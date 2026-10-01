@@ -570,36 +570,6 @@ Classes
 
    gpu_edge_mask_generator.GPUEdgeMaskGenerator
 
-``graph_attention``
--------------------
-
-Graph attention network combining a DeepSet encoder with GATv2 layers.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   graph_attention.GraphAttention
-
-``graph_convolution``
----------------------
-
-DeepSet node encoder followed by GCN message passing and set aggregation.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   graph_convolution.GraphConvolution
-
 ``hetero_cell``
 ---------------
 

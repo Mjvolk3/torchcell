@@ -101,8 +101,6 @@
 <li class="toctree-l2"><a class="reference internal" href="#gat-diffpool-alt"><code class="docutils literal notranslate"><span class="pre">gat_diffpool_alt</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#gat-diffpool-inception"><code class="docutils literal notranslate"><span class="pre">gat_diffpool_inception</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#gpu-edge-mask-generator"><code class="docutils literal notranslate"><span class="pre">gpu_edge_mask_generator</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#graph-attention"><code class="docutils literal notranslate"><span class="pre">graph_attention</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#graph-convolution"><code class="docutils literal notranslate"><span class="pre">graph_convolution</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#hetero-cell"><code class="docutils literal notranslate"><span class="pre">hetero_cell</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#hetero-cell-bipartite"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#hetero-cell-bipartite-dango"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango</span></code></a></li>
@@ -173,283 +171,273 @@
 <nav class="contents local" id="contents">
 <p class="topic-title">Contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#cell-diffpool-dense" id="id76"><code class="docutils literal notranslate"><span class="pre">cell_diffpool_dense</span></code></a></p>
+<li><p><a class="reference internal" href="#cell-diffpool-dense" id="id74"><code class="docutils literal notranslate"><span class="pre">cell_diffpool_dense</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#classes" id="id77">Classes</a></p></li>
-<li><p><a class="reference internal" href="#functions" id="id78">Functions</a></p></li>
+<li><p><a class="reference internal" href="#classes" id="id75">Classes</a></p></li>
+<li><p><a class="reference internal" href="#functions" id="id76">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#cell-diffpool-sparse" id="id79"><code class="docutils literal notranslate"><span class="pre">cell_diffpool_sparse</span></code></a></p>
+<li><p><a class="reference internal" href="#cell-diffpool-sparse" id="id77"><code class="docutils literal notranslate"><span class="pre">cell_diffpool_sparse</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id1" id="id80">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id2" id="id81">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id1" id="id78">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id2" id="id79">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#cell-gin-diffpool-dense" id="id82"><code class="docutils literal notranslate"><span class="pre">cell_gin_diffpool_dense</span></code></a></p>
+<li><p><a class="reference internal" href="#cell-gin-diffpool-dense" id="id80"><code class="docutils literal notranslate"><span class="pre">cell_gin_diffpool_dense</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id3" id="id83">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id4" id="id84">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id3" id="id81">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id4" id="id82">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#cell-graph-transformer" id="id85"><code class="docutils literal notranslate"><span class="pre">cell_graph_transformer</span></code></a></p>
+<li><p><a class="reference internal" href="#cell-graph-transformer" id="id83"><code class="docutils literal notranslate"><span class="pre">cell_graph_transformer</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id5" id="id86">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id6" id="id87">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id5" id="id84">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id6" id="id85">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#cell-graph-transformer-metabolism" id="id88"><code class="docutils literal notranslate"><span class="pre">cell_graph_transformer_metabolism</span></code></a></p>
+<li><p><a class="reference internal" href="#cell-graph-transformer-metabolism" id="id86"><code class="docutils literal notranslate"><span class="pre">cell_graph_transformer_metabolism</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id7" id="id89">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id8" id="id90">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id7" id="id87">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id8" id="id88">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#cell-latent-perturbation" id="id91"><code class="docutils literal notranslate"><span class="pre">cell_latent_perturbation</span></code></a></p>
+<li><p><a class="reference internal" href="#cell-latent-perturbation" id="id89"><code class="docutils literal notranslate"><span class="pre">cell_latent_perturbation</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id9" id="id92">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id10" id="id93">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id9" id="id90">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id10" id="id91">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#cell-latent-perturbation-tform" id="id94"><code class="docutils literal notranslate"><span class="pre">cell_latent_perturbation_tform</span></code></a></p>
+<li><p><a class="reference internal" href="#cell-latent-perturbation-tform" id="id92"><code class="docutils literal notranslate"><span class="pre">cell_latent_perturbation_tform</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id11" id="id95">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id12" id="id96">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id11" id="id93">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id12" id="id94">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#cell-latent-perturbation-unified" id="id97"><code class="docutils literal notranslate"><span class="pre">cell_latent_perturbation_unified</span></code></a></p>
+<li><p><a class="reference internal" href="#cell-latent-perturbation-unified" id="id95"><code class="docutils literal notranslate"><span class="pre">cell_latent_perturbation_unified</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id13" id="id98">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id14" id="id99">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id13" id="id96">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id14" id="id97">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#cell-sagpool" id="id100"><code class="docutils literal notranslate"><span class="pre">cell_sagpool</span></code></a></p>
+<li><p><a class="reference internal" href="#cell-sagpool" id="id98"><code class="docutils literal notranslate"><span class="pre">cell_sagpool</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id15" id="id101">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id16" id="id102">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id15" id="id99">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id16" id="id100">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#cell-sagpool-inception" id="id103"><code class="docutils literal notranslate"><span class="pre">cell_sagpool_inception</span></code></a></p>
+<li><p><a class="reference internal" href="#cell-sagpool-inception" id="id101"><code class="docutils literal notranslate"><span class="pre">cell_sagpool_inception</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id17" id="id104">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id18" id="id105">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id17" id="id102">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id18" id="id103">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#dango" id="id106"><code class="docutils literal notranslate"><span class="pre">dango</span></code></a></p>
+<li><p><a class="reference internal" href="#dango" id="id104"><code class="docutils literal notranslate"><span class="pre">dango</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id19" id="id107">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id19" id="id105">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#dcell" id="id108"><code class="docutils literal notranslate"><span class="pre">dcell</span></code></a></p>
+<li><p><a class="reference internal" href="#dcell" id="id106"><code class="docutils literal notranslate"><span class="pre">dcell</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id20" id="id109">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id20" id="id107">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#dcell-opt" id="id110"><code class="docutils literal notranslate"><span class="pre">dcell_opt</span></code></a></p>
+<li><p><a class="reference internal" href="#dcell-opt" id="id108"><code class="docutils literal notranslate"><span class="pre">dcell_opt</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id21" id="id111">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id21" id="id109">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#deep-set" id="id112"><code class="docutils literal notranslate"><span class="pre">deep_set</span></code></a></p>
+<li><p><a class="reference internal" href="#deep-set" id="id110"><code class="docutils literal notranslate"><span class="pre">deep_set</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id22" id="id113">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id22" id="id111">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#dense-gat-conv" id="id114"><code class="docutils literal notranslate"><span class="pre">dense_gat_conv</span></code></a></p>
+<li><p><a class="reference internal" href="#dense-gat-conv" id="id112"><code class="docutils literal notranslate"><span class="pre">dense_gat_conv</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id23" id="id115">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id23" id="id113">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#diffusion-decoder" id="id116"><code class="docutils literal notranslate"><span class="pre">diffusion_decoder</span></code></a></p>
+<li><p><a class="reference internal" href="#diffusion-decoder" id="id114"><code class="docutils literal notranslate"><span class="pre">diffusion_decoder</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id24" id="id117">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id24" id="id115">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#early-cell-diffpool-dense" id="id118"><code class="docutils literal notranslate"><span class="pre">early_cell_diffpool_dense</span></code></a></p>
+<li><p><a class="reference internal" href="#early-cell-diffpool-dense" id="id116"><code class="docutils literal notranslate"><span class="pre">early_cell_diffpool_dense</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id25" id="id119">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id26" id="id120">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id25" id="id117">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id26" id="id118">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#equivariant-cell-graph-transformer" id="id121"><code class="docutils literal notranslate"><span class="pre">equivariant_cell_graph_transformer</span></code></a></p>
+<li><p><a class="reference internal" href="#equivariant-cell-graph-transformer" id="id119"><code class="docutils literal notranslate"><span class="pre">equivariant_cell_graph_transformer</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id27" id="id122">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id28" id="id123">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id27" id="id120">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id28" id="id121">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#esm2" id="id124"><code class="docutils literal notranslate"><span class="pre">esm2</span></code></a></p>
+<li><p><a class="reference internal" href="#esm2" id="id122"><code class="docutils literal notranslate"><span class="pre">esm2</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id29" id="id125">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id29" id="id123">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#fungal-up-down-transformer" id="id126"><code class="docutils literal notranslate"><span class="pre">fungal_up_down_transformer</span></code></a></p>
+<li><p><a class="reference internal" href="#fungal-up-down-transformer" id="id124"><code class="docutils literal notranslate"><span class="pre">fungal_up_down_transformer</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id30" id="id127">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id30" id="id125">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#gat-diffpool" id="id128"><code class="docutils literal notranslate"><span class="pre">gat_diffpool</span></code></a></p>
+<li><p><a class="reference internal" href="#gat-diffpool" id="id126"><code class="docutils literal notranslate"><span class="pre">gat_diffpool</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id31" id="id129">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id32" id="id130">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id31" id="id127">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id32" id="id128">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#gat-diffpool-alt" id="id131"><code class="docutils literal notranslate"><span class="pre">gat_diffpool_alt</span></code></a></p>
+<li><p><a class="reference internal" href="#gat-diffpool-alt" id="id129"><code class="docutils literal notranslate"><span class="pre">gat_diffpool_alt</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id33" id="id132">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id34" id="id133">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id33" id="id130">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id34" id="id131">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#gat-diffpool-inception" id="id134"><code class="docutils literal notranslate"><span class="pre">gat_diffpool_inception</span></code></a></p>
+<li><p><a class="reference internal" href="#gat-diffpool-inception" id="id132"><code class="docutils literal notranslate"><span class="pre">gat_diffpool_inception</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id35" id="id135">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id36" id="id136">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id35" id="id133">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id36" id="id134">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#gpu-edge-mask-generator" id="id137"><code class="docutils literal notranslate"><span class="pre">gpu_edge_mask_generator</span></code></a></p>
+<li><p><a class="reference internal" href="#gpu-edge-mask-generator" id="id135"><code class="docutils literal notranslate"><span class="pre">gpu_edge_mask_generator</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id37" id="id138">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id37" id="id136">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#graph-attention" id="id139"><code class="docutils literal notranslate"><span class="pre">graph_attention</span></code></a></p>
+<li><p><a class="reference internal" href="#hetero-cell" id="id137"><code class="docutils literal notranslate"><span class="pre">hetero_cell</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id38" id="id140">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id38" id="id138">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id39" id="id139">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#graph-convolution" id="id141"><code class="docutils literal notranslate"><span class="pre">graph_convolution</span></code></a></p>
+<li><p><a class="reference internal" href="#hetero-cell-bipartite" id="id140"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id39" id="id142">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id40" id="id141">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id41" id="id142">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#hetero-cell" id="id143"><code class="docutils literal notranslate"><span class="pre">hetero_cell</span></code></a></p>
+<li><p><a class="reference internal" href="#hetero-cell-bipartite-dango" id="id143"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id40" id="id144">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id41" id="id145">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id42" id="id144">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id43" id="id145">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#hetero-cell-bipartite" id="id146"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite</span></code></a></p>
+<li><p><a class="reference internal" href="#hetero-cell-bipartite-dango-diff-gi" id="id146"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_diff_gi</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id42" id="id147">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id43" id="id148">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id44" id="id147">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#hetero-cell-bipartite-dango" id="id149"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango</span></code></a></p>
+<li><p><a class="reference internal" href="#hetero-cell-bipartite-dango-gi" id="id148"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id44" id="id150">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id45" id="id151">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id45" id="id149">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id46" id="id150">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#hetero-cell-bipartite-dango-diff-gi" id="id152"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_diff_gi</span></code></a></p>
+<li><p><a class="reference internal" href="#hetero-cell-bipartite-dango-gi-lazy" id="id151"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi_lazy</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id46" id="id153">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id47" id="id152">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id48" id="id153">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#hetero-cell-bipartite-dango-gi" id="id154"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi</span></code></a></p>
+<li><p><a class="reference internal" href="#hetero-cell-flex" id="id154"><code class="docutils literal notranslate"><span class="pre">hetero_cell_flex</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id47" id="id155">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id48" id="id156">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id49" id="id155">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id50" id="id156">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#hetero-cell-bipartite-dango-gi-lazy" id="id157"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi_lazy</span></code></a></p>
+<li><p><a class="reference internal" href="#hetero-cell-isab-split" id="id157"><code class="docutils literal notranslate"><span class="pre">hetero_cell_isab_split</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id49" id="id158">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id50" id="id159">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id51" id="id158">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id52" id="id159">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#hetero-cell-flex" id="id160"><code class="docutils literal notranslate"><span class="pre">hetero_cell_flex</span></code></a></p>
+<li><p><a class="reference internal" href="#hetero-cell-nsa" id="id160"><code class="docutils literal notranslate"><span class="pre">hetero_cell_nsa</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id51" id="id161">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id52" id="id162">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id53" id="id161">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id54" id="id162">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#hetero-cell-isab-split" id="id163"><code class="docutils literal notranslate"><span class="pre">hetero_cell_isab_split</span></code></a></p>
+<li><p><a class="reference internal" href="#hetero-cell-nsa-retry" id="id163"><code class="docutils literal notranslate"><span class="pre">hetero_cell_nsa_retry</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id53" id="id164">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id54" id="id165">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id55" id="id164">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id56" id="id165">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#hetero-cell-nsa" id="id166"><code class="docutils literal notranslate"><span class="pre">hetero_cell_nsa</span></code></a></p>
+<li><p><a class="reference internal" href="#hetero-cell-pma" id="id166"><code class="docutils literal notranslate"><span class="pre">hetero_cell_pma</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id55" id="id167">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id56" id="id168">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id57" id="id167">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id58" id="id168">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#hetero-cell-nsa-retry" id="id169"><code class="docutils literal notranslate"><span class="pre">hetero_cell_nsa_retry</span></code></a></p>
+<li><p><a class="reference internal" href="#hetero-gnn-pool" id="id169"><code class="docutils literal notranslate"><span class="pre">hetero_gnn_pool</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id57" id="id170">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id58" id="id171">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id59" id="id170">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id60" id="id171">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#hetero-cell-pma" id="id172"><code class="docutils literal notranslate"><span class="pre">hetero_cell_pma</span></code></a></p>
+<li><p><a class="reference internal" href="#isomorphic-cell" id="id172"><code class="docutils literal notranslate"><span class="pre">isomorphic_cell</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id59" id="id173">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id60" id="id174">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id61" id="id173">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id62" id="id174">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#hetero-gnn-pool" id="id175"><code class="docutils literal notranslate"><span class="pre">hetero_gnn_pool</span></code></a></p>
+<li><p><a class="reference internal" href="#isomorphic-cell-attentional" id="id175"><code class="docutils literal notranslate"><span class="pre">isomorphic_cell_attentional</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id61" id="id176">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id62" id="id177">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id63" id="id176">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id64" id="id177">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#isomorphic-cell" id="id178"><code class="docutils literal notranslate"><span class="pre">isomorphic_cell</span></code></a></p>
+<li><p><a class="reference internal" href="#linear" id="id178"><code class="docutils literal notranslate"><span class="pre">linear</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id63" id="id179">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id64" id="id180">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id65" id="id179">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#isomorphic-cell-attentional" id="id181"><code class="docutils literal notranslate"><span class="pre">isomorphic_cell_attentional</span></code></a></p>
+<li><p><a class="reference internal" href="#llm" id="id180"><code class="docutils literal notranslate"><span class="pre">llm</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id65" id="id182">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id66" id="id183">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id66" id="id181">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#linear" id="id184"><code class="docutils literal notranslate"><span class="pre">linear</span></code></a></p>
+<li><p><a class="reference internal" href="#mlp" id="id182"><code class="docutils literal notranslate"><span class="pre">mlp</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id67" id="id185">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id67" id="id183">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#llm" id="id186"><code class="docutils literal notranslate"><span class="pre">llm</span></code></a></p>
+<li><p><a class="reference internal" href="#nsa-hetero-cell" id="id184"><code class="docutils literal notranslate"><span class="pre">nsa_hetero_cell</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id68" id="id187">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id68" id="id185">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id69" id="id186">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#mlp" id="id188"><code class="docutils literal notranslate"><span class="pre">mlp</span></code></a></p>
+<li><p><a class="reference internal" href="#nucleotide-transformer" id="id187"><code class="docutils literal notranslate"><span class="pre">nucleotide_transformer</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id69" id="id189">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id70" id="id188">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#nsa-hetero-cell" id="id190"><code class="docutils literal notranslate"><span class="pre">nsa_hetero_cell</span></code></a></p>
+<li><p><a class="reference internal" href="#prott5" id="id189"><code class="docutils literal notranslate"><span class="pre">protT5</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id70" id="id191">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id71" id="id192">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id71" id="id190">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#nucleotide-transformer" id="id193"><code class="docutils literal notranslate"><span class="pre">nucleotide_transformer</span></code></a></p>
+<li><p><a class="reference internal" href="#self-attention-deep-set" id="id191"><code class="docutils literal notranslate"><span class="pre">self_attention_deep_set</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id72" id="id194">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id72" id="id192">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#prott5" id="id195"><code class="docutils literal notranslate"><span class="pre">protT5</span></code></a></p>
+<li><p><a class="reference internal" href="#self-attention-sag" id="id193"><code class="docutils literal notranslate"><span class="pre">self_attention_sag</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id73" id="id196">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id73" id="id194">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#self-attention-deep-set" id="id197"><code class="docutils literal notranslate"><span class="pre">self_attention_deep_set</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id74" id="id198">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#self-attention-sag" id="id199"><code class="docutils literal notranslate"><span class="pre">self_attention_sag</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id75" id="id200">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#not-documented" id="id201">Not documented</a></p></li>
+<li><p><a class="reference internal" href="#not-documented" id="id195">Not documented</a></p></li>
 </ul>
 </nav>
 <section id="cell-diffpool-dense">
-<h2><a class="toc-backref" href="#id76" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_diffpool_dense</span></code></a><a class="headerlink" href="#cell-diffpool-dense" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id74" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_diffpool_dense</span></code></a><a class="headerlink" href="#cell-diffpool-dense" title="Link to this heading"></a></h2>
 <p>Dense DiffPool models over cell graphs for hierarchical graph pooling.</p>
 <section id="classes">
-<h3><a class="toc-backref" href="#id77" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id75" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_diffpool_dense.DenseDiffPool.html#torchcell.models.cell_diffpool_dense.DenseDiffPool" title="torchcell.models.cell_diffpool_dense.DenseDiffPool"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_diffpool_dense.DenseDiffPool</span></code></a></p></td>
@@ -462,7 +450,7 @@
 </table>
 </section>
 <section id="functions">
-<h3><a class="toc-backref" href="#id78" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id76" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_diffpool_dense.load_sample_data_batch.html#torchcell.models.cell_diffpool_dense.load_sample_data_batch" title="torchcell.models.cell_diffpool_dense.load_sample_data_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_diffpool_dense.load_sample_data_batch</span></code></a></p></td>
@@ -473,10 +461,10 @@
 </section>
 </section>
 <section id="cell-diffpool-sparse">
-<h2><a class="toc-backref" href="#id79" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_diffpool_sparse</span></code></a><a class="headerlink" href="#cell-diffpool-sparse" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id77" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_diffpool_sparse</span></code></a><a class="headerlink" href="#cell-diffpool-sparse" title="Link to this heading"></a></h2>
 <p>Sparse DiffPool cell model with GAT-based pooling over multiple graphs.</p>
 <section id="id1">
-<h3><a class="toc-backref" href="#id80" role="doc-backlink">Classes</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id78" role="doc-backlink">Classes</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_diffpool_sparse.SingleDiffPool.html#torchcell.models.cell_diffpool_sparse.SingleDiffPool" title="torchcell.models.cell_diffpool_sparse.SingleDiffPool"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_diffpool_sparse.SingleDiffPool</span></code></a></p></td>
@@ -489,7 +477,7 @@
 </table>
 </section>
 <section id="id2">
-<h3><a class="toc-backref" href="#id81" role="doc-backlink">Functions</a><a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id79" role="doc-backlink">Functions</a><a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_diffpool_sparse.from_dense_batch.html#torchcell.models.cell_diffpool_sparse.from_dense_batch" title="torchcell.models.cell_diffpool_sparse.from_dense_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_diffpool_sparse.from_dense_batch</span></code></a></p></td>
@@ -503,10 +491,10 @@
 </section>
 </section>
 <section id="cell-gin-diffpool-dense">
-<h2><a class="toc-backref" href="#id82" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_gin_diffpool_dense</span></code></a><a class="headerlink" href="#cell-gin-diffpool-dense" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id80" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_gin_diffpool_dense</span></code></a><a class="headerlink" href="#cell-gin-diffpool-dense" title="Link to this heading"></a></h2>
 <p>Dense GIN-based DiffPool cell model over dense adjacency matrices.</p>
 <section id="id3">
-<h3><a class="toc-backref" href="#id83" role="doc-backlink">Classes</a><a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id81" role="doc-backlink">Classes</a><a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_gin_diffpool_dense.DenseDiffPool.html#torchcell.models.cell_gin_diffpool_dense.DenseDiffPool" title="torchcell.models.cell_gin_diffpool_dense.DenseDiffPool"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_gin_diffpool_dense.DenseDiffPool</span></code></a></p></td>
@@ -519,7 +507,7 @@
 </table>
 </section>
 <section id="id4">
-<h3><a class="toc-backref" href="#id84" role="doc-backlink">Functions</a><a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id82" role="doc-backlink">Functions</a><a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_gin_diffpool_dense.load_sample_data_batch.html#torchcell.models.cell_gin_diffpool_dense.load_sample_data_batch" title="torchcell.models.cell_gin_diffpool_dense.load_sample_data_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_gin_diffpool_dense.load_sample_data_batch</span></code></a></p></td>
@@ -530,10 +518,10 @@
 </section>
 </section>
 <section id="cell-graph-transformer">
-<h2><a class="toc-backref" href="#id85" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_graph_transformer</span></code></a><a class="headerlink" href="#cell-graph-transformer" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id83" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_graph_transformer</span></code></a><a class="headerlink" href="#cell-graph-transformer" title="Link to this heading"></a></h2>
 <p>Cell Graph Transformer with graph-regularized attention heads.</p>
 <section id="id5">
-<h3><a class="toc-backref" href="#id86" role="doc-backlink">Classes</a><a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id84" role="doc-backlink">Classes</a><a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer.GraphRegularizedTransformerLayer.html#torchcell.models.cell_graph_transformer.GraphRegularizedTransformerLayer" title="torchcell.models.cell_graph_transformer.GraphRegularizedTransformerLayer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_graph_transformer.GraphRegularizedTransformerLayer</span></code></a></p></td>
@@ -552,7 +540,7 @@
 </table>
 </section>
 <section id="id6">
-<h3><a class="toc-backref" href="#id87" role="doc-backlink">Functions</a><a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id85" role="doc-backlink">Functions</a><a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer.calculate_weight_l2_norm.html#torchcell.models.cell_graph_transformer.calculate_weight_l2_norm" title="torchcell.models.cell_graph_transformer.calculate_weight_l2_norm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_graph_transformer.calculate_weight_l2_norm</span></code></a></p></td>
@@ -566,10 +554,10 @@
 </section>
 </section>
 <section id="cell-graph-transformer-metabolism">
-<h2><a class="toc-backref" href="#id88" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_graph_transformer_metabolism</span></code></a><a class="headerlink" href="#cell-graph-transformer-metabolism" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id86" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_graph_transformer_metabolism</span></code></a><a class="headerlink" href="#cell-graph-transformer-metabolism" title="Link to this heading"></a></h2>
 <p>CGT-Metabolism: the Cell Graph Transformer with production / metabolome readouts.</p>
 <section id="id7">
-<h3><a class="toc-backref" href="#id89" role="doc-backlink">Classes</a><a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id87" role="doc-backlink">Classes</a><a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer_metabolism.FluxMetaboliteHead.html#torchcell.models.cell_graph_transformer_metabolism.FluxMetaboliteHead" title="torchcell.models.cell_graph_transformer_metabolism.FluxMetaboliteHead"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_graph_transformer_metabolism.FluxMetaboliteHead</span></code></a></p></td>
@@ -591,7 +579,7 @@
 </table>
 </section>
 <section id="id8">
-<h3><a class="toc-backref" href="#id90" role="doc-backlink">Functions</a><a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id88" role="doc-backlink">Functions</a><a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_graph_transformer_metabolism.perturbed_gene_pool.html#torchcell.models.cell_graph_transformer_metabolism.perturbed_gene_pool" title="torchcell.models.cell_graph_transformer_metabolism.perturbed_gene_pool"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_graph_transformer_metabolism.perturbed_gene_pool</span></code></a></p></td>
@@ -602,10 +590,10 @@
 </section>
 </section>
 <section id="cell-latent-perturbation">
-<h2><a class="toc-backref" href="#id91" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_latent_perturbation</span></code></a><a class="headerlink" href="#cell-latent-perturbation" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id89" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_latent_perturbation</span></code></a><a class="headerlink" href="#cell-latent-perturbation" title="Link to this heading"></a></h2>
 <p>Latent-perturbation cell model: hetero GNN pooling over gene and metabolism graphs.</p>
 <section id="id9">
-<h3><a class="toc-backref" href="#id92" role="doc-backlink">Classes</a><a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id90" role="doc-backlink">Classes</a><a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_latent_perturbation.ProjectedGATConv.html#torchcell.models.cell_latent_perturbation.ProjectedGATConv" title="torchcell.models.cell_latent_perturbation.ProjectedGATConv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_latent_perturbation.ProjectedGATConv</span></code></a></p></td>
@@ -633,7 +621,7 @@
 </table>
 </section>
 <section id="id10">
-<h3><a class="toc-backref" href="#id93" role="doc-backlink">Functions</a><a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id91" role="doc-backlink">Functions</a><a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_latent_perturbation.load_sample_data_batch.html#torchcell.models.cell_latent_perturbation.load_sample_data_batch" title="torchcell.models.cell_latent_perturbation.load_sample_data_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_latent_perturbation.load_sample_data_batch</span></code></a></p></td>
@@ -647,10 +635,10 @@
 </section>
 </section>
 <section id="cell-latent-perturbation-tform">
-<h2><a class="toc-backref" href="#id94" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_latent_perturbation_tform</span></code></a><a class="headerlink" href="#cell-latent-perturbation-tform" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id92" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_latent_perturbation_tform</span></code></a><a class="headerlink" href="#cell-latent-perturbation-tform" title="Link to this heading"></a></h2>
 <p>Cell latent perturbation model with set-transformer and metabolism encoders.</p>
 <section id="id11">
-<h3><a class="toc-backref" href="#id95" role="doc-backlink">Classes</a><a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id93" role="doc-backlink">Classes</a><a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_latent_perturbation_tform.ProjectedGATConv.html#torchcell.models.cell_latent_perturbation_tform.ProjectedGATConv" title="torchcell.models.cell_latent_perturbation_tform.ProjectedGATConv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_latent_perturbation_tform.ProjectedGATConv</span></code></a></p></td>
@@ -678,7 +666,7 @@
 </table>
 </section>
 <section id="id12">
-<h3><a class="toc-backref" href="#id96" role="doc-backlink">Functions</a><a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id94" role="doc-backlink">Functions</a><a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_latent_perturbation_tform.load_sample_data_batch.html#torchcell.models.cell_latent_perturbation_tform.load_sample_data_batch" title="torchcell.models.cell_latent_perturbation_tform.load_sample_data_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_latent_perturbation_tform.load_sample_data_batch</span></code></a></p></td>
@@ -692,10 +680,10 @@
 </section>
 </section>
 <section id="cell-latent-perturbation-unified">
-<h2><a class="toc-backref" href="#id97" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_latent_perturbation_unified</span></code></a><a class="headerlink" href="#cell-latent-perturbation-unified" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id95" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_latent_perturbation_unified</span></code></a><a class="headerlink" href="#cell-latent-perturbation-unified" title="Link to this heading"></a></h2>
 <p>Unified cell latent perturbation model over gene, reaction, and metabolism graphs.</p>
 <section id="id13">
-<h3><a class="toc-backref" href="#id98" role="doc-backlink">Classes</a><a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id96" role="doc-backlink">Classes</a><a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_latent_perturbation_unified.WholeIntactProcessor.html#torchcell.models.cell_latent_perturbation_unified.WholeIntactProcessor" title="torchcell.models.cell_latent_perturbation_unified.WholeIntactProcessor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_latent_perturbation_unified.WholeIntactProcessor</span></code></a></p></td>
@@ -732,7 +720,7 @@
 </table>
 </section>
 <section id="id14">
-<h3><a class="toc-backref" href="#id99" role="doc-backlink">Functions</a><a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id97" role="doc-backlink">Functions</a><a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_latent_perturbation_unified.load_sample_data_batch.html#torchcell.models.cell_latent_perturbation_unified.load_sample_data_batch" title="torchcell.models.cell_latent_perturbation_unified.load_sample_data_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_latent_perturbation_unified.load_sample_data_batch</span></code></a></p></td>
@@ -746,10 +734,10 @@
 </section>
 </section>
 <section id="cell-sagpool">
-<h2><a class="toc-backref" href="#id100" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_sagpool</span></code></a><a class="headerlink" href="#cell-sagpool" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id98" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_sagpool</span></code></a><a class="headerlink" href="#cell-sagpool" title="Link to this heading"></a></h2>
 <p>Self-attention graph pooling (SAGPool) models for cell graphs.</p>
 <section id="id15">
-<h3><a class="toc-backref" href="#id101" role="doc-backlink">Classes</a><a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id99" role="doc-backlink">Classes</a><a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_sagpool.SingleSAGPool.html#torchcell.models.cell_sagpool.SingleSAGPool" title="torchcell.models.cell_sagpool.SingleSAGPool"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_sagpool.SingleSAGPool</span></code></a></p></td>
@@ -762,7 +750,7 @@
 </table>
 </section>
 <section id="id16">
-<h3><a class="toc-backref" href="#id102" role="doc-backlink">Functions</a><a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id100" role="doc-backlink">Functions</a><a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_sagpool.load_sample_data_batch.html#torchcell.models.cell_sagpool.load_sample_data_batch" title="torchcell.models.cell_sagpool.load_sample_data_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_sagpool.load_sample_data_batch</span></code></a></p></td>
@@ -776,10 +764,10 @@
 </section>
 </section>
 <section id="cell-sagpool-inception">
-<h2><a class="toc-backref" href="#id103" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_sagpool_inception</span></code></a><a class="headerlink" href="#cell-sagpool-inception" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id101" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell_sagpool_inception</span></code></a><a class="headerlink" href="#cell-sagpool-inception" title="Link to this heading"></a></h2>
 <p>Inception-style multi-graph SAGPooling model for cell graph regression.</p>
 <section id="id17">
-<h3><a class="toc-backref" href="#id104" role="doc-backlink">Classes</a><a class="headerlink" href="#id17" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id102" role="doc-backlink">Classes</a><a class="headerlink" href="#id17" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_sagpool_inception.MLP.html#torchcell.models.cell_sagpool_inception.MLP" title="torchcell.models.cell_sagpool_inception.MLP"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_sagpool_inception.MLP</span></code></a></p></td>
@@ -795,7 +783,7 @@
 </table>
 </section>
 <section id="id18">
-<h3><a class="toc-backref" href="#id105" role="doc-backlink">Functions</a><a class="headerlink" href="#id18" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id103" role="doc-backlink">Functions</a><a class="headerlink" href="#id18" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.cell_sagpool_inception.load_sample_data_batch.html#torchcell.models.cell_sagpool_inception.load_sample_data_batch" title="torchcell.models.cell_sagpool_inception.load_sample_data_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell_sagpool_inception.load_sample_data_batch</span></code></a></p></td>
@@ -809,10 +797,10 @@
 </section>
 </section>
 <section id="dango">
-<h2><a class="toc-backref" href="#id106" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">dango</span></code></a><a class="headerlink" href="#dango" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id104" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">dango</span></code></a><a class="headerlink" href="#dango" title="Link to this heading"></a></h2>
 <p>DANGO model: PPI-network pretraining, embedding integration, and HyperSAGNN.</p>
 <section id="id19">
-<h3><a class="toc-backref" href="#id107" role="doc-backlink">Classes</a><a class="headerlink" href="#id19" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id105" role="doc-backlink">Classes</a><a class="headerlink" href="#id19" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.dango.DangoPreTrain.html#torchcell.models.dango.DangoPreTrain" title="torchcell.models.dango.DangoPreTrain"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dango.DangoPreTrain</span></code></a></p></td>
@@ -832,10 +820,10 @@
 </section>
 </section>
 <section id="dcell">
-<h2><a class="toc-backref" href="#id108" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">dcell</span></code></a><a class="headerlink" href="#dcell" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id106" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">dcell</span></code></a><a class="headerlink" href="#dcell" title="Link to this heading"></a></h2>
 <p>DCell model: a GO-ontology-structured neural network over gene perturbations.</p>
 <section id="id20">
-<h3><a class="toc-backref" href="#id109" role="doc-backlink">Classes</a><a class="headerlink" href="#id20" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id107" role="doc-backlink">Classes</a><a class="headerlink" href="#id20" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.dcell.DCell.html#torchcell.models.dcell.DCell" title="torchcell.models.dcell.DCell"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dcell.DCell</span></code></a></p></td>
@@ -849,10 +837,10 @@
 </section>
 </section>
 <section id="dcell-opt">
-<h2><a class="toc-backref" href="#id110" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">dcell_opt</span></code></a><a class="headerlink" href="#dcell-opt" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id108" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">dcell_opt</span></code></a><a class="headerlink" href="#dcell-opt" title="Link to this heading"></a></h2>
 <p>Optimized DCell model for torch.compile compatibility.</p>
 <section id="id21">
-<h3><a class="toc-backref" href="#id111" role="doc-backlink">Classes</a><a class="headerlink" href="#id21" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id109" role="doc-backlink">Classes</a><a class="headerlink" href="#id21" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.dcell_opt.DCellOpt.html#torchcell.models.dcell_opt.DCellOpt" title="torchcell.models.dcell_opt.DCellOpt"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dcell_opt.DCellOpt</span></code></a></p></td>
@@ -866,10 +854,10 @@
 </section>
 </section>
 <section id="deep-set">
-<h2><a class="toc-backref" href="#id112" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">deep_set</span></code></a><a class="headerlink" href="#deep-set" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id110" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">deep_set</span></code></a><a class="headerlink" href="#deep-set" title="Link to this heading"></a></h2>
 <p>DeepSet model with permutation-invariant set aggregation over node features.</p>
 <section id="id22">
-<h3><a class="toc-backref" href="#id113" role="doc-backlink">Classes</a><a class="headerlink" href="#id22" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id111" role="doc-backlink">Classes</a><a class="headerlink" href="#id22" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.deep_set.DeepSet.html#torchcell.models.deep_set.DeepSet" title="torchcell.models.deep_set.DeepSet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">deep_set.DeepSet</span></code></a></p></td>
@@ -880,10 +868,10 @@
 </section>
 </section>
 <section id="dense-gat-conv">
-<h2><a class="toc-backref" href="#id114" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">dense_gat_conv</span></code></a><a class="headerlink" href="#dense-gat-conv" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id112" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">dense_gat_conv</span></code></a><a class="headerlink" href="#dense-gat-conv" title="Link to this heading"></a></h2>
 <p>Dense (adjacency-matrix) implementation of the graph attention layer.</p>
 <section id="id23">
-<h3><a class="toc-backref" href="#id115" role="doc-backlink">Classes</a><a class="headerlink" href="#id23" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id113" role="doc-backlink">Classes</a><a class="headerlink" href="#id23" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.dense_gat_conv.DenseGATConv.html#torchcell.models.dense_gat_conv.DenseGATConv" title="torchcell.models.dense_gat_conv.DenseGATConv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dense_gat_conv.DenseGATConv</span></code></a></p></td>
@@ -894,10 +882,10 @@
 </section>
 </section>
 <section id="diffusion-decoder">
-<h2><a class="toc-backref" href="#id116" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">diffusion_decoder</span></code></a><a class="headerlink" href="#diffusion-decoder" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id114" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">diffusion_decoder</span></code></a><a class="headerlink" href="#diffusion-decoder" title="Link to this heading"></a></h2>
 <p>Diffusion-based decoder conditioning on graph embeddings via cross-attention.</p>
 <section id="id24">
-<h3><a class="toc-backref" href="#id117" role="doc-backlink">Classes</a><a class="headerlink" href="#id24" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id115" role="doc-backlink">Classes</a><a class="headerlink" href="#id24" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.diffusion_decoder.SinusoidalTimeEmbedding.html#torchcell.models.diffusion_decoder.SinusoidalTimeEmbedding" title="torchcell.models.diffusion_decoder.SinusoidalTimeEmbedding"><code class="xref py py-obj docutils literal notranslate"><span class="pre">diffusion_decoder.SinusoidalTimeEmbedding</span></code></a></p></td>
@@ -917,10 +905,10 @@
 </section>
 </section>
 <section id="early-cell-diffpool-dense">
-<h2><a class="toc-backref" href="#id118" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">early_cell_diffpool_dense</span></code></a><a class="headerlink" href="#early-cell-diffpool-dense" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id116" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">early_cell_diffpool_dense</span></code></a><a class="headerlink" href="#early-cell-diffpool-dense" title="Link to this heading"></a></h2>
 <p>Dense DiffPool cell model over multiple per-graph GAT stacks.</p>
 <section id="id25">
-<h3><a class="toc-backref" href="#id119" role="doc-backlink">Classes</a><a class="headerlink" href="#id25" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id117" role="doc-backlink">Classes</a><a class="headerlink" href="#id25" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.early_cell_diffpool_dense.EarlyDenseCellDiffPool.html#torchcell.models.early_cell_diffpool_dense.EarlyDenseCellDiffPool" title="torchcell.models.early_cell_diffpool_dense.EarlyDenseCellDiffPool"><code class="xref py py-obj docutils literal notranslate"><span class="pre">early_cell_diffpool_dense.EarlyDenseCellDiffPool</span></code></a></p></td>
@@ -930,7 +918,7 @@
 </table>
 </section>
 <section id="id26">
-<h3><a class="toc-backref" href="#id120" role="doc-backlink">Functions</a><a class="headerlink" href="#id26" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id118" role="doc-backlink">Functions</a><a class="headerlink" href="#id26" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.early_cell_diffpool_dense.load_sample_data_batch.html#torchcell.models.early_cell_diffpool_dense.load_sample_data_batch" title="torchcell.models.early_cell_diffpool_dense.load_sample_data_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">early_cell_diffpool_dense.load_sample_data_batch</span></code></a></p></td>
@@ -941,10 +929,10 @@
 </section>
 </section>
 <section id="equivariant-cell-graph-transformer">
-<h2><a class="toc-backref" href="#id121" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">equivariant_cell_graph_transformer</span></code></a><a class="headerlink" href="#equivariant-cell-graph-transformer" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id119" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">equivariant_cell_graph_transformer</span></code></a><a class="headerlink" href="#equivariant-cell-graph-transformer" title="Link to this heading"></a></h2>
 <p>Equivariant Cell Graph Transformer with graph-regularized attention heads.</p>
 <section id="id27">
-<h3><a class="toc-backref" href="#id122" role="doc-backlink">Classes</a><a class="headerlink" href="#id27" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id120" role="doc-backlink">Classes</a><a class="headerlink" href="#id27" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.GraphRegularizedTransformerLayer.html#torchcell.models.equivariant_cell_graph_transformer.GraphRegularizedTransformerLayer" title="torchcell.models.equivariant_cell_graph_transformer.GraphRegularizedTransformerLayer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">equivariant_cell_graph_transformer.GraphRegularizedTransformerLayer</span></code></a></p></td>
@@ -999,7 +987,7 @@
 </table>
 </section>
 <section id="id28">
-<h3><a class="toc-backref" href="#id123" role="doc-backlink">Functions</a><a class="headerlink" href="#id28" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id121" role="doc-backlink">Functions</a><a class="headerlink" href="#id28" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.equivariant_cell_graph_transformer.calculate_weight_l2_norm.html#torchcell.models.equivariant_cell_graph_transformer.calculate_weight_l2_norm" title="torchcell.models.equivariant_cell_graph_transformer.calculate_weight_l2_norm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">equivariant_cell_graph_transformer.calculate_weight_l2_norm</span></code></a></p></td>
@@ -1013,10 +1001,10 @@
 </section>
 </section>
 <section id="esm2">
-<h2><a class="toc-backref" href="#id124" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">esm2</span></code></a><a class="headerlink" href="#esm2" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id122" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">esm2</span></code></a><a class="headerlink" href="#esm2" title="Link to this heading"></a></h2>
 <p>ESM-2 protein language model wrapper producing per-residue or mean embeddings.</p>
 <section id="id29">
-<h3><a class="toc-backref" href="#id125" role="doc-backlink">Classes</a><a class="headerlink" href="#id29" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id123" role="doc-backlink">Classes</a><a class="headerlink" href="#id29" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.esm2.Esm2.html#torchcell.models.esm2.Esm2" title="torchcell.models.esm2.Esm2"><code class="xref py py-obj docutils literal notranslate"><span class="pre">esm2.Esm2</span></code></a></p></td>
@@ -1027,10 +1015,10 @@
 </section>
 </section>
 <section id="fungal-up-down-transformer">
-<h2><a class="toc-backref" href="#id126" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fungal_up_down_transformer</span></code></a><a class="headerlink" href="#fungal-up-down-transformer" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id124" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fungal_up_down_transformer</span></code></a><a class="headerlink" href="#fungal-up-down-transformer" title="Link to this heading"></a></h2>
 <p>SpeciesLM-based transformer embedding fungal upstream/downstream DNA sequences.</p>
 <section id="id30">
-<h3><a class="toc-backref" href="#id127" role="doc-backlink">Classes</a><a class="headerlink" href="#id30" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id125" role="doc-backlink">Classes</a><a class="headerlink" href="#id30" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.fungal_up_down_transformer.FungalUpDownTransformer.html#torchcell.models.fungal_up_down_transformer.FungalUpDownTransformer" title="torchcell.models.fungal_up_down_transformer.FungalUpDownTransformer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fungal_up_down_transformer.FungalUpDownTransformer</span></code></a></p></td>
@@ -1041,10 +1029,10 @@
 </section>
 </section>
 <section id="gat-diffpool">
-<h2><a class="toc-backref" href="#id128" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gat_diffpool</span></code></a><a class="headerlink" href="#gat-diffpool" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id126" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gat_diffpool</span></code></a><a class="headerlink" href="#gat-diffpool" title="Link to this heading"></a></h2>
 <p>GAT-then-DiffPool model that pools each input graph into a graph embedding.</p>
 <section id="id31">
-<h3><a class="toc-backref" href="#id129" role="doc-backlink">Classes</a><a class="headerlink" href="#id31" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id127" role="doc-backlink">Classes</a><a class="headerlink" href="#id31" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.gat_diffpool.GatDiffPool.html#torchcell.models.gat_diffpool.GatDiffPool" title="torchcell.models.gat_diffpool.GatDiffPool"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gat_diffpool.GatDiffPool</span></code></a></p></td>
@@ -1054,7 +1042,7 @@
 </table>
 </section>
 <section id="id32">
-<h3><a class="toc-backref" href="#id130" role="doc-backlink">Functions</a><a class="headerlink" href="#id32" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id128" role="doc-backlink">Functions</a><a class="headerlink" href="#id32" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.gat_diffpool.load_sample_data_batch.html#torchcell.models.gat_diffpool.load_sample_data_batch" title="torchcell.models.gat_diffpool.load_sample_data_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gat_diffpool.load_sample_data_batch</span></code></a></p></td>
@@ -1065,10 +1053,10 @@
 </section>
 </section>
 <section id="gat-diffpool-alt">
-<h2><a class="toc-backref" href="#id131" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gat_diffpool_alt</span></code></a><a class="headerlink" href="#gat-diffpool-alt" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id129" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gat_diffpool_alt</span></code></a><a class="headerlink" href="#gat-diffpool-alt" title="Link to this heading"></a></h2>
 <p>Multi-graph GATv2 encoder with hierarchical DiffPool clustering.</p>
 <section id="id33">
-<h3><a class="toc-backref" href="#id132" role="doc-backlink">Classes</a><a class="headerlink" href="#id33" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id130" role="doc-backlink">Classes</a><a class="headerlink" href="#id33" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.gat_diffpool_alt.GatDiffPool.html#torchcell.models.gat_diffpool_alt.GatDiffPool" title="torchcell.models.gat_diffpool_alt.GatDiffPool"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gat_diffpool_alt.GatDiffPool</span></code></a></p></td>
@@ -1078,7 +1066,7 @@
 </table>
 </section>
 <section id="id34">
-<h3><a class="toc-backref" href="#id133" role="doc-backlink">Functions</a><a class="headerlink" href="#id34" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id131" role="doc-backlink">Functions</a><a class="headerlink" href="#id34" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.gat_diffpool_alt.load_sample_data_batch.html#torchcell.models.gat_diffpool_alt.load_sample_data_batch" title="torchcell.models.gat_diffpool_alt.load_sample_data_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gat_diffpool_alt.load_sample_data_batch</span></code></a></p></td>
@@ -1089,10 +1077,10 @@
 </section>
 </section>
 <section id="gat-diffpool-inception">
-<h2><a class="toc-backref" href="#id134" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gat_diffpool_inception</span></code></a><a class="headerlink" href="#gat-diffpool-inception" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id132" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gat_diffpool_inception</span></code></a><a class="headerlink" href="#gat-diffpool-inception" title="Link to this heading"></a></h2>
 <p>GAT-with-DiffPool inception model over multiple graphs for graph-level prediction.</p>
 <section id="id35">
-<h3><a class="toc-backref" href="#id135" role="doc-backlink">Classes</a><a class="headerlink" href="#id35" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id133" role="doc-backlink">Classes</a><a class="headerlink" href="#id35" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.gat_diffpool_inception.GatDiffPool.html#torchcell.models.gat_diffpool_inception.GatDiffPool" title="torchcell.models.gat_diffpool_inception.GatDiffPool"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gat_diffpool_inception.GatDiffPool</span></code></a></p></td>
@@ -1102,7 +1090,7 @@
 </table>
 </section>
 <section id="id36">
-<h3><a class="toc-backref" href="#id136" role="doc-backlink">Functions</a><a class="headerlink" href="#id36" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id134" role="doc-backlink">Functions</a><a class="headerlink" href="#id36" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.gat_diffpool_inception.load_sample_data_batch.html#torchcell.models.gat_diffpool_inception.load_sample_data_batch" title="torchcell.models.gat_diffpool_inception.load_sample_data_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gat_diffpool_inception.load_sample_data_batch</span></code></a></p></td>
@@ -1113,10 +1101,10 @@
 </section>
 </section>
 <section id="gpu-edge-mask-generator">
-<h2><a class="toc-backref" href="#id137" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gpu_edge_mask_generator</span></code></a><a class="headerlink" href="#gpu-edge-mask-generator" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id135" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gpu_edge_mask_generator</span></code></a><a class="headerlink" href="#gpu-edge-mask-generator" title="Link to this heading"></a></h2>
 <p>GPU-based edge mask generator for zero-copy lazy subgraph representation.</p>
 <section id="id37">
-<h3><a class="toc-backref" href="#id138" role="doc-backlink">Classes</a><a class="headerlink" href="#id37" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id136" role="doc-backlink">Classes</a><a class="headerlink" href="#id37" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator.html#torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator" title="torchcell.models.gpu_edge_mask_generator.GPUEdgeMaskGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gpu_edge_mask_generator.GPUEdgeMaskGenerator</span></code></a></p></td>
@@ -1126,39 +1114,11 @@
 </table>
 </section>
 </section>
-<section id="graph-attention">
-<h2><a class="toc-backref" href="#id139" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">graph_attention</span></code></a><a class="headerlink" href="#graph-attention" title="Link to this heading"></a></h2>
-<p>Graph attention network combining a DeepSet encoder with GATv2 layers.</p>
-<section id="id38">
-<h3><a class="toc-backref" href="#id140" role="doc-backlink">Classes</a><a class="headerlink" href="#id38" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.graph_attention.GraphAttention.html#torchcell.models.graph_attention.GraphAttention" title="torchcell.models.graph_attention.GraphAttention"><code class="xref py py-obj docutils literal notranslate"><span class="pre">graph_attention.GraphAttention</span></code></a></p></td>
-<td><p>DeepSet node encoder, stacked GATv2 message passing, then set readout.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="graph-convolution">
-<h2><a class="toc-backref" href="#id141" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">graph_convolution</span></code></a><a class="headerlink" href="#graph-convolution" title="Link to this heading"></a></h2>
-<p>DeepSet node encoder followed by GCN message passing and set aggregation.</p>
-<section id="id39">
-<h3><a class="toc-backref" href="#id142" role="doc-backlink">Classes</a><a class="headerlink" href="#id39" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.graph_convolution.GraphConvolution.html#torchcell.models.graph_convolution.GraphConvolution" title="torchcell.models.graph_convolution.GraphConvolution"><code class="xref py py-obj docutils literal notranslate"><span class="pre">graph_convolution.GraphConvolution</span></code></a></p></td>
-<td><p>Combine DeepSet node layers, stacked GCN layers, and post-aggregation MLP.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
 <section id="hetero-cell">
-<h2><a class="toc-backref" href="#id143" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell</span></code></a><a class="headerlink" href="#hetero-cell" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id137" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell</span></code></a><a class="headerlink" href="#hetero-cell" title="Link to this heading"></a></h2>
 <p>Heterogeneous GNN over gene, reaction, and metabolite graphs for fitness.</p>
-<section id="id40">
-<h3><a class="toc-backref" href="#id144" role="doc-backlink">Classes</a><a class="headerlink" href="#id40" title="Link to this heading"></a></h3>
+<section id="id38">
+<h3><a class="toc-backref" href="#id138" role="doc-backlink">Classes</a><a class="headerlink" href="#id38" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell.AttentionalGraphAggregation.html#torchcell.models.hetero_cell.AttentionalGraphAggregation" title="torchcell.models.hetero_cell.AttentionalGraphAggregation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell.AttentionalGraphAggregation</span></code></a></p></td>
@@ -1176,8 +1136,8 @@
 </tbody>
 </table>
 </section>
-<section id="id41">
-<h3><a class="toc-backref" href="#id145" role="doc-backlink">Functions</a><a class="headerlink" href="#id41" title="Link to this heading"></a></h3>
+<section id="id39">
+<h3><a class="toc-backref" href="#id139" role="doc-backlink">Functions</a><a class="headerlink" href="#id39" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell.get_norm_layer.html#torchcell.models.hetero_cell.get_norm_layer" title="torchcell.models.hetero_cell.get_norm_layer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell.get_norm_layer</span></code></a></p></td>
@@ -1188,10 +1148,10 @@
 </section>
 </section>
 <section id="hetero-cell-bipartite">
-<h2><a class="toc-backref" href="#id146" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite</span></code></a><a class="headerlink" href="#hetero-cell-bipartite" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id140" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite</span></code></a><a class="headerlink" href="#hetero-cell-bipartite" title="Link to this heading"></a></h2>
 <p>Bipartite hetero GNN over gene, reaction, and metabolite graphs.</p>
-<section id="id42">
-<h3><a class="toc-backref" href="#id147" role="doc-backlink">Classes</a><a class="headerlink" href="#id42" title="Link to this heading"></a></h3>
+<section id="id40">
+<h3><a class="toc-backref" href="#id141" role="doc-backlink">Classes</a><a class="headerlink" href="#id40" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite.AttentionalGraphAggregation.html#torchcell.models.hetero_cell_bipartite.AttentionalGraphAggregation" title="torchcell.models.hetero_cell_bipartite.AttentionalGraphAggregation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_bipartite.AttentionalGraphAggregation</span></code></a></p></td>
@@ -1209,8 +1169,8 @@
 </tbody>
 </table>
 </section>
-<section id="id43">
-<h3><a class="toc-backref" href="#id148" role="doc-backlink">Functions</a><a class="headerlink" href="#id43" title="Link to this heading"></a></h3>
+<section id="id41">
+<h3><a class="toc-backref" href="#id142" role="doc-backlink">Functions</a><a class="headerlink" href="#id41" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite.get_norm_layer.html#torchcell.models.hetero_cell_bipartite.get_norm_layer" title="torchcell.models.hetero_cell_bipartite.get_norm_layer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_bipartite.get_norm_layer</span></code></a></p></td>
@@ -1221,10 +1181,10 @@
 </section>
 </section>
 <section id="hetero-cell-bipartite-dango">
-<h2><a class="toc-backref" href="#id149" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango</span></code></a><a class="headerlink" href="#hetero-cell-bipartite-dango" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id143" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango</span></code></a><a class="headerlink" href="#hetero-cell-bipartite-dango" title="Link to this heading"></a></h2>
 <p>Bipartite hetero GNN with DANGO-style gene interaction attention.</p>
-<section id="id44">
-<h3><a class="toc-backref" href="#id150" role="doc-backlink">Classes</a><a class="headerlink" href="#id44" title="Link to this heading"></a></h3>
+<section id="id42">
+<h3><a class="toc-backref" href="#id144" role="doc-backlink">Classes</a><a class="headerlink" href="#id42" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango.GeneInteractionAttention.html#torchcell.models.hetero_cell_bipartite_dango.GeneInteractionAttention" title="torchcell.models.hetero_cell_bipartite_dango.GeneInteractionAttention"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango.GeneInteractionAttention</span></code></a></p></td>
@@ -1248,8 +1208,8 @@
 </tbody>
 </table>
 </section>
-<section id="id45">
-<h3><a class="toc-backref" href="#id151" role="doc-backlink">Functions</a><a class="headerlink" href="#id45" title="Link to this heading"></a></h3>
+<section id="id43">
+<h3><a class="toc-backref" href="#id145" role="doc-backlink">Functions</a><a class="headerlink" href="#id43" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango.get_norm_layer.html#torchcell.models.hetero_cell_bipartite_dango.get_norm_layer" title="torchcell.models.hetero_cell_bipartite_dango.get_norm_layer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango.get_norm_layer</span></code></a></p></td>
@@ -1260,10 +1220,10 @@
 </section>
 </section>
 <section id="hetero-cell-bipartite-dango-diff-gi">
-<h2><a class="toc-backref" href="#id152" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_diff_gi</span></code></a><a class="headerlink" href="#hetero-cell-bipartite-dango-diff-gi" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id146" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_diff_gi</span></code></a><a class="headerlink" href="#hetero-cell-bipartite-dango-diff-gi" title="Link to this heading"></a></h2>
 <p>Gene interaction model variant with a diffusion-based prediction head.</p>
-<section id="id46">
-<h3><a class="toc-backref" href="#id153" role="doc-backlink">Classes</a><a class="headerlink" href="#id46" title="Link to this heading"></a></h3>
+<section id="id44">
+<h3><a class="toc-backref" href="#id147" role="doc-backlink">Classes</a><a class="headerlink" href="#id44" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_diff_gi.LinearDecoder.html#torchcell.models.hetero_cell_bipartite_dango_diff_gi.LinearDecoder" title="torchcell.models.hetero_cell_bipartite_dango_diff_gi.LinearDecoder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_diff_gi.LinearDecoder</span></code></a></p></td>
@@ -1277,10 +1237,10 @@
 </section>
 </section>
 <section id="hetero-cell-bipartite-dango-gi">
-<h2><a class="toc-backref" href="#id154" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi</span></code></a><a class="headerlink" href="#hetero-cell-bipartite-dango-gi" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id148" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi</span></code></a><a class="headerlink" href="#hetero-cell-bipartite-dango-gi" title="Link to this heading"></a></h2>
 <p>Heterogeneous bipartite cell-graph model for DANGO gene-interaction prediction.</p>
-<section id="id47">
-<h3><a class="toc-backref" href="#id155" role="doc-backlink">Classes</a><a class="headerlink" href="#id47" title="Link to this heading"></a></h3>
+<section id="id45">
+<h3><a class="toc-backref" href="#id149" role="doc-backlink">Classes</a><a class="headerlink" href="#id45" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.SelfAttentionGraphAggregation.html#torchcell.models.hetero_cell_bipartite_dango_gi.SelfAttentionGraphAggregation" title="torchcell.models.hetero_cell_bipartite_dango_gi.SelfAttentionGraphAggregation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi.SelfAttentionGraphAggregation</span></code></a></p></td>
@@ -1313,8 +1273,8 @@
 </tbody>
 </table>
 </section>
-<section id="id48">
-<h3><a class="toc-backref" href="#id156" role="doc-backlink">Functions</a><a class="headerlink" href="#id48" title="Link to this heading"></a></h3>
+<section id="id46">
+<h3><a class="toc-backref" href="#id150" role="doc-backlink">Functions</a><a class="headerlink" href="#id46" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi.get_norm_layer.html#torchcell.models.hetero_cell_bipartite_dango_gi.get_norm_layer" title="torchcell.models.hetero_cell_bipartite_dango_gi.get_norm_layer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi.get_norm_layer</span></code></a></p></td>
@@ -1334,10 +1294,10 @@
 </section>
 </section>
 <section id="hetero-cell-bipartite-dango-gi-lazy">
-<h2><a class="toc-backref" href="#id157" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi_lazy</span></code></a><a class="headerlink" href="#hetero-cell-bipartite-dango-gi-lazy" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id151" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi_lazy</span></code></a><a class="headerlink" href="#hetero-cell-bipartite-dango-gi-lazy" title="Link to this heading"></a></h2>
 <p>Lazy bipartite Dango gene-interaction model using masked, zero-copy message passing.</p>
-<section id="id49">
-<h3><a class="toc-backref" href="#id158" role="doc-backlink">Classes</a><a class="headerlink" href="#id49" title="Link to this heading"></a></h3>
+<section id="id47">
+<h3><a class="toc-backref" href="#id152" role="doc-backlink">Classes</a><a class="headerlink" href="#id47" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi_lazy.SelfAttentionGraphAggregation.html#torchcell.models.hetero_cell_bipartite_dango_gi_lazy.SelfAttentionGraphAggregation" title="torchcell.models.hetero_cell_bipartite_dango_gi_lazy.SelfAttentionGraphAggregation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi_lazy.SelfAttentionGraphAggregation</span></code></a></p></td>
@@ -1370,8 +1330,8 @@
 </tbody>
 </table>
 </section>
-<section id="id50">
-<h3><a class="toc-backref" href="#id159" role="doc-backlink">Functions</a><a class="headerlink" href="#id50" title="Link to this heading"></a></h3>
+<section id="id48">
+<h3><a class="toc-backref" href="#id153" role="doc-backlink">Functions</a><a class="headerlink" href="#id48" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_bipartite_dango_gi_lazy.get_norm_layer.html#torchcell.models.hetero_cell_bipartite_dango_gi_lazy.get_norm_layer" title="torchcell.models.hetero_cell_bipartite_dango_gi_lazy.get_norm_layer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_bipartite_dango_gi_lazy.get_norm_layer</span></code></a></p></td>
@@ -1391,10 +1351,10 @@
 </section>
 </section>
 <section id="hetero-cell-flex">
-<h2><a class="toc-backref" href="#id160" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_flex</span></code></a><a class="headerlink" href="#hetero-cell-flex" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id154" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_flex</span></code></a><a class="headerlink" href="#hetero-cell-flex" title="Link to this heading"></a></h2>
 <p>Flexible heterogeneous cell model over gene, reaction, and metabolite graphs.</p>
-<section id="id51">
-<h3><a class="toc-backref" href="#id161" role="doc-backlink">Classes</a><a class="headerlink" href="#id51" title="Link to this heading"></a></h3>
+<section id="id49">
+<h3><a class="toc-backref" href="#id155" role="doc-backlink">Classes</a><a class="headerlink" href="#id49" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_flex.GraphMaskedAttention.html#torchcell.models.hetero_cell_flex.GraphMaskedAttention" title="torchcell.models.hetero_cell_flex.GraphMaskedAttention"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_flex.GraphMaskedAttention</span></code></a></p></td>
@@ -1418,8 +1378,8 @@
 </tbody>
 </table>
 </section>
-<section id="id52">
-<h3><a class="toc-backref" href="#id162" role="doc-backlink">Functions</a><a class="headerlink" href="#id52" title="Link to this heading"></a></h3>
+<section id="id50">
+<h3><a class="toc-backref" href="#id156" role="doc-backlink">Functions</a><a class="headerlink" href="#id50" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_flex.get_norm_layer.html#torchcell.models.hetero_cell_flex.get_norm_layer" title="torchcell.models.hetero_cell_flex.get_norm_layer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_flex.get_norm_layer</span></code></a></p></td>
@@ -1436,10 +1396,10 @@
 </section>
 </section>
 <section id="hetero-cell-isab-split">
-<h2><a class="toc-backref" href="#id163" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_isab_split</span></code></a><a class="headerlink" href="#hetero-cell-isab-split" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id157" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_isab_split</span></code></a><a class="headerlink" href="#hetero-cell-isab-split" title="Link to this heading"></a></h2>
 <p>Heterogeneous cell model with ISAB set-transformer aggregation splits.</p>
-<section id="id53">
-<h3><a class="toc-backref" href="#id164" role="doc-backlink">Classes</a><a class="headerlink" href="#id53" title="Link to this heading"></a></h3>
+<section id="id51">
+<h3><a class="toc-backref" href="#id158" role="doc-backlink">Classes</a><a class="headerlink" href="#id51" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_isab_split.SortedSetTransformerAggregation.html#torchcell.models.hetero_cell_isab_split.SortedSetTransformerAggregation" title="torchcell.models.hetero_cell_isab_split.SortedSetTransformerAggregation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_isab_split.SortedSetTransformerAggregation</span></code></a></p></td>
@@ -1457,8 +1417,8 @@
 </tbody>
 </table>
 </section>
-<section id="id54">
-<h3><a class="toc-backref" href="#id165" role="doc-backlink">Functions</a><a class="headerlink" href="#id54" title="Link to this heading"></a></h3>
+<section id="id52">
+<h3><a class="toc-backref" href="#id159" role="doc-backlink">Functions</a><a class="headerlink" href="#id52" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_isab_split.get_norm_layer.html#torchcell.models.hetero_cell_isab_split.get_norm_layer" title="torchcell.models.hetero_cell_isab_split.get_norm_layer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_isab_split.get_norm_layer</span></code></a></p></td>
@@ -1478,10 +1438,10 @@
 </section>
 </section>
 <section id="hetero-cell-nsa">
-<h2><a class="toc-backref" href="#id166" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_nsa</span></code></a><a class="headerlink" href="#hetero-cell-nsa" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id160" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_nsa</span></code></a><a class="headerlink" href="#hetero-cell-nsa" title="Link to this heading"></a></h2>
 <p>Heterogeneous cell model built from Node-Set Attention (NSA) blocks.</p>
-<section id="id55">
-<h3><a class="toc-backref" href="#id167" role="doc-backlink">Classes</a><a class="headerlink" href="#id55" title="Link to this heading"></a></h3>
+<section id="id53">
+<h3><a class="toc-backref" href="#id161" role="doc-backlink">Classes</a><a class="headerlink" href="#id53" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_nsa.AttentionalGraphAggregation.html#torchcell.models.hetero_cell_nsa.AttentionalGraphAggregation" title="torchcell.models.hetero_cell_nsa.AttentionalGraphAggregation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_nsa.AttentionalGraphAggregation</span></code></a></p></td>
@@ -1496,8 +1456,8 @@
 </tbody>
 </table>
 </section>
-<section id="id56">
-<h3><a class="toc-backref" href="#id168" role="doc-backlink">Functions</a><a class="headerlink" href="#id56" title="Link to this heading"></a></h3>
+<section id="id54">
+<h3><a class="toc-backref" href="#id162" role="doc-backlink">Functions</a><a class="headerlink" href="#id54" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_nsa.get_norm_layer.html#torchcell.models.hetero_cell_nsa.get_norm_layer" title="torchcell.models.hetero_cell_nsa.get_norm_layer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_nsa.get_norm_layer</span></code></a></p></td>
@@ -1508,10 +1468,10 @@
 </section>
 </section>
 <section id="hetero-cell-nsa-retry">
-<h2><a class="toc-backref" href="#id169" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_nsa_retry</span></code></a><a class="headerlink" href="#hetero-cell-nsa-retry" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id163" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_nsa_retry</span></code></a><a class="headerlink" href="#hetero-cell-nsa-retry" title="Link to this heading"></a></h2>
 <p>Heterogeneous cell model using Node-Set Attention blocks over gene/reaction/metabolite graphs.</p>
-<section id="id57">
-<h3><a class="toc-backref" href="#id170" role="doc-backlink">Classes</a><a class="headerlink" href="#id57" title="Link to this heading"></a></h3>
+<section id="id55">
+<h3><a class="toc-backref" href="#id164" role="doc-backlink">Classes</a><a class="headerlink" href="#id55" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_nsa_retry.AttentionalGraphAggregation.html#torchcell.models.hetero_cell_nsa_retry.AttentionalGraphAggregation" title="torchcell.models.hetero_cell_nsa_retry.AttentionalGraphAggregation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_nsa_retry.AttentionalGraphAggregation</span></code></a></p></td>
@@ -1526,8 +1486,8 @@
 </tbody>
 </table>
 </section>
-<section id="id58">
-<h3><a class="toc-backref" href="#id171" role="doc-backlink">Functions</a><a class="headerlink" href="#id58" title="Link to this heading"></a></h3>
+<section id="id56">
+<h3><a class="toc-backref" href="#id165" role="doc-backlink">Functions</a><a class="headerlink" href="#id56" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_nsa_retry.get_norm_layer.html#torchcell.models.hetero_cell_nsa_retry.get_norm_layer" title="torchcell.models.hetero_cell_nsa_retry.get_norm_layer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_nsa_retry.get_norm_layer</span></code></a></p></td>
@@ -1538,10 +1498,10 @@
 </section>
 </section>
 <section id="hetero-cell-pma">
-<h2><a class="toc-backref" href="#id172" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_pma</span></code></a><a class="headerlink" href="#hetero-cell-pma" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id166" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_cell_pma</span></code></a><a class="headerlink" href="#hetero-cell-pma" title="Link to this heading"></a></h2>
 <p>Heterogeneous cell graph model with PMA pooling for fitness/interaction.</p>
-<section id="id59">
-<h3><a class="toc-backref" href="#id173" role="doc-backlink">Classes</a><a class="headerlink" href="#id59" title="Link to this heading"></a></h3>
+<section id="id57">
+<h3><a class="toc-backref" href="#id167" role="doc-backlink">Classes</a><a class="headerlink" href="#id57" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_pma.SimplePMA.html#torchcell.models.hetero_cell_pma.SimplePMA" title="torchcell.models.hetero_cell_pma.SimplePMA"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_pma.SimplePMA</span></code></a></p></td>
@@ -1559,8 +1519,8 @@
 </tbody>
 </table>
 </section>
-<section id="id60">
-<h3><a class="toc-backref" href="#id174" role="doc-backlink">Functions</a><a class="headerlink" href="#id60" title="Link to this heading"></a></h3>
+<section id="id58">
+<h3><a class="toc-backref" href="#id168" role="doc-backlink">Functions</a><a class="headerlink" href="#id58" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_cell_pma.get_norm_layer.html#torchcell.models.hetero_cell_pma.get_norm_layer" title="torchcell.models.hetero_cell_pma.get_norm_layer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_cell_pma.get_norm_layer</span></code></a></p></td>
@@ -1580,10 +1540,10 @@
 </section>
 </section>
 <section id="hetero-gnn-pool">
-<h2><a class="toc-backref" href="#id175" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_gnn_pool</span></code></a><a class="headerlink" href="#hetero-gnn-pool" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id169" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_gnn_pool</span></code></a><a class="headerlink" href="#hetero-gnn-pool" title="Link to this heading"></a></h2>
 <p>Heterogeneous GNN with graph pooling and a configurable prediction head.</p>
-<section id="id61">
-<h3><a class="toc-backref" href="#id176" role="doc-backlink">Classes</a><a class="headerlink" href="#id61" title="Link to this heading"></a></h3>
+<section id="id59">
+<h3><a class="toc-backref" href="#id170" role="doc-backlink">Classes</a><a class="headerlink" href="#id59" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_gnn_pool.ProjectedGATConv.html#torchcell.models.hetero_gnn_pool.ProjectedGATConv" title="torchcell.models.hetero_gnn_pool.ProjectedGATConv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_gnn_pool.ProjectedGATConv</span></code></a></p></td>
@@ -1598,8 +1558,8 @@
 </tbody>
 </table>
 </section>
-<section id="id62">
-<h3><a class="toc-backref" href="#id177" role="doc-backlink">Functions</a><a class="headerlink" href="#id62" title="Link to this heading"></a></h3>
+<section id="id60">
+<h3><a class="toc-backref" href="#id171" role="doc-backlink">Functions</a><a class="headerlink" href="#id60" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.hetero_gnn_pool.load_sample_data_batch.html#torchcell.models.hetero_gnn_pool.load_sample_data_batch" title="torchcell.models.hetero_gnn_pool.load_sample_data_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_gnn_pool.load_sample_data_batch</span></code></a></p></td>
@@ -1610,10 +1570,10 @@
 </section>
 </section>
 <section id="isomorphic-cell">
-<h2><a class="toc-backref" href="#id178" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">isomorphic_cell</span></code></a><a class="headerlink" href="#isomorphic-cell" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id172" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">isomorphic_cell</span></code></a><a class="headerlink" href="#isomorphic-cell" title="Link to this heading"></a></h2>
 <p>Isomorphic cell model combining gene GNN and metabolism hypergraph branches.</p>
-<section id="id63">
-<h3><a class="toc-backref" href="#id179" role="doc-backlink">Classes</a><a class="headerlink" href="#id63" title="Link to this heading"></a></h3>
+<section id="id61">
+<h3><a class="toc-backref" href="#id173" role="doc-backlink">Classes</a><a class="headerlink" href="#id61" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.isomorphic_cell.PreProcessor.html#torchcell.models.isomorphic_cell.PreProcessor" title="torchcell.models.isomorphic_cell.PreProcessor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isomorphic_cell.PreProcessor</span></code></a></p></td>
@@ -1652,8 +1612,8 @@
 </tbody>
 </table>
 </section>
-<section id="id64">
-<h3><a class="toc-backref" href="#id180" role="doc-backlink">Functions</a><a class="headerlink" href="#id64" title="Link to this heading"></a></h3>
+<section id="id62">
+<h3><a class="toc-backref" href="#id174" role="doc-backlink">Functions</a><a class="headerlink" href="#id62" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.isomorphic_cell.initialize_model.html#torchcell.models.isomorphic_cell.initialize_model" title="torchcell.models.isomorphic_cell.initialize_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isomorphic_cell.initialize_model</span></code></a></p></td>
@@ -1670,10 +1630,10 @@
 </section>
 </section>
 <section id="isomorphic-cell-attentional">
-<h2><a class="toc-backref" href="#id181" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">isomorphic_cell_attentional</span></code></a><a class="headerlink" href="#isomorphic-cell-attentional" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id175" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">isomorphic_cell_attentional</span></code></a><a class="headerlink" href="#isomorphic-cell-attentional" title="Link to this heading"></a></h2>
 <p>Attentional isomorphic cell model over gene, reaction, and metabolite graphs.</p>
-<section id="id65">
-<h3><a class="toc-backref" href="#id182" role="doc-backlink">Classes</a><a class="headerlink" href="#id65" title="Link to this heading"></a></h3>
+<section id="id63">
+<h3><a class="toc-backref" href="#id176" role="doc-backlink">Classes</a><a class="headerlink" href="#id63" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.isomorphic_cell_attentional.AttentionalGraphAggregation.html#torchcell.models.isomorphic_cell_attentional.AttentionalGraphAggregation" title="torchcell.models.isomorphic_cell_attentional.AttentionalGraphAggregation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isomorphic_cell_attentional.AttentionalGraphAggregation</span></code></a></p></td>
@@ -1712,8 +1672,8 @@
 </tbody>
 </table>
 </section>
-<section id="id66">
-<h3><a class="toc-backref" href="#id183" role="doc-backlink">Functions</a><a class="headerlink" href="#id66" title="Link to this heading"></a></h3>
+<section id="id64">
+<h3><a class="toc-backref" href="#id177" role="doc-backlink">Functions</a><a class="headerlink" href="#id64" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.isomorphic_cell_attentional.get_norm_layer.html#torchcell.models.isomorphic_cell_attentional.get_norm_layer" title="torchcell.models.isomorphic_cell_attentional.get_norm_layer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">isomorphic_cell_attentional.get_norm_layer</span></code></a></p></td>
@@ -1730,10 +1690,10 @@
 </section>
 </section>
 <section id="linear">
-<h2><a class="toc-backref" href="#id184" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">linear</span></code></a><a class="headerlink" href="#linear" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id178" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">linear</span></code></a><a class="headerlink" href="#linear" title="Link to this heading"></a></h2>
 <p>Simple set-aggregation linear model over scatter-pooled node features.</p>
-<section id="id67">
-<h3><a class="toc-backref" href="#id185" role="doc-backlink">Classes</a><a class="headerlink" href="#id67" title="Link to this heading"></a></h3>
+<section id="id65">
+<h3><a class="toc-backref" href="#id179" role="doc-backlink">Classes</a><a class="headerlink" href="#id65" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.linear.SimpleLinearModel.html#torchcell.models.linear.SimpleLinearModel" title="torchcell.models.linear.SimpleLinearModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">linear.SimpleLinearModel</span></code></a></p></td>
@@ -1744,10 +1704,10 @@
 </section>
 </section>
 <section id="llm">
-<h2><a class="toc-backref" href="#id186" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">llm</span></code></a><a class="headerlink" href="#llm" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id180" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">llm</span></code></a><a class="headerlink" href="#llm" title="Link to this heading"></a></h2>
 <p>Abstract base classes for nucleotide and peptide language models.</p>
-<section id="id68">
-<h3><a class="toc-backref" href="#id187" role="doc-backlink">Classes</a><a class="headerlink" href="#id68" title="Link to this heading"></a></h3>
+<section id="id66">
+<h3><a class="toc-backref" href="#id181" role="doc-backlink">Classes</a><a class="headerlink" href="#id66" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.llm.NucleotideModel.html#torchcell.models.llm.NucleotideModel" title="torchcell.models.llm.NucleotideModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">llm.NucleotideModel</span></code></a></p></td>
@@ -1764,10 +1724,10 @@
 </section>
 </section>
 <section id="mlp">
-<h2><a class="toc-backref" href="#id188" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">mlp</span></code></a><a class="headerlink" href="#mlp" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id182" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">mlp</span></code></a><a class="headerlink" href="#mlp" title="Link to this heading"></a></h2>
 <p>Configurable multilayer perceptron with optional normalization and activations.</p>
-<section id="id69">
-<h3><a class="toc-backref" href="#id189" role="doc-backlink">Classes</a><a class="headerlink" href="#id69" title="Link to this heading"></a></h3>
+<section id="id67">
+<h3><a class="toc-backref" href="#id183" role="doc-backlink">Classes</a><a class="headerlink" href="#id67" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.mlp.Mlp.html#torchcell.models.mlp.Mlp" title="torchcell.models.mlp.Mlp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mlp.Mlp</span></code></a></p></td>
@@ -1778,10 +1738,10 @@
 </section>
 </section>
 <section id="nsa-hetero-cell">
-<h2><a class="toc-backref" href="#id190" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">nsa_hetero_cell</span></code></a><a class="headerlink" href="#nsa-hetero-cell" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id184" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">nsa_hetero_cell</span></code></a><a class="headerlink" href="#nsa-hetero-cell" title="Link to this heading"></a></h2>
 <p>Heterogeneous Node-Set Attention model over gene/metabolite/reaction graphs.</p>
-<section id="id70">
-<h3><a class="toc-backref" href="#id191" role="doc-backlink">Classes</a><a class="headerlink" href="#id70" title="Link to this heading"></a></h3>
+<section id="id68">
+<h3><a class="toc-backref" href="#id185" role="doc-backlink">Classes</a><a class="headerlink" href="#id68" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.nsa_hetero_cell.BlockContainer.html#torchcell.models.nsa_hetero_cell.BlockContainer" title="torchcell.models.nsa_hetero_cell.BlockContainer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nsa_hetero_cell.BlockContainer</span></code></a></p></td>
@@ -1808,8 +1768,8 @@
 </tbody>
 </table>
 </section>
-<section id="id71">
-<h3><a class="toc-backref" href="#id192" role="doc-backlink">Functions</a><a class="headerlink" href="#id71" title="Link to this heading"></a></h3>
+<section id="id69">
+<h3><a class="toc-backref" href="#id186" role="doc-backlink">Functions</a><a class="headerlink" href="#id69" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.nsa_hetero_cell.load_sample_data_batch.html#torchcell.models.nsa_hetero_cell.load_sample_data_batch" title="torchcell.models.nsa_hetero_cell.load_sample_data_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nsa_hetero_cell.load_sample_data_batch</span></code></a></p></td>
@@ -1823,10 +1783,10 @@
 </section>
 </section>
 <section id="nucleotide-transformer">
-<h2><a class="toc-backref" href="#id193" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">nucleotide_transformer</span></code></a><a class="headerlink" href="#nucleotide-transformer" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id187" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">nucleotide_transformer</span></code></a><a class="headerlink" href="#nucleotide-transformer" title="Link to this heading"></a></h2>
 <p>Nucleotide Transformer wrapper for embedding DNA sequences.</p>
-<section id="id72">
-<h3><a class="toc-backref" href="#id194" role="doc-backlink">Classes</a><a class="headerlink" href="#id72" title="Link to this heading"></a></h3>
+<section id="id70">
+<h3><a class="toc-backref" href="#id188" role="doc-backlink">Classes</a><a class="headerlink" href="#id70" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.nucleotide_transformer.NucleotideTransformer.html#torchcell.models.nucleotide_transformer.NucleotideTransformer" title="torchcell.models.nucleotide_transformer.NucleotideTransformer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">nucleotide_transformer.NucleotideTransformer</span></code></a></p></td>
@@ -1837,10 +1797,10 @@
 </section>
 </section>
 <section id="prott5">
-<h2><a class="toc-backref" href="#id195" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">protT5</span></code></a><a class="headerlink" href="#prott5" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id189" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">protT5</span></code></a><a class="headerlink" href="#prott5" title="Link to this heading"></a></h2>
 <p>ProtT5 protein language model wrapper for embedding amino-acid sequences.</p>
-<section id="id73">
-<h3><a class="toc-backref" href="#id196" role="doc-backlink">Classes</a><a class="headerlink" href="#id73" title="Link to this heading"></a></h3>
+<section id="id71">
+<h3><a class="toc-backref" href="#id190" role="doc-backlink">Classes</a><a class="headerlink" href="#id71" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.protT5.ProtT5.html#torchcell.models.protT5.ProtT5" title="torchcell.models.protT5.ProtT5"><code class="xref py py-obj docutils literal notranslate"><span class="pre">protT5.ProtT5</span></code></a></p></td>
@@ -1851,10 +1811,10 @@
 </section>
 </section>
 <section id="self-attention-deep-set">
-<h2><a class="toc-backref" href="#id197" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">self_attention_deep_set</span></code></a><a class="headerlink" href="#self-attention-deep-set" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id191" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">self_attention_deep_set</span></code></a><a class="headerlink" href="#self-attention-deep-set" title="Link to this heading"></a></h2>
 <p>Self-attention Deep Sets model for permutation-invariant set encoding.</p>
-<section id="id74">
-<h3><a class="toc-backref" href="#id198" role="doc-backlink">Classes</a><a class="headerlink" href="#id74" title="Link to this heading"></a></h3>
+<section id="id72">
+<h3><a class="toc-backref" href="#id192" role="doc-backlink">Classes</a><a class="headerlink" href="#id72" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.self_attention_deep_set.SelfAttention.html#torchcell.models.self_attention_deep_set.SelfAttention" title="torchcell.models.self_attention_deep_set.SelfAttention"><code class="xref py py-obj docutils literal notranslate"><span class="pre">self_attention_deep_set.SelfAttention</span></code></a></p></td>
@@ -1868,10 +1828,10 @@
 </section>
 </section>
 <section id="self-attention-sag">
-<h2><a class="toc-backref" href="#id199" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">self_attention_sag</span></code></a><a class="headerlink" href="#self-attention-sag" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id193" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">self_attention_sag</span></code></a><a class="headerlink" href="#self-attention-sag" title="Link to this heading"></a></h2>
 <p>Self-attention pooling model combining multi-head attention with SAGPooling GCNs.</p>
-<section id="id75">
-<h3><a class="toc-backref" href="#id200" role="doc-backlink">Classes</a><a class="headerlink" href="#id75" title="Link to this heading"></a></h3>
+<section id="id73">
+<h3><a class="toc-backref" href="#id194" role="doc-backlink">Classes</a><a class="headerlink" href="#id73" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.models.self_attention_sag.SelfAttention.html#torchcell.models.self_attention_sag.SelfAttention" title="torchcell.models.self_attention_sag.SelfAttention"><code class="xref py py-obj docutils literal notranslate"><span class="pre">self_attention_sag.SelfAttention</span></code></a></p></td>
@@ -1885,7 +1845,7 @@
 </section>
 </section>
 <section id="not-documented">
-<h2><a class="toc-backref" href="#id201" role="doc-backlink">Not documented</a><a class="headerlink" href="#not-documented" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id195" role="doc-backlink">Not documented</a><a class="headerlink" href="#not-documented" title="Link to this heading"></a></h2>
 <p>Submodules left out of this page:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">dcell_DEPRECATED</span></code> (scratch, demo or deprecated)</p></li>

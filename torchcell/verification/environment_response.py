@@ -37,7 +37,7 @@ from collections.abc import Callable, Iterable, Sequence
 from typing import Any
 
 from torchcell.verification.common import GeneNameResolver, SharedRecordRules
-from torchcell.verification.levels import l0_structural, l1_count, l2_value_fidelity
+from torchcell.verification.levels import l0_structural, l1_count
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -199,32 +199,100 @@ def _l1_pair_uniqueness(
     not flagged as duplicates -- for a single-study dataset the study is constant and the key
     reduces to (strain, condition).
     """
-    seen: dict[tuple[Any, ...], int] = {}
-    for rec in records:
-        exp = rec["experiment"]
-        key = (
-            _study_key(rec),
-            _genotype_signature(exp, background),
-            _condition_signature(exp),
-        )
-        seen[key] = seen.get(key, 0) + 1
-    dups = {k: n for k, n in seen.items() if n > 1}
-    return LevelResult(
-        level=Level.L1,
-        name="pair_uniqueness",
-        passed=not dups,
-        message=(
-            f"{len(seen)} unique (study, strain, condition) records, one each"
-            if not dups
-            else f"{len(dups)} (study, strain, condition) triples appear in multiple records"
-        ),
-        details={"n_pairs": len(seen), "n_duplicated": len(dups)},
+    seen = {_pair_key(rec, background) for rec in records}
+    return _pair_uniqueness_result(
+        n_pairs=len(seen), n_duplicated=len(records) - len(seen)
     )
 
 
-def _l3_measurement_type_consistent(records: Sequence[Record]) -> LevelResult:
-    """L3: all records share a single measurement_type (no silent cross-assay mixing)."""
-    types = {rec["experiment"]["phenotype"]["measurement_type"] for rec in records}
+def _pair_key(record: Record, background: frozenset[str]) -> tuple[Any, ...]:
+    """The L1 uniqueness key: (study, strain signature, condition signature)."""
+    experiment = record["experiment"]
+    return (
+        _study_key(record),
+        _genotype_signature(experiment, background),
+        _condition_signature(experiment),
+    )
+
+
+def _pair_uniqueness_result(*, n_pairs: int, n_duplicated: int) -> LevelResult:
+    """L1 ``pair_uniqueness`` row, shared by the eager and streaming verifiers.
+
+    ``n_duplicated`` counts REDUNDANT RECORDS (every record after the first with a given
+    key), so three copies of one record are 2 duplicates and
+    ``n_pairs + n_duplicated`` equals the ``count`` row's observed record total. This is
+    the number of records the loader has to aggregate or drop for L1 to pass, the unit the
+    count oracle is stated in, and the one a single streaming pass computes without
+    holding a per-key counter.
+    """
+    return LevelResult(
+        level=Level.L1,
+        name="pair_uniqueness",
+        passed=n_duplicated == 0,
+        message=(
+            f"{n_pairs} unique (study, strain, condition) records, one each"
+            if n_duplicated == 0
+            else f"{n_duplicated} records duplicate an earlier (study, strain, "
+            f"condition) triple; {n_pairs} unique triples"
+        ),
+        details={"n_pairs": n_pairs, "n_duplicated": n_duplicated},
+    )
+
+
+def _value_problem(
+    index: int, value: float, *, minimum: float | None
+) -> dict[str, Any] | None:
+    """The L2 entry for one bad value, or None when the value is fine.
+
+    ``index`` is the RECORD's position in the dataset (records without the value are
+    skipped but still counted), so an entry points at the record to inspect. The entry
+    shape is :func:`torchcell.verification.levels.l2_value_fidelity`'s.
+    """
+    if math.isnan(value):
+        return {"index": index, "value": "nan", "reason": "nan"}
+    if math.isinf(value):
+        return {"index": index, "value": repr(value), "reason": "inf"}
+    if minimum is not None and value < minimum:
+        return {"index": index, "value": value, "reason": f"< {minimum}"}
+    return None
+
+
+def _value_result(name: str, n_values: int, bad: list[dict[str, Any]]) -> LevelResult:
+    """L2 value row (``value_fidelity`` / ``se_nonnegative``) for both verifiers."""
+    return LevelResult(
+        level=Level.L2,
+        name=name,
+        passed=not bad,
+        message=(
+            f"{n_values} values checked"
+            if not bad
+            else f"{len(bad)}/{n_values} values invalid"
+        ),
+        details={"n_values": n_values, "n_bad": len(bad), "bad": bad[:20]},
+    )
+
+
+def _response_value(record: Record) -> float | None:
+    """The experiment's numeric response, or None for a categorical record."""
+    value = record["experiment"]["phenotype"]["environment_response"]
+    return None if value is None else float(value)
+
+
+def _se_value(record: Record) -> float | None:
+    """The reported response SE, or None when it is absent or NaN (not reported)."""
+    value = record["experiment"]["phenotype"].get("environment_response_se")
+    if value is None or (isinstance(value, float) and math.isnan(value)):
+        return None
+    return float(value)
+
+
+def _measurement_type_result(types: set[str]) -> LevelResult:
+    """L3 ``measurement_type_consistent`` row for both verifiers.
+
+    ``types`` holds the enum VALUES (``str`` of a ``MeasurementType`` member), so the
+    message reads ``'log2_ratio'`` whether the records carry the enum member
+    (``model_dump()``) or its JSON string.
+    """
     return LevelResult(
         level=Level.L3,
         name="measurement_type_consistent",
@@ -235,6 +303,13 @@ def _l3_measurement_type_consistent(records: Sequence[Record]) -> LevelResult:
             else f"{len(types)} distinct measurement_types mixed: {sorted(types)}"
         ),
         details={"measurement_types": sorted(types)},
+    )
+
+
+def _l3_measurement_type_consistent(records: Sequence[Record]) -> LevelResult:
+    """L3: all records share a single measurement_type (no silent cross-assay mixing)."""
+    return _measurement_type_result(
+        {str(rec["experiment"]["phenotype"]["measurement_type"]) for rec in records}
     )
 
 
@@ -442,27 +517,33 @@ def verify_environment_response_dataset(
     shared.add_all(records)
 
     responses = [
-        float(rec["experiment"]["phenotype"]["environment_response"])
-        for rec in records
-        if rec["experiment"]["phenotype"]["environment_response"] is not None
+        (i, v)
+        for i, rec in enumerate(records)
+        if (v := _response_value(rec)) is not None
     ]
-    report.add(l2_value_fidelity(responses, allow_nan=False))
-
-    se_values = [
-        float(v)
-        for rec in records
-        if (v := rec["experiment"]["phenotype"].get("environment_response_se"))
-        is not None
-        and not (isinstance(v, float) and math.isnan(v))
-    ]
-    se_result = l2_value_fidelity(se_values, allow_nan=False, minimum=0.0)
     report.add(
-        LevelResult(
-            level=Level.L2,
-            name="se_nonnegative",
-            passed=se_result.passed,
-            message=se_result.message,
-            details=se_result.details,
+        _value_result(
+            "value_fidelity",
+            len(responses),
+            [
+                bad
+                for i, v in responses
+                if (bad := _value_problem(i, v, minimum=None)) is not None
+            ],
+        )
+    )
+    se_values = [
+        (i, v) for i, rec in enumerate(records) if (v := _se_value(rec)) is not None
+    ]
+    report.add(
+        _value_result(
+            "se_nonnegative",
+            len(se_values),
+            [
+                bad
+                for i, v in se_values
+                if (bad := _value_problem(i, v, minimum=0.0)) is not None
+            ],
         )
     )
 
@@ -551,28 +632,24 @@ def verify_environment_response_dataset_streaming(
         # L1 uniqueness keys on the STUDY x the STRAIN (genotype signature) x the full
         # CONDITION signature (environment identity); L4 gene-containment accumulates the
         # bare screened systematic names.
-        pkey = (
-            _study_key(rec),
-            _genotype_signature(exp, background_genes),
-            _condition_signature(exp),
-        )
+        pkey = _pair_key(rec, background_genes)
         if pkey in pair_seen:
             n_pair_dups += 1
         else:
             pair_seen.add(pkey)
             n_pairs += 1
 
-        response = exp["phenotype"]["environment_response"]
+        response = _response_value(rec)
         if response is not None:
             n_responses += 1
-            if math.isnan(response) or math.isinf(response):
-                bad_responses.append({"index": i, "value": repr(response)})
-        se = exp["phenotype"].get("environment_response_se")
-        if se is not None and not (isinstance(se, float) and math.isnan(se)):
+            if (bad := _value_problem(i, response, minimum=None)) is not None:
+                bad_responses.append(bad)
+        se = _se_value(rec)
+        if se is not None:
             n_se += 1
-            if se < 0.0:
-                bad_se.append({"index": i, "value": se})
-        measurement_types.add(exp["phenotype"]["measurement_type"])
+            if (bad := _value_problem(i, se, minimum=0.0)) is not None:
+                bad_se.append(bad)
+        measurement_types.add(str(exp["phenotype"]["measurement_type"]))
 
         reference = rec["reference"]["phenotype_reference"]
         ref_val = reference["environment_response"]
@@ -624,63 +701,10 @@ def verify_environment_response_dataset_streaming(
             details={"observed": n_records, "expected": expected_count},
         )
     )
-    report.add(
-        LevelResult(
-            level=Level.L1,
-            name="pair_uniqueness",
-            passed=n_pair_dups == 0,
-            message=(
-                f"{n_pairs} unique (strain, condition) records, one each"
-                if n_pair_dups == 0
-                else f"{n_pair_dups} (strain, condition) records duplicate an existing pair"
-            ),
-            details={"n_pairs": n_pairs, "n_duplicated": n_pair_dups},
-        )
-    )
-    report.add(
-        LevelResult(
-            level=Level.L2,
-            name="value_fidelity",
-            passed=not bad_responses,
-            message=(
-                f"{n_responses} values checked"
-                if not bad_responses
-                else f"{len(bad_responses)}/{n_responses} values invalid"
-            ),
-            details={
-                "n_values": n_responses,
-                "n_bad": len(bad_responses),
-                "bad": bad_responses[:20],
-            },
-        )
-    )
-    report.add(
-        LevelResult(
-            level=Level.L2,
-            name="se_nonnegative",
-            passed=not bad_se,
-            message=(
-                f"{n_se} values checked"
-                if not bad_se
-                else f"{len(bad_se)}/{n_se} values invalid"
-            ),
-            details={"n_values": n_se, "n_bad": len(bad_se), "bad": bad_se[:20]},
-        )
-    )
-    report.add(
-        LevelResult(
-            level=Level.L3,
-            name="measurement_type_consistent",
-            passed=len(measurement_types) <= 1,
-            message=(
-                f"single measurement_type: {next(iter(measurement_types), None)!r}"
-                if len(measurement_types) <= 1
-                else f"{len(measurement_types)} distinct measurement_types mixed: "
-                f"{sorted(measurement_types)}"
-            ),
-            details={"measurement_types": sorted(measurement_types)},
-        )
-    )
+    report.add(_pair_uniqueness_result(n_pairs=n_pairs, n_duplicated=n_pair_dups))
+    report.add(_value_result("value_fidelity", n_responses, bad_responses))
+    report.add(_value_result("se_nonnegative", n_se, bad_se))
+    report.add(_measurement_type_result(measurement_types))
     report.add(
         _reference_baseline_result(
             n_numeric=n_ref,

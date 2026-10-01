@@ -78,3 +78,23 @@ The first export differs from every committed `references.bib`, in each case bec
 committed file is a snapshot of earlier curation and the collection has since changed.
 Key-by-key comparison and what each collection holds today:
 [[tectonic-builds-and-bibliographies]], "State of the committed bibliographies vs Zotero".
+
+## 2026.10.01 - Keys by declaration, staging cleanup, retired files, Makefile comments (issue #529)
+
+Previous behavior, pinned as Findings by Phase 14 of the test campaign:
+
+- `fetch_scope_entries` decided key-or-name with `re.fullmatch(r"[A-Z0-9]{8}", ...)`, so a collection NAMED `RNASEQ01` was sent as a key;
+- a failed export left the earlier specs' `.part` files in `_bib/`;
+- a spec removed from the repo stopped being listed and served, but its `.bib` stayed in `_bib/` looking served;
+- the Makefile pattern ended `(\S*)\s*$`, so `ZOTERO_COLLECTION := VNDH4NMX  # eQTL` read as empty and the document silently got no bibliography.
+
+Fix:
+
+- Every declaration in the repo is a collection KEY (`PAPER_COLLECTION_KEY`; the Makefile values `build_bib.py` hands Better BibTeX), so `BibScope.group_collection` and `user_collection` are keys by declaration. A field validator refuses any other value with `not a Zotero collection key (8 upper-case letters or digits): '<value>'; ...`. The regex only validates a declared key; it never decides. `fetch_scope_entries` always sends `collection_key`, and the paired pull passes `as_keys=True` (new keyword on [[torchcell.literature.bib]] `fetch_paired_collection_entries`). The served manifest and the repo's five specs load unchanged under the validator (checked read-only).
+- A failed export unlinks every `<name>.bib.part` it staged, then re-raises.
+- After a successful export, every `*.bib` or `*.bib.part` the new manifest does not serve is moved to `_bib/_retired/<generated_at>/`, with a warning naming each; nothing is deleted. This also moves the specs left out of a `--name` subset run, which the wholesale manifest replacement already stopped serving.
+- `parse_makefile_collections` cuts a trailing `# comment` off the value, as make does, and refuses a value of more than one word with `ValueError` naming the Makefile and variable.
+
+Issue #563 (nightly export failing since 2026-09-21 with `Zotero collection 'torchcell' not found`): not fixed here, but explained. `/tmp/torchcell-lit-bib-store.log` lists exactly 100 available collections (alphabetical through `w019-strain-build-list`, with `torchcell-topics` present and `torchcell` absent). `ZoteroLibrary.collection_key` calls `self.zot.collections()` without `everything(...)`, so it reads one 100-collection page; the personal library now has more than 100 collections and `torchcell` falls off that page. `collection_tree` pages correctly and then resolves its root through the unpaged `collection_key`. Hypothesis (consistent with the log, not tested against Zotero): paging `list_collections` fixes #563.
+
+Evidence: `test_scope_collections_are_keys_by_declaration`, `test_empty_pull_message_and_no_part_file_left_by_a_failed_export`, `test_partial_failure_leaves_previous_store_intact`, `test_dropped_spec_is_unserved_and_its_file_is_moved_aside`, `test_inline_comment_after_the_value_is_cut_off`, `test_a_two_word_makefile_value_is_refused_by_name` in [[tests.torchcell.literature.test_bib_store]].

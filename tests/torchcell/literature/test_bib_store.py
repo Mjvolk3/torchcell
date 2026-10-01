@@ -11,30 +11,36 @@ manifest, the content-stable hash, and the endpoint's hash header.
 replaced by recorders (no Zotero, no network):
 
 - ``fetch_scope_entries`` dispatch on each scope shape (paired, tree, whole group,
-  an 8-character key, a name), which library each fetcher receives, the paired shape
+  a group collection key), which library each fetcher receives, the paired shape
   winning over a tree, and the refusal of a personal collection with no group one;
-  Finding: any 8-character upper-case alphanumeric NAME is sent as a key;
 - the exact bytes of a store written from three specs (manuscript, notes-tex pair,
   Dendron tree): banner lines, BibTeX body sorted case-insensitively by key, the
   directory listing, and every manifest row (bytes, sha256, entries, scope, origin,
   stamp) plus ``manifest.json`` as written;
 - refusals: the exact 0-entry message, an illegal spec name raised before any pull,
-  ``load_bib_store`` on an empty mirror; Findings: a failed export leaves the earlier
-  specs' ``.part`` files behind, and a spec dropped from the repo leaves its ``.bib``
-  on disk (the server stops listing and serving it);
+  ``load_bib_store`` on an empty mirror;
 - ``discover_bib_specs`` on Makefiles using ``=``, ``?=`` and ``:=``, an empty personal
-  collection, a repeated assignment (the last wins), a dot directory (refused by name)
-  and, as a Finding, an inline comment after the value, which drops the document.
+  collection, a repeated assignment (the last wins), a dot directory (refused by name).
+
+2026.10.01 (issue #529) retired four Findings; now asserted: scope collections are
+KEYS by declaration (a value that is not a key is refused by value, and an 8-character
+upper-case value is sent as the key it is declared to be, never classified by shape);
+a failed export leaves no ``.part`` file; a spec dropped from the repo has its ``.bib``
+moved to ``_bib/_retired/<generated_at>/`` with a warning naming it; an inline
+``# comment`` after a Makefile value is cut off, and a two-word value is refused naming
+the Makefile.
 """
 
 import hashlib
 import json
+import logging
 import re
 from pathlib import Path
 from typing import Any, cast
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 import torchcell.literature.bib_store as store_mod
 from torchcell.literature.bib_store import (
@@ -208,6 +214,11 @@ def test_partial_failure_leaves_previous_store_intact(
     assert load_bib_store(tmp_path) == before
     paper_text = (bib_store_dir(tmp_path) / "paper.bib").read_text()
     assert "z2021" not in paper_text
+    assert sorted(p.name for p in bib_store_dir(tmp_path).iterdir()) == [
+        "eqtl-data-model.bib",
+        "manifest.json",
+        "paper.bib",
+    ]
 
 
 # --- endpoint -----------------------------------------------------------------
@@ -297,10 +308,22 @@ def fetch_calls(monkeypatch: pytest.MonkeyPatch) -> list[tuple[Any, ...]]:
         return [_entry("s2020", "Single")]
 
     def paired(
-        group: Any, user: Any, *, group_collection: str, user_collection: str
+        group: Any,
+        user: Any,
+        *,
+        group_collection: str,
+        user_collection: str,
+        as_keys: bool = False,
     ) -> Any:
         calls.append(
-            ("paired", group.label, user.label, group_collection, user_collection)
+            (
+                "paired",
+                group.label,
+                user.label,
+                group_collection,
+                user_collection,
+                as_keys,
+            )
         )
         return [_entry("p2020", "Paired")]
 
@@ -318,10 +341,9 @@ def test_fetch_scope_entries_dispatches_on_the_scope_shape(
     fetch_calls: list[tuple[Any, ...]],
 ) -> None:
     """Paired (group + personal collection) -> the paired pull with the group library
-    first; a personal tree -> the union pull; no collection -> the whole group; an
-    8-character upper-case alphanumeric collection -> ``collection_key``; anything else
-    -> ``collection`` by name. A scope carrying both a personal collection and a tree
-    takes the paired pull (the first branch).
+    first and ``as_keys=True``; a personal tree -> the union pull; no collection -> the
+    whole group; a group collection -> ``collection_key``. A scope carrying both a
+    personal collection and a tree takes the paired pull (the first branch).
     """
     scopes = [
         BibScope(
@@ -337,8 +359,6 @@ def test_fetch_scope_entries_dispatches_on_the_scope_shape(
         ),
         BibScope(group_library_id="6582362"),
         BibScope(group_library_id="6582362", group_collection="W46ATS7B"),
-        BibScope(group_library_id="6582362", group_collection="ABCDEFG"),
-        BibScope(group_library_id="6582362", group_collection="w46ats7b"),
         BibScope(
             group_library_id="6582362",
             group_collection="VNDH4NMX",
@@ -353,32 +373,50 @@ def test_fetch_scope_entries_dispatches_on_the_scope_shape(
         "u2020",
         "s2020",
         "s2020",
-        "s2020",
-        "s2020",
         "p2020",
     ]
     assert fetch_calls == [
-        ("paired", "group", "user", "VNDH4NMX", "4VNJWJAW"),
+        ("paired", "group", "user", "VNDH4NMX", "4VNJWJAW", True),
         ("union", "group", "user", "torchcell"),
         ("single", "group", None, None),
         ("single", "group", None, "W46ATS7B"),
-        ("single", "group", "ABCDEFG", None),
-        ("single", "group", "w46ats7b", None),
-        ("paired", "group", "user", "VNDH4NMX", "4VNJWJAW"),
+        ("paired", "group", "user", "VNDH4NMX", "4VNJWJAW", True),
     ]
 
 
-def test_an_eight_character_upper_case_name_is_sent_as_a_key(
+def test_scope_collections_are_keys_by_declaration(
     fetch_calls: list[tuple[Any, ...]],
 ) -> None:
-    """Finding: the key test is ``re.fullmatch(r"[A-Z0-9]{8}", ...)`` on the value (source
-    line 267), so a collection NAMED ``RNASEQ01`` is looked up as a collection key and
-    would miss. Pinned until a key is marked as a key where it is declared.
+    """``group_collection`` and ``user_collection`` are declared KEYS, so nothing is
+    classified by shape: ``RNASEQ01`` is sent as the key it is declared to be, and a
+    value that cannot be a key (a name, a 7-character or lower-case string) is refused
+    when the scope is built, with the exact message naming the value and the field.
     """
     scope = BibScope(group_library_id="6582362", group_collection="RNASEQ01")
-    entries = store_mod.fetch_scope_entries(scope, GROUP, USER)
-    assert entries == [_entry("s2020", "Single")]
+    assert store_mod.fetch_scope_entries(scope, GROUP, USER) == [
+        _entry("s2020", "Single")
+    ]
     assert fetch_calls == [("single", "group", None, "RNASEQ01")]
+    refused = [
+        ("group_collection", "microbe-perturb-seq"),
+        ("group_collection", "ABCDEFG"),
+        ("user_collection", "w46ats7b"),
+    ]
+    for field, value in refused:
+        with pytest.raises(ValidationError) as excinfo:
+            BibScope(
+                **{
+                    "group_library_id": "6582362",
+                    "group_collection": "VNDH4NMX",
+                    field: value,
+                }
+            )
+        [error] = excinfo.value.errors()
+        assert (error["loc"], error["msg"]) == (
+            (field,),
+            "Value error, not a Zotero collection key (8 upper-case letters or "
+            f"digits): {value!r}; bibliography scopes address collections by key",
+        )
 
 
 def test_personal_collection_without_a_group_collection_is_refused(
@@ -520,14 +558,12 @@ def test_body_is_sorted_case_insensitively_by_key(
     assert "% name: paper  entries: 2\n" in text
 
 
-def test_empty_pull_message_and_part_files_left_by_a_failed_export(
+def test_empty_pull_message_and_no_part_file_left_by_a_failed_export(
     tmp_path: Path, canned_pull: Canned
 ) -> None:
-    """The refusal names the file and the scope without its None fields.
-
-    Finding: the specs before the failing one were already staged, and nothing removes
-    them, so ``paper.bib.part`` stays in ``_bib/`` after the raise (no manifest is
-    written, so nothing serves it). Pinned until a failed export cleans its staging.
+    """The refusal names the file and the scope without its None fields, and the
+    export removes what it staged before re-raising: ``paper.bib.part``, staged for
+    the spec before the failing one, is gone and ``_bib/`` is empty.
     """
     canned_pull["W46ATS7B"] = [_entry("a2020", "First")]
     canned_pull["VNDH4NMX"] = []
@@ -543,9 +579,7 @@ def test_empty_pull_message_and_part_files_left_by_a_failed_export(
         ),
     ):
         export_bib_store(tmp_path, specs, NO_LIB, NO_LIB, generated_at="T0")
-    assert sorted(p.name for p in bib_store_dir(tmp_path).iterdir()) == [
-        "paper.bib.part"
-    ]
+    assert sorted(p.name for p in bib_store_dir(tmp_path).iterdir()) == []
 
 
 def test_illegal_spec_name_is_refused_before_any_pull(
@@ -577,27 +611,43 @@ def test_load_bib_store_without_an_export_raises_file_not_found(tmp_path: Path) 
         load_bib_store(tmp_path)
 
 
-def test_dropped_spec_is_unlisted_and_unserved_but_its_file_stays(
-    tmp_path: Path, canned_pull: Canned
+def test_dropped_spec_is_unserved_and_its_file_is_moved_aside(
+    tmp_path: Path, canned_pull: Canned, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Export two specs, then only ``paper``: the manifest lists ``paper`` alone and
-    ``/bib/eqtl-data-model`` answers 404 ``unknown bibliography``.
-
-    Finding: ``eqtl-data-model.bib`` from the first export is still in ``_bib/`` (the
-    export replaces the manifest wholesale but never prunes files). Pinned until the
-    export removes files no spec names.
+    """Export two specs, then only ``paper``: the manifest lists ``paper`` alone,
+    ``/bib/eqtl-data-model`` answers 404 ``unknown bibliography``, and the dropped
+    file (plus a stray ``old-doc.bib.part`` from an earlier run) is moved, with its
+    bytes, to ``_bib/_retired/T1/`` with one warning per file naming it; nothing is
+    deleted and ``_bib/`` holds only what the manifest serves.
     """
     canned_pull["W46ATS7B"] = [_entry("a2020", "First")]
     canned_pull["VNDH4NMX"] = [_entry("q2020", "Doc")]
     paper = _spec("paper", group_collection="W46ATS7B")
     doc = _spec("eqtl-data-model", group_collection="VNDH4NMX")
     export_bib_store(tmp_path, [paper, doc], NO_LIB, NO_LIB, generated_at="T0")
+    store = bib_store_dir(tmp_path)
+    dropped_text = (store / "eqtl-data-model.bib").read_text()
+    (store / "old-doc.bib.part").write_text("stale")
+    caplog.set_level(logging.WARNING, logger=store_mod.__name__)
     export_bib_store(tmp_path, [paper], NO_LIB, NO_LIB, generated_at="T1")
     assert [b.name for b in load_bib_store(tmp_path).bibs] == ["paper"]
-    assert sorted(p.name for p in bib_store_dir(tmp_path).iterdir()) == [
-        "eqtl-data-model.bib",
+    assert sorted(p.name for p in store.iterdir()) == [
+        "_retired",
         "manifest.json",
         "paper.bib",
+    ]
+    retired = store / "_retired" / "T1"
+    assert sorted(p.name for p in retired.iterdir()) == [
+        "eqtl-data-model.bib",
+        "old-doc.bib.part",
+    ]
+    assert (retired / "eqtl-data-model.bib").read_text() == dropped_text
+    assert (retired / "old-doc.bib.part").read_text() == "stale"
+    assert [r.getMessage() for r in caplog.records if r.levelno >= logging.WARNING] == [
+        f"bib_store: eqtl-data-model is not declared by any exported spec; moved "
+        f"{store / 'eqtl-data-model.bib'} -> {retired / 'eqtl-data-model.bib'}",
+        f"bib_store: old-doc is not declared by any exported spec; moved "
+        f"{store / 'old-doc.bib.part'} -> {retired / 'old-doc.bib.part'}",
     ]
     config = LiteratureServerConfig(
         mirror_root=tmp_path, keys=LiteratureKeys.from_pairs(f"t:{KEY}"), port=8899
@@ -681,19 +731,43 @@ def test_discover_reads_every_assignment_form(tmp_path: Path) -> None:
     ]
 
 
-def test_inline_comment_after_the_value_drops_the_document(tmp_path: Path) -> None:
-    r"""Finding: the Makefile pattern ends ``(\S*)\s*$`` (source lines 82-84), so
-    ``ZOTERO_COLLECTION := VNDH4NMX  # eQTL`` does not match, the collection reads as
-    empty, and the document silently gets no bibliography. Pinned until the parser
-    strips a trailing ``#`` comment.
+def test_inline_comment_after_the_value_is_cut_off(tmp_path: Path) -> None:
+    """``ZOTERO_COLLECTION := VNDH4NMX  # eQTL`` reads as ``VNDH4NMX`` (make drops the
+    comment), and so does the personal line with ``#`` right after the value; the
+    document is discovered with both keys.
     """
-    _makefile(tmp_path, "eqtl", "ZOTERO_COLLECTION := VNDH4NMX  # eQTL\n")
+    _makefile(
+        tmp_path,
+        "eqtl",
+        "ZOTERO_COLLECTION := VNDH4NMX  # eQTL\n"
+        "ZOTERO_PERSONAL_COLLECTION := 4VNJWJAW# personal\n",
+    )
     makefile = tmp_path / "notes-tex" / "eqtl" / "Makefile"
-    assert parse_makefile_collections(makefile) == ("", "")
+    assert parse_makefile_collections(makefile) == ("VNDH4NMX", "4VNJWJAW")
     specs = discover_bib_specs(
         tmp_path, group_library_id="6582362", user_library_id="1"
     )
-    assert [s.name for s in specs] == ["paper", "library"]
+    assert [s.name for s in specs] == ["paper", "eqtl", "library"]
+    assert specs[1].scope == BibScope(
+        group_library_id="6582362",
+        group_collection="VNDH4NMX",
+        user_library_id="1",
+        user_collection="4VNJWJAW",
+    )
+
+
+def test_a_two_word_makefile_value_is_refused_by_name(tmp_path: Path) -> None:
+    """``ZOTERO_COLLECTION := VNDH4NMX extra`` is refused with the Makefile path, the
+    variable and the value, rather than read as empty or as its first word.
+    """
+    _makefile(tmp_path, "eqtl", "ZOTERO_COLLECTION := VNDH4NMX extra  # two\n")
+    makefile = tmp_path / "notes-tex" / "eqtl" / "Makefile"
+    with pytest.raises(ValueError) as excinfo:
+        discover_bib_specs(tmp_path, group_library_id="6582362", user_library_id="1")
+    assert str(excinfo.value) == (
+        f"{makefile}: ZOTERO_COLLECTION must be one collection key, "
+        "got 'VNDH4NMX extra'"
+    )
 
 
 def test_a_citing_dot_directory_is_refused_by_name(tmp_path: Path) -> None:

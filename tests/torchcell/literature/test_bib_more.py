@@ -174,6 +174,44 @@ def test_fetch_paired_collection_entries_personal_wins(
     assert entries == [_entry("shared2020", title="Personal"), _entry("groupOnly2019")]
 
 
+def test_fetch_paired_collection_entries_as_keys_sends_values_as_keys(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``as_keys=True`` sends both declared values as ``collection_key`` exactly as
+    given (the bibliography store's path, issue #529); the default keeps the shape
+    test, so a value that does not look like a key goes as a ``collection`` name.
+    """
+    import torchcell.literature.bib as bib_mod
+
+    calls: list[tuple[str, dict[str, str]]] = []
+
+    def record(lib: Any, **selector: str) -> list[dict[str, str]]:
+        calls.append((lib, selector))
+        return [_entry(f"{lib}2020")]
+
+    monkeypatch.setattr(bib_mod, "fetch_bibtex_entries", record)
+    # Labels stand in for the libraries: the recorder only reads them back.
+    group: Any = "group"
+    user: Any = "user"
+    keyed = fetch_paired_collection_entries(
+        group,
+        user,
+        group_collection="RNASEQ01",
+        user_collection="4VNJWJAW",
+        as_keys=True,
+    )
+    fetch_paired_collection_entries(
+        group, user, group_collection="GROUP001", user_collection="topic-a"
+    )
+    assert keyed == [_entry("group2020"), _entry("user2020")]
+    assert calls == [
+        ("group", {"collection_key": "RNASEQ01"}),
+        ("user", {"collection_key": "4VNJWJAW"}),
+        ("group", {"collection_key": "GROUP001"}),
+        ("user", {"collection": "topic-a"}),
+    ]
+
+
 def _user_tree_library(monkeypatch: pytest.MonkeyPatch) -> Any:
     return make_library(
         monkeypatch,

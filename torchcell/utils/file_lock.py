@@ -24,12 +24,35 @@ class FileLockHelper:
     macOS, and Linux.
 
     Attributes:
-        default_timeout: Default timeout in seconds for acquiring locks
-        default_retry_delay: Default delay between retries in seconds
+        default_timeout: Default timeout in seconds for acquiring locks. A caller's
+            ``timeout`` replaces it only when given (``None`` means the default), so
+            ``timeout=0`` is one non-blocking attempt, as in ``filelock``.
+        default_retry_delay: Default delay between retries in seconds, passed to
+            ``filelock``'s ``acquire`` as ``poll_interval``.
     """
 
     default_timeout: float = 60.0
     default_retry_delay: float = 0.1
+
+    @classmethod
+    def _resolve_timeout(cls, timeout: float | None) -> float:
+        """The caller's timeout, or the class default when none was given."""
+        return cls.default_timeout if timeout is None else timeout
+
+    @classmethod
+    def _resolve_retry_delay(cls, retry_delay: float | None) -> float:
+        """The caller's retry delay, or the class default when none was given."""
+        return cls.default_retry_delay if retry_delay is None else retry_delay
+
+    @staticmethod
+    def _get_temp_path(file_path: Path) -> Path:
+        """Staging path for an atomic write: ``<name>.tmp`` beside the target.
+
+        The suffix is APPENDED to the full name (``a.json`` -> ``a.json.tmp``), so two
+        targets that share a stem (``a.json``, ``a.yaml``) never share a staging file
+        while each holds only its own lock.
+        """
+        return file_path.with_name(file_path.name + ".tmp")
 
     @classmethod
     def _get_lock_path(cls, file_path: str | Path) -> Path:
@@ -57,8 +80,10 @@ class FileLockHelper:
 
         Args:
             file_path: Path to the JSON file
-            timeout: Maximum time to wait for lock acquisition
-            retry_delay: Delay between lock acquisition retries
+            timeout: Maximum time to wait for lock acquisition (``None``: the class
+                default; ``0``: a single non-blocking attempt)
+            retry_delay: Delay between lock acquisition retries (``None``: the class
+                default)
             create_if_missing: If True, create file with default_data if it doesn't exist
             default_data: Data to write if creating new file (defaults to empty dict)
 
@@ -72,8 +97,8 @@ class FileLockHelper:
         """
         file_path = Path(file_path)
         lock_path = cls._get_lock_path(file_path)
-        timeout = timeout or cls.default_timeout
-        retry_delay = retry_delay or cls.default_retry_delay
+        timeout = cls._resolve_timeout(timeout)
+        retry_delay = cls._resolve_retry_delay(retry_delay)
 
         if default_data is None:
             default_data = {}
@@ -81,7 +106,7 @@ class FileLockHelper:
         lock = FileLock(lock_path, timeout=timeout)
 
         try:
-            with lock.acquire(timeout=timeout):
+            with lock.acquire(timeout=timeout, poll_interval=retry_delay):
                 if not file_path.exists():
                     if create_if_missing:
                         # Create parent directories if needed
@@ -117,8 +142,10 @@ class FileLockHelper:
         Args:
             file_path: Path to the JSON file
             data: Data to serialize to JSON
-            timeout: Maximum time to wait for lock acquisition
-            retry_delay: Delay between lock acquisition retries
+            timeout: Maximum time to wait for lock acquisition (``None``: the class
+                default; ``0``: a single non-blocking attempt)
+            retry_delay: Delay between lock acquisition retries (``None``: the class
+                default)
             indent: JSON indentation level
             ensure_ascii: If True, escape non-ASCII characters
 
@@ -128,8 +155,8 @@ class FileLockHelper:
         """
         file_path = Path(file_path)
         lock_path = cls._get_lock_path(file_path)
-        timeout = timeout or cls.default_timeout
-        retry_delay = retry_delay or cls.default_retry_delay
+        timeout = cls._resolve_timeout(timeout)
+        retry_delay = cls._resolve_retry_delay(retry_delay)
 
         # Create parent directories if needed
         file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -137,9 +164,9 @@ class FileLockHelper:
         lock = FileLock(lock_path, timeout=timeout)
 
         try:
-            with lock.acquire(timeout=timeout):
+            with lock.acquire(timeout=timeout, poll_interval=retry_delay):
                 # Write to temporary file first for atomicity
-                temp_path = file_path.with_suffix(".tmp")
+                temp_path = cls._get_temp_path(file_path)
                 with open(temp_path, "w") as f:
                     json.dump(data, f, indent=indent, ensure_ascii=ensure_ascii)
 
@@ -170,8 +197,10 @@ class FileLockHelper:
         Args:
             file_path: Path to the JSON file
             update_func: Function that takes current data and returns updated data
-            timeout: Maximum time to wait for lock acquisition
-            retry_delay: Delay between lock acquisition retries
+            timeout: Maximum time to wait for lock acquisition (``None``: the class
+                default; ``0``: a single non-blocking attempt)
+            retry_delay: Delay between lock acquisition retries (``None``: the class
+                default)
             create_if_missing: If True, create file with default_data if it doesn't exist
             default_data: Initial data if creating new file
 
@@ -183,8 +212,8 @@ class FileLockHelper:
         """
         file_path = Path(file_path)
         lock_path = cls._get_lock_path(file_path)
-        timeout = timeout or cls.default_timeout
-        retry_delay = retry_delay or cls.default_retry_delay
+        timeout = cls._resolve_timeout(timeout)
+        retry_delay = cls._resolve_retry_delay(retry_delay)
 
         if default_data is None:
             default_data = {}
@@ -192,7 +221,7 @@ class FileLockHelper:
         lock = FileLock(lock_path, timeout=timeout)
 
         try:
-            with lock.acquire(timeout=timeout):
+            with lock.acquire(timeout=timeout, poll_interval=retry_delay):
                 # Read current data
                 if file_path.exists():
                     with open(file_path) as f:
@@ -207,7 +236,7 @@ class FileLockHelper:
                 updated_data = update_func(current_data)
 
                 # Write back atomically
-                temp_path = file_path.with_suffix(".tmp")
+                temp_path = cls._get_temp_path(file_path)
                 with open(temp_path, "w") as f:
                     json.dump(updated_data, f, indent=2, ensure_ascii=False)
 
@@ -232,7 +261,8 @@ class FileLockHelper:
 
         Args:
             file_path: Path to the file to lock
-            timeout: Maximum time to wait for lock acquisition
+            timeout: Maximum time to wait for lock acquisition (``None``: the class
+                default; ``0``: a single non-blocking attempt)
 
         Returns:
             FileLock instance
@@ -245,8 +275,7 @@ class FileLockHelper:
                     f.write("new data\\n")
         """
         lock_path = cls._get_lock_path(file_path)
-        timeout = timeout or cls.default_timeout
-        return FileLock(lock_path, timeout=timeout)
+        return FileLock(lock_path, timeout=cls._resolve_timeout(timeout))
 
     @classmethod
     def cleanup_lock_files(cls, directory: str | Path) -> int:

@@ -24,6 +24,10 @@ Usage::
     python scripts/lit_bib_store.py --name paper --name eqtl-data-model   # a subset
     python scripts/lit_bib_store.py --dry-run    # pull + report counts, write nothing
 
+A subset run replaces the manifest with that subset, so the other bibliographies
+stop being served and their files are moved to ``_bib/_retired/<generated_at>/``
+(logged by name, never deleted); the next full run exports them again.
+
 Cadence: nightly from cron after ``lit_sync.py`` (see ``scripts/crontab.txt``), and
 by hand right after a collection changes. Unlike ``lit_bib.py`` this writes nothing
 git-tracked, so cron cannot dirty a checkout. Consumers pull an explicit, pinned

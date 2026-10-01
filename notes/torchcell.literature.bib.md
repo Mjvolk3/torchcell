@@ -86,3 +86,7 @@ every policy — the difference is cosmetic, not broken citations.
 `bib.bib` is git-tracked, so a nightly regeneration would leave the primary checkout
 dirty and fight the worktree discipline in `CLAUDE.md`. Run it by hand after
 [[scripts.lit_sync]] captures new papers.
+
+## 2026.10.01 - `fetch_paired_collection_entries(as_keys=...)` (issue #529)
+
+New keyword `as_keys: bool = False`. True sends both values as `collection_key` exactly as given, for callers whose values are declared keys ([[torchcell.literature.bib_store]], whose scopes hold keys by declaration). The default keeps `_collection_selector`'s shape test, so `scripts/lit_bib.py` is unchanged. Test: `test_fetch_paired_collection_entries_as_keys_sends_values_as_keys` in [[tests.torchcell.literature.test_bib_more]].

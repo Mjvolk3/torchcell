@@ -164,6 +164,7 @@ def fetch_paired_collection_entries(
     *,
     group_collection: str,
     user_collection: str,
+    as_keys: bool = False,
 ) -> list[dict[str, Any]]:
     """Union ONE group collection with ONE personal collection.
 
@@ -181,6 +182,9 @@ def fetch_paired_collection_entries(
         user: The personal library.
         group_collection: Collection name or key in the group.
         user_collection: Collection name or key in the personal library.
+        as_keys: True when both values are DECLARED collection keys; they are then
+            sent as keys as given. False keeps :func:`_collection_selector`'s
+            shape test (a key if it looks like one, else a name).
 
     Returns:
         Deduplicated entries from the two collections.
@@ -190,7 +194,10 @@ def fetch_paired_collection_entries(
         (group, group_collection, "group"),
         (user, user_collection, "personal"),
     ):
-        entries = fetch_bibtex_entries(lib, **_collection_selector(lib, name))
+        selector = (
+            {"collection_key": name} if as_keys else _collection_selector(lib, name)
+        )
+        entries = fetch_bibtex_entries(lib, **selector)
         for entry in entries:
             if key := entry.get(_ID):
                 by_key[key] = entry  # personal is applied second, so it wins

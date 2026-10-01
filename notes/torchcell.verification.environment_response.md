@@ -108,3 +108,21 @@ written): the new rules fire exactly on what the review predicted, `compound_ide
 categorical rule (baseline `tolerant`, reported by no experiment record), and the census
 reporting 0 gap-capable carriers because that LMDB predates the mixin on `Compound` and
 `Environment` (the same staleness its L0 already fails on).
+
+## 2026.10.01 - Eager and streaming verifiers made identical (issue #529)
+
+The streaming verifier's docstring promised it was "semantically identical" to the eager one, and three rows disagreed:
+
+- `pair_uniqueness`: eager counted duplicated KEYS (`len(dups)`) and said "(study, strain, condition) triples appear in multiple records"; streaming counted redundant RECORDS and said "(strain, condition)" although it keyed on the study too. Three copies of one record read 1 against 2.
+- `value_fidelity` and `se_nonnegative`: eager ran `l2_value_fidelity` over the list of present values, so a bad value was indexed by its position among them and carried a `reason`; streaming indexed by record with no `reason`.
+- `measurement_type_consistent` printed the enum member's repr (`<MeasurementType.log2_ratio: 'log2_ratio'>`), because records hold `model_dump()` output.
+
+Fix: each of these rows is now built by one helper both entry points call (`_pair_key`, `_pair_uniqueness_result`, `_value_problem`, `_value_result`, `_response_value`, `_se_value`, `_measurement_type_result`).
+
+- One duplicate definition, REDUNDANT RECORDS: every record after the first with a key. Three copies are 2. Chosen because it is the unit the `count` row is stated in (`n_pairs + n_duplicated` equals the observed record count), it is the number of records a loader must aggregate or drop for L1 to pass, and a single streaming pass computes it without a per-key counter. Wording: `N records duplicate an earlier (study, strain, condition) triple; M unique triples`.
+- Bad values are indexed by RECORD and carry `reason` (`nan`, `inf`, `< 0.0`), so an entry points at the record to inspect.
+- Measurement types are collected as `str(...)`, the StrEnum VALUE (`'log2_ratio'`), in both message and details.
+
+No consumer parses these messages: `scripts/verify_datasets.py` and `torchcell/provenance/build_manifest.py` read only `passed` per level. The 13 stored `verification_report.json` files under `$DATA_ROOT/data/torchcell/*/preprocess/` all pass these rows with no duplicates and no bad values, so a regeneration changes only text: every `measurement_type_consistent` message (repr to value), and the `pair_uniqueness` wording of the five streaming datasets (hoepfner2014, wildenhain2015, crispr_magic_lian2019, hillenmeyer2008_het, hillenmeyer2008_hom) from "(strain, condition)" to "(study, strain, condition)". Not regenerated.
+
+Evidence: `test_eager_and_streaming_reports_are_equal` (one release failing every own rule, compared field by field and as whole models), `test_triplicate_record_counts_two_redundant_records`, `test_non_finite_responses_are_indexed_by_record`, `test_negative_se_fails_and_nan_se_is_not_counted`, `test_mixed_measurement_types_fail` in [[tests.torchcell.verification.test_environment_response]].

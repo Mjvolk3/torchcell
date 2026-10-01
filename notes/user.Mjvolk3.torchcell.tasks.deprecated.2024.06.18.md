@@ -1622,7 +1622,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 
 - [x] Make docs → Changed to `pyg` template as it is simpler
 - [x] Make  `pytest --cov=torchcell --cov-report html tests/` task → have to use full paths to executables.
-- [x] Check non-coding exons `noncoding_exon` features to see if they can imply `3'utr`. There are no `exons` in the sgd `.gff` → [[Using the NCBI S288C we cannot compute UTR lengths|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c_ncbi#using-the-ncbi-S288C-we-cannot-compute-utr-lengths]]
+- [x] Check non-coding exons `noncoding_exon` features to see if they can imply `3'utr`. There are no `exons` in the sgd `.gff` → "Using the NCBI S288C we cannot compute UTR lengths", a section of the note for `torchcell/sequence/genome/scerevisiae/s288c_ncbi.py`, which was retired on 2026.09.30 (issue #555); module and note are in `/scratch/projects/torchcell-deprecated/2026-09-30_203739__*/`
 - 🔲 Test genome [[torchcell.sequence.genome.scerevisiae.s288c]]
 
 ## 2023.09.21

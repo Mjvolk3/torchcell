@@ -144,6 +144,29 @@ _EXCLUDED_STRAIN_RE = re.compile(r"^XTRA_")
 _COMPLEMENT = str.maketrans("ACGTNacgtn", "TGCANtgcan")
 
 
+class MissingTabMemberError(ValueError):
+    """The Caudal expression zip does not hold exactly one ``.tab`` member."""
+
+
+class UnextractableMemberError(RuntimeError):
+    """A regular file in the reference-gene tarball could not be opened for reading."""
+
+
+def _tab_member(zip_path: str, names: list[str]) -> str:
+    """The one ``.tab`` member of the Caudal zip; any other count is refused.
+
+    The released archive (sha256 ``8b55ccd7...``) holds exactly one member,
+    ``final_data_annotated_merged_04052022.tab`` (issue #541).
+    """
+    tabs = [n for n in names if n.endswith(".tab")]
+    if len(tabs) != 1:
+        raise MissingTabMemberError(
+            f"{zip_path} must hold exactly one '.tab' member, found {tabs}; "
+            f"members: {names}"
+        )
+    return tabs[0]
+
+
 def _reverse_complement(seq: str) -> str:
     """Return the reverse complement of a DNA string (A/C/G/T/N, case-preserving)."""
     return seq.translate(_COMPLEMENT)[::-1]
@@ -468,7 +491,7 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
 
         path = osp.join(self.raw_dir, CAUDAL_ZIP_BASENAME)
         with zipfile.ZipFile(path) as zf:
-            name = next(n for n in zf.namelist() if n.endswith(".tab"))
+            name = _tab_member(path, zf.namelist())
             with zf.open(name) as handle:
                 df = pd.read_csv(
                     handle,
@@ -543,7 +566,13 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
                 sys_name = member.name.replace(".fasta", "")
                 extracted = tf.extractfile(member)
                 if extracted is None:
-                    continue
+                    # Unreachable for a released archive: all 6,015 members of the
+                    # pinned tarball are regular files and extract (issue #541).
+                    raise UnextractableMemberError(
+                        f"{tar_path}: member {member.name!r} is a regular file but "
+                        "tarfile returned no file object for it; refusing to drop "
+                        "its variants"
+                    )
                 records = _parse_fasta(extracted.read().decode("latin-1"))
                 if not records:
                     continue

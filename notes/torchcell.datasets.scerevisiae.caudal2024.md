@@ -347,3 +347,13 @@ LMDB reading `fresh`. Nothing to re-serve; no KG rebuild needed.
 Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; the two matrices were never re-hashed once in `raw/`; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: no (symlink); refused deposit leaving a directory: n/a.
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against zip and tarball pins + genomes-tier manifest for the two matrices, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.01 - Named refusals for the zip member and an unextractable tar member (issue #541)
+
+Previous behavior: a zip with no `.tab` member raised a bare `StopIteration`; a tarball member that passed `isfile()` but returned no file object was skipped, dropping that gene's variants with no log.
+
+Fix: `_tab_member` requires exactly one `.tab` member and raises `MissingTabMemberError` naming the archive, the `.tab` members found and every member. The `extracted is None` guard raises `UnextractableMemberError` naming the tarball and the member.
+
+Evidence: the pinned zip holds one member (`final_data_annotated_merged_04052022.tab`); all 6,015 members of the pinned reference-gene tarball are regular files and extract. No stored record changes.
+
+Left open, RECORD-CHANGING: `groupby` drops rows with a blank `systematic_name`. The released table has 470,944 such rows, 459,790 of them in the 943 built isolates (every isolate, 416 to 612 rows each). They carry an `ORF` value (1,037 distinct, 974 of which also appear named elsewhere; none duplicates a named (Strain, ORF) row) and a `pan_absence` class: 443,612 absent, 16,048 bad annotation, 10,725 unannotated, 559 present. The paper's Fig. 2 caption excludes isolates that do not carry an accessory gene, which supports dropping the `absent` rows but says nothing about the other classes. Pinned by `test_a_row_with_a_blank_gene_is_dropped_without_a_trace`.

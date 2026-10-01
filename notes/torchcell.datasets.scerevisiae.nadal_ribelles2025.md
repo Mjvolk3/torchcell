@@ -71,3 +71,11 @@ log2 FC — only the environment metadata. `GROWTH_TEMP_C` in the loader.
 Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: no (symlink); refused deposit leaving a directory: n/a.
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `SHA256_EXPECTED`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.01 - Repeated ptbs labels and unknown conditions are refused (issue #541)
+
+Previous behavior: a `ptbs` label on two rows of one condition kept the first row's `sd_lvscore_scaledFU2` and `cell_number` with no log and no batch field; any condition other than `nacl` was stored with the control environment.
+
+Fix: `_load_ptbs` raises `RepeatedPtbsLabelError` naming the condition and the repeated (normalized) labels; `_environment` raises `UnknownConditionError` for any condition outside `CONDITIONS = ("control", "nacl")`, which happens while the references are built, before the store opens. `_ptb_scalars` no longer carries the `iloc[0]` branch.
+
+Evidence on the pinned files: `ptb_summary.Rdata` has 3,207 control and 3,204 nacl rows, 0 repeated labels, no batch column; `FC_genotype.Rdata` has 6,188 keys, Control 3,091 and NaCl 3,097, no other condition. No stored record changes. The closest thing to a repeat is the same ORF under replacement-strain labels (`bc-YBR020W-1`, `-2`): 55 ORFs in control (111 rows) and 57 in nacl (115 rows), each its own record. The spread in `sd_lvscore_scaledFU2` between such strains has median 0.100 (max 0.713, YGR180C) in control and 0.074 (max 0.53) in nacl. Tests: `test_a_label_repeated_within_a_condition_is_refused`, `test_ptbs_lookup_is_by_label_not_row_position`, `test_an_unknown_condition_is_refused_before_any_store`.

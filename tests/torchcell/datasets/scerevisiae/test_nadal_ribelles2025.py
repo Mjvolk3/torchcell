@@ -15,14 +15,16 @@ against 0.022 for different genotypes, experiment 028). The loader has no batch 
 record is one ``fcs`` table per (condition, label), and its two single-cell scalars come
 from ``ptbs`` by label. The batch fixture gives ``bc-YAL012W`` two control rows (batch
 c1: 60 cells, sd 1.5; batch c2: 40 cells, sd 0.9) and WT two control rows (c1: 300 cells,
-sd 1.0; c2: 200, sd 1.2); NaCl has WT (250, 1.05) listed BEFORE ``bc-YAL012W`` (45, 0.8).
-Stored: control record 1.5 / 60 (the first row, not a pooled 100 cells), control
-reference 1.0 / 300 (not 500), NaCl record 0.8 / 45 and reference 1.05 / 250 (looked up by
-label, not position). The ``batch`` column is read and ignored.
+sd 1.0; c2: 200, sd 1.2). Contract (issue #541, fixed 2026.10.01): a label repeated within
+one condition raises ``RepeatedPtbsLabelError`` naming the condition and the labels, since
+no field says which row belongs to the logFC vector; the released ``ptbs`` repeats no
+label (0 of 3,207 control and 3,204 nacl rows). The lookup fixture has one row per label,
+with NaCl listing WT (250, 1.05) BEFORE ``bc-YAL012W`` (45, 0.8): the record stores
+0.8 / 45 and the reference 1.05 / 250 (looked up by label, not position).
 
-A third table ``DEG_Heat_bc_YAL012W.csv`` (MUP1 0.7) has a condition the loader does not
-know: it is stored under ``heat`` with the CONTROL environment, no scalars and its own
-reference, three references in all.
+A table ``DEG_Heat_bc_YAL012W.csv`` names a condition the paper did not profile: the
+build raises ``UnknownConditionError`` before any store is written, instead of storing it
+with the CONTROL environment.
 
 Resolver (stub genome from the synthetic file plus the alias ``YPL998W`` and ``RETIRED``
 both pointing at ``YZZ000W``, which is not a genome ID): ``yal012w`` -> YAL012W,
@@ -38,7 +40,6 @@ with ``load_dotenv`` stubbed and ``SCerevisiaeGenome`` a recorder returning the 
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import os
 from pathlib import Path
@@ -65,10 +66,9 @@ from torchcell.datamodels.schema import MarkerDeletionPerturbation
 from torchcell.datasets.scerevisiae import nadal_ribelles2025 as m
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
-_BATCH_FCS = {
+_FCS = {
     "DEG_Control_bc_YAL012W.csv": _deg(["MET14", "MUP1"], [1.0, -0.5]),
     "DEG_NaCl_bc_YAL012W.csv": _deg(["MET14"], [2.0]),
-    "DEG_Heat_bc_YAL012W.csv": _deg(["MUP1"], [0.7]),
 }
 _BATCH_PTBS = {
     "control": pd.DataFrame(
@@ -82,11 +82,20 @@ _BATCH_PTBS = {
     "NaCl": pd.DataFrame(
         {
             "assignment_consensus2": ["WT", "bc-YAL012W"],
-            "batch": ["c2", "c2"],
             "cell_number": [250.0, 45.0],
             "sd_lvscore_scaledFU2": [1.05, 0.8],
         }
     ),
+}
+_PTBS = {
+    "control": pd.DataFrame(
+        {
+            "assignment_consensus2": ["bc-YAL012W", "WT"],
+            "cell_number": [60.0, 300.0],
+            "sd_lvscore_scaledFU2": [1.5, 1.0],
+        }
+    ),
+    "NaCl": _BATCH_PTBS["NaCl"],
 }
 
 
@@ -97,30 +106,45 @@ def _write(directory: Path, fcs: dict[str, Any], ptbs: dict[str, Any]) -> None:
     (directory / m.README_NAME).write_bytes(b"readme\n")
 
 
-@pytest.fixture
-def batch_dataset(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def _build(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    fcs: dict[str, Any],
+    ptbs: dict[str, Any],
 ) -> m.NadalRibellesPerturbSeq2025Dataset:
     monkeypatch.setenv("DATA_ROOT", str(tmp_path / "data_root"))
-    _write(tmp_path / "nadal" / "raw", _BATCH_FCS, _BATCH_PTBS)
+    _write(tmp_path / "nadal" / "raw", fcs, ptbs)
     return m.NadalRibellesPerturbSeq2025Dataset(
         root=str(tmp_path / "nadal"), genome=_genome()
     )
 
 
-def test_a_label_in_two_batches_stores_the_first_rows_scalars_only(
-    batch_dataset: m.NadalRibellesPerturbSeq2025Dataset,
+def test_a_label_repeated_within_a_condition_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: ``_ptb_scalars`` (nadal_ribelles2025.py line 400) takes ``iloc[0]`` when
-    a label has several ``ptbs`` rows, so a genotype profiled in two batches stores the
-    first batch's dispersion and cell count (1.5, 60) and silently drops the second (0.9,
-    40); the WT reference likewise stores 300 cells, not 500. No field of the record names
-    the batch. Given the recorded cross-batch r of 0.043, the stored scalars cannot be
-    matched back to the batch the logFC vector was pooled over. Whether the released
-    ``ptbs`` carries such repeated labels is not checked here (the mirror is off limits
-    to the suite). Pinned until repeated labels are refused or pooled explicitly.
+    """Two control rows for ``bc-YAL012W`` (batches c1, c2) and for WT: refused, naming
+    the condition and both normalized labels, before any store is written; the first
+    row's scalars are no longer stored silently.
     """
-    assert batch_dataset[0]["experiment"] == _experiment(
+    with pytest.raises(m.RepeatedPtbsLabelError) as err:
+        _build(tmp_path, monkeypatch, _FCS, _BATCH_PTBS)
+    assert str(err.value) == (
+        "ptbs condition 'control' lists genotype label(s) ['WT', 'bc_YAL012W'] on more "
+        "than one row; one record takes one row's dispersion and n_cells, refusing to "
+        "keep the first"
+    )
+    assert list((tmp_path / "nadal" / "processed").iterdir()) == []
+
+
+def test_ptbs_lookup_is_by_label_not_row_position(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Control stores its one row (1.5, 60) and WT (1.0, 300); NaCl lists WT first, the
+    mutant still gets its own row (0.8, 45) and the reference the WT row (1.05, 250).
+    """
+    dataset = _build(tmp_path, monkeypatch, _FCS, _PTBS)
+    assert len(dataset) == 2
+    assert dataset[0]["experiment"] == _experiment(
         "YAL012W",
         "CYS3",
         "bc_YAL012W",
@@ -129,47 +153,29 @@ def test_a_label_in_two_batches_stores_the_first_rows_scalars_only(
         1.5,
         60,
     )
-    assert batch_dataset[0]["reference"] == _reference(
+    assert dataset[0]["reference"] == _reference(
         _CONTROL, ["YKL001C", "YGR055W"], 1.0, 300
     )
-
-
-def test_ptbs_lookup_is_by_label_not_row_position(
-    batch_dataset: m.NadalRibellesPerturbSeq2025Dataset,
-) -> None:
-    """NaCl lists WT first; the mutant still gets its own row (0.8, 45) and the reference
-    the WT row (1.05, 250).
-    """
-    assert batch_dataset[1]["experiment"] == _experiment(
+    assert dataset[1]["experiment"] == _experiment(
         "YAL012W", "CYS3", "bc_YAL012W", _NACL, {"YKL001C": 2.0}, 0.8, 45
     )
-    assert batch_dataset[1]["reference"] == _reference(_NACL, ["YKL001C"], 1.05, 250)
+    assert dataset[1]["reference"] == _reference(_NACL, ["YKL001C"], 1.05, 250)
 
 
-def test_an_unknown_condition_is_stored_with_the_control_environment(
-    batch_dataset: m.NadalRibellesPerturbSeq2025Dataset,
+def test_an_unknown_condition_is_refused_before_any_store(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: ``_environment`` (lines 430-445) returns the base YPD environment for any
-    condition other than ``nacl``, so a ``Heat`` table is stored as a third condition
-    whose experiment and reference carry the CONTROL environment, with no scalars (there
-    is no ``heat`` table in ``ptbs``). Pinned until an unknown condition is refused.
+    """A ``Heat`` table is refused with ``UnknownConditionError`` instead of being stored
+    under the control environment; nothing is written to ``processed/``.
     """
-    assert len(batch_dataset) == 3
-    assert batch_dataset[2]["experiment"] == _experiment(
-        "YAL012W", "CYS3", "bc_YAL012W", _CONTROL, {"YGR055W": 0.7}, None, None
+    fcs = {**_FCS, "DEG_Heat_bc_YAL012W.csv": _deg(["MUP1"], [0.7])}
+    with pytest.raises(m.UnknownConditionError) as err:
+        _build(tmp_path, monkeypatch, fcs, _PTBS)
+    assert str(err.value) == (
+        "condition 'heat' is neither of the profiled conditions ['control', 'nacl']; "
+        "refusing to store it with the control environment"
     )
-    heat_reference = batch_dataset[2]["reference"]
-    assert heat_reference["environment_reference"] == _CONTROL.model_dump()
-    assert heat_reference["phenotype_reference"]["expression_log2_ratio"] == {
-        "YGR055W": 0.0
-    }
-    assert (
-        heat_reference["phenotype_reference"]["dispersion"],
-        heat_reference["phenotype_reference"]["n_cells"],
-    ) == (None, None)
-    index_path = Path(batch_dataset.preprocess_dir) / "experiment_reference_index.json"
-    index = json.loads(index_path.read_text())
-    assert [entry["member_indices"] for entry in index] == [[0], [1], [2]]
+    assert list((tmp_path / "nadal" / "processed").iterdir()) == []
 
 
 class _AliasGenome(_StubGenome):

@@ -15,3 +15,7 @@ Findings: the sha256 pin is checked only inside `download` (lines 595-622) and a
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Finding retired: `test_a_failed_sha256_check_leaves_bytes_the_next_build_uses_unverified` and `test_deposit_refuses_a_source_off_the_pin_after_creating_the_mirror_dir` (#524) are now `test_a_failed_sha256_check_leaves_nothing_in_raw_and_every_retry_refuses` and `test_deposit_refuses_a_source_off_the_pin_before_creating_the_mirror_dir`; `test_download_called_on_an_existing_raw_file_hashes_it_in_place` became the build-time refusal test. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.10.01 - Fix PR for the pinned findings
+
+Retired the blank-name, repeated-row and AMBIGUOUS-candidate findings (issue #524). The fixture sheet is now seven rows (6 records); the blank and repeated rows are added only in the refusal tests, which assert `BlankSystematicNameError` and `RepeatedStrainRowError` with exact messages and no store or drop log. The drop log asserts `candidates` on every entry.

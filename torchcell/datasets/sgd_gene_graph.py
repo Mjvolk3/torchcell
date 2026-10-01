@@ -15,6 +15,22 @@ from torch_geometric.data import Data
 from torchcell.data.embedding import BaseEmbeddingDataset
 
 
+class ConstantFeatureError(ValueError):
+    """A feature has one value on every gene, so min-max normalization is undefined."""
+
+
+def _refuse_constant_features(feature_min_max: dict[str, tuple[float, float]]) -> None:
+    """Raise ``ConstantFeatureError`` naming every feature whose min equals its max."""
+    constant = {
+        feature: low for feature, (low, high) in feature_min_max.items() if low == high
+    }
+    if constant:
+        raise ConstantFeatureError(
+            f"features {constant} take one value on every gene; min-max "
+            "normalization would divide 0 by 0, refusing to store NaN"
+        )
+
+
 class GraphEmbeddingDataset(BaseEmbeddingDataset):
     """Node-feature embeddings derived from an SGD gene graph.
 
@@ -59,10 +75,18 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
         return [f"{self.model_name}.pt", "categorical_features.pt"]
 
     def process(self) -> None:
-        """Build node feature tensors and save them with categorical metadata."""
+        """Build node feature tensors and save them with categorical metadata.
+
+        A feature that is None is filled with that feature's median; a value of 0 is a
+        value and is kept. Chromosome and pathway indices are positions in the SORTED
+        vocabulary of every value in the graph, so one category maps to one index and
+        the indices do not depend on ``PYTHONHASHSEED``. Min-max normalization refuses
+        a constant feature (``ConstantFeatureError``) rather than storing 0 / 0 = NaN.
+        On the cached SGD ``G_gene`` (6,607 genes) no feature has a 0 and none is
+        constant (issue #518), so only the categorical indices differ from the old
+        builds, and no consumer reads them.
+        """
         data_list = []
-        unique_chromosomes = set()
-        unique_pathways: set[Any] = set()
 
         normalize_data = self.MODEL_TO_WINDOW[cast(str, self.model_name)]
 
@@ -97,42 +121,37 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
             )
             for feature, values in feature_values.items()
         }
+        if normalize_data:
+            _refuse_constant_features(feature_min_max)
+
+        chromosome_vocab = sorted(
+            {node_data["chromosome"] for _, node_data in self.graph.nodes(data=True)}
+        )
+        pathway_vocab = sorted(
+            {
+                pathway
+                for _, node_data in self.graph.nodes(data=True)
+                for pathway in (node_data["pathways"] or [])
+            }
+        )
+        chromosome_to_index = {c: i for i, c in enumerate(chromosome_vocab)}
+        pathway_to_index = {p: i for i, p in enumerate(pathway_vocab)}
 
         for node_id, node_data in self.graph.nodes(data=True):
-            # Extract node features
-            length = node_data["length"] or feature_medians["length"]
-            molecular_weight = (
-                node_data["molecular_weight"] or feature_medians["molecular_weight"]
-            )
-            pi = node_data["pi"] or feature_medians["pi"]
-            median_value = node_data["median_value"] or feature_medians["median_value"]
-            median_abs_dev_value = (
-                node_data["median_abs_dev_value"]
-                or feature_medians["median_abs_dev_value"]
-            )
-            start = node_data["start"] or feature_medians["start"]
-            end = node_data["end"] or feature_medians["end"]
+            # Extract node features; only a missing (None) value takes the median
+            values = [
+                node_data[feature]
+                if node_data[feature] is not None
+                else feature_medians[feature]
+                for feature in feature_values
+            ]
             chromosome = node_data["chromosome"]
             pathways = (
                 node_data["pathways"] if node_data["pathways"] is not None else []
             )
 
-            unique_chromosomes.add(chromosome)
-            unique_pathways.update(pathways)
-
             # Create node feature vector
-            node_features = torch.tensor(
-                [
-                    length,
-                    molecular_weight,
-                    pi,
-                    median_value,
-                    median_abs_dev_value,
-                    start,
-                    end,
-                ],
-                dtype=torch.float,
-            )
+            node_features = torch.tensor(values, dtype=torch.float)
 
             if normalize_data:
                 # Min-max scaling for each feature type
@@ -144,12 +163,11 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
 
             # Get indices for categorical variables
             chromosome_index = torch.tensor(
-                list(unique_chromosomes).index(chromosome), dtype=torch.long
+                chromosome_to_index[chromosome], dtype=torch.long
             )
 
             pathways_indices = torch.tensor(
-                [list(unique_pathways).index(pathway) for pathway in pathways],
-                dtype=torch.long,
+                [pathway_to_index[pathway] for pathway in pathways], dtype=torch.long
             )
 
             # Create Data object
@@ -162,11 +180,11 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
         # Update the categorical_features dictionary with the number of unique values
         if "chromosome" not in self.categorical_features:
             self.categorical_features["chromosome"] = {}
-        self.categorical_features["chromosome"]["num_values"] = len(unique_chromosomes)
+        self.categorical_features["chromosome"]["num_values"] = len(chromosome_vocab)
 
         if "pathways" not in self.categorical_features:
             self.categorical_features["pathways"] = {}
-        self.categorical_features["pathways"]["num_values"] = len(unique_pathways)
+        self.categorical_features["pathways"]["num_values"] = len(pathway_vocab)
 
         if self.pre_transform is not None:
             data_list = [self.pre_transform(data) for data in data_list]

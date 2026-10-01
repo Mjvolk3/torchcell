@@ -15,3 +15,7 @@ Findings: a feature value of 0 is treated as missing and replaced by the median 
 ## 2026.09.30 - Message spacing (issue #543)
 
 The invalid-name test asserts the spaced base message.
+
+## 2026.10.01 - Fix PR for the pinned findings
+
+Retired the 0-as-missing, growing-set index and constant-feature NaN findings (issue #518). YBR001C's pI 0 is now stored as 0; indices are sorted-vocabulary positions ([1, 0, 1]); a subprocess test builds a string-keyed graph under PYTHONHASHSEED 1 and 2 and asserts identical, exact indices; one gene normalized raises `ConstantFeatureError` while one gene unnormalized builds.

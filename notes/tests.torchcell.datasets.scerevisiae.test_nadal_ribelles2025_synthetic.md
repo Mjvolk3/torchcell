@@ -13,3 +13,7 @@ Seven tests; the `rdata` package the loader reads with also writes (`rdata.write
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.10.01 - Fix PR for the pinned findings
+
+The control `ptbs` table no longer repeats `bc-YBR020W-1` (repeats are now refused, issue #541); the normalized index has three labels.

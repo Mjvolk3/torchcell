@@ -135,6 +135,18 @@ _SYSTEMATIC_RE = re.compile(
 _REPLACEMENT_RE = re.compile(r"^(.+?)-\d+$")  # base-<digits> replacement-strain label
 
 
+#: The two conditions the paper profiled; ``fcs`` keys and ``ptbs`` names, lower-cased.
+CONDITIONS = ("control", "nacl")
+
+
+class RepeatedPtbsLabelError(ValueError):
+    """A ``ptbs`` condition table lists one genotype label on more than one row."""
+
+
+class UnknownConditionError(ValueError):
+    """A table names a condition other than the paper's control and 0.4 M NaCl."""
+
+
 def _sha256(path: str, chunk_size: int = 1 << 20) -> str:
     """Return the hex sha256 of a file, read in chunks."""
     digest = hashlib.sha256()
@@ -265,6 +277,12 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
 
         The genotype label ``assignment_consensus2`` uses a hyphen (``bc-YAL012W``); it is
         normalized to the fcs underscore form (``bc_YAL012W``). ``WT`` is left as-is.
+
+        A label on two rows of one condition raises ``RepeatedPtbsLabelError``: a record
+        takes ONE row's dispersion and cell count, and the table carries no batch column
+        that would say which row belongs to the logFC vector. The released
+        ``ptb_summary.Rdata`` (sha256 ``01c2d54a...``) repeats no label in either
+        condition (control 3,207 rows, nacl 3,204; issue #541).
         """
         import rdata
 
@@ -278,6 +296,13 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
                 label.replace("bc-", "bc_", 1) if label.startswith("bc-") else label
                 for label in labels
             ]
+            repeated = sorted(set(df["_geno"][df["_geno"].duplicated()]))
+            if repeated:
+                raise RepeatedPtbsLabelError(
+                    f"ptbs condition {str(cond)!r} lists genotype label(s) {repeated} "
+                    "on more than one row; one record takes one row's dispersion and "
+                    "n_cells, refusing to keep the first"
+                )
             out[str(cond)] = df.set_index("_geno")
         return out
 
@@ -397,8 +422,7 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
         """Return (dispersion=sd_lvscore_scaledFU2, n_cells=cell_number) for a strain."""
         if ptb is None or strain_label not in ptb.index:
             return None, None
-        rowobj = ptb.loc[strain_label]
-        row = rowobj.iloc[0] if isinstance(rowobj, pd.DataFrame) else rowobj
+        row = ptb.loc[strain_label]  # one row: _load_ptbs refuses a repeated label
         dispersion = float(row["sd_lvscore_scaledFU2"])
         n_cells = int(round(float(row["cell_number"])))
         return dispersion, n_cells
@@ -425,7 +449,17 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
 
     @staticmethod
     def _environment(cond: str) -> Environment:
-        """Base YPD (control) or YPD + 0.4 M NaCl for 15 min (osmostress)."""
+        """Base YPD (control) or YPD + 0.4 M NaCl for 15 min (osmostress).
+
+        Any other condition raises ``UnknownConditionError`` rather than being stored
+        with the control environment. The released ``FC_genotype.Rdata`` keys name only
+        ``Control`` and ``NaCl`` (issue #541).
+        """
+        if cond not in CONDITIONS:
+            raise UnknownConditionError(
+                f"condition {cond!r} is neither of the profiled conditions "
+                f"{list(CONDITIONS)}; refusing to store it with the control environment"
+            )
         media = Media(name="YPD", state="liquid", is_synthetic=False)
         temperature = Temperature(value=GROWTH_TEMP_C)
         if cond == "nacl":

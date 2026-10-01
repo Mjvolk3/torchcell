@@ -216,6 +216,52 @@ def test_sgd_genes_add_l4_results_and_min_containment_is_forwarded() -> None:
     assert _result(relaxed, "gene_containment_sgd").message.endswith("(>= 0.5)")
 
 
+@pytest.mark.parametrize(
+    "records",
+    [
+        [
+            _record([], f, temperature=t)
+            for f, t in ((0.9, 26.0), (1.0, 30.0), (0.7, 37.0))
+        ],
+        [_record([], 1.0)],
+    ],
+    ids=["three-temperatures", "one-wild-type"],
+)
+def test_a_dataset_with_no_gene_perturbations_fails_for_no_measured_genes(
+    records: list[dict[str, Any]],
+) -> None:
+    """With ``sgd_genes`` given and no record carrying a gene perturbation, the report
+    fails on ``measured_genes_present`` alone (issue #541 review).
+
+    Both containment results pass vacuously and say the set is empty; the failing row
+    names the true reason instead of a 0.000 overlap. Every other rule passes, so
+    without that row the report would pass with nothing measured.
+    """
+    report = _verify(records, sgd_genes={"YAL001C"})
+    assert [r.name for r in report.results][-3:] == [
+        "measured_genes_present",
+        "gene_containment_sgd",
+        "current_genome_genes",
+    ]
+    assert [r.name for r in report.results if not r.passed] == [
+        "measured_genes_present"
+    ]
+    assert report.passed is False
+    assert _result(report, "measured_genes_present").message == (
+        f"no measured genes: none of the {len(records)} records carries a gene "
+        "perturbation outside the background genes, so the SGD gene rules have "
+        "nothing to check"
+    )
+    assert _result(report, "gene_containment_sgd").message == (
+        "no measured genes (the measured gene set is empty); containment holds "
+        "vacuously"
+    )
+    assert _result(report, "current_genome_genes").message == (
+        "no measured genes (the measured gene set is empty); genome membership holds "
+        "vacuously"
+    )
+
+
 def test_resolver_is_forwarded_to_the_canonical_name_rule() -> None:
     report = _verify(_good_records(), resolve_gene_name=_retiring_resolver)
     names = _result(report, "canonical_gene_names")

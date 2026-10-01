@@ -15,3 +15,7 @@ Finding: with `sgd_genes` given and no gene perturbations, overlap is 0.0, so `g
 ## 2026.10.01 - Findings retired (issue #541)
 
 The empty-gene-set Finding is retired: `test_gene_containment_passes_a_dataset_with_no_genes_vacuously` asserts both L4 results pass at `min_containment=1.0`, the exact empty-set message and details (overlap 1.0). The uncertainty messages now assert "labeled".
+
+## 2026.10.01 - Review: measured_genes_present
+
+The empty-set test now asserts the failing `measured_genes_present` row (exact message and details) ahead of the two vacuous passes; a background-only record gives the same L4 group.

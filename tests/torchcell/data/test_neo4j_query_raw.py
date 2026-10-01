@@ -666,3 +666,80 @@ def test_a_query_with_no_records_writes_no_store_and_a_retry_reruns_the_query(
     assert len(raw) == 2
     assert raw[0:2] == [RECORDS[0], RECORDS[2]]
     raw.close_lmdb()
+
+
+def test_a_query_that_fails_midway_leaves_no_store_and_a_retry_rebuilds_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A query that yields one record then raises leaves no store at the target.
+
+    Contract (issue #541 review): the store is written in ``raw/lmdb.partial`` and moved
+    into place only when complete, so after the ``ConnectionError`` the target
+    ``raw/lmdb`` is empty, the staging directory is gone, and no index or gene set was
+    written. A retry on the same root runs the whole query again and stores all three
+    records (before the fix it found a one-record ``data.mdb``, ran no query and
+    reported ``len`` 1 of 3).
+    """
+    rows = [_property_shape(record) for record in RECORDS]
+    calls: list[str] = []
+
+    def failing(self: Neo4jQueryRaw) -> Iterator[dict[str, Any]]:
+        calls.append("failing")
+        yield rows[0]
+        raise ConnectionError("connection reset after one record")
+
+    def complete(self: Neo4jQueryRaw) -> Iterator[dict[str, Any]]:
+        calls.append("complete")
+        yield from rows
+
+    monkeypatch.setattr(Neo4jQueryRaw, "fetch_data", failing)
+    with pytest.raises(ConnectionError, match=r"^connection reset after one record$"):
+        Neo4jQueryRaw(
+            uri=URI, username="u", password="p", root_dir=str(tmp_path), query=QUERY
+        )
+    raw_dir = tmp_path / "raw"
+    assert sorted(p.name for p in raw_dir.iterdir()) == ["lmdb"]
+    assert list((raw_dir / "lmdb").iterdir()) == []
+
+    monkeypatch.setattr(Neo4jQueryRaw, "fetch_data", complete)
+    raw = Neo4jQueryRaw(
+        uri=URI, username="u", password="p", root_dir=str(tmp_path), query=QUERY
+    )
+    assert calls == ["failing", "complete"]
+    assert len(raw) == 3
+    assert raw[0:3] == RECORDS
+    assert sorted(p.name for p in raw_dir.iterdir()) == [
+        "experiment_reference_index.json",
+        "gene_set.json",
+        "lmdb",
+    ]
+    raw.close_lmdb()
+
+
+def test_a_leftover_staging_store_is_refused_before_the_query_runs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A ``raw/lmdb.partial`` left by a killed build is refused by name, never reused.
+
+    The query is not run, and the leftover directory and its contents stay as found.
+    """
+    staging = tmp_path / "raw" / "lmdb.partial"
+    staging.mkdir(parents=True)
+    (staging / "data.mdb").write_bytes(b"partial")
+    calls: list[str] = []
+
+    def fetch(self: Neo4jQueryRaw) -> Iterator[dict[str, Any]]:
+        calls.append("fetch")
+        yield from []
+
+    monkeypatch.setattr(Neo4jQueryRaw, "fetch_data", fetch)
+    with pytest.raises(neo4j_query_raw.StaleStagingStoreError) as excinfo:
+        Neo4jQueryRaw(
+            uri=URI, username="u", password="p", root_dir=str(tmp_path), query=QUERY
+        )
+    assert str(excinfo.value) == (
+        f"{tmp_path / 'raw' / 'lmdb'}.partial is left from an interrupted build and "
+        "may hold a partial store; inspect and remove it, then construct again"
+    )
+    assert calls == []
+    assert (staging / "data.mdb").read_bytes() == b"partial"

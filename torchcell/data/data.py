@@ -23,6 +23,20 @@ class DuplicateReferenceError(ValueError):
     """
 
 
+def reference_key(reference: Any) -> str:
+    """The value key two references share exactly when they are the same reference.
+
+    The class name plus the key-sorted JSON dump (``model_dump(mode="json")``). This is
+    deliberately not ``==``: a reference carrying a NaN dumps to the same key as a
+    separately built copy of itself, while ``==`` calls the two unequal because
+    ``nan != nan``. ``ReferenceIndex`` refuses equal keys and
+    ``ExperimentReferenceIndex.combine`` merges on them, so the refusal's remedy works.
+    """
+    return type(reference).__name__ + json.dumps(
+        reference.model_dump(mode="json"), sort_keys=True
+    )
+
+
 class ExperimentReferenceIndex(ModelStrict):
     """A reference paired with the sorted record indices of the experiments using it.
 
@@ -79,8 +93,12 @@ class ExperimentReferenceIndex(ModelStrict):
 
     # Use for parallel computation of a Dataset ExperimentReferenceIndices
     def combine(self, other: "ExperimentReferenceIndex") -> "ExperimentReferenceIndex":
-        """Return a new index UNION-ing two member-index sets that share a reference."""
-        if self.reference != other.reference:
+        """Return a new index UNION-ing two member-index sets that share a reference.
+
+        References match by ``reference_key``, the same key ``ReferenceIndex`` refuses
+        duplicates on.
+        """
+        if reference_key(self.reference) != reference_key(other.reference):
             raise ValueError(
                 "Cannot combine ExperimentReferenceIndex objects with different references"
             )
@@ -123,8 +141,9 @@ class ReferenceIndex(ModelStrict):
         """Check the member-index sets partition ``range(N)`` exactly (cover once, no gap)
         and that no reference appears in two entries (``DuplicateReferenceError``).
 
-        References are compared by value: the class name plus the key-sorted JSON dump, so
-        two separately built equal references collide as ``==`` says they are equal.
+        References are compared by ``reference_key`` (class name plus key-sorted JSON
+        dump), not by ``==``: a NaN-bearing reference and its separately built copy are
+        refused although ``==`` calls them unequal, and ``combine`` merges them.
         """
         all_indices = [i for eri in v for i in eri.member_indices]
         if sorted(all_indices) != list(range(len(all_indices))):
@@ -134,9 +153,7 @@ class ReferenceIndex(ModelStrict):
             )
         first_entry: dict[str, int] = {}
         for position, eri in enumerate(v):
-            key = type(eri.reference).__name__ + json.dumps(
-                eri.reference.model_dump(mode="json"), sort_keys=True
-            )
+            key = reference_key(eri.reference)
             if key in first_entry:
                 raise DuplicateReferenceError(
                     f"entries {first_entry[key]} and {position} carry equal references; "

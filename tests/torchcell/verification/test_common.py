@@ -710,16 +710,32 @@ def test_gene_containment_passes_when_every_gene_is_on_the_genome() -> None:
     )
 
 
-def test_gene_containment_passes_a_dataset_with_no_genes_vacuously() -> None:
-    """With ``sgd_genes`` given and no gene perturbations, both L4 results pass.
+def test_gene_containment_with_no_genes_fails_on_measured_genes_present() -> None:
+    """With ``sgd_genes`` given and no gene perturbations, both containment results
+    pass vacuously and a failing ``measured_genes_present`` result states why.
 
-    Contract (issue #541): the empty measured set is vacuously contained, the same
-    verdict ``current_genome_genes`` gives it, and the containment message names the
-    empty set instead of printing "0.000 of 0". ``overlap`` is 1.0 so the floor holds at
-    any ``min_containment`` up to 1.
+    Contract (issue #541 and its review): the empty measured set is vacuously
+    contained and on the genome (each message names the empty set, ``overlap`` 1.0 so
+    the floor holds at any ``min_containment`` up to 1), and the dataset fails because
+    it measures no gene, not because of a fabricated 0.000 overlap.
     """
-    results = _run([_record()], sgd_genes={"YA"}, min_containment=1.0)
-    containment = results["gene_containment_sgd"]
+    rules = SharedRecordRules(sgd_genes={"YA"}, min_containment=1.0)
+    rules.add_all([_record(), _record()])
+    results = rules.results()
+    assert [r.name for r in results][6:] == [
+        "measured_genes_present",
+        "gene_containment_sgd",
+        "current_genome_genes",
+    ]
+    by_name = _by_name(results)
+    absent = by_name["measured_genes_present"]
+    assert (absent.level, absent.passed) == (Level.L4, False)
+    assert absent.message == (
+        "no measured genes: none of the 2 records carries a gene perturbation outside "
+        "the background genes, so the SGD gene rules have nothing to check"
+    )
+    assert absent.details == {"n_records": 2, "n_measured": 0}
+    containment = by_name["gene_containment_sgd"]
     assert containment.passed is True
     assert containment.message == (
         "no measured genes (the measured gene set is empty); containment holds "
@@ -731,11 +747,27 @@ def test_gene_containment_passes_a_dataset_with_no_genes_vacuously() -> None:
         "overlap": 1.0,
         "missing_examples": [],
     }
-    off = results["current_genome_genes"]
+    off = by_name["current_genome_genes"]
     assert off.passed is True
     assert off.message == (
-        "every one of the 0 measured systematic names is a gene of the current genome"
+        "no measured genes (the measured gene set is empty); genome membership holds "
+        "vacuously"
     )
+
+
+def test_background_only_genes_count_as_no_measured_genes() -> None:
+    """A record whose only perturbation is a background gene measures nothing.
+
+    The fixture's free-text medium also fails ``media_membership``; the L4 group is
+    the failing ``measured_genes_present`` plus the two vacuous passes.
+    """
+    rules = SharedRecordRules(background_genes=frozenset({"YBG"}), sgd_genes={"YBG"})
+    rules.add(_record(perturbations=[_deletion("YBG", "BG1")]))
+    assert [(r.name, r.passed) for r in rules.results()][6:] == [
+        ("measured_genes_present", False),
+        ("gene_containment_sgd", True),
+        ("current_genome_genes", True),
+    ]
 
 
 def test_results_order_and_levels_with_and_without_sgd_genes() -> None:
@@ -750,8 +782,8 @@ def test_results_order_and_levels_with_and_without_sgd_genes() -> None:
         ("media_compound_identity", Level.L3),
         ("media_membership", Level.L3),
     ]
-    with_sgd = SharedRecordRules(sgd_genes=set())
-    with_sgd.add(_record())
+    with_sgd = SharedRecordRules(sgd_genes={"YA"})
+    with_sgd.add(_record(perturbations=[_deletion("YA", None)]))
     assert [r.name for r in with_sgd.results()][6:] == [
         "gene_containment_sgd",
         "current_genome_genes",

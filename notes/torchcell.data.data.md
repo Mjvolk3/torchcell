@@ -20,3 +20,7 @@ Notation: $\mathcal{N}$ is the set of nodes, $\mathcal{E}$ is the set of edges, 
 ## 2026.10.01 - ReferenceIndex refuses equal references
 
 `ReferenceIndex.validate_data` checked only that member indices partition `range(N)`, so two entries with equal references were accepted. It now raises `DuplicateReferenceError` (a `ValueError`, wrapped by pydantic) naming both entry positions and pointing at `ExperimentReferenceIndex.combine`. References compare by class name plus key-sorted JSON dump. Before the change, 38 built dev stores under `$DATA_ROOT/data/torchcell/` (every current `preprocess/experiment_reference_index.json` under 2 MB, plus the `neo4j_query_test` and `showcase_essentiality_smf` raw indices) were read with a one-off script: none holds two entries with equal references. `ReferenceIndex` is also instantiated nowhere in `torchcell/`. Issue #541; test `test_reference_index_refuses_one_reference_split_over_two_entries`.
+
+## 2026.10.01 - Review fix: one reference key
+
+The key is now `reference_key` (class name plus key-sorted JSON dump), used by both the `ReferenceIndex` refusal and `ExperimentReferenceIndex.combine`. Two separately built NaN-bearing references are unequal under `==` but share the key, so they are refused together and `combine` (the remedy the refusal names) merges them. Test: `test_nan_bearing_references_are_refused_together_and_combine_merges_them`.

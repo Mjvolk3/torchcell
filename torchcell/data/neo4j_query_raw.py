@@ -10,6 +10,7 @@ import logging
 import multiprocessing as mp
 import os
 import os.path as osp
+import shutil
 from collections.abc import Iterator, Sequence
 from concurrent.futures import ProcessPoolExecutor
 from itertools import chain
@@ -29,6 +30,15 @@ from torchcell.sequence import GeneSet
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+
+class StaleStagingStoreError(RuntimeError):
+    """A staging store from an interrupted build sits beside the target store.
+
+    A build that was killed outright (no Python cleanup ran) leaves ``raw/lmdb.partial``
+    behind. It may hold any prefix of the query, so it is never reused or silently
+    replaced: the caller inspects it and removes it before the query runs again.
+    """
 
 
 class EmptyQueryResultError(ValueError):
@@ -226,10 +236,22 @@ class Neo4jQueryRaw:
     def process(self) -> None:
         """Stream query results into LMDB and build the reference and gene-set indices.
 
-        The first record is read before the store is opened for writing: a query that
-        returns none raises ``EmptyQueryResultError`` with no ``data.mdb`` on disk, so a
-        retry on the same root runs the query again.
+        The store is written in a staging directory beside the target
+        (``raw/lmdb.partial``) and moved into place with ``os.replace`` only once every
+        record is written and the environment is closed, so the target never holds a
+        partial store that a later construction would reuse without querying. A query
+        that returns no records raises ``EmptyQueryResultError`` before any store
+        exists. A failure while writing closes the environment, removes the staging
+        directory this call created, and re-raises; a staging directory found at the
+        start (left by a build that was killed outright) raises
+        ``StaleStagingStoreError`` before the query runs.
         """
+        staging_dir = self.lmdb_dir + ".partial"
+        if osp.exists(staging_dir):
+            raise StaleStagingStoreError(
+                f"{staging_dir} is left from an interrupted build and may hold a "
+                "partial store; inspect and remove it, then construct again"
+            )
         log.info("Processing data...")
         records = self.fetch_data()
         first = next(records, None)
@@ -238,9 +260,29 @@ class Neo4jQueryRaw:
                 f"the query returned no records; no store was written at "
                 f"{self.lmdb_dir}. Query: {self.query}"
             )
-        self._init_lmdb(readonly=False)
+        final_dir = self.lmdb_dir
+        os.makedirs(staging_dir)
+        self.lmdb_dir = staging_dir
+        try:
+            self._init_lmdb(readonly=False)
+            n_records = self._write_records(chain([first], records))
+            self.close_lmdb()
+        except BaseException:
+            self.close_lmdb()
+            shutil.rmtree(staging_dir)
+            raise
+        finally:
+            self.lmdb_dir = final_dir
+        os.replace(staging_dir, final_dir)
+        log.info(f"Total records processed: {n_records}")
+
+        self.experiment_reference_index
+        self.gene_set = self.compute_gene_set()
+
+    def _write_records(self, records: Iterator[Any]) -> int:
+        """Write each query record as ``data_<i>``; return the number written."""
         i = -1
-        for i, record in tqdm(enumerate(chain([first], records))):
+        for i, record in tqdm(enumerate(records)):
             # Two record shapes, by what the query RETURNs. Property shape
             # (e_serialized/ref_serialized strings) is REQUIRED at scale: returning
             # whole nodes makes the driver register every hydrated Node in the
@@ -295,10 +337,7 @@ class Neo4jQueryRaw:
             # if (i + 1) % log_batch_size == 0:
             #     log.info(f"Processed {i + 1} records")
 
-        log.info(f"Total records processed: {i + 1}")
-
-        self.experiment_reference_index
-        self.gene_set = self.compute_gene_set()
+        return i + 1
 
     def __getitem__(self, index: int | slice | list[int]) -> Any:
         """Return the record(s) for an int, slice, or list of indices."""

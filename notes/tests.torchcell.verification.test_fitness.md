@@ -13,3 +13,7 @@ created: 1790648019653
 ## 2026.10.01 - American spelling (issue #541)
 
 The `uncertainty_sanity` messages are asserted with "labeled".
+
+## 2026.10.01 - Review: no gene perturbations fail the report
+
+`test_a_dataset_with_no_gene_perturbations_fails_for_no_measured_genes` runs `verify_fitness_dataset` on three wild-type records at three temperatures and on one wild-type record: `measured_genes_present` is the only failing result and `report.passed` is False.

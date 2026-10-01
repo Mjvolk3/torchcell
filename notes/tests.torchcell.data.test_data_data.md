@@ -15,3 +15,7 @@ Finding: `ReferenceIndex` accepts two entries with equal references because the 
 ## 2026.10.01 - Equal references refused (issue #541)
 
 The split-reference Finding is retired: `test_reference_index_refuses_one_reference_split_over_two_entries` asserts the exact pydantic message naming entries 0 and 2 and that the wrapped error is `DuplicateReferenceError`.
+
+## 2026.10.01 - Review: NaN-bearing references
+
+Two separately built references with a NaN fitness are refused together by `ReferenceIndex` and merged by `combine`.

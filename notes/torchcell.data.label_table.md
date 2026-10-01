@@ -24,3 +24,7 @@ the 029 closure recompute was limited to.
 
 The function returns None when the roles are ambiguous rather than guessing, which is the honest
 answer for a record whose source never named its strains.
+
+## 2026.10.01 - Experiment types come from label_policy (issue #527)
+
+`entries_of_record` read any experiment type without "interaction" in its name as fitness. It now calls `label_policy.label_of_experiment_type`, which maps "fitness" and "gene interaction" and refuses any other type. The 029 build stores exactly those two types and the 034 showcase build only "fitness", so no table built from them changes; a seeded 45k-record sample of the 029 and 030 LMDBs parses without a refusal. Test: `test_entries_of_record_refuses_an_experiment_type_no_policy_ranks` in [[tests.torchcell.data.test_label_table]].

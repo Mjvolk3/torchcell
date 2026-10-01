@@ -35,6 +35,7 @@ from pydantic import BaseModel
 from torchcell.data.label_policy import (
     LabelEntry,
     LabelPolicy,
+    label_of_experiment_type,
     source_key,
     strain_token,
 )
@@ -122,13 +123,13 @@ def entries_of_record(raw: bytes) -> list[LabelEntry]:
     A stored record is a JSON list of ``{"experiment": ..., "experiment_reference": ...}``.
     A perturbation carries ``strain_id`` when the source reported one; when every
     perturbation of the entry shares it, that is the strain the entry measured, which is
-    what a triple matches its doubles on.
+    what a triple matches its doubles on. An experiment type other than fitness or gene
+    interaction is refused by ``label_of_experiment_type`` rather than read as fitness.
     """
     out: list[LabelEntry] = []
     for item in json.loads(raw):
         e = item["experiment"]
-        raw_type = e["experiment_type"]
-        label = "gene_interaction" if "interaction" in raw_type else "fitness"
+        label = label_of_experiment_type(e["experiment_type"])
         ph = e["phenotype"]
         value = _finite(
             ph.get("fitness") if label == "fitness" else ph.get("gene_interaction")

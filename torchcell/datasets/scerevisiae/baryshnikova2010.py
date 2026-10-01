@@ -105,7 +105,12 @@ from typing import Any
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    link_verified,
+    post_process,
+    verify_raw_files,
+)
 from torchcell.datamodels.media import SGA_DM_SELECTION
 from torchcell.datamodels.schema import (
     Environment,
@@ -608,17 +613,12 @@ class SmfBaryshnikova2010Dataset(ExperimentDataset):
         if not src.exists():
             raise RuntimeError(f"required raw artifact missing from mirror: {src}")
         expected = manifest_sha256(manifest, XLS_REL)
-        got = _sha256(src)
-        if got != expected:
-            raise RuntimeError(
-                f"{XLS_NAME} sha256 mismatch: got {got}, expected {expected}"
-            )
         os.makedirs(self.raw_dir, exist_ok=True)
-        dest = osp.join(self.raw_dir, XLS_NAME)
-        if not osp.exists(dest):
-            os.symlink(src, dest)
+        link_verified(src, osp.join(self.raw_dir, XLS_NAME), expected)
         log.info(
-            "Baryshnikova 2010 raw file linked into %s (sha256 %s)", self.raw_dir, got
+            "Baryshnikova 2010 raw file linked into %s (sha256 %s)",
+            self.raw_dir,
+            expected,
         )
 
     def _resolver(self) -> Callable[[str], str | None]:
@@ -723,6 +723,7 @@ class SmfBaryshnikova2010Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Convert each SMF row into a fitness record; write LMDB."""
+        verify_raw_files(self.raw_dir, {XLS_NAME: XLS_SHA256})
         resolve = self._resolver()
         df = self._read_smf()
 

@@ -40,13 +40,15 @@ drop summary log line on the first fixture (2 strains, 3 reference proteins, 1 s
 ORF), a KO protein that no WT sample measured (a bare ``KeyError``, a Finding), a GFF
 line whose ninth column has no ORF token and a line with two accessions, the three
 ``download`` outcomes against a mirror under ``tmp_path`` (missing, off the pin, copied)
-and the partial-raw case, and ``main``.
+and the partial-raw case, and ``main``. The sha256 contract (issue #528, fixed):
+``download`` hashes a mirror file before copying it, and ``process`` verifies both raw
+files against their pins before reading a row, so a stale file left in ``raw/`` is
+refused at build time.
 
 Findings pinned: a numeric filename token is stored as ``perturbed_gene_name`` (issue
 #485, 156 served records); ``duration_hours`` is None although the 8 h culture is
 sourceable (issue #486); a protein a KO measured but no WT sample did raises
-``KeyError`` from ``create_experiment`` (line 360) rather than a named refusal;
-``download`` skips a raw file that is already present without hashing it (line 190).
+``KeyError`` from ``create_experiment`` (line 360) rather than a named refusal.
 """
 
 import hashlib
@@ -59,6 +61,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from torchcell.data import RawSha256MismatchError
+from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.media import SM
 from torchcell.datamodels.schema import (
     Environment,
@@ -609,12 +613,12 @@ def test_download_refuses_a_mirror_file_off_the_pin_and_copies_nothing(
     mirror = _mirror(tmp_path)
     (mirror / MATRIX_FILENAME).write_bytes(b"not the matrix")
     dataset = _bare(tmp_path / "ds")
-    with pytest.raises(RuntimeError) as excinfo:
+    with pytest.raises(RawSha256MismatchError) as excinfo:
         dataset.download()
     got = hashlib.sha256(b"not the matrix").hexdigest()
     assert str(excinfo.value) == (
-        f"Messner {MATRIX_FILENAME} sha256 mismatch: got {got}, "
-        f"expected {m.MATRIX_SHA256}"
+        f"sha256 mismatch for {mirror / MATRIX_FILENAME}: expected {m.MATRIX_SHA256}, "
+        f"observed {got}"
     )
     assert list((tmp_path / "ds" / "raw").iterdir()) == []
 
@@ -637,13 +641,16 @@ def test_download_copies_both_files_on_the_pin(
     assert (raw / METADATA_FILENAME).read_bytes() == b"metadata bytes"
 
 
-def test_download_skips_a_present_raw_file_without_hashing_it(
+def test_a_present_raw_file_off_the_pin_is_refused_at_build_time(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: a matrix already in ``raw/`` is kept as is (line 190 ``continue``) even
-    though its bytes are off the pin; only the absent metadata is fetched and verified.
-    Pinned until a present raw file is verified too.
+    """Contract (issue #528): ``download`` leaves a matrix already in ``raw/`` in place
+    and fetches only the absent metadata (verified before the copy); the build then
+    verifies both raw files in ``process`` and refuses the stale matrix with
+    ``RawSha256MismatchError`` naming it and both digests, before any store exists.
     """
+    monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     mirror = _mirror(tmp_path)
     (mirror / METADATA_FILENAME).write_bytes(b"metadata bytes")
@@ -656,6 +663,14 @@ def test_download_skips_a_present_raw_file_without_hashing_it(
     _bare(tmp_path / "ds").download()
     assert (raw / MATRIX_FILENAME).read_bytes() == b"stale unverified matrix"
     assert (raw / METADATA_FILENAME).read_bytes() == b"metadata bytes"
+    with pytest.raises(RawSha256MismatchError) as excinfo:
+        ProteomeMessner2023Dataset(root=str(tmp_path / "ds"))
+    stale = hashlib.sha256(b"stale unverified matrix").hexdigest()
+    assert str(excinfo.value) == (
+        f"sha256 mismatch for {raw / MATRIX_FILENAME}: expected {m.MATRIX_SHA256}, "
+        f"observed {stale}"
+    )
+    assert list((tmp_path / "ds" / "processed").iterdir()) == []
 
 
 def test_main_builds_from_data_root_and_prints_the_length(

@@ -35,11 +35,12 @@ import json
 import os
 import re
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import pandas as pd
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.media import YPBA, YPBM, YPBO
 from torchcell.datamodels.schema import (
     AssayType,
@@ -432,14 +433,13 @@ def test_download_refuses_changed_or_missing_mirror_bytes(
     mirror = data_root / "torchcell-raw" / s.CITATION_KEY / "data" / s.XLS_FILENAME
     mirror.write_bytes(b"changed")
     got = hashlib.sha256(b"changed").hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"msb4100051-s1.xls sha256 mismatch: got {got}, "
-            f"expected {hashlib.sha256(_XLS_BYTES).hexdigest()}"
-        ),
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         s.FattyAcidSmith2006Dataset(root=str(tmp_path / "a"), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {mirror}: expected "
+        f"{hashlib.sha256(_XLS_BYTES).hexdigest()}, observed {got}"
+    )
+    assert list((tmp_path / "a" / "raw").iterdir()) == []
     mirror.unlink()
     with pytest.raises(
         RuntimeError,
@@ -472,3 +472,26 @@ def test_deposit_refuses_bytes_that_are_not_the_pin(
         match=re.escape(f"{dest} exists with a different sha256; refusing"),
     ):
         s.deposit_raw_mirror(xls_path=tmp_path / "msb4100051-s1.xls")
+
+
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #518's sweep): with the workbook already in ``raw/`` PyG skips
+    ``download()``, so ``process()`` verifies it against ``XLS_SHA256`` first and raises
+    ``RawSha256MismatchError`` naming it and both digests before a row is read; no store
+    is written and the file is left as found.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(s, [s.XLS_FILENAME])
+    raw = staged.root / "raw" / s.XLS_FILENAME
+    with pytest.raises(RawSha256MismatchError) as err:
+        s.FattyAcidSmith2006Dataset(root=str(staged.root), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw}: expected "
+        "7048663ffa4890478724e6e371f434baccc7160e6d8250df9a777a26c6b283a4, "
+        f"observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed

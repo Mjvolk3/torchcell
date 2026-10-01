@@ -5,13 +5,15 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/dataset/experiment_dataset
 # Test file: tests/torchcell/dataset/test_experiment_dataset.py
 
+import hashlib
 import json
 import logging
 import os
 import os.path as osp
 import pickle
+import shutil
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from functools import wraps
 from pathlib import Path
 from typing import Any, cast
@@ -58,6 +60,98 @@ def _compute_reference_hash_parallel(data: dict[str, Any]) -> str:
     # Parallel processing function for computing reference hash
     reference = data["reference"]
     return compute_sha256_hash(serialize_for_hashing(reference))
+
+
+# --------------------------------------------------------------------------- #
+# Raw-file sha256 pins (provenance rule: the stored artifact plus its sha256 is
+# canonical, and every built LMDB traces to an exact, hash-pinned raw version).
+#
+# PyG skips ``download()`` whenever ``raw/`` is populated, so a pin checked only in
+# ``download()`` never sees a file that was copied or edited into ``raw/`` by hand.
+# Loaders therefore call ``verify_raw_files`` at the start of ``process()``, before
+# any record is read, and stage files into ``raw/`` (or a mirror) only through
+# ``copy_verified``/``write_verified``/``link_verified``, which hash first and never
+# leave unverified bytes at the destination.
+# --------------------------------------------------------------------------- #
+
+
+class RawSha256MismatchError(RuntimeError):
+    """A file's bytes do not match the sha256 pin its loader records."""
+
+    def __init__(self, path: str | Path, expected: str, observed: str) -> None:
+        """Record the offending file and both digests in the message."""
+        self.path = str(path)
+        self.expected = expected
+        self.observed = observed
+        super().__init__(
+            f"sha256 mismatch for {self.path}: expected {expected}, observed {observed}"
+        )
+
+
+def file_sha256(path: str | Path, chunk_size: int = 1 << 20) -> str:
+    """Hex sha256 of a file's bytes (symlinks are followed), read in chunks."""
+    h = hashlib.sha256()
+    with open(path, "rb") as handle:
+        for chunk in iter(lambda: handle.read(chunk_size), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def verify_sha256(path: str | Path, expected: str) -> None:
+    """Raise ``RawSha256MismatchError`` unless ``path`` hashes to ``expected``."""
+    observed = file_sha256(path)
+    if observed != expected:
+        raise RawSha256MismatchError(path, expected, observed)
+
+
+def verify_raw_files(raw_dir: str, pins: Mapping[str, str]) -> None:
+    """Verify every pinned file in ``raw_dir`` (``{file name: sha256}``).
+
+    Called at the start of a loader's ``process()`` so a file placed in or edited
+    inside ``raw/`` after ``download()`` never reaches a record unchecked.
+    """
+    for name, expected in pins.items():
+        verify_sha256(osp.join(raw_dir, name), expected)
+
+
+def write_verified(data: bytes, dest: str | Path, expected: str, source: str) -> None:
+    """Write ``data`` to ``dest`` only if it hashes to ``expected``.
+
+    The digest is checked before anything is written; the bytes go to a sibling
+    ``.partial`` file that is renamed into place, so ``dest`` never holds a partial
+    or unverified payload. ``source`` names the origin (a URL) in the error.
+    """
+    observed = hashlib.sha256(data).hexdigest()
+    if observed != expected:
+        raise RawSha256MismatchError(source, expected, observed)
+    partial = f"{dest}.partial"
+    with open(partial, "wb") as handle:
+        handle.write(data)
+    os.replace(partial, dest)
+
+
+def copy_verified(src: str | Path, dest: str | Path, expected: str) -> None:
+    """Copy ``src`` to ``dest`` after verifying ``src`` against ``expected``.
+
+    The source is hashed before anything is written and the copy goes to a sibling
+    ``.partial`` file renamed into place, so a refusal leaves ``dest`` as it was. The
+    copied bytes are re-verified at build time by ``verify_raw_files``.
+    """
+    verify_sha256(src, expected)
+    partial = f"{dest}.partial"
+    shutil.copyfile(src, partial)
+    os.replace(partial, dest)
+
+
+def link_verified(src: str | Path, dest: str | Path, expected: str) -> None:
+    """Symlink ``dest`` to ``src`` after verifying ``src``; an existing link is kept.
+
+    The link target is re-verified at build time by ``verify_raw_files``, so an
+    edit to the mirror after linking is still caught before any record is read.
+    """
+    verify_sha256(src, expected)
+    if not osp.lexists(dest):
+        os.symlink(src, dest)
 
 
 # return reference_indices

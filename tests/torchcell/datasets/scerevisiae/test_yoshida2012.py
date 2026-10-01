@@ -63,6 +63,8 @@ import pandas as pd
 import pydantic
 import pytest
 
+from torchcell.data import RawSha256MismatchError
+from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.schema import (
     Environment,
     Genotype,
@@ -285,11 +287,11 @@ def test_download_stages_the_mirror_pdf_only_after_verifying_it(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, s_id_calls: list[dict[str, str]]
 ) -> None:
     """An empty root looks for ``$DATA_ROOT/torchcell-library/<key>/paper.pdf`` and names
-    it when absent; a mirror PDF holding ``b"wrong pdf"`` is rejected with its digest
-    (43d5ed94...) and not copied into ``raw/``.
-
-    Finding: with ``paper.pdf`` already in ``raw/`` the method returns without hashing
-    it (source line 334), so the staged copy is not re-verified on later builds.
+    it when absent; a mirror PDF holding ``b"wrong pdf"`` is rejected with
+    ``RawSha256MismatchError`` naming it, the pin and its digest (43d5ed94...) and not
+    copied into ``raw/``. With ``paper.pdf`` already in ``raw/`` the method returns
+    without hashing it, and the build-time check in ``process`` (issue #537's sweep)
+    refuses the staged copy instead.
     """
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
@@ -302,20 +304,26 @@ def test_download_stages_the_mirror_pdf_only_after_verifying_it(
     mirror.write_bytes(b"wrong pdf")
     digest = hashlib.sha256(b"wrong pdf").hexdigest()
     assert digest.startswith("43d5ed94")
-    with pytest.raises(
-        RuntimeError,
-        match=f"Yoshida2012 paper.pdf sha256 mismatch: got {digest}, "
-        f"expected {m.PDF_SHA256}",
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         m.OrganicAcidYoshida2012Dataset(root=str(tmp_path / "empty2"), genome=_genome())
-    assert not (tmp_path / "empty2" / "raw" / m.PDF_FILENAME).exists()
+    assert str(err.value) == (
+        f"sha256 mismatch for {mirror}: expected {m.PDF_SHA256}, observed {digest}"
+    )
+    assert list((tmp_path / "empty2" / "raw").iterdir()) == []
     dataset = m.OrganicAcidYoshida2012Dataset(
         root=str(_root(tmp_path)), genome=_genome()
     )
     dest = Path(dataset.root) / "raw" / m.PDF_FILENAME
-    assert hashlib.sha256(dest.read_bytes()).hexdigest() != m.PDF_SHA256
+    placeholder = hashlib.sha256(dest.read_bytes()).hexdigest()
+    assert placeholder != m.PDF_SHA256
     dataset.download()
     assert dest.read_bytes() == b"%PDF-1.4 synthetic placeholder"
+    monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
+    with pytest.raises(RawSha256MismatchError) as err:
+        dataset.process()
+    assert str(err.value) == (
+        f"sha256 mismatch for {dest}: expected {m.PDF_SHA256}, observed {placeholder}"
+    )
 
 
 def test_items_retype_through_the_metabolite_classes(

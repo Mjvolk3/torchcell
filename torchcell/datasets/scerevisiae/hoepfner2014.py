@@ -193,7 +193,14 @@ import requests
 from pydantic import BaseModel, ConfigDict, Field
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    RawSha256MismatchError,
+    link_verified,
+    post_process,
+    verify_raw_files,
+    verify_sha256,
+)
 from torchcell.datamodels.compound_identity import (
     resolve_compound_identity,
     resolved_compound,
@@ -553,17 +560,21 @@ def deposit_raw_mirror(
     recorded, so the manifest can only ever describe the bytes the build consumed.
     """
     root = raw_mirror_dir(data_root)
+    # Every file (the mirror copy when present, else the staged source) is verified
+    # before anything is written, so a refusal leaves no mirror directory, no partial
+    # deposit and no unverified bytes in the mirror.
+    for name, spec in _DRYAD_FILES.items():
+        dest = root / name
+        verify_sha256(
+            dest if dest.exists() else Path(source_dir) / name, spec["sha256"]
+        )
     root.mkdir(parents=True, exist_ok=True)
     files: list[ArtifactRecord] = []
     for name, spec in _DRYAD_FILES.items():
         dest = root / name
         if not dest.exists():
             shutil.copy2(Path(source_dir) / name, dest)
-        digest = sha256_file(dest)
-        if digest != spec["sha256"]:
-            raise RuntimeError(
-                f"{dest} sha256 {digest} != pinned {spec['sha256']}; refusing to record"
-            )
+        digest = spec["sha256"]
         files.append(
             ArtifactRecord(
                 path=name,
@@ -971,13 +982,7 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             if not source.exists():
                 self._fetch_from_dryad(name, spec, dest)
                 continue
-            digest = sha256_file(source)
-            if digest != spec["sha256"]:
-                raise RuntimeError(
-                    f"raw mirror {source} sha256 mismatch: got {digest}, expected "
-                    f"{spec['sha256']}"
-                )
-            os.symlink(source, dest)
+            link_verified(source, dest, spec["sha256"])
             log.info("Linked %s from the raw mirror (sha256 verified)", name)
 
     def _fetch_from_dryad(self, name: str, spec: dict[str, str], dest: str) -> None:
@@ -987,7 +992,10 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         log.info("Downloading Hoepfner2014 %s from %s", name, spec["url"])
         resp = _dryad_get(session, spec["url"])
         digest = hashlib.sha256()
-        with open(dest, "wb") as handle:
+        # Stream into a sibling ``.partial`` renamed into place only after the digest
+        # matches, so a refused download never leaves unverified bytes in raw/.
+        partial = f"{dest}.partial"
+        with open(partial, "wb") as handle:
             for chunk in resp.iter_content(chunk_size=1 << 20):
                 if chunk:
                     handle.write(chunk)
@@ -995,9 +1003,9 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         resp.close()
         got = digest.hexdigest()
         if got != spec["sha256"]:
-            raise RuntimeError(
-                f"{name} sha256 mismatch: got {got}, expected {spec['sha256']}"
-            )
+            os.remove(partial)
+            raise RawSha256MismatchError(spec["url"], spec["sha256"], got)
+        os.replace(partial, dest)
         log.info("Wrote %s (sha256 verified)", dest)
 
     # ---- record builders ------------------------------------------------------ #
@@ -1327,6 +1335,9 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         a record with a dangling ``$ref``. Records then commit in batches so a multi-
         million-record build never accumulates one giant dirty-page write transaction.
         """
+        verify_raw_files(
+            self.raw_dir, {name: spec["sha256"] for name, spec in _DRYAD_FILES.items()}
+        )
         from dotenv import load_dotenv
         from pydantic import TypeAdapter
 

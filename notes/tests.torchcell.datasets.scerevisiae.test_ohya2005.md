@@ -15,3 +15,7 @@ Both TSVs are written into `<root>/raw/`; the genome stub implements only `resol
 Four to fourteen tests, 94 to 100 percent. The ledger; the warning truncated at 20 names; a duplicate-spelling matrix; a non-numeric cell refused; `default_genome()` called once; both files copied.
 
 Findings: `TCV` in `_CV_PREFIXES` (line 105) is not a real prefix, so a TCV column is routed to the CV traits and refused by the schema; `create_experiment` is a bare `pass` returning None (292); duplicate spellings give two records; the publication is Ohya 2005 (PMID 16365294) while the 2026.09.29 verification (issue #491) records the matrices as the Suzuki 2018 CalMorph 1.2 re-analysis.
+
+## 2026.09.30 - Raw sha256 pin enforced at build time
+
+Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.

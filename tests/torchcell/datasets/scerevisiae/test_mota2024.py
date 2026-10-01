@@ -48,6 +48,7 @@ import openpyxl
 import pandas as pd
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import YPD_AGAR
 from torchcell.datamodels.schema import (
@@ -650,13 +651,63 @@ def test_download_refuses_a_mirror_file_with_the_wrong_digest(
     (si / spec["filename"]).write_bytes(b"not the SI")
     dataset = m.EnvChemgenMota2024Dataset.__new__(m.EnvChemgenMota2024Dataset)
     dataset.root = str(tmp_path / "ds")
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RawSha256MismatchError) as info:
         dataset.download()
     got = hashlib.sha256(b"not the SI").hexdigest()
     assert str(info.value) == (
-        f"12934_2024_2309_MOESM1_ESM.xlsx sha256 mismatch: got {got}, "
-        "expected b23ad28141e70b307048fc69475aedd4e3cf880118ae9d0d806b6d9f91205e42"
+        f"sha256 mismatch for {si / spec['filename']}: expected "
+        "b23ad28141e70b307048fc69475aedd4e3cf880118ae9d0d806b6d9f91205e42, "
+        f"observed {got}"
     )
+    # The mirror file is hashed before the copy: nothing lands in raw/.
+    assert list((tmp_path / "ds" / "raw").iterdir()) == []
+
+
+def test_download_refuses_an_esm_payload_off_the_pin_and_writes_nothing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With no mirror, a Springer ESM body whose digest is not the pin raises
+    ``RawSha256MismatchError`` naming the URL and both digests before a byte is written.
+    """
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path / "data_root"))
+    monkeypatch.setattr(
+        "urllib.request.urlopen", lambda req, timeout: _Response(b"a changed upload")
+    )
+    dataset = m.EnvChemgenMota2024Dataset.__new__(m.EnvChemgenMota2024Dataset)
+    dataset.root = str(tmp_path / "ds")
+    (tmp_path / "ds" / "raw").mkdir(parents=True)
+    with pytest.raises(RawSha256MismatchError) as info:
+        dataset.download()
+    assert str(info.value) == (
+        "sha256 mismatch for https://static-content.springer.com/esm/"
+        "art%3A10.1186%2Fs12934-024-02309-0/MediaObjects/12934_2024_2309_MOESM1_ESM.xlsx: "
+        "expected b23ad28141e70b307048fc69475aedd4e3cf880118ae9d0d806b6d9f91205e42, "
+        f"observed {hashlib.sha256(b'a changed upload').hexdigest()}"
+    )
+    assert list((tmp_path / "ds" / "raw").iterdir()) == []
+
+
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #518's sweep): with the three spreadsheets already in ``raw/``
+    PyG skips ``download()``, so ``process()`` verifies each against its pin first. The
+    acetic-acid sheet off its pin raises ``RawSha256MismatchError`` naming it and both
+    digests before a row is read; no store is written.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(m, [spec["filename"] for spec in m._ACID_SPECS])
+    raw = staged.root / "raw" / "12934_2024_2309_MOESM1_ESM.xlsx"
+    with pytest.raises(RawSha256MismatchError) as info:
+        m.EnvChemgenMota2024Dataset(root=str(staged.root))
+    assert str(info.value) == (
+        f"sha256 mismatch for {raw}: expected "
+        "b23ad28141e70b307048fc69475aedd4e3cf880118ae9d0d806b6d9f91205e42, "
+        f"observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
 
 
 def test_raw_mirror_dir_prefers_the_argument_then_the_environment(
@@ -675,15 +726,41 @@ def test_deposit_refuses_a_source_with_the_wrong_digest(tmp_path: Path) -> None:
     spec = m._ACID_SPECS[0]
     (source / spec["filename"]).write_bytes(b"wrong")
     got = hashlib.sha256(b"wrong").hexdigest()
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RawSha256MismatchError) as info:
         m.deposit_raw_mirror(
             source_dir=str(source),
             retrieved_at="2026-09-12T00:00:00+00:00",
             data_root=str(tmp_path / "dr"),
         )
     assert str(info.value) == (
-        f"{source / spec['filename']} sha256 {got} != pinned {spec['sha256']}; "
-        "refusing to deposit"
+        f"sha256 mismatch for {source / spec['filename']}: expected {spec['sha256']}, "
+        f"observed {got}"
+    )
+    assert not (tmp_path / "dr").exists()
+
+
+def test_deposit_refuses_a_later_source_before_writing_an_earlier_one(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Every spreadsheet is verified before any is written: with acetic and butyric on
+    their (repointed) pins and octanoic off its pin, the refusal names octanoic and no
+    mirror directory exists, so a partial deposit never happens.
+    """
+    specs = _pinned_specs(monkeypatch)
+    source = tmp_path / "source"
+    source.mkdir()
+    for spec in specs[:2]:
+        (source / spec["filename"]).write_bytes(_PAYLOADS[spec["acid"]])
+    (source / specs[2]["filename"]).write_bytes(b"wrong")
+    with pytest.raises(RawSha256MismatchError) as info:
+        m.deposit_raw_mirror(
+            source_dir=str(source),
+            retrieved_at="2026-09-12T00:00:00+00:00",
+            data_root=str(tmp_path / "dr"),
+        )
+    assert str(info.value) == (
+        f"sha256 mismatch for {source / specs[2]['filename']}: expected "
+        f"{specs[2]['sha256']}, observed {hashlib.sha256(b'wrong').hexdigest()}"
     )
     assert not (tmp_path / "dr").exists()
 

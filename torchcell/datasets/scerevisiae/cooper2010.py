@@ -127,7 +127,13 @@ from typing import Any
 import lmdb
 from pydantic import BaseModel, ConfigDict, Field
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    link_verified,
+    post_process,
+    verify_raw_files,
+    verify_sha256,
+)
 from torchcell.data.experiment_dataset import resolve_interned
 from torchcell.datamodels.media import SC, dropout
 from torchcell.datamodels.schema import (
@@ -628,17 +634,16 @@ def deposit_raw_mirror(
     sums = _read_sha256sums(source / SHA256SUMS_NAME)
     root = raw_mirror_dir(data_root)
     files: list[ArtifactRecord] = []
+    # Every staged file is verified before anything is written, so a refusal leaves
+    # no mirror directory and no partial deposit behind.
     for name, spec in _RAW_FILES.items():
         if sums[name] != spec["sha256"]:
             raise RuntimeError(
                 f"{SHA256SUMS_NAME} lists {name} as {sums[name]}, pinned {spec['sha256']}"
             )
+        verify_sha256(source / name, spec["sha256"])
+    for name, spec in _RAW_FILES.items():
         staged = source / name
-        digest = sha256_file(staged)
-        if digest != spec["sha256"]:
-            raise RuntimeError(
-                f"{staged} sha256 {digest} != pinned {spec['sha256']}; refusing to deposit"
-            )
         dest = root / spec["relpath"]
         dest.parent.mkdir(parents=True, exist_ok=True)
         if dest.exists():
@@ -1099,13 +1104,7 @@ class AminoAcidCooper2010Dataset(ExperimentDataset):
                 f"raw mirror file {source} is absent and the source is not scriptable; "
                 f"deposit it with deposit_raw_mirror(). Recipe: {MANUAL_RECIPE}"
             )
-        digest = sha256_file(source)
-        if digest != TABLE4_SHA256:
-            raise RuntimeError(
-                f"raw mirror {source} sha256 mismatch: got {digest}, expected "
-                f"{TABLE4_SHA256}"
-            )
-        os.symlink(source, dest)
+        link_verified(source, dest, TABLE4_SHA256)
         log.info("Linked %s from the raw mirror (sha256 verified)", TABLE4_NAME)
 
     # ---- record builders ------------------------------------------------------ #
@@ -1174,7 +1173,12 @@ class AminoAcidCooper2010Dataset(ExperimentDataset):
     # ---- build ---------------------------------------------------------------- #
     @post_process
     def process(self) -> None:
-        """Parse Table 4, apply the retention rules, write the LMDB and the ledgers."""
+        """Parse Table 4, apply the retention rules, write the LMDB and the ledgers.
+
+        Table 4 in ``raw/`` is verified against its sha256 pin before any row is read;
+        a mismatch raises ``RawSha256MismatchError`` and no store is written.
+        """
+        verify_raw_files(self.raw_dir, {TABLE4_NAME: TABLE4_SHA256})
         from dotenv import load_dotenv
 
         load_dotenv()

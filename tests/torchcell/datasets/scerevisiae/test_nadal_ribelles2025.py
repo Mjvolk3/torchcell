@@ -59,6 +59,8 @@ from tests.torchcell.datasets.scerevisiae.test_nadal_ribelles2025_synthetic impo
     _StubGenome,
     _write_files,
 )
+from torchcell.data import RawSha256MismatchError
+from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.schema import MarkerDeletionPerturbation
 from torchcell.datasets.scerevisiae import nadal_ribelles2025 as m
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
@@ -224,15 +226,16 @@ def test_build_logs_the_gene_ledger_and_every_skipped_table(
     ]
 
 
-def test_a_stale_raw_file_is_kept_and_used_even_though_the_mirror_verifies(
+def test_a_stale_raw_file_is_refused_at_build_time_though_the_mirror_verifies(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: ``download`` verifies every MIRROR file but skips the link when the raw
-    destination already exists (line 225), and ``process`` reads ``raw/``. A leftover
-    ``raw/ptb_summary.Rdata`` whose WT row says 999 cells is therefore built from while
-    the mirror copy (500 cells) passes its sha256. Pinned until an existing raw file is
-    hashed too.
+    """Contract (issue #518's sweep): ``download`` verifies every MIRROR file and links
+    only what ``raw/`` lacks, so a leftover ``raw/ptb_summary.Rdata`` (WT row 999 cells)
+    stays in place while the mirror copy (500 cells) passes. ``process`` then verifies
+    ``raw/`` itself and refuses the stale file with ``RawSha256MismatchError`` naming it,
+    the pin and its digest; no store is written.
     """
+    monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     mirror = data_root / m.RAW_DIR_REL
@@ -252,8 +255,14 @@ def test_a_stale_raw_file_is_kept_and_used_even_though_the_mirror_verifies(
     }
     rdata.write_rda(str(raw / m.PTB_NAME), {"ptbs": stale})
     stale_bytes = (raw / m.PTB_NAME).read_bytes()
-    dataset = m.NadalRibellesPerturbSeq2025Dataset(
-        root=str(tmp_path / "nadal"), genome=_genome()
+    with pytest.raises(RawSha256MismatchError) as err:
+        m.NadalRibellesPerturbSeq2025Dataset(
+            root=str(tmp_path / "nadal"), genome=_genome()
+        )
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw / m.PTB_NAME}: expected "
+        f"{hashlib.sha256(files[m.PTB_NAME]).hexdigest()}, "
+        f"observed {hashlib.sha256(stale_bytes).hexdigest()}"
     )
     assert not os.path.islink(raw / m.PTB_NAME)
     assert (raw / m.PTB_NAME).read_bytes() == stale_bytes
@@ -261,12 +270,7 @@ def test_a_stale_raw_file_is_kept_and_used_even_though_the_mirror_verifies(
         str(mirror / m.FC_NAME),
         str(mirror / m.README_NAME),
     ]
-    phenotype = dataset[0]["reference"]["phenotype_reference"]
-    assert (phenotype["dispersion"], phenotype["n_cells"]) == (0.5, 999)
-    assert (
-        dataset[0]["experiment"]["phenotype"]["dispersion"],
-        dataset[0]["experiment"]["phenotype"]["n_cells"],
-    ) == (None, None)
+    assert list((tmp_path / "nadal" / "processed").iterdir()) == []
 
 
 def test_main_builds_under_data_root_with_a_read_only_genome(

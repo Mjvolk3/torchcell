@@ -89,12 +89,10 @@ three files bit-identically on 2026-09-12, which is recorded as the manifest's
 is absent.
 """
 
-import hashlib
 import logging
 import os
 import os.path as osp
 import pickle
-import shutil
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
@@ -105,7 +103,14 @@ import openpyxl
 from pydantic import BaseModel, Field
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    copy_verified,
+    post_process,
+    verify_raw_files,
+    verify_sha256,
+    write_verified,
+)
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import YPD_AGAR
 from torchcell.datamodels.schema import (
@@ -384,13 +389,12 @@ def deposit_raw_mirror(
     """
     root = Path(raw_mirror_dir(data_root))
     files: list[ArtifactRecord] = []
+    # Every spreadsheet is verified before anything is written, so a refusal leaves
+    # no mirror directory and no partial deposit behind.
+    for spec in _ACID_SPECS:
+        verify_sha256(Path(source_dir) / spec["filename"], spec["sha256"])
     for spec in _ACID_SPECS:
         src = Path(source_dir) / spec["filename"]
-        digest = sha256_file(src)
-        if digest != spec["sha256"]:
-            raise RuntimeError(
-                f"{src} sha256 {digest} != pinned {spec['sha256']}; refusing to deposit"
-            )
         dest = root / _raw_relpath(spec)
         dest.parent.mkdir(parents=True, exist_ok=True)
         if dest.exists():
@@ -529,7 +533,7 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
             if not osp.exists(dest):
                 mirror = osp.join(raw_mirror_dir(), _raw_relpath(spec))
                 if osp.exists(mirror):
-                    shutil.copyfile(mirror, dest)
+                    copy_verified(mirror, dest, spec["sha256"])
                 else:
                     url = _ESM_URL.format(n=spec["n"])
                     log.info("raw mirror missing %s; fetching %s", spec["acid"], url)
@@ -538,14 +542,7 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
                     )
                     with urllib.request.urlopen(req, timeout=180) as resp:
                         data = resp.read()
-                    with open(dest, "wb") as handle:
-                        handle.write(data)
-            digest = hashlib.sha256(open(dest, "rb").read()).hexdigest()
-            if digest != spec["sha256"]:
-                raise RuntimeError(
-                    f"{spec['filename']} sha256 mismatch: got {digest}, "
-                    f"expected {spec['sha256']}"
-                )
+                    write_verified(data, dest, spec["sha256"], url)
 
     def _parse_acid(
         self, spec: dict[str, Any]
@@ -706,6 +703,9 @@ class EnvChemgenMota2024Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Parse the three acid spreadsheets into ordinal records; write LMDB + drop log."""
+        verify_raw_files(
+            self.raw_dir, {spec["filename"]: spec["sha256"] for spec in _ACID_SPECS}
+        )
         publication = Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
         pub_dump = publication.model_dump()
 

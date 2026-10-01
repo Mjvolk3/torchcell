@@ -25,7 +25,6 @@ The varying deletion stores the genome's own standard name as `perturbed_gene_na
 one spelling across datasets; an ORF with no round-tripping standard name stores the id.
 """
 
-import hashlib
 import logging
 import math
 import os
@@ -39,7 +38,12 @@ import lmdb
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    post_process,
+    verify_raw_files,
+    write_verified,
+)
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
@@ -167,19 +171,13 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
     def download(self) -> None:
         """Download the gene-level CRI-SPA dataset from the authors' GitHub repo.
 
-        The stored artifact's sha256 is canonical: an already-present file is verified
-        against ``DATA_SHA256`` rather than trusted, and a freshly downloaded file is
-        verified before use. A mismatch means upstream drift or corruption and raises
-        (never silently followed).
+        The stored artifact's sha256 is canonical: a freshly downloaded payload is
+        verified before it is written, and the file in ``raw/`` (present or fresh) is
+        verified against ``DATA_SHA256`` at the start of ``process``. A mismatch means
+        upstream drift or corruption and raises (never silently followed).
         """
         dest = osp.join(self.raw_dir, DATA_FILENAME)
         if osp.exists(dest):
-            digest = hashlib.sha256(open(dest, "rb").read()).hexdigest()
-            if digest != DATA_SHA256:
-                raise RuntimeError(
-                    f"CRI-SPA data sha256 mismatch for {dest}: got {digest}, "
-                    f"expected {DATA_SHA256}"
-                )
             return
         os.makedirs(self.raw_dir, exist_ok=True)
         log.info("Downloading CRI-SPA data from %s", DATA_URL)
@@ -188,14 +186,7 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
             data = resp.read()
         if len(data) < 10000:
             raise RuntimeError(f"CRI-SPA download too small: {len(data)} bytes")
-        digest = hashlib.sha256(data).hexdigest()
-        if digest != DATA_SHA256:
-            raise RuntimeError(
-                f"CRI-SPA data sha256 mismatch on download: got {digest}, "
-                f"expected {DATA_SHA256}"
-            )
-        with open(dest, "wb") as handle:
-            handle.write(data)
+        write_verified(data, dest, DATA_SHA256, DATA_URL)
         log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(data))
 
     def _resolve_systematic(self, gene: str) -> str | None:
@@ -224,6 +215,7 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Parse the CRI-SPA dataset into per-ORF Metabolite experiments and write LMDB."""
+        verify_raw_files(self.raw_dir, {DATA_FILENAME: DATA_SHA256})
         if self.genome is None:
             raise RuntimeError(
                 "Cachera2023 requires an injected SCerevisiaeGenome to resolve common "

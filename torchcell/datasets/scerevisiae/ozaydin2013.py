@@ -23,7 +23,6 @@ text-only rows (`pet`, `tiny`, `_`) carry no usable measurement and are excluded
 (counted + logged, never silently dropped).
 """
 
-import hashlib
 import logging
 import os
 import os.path as osp
@@ -37,7 +36,12 @@ import lmdb
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    post_process,
+    verify_raw_files,
+    write_verified,
+)
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
@@ -183,19 +187,13 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
     def download(self) -> None:
         """Download the SI spreadsheet from the Elsevier ESM (scriptable direct URL).
 
-        The stored artifact's sha256 is canonical: an already-present file is verified
-        against ``_SI_SHA256`` rather than trusted, and a freshly downloaded file is
-        verified before use. A mismatch means upstream drift or corruption and raises
-        (never silently followed).
+        The stored artifact's sha256 is canonical: a freshly downloaded payload is
+        verified before it is written, and the file in ``raw/`` (present or fresh) is
+        verified against ``_SI_SHA256`` at the start of ``process``. A mismatch means
+        upstream drift or corruption and raises (never silently followed).
         """
         dest = osp.join(self.raw_dir, self.si_filename)
         if osp.exists(dest):
-            digest = hashlib.sha256(open(dest, "rb").read()).hexdigest()
-            if digest != _SI_SHA256:
-                raise RuntimeError(
-                    f"Ozaydin SI sha256 mismatch for {dest}: got {digest}, "
-                    f"expected {_SI_SHA256}"
-                )
             return
         os.makedirs(self.raw_dir, exist_ok=True)
         log.info("Downloading Ozaydin SI from %s", self.si_url)
@@ -204,14 +202,7 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
             data = resp.read()
         if len(data) < 10000:
             raise RuntimeError(f"Ozaydin SI download too small: {len(data)} bytes")
-        digest = hashlib.sha256(data).hexdigest()
-        if digest != _SI_SHA256:
-            raise RuntimeError(
-                f"Ozaydin SI sha256 mismatch on download: got {digest}, "
-                f"expected {_SI_SHA256}"
-            )
-        with open(dest, "wb") as handle:
-            handle.write(data)
+        write_verified(data, dest, _SI_SHA256, self.si_url)
         log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(data))
 
     def _aggregate_by_orf(self) -> pd.DataFrame:
@@ -296,6 +287,7 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Parse the SI into per-ORF VisualScore experiments and write LMDB."""
+        verify_raw_files(self.raw_dir, {self.si_filename: _SI_SHA256})
         agg = self._aggregate_by_orf()
         n_total = len(agg)
         # Exclude ORFs with no numeric color (text-only / missing) -- not measurements.

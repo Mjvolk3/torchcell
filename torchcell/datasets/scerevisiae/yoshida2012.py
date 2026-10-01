@@ -42,14 +42,12 @@ module-level ``TABLE_3`` literal so the build is deterministic and reviewable (t
 never re-parsed at ``process()`` time).
 """
 
-import hashlib
 import logging
 import math
 import os
 import os.path as osp
 import pickle
 import re
-import shutil
 from collections.abc import Callable
 from typing import Any, cast
 
@@ -57,7 +55,12 @@ import lmdb
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    copy_verified,
+    post_process,
+    verify_raw_files,
+)
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
@@ -342,15 +345,8 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
         )
         if not osp.exists(mirror):
             raise RuntimeError(f"Yoshida2012 mirror PDF not found: {mirror}")
-        with open(mirror, "rb") as handle:
-            data = handle.read()
-        got = hashlib.sha256(data).hexdigest()
-        if got != PDF_SHA256:
-            raise RuntimeError(
-                f"Yoshida2012 paper.pdf sha256 mismatch: got {got}, expected {PDF_SHA256}"
-            )
-        shutil.copyfile(mirror, dest)
-        log.info("Staged %s (%d bytes, sha256 verified)", dest, len(data))
+        copy_verified(mirror, dest, PDF_SHA256)
+        log.info("Staged %s (%d bytes, sha256 verified)", dest, osp.getsize(dest))
 
     def _resolve_systematic(self, gene: str) -> str:
         """Resolve a common/systematic gene name to a systematic ORF id (must succeed)."""
@@ -366,6 +362,7 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Build per-strain Metabolite experiments from the Table 3 literal, write LMDB."""
+        verify_raw_files(self.raw_dir, {PDF_FILENAME: PDF_SHA256})
         if self.genome is None:
             raise RuntimeError(
                 "OrganicAcidYoshida2012Dataset requires an injected SCerevisiaeGenome to "

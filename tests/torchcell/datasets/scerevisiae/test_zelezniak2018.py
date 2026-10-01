@@ -58,6 +58,7 @@ from typing import Any
 import pydantic
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.media import SM_DEFERRED
 from torchcell.datamodels.schema import (
     Environment,
@@ -595,18 +596,60 @@ def test_download_refuses_a_digest_mismatch_and_writes_nothing(
     label: str,
 ) -> None:
     """The proteome uses the ``?download=1`` URL, the metabolome the API content
-    endpoint (the other 403s); both send a browser User-Agent with a 300 s timeout.
+    endpoint (the other 403s); both send a browser User-Agent with a 300 s timeout. A
+    body off the pin raises ``RawSha256MismatchError`` naming the URL and both digests,
+    and ``raw/`` stays empty (no file, no ``.partial``).
     """
     calls = _fake_urlopen(monkeypatch, b"tampered")
     got = hashlib.sha256(b"tampered").hexdigest()
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RawSha256MismatchError) as info:
         _bare(cls, tmp_path / "ds").download()
-    assert str(info.value) == (
-        f"Zelezniak {label} sha256 mismatch: got {got}, expected {pinned}"
+    assert (
+        str(info.value)
+        == f"sha256 mismatch for {url}: expected {pinned}, observed {got}"
     )
     assert calls == [(url, "Mozilla/5.0", 300)]
-    assert (tmp_path / "ds" / "raw").is_dir()
-    assert not (tmp_path / "ds" / "raw" / filename).exists()
+    assert list((tmp_path / "ds" / "raw").iterdir()) == []
+
+
+@pytest.mark.parametrize(
+    ("cls", "filename", "pinned"),
+    [
+        (
+            ProteomeZelezniak2018Dataset,
+            PROTEOME_FILENAME,
+            "9ff81ecb1e2dd44d2f6e072ce5b628f0be1abdf57cdbd90d645db4d1fb64bfeb",
+        ),
+        (
+            MetaboliteZelezniak2018Dataset,
+            METABOLITE_DATA_FILENAME,
+            "c4429fd8cef675d96ffacba1ed51e52ea483fd72d6978a22c04fa405f4e1b07d",
+        ),
+    ],
+)
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    cls: type[Any],
+    filename: str,
+    pinned: str,
+    off_pin_raw: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Contract (issue #518's sweep): with the matrix already in ``raw/`` PyG skips
+    ``download()``, so each loader's ``process()`` verifies it against its pin first and
+    raises ``RawSha256MismatchError`` naming it and both digests before a row is read;
+    no store is written and the file is left as found.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(zelezniak2018, [filename])
+    raw = staged.root / "raw" / filename
+    with pytest.raises(RawSha256MismatchError) as info:
+        cls(root=str(staged.root))
+    assert str(info.value) == (
+        f"sha256 mismatch for {raw}: expected {pinned}, observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
 
 
 @pytest.mark.parametrize(

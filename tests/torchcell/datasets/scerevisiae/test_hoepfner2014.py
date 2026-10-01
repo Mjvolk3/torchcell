@@ -57,6 +57,7 @@ from typing import Any
 import pytest
 import requests
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.media import YPD_LIQUID
 from torchcell.datamodels.schema import (
     AssayType,
@@ -632,7 +633,9 @@ def test_fetch_from_dryad_skips_empty_chunks_and_verifies_the_pin(
     """``b"ab"``, ``b""``, ``b"c"`` write ``abc`` (the empty chunk is skipped) in 1 MiB
     reads through a session carrying the browser User-Agent; the digest ba7816bf... is
     the pin, so the file is kept and "Wrote <dest> (sha256 verified)" is logged. The
-    same body against another pin raises with both digests.
+    same body against another pin raises ``RawSha256MismatchError`` naming the URL and
+    both digests, and the refused body never reaches ``dest`` (it streams into a
+    ``.partial`` sibling that is removed), so the earlier verified file is untouched.
     """
     sessions: list[Any] = []
     responses: list[_ChunkedResponse] = []
@@ -657,13 +660,15 @@ def test_fetch_from_dryad_skips_empty_chunks_and_verifies_the_pin(
         f"Downloading Hoepfner2014 HOP_scores.txt from {_URL}",
         f"Wrote {dest} (sha256 verified)",
     ]
-    with pytest.raises(
-        RuntimeError,
-        match=f"^HOP_scores.txt sha256 mismatch: got {abc}, expected {'0' * 64}$",
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         _dataset()._fetch_from_dryad(
             "HOP_scores.txt", {"url": _URL, "sha256": "0" * 64}, str(dest)
         )
+    assert str(err.value) == (
+        f"sha256 mismatch for {_URL}: expected {'0' * 64}, observed {abc}"
+    )
+    assert dest.read_bytes() == b"abc"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["HOP_scores.txt"]
 
 
 # ---- sign convention and the dosage-duration confound ----------------------------- #

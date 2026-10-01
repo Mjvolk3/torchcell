@@ -68,6 +68,7 @@ import pandas as pd
 import pydantic
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.schema import (
     Environment,
     Genotype,
@@ -271,27 +272,45 @@ def test_requires_an_injected_genome(tmp_path: Path) -> None:
         m.MetaboliteDaSilveira2014Dataset(root=str(_root(tmp_path)), genome=None)
 
 
-def test_download_verifies_present_files_and_needs_the_mirror(
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #537's sweep): with Tables S4 and S10 already in ``raw/`` PyG
+    skips ``download()``, so ``process()`` verifies both against their pins first. Table
+    S4 off its pin raises ``RawSha256MismatchError`` naming it and both digests before a
+    row is read; no store is written and the file is left as found.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(m, [m.DATA_FILENAME, m.CHEBI_FILENAME])
+    raw = staged.root / "raw" / m.DATA_FILENAME
+    with pytest.raises(RawSha256MismatchError) as err:
+        m.MetaboliteDaSilveira2014Dataset(root=str(staged.root), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw}: expected "
+        "91409229756c132823e6e7a8dbe552d4d7451833b2ff902740f24a29bced3894, "
+        f"observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
+
+
+def test_download_leaves_present_files_to_the_build_check_and_needs_the_mirror(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """``download()`` on a root holding the synthetic Table S4 rejects it with its actual
-    digest against the pinned one; on an empty root it looks for the file under
-    ``$DATA_ROOT/torchcell-library/daSystematicLipidomicAnalysis2014/data/`` and names
-    that path when it is absent.
+    """``download()`` on a root holding the synthetic tables copies nothing over them
+    (``process`` verifies them at build time); on an empty root it looks for the file
+    under ``$DATA_ROOT/torchcell-library/daSystematicLipidomicAnalysis2014/data/`` and
+    names that path when it is absent.
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path / "data_root"))
     dataset = m.MetaboliteDaSilveira2014Dataset(
         root=str(_root(tmp_path)), genome=_genome()
     )
     dest = Path(dataset.root) / "raw" / m.DATA_FILENAME
-    digest = hashlib.sha256(dest.read_bytes()).hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"{m.DATA_FILENAME} sha256 mismatch: got {digest}, expected {m.DATA_SHA256}"
-        ),
-    ):
-        dataset.download()
+    before = dest.read_bytes()
+    dataset.download()
+    assert dest.read_bytes() == before
     src = (
         tmp_path
         / "data_root"

@@ -33,3 +33,9 @@ Replaced the local `_load_sgd_genes` FASTA R64 drop with the shared
 naming** (was already empirically zero). Build: 1112 strains — 1111 CURRENT + 1
 NON_GENE_FEATURE (a valid non-`"gene"` essential locus, now retained rather than at risk of a
 FASTA-vs-gene_set mismatch). Added an optional injectable `genome` (defaults to `DATA_ROOT`).
+
+## 2026.09.30 - Raw sha256 pin verified at build time
+
+Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: yes; refused deposit leaving a directory: n/a.
+
+Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `_RAW_FILES`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.

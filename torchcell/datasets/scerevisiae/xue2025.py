@@ -74,14 +74,12 @@ cerevisiae for production of fatty acid-derived biofuels and chemicals," Metab E
 xlsx in the library mirror. Flagged for review.
 """
 
-import hashlib
 import logging
 import math
 import os
 import os.path as osp
 import pickle
 import re
-import shutil
 from collections.abc import Callable
 from typing import Any, cast
 
@@ -89,7 +87,12 @@ import lmdb
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    copy_verified,
+    post_process,
+    verify_raw_files,
+)
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
@@ -210,13 +213,8 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
                     f"library mirror data file not found: {src}. This dataset's source is "
                     f"the sha256-pinned {DATA_FILENAME} in the torchcell-library mirror."
                 )
-            shutil.copyfile(src, dest)
-        digest = hashlib.sha256(open(dest, "rb").read()).hexdigest()
-        if digest != DATA_SHA256:
-            raise RuntimeError(
-                f"{DATA_FILENAME} sha256 mismatch: got {digest}, expected {DATA_SHA256}"
-            )
-        log.info("Verified %s (sha256 %s)", dest, DATA_SHA256)
+            copy_verified(src, dest, DATA_SHA256)
+            log.info("Verified %s (sha256 %s)", dest, DATA_SHA256)
 
     def _code_to_gene(self) -> dict[str, str]:
         """Read the Abbreviations sheet (code -> common name) and assert the expected map."""
@@ -327,6 +325,7 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Parse the raw-titer sheet into per-strain Metabolite experiments; write LMDB."""
+        verify_raw_files(self.raw_dir, {DATA_FILENAME: DATA_SHA256})
         if self.genome is None:
             raise RuntimeError(
                 "FattyAcidXue2025Dataset requires an injected SCerevisiaeGenome to resolve "

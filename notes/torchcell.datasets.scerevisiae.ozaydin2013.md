@@ -169,3 +169,9 @@ the plasmid-sequence store lands (Ozaydin plasmid is physical-only, reconstruct-
 Added `_SI_SHA256` pin + verification to `download()` (the stored SI is canonical, not the
 Elsevier URL). The on-disk canonical LMDB predated the required `Media.is_synthetic` field
 and failed schema round-trip; rebuilt in place under `$DATA_ROOT` as part of this cleanup.
+
+## 2026.09.30 - Raw sha256 pin verified at build time
+
+Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: no; refused deposit leaving a directory: n/a.
+
+Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `_SI_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.

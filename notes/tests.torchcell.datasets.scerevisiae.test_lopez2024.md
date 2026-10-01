@@ -19,3 +19,7 @@ Error paths: `genome=None` raises naming the loader class for both datasets; wit
 Finding (pinned, not a contradiction of the docstring): the screen rebuilds the WT reference per record with `n_replicates` equal to that record's row count, so the dataset holds one reference per distinct n. With one aggregated gene and three singletons `experiment_reference_index.json` has two entries, member indices [0] and [1, 2, 3], both FC 1.0 with SE None.
 
 Not covered, with reason: `main()` (needs the real genome and `DATA_ROOT`), the `download()` success log (needs the real sha256-pinned workbook), and the `preprocess_raw` / `create_experiment` stubs. `coverage run` over this file: 26.0% -> 94% of `lopez2024.py` (uncovered: 161->176, 181, 299, 303, 512-532). Seven tests; Phase 5 of [[plan.test-suite-buildout.2026.09.25]].
+
+## 2026.09.30 - Raw sha256 pin enforced at build time
+
+Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.

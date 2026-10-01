@@ -138,3 +138,9 @@ env_chemgen_auesukaree2009: PASS
 ## 2026.09.12 - Medium switched from the YPD join anchor to the YPD_AGAR plate
 
 `media.YPD` is the join anchor the family shares and is not used by a loader directly; a plate is `media.YPD_AGAR` (it states its agar row) and a culture is `media.YPD_LIQUID`. This screen is stamped onto plates, so both environments now carry `YPD_AGAR`, which puts these records on the SAME media node as Mota 2024's plates; the dev store was rebuilt (525 records, unchanged) and the verifier still reports `env_chemgen_auesukaree2009: PASS` with `L3 media_membership: 525 records on a shared MEDIA_LIBRARY medium (1 distinct media)`.
+
+## 2026.09.30 - Raw sha256 pin verified at build time
+
+Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: yes; refused deposit leaving a directory: yes (mkdir before hash).
+
+Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `_PDF_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.

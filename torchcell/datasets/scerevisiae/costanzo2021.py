@@ -98,7 +98,6 @@ Final: 4414 strains (4396 CURRENT + 18 RENAMED) x 14 conditions minus empty cell
 61,430 records.
 """
 
-import hashlib
 import json
 import logging
 import os
@@ -114,7 +113,13 @@ import pandas as pd
 from pydantic import BaseModel, Field
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    copy_verified,
+    post_process,
+    verify_raw_files,
+    verify_sha256,
+)
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import SGA_DM_SELECTION, SGA_DM_SELECTION_GALACTOSE
 from torchcell.datamodels.schema import (
@@ -513,12 +518,8 @@ def deposit_raw_mirror(
     """
     root = Path(raw_mirror_dir(data_root))
     dest = root / _S1_RAW_RELPATH
+    verify_sha256(source_xlsx, _S1_SHA256)
     dest.parent.mkdir(parents=True, exist_ok=True)
-    digest = sha256_file(Path(source_xlsx))
-    if digest != _S1_SHA256:
-        raise RuntimeError(
-            f"{source_xlsx} sha256 {digest} != pinned {_S1_SHA256}; refusing to deposit"
-        )
     if dest.exists():
         if sha256_file(dest) != _S1_SHA256:
             raise RuntimeError(f"{dest} exists with a different sha256; refusing")
@@ -613,13 +614,7 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
                     "https://www.science.org/doi/10.1126/science.abf8424 into the raw "
                     "mirror with deposit_raw_mirror(), then rebuild (sha256 verified)."
                 )
-            with open(mirror, "rb") as src, open(dest, "wb") as out:
-                out.write(src.read())
-        digest = hashlib.sha256(open(dest, "rb").read()).hexdigest()
-        if digest != _S1_SHA256:
-            raise RuntimeError(
-                f"{_S1_FILENAME} sha256 mismatch: got {digest}, expected {_S1_SHA256}"
-            )
+            copy_verified(mirror, dest, _S1_SHA256)
 
     def _environment(self, spec: dict[str, Any]) -> Environment:
         """Build the 26 C environment carrying this condition's edit.
@@ -736,7 +731,12 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Parse the differential-fitness sheet into records; write LMDB + the drop log."""
+        """Parse the differential-fitness sheet into records; write LMDB + the drop log.
+
+        Data File S1 in ``raw/`` is verified against its sha256 pin first; a mismatch
+        raises ``RawSha256MismatchError`` before any row is read or any store opened.
+        """
+        verify_raw_files(self.raw_dir, {_S1_FILENAME: _S1_SHA256})
         if self.genome is None:
             raise RuntimeError(
                 "EnvChemgenCostanzo2021Dataset requires a genome for R64 ORF "

@@ -54,6 +54,8 @@ import openpyxl
 import pandas as pd
 import pytest
 
+from torchcell.data import RawSha256MismatchError
+from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.media import YNB_GLUCOSE_SOLID, YP_GALACTOSE, YPD
 from torchcell.datamodels.schema import (
     AssayType,
@@ -936,8 +938,10 @@ def test_download_symlinks_every_raw_file_from_the_verified_mirror(
     """With ``raw/`` empty, ``download()`` links the five data files from
     ``$DATA_ROOT/torchcell-raw/<key>/data/`` after checking each digest against the
     manifest: a file absent from the mirror raises naming it, a manifest digest that
-    disagrees raises with both digests, and a clean mirror links all five and builds.
+    disagrees raises ``RawSha256MismatchError`` with both digests before linking, and a
+    clean mirror links all five and builds under the real build-time check.
     """
+    monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
     _patch_release(monkeypatch)
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
@@ -959,11 +963,13 @@ def test_download_symlinks_every_raw_file_from_the_verified_mirror(
         sha_override={"data/cross_genotypes_README": "2" * 64},
     )
     readme_sha = _sha256(mirror / "data" / "cross_genotypes_README")
-    with pytest.raises(
-        RuntimeError,
-        match=f"cross_genotypes_README sha256 mismatch: got {readme_sha}, expected {'2' * 64}",
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         m.Bloom2019Dataset(root=str(tmp_path / "b"), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {mirror / 'data' / 'cross_genotypes_README'}: "
+        f"expected {'2' * 64}, observed {readme_sha}"
+    )
+    assert not (tmp_path / "b" / "raw" / "cross_genotypes_README").exists()
     _write_mirror_manifest(data_root, _raw_files(mirror / "data"))
     raw = tmp_path / "c" / "raw"
     raw.mkdir(parents=True)
@@ -1084,3 +1090,31 @@ def test_deposit_raw_mirror_records_every_file_with_its_retrieval(
             retrieved_at_paper="2026-09-02",
             data_root=str(data_root),
         )
+
+
+def test_a_raw_file_off_the_manifest_pin_is_refused_at_build_time(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, off_pin_raw: Any
+) -> None:
+    """Contract (issue #518's sweep): with every data file already in ``raw/`` PyG skips
+    ``download()``, so ``process()`` verifies each against the raw-mirror manifest
+    before reading a row. The first file off its pin (``phenotypes.tsv.gz``) raises
+    ``RawSha256MismatchError`` naming it and both digests; no store is written.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    _patch_release(monkeypatch)
+    data_root = tmp_path / "data_root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    staged_files = tmp_path / "staged"
+    _write_data_files(staged_files)
+    _write_mirror_manifest(data_root, _raw_files(staged_files))
+    staged = off_pin_raw(m, [path.name for path in _raw_files(staged_files).values()])
+    raw = staged.root / "raw" / "phenotypes.tsv.gz"
+    with pytest.raises(RawSha256MismatchError) as err:
+        m.Bloom2019Dataset(root=str(staged.root), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw}: expected "
+        f"{_sha256(staged_files / 'phenotypes.tsv.gz')}, observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert _sha256(raw) == staged.observed

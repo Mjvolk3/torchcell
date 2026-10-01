@@ -110,7 +110,13 @@ import pandas as pd
 from pydantic import BaseModel
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    link_verified,
+    post_process,
+    verify_raw_files,
+    verify_sha256,
+)
 from torchcell.datamodels.compound_identity import (
     resolve_compound_identity,
     resolved_compound,
@@ -335,15 +341,15 @@ def deposit_raw_mirror(
     """
     root = raw_mirror_dir(data_root)
     files: list[ArtifactRecord] = []
-    for source, relpath, filename, expected in (
+    deposits = (
         (effect_path, EFFECT_REL, EFFECT_FILENAME, EFFECT_SHA256),
         (guide_path, GUIDE_REL, GUIDE_FILENAME, GUIDE_SHA256),
-    ):
-        got = _sha256(source)
-        if got != expected:
-            raise RuntimeError(
-                f"{source} sha256 mismatch: got {got}, expected {expected}"
-            )
+    )
+    # Both workbooks are verified before anything is written, so a refusal leaves no
+    # mirror directory and no partial deposit behind.
+    for source, _, _, expected in deposits:
+        verify_sha256(source, expected)
+    for source, relpath, filename, expected in deposits:
         dest = root / relpath
         dest.parent.mkdir(parents=True, exist_ok=True)
         if dest.exists():
@@ -476,14 +482,7 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
             src = raw_mirror_dir(data_root) / relpath
             if not src.exists():
                 raise RuntimeError(f"required raw artifact missing from mirror: {src}")
-            got = _sha256(src)
-            if got != expected:
-                raise RuntimeError(
-                    f"{filename} sha256 mismatch: got {got}, expected {expected}"
-                )
-            dest = osp.join(self.raw_dir, filename)
-            if not osp.exists(dest):
-                os.symlink(src, dest)
+            link_verified(src, osp.join(self.raw_dir, filename), expected)
         log.info(
             "Smith 2016 SI workbooks linked into %s (sha256 verified)", self.raw_dir
         )
@@ -555,6 +554,9 @@ class CrispriChemgenSmith2016Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Build one env x geno -> A record per (pool, guide, drug, condition); write LMDB."""
+        verify_raw_files(
+            self.raw_dir, {EFFECT_FILENAME: EFFECT_SHA256, GUIDE_FILENAME: GUIDE_SHA256}
+        )
         df = pd.read_excel(
             osp.join(self.raw_dir, EFFECT_FILENAME), sheet_name=EFFECT_SHEET
         )

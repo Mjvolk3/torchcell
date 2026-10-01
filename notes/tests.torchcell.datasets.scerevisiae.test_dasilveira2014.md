@@ -15,3 +15,7 @@ Both workbooks are written with openpyxl into `<root>/raw/`; the genome stub car
 Five to twelve tests, 92 to 100 percent. The four ledger lines including the duplicate-ORF warning; name stripping; a lipid no wild-type row measured; the empty unresolved suffix; the all-blank mutant refusal; both workbooks copied; `main`.
 
 Findings: a lipid no wild-type row measured has no reference entry (lines 246, 361); an all-blank mutant raises only after the store is open (305), leaving `data.csv` with `n_lipids` 0 and a retry that serves 0 records; `gene_set` membership is case-sensitive (201).
+
+## 2026.09.30 - Raw sha256 pin enforced at build time
+
+Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.

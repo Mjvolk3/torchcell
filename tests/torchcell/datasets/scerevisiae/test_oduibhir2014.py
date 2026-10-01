@@ -34,9 +34,11 @@ BY4741 reference at fitness 1.0.
 - a blank ``log2relT`` (row 1 of the matrix): ``2.0 ** -nan`` is NaN and the
   ``FitnessPhenotype`` validator refuses "Fitness cannot be NaN".
 - ``download`` with ``_DATASET_S2_SHA256`` replaced by the digest of the synthetic file
-  (read at call time, line 181): the mirror copy lands byte-identical and logs
-  "Verified <dest> (sha256 <digest>)"; a mirror file whose digest differs from the pin
-  raises "sha256 mismatch" after the copy.
+  (read at call time): the mirror copy lands byte-identical and logs "Verified <dest>
+  (sha256 <digest>)"; a mirror file whose digest differs from the pin raises
+  ``RawSha256MismatchError`` before the copy, so ``raw/`` stays empty (issue #537).
+- ``process`` verifies the file in ``raw/`` against the pin before reading a row, so a
+  file placed there by hand is refused with no store written (issue #537).
 - ``main`` with ``load_dotenv`` stubbed and the genome and dataset classes as recorders.
 
 Findings pinned here: the same ORF listed twice (or once in lowercase) gives one record
@@ -44,10 +46,7 @@ per row with identical genotypes (no duplicate check in lines 292 to 314); a bla
 ``commonName`` is stored as the string "nan" (``str(row["commonName"])``, line 301);
 a blank ``log2relT`` raises pydantic's ``ValidationError`` instead of a named refusal,
 and because the write env is opened first (line 289) the aborted build leaves an empty
-``processed/lmdb`` that a retry serves as 0 records; a mirror file that fails the pin is
-left in ``raw/`` after the refusal (the copy at line 179 precedes the check at 180), so
-the next constructor finds the raw file present, skips ``download`` and builds from the
-unverified bytes.
+``processed/lmdb`` that a retry serves as 0 records.
 """
 
 from __future__ import annotations
@@ -63,6 +62,8 @@ import pandas as pd
 import pydantic
 import pytest
 
+from torchcell.data import RawSha256MismatchError
+from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.media import SC
 from torchcell.datamodels.schema import (
     Environment,
@@ -250,21 +251,19 @@ def test_row_count_self_checksum(tmp_path: Path) -> None:
         m.SmfODuibhir2014Dataset(root=str(root), genome=_genome())
 
 
-def test_download_verifies_present_file_and_needs_the_mirror(
+def test_download_leaves_a_present_file_to_the_build_check_and_needs_the_mirror(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """A file already in ``raw/`` is not copied over (``process`` verifies it at build
+    time); with no raw file and no mirror the constructor names the missing mirror path.
+    """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path / "data_root"))
     dataset = m.SmfODuibhir2014Dataset(root=str(_root(tmp_path)), genome=_genome())
     dest = Path(dataset.root) / "raw" / m._RAW_FILENAME
-    digest = hashlib.sha256(dest.read_bytes()).hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"{m._RAW_FILENAME} sha256 mismatch: got {digest}, "
-            f"expected {m._DATASET_S2_SHA256}"
-        ),
-    ):
-        dataset.download()
+    before = dest.read_bytes()
+    dataset.download()
+    assert dest.read_bytes() == before
+    assert sorted(p.name for p in dest.parent.iterdir()) == [m._RAW_FILENAME]
     src = (
         tmp_path
         / "data_root"
@@ -419,9 +418,11 @@ def test_download_copies_the_pinned_mirror_file_then_verifies_in_place(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     """With the pin set to the synthetic file's digest, an empty root copies the mirror
-    file byte for byte, logs "Verified <dest> (sha256 <pin>)" and builds three records; a
-    second ``download`` with the mirror removed re-verifies the raw copy and logs again.
+    file byte for byte, logs "Verified <dest> (sha256 <pin>)" and builds three records
+    under the real build-time check; a second ``download`` with the mirror removed finds
+    the raw copy present and neither copies nor logs.
     """
+    monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
     content = _synthetic_bytes(tmp_path)
     digest = hashlib.sha256(content).hexdigest()
     src = _mirror(tmp_path, monkeypatch, content)
@@ -433,43 +434,60 @@ def test_download_copies_the_pinned_mirror_file_then_verifies_in_place(
     dest = tmp_path / "fresh" / "raw" / m._RAW_FILENAME
     assert dest.read_bytes() == content
     assert len(dataset) == 3
+    assert [r.getMessage() for r in caplog.records if r.name == m.log.name][0] == (
+        f"Verified {dest} (sha256 {digest})"
+    )
     src.unlink()
     caplog.clear()
     with caplog.at_level(logging.INFO, logger=m.log.name):
         dataset.download()
-    assert [r.getMessage() for r in caplog.records if r.name == m.log.name] == [
-        f"Verified {dest} (sha256 {digest})"
-    ]
+    assert [r.getMessage() for r in caplog.records if r.name == m.log.name] == []
+    assert dest.read_bytes() == content
 
 
-def test_a_mirror_file_off_the_pin_is_refused_but_left_in_raw_for_the_next_build(
+def test_a_mirror_file_off_the_pin_is_refused_and_nothing_lands_in_raw(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The mirror holds a well-formed Dataset S2 whose digest is not the pin: the copy
-    lands, then the check raises "sha256 mismatch" with that digest.
-
-    Finding: the refused copy stays in ``raw/`` (the copy at line 179 precedes the check
-    at 180), so a second constructor finds every raw file present, PyG skips
-    ``download()`` and the build serves three records from the unverified bytes. Pinned
-    until a failed check removes the copy.
+    """Contract (issue #537): the mirror holds a well-formed Dataset S2 whose digest is
+    not the pin. ``download`` hashes it before copying and raises
+    ``RawSha256MismatchError`` naming the mirror file and both digests; ``raw/`` stays
+    empty, so a second constructor runs ``download`` again and refuses again.
     """
     content = _synthetic_bytes(tmp_path)
     digest = hashlib.sha256(content).hexdigest()
-    _mirror(tmp_path, monkeypatch, content)
+    src = _mirror(tmp_path, monkeypatch, content)
     root = tmp_path / "unverified"
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"{m._RAW_FILENAME} sha256 mismatch: got {digest}, "
-            f"expected {m._DATASET_S2_SHA256}"
-        ),
-    ):
-        m.SmfODuibhir2014Dataset(root=str(root), genome=_genome())
-    assert (root / "raw" / m._RAW_FILENAME).read_bytes() == content
-    rebuilt = m.SmfODuibhir2014Dataset(root=str(root), genome=_genome())
-    assert rebuilt[0]["experiment"] == _experiment("YAL001C", "TFC3", 0.5)
-    assert len(rebuilt) == 3
-    rebuilt.close_lmdb()
+    for _ in range(2):
+        with pytest.raises(RawSha256MismatchError) as err:
+            m.SmfODuibhir2014Dataset(root=str(root), genome=_genome())
+        assert str(err.value) == (
+            f"sha256 mismatch for {src}: expected {m._DATASET_S2_SHA256}, "
+            f"observed {digest}"
+        )
+        assert list((root / "raw").iterdir()) == []
+        assert not (root / "processed" / "lmdb").exists()
+
+
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #537): with Dataset S2 already in ``raw/`` PyG skips
+    ``download``, so ``process`` verifies it first and raises ``RawSha256MismatchError``
+    before any row is read; no store is written and the file is left as found.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(m, [m._RAW_FILENAME])
+    raw = staged.root / "raw" / m._RAW_FILENAME
+    with pytest.raises(RawSha256MismatchError) as err:
+        m.SmfODuibhir2014Dataset(root=str(staged.root), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw}: expected "
+        "37ef19ee249c64c0557c84870e59b2fd7a8bbaf14371fd355775e650f2a39f1c, "
+        f"observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
 
 
 def test_main_builds_genome_and_dataset_under_data_root(

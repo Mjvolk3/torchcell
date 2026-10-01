@@ -87,7 +87,13 @@ from typing import Any
 from pydantic import BaseModel
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    link_verified,
+    post_process,
+    verify_raw_files,
+    verify_sha256,
+)
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import SC
 from torchcell.datamodels.schema import (
@@ -387,17 +393,17 @@ def deposit_raw_mirror(
     marked ``provenance_complete=False`` rather than carrying a fabricated version.
     """
     root = raw_mirror_dir(data_root)
-    root.mkdir(parents=True, exist_ok=True)
-    files: list[ArtifactRecord] = []
-    for source, relpath, expected in (
+    deposits = (
         (pdf_path, PDF_REL, PDF_SHA256),
         (paper_md_path, PAPER_MD_REL, PAPER_MD_SHA256),
-    ):
-        got = _sha256(source)
-        if got != expected:
-            raise RuntimeError(
-                f"{source} sha256 mismatch: got {got}, expected {expected}"
-            )
+    )
+    # Both sources are verified before the mirror directory is created, so a refusal
+    # leaves no directory and no partial deposit behind.
+    for source, _, expected in deposits:
+        verify_sha256(source, expected)
+    root.mkdir(parents=True, exist_ok=True)
+    files: list[ArtifactRecord] = []
+    for source, relpath, expected in deposits:
         dest = root / relpath
         if dest.exists():
             if _sha256(dest) != expected:
@@ -534,14 +540,7 @@ class CrispriMormino2022Dataset(ExperimentDataset):
             src = raw_mirror_dir(data_root) / relpath
             if not src.exists():
                 raise RuntimeError(f"required raw artifact missing from mirror: {src}")
-            got = _sha256(src)
-            if got != expected:
-                raise RuntimeError(
-                    f"{relpath} sha256 mismatch: got {got}, expected {expected}"
-                )
-            dest = osp.join(self.raw_dir, osp.basename(relpath))
-            if not osp.exists(dest):
-                os.symlink(src, dest)
+            link_verified(src, osp.join(self.raw_dir, osp.basename(relpath)), expected)
         log.info(
             "Mormino 2022 artifacts linked into %s (sha256 verified)", self.raw_dir
         )
@@ -615,6 +614,9 @@ class CrispriMormino2022Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Build one categorical env x geno record per Table 1 isolated strain; write LMDB."""
+        verify_raw_files(
+            self.raw_dir, {PDF_FILENAME: PDF_SHA256, PAPER_MD: PAPER_MD_SHA256}
+        )
         paper_md = Path(osp.join(self.raw_dir, PAPER_MD)).read_text(encoding="utf-8")
         audit_table_1(paper_md)
         assert self.genome is not None

@@ -35,7 +35,7 @@ means A101_A 2.0, C103_A1B 4.0, ACV103_A1B 0.5, CCV103_A1B 0.75.
   files (they are read at call time, line 188): an empty ``raw/`` is filled from
   ``$DATA_ROOT/torchcell-library/ohnukiHighthroughputPlatformYeast2022/data`` and the
   build proceeds; a second call with the mirror gone skips both verified raw files; a
-  copy that lands different bytes raises "sha256 mismatch after copy".
+  copy that lands different bytes is refused by the build-time check in ``process``.
 - a non-numeric reference cell ("x" in row 2) refuses with pandas' ``ValueError``
   'Unable to parse string "x" at position 1' (``errors="raise"``, line 313).
 - the default-genome path (``genome=None`` calls ``default_genome()`` once, line 233) and
@@ -60,6 +60,8 @@ from typing import Any, cast
 import pandas as pd
 import pytest
 
+from torchcell.data import RawSha256MismatchError
+from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.schema import (
     CalMorphExperiment,
     CalMorphExperimentReference,
@@ -245,10 +247,11 @@ def test_side_files(dataset: m.ScmdOhnuki2022Dataset) -> None:
 def test_download_checks_raw_then_mirror_hashes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Three branches of ``download()``: a present raw file with the wrong hash raises
-    "in raw dir"; an empty root with no mirror file raises "mirror file missing"; a
-    mirror file holding ``b"not the matrix"`` raises "in mirror" with its digest
-    (35fe305f...) and nothing is copied into ``raw/``.
+    """A present raw file with the wrong hash is refused by ``process()`` (the build-time
+    check, issue #518's sweep) with ``RawSha256MismatchError``; an empty root with no
+    mirror file raises "mirror file missing"; a mirror file holding ``b"not the matrix"``
+    is refused before the copy with its digest (35fe305f...) and nothing lands in
+    ``raw/``.
     """
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
@@ -257,12 +260,12 @@ def test_download_checks_raw_then_mirror_hashes(
     dataset = m.ScmdOhnuki2022Dataset(root=str(_root(tmp_path)), genome=_genome())
     dest = Path(dataset.root) / "raw" / m.MUTANT_FILE
     digest = hashlib.sha256(dest.read_bytes()).hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=f"{m.MUTANT_FILE} sha256 mismatch in raw dir: got {digest}, "
-        f"expected {m.MUTANT_SHA256}",
-    ):
-        dataset.download()
+    monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
+    with pytest.raises(RawSha256MismatchError) as err:
+        dataset.process()
+    assert str(err.value) == (
+        f"sha256 mismatch for {dest}: expected {m.MUTANT_SHA256}, observed {digest}"
+    )
     mirror = data_root / m.MIRROR_SUBPATH
     with pytest.raises(
         RuntimeError, match=re.escape(f"mirror file missing: {mirror / m.MUTANT_FILE}")
@@ -272,13 +275,13 @@ def test_download_checks_raw_then_mirror_hashes(
     (mirror / m.MUTANT_FILE).write_bytes(b"not the matrix")
     bad = hashlib.sha256(b"not the matrix").hexdigest()
     assert bad.startswith("35fe305f")
-    with pytest.raises(
-        RuntimeError,
-        match=f"{m.MUTANT_FILE} sha256 mismatch in mirror: got {bad}, "
-        f"expected {m.MUTANT_SHA256}",
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         m.ScmdOhnuki2022Dataset(root=str(tmp_path / "empty2"), genome=_genome())
-    assert not (tmp_path / "empty2" / "raw" / m.MUTANT_FILE).exists()
+    assert str(err.value) == (
+        f"sha256 mismatch for {mirror / m.MUTANT_FILE}: expected {m.MUTANT_SHA256}, "
+        f"observed {bad}"
+    )
+    assert list((tmp_path / "empty2" / "raw").iterdir()) == []
 
 
 def _background() -> list[Any]:
@@ -500,12 +503,14 @@ def test_download_copies_verified_mirror_files_then_skips_verified_raw(
     assert {name: (raw / name).read_bytes() for name in content} == content
 
 
-def test_download_refuses_a_copy_that_lands_different_bytes(
+def test_build_refuses_a_copy_that_lands_different_bytes(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The copied file is hashed again: a copy that writes ``b"torn"`` instead of the
-    mirror bytes raises "sha256 mismatch after copy" with the torn digest.
+    """The mirror bytes verify, but a copy that writes ``b"torn"`` instead lands in
+    ``raw/``; ``process()`` re-hashes ``raw/`` before reading a row and refuses it with
+    ``RawSha256MismatchError`` naming the raw file and the torn digest.
     """
+    monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
     _pinned_to_synthetic(tmp_path, monkeypatch)
 
     def torn_copy(src: str, dest: str) -> None:
@@ -513,12 +518,13 @@ def test_download_refuses_a_copy_that_lands_different_bytes(
 
     monkeypatch.setattr(shutil, "copyfile", torn_copy)
     torn = hashlib.sha256(b"torn").hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=f"^{m.MUTANT_FILE} sha256 mismatch after copy: got {torn}, "
-        f"expected {m.MUTANT_SHA256}$",
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         m.ScmdOhnuki2022Dataset(root=str(tmp_path / "torn"), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {tmp_path / 'torn' / 'raw' / m.MUTANT_FILE}: "
+        f"expected {m.MUTANT_SHA256}, observed {torn}"
+    )
+    assert list((tmp_path / "torn" / "processed").iterdir()) == []
 
 
 def test_main_builds_under_data_root_and_prints_the_first_item(

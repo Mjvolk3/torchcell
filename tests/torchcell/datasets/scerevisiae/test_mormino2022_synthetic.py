@@ -32,11 +32,12 @@ import socket
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import lmdb
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import SC
 from torchcell.datamodels.schema import (
@@ -562,7 +563,8 @@ def _expected_manifest(
 def test_deposit_raw_mirror_records_pdf_retrieval_and_unrecorded_ocr(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """``deposit_raw_mirror`` refuses a PDF whose sha256 is not the pinned one. With the
+    """``deposit_raw_mirror`` refuses a PDF whose sha256 is not the pinned one with
+    ``RawSha256MismatchError`` before it creates the mirror directory. With the
     pins patched to the fixture digests it copies ``paper.pdf`` and ``paper.md`` to the
     mirror root and writes a manifest: a ``direct_url`` retrieval for the PDF, a
     ``mineru`` ``ProcessingRecord`` with ``version = "unrecorded"`` and the PDF digest as
@@ -575,16 +577,12 @@ def test_deposit_raw_mirror_records_pdf_retrieval_and_unrecorded_ocr(
     staging, pdf_sha, md_sha = _staged_raw(tmp_path, "staging")
     pdf_path = staging / mo.PDF_FILENAME
     md_path = staging / mo.PAPER_MD
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"{pdf_path} sha256 mismatch: got {pdf_sha}, expected {mo.PDF_SHA256}"
-        ),
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         mo.deposit_raw_mirror(pdf_path=pdf_path, paper_md_path=md_path)
-    assert sorted(p.name for p in (data_root / "torchcell-raw").rglob("*")) == [
-        mo.CITATION_KEY
-    ]
+    assert str(err.value) == (
+        f"sha256 mismatch for {pdf_path}: expected {mo.PDF_SHA256}, observed {pdf_sha}"
+    )
+    assert not (data_root / "torchcell-raw").exists()
 
     monkeypatch.setattr(mo, "PDF_SHA256", pdf_sha)
     monkeypatch.setattr(mo, "PAPER_MD_SHA256", md_sha)
@@ -667,11 +665,13 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
 
     (mirror / "paper.md").write_text("drifted upstream", encoding="utf-8")
     drifted = _sha256(mirror / "paper.md")
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(f"paper.md sha256 mismatch: got {drifted}, expected {md_sha}"),
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         mo.CrispriMormino2022Dataset(root=str(tmp_path / "c"), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {mirror / 'paper.md'}: expected {md_sha}, "
+        f"observed {drifted}"
+    )
+    assert not (tmp_path / "c" / "raw" / mo.PAPER_MD).exists()
     (mirror / "paper.md").unlink()
     with pytest.raises(
         RuntimeError,
@@ -680,3 +680,26 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
         ),
     ):
         mo.CrispriMormino2022Dataset(root=str(tmp_path / "d"), genome=_genome())
+
+
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #518's sweep): with the PDF and ``paper.md`` already in ``raw/``
+    PyG skips ``download()``, so ``process()`` verifies both against ``PDF_SHA256`` and
+    ``PAPER_MD_SHA256`` before Table 1 is audited. The PDF off its pin raises
+    ``RawSha256MismatchError`` naming it and both digests; no store is written.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(mo, [mo.PDF_FILENAME, mo.PAPER_MD])
+    raw = staged.root / "raw" / mo.PDF_FILENAME
+    with pytest.raises(RawSha256MismatchError) as err:
+        mo.CrispriMormino2022Dataset(root=str(staged.root), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw}: expected "
+        "388f8e922b0b94fba3a41965035eeee0f6180a110869073a426df96b5e63746a, "
+        f"observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert _sha256(raw) == staged.observed

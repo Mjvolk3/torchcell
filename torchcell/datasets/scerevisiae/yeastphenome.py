@@ -49,7 +49,6 @@ design is not carried). All are ``not_carried_by_curation`` and anchored by ``lo
 = the Zenodo record. A future per-paper SI comb would upgrade these to sourced values.
 """
 
-import hashlib
 import logging
 import os
 import os.path as osp
@@ -62,7 +61,12 @@ from typing import Any, Literal
 
 import lmdb
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    post_process,
+    verify_raw_files,
+    write_verified,
+)
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     BiologicAgentClass,
@@ -536,14 +540,7 @@ class YeastPhenomeDataset(ExperimentDataset):
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=120) as resp:
                 data = resp.read()
-            digest = hashlib.sha256(data).hexdigest()
-            if digest != s["valuez_sha256"]:
-                raise RuntimeError(
-                    f"{s['stem']} valuez sha256 mismatch: got {digest}, "
-                    f"expected {s['valuez_sha256']}"
-                )
-            with open(dest, "wb") as handle:
-                handle.write(data)
+            write_verified(data, dest, s["valuez_sha256"], url)
 
     def _read_screen(self, s: dict[str, str]) -> tuple[list[str], list[list[str]]]:
         """Return (header columns, data rows as cell lists) for one screen's NPV file."""
@@ -574,6 +571,13 @@ class YeastPhenomeDataset(ExperimentDataset):
         are homozygous + a growth readout + a single dosed-compound condition + a known
         base medium; every other column is dropped-and-logged (the worklist), never guessed.
         """
+        verify_raw_files(
+            self.raw_dir,
+            {
+                f"{s['pmid']}_{s['stem']}_valuez.txt": s["valuez_sha256"]
+                for s in SCREENS
+            },
+        )
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))

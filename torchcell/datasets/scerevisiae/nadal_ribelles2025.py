@@ -77,7 +77,12 @@ import lmdb
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    link_verified,
+    post_process,
+    verify_raw_files,
+)
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     Concentration,
@@ -216,14 +221,7 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
             src = osp.join(data_root, RAW_DIR_REL, name)
             if not osp.exists(src):
                 raise RuntimeError(f"required raw artifact missing from mirror: {src}")
-            got = _sha256(src)
-            if got != SHA256_EXPECTED[name]:
-                raise RuntimeError(
-                    f"{name} sha256 mismatch: got {got}, expected {SHA256_EXPECTED[name]}"
-                )
-            dest = osp.join(self.raw_dir, name)
-            if not osp.exists(dest):
-                os.symlink(src, dest)
+            link_verified(src, osp.join(self.raw_dir, name), SHA256_EXPECTED[name])
         log.info(
             "Nadal-Ribelles raw files linked into %s (sha256 verified)", self.raw_dir
         )
@@ -286,6 +284,9 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Build the per-(genotype, condition) pseudobulk records and write LMDB."""
+        verify_raw_files(
+            self.raw_dir, {name: SHA256_EXPECTED[name] for name in RAW_FILES}
+        )
         import rdata
 
         data_root = self._data_root()

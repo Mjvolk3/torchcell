@@ -131,7 +131,13 @@ import pandas as pd
 from pydantic import BaseModel
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    link_verified,
+    post_process,
+    verify_raw_files,
+    verify_sha256,
+)
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import SED_URA_G418
 from torchcell.datamodels.schema import (
@@ -404,15 +410,15 @@ def deposit_raw_mirror(
     design_url = f"{_ESM_BASE}{DESIGN_D_FILENAME}"
     reference_url = f"{_ESM_BASE}{REFERENCE_FILENAME}"
     files: list[ArtifactRecord] = []
-    for source, relpath, expected in (
+    deposits = (
         (enrichment_path, TSV_REL, TSV_SHA256),
         (design_d_path, DESIGN_D_REL, DESIGN_D_SHA256),
-    ):
-        got = _sha256(source)
-        if got != expected:
-            raise RuntimeError(
-                f"{source} sha256 mismatch: got {got}, expected {expected}"
-            )
+    )
+    # Both sources are verified before anything is written, so a refusal leaves no
+    # mirror directory and no partial deposit behind.
+    for source, _, expected in deposits:
+        verify_sha256(source, expected)
+    for source, relpath, expected in deposits:
         dest = root / relpath
         dest.parent.mkdir(parents=True, exist_ok=True)
         if dest.exists():
@@ -589,14 +595,7 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
             src = raw_mirror_dir(data_root) / relpath
             if not src.exists():
                 raise RuntimeError(f"required raw artifact missing from mirror: {src}")
-            got = _sha256(src)
-            if got != expected:
-                raise RuntimeError(
-                    f"{filename} sha256 mismatch: got {got}, expected {expected}"
-                )
-            dest = osp.join(self.raw_dir, filename)
-            if not osp.exists(dest):
-                os.symlink(src, dest)
+            link_verified(src, osp.join(self.raw_dir, filename), expected)
         log.info("Lian 2019 artifacts linked into %s (sha256 verified)", self.raw_dir)
 
     def _resolver(self) -> Callable[[str], str | None]:
@@ -692,6 +691,9 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Build one env x geno -> log2-enrichment record per (guide, round); write LMDB."""
+        verify_raw_files(
+            self.raw_dir, {TSV_FILENAME: TSV_SHA256, DESIGN_D_FILENAME: DESIGN_D_SHA256}
+        )
         table = pd.read_csv(osp.join(self.raw_dir, TSV_FILENAME), sep="\t")
         resolve = self._resolver()
         assert self.genome is not None

@@ -68,7 +68,12 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    post_process,
+    verify_raw_files,
+    verify_sha256,
+)
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
@@ -86,7 +91,12 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.sequence.genome.registry import PETER2018_1011, SGD_S288C_R64, resolve
+from torchcell.sequence.genome.registry import (
+    PETER2018_1011,
+    SGD_S288C_R64,
+    load_genome_manifest,
+    resolve,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -293,9 +303,10 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
     def download(self) -> None:
         """Symlink the hash-pinned mirror files into ``raw_dir`` and verify sha256.
 
-        Large artifacts are referenced in place (never copied). Only the two files with a
-        pinned sha256 (Caudal zip, Peter reference-gene tarball) are hash-verified; the
-        presence/copy-number matrices are existence-checked.
+        Large artifacts are referenced in place (never copied). The two files with a
+        module pin (Caudal zip, Peter reference-gene tarball) are hash-verified here; the
+        presence/copy-number matrices are verified by the genomes tier on ``resolve``.
+        ``process`` re-verifies all four in ``raw/`` before reading them.
         """
         data_root = self._data_root()
         os.makedirs(self.raw_dir, exist_ok=True)
@@ -315,11 +326,7 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
                 raise RuntimeError(f"required raw artifact missing from mirror: {src}")
             expected = sha256_expected.get(name)
             if expected is not None:
-                got = _sha256(src)
-                if got != expected:
-                    raise RuntimeError(
-                        f"{name} sha256 mismatch: got {got}, expected {expected}"
-                    )
+                verify_sha256(src, expected)
             dest = osp.join(self.raw_dir, name)
             if not osp.exists(dest):
                 os.symlink(src, dest)
@@ -329,8 +336,24 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Build the 943 per-isolate pan-transcriptome experiments and write LMDB."""
+        """Build the 943 per-isolate pan-transcriptome experiments and write LMDB.
+
+        Every file in ``raw/`` is verified before a row is read: the Caudal zip and the
+        reference-gene tarball against this module's pins, the presence and copy-number
+        matrices against the genomes tier's manifest (the pin ``resolve`` checks in
+        ``download``). A mismatch raises ``RawSha256MismatchError``.
+        """
         data_root = self._data_root()
+        peter = load_genome_manifest(PETER2018_1011, data_root)
+        verify_raw_files(
+            self.raw_dir,
+            {
+                CAUDAL_ZIP_BASENAME: CAUDAL_ZIP_SHA256,
+                REFGENE_TAR_NAME: REFGENE_TAR_SHA256,
+                PRESENCE_NAME: peter.record(PRESENCE_NAME).sha256,
+                COPYNUMBER_NAME: peter.record(COPYNUMBER_NAME).sha256,
+            },
+        )
         os.makedirs(self.preprocess_dir, exist_ok=True)
 
         # 1. Peter presence/absence + copy-number matrices -> core/accessory + ORF maps.
@@ -583,9 +606,9 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
     @staticmethod
     def _content_perturbations(
         strain: str,
-        presence_row: np.ndarray,
-        copynumber_row: np.ndarray,
-        s288c_mask: np.ndarray,
+        presence_row: np.ndarray[Any, Any],
+        copynumber_row: np.ndarray[Any, Any],
+        s288c_mask: np.ndarray[Any, Any],
         orf_ids: list[str],
         s288c_names: list[str | None],
     ) -> tuple[

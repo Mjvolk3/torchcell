@@ -155,7 +155,12 @@ from typing import Any
 from pydantic import BaseModel
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    link_verified,
+    post_process,
+    verify_raw_files,
+)
 from torchcell.datamodels.compound_identity import (
     resolve_compound_identity,
     resolved_compound,
@@ -848,15 +853,9 @@ class _Hillenmeyer2008Base(ExperimentDataset):
             src = raw_mirror_dir(data_root) / rel[name]
             if not src.exists():
                 raise RuntimeError(f"required raw artifact missing from mirror: {src}")
-            expected = manifest_sha256(manifest, rel[name])
-            got = _sha256(src)
-            if got != expected:
-                raise RuntimeError(
-                    f"{name} sha256 mismatch: got {got}, expected {expected}"
-                )
-            dest = osp.join(self.raw_dir, name)
-            if not osp.exists(dest):
-                os.symlink(src, dest)
+            link_verified(
+                src, osp.join(self.raw_dir, name), manifest_sha256(manifest, rel[name])
+            )
         log.info(
             "Hillenmeyer 2008 %s raw files linked into %s (sha256 verified against the "
             "raw-mirror manifest)",
@@ -1066,14 +1065,14 @@ class _Hillenmeyer2008Base(ExperimentDataset):
         sgd_genes = _load_sgd_genes(data_root)
         manifest = load_manifest(data_root)
         rel = raw_relpaths()
+        verify_raw_files(
+            self.raw_dir,
+            {
+                name: manifest_sha256(manifest, rel[name])
+                for name in self.raw_file_names
+            },
+        )
         matrix_path = osp.join(self.raw_dir, spec.filename)
-        got = _sha256(matrix_path)
-        expected = manifest_sha256(manifest, rel[spec.filename])
-        if got != expected:
-            raise RuntimeError(
-                f"{spec.filename} sha256 mismatch at build time: got {got}, expected "
-                f"{expected}"
-            )
 
         control_sets = read_control_set_map(osp.join(self.raw_dir, spec.keyfile))
         control_sizes = read_control_set_sizes(

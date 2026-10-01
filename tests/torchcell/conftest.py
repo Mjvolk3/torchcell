@@ -12,14 +12,39 @@ Everything here is tiny and built in memory, so no fixture needs ``DATA_ROOT``:
   dataset loaders take (``tests/torchcell/datasets/scerevisiae/test_hoepfner2014.py``
   keeps its own copy for its module-level helpers);
 * ``dcell_graph`` / ``dcell_batch``, a three-term GO hierarchy over four genes in the
-  layout ``torchcell.models.dcell.DCell`` reads.
+  layout ``torchcell.models.dcell.DCell`` reads;
+* ``raw_pin_calls`` and ``off_pin_raw``, the build-time sha256 pins of the dataset
+  loaders (below).
+
+Build-time sha256 pins (issues #518, #524, #528, #537). Every pinned loader verifies the
+bytes in ``raw/`` against its real sha256 pin at the start of ``process()``
+(``torchcell.data.experiment_dataset.verify_raw_files``). The synthetic raw files the
+loader and adapter tests build from are tiny hand-written stand-ins that can never carry
+the real pin, so for each test module ``raw_pin_calls`` replaces the
+``verify_raw_files`` each loader module imported with a recorder that still demands
+every pinned file exist in ``raw/`` and records ``(module, raw dir, pins)``, but does not
+compare bytes. The byte comparison is asserted by each loader's refusal test, which
+restores the real function (``monkeypatch.setattr(<module>, "verify_raw_files",
+verify_raw_files)``) and checks the exact ``RawSha256MismatchError`` message and the
+on-disk state after the refusal. ``off_pin_raw`` stages that case: it puts the real
+check back on one loader module and fills a fresh dataset root's ``raw/`` with bytes
+that are not any release, so PyG skips ``download()`` and the build reaches
+``process()`` with an unverified file.
 """
 
-from typing import Any
+import hashlib
+import importlib
+import os.path as osp
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from pathlib import Path
+from types import ModuleType
+from typing import Any, NamedTuple
 
 import pytest
 import torch
 from torch_geometric.data import HeteroData
+
+from torchcell.data.experiment_dataset import verify_raw_files
 
 # Sizes of the synthetic CGT graph. Test modules cannot import a conftest (the test
 # tree has no __init__.py, so a relative import has no parent package); they restate
@@ -330,3 +355,94 @@ class EmbeddingStubGenome:
 def embedding_genome() -> EmbeddingStubGenome:
     """Three real ``SCerevisiaeGene`` objects on a 6,100 nt synthetic chromosome I."""
     return EmbeddingStubGenome()
+
+
+# ---- build-time sha256 pins of the dataset loaders ------------------------------- #
+#: The real build-time check, for refusal tests to put back.
+REAL_VERIFY_RAW_FILES = verify_raw_files
+
+#: Every loader module that verifies its raw pins at build time.
+PINNED_LOADERS = (
+    "auesukaree2009",
+    "baryshnikova2010",
+    "bloom2019",
+    "cachera2023",
+    "caudal2024",
+    "cooper2010",
+    "costanzo2021",
+    "dasilveira2014",
+    "hillenmeyer2008",
+    "hoepfner2014",
+    "lian2019",
+    "lopez2024",
+    "messner2023",
+    "mormino2022",
+    "mota2024",
+    "mulleder2016",
+    "nadal_ribelles2025",
+    "oduibhir2014",
+    "ohnuki2018",
+    "ohnuki2022",
+    "ohya2005",
+    "ozaydin2013",
+    "smith2006",
+    "smith2016",
+    "vanacloig2022",
+    "wildenhain2015",
+    "xue2025",
+    "yeastphenome",
+    "yoshida2012",
+    "zelezniak2018",
+)
+
+#: ``(loader module name, raw dir, {file name: pinned sha256})`` per recorded check.
+PinCall = tuple[str, str, dict[str, str]]
+
+
+@pytest.fixture(scope="module", autouse=True)
+def raw_pin_calls() -> Iterator[list[PinCall]]:
+    """Swap each loader's build-time byte check for a presence-checking recorder."""
+    calls: list[PinCall] = []
+    with pytest.MonkeyPatch.context() as mp:
+        for name in PINNED_LOADERS:
+            module = importlib.import_module(f"torchcell.datasets.scerevisiae.{name}")
+
+            def record(
+                raw_dir: str, pins: Mapping[str, str], _name: str = name
+            ) -> None:
+                missing = [f for f in pins if not osp.exists(osp.join(raw_dir, f))]
+                if missing:
+                    raise FileNotFoundError(f"pinned raw files absent: {missing}")
+                calls.append((_name, raw_dir, dict(pins)))
+
+            mp.setattr(module, "verify_raw_files", record)
+        yield calls
+
+
+#: The bytes ``off_pin_raw`` writes; no pinned release hashes to this.
+OFF_PIN_BYTES = b"bytes that are not the pinned release\n"
+
+
+class OffPinRoot(NamedTuple):
+    """A dataset root whose ``raw/`` holds only off-pin bytes, and their sha256."""
+
+    root: Path
+    observed: str
+
+
+@pytest.fixture
+def off_pin_raw(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> Callable[[ModuleType, Sequence[str]], OffPinRoot]:
+    """Restore the real build-time check on a loader and stage off-pin raw files."""
+
+    def stage(module: ModuleType, names: Sequence[str]) -> OffPinRoot:
+        monkeypatch.setattr(module, "verify_raw_files", REAL_VERIFY_RAW_FILES)
+        root = tmp_path / "off_pin"
+        raw = root / "raw"
+        raw.mkdir(parents=True)
+        for name in names:
+            (raw / name).write_bytes(OFF_PIN_BYTES)
+        return OffPinRoot(root, hashlib.sha256(OFF_PIN_BYTES).hexdigest())
+
+    return stage

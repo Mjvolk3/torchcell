@@ -64,14 +64,12 @@ A-C and a FC<=0.5 DOWN block in cols E-G, each ``Gene knockout-strain`` | ``FC (
 ``STD``).
 """
 
-import hashlib
 import logging
 import math
 import os
 import os.path as osp
 import pickle
 import re
-import shutil
 import statistics
 from collections.abc import Callable
 from typing import Any
@@ -80,7 +78,12 @@ import lmdb
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    copy_verified,
+    post_process,
+    verify_raw_files,
+)
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
@@ -172,13 +175,8 @@ class _IsobutanolLopez2024Base(ExperimentDataset):
                     f"library mirror data file not found: {src}. This dataset's source is "
                     f"the sha256-pinned supplementary tables in the torchcell-library mirror."
                 )
-            shutil.copyfile(src, dest)
-        digest = hashlib.sha256(open(dest, "rb").read()).hexdigest()
-        if digest != _XLSX_SHA256:
-            raise RuntimeError(
-                f"{_XLSX_FILENAME} sha256 mismatch: got {digest}, expected {_XLSX_SHA256}"
-            )
-        log.info("Verified %s (sha256 %s)", dest, _XLSX_SHA256)
+            copy_verified(src, dest, _XLSX_SHA256)
+            log.info("Verified %s (sha256 %s)", dest, _XLSX_SHA256)
 
     def _require_genome(self) -> SCerevisiaeGenome:
         """Return the injected genome or raise (systematic-name resolution requires it)."""
@@ -330,6 +328,7 @@ class IsobutanolScreenLopez2024Dataset(_IsobutanolLopez2024Base):
         = row count; ``metabolite_level_se`` = sample-SD / sqrt(n) when the gene has >= 2 rows
         (each row was itself an ``n=1`` median-fluorescence measurement), else ``None``.
         """
+        verify_raw_files(self.raw_dir, {_XLSX_FILENAME: _XLSX_SHA256})
         xlsx = osp.join(self.raw_dir, _XLSX_FILENAME)
         # header on 0-based row 1: "Gene-knockout strain" | "Fold change".
         df = pd.read_excel(xlsx, sheet_name="Table S2", header=1)
@@ -449,6 +448,7 @@ class IsobutanolValidatedLopez2024Dataset(_IsobutanolLopez2024Base):
         remaining ORF must be unique (metabolite L1 orf_uniqueness); a collision would signal
         a second contradictory strain and raises rather than silently overwriting.
         """
+        verify_raw_files(self.raw_dir, {_XLSX_FILENAME: _XLSX_SHA256})
         records = self._read_blocks()
         systematic_names = [g for g, _, _ in records]
         resolve = self._resolver(systematic_names)

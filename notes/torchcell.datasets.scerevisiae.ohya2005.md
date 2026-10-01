@@ -241,3 +241,9 @@ A read-only Fable 5.1 agent graded eight recorded claims against the mirror (pap
 - Three wild-type counts: the paper imaged 126, the average file has 122 rows, Suzuki 2018 selected 109. The mean-WT reference is correct as a torchcell choice but is not the paper's Box-Cox standardization. #494.
 - The `2005a` mirror directory is a deliberate `dataset_raw_mirror` record with no `paper.md`, not a broken capture as #271 says; the lit sync should read `kind`. #495.
 - Four strains the Supporting Text flags (rad18 an α cell, ctf8 an a/α mixture, scp160 2N, rho4 unlinked to the cassette) carry no qc flag. #496.
+
+## 2026.09.30 - Raw sha256 pin verified at build time
+
+Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: yes; refused deposit leaving a directory: n/a.
+
+Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `_RAW_FILES`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.

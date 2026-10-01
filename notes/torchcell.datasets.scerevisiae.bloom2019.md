@@ -226,3 +226,9 @@ tier's manifest pins `1011Assemblies.tar.gz` at `ASSEMBLY_TAR_SHA256`, so the st
 are byte-identical (they hold `<tar>::<member>` and the tarball sha256, no path); the dev
 store still reads 530,100 records, and the member index read through the tier equals the
 library copy (1,010 entries). The library key's `data/` is retained untouched.
+
+## 2026.09.30 - Raw sha256 pin verified at build time
+
+Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: no; refused deposit leaving a directory: n/a (records source digest).
+
+Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against raw-mirror manifest, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.

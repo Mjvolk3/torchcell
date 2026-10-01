@@ -70,12 +70,10 @@ DATA SOURCE (sha256-pinned mirror):
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import os
 import os.path as osp
 import pickle
-import shutil
 from collections.abc import Callable
 from typing import Any
 
@@ -83,7 +81,12 @@ import lmdb
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    copy_verified,
+    post_process,
+    verify_raw_files,
+)
 from torchcell.datamodels.media import SC
 from torchcell.datamodels.schema import (
     Environment,
@@ -176,14 +179,8 @@ class SmfODuibhir2014Dataset(ExperimentDataset):
                     f"the sha256-pinned Supplementary Dataset S2 in the torchcell-library "
                     f"mirror."
                 )
-            shutil.copyfile(src, dest)
-        digest = hashlib.sha256(open(dest, "rb").read()).hexdigest()
-        if digest != _DATASET_S2_SHA256:
-            raise RuntimeError(
-                f"{_RAW_FILENAME} sha256 mismatch: got {digest}, "
-                f"expected {_DATASET_S2_SHA256}"
-            )
-        log.info("Verified %s (sha256 %s)", dest, _DATASET_S2_SHA256)
+            copy_verified(src, dest, _DATASET_S2_SHA256)
+            log.info("Verified %s (sha256 %s)", dest, _DATASET_S2_SHA256)
 
     def _resolver(self) -> Callable[[str], str | None]:
         """Build an ORF -> current-R64-systematic-name resolver from the genome."""
@@ -279,6 +276,7 @@ class SmfODuibhir2014Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Convert each Dataset S2 row into a fitness record; write LMDB."""
+        verify_raw_files(self.raw_dir, {_RAW_FILENAME: _DATASET_S2_SHA256})
         resolve = self._resolver()
         df = self._read_dataset_s2()
 

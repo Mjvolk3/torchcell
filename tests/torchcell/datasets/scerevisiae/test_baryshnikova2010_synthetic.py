@@ -40,12 +40,13 @@ import socket
 import subprocess
 from pathlib import Path
 from types import MappingProxyType
-from typing import cast
+from typing import Any, cast
 
 import openpyxl
 import pandas as pd
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.media import SGA_DM_SELECTION
 from torchcell.datamodels.schema import (
     Environment,
@@ -522,11 +523,12 @@ def test_download_links_the_mirror_file_after_verifying_its_manifest_sha256(
     xls.parent.mkdir()
     xls.write_bytes(staged.read_bytes())
     digest = hashlib.sha256(xls.read_bytes()).hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=f"SupplementaryData1_SMF.xls sha256 mismatch: got {digest}, expected {'0' * 64}",
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "c"), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {xls}: expected {'0' * 64}, observed {digest}"
+    )
+    assert list((tmp_path / "c" / "raw").iterdir()) == []
     manifest_path.write_text(_mirror_manifest(xls, digest).model_dump_json())
     dataset = m.SmfBaryshnikova2010Dataset(root=str(tmp_path / "d"), genome=_genome())
     # a raw file already in place is left alone: download() only links what is absent
@@ -600,3 +602,26 @@ def test_deposit_raw_mirror_is_idempotent_by_sha256(
         m.deposit_raw_mirror(
             xls_path=other, retrieved_at="2026-09-28", data_root=str(data_root)
         )
+
+
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #518's sweep): with the workbook already in ``raw/`` PyG skips
+    ``download()``, so ``process()`` verifies it against ``XLS_SHA256`` first and raises
+    ``RawSha256MismatchError`` before a row is read; no store is written and the file
+    is left as found.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(m, ["SupplementaryData1_SMF.xls"])
+    raw = staged.root / "raw" / "SupplementaryData1_SMF.xls"
+    with pytest.raises(RawSha256MismatchError) as err:
+        m.SmfBaryshnikova2010Dataset(root=str(staged.root), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw}: expected "
+        "086bfadf2684f28940500dd87e3be74c53a957448d2016f7a02370540da8a04e, "
+        f"observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed

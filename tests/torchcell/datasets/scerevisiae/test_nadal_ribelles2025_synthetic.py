@@ -46,6 +46,8 @@ import pandas as pd
 import pytest
 import rdata
 
+from torchcell.data import RawSha256MismatchError
+from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.schema import (
     Compound,
     Concentration,
@@ -380,20 +382,24 @@ def test_process_refuses_to_run_without_a_genome(
 def test_download_verifies_every_mirror_file_then_links_it(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Against the real pins the synthetic ``FC_genotype.Rdata`` is refused with both
-    digests; with the pins repointed, each file is symlinked into ``raw/`` and the build
+    """Against the real pins the synthetic ``FC_genotype.Rdata`` is refused with
+    ``RawSha256MismatchError`` and both digests, nothing linked; with the pins repointed,
+    each file is symlinked into ``raw/`` and the build, under the real build-time check,
     yields the four records. A missing mirror file is refused by path.
     """
+    monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     mirror = data_root / m.RAW_DIR_REL
     files = _write_files(mirror)
     got = hashlib.sha256(files[m.FC_NAME]).hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=f"FC_genotype.Rdata sha256 mismatch: got {got}, expected {m.FC_SHA256}",
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         m.NadalRibellesPerturbSeq2025Dataset(root=str(tmp_path / "a"), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {mirror / m.FC_NAME}: expected {m.FC_SHA256}, "
+        f"observed {got}"
+    )
+    assert list((tmp_path / "a" / "raw").iterdir()) == []
     for name, data in files.items():
         monkeypatch.setitem(m.SHA256_EXPECTED, name, hashlib.sha256(data).hexdigest())
     dataset = m.NadalRibellesPerturbSeq2025Dataset(

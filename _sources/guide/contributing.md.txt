@@ -96,6 +96,13 @@ publishes nothing. The wheel carries the `torchcell` package and its data files
 (`[tool.setuptools.package-data]`), not `tests/`, `experiments/` or `notes/`; check a
 build locally with `python -m build` followed by `python -m twine check dist/*`.
 
+A release that was tagged but did not reach PyPI (the publish step failed, or the
+trusted publisher was not yet registered) is published without a new bump by running the
+same workflow by hand on the existing tag: `gh workflow run semantic-release.yaml -f
+tag=vX.Y.Z`. The `publish-tag` job checks out the tag, builds it, refuses a build whose
+version is not the tag's, replaces the assets on the GitHub release and publishes to
+PyPI, so the two always carry the files of one build.
+
 ## Adding a dataset page
 
 A dataset page under `docs/source/datasets/<organism>/` follows the section contract on the {doc}`../datasets/index` page: introduction and terms, the draw.io diagram, the record dumps, the data tables and figures with one exploration, the supported query and its results from a named release, the download section, sourced caveats, and the provenance table. The checklist before opening the PR:

@@ -137,8 +137,8 @@ loader consumed are served from the same endpoint, hash-pinned by their <code cl
 <p>The endpoint is <code class="docutils literal notranslate"><span class="pre">http://torchcell-database.ncsa.illinois.edu:8724</span></code>, on the database
 host, serving the archive store and the raw mirror from the Taiga project storage. A
 user needs nothing but that URL and a key: no account on the host, no ssh. Ask the
-maintainers for a named API key; every request except <code class="docutils literal notranslate"><span class="pre">/health</span></code> carries the key in the
-<code class="docutils literal notranslate"><span class="pre">X-API-Key</span></code> header. The store currently holds <code class="docutils literal notranslate"><span class="pre">gene_essentiality_sgd</span></code>,
+maintainers for a named API key (the Keys section below says how one is issued); every request except <code class="docutils literal notranslate"><span class="pre">/health</span></code>
+carries the key in the <code class="docutils literal notranslate"><span class="pre">X-API-Key</span></code> header. The store currently holds <code class="docutils literal notranslate"><span class="pre">gene_essentiality_sgd</span></code>,
 <code class="docutils literal notranslate"><span class="pre">smf_costanzo2016</span></code>, <code class="docutils literal notranslate"><span class="pre">amino_acid_cooper2010</span></code>, <code class="docutils literal notranslate"><span class="pre">amino_acid_mulleder2016</span></code> and
 <code class="docutils literal notranslate"><span class="pre">betaxanthin_cachera2023</span></code>; <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/datasets</span></code> is the authoritative list.</p>
 <section id="swagger">
@@ -209,6 +209,19 @@ curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Ke
 </pre></div>
 </div>
 </section>
+<section id="keys">
+<h2>Keys<a class="headerlink" href="#keys" title="Link to this heading"></a></h2>
+<p>A key is issued per person or group by a maintainer; there is no self-service sign-up.
+Each key has a name, the endpoint stores only its sha256, and the plaintext is shown
+once, at the moment it is made. To issue one, on the endpoint host:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>torchcell.datasets.server<span class="w"> </span>--gen-key<span class="w"> </span>&lt;name&gt;
+</pre></div>
+</div>
+<p>It prints the plaintext key, which goes to the user, and a <code class="docutils literal notranslate"><span class="pre">{&quot;&lt;name&gt;&quot;:</span> <span class="pre">&quot;&lt;sha256hex&gt;&quot;}</span></code>
+line, which is added to the JSON file <code class="docutils literal notranslate"><span class="pre">TC_DATA_KEYS_FILE</span></code> points at. The service reads
+that file when it starts, so restart it for a new key to be accepted. Deleting an entry
+and restarting revokes that key and no other.</p>
+</section>
 <section id="environment-variables">
 <h2>Environment variables<a class="headerlink" href="#environment-variables" title="Link to this heading"></a></h2>
 <table class="docutils align-default">
@@ -257,6 +270,21 @@ LMDB is absent fetches, verifies and unpacks its artifact instead of downloading
 publisher files and running <code class="docutils literal notranslate"><span class="pre">process()</span></code>. If the endpoint has no artifact compatible
 with the installed version the loader raises and names the slug; it never falls back
 to the publisher path while the variable is set.</p>
+<p>The two variables are read from the process environment. Either export them in the
+shell, as in the curl section, or put the same two lines, without <code class="docutils literal notranslate"><span class="pre">export</span></code>, in a <code class="docutils literal notranslate"><span class="pre">.env</span></code>
+file in your project and load it before constructing a loader:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
+
+<span class="n">load_dotenv</span><span class="p">()</span>  <span class="c1"># reads the .env beside this script or in a parent directory</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.costanzo2016</span><span class="w"> </span><span class="kn">import</span> <span class="n">SmfCostanzo2016Dataset</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">SmfCostanzo2016Dataset</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="s2">"data/torchcell/smf_costanzo2016"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>torchcell does not read <code class="docutils literal notranslate"><span class="pre">.env</span></code> on its own. A <code class="docutils literal notranslate"><span class="pre">.env</span></code> with no <code class="docutils literal notranslate"><span class="pre">load_dotenv()</span></code> call leaves
+<code class="docutils literal notranslate"><span class="pre">TC_DATA_URL</span></code> unset, and the loader then downloads the publisher files and builds, with
+no error. <code class="docutils literal notranslate"><span class="pre">load_dotenv()</span></code> never overrides a variable that is already exported.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetClient</span><span class="p">,</span> <span class="n">unpack_artifact</span>
 
 <span class="n">client</span> <span class="o">=</span> <span class="n">DatasetClient</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>          <span class="c1"># TC_DATA_URL, TC_DATA_API_KEY</span>

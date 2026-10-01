@@ -292,6 +292,11 @@ OIDC identity, so no PyPI secret is stored in the repository. A push with no bum
 publishes nothing. The wheel carries the <code class="docutils literal notranslate"><span class="pre">torchcell</span></code> package and its data files
 (<code class="docutils literal notranslate"><span class="pre">[tool.setuptools.package-data]</span></code>), not <code class="docutils literal notranslate"><span class="pre">tests/</span></code>, <code class="docutils literal notranslate"><span class="pre">experiments/</span></code> or <code class="docutils literal notranslate"><span class="pre">notes/</span></code>; check a
 build locally with <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">build</span></code> followed by <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">twine</span> <span class="pre">check</span> <span class="pre">dist/*</span></code>.</p>
+<p>A release that was tagged but did not reach PyPI (the publish step failed, or the
+trusted publisher was not yet registered) is published without a new bump by running the
+same workflow by hand on the existing tag: <code class="docutils literal notranslate"><span class="pre">gh</span> <span class="pre">workflow</span> <span class="pre">run</span> <span class="pre">semantic-release.yaml</span> <span class="pre">-f</span> <span class="pre">tag=vX.Y.Z</span></code>. The <code class="docutils literal notranslate"><span class="pre">publish-tag</span></code> job checks out the tag, builds it, refuses a build whose
+version is not the tag’s, replaces the assets on the GitHub release and publishes to
+PyPI, so the two always carry the files of one build.</p>
 </section>
 <section id="adding-a-dataset-page">
 <h2>Adding a dataset page<a class="headerlink" href="#adding-a-dataset-page" title="Link to this heading"></a></h2>

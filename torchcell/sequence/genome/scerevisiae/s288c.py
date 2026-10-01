@@ -29,7 +29,7 @@ from attrs import define, field
 from Bio import SeqIO
 from gffutils.feature import Feature
 from goatools.obo_parser import GODag
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sortedcontainers import SortedDict, SortedSet
 from torch_geometric.data import download_url
 
@@ -505,7 +505,10 @@ GENOME_DB_FILENAME = "data.db"
 UNTRUSTED_DB_FILENAME = GENOME_DB_FILENAME + ".untrusted"
 #: The table inside ``data.db`` that records what the database was built from.
 SOURCE_TABLE = "torchcell_genome_db_source"
-#: The :class:`GenomeDatabaseRecord` schema version this code writes and reads.
+#: The :class:`GenomeDatabaseRecord` schema version this code writes and reads. ANY
+#: change to the fields of :class:`GenomeDatabaseRecord` or :class:`GenomeDatabaseSource`
+#: (added, removed, renamed or retyped) must bump it; the test suite pins both field
+#: sets against this number.
 RECORD_VERSION = 1
 #: The ``gffutils.create_db`` arguments every build uses (also recorded in the source).
 CREATE_DB_KWARGS: dict[str, Any] = {
@@ -529,7 +532,10 @@ _PRIVATE_COPY = re.compile(
 
 
 class GenomeDatabaseSource(BaseModel):
-    """What a genome ``data.db`` is built from: the pinned GFF and the build arguments."""
+    """What a genome ``data.db`` is built from: the pinned GFF and the build arguments.
+
+    Any change to these fields bumps :data:`RECORD_VERSION`.
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -556,7 +562,9 @@ class GenomeDatabaseRecord(BaseModel):
     lower (or absent) version as untrusted and migrates it once; a higher version was
     written by newer code and is refused by name
     (:class:`GenomeDatabaseVersionError`), so two code versions never rebuild the
-    file back and forth.
+    file back and forth. Any change to these fields bumps :data:`RECORD_VERSION`; a
+    current-version record that does not validate raises
+    :class:`GenomeDatabaseRecordError`.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -574,6 +582,14 @@ class GenomeDatabaseSourceError(RuntimeError):
 
 class GenomeDatabaseVersionError(RuntimeError):
     """``data.db`` carries a record written by newer code than this checkout."""
+
+
+class GenomeDatabaseRecordError(RuntimeError):
+    """``data.db`` carries a record this checkout cannot read at its own version."""
+
+
+#: The remedy every record-version or record-schema refusal names.
+_UPDATE_CHECKOUT = "Update this checkout, or resubmit the job from an updated checkout."
 
 
 class GenomeRootNotFoundError(FileNotFoundError):
@@ -750,6 +766,44 @@ def read_genome_database_record(db_path: str) -> GenomeDatabaseRecord | None:
     return GenomeDatabaseRecord.model_validate_json(raw)
 
 
+def record_version(db_path: str, raw: str) -> int:
+    """The ``version`` of the record JSON ``raw`` read from ``db_path``; 0 when absent
+    (records written before versioning). A version newer than this checkout's raises
+    :class:`GenomeDatabaseVersionError`; a record that is not a JSON object, or whose
+    version is not an integer, raises :class:`GenomeDatabaseRecordError`.
+    """
+    data = json.loads(raw)
+    if not isinstance(data, dict):
+        raise GenomeDatabaseRecordError(
+            f"{db_path} carries a record that is not a JSON object ({type(data).__name__})"
+            f". {_UPDATE_CHECKOUT}"
+        )
+    version = data.get("version", 0)
+    if not isinstance(version, int) or isinstance(version, bool):
+        raise GenomeDatabaseRecordError(
+            f"{db_path} carries a record whose version is {version!r}, not an "
+            f"integer. {_UPDATE_CHECKOUT}"
+        )
+    if version > RECORD_VERSION:
+        raise GenomeDatabaseVersionError(
+            f"{db_path} carries a record of version {version}, written by newer code "
+            f"than this checkout (which reads version {RECORD_VERSION}); refusing to "
+            f"replace it. {_UPDATE_CHECKOUT}"
+        )
+    return version
+
+
+def refuse_newer_record(db_path: str) -> None:
+    """Raise :class:`GenomeDatabaseVersionError` when ``db_path`` exists and carries a
+    record newer than this checkout: even an explicit ``overwrite=True`` must not
+    downgrade a database written by newer code.
+    """
+    if osp.exists(db_path):
+        raw = _read_record_json(db_path)
+        if raw is not None:
+            record_version(db_path, raw)
+
+
 def untrusted_reason(
     db_path: str, expected: GenomeDatabaseSource, rebuild_call: str
 ) -> str | None:
@@ -767,16 +821,21 @@ def untrusted_reason(
     raw = _read_record_json(db_path)
     if raw is None:
         return f"it carries no {SOURCE_TABLE} record"
-    version = json.loads(raw).get("version", 0)  # absent: written before versioning
-    if version > RECORD_VERSION:
-        raise GenomeDatabaseVersionError(
-            f"{db_path} carries a record of version {version}, written by newer code "
-            f"than this checkout (which reads version {RECORD_VERSION}); refusing to "
-            "replace it. Update this checkout."
-        )
+    version = record_version(db_path, raw)
     if version < RECORD_VERSION:
         return f"its record is version {version}, older than {RECORD_VERSION}"
-    record = GenomeDatabaseRecord.model_validate_json(raw)
+    try:
+        record = GenomeDatabaseRecord.model_validate_json(raw)
+    except ValidationError as exc:
+        summary = "; ".join(
+            f"{'.'.join(str(part) for part in err['loc'])}: {err['msg']}"
+            for err in exc.errors()
+        )
+        raise GenomeDatabaseRecordError(
+            f"{db_path} carries a version {version} record that this checkout cannot "
+            f"read ({exc.error_count()} errors: {summary}); it was written by code "
+            f"with a different record schema at the same version. {_UPDATE_CHECKOUT}"
+        ) from exc
     if record.source != expected:
         raise GenomeDatabaseSourceError(
             f"{db_path} was built from {record.source.model_dump()} but this genome's "
@@ -1018,6 +1077,7 @@ class SCerevisiaeGenome(Genome):
             _sweep_dead(self.genome_root, _BUILD_TEMP)
         if self.overwrite or not osp.exists(db_path):
             why = "overwrite=True" if self.overwrite else "it does not exist"
+            refuse_newer_record(db_path)
             self._require_writable(writable, db_path, why)
             tmp_path = write_genome_database(self._gff_path, self.genome_root, source)
             os.replace(tmp_path, db_path)
@@ -1119,6 +1179,11 @@ class SCerevisiaeGenome(Genome):
         # and copies on its own first write (or first read, once the path is gone).
         state["_private_db_owner"] = None
         state["_instance_token"] = secrets.token_hex(8)
+        # Mutable state a copy must not share (copy.copy passes ``state`` by
+        # reference): the write log, and the gene-set cache the drops edit in place.
+        state["_db_writes"] = [(op, list(ids)) for op, ids in self._db_writes]
+        if self._gene_set is not None:
+            state["_gene_set"] = GeneSet(self._gene_set)
 
         # Reconstruct with overwrite=False on the same database file (the private
         # copy when this instance has written): unpickling in a worker must never

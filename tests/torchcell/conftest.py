@@ -538,23 +538,36 @@ def require_trusted_genome_database(genome_root: str) -> None:
 _REAL_DATA_MARKERS = ("data", "slow")
 
 
+class _MarkedNode(Protocol):
+    def get_closest_marker(self, name: str) -> Any: ...
+
+
+def guard_real_genome_root(node: _MarkedNode, data_root: Callable[[], str]) -> None:
+    """Fail ``node`` by name before it could build or migrate the real genome root.
+
+    Only ``data``/``slow`` tests are checked; ``data_root`` is called only for them,
+    so an unmarked test never resolves ``DATA_ROOT``. Nothing is checked when the
+    genome root or the genomes tier is absent: a construction there fails before it
+    could write.
+    """
+    if not any(node.get_closest_marker(m) for m in _REAL_DATA_MARKERS):
+        return
+    from torchcell.sequence.genome.registry import SGD_S288C_R64, genomes_root
+
+    root = data_root()
+    genome_root = osp.join(root, "data/sgd/genome")
+    if not (
+        osp.isdir(genome_root)
+        and osp.isdir(osp.join(genomes_root(root), SGD_S288C_R64))
+    ):
+        return
+    require_trusted_genome_database(genome_root)
+
+
 @pytest.fixture(autouse=True)
 def _never_migrate_a_real_genome_root(request: pytest.FixtureRequest) -> None:
     """Every ``data``/``slow`` test first checks the real genome root, so no test can
     build or migrate ``$DATA_ROOT/data/sgd/genome/data.db``, whichever module happens
-    to construct the genome first (directly or through a loader). Nothing is checked
-    when the root or the genomes tier is absent: a construction there fails before it
-    could write.
+    to construct the genome first (directly or through a loader).
     """
-    if not any(request.node.get_closest_marker(m) for m in _REAL_DATA_MARKERS):
-        return
-    from torchcell.sequence.genome.registry import SGD_S288C_R64, genomes_root
-
-    data_root = os.environ["DATA_ROOT"]
-    genome_root = osp.join(data_root, "data/sgd/genome")
-    if not (
-        osp.isdir(genome_root)
-        and osp.isdir(osp.join(genomes_root(data_root), SGD_S288C_R64))
-    ):
-        return
-    require_trusted_genome_database(genome_root)
+    guard_real_genome_root(request.node, lambda: os.environ["DATA_ROOT"])

@@ -63,6 +63,7 @@ import os
 import os.path as osp
 import pickle
 import re
+import shutil
 import socket
 import sqlite3
 import subprocess
@@ -1406,6 +1407,7 @@ def _assert_recorded(release: dict[str, str], db_path: Path) -> None:
         featuretype_counts=FIXTURE_COUNTS,
         relations_count=FIXTURE_RELATIONS,
         change_counter=_header_counter(db_path),
+        version=1,
     )
 
 
@@ -1460,11 +1462,14 @@ def _dead_pid() -> int:
     return proc.pid
 
 
-@pytest.fixture
-def private_tmp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """A private temp dir for the private copies (``tempfile.gettempdir()``)."""
-    d = tmp_path / "private_tmp"
-    d.mkdir()
+@pytest.fixture(autouse=True)
+def private_tmp(
+    tmp_path_factory: pytest.TempPathFactory, monkeypatch: pytest.MonkeyPatch
+) -> Path:
+    """Every test in this module gets its own temp dir for private copies
+    (``tempfile.gettempdir()``), so no test writes to or sweeps the real one.
+    """
+    d = tmp_path_factory.mktemp("private_tmp")
     monkeypatch.setattr(tempfile, "tempdir", str(d))
     return d
 
@@ -1826,18 +1831,22 @@ def test_failure_between_build_and_install_leaves_no_temporary(
 
 def test_construction_sweeps_dead_build_temporaries(release: dict[str, str]) -> None:
     """Build temporaries of a dead pid on this host are removed at construction; a
-    live pid's and another host's are left.
+    live pid's and another host's are left, and so is any file that is not a build
+    temporary (the kept data.db.untrusted, or a dead-pid-like name without the
+    .building suffix).
     """
     build_db(release[GFF_NAME], Path(release["__genome_root__"]))
     root = Path(release["__genome_root__"])
     dead = f"data.db.{HOST}.{_dead_pid()}.abc123.building"
     dead_copy = f"data.db.untrusted.{HOST}.{_dead_pid()}.x_9.building"
     live = f"data.db.{HOST}.{os.getpid()}.def456.building"
-    other = "data.db.otherhost.1.ghi789.building"
-    for name in (dead, dead_copy, live, other):
+    other = f"data.db.otherhost.{_dead_pid()}.ghi789.building"
+    kept = "data.db.untrusted"
+    not_temp = f"data.db.{HOST}.{_dead_pid()}.jkl012.db"
+    for name in (dead, dead_copy, live, other, kept, not_temp):
         (root / name).write_bytes(b"x")
     _construct(release)
-    assert sorted(os.listdir(root)) == sorted(["data.db", live, other])
+    assert sorted(os.listdir(root)) == sorted(["data.db", live, other, kept, not_temp])
 
 
 def test_private_copy_creation_sweeps_dead_copies(
@@ -1849,7 +1858,7 @@ def test_private_copy_creation_sweeps_dead_copies(
     """
     dead = f"torchcell-genome-{HOST}-{_dead_pid()}-abc123.db"
     live = f"torchcell-genome-{HOST}-{os.getpid()}-def456.db"
-    other = "torchcell-genome-otherhost-1-ghi789.db"
+    other = f"torchcell-genome-otherhost-{_dead_pid()}-ghi789.db"
     for name in (dead, live, other):
         (private_tmp / name).write_bytes(b"x")
     build_db(release[GFF_NAME], Path(release["__genome_root__"]))
@@ -2010,6 +2019,7 @@ def test_genome_database_untrusted_reason_reads_only(release: dict[str, str]) ->
         s288c.genome_database_untrusted_reason(str(root))
         == "it carries no torchcell_genome_db_source record"
     )
+    assert s288c.read_genome_database_record(str(db_path)) is None
     assert _identity(db_path) == before
     db_path.unlink()
     build_db(release[GFF_NAME], root)
@@ -2079,31 +2089,218 @@ def test_record_transaction_must_advance_the_change_counter_once(
     assert os.listdir(root) == []
 
 
-def test_record_from_an_older_schema_is_migrated(
+def _rewrite_record(db_path: Path, edit: Any) -> None:
+    conn = sqlite3.connect(db_path)
+    (raw,) = conn.execute("SELECT record FROM torchcell_genome_db_source").fetchone()
+    record = json.loads(raw)
+    edit(record)
+    conn.execute(
+        "UPDATE torchcell_genome_db_source SET record = ?", (json.dumps(record),)
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_record_without_a_version_is_migrated(
     release: dict[str, str], caplog: pytest.LogCaptureFixture
 ) -> None:
-    """A record without ``change_counter`` (written by an earlier draft of this
-    change) does not validate: the database is untrusted and migrated, never opened
-    on a record it cannot read.
+    """A record with no ``version`` (an earlier draft wrote one without it and
+    without ``change_counter``) is an older record: migrated once, never opened on a
+    record this code cannot read.
     """
     build_db(release[GFF_NAME], Path(release["__genome_root__"]))
     db_path = Path(release["__genome_root__"]) / "data.db"
-    conn = sqlite3.connect(db_path)
-    (raw,) = conn.execute("SELECT record FROM torchcell_genome_db_source").fetchone()
-    old = json.loads(raw)
-    del old["change_counter"]
-    conn.execute("UPDATE torchcell_genome_db_source SET record = ?", (json.dumps(old),))
-    conn.commit()
-    conn.close()
+
+    def strip(record: dict[str, Any]) -> None:
+        del record["version"]
+        del record["change_counter"]
+
+    _rewrite_record(db_path, strip)
     with caplog.at_level(logging.WARNING, logger=s288c.__name__):
         genome = _construct(release)
     assert (
         caplog.records[0]
         .getMessage()
         .startswith(
-            f"genome database {db_path} was not trusted (its torchcell_genome_db_source "
-            "record does not validate as the current GenomeDatabaseRecord (1 errors)); "
+            f"genome database {db_path} was not trusted (its record is version 0, "
+            "older than 1); "
         )
     )
     _assert_recorded(release, db_path)
     assert list(genome.gene_set) == ALL_GENES
+
+
+def test_record_from_newer_code_is_refused(release: dict[str, str]) -> None:
+    """A record of a higher version was written by newer code: refused by name and
+    left alone, so two code versions never rebuild the file back and forth.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    _rewrite_record(db_path, lambda record: record.update(version=2))
+    before = _sha(db_path)
+    with pytest.raises(s288c.GenomeDatabaseVersionError) as exc:
+        _construct(release)
+    assert str(exc.value) == (
+        f"{db_path} carries a record of version 2, written by newer code than this "
+        "checkout (which reads version 1); refusing to replace it. Update this "
+        "checkout."
+    )
+    assert _sha(db_path) == before
+
+
+def test_unpickling_after_the_parent_is_collected_never_claims_its_copy(
+    release: dict[str, str], private_tmp: Path
+) -> None:
+    """The parent that wrote is collected BEFORE the unpickle in the same process
+    (CPython may reuse its address): the restored instance owns nothing, rebuilds a
+    copy of its own by replay at its first read, and writes to it.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    genome = _construct(release)
+    genome.drop_chrmt()
+    parent_copy = genome._private_db_path
+    blob = pickle.dumps(genome)
+    del genome
+    gc.collect()
+    assert parent_copy is not None and not osp.exists(parent_copy)
+    restored = pickle.loads(blob)
+    assert restored._private_db_owner is None
+    assert sorted(f.id for f in restored.db.features_of_type("gene")) == NO_CHRMT
+    own = restored._private_db_path
+    assert own not in (None, parent_copy) and osp.exists(own)
+    restored.drop_empty_go()
+    assert restored._private_db_path == own
+    assert sorted(f.id for f in restored.db.features_of_type("gene")) == [
+        "YAL001C",
+        "YAL002W",
+        "YBL002W",
+        "YCL001W",
+    ]
+
+
+def test_sweep_skips_a_file_another_sweeper_removed_first(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A listed dead-pid copy vanishes before ``lstat`` or before ``remove`` (another
+    sweeper won the race): skipped, no error, and the sweep goes on.
+    """
+    d = tmp_path / "sweep"
+    d.mkdir()
+    pid = _dead_pid()
+    gone_at_stat = f"torchcell-genome-{HOST}-{pid}-aaa111.db"
+    gone_at_remove = f"torchcell-genome-{HOST}-{pid}-bbb222.db"
+    swept = f"torchcell-genome-{HOST}-{pid}-ccc333.db"
+    for name in (gone_at_stat, gone_at_remove, swept):
+        (d / name).write_bytes(b"x")
+    real_lstat, real_remove = os.lstat, os.remove
+
+    def racing_lstat(path: Any, *a: Any, **k: Any) -> os.stat_result:
+        if str(path).endswith(gone_at_stat):
+            real_remove(path)
+        return real_lstat(path, *a, **k)
+
+    def racing_remove(path: Any, *a: Any, **k: Any) -> None:
+        if str(path).endswith(gone_at_remove):
+            real_remove(path)
+        real_remove(path, *a, **k)
+
+    monkeypatch.setattr(os, "lstat", racing_lstat)
+    monkeypatch.setattr(os, "remove", racing_remove)
+    assert s288c._sweep_dead(str(d), s288c._PRIVATE_COPY) == [swept]
+    assert os.listdir(d) == []
+
+
+def test_sweep_skips_out_of_range_pids_and_directories(tmp_path: Path) -> None:
+    """A crafted 20-digit pid and a directory with a matching name are left alone."""
+    d = tmp_path / "sweep"
+    d.mkdir()
+    huge = f"torchcell-genome-{HOST}-{'9' * 20}-aaa111.db"
+    zero = f"torchcell-genome-{HOST}-0-bbb222.db"
+    a_dir = f"torchcell-genome-{HOST}-{_dead_pid()}-ccc333.db"
+    (d / huge).write_bytes(b"x")
+    (d / zero).write_bytes(b"x")
+    (d / a_dir).mkdir()
+    assert s288c._sweep_dead(str(d), s288c._PRIVATE_COPY) == []
+    assert sorted(os.listdir(d)) == sorted([huge, zero, a_dir])
+
+
+def test_sweep_removes_a_dead_builds_journal_with_it(release: dict[str, str]) -> None:
+    """A kill inside the record transaction leaves ``...building`` and its
+    ``...building-journal``: both are swept at the next construction.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    root = Path(release["__genome_root__"])
+    stem = f"data.db.{HOST}.{_dead_pid()}.abc123.building"
+    (root / stem).write_bytes(b"x")
+    (root / f"{stem}-journal").write_bytes(b"x")
+    _construct(release)
+    assert os.listdir(root) == ["data.db"]
+
+
+def test_kept_untrusted_file_is_replaced_atomically(
+    release: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A second damaged database replaces the earlier ``data.db.untrusted``, by a
+    copy written to a temporary file in the root and renamed onto it.
+    """
+    db_path = _old_code_rebuild(release)
+    _old_code_delete(db_path, "Q0010")
+    _construct(release)
+    root = Path(release["__genome_root__"])
+    first_kept = _sha(root / "data.db.untrusted")
+    db_path = _old_code_rebuild(release)
+    _old_code_delete(db_path, "YAL001C")
+    second_damaged = _sha(db_path)
+    copies: list[str] = []
+    real_copyfile = shutil.copyfile
+
+    def recording_copyfile(src: str, dst: str) -> Any:
+        copies.append(dst)
+        return real_copyfile(src, dst)
+
+    monkeypatch.setattr(shutil, "copyfile", recording_copyfile)
+    _construct(release)
+    assert len(copies) == 1
+    assert re.fullmatch(
+        rf"{re.escape(str(root))}/data\.db\.untrusted\.{re.escape(HOST)}\."
+        rf"{os.getpid()}\.[a-z0-9_]+\.building",
+        copies[0],
+    )
+    assert _sha(root / "data.db.untrusted") == second_damaged != first_kept
+    assert sorted(os.listdir(root)) == ["data.db", "data.db.untrusted"]
+
+
+def test_relations_alone_differing_are_kept(release: dict[str, str]) -> None:
+    """A legacy database whose features equal a fresh build but whose relations lost
+    a row differs from the fresh build: it is kept, not discarded.
+    """
+    db_path = _old_code_rebuild(release)
+    conn = sqlite3.connect(db_path)
+    conn.execute(
+        "DELETE FROM relations WHERE rowid = (SELECT MIN(rowid) FROM relations)"
+    )
+    conn.commit()
+    conn.close()
+    damaged = _sha(db_path)
+    _construct(release)
+    root = Path(release["__genome_root__"])
+    assert sorted(os.listdir(root)) == ["data.db", "data.db.untrusted"]
+    assert _sha(root / "data.db.untrusted") == damaged
+
+
+def test_installed_database_is_mode_0644_after_migration_and_rebuild(
+    release: dict[str, str],
+) -> None:
+    """Both install paths leave the shared file readable by every user (0644), even
+    under a umask of 077, where sqlite alone would create it 0600.
+    """
+    db_path = _old_code_rebuild(release)
+    old_umask = os.umask(0o077)
+    try:
+        _construct(release)
+        migrated = db_path.stat().st_mode & 0o777
+        _construct(release, overwrite=True)
+        rebuilt = db_path.stat().st_mode & 0o777
+    finally:
+        os.umask(old_umask)
+    assert (migrated, rebuilt) == (0o644, 0o644)

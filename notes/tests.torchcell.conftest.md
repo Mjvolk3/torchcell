@@ -32,3 +32,7 @@ Two fixtures for the loader pin check (issues #518, #524, #528, #537). `raw_pin_
 ## 2026.10.01 - require_trusted_genome_database
 
 New helper `require_trusted_genome_database(genome_root)`: data-gated tests call it before constructing `SCerevisiaeGenome` on a real root. It reads only (`genome_database_untrusted_reason`) and fails the test by name when a construction would build or migrate the shared `data.db`, so a test never performs the first migration of a real root. Pinned hermetically in `test_s288c_synthetic.py::test_data_gated_helper_refuses_an_untrusted_real_root_by_name`.
+
+## 2026.10.01 - Autouse real-root guard
+
+`_never_migrate_a_real_genome_root` (autouse) calls `require_trusted_genome_database` for every test marked `data` or `slow` when the real genome root and the genomes tier exist, so the first construction in a `--data` run, whichever module or loader makes it, cannot build or migrate the shared `data.db`.

@@ -324,6 +324,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         pre_filter: Callable[..., Any] | None = None,
         phenotype_labels: list[str] | None = None,
         fetch_workers: int = 0,
+        partition_prefix_length: int = 1,
     ) -> None:
         """Configure data sources, processing pipeline, and load or build the dataset.
 
@@ -346,7 +347,9 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
 
         ``fetch_workers`` > 0 runs the raw stage partitioned over that many processes
         (``Neo4jQueryRaw.fetch_workers``); the query must then carry
-        ``PARTITION_MARKER`` once per ``UNION ALL`` block.
+        ``PARTITION_MARKER`` once per ``UNION ALL`` block, split into
+        ``16 ** partition_prefix_length`` partitions each
+        (``Neo4jQueryRaw.partition_prefix_length``; 2 for a multi-million-record block).
         """
         self.env: Any = None
         self.root = root
@@ -354,6 +357,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         self.process_graph = graph_processor
         self.phenotype_labels = phenotype_labels
         self.fetch_workers = fetch_workers
+        self.partition_prefix_length = partition_prefix_length
 
         # self loops, transform base graph
         self.add_remaining_gene_self_loops = add_remaining_gene_self_loops
@@ -469,11 +473,13 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         gene_set: GeneSet,
         record_observers: Sequence[RecordObserver] = (),
         fetch_workers: int = 0,
+        partition_prefix_length: int = 1,
     ) -> Neo4jQueryRaw:
         """Query Neo4j and load the raw experiment records for the gene set.
 
         ``record_observers`` see every record the raw stage writes (see
         ``RecordObserver``); they see nothing when the raw LMDB already exists.
+        ``fetch_workers`` and ``partition_prefix_length`` are ``Neo4jQueryRaw``'s.
         """
         cypher_kwargs: dict[str, str | int | float | list[Any]] = {
             "gene_set": list(gene_set)
@@ -493,6 +499,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
             cypher_kwargs=cypher_kwargs,
             record_observers=list(record_observers),
             fetch_workers=fetch_workers,
+            partition_prefix_length=partition_prefix_length,
         )
         return raw_db  # break point here
 
@@ -602,6 +609,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
             self.gene_set,
             record_observers=[grouping] if grouping is not None else [],
             fetch_workers=self.fetch_workers,
+            partition_prefix_length=self.partition_prefix_length,
         )
         self.converter = (
             cast("type[Converter]", self.converter)(root=self.root, query=raw_db)

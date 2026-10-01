@@ -131,6 +131,7 @@ def build(
         gene_set: GeneSet,
         record_observers: list[RecordObserver],
         fetch_workers: int,
+        partition_prefix_length: int,
     ) -> Neo4jQueryRaw:
         raw = SliceQueryRaw(
             uri=uri,
@@ -140,6 +141,7 @@ def build(
             query=query,
             record_observers=list(record_observers),
             fetch_workers=fetch_workers,
+            partition_prefix_length=partition_prefix_length,
         )
         if withhold:
             raw.raw_stage_ran = False

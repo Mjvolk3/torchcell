@@ -44,9 +44,28 @@ wandb:
 # lands near 41 GB against a 320 G reservation. Taking the faster setting back is worth
 # roughly twelve hours on this build.
 adapters:
-  io_to_total_worker_ratio: 0.1
+  # tcdb-002 (2026.09.26 to 2026.09.30, notes/experiments.tcdb-002-build-speed.md): the
+  # benchmark ladder went from 5,496 s to 328 s at 48 CPUs with these settings, and the
+  # full 51-dataset generation (job 2959, before the last two fixes) from 28 h 15 min to
+  # 4 h 30 min at 64 CPUs / 256 GB. Each knob is documented on CellAdapter.
+  io_to_total_worker_ratio: 0.02
   chunk_size: 1e5
   loader_batch_size: 1e3
+  # datasets up to 25,000 records AND 256 MiB of resolved records run in-process
+  inprocess_max_records: 25000
+  inprocess_max_mb: 256
+  # one traversal per adapter for all chunked node methods, one for all edge methods
+  single_pass: true
+  # rows rendered in the chunk workers; the parent only dedups and appends
+  fast_writer: true
+  # resolved-record MiB per single-pass chunk (48 was a regression, 128 measured best)
+  single_pass_chunk_budget_mb: 128
+  # pool recycled every workers x 64 chunks, or when the container's memory passes 0.8
+  # of its cgroup limit, whichever first (worker memory is flat since 765bdc38)
+  chunks_per_worker: 64
+  pool_memory_fraction: 0.8
+  # chunk results consumed as they complete
+  completion_order: true
 
 subset:
   size: null # null => full dataset

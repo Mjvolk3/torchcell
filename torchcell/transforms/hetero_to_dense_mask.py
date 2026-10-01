@@ -16,24 +16,36 @@ class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform i
 
     A mask entry is set only when both endpoints are real (original) nodes, so an edge
     into a padding row or past the input's node count is dropped from the mask (it
-    stays in ``edge_index``). A node tensor is padded with zeros along every one of
-    its first two axes whose size equals the original node count, so a per-node
-    ``[N, N]`` matrix becomes ``[N_pad, N_pad]``. A feature axis that happens to equal
-    ``N`` is padded too: the transform cannot tell it from a node axis.
+    stays in ``edge_index``). A node tensor whose first axis equals the original node
+    count ``N`` is padded with zero rows. Only the attributes named in ``square_attrs``
+    are also padded on their second axis, so a listed per-node ``[N, N]`` matrix
+    becomes ``[N_pad, N_pad]``; an unlisted ``[N, d]`` tensor keeps its ``d`` columns
+    even when ``d == N`` (the shape cannot tell a feature axis from a node axis).
 
     Args:
         num_nodes_dict (Dict[str, int], optional): Dictionary mapping node types to
             their desired number of nodes. If not provided for a node type, will
             use the maximum number of nodes found for that type. (default: None)
+        square_attrs (Dict[str, List[str]], optional): Per node type, the names of
+            the ``[N, N, ...]`` node attributes to pad on both axes. A listed
+            attribute that is absent or not ``[N, N, ...]`` raises ``ValueError``.
+            (default: None, no square attributes)
     """
 
-    def __init__(self, num_nodes_dict: dict[str, int] | None = None) -> None:
-        """Store the optional per-node-type target node counts.
+    def __init__(
+        self,
+        num_nodes_dict: dict[str, int] | None = None,
+        square_attrs: dict[str, list[str]] | None = None,
+    ) -> None:
+        """Store the per-node-type target node counts and square attribute names.
 
         Args:
             num_nodes_dict: Optional mapping of node type to target node count.
+            square_attrs: Optional mapping of node type to the per-node square
+                attributes padded on both axes.
         """
         self.num_nodes_dict = num_nodes_dict or {}
+        self.square_attrs = square_attrs or {}
 
     def forward(self, data: HeteroData) -> HeteroData:
         """Add dense masks, pad node attributes, and return the transformed data."""
@@ -120,6 +132,23 @@ class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform i
             num_nodes = num_nodes_dict[node_type]
             orig_num_nodes = store.num_nodes
 
+            square = self.square_attrs.get(node_type, [])
+            for attr in square:
+                value = getattr(store, attr, None)
+                if not (
+                    isinstance(value, Tensor)
+                    and value.dim() >= 2
+                    and value.size(0) == orig_num_nodes
+                    and value.size(1) == orig_num_nodes
+                ):
+                    shape = (
+                        list(value.size()) if isinstance(value, Tensor) else type(value)
+                    )
+                    raise ValueError(
+                        f"square attribute {node_type}.{attr} must be a tensor of "
+                        f"shape [{orig_num_nodes}, {orig_num_nodes}, ...], got {shape}"
+                    )
+
             # Create mask to indicate original vs padded nodes
             store.mask = torch.zeros(num_nodes, dtype=torch.bool)
             store.mask[:orig_num_nodes] = 1
@@ -153,8 +182,8 @@ class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform i
                 if isinstance(value, Tensor) and value.size(0) == orig_num_nodes:
                     size = [num_nodes - value.size(0)] + list(value.size())[1:]
                     padded_value = torch.cat([value, value.new_zeros(size)], dim=0)
-                    # A per-node matrix ([N, N, ...]) is padded on its columns too
-                    if value.dim() >= 2 and value.size(1) == orig_num_nodes:
+                    # a listed per-node matrix ([N, N, ...]) is padded on its columns too
+                    if attr in square:
                         size = [num_nodes, num_nodes - value.size(1)] + list(
                             value.size()
                         )[2:]
@@ -166,7 +195,10 @@ class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform i
         return data
 
     def __repr__(self) -> str:
-        """Return a string representation including the node-count overrides."""
-        if not self.num_nodes_dict:
-            return f"{self.__class__.__name__}()"
-        return f"{self.__class__.__name__}(num_nodes_dict={self.num_nodes_dict})"
+        """Return a string representation including the non-default arguments."""
+        args = []
+        if self.num_nodes_dict:
+            args.append(f"num_nodes_dict={self.num_nodes_dict}")
+        if self.square_attrs:
+            args.append(f"square_attrs={self.square_attrs}")
+        return f"{self.__class__.__name__}({', '.join(args)})"

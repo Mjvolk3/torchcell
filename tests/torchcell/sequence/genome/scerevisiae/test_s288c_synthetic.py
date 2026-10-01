@@ -50,6 +50,9 @@ feature falls inside its region. Expected values, derived from the source:
   slicing (issue #538).
 * ``drop_chrmt`` resets the locus index and the GO-to-genes map, so Q0010 resolves as
   RETIRED and GO:0000002 maps to YAL002W only (issue #538).
+* ``drop_empty_go`` resets the same two caches (issue #570): YBL001W, which carries no
+  GO term, resolves as RETIRED afterwards, and ``go_genes`` is rebuilt from the
+  post-drop gene set with the same three terms.
 """
 
 import os
@@ -1242,6 +1245,42 @@ def test_drop_chrmt_rebuilds_the_locus_index_and_go_genes(
     )
     assert "Q0010" not in genome.feature_index["genes"]
     assert list(genome.go_genes["GO:0000002"]) == ["YAL002W"]
+
+
+def test_drop_empty_go_rebuilds_the_locus_index_and_go_genes(
+    genome: SCerevisiaeGenome,
+) -> None:
+    """After ``drop_empty_go`` the warm caches are rebuilt without YBL001W.
+
+    Both caches are populated first. YBL001W has no GO term, so it never appears in
+    ``go_genes``; the stale cache it left was the locus index, under which YBL001W
+    still resolved as CURRENT after the drop (issue #570). Now it resolves as RETIRED,
+    the index lists the five surviving genes, and ``go_genes`` is a fresh map, built
+    from the post-drop gene set, with the exact three terms and no YBL001W.
+    """
+    assert genome.resolve_gene_name("YBL001W").status is GeneNameStatus.CURRENT
+    warm_go_genes = genome.go_genes
+    genome.drop_empty_go()
+    resolution = genome.resolve_gene_name("YBL001W")
+    assert (resolution.status, resolution.systematic_name) == (
+        GeneNameStatus.RETIRED,
+        "YBL001W",
+    )
+    assert genome.feature_index["genes"] == {
+        "Q0010",
+        "YAL001C",
+        "YAL002W",
+        "YBL002W",
+        "YCL001W",
+    }
+    assert genome.go_genes is not warm_go_genes
+    assert genome.go_genes == SortedDict(
+        {
+            "GO:0000001": SortedSet(["YAL001C", "YBL002W"]),
+            "GO:0000002": SortedSet(["Q0010", "YAL002W"]),
+            "GO:0000003": SortedSet(["YAL001C"]),
+        }
+    )
 
 
 def test_drop_chrmt_before_the_gene_set_is_cached(genome: SCerevisiaeGenome) -> None:

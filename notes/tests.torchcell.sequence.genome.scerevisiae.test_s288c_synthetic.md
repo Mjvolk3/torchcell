@@ -24,3 +24,7 @@ Retired the Finding that the `+` 5' window included the first CDS base. Now asse
 
 - Retired: the unbound `feature` for a 5' intron with no usable CDS, the "not found" read of a CDS without `orf_classification`, the `.`-strand gene with `seq` None, `get_seq` accepting a FASTA key, the stale `feature_index`/`go_genes` after `drop_chrmt`, and `main`'s `overwrite=True`.
 - Now asserted: the exact `ValueError` messages (gene id, CDS id and span, strand), `get_seq` refusing a FASTA key, an absent chromosome number and a `.` strand by name, Q0010 resolving as RETIRED and GO:0000002 mapping to YAL002W only after the drop, and `overwrite=False` in `main`. The `self.id` and `FeatureNotFoundError` findings remain pinned.
+
+## 2026.09.30 - drop_empty_go cache reset asserted (issue #570)
+
+- Added `test_drop_empty_go_rebuilds_the_locus_index_and_go_genes`: with both caches warm, YBL001W resolves CURRENT before `drop_empty_go` and RETIRED after; `feature_index["genes"]` is the five surviving genes; `go_genes` is a new object with the exact three-term map. Fails on the previous source (YBL001W stayed CURRENT).

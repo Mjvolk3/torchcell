@@ -17,9 +17,15 @@ a hyperedge list ``[[5], [0]]`` naming reaction 5 of 2, and an edge type carryin
 with genes padded to 4 the physical mask holds only (0, 1), the dead mask and the
 incidence mask are all False, and the attribute-only edge type gets neither mask. The
 node-attribute padding pads ``pos`` by ``4 - 3 = 1`` zero row and the per-gene ``[3, 3]``
-``pair`` by one zero row AND one zero column, to ``[4, 4]``, and leaves everything else
-(``other`` of length 5, the list, and ``node_ids`` by name) as it was (issue #538 fixed
-the row-only padding and the padded-count filter).
+``pair`` (listed in ``square_attrs``) by one zero row AND one zero column, to
+``[4, 4]``, and leaves everything else (``other`` of length 5, the list, and
+``node_ids`` by name) as it was (issue #538 fixed the row-only padding and the
+padded-count filter).
+
+2026.09.30, issue #570: column padding is opt-in by name. ``square_attrs`` lists the
+per-node ``[N, N]`` attributes; every other node tensor with ``size(0) == N`` is padded
+on its rows only, so a ``[3, 3]`` feature matrix that is NOT listed comes back
+``[4, 3]``. A listed name that is absent or not ``[N, N]`` raises ``ValueError``.
 """
 
 import pytest
@@ -94,6 +100,14 @@ def test_repr_names_the_overrides() -> None:
         repr(HeteroToDenseMask({"gene": 4}))
         == "HeteroToDenseMask(num_nodes_dict={'gene': 4})"
     )
+    assert (
+        repr(HeteroToDenseMask({"gene": 4}, square_attrs={"gene": ["pair"]}))
+        == "HeteroToDenseMask(num_nodes_dict={'gene': 4}, square_attrs={'gene': ['pair']})"
+    )
+    assert (
+        repr(HeteroToDenseMask(square_attrs={"gene": ["pair"]}))
+        == "HeteroToDenseMask(square_attrs={'gene': ['pair']})"
+    )
 
 
 def _edge_case_graph() -> HeteroData:
@@ -147,13 +161,16 @@ def test_an_edge_type_without_an_index_gets_no_mask() -> None:
 
 
 def test_padding_extends_pos_and_node_sized_tensors_and_leaves_the_rest() -> None:
-    """``pos`` gains one zero row; the gene-by-gene ``pair`` gains a zero row and a zero
-    column, ``[3, 3]`` to ``[4, 4]``; ``other`` (length 5), the list of names and
-    ``node_ids`` (skipped by name) are unchanged.
+    """``pos`` gains one zero row; the gene-by-gene ``pair``, listed in
+    ``square_attrs``, gains a zero row and a zero column, ``[3, 3]`` to ``[4, 4]``;
+    ``other`` (length 5), the list of names and ``node_ids`` (skipped by name) are
+    unchanged.
 
     ``pair`` used to be padded on its rows only and came back ``[4, 3]`` (issue #538).
     """
-    out = HeteroToDenseMask(num_nodes_dict={"gene": 4})(_edge_case_graph())
+    out = HeteroToDenseMask(
+        num_nodes_dict={"gene": 4}, square_attrs={"gene": ["pair"]}
+    )(_edge_case_graph())
     gene = out["gene"]
     torch.testing.assert_close(
         gene.pos, torch.tensor([[0.0, 1.0], [2.0, 3.0], [4.0, 5.0], [0.0, 0.0]])
@@ -197,3 +214,47 @@ def test_an_edge_touching_the_padding_row_is_dropped_from_the_mask() -> None:
     incidence = torch.zeros(3, 2, dtype=torch.bool)
     incidence[1, 1] = True
     assert torch.equal(out["reaction", "rmr", "metabolite"].inc_mask, incidence)
+
+
+def test_an_unlisted_feature_dimension_equal_to_n_is_padded_on_rows_only() -> None:
+    """A ``[3, 3]`` per-gene feature not named in ``square_attrs`` gains one zero row
+    and keeps its 3 columns: ``[4, 3]``. The shape guess used to pad it to ``[4, 4]``
+    because its feature dimension equals the gene count (issue #570).
+    """
+    out = HeteroToDenseMask(num_nodes_dict={"gene": 4})(_edge_case_graph())
+    torch.testing.assert_close(
+        out["gene"].pair,
+        torch.tensor(
+            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0], [0.0, 0.0, 0.0]]
+        ),
+    )
+
+
+def test_square_attrs_apply_only_to_their_node_type() -> None:
+    """Listing ``pair`` under ``reaction`` leaves the gene ``pair`` row-padded only."""
+    data = _edge_case_graph()
+    data["reaction"].pair = torch.ones(2, 2)
+    out = HeteroToDenseMask(
+        num_nodes_dict={"gene": 4, "reaction": 3}, square_attrs={"reaction": ["pair"]}
+    )(data)
+    assert tuple(out["gene"].pair.shape) == (4, 3)
+    torch.testing.assert_close(
+        out["reaction"].pair,
+        torch.tensor([[1.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 0.0]]),
+    )
+
+
+def test_a_listed_attribute_that_is_not_square_is_refused_by_name() -> None:
+    """``pos`` is ``[3, 2]`` and ``missing`` does not exist: each raises with its shape."""
+    with pytest.raises(
+        ValueError,
+        match=r"^square attribute gene\.pos must be a tensor of shape \[3, 3, \.\.\.\], "
+        r"got \[3, 2\]$",
+    ):
+        HeteroToDenseMask(square_attrs={"gene": ["pos"]})(_edge_case_graph())
+    with pytest.raises(
+        ValueError,
+        match=r"^square attribute gene\.missing must be a tensor of shape "
+        r"\[3, 3, \.\.\.\], got <class 'NoneType'>$",
+    ):
+        HeteroToDenseMask(square_attrs={"gene": ["missing"]})(_edge_case_graph())

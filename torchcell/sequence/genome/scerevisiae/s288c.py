@@ -989,6 +989,12 @@ class SCerevisiaeGenome(Genome):
         # Commit the changes to the database
         self.db.conn.commit()
 
+        # Same as drop_chrmt: the locus index and the GO-to-genes map were built from
+        # the pre-drop gene set; reset them so the next access rebuilds without the
+        # dropped genes.
+        self._feature_index = None
+        self._go_genes = None
+
     def __getitem__(self, item: str) -> SCerevisiaeGene | None:
         """Return the SCerevisiaeGene for a systematic ID, or None if absent."""
         # For now we only support the systematic names

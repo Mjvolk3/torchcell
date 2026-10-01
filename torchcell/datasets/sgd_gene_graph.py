@@ -31,6 +31,10 @@ def _refuse_constant_features(feature_min_max: dict[str, tuple[float, float]]) -
         )
 
 
+class MissingChromosomeError(ValueError):
+    """A gene carries no chromosome, so it has no chromosome index."""
+
+
 class GraphEmbeddingDataset(BaseEmbeddingDataset):
     """Node-feature embeddings derived from an SGD gene graph.
 
@@ -81,10 +85,11 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
         value and is kept. Chromosome and pathway indices are positions in the SORTED
         vocabulary of every value in the graph, so one category maps to one index and
         the indices do not depend on ``PYTHONHASHSEED``. Min-max normalization refuses
-        a constant feature (``ConstantFeatureError``) rather than storing 0 / 0 = NaN.
+        a constant feature (``ConstantFeatureError``) rather than storing 0 / 0 = NaN,
+        and a gene whose chromosome is None raises ``MissingChromosomeError``.
         On the cached SGD ``G_gene`` (6,607 genes) no feature has a 0 and none is
-        constant (issue #518), so only the categorical indices differ from the old
-        builds, and no consumer reads them.
+        constant and none lacks a chromosome (issue #518), so only the categorical
+        indices differ from the old builds, and no consumer reads them.
         """
         data_list = []
 
@@ -124,6 +129,16 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
         if normalize_data:
             _refuse_constant_features(feature_min_max)
 
+        no_chromosome = [
+            node_id
+            for node_id, node_data in self.graph.nodes(data=True)
+            if node_data["chromosome"] is None
+        ]
+        if no_chromosome:
+            raise MissingChromosomeError(
+                f"genes {no_chromosome} have no chromosome; refusing to give them a "
+                "chromosome index"
+            )
         chromosome_vocab = sorted(
             {node_data["chromosome"] for _, node_data in self.graph.nodes(data=True)}
         )

@@ -41,22 +41,25 @@ log = logging.getLogger(__name__)
 
 
 class BlankPubmedIdError(ValueError):
-    """A SynLethDB row with a blank ``r.pubmed_id``.
+    """A SynLethDB row with a blank or whitespace-only ``r.pubmed_id``.
 
     Every record cites its PMID, so a blank one is refused by name. The pinned
-    ``Yeast_SL.csv`` (14,000 rows) and ``Yeast_SR.csv`` (6,948 rows) have none.
+    ``Yeast_SL.csv`` (14,000 rows) and ``Yeast_SR.csv`` (6,948 rows) have none
+    (0 empty and 0 whitespace-only cells).
     """
 
 
 def _read_synlethdb_csv(path: str) -> pd.DataFrame:
     """Read a SynLethDB CSV with ``r.pubmed_id`` as text, refusing a blank PMID.
 
+    A cell that is empty or only whitespace counts as blank.
+
     Reading the PMID as text keeps it verbatim (``"18676811"``, or
     ``"24125552;19918932"`` for a row citing two papers); read as a number, one blank
     cell would turn the whole column float and every PMID into ``"111.0"``.
     """
     df = pd.read_csv(path, dtype={"r.pubmed_id": str})
-    blank = df["r.pubmed_id"].isna()
+    blank = df["r.pubmed_id"].fillna("").str.strip().eq("")
     if blank.any():
         raise BlankPubmedIdError(
             f"{path}: {int(blank.sum())} row(s) with a blank r.pubmed_id "

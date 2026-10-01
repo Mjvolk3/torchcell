@@ -28,7 +28,7 @@ that writes no file) with their exact Google Drive URLs, and ``main`` against a 
 genome.
 
 2026.10.01 (issue #528): the PMID column is read as text and a blank PMID is refused
-with ``BlankPubmedIdError`` (it used to turn every PMID into ``"111.0"`` and the blank
+with ``BlankPubmedIdError``, an empty or whitespace-only cell alike (it used to turn every PMID into ``"111.0"`` and the blank
 one into ``"nan"``); ``main`` builds both datasets under ``$DATA_ROOT`` at the
 dev-tree directories the knowledge-graph configs read. Neither changes a stored record
 of the pinned raw files (0 blank PMIDs in 14,000 SL and 6,948 SR rows).
@@ -522,16 +522,20 @@ def test_a_blank_pmid_refuses_the_build_by_name(
     | type[s.SynthRescueYeastSynthLethDbDataset],
     filename: str,
 ) -> None:
-    """Contract: a blank PMID in row 1 raises ``BlankPubmedIdError`` naming the file,
-    the count and the first blank row, before any LMDB is written (it used to make
-    pandas read the column as float and store ``"111.0"`` and ``"nan"``).
+    """Contract: an empty PMID in row 1 and a whitespace-only PMID (``" "``) in row 2
+    are both blank, so ``BlankPubmedIdError`` names the file, the count 2 and the first
+    blank row, before any LMDB is written (an empty cell used to make pandas read the
+    column as float and store ``"111.0"`` and ``"nan"``; a whitespace cell was stored
+    as-is).
     """
     root = tmp_path / "blank_pmid"
-    _write_raw(root, filename, ["TFC3,VPS8,0.2,111\n", "SSA1,VPS8,0.5,\n"])
+    _write_raw(
+        root, filename, ["TFC3,VPS8,0.2,111\n", "SSA1,VPS8,0.5,\n", "TFC3,EFB1,0.3, \n"]
+    )
     with pytest.raises(s.BlankPubmedIdError) as excinfo:
         cls(root=str(root), genome=_genome())
     assert str(excinfo.value) == (
-        f"{root / 'raw' / filename}: 1 row(s) with a blank r.pubmed_id (first at row 1)"
+        f"{root / 'raw' / filename}: 2 row(s) with a blank r.pubmed_id (first at row 1)"
     )
     assert not (root / "processed" / "lmdb").exists()
 

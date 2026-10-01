@@ -37,7 +37,10 @@ from torchcell.datamodules import (
     DatasetSplit,
     IndexSplit,
 )
-from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+from torchcell.datamodules.perturbation_subset import (
+    DENSE_COLLATE_REFUSAL,
+    PerturbationSubsetDataModule,
+)
 from torchcell.loader.dense_padding_data_loader import DensePaddingDataLoader
 from torchcell.sequence import GeneSet
 
@@ -382,33 +385,104 @@ def test_without_a_collate_fn_the_pyg_loader_applies_follow_batch(
     assert _module(tmp_path).follow_batch == ["x", "x_pert"]
 
 
-def test_dense_selects_the_dense_padding_loader_but_needs_workers(
+def test_dense_builds_at_zero_workers_and_pads_the_parent_test_pair(
     tmp_path: Path,
 ) -> None:
-    """Finding: ``dense=True`` with ``num_workers=0`` is unconstructible.
+    """``dense=True`` at ``num_workers=0`` builds and iterates (issue #580).
 
-    The dense branch passes ``prefetch_factor`` unconditionally
-    (``perturbation_subset.py:421``) and torch rejects it at ``num_workers=0``; the plain
-    branch does not pass ``prefetch_factor`` at all. With one worker the loader is a ``DensePaddingDataLoader``
-    carrying the follow_batch list, spawn context and prefetch factor; it is not iterated
-    here because that would spawn a worker process.
+    The dense branch now takes ``prefetch_factor`` through ``worker_dataloader_kwargs``,
+    which passes ``None`` at zero workers instead of the constructor's 2 that torch
+    rejected. Batch size 2 over the parent's test split [18, 19] pads both ``[1, 1]``
+    records into one ``x`` of ``[[[18.0]], [[19.0]]]`` with an all-True mask.
     """
-    dm = _module(tmp_path, dense=True)
+    dm = _module(tmp_path, dense=True, batch_size=2)
     dm.setup()
-    with pytest.raises(
-        ValueError, match="prefetch_factor option could only be specified"
-    ):
-        dm.train_dataloader()
+    loader = dm.test_cell_module_dataloader()
+    assert type(loader) is DensePaddingDataLoader
+    assert (
+        loader.num_workers,
+        loader.prefetch_factor,
+        loader.timeout,
+        loader.persistent_workers,
+        loader.multiprocessing_context,
+    ) == (0, None, 0, False, None)
+    (batch,) = list(loader)
+    assert batch.x.tolist() == [[[18.0]], [[19.0]]]
+    assert batch.mask_dict["x"].tolist() == [[[True]], [[True]]]
+
+
+def test_dense_with_workers_carries_the_shared_worker_options(tmp_path: Path) -> None:
+    """With one worker the dense loader carries prefetch 3, timeout 10800 s, spawn.
+
+    It is constructed only, never iterated, because that would spawn a worker process.
+    """
     worker_dm = _module(tmp_path, dense=True, num_workers=1, prefetch_factor=3)
     worker_dm.setup()
     loader = worker_dm.test_dataloader()
-    assert isinstance(loader, DensePaddingDataLoader)
+    assert type(loader) is DensePaddingDataLoader
     assert loader.num_workers == 1
     assert loader.prefetch_factor == 3
+    assert loader.timeout == 10800
     assert loader.persistent_workers is True
     assert loader.follow_batch == ["x", "x_pert"]
     assert loader.collator.follow_batch == ["x", "x_pert"]
     assert loader.multiprocessing_context.get_start_method() == "spawn"
+
+
+def test_dense_with_a_collate_fn_is_refused_by_name(tmp_path: Path) -> None:
+    """``dense=True`` plus a ``collate_fn`` raises ``ValueError`` at construction.
+
+    ``DensePaddingDataLoader`` pops any ``collate_fn`` and always batches with its own
+    ``DensePaddingCollater``, so the caller's function could never run; the module
+    refuses the pair instead of dropping the function silently. Nothing is written:
+    the subset cache directory is not created.
+    """
+
+    def my_collate(items: list[Data]) -> list[Data]:
+        return items
+
+    with pytest.raises(ValueError) as excinfo:
+        _module(tmp_path, dense=True, collate_fn=my_collate)
+    assert str(excinfo.value) == (
+        "dense=True builds a DensePaddingDataLoader, whose DensePaddingCollater is the "
+        "batching and replaces any collate_fn; a collate_fn cannot be honored with "
+        "dense=True. Pass dense=False to use collate_fn, or drop collate_fn."
+    )
+    assert str(excinfo.value) == DENSE_COLLATE_REFUSAL
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_non_dense_loaders_pass_prefetch_factor_and_the_worker_timeout(
+    tmp_path: Path,
+) -> None:
+    """The PyG and torch-collate loaders honor ``prefetch_factor`` (issue #580).
+
+    Before the fix a loader built with ``num_workers=1, prefetch_factor=7`` reported
+    torch's default 2 and ``timeout`` 0, while ``CellDataModule`` passed both. Both
+    modules now take their options from ``worker_dataloader_kwargs``: prefetch 7 and
+    timeout 10800 s with a worker, ``None`` and 0 at zero workers. Constructed only.
+    """
+
+    def my_collate(items: list[Data]) -> list[Data]:
+        return items
+
+    for collate_fn, loader_type in ((None, DataLoader), (my_collate, TorchDataLoader)):
+        worker_dm = _module(
+            tmp_path, num_workers=1, prefetch_factor=7, collate_fn=collate_fn
+        )
+        worker_dm.setup()
+        loader = worker_dm.train_dataloader()
+        assert type(loader) is loader_type
+        assert (loader.num_workers, loader.prefetch_factor, loader.timeout) == (
+            1,
+            7,
+            10800,
+        )
+        zero_dm = _module(tmp_path, prefetch_factor=7, collate_fn=collate_fn)
+        zero_dm.setup()
+        zero = zero_dm.train_dataloader()
+        assert type(zero) is loader_type
+        assert (zero.num_workers, zero.prefetch_factor, zero.timeout) == (0, None, 0)
 
 
 def test_prefetch_wraps_the_loader_in_a_prefetch_loader(tmp_path: Path) -> None:

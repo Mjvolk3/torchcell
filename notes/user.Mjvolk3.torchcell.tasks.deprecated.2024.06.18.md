@@ -1633,7 +1633,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 ## 2023.09.20
 
 - [x] Email Fungal UTR authors to clarify some of the 5 utr selections
-- [x] The genbank files `.gbff` contain all information in one file, which could be streamline for creating the genome class. See if it is worth converting to genbank files. → I explored [[GeneBank for Constructing Genome|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c_gb#genebank-for-constructing-genome]] and decided against it for now. We show that any missing information can be recovered from various APIs [[GFF File Does not Contain EC Number|dendron://torchcell/torchcell.multidigraph.uniprot_api_ec#gff-file-does-not-contain-ec-number]]
+- [x] The genbank files `.gbff` contain all information in one file, which could be streamline for creating the genome class. See if it is worth converting to genbank files. → I explored "GeneBank for Constructing Genome", a section of the note for `torchcell/sequence/genome/scerevisiae/s288c_gb.py`, which was retired on 2026.10.01 (issue #580); module and note are in `/scratch/projects/torchcell-deprecated/2026-10-01_112645__*/`, and decided against it for now. We show that any missing information can be recovered from various APIs [[GFF File Does not Contain EC Number|dendron://torchcell/torchcell.multidigraph.uniprot_api_ec#gff-file-does-not-contain-ec-number]]
 - [x] Complete coverage on data → [[Data|dendron://torchcell/torchcell.sequence.data]] made some progress
 - [x] Previous task was to organize Umap visualization overlays. Now delete since these are now invalid.
 - 🔲 Make  `pytest --cov=torchcell --cov-report html tests/` task

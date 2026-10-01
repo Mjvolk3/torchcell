@@ -24,9 +24,16 @@ from torchcell.datamodules import (
     DatasetSplit,
     IndexSplit,
 )
+from torchcell.datamodules.cell import worker_dataloader_kwargs
 from torchcell.loader.dense_padding_data_loader import DensePaddingDataLoader
 from torchcell.sequence import GeneSet
 from torchcell.utils import format_scientific_notation
+
+DENSE_COLLATE_REFUSAL = (
+    "dense=True builds a DensePaddingDataLoader, whose DensePaddingCollater is the "
+    "batching and replaces any collate_fn; a collate_fn cannot be honored with "
+    "dense=True. Pass dense=False to use collate_fn, or drop collate_fn."
+)
 
 
 class PerturbationSubsetDataModule(L.LightningDataModule):
@@ -50,7 +57,15 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         collate_fn: Callable[[list[Any]], Any] | None = None,
         val_batch_size: int | None = None,
     ) -> None:
-        """Configure subset size, loader options, and the cache directory."""
+        """Configure subset size, loader options, and the cache directory.
+
+        Raises:
+            ValueError: ``dense=True`` together with a ``collate_fn``
+                (``DENSE_COLLATE_REFUSAL``): the dense loader always collates with its
+                own ``DensePaddingCollater``, so the caller's function would never run.
+        """
+        if dense and collate_fn is not None:
+            raise ValueError(DENSE_COLLATE_REFUSAL)
         super().__init__()
         self.cell_data_module = cell_data_module
         self.dataset = cell_data_module.dataset
@@ -396,53 +411,44 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
     ) -> TorchDataLoader[Any] | DensePaddingDataLoader | PrefetchLoader:
         """Build the loader for ``dataset``: dense padding, PyG's, or torch's for a collate.
 
-        ``dense=True`` gives a ``DensePaddingDataLoader``. Otherwise PyG's ``DataLoader``
-        with ``follow_batch`` is used, unless a ``collate_fn`` is given: PyG's loader pops
-        it and installs its own ``Collater``, so the plain torch ``DataLoader`` is used with
-        that collate instead and ``follow_batch`` is not applied.
+        ``dense=True`` gives a ``DensePaddingDataLoader`` (a ``collate_fn`` is refused
+        with ``dense=True`` at construction). Otherwise PyG's ``DataLoader`` with
+        ``follow_batch`` is used, unless a ``collate_fn`` is given: PyG's loader pops it
+        and installs its own ``Collater``, so the plain torch ``DataLoader`` is used with
+        that collate instead and ``follow_batch`` is not applied. Every branch takes the
+        worker options from ``worker_dataloader_kwargs``, the helper ``CellDataModule``
+        uses, so ``prefetch_factor`` and the 3 h worker ``timeout`` apply with workers and
+        are ``None`` and 0 at ``num_workers=0``.
         """
         # Use provided batch_size or fall back to self.batch_size
         if batch_size is None:
             batch_size = self.batch_size
 
+        dataloader_kwargs = worker_dataloader_kwargs(
+            batch_size=batch_size,
+            shuffle=shuffle,
+            num_workers=self.num_workers,
+            persistent_workers=self.persistent_workers,
+            pin_memory=self.pin_memory,
+            prefetch_factor=self.prefetch_factor,
+        )
         loader: TorchDataLoader[Any]
         if self.dense:
             loader = DensePaddingDataLoader(
-                dataset,
-                batch_size=batch_size,
-                shuffle=shuffle,
-                num_workers=self.num_workers,
-                persistent_workers=self.persistent_workers
-                if self.num_workers > 0
-                else False,
-                pin_memory=self.pin_memory,
-                follow_batch=self.follow_batch,
-                multiprocessing_context=("spawn" if self.num_workers > 0 else None),
-                prefetch_factor=self.prefetch_factor,
+                dataset, follow_batch=self.follow_batch, **dataloader_kwargs
             )
-        else:
-            dataloader_kwargs: dict[str, Any] = {
-                "batch_size": batch_size,
-                "shuffle": shuffle,
-                "num_workers": self.num_workers,
-                "persistent_workers": self.persistent_workers
-                if self.num_workers > 0
-                else False,
-                "pin_memory": self.pin_memory,
-                "multiprocessing_context": ("spawn" if self.num_workers > 0 else None),
-            }
+        elif self.collate_fn is not None:
             # PyG's DataLoader pops any `collate_fn` and installs its own `Collater`, so
             # a caller's collate (experiment 006's `LazyCollater`) only runs through the
             # plain torch loader; `follow_batch` is not applied there, that collate owns
             # the batching. Same contract as `CellDataModule._get_dataloader`.
-            if self.collate_fn is not None:
-                loader = TorchDataLoader(
-                    dataset, collate_fn=self.collate_fn, **dataloader_kwargs
-                )
-            else:
-                loader = DataLoader(
-                    dataset, follow_batch=self.follow_batch, **dataloader_kwargs
-                )
+            loader = TorchDataLoader(
+                dataset, collate_fn=self.collate_fn, **dataloader_kwargs
+            )
+        else:
+            loader = DataLoader(
+                dataset, follow_batch=self.follow_batch, **dataloader_kwargs
+            )
         if self.prefetch:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             return PrefetchLoader(loader, device=device)

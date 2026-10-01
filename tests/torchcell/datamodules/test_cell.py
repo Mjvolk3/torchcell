@@ -36,12 +36,14 @@ from torch_geometric.loader import PrefetchLoader
 from torch_geometric.loader.dataloader import Collater
 
 from torchcell.datamodules.cell import (
+    WORKER_TIMEOUT_S,
     CellDataModule,
     DataModuleIndex,
     DataModuleIndexDetails,
     DatasetSplit,
     IndexSplit,
     overlap_dataset_index_split,
+    worker_dataloader_kwargs,
 )
 
 
@@ -240,6 +242,74 @@ def test_dataloaders_construct_at_any_worker_count(
         assert loader.num_workers == num_workers, name
         expected = 2 if num_workers > 0 else None
         assert loader.prefetch_factor == expected, name
+
+
+def test_worker_dataloader_kwargs_is_the_exact_dict_at_zero_and_two_workers() -> None:
+    """The shared helper (issue #580) guards every worker option on ``num_workers``.
+
+    With workers: persistence as requested, timeout 10800 s, spawn, the given prefetch
+    factor. At zero workers: persistence off even when requested, timeout 0, no context,
+    ``prefetch_factor`` ``None`` (torch rejects any other value there).
+    """
+    assert WORKER_TIMEOUT_S == 10800
+    assert worker_dataloader_kwargs(
+        batch_size=4,
+        shuffle=True,
+        num_workers=2,
+        persistent_workers=True,
+        pin_memory=True,
+        prefetch_factor=7,
+    ) == {
+        "batch_size": 4,
+        "shuffle": True,
+        "num_workers": 2,
+        "persistent_workers": True,
+        "pin_memory": True,
+        "timeout": 10800,
+        "multiprocessing_context": "spawn",
+        "prefetch_factor": 7,
+    }
+    assert worker_dataloader_kwargs(
+        batch_size=4,
+        shuffle=True,
+        num_workers=0,
+        persistent_workers=True,
+        pin_memory=True,
+        prefetch_factor=7,
+    ) == {
+        "batch_size": 4,
+        "shuffle": True,
+        "num_workers": 0,
+        "persistent_workers": False,
+        "pin_memory": True,
+        "timeout": 0,
+        "multiprocessing_context": None,
+        "prefetch_factor": None,
+    }
+
+
+def test_cell_loader_passes_a_non_default_prefetch_factor(tmp_path: Any) -> None:
+    """``CellDataModule`` with one worker and ``prefetch_factor=7`` builds loaders with 7.
+
+    The default 2 equals torch's own default, so only a non-default value shows the
+    constructor's factor reaches the loader; timeout is 10800 s. Constructed only.
+    """
+    dm = CellDataModule(
+        dataset=_FakeDataset(),
+        cache_dir=str(tmp_path / "cache"),
+        split_indices=["phenotype_label_index"],
+        random_seed=42,
+        num_workers=1,
+        prefetch_factor=7,
+    )
+    dm.setup()
+    for name in ("train_dataloader", "val_dataloader", "test_dataloader"):
+        loader = getattr(dm, name)()
+        assert (loader.num_workers, loader.prefetch_factor, loader.timeout) == (
+            1,
+            7,
+            10800,
+        ), name
 
 
 def _build_full_pin(

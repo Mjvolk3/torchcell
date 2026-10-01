@@ -223,6 +223,58 @@ def overlap_dataset_index_split(
     return DatasetIndexSplit(train=train_dict, val=val_dict, test=test_dict)
 
 
+WORKER_TIMEOUT_S = 10800
+
+
+def worker_dataloader_kwargs(
+    *,
+    batch_size: int,
+    shuffle: bool,
+    num_workers: int,
+    persistent_workers: bool,
+    pin_memory: bool,
+    prefetch_factor: int,
+) -> dict[str, Any]:
+    """Return the ``DataLoader`` keyword arguments every torchcell datamodule shares.
+
+    ``CellDataModule`` and ``PerturbationSubsetDataModule`` both build their loaders
+    from this one dict (issue #580), so the two cannot drift apart again. The worker
+    options are guarded on ``num_workers``: with workers, persistence is as requested,
+    ``timeout`` is ``WORKER_TIMEOUT_S`` (3 h), the context is ``spawn`` and
+    ``prefetch_factor`` is passed through; at ``num_workers=0`` persistence is off,
+    ``timeout`` is 0, the context is ``None`` and ``prefetch_factor`` is ``None``.
+    """
+    return {
+        "batch_size": batch_size,
+        "shuffle": shuffle,
+        "num_workers": num_workers,
+        "persistent_workers": persistent_workers if num_workers > 0 else False,
+        "pin_memory": pin_memory,
+        # THE SAME GUARD AS `prefetch_factor` BELOW, and for the same reason -- this one
+        # was missed when that fix landed (commit 2cca6d83), so num_workers=0 was still
+        # unconstructible afterwards. `timeout` is a WORKER-QUEUE timeout, so at
+        # num_workers=0 torch asserts outright:
+        #   AssertionError: _SingleProcessDataLoaderIter requires timeout == 0
+        # raised from `iter(dataloader)`, i.e. during sanity-check, AFTER the dataset and
+        # embeddings have been loaded. A trial therefore burns its full startup cost and
+        # then dies, which is why 119 of them could fail in a job that still exited
+        # COMPLETED 0:0.
+        "timeout": (WORKER_TIMEOUT_S if num_workers > 0 else 0),
+        "multiprocessing_context": ("spawn" if num_workers > 0 else None),
+        # Torch REJECTS a non-None prefetch_factor at num_workers=0 ("could only be
+        # specified in multiprocessing"), so this needs the same guard its two
+        # neighbors already carry. Without it num_workers=0 is not merely slow, it is
+        # unconstructible -- every DataLoader raises ValueError before the first batch.
+        #
+        # That is not hypothetical: on 2026-07-28 Delta job 20556837 ran NUM_WORKERS=0
+        # and all 119 optuna trials died here, ~15s apiece, while the job still exited
+        # COMPLETED 0:0. num_workers=0 is worth supporting because on a parallel
+        # filesystem the spawn path is the expensive one -- each worker re-imports the
+        # whole stack off /work/hdd.
+        "prefetch_factor": (prefetch_factor if num_workers > 0 else None),
+    }
+
+
 class CellDataModule(L.LightningDataModule):
     """Lightning data module that splits a cell dataset and builds dataloaders."""
 
@@ -694,37 +746,14 @@ class CellDataModule(L.LightningDataModule):
         if batch_size is None:
             batch_size = self.batch_size
 
-        dataloader_kwargs: dict[str, Any] = {
-            "batch_size": batch_size,
-            "shuffle": shuffle,
-            "num_workers": self.num_workers,
-            "persistent_workers": self.persistent_workers
-            if self.num_workers > 0
-            else False,
-            "pin_memory": self.pin_memory,
-            # THE SAME GUARD AS `prefetch_factor` BELOW, and for the same reason -- this one
-            # was missed when that fix landed (commit 2cca6d83), so num_workers=0 was still
-            # unconstructible afterwards. `timeout` is a WORKER-QUEUE timeout, so at
-            # num_workers=0 torch asserts outright:
-            #   AssertionError: _SingleProcessDataLoaderIter requires timeout == 0
-            # raised from `iter(dataloader)`, i.e. during sanity-check, AFTER the dataset and
-            # embeddings have been loaded. A trial therefore burns its full startup cost and
-            # then dies, which is why 119 of them could fail in a job that still exited
-            # COMPLETED 0:0.
-            "timeout": (10800 if self.num_workers > 0 else 0),
-            "multiprocessing_context": ("spawn" if self.num_workers > 0 else None),
-            # Torch REJECTS a non-None prefetch_factor at num_workers=0 ("could only be
-            # specified in multiprocessing"), so this needs the same guard its two
-            # neighbours already carry. Without it num_workers=0 is not merely slow, it is
-            # unconstructible -- every DataLoader raises ValueError before the first batch.
-            #
-            # That is not hypothetical: on 2026-07-28 Delta job 20556837 ran NUM_WORKERS=0
-            # and all 119 optuna trials died here, ~15s apiece, while the job still exited
-            # COMPLETED 0:0. num_workers=0 is worth supporting because on a parallel
-            # filesystem the spawn path is the expensive one -- each worker re-imports the
-            # whole stack off /work/hdd.
-            "prefetch_factor": (self.prefetch_factor if self.num_workers > 0 else None),
-        }
+        dataloader_kwargs = worker_dataloader_kwargs(
+            batch_size=batch_size,
+            shuffle=shuffle,
+            num_workers=self.num_workers,
+            persistent_workers=self.persistent_workers,
+            pin_memory=self.pin_memory,
+            prefetch_factor=self.prefetch_factor,
+        )
 
         loader: TorchDataLoader[Any]
         if self.collate_fn is not None:

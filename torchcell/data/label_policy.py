@@ -92,7 +92,8 @@ def source_key(dataset_name: str, temperature: float | None) -> str:
     experiments; Kuzmin is not, because it screened at one temperature. A converted 0
     collapses to one key whatever produced it. A Costanzo temperature that is not a whole
     degree is refused rather than truncated: the loader writes the screen temperature as
-    an integer, so a fractional one is not a screen the key can name.
+    an integer, so a fractional one is not a screen the key can name. NaN and infinity are
+    refused by the same ValueError (infinity used to raise OverflowError from ``int``).
     """
     if any(tag in dataset_name for tag in _CONVERTED_ZERO_DATASETS):
         return CONVERTED_ZERO
@@ -105,7 +106,7 @@ def source_key(dataset_name: str, temperature: float | None) -> str:
             raise ValueError(f"{dataset_name} entry carries no temperature")
         if not float(temperature).is_integer():
             raise ValueError(
-                f"{dataset_name} temperature {temperature!r} is not a whole degree"
+                f"{dataset_name} temperature {float(temperature)} is not a whole degree"
             )
         return f"costanzo2016@{int(temperature)}"
     raise ValueError(f"no source key for dataset {dataset_name!r}")
@@ -380,8 +381,10 @@ class LabelPolicy(BaseModel):
 
         Strain-matched entries from different sources are different screens, not
         replicates, so they are ranked by this policy's precedence like any other entries
-        and only the best-ranked source's matches are combined. When no matched entry
-        comes from a listed source, the pair's own entries are selected as without a match.
+        and only the best-ranked source's matches are combined. Strain matches that all
+        come from sources this policy does not list are refused rather than replaced by
+        the pair's array-screen entries, since that would discard the strain measurement
+        without a trace in the ``LabelChoice``.
         """
         if self.prefer_strain_matched_double and query_strain_id is not None:
             token = strain_token(query_strain_id)
@@ -394,8 +397,15 @@ class LabelPolicy(BaseModel):
                     or (token is not None and strain_token(e.strain_id) == token)
                 )
             ]
-            choice = self.select(matched, label)
-            if choice is not None:
+            if matched:
+                choice = self.select(matched, label)
+                if choice is None:
+                    raise ValueError(
+                        f"strain matches for query strain {query_strain_id!r} come "
+                        f"from {sorted({e.source for e in matched})}, none of which "
+                        f"policy {self.name!r} lists for {label}: "
+                        f"{self.precedence_for(label)}"
+                    )
                 return choice
         return self.select(entries, label)
 
@@ -463,14 +473,21 @@ def label_of_experiment_type(experiment_type: str) -> str:
     return LABEL_OF_EXPERIMENT_TYPE[experiment_type]
 
 
-def _short_or_long(row: dict[str, Any], short: str, long: str) -> Any:
-    """The value under ``short``, or under ``long`` when ``short`` is absent or None.
+def _is_absent(x: Any) -> bool:
+    """None, a float NaN and the empty string all mean "no value stored here"."""
+    return x is None or x == "" or (isinstance(x, float) and math.isnan(x))
 
-    A row carrying both spellings with different values is refused, since either choice
-    would silently discard a stored value.
+
+def _short_or_long(row: dict[str, Any], short: str, long: str) -> Any:
+    """The value under ``short``, or under ``long`` when ``short`` is absent.
+
+    A key is absent when it is missing or holds None, NaN or the empty string, none of
+    which is a value, so reading the other spelling hides nothing; both absent gives
+    None. A row carrying both spellings with different present values is refused, since
+    either choice would silently discard a stored value.
     """
-    a = row.get(short)
-    b = row.get(long)
+    a = None if _is_absent(row.get(short)) else row[short]
+    b = None if _is_absent(row.get(long)) else row[long]
     if a is not None and b is not None and a != b:
         raise ValueError(f"row carries {short}={a!r} and {long}={b!r}")
     return b if a is None else a

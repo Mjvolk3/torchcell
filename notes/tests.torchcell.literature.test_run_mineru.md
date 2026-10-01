@@ -13,3 +13,7 @@ Fake `mineru` modules in `sys.modules`; the fake `do_parse` writes MinerU's nest
 ## 2026.10.01 - Review fixes
 
 Added the crash re-run tests (failed copy; kill between the moves), the `SOM.pdf` then `paper.pdf` re-run test, anchored reference forms (markdown, HTML, content list, uppercase and spaced names, prose URL untouched), and the exit-5 test now asserts the PDF's directory holds only the PDF (no scratch). Each failed on the previous runner.
+
+## 2026.10.01 - Kill mid-swap then a failing re-run
+
+Parametrized over the recorded phase (`retiring`, `installing`, `swapped`, none): a kill parks `old.jpg` in `.images.old`, the next run exits 5, and the old markdown is unchanged with every figure it references back in `images/si1` (arrivals of an `installing` kill removed, both sets after `swapped`), and no scratch remains. The header no longer claims a failed swap always leaves the previous markdown with its figures.

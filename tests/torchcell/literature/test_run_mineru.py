@@ -23,9 +23,12 @@ PDF's ``images/<stem>/``. A reference to a figure MinerU did not write exits 5 b
 anything is written and leaves no scratch. The runner prints ``MINERU_VERSION`` and
 the effective ``MINERU_DPI``.
 
-2026.10.01 (PR #585 review): every run starts from a fresh scratch and writes the
-markdown only after the figures are in place, so a crash in the copy or between the
-moves leaves the previous markdown with its figures, and the next run succeeds.
+2026.10.01 (PR #585 review): the markdown is written only after the figures are in
+place, so a failed copy leaves the previous markdown and figures untouched. A kill
+later in the swap can leave the markdown referencing figures parked in the scratch's
+``.images.old``; the next run first puts them back (by the recorded swap phase) and
+then starts from a fresh scratch, so even a next run that fails leaves every
+reference of the markdown on disk resolvable.
 References are rewritten only in MinerU's three forms (``](images/``,
 ``<img src="images/``, ``"img_path": "images/``); prose URLs pass through.
 """
@@ -433,3 +436,47 @@ def test_a_paper_rerun_keeps_another_root_pdfs_figures(
     figures["paper"] = []
     assert _run(monkeypatch, paper) == 0
     assert _tree(root / "images") == ["SOM/s1.jpg"]
+
+
+@pytest.mark.parametrize(
+    ("phase", "in_dest", "expected"),
+    [
+        ("retiring", [], ["si1/old.jpg"]),
+        ("installing", ["new.jpg"], ["si1/old.jpg"]),
+        ("swapped", ["new.jpg"], ["si1/new.jpg", "si1/old.jpg"]),
+        (None, [], ["si1/old.jpg"]),
+    ],
+)
+def test_a_failed_rerun_after_a_kill_mid_swap_restores_the_old_figures(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    phase: str | None,
+    in_dest: list[str],
+    expected: list[str],
+) -> None:
+    """A kill mid-swap parked ``old.jpg`` in ``.images.old`` (``in_dest`` is what
+    had already arrived, ``phase`` what ``.swap_phase`` said; ``None`` is a kill
+    before the phase file existed). The next run then exits 5: the old markdown is
+    unchanged and every figure it references is back in ``images/si1``. Arrivals of
+    an ``installing`` kill are removed; after ``swapped`` both sets stay. No scratch.
+    """
+    fake = _install(monkeypatch, {"si1": ["old.jpg"]})
+    si = tmp_path / "ck" / "si"
+    si1 = _pdf(si, "si1.pdf")
+    assert _run(monkeypatch, si1, "--images-dir", "images/si1") == 0
+    old_md = (si / "si1.md").read_text()
+    scratch = si / ".mineru_scratch_si1"
+    (scratch / ".images.old").mkdir(parents=True)
+    (si / "images" / "si1" / "old.jpg").rename(scratch / ".images.old" / "old.jpg")
+    for name in in_dest:
+        (si / "images" / "si1" / name).write_bytes(b"arrived")
+    if phase is not None:
+        (scratch / ".swap_phase").write_text(phase)
+
+    fake.extra_refs = ["ghost.jpg"]
+    assert _run(monkeypatch, si1, "--images-dir", "images/si1") == 5
+
+    assert (si / "si1.md").read_text() == old_md == "# si1\n![](images/si1/old.jpg)\n"
+    assert _tree(si / "images") == expected
+    assert (si / "images" / "si1" / "old.jpg").read_bytes() == b"si1:old.jpg"
+    assert not scratch.exists()

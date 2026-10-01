@@ -125,30 +125,65 @@ def _rewrite_image_refs(text: str, produced: set[str], images_rel: str) -> str:
     return IMAGE_REF.sub(_sub, text)
 
 
+_OLD = ".images.old"
+_PHASE = ".swap_phase"
+
+
 def _replace_images_dir(images_src: Path | None, dest: Path, stage_root: Path) -> None:
     """Make the files directly in ``dest`` exactly this run's figures.
 
     The figures are copied into ``<stage_root>/.images.new`` first; only then are
     the files directly in ``dest`` (this PDF's own figures from an earlier run) moved
     into ``<stage_root>/.images.old`` and the staged files moved into ``dest``. The
-    caller removes ``stage_root``. Subdirectories of ``dest`` are never touched: the
-    paper's flat ``images/`` can hold another root PDF's ``images/<stem>/`` (Costanzo
-    2016's ``SOM.pdf``). A ``dest`` left empty (MinerU wrote no figures) is removed.
+    phase is written to ``<stage_root>/.swap_phase`` (``retiring``, ``installing``,
+    ``swapped``) so :func:`_restore_after_kill` can undo a killed swap. The caller
+    removes ``stage_root``. Subdirectories of ``dest`` are never touched: the paper's
+    flat ``images/`` can hold another root PDF's ``images/<stem>/`` (Costanzo 2016's
+    ``SOM.pdf``). A ``dest`` left empty (MinerU wrote no figures) is removed.
     """
     staged = stage_root / ".images.new"
-    retired = stage_root / ".images.old"
+    retired = stage_root / _OLD
+    phase = stage_root / _PHASE
     if images_src is not None:
         shutil.copytree(images_src, staged)
+    phase.write_text("retiring")
     retired.mkdir()
     if dest.is_dir():
         for old in sorted(p for p in dest.iterdir() if p.is_file()):
             old.rename(retired / old.name)
+    phase.write_text("installing")
     if images_src is not None:
         dest.mkdir(parents=True, exist_ok=True)
         for new in sorted(staged.iterdir()):
             new.rename(dest / new.name)
+    phase.write_text("swapped")
     if dest.is_dir() and not any(dest.iterdir()):
         dest.rmdir()
+
+
+def _restore_after_kill(stage_root: Path, dest: Path) -> None:
+    """Put back the figures a killed swap moved into ``<stage_root>/.images.old``.
+
+    Killed while ``retiring``: the moved files go back beside the ones not yet
+    moved. Killed while ``installing``: every file directly in ``dest`` arrived in
+    this swap (the old ones had all left), so those are removed and the old ones put
+    back. Killed once ``swapped`` (while the markdown was being written): the old
+    files are put back beside the new ones, so the old and the new markdown both
+    resolve. Afterwards the files directly in ``dest`` include every figure the
+    markdown on disk references, and the caller can discard the scratch.
+    """
+    retired = stage_root / _OLD
+    if not retired.is_dir():
+        return
+    phase_file = stage_root / _PHASE
+    phase = phase_file.read_text() if phase_file.is_file() else "retiring"
+    if phase == "installing" and dest.is_dir():
+        for arrived in sorted(p for p in dest.iterdir() if p.is_file()):
+            arrived.unlink()
+    dest.mkdir(parents=True, exist_ok=True)
+    for old in sorted(retired.iterdir()):
+        if not (dest / old.name).exists():
+            old.rename(dest / old.name)
 
 
 def main() -> int:
@@ -179,10 +214,13 @@ def main() -> int:
     print(f"MINERU_VERSION={mineru_version}")
     print(f"MINERU_DPI={args.dpi if args.dpi > 0 else default_dpi}")
 
-    # This PDF's private staging path. A run killed earlier can leave it behind
-    # (half-staged figures), so every run starts from a fresh one.
+    # This PDF's private staging path. A run killed earlier can leave it behind;
+    # the figures that run moved aside are put back first, then every run starts
+    # from a fresh scratch.
+    images_rel: str = args.images_dir
     scratch = out_dir / f".mineru_scratch_{stem}"
     if scratch.exists():
+        _restore_after_kill(scratch, out_dir / images_rel)
         shutil.rmtree(scratch)
     scratch.mkdir(parents=True)
 
@@ -207,7 +245,6 @@ def main() -> int:
         if images_src.is_dir()
         else set()
     )
-    images_rel: str = args.images_dir
     rewritten: dict[str, str] = {}
     for name in (f"{stem}.md", f"{stem}_content_list.json"):
         src = auto_dir / name
@@ -221,8 +258,11 @@ def main() -> int:
                 print(f"ERROR: {name} {err}", file=sys.stderr)
                 return 5
 
-    # Figures first, markdown after: a failure in the swap leaves the previous
-    # markdown with the figures it references.
+    # Figures first, markdown after. A failed copy leaves the previous markdown
+    # and figures untouched. A kill later in the swap or during the markdown
+    # writes can leave the markdown on disk referencing figures that sit in the
+    # scratch's .images.old until the next run, which puts them back before
+    # anything else (_restore_after_kill), even if that run then fails.
     _replace_images_dir(
         images_src if images_src.is_dir() else None, out_dir / images_rel, scratch
     )

@@ -601,15 +601,24 @@ def test_two_indices_balance_ten_record_keys_to_eight_one_one(tmp_path: Path) ->
     remainder: a 10-record key targets 8 / 1 / 1 (the old ``int(10 * 0.0999...) = 0``
     test target divided by zero). Ten is the smallest key that balances, since at nine the
     val target ``int(0.9)`` is 0. The seeded result puts both phenotype keys at exactly
-    8 / 1 / 1 and the three splits partition all 20 records.
+    8 / 1 / 1. Only the FIRST index's keys are balanced: the perturbation-count keys keep
+    whatever that leaves them, key 1 (evens) at 8 / 2 / 0 and key 2 (odds) at 8 / 0 / 2.
     """
-    index = _two_indices(tmp_path, 10).index
+    dm = _two_indices(tmp_path, 10)
+    index = dm.index
     assert index.model_dump() == {
         "train": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18],
         "val": [0, 16],
         "test": [1, 19],
     }
-    assert sorted(index.train + index.val + index.test) == list(range(20))
+    details = dm.index_details.model_dump()
+    assert [
+        [
+            details[split]["perturbation_count_index"][key]["count"]
+            for split in ("train", "val", "test")
+        ]
+        for key in (1, 2)
+    ] == [[8, 2, 0], [8, 0, 2]]
 
 
 def test_two_indices_refuse_a_nine_record_key_with_a_disputed_record(
@@ -811,7 +820,7 @@ def test_dataloader_options_at_two_workers(tmp_path: Path) -> None:
     assert isinstance(val.sampler, SequentialSampler)
     assert isinstance(test.sampler, SequentialSampler)
     assert (train.batch_size, val.batch_size, test.batch_size) == (3, 5, 3)
-    assert isinstance(full.dataset, _KeyedDataset)
+    assert full.dataset is dm.dataset
     assert len(full.dataset) == 10
 
 

@@ -83,6 +83,7 @@ from torchcell.datamodels.schema import (
     Temperature,
     UncertaintyType,
 )
+from torchcell.datasets.scerevisiae import kuzmin2018 as k2018
 from torchcell.datasets.scerevisiae import kuzmin2020 as k
 
 S1_NAME = "aaz5667-Table-S1.xlsx"
@@ -303,7 +304,7 @@ def test_smf_allele_single_and_blank_sd(tmp_path: Path) -> None:
     assert stored(ds, "reference") == [fitness_reference(name, None)] * 2
 
 
-def test_dmf_allele_query_unknown_array_and_s5_disagreement(
+def test_dmf_allele_query_ts_array_and_s5_disagreement(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Dmf: the allele query x ts-array cross (blank SD, stored as ``fitness_std`` None
@@ -354,12 +355,14 @@ def test_dmf_allele_query_unknown_array_and_s5_disagreement(
 
 
 def test_dmf_refuses_a_repeated_s5_double_mutant_row(tmp_path: Path) -> None:
-    """With the tm801 "Double mutant" row listed twice in Table S5, the build refuses
-    before the left merge on the tm number could fan the one strain out into two
-    records, and no LMDB store is written.
+    """With the tm801 "Double mutant" row listed twice in Table S5, the second time with
+    a different fitness (0.51 against 0.5), the build refuses on the tm number before
+    the left merge could fan the one strain out into two records, and no LMDB store is
+    written.
     """
+    repeat = [*S5_DOUBLE[:5], 0.51, S5_DOUBLE[6]]
     with pytest.raises(ValueError) as info:
-        build(tmp_path, k.DmfKuzmin2020Dataset, s5_rows=[*S5_ROWS, S5_DOUBLE])
+        build(tmp_path, k.DmfKuzmin2020Dataset, s5_rows=[*S5_ROWS, repeat])
     assert str(info.value) == (
         "Table S5 lists 1 'Double mutant' query strain(s) more than once: ['tm801']; "
         "the tm-number join would store each strain once per listing"
@@ -393,6 +396,23 @@ def test_unknown_array_strain_type_refuses_the_build(
         "array strain 'YCR002C_sn1' is neither a 'tsa' (temperature-sensitive allele) "
         "nor a 'dma' (KanMX deletion) strain; its perturbation type is unknown"
     )
+    assert not (tmp_path / cls.__name__ / "processed" / "lmdb").exists()
+
+
+@pytest.mark.parametrize("module", [k, k2018])
+@pytest.mark.parametrize("strain", ["YBR001C_TSA100", "YAL048C_DMA5203"])
+def test_array_strain_type_is_matched_case_sensitively(
+    module: Any, strain: str
+) -> None:
+    """Both years match the lowercase ``tsa`` / ``dma`` tags the released tables use; an
+    uppercase tag is not silently accepted as the same array but refused by name.
+    """
+    with pytest.raises(ValueError) as info:
+        module._array_perturbation_type(strain)
+    assert str(info.value) == (
+        f"array strain '{strain}' is neither a 'tsa' (temperature-sensitive allele) "
+        "nor a 'dma' (KanMX deletion) strain; its perturbation type is unknown"
+    )
 
 
 def test_tmf_allele_first_query_and_ts_array(tmp_path: Path) -> None:
@@ -408,6 +428,23 @@ def test_tmf_allele_first_query_and_ts_array(tmp_path: Path) -> None:
     ]
     assert (0.02 + 0.03) / 2 == 0.025
     assert stored(ds, "reference") == [fitness_reference(name, 0.025)] * 2
+
+
+def test_tmf_blank_sd_is_stored_as_none(tmp_path: Path) -> None:
+    """A trigenic S1 row with a blank SD (tm801 against the ts array, 0.3) is stored with
+    ``fitness_std`` None, not a float NaN; the reference SD is the mean of the one
+    reported SD, 0.03.
+    """
+    name = "TmfKuzmin2020Dataset"
+    blank = [*S1_ROWS[1][:6], None, *S1_ROWS[1][7:]]
+    ds = build(tmp_path, k.TmfKuzmin2020Dataset, s1_rows=[S1_ROWS[0], blank])
+    experiments = stored(ds, "experiment")
+    assert experiments[0]["phenotype"]["fitness_std"] is None
+    assert experiments == [
+        fitness(name, [CDC28_SPLIT, PML39_SPLIT, NTH2_TS], 0.3, None),
+        fitness(name, [CDC28_SPLIT, PML39_SPLIT, GEM1], 0.25, 0.03),
+    ]
+    assert stored(ds, "reference") == [fitness_reference(name, 0.03)] * 2
 
 
 def test_dmi_and_tmi_allele_records(tmp_path: Path) -> None:
@@ -594,17 +631,27 @@ def test_main_builds_all_five_under_data_root(
     assert list(work.iterdir()) == []
 
 
-def test_main_refuses_an_unset_data_root(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_main_refuses_an_unset_data_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """With ``DATA_ROOT`` unset ``main`` refuses before building anything, instead of
-    building at a root relative to the working directory.
+    building at a root relative to the working directory: nothing is downloaded and the
+    (temporary) working directory stays empty.
     """
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **kw: False)
     monkeypatch.delenv("DATA_ROOT")
+    monkeypatch.chdir(tmp_path)
+    downloads: list[tuple[str, str]] = []
+    monkeypatch.setattr(
+        k, "download_url", lambda url, folder: downloads.append((url, folder))
+    )
     with pytest.raises(ValueError) as info:
         k.main()
     assert str(info.value) == (
         "DATA_ROOT environment variable is not set. Please set it in your .env file."
     )
+    assert downloads == []
+    assert list(tmp_path.iterdir()) == []
 
 
 # ---------------------------------------------------------------------------------------

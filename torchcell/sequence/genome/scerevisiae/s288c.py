@@ -6,13 +6,16 @@
 """S. cerevisiae S288C genome access over SGD FASTA/GFF with GO and sequence windows."""
 
 import hashlib
+import json
 import logging
 import os
 import os.path as osp
 import re
+import secrets
 import shutil
 import socket
 import sqlite3
+import stat
 import tempfile
 import weakref
 from enum import StrEnum
@@ -26,7 +29,7 @@ from attrs import define, field
 from Bio import SeqIO
 from gffutils.feature import Feature
 from goatools.obo_parser import GODag
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field
 from sortedcontainers import SortedDict, SortedSet
 from torch_geometric.data import download_url
 
@@ -502,6 +505,8 @@ GENOME_DB_FILENAME = "data.db"
 UNTRUSTED_DB_FILENAME = GENOME_DB_FILENAME + ".untrusted"
 #: The table inside ``data.db`` that records what the database was built from.
 SOURCE_TABLE = "torchcell_genome_db_source"
+#: The :class:`GenomeDatabaseRecord` schema version this code writes and reads.
+RECORD_VERSION = 1
 #: The ``gffutils.create_db`` arguments every build uses (also recorded in the source).
 CREATE_DB_KWARGS: dict[str, Any] = {
     "keep_order": True,
@@ -512,8 +517,11 @@ CREATE_DB_KWARGS: dict[str, Any] = {
 #: <random>.building`` (a build) and ``data.db.untrusted.<host>.<pid>.<random>.
 #: building`` (the copy of an untrusted database on its way to ``data.db.untrusted``).
 _BUILD_TEMP = re.compile(
-    r"^data\.db\.(?:untrusted\.)?(?P<host>.+)\.(?P<pid>\d+)\.[a-z0-9_]+\.building$"
+    r"^data\.db\.(?:untrusted\.)?(?P<host>.+)\.(?P<pid>\d+)\.[a-z0-9_]+"
+    r"\.building(?:-journal)?$"
 )
+#: Largest pid a sweep considers (a 32-bit pid_t); a name beyond it is not ours.
+_PID_LIMIT = 2**31 - 1
 #: Private database copies in the temp dir: ``torchcell-genome-<host>-<pid>-<random>.db``.
 _PRIVATE_COPY = re.compile(
     r"^torchcell-genome-(?P<host>.+)-(?P<pid>\d+)-[a-z0-9_]+\.db$"
@@ -543,10 +551,17 @@ class GenomeDatabaseRecord(BaseModel):
     rollback-journal modes gffutils uses) are compared with the record, so any write
     made in place after the build, by a process running pre-2026.10.01 code, is
     detected: a deletion changes the counts, any write changes the counter.
+
+    ``version`` is :data:`RECORD_VERSION` of the code that wrote it. A reader treats a
+    lower (or absent) version as untrusted and migrates it once; a higher version was
+    written by newer code and is refused by name
+    (:class:`GenomeDatabaseVersionError`), so two code versions never rebuild the
+    file back and forth.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
+    version: int
     source: GenomeDatabaseSource
     featuretype_counts: dict[str, int]
     relations_count: int
@@ -555,6 +570,10 @@ class GenomeDatabaseRecord(BaseModel):
 
 class GenomeDatabaseSourceError(RuntimeError):
     """``data.db`` records a different source than this genome's pinned GFF."""
+
+
+class GenomeDatabaseVersionError(RuntimeError):
+    """``data.db`` carries a record written by newer code than this checkout."""
 
 
 class GenomeRootNotFoundError(FileNotFoundError):
@@ -621,20 +640,31 @@ def _pid_alive(pid: int) -> bool:
 
 
 def _sweep_dead(directory: str, pattern: re.Pattern[str]) -> list[str]:
-    """Remove this host's and this user's files in ``directory`` matching ``pattern``
-    whose writer pid is dead; another host's and a live pid's are left. Returns the
-    removed names.
+    """Remove this host's and this user's regular files in ``directory`` matching
+    ``pattern`` whose writer pid is dead; another host's, another user's, a live pid's,
+    a directory and a name whose pid is out of range are left. Safe to run in many
+    processes at once: a file another sweeper removed first is skipped. Returns the
+    names this call removed.
     """
     host = socket.gethostname()
     removed = []
     for name in sorted(os.listdir(directory)):
         m = pattern.match(name)
-        if m is None or m["host"] != host or _pid_alive(int(m["pid"])):
+        if m is None or m["host"] != host or not 0 < int(m["pid"]) <= _PID_LIMIT:
             continue
         path = osp.join(directory, name)
-        if os.stat(path).st_uid != os.getuid():
+        try:
+            st = os.lstat(path)
+        except FileNotFoundError:  # another sweeper removed it first
             continue
-        os.remove(path)
+        if not stat.S_ISREG(st.st_mode) or st.st_uid != os.getuid():
+            continue
+        if _pid_alive(int(m["pid"])):
+            continue
+        try:
+            os.remove(path)
+        except FileNotFoundError:  # another sweeper removed it first
+            continue
         removed.append(name)
     return removed
 
@@ -666,6 +696,7 @@ def write_genome_database(
         featuretype_counts, relations_count = _database_counts(conn)
         expected_counter = _change_counter(tmp_path) + 1
         record = GenomeDatabaseRecord(
+            version=RECORD_VERSION,
             source=source,
             featuretype_counts=featuretype_counts,
             relations_count=relations_count,
@@ -693,8 +724,8 @@ def write_genome_database(
     return tmp_path
 
 
-def read_genome_database_record(db_path: str) -> GenomeDatabaseRecord | None:
-    """The record stored inside ``db_path``, or None when it carries none."""
+def _read_record_json(db_path: str) -> str | None:
+    """The raw record JSON stored inside ``db_path``, or None when it carries none."""
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
     has_table = conn.execute(
         "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (SOURCE_TABLE,)
@@ -708,7 +739,15 @@ def read_genome_database_record(db_path: str) -> GenomeDatabaseRecord | None:
         raise GenomeDatabaseSourceError(
             f"{db_path}: {SOURCE_TABLE} holds {len(rows)} rows, expected exactly 1"
         )
-    return GenomeDatabaseRecord.model_validate_json(rows[0][0])
+    return str(rows[0][0])
+
+
+def read_genome_database_record(db_path: str) -> GenomeDatabaseRecord | None:
+    """The record stored inside ``db_path``, or None when it carries none."""
+    raw = _read_record_json(db_path)
+    if raw is None:
+        return None
+    return GenomeDatabaseRecord.model_validate_json(raw)
 
 
 def untrusted_reason(
@@ -717,21 +756,27 @@ def untrusted_reason(
     """Why the existing ``db_path`` cannot be trusted, or None when it can.
 
     Untrusted (returned as a reason): no record, which is every database built before
-    2026.10.01; a record that does not validate as the current schema and every one rebuilt in place by a process still running older code;
-    row counts that differ from the record (rows deleted in place by such a process);
-    or a change counter that differs from the record (any other write in place). A
-    record for a different source raises :class:`GenomeDatabaseSourceError`: the
-    pinned GFF changed, which is a real source change, not a migration.
+    2026.10.01 and every one rebuilt in place by a process still running older code; a
+    record of a lower (or absent) :data:`RECORD_VERSION`; row counts that differ from
+    the record (rows deleted in place by such a process); or a change counter that
+    differs from the record (any other write in place). A record of a higher version
+    raises :class:`GenomeDatabaseVersionError`, and a record for a different source
+    raises :class:`GenomeDatabaseSourceError`: the pinned GFF changed, which is a real
+    source change, not a migration.
     """
-    try:
-        record = read_genome_database_record(db_path)
-    except ValidationError as exc:  # a record written under an older record schema
-        return (
-            f"its {SOURCE_TABLE} record does not validate as the current "
-            f"GenomeDatabaseRecord ({exc.error_count()} errors)"
-        )
-    if record is None:
+    raw = _read_record_json(db_path)
+    if raw is None:
         return f"it carries no {SOURCE_TABLE} record"
+    version = json.loads(raw).get("version", 0)  # absent: written before versioning
+    if version > RECORD_VERSION:
+        raise GenomeDatabaseVersionError(
+            f"{db_path} carries a record of version {version}, written by newer code "
+            f"than this checkout (which reads version {RECORD_VERSION}); refusing to "
+            "replace it. Update this checkout."
+        )
+    if version < RECORD_VERSION:
+        return f"its record is version {version}, older than {RECORD_VERSION}"
+    record = GenomeDatabaseRecord.model_validate_json(raw)
     if record.source != expected:
         raise GenomeDatabaseSourceError(
             f"{db_path} was built from {record.source.model_dump()} but this genome's "
@@ -914,10 +959,15 @@ class SCerevisiaeGenome(Genome):
     _go_dag: GODag | None = field(init=False, factory=lambda: None, repr=False)
     _obo_path: str | None = field(init=False, default=None, repr=False)
     # This instance's private copy of data.db (made on its first write) and the
-    # (pid, id) that made it; a pickled or forked copy writes to a copy of its own.
+    # (pid, instance token) that made it; a pickled or forked copy writes to a copy of its own.
     _private_db_path: str | None = field(init=False, default=None, repr=False)
-    _private_db_owner: tuple[int, int] | None = field(
+    _private_db_owner: tuple[int, str] | None = field(
         init=False, default=None, repr=False
+    )
+    # A random token per instance: ownership never depends on id(), which CPython
+    # reuses after collection.
+    _instance_token: str = field(
+        init=False, factory=lambda: secrets.token_hex(8), repr=False
     )
     # Every write this instance made, in order, so a copy can be rebuilt from the
     # shared file: ("delete", ids) or ("remove_deprecated_go_terms", []).
@@ -1034,7 +1084,7 @@ class SCerevisiaeGenome(Genome):
         """
         if (
             self._private_db_path is not None
-            and self._private_db_owner != (os.getpid(), id(self))
+            and self._private_db_owner != (os.getpid(), self._instance_token)
             and not osp.exists(self._private_db_path)
         ):
             self._writable_db()
@@ -1065,6 +1115,10 @@ class SCerevisiaeGenome(Genome):
         # Clear non-pickleable objects
         if "_go_dag" in state:
             state["_go_dag"] = None
+        # An unpickled instance never owns the pickled private path: it reads it,
+        # and copies on its own first write (or first read, once the path is gone).
+        state["_private_db_owner"] = None
+        state["_instance_token"] = secrets.token_hex(8)
 
         # Reconstruct with overwrite=False on the same database file (the private
         # copy when this instance has written): unpickling in a worker must never
@@ -1083,10 +1137,10 @@ class SCerevisiaeGenome(Genome):
         The copy is a sqlite backup of the file this instance currently reads, so
         every later read and write of this instance sees exactly the database it had,
         and the shared ``data.db`` is never written. A pickled or forked copy of the
-        instance (a different pid or object) makes a copy of its own; when the file
+        instance (another pid, or an unpickled instance) makes a copy of its own; when the file
         it reads is gone, it copies the shared file and replays :attr:`_db_writes`.
         """
-        owner = (os.getpid(), id(self))
+        owner = (os.getpid(), self._instance_token)
         if self._private_db_owner != owner:
             assert self._db_connection_manager is not None
             source_path = self._db_connection_manager.db_path

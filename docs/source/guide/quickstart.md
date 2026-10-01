@@ -14,8 +14,10 @@ Neo4j connection.
 from the genomes tier at `$DATA_ROOT/torchcell-genomes/`, verifying each file's sha256
 against the tier's `manifest.json` on every load. There is no fallback location: a
 machine without the tier raises `FileNotFoundError` with the command that seeds it.
-`genome_root` is only a cache directory for the gffutils database (`data.db`), which
-`overwrite=True` (the default) rebuilds and `overwrite=False` reuses. `go_root` holds
+`genome_root` is only a cache directory for the gffutils database (`data.db`) and must
+already exist. With `overwrite=False` (the default) the database is built only when it
+is absent and is otherwise opened after its record is verified; `overwrite=True`
+rebuilds it. `go_root` holds
 `go.obo`, which is downloaded from geneontology.org only when it is missing.
 
 ```python

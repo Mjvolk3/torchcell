@@ -39,6 +39,7 @@ the synthetic tests keep the recorder whatever flags the run carries.
 import ast
 import hashlib
 import importlib
+import os
 import os.path as osp
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from pathlib import Path
@@ -531,3 +532,29 @@ def require_trusted_genome_database(genome_root: str) -> None:
             f"SCerevisiaeGenome(genome_root={genome_root!r}, ...) once outside the "
             "tests, then rerun."
         )
+
+
+#: Markers of tests that read the real ``$DATA_ROOT`` (see ``tests/conftest.py``).
+_REAL_DATA_MARKERS = ("data", "slow")
+
+
+@pytest.fixture(autouse=True)
+def _never_migrate_a_real_genome_root(request: pytest.FixtureRequest) -> None:
+    """Every ``data``/``slow`` test first checks the real genome root, so no test can
+    build or migrate ``$DATA_ROOT/data/sgd/genome/data.db``, whichever module happens
+    to construct the genome first (directly or through a loader). Nothing is checked
+    when the root or the genomes tier is absent: a construction there fails before it
+    could write.
+    """
+    if not any(request.node.get_closest_marker(m) for m in _REAL_DATA_MARKERS):
+        return
+    from torchcell.sequence.genome.registry import SGD_S288C_R64, genomes_root
+
+    data_root = os.environ["DATA_ROOT"]
+    genome_root = osp.join(data_root, "data/sgd/genome")
+    if not (
+        osp.isdir(genome_root)
+        and osp.isdir(osp.join(genomes_root(data_root), SGD_S288C_R64))
+    ):
+        return
+    require_trusted_genome_database(genome_root)

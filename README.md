@@ -30,16 +30,14 @@ Dataset downloads (the tc-data API): <https://mjvolk3.github.io/torchcell/guide/
 
 Built datasets are served as versioned archives (the records LMDB plus its build
 manifest) by the `tc-data` endpoint on the database host, with Swagger at `/docs`. Each
-dataset page shows what the experiment measured, one stored record, the value
-distributions, the supported query, and the download commands.
+page below is one supported query over the knowledge graph and bundles the datasets it
+returns: what the experiments measured, one stored record each, the value distributions,
+the query, and the download commands.
 
-| Dataset | Records | Page |
-| :-- | --: | :-- |
-| Gene essentiality (SGD) | 1,329 | [Gene essentiality and single-mutant fitness](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/essentiality-smf.html) |
-| Single-mutant fitness (Costanzo 2016) | 20,484 | [Gene essentiality and single-mutant fitness](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/essentiality-smf.html) |
-| Amino acids (Mulleder 2016) | 4,678 | [Amino acids and betaxanthin](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/amino-acid-betaxanthin.html) |
-| Amine peaks (Cooper 2010) | 4,313 | [Amino acids and betaxanthin](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/amino-acid-betaxanthin.html) |
-| Betaxanthin (Cachera 2023) | 4,719 | [Amino acids and betaxanthin](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/amino-acid-betaxanthin.html) |
+| Page | Datasets (records) |
+| :-- | :-- |
+| [Gene essentiality and single-mutant fitness](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/essentiality-smf.html) | Gene essentiality, SGD (1,329); single-mutant fitness, Costanzo 2016 (20,484) |
+| [Amino acids and betaxanthin](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/amino-acid-betaxanthin.html) | Amino acids, Mulleder 2016 (4,678); amine peaks, Cooper 2010 (4,313); betaxanthin, Cachera 2023 (4,719) |
 
 With an endpoint URL and a key (see [Downloading datasets](https://mjvolk3.github.io/torchcell/guide/downloads.html)),
 a loader fetches its archive instead of building:

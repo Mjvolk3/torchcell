@@ -28,6 +28,7 @@ import os.path as osp
 import random
 from typing import Any
 
+import numpy as np
 import pytest
 
 from torchcell.data.label_policy import (
@@ -361,6 +362,18 @@ def test_source_key_refuses_a_fractional_costanzo_temperature() -> None:
         match=r"^DmiCostanzo2016Dataset temperature nan is not a whole degree$",
     ):
         source_key("DmiCostanzo2016Dataset", math.nan)
+    # a numpy scalar, as a parquet column yields, formats as the plain float
+    with pytest.raises(
+        ValueError,
+        match=r"^SmfCostanzo2016Dataset temperature 29\.9 is not a whole degree$",
+    ):
+        source_key("SmfCostanzo2016Dataset", np.float64(29.9))
+    # infinity is the same refusal, not int()'s OverflowError
+    with pytest.raises(
+        ValueError,
+        match=r"^DmfCostanzo2016Dataset temperature inf is not a whole degree$",
+    ):
+        source_key("DmfCostanzo2016Dataset", math.inf)
 
 
 def test_standard_error_is_sd_over_root_n_with_each_fallback() -> None:
@@ -569,10 +582,10 @@ def test_strain_matched_doubles_are_ranked_by_source_not_averaged_across_it() ->
     assert (both.n_entries_combined, both.n_entries_available) == (2, 3)
 
 
-def test_a_strain_match_from_no_listed_source_falls_to_the_pairs_own_entries() -> None:
-    """A match whose source the policy does not list is never chosen; the pair's own
-    entries are then selected as if there were no match, here kuzmin2020's 0.81 over
-    the unlisted costanzo2016@26 match and the lower-ranked costanzo2016@30 entry.
+def test_strain_matches_from_no_listed_source_are_refused() -> None:
+    """Strain matches that exist but come only from sources the policy does not list
+    are refused, rather than silently replaced by the pair's other entries (here
+    kuzmin2020's 0.81), which would discard the strain measurement without a trace.
     """
     policy = LabelPolicy(
         name="no-26", fitness_precedence=["kuzmin2020", "costanzo2016@30"]
@@ -582,9 +595,19 @@ def test_a_strain_match_from_no_listed_source_falls_to_the_pairs_own_entries() -
         _fit("costanzo2016@30", 0.93),
         _fit("kuzmin2020", 0.81),
     ]
-    chosen = _pick_double(policy, entries, "YAL015C+YOL043C_tm1501")
+    with pytest.raises(
+        ValueError,
+        match=(
+            r"^strain matches for query strain 'YAL015C\+YOL043C_tm1501' come from "
+            r"\['costanzo2016@26'\], none of which policy 'no-26' lists for fitness: "
+            r"\['kuzmin2020', 'costanzo2016@30'\]$"
+        ),
+    ):
+        policy.select_double(entries, "YAL015C+YOL043C_tm1501")
+    # with no strain match at all, the pair's own entries are selected as before
+    chosen = _pick_double(policy, entries[1:], "YAL015C+YOL043C_tm1501")
     assert (chosen.value, chosen.source) == (0.81, "kuzmin2020")
-    assert chosen.n_entries_available == 3
+    assert chosen.n_entries_available == 2
 
 
 def test_select_double_without_a_query_strain_is_plain_selection() -> None:
@@ -734,6 +757,51 @@ def test_entries_from_records_reads_the_long_key_when_the_short_one_is_none() ->
     ]
     with pytest.raises(ValueError, match=r"^row carries temp=26 and temperature=30$"):
         entries_from_records(conflict)
+
+
+def test_nan_and_empty_string_count_as_absent_under_either_spelling() -> None:
+    """None, NaN and "" are not values, so they never conflict with or hide one.
+
+    ``p=nan`` beside ``p_value=0.01`` reads 0.01; ``temp=""`` beside ``temperature=30``
+    keys costanzo2016@30; ``dataset=""`` reads ``dataset_name``; NaN under both
+    temperature spellings is no temperature, which a Costanzo row refuses.
+    """
+    rows: list[dict[str, Any]] = [
+        {
+            "dataset": "",
+            "dataset_name": "DmfCostanzo2016Dataset",
+            "exp_type": "fitness",
+            "value": 0.9,
+            "temp": "",
+            "temperature": 30,
+            "p": math.nan,
+            "p_value": 0.01,
+        },
+        {
+            "dataset": "SmfKuzmin2018Dataset",
+            "exp_type": "fitness",
+            "value": 0.7,
+            "p": math.nan,
+            "p_value": math.nan,
+        },
+    ]
+    assert entries_from_records(rows) == [
+        LabelEntry(source="costanzo2016@30", label="fitness", value=0.9, p_value=0.01),
+        LabelEntry(source="kuzmin2018", label="fitness", value=0.7),
+    ]
+    both_nan: list[dict[str, Any]] = [
+        {
+            "dataset": "DmfCostanzo2016Dataset",
+            "exp_type": "fitness",
+            "value": 0.9,
+            "temp": math.nan,
+            "temperature": math.nan,
+        }
+    ]
+    with pytest.raises(
+        ValueError, match=r"^DmfCostanzo2016Dataset entry carries no temperature$"
+    ):
+        entries_from_records(both_nan)
 
 
 # ------------------------------------------------------------------ integration

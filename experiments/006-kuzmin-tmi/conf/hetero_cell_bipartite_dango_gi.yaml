@@ -87,8 +87,13 @@ model:
     # graph_aggregation_method: "mean"  # Alternative: simple mean aggregation
 
     graph_aggregation_config:
-      # Normalization after graph aggregation (applies to pairwise_interaction and cross_attention)
-      aggregation_norm: "layer"  # Options: "layer", "batch", null
+      # Normalization after graph aggregation. Historical runs ignored this key and
+      # trained with no aggregation norm: it was "layer" here, but with method "sum"
+      # neither hetero_cell_bipartite_dango_gi (which never read it) nor the _lazy
+      # variant (which builds it only for pairwise_interaction) built one (issue #540).
+      # hetero_cell_bipartite_dango_gi refuses any non-null value; the _lazy
+      # variant's pairwise_interaction accepts "layer" or "batch".
+      aggregation_norm: null
       # num_heads: 4  # Number of attention heads for cross_attention
       dropout: 0.0  # Dropout for aggregation modules (set to 0 as requested)
     

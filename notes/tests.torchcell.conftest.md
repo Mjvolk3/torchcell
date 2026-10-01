@@ -36,3 +36,7 @@ New helper `require_trusted_genome_database(genome_root)`: data-gated tests call
 ## 2026.10.01 - Autouse real-root guard
 
 `_never_migrate_a_real_genome_root` (autouse) calls `require_trusted_genome_database` for every test marked `data` or `slow` when the real genome root and the genomes tier exist, so the first construction in a `--data` run, whichever module or loader makes it, cannot build or migrate the shared `data.db`.
+
+## 2026.10.01 - guard_real_genome_root
+
+The autouse fixture's body is now the plain helper `guard_real_genome_root(node, data_root)`, where `data_root` is a callable invoked only for `data`/`slow` tests, so an unmarked test never resolves `DATA_ROOT`. It is tested hermetically in `test_s288c_synthetic.py`.

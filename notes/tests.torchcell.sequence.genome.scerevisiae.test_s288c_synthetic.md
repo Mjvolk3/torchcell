@@ -37,3 +37,7 @@ Retired the Finding that the `+` 5' window included the first CDS base. Now asse
 ## 2026.10.01 - Second review additions
 
 `private_tmp` is autouse (a fresh temp dir per test from `tmp_path_factory`), so no test writes to or sweeps the real temp dir. New tests: an instance unpickled after its parent was collected owns nothing and rebuilds by replay; sweeps skip files that vanish before `lstat` or `remove`, out-of-range pids and directories, and remove a dead build's `-journal`; other-host names use a dead pid so only the host comparison protects them; the kept `data.db.untrusted` is replaced through a temporary in the root; relations-only damage is kept; both install paths are 0644 under umask 077; records without a version are migrated and records of a newer version refused. Mutation check: 16 mutants, all killed.
+
+## 2026.10.01 - Third review additions
+
+New tests: the record field sets pinned to `RECORD_VERSION`; current-version records with an extra, a missing or an extra `source` field, a non-integer version and a non-object record each refused with the exact `GenomeDatabaseRecordError` message and the file unchanged; `overwrite=True` refusing to downgrade a version 2 record; a write on a shallow copy, deep copy or pickle never changing the original's gene set, cache, log or database; the `(pid, token)` owner and a fresh token per unpickled instance; replay order asserted on the applied calls; the pid range with liveness forced false; and `guard_real_genome_root` for `data`, `slow`, unmarked and autouse.

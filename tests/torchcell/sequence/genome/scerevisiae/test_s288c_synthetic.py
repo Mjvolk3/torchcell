@@ -55,6 +55,7 @@ feature falls inside its region. Expected values, derived from the source:
   post-drop gene set with the same three terms.
 """
 
+import copy
 import gc
 import hashlib
 import json
@@ -80,7 +81,10 @@ from gffutils.exceptions import FeatureNotFoundError
 from sortedcontainers import SortedDict, SortedSet
 
 import torchcell.sequence.genome.scerevisiae.s288c as s288c
-from tests.torchcell.conftest import require_trusted_genome_database
+from tests.torchcell.conftest import (
+    guard_real_genome_root,
+    require_trusted_genome_database,
+)
 from torchcell.sequence import DnaSelectionResult, DnaWindowResult
 from torchcell.sequence.data import GeneSet
 from torchcell.sequence.genome.scerevisiae.s288c import (
@@ -2143,7 +2147,7 @@ def test_record_from_newer_code_is_refused(release: dict[str, str]) -> None:
     assert str(exc.value) == (
         f"{db_path} carries a record of version 2, written by newer code than this "
         "checkout (which reads version 1); refusing to replace it. Update this "
-        "checkout."
+        "checkout, or resubmit the job from an updated checkout."
     )
     assert _sha(db_path) == before
 
@@ -2304,3 +2308,305 @@ def test_installed_database_is_mode_0644_after_migration_and_rebuild(
     finally:
         os.umask(old_umask)
     assert (migrated, rebuilt) == (0o644, 0o644)
+
+
+#: The field sets of the two record models at each RECORD_VERSION. Adding, removing
+#: or renaming a field without bumping RECORD_VERSION fails here.
+RECORD_FIELDS = {
+    1: (
+        {
+            "version",
+            "source",
+            "featuretype_counts",
+            "relations_count",
+            "change_counter",
+        },
+        {
+            "assembly_set",
+            "gff_filename",
+            "gff_sha256",
+            "keep_order",
+            "merge_strategy",
+            "sort_attribute_values",
+        },
+    )
+}
+
+
+def test_record_field_sets_are_pinned_to_the_record_version() -> None:
+    """Any field change to GenomeDatabaseRecord or GenomeDatabaseSource bumps
+    RECORD_VERSION (and adds its field sets here).
+    """
+    current = (
+        set(s288c.GenomeDatabaseRecord.model_fields),
+        set(GenomeDatabaseSource.model_fields),
+    )
+    assert current == RECORD_FIELDS[s288c.RECORD_VERSION], (
+        "GenomeDatabaseRecord/GenomeDatabaseSource fields changed: bump "
+        "s288c.RECORD_VERSION and add the new field sets to RECORD_FIELDS"
+    )
+
+
+@pytest.mark.parametrize(
+    ("edit", "errors"),
+    [
+        (
+            lambda r: r.update(extra_field=1),
+            "1 errors: extra_field: Extra inputs are not permitted",
+        ),
+        (
+            lambda r: r.pop("relations_count"),
+            "1 errors: relations_count: Field required",
+        ),
+        (
+            lambda r: r["source"].update(extra_field=1),
+            "1 errors: source.extra_field: Extra inputs are not permitted",
+        ),
+    ],
+)
+def test_current_version_record_that_does_not_validate_is_refused_by_name(
+    release: dict[str, str], edit: Any, errors: str
+) -> None:
+    """A version-1 record with a field this checkout does not know or lacks (a later
+    edit changed the models without bumping the version) is refused by name with the
+    remedy, never migrated, and the file is left alone.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    _rewrite_record(db_path, edit)
+    before = _sha(db_path)
+    with pytest.raises(s288c.GenomeDatabaseRecordError) as exc:
+        _construct(release)
+    assert str(exc.value) == (
+        f"{db_path} carries a version 1 record that this checkout cannot read "
+        f"({errors}); it was written by code with a different record schema at the "
+        "same version. Update this checkout, or resubmit the job from an updated "
+        "checkout."
+    )
+    assert _sha(db_path) == before
+
+
+@pytest.mark.parametrize(
+    ("bad", "shown"), [("1", "'1'"), (None, "None"), (True, "True")]
+)
+def test_non_integer_record_version_is_refused_by_name(
+    release: dict[str, str], bad: Any, shown: str
+) -> None:
+    """A string, null or boolean ``version`` raises the named record error."""
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    _rewrite_record(db_path, lambda r: r.update(version=bad))
+    with pytest.raises(s288c.GenomeDatabaseRecordError) as exc:
+        _construct(release)
+    assert str(exc.value) == (
+        f"{db_path} carries a record whose version is {shown}, not an integer. "
+        "Update this checkout, or resubmit the job from an updated checkout."
+    )
+
+
+def test_record_that_is_not_a_json_object_is_refused_by_name(
+    release: dict[str, str],
+) -> None:
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    conn = sqlite3.connect(db_path)
+    conn.execute("UPDATE torchcell_genome_db_source SET record = '[1]'")
+    conn.commit()
+    conn.close()
+    with pytest.raises(s288c.GenomeDatabaseRecordError) as exc:
+        _construct(release)
+    assert str(exc.value) == (
+        f"{db_path} carries a record that is not a JSON object (list). Update this "
+        "checkout, or resubmit the job from an updated checkout."
+    )
+
+
+def test_overwrite_true_refuses_to_downgrade_a_newer_record(
+    release: dict[str, str],
+) -> None:
+    """An older checkout's explicit rebuild over a database written by newer code is
+    refused too; the file keeps its bytes.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    _rewrite_record(db_path, lambda r: r.update(version=2))
+    before = _sha(db_path)
+    with pytest.raises(s288c.GenomeDatabaseVersionError) as exc:
+        _construct(release, overwrite=True)
+    assert str(exc.value).startswith(
+        f"{db_path} carries a record of version 2, written by newer code"
+    )
+    assert _sha(db_path) == before
+
+
+@pytest.mark.parametrize(
+    "make_copy",
+    [copy.copy, copy.deepcopy, lambda g: pickle.loads(pickle.dumps(g))],
+    ids=["copy", "deepcopy", "pickle"],
+)
+def test_a_write_on_a_copy_never_changes_the_original(
+    release: dict[str, str], make_copy: Any
+) -> None:
+    """A shallow copy, a deep copy and a pickle round trip each get their own write
+    log and gene-set cache: drop_chrmt on the copy leaves the original's gene set,
+    cache, log and database untouched.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    genome = _construct(release)
+    genome.drop_empty_go()
+    original_log = list(genome._db_writes)
+    original_genes = list(genome.gene_set)
+    clone = make_copy(genome)
+    clone.drop_chrmt()
+    assert list(clone.gene_set) == ["YAL001C", "YAL002W", "YBL002W", "YCL001W"]
+    assert (
+        list(genome.gene_set)
+        == original_genes
+        == ["Q0010", "YAL001C", "YAL002W", "YBL002W", "YCL001W"]
+    )
+    assert genome._db_writes == original_log == [("delete", ["YBL001W"])]
+    assert clone._db_writes == [("delete", ["YBL001W"]), ("delete", ["Q0010"])]
+    assert sorted(f.id for f in genome.db.features_of_type("gene")) == original_genes
+
+
+def test_first_write_owner_is_this_process_and_this_instances_token(
+    release: dict[str, str],
+) -> None:
+    """Ownership is (pid, per-instance token), never id()."""
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    genome = _construct(release)
+    genome.drop_chrmt()
+    assert genome._private_db_owner == (os.getpid(), genome._instance_token)
+    assert genome._instance_token != str(id(genome))
+    assert re.fullmatch(r"[0-9a-f]{16}", genome._instance_token)
+
+
+def test_replay_applies_the_logged_writes_in_order(
+    release: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The replay after the parent's copy is gone applies the log in its recorded
+    order. The three writes happen to commute in end state (each delete carries a
+    fixed id list, and remove_deprecated_go_terms is recomputed on the current rows),
+    so the order is asserted on the applied calls themselves.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    genome = _construct(release)
+    genome.remove_deprecated_go_terms()
+    genome.drop_chrmt()
+    genome.drop_empty_go()
+    log = list(genome._db_writes)
+    # drop_empty_go ran after remove_deprecated_go_terms stripped YAL002W's only
+    # (obsolete) term, so it dropped YAL002W as well as YBL001W.
+    assert log == [
+        ("remove_deprecated_go_terms", []),
+        ("delete", ["Q0010"]),
+        ("delete", ["YAL002W", "YBL001W"]),
+    ]
+    parent_genes = sorted(f.id for f in genome.db.features_of_type("gene"))
+    assert parent_genes == ["YAL001C", "YBL002W", "YCL001W"]
+    blob = pickle.dumps(genome)
+    del genome
+    gc.collect()
+    restored = pickle.loads(blob)
+    applied: list[tuple[str, list[str]]] = []
+    real_apply = SCerevisiaeGenome._apply_write
+
+    def recording_apply(self: SCerevisiaeGenome, op: str, ids: list[str]) -> None:
+        applied.append((op, ids))
+        real_apply(self, op, ids)
+
+    monkeypatch.setattr(SCerevisiaeGenome, "_apply_write", recording_apply)
+    assert sorted(f.id for f in restored.db.features_of_type("gene")) == parent_genes
+    assert applied == log
+
+
+class _Node:
+    """A test item stand-in carrying a set of marker names."""
+
+    def __init__(self, *markers: str) -> None:
+        self.markers = set(markers)
+
+    def get_closest_marker(self, name: str) -> Any:
+        return name if name in self.markers else None
+
+
+def _legacy_data_root(release: dict[str, str], tmp_path: Path) -> Path:
+    """A DATA_ROOT whose genome root holds a record-less data.db, with the tier dir."""
+    data_root = tmp_path / "data_root"
+    genome_root = data_root / "data/sgd/genome"
+    genome_root.mkdir(parents=True)
+    (data_root / "torchcell-genomes" / SCerevisiaeGenome.ASSEMBLY_SET).mkdir(
+        parents=True
+    )
+    gffutils.create_db(
+        release[GFF_NAME],
+        dbfn=str(genome_root / "data.db"),
+        force=True,
+        **s288c.CREATE_DB_KWARGS,
+    )
+    return data_root
+
+
+@pytest.mark.parametrize("marker", ["data", "slow"])
+def test_real_root_guard_refuses_data_and_slow_tests_by_name(
+    release: dict[str, str], tmp_path: Path, marker: str
+) -> None:
+    """A data- or slow-marked test on a root a construction would migrate fails by
+    name, and the database is untouched.
+    """
+    data_root = _legacy_data_root(release, tmp_path)
+    db_path = data_root / "data/sgd/genome/data.db"
+    before = _identity(db_path)
+    with pytest.raises(pytest.fail.Exception) as exc:
+        guard_real_genome_root(_Node(marker), lambda: str(data_root))
+    assert str(exc.value) == (
+        f"refusing to build or migrate the real genome database {db_path} from a "
+        "test: it carries no torchcell_genome_db_source record. Construct "
+        f"SCerevisiaeGenome(genome_root={str(db_path.parent)!r}, ...) once outside "
+        "the tests, then rerun."
+    )
+    assert _identity(db_path) == before
+
+
+def test_real_root_guard_never_reads_data_root_for_unmarked_tests() -> None:
+    """An unmarked test returns before DATA_ROOT is resolved at all."""
+
+    def untouchable() -> str:
+        raise AssertionError("DATA_ROOT was read for an unmarked test")
+
+    guard_real_genome_root(_Node(), untouchable)
+    guard_real_genome_root(_Node("gpu", "network"), untouchable)
+
+
+def test_real_root_guard_is_autouse(request: pytest.FixtureRequest) -> None:
+    """The guard fixture runs for every test, marked or not."""
+    assert "_never_migrate_a_real_genome_root" in request.fixturenames
+
+
+def test_unpickled_instance_gets_a_fresh_token(release: dict[str, str]) -> None:
+    """Every instance has its own ownership token, an unpickled one included."""
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    genome = _construct(release)
+    genome.drop_chrmt()
+    restored = pickle.loads(pickle.dumps(genome))
+    assert restored._private_db_owner is None
+    assert re.fullmatch(r"[0-9a-f]{16}", restored._instance_token)
+    assert restored._instance_token != genome._instance_token
+
+
+def test_sweep_range_check_holds_even_if_every_pid_looked_dead(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Pid 0 (which os.kill treats as the process group) and pids beyond a 32-bit
+    pid_t are never ours, independently of the liveness probe.
+    """
+    d = tmp_path / "sweep"
+    d.mkdir()
+    zero = f"torchcell-genome-{HOST}-0-aaa111.db"
+    huge = f"torchcell-genome-{HOST}-{2**31}-bbb222.db"
+    top = f"torchcell-genome-{HOST}-{2**31 - 1}-ccc333.db"
+    for name in (zero, huge, top):
+        (d / name).write_bytes(b"x")
+    monkeypatch.setattr(s288c, "_pid_alive", lambda pid: False)
+    assert s288c._sweep_dead(str(d), s288c._PRIVATE_COPY) == [top]
+    assert sorted(os.listdir(d)) == sorted([zero, huge])

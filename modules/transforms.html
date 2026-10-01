@@ -91,7 +91,6 @@
 <li class="toctree-l2"><a class="reference internal" href="#hetero-to-dense"><code class="docutils literal notranslate"><span class="pre">hetero_to_dense</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#hetero-to-dense-mask"><code class="docutils literal notranslate"><span class="pre">hetero_to_dense_mask</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#regression-to-classification"><code class="docutils literal notranslate"><span class="pre">regression_to_classification</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#regression-to-classification-coo"><code class="docutils literal notranslate"><span class="pre">regression_to_classification_coo</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="utils.html">torchcell.utils</a></li>
@@ -129,38 +128,33 @@
 <nav class="contents local" id="contents">
 <p class="topic-title">Contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#coo-regression-to-classification" id="id5"><code class="docutils literal notranslate"><span class="pre">coo_regression_to_classification</span></code></a></p>
+<li><p><a class="reference internal" href="#coo-regression-to-classification" id="id4"><code class="docutils literal notranslate"><span class="pre">coo_regression_to_classification</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#classes" id="id6">Classes</a></p></li>
+<li><p><a class="reference internal" href="#classes" id="id5">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#hetero-to-dense" id="id7"><code class="docutils literal notranslate"><span class="pre">hetero_to_dense</span></code></a></p>
+<li><p><a class="reference internal" href="#hetero-to-dense" id="id6"><code class="docutils literal notranslate"><span class="pre">hetero_to_dense</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id1" id="id8">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id1" id="id7">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#hetero-to-dense-mask" id="id9"><code class="docutils literal notranslate"><span class="pre">hetero_to_dense_mask</span></code></a></p>
+<li><p><a class="reference internal" href="#hetero-to-dense-mask" id="id8"><code class="docutils literal notranslate"><span class="pre">hetero_to_dense_mask</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id2" id="id10">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id2" id="id9">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#regression-to-classification" id="id11"><code class="docutils literal notranslate"><span class="pre">regression_to_classification</span></code></a></p>
+<li><p><a class="reference internal" href="#regression-to-classification" id="id10"><code class="docutils literal notranslate"><span class="pre">regression_to_classification</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id3" id="id12">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#regression-to-classification-coo" id="id13"><code class="docutils literal notranslate"><span class="pre">regression_to_classification_coo</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id4" id="id14">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id3" id="id11">Classes</a></p></li>
 </ul>
 </li>
 </ul>
 </nav>
 <section id="coo-regression-to-classification">
-<h2><a class="toc-backref" href="#id5" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">coo_regression_to_classification</span></code></a><a class="headerlink" href="#coo-regression-to-classification" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id4" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">coo_regression_to_classification</span></code></a><a class="headerlink" href="#coo-regression-to-classification" title="Link to this heading"></a></h2>
 <p>Transforms converting COO-format regression labels to classification targets.</p>
 <section id="classes">
-<h3><a class="toc-backref" href="#id6" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.transforms.coo_regression_to_classification.COOLabelNormalizationTransform.html#torchcell.transforms.coo_regression_to_classification.COOLabelNormalizationTransform" title="torchcell.transforms.coo_regression_to_classification.COOLabelNormalizationTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">coo_regression_to_classification.COOLabelNormalizationTransform</span></code></a></p></td>
@@ -189,10 +183,10 @@
 </section>
 </section>
 <section id="hetero-to-dense">
-<h2><a class="toc-backref" href="#id7" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_to_dense</span></code></a><a class="headerlink" href="#hetero-to-dense" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id6" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_to_dense</span></code></a><a class="headerlink" href="#hetero-to-dense" title="Link to this heading"></a></h2>
 <p>PyG transform converting heterogeneous sparse adjacencies to dense matrices.</p>
 <section id="id1">
-<h3><a class="toc-backref" href="#id8" role="doc-backlink">Classes</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id7" role="doc-backlink">Classes</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.transforms.hetero_to_dense.HeteroToDense.html#torchcell.transforms.hetero_to_dense.HeteroToDense" title="torchcell.transforms.hetero_to_dense.HeteroToDense"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_to_dense.HeteroToDense</span></code></a></p></td>
@@ -203,10 +197,10 @@
 </section>
 </section>
 <section id="hetero-to-dense-mask">
-<h2><a class="toc-backref" href="#id9" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_to_dense_mask</span></code></a><a class="headerlink" href="#hetero-to-dense-mask" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id8" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">hetero_to_dense_mask</span></code></a><a class="headerlink" href="#hetero-to-dense-mask" title="Link to this heading"></a></h2>
 <p>Transform converting sparse hetero adjacencies to dense boolean masks.</p>
 <section id="id2">
-<h3><a class="toc-backref" href="#id10" role="doc-backlink">Classes</a><a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">Classes</a><a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.transforms.hetero_to_dense_mask.HeteroToDenseMask.html#torchcell.transforms.hetero_to_dense_mask.HeteroToDenseMask" title="torchcell.transforms.hetero_to_dense_mask.HeteroToDenseMask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hetero_to_dense_mask.HeteroToDenseMask</span></code></a></p></td>
@@ -217,10 +211,10 @@
 </section>
 </section>
 <section id="regression-to-classification">
-<h2><a class="toc-backref" href="#id11" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">regression_to_classification</span></code></a><a class="headerlink" href="#regression-to-classification" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id10" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">regression_to_classification</span></code></a><a class="headerlink" href="#regression-to-classification" title="Link to this heading"></a></h2>
 <p>Transforms that bin regression labels into classification targets and invert them.</p>
 <section id="id3">
-<h3><a class="toc-backref" href="#id12" role="doc-backlink">Classes</a><a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">Classes</a><a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.transforms.regression_to_classification.LabelNormalizationTransform.html#torchcell.transforms.regression_to_classification.LabelNormalizationTransform" title="torchcell.transforms.regression_to_classification.LabelNormalizationTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">regression_to_classification.LabelNormalizationTransform</span></code></a></p></td>
@@ -243,38 +237,6 @@
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.transforms.regression_to_classification.InverseCompose.html#torchcell.transforms.regression_to_classification.InverseCompose" title="torchcell.transforms.regression_to_classification.InverseCompose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">regression_to_classification.InverseCompose</span></code></a></p></td>
 <td><p>A transform that applies the inverse of a sequence of transforms in reverse order.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="regression-to-classification-coo">
-<h2><a class="toc-backref" href="#id13" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">regression_to_classification_coo</span></code></a><a class="headerlink" href="#regression-to-classification-coo" title="Link to this heading"></a></h2>
-<p>COO-format transforms to normalize, bin, and invert regression labels.</p>
-<section id="id4">
-<h3><a class="toc-backref" href="#id14" role="doc-backlink">Classes</a><a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.transforms.regression_to_classification_coo.COOLabelNormalizationTransform.html#torchcell.transforms.regression_to_classification_coo.COOLabelNormalizationTransform" title="torchcell.transforms.regression_to_classification_coo.COOLabelNormalizationTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">regression_to_classification_coo.COOLabelNormalizationTransform</span></code></a></p></td>
-<td><p>Transform for normalizing labels in COO format with different strategies.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.transforms.regression_to_classification_coo.BaseBinningStrategy.html#torchcell.transforms.regression_to_classification_coo.BaseBinningStrategy" title="torchcell.transforms.regression_to_classification_coo.BaseBinningStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">regression_to_classification_coo.BaseBinningStrategy</span></code></a></p></td>
-<td><p>Base class for label binning strategies operating on value arrays.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.transforms.regression_to_classification_coo.EqualWidthStrategy.html#torchcell.transforms.regression_to_classification_coo.EqualWidthStrategy" title="torchcell.transforms.regression_to_classification_coo.EqualWidthStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">regression_to_classification_coo.EqualWidthStrategy</span></code></a></p></td>
-<td><p>Binning strategy with bins of equal width over the value range.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.transforms.regression_to_classification_coo.EqualFrequencyStrategy.html#torchcell.transforms.regression_to_classification_coo.EqualFrequencyStrategy" title="torchcell.transforms.regression_to_classification_coo.EqualFrequencyStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">regression_to_classification_coo.EqualFrequencyStrategy</span></code></a></p></td>
-<td><p>Binning strategy with quantile bins holding roughly equal counts.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.transforms.regression_to_classification_coo.AutoBinStrategy.html#torchcell.transforms.regression_to_classification_coo.AutoBinStrategy" title="torchcell.transforms.regression_to_classification_coo.AutoBinStrategy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">regression_to_classification_coo.AutoBinStrategy</span></code></a></p></td>
-<td><p>Binning strategy choosing bin count from the data standard deviation.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.transforms.regression_to_classification_coo.COOLabelBinningTransform.html#torchcell.transforms.regression_to_classification_coo.COOLabelBinningTransform" title="torchcell.transforms.regression_to_classification_coo.COOLabelBinningTransform"><code class="xref py py-obj docutils literal notranslate"><span class="pre">regression_to_classification_coo.COOLabelBinningTransform</span></code></a></p></td>
-<td><p>Transform for binning labels in COO format.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.transforms.regression_to_classification_coo.COOInverseCompose.html#torchcell.transforms.regression_to_classification_coo.COOInverseCompose" title="torchcell.transforms.regression_to_classification_coo.COOInverseCompose"><code class="xref py py-obj docutils literal notranslate"><span class="pre">regression_to_classification_coo.COOInverseCompose</span></code></a></p></td>
-<td><p>Apply the inverse of a sequence of COO transforms in reverse order.</p></td>
 </tr>
 </tbody>
 </table>

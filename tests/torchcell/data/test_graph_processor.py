@@ -30,11 +30,14 @@ Growth) and no gpr edges, and two metabolites with no rmr edges) and on the conf
 in its test: perturbing gene 1 keeps genes [0, 2] with map {0: 0, 2: 1}, so the physical
 survivor (2, 2) becomes (1, 1) and the regulatory (2, 0) becomes (1, 0); without gpr
 edges every reaction is kept; the DCell union {0, 2} zeroes the state of rows (1, 0) and
-(2, 2). Findings pinned: Subgraph and Lazy read different sources for ``w_growth``; a
-tensor ``subsystem`` never marks Growth; the incidence cache is reused for a different
-cell graph and yields a -1 node index; ``Unperturbed`` fails on a phenotype with no
-statistic name; DCell omits ``perturbation_indices_batch`` when no gene is a node; the
-neighbor processor writes no placeholder phenotype.
+(2, 2).
+
+2026.09.30 (issue #527): the six Phase 14 Findings are fixed and asserted as
+contracts. ``w_growth`` has one source, the stored cell-graph tensor, in all three
+masking processors; a ``subsystem`` attribute (list or tensor) is no longer read; the
+incidence cache is rebuilt when a different cell graph arrives; ``Unperturbed`` skips a
+phenotype with no statistic name; DCell always writes ``perturbation_indices_batch``;
+the neighbor processor writes the [NaN] placeholder.
 """
 
 from types import SimpleNamespace
@@ -392,31 +395,26 @@ def test_reactions_without_gpr_edges_are_all_kept(processor: Any) -> None:
     assert metabolite == {}
 
 
-def test_subgraph_and_lazy_disagree_on_w_growth() -> None:
-    """Finding: the two families read different sources for ``w_growth``.
-
-    The cell graph carries w_growth [0.5, 0, 1] and subsystem (Growth, Other, Growth).
-    Subgraph and Incidence subset the stored tensor (graph_processor.py:367-369,
-    1061-1063) and discard the subsystem-derived vector they compute at 229-246;
-    Lazy returns the subsystem-derived [1, 0, 1] (1725-1727). Pinned until one source
-    is chosen.
+@pytest.mark.parametrize("processor", MASKING_PROCESSORS, ids=["sub", "inc", "lazy"])
+def test_every_masking_processor_returns_the_stored_w_growth(processor: Any) -> None:
+    """Contract (issue #527): ``w_growth`` has ONE source, the tensor ``to_cell_data``
+    stores on the cell graph (1 for a Growth-subsystem reaction), subset to the kept
+    reactions. The graph carries w_growth [0.5, 0, 1] and a contradicting subsystem
+    (Growth, Other, Growth); without gpr edges every reaction is kept, so all three
+    processors return exactly [0.5, 0, 1]. Before the fix Lazy recomputed [1, 0, 1]
+    from the subsystem labels, and on a real ``to_cell_data`` graph (which carries no
+    ``subsystem``) returned all zeros.
     """
     graph = _small_graph(reactions=True)
     graph["reaction"].w_growth = torch.tensor([0.5, 0.0, 1.0])
-    data = [_record(["YAL002W"], 0.9)]
-    for processor in SUBGRAPH_PROCESSORS:
-        out = processor().process(graph, PHENOTYPES, data)
-        assert out["reaction"].w_growth.tolist() == [0.5, 0.0, 1.0]
-    lazy = LazySubgraphRepresentation().process(graph, PHENOTYPES, data)
-    assert lazy["reaction"].w_growth.tolist() == [1.0, 0.0, 1.0]
+    out = processor().process(graph, PHENOTYPES, [_record(["YAL002W"], 0.9)])
+    assert out["reaction"].w_growth.tolist() == [0.5, 0.0, 1.0]
 
 
-def test_a_tensor_subsystem_never_marks_growth() -> None:
-    """Finding: the tensor branch compares a 0-d tensor with the string "Growth".
-
-    ``subsystems[i] == "Growth"`` on a tensor element is False for every element
-    (graph_processor.py:1602-1604), so a tensor-valued ``subsystem`` always yields
-    w_growth zeros, whatever it encodes. Pinned until the branch is removed or decodes.
+def test_a_tensor_subsystem_does_not_touch_the_stored_w_growth() -> None:
+    """Contract (issue #527): a tensor-valued ``subsystem`` is not decoded at all; the
+    stored w_growth [1, 0, 1] is returned exactly. Before the fix the tensor branch
+    compared each 0-d tensor with the string "Growth" and always produced [0, 0, 0].
     """
     graph = _small_graph(reactions=True)
     graph["reaction"].subsystem = torch.tensor([1, 0, 1])
@@ -424,7 +422,7 @@ def test_a_tensor_subsystem_never_marks_growth() -> None:
     out = LazySubgraphRepresentation().process(
         graph, PHENOTYPES, [_record(["YAL002W"], 0.9)]
     )
-    assert out["reaction"].w_growth.tolist() == [0.0, 0.0, 0.0]
+    assert out["reaction"].w_growth.tolist() == [1.0, 0.0, 1.0]
 
 
 @pytest.mark.parametrize("processor", MASKING_PROCESSORS, ids=["sub", "inc", "lazy"])
@@ -482,37 +480,78 @@ def test_incidence_reuses_a_built_cache_across_samples() -> None:
     assert second[REGULATORY].edge_index.tolist() == [[1], [0]]
 
 
-def test_a_cached_processor_reads_a_second_graph_through_the_first_graphs_cache() -> (
-    None
-):
-    """Finding: the incidence cache is never keyed to the cell graph it came from.
-
-    Built on the physical edges (0, 1), (1, 2), (2, 2), gene 0's list is [0]. On a
-    second graph with edges (1, 2), (2, 2), (0, 1), removing gene 0 then drops position
-    0, the edge (1, 2) that does not touch it, and keeps (0, 1), which relabels to
-    (-1, 0): a negative node index. The Lazy mask is [F, T, T] where the fresh answer is
-    [T, T, F]. ``SubgraphRepresentation`` gives [[0, 1], [1, 1]]. The early return at
-    graph_processor.py:664-665 and 1350-1351 keeps the stale cache. Pinned until the
-    cache is keyed or invalidated per graph.
+def _four_gene_graph() -> HeteroData:
+    """Four genes (one more than ``_small_graph``); physical edges (1, 2), (2, 2),
+    (0, 1), (3, 0) at positions 0..3; one regulatory edge (3, 2).
     """
-    second = _small_graph()
-    second[PHYSICAL].edge_index = torch.tensor([[1, 2, 0], [2, 2, 1]])
+    graph = HeteroData()
+    graph["gene"].node_ids = ["YAL001C", "YAL002W", "YAL003W", "YAL004W"]
+    graph["gene"].num_nodes = 4
+    graph["gene"].x = torch.tensor([[1.0], [2.0], [3.0], [4.0]])
+    graph[PHYSICAL].edge_index = torch.tensor([[1, 2, 0, 3], [2, 2, 1, 0]])
+    graph[REGULATORY].edge_index = torch.tensor([[3], [2]])
+    return graph
+
+
+def test_a_cached_processor_rebuilds_its_cache_for_a_different_graph() -> None:
+    """Contract (issue #527): the incidence cache is tied to the gene count and the
+    gene-gene ``edge_index`` tensors it was built from, and is REBUILT when a different
+    graph arrives. Built on ``_small_graph`` (3 genes), then fed the four-gene graph:
+    removing gene 0 drops positions 2 and 3, the kept genes [1, 2, 3] relabel to
+    {1: 0, 2: 1, 3: 2}, so physical (1, 2), (2, 2) become [[0, 1], [1, 1]] with
+    pert_mask [F, F, T, T], and regulatory (3, 2) becomes [[2], [1]]. The Lazy mask is
+    [T, T, F, F]. Before the fix the stale three-gene cache dropped the wrong position
+    and emitted node index -1. Returning to the first graph rebuilds again.
+    """
     data = [_record(["YAL001C"], 0.9)]
-    fresh = SubgraphRepresentation().process(second, PHENOTYPES, data)
+    fresh = SubgraphRepresentation().process(_four_gene_graph(), PHENOTYPES, data)
     assert fresh[PHYSICAL].edge_index.tolist() == [[0, 1], [1, 1]]
 
     incidence = IncidenceSubgraphRepresentation()
     incidence.build_cache(_small_graph())
-    stale = incidence.process(second, PHENOTYPES, data)
-    assert stale[PHYSICAL].edge_index.tolist() == [[1, -1], [1, 0]]
+    second = incidence.process(_four_gene_graph(), PHENOTYPES, data)
+    assert second["gene"].node_ids == ["YAL002W", "YAL003W", "YAL004W"]
+    assert second[PHYSICAL].edge_index.tolist() == [[0, 1], [1, 1]]
+    assert second[PHYSICAL].pert_mask.tolist() == [False, False, True, True]
+    assert second[REGULATORY].edge_index.tolist() == [[2], [1]]
+    assert [len(e) for e in incidence.edge_incidence_cache[PHYSICAL]] == [2, 2, 2, 1]
+    back = incidence.process(_small_graph(), PHENOTYPES, data)
+    assert back[PHYSICAL].edge_index.tolist() == [[0, 1], [1, 1]]
+    assert [len(e) for e in incidence.edge_incidence_cache[PHYSICAL]] == [1, 2, 2]
 
     lazy = LazySubgraphRepresentation()
     lazy.build_cache(_small_graph())
-    assert lazy.process(second, PHENOTYPES, data)[PHYSICAL].mask.tolist() == [
-        False,
-        True,
-        True,
-    ]
+    assert lazy.process(_four_gene_graph(), PHENOTYPES, data)[
+        PHYSICAL
+    ].mask.tolist() == [True, True, False, False]
+
+
+@pytest.mark.parametrize(
+    "processor",
+    [IncidenceSubgraphRepresentation, LazySubgraphRepresentation],
+    ids=["incidence", "lazy"],
+)
+def test_the_cache_is_rebuilt_for_same_size_graphs_with_different_edges(
+    processor: Any,
+) -> None:
+    """A graph with the same gene count and edge count but different edges is a
+    different graph: ``build_cache`` on it reports a fresh build (3 incidence pairs,
+    as in ``test_incidence_reuses_a_built_cache_across_samples``) and gene 0's list
+    becomes [2] (the edge (0, 1) now at position 2). An equal-content copy of the first
+    graph is recognised: ``build_cache`` returns the zero report.
+    """
+    instance = processor()
+    instance.build_cache(_small_graph())
+    assert instance.build_cache(_small_graph()) == {
+        "total_time_ms": 0.0,
+        "num_edge_types": 0,
+        "total_edges": 0,
+    }
+    permuted = _small_graph()
+    permuted[PHYSICAL].edge_index = torch.tensor([[1, 2, 0], [2, 2, 1]])
+    info = instance.build_cache(permuted)
+    assert (info["num_edge_types"], info["total_edges"]) == (2, 3)
+    assert instance.edge_incidence_cache[PHYSICAL][0].tolist() == [2]
 
 
 def _unperturbed_graph() -> HeteroData:
@@ -580,18 +619,24 @@ def test_unperturbed_refuses_a_gene_that_is_not_a_node() -> None:
         Unperturbed().process(_small_graph(), PHENOTYPES, [_record(["YBR001C"], 0.9)])
 
 
-def test_unperturbed_cannot_take_a_phenotype_without_a_statistic() -> None:
-    """Finding: ``Unperturbed`` asks the phenotype for an attribute named None.
-
-    It appends ``label_statistic_name`` unconditionally (graph_processor.py:1926-1929),
-    so VisualScorePhenotype's None reaches ``getattr(phenotype, None, None)``, a
-    TypeError, where every other processor skips a missing statistic name. Pinned until
-    the None is filtered.
+def test_unperturbed_skips_a_phenotype_without_a_statistic() -> None:
+    """Contract (issue #527): ``Unperturbed`` writes the statistic field only when the
+    phenotype class names one. VisualScorePhenotype has none, so the gene store gains
+    only ``visual_score`` (the fitness record lacks it: [NaN]); FitnessPhenotype names
+    ``fitness_se``, so both fields are written. Before the fix the None statistic name
+    reached ``getattr`` and raised TypeError.
     """
-    with pytest.raises(
-        TypeError, match=r"^attribute name must be string, not 'NoneType'$"
-    ):
-        Unperturbed().process(_small_graph(), VISUAL_ONLY, [_record(["YAL002W"], 0.9)])
+    base = {"x", "node_ids", "num_nodes", "perturbed_genes", "perturbation_indices"}
+    visual = Unperturbed().process(
+        _small_graph(), VISUAL_ONLY, [_record(["YAL002W"], 0.9)]
+    )["gene"]
+    assert set(visual.keys()) - base == {"visual_score"}
+    assert torch.isnan(visual.visual_score).tolist() == [True]
+    fitness = Unperturbed().process(
+        _small_graph(), PHENOTYPES, [_record(["YAL002W"], 0.9, 0.05)]
+    )["gene"]
+    assert set(fitness.keys()) - base == {"fitness", "fitness_se"}
+    torch.testing.assert_close(fitness.fitness_se, torch.tensor([0.05]))
 
 
 class _ProfilePhenotype(BaseModel):
@@ -703,17 +748,14 @@ def test_dcell_on_the_conftest_hierarchy_zeroes_each_perturbed_annotation(
     ]
 
 
-def test_dcell_with_a_gene_outside_the_graph_omits_the_batch_vector(
+def test_dcell_with_a_gene_outside_the_graph_writes_an_empty_batch_vector(
     dcell_graph: HeteroData,
 ) -> None:
-    """Finding: a record whose genes are all outside the graph drops a key.
-
-    YBR001C is not a node: perturbation_indices is empty, the state is unchanged, the
-    name is still listed in perturbed_genes, and ``perturbation_indices_batch`` is not
-    written at all (graph_processor.py:2275-2279), the missing-key pattern the
-    Perturbation processor's comment names as a ``Batch.from_data_list`` KeyError.
-    The gene_interaction label is absent, so values are the [NaN] placeholder and no
-    statistic key is written. Pinned until the key is always emitted.
+    """Contract (issue #527): ``perturbation_indices_batch`` is always written so every
+    sample collates uniformly. YBR001C is not a node: perturbation_indices and the batch
+    vector are both the empty long tensor, the state is unchanged, and the name is still
+    listed in perturbed_genes. The gene_interaction label is absent, so values are the
+    [NaN] placeholder and no statistic key is written.
     """
     out = DCellGraphProcessor().process(
         _named(dcell_graph), INTERACTION_ONLY, [_record(["YBR001C"], 0.5)]
@@ -721,7 +763,8 @@ def test_dcell_with_a_gene_outside_the_graph_omits_the_batch_vector(
     gene = out["gene"]
     assert gene.perturbed_genes == ["YBR001C"]
     assert gene.perturbation_indices.tolist() == []
-    assert "perturbation_indices_batch" not in gene
+    batch = gene.perturbation_indices_batch
+    assert (batch.dtype, batch.tolist()) == (torch.long, [])
     assert out["gene_ontology"].go_gene_strata_state[:, 3].tolist() == [1, 1, 1, 1]
     assert torch.isnan(gene.phenotype_values).tolist() == [True]
     assert not any(key.startswith("phenotype_stat") for key in gene.keys())
@@ -790,13 +833,12 @@ def test_neighbor_metabolism_stops_at_each_missing_piece() -> None:
     assert reached[GPR].mask.tolist() == [False, True]
 
 
-def test_neighbor_phenotypes_have_no_placeholder() -> None:
-    """Finding: the neighbor processor writes no phenotype keys when no value exists.
-
-    With a statistic present the COO tensors match the other processors (fitness at
-    type 1 after visual_score, se at statistic type 0). Asking for gene_interaction on
-    fitness records writes nothing at all (graph_processor.py:2662-2672), where the
-    subgraph processors write a [NaN] placeholder. Pinned until the schemas agree.
+def test_neighbor_phenotypes_write_the_shared_placeholder() -> None:
+    """Contract (issue #527): with no label value the neighbor processor writes the
+    placeholder the subgraph processors write: values [NaN], type [0], sample [0], the
+    phenotype_types list, and no statistic keys. With a statistic present the COO
+    tensors match the other processors (fitness at type 1 after visual_score, se at
+    statistic type 0).
     """
     processor = NeighborSubgraphRepresentation()
     with_stat = HeteroData()
@@ -814,8 +856,20 @@ def test_neighbor_phenotypes_have_no_placeholder() -> None:
     assert gene.phenotype_stat_sample_indices.tolist() == [0]
     assert gene.phenotype_stat_types == ["fitness_se"]
 
+    assert gene.phenotype_types == ["visual_score", "fitness"]
+
     empty = HeteroData()
     processor._add_phenotype_data(
         empty, INTERACTION_ONLY, [_record(["YAL002W"], 0.9, 0.05)]
     )
-    assert empty.node_types == []
+    placeholder = empty["gene"]
+    assert set(placeholder.keys()) == {
+        "phenotype_values",
+        "phenotype_type_indices",
+        "phenotype_sample_indices",
+        "phenotype_types",
+    }
+    assert torch.isnan(placeholder.phenotype_values).tolist() == [True]
+    assert placeholder.phenotype_type_indices.tolist() == [0]
+    assert placeholder.phenotype_sample_indices.tolist() == [0]
+    assert placeholder.phenotype_types == ["gene_interaction"]

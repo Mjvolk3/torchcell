@@ -28,6 +28,16 @@ from torch_geometric.typing import EdgeType
 from torch_scatter import scatter_mean
 
 from torchcell.graph.graph import GeneMultiGraph
+from torchcell.models.act import act_register
+
+
+def get_activation(activation: str) -> nn.Module:
+    """Return the ``act_register`` module named ``activation``, refusing unknown names."""
+    if activation not in act_register:
+        raise ValueError(
+            f"Unknown activation: {activation}; expected one of {sorted(act_register)}"
+        )
+    return act_register[activation]
 
 
 class SelfAttentionGraphAggregation(nn.Module):
@@ -568,7 +578,7 @@ class PreProcessor(nn.Module):
     ):
         """Build the stacked linear/norm/activation/dropout MLP."""
         super().__init__()
-        self.act = nn.ReLU() if activation == "relu" else nn.SiLU()
+        self.act = get_activation(activation)
         norm_layer = get_norm_layer(hidden_channels, norm)
         layers: list[nn.Module] = []
         layers.append(nn.Linear(in_channels, hidden_channels))
@@ -609,10 +619,13 @@ class AttentionConvWrapper(nn.Module):
             mlp = conv.nn
             if isinstance(mlp, nn.Sequential):
                 # Find the last Linear layer in the MLP
-                for module in reversed(list(mlp.modules())):
-                    if isinstance(module, nn.Linear):
-                        expected_dim = module.out_features
-                        break
+                linears = [m for m in mlp.modules() if isinstance(m, nn.Linear)]
+                if not linears:
+                    raise ValueError(
+                        "AttentionConvWrapper cannot infer the output width of "
+                        "GINConv: its nn.Sequential contains no nn.Linear"
+                    )
+                expected_dim = linears[-1].out_features
             else:
                 expected_dim = target_dim  # fallback
         elif hasattr(conv, "concat"):
@@ -642,7 +655,7 @@ class AttentionConvWrapper(nn.Module):
         else:
             self.norm = None
 
-        self.act = nn.ReLU() if activation == "relu" else nn.SiLU()
+        self.act = nn.Identity() if activation is None else get_activation(activation)
         self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
     def forward(
@@ -812,8 +825,10 @@ class GeneInteractionDango(nn.Module):
                     hidden_channels=hidden_channels,
                     aggregation_method=self.graph_aggregation_method,
                     aggregation_config={
+                        # Model dropout is the default; the aggregation config's own
+                        # dropout, when given, wins.
+                        "dropout": dropout,
                         **self.graph_aggregation_config,
-                        "dropout": dropout,  # Pass model dropout to aggregation
                     },
                 )
             )
@@ -953,9 +968,9 @@ class GeneInteractionDango(nn.Module):
         # Process reference graph (wildtype)
         z_w = self.forward_single(cell_graph)
 
-        # Check for NaNs after processing wildtype
-        if torch.isnan(z_w).any():
-            raise RuntimeError("NaN detected in wildtype embeddings (z_w)")
+        # Check for NaN or inf after processing wildtype
+        if not torch.isfinite(z_w).all():
+            raise RuntimeError("NaN or inf detected in wildtype embeddings (z_w)")
 
         # Proper global aggregation for wildtype
         z_w_global = self.global_aggregator(
@@ -964,36 +979,36 @@ class GeneInteractionDango(nn.Module):
             dim_size=1,
         )
 
-        # Check for NaNs in global wildtype embeddings
-        if torch.isnan(z_w_global).any():
+        # Check for NaN or inf in global wildtype embeddings
+        if not torch.isfinite(z_w_global).all():
             raise RuntimeError(
-                "NaN detected in global wildtype embeddings (z_w_global)"
+                "NaN or inf detected in global wildtype embeddings (z_w_global)"
             )
 
         # Process perturbed batch if needed
         z_i = self.forward_single(batch)
 
-        # Check for NaNs in perturbed embeddings
-        if torch.isnan(z_i).any():
-            raise RuntimeError("NaN detected in perturbed embeddings (z_i)")
+        # Check for NaN or inf in perturbed embeddings
+        if not torch.isfinite(z_i).all():
+            raise RuntimeError("NaN or inf detected in perturbed embeddings (z_i)")
 
         # Proper global aggregation for perturbed genes
         z_i_global = self.global_aggregator(z_i, index=batch["gene"].batch)
 
-        # Check for NaNs in global perturbed embeddings
-        if torch.isnan(z_i_global).any():
+        # Check for NaN or inf in global perturbed embeddings
+        if not torch.isfinite(z_i_global).all():
             raise RuntimeError(
-                "NaN detected in global perturbed embeddings (z_i_global)"
+                "NaN or inf detected in global perturbed embeddings (z_i_global)"
             )
 
         # Get embeddings of perturbed genes from wildtype
         pert_indices = batch["gene"].perturbation_indices
         pert_gene_embs = z_w[pert_indices]
 
-        # Check for NaNs in perturbed gene embeddings
-        if torch.isnan(pert_gene_embs).any():
+        # Check for NaN or inf in perturbed gene embeddings
+        if not torch.isfinite(pert_gene_embs).all():
             raise RuntimeError(
-                "NaN detected in perturbed gene embeddings (pert_gene_embs)"
+                "NaN or inf detected in perturbed gene embeddings (pert_gene_embs)"
             )
 
         # Calculate perturbation difference for z_p_global
@@ -1001,9 +1016,11 @@ class GeneInteractionDango(nn.Module):
         z_w_exp = z_w_global.expand(batch_size, -1)
         z_p_global = z_w_exp - z_i_global
 
-        # Check for NaNs in perturbation difference
-        if torch.isnan(z_p_global).any():
-            raise RuntimeError("NaN detected in perturbation difference (z_p_global)")
+        # Check for NaN or inf in perturbation difference
+        if not torch.isfinite(z_p_global).all():
+            raise RuntimeError(
+                "NaN or inf detected in perturbation difference (z_p_global)"
+            )
 
         # Determine batch assignment for perturbed genes
         batch_assign: torch.Tensor | None
@@ -1028,16 +1045,16 @@ class GeneInteractionDango(nn.Module):
             pert_gene_embs, batch_assign
         )
 
-        # Check for NaNs in local interaction predictions
-        if torch.isnan(local_interaction).any():
-            raise RuntimeError("NaN detected in local interaction predictions")
+        # Check for NaN or inf in local interaction predictions
+        if not torch.isfinite(local_interaction).all():
+            raise RuntimeError("NaN or inf detected in local interaction predictions")
 
         # Get gene interaction predictions using the global predictor
         global_interaction = self.global_interaction_predictor(z_p_global)
 
-        # Check for NaNs in global interaction predictions
-        if torch.isnan(global_interaction).any():
-            raise RuntimeError("NaN detected in global interaction predictions")
+        # Check for NaN or inf in global interaction predictions
+        if not torch.isfinite(global_interaction).all():
+            raise RuntimeError("NaN or inf detected in global interaction predictions")
 
         # Ensure dimensions match for gating
         if local_interaction.size(0) != batch_size:
@@ -1050,10 +1067,10 @@ class GeneInteractionDango(nn.Module):
                     local_interaction_expanded[batch_idx] = local_interaction[i]
             local_interaction = local_interaction_expanded
 
-            # Check for NaNs after dimension adjustment
-            if torch.isnan(local_interaction).any():
+            # Check for NaN or inf after dimension adjustment
+            if not torch.isfinite(local_interaction).all():
                 raise RuntimeError(
-                    "NaN detected after dimension adjustment of local interaction"
+                    "NaN or inf detected after dimension adjustment of local interaction"
                 )
 
         # Ensure both tensors have the same number of dimensions before concatenation
@@ -1068,29 +1085,29 @@ class GeneInteractionDango(nn.Module):
             # Stack the predictions
             pred_stack = torch.cat([global_interaction, local_interaction], dim=1)
 
-            # Check for NaNs in prediction stack
-            if torch.isnan(pred_stack).any():
-                raise RuntimeError("NaN detected in prediction stack")
+            # Check for NaN or inf in prediction stack
+            if not torch.isfinite(pred_stack).all():
+                raise RuntimeError("NaN or inf detected in prediction stack")
 
             # Use MLP to get logits for gating, then apply softmax
             gate_logits = self.gate_mlp(pred_stack)
 
-            # Check for NaNs in gate logits
-            if torch.isnan(gate_logits).any():
-                raise RuntimeError("NaN detected in gate logits")
+            # Check for NaN or inf in gate logits
+            if not torch.isfinite(gate_logits).all():
+                raise RuntimeError("NaN or inf detected in gate logits")
 
             gate_weights = F.softmax(gate_logits, dim=1)
 
-            # Check for NaNs in gate weights
-            if torch.isnan(gate_weights).any():
-                raise RuntimeError("NaN detected in gate weights after softmax")
+            # Check for NaN or inf in gate weights
+            if not torch.isfinite(gate_weights).all():
+                raise RuntimeError("NaN or inf detected in gate weights after softmax")
 
             # Element-wise product of predictions and weights, then sum
             weighted_preds = pred_stack * gate_weights
 
-            # Check for NaNs in weighted predictions
-            if torch.isnan(weighted_preds).any():
-                raise RuntimeError("NaN detected in weighted predictions")
+            # Check for NaN or inf in weighted predictions
+            if not torch.isfinite(weighted_preds).all():
+                raise RuntimeError("NaN or inf detected in weighted predictions")
 
             gene_interaction = weighted_preds.sum(dim=1, keepdim=True)
 
@@ -1104,16 +1121,18 @@ class GeneInteractionDango(nn.Module):
                 torch.ones(batch_size, 2, device=global_interaction.device) * 0.5
             )
 
-            # Check for NaNs
-            if torch.isnan(gene_interaction).any():
-                raise RuntimeError("NaN detected in concatenated gene interaction")
+            # Check for NaN or inf
+            if not torch.isfinite(gene_interaction).all():
+                raise RuntimeError(
+                    "NaN or inf detected in concatenated gene interaction"
+                )
 
         else:
             raise ValueError(f"Unknown combination method: {self.combination_method}")
 
-        # Final check for NaNs in gene interaction output
-        if torch.isnan(gene_interaction).any():
-            raise RuntimeError("NaN detected in final gene interaction output")
+        # Final check for NaN or inf in gene interaction output
+        if not torch.isfinite(gene_interaction).all():
+            raise RuntimeError("NaN or inf detected in final gene interaction output")
 
         # Return both predictions and representations dictionary
         return (
@@ -1195,6 +1214,7 @@ def main(cfg: DictConfig) -> None:
     """Load config, build the model on a sample batch, and run example diagnostics."""
     import os
 
+    import lightning as L
     import matplotlib.pyplot as plt
     import numpy as np
     from dotenv import load_dotenv
@@ -1210,6 +1230,11 @@ def main(cfg: DictConfig) -> None:
     from torchcell.timestamp import timestamp
 
     load_dotenv()
+    # Seeds torch, numpy and random (as experiments/025-solid-growth does); the model
+    # build is the first consumer, so a config seed fixes the initial weights.
+    seed = int(cfg.get("seed", 42))
+    L.seed_everything(seed, workers=True)
+    print(f"seed: {seed}")
     ASSET_IMAGES_DIR = cast(str, os.getenv("ASSET_IMAGES_DIR"))
     DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
     device = torch.device(
@@ -1458,7 +1483,7 @@ def main(cfg: DictConfig) -> None:
         maes: list[float],
         rmses: list[float],
         learning_rates: list[float],
-        gate_weights_history: list[np.ndarray],
+        gate_weights_history: list[np.ndarray[Any, Any]],
         model: nn.Module,
         cell_graph: HeteroData,
         batch: HeteroData,
@@ -2306,24 +2331,27 @@ def main(cfg: DictConfig) -> None:
                 loss = loss_output[0]
                 loss_dict = loss_output[1]
                 # You can log additional loss components if needed
-                if isinstance(criterion, ICLoss):
-                    loss_name = "ICLoss"
-                elif isinstance(criterion, MleWassSupCR):
-                    loss_name = "MleWassSupCR"
+                # MleWassSupCR names its distribution term "wasserstein"; ICLoss and
+                # MleDistSupCR name it "dist". The history below stores it under the
+                # generic "dist" keys the plots read.
+                if isinstance(criterion, MleWassSupCR):
+                    loss_name, dist_name = "MleWassSupCR", "wasserstein"
+                elif isinstance(criterion, ICLoss):
+                    loss_name, dist_name = "ICLoss", "dist"
                 else:
-                    loss_name = "MleDistSupCR"
+                    loss_name, dist_name = "MleDistSupCR", "dist"
                 print(
-                    f"  {loss_name} components: mse={loss_dict['mse_loss']:.4f}, dist={loss_dict['weighted_dist']:.4f}, supcr={loss_dict['weighted_supcr']:.4f}"
+                    f"  {loss_name} components: mse={loss_dict['mse_loss']:.4f}, {dist_name}={loss_dict[f'weighted_{dist_name}']:.4f}, supcr={loss_dict['weighted_supcr']:.4f}"
                 )
                 # Track loss components
                 # Ensure values are Python scalars, not tensors
                 loss_components_history.append(
                     {
                         "weighted_mse": float(loss_dict["weighted_mse"]),
-                        "weighted_dist": float(loss_dict["weighted_dist"]),
+                        "weighted_dist": float(loss_dict[f"weighted_{dist_name}"]),
                         "weighted_supcr": float(loss_dict["weighted_supcr"]),
                         "mse_loss": float(loss_dict["mse_loss"]),
-                        "dist_loss": float(loss_dict["dist_loss"]),
+                        "dist_loss": float(loss_dict[f"{dist_name}_loss"]),
                         "supcr_loss": float(loss_dict["supcr_loss"]),
                     }
                 )
@@ -2771,8 +2799,12 @@ def main(cfg: DictConfig) -> None:
             plt.title(f"Model Parameters (Total: {param_counts['total']:,})")
             plt.grid(True, axis="y")
 
-            # Loss components evolution (for ICLoss) - final plot
-            if loss_components_history and loss_type == "icloss":
+            # Loss components evolution (every composite loss) - final plot
+            if loss_components_history and loss_type in [
+                "icloss",
+                "mle_dist_supcr",
+                "mle_wass_supcr",
+            ]:
                 plt.figure(figsize=(10, 6))
                 epochs_range = range(1, len(loss_components_history) + 1)
 
@@ -2801,7 +2833,11 @@ def main(cfg: DictConfig) -> None:
                     epochs_range,
                     weighted_dist,
                     "r-",
-                    label="Weighted Dist",
+                    label=(
+                        "Weighted Wasserstein"
+                        if loss_type == "mle_wass_supcr"
+                        else "Weighted Dist"
+                    ),
                     linewidth=2,
                     marker="s",
                     markersize=4,
@@ -2820,7 +2856,7 @@ def main(cfg: DictConfig) -> None:
 
                 plt.xlabel("Epoch", fontsize=12)
                 plt.ylabel("Loss Component Value", fontsize=12)
-                plt.title("ICLoss Weighted Components Evolution", fontsize=14)
+                plt.title(f"{loss_label} Weighted Components Evolution", fontsize=14)
                 plt.grid(True, alpha=0.3)
                 plt.legend(fontsize=11)
                 plt.yscale("log")

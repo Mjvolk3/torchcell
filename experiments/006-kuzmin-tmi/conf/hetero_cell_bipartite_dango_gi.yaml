@@ -3,6 +3,9 @@ defaults:
   - default
   - _self_
 
+# Seeds torch, numpy and random in main (L.seed_everything).
+seed: 42
+
 wandb:
   # FLAG
   project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi_test

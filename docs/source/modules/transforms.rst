@@ -82,23 +82,3 @@ Classes
    regression_to_classification.LabelBinningTransform
    regression_to_classification.InverseCompose
 
-``regression_to_classification_coo``
-------------------------------------
-
-COO-format transforms to normalize, bin, and invert regression labels.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   regression_to_classification_coo.COOLabelNormalizationTransform
-   regression_to_classification_coo.BaseBinningStrategy
-   regression_to_classification_coo.EqualWidthStrategy
-   regression_to_classification_coo.EqualFrequencyStrategy
-   regression_to_classification_coo.AutoBinStrategy
-   regression_to_classification_coo.COOLabelBinningTransform
-   regression_to_classification_coo.COOInverseCompose

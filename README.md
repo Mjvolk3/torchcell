@@ -36,8 +36,8 @@ the query, and the download commands.
 
 | Page | Datasets (records) |
 | :-- | :-- |
-| [Gene essentiality and single-mutant fitness](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/essentiality-smf.html) | Gene essentiality, SGD (1,329); single-mutant fitness, Costanzo 2016 (20,484) |
-| [Amino acids and betaxanthin](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/amino-acid-betaxanthin.html) | Amino acids, Mulleder 2016 (4,678); amine peaks, Cooper 2010 (4,313); betaxanthin, Cachera 2023 (4,719) |
+| [Gene essentiality and single-mutant fitness](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/essentiality-smf.html) | Gene essentiality, SGD (1,329)<br>Single-mutant fitness, Costanzo 2016 (20,484) |
+| [Amino acids and betaxanthin](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/amino-acid-betaxanthin.html) | Amino acids, Mulleder 2016 (4,678)<br>Amine peaks, Cooper 2010 (4,313)<br>Betaxanthin, Cachera 2023 (4,719) |
 
 With an endpoint URL and a key (see [Downloading datasets](https://mjvolk3.github.io/torchcell/guide/downloads.html)),
 a loader fetches its archive instead of building. Export the two variables in the shell:

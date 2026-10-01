@@ -97,7 +97,8 @@ class FactorizedConfig(BaseModel):
 
     name: str
     gene_encoder: Literal["table", "cgt"] = "table"
-    head: Literal["bilinear", "mlp"] = "bilinear"
+    # operator: the compound acts on every gene of the strain's perturbed state (cgt only)
+    head: Literal["bilinear", "mlp", "operator"] = "bilinear"
     embeddings: list[str] = ["fcfp4_count"]
     pca_dim: int | None = 64
     dim: int = 64
@@ -234,7 +235,11 @@ class Factorized(nn.Module):
         return self.project(torch.cat(parts, -1).float()), out["graph_reg_loss"]
 
     def forward(
-        self, z: torch.Tensor, gene_idx: torch.Tensor, x: torch.Tensor
+        self,
+        z: torch.Tensor,
+        gene_idx: torch.Tensor,
+        x: torch.Tensor,
+        strain: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """[B, C] predictions for gene vectors ``z`` [B, dim] and compounds ``x``."""
         u = self.compound(x)  # [C, dim]
@@ -245,6 +250,106 @@ class Factorized(nn.Module):
         zz = z[:, None, :].expand(b, c, -1)
         uu = u[None, :, :].expand(b, c, -1)
         return base + self.mlp(torch.cat([zz, uu, zz * uu], -1)).squeeze(-1)
+
+
+class EnvironmentOperator(nn.Module):
+    """The compound as a Type I operator on the strain's perturbed cell state.
+
+    The transformer runs once on the wildtype graph and the deletion operator gives the
+    strain's state ``H`` [B, N, d]. A compound token ``e_c`` from the fingerprint then
+    acts on every gene: per gene and per head a sigmoid gate ``a`` says how much of the
+    compound's value ``v_c`` that gene takes, and the state becomes
+    ``H + beta * a * v_c`` with ``beta`` a ReZero scalar at zero, so the model starts as
+    the identity on the strain state. The readout is invariant over the genome: the
+    deleted genes' rows summed, the mean over all genes, and the token itself, through an
+    MLP, beside the gene bias and compound offset. Both readouts are linear in the
+    update, so the pooled term is ``mean_i a`` times ``v_c`` and the ``B x C x N x d``
+    state is never materialized; only the gates ``[B, C, N, heads]`` are.
+    """
+
+    def __init__(
+        self, cfg: FactorizedConfig, n_genes: int, feature_dim: int, encoder
+    ) -> None:
+        """``encoder`` is the cell graph transformer; its width is the operator's."""
+        super().__init__()
+        self.cfg = cfg
+        self.encoder = encoder
+        d, heads = cfg.cgt_dim, cfg.cgt_heads
+        self.gene_bias = nn.Embedding(n_genes, 1)
+        nn.init.zeros_(self.gene_bias.weight)
+        self.compound = nn.Sequential(
+            nn.Dropout(cfg.dropout),
+            nn.Linear(feature_dim, cfg.hidden),
+            nn.GELU(),
+            nn.Dropout(cfg.dropout),
+            nn.Linear(cfg.hidden, d),
+        )
+        self.offset = nn.Linear(d, 1)
+        self.q = nn.Linear(d, d)
+        self.k = nn.Linear(d, d)
+        self.v = nn.Linear(d, d)
+        self.gate_bias = nn.Parameter(torch.zeros(heads))
+        self.beta = nn.Parameter(torch.zeros(()))
+        self.norm = nn.LayerNorm(3 * d)
+        self.head = nn.Sequential(
+            nn.Linear(3 * d, cfg.hidden),
+            nn.GELU(),
+            nn.Dropout(cfg.dropout),
+            nn.Linear(cfg.hidden, 1),
+        )
+
+    def genes(
+        self, gene_idx: torch.Tensor, strain: torch.Tensor | None, cell_graph=None
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """[B, N, d] strain states after the deletion operator, and the graph penalty."""
+        assert strain is not None
+        size, order = strain.shape
+        batch = {
+            "gene": SimpleNamespace(
+                perturbation_indices=strain.reshape(-1),
+                perturbation_indices_batch=torch.arange(
+                    size, device=strain.device
+                ).repeat_interleave(order),
+            )
+        }
+        _, out = self.encoder(cell_graph, batch)
+        return out["H_genes_pert"], out["graph_reg_loss"]
+
+    def forward(
+        self,
+        z: torch.Tensor,
+        gene_idx: torch.Tensor,
+        x: torch.Tensor,
+        strain: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """[B, C] predictions from strain states ``z`` [B, N, d] under compounds ``x``."""
+        assert strain is not None
+        b, n, d = z.shape
+        heads = self.cfg.cgt_heads
+        dh = d // heads
+        e = self.compound(x)  # [C, d]
+        c = e.shape[0]
+        q = self.q(z).view(b, n, heads, dh)
+        k = self.k(e).view(c, heads, dh)
+        v = self.v(e).view(c, heads, dh)
+        # how much of the compound each gene takes, per head
+        a = torch.sigmoid(
+            torch.einsum("bnhd,chd->bcnh", q, k) / dh**0.5 + self.gate_bias
+        )  # [B, C, N, heads]
+        s = strain.shape[1]
+        rows = torch.arange(b, device=z.device)[:, None]
+        h_del = z[rows, strain].sum(1)  # [B, d]
+        a_del = torch.gather(
+            a, 2, strain[:, None, :, None].expand(b, c, s, heads)
+        )  # [B, C, S, heads]
+        upd_del = (a_del.sum(2).unsqueeze(-1) * v[None]).reshape(b, c, d)
+        upd_pool = (a.mean(2).unsqueeze(-1) * v[None]).reshape(b, c, d)
+        z_del = h_del[:, None] + self.beta * upd_del  # [B, C, d]
+        z_pool = z.mean(1)[:, None] + self.beta * upd_pool  # [B, C, d]
+        ee = e[None].expand(b, c, d)
+        base = self.gene_bias(gene_idx) + self.offset(e).T  # [B, C]
+        state = self.norm(torch.cat([z_del, z_pool, ee], -1).float())
+        return base + self.head(state).squeeze(-1)
 
 
 # ---- training -------------------------------------------------------------- #
@@ -297,7 +402,7 @@ def build_encoder(cfg: FactorizedConfig, cell_graph):
 
 @torch.no_grad()
 def predict_all(
-    model: Factorized, ctx: Context, x: torch.Tensor, device: torch.device, batch: int
+    model: nn.Module, ctx: Context, x: torch.Tensor, device: torch.device, batch: int
 ) -> NDArray[np.float64]:
     model.eval()
     n = ctx.y.shape[0]
@@ -307,7 +412,7 @@ def predict_all(
         strain = None if ctx.strain is None else ctx.strain[idx.cpu()].to(device)
         with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
             z, _ = model.genes(idx, strain, ctx.cell_graph)
-            pred = model(z.float(), idx, x)
+            pred = model(z.float(), idx, x, strain)
         out.append(pred.float().cpu().numpy())
     return np.concatenate(out)
 
@@ -340,7 +445,13 @@ def train_seed(
     encoder = None
     if cfg.gene_encoder == "cgt":
         encoder = build_encoder(cfg, ctx.cell_graph)
-    model = Factorized(cfg, ctx.y.shape[0], x.shape[1], encoder).to(device)
+    model: nn.Module
+    if cfg.head == "operator":
+        assert encoder is not None, "the operator head needs the cgt gene encoder"
+        model = EnvironmentOperator(cfg, ctx.y.shape[0], x.shape[1], encoder)
+    else:
+        model = Factorized(cfg, ctx.y.shape[0], x.shape[1], encoder)
+    model = model.to(device)
     groups = [
         {
             "params": [
@@ -389,7 +500,7 @@ def train_seed(
             xin = xin + cfg.input_noise * torch.randn_like(xin)
         with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
             z, penalty = model.genes(idx, strain, ctx.cell_graph)
-            pred = model(z.float(), idx, xin).float()
+            pred = model(z.float(), idx, xin, strain).float()
         t, m, w = target[idx], mask[idx], weight[idx]
         if cfg.huber is None:
             err = (pred - t) ** 2

@@ -114,6 +114,15 @@ def _carotenogenic_cassette() -> list[GeneAdditionPerturbation]:
     ]
 
 
+class MixedStrainScoresError(ValueError):
+    """An ORF with numeric color scores on more than one background strain.
+
+    One record carries one reference genome, so scores from two backgrounds cannot be
+    aggregated into it. The pinned SI has none: its one ORF listed on two strains
+    (YML086C) has a numeric score only on BY4730 (the BY4741 row reads ``pet``).
+    """
+
+
 # Valid S. cerevisiae systematic ORF name (optional trailing -A/-B for sub-features).
 _SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
 
@@ -248,12 +257,14 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
                     "orf": orf,
                     "strain": strain,
                     "numeric_scores": [],
+                    "numeric_strains": set(),
                     "texts": set(),
                     "flags": {k: False for k in _FLAG_PATTERNS},
                 },
             )
             if num is not None:
                 rec["numeric_scores"].append(num)
+                rec["numeric_strains"].add(strain)
             if text is not None:
                 rec["texts"].add(text)
             for k, v in flags.items():
@@ -262,11 +273,19 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
         rows: list[dict[str, Any]] = []
         for orf, rec in records.items():
             scores = rec["numeric_scores"]
+            numeric_strains = sorted(rec["numeric_strains"])
+            if len(numeric_strains) > 1:
+                raise MixedStrainScoresError(
+                    f"Ozaydin: {orf} has numeric color scores on strains "
+                    f"{numeric_strains}; one record carries one reference genome"
+                )
             meta = top200_meta.get(orf, {})
             rows.append(
                 {
                     "orf": orf,
-                    "strain": rec["strain"],
+                    # The strain of the scored rows; an ORF with no numeric score keeps
+                    # its first row's strain and is excluded from the records anyway.
+                    "strain": numeric_strains[0] if numeric_strains else rec["strain"],
                     "visual_score": max(scores) if scores else None,
                     "visual_score_min": min(scores) if len(scores) > 1 else None,
                     "n_replicates": len(scores),

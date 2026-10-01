@@ -29,10 +29,13 @@ per amino acid; every record's reference is that table, n = 1 per amino acid, SE
 - the medium as a Finding: the record and its reference carry ``SM_AGAR`` (solid), not
   the liquid ``SM`` subculture the amino acids are extracted from (issue #143);
 - the build ledger: four YBR001C rows, one blank ORF and one ``WT`` row log exactly
-  "2 usable ORFs, 2 non-systematic ORF names skipped, 1 ORF collisions deduped" although
-  three rows were dropped as collisions (Finding: the ledger counts ORFs, not rows);
-- a blank concentration cell is stored as NaN in a served record (Finding) and a text
-  cell (``n.d.``) aborts the build with the ``float()`` message;
+  "2 usable ORFs, 2 non-systematic ORF names skipped, 3 repeated-ORF rows dropped (1
+  ORFs kept at their first row)" (2026.10.01, issue #528: it used to count the one ORF,
+  not the three rows);
+- a blank concentration cell and a text cell (``n.d.``) each raise
+  ``InvalidConcentrationError`` with an exact message (2026.10.01, issue #528: the blank
+  used to be served as NaN and the text to stop in Python's ``float()``). The pinned
+  Table S3 has no repeated ORF, blank or text cell, so no stored record changes;
 - ``download()`` on a faked ``urlopen``: the request (URL, User-Agent, timeout 300), the
   sha256 refusal with its exact message and no file written, and the write on a match;
 - ``process()`` verifying the raw workbook against ``DATA_SHA256`` before reading a
@@ -47,7 +50,6 @@ import hashlib
 import io
 import json
 import logging
-import math
 import re
 import urllib.request
 from pathlib import Path
@@ -352,7 +354,7 @@ def test_medium_is_sm_agar_not_the_liquid_subculture(
     assert dataset[0]["experiment"]["environment"]["temperature"]["value"] == 30.0
 
 
-def test_ledger_counts_collided_orfs_not_dropped_rows(
+def test_ledger_counts_dropped_rows_and_their_orfs(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Six rows: YBR001C four times (2.0, 3.0, 4.0, 5.0), a blank ORF cell (read as NaN,
@@ -360,9 +362,8 @@ def test_ledger_counts_collided_orfs_not_dropped_rows(
     every key) and YAL001C, so two records. The ledger line counts the blank and ``WT``
     as two non-systematic names.
 
-    Finding: the collision count is the number of distinct ORFs that collided (1), not
-    the three rows discarded, so the ledger under-reports what the build dropped (source
-    lines 182-193). Pinned until the ledger counts discarded rows.
+    Contract (issue #528): the ledger counts the three discarded YBR001C rows and the
+    one ORF they belong to (it used to report only "1 ORF collisions deduped").
     """
     rows: list[list[Any]] = [
         ["YBR001C", *([2.0] * 19)],
@@ -382,38 +383,39 @@ def test_ledger_counts_collided_orfs_not_dropped_rows(
     messages = [r.getMessage() for r in caplog.records if r.name == m.__name__]
     assert messages == [
         "Mulleder: 2 usable ORFs, 2 non-systematic ORF names skipped, "
-        "1 ORF collisions deduped",
+        "3 repeated-ORF rows dropped (1 ORFs kept at their first row)",
         "Wrote 2 Mulleder amino-acid experiments to LMDB",
     ]
 
 
-def test_blank_concentration_is_served_as_nan(tmp_path: Path) -> None:
-    """Finding: a blank concentration cell is read as NaN and ``float(nan)`` passes, so
-    the record serves ``metabolite_level["tyrosine"] = nan`` with ``n_replicates`` 1 for
-    it; ``MetabolitePhenotype`` does not reject a non-finite level. The other 18 keys
-    keep their values. Pinned until the loader refuses or omits an unmeasured key.
+def test_blank_concentration_refuses_the_build_by_name(tmp_path: Path) -> None:
+    """Contract (issue #528): a blank tyrosine cell raises
+    ``InvalidConcentrationError`` naming the ORF, the amino acid and the cell, and
+    nothing is written to LMDB (it used to be served as ``nan`` with ``n_replicates``
+    1).
     """
     rows: list[list[Any]] = [["YAL001C", *_LEVELS_YAL001C[:-1], None]]
     root = _root(tmp_path, conc_rows=rows)
-    dataset = m.AminoAcidMulleder2016Dataset(root=str(root))
-    level = dataset[0]["experiment"]["phenotype"]["metabolite_level"]
-    assert math.isnan(level["tyrosine"])
-    assert {aa: v for aa, v in level.items() if aa != "tyrosine"} == dict(
-        zip(_AA[:-1], _LEVELS_YAL001C[:-1], strict=True)
+    with pytest.raises(m.InvalidConcentrationError) as excinfo:
+        m.AminoAcidMulleder2016Dataset(root=str(root))
+    assert str(excinfo.value) == (
+        "Mulleder Table S3: YAL001C tyrosine concentration nan is not a finite number"
     )
-    assert dataset[0]["experiment"]["phenotype"]["n_replicates"]["tyrosine"] == 1
+    assert not (root / "processed" / "lmdb").exists()
 
 
-def test_text_concentration_aborts_the_build(tmp_path: Path) -> None:
-    """A non-numeric cell reaches ``float(row[aa])`` (source line 186) and the build
-    stops with Python's own message, naming the cell text; nothing is written to LMDB.
+def test_text_concentration_refuses_the_build_by_name(tmp_path: Path) -> None:
+    """Contract (issue #528): a non-numeric cell raises ``InvalidConcentrationError``
+    with the same message shape as a blank one, quoting the cell text (it used to stop
+    with Python's ``could not convert string to float``); nothing is written to LMDB.
     """
     rows: list[list[Any]] = [["YAL001C", "n.d.", *_LEVELS_YAL001C[1:]]]
     root = _root(tmp_path, conc_rows=rows)
-    with pytest.raises(
-        ValueError, match=re.escape("could not convert string to float: 'n.d.'")
-    ):
+    with pytest.raises(m.InvalidConcentrationError) as excinfo:
         m.AminoAcidMulleder2016Dataset(root=str(root))
+    assert str(excinfo.value) == (
+        "Mulleder Table S3: YAL001C alanine concentration 'n.d.' is not a finite number"
+    )
     assert not (root / "processed" / "lmdb").exists()
 
 

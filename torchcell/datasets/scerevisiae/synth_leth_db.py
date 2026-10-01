@@ -40,6 +40,31 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
+class BlankPubmedIdError(ValueError):
+    """A SynLethDB row with a blank ``r.pubmed_id``.
+
+    Every record cites its PMID, so a blank one is refused by name. The pinned
+    ``Yeast_SL.csv`` (14,000 rows) and ``Yeast_SR.csv`` (6,948 rows) have none.
+    """
+
+
+def _read_synlethdb_csv(path: str) -> pd.DataFrame:
+    """Read a SynLethDB CSV with ``r.pubmed_id`` as text, refusing a blank PMID.
+
+    Reading the PMID as text keeps it verbatim (``"18676811"``, or
+    ``"24125552;19918932"`` for a row citing two papers); read as a number, one blank
+    cell would turn the whole column float and every PMID into ``"111.0"``.
+    """
+    df = pd.read_csv(path, dtype={"r.pubmed_id": str})
+    blank = df["r.pubmed_id"].isna()
+    if blank.any():
+        raise BlankPubmedIdError(
+            f"{path}: {int(blank.sum())} row(s) with a blank r.pubmed_id "
+            f"(first at row {int(blank.to_numpy().nonzero()[0][0])})"
+        )
+    return df
+
+
 @register_dataset
 class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
     """Yeast synthetic lethality gene-pair experiments from SynLethDB."""
@@ -147,7 +172,7 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
         log.info("Processing Synthetic Lethality Yeast Data...")
 
         raw_data_path = os.path.join(self.raw_dir, self.raw_file_names[0])
-        df = pd.read_csv(raw_data_path)
+        df = _read_synlethdb_csv(raw_data_path)
         df = self.preprocess_raw(df)
 
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -342,7 +367,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
         log.info("Processing Synthetic Rescue Yeast Data...")
 
         raw_data_path = os.path.join(self.raw_dir, self.raw_file_names[0])
-        df = pd.read_csv(raw_data_path)
+        df = _read_synlethdb_csv(raw_data_path)
         df = self.preprocess_raw(df)
 
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -434,7 +459,11 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
 
 
 def main() -> None:
-    """Build and inspect both SynLethDB datasets from a local genome."""
+    """Build and inspect both SynLethDB datasets under ``$DATA_ROOT``.
+
+    The roots are the dev-tree directories the knowledge-graph configs read
+    (``torchcell/knowledge_graphs/conf/synth_*_yeast_synth_leth_db.yaml``).
+    """
     import os
 
     from dotenv import load_dotenv
@@ -448,10 +477,16 @@ def main() -> None:
         overwrite=False,
     )
 
-    lethality_dataset = SynthLethalityYeastSynthLethDbDataset(genome=genome)
+    lethality_dataset = SynthLethalityYeastSynthLethDbDataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/synth_lethality_yeast_synth_leth_db"),
+        genome=genome,
+    )
     print(lethality_dataset)
 
-    rescue_dataset = SynthRescueYeastSynthLethDbDataset(genome=genome)
+    rescue_dataset = SynthRescueYeastSynthLethDbDataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/synth_rescue_yeast_synth_leth_db"),
+        genome=genome,
+    )
     print(rescue_dataset)
 
 

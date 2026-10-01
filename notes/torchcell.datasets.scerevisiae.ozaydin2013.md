@@ -175,3 +175,11 @@ and failed schema round-trip; rebuilt in place under `$DATA_ROOT` as part of thi
 Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: no; refused deposit leaving a directory: n/a.
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `_SI_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.01 - Strain of the scored rows, mixed-strain scores refused (issue #528)
+
+- Before: `records.setdefault` kept the first row's strain, so an ORF scored on two backgrounds was labeled with whichever row came first.
+- Now: the record's strain is the strain its numeric scores were taken on; numeric scores on two strains raise `MixedStrainScoresError` ("Ozaydin: <ORF> has numeric color scores on strains [...]; one record carries one reference genome"). An ORF with no numeric score keeps its first row's strain and is excluded anyway.
+- Record-neutral on the pinned SI: one ORF is listed on two strains (YML086C: BY4730 scored 1, BY4741 reads `pet`), its numeric score is BY4730's and BY4730 is its first row; the whole per-ORF aggregate of 4,975 ORFs is identical before and after (`ozaydin_agg_snapshot.py` in the fix scratchpad).
+- Left open (record-changing): equal replicate scores give `visual_score_min` equal to the score on 34 records (the schema documents None only for a single replicate, so this is consistent with it); the free-text `Media(name="SC-URA")` stub and the cassette's `plasmid_contig_id`, `locus_tag` and `integration_locus` touch all 4,474 records.
+- Tests: `test_numeric_scores_on_two_strains_refuse_the_build_by_name`, `test_the_strain_is_the_one_the_score_was_taken_on`, `test_replicates_on_one_strain_aggregate_and_or_the_flags`.

@@ -111,3 +111,10 @@ A read-only Fable 5.1 agent graded twenty recorded claims against the mirror, Me
 Issue #528; the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes (#528, present file skipped); PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: no; refused deposit leaving a directory: n/a.
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `MATRIX_SHA256`, `METADATA_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.01 - KO protein without a WT measurement refused by name (issue #528)
+
+- Before: a protein a KO sample measured but no HIS3 sample did was absent from the reference and failed `create_experiment` with a bare `KeyError('<ORF>')`.
+- Now: `process` raises `MissingWildTypeReferenceError` naming the KO sample, its ORF, the count and the first proteins, before any LMDB is written.
+- Record-neutral: 0 of 1,850 proteins in the pinned matrix are measured in a KO sample (4,699 columns) and in no WT sample (388 columns).
+- Test: `test_a_ko_protein_no_wt_sample_measured_is_refused_by_name`.

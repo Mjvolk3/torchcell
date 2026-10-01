@@ -114,6 +114,15 @@ _ORF_RE = re.compile(r"(?:Y[A-P][LR]\d{3}[WC](?:-[A-Z])?|Q\d{4})")
 _UNIPROT_RE = re.compile(r"UniProtKB:([A-Z0-9]+)")
 
 
+class MissingWildTypeReferenceError(ValueError):
+    """A KO sample measured a protein that no HIS3 (WT) sample measured.
+
+    The reference is the WT profile restricted to the proteins a strain measured, so
+    such a protein has no reference value. The pinned matrix has none (0 of 1,850
+    proteins are measured in a KO sample and in no WT sample).
+    """
+
+
 def build_uniprot_to_orf_map(data_root: str | None = None) -> dict[str, str]:
     """Map UniProt accession -> systematic ORF from the SGD S288C GFF.
 
@@ -267,6 +276,13 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
                 continue
             series = matrix[filename].dropna()  # measured proteins only (noimpute)
             abundance = {str(o): float(v) for o, v in series.items()}
+            no_wt = sorted(set(abundance) - set(self._reference["abundance"]))
+            if no_wt:
+                raise MissingWildTypeReferenceError(
+                    f"Messner: KO sample {filename} ({deletion_orf}) measured "
+                    f"{len(no_wt)} protein(s) no WT sample measured (e.g. {no_wt[:5]}); "
+                    "the reference has no value for them"
+                )
             rows.append(
                 {
                     "filename": filename,

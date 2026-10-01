@@ -155,7 +155,13 @@
 <span class="sd">2. prefer ``wildtype`` over mutant -- a mutant's k_cat describes a protein we do not have;</span>
 <span class="sd">3. minimize ``|T - 30 C|``; entries with no recorded temperature sort last, never first;</span>
 <span class="sd">4. break remaining ties on the MEDIAN value, which is deterministic and avoids letting an</span>
-<span class="sd">   arbitrary row order decide.</span>
+<span class="sd">   arbitrary row order decide. With an even number of tied rows this is the LOWER median</span>
+<span class="sd">   (``statistics.median_low``), so the value is always one measured row; rows sharing</span>
+<span class="sd">   that value are ordered lexicographically on their ``model_dump_json()`` TEXT (so</span>
+<span class="sd">   ``"ph":10.0`` sorts before ``"ph":9.0``), never by input position. That order is</span>
+<span class="sd">   deterministic by construction, not scientifically meaningful. The lower median is</span>
+<span class="sd">   not neutral: for a ``k_cat`` it tightens a capacity bound (conservative), but for a</span>
+<span class="sd">   ``K_M`` a lower value means MORE saturation at a given substrate concentration.</span>
 
 <span class="sd">Every resolved value keeps ``n_candidates`` and ``selection_rule`` so a reviewer can see</span>
 <span class="sd">how much choice was involved, and the PubMed id of the row it came from.</span>
@@ -454,11 +460,11 @@
     <span class="p">)</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">with_value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">values</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">value_for</span><span class="p">(</span><span class="n">kind</span><span class="p">))</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">with_value</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
-        <span class="n">median</span> <span class="o">=</span> <span class="n">statistics</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">value_for</span><span class="p">(</span><span class="n">kind</span><span class="p">))</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">with_value</span><span class="p">]</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="n">median</span> <span class="o">=</span> <span class="n">statistics</span><span class="o">.</span><span class="n">median_low</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
         <span class="n">chosen</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
-            <span class="n">with_value</span><span class="p">,</span>
-            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">value_for</span><span class="p">(</span><span class="n">kind</span><span class="p">))</span> <span class="o">-</span> <span class="n">median</span><span class="p">),</span>  <span class="c1"># type: ignore[arg-type]</span>
+            <span class="p">(</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">with_value</span> <span class="k">if</span> <span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">value_for</span><span class="p">(</span><span class="n">kind</span><span class="p">))</span> <span class="o">==</span> <span class="n">median</span><span class="p">),</span>  <span class="c1"># type: ignore[arg-type]</span>
+            <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(),</span>
         <span class="p">)</span>
         <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"median_of_ties"</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>

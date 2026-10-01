@@ -122,6 +122,16 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.models.act</span><span class="w"> </span><span class="kn">import</span> <span class="n">act_register</span>
 
+<span class="n">AGGREGATIONS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"sum"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_aggregation</span><span class="p">(</span><span class="n">aggregation</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise ``ValueError`` naming an aggregation that is not ``sum`` or ``mean``."""</span>
+    <span class="k">if</span> <span class="n">aggregation</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">AGGREGATIONS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Unknown aggregation </span><span class="si">{</span><span class="n">aggregation</span><span class="si">!r}</span><span class="s2">; expected one of </span><span class="si">{</span><span class="n">AGGREGATIONS</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
 
 <div class="viewcode-block" id="DeepSet">
 <a class="viewcode-back" href="../../../generated/torchcell.models.deep_set.DeepSet.html#torchcell.models.deep_set.DeepSet">[docs]</a>
@@ -156,12 +166,16 @@
 <span class="sd">            skip_node: Whether to add residual connections in node layers.</span>
 <span class="sd">            skip_set: Whether to add residual connections in set layers.</span>
 <span class="sd">            aggregation: Set aggregation method ("sum" or "mean").</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: ``aggregation`` is not ``sum`` or ``mean`` (checked again in</span>
+<span class="sd">                :meth:`forward`, since the attribute can be reassigned).</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
         <span class="k">assert</span> <span class="n">norm</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"batch"</span><span class="p">,</span> <span class="s2">"instance"</span><span class="p">,</span> <span class="s2">"layer"</span><span class="p">],</span> <span class="s2">"Invalid norm type"</span>
         <span class="k">assert</span> <span class="n">activation</span> <span class="ow">in</span> <span class="n">act_register</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="s2">"Invalid activation type"</span>
-        <span class="k">assert</span> <span class="n">aggregation</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"sum"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">],</span> <span class="s2">"Invalid aggregation method"</span>
+        <span class="n">_check_aggregation</span><span class="p">(</span><span class="n">aggregation</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">skip_node</span> <span class="o">=</span> <span class="n">skip_node</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">skip_set</span> <span class="o">=</span> <span class="n">skip_set</span>
@@ -261,7 +275,11 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A tuple of per-node features and per-set output features.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: ``self.aggregation`` is not ``sum`` or ``mean``.</span>
 <span class="sd">        """</span>
+        <span class="n">_check_aggregation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_layers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">x_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_layers_forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -269,7 +287,7 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span> <span class="o">==</span> <span class="s2">"sum"</span><span class="p">:</span>
             <span class="n">x_aggregated</span> <span class="o">=</span> <span class="n">scatter_add</span><span class="p">(</span><span class="n">x_node</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregation</span> <span class="o">==</span> <span class="s2">"mean"</span><span class="p">:</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="n">x_aggregated</span> <span class="o">=</span> <span class="n">scatter_mean</span><span class="p">(</span><span class="n">x_node</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="n">x_set</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_layers_forward</span><span class="p">(</span><span class="n">x_aggregated</span><span class="p">)</span>
@@ -279,9 +297,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Run a small DeepSet forward/backward pass on dummy data."""</span>
-    <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">set_detect_anomaly</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Run a small DeepSet forward/backward pass on dummy data.</span>
 
+<span class="sd">    Autograd anomaly detection is on only inside this demo's forward/backward</span>
+<span class="sd">    (``torch.autograd.detect_anomaly``), so calling ``main`` leaves it off afterwards.</span>
+<span class="sd">    """</span>
     <span class="c1"># Model configuration</span>
     <span class="n">in_channels</span> <span class="o">=</span> <span class="mi">10</span>
     <span class="n">hidden_channels</span> <span class="o">=</span> <span class="mi">32</span>
@@ -307,26 +327,27 @@
     <span class="nb">print</span><span class="p">(</span><span class="s2">"x shape:"</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
     <span class="n">batch</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="mi">20</span><span class="p">,),</span> <span class="n">i</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)])</span>
 
-    <span class="c1"># Forward pass</span>
-    <span class="n">x_nodes</span><span class="p">,</span> <span class="n">x_set</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"x_set shape:"</span><span class="p">,</span> <span class="n">x_set</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"batch shape:"</span><span class="p">,</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"batch unique:"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">batch</span><span class="p">))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"x_nodes shape:"</span><span class="p">,</span> <span class="n">x_nodes</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">detect_anomaly</span><span class="p">():</span>
+        <span class="c1"># Forward pass</span>
+        <span class="n">x_nodes</span><span class="p">,</span> <span class="n">x_set</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"x_set shape:"</span><span class="p">,</span> <span class="n">x_set</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"batch shape:"</span><span class="p">,</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"batch unique:"</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">batch</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"x_nodes shape:"</span><span class="p">,</span> <span class="n">x_nodes</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 
-    <span class="c1"># Let's assume you want to predict some values for each set.</span>
-    <span class="c1"># So, we'll create a dummy target tensor for demonstration purposes.</span>
-    <span class="n">target</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">)</span>
+        <span class="c1"># Let's assume you want to predict some values for each set.</span>
+        <span class="c1"># So, we'll create a dummy target tensor for demonstration purposes.</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">)</span>
 
-    <span class="c1"># Simple mean squared error loss</span>
-    <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">x_set</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-    <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">x_set</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Loss:"</span><span class="p">,</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+        <span class="c1"># Simple mean squared error loss</span>
+        <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">x_set</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">x_set</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Loss:"</span><span class="p">,</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
 
-    <span class="c1"># Backpropagation</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
-    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="c1"># Backpropagation</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"Gradients computed successfully!"</span><span class="p">)</span>
 
 

@@ -138,7 +138,12 @@
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The per-key outcome (mode, file count, provenance completeness).</p>
+<dd class="field-even"><p>The per-key outcome (mode, file count, provenance completeness). A skipped
+key reports the values recorded in its existing manifest.</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>CorruptManifestError</strong> – Without <code class="docutils literal notranslate"><span class="pre">force</span></code>, the existing manifest does not
+    parse as a <a class="reference internal" href="torchcell.literature.Manifest.html#torchcell.literature.Manifest" title="torchcell.literature.Manifest"><code class="xref py py-class docutils literal notranslate"><span class="pre">Manifest</span></code></a>.</p>
 </dd>
 </dl>
 </dd></dl>

@@ -345,7 +345,13 @@ def main(cfg: DictConfig) -> None:
         "use_auxiliary_losses", True
     )
 
-    loss_func = DCellLoss(alpha=alpha, use_auxiliary_losses=use_auxiliary_losses)
+    aux_reduction = wandb.config.regression_task["dcell_loss"]["aux_reduction"]
+
+    loss_func = DCellLoss(
+        alpha=alpha,
+        use_auxiliary_losses=use_auxiliary_losses,
+        aux_reduction=aux_reduction,
+    )
 
     # Always use DCellRegressionTask based on the updated config
     RegressionTask = DCellRegressionTask

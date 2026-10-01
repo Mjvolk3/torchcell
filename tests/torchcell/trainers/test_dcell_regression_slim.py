@@ -7,8 +7,9 @@ Fixture and loss as in ``test_dcell_regression.py``: ``make_dcell_regression_bat
 gives ``GO:ROOT`` = [0, -1, 1], ``GO:1`` = [0, 1, 2], ``GO:2`` = [0, 2, 1] against
 y = [1.0, 0.0, 0.5]. The task calls the ``DCellLoss(predictions, outputs, target)`` it
 constructs with the root as predictions and every head as ``linear_outputs``, so at alpha
-0.3 the loss is root MSE plus alpha times the mean auxiliary MSE:
-loss = 0.75 + 0.3 * ((4.25 + 5.25) / 3) / 2 = 0.75 + 0.475 = 1.225.
+0.3 the loss is root MSE plus alpha times the SUM of the auxiliary MSEs (Ma et al. 2018,
+issue #554): loss = 0.75 + 0.3 * (4.25 + 5.25) / 3 = 0.75 + 0.95 = 1.7. The pre-fix mean
+gave 0.75 + 0.3 * ((4.25 + 5.25) / 3) / 2 = 1.225.
 
 Unlike the full task, the slim task keeps separate collections for the subsystem mean
 m = [0, 2/3, 4/3] and for the root, each with Pearson and Spearman inside:
@@ -45,7 +46,7 @@ from tests.torchcell.conftest import (
 from torchcell.losses.dcell import DCellLoss
 from torchcell.trainers.dcell_regression_slim import DCellRegressionSlimTask
 
-LOSS = 1.225
+LOSS = 1.7
 SUBSYSTEM = {
     "MSE": 77 / 108,
     "RMSE": math.sqrt(77 / 108),
@@ -138,15 +139,16 @@ def test_configure_optimizers_is_adam_over_dcell_then_linear_parameters() -> Non
 
 
 @pytest.mark.parametrize(
-    ("alpha", "expected"), [(0.3, LOSS), (0.7, 0.75 + 0.7 * 19 / 12)]
+    ("alpha", "expected"), [(0.3, LOSS), (0.7, 0.75 + 0.7 * 19 / 6)]
 )
 def test_loss_feeds_the_root_as_prediction_and_every_head_as_auxiliary(
     alpha: float, expected: float
 ) -> None:
     """``_loss`` calls ``DCellLoss(predictions, outputs, target)`` in that order.
 
-    The mean auxiliary MSE is (4.25 + 5.25) / 6 = 19/12, so alpha 0.3 gives 1.225 and
-    alpha 0.7 gives 0.75 + 0.7 * 19/12 = 1.8583333; ``alpha`` reaches the loss the steps
+    The summed auxiliary MSE is (4.25 + 5.25) / 3 = 19/6, so alpha 0.3 gives
+    0.75 + 0.95 = 1.7 and alpha 0.7 gives 0.75 + 0.7 * 19/6 = 2.9666667 (the pre-fix mean,
+    19/12, gave 1.225 and 1.8583333); ``alpha`` reaches the loss the steps
     call (issue #516: they passed the deprecated ``(outputs, target, weights)`` order).
     """
     task = _task(alpha=alpha)
@@ -158,10 +160,10 @@ def test_loss_feeds_the_root_as_prediction_and_every_head_as_auxiliary(
 def test_one_training_step_logs_subsystem_and_root_metrics_separately(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """train_loss 1.225, ``train_*`` from m, ``train_root_*`` from the root, 9 parameters.
+    """train_loss 1.7, ``train_*`` from m, ``train_root_*`` from the root, 9 parameters.
 
-    Gradients (root head weight 1.0, bias -1.0; GO:1 head 0.4, 0.15; GO:2 head 0.45,
-    0.15; ``scale`` [1.0, 0.4, 0.45]) are all nonzero, so the one Adam step moves every
+    Gradients (root head weight 1.0, bias -1.0; GO:1 head 0.8, 0.3; GO:2 head 0.9,
+    0.3; ``scale`` [1.0, 0.8, 0.9]) are all nonzero, so the one Adam step moves every
     parameter by exactly -1e-3 * sign(grad).
 
     The slim task never calls ``wandb.log`` (it has no box plot), and with no best

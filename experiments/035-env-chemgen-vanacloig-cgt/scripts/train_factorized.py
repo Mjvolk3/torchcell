@@ -60,6 +60,7 @@ from dotenv import load_dotenv
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict
 from scipy.stats import rankdata
+from torch.nn.attention import SDPBackend, sdpa_kernel
 
 sys.path.insert(0, osp.dirname(__file__))
 from vanacloig_data import (  # noqa: E402
@@ -98,7 +99,10 @@ class FactorizedConfig(BaseModel):
     name: str
     gene_encoder: Literal["table", "cgt"] = "table"
     # operator: the compound acts on every gene of the strain's perturbed state (cgt only)
-    head: Literal["bilinear", "mlp", "operator"] = "bilinear"
+    # env_encoder: the compound is a token the gene tokens attend to (cgt only)
+    head: Literal["bilinear", "mlp", "operator", "env_encoder"] = "bilinear"
+    env_layers: int = 1  # env_encoder: transformer layers over [compound ; genes]
+    env_chunk: int = 0  # env_encoder: compounds per pass, 0 = all at once
     embeddings: list[str] = ["fcfp4_count"]
     pca_dim: int | None = 64
     dim: int = 64
@@ -248,6 +252,7 @@ class Factorized(nn.Module):
         strain: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """[B, C] predictions for gene vectors ``z`` [B, dim] and compounds ``x``."""
+        z = z.float()
         u = self.compound(x)  # [C, dim]
         base = self.gene_bias(gene_idx) + self.offset(u).T  # [B, C]
         if self.cfg.head == "bilinear":
@@ -330,6 +335,7 @@ class EnvironmentOperator(nn.Module):
     ) -> torch.Tensor:
         """[B, C] predictions from strain states ``z`` [B, N, d] under compounds ``x``."""
         assert strain is not None
+        z = z.float()
         b, n, d = z.shape
         heads = self.cfg.cgt_heads
         dh = d // heads
@@ -356,6 +362,151 @@ class EnvironmentOperator(nn.Module):
         base = self.gene_bias(gene_idx) + self.offset(e).T  # [B, C]
         state = self.norm(torch.cat([z_del, z_pool, ee], -1).float())
         return base + self.head(state).squeeze(-1)
+
+
+class TokenLayer(nn.Module):
+    """One pre-norm transformer layer over [compound ; genes], attention never stored.
+
+    ``scaled_dot_product_attention`` runs the flash or memory-efficient kernel on a GPU,
+    so the N x N attention of 6,607 gene tokens is not materialized per compound.
+    """
+
+    def __init__(self, dim: int, heads: int, dropout: float) -> None:
+        """``dim`` must be divisible by ``heads``."""
+        super().__init__()
+        self.heads = heads
+        self.dropout = dropout
+        self.norm1 = nn.LayerNorm(dim)
+        self.qkv = nn.Linear(dim, 3 * dim)
+        self.proj = nn.Linear(dim, dim)
+        self.norm2 = nn.LayerNorm(dim)
+        self.ffn = nn.Sequential(
+            nn.Linear(dim, 2 * dim),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(2 * dim, dim),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """[C, T, d] -> [C, T, d]."""
+        c, t, d = x.shape
+        q, k, v = (
+            self.qkv(self.norm1(x))
+            .view(c, t, 3, self.heads, d // self.heads)
+            .permute(2, 0, 3, 1, 4)
+        )
+        backends = (
+            [SDPBackend.FLASH_ATTENTION, SDPBackend.EFFICIENT_ATTENTION]
+            if x.is_cuda
+            else [SDPBackend.MATH]
+        )
+        with sdpa_kernel(backends):
+            attended = nn.functional.scaled_dot_product_attention(
+                q, k, v, dropout_p=self.dropout if self.training else 0.0
+            )
+        x = x + self.proj(attended.transpose(1, 2).reshape(c, t, d))
+        return x + self.ffn(self.norm2(x))
+
+
+class EnvironmentEncoder(nn.Module):
+    """The compound as a token the genes attend to, before the strain is read.
+
+    The transformer encodes the wildtype cell once, ``H`` [N, d]. For each compound its
+    token ``e_c`` from the fingerprint is placed in front of the gene tokens and the
+    sequence runs through ``env_layers`` further transformer layers, so every gene can
+    take from the compound (the hit) and from every other gene after it was hit (the
+    spread). The result ``H^c`` [C, N, d] is the cell in that medium: the medium as a
+    Type I operator on the representation. A strain is then read where it is cut: the
+    rows of ``H^c`` at its deleted genes, summed; the same rows of the strain's own
+    post-deletion state from the encoder's deletion operator; the mean of ``H^c`` over
+    genes; and the compound token after it has read the genome.
+    """
+
+    def __init__(
+        self, cfg: FactorizedConfig, n_genes: int, feature_dim: int, encoder
+    ) -> None:
+        """``encoder`` is the cell graph transformer; its width is the token's."""
+        super().__init__()
+        self.cfg = cfg
+        self.encoder = encoder
+        d = cfg.cgt_dim
+        self.gene_bias = nn.Embedding(n_genes, 1)
+        nn.init.zeros_(self.gene_bias.weight)
+        self.compound = nn.Sequential(
+            nn.Dropout(cfg.dropout),
+            nn.Linear(feature_dim, cfg.hidden),
+            nn.GELU(),
+            nn.Dropout(cfg.dropout),
+            nn.Linear(cfg.hidden, d),
+        )
+        self.offset = nn.Linear(d, 1)
+        self.layers = nn.ModuleList(
+            TokenLayer(d, cfg.cgt_heads, cfg.dropout) for _ in range(cfg.env_layers)
+        )
+        self.norm = nn.LayerNorm(4 * d)
+        self.head = nn.Sequential(
+            nn.Linear(4 * d, cfg.hidden),
+            nn.GELU(),
+            nn.Dropout(cfg.dropout),
+            nn.Linear(cfg.hidden, 1),
+        )
+
+    def genes(
+        self, gene_idx: torch.Tensor, strain: torch.Tensor | None, cell_graph=None
+    ) -> tuple[tuple[torch.Tensor, torch.Tensor], torch.Tensor]:
+        """(wildtype tokens [N, d], strain rows [B, d]) and the graph penalty."""
+        assert strain is not None
+        size, order = strain.shape
+        batch = {
+            "gene": SimpleNamespace(
+                perturbation_indices=strain.reshape(-1),
+                perturbation_indices_batch=torch.arange(
+                    size, device=strain.device
+                ).repeat_interleave(order),
+            )
+        }
+        _, out = self.encoder(cell_graph, batch)
+        rows = torch.arange(size, device=strain.device).unsqueeze(1)
+        h_del = out["H_genes_pert"][rows, strain].sum(dim=1)  # [B, d]
+        return (out["H_genes"], h_del), out["graph_reg_loss"]
+
+    def forward(
+        self,
+        z: tuple[torch.Tensor, torch.Tensor],
+        gene_idx: torch.Tensor,
+        x: torch.Tensor,
+        strain: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """[B, C] predictions for the strains under compounds ``x``."""
+        assert strain is not None
+        h, h_del = z[0].float(), z[1].float()
+        n, d = h.shape
+        b = strain.shape[0]
+        e = self.compound(x)  # [C, d]
+        c = e.shape[0]
+        z_env, pooled, token = [], [], []
+        for part in e.split(self.cfg.env_chunk or c):
+            seq = torch.cat(
+                [part[:, None], h[None].expand(len(part), n, d)], dim=1
+            )  # [c', N + 1, d]
+            for layer in self.layers:
+                seq = layer(seq)
+            cell = seq[:, 1:]  # the cell in that medium, [c', N, d]
+            z_env.append(cell[:, strain].sum(2))  # [c', B, d]
+            pooled.append(cell.mean(1))
+            token.append(seq[:, 0])
+        env = torch.cat(z_env).transpose(0, 1)  # [B, C, d]
+        state = torch.cat(
+            [
+                env,
+                h_del[:, None].expand(b, c, d),
+                torch.cat(pooled)[None].expand(b, c, d),
+                torch.cat(token)[None].expand(b, c, d),
+            ],
+            -1,
+        )
+        base = self.gene_bias(gene_idx) + self.offset(e).T  # [B, C]
+        return base + self.head(self.norm(state.float())).squeeze(-1)
 
 
 # ---- training -------------------------------------------------------------- #
@@ -418,7 +569,7 @@ def predict_all(
         strain = None if ctx.strain is None else ctx.strain[idx.cpu()].to(device)
         with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
             z, _ = model.genes(idx, strain, ctx.cell_graph)
-            pred = model(z.float(), idx, x, strain)
+            pred = model(z, idx, x, strain)
         out.append(pred.float().cpu().numpy())
     return np.concatenate(out)
 
@@ -455,6 +606,9 @@ def train_seed(
     if cfg.head == "operator":
         assert encoder is not None, "the operator head needs the cgt gene encoder"
         model = EnvironmentOperator(cfg, ctx.y.shape[0], x.shape[1], encoder)
+    elif cfg.head == "env_encoder":
+        assert encoder is not None, "the env_encoder head needs the cgt gene encoder"
+        model = EnvironmentEncoder(cfg, ctx.y.shape[0], x.shape[1], encoder)
     else:
         model = Factorized(cfg, ctx.y.shape[0], x.shape[1], encoder)
     model = model.to(device)
@@ -506,7 +660,7 @@ def train_seed(
             xin = xin + cfg.input_noise * torch.randn_like(xin)
         with torch.autocast(device_type=device.type, dtype=torch.bfloat16):
             z, penalty = model.genes(idx, strain, ctx.cell_graph)
-            pred = model(z.float(), idx, xin, strain).float()
+            pred = model(z, idx, xin, strain).float()
         t, m, w = target[idx], mask[idx], weight[idx]
         if cfg.huber is None:
             err = (pred - t) ** 2

@@ -1,0 +1,4 @@
+# Round 10 smoke: the environment-encoder head (compound token in front of the gene
+# tokens, one further transformer layer) on a one-layer encoder, two steps, CPU-sized
+# (8 strains per step, 2 compounds per pass so the math attention kernel fits in memory).
+- {name: smoke_envenc, gene_encoder: cgt, head: env_encoder, env_layers: 1, env_chunk: 2, pca_dim: null, gene_batch: 8, steps: 2, eval_every: 2, seeds: [0], folds: [0], cgt_layers: 1, cgt_lambda: 0.0, select: last, fit_on: pool}

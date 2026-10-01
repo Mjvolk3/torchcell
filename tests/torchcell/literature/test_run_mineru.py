@@ -293,3 +293,36 @@ def test_rewrite_image_refs_refuses_an_unknown_figure() -> None:
     with pytest.raises(runner.UnresolvedImageRefError) as refused:
         rewrite("![](images/a.jpg)", {"b.jpg"}, "images/si1")
     assert str(refused.value) == "references images/a.jpg, not produced"
+
+
+def test_dpi_patch_reads_module_dicts_and_never_triggers_lazy_attributes(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``_patch_dpi`` finds the modules that imported ``load_images_from_pdf`` by
+    name through their ``__dict__``: a lazy module in ``sys.modules`` whose
+    ``__getattr__`` would import heavy optional dependencies (transformers does this,
+    reaching torchvision; CI failure on PR #585) is never asked for the attribute,
+    and a ``None`` entry (an import blocked in ``sys.modules``) is skipped.
+    An importer that bound the function by name is patched to force the DPI.
+    """
+    fake = _install(monkeypatch, {})
+
+    class _Lazy(ModuleType):
+        def __getattr__(self, name: str) -> Any:
+            raise ModuleNotFoundError("No module named 'torchvision'")
+
+    monkeypatch.setitem(sys.modules, "lazy_heavy", _Lazy("lazy_heavy"))
+    monkeypatch.setitem(sys.modules, "blocked_import", None)
+    importer = ModuleType("mineru_importer")
+    original = sys.modules["mineru.utils.pdf_image_tools"].load_images_from_pdf
+    importer.load_images_from_pdf = original  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "mineru_importer", importer)
+
+    runner._patch_dpi(350)
+
+    assert capsys.readouterr().out == "[mineru] page rasterization DPI -> 350\n"
+    patched = vars(importer)["load_images_from_pdf"]
+    assert patched is not original
+    assert sys.modules["mineru.utils.pdf_image_tools"].load_images_from_pdf is patched
+    patched(b"")
+    assert fake.dpis == [350]

@@ -49,7 +49,7 @@ def _patch_dpi(dpi: int) -> None:
 
     ``do_parse`` does not expose DPI; it calls ``load_images_from_pdf`` with the
     hardcoded default. We replace that function -- in its defining module and in
-    every module that imported it by name -- with one that forces ``dpi``. Must
+    every module whose namespace bound it by name -- with one that forces ``dpi``. Must
     run after the MinerU import chain so the importer modules already exist.
     """
     import sys
@@ -61,8 +61,11 @@ def _patch_dpi(dpi: int) -> None:
     def patched(pdf_bytes, dpi=dpi, **kwargs):  # type: ignore[no-untyped-def]
         return original(pdf_bytes, dpi=dpi, **kwargs)
 
+    # Read each module's __dict__ (a None entry has none), never the attribute: a
+    # lazy module (transformers) answers an attribute lookup by importing optional
+    # heavy dependencies such as torchvision.
     for module in list(sys.modules.values()):
-        if getattr(module, "load_images_from_pdf", None) is original:
+        if getattr(module, "__dict__", {}).get("load_images_from_pdf") is original:
             module.load_images_from_pdf = patched  # type: ignore[attr-defined]  # monkey-patch mineru DPI on its module object
     pit.load_images_from_pdf = patched
     print(f"[mineru] page rasterization DPI -> {dpi}")

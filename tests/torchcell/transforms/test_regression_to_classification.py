@@ -1188,6 +1188,11 @@ class TestBinningBranches:
     def test_soft_labels_nan_row_and_the_closed_form(self) -> None:
         """Edges [0, 1, 2], centers [0.5, 1.5], sigma = 1 * 1: 0.5 -> [1, e^-0.5]
         normalized = [0.6224593, 0.3775407]; NaN gives a NaN row.
+
+        The exponent squares distance / sigma: with sigma_scale 0.5 (sigma 0.5) the value
+        0.5 is 0 and 2 sigmas from the centers, log-weights -0.5 * [0, 2^2] = [0, -2],
+        so the row is [1, e^-2] / (1 + e^-2) = [0.8807970, 0.1192029]. Without the
+        square the log-weights would be [0, -1] and the row [0.7310586, 0.2689414].
         """
         soft = EqualWidthStrategy().compute_soft_labels(
             torch.tensor([0.5, float("nan")]), torch.tensor([0.0, 1.0, 2.0]), "x", 1
@@ -1195,6 +1200,14 @@ class TestBinningBranches:
         e = math.exp(-0.5)
         assert soft[0].tolist() == pytest.approx([1 / (1 + e), e / (1 + e)], abs=1e-7)
         assert torch.isnan(soft[1]).all()
+        narrow = EqualWidthStrategy().compute_soft_labels(
+            torch.tensor([0.5]), torch.tensor([0.0, 1.0, 2.0]), "x", 0.5
+        )
+        e2 = math.exp(-2.0)
+        assert narrow[0].tolist() == pytest.approx(
+            [1 / (1 + e2), e2 / (1 + e2)], abs=1e-7
+        )
+        assert narrow[0].tolist() == pytest.approx([0.8807970, 0.1192029], abs=1e-7)
 
     def test_soft_labels_that_would_underflow_put_all_mass_on_the_nearest_center(
         self,
@@ -1214,6 +1227,33 @@ class TestBinningBranches:
             torch.tensor([100.0, 0.0005]), torch.tensor([0.0, 1e-3, 100.0]), "x", 3
         )
         assert soft.tolist() == [[0.0, 1.0], [1.0, 0.0]]
+
+    def test_soft_labels_refuse_a_zero_width_bin_at_construction(self) -> None:
+        """Duplicate edges make sigma = sigma_scale * min width = 0, and every soft row
+        NaN, so a soft config with a zero-width bin is refused when it is built (#529).
+
+        Fitness [0, 0, 0, 0, 1, 2] in three equal-frequency bins: the 33.3 and 66.7
+        percentiles are 0 and 1/3, edges [0, 0, 1/3, 2], minimum width 0. The same edges
+        are accepted for categorical labels, where an empty bin is harmless.
+        """
+        ties: Any = SimpleNamespace(
+            label_df=pd.DataFrame({"fitness": [0.0, 0.0, 0.0, 0.0, 1.0, 2.0]})
+        )
+        config: dict[str, Any] = {"strategy": "equal_frequency", "num_bins": 3}
+        with pytest.raises(
+            ValueError,
+            match=(
+                r"^Soft labels for label 'fitness' need bins of positive width; "
+                r"the minimum bin width is 0\.0 \(duplicate bin edges\)$"
+            ),
+        ):
+            LabelBinningTransform(ties, {"fitness": {**config, "label_type": "soft"}})
+        categorical = LabelBinningTransform(
+            ties, {"fitness": {**config, "label_type": "categorical"}}
+        )
+        assert categorical.get_bin_info("fitness")["bin_edges"].tolist() == (
+            pytest.approx([0.0, 0.0, 1 / 3, 2.0], abs=1e-12)
+        )
 
     def test_categorical_inverse_draws_seeded_uniforms_bin_by_bin(self) -> None:
         """Edges [0..4]; argmax rows [2, 0, 2, NaN]. Under seed 42 the draws go to bin 0

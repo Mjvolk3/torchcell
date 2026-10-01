@@ -380,6 +380,14 @@ class LabelBinningTransform(BaseTransform):  # type: ignore[misc]  # BaseTransfo
             bin_edges, metadata = strategy.compute_bins(
                 df[label].values, config.get("num_bins", None)
             )
+            # Soft labels use sigma = sigma_scale * min bin width; a zero-width bin
+            # (duplicate edges) gives sigma 0 and all-NaN rows, so refuse it here.
+            min_width = float(np.min(np.diff(bin_edges)))
+            if resolve_label_type(label, config) == "soft" and min_width <= 0:
+                raise ValueError(
+                    f"Soft labels for label {label!r} need bins of positive width; "
+                    f"the minimum bin width is {min_width} (duplicate bin edges)"
+                )
             self.label_metadata[label] = metadata
 
         # If normalizer is provided, also store denormalized bin edges

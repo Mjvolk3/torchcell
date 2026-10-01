@@ -33,6 +33,11 @@ parameters:
       graph_processor:
         values: [subgraph_representation] # [subgraph_representation, node_feature, node_augmentation]
 
+  # 2026.10.01 (#529, PR #584): historical runs of this config trained with all-zero soft
+  # targets on underflowed tail rows (9,422 of 1,023,196 gene_interaction labels, 0.92%,
+  # in the two wide tail bins of the 32 equal-frequency bins; 0 fitness rows), measured on
+  # 003-fit-int/001-small-build. LabelBinningTransform now emits a distribution there.
+  # See notes/torchcell.transforms.regression_to_classification.md.
   transforms:
     num_bins: 
       values: [32]

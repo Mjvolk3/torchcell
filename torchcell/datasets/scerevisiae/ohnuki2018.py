@@ -180,22 +180,21 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
 
         df = self.preprocess_calmorph_data(df_mutant)
 
-        os.makedirs(self.preprocess_dir, exist_ok=True)
-        df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
-
         # Aggregate the 114 WT replicate averages into a single mean-WT reference.
         self.wt_reference_phenotype = self._calculate_wt_reference(df_wt)
 
         log.info("Processing Ohnuki 2018 CalMorph morphology data...")
 
-        # Every record is built (and so every refusal raised) before the store is opened,
-        # so a refused matrix leaves no ``processed/lmdb`` for a retry to serve as empty.
+        # Every record is built (and so every refusal raised) before ``data.csv`` or the
+        # store is written, so a refused matrix leaves neither behind for a retry.
         records = [
             self.create_calmorph_experiment(
                 self.name, row, wt_reference_phenotype=self.wt_reference_phenotype
             )
             for _, row in tqdm(df.iterrows(), total=df.shape[0])
         ]
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
         with env.begin(write=True) as txn:
             for index, (experiment, reference, publication) in enumerate(records):

@@ -493,18 +493,24 @@ def test_negative_sd_is_refused_by_the_phenotype_validator(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, s_id_calls: list[dict[str, str]]
 ) -> None:
     """A negative SD becomes a negative SE (-0.3 / sqrt(3)) and the phenotype validator
-    refuses it with "SE for acetate must be non-negative".
+    refuses it with "SE for acetate must be non-negative". Contract (issue #537): the
+    refusal comes from ``create_experiment``, which runs for every record before
+    ``data.csv`` or the store is written, so neither exists afterwards and a second
+    constructor on the same root refuses with the same message instead of serving 0
+    records.
     """
     wt = m.TABLE_3["WT"]
     bad = [wt[0], (4.0, -0.3), *wt[2:]]
     monkeypatch.setattr(m, "TABLE_3", {"WT": wt, "ASM4": bad})
-    with pytest.raises(pydantic.ValidationError) as info:
-        m.OrganicAcidYoshida2012Dataset(
-            root=str(_root(tmp_path, "negative")), genome=_genome()
-        )
-    assert [e["msg"] for e in info.value.errors()] == [
-        "Value error, SE for acetate must be non-negative"
-    ]
+    root = _root(tmp_path, "negative")
+    for _ in range(2):
+        with pytest.raises(pydantic.ValidationError) as info:
+            m.OrganicAcidYoshida2012Dataset(root=str(root), genome=_genome())
+        assert [e["msg"] for e in info.value.errors()] == [
+            "Value error, SE for acetate must be non-negative"
+        ]
+        assert not (root / "preprocess" / "data.csv").exists()
+        assert not (root / "processed" / "lmdb").exists()
 
 
 def test_download_copies_a_verified_mirror_pdf(

@@ -184,8 +184,9 @@ class ScmdOhya2005Dataset(ExperimentDataset):
     def process(self) -> None:
         """Load raw TSVs, build CalMorph experiments, and write the LMDB store.
 
-        Every record is built (and so every refusal raised) BEFORE the store is opened, so
-        a refused matrix leaves no ``processed/lmdb`` for a retry to serve as empty.
+        Every record is built (and so every refusal raised) BEFORE ``data.csv`` or the
+        store is written, so a refused matrix leaves no ``processed/lmdb`` for a retry to
+        serve as empty and no ``preprocess/data.csv``.
         Records are written through ``_intern_record``: the constant reference (the
         501-feature WT phenotype) is stored once in the sibling ``interned`` env and each
         record carries a ``$ref`` pointer that ``get_single_item`` splices back, so the
@@ -199,10 +200,6 @@ class ScmdOhya2005Dataset(ExperimentDataset):
 
         df = self.preprocess_calmorph_data(df_mutant)
 
-        # Save preprocessed data
-        os.makedirs(self.preprocess_dir, exist_ok=True)
-        df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
-
         # Aggregate the 122 WT replicate averages into a single mean-WT reference.
         self.wt_reference_phenotype = self._calculate_wt_reference(df_wt)
 
@@ -214,6 +211,8 @@ class ScmdOhya2005Dataset(ExperimentDataset):
             )
             for _, row in tqdm(df.iterrows(), total=df.shape[0])
         ]
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         # LIFO exit: the interned txn commits before the records txn (crash safety).

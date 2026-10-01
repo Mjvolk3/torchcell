@@ -257,3 +257,8 @@ Fix: records are built first and written through `_open_write_lmdb` + `_intern_r
 Record values are unchanged: `test_the_interned_store_resolves_to_exactly_the_inline_records` builds the synthetic matrices with the shipped writer and with the earlier inline writer and compares every resolved record exactly. The on-disk layout of a rebuilt store does change; the dev store at `$DATA_ROOT/data/torchcell/scmd_ohya2005` keeps its inline layout until its next rebuild. Measured on the pinned matrices: 4718 x 501, CV columns DCV 127 + CCV 60 + ACV 33 = 220, 0 TCV, 0 blank ORFs, 0 duplicate spellings (every ORF is lowercase, all distinct after uppercasing), 0 missing or non-numeric cells.
 
 Left open: the publication is Ohya 2005 while the matrices are the Suzuki 2018 CalMorph 1.2 re-analysis (#491); that changes every stored record and belongs to a database-labelled PR.
+
+## 2026.10.01 - Review follow-up on PR #591
+
+- The duplicate-spelling refusal runs before the incomplete-row drop, so a strain listed twice with one incomplete row is now refused where the earlier loader kept one record. The pinned matrices have 0 such rows (0 duplicate spellings at all).
+- `data.csv` is written after every record is built, so a refused matrix leaves neither `preprocess/data.csv` nor `processed/lmdb`. On success the file bytes are unchanged (`test_side_files` asserts them exactly).

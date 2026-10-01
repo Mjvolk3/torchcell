@@ -558,7 +558,7 @@ def test_a_tcv_column_is_a_base_parameter_and_refused_by_the_schema(
 def test_non_numeric_mutant_cell_refuses_before_the_store_opens(tmp_path: Path) -> None:
     """A mutant cell "x" passes the completeness check (it is not NaN) and then fails
     ``float(row[col])`` with Python's own message. Contract (issue #537): every record
-    is built before the store is opened, so the refusal leaves no ``processed/lmdb``
+    is built before ``data.csv`` or the store is written, so the refusal leaves neither
     and a retry refuses again (the pinned matrix has 0 non-numeric cells).
     """
     root = tmp_path / "bad_cell"
@@ -575,6 +575,7 @@ def test_non_numeric_mutant_cell_refuses_before_the_store_opens(tmp_path: Path) 
         ):
             m.ScmdOhya2005Dataset(root=str(root), genome=_genome())
         assert not (root / "processed" / "lmdb").exists()
+        assert not (root / "preprocess" / "data.csv").exists()
 
 
 def test_missing_genome_is_built_once_by_default_genome(

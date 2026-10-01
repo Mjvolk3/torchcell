@@ -224,11 +224,12 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
     def process(self) -> None:
         """Parse the Quant sheet into per-mutant Metabolite experiments and write LMDB.
 
-        Every record is built and every refusal raised BEFORE ``data.csv`` or the store is
-        written, so a refused matrix leaves nothing for a retry to serve. Refusals (each
-        0 in the pinned Table S4, 2026.10.01: 147 lipids, 127 mutant rows): a lipid that
-        no WT control row measured (it would have no reference value) and a mutant row
-        with every lipid blank.
+        Every record is built and every refusal raised BEFORE ``lipid_chebi.csv``,
+        ``data.csv`` or the store is written, so a refused matrix writes nothing under
+        ``preprocess/`` or ``processed/``. Refusals (each 0 in the pinned Table S4,
+        2026.10.01: 147 lipids, 127 mutant rows): a lipid that no WT control row
+        measured (it would have no reference value), two mutant rows resolving to one
+        ORF, and a mutant row with every lipid blank.
         """
         verify_raw_files(
             self.raw_dir, {DATA_FILENAME: DATA_SHA256, CHEBI_FILENAME: CHEBI_SHA256}
@@ -272,18 +273,10 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
             len(chebi_missing),
         )
 
-        os.makedirs(self.preprocess_dir, exist_ok=True)
-        pd.DataFrame(
-            [
-                {"lipid": c, "chebi": chebi_by_lipid.get(c.strip(), "")}
-                for c in lipid_cols
-            ]
-        ).to_csv(osp.join(self.preprocess_dir, "lipid_chebi.csv"), index=False)
-
         mut_df = df[~df[_SYS_COL].isin(_WT_ROW_IDS)]
         n_unresolved = 0
         unresolved: list[str] = []
-        seen: set[str] = set()
+        source_by_orf: dict[str, str] = {}
         rows: list[dict[str, Any]] = []
         for _, row in mut_df.iterrows():
             source_orf = str(row[_SYS_COL]).strip()
@@ -292,10 +285,12 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
                 n_unresolved += 1
                 unresolved.append(source_orf)
                 continue
-            if orf in seen:
-                log.warning("duplicate ORF %s after resolution; keeping first", orf)
-                continue
-            seen.add(orf)
+            if orf in source_by_orf:
+                raise RuntimeError(
+                    f"da Silveira: mutant rows {source_by_orf[orf]!r} and "
+                    f"{source_orf!r} both resolve to {orf}"
+                )
+            source_by_orf[orf] = source_orf
             std = row[_STD_COL]
             gene_name = str(std).strip() if pd.notna(std) else orf
             level = {c: float(row[c]) for c in lipid_cols if pd.notna(row[c])}
@@ -314,6 +309,13 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
             f" ({unresolved})" if unresolved else "",
         )
         records = [self.create_experiment(record_row) for record_row in rows]
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        pd.DataFrame(
+            [
+                {"lipid": c, "chebi": chebi_by_lipid.get(c.strip(), "")}
+                for c in lipid_cols
+            ]
+        ).to_csv(osp.join(self.preprocess_dir, "lipid_chebi.csv"), index=False)
         pd.DataFrame(
             [
                 {"orf": r["orf"], "gene": r["gene"], "n_lipids": len(r["level"])}

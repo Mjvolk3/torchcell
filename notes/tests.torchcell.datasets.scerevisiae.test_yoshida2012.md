@@ -23,3 +23,7 @@ Issues #518, #524, #528, #537. Finding retired: the present-PDF Finding in `test
 ## 2026.10.01 - Findings retired (issues #537, #546)
 
 Retired the Phase 16 findings: the stub genome gains a `gene_set`, and one parametrized test asserts the exact refusal for a duplicate ORF, a systematic name absent from the genome, an alias of two ORFs and a NaN cell, with no `data.csv` and no `processed/lmdb` after each refusal and a retry refusing again.
+
+## 2026.10.01 - Review follow-up on PR #591
+
+`test_negative_sd_is_refused_by_the_phenotype_validator` builds twice and asserts no `data.csv` and no `processed/lmdb` after each refusal, which pins building every record before the store (it fails with `create_experiment` moved back inside the write transaction).

@@ -15,7 +15,6 @@ Table S4 ``Quant`` sheet (Systematic Name, Standard Name, PC 32:1, PE 34:2, Erg)
     YAL001C  TFC3   1.5   2.5   3.5
     YBR002C  (blank) 4.0  (blank) 6.0      alias -> YBR001C, gene name falls back to the ORF
     YZZ999W  GHOST  1     1     1          unresolved -> dropped
-    YAL003W  OLD    9     9     9          alias -> YAL001C already seen -> dropped
 
 WT reference: PC 32:1 mean(10, 12, 14) = 12.0 over n = 3; PE 34:2 mean(20, 22) = 21.0,
 n = 2; Erg mean(5, 7) = 6.0, n = 2. Each record's reference is restricted to the lipids
@@ -51,6 +50,11 @@ measured and a mutant row with every lipid blank are each refused with a named
 ``RuntimeError`` before ``data.csv`` or the store is written, so a retry refuses again;
 ``gene_set`` membership is case-insensitive, so ``ybr001c`` resolves to YBR001C. The
 pinned Table S4 has 0 of each (147 lipids, 127 mutant rows, every name uppercase).
+
+2026.10.01 (review of PR #591): two mutant rows resolving to one ORF are refused rather
+than keeping the first with a warning (0 such pairs in the pinned Table S4), so the
+default matrix no longer carries the YAL003W row; ``lipid_chebi.csv`` is written only
+after every record is built, and a failure inside ``create_experiment`` leaves nothing.
 """
 
 from __future__ import annotations
@@ -99,7 +103,6 @@ _QUANT_ROWS: list[list[Any]] = [
     ["YAL001C", "TFC3", 1.5, 2.5, 3.5],
     ["YBR002C", None, 4.0, None, 6.0],
     ["YZZ999W", "GHOST", 1, 1, 1],
-    ["YAL003W", "OLD", 9, 9, 9],
 ]
 _S10_ROWS: list[list[Any]] = [
     ["Table S10. LipidX identifiers"],
@@ -203,7 +206,7 @@ def _reference(level: dict[str, float], n: dict[str, int]) -> dict[str, Any]:
 def test_two_mutant_records_with_wt_reference_restricted_per_record(
     dataset: m.MetaboliteDaSilveira2014Dataset,
 ) -> None:
-    """Seven Quant rows give two records. Record 0 (YAL001C/TFC3) measures all three
+    """Six Quant rows give two records. Record 0 (YAL001C/TFC3) measures all three
     lipids, n = 2 each, SE None; its reference is the three WT means with n 3/2/2.
     Record 1 (YBR002C -> YBR001C, blank standard name -> the ORF) measured PC 32:1 and
     Erg only, so its reference drops PE 34:2. The index has one entry per reference.
@@ -350,19 +353,16 @@ def test_items_retype_through_the_metabolite_classes(
     assert returned.to_dict("list") == {m._SYS_COL: ["YAL001C"]}
 
 
-def test_ledger_logs_chebi_coverage_the_duplicate_and_the_unresolved_orf(
+def test_ledger_logs_chebi_coverage_and_the_unresolved_orf(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """One of three lipids has a ChEBI id; YAL003W resolves to the already seen YAL001C
-    and is dropped with a warning; YZZ999W is the one unresolved ORF.
-    """
+    """One of three lipids has a ChEBI id; YZZ999W is the one unresolved ORF."""
     with caplog.at_level(logging.INFO, logger=m.log.name):
         m.MetaboliteDaSilveira2014Dataset(root=str(_root(tmp_path)), genome=_genome())
     assert [
         (r.levelname, r.getMessage()) for r in caplog.records if r.name == m.log.name
     ] == [
         ("INFO", "da Silveira: 1/3 lipids have a Table S10 ChEBI id (2 missing)"),
-        ("WARNING", "duplicate ORF YAL001C after resolution; keeping first"),
         (
             "INFO",
             "da Silveira: 2 mutant records, 3 WT control rows -> measured reference "
@@ -373,11 +373,14 @@ def test_ledger_logs_chebi_coverage_the_duplicate_and_the_unresolved_orf(
 
 
 def _refused_twice(root: Path, message: str) -> None:
-    """Two constructors on ``root`` both raise ``message`` and write no data.csv/store."""
+    """Two constructors on ``root`` both raise ``message``; neither writes
+    ``lipid_chebi.csv``, ``data.csv`` or ``processed/lmdb``.
+    """
     for _ in range(2):
         with pytest.raises(RuntimeError) as info:
             m.MetaboliteDaSilveira2014Dataset(root=str(root), genome=_genome())
         assert str(info.value) == message
+        assert not (root / "preprocess" / "lipid_chebi.csv").exists()
         assert not (root / "preprocess" / "data.csv").exists()
         assert not (root / "processed" / "lmdb").exists()
 
@@ -481,6 +484,42 @@ def test_an_all_blank_mutant_row_is_refused_before_anything_is_written(
     _refused_twice(
         _root(tmp_path, rows), "da Silveira: mutant row 'YAL001C' has every lipid blank"
     )
+
+
+def test_two_rows_resolving_to_one_orf_are_refused_before_anything_is_written(
+    tmp_path: Path,
+) -> None:
+    """Contract (2026.10.01 review of PR #591): YAL003W resolves through the alias table
+    to YAL001C, already seen, so the build refuses naming both source rows (it used to
+    keep the first with a warning). The pinned Table S4 has 0 such pairs of 127.
+    """
+    rows = [row for row in _QUANT_ROWS if row[0] in {"Y7092", "Y7220", "BY4741"}]
+    rows += [["YAL001C", "TFC3", 1.5, 2.5, 3.5], ["YAL003W", "OLD", 9, 9, 9]]
+    _refused_twice(
+        _root(tmp_path, rows),
+        "da Silveira: mutant rows 'YAL001C' and 'YAL003W' both resolve to YAL001C",
+    )
+
+
+def test_a_failure_inside_create_experiment_leaves_nothing_behind(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #537): every record is built before ``lipid_chebi.csv``,
+    ``data.csv`` or the store is written. ``create_experiment`` is replaced, inside
+    this test, by one that raises on the second record; both attempts refuse with that
+    message and leave no file under ``preprocess/`` and no ``processed/lmdb``.
+    """
+    original = m.MetaboliteDaSilveira2014Dataset.create_experiment
+
+    def failing(
+        self: m.MetaboliteDaSilveira2014Dataset, row: dict[str, Any]
+    ) -> tuple[MetaboliteExperiment, MetaboliteExperimentReference, Publication]:
+        if row["orf"] == "YBR001C":
+            raise RuntimeError("synthetic failure for YBR001C")
+        return original(self, row)
+
+    monkeypatch.setattr(m.MetaboliteDaSilveira2014Dataset, "create_experiment", failing)
+    _refused_twice(_root(tmp_path), "synthetic failure for YBR001C")
 
 
 def test_download_copies_both_verified_mirror_workbooks(

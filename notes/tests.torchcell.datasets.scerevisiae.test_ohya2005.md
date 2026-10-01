@@ -23,3 +23,7 @@ Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256Mismat
 ## 2026.10.01 - Findings retired (issues #537, #546)
 
 Retired the duplicate, TCV, `create_experiment` and half-built-store findings: two spellings of one strain are refused, blank ORF rows give a counted warning, a `TCV101_X` column is refused as a base parameter, `create_experiment` raises, a non-numeric cell leaves no store. New `test_the_interned_store_resolves_to_exactly_the_inline_records` builds both layouts and compares every resolved record exactly, and pins the `$ref` layout. The Suzuki 2018 publication finding (#491) stays pinned.
+
+## 2026.10.01 - Review follow-up on PR #591
+
+The non-numeric-cell refusal also asserts no `data.csv` (written only after every record is built).

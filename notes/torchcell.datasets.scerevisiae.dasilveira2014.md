@@ -42,3 +42,8 @@ Previous behavior: a lipid that no WT control row measured was stored on mutants
 Fix: both cases are refused with a named `RuntimeError` before `data.csv` or the store is written, and names are uppercased before the `gene_set` and alias lookups. Measured on the pinned Table S4 (`Quant` sheet): 147 lipids, all measured in at least one WT row; 127 mutant rows, none all-blank, every name uppercase and resolved; the built records do not change.
 
 Tests: `test_a_lipid_no_wt_row_measured_is_refused_before_anything_is_written`, `test_padded_and_lowercase_systematic_names_resolve`, `test_an_all_blank_mutant_row_is_refused_before_anything_is_written`.
+
+## 2026.10.01 - Review follow-up on PR #591
+
+- Two mutant rows resolving to one ORF are refused with a named `RuntimeError` instead of keeping the first with a warning. Measured on the pinned Table S4: 0 such pairs of 127 mutant rows, so the built records do not change.
+- `lipid_chebi.csv` is written after every record is built, so a refused matrix writes nothing under `preprocess/` or `processed/`; on success the bytes are unchanged (`test_side_files`).

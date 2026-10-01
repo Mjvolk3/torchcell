@@ -32,3 +32,7 @@ Decisions:
 ## 2026.09.30 - --port 0 honored
 
 Issue #534 (fixed in the literature PR for #525, since both servers share the pattern). `main` used `args.port or config.port`, so `--port 0` fell back to `TC_DATA_PORT`. Now `config.port if args.port is None else args.port`, so 0 reaches `uvicorn.run` and binds an ephemeral port. Evidence: `test_main_runs_uvicorn_with_config_or_override_host_and_port` in [[tests.torchcell.datasets.test_datasets_server]] asserts the parsed `args.port` and the `uvicorn.run` stub call.
+
+## 2026.09.30 - Underscore directories are unknown keys
+
+Issue #564. `_list_raw_keys` hid `_`-prefixed directories from `/raw`, but `_raw_key_dir` resolved them, so a direct `/raw/_x/manifest`, `/files` or `/artifact/...` request still answered when the directory held a manifest. Now `_raw_key_dir` raises 404 `unknown citation key` for any name starting with `_`, the same answer as an absent key and the same rule PR #559 added to the literature server's `_key_dir`. No other route, status or schema changed. Evidence: `test_underscore_directory_is_an_unknown_key_even_with_a_manifest` in [[tests.torchcell.datasets.test_datasets_server]].

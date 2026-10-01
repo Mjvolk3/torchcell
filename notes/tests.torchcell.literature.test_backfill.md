@@ -15,3 +15,7 @@ Findings: an enriched manifest is `provenance_complete=True` even with no DOI or
 ## 2026.09.30 - Findings retired (issue #525)
 
 All five Phase 13 Findings are retired. Now asserted: an enriched manifest without DOI or title (either alone) is `provenance_complete=False`; `thesis.txt` and a nested `si/extra/notes.md` carry no `mineru-ocr` source while `paper.md` and `si/si1.md` do; `_bib`, an empty directory and one holding only empty subdirectories get no manifest and are absent from the report; a corrupt existing manifest raises `CorruptManifestError` with its exact path and is left in place; a skipped key reports its manifest's values; two items sharing `dupKey2020` raise `DuplicateCitationKeyError` with `(dupKey2020: A, B)`.
+
+## 2026.09.30 - SI sidecar roles pinned (issue #564)
+
+New `test_role_for_mineru_sidecars_under_si_are_ocr_roles` (sidecars under `si/` are `ocr_layout` / `ocr_image`; `si/si_data/images/plate.png`, `si/si_data/run_middle.json` and `si/Table_S2.json` stay `si_data`) and `test_captured_key_full_role_table` (the full `(path, role, source)` table of an `avsecEffectiveGeneExpression2021`-shaped key from `build_manifest`).

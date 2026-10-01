@@ -13,3 +13,7 @@ Fifteen to twenty-six tests, 86 to 100 percent. A 206 slice on a raw file still 
 ## 2026.09.30 - --port 0 Finding retired (issue #534)
 
 `test_main_runs_uvicorn_with_config_or_override_host_and_port` now asserts the parsed ports `[None, 9200, 0]` and that `--port 0` reaches `uvicorn.run` and the log line as `0.0.0.0:0`.
+
+## 2026.09.30 - Underscore key hole closed (issue #564)
+
+New `test_underscore_directory_is_an_unknown_key_even_with_a_manifest`: a `_sync_reports` directory holding a valid manifest and its listed file is absent from `/raw` and answers 404 `unknown citation key` on `/manifest`, `/files` and `/artifact/data/table.csv`, while the same manifest under `fakeKey2020` still serves the file.

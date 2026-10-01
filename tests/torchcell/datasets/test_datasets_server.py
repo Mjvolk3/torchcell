@@ -20,6 +20,11 @@ is 400, an unknown or escaping citation key is 404, and a manifest or index that
 parse is 500 (a key with no manifest stays a clean 404). ``--gen-key`` prints a
 ``TC_DATA_KEYS_FILE`` line and starts nothing; ``main`` hands ``uvicorn.run`` the config
 host and port unless overridden, and ``--port 0`` is passed through as 0.
+
+2026.09.30 (issue #564): an underscore-prefixed name is a service directory, never a
+citation key. ``/raw`` does not list it and every ``/raw/{key}/...`` route answers it 404
+``unknown citation key``, the same as an absent key, even when the directory holds a
+valid manifest and the file it lists (the literature server's ``_key_dir`` rule).
 """
 
 import argparse
@@ -207,6 +212,38 @@ def test_raw_keys_exclude_service_dirs(client: TestClient) -> None:
     resp = client.get("/raw", headers=HEADERS)
     assert resp.status_code == 200
     assert resp.json() == {"citation_keys": ["bareKey2021", "fakeKey2020"], "count": 2}
+
+
+def test_underscore_directory_is_an_unknown_key_even_with_a_manifest(
+    tmp_path: Path,
+) -> None:
+    raw = build_raw(tmp_path)
+    hidden = raw / "_sync_reports"
+    (hidden / "data").mkdir()
+    (hidden / "data" / "table.csv").write_bytes(RAW_CSV)
+    (hidden / "manifest.json").write_text(
+        (raw / "fakeKey2020" / "manifest.json").read_text()
+    )
+    config = DataServerConfig(
+        store_root=build_store(tmp_path),
+        raw_root=raw,
+        keys=DataKeys.from_pairs(f"mac:{GOOD_KEY}"),
+    )
+    http = TestClient(create_app(config))
+
+    assert http.get("/raw", headers=HEADERS).json() == {
+        "citation_keys": ["bareKey2021", "fakeKey2020"],
+        "count": 2,
+    }
+    for route in ("manifest", "files", "artifact/data/table.csv"):
+        resp = http.get(f"/raw/_sync_reports/{route}", headers=HEADERS)
+        assert (resp.status_code, resp.json()) == (
+            404,
+            {"detail": "unknown citation key"},
+        )
+    # The same manifest under a citation-key name is served.
+    listed = http.get("/raw/fakeKey2020/artifact/data/table.csv", headers=HEADERS)
+    assert (listed.status_code, listed.content) == (200, RAW_CSV)
 
 
 def test_raw_files_and_manifest_come_from_the_manifest(client: TestClient) -> None:

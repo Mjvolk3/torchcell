@@ -915,6 +915,35 @@ the index state's memory at 6.4M records (unmeasured). Untested further gains:
 readahead on the re-read, validation across worker processes, parallel Cypher
 partitions against the server residual, and the pointer layout's 4x smaller payload.
 
+### Query build stage 1 implemented: cached constants, indices written while streaming
+
+`Neo4jQueryRaw.process` (commit below) validates the environment once per distinct
+value (keyed by `$ref` id on the pointer layout, by its JSON on the inline one) and
+the reference once per distinct `ref_serialized` string, validates only the
+experiment per record with the cached environment model passed in, splices the
+cached environment and reference JSON into the record's JSON (the field order is the
+model's, enforced), and records each reference hash and each gene while writing, so
+`experiment_reference_index.json` and `gene_set.json` are written at the end and the
+two later passes are skipped. Caches empty at 200,000 entries, which bounds memory
+without changing output. `Neo4jCellDataset` and the aggregator are untouched.
+
+Equivalence: `tests/torchcell/data/test_neo4j_query_raw_single_pass.py` keeps the
+old per-record path inside the test and asserts every LMDB value, the index file and
+the gene set file byte-equal in both layouts, across batch boundaries and cache
+evictions; `scripts/single_pass_slice_check.py` (`results/single_pass_slice_check.csv`)
+does the same on the 21,184 real 033 records: all values, the index (1,303
+references, 22,535,709 bytes) and the gene set (5,582 genes) match in both layouts.
+
+Speed on that slice (ms per record, min of 3): old write 0.719 inline / 0.576
+pointer, old write plus the two passes 1.099 / 1.043; new `process` total 0.733 /
+0.583, of which the batch writes with every constant already cached are 0.208 /
+0.180. The slice carries 2,194 distinct environments in 21,184 records against
+6,232 in 6.39M, so at full scale the raw stage moves toward the cached row
+(hypothesis: 0.18 to 0.21 ms per record against 1.04 to 1.10). Behavior changes: a
+record whose genotype is a list fails while being written instead of in the later
+gene-set pass; the index builder validates only the reference of each group's
+representative. Stage 2 (the aggregation's grouping pass) is next.
+
 ### Duplicate node blobs removed (2026.09.30)
 
 `serialized_data` is gone from genotype, segregant genotype, perturbation, crispr construct, environment perturbation and all 13 phenotype classes (fitness, gene interaction, gene essentiality, synthetic lethality, synthetic rescue, calmorph, microarray / rnaseq / pseudobulk expression, visual score, metabolite, protein abundance, environment response), in `torchcell/adapters/cell_adapter.py` and `biocypher/config/torchcell_schema_config.yaml`. Each is a sub-object of the experiment record, so its full copy is in the Experiment blob or the interned constant it points to; the reference-side phenotype and environment perturbation nodes are sub-objects of the experiment reference blob. Node ids are still sha256 of the sub-object's model_dump, so ids and edges do not change.

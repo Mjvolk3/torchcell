@@ -1,0 +1,13 @@
+layout,path,ms_per_record_min_of_3,records,values_byte_identical,references,genes
+inline,old_write,0.7187,21184,21184,1303,5582
+inline,old_write_plus_two_passes,1.0989,21184,21184,1303,5582
+inline,new_process,0.7326,21184,21184,1303,5582
+inline,new_write_batches,0.3697,21184,21184,1303,5582
+inline,new_index_and_gene_set_files,0.3630,21184,21184,1303,5582
+inline,new_write_batches_warm_cache,0.2081,21184,21184,1303,5582
+pointer,old_write,0.5763,21184,21184,1303,5582
+pointer,old_write_plus_two_passes,1.0430,21184,21184,1303,5582
+pointer,new_process,0.5826,21184,21184,1303,5582
+pointer,new_write_batches,0.3720,21184,21184,1303,5582
+pointer,new_index_and_gene_set_files,0.2106,21184,21184,1303,5582
+pointer,new_write_batches_warm_cache,0.1799,21184,21184,1303,5582

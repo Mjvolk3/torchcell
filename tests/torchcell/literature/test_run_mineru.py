@@ -23,12 +23,13 @@ PDF's ``images/<stem>/``. A reference to a figure MinerU did not write exits 5 b
 anything is written and leaves no scratch. The runner prints ``MINERU_VERSION`` and
 the effective ``MINERU_DPI``.
 
-2026.10.01 (PR #585 review): the markdown is written only after the figures are in
-place, so a failed copy leaves the previous markdown and figures untouched. A kill
-later in the swap can leave the markdown referencing figures parked in the scratch's
-``.images.old``; the next run first puts them back (by the recorded swap phase) and
-then starts from a fresh scratch, so even a next run that fails leaves every
-reference of the markdown on disk resolvable.
+2026.10.01 (PR #585 reviews): the markdown and content list are replaced atomically and
+only after the figures are in place, so a failed copy leaves the previous markdown and
+figures untouched. A kill later can leave the markdown referencing figures parked in
+the scratch's ``.images.old``; the next run first moves them back (never deleting
+anything) and then starts from a fresh scratch, so even a next run that fails leaves
+every reference on disk resolvable. The kill tests kill the REAL runner at every
+counted filesystem operation, once and twice in a row.
 References are rewritten only in MinerU's three forms (``](images/``,
 ``<img src="images/``, ``"img_path": "images/``); prose URLs pass through.
 """
@@ -36,6 +37,8 @@ References are rewritten only in MinerU's three forms (``](images/``,
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import sys
 from collections.abc import Callable
 from pathlib import Path
@@ -438,45 +441,188 @@ def test_a_paper_rerun_keeps_another_root_pdfs_figures(
     assert _tree(root / "images") == ["SOM/s1.jpg"]
 
 
-@pytest.mark.parametrize(
-    ("phase", "in_dest", "expected"),
-    [
-        ("retiring", [], ["si1/old.jpg"]),
-        ("installing", ["new.jpg"], ["si1/old.jpg"]),
-        ("swapped", ["new.jpg"], ["si1/new.jpg", "si1/old.jpg"]),
-        (None, [], ["si1/old.jpg"]),
-    ],
-)
-def test_a_failed_rerun_after_a_kill_mid_swap_restores_the_old_figures(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    phase: str | None,
-    in_dest: list[str],
-    expected: list[str],
-) -> None:
-    """A kill mid-swap parked ``old.jpg`` in ``.images.old`` (``in_dest`` is what
-    had already arrived, ``phase`` what ``.swap_phase`` said; ``None`` is a kill
-    before the phase file existed). The next run then exits 5: the old markdown is
-    unchanged and every figure it references is back in ``images/si1``. Arrivals of
-    an ``installing`` kill are removed; after ``swapped`` both sets stay. No scratch.
+class _Killed(Exception):
+    """Raised by :class:`_Killer` in place of a filesystem operation."""
+
+
+class _Killer:
+    """Counts the runner's filesystem operations and kills the ``at``-th one.
+
+    Counted: ``Path.rename``, ``Path.write_text``, ``os.replace``,
+    ``shutil.copytree`` and ``shutil.rmtree``, only while ``active``. A killed
+    ``write_text`` first writes the first half of its text, as a kill inside the
+    write would leave the file. ``fired`` says whether the kill happened.
     """
-    fake = _install(monkeypatch, {"si1": ["old.jpg"]})
+
+    def __init__(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        self.active = False
+        self.count = 0
+        self.at = 0
+        self.fired = False
+        originals: dict[str, Callable[..., Any]] = {
+            "rename": Path.rename,
+            "write_text": Path.write_text,
+            "replace": os.replace,
+            "copytree": shutil.copytree,
+            "rmtree": shutil.rmtree,
+        }
+
+        def wrap(name: str) -> Callable[..., Any]:
+            original = originals[name]
+
+            def counted(*args: Any, **kwargs: Any) -> Any:
+                if self.active:
+                    self.count += 1
+                    if self.count == self.at:
+                        self.fired = True
+                        if name == "write_text":
+                            original(args[0], args[1][: len(args[1]) // 2], **kwargs)
+                        raise _Killed(f"{name} #{self.count}")
+                return original(*args, **kwargs)
+
+            return counted
+
+        monkeypatch.setattr(Path, "rename", wrap("rename"))
+        monkeypatch.setattr(Path, "write_text", wrap("write_text"))
+        monkeypatch.setattr(os, "replace", wrap("replace"))
+        monkeypatch.setattr(shutil, "copytree", wrap("copytree"))
+        monkeypatch.setattr(shutil, "rmtree", wrap("rmtree"))
+
+    def run(
+        self, monkeypatch: pytest.MonkeyPatch, pdf: Path, at: int, *extra: str
+    ) -> int | None:
+        """One runner call killed at operation ``at`` (0: never); None if killed."""
+        self.count, self.at, self.fired, self.active = 0, at, False, True
+        try:
+            return _run(monkeypatch, pdf, *extra)
+        except _Killed:
+            return None
+        finally:
+            self.active = False
+
+
+def _unresolved(si: Path) -> list[str]:
+    """Every figure reference in ``si1.md`` and its content list with no file."""
+    missing = []
+    for name in ("si1.md", "si1_content_list.json"):
+        for match in runner.IMAGE_REF.finditer((si / name).read_text()):
+            if not (si / "images" / match.group("name")).is_file():
+                missing.append(f"{name}: {match.group('name')}")
+    return missing
+
+
+def _kill_sequence(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, kills: list[int]
+) -> tuple[Path, list[bool]]:
+    """Run 1 writes figures a, b, c. Each later run writes d, e and is killed at
+    the given operation; a final run references a figure MinerU did not write and
+    exits 5. Returns the ``si`` directory and whether each kill fired.
+    """
+    figures = {"si1": ["a.jpg", "b.jpg", "c.jpg"]}
+    fake = _install(monkeypatch, figures)
+    killer = _Killer(monkeypatch)
     si = tmp_path / "ck" / "si"
     si1 = _pdf(si, "si1.pdf")
-    assert _run(monkeypatch, si1, "--images-dir", "images/si1") == 0
-    old_md = (si / "si1.md").read_text()
-    scratch = si / ".mineru_scratch_si1"
-    (scratch / ".images.old").mkdir(parents=True)
-    (si / "images" / "si1" / "old.jpg").rename(scratch / ".images.old" / "old.jpg")
-    for name in in_dest:
-        (si / "images" / "si1" / name).write_bytes(b"arrived")
-    if phase is not None:
-        (scratch / ".swap_phase").write_text(phase)
-
+    args = ("--images-dir", "images/si1")
+    assert killer.run(monkeypatch, si1, 0, *args) == 0
+    figures["si1"] = ["d.jpg", "e.jpg"]
+    fired = []
+    for at in kills:
+        killer.run(monkeypatch, si1, at, *args)
+        fired.append(killer.fired)
     fake.extra_refs = ["ghost.jpg"]
-    assert _run(monkeypatch, si1, "--images-dir", "images/si1") == 5
+    assert killer.run(monkeypatch, si1, 0, *args) == 5
+    return si, fired
 
-    assert (si / "si1.md").read_text() == old_md == "# si1\n![](images/si1/old.jpg)\n"
-    assert _tree(si / "images") == expected
-    assert (si / "images" / "si1" / "old.jpg").read_bytes() == b"si1:old.jpg"
-    assert not scratch.exists()
+
+def test_any_single_kill_then_a_failing_rerun_leaves_every_reference_resolvable(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The real runner is killed at each of its counted operations in turn (the
+    MinerU writes, the figure copy, every move out of and into ``images/si1``, the
+    markdown and content-list replacement, the scratch removal), then a run exits 5.
+    After every such sequence each reference in the markdown and content list on disk
+    resolves, and no scratch remains. The loop stops at the first count that no
+    longer fires, which must be past 12 operations.
+    """
+    at = 1
+    while True:
+        with monkeypatch.context() as patch:
+            si, (fired,) = _kill_sequence(patch, tmp_path / f"k{at}", [at])
+        if not fired:
+            break
+        assert _unresolved(si) == [], f"kill at {at}"
+        assert not (si / ".mineru_scratch_si1").exists()
+        at += 1
+    assert at > 12
+
+
+def test_any_double_kill_then_a_failing_rerun_leaves_every_reference_resolvable(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Two consecutive killed runs (every pair of kill points, the second run's
+    kills include the move-back of the first run's parked figures and the scratch
+    removal), then a run that exits 5: every reference on disk resolves. This is
+    the sequence where a recovery that deleted files lost the only copy of a, b, c.
+    """
+    pairs = 0
+    first = 1
+    while True:
+        second = 1
+        while True:
+            with monkeypatch.context() as patch:
+                si, fired = _kill_sequence(
+                    patch, tmp_path / f"k{first}-{second}", [first, second]
+                )
+            if not fired[1]:
+                break
+            assert _unresolved(si) == [], f"kills at {first}, {second}"
+            pairs += 1
+            second += 1
+        if not fired[0]:
+            break
+        first += 1
+    assert pairs > 150
+
+
+def test_a_kill_during_install_then_during_recovery_keeps_the_old_figures(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The reviewer's sequence: run 2 is killed after moving a, b, c aside and
+    ``d.jpg`` in; run 3 is killed while moving the parked figures back (after
+    ``a.jpg``); run 4 exits 5. ``images/si1`` holds a, b, c (and the orphan d), and
+    the old markdown, which references a, b, c, resolves.
+    """
+    figures = {"si1": ["a.jpg", "b.jpg", "c.jpg"]}
+    fake = _install(monkeypatch, figures)
+    si = tmp_path / "ck" / "si"
+    si1 = _pdf(si, "si1.pdf")
+    args = ("--images-dir", "images/si1")
+    assert _run(monkeypatch, si1, *args) == 0
+    figures["si1"] = ["d.jpg", "e.jpg"]
+    original = Path.rename
+    seen: list[tuple[str, str]] = []
+
+    def killing_rename(self: Path, target: Any) -> Any:
+        seen.append((self.parent.name, Path(target).parent.name))
+        if seen[-1] == (".images.new", "si1") and Path(target).name == "e.jpg":
+            raise _Killed("installing")
+        if seen[-1] == (".images.old", "si1") and Path(target).name == "b.jpg":
+            raise _Killed("restoring")
+        return original(self, target)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "rename", killing_rename)
+        with pytest.raises(_Killed, match="installing"):
+            _run(monkeypatch, si1, *args)
+        assert _tree(si / "images") == ["si1/d.jpg"]
+        with pytest.raises(_Killed, match="restoring"):
+            _run(monkeypatch, si1, *args)
+    assert _tree(si / "images") == ["si1/a.jpg", "si1/d.jpg"]
+    fake.extra_refs = ["ghost.jpg"]
+    assert _run(monkeypatch, si1, *args) == 5
+    assert _tree(si / "images") == ["si1/a.jpg", "si1/b.jpg", "si1/c.jpg", "si1/d.jpg"]
+    assert (si / "si1.md").read_text() == (
+        "# si1\n![](images/si1/a.jpg)\n![](images/si1/b.jpg)\n![](images/si1/c.jpg)\n"
+    )
+    assert _unresolved(si) == []

@@ -17,3 +17,7 @@ Added the crash re-run tests (failed copy; kill between the moves), the `SOM.pdf
 ## 2026.10.01 - Kill mid-swap then a failing re-run
 
 Parametrized over the recorded phase (`retiring`, `installing`, `swapped`, none): a kill parks `old.jpg` in `.images.old`, the next run exits 5, and the old markdown is unchanged with every figure it references back in `images/si1` (arrivals of an `installing` kill removed, both sets after `swapped`), and no scratch remains. The header no longer claims a failed swap always leaves the previous markdown with its figures.
+
+## 2026.10.01 - Real kills
+
+Replaced the hand-built post-kill states with `_Killer`, which kills the k-th `Path.rename`, `Path.write_text` (after writing half its text), `os.replace`, `shutil.copytree` or `shutil.rmtree` of the real runner. `test_any_single_kill_...` and `test_any_double_kill_...` loop over every kill point (and every pair) followed by an exit-5 run and assert every reference in the markdown and content list resolves; `test_a_kill_during_install_then_during_recovery_keeps_the_old_figures` pins the reviewer's double-kill sequence with exact file lists.

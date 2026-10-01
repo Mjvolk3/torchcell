@@ -1,0 +1,22 @@
+# Round 9, GPU: the compound as a Type I operator on the strain's perturbed cell state
+# (head: operator in train_factorized.py) against the factorized bilinear head on the
+# same encoder: one transformer layer, 9 heads, prior weight 0.001 (the small round-8
+# arms reach the ridge regime there; L8 did not), 100 epochs (the 1-layer arm overfits
+# past epoch 30 to 70, selection on the validation compounds), one seed, five folds on
+# each of fold seeds 0, 1, 2 so the comparison against nested ridge pairs all 123
+# compound evaluations. Card A: the operator. PARALLEL=2.
+- {name: op_L1_lam1e-3_fs0_f0, folds: [0], cgt_layers: 1, cgt_lambda: 0.001, epochs: 100, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, head: operator, fold_seed: 0}
+- {name: op_L1_lam1e-3_fs0_f1, folds: [1], cgt_layers: 1, cgt_lambda: 0.001, epochs: 100, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, head: operator, fold_seed: 0}
+- {name: op_L1_lam1e-3_fs0_f2, folds: [2], cgt_layers: 1, cgt_lambda: 0.001, epochs: 100, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, head: operator, fold_seed: 0}
+- {name: op_L1_lam1e-3_fs0_f3, folds: [3], cgt_layers: 1, cgt_lambda: 0.001, epochs: 100, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, head: operator, fold_seed: 0}
+- {name: op_L1_lam1e-3_fs0_f4, folds: [4], cgt_layers: 1, cgt_lambda: 0.001, epochs: 100, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, head: operator, fold_seed: 0}
+- {name: op_L1_lam1e-3_fs1_f0, folds: [0], cgt_layers: 1, cgt_lambda: 0.001, epochs: 100, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, head: operator, fold_seed: 1}
+- {name: op_L1_lam1e-3_fs1_f1, folds: [1], cgt_layers: 1, cgt_lambda: 0.001, epochs: 100, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, head: operator, fold_seed: 1}
+- {name: op_L1_lam1e-3_fs1_f2, folds: [2], cgt_layers: 1, cgt_lambda: 0.001, epochs: 100, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, head: operator, fold_seed: 1}
+- {name: op_L1_lam1e-3_fs1_f3, folds: [3], cgt_layers: 1, cgt_lambda: 0.001, epochs: 100, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, head: operator, fold_seed: 1}
+- {name: op_L1_lam1e-3_fs1_f4, folds: [4], cgt_layers: 1, cgt_lambda: 0.001, epochs: 100, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, head: operator, fold_seed: 1}
+- {name: op_L1_lam1e-3_fs2_f0, folds: [0], cgt_layers: 1, cgt_lambda: 0.001, epochs: 100, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, head: operator, fold_seed: 2}
+- {name: op_L1_lam1e-3_fs2_f1, folds: [1], cgt_layers: 1, cgt_lambda: 0.001, epochs: 100, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, head: operator, fold_seed: 2}
+- {name: op_L1_lam1e-3_fs2_f2, folds: [2], cgt_layers: 1, cgt_lambda: 0.001, epochs: 100, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, head: operator, fold_seed: 2}
+- {name: op_L1_lam1e-3_fs2_f3, folds: [3], cgt_layers: 1, cgt_lambda: 0.001, epochs: 100, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, head: operator, fold_seed: 2}
+- {name: op_L1_lam1e-3_fs2_f4, folds: [4], cgt_layers: 1, cgt_lambda: 0.001, epochs: 100, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, head: operator, fold_seed: 2}

@@ -535,10 +535,17 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
         were OOM-killed at Bloom's node pass; Bloom alone peaked at 70.5 GB (job 2934).
         A forked worker finds the table in the module cache it inherited; a spawned
         process loads it from disk once.
+
+        The cached ``_experiment_reference_index`` is dropped for the same reason: one
+        member index per record, 20.7M integers for Costanzo, which every chunk view
+        (a ``copy.copy``) and so every pool task carried, 103.5 MB per task pickled by
+        the parent's feeder thread and unpickled by the worker. The property recomputes
+        or reloads it from JSON when a copy ever needs it.
         """
         state = self.__dict__.copy()
         state["_interned"] = None
         state["_validated_interned"] = {}
+        state["_experiment_reference_index"] = None
         return state
 
     def _open_write_lmdb(self, path: str) -> tuple[Any, Any]:

@@ -168,15 +168,14 @@
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="n">ParsedGenome</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">genome</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="o">=</span> <span class="n">model_name</span>
+        <span class="c1"># LAZY: PyG's InMemoryDataset.__init__ calls process() from inside</span>
+        <span class="c1"># super().__init__() when the store is absent, so the backbone is built there</span>
+        <span class="c1"># (and only there); a store already on disk is loaded without building it.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="p">:</span> <span class="n">NucleotideTransformer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">)</span>
 
         <span class="c1"># Conditionally load the data</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-                <span class="c1"># Initialize the language model</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_model</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="p">()</span>
             <span class="c1"># TODO me might consider adding this to others</span>
             <span class="c1"># only her bc computed on delta.</span>
             <span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda"</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="p">)</span>
@@ -220,6 +219,9 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span>
 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_model</span><span class="p">()</span>
+
         <span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="s2">"five_prime"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="ow">or</span> <span class="s2">"three_prime"</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span>
             <span class="n">window_method</span><span class="p">,</span> <span class="n">window_size</span><span class="p">,</span> <span class="n">has_special_codon</span><span class="p">,</span> <span class="n">allow_undersize</span> <span class="o">=</span> <span class="p">(</span>
@@ -240,8 +242,11 @@
             <span class="n">sequence</span> <span class="o">=</span> <span class="n">genome</span><span class="p">[</span><span class="n">gene_id</span><span class="p">]</span>
 
             <span class="k">if</span> <span class="s2">"three_prime"</span> <span class="ow">in</span> <span class="n">window_method</span> <span class="ow">or</span> <span class="s2">"five_prime"</span> <span class="ow">in</span> <span class="n">window_method</span><span class="p">:</span>
+                <span class="c1"># has_special_codon is include_start_codon for window_five_prime and</span>
+                <span class="c1"># include_stop_codon for window_three_prime (the second positional),</span>
+                <span class="c1"># the same flag the fungal up/down dataset passes.</span>
                 <span class="n">dna_selection</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="n">window_method</span><span class="p">)(</span>
-                    <span class="n">window_size</span><span class="p">,</span> <span class="n">allow_undersize</span><span class="o">=</span><span class="n">allow_undersize</span>
+                    <span class="n">window_size</span><span class="p">,</span> <span class="n">has_special_codon</span><span class="p">,</span> <span class="n">allow_undersize</span><span class="o">=</span><span class="n">allow_undersize</span>
                 <span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">dna_selection</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="n">window_method</span><span class="p">)(</span>
@@ -258,9 +263,14 @@
             <span class="n">batch_embeddings</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span><span class="n">batch_sequences</span><span class="p">,</span> <span class="n">mean_embedding</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="n">embeddings_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">batch_embeddings</span><span class="p">)</span>
 
+        <span class="c1"># The backbone's mean embedding is [batch, dim]; the concatenation is</span>
+        <span class="c1"># [n_genes, dim] and each gene stores its row as [1, dim], so the collate is</span>
+        <span class="c1"># [n_genes, dim] and integer and gene-id lookup both return the gene's [1, dim].</span>
         <span class="n">embeddings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">embeddings_list</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">gene_id</span><span class="p">,</span> <span class="n">dna_selection</span><span class="p">,</span> <span class="n">embedding</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">gene_ids</span><span class="p">,</span> <span class="n">sequences</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">gene_id</span><span class="p">,</span> <span class="n">dna_selection</span><span class="p">,</span> <span class="n">embedding</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">gene_ids</span><span class="p">,</span> <span class="n">sequences</span><span class="p">,</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">):</span>
             <span class="c1"># Create or update the dna_window dictionary</span>
             <span class="n">dna_window_dict</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span> <span class="n">dna_selection</span><span class="p">}</span>
 

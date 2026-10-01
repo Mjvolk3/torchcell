@@ -121,7 +121,9 @@
 <span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/random_embedding</span>
 <span class="c1"># Test file: tests/torchcell/datasets/test_random_embedding.py</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
@@ -135,6 +137,8 @@
     <span class="n">SCerevisiaeGene</span><span class="p">,</span>
     <span class="n">SCerevisiaeGenome</span><span class="p">,</span>
 <span class="p">)</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="RandomEmbeddingDataset">
@@ -203,28 +207,45 @@
         <span class="p">)</span></div>
 
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">partial_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Path of the in-progress chunk file, beside (never at) the final store."""</span>
+        <span class="k">return</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">.partial.pt"</span><span class="p">)</span>
+
 <div class="viewcode-block" id="RandomEmbeddingDataset.process">
 <a class="viewcode-back" href="../../../generated/torchcell.datasets.RandomEmbeddingDataset.html#torchcell.datasets.RandomEmbeddingDataset.process">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Generate random embeddings per gene and save them in batched chunks."""</span>
+<span class="w">        </span><span class="sd">"""Generate random embeddings per gene and save them in batched chunks.</span>
+
+<span class="sd">        Rows are drawn from a private ``torch.Generator`` seeded with 42, so the</span>
+<span class="sd">        store is the seed-42 stream and the caller's global RNG is left untouched.</span>
+<span class="sd">        Chunks are written to ``partial_path``; a chunk file left by an interrupted</span>
+<span class="sd">        build is removed with a warning, since the build restarts at the first gene.</span>
+<span class="sd">        """</span>
         <span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="p">(</span><span class="n">window_method</span><span class="p">,</span> <span class="n">window_size</span><span class="p">,</span> <span class="n">is_max_size</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MODEL_TO_WINDOW</span><span class="p">[</span>
             <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">)</span>
         <span class="p">]</span>
 
-        <span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>  <span class="c1"># Set a fixed seed for reproducibility</span>
+        <span class="n">generator</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Generator</span><span class="p">()</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partial_path</span><span class="p">):</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Removing partial chunk file </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partial_path</span><span class="si">}</span><span class="s2"> left by an "</span>
+                <span class="s2">"interrupted build; rebuilding from the first gene."</span>
+            <span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partial_path</span><span class="p">)</span>
 
         <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">gene_id</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">)):</span>
             <span class="n">sequence</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGene</span><span class="p">,</span> <span class="n">genome</span><span class="p">[</span><span class="n">gene_id</span><span class="p">])</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">window_size</span><span class="p">:</span>
                 <span class="n">cds_sequence</span> <span class="o">=</span> <span class="n">sequence</span><span class="o">.</span><span class="n">cds</span><span class="o">.</span><span class="n">seq</span>
-                <span class="n">embeddings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">window_size</span><span class="p">)</span>  <span class="c1"># Random values between 0 and 1</span>
+                <span class="n">embeddings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">window_size</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">)</span>
                 <span class="n">dna_selection</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="n">window_method</span><span class="p">)(</span><span class="nb">len</span><span class="p">(</span><span class="n">cds_sequence</span><span class="p">))</span>
                 <span class="n">dna_window_dict</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span> <span class="n">dna_selection</span><span class="p">}</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">dna_selection</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="n">window_method</span><span class="p">)(</span><span class="n">window_size</span><span class="p">)</span>
-                <span class="n">embeddings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">window_size</span><span class="p">)</span>  <span class="c1"># Random values between 0 and 1</span>
+                <span class="n">embeddings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">window_size</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">generator</span><span class="p">)</span>
                 <span class="n">dna_window_dict</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span> <span class="n">dna_selection</span><span class="p">}</span>
 
             <span class="n">data</span> <span class="o">=</span> <span class="n">Data</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">gene_id</span><span class="p">,</span> <span class="n">dna_windows</span><span class="o">=</span><span class="n">dna_window_dict</span><span class="p">)</span>
@@ -238,18 +259,15 @@
             <span class="n">data_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">):</span>
-                <span class="c1"># Load existing data from the file if it exists</span>
-                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-                    <span class="n">existing_data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span>
-                    <span class="p">)</span>
-                    <span class="n">existing_data_list</span> <span class="o">=</span> <span class="n">existing_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"data_list"</span><span class="p">,</span> <span class="p">[])</span>
-                    <span class="n">data_list</span> <span class="o">=</span> <span class="n">existing_data_list</span> <span class="o">+</span> <span class="n">data_list</span>
+                <span class="c1"># Merge the chunks this run already wrote, then consume the file</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partial_path</span><span class="p">):</span>
+                    <span class="n">existing_data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partial_path</span><span class="p">,</span> <span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                    <span class="n">data_list</span> <span class="o">=</span> <span class="n">existing_data</span><span class="p">[</span><span class="s2">"data_list"</span><span class="p">]</span> <span class="o">+</span> <span class="n">data_list</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partial_path</span><span class="p">)</span>
                 <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">):</span>
                     <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">collate</span><span class="p">(</span><span class="n">data_list</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># Save the updated data back to the file</span>
-                    <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">({</span><span class="s2">"data_list"</span><span class="p">:</span> <span class="n">data_list</span><span class="p">},</span> <span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">({</span><span class="s2">"data_list"</span><span class="p">:</span> <span class="n">data_list</span><span class="p">},</span> <span class="bp">self</span><span class="o">.</span><span class="n">partial_path</span><span class="p">)</span>
                 <span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span></div>
 </div>
 

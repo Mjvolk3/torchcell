@@ -146,8 +146,8 @@
     <span class="n">MODEL_TO_WINDOW</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"prot_t5_xl_uniref50_all"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
         <span class="s2">"prot_t5_xl_uniref50_no_dubious_uncharacterized"</span><span class="p">:</span> <span class="p">[</span>
-            <span class="s2">"dubious"</span><span class="p">,</span>
-            <span class="s2">"uncharacterized"</span><span class="p">,</span>
+            <span class="s2">"Dubious"</span><span class="p">,</span>
+            <span class="s2">"Uncharacterized"</span><span class="p">,</span>
         <span class="p">],</span>
         <span class="s2">"prot_t5_xl_uniref50_no_dubious"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"Dubious"</span><span class="p">],</span>
         <span class="s2">"prot_t5_xl_uniref50_no_uncharacterized"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"Uncharacterized"</span><span class="p">],</span>
@@ -174,9 +174,6 @@
         <span class="c1">#     self.processed_paths[0], map_location=self.device</span>
         <span class="c1"># )</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_transformer</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">process</span><span class="p">()</span>
             <span class="c1"># HACK we send cpu because all data needs to be on cpu for lightning</span>
             <span class="c1"># lightning automatically moves</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">slices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
@@ -206,11 +203,17 @@
 <div class="viewcode-block" id="ProtT5Dataset.process">
 <a class="viewcode-back" href="../../../generated/torchcell.datasets.ProtT5Dataset.html#torchcell.datasets.ProtT5Dataset.process">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Compute ProtT5 embeddings for all genes and save the processed data."""</span>
-        <span class="c1"># HACK</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_model</span><span class="p">()</span>
+<span class="w">        </span><span class="sd">"""Compute ProtT5 embeddings for all genes and save the processed data.</span>
+
+<span class="sd">        Returns before building a backbone when no model is named. Each gene stores</span>
+<span class="sd">        a ``[1, hidden]`` float32 CPU tensor, ``hidden`` read from the backbone's</span>
+<span class="sd">        config (zeros for an excluded ORF classification), so the collate is one</span>
+<span class="sd">        ``[n_genes, hidden]`` tensor.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span>
             <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_model</span><span class="p">()</span>
+        <span class="n">hidden_size</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">hidden_size</span>
 
         <span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -228,12 +231,13 @@
                 <span class="ow">and</span> <span class="n">orf_classification</span> <span class="ow">in</span> <span class="n">exclude_classifications</span>
             <span class="p">):</span>
                 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"zeros for </span><span class="si">{</span><span class="n">gene_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-                <span class="n">embeddings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1024</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+                <span class="n">embeddings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">embed</span><span class="p">(</span>
-                    <span class="p">[</span><span class="n">protein_sequence</span><span class="p">],</span> <span class="n">mean_embedding</span><span class="o">=</span><span class="kc">True</span>
+                <span class="n">embeddings</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">embed</span><span class="p">([</span><span class="n">protein_sequence</span><span class="p">],</span> <span class="n">mean_embedding</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+                    <span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
                 <span class="p">)</span>
-                <span class="n">embeddings</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>  <span class="c1"># Convert to numpy array</span>
 
             <span class="n">protein_data_dict</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span> <span class="n">protein_sequence</span><span class="p">}</span>
 

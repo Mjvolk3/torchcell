@@ -146,6 +146,8 @@
 <dt class="sig sig-object py" id="torchcell.datasets.Esm2Dataset.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/esm2.html#Esm2Dataset.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.Esm2Dataset.process" title="Link to this definition"></a></dt>
 <dd><p>Compute ESM2 embeddings for each gene and save the processed dataset.</p>
+<p>Each gene stores a <code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">hidden]</span></code> float32 row (zeros for an excluded ORF
+classification), so the collate is <code class="docutils literal notranslate"><span class="pre">[n_genes,</span> <span class="pre">hidden]</span></code>.</p>
 </dd></dl>
 
 </dd></dl>

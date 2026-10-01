@@ -139,7 +139,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">load_model</span><span class="p">()</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_check_and_download_model</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_and_download_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">MODEL_NAME</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Download the pretrained model and tokenizer if not already cached."""</span>
         <span class="c1"># Define the directory where you want the model to be saved</span>
         <span class="n">script_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
@@ -151,17 +151,17 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">target_directory</span><span class="p">):</span>
             <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">target_directory</span><span class="p">)</span>
 
-        <span class="n">model_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target_directory</span><span class="p">,</span> <span class="n">MODEL_NAME</span><span class="p">)</span>
+        <span class="n">model_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">target_directory</span><span class="p">,</span> <span class="n">model_name</span><span class="p">)</span>
 
         <span class="c1"># Check if the model has already been downloaded</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">model_directory</span><span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">MODEL_NAME</span><span class="si">}</span><span class="s2"> model already downloaded."</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2"> model already downloaded."</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Downloading </span><span class="si">{</span><span class="n">MODEL_NAME</span><span class="si">}</span><span class="s2"> model to </span><span class="si">{</span><span class="n">model_directory</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Downloading </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2"> model to </span><span class="si">{</span><span class="n">model_directory</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
             <span class="c1"># tokenizer</span>
-            <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">MODEL_NAME</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="n">target_directory</span><span class="p">)</span>  <span class="c1"># type: ignore[no-untyped-call]  # transformers from_pretrained is untyped</span>
+            <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="n">target_directory</span><span class="p">)</span>  <span class="c1"># type: ignore[no-untyped-call, unused-ignore]  # AutoTokenizer.from_pretrained is untyped in transformers 4.57 and typed in CI's newer transformers</span>
             <span class="c1"># model</span>
-            <span class="n">AutoModelForMaskedLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">MODEL_NAME</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="n">target_directory</span><span class="p">)</span>
+            <span class="n">AutoModelForMaskedLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="n">target_directory</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">"Download finished."</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -173,13 +173,13 @@
 <div class="viewcode-block" id="NucleotideTransformer.load_model">
 <a class="viewcode-back" href="../../../generated/torchcell.models.nucleotide_transformer.NucleotideTransformer.html#torchcell.models.nucleotide_transformer.NucleotideTransformer.load_model">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">MODEL_NAME</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Load the tokenizer and model onto the selected device."""</span>
+<span class="w">        </span><span class="sd">"""Load the named Hub checkpoint's tokenizer and model onto the device."""</span>
         <span class="c1"># Check and download the model if necessary</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_and_download_model</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_and_download_model</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
 
         <span class="c1"># Load the tokenizer and the model</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">MODEL_NAME</span><span class="p">)</span>  <span class="c1"># type: ignore[no-untyped-call]  # transformers from_pretrained is untyped</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForMaskedLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">MODEL_NAME</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>  <span class="c1"># type: ignore[no-untyped-call, unused-ignore]  # AutoTokenizer.from_pretrained is untyped in transformers 4.57 and typed in CI's newer transformers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForMaskedLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
 
         <span class="c1"># Move the model to the selected device</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></div>
@@ -190,7 +190,11 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">embed</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">sequences</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">mean_embedding</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Embed one or more DNA sequences, optionally returning mean embeddings."""</span>
+<span class="w">        </span><span class="sd">"""Embed DNA sequences: per-token ``[batch, tokens, dim]`` or mean ``[batch, dim]``.</span>
+
+<span class="sd">        With ``mean_embedding`` the last hidden state is averaged over the non-pad</span>
+<span class="sd">        tokens of each sequence.</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sequences</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">sequences</span> <span class="o">=</span> <span class="p">[</span><span class="n">sequences</span><span class="p">]</span>  <span class="c1"># Convert single string to a list</span>
 
@@ -222,7 +226,6 @@
             <span class="n">embeddings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">attention_mask</span> <span class="o">*</span> <span class="n">embeddings</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
                 <span class="n">attention_mask</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">2</span>
             <span class="p">)</span>
-            <span class="n">embeddings</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">embeddings</span></div>
 </div>

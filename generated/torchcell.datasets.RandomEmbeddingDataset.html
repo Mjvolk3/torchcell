@@ -142,10 +142,20 @@
 <dd><p>Raise; random embeddings need no model initialization.</p>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.datasets.RandomEmbeddingDataset.partial_path">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">partial_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><a class="headerlink" href="#torchcell.datasets.RandomEmbeddingDataset.partial_path" title="Link to this definition"></a></dt>
+<dd><p>Path of the in-progress chunk file, beside (never at) the final store.</p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datasets.RandomEmbeddingDataset.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/random_embedding.html#RandomEmbeddingDataset.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.RandomEmbeddingDataset.process" title="Link to this definition"></a></dt>
 <dd><p>Generate random embeddings per gene and save them in batched chunks.</p>
+<p>Rows are drawn from a private <code class="docutils literal notranslate"><span class="pre">torch.Generator</span></code> seeded with 42, so the
+store is the seed-42 stream and the caller’s global RNG is left untouched.
+Chunks are written to <code class="docutils literal notranslate"><span class="pre">partial_path</span></code>; a chunk file left by an interrupted
+build is removed with a warning, since the build restarts at the first gene.</p>
 </dd></dl>
 
 </dd></dl>

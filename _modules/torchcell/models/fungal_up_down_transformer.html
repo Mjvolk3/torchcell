@@ -160,7 +160,16 @@
 <span class="sd">            target_layer (int | tuple[int, ...], optional): The layer(s) of the</span>
 <span class="sd">                model to be used for embeddings. If a tuple, embeddings are</span>
 <span class="sd">                averaged over the range of layers. Defaults to (8,).</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If ``model_name`` is not in ``VALID_MODEL_NAMES``; raised</span>
+<span class="sd">                before anything is downloaded or loaded.</span>
 <span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">model_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALID_MODEL_NAMES</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Invalid model_name '</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">'. "</span>
+                <span class="sa">f</span><span class="s2">"Valid options are: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">VALID_MODEL_NAMES</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">target_layer</span> <span class="o">=</span> <span class="n">target_layer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
@@ -191,7 +200,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Downloading </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2"> model to </span><span class="si">{</span><span class="n">model_directory</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
             <span class="c1"># tokenizer</span>
-            <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>  <span class="c1"># type: ignore[no-untyped-call]  # transformers from_pretrained is untyped</span>
+            <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>  <span class="c1"># type: ignore[no-untyped-call, unused-ignore]  # AutoTokenizer.from_pretrained is untyped in transformers 4.57 and typed in CI's newer transformers</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">hugging_model_dir</span><span class="p">,</span>
                 <span class="n">revision</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
                 <span class="n">cache_dir</span><span class="o">=</span><span class="n">target_directory</span><span class="p">,</span>
@@ -209,7 +218,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">load_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">"""Load the model and tokenizer used for embedding sequences."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_and_download_model</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>  <span class="c1"># type: ignore[no-untyped-call]  # transformers from_pretrained is untyped</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>  <span class="c1"># type: ignore[no-untyped-call, unused-ignore]  # AutoTokenizer.from_pretrained is untyped in transformers 4.57 and typed in CI's newer transformers</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">hugging_model_dir</span><span class="p">,</span> <span class="n">revision</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForMaskedLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
@@ -311,7 +320,7 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"downstream"</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">sequence_length</span> <span class="o">&lt;</span> <span class="mi">11</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">"Seq len for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2"> must be &gt;  11."</span>
+                        <span class="sa">f</span><span class="s2">"Seq len for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2"> must be &gt;= 11."</span>
                         <span class="sa">f</span><span class="s2">" Provided: </span><span class="si">{</span><span class="n">sequence_length</span><span class="si">}</span><span class="s2">"</span>
                     <span class="p">)</span>
                 <span class="k">elif</span> <span class="n">sequence_length</span> <span class="o">&gt;</span> <span class="n">desired_length</span><span class="p">:</span>
@@ -346,10 +355,10 @@
                     <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">target_layer</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">:]),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span>
                 <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_layer</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_layer</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">):</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s2">"Target layer </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">target_layer</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> is out of range."</span>
-                        <span class="sa">f</span><span class="s2">" Max layer is </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span>
+                        <span class="sa">f</span><span class="s2">" Max layer is </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">hidden_states</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">."</span>
                     <span class="p">)</span>
                 <span class="n">embedding</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
                     <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>

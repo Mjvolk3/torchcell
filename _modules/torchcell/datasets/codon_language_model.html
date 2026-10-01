@@ -121,7 +121,9 @@
 
 <span class="sd">"""Dataset producing CaLM codon language-model embeddings for yeast genes."""</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
@@ -142,14 +144,22 @@
     <span class="c1"># deferred to initialize_model() so importing torchcell.datasets never requires it.</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">calm</span><span class="w"> </span><span class="kn">import</span> <span class="n">CaLM</span>
 
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
 
 <div class="viewcode-block" id="CalmDataset">
 <a class="viewcode-back" href="../../../generated/torchcell.datasets.CalmDataset.html#torchcell.datasets.CalmDataset">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CalmDataset</span><span class="p">(</span><span class="n">BaseEmbeddingDataset</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Embedding dataset that runs the CaLM model over gene CDS sequences."""</span>
+<span class="w">    </span><span class="sd">"""Embedding dataset that runs the CaLM model over gene CDS sequences.</span>
 
-    <span class="c1"># 3072 = 1024 * 3</span>
-    <span class="n">MODEL_TO_WINDOW</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"calm"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"window"</span><span class="p">,</span> <span class="mi">3072</span><span class="p">,</span> <span class="kc">False</span><span class="p">)}</span>
+<span class="sd">    CaLM tokenizes its input into codons, so each gene embeds its spliced CDS (the</span>
+<span class="sd">    ``orf_coding`` FASTA record), truncated to the first 3,072 nt (1,024 codons,</span>
+<span class="sd">    in frame from the start codon) when longer. ``dna_windows`` stores exactly the</span>
+<span class="sd">    string embedded.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># 3072 = 1024 * 3: the most CDS nucleotides embedded per gene</span>
+    <span class="n">MODEL_TO_WINDOW</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"calm"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"cds"</span><span class="p">,</span> <span class="mi">3072</span><span class="p">)}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -200,34 +210,40 @@
             <span class="k">return</span> <span class="n">ParsedGenome</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span></div>
 
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">partial_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Path of the in-progress chunk file, beside (never at) the final store."""</span>
+        <span class="k">return</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">.partial.pt"</span><span class="p">)</span>
+
 <div class="viewcode-block" id="CalmDataset.process">
 <a class="viewcode-back" href="../../../generated/torchcell.datasets.CalmDataset.html#torchcell.datasets.CalmDataset.process">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Embed each gene's CDS with CaLM and save the processed data list."""</span>
+<span class="w">        </span><span class="sd">"""Embed each gene's CDS with CaLM and save the processed data list.</span>
+
+<span class="sd">        Chunks are written to ``partial_path``; a chunk file left by an interrupted</span>
+<span class="sd">        build is removed with a warning, since the build restarts at the first gene.</span>
+<span class="sd">        """</span>
         <span class="c1"># `self.model` is lazily built: it is None unless the caller initialized it because</span>
         <span class="c1"># embeddings actually need computing (see __init__). Reaching process() without it</span>
         <span class="c1"># is a programming error, not a runtime condition.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_model</span><span class="p">()</span>
         <span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="p">(</span><span class="n">window_method</span><span class="p">,</span> <span class="n">window_size</span><span class="p">,</span> <span class="n">is_max_size</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MODEL_TO_WINDOW</span><span class="p">[</span>
-            <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">)</span>
-        <span class="p">]</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">window_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MODEL_TO_WINDOW</span><span class="p">[</span><span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partial_path</span><span class="p">):</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Removing partial chunk file </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partial_path</span><span class="si">}</span><span class="s2"> left by an "</span>
+                <span class="s2">"interrupted build; rebuilding from the first gene."</span>
+            <span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partial_path</span><span class="p">)</span>
 
         <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">gene_id</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">)):</span>
             <span class="n">sequence</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGene</span><span class="p">,</span> <span class="n">genome</span><span class="p">[</span><span class="n">gene_id</span><span class="p">])</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">window_size</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">sequence</span><span class="o">.</span><span class="n">cds</span><span class="o">.</span><span class="n">seq</span><span class="p">))</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">==</span> <span class="mi">0</span>
-                <span class="n">cds_sequence</span> <span class="o">=</span> <span class="n">sequence</span><span class="o">.</span><span class="n">cds</span><span class="o">.</span><span class="n">seq</span>
-                <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">embed_sequence</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">cds_sequence</span><span class="p">))</span>
-                <span class="n">dna_selection</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="n">window_method</span><span class="p">)(</span><span class="nb">len</span><span class="p">(</span><span class="n">cds_sequence</span><span class="p">))</span>
-                <span class="n">dna_window_dict</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span> <span class="n">dna_selection</span><span class="p">}</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">dna_selection</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="n">window_method</span><span class="p">)(</span><span class="n">window_size</span><span class="p">)</span>
-                <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">dna_selection</span><span class="o">.</span><span class="n">seq</span><span class="p">)</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">==</span> <span class="mi">0</span>
-                <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">embed_sequence</span><span class="p">(</span><span class="n">dna_selection</span><span class="o">.</span><span class="n">seq</span><span class="p">)</span>
-                <span class="n">dna_window_dict</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span> <span class="n">dna_selection</span><span class="p">}</span>
+            <span class="n">cds_sequence</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">sequence</span><span class="o">.</span><span class="n">cds</span><span class="o">.</span><span class="n">seq</span><span class="p">)[:</span><span class="n">window_size</span><span class="p">]</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">cds_sequence</span><span class="p">)</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="n">embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">embed_sequence</span><span class="p">(</span><span class="n">cds_sequence</span><span class="p">)</span>
+            <span class="n">dna_window_dict</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span> <span class="n">cds_sequence</span><span class="p">}</span>
 
             <span class="n">data</span> <span class="o">=</span> <span class="n">Data</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">gene_id</span><span class="p">,</span> <span class="n">dna_windows</span><span class="o">=</span><span class="n">dna_window_dict</span><span class="p">)</span>
             <span class="n">data</span><span class="o">.</span><span class="n">embeddings</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span> <span class="n">embeddings</span><span class="p">}</span>
@@ -240,19 +256,15 @@
             <span class="n">data_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">):</span>
-                <span class="c1"># Load existing data from the file if it exists</span>
-                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-                    <span class="n">existing_data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span>
-                    <span class="p">)</span>
-                    <span class="n">existing_data_list</span> <span class="o">=</span> <span class="n">existing_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"data_list"</span><span class="p">,</span> <span class="p">[])</span>
-                    <span class="n">data_list</span> <span class="o">=</span> <span class="n">existing_data_list</span> <span class="o">+</span> <span class="n">data_list</span>
+                <span class="c1"># Merge the chunks this run already wrote, then consume the file</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partial_path</span><span class="p">):</span>
+                    <span class="n">existing_data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partial_path</span><span class="p">,</span> <span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                    <span class="n">data_list</span> <span class="o">=</span> <span class="n">existing_data</span><span class="p">[</span><span class="s2">"data_list"</span><span class="p">]</span> <span class="o">+</span> <span class="n">data_list</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partial_path</span><span class="p">)</span>
                 <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">):</span>
                     <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">collate</span><span class="p">(</span><span class="n">data_list</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># Save the updated data back to the file</span>
-                    <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">({</span><span class="s2">"data_list"</span><span class="p">:</span> <span class="n">data_list</span><span class="p">},</span> <span class="bp">self</span><span class="o">.</span><span class="n">processed_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">({</span><span class="s2">"data_list"</span><span class="p">:</span> <span class="n">data_list</span><span class="p">},</span> <span class="bp">self</span><span class="o">.</span><span class="n">partial_path</span><span class="p">)</span>
                 <span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span></div>
 </div>
 

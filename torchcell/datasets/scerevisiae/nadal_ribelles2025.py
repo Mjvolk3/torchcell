@@ -422,9 +422,12 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
         """Return (dispersion=sd_lvscore_scaledFU2, n_cells=cell_number) for a strain."""
         if ptb is None or strain_label not in ptb.index:
             return None, None
-        row = ptb.loc[strain_label]  # one row: _load_ptbs refuses a repeated label
-        dispersion = float(row["sd_lvscore_scaledFU2"])
-        n_cells = int(round(float(row["cell_number"])))
+        # One float64 Series per column, keyed by the (unique) label: indexing it is a
+        # scalar for the type checker, where a ``.loc`` row read is ``Any | Series``.
+        dispersions: pd.Series[float] = ptb["sd_lvscore_scaledFU2"].astype("float64")
+        cells: pd.Series[float] = ptb["cell_number"].astype("float64")
+        dispersion = float(dispersions[strain_label])
+        n_cells = int(round(float(cells[strain_label])))
         return dispersion, n_cells
 
     def _build_reference(

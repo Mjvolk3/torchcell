@@ -156,6 +156,16 @@
 <span class="p">)</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">MemberlessReactionError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A reaction with no metabolites, which neither graph view can represent.</span>
+
+<span class="sd">    hypernetx drops a hyperedge with no members, so such a reaction would vanish from</span>
+<span class="sd">    ``reaction_map`` while ``bipartite_graph`` kept it as an isolated node. Both views</span>
+<span class="sd">    refuse it instead, so they always agree on the reaction set. yeast-GEM 9.0.2 has</span>
+<span class="sd">    none of its 4,131 reactions in this state.</span>
+<span class="sd">    """</span>
+
+
 <div class="viewcode-block" id="YeastGEM">
 <a class="viewcode-back" href="../../../generated/torchcell.metabolism.yeast_GEM.YeastGEM.html#torchcell.metabolism.yeast_GEM.YeastGEM">[docs]</a>
 <span class="nd">@define</span>
@@ -220,9 +230,23 @@
 
         <span class="k">return</span> <span class="n">combinations</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_refuse_memberless_reactions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Raise :class:`MemberlessReactionError` naming every reaction without species."""</span>
+        <span class="n">memberless</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">reactions</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="o">.</span><span class="n">metabolites</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">memberless</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MemberlessReactionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Reactions with no metabolites cannot be represented in "</span>
+                <span class="sa">f</span><span class="s2">"reaction_map or bipartite_graph: </span><span class="si">{</span><span class="n">memberless</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">reaction_map</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">hnx</span><span class="o">.</span><span class="n">Hypergraph</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Create a hypergraph where edges represent reactions with gene combinations."""</span>
+<span class="w">        </span><span class="sd">"""Create a hypergraph where edges represent reactions with gene combinations.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            MemberlessReactionError: if any reaction has no metabolites.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_refuse_memberless_reactions</span><span class="p">()</span>
         <span class="c1"># Dictionary to store edges for the hypergraph</span>
         <span class="n">edge_dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">edge_props</span> <span class="o">=</span> <span class="p">{}</span>
@@ -369,8 +393,12 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            nx.DiGraph: A directed bipartite graph</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            MemberlessReactionError: if any reaction has no metabolites.</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"_bipartite_graph"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_refuse_memberless_reactions</span><span class="p">()</span>
             <span class="c1"># Create directed bipartite graph</span>
             <span class="n">B</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">()</span>
 
@@ -802,6 +830,11 @@
     <span class="k">elif</span> <span class="n">layout</span> <span class="o">==</span> <span class="s2">"kamada_kawai"</span><span class="p">:</span>
         <span class="n">layout_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">layout</span> <span class="o">=</span> <span class="n">kamada_kawai_layout</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Unknown layout </span><span class="si">{</span><span class="n">layout</span><span class="si">!r}</span><span class="s2">; valid layouts are "</span>
+            <span class="s2">"'spring', 'spectral', 'kamada_kawai'."</span>
+        <span class="p">)</span>
 
     <span class="n">hnx</span><span class="o">.</span><span class="n">draw</span><span class="p">(</span>
         <span class="n">H_sub</span><span class="p">,</span>
@@ -1044,7 +1077,7 @@
     <span class="n">genome</span> <span class="o">=</span> <span class="n">SCerevisiaeGenome</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="s2">"data/sgd/genome"</span><span class="p">))</span>
     <span class="n">genome</span><span class="o">.</span><span class="n">drop_chrmt</span><span class="p">()</span>
 
-    <span class="n">yeast_gem</span> <span class="o">=</span> <span class="n">YeastGEM</span><span class="p">(</span><span class="n">gene_set</span><span class="o">=</span><span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">)</span>  <span class="c1"># type: ignore[call-arg]  # demo helper passes nonexistent kwarg (field is `induced_gene_set`); pre-existing runtime bug, left as-is to preserve behavior</span>
+    <span class="n">yeast_gem</span> <span class="o">=</span> <span class="n">YeastGEM</span><span class="p">(</span><span class="n">induced_gene_set</span><span class="o">=</span><span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">)</span>
     <span class="n">H</span> <span class="o">=</span> <span class="n">yeast_gem</span><span class="o">.</span><span class="n">reaction_map</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"H num edges with gene_set edge drop: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">H</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
@@ -1302,15 +1335,16 @@
         <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">no_gene_rule</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">yeast_gem</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">reactions</span><span class="o">.</span><span class="n">get_by_id</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">metabolites</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
     <span class="p">]</span>
+    <span class="c1"># Transport moves species across compartments, so it is read from the metabolites'</span>
+    <span class="c1"># compartment field. yeast-GEM ids are ``s_NNNN`` with the compartment stored</span>
+    <span class="c1"># separately, so comparing id suffixes would call ``s_0001 --&gt; s_0002`` transport.</span>
     <span class="n">transport_rxns</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">r</span>
         <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">no_gene_rule</span>
-        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
-            <span class="n">m1</span><span class="o">.</span><span class="n">id</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">m2</span><span class="o">.</span><span class="n">id</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="n">m1</span><span class="o">.</span><span class="n">id</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">m2</span><span class="o">.</span><span class="n">id</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">m1</span> <span class="ow">in</span> <span class="n">yeast_gem</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">reactions</span><span class="o">.</span><span class="n">get_by_id</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">metabolites</span>
-            <span class="k">for</span> <span class="n">m2</span> <span class="ow">in</span> <span class="n">yeast_gem</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">reactions</span><span class="o">.</span><span class="n">get_by_id</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">metabolites</span>
-            <span class="k">if</span> <span class="n">m1</span> <span class="o">!=</span> <span class="n">m2</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">m</span><span class="o">.</span><span class="n">compartment</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">yeast_gem</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">reactions</span><span class="o">.</span><span class="n">get_by_id</span><span class="p">(</span><span class="n">r</span><span class="p">)</span><span class="o">.</span><span class="n">metabolites</span><span class="p">}</span>
         <span class="p">)</span>
+        <span class="o">&gt;</span> <span class="mi">1</span>
     <span class="p">]</span>
     <span class="n">other_rxns</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">no_gene_rule</span> <span class="k">if</span> <span class="n">r</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">exchange_rxns</span> <span class="ow">and</span> <span class="n">r</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">transport_rxns</span>

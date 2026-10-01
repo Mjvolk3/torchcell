@@ -139,6 +139,9 @@
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
+<span class="c1">#: The metric the default ReduceLROnPlateau scheduler is stepped on.</span>
+<span class="n">PLATEAU_MONITOR</span> <span class="o">=</span> <span class="s2">"val/gene_interaction/MSE"</span>
+
 
 <div class="viewcode-block" id="RegressionTask">
 <a class="viewcode-back" href="../../../generated/torchcell.trainers.int_transformer_cell.RegressionTask.html#torchcell.trainers.int_transformer_cell.RegressionTask">[docs]</a>
@@ -262,6 +265,35 @@
             <span class="c1"># Last resort fallback</span>
             <span class="k">return</span> <span class="mi">1</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_loss_components</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">loss_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Log every loss component the same way for every loss function.</span>
+
+<span class="sd">        A one-element tensor or a Python number is logged as ``{stage}/{key}``; a</span>
+<span class="sd">        multi-element tensor is logged element by element as ``{stage}/{key}_{i}``</span>
+<span class="sd">        over its flattened values; an empty tensor and any other value are skipped.</span>
+<span class="sd">        """</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">loss_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                        <span class="n">value</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                        <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+                        <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">elif</span> <span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">element</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                            <span class="n">element</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                            <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+                            <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
 <div class="viewcode-block" id="RegressionTask.reset_edge_recovery_accumulators">
 <a class="viewcode-back" href="../../../generated/torchcell.trainers.int_transformer_cell.RegressionTask.html#torchcell.trainers.int_transformer_cell.RegressionTask.reset_edge_recovery_accumulators">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">reset_edge_recovery_accumulators</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -284,15 +316,17 @@
                     <span class="n">acc</span><span class="p">[</span><span class="s2">"sum_recall_deg"</span><span class="p">]</span> <span class="o">/</span> <span class="n">acc</span><span class="p">[</span><span class="s2">"count_nodes_deg"</span><span class="p">]</span>
                 <span class="p">)</span>
 
-        <span class="c1"># Prepare precision metrics</span>
+        <span class="c1"># Prepare precision metrics; a graph with no counted node at any k has</span>
+        <span class="c1"># nothing to plot and is left out rather than passed as an empty dict.</span>
         <span class="n">precision_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">metric_key</span><span class="p">,</span> <span class="n">acc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edge_recovery_accumulators</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">precision_metrics</span><span class="p">[</span><span class="n">metric_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edge_recovery_ks</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">acc</span><span class="p">[</span><span class="s2">"count_nodes_prec"</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">precision_metrics</span><span class="p">[</span><span class="n">metric_key</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
-                        <span class="n">acc</span><span class="p">[</span><span class="s2">"sum_prec"</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">/</span> <span class="n">acc</span><span class="p">[</span><span class="s2">"count_nodes_prec"</span><span class="p">][</span><span class="n">k</span><span class="p">]</span>
-                    <span class="p">)</span>
+            <span class="n">per_k</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">k</span><span class="p">:</span> <span class="n">acc</span><span class="p">[</span><span class="s2">"sum_prec"</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">/</span> <span class="n">acc</span><span class="p">[</span><span class="s2">"count_nodes_prec"</span><span class="p">][</span><span class="n">k</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edge_recovery_ks</span>
+                <span class="k">if</span> <span class="n">acc</span><span class="p">[</span><span class="s2">"count_nodes_prec"</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="n">per_k</span><span class="p">:</span>
+                <span class="n">precision_metrics</span><span class="p">[</span><span class="n">metric_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">per_k</span>
 
         <span class="c1"># Prepare edge-mass alignment metrics</span>
         <span class="n">edge_mass_metrics</span> <span class="o">=</span> <span class="p">{}</span>
@@ -315,6 +349,12 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span><span class="p">,</span>
                 <span class="kc">None</span><span class="p">,</span>
                 <span class="n">stage</span><span class="o">=</span><span class="s2">"val"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">"Skipping the edge recovery precision plot at epoch </span><span class="si">%d</span><span class="s2">: no graph "</span>
+                <span class="s2">"has a counted node at any k."</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">current_epoch</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">edge_mass_metrics</span><span class="p">:</span>
@@ -987,22 +1027,7 @@
 
             <span class="c1"># Log all loss components</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loss_dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">loss_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-                        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-                                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-                                <span class="n">value</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
-                                <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
-                                <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                            <span class="p">)</span>
-                    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-                            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-                            <span class="n">value</span><span class="p">,</span>
-                            <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
-                            <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                        <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log_loss_components</span><span class="p">(</span><span class="n">stage</span><span class="p">,</span> <span class="n">loss_dict</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># For ICLoss or other custom losses that might use z_p</span>
             <span class="c1"># Check if loss function accepts epoch parameter (for MleDistSupCR and MleWassSupCR)</span>
@@ -1028,35 +1053,7 @@
 
                 <span class="c1"># Log additional loss components if available</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loss_dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">loss_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-                            <span class="c1"># Handle multi-dimensional tensors</span>
-                            <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                                <span class="c1"># Single element tensor - log as scalar</span>
-                                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-                                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-                                    <span class="n">value</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
-                                    <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
-                                    <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                                <span class="p">)</span>
-                            <span class="k">elif</span> <span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                                <span class="c1"># Multi-element tensor - log each element separately</span>
-                                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">numel</span><span class="p">()):</span>
-                                    <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-                                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-                                        <span class="n">value</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
-                                        <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
-                                        <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                                    <span class="p">)</span>
-                            <span class="c1"># Skip empty tensors</span>
-                        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-                            <span class="c1"># Handle scalar values</span>
-                            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-                                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-                                <span class="n">value</span><span class="p">,</span>
-                                <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
-                                <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                            <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_log_loss_components</span><span class="p">(</span><span class="n">stage</span><span class="p">,</span> <span class="n">loss_dict</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_output</span>
 
@@ -1140,14 +1137,20 @@
             <span class="c1"># Extract the inversed predictions</span>
             <span class="n">inv_gene_int</span> <span class="o">=</span> <span class="n">inv_data</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="s2">"phenotype_values"</span><span class="p">]</span>
 
-            <span class="c1"># Handle tensor shape</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inv_gene_int</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">inv_gene_int</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">inv_predictions</span> <span class="o">=</span> <span class="n">inv_gene_int</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">inv_gene_int</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="n">inv_predictions</span> <span class="o">=</span> <span class="n">inv_gene_int</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">inv_predictions</span> <span class="o">=</span> <span class="n">inv_gene_int</span>
+            <span class="c1"># A non-tensor here would leave the original-scale metrics computed on the</span>
+            <span class="c1"># transformed predictions, so it is refused rather than skipped.</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inv_gene_int</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"inverse_transform </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="s2">"returned phenotype_values of type "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">inv_gene_int</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">; expected torch.Tensor"</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">inv_gene_int</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">inv_predictions</span> <span class="o">=</span> <span class="n">inv_gene_int</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">inv_gene_int</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">inv_predictions</span> <span class="o">=</span> <span class="n">inv_gene_int</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">inv_predictions</span> <span class="o">=</span> <span class="n">inv_gene_int</span>
 
         <span class="c1"># Update metrics with original scale values</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">torch</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">gene_interaction_orig</span><span class="p">)</span>
@@ -1497,19 +1500,10 @@
             <span class="c1"># Reset the sample containers</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">train_samples</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"true_values"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"predictions"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"latents"</span><span class="p">:</span> <span class="p">{}}</span>
 
-        <span class="c1"># Step the scheduler when using manual optimization</span>
-        <span class="n">sch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr_schedulers</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">sch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># Lightning returns a list of schedulers even if there's only one</span>
-            <span class="n">active_sch</span><span class="p">:</span> <span class="n">LRScheduler</span> <span class="o">|</span> <span class="n">ReduceLROnPlateau</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sch</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">sch</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">active_sch</span> <span class="o">=</span> <span class="n">sch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">active_sch</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"LRScheduler | ReduceLROnPlateau"</span><span class="p">,</span> <span class="n">sch</span><span class="p">)</span>
-            <span class="c1"># Manual-optimization schedulers stepped here are epoch-interval</span>
-            <span class="c1"># LRSchedulers, never ReduceLROnPlateau (which Lightning drives via</span>
-            <span class="c1"># its monitor); narrow so step() needs no metric argument.</span>
-            <span class="k">assert</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">active_sch</span><span class="p">,</span> <span class="n">ReduceLROnPlateau</span><span class="p">)</span>
+        <span class="c1"># Step the scheduler when using manual optimization. A plateau scheduler is</span>
+        <span class="c1"># stepped on its monitored metric in on_validation_epoch_end instead.</span>
+        <span class="n">active_sch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_scheduler</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">active_sch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">active_sch</span><span class="p">,</span> <span class="n">ReduceLROnPlateau</span><span class="p">):</span>
             <span class="n">active_sch</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
 
         <span class="c1"># CRITICAL: Clear GPU memory at end of training epoch</span>
@@ -1575,15 +1569,38 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">test_samples</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"true_values"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"predictions"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"latents"</span><span class="p">:</span> <span class="p">{}}</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_active_scheduler</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LRScheduler</span> <span class="o">|</span> <span class="n">ReduceLROnPlateau</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The configured scheduler, or None (Lightning may wrap it in a list)."""</span>
+        <span class="n">sch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr_schedulers</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">sch</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sch</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">sch</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">sch</span>
+
 <div class="viewcode-block" id="RegressionTask.on_validation_epoch_end">
 <a class="viewcode-back" href="../../../generated/torchcell.trainers.int_transformer_cell.RegressionTask.html#torchcell.trainers.int_transformer_cell.RegressionTask.on_validation_epoch_end">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">on_validation_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Log and reset validation metrics and plot validation samples periodically."""</span>
+<span class="w">        </span><span class="sd">"""Log and reset validation metrics and plot validation samples periodically.</span>
+
+<span class="sd">        Under manual optimization Lightning never steps a scheduler, so a</span>
+<span class="sd">        ReduceLROnPlateau scheduler is stepped here, once per (non-sanity) validation</span>
+<span class="sd">        epoch, on the value of its monitor ``val/gene_interaction/MSE`` computed just</span>
+<span class="sd">        above. Validation runs inside the training epoch, before on_train_epoch_end, so</span>
+<span class="sd">        this is the point where the monitor is fresh. Without a validation loop the</span>
+<span class="sd">        plateau scheduler is never stepped and the learning rate stays fixed.</span>
+<span class="sd">        """</span>
         <span class="c1"># Log validation metrics</span>
         <span class="n">computed_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_metrics_safely</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val_metrics</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">computed_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">val_metrics</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="n">active_sch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_active_scheduler</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">sanity_checking</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">active_sch</span><span class="p">,</span> <span class="n">ReduceLROnPlateau</span>
+        <span class="p">):</span>
+            <span class="n">active_sch</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">computed_metrics</span><span class="p">[</span><span class="n">PLATEAU_MONITOR</span><span class="p">])</span>
 
         <span class="c1"># Compute and log transformed metrics</span>
         <span class="n">transformed_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_metrics_safely</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val_transformed_metrics</span><span class="p">)</span>
@@ -1725,7 +1742,7 @@
                 <span class="s2">"optimizer"</span><span class="p">:</span> <span class="n">optimizer</span><span class="p">,</span>
                 <span class="s2">"lr_scheduler"</span><span class="p">:</span> <span class="p">{</span>
                     <span class="s2">"scheduler"</span><span class="p">:</span> <span class="n">scheduler</span><span class="p">,</span>
-                    <span class="s2">"monitor"</span><span class="p">:</span> <span class="s2">"val/gene_interaction/MSE"</span><span class="p">,</span>
+                    <span class="s2">"monitor"</span><span class="p">:</span> <span class="n">PLATEAU_MONITOR</span><span class="p">,</span>
                     <span class="s2">"interval"</span><span class="p">:</span> <span class="s2">"epoch"</span><span class="p">,</span>
                     <span class="s2">"frequency"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
                 <span class="p">},</span>

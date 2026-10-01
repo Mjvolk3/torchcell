@@ -150,6 +150,11 @@
 <dt class="sig sig-object py" id="torchcell.metabolism.yeast_GEM.YeastGEM.reaction_map">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reaction_map</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Hypergraph</span></em><a class="headerlink" href="#torchcell.metabolism.yeast_GEM.YeastGEM.reaction_map" title="Link to this definition"></a></dt>
 <dd><p>Create a hypergraph where edges represent reactions with gene combinations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>MemberlessReactionError</strong> – if any reaction has no metabolites.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py property">
@@ -170,6 +175,9 @@ edge_type indicating whether the metabolite is a reactant or product.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>nx.DiGraph</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>MemberlessReactionError</strong> – if any reaction has no metabolites.</p>
 </dd>
 </dl>
 </dd></dl>

@@ -212,6 +212,12 @@
 <dt class="sig sig-object py" id="torchcell.trainers.int_transformer_cell.RegressionTask.on_validation_epoch_end">
 <span class="sig-name descname"><span class="pre">on_validation_epoch_end</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/trainers/int_transformer_cell.html#RegressionTask.on_validation_epoch_end"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.trainers.int_transformer_cell.RegressionTask.on_validation_epoch_end" title="Link to this definition"></a></dt>
 <dd><p>Log and reset validation metrics and plot validation samples periodically.</p>
+<p>Under manual optimization Lightning never steps a scheduler, so a
+ReduceLROnPlateau scheduler is stepped here, once per (non-sanity) validation
+epoch, on the value of its monitor <code class="docutils literal notranslate"><span class="pre">val/gene_interaction/MSE</span></code> computed just
+above. Validation runs inside the training epoch, before on_train_epoch_end, so
+this is the point where the monitor is fresh. Without a validation loop the
+plateau scheduler is never stepped and the learning rate stays fixed.</p>
 </dd></dl>
 
 <dl class="py method">

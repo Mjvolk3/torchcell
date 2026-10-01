@@ -14,14 +14,14 @@ timed with ``time.monotonic``:
   ``filelock.Timeout`` naming the ``.lock`` path and log the exact error line; the
   elapsed time is asserted in [0.2, 1.5) s, the upper bound generous for a loaded CI
   runner;
-- Findings: ``timeout=0`` becomes the 60 s default (``timeout or default``), and
-  ``retry_delay`` is never passed to ``filelock`` (a 5 s delay still acquires a lock
-  released at 0.15 s in under 1 s);
+- ``timeout=0`` is one non-blocking attempt and ``retry_delay`` is ``filelock``'s
+  ``poll_interval``; only ``None`` takes the class defaults (2026.10.01, issue #529,
+  which retired the Findings that 0 became 60 s and that the delay was dropped);
 - a stale ``.lock`` file with content and no holder does not block, and is truncated to
   empty while held; the context manager and the update path release on an exception;
-- the exact lock and staging paths: ``<name><suffix>.lock`` and, as a Finding, the
-  staging file ``<stem>.tmp``, which ``a.json`` and ``a.yaml`` share under two
-  different locks; a failed stage leaves the target untouched;
+- the exact lock and staging paths: ``<name><suffix>.lock`` and ``<name><suffix>.tmp``
+  (2026.10.01: no longer ``<stem>.tmp``, which ``a.json`` and ``a.yaml`` shared under
+  two different locks); a failed stage leaves the target untouched;
 - the exact written text (indent 2, non-ASCII kept), ``FileNotFoundError`` messages,
   and ``cleanup_lock_files`` recursing and counting only what it removed.
 """
@@ -324,14 +324,12 @@ def test_timeout_raises_after_the_timeout_and_logs(
     assert path.read_text() == '{"kept": true}'
 
 
-def test_zero_timeout_becomes_the_sixty_second_default(tmp_path: Path) -> None:
-    """Finding: every method resolves ``timeout = timeout or cls.default_timeout``, so a
-    caller asking for 0 (try once, do not wait) gets 60 s; ``with_file_lock`` exposes
-    the resolved value on the returned lock. An explicit 2.5 is kept. Pinned until the
-    default is applied only to ``None``.
+def test_zero_timeout_is_kept_and_only_none_takes_the_default(tmp_path: Path) -> None:
+    """The class default (60 s) applies only to ``None``: ``timeout=0`` stays 0 on the
+    lock ``with_file_lock`` returns, an explicit 2.5 is kept, and no argument gives 60.
     """
     lock = FileLockHelper.with_file_lock(tmp_path / "a.json", timeout=0)
-    assert lock.timeout == 60.0
+    assert lock.timeout == 0
     assert lock.lock_file == str(tmp_path / "a.json.lock")
     assert (
         FileLockHelper.with_file_lock(tmp_path / "a.json", timeout=2.5).timeout == 2.5
@@ -339,21 +337,71 @@ def test_zero_timeout_becomes_the_sixty_second_default(tmp_path: Path) -> None:
     assert FileLockHelper.with_file_lock(tmp_path / "a.json").timeout == 60.0
 
 
-def test_retry_delay_is_not_the_polling_interval(tmp_path: Path) -> None:
-    """Finding: ``retry_delay`` ("Delay between lock acquisition retries") is resolved
-    and never passed to ``filelock``, which polls at its own 0.05 s default. The holder
-    releases at about 0.15 s; with ``retry_delay=5.0`` the read still returns in under
-    1 s instead of after the first 5 s retry. Pinned until the argument is forwarded as
-    ``poll_interval`` or removed.
+def test_zero_timeout_fails_at_once_on_a_held_lock(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """With the lock held for up to 5 s, a read with ``timeout=0`` makes one attempt
+    and raises ``filelock.Timeout`` in well under a second (it used to wait the 60 s
+    default), logging ``within 0s``.
+    """
+    path = tmp_path / "data.json"
+    path.write_text('{"a": 1}')
+    caplog.set_level(logging.ERROR, logger=file_lock_module.__name__)
+    with _held_by_another_thread(tmp_path / "data.json.lock", hold_s=5.0):
+        start = time.monotonic()
+        with pytest.raises(Timeout):
+            FileLockHelper.read_json_with_lock(path, timeout=0)
+        elapsed = time.monotonic() - start
+    assert elapsed < 0.5
+    assert [r.getMessage() for r in caplog.records] == [
+        f"Failed to acquire lock for reading {path} within 0s"
+    ]
+
+
+def test_retry_delay_is_the_polling_interval(tmp_path: Path) -> None:
+    """``retry_delay`` is forwarded to ``filelock`` as ``poll_interval``: the holder
+    releases at about 0.15 s, so a reader polling every 1.0 s fails its first attempt,
+    sleeps the full 1.0 s and only then acquires (elapsed >= 1.0 s; the 0.05 s
+    ``filelock`` default would have returned near 0.15 s).
     """
     path = tmp_path / "data.json"
     path.write_text('{"a": 1}')
     with _held_by_another_thread(tmp_path / "data.json.lock", hold_s=0.15):
         start = time.monotonic()
-        data = FileLockHelper.read_json_with_lock(path, timeout=5, retry_delay=5.0)
+        data = FileLockHelper.read_json_with_lock(path, timeout=5, retry_delay=1.0)
         elapsed = time.monotonic() - start
     assert data == {"a": 1}
-    assert elapsed < 1.0
+    assert 1.0 <= elapsed < 3.0
+
+
+def test_every_method_forwards_timeout_and_poll_interval(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``read``, ``write`` and ``update`` each pass the resolved ``(timeout,
+    poll_interval)`` to ``FileLock.acquire``: explicit zeros stay zeros, and ``None``
+    gives the class defaults ``(60.0, 0.1)``.
+    """
+    seen: list[tuple[float | None, float]] = []
+    real_acquire = FileLock.acquire
+
+    def spy(
+        self: FileLock, timeout: float | None = None, poll_interval: float = 0.05
+    ) -> Any:
+        seen.append((timeout, poll_interval))
+        return real_acquire(self, timeout=timeout, poll_interval=poll_interval)
+
+    monkeypatch.setattr(FileLock, "acquire", spy)
+    path = tmp_path / "data.json"
+    results = [
+        FileLockHelper.write_json_with_lock(path, {"a": 1}, timeout=0, retry_delay=0),
+        FileLockHelper.read_json_with_lock(path, timeout=0, retry_delay=0),
+        FileLockHelper.update_json_with_lock(path, dict, timeout=0, retry_delay=0),
+        FileLockHelper.write_json_with_lock(path, {"a": 2}),
+        FileLockHelper.read_json_with_lock(path),
+        FileLockHelper.update_json_with_lock(path, dict),
+    ]
+    assert results == [None, {"a": 1}, {"a": 1}, None, {"a": 2}, {"a": 2}]
+    assert seen == [(0, 0)] * 3 + [(60.0, 0.1)] * 3
 
 
 def test_stale_lock_file_does_not_block_and_is_truncated_while_held(
@@ -411,33 +459,41 @@ def test_update_releases_and_leaves_the_file_when_the_function_raises(
     with pytest.raises(KeyError, match="missing"):
         FileLockHelper.update_json_with_lock(path, explode)
     assert path.read_text() == '{"a": 1}'
-    assert not (tmp_path / "data.tmp").exists()
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["data.json", "data.json.lock"]
     other = FileLock(tmp_path / "data.json.lock")
     other.acquire(blocking=False)
     other.release()
 
 
-def test_staging_file_is_the_stem_tmp_and_shared_across_suffixes(
+def test_staging_file_is_the_full_name_tmp_and_unique_per_target(
     tmp_path: Path,
 ) -> None:
-    """Finding: writes stage through ``file_path.with_suffix(".tmp")``, so ``a.json``
-    and ``a.yaml`` both stage through ``a.tmp`` while holding different locks
-    (``a.json.lock``, ``a.yaml.lock``); two concurrent writers of the two files can
-    overwrite each other's staging bytes. Shown by making ``a.tmp`` a directory: both
-    writes fail naming ``a.tmp``, and each target keeps its previous bytes. Pinned
-    until the staging name is derived from the full file name.
+    """Writes stage through ``<name><suffix>.tmp``, so ``a.json`` and ``a.yaml``, which
+    hold different locks, never share a staging file. Shown by making ``a.json.tmp`` a
+    directory: the ``a.json`` write fails naming exactly that path and keeps its
+    previous bytes, while the ``a.yaml`` write (staging ``a.yaml.tmp``) succeeds and
+    leaves no staging file; ``a.tmp`` is never created.
     """
-    staging = tmp_path / "a.tmp"
+    staging = tmp_path / "a.json.tmp"
     staging.mkdir()
-    for name in ("a.json", "a.yaml"):
-        target = tmp_path / name
-        target.write_text("previous")
-        with pytest.raises(
-            IsADirectoryError,
-            match=re.escape(f"[Errno 21] Is a directory: '{staging}'"),
-        ):
-            FileLockHelper.write_json_with_lock(target, {"new": True})
-        assert target.read_text() == "previous"
+    json_target = tmp_path / "a.json"
+    yaml_target = tmp_path / "a.yaml"
+    json_target.write_text("previous")
+    yaml_target.write_text("previous")
+    with pytest.raises(
+        IsADirectoryError, match=re.escape(f"[Errno 21] Is a directory: '{staging}'")
+    ):
+        FileLockHelper.write_json_with_lock(json_target, {"new": True})
+    assert json_target.read_text() == "previous"
+    FileLockHelper.write_json_with_lock(yaml_target, {"new": True})
+    assert json.loads(yaml_target.read_text()) == {"new": True}
+    assert sorted(p.name for p in tmp_path.iterdir()) == [
+        "a.json",
+        "a.json.lock",
+        "a.json.tmp",
+        "a.yaml",
+        "a.yaml.lock",
+    ]
 
 
 def test_written_text_is_indented_and_keeps_non_ascii(tmp_path: Path) -> None:

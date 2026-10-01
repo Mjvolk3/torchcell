@@ -17,18 +17,16 @@ table per failure mode, for both entry points; plus the report's ``summary()`` l
 the strain and condition signatures on hand-written perturbation dicts, and the gene
 set helper. The module has no ``main``.
 
-Findings (the streaming docstring says it is "Semantically identical" to the eager
-verifier and its closing comment that the streaming report "carries exactly the
-results the eager one does"):
+2026.10.01 (issue #529): the two entry points are semantically identical, as the
+streaming docstring promises, and ``test_eager_and_streaming_reports_are_equal`` holds
+them to it field by field on a release that fails every own rule at once:
 
-- ``pair_uniqueness``: eager counts duplicated KEYS and says "(study, strain,
-  condition) triples"; streaming counts EXTRA RECORDS and says "(strain, condition)"
-  although it keys on the study too. Three copies of one record give 1 against 2.
-- ``value_fidelity`` and ``se_nonnegative``: eager indexes a bad value by its position
-  among the non-missing values and adds a ``reason``; streaming indexes by record and
-  has no ``reason``.
-- ``measurement_type_consistent`` prints the enum member's repr (``<MeasurementType.
-  log2_ratio: 'log2_ratio'>``) because records hold ``model_dump()`` output, not JSON.
+- ``pair_uniqueness`` counts REDUNDANT RECORDS (three copies of one record are 2) with
+  one wording that names the study, so ``n_pairs + n_duplicated`` is the record count.
+- ``value_fidelity`` and ``se_nonnegative`` index a bad value by its RECORD and carry a
+  ``reason``.
+- ``measurement_type_consistent`` prints the enum VALUE (``'log2_ratio'``), not the
+  member's repr, although records hold ``model_dump()`` output.
 """
 
 from __future__ import annotations
@@ -78,7 +76,7 @@ OWN = {
     "reference_zero",
     "environment_perturbed",
 }
-LOG2 = "<MeasurementType.log2_ratio: 'log2_ratio'>"
+LOG2 = "'log2_ratio'"
 EDIT_OK = (
     "all 3 experiments carry an environmental edit (perturbation, non-baseline "
     "temperature, or non-baseline media; baseline temp=30.0, media='YP + 2% galactose')"
@@ -205,8 +203,8 @@ def _details(report: VerificationReport, name: str) -> dict[str, Any]:
 
 def test_passing_release_rows_and_result_order() -> None:
     """Every own row passes with its exact message; the 16 results come in the same
-    order from both entry points (the eight own rows, then the eight shared ones).
-    The two reports differ only in the ``pair_uniqueness`` wording (Finding).
+    order from both entry points (the eight own rows, then the eight shared ones),
+    and the two reports are equal.
     """
     eager, streaming = _both(_release())
     expected = [
@@ -230,17 +228,7 @@ def test_passing_release_rows_and_result_order() -> None:
         ("L3", "environment_perturbed", True, EDIT_OK),
     ]
     assert _rows(eager) == expected
-    assert _rows(streaming) == [
-        expected[0],
-        expected[1],
-        (
-            "L1",
-            "pair_uniqueness",
-            True,
-            "3 unique (strain, condition) records, one each",
-        ),
-        *expected[3:],
-    ]
+    assert eager == streaming
     names = [
         "structural",
         "count",
@@ -304,28 +292,23 @@ def test_summary_is_sorted_by_level_with_a_mark_per_row() -> None:
     ]
 
 
-def test_triplicate_record_counts_differ_between_entry_points() -> None:
-    """Finding: YAL001C's record three times plus the other two. Eager: 3 distinct
-    keys, 1 of them duplicated. Streaming: 3 distinct keys and 2 duplicate RECORDS.
-    Both fail. Pinned until the two counts and wordings agree.
+def test_triplicate_record_counts_two_redundant_records() -> None:
+    """YAL001C's record three times plus the other two: 3 unique triples and 2
+    redundant records (every copy after the first), so ``n_pairs + n_duplicated`` is
+    the 5 records the count row observed. Both entry points report exactly this.
     """
     records = _release()
     records += [copy.deepcopy(records[0]), copy.deepcopy(records[0])]
     eager, streaming = _both(records, expected_count=5)
-    assert _row(eager, "pair_uniqueness") == (
-        "L1",
-        "pair_uniqueness",
-        False,
-        "1 (study, strain, condition) triples appear in multiple records",
-    )
-    assert _details(eager, "pair_uniqueness") == {"n_pairs": 3, "n_duplicated": 1}
-    assert _row(streaming, "pair_uniqueness") == (
-        "L1",
-        "pair_uniqueness",
-        False,
-        "2 (strain, condition) records duplicate an existing pair",
-    )
-    assert _details(streaming, "pair_uniqueness") == {"n_pairs": 3, "n_duplicated": 2}
+    for report in (eager, streaming):
+        assert _row(report, "pair_uniqueness") == (
+            "L1",
+            "pair_uniqueness",
+            False,
+            "2 records duplicate an earlier (study, strain, condition) triple; "
+            "3 unique triples",
+        )
+        assert _details(report, "pair_uniqueness") == {"n_pairs": 3, "n_duplicated": 2}
 
 
 def test_same_strain_and_condition_in_another_study_is_not_a_duplicate() -> None:
@@ -339,14 +322,11 @@ def test_same_strain_and_condition_in_another_study_is_not_a_duplicate() -> None
     doi_only = copy.deepcopy(records[0])
     doi_only["publication"] = {"pubmed_id": None, "doi": "10.1/x"}
     eager, streaming = _both([*records, other_pmid, doi_only], expected_count=5)
-    assert _row(eager, "pair_uniqueness")[2:] == (
-        True,
-        "5 unique (study, strain, condition) records, one each",
-    )
-    assert _row(streaming, "pair_uniqueness")[2:] == (
-        True,
-        "5 unique (strain, condition) records, one each",
-    )
+    for report in (eager, streaming):
+        assert _row(report, "pair_uniqueness")[2:] == (
+            True,
+            "5 unique (study, strain, condition) records, one each",
+        )
 
 
 def test_schema_failure_is_an_l0_row_with_the_record_index() -> None:
@@ -372,12 +352,11 @@ def test_schema_failure_is_an_l0_row_with_the_record_index() -> None:
         assert len(details["failures"][0]["error"]) == 500
 
 
-def test_non_finite_responses_are_indexed_differently() -> None:
+def test_non_finite_responses_are_indexed_by_record() -> None:
     """Record 0's response is removed (None), record 1's is NaN and record 2's is
-    +inf. Both entry points check 2 values and find both bad.
-
-    Finding: eager indexes among the non-missing values (0 and 1) and adds a reason;
-    streaming indexes by record (1 and 2) with no reason. Pinned until they agree.
+    +inf. Both entry points check 2 values, find both bad, and name them by RECORD
+    index (1 and 2, not their positions 0 and 1 among the present values) with a
+    reason.
     """
     records = _release()
     records[0]["experiment"]["phenotype"]["environment_response"] = None
@@ -391,20 +370,16 @@ def test_non_finite_responses_are_indexed_differently() -> None:
             False,
             "2/2 values invalid",
         )
-    assert _details(eager, "value_fidelity")["bad"] == [
-        {"index": 0, "value": "nan", "reason": "nan"},
-        {"index": 1, "value": "inf", "reason": "inf"},
-    ]
-    assert _details(streaming, "value_fidelity")["bad"] == [
-        {"index": 1, "value": "nan"},
-        {"index": 2, "value": "inf"},
-    ]
+        assert _details(report, "value_fidelity")["bad"] == [
+            {"index": 1, "value": "nan", "reason": "nan"},
+            {"index": 2, "value": "inf", "reason": "inf"},
+        ]
 
 
 def test_negative_se_fails_and_nan_se_is_not_counted() -> None:
     """SEs become None, NaN and -0.5: the None and the NaN are skipped, so one value is
-    checked and it is bad (``< 0.0``). Eager reports index 0 of the checked values with
-    a reason; streaming reports record 2 (Finding, as for responses).
+    checked and it is bad (``< 0.0``). Both entry points name record 2 with the
+    reason.
     """
     records = _release()
     records[0]["experiment"]["phenotype"]["environment_response_se"] = None
@@ -418,14 +393,13 @@ def test_negative_se_fails_and_nan_se_is_not_counted() -> None:
             False,
             "1/1 values invalid",
         )
-    assert _details(eager, "se_nonnegative")["bad"] == [
-        {"index": 0, "value": -0.5, "reason": "< 0.0"}
-    ]
-    assert _details(streaming, "se_nonnegative")["bad"] == [{"index": 2, "value": -0.5}]
+        assert _details(report, "se_nonnegative")["bad"] == [
+            {"index": 2, "value": -0.5, "reason": "< 0.0"}
+        ]
 
 
 def test_mixed_measurement_types_fail() -> None:
-    """Record 2 is relabeled ``z_score``: two types, listed sorted by value."""
+    """Record 2 is relabeled ``z_score``: two types, listed sorted, as enum values."""
     records = _release()
     records[2]["experiment"]["phenotype"]["measurement_type"] = MeasurementType.z_score
     eager, streaming = _both(records)
@@ -434,10 +408,11 @@ def test_mixed_measurement_types_fail() -> None:
             "L3",
             "measurement_type_consistent",
             False,
-            "2 distinct measurement_types mixed: "
-            "[<MeasurementType.log2_ratio: 'log2_ratio'>, "
-            "<MeasurementType.z_score: 'z_score'>]",
+            "2 distinct measurement_types mixed: ['log2_ratio', 'z_score']",
         )
+        assert _details(report, "measurement_type_consistent") == {
+            "measurement_types": ["log2_ratio", "z_score"]
+        }
 
 
 def test_nonzero_reference_fails_the_numeric_rule() -> None:
@@ -643,3 +618,71 @@ def test_gene_set_leaves_out_the_background() -> None:
         "YAL001C",
         "YJR155W",
     }
+
+
+def test_eager_and_streaming_reports_are_equal() -> None:
+    """The streaming verifier's contract: semantically identical to the eager one.
+
+    One release fails every own rule at once: YAL001C's record three times, record 1's
+    response NaN, record 2's SE -0.5, record 3 relabeled ``z_score``, record 4's
+    reference at 0.5, plus an unperturbed record at the baseline with no SE (so 5 SEs
+    are checked). Both reports are compared result by result and field by field, then
+    as whole models; the failing own rows are pinned to their exact values.
+    """
+    records = _release()
+    records += [copy.deepcopy(records[0]), copy.deepcopy(records[0])]
+    records[1]["experiment"]["phenotype"]["environment_response"] = float("nan")
+    records[2]["experiment"]["phenotype"]["environment_response_se"] = -0.5
+    records[3]["experiment"]["phenotype"]["measurement_type"] = MeasurementType.z_score
+    records[4]["reference"]["phenotype_reference"]["environment_response"] = 0.5
+    records.append(
+        _record("YCR001W", _numeric(0.1), _numeric(0.0), _environment(perturbed=False))
+    )
+    eager, streaming = _both(records, expected_count=6)
+    assert len(eager.results) == len(streaming.results) == 16
+    for left, right in zip(eager.results, streaming.results, strict=True):
+        assert (left.level, left.name, left.passed, left.message) == (
+            right.level,
+            right.name,
+            right.passed,
+            right.message,
+        )
+        assert left.details == right.details
+    assert eager.model_dump() == streaming.model_dump()
+    assert [row for row in _rows(eager) if not row[2]] == [
+        ("L0", "structural", False, "1/6 records failed schema validation"),
+        (
+            "L1",
+            "pair_uniqueness",
+            False,
+            "2 records duplicate an earlier (study, strain, condition) triple; "
+            "4 unique triples",
+        ),
+        ("L2", "value_fidelity", False, "1/6 values invalid"),
+        ("L2", "se_nonnegative", False, "1/5 values invalid"),
+        (
+            "L3",
+            "measurement_type_consistent",
+            False,
+            "2 distinct measurement_types mixed: ['log2_ratio', 'z_score']",
+        ),
+        (
+            "L3",
+            "reference_zero",
+            False,
+            "numeric rule: reference response not identically 0: max|v|=0.5",
+        ),
+        (
+            "L3",
+            "environment_perturbed",
+            False,
+            "1 experiments have no environmental edit (no perturbation, baseline "
+            "temperature 30.0, baseline media)",
+        ),
+    ]
+    assert _details(eager, "value_fidelity")["bad"] == [
+        {"index": 1, "value": "nan", "reason": "nan"}
+    ]
+    assert _details(eager, "se_nonnegative")["bad"] == [
+        {"index": 2, "value": -0.5, "reason": "< 0.0"}
+    ]

@@ -38,6 +38,11 @@ matches the one already on disk is a no-op for the client.
 
 The store directory is underscore-prefixed, like ``_sync_reports``, which is the
 convention for a service directory in the mirror root that is NOT a citation key.
+
+**Collections are addressed by KEY.** Every declaration the repo makes is a Zotero
+collection key (``PAPER_COLLECTION_KEY``, and the Makefile values ``build_bib.py`` sends
+to Better BibTeX), so :class:`BibScope` holds keys and refuses anything else by value.
+A key is never inferred from the shape of a name.
 """
 
 from __future__ import annotations
@@ -48,7 +53,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from torchcell.literature.bib import (
     fetch_bibtex_entries,
@@ -78,9 +83,18 @@ DEFAULT_USER_ROOT_COLLECTION = "torchcell"
 # never address a file outside the store.
 _NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.\-]*$")
 
-# `ZOTERO_COLLECTION := FE8DQKUH` in a notes-tex document Makefile.
+# A served file that no longer belongs to a declared spec is moved under
+# `_bib/_retired/<generated_at>/`, never deleted.
+BIB_STORE_RETIRED_SUBDIR = "_retired"
+
+# A Zotero collection key: 8 upper-case letters or digits. Used only to VALIDATE a
+# value declared as a key, never to decide whether a value is a key.
+_COLLECTION_KEY_RE = re.compile(r"[A-Z0-9]{8}")
+
+# `ZOTERO_COLLECTION := FE8DQKUH  # optional comment` in a notes-tex document Makefile.
+# The value (group 2) runs to the end of the line; a `#` comment is cut off after.
 _MAKEFILE_VAR_RE = re.compile(
-    r"^\s*(ZOTERO_COLLECTION|ZOTERO_PERSONAL_COLLECTION)\s*[:?]?=\s*(\S*)\s*$"
+    r"^\s*(ZOTERO_COLLECTION|ZOTERO_PERSONAL_COLLECTION)\s*[:?]?=(.*)$"
 )
 
 
@@ -90,7 +104,8 @@ class BibScope(BaseModel):
     Exactly one of three shapes: a single group collection (the manuscript); a
     group collection paired with one personal collection (a notes-tex document);
     or the group library unioned with a personal collection tree (the Dendron
-    scope). Collections are addressed by key where the source declares a key.
+    scope). ``group_collection`` and ``user_collection`` are collection KEYS, as
+    every repo declaration states them; ``user_root_collection`` is a NAME.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -98,15 +113,28 @@ class BibScope(BaseModel):
     group_library_id: str
     group_collection: str | None = Field(
         default=None,
-        description="One group collection (key or name); None = the whole group.",
+        description="One group collection, by KEY; None = the whole group.",
     )
     user_library_id: str | None = None
     user_collection: str | None = Field(
-        default=None, description="One personal collection paired with the group one."
+        default=None,
+        description="One personal collection, by KEY, paired with the group one.",
     )
     user_root_collection: str | None = Field(
-        default=None, description="A personal collection tree unioned in recursively."
+        default=None,
+        description="A personal collection tree, by NAME, unioned in recursively.",
     )
+
+    @field_validator("group_collection", "user_collection")
+    @classmethod
+    def _require_collection_key(cls, value: str | None) -> str | None:
+        """Refuse a value that is not a collection key, naming it."""
+        if value is not None and not _COLLECTION_KEY_RE.fullmatch(value):
+            raise ValueError(
+                f"not a Zotero collection key (8 upper-case letters or digits): "
+                f"{value!r}; bibliography scopes address collections by key"
+            )
+        return value
 
 
 class BibSpec(BaseModel):
@@ -172,13 +200,22 @@ def load_bib_store(mirror_root: str | Path) -> BibStoreManifest:
 def parse_makefile_collections(makefile: Path) -> tuple[str, str]:
     """``(ZOTERO_COLLECTION, ZOTERO_PERSONAL_COLLECTION)`` from a notes-tex Makefile.
 
-    Either may be empty: a document that cites nothing declares neither.
+    Either may be empty: a document that cites nothing declares neither. A trailing
+    ``# comment`` is cut off the value, as make does. A value of more than one word is
+    refused with ``ValueError`` naming the Makefile and the variable, so a document is
+    never silently left without its bibliography.
     """
     values = {"ZOTERO_COLLECTION": "", "ZOTERO_PERSONAL_COLLECTION": ""}
     for line in makefile.read_text().splitlines():
         match = _MAKEFILE_VAR_RE.match(line)
         if match:
-            values[match.group(1)] = match.group(2)
+            value = match.group(2).split("#", 1)[0].strip()
+            if len(value.split()) > 1:
+                raise ValueError(
+                    f"{makefile}: {match.group(1)} must be one collection key, "
+                    f"got {value!r}"
+                )
+            values[match.group(1)] = value
     return values["ZOTERO_COLLECTION"], values["ZOTERO_PERSONAL_COLLECTION"]
 
 
@@ -247,7 +284,7 @@ def fetch_scope_entries(
     A group collection paired with a personal collection is the notes-tex union
     (personal wins on a shared key, as in :func:`fetch_paired_collection_entries`);
     a personal root collection is the Dendron union; a lone group collection is
-    the manuscript export.
+    the manuscript export. Collections are sent as the keys the scope holds.
     """
     if scope.user_collection is not None:
         if scope.group_collection is None:
@@ -257,6 +294,7 @@ def fetch_scope_entries(
             user,
             group_collection=scope.group_collection,
             user_collection=scope.user_collection,
+            as_keys=True,
         )
     if scope.user_root_collection is not None:
         return fetch_union_bibtex_entries(
@@ -264,9 +302,7 @@ def fetch_scope_entries(
         )
     if scope.group_collection is None:
         return fetch_bibtex_entries(group)
-    if re.fullmatch(r"[A-Z0-9]{8}", scope.group_collection):
-        return fetch_bibtex_entries(group, collection_key=scope.group_collection)
-    return fetch_bibtex_entries(group, collection=scope.group_collection)
+    return fetch_bibtex_entries(group, collection_key=scope.group_collection)
 
 
 def _header(spec: BibSpec, n_entries: int) -> str:
@@ -320,18 +356,32 @@ def export_bib_store(
     file is pulled and written under a ``.part`` suffix first; the served files
     and the manifest are swapped in only once every spec succeeded, so a pull that
     fails part-way leaves the previous store intact and consistent, and the
-    manifest never advertises a hash the file beside it does not have.
+    manifest never advertises a hash the file beside it does not have. A failed
+    export removes every ``.part`` file it staged before re-raising.
+
+    After a successful export, any ``<name>.bib`` (or leftover ``<name>.bib.part``)
+    that no given spec wrote is moved to ``_retired/<generated_at>/`` with a warning
+    naming it, so the store directory holds only what the manifest serves. This
+    includes the specs left out of a ``--name`` subset run, which the replaced
+    manifest stops serving too.
     """
     store_dir = bib_store_dir(mirror_root)
     store_dir.mkdir(parents=True, exist_ok=True)
     stamp = generated_at or datetime.now(UTC).isoformat()
     staged: list[tuple[BibSpec, Path, int]] = []
-    for spec in specs:
-        validate_bib_name(spec.name)
-        entries = fetch_scope_entries(spec.scope, group, user)
-        path = write_bib(store_dir, spec, entries, suffix=".part")
-        staged.append((spec, path, len(entries)))
-        log.info("bib_store: %s -> %d entries", spec.name, len(entries))
+    attempted: list[Path] = []
+    try:
+        for spec in specs:
+            validate_bib_name(spec.name)
+            attempted.append(store_dir / f"{spec.name}.bib.part")
+            entries = fetch_scope_entries(spec.scope, group, user)
+            path = write_bib(store_dir, spec, entries, suffix=".part")
+            staged.append((spec, path, len(entries)))
+            log.info("bib_store: %s -> %d entries", spec.name, len(entries))
+    except BaseException:
+        for part in attempted:
+            part.unlink(missing_ok=True)
+        raise
 
     records: list[BibRecord] = []
     for spec, part, n_entries in staged:
@@ -352,4 +402,28 @@ def export_bib_store(
     manifest = BibStoreManifest(bibs=records, generated_at=stamp)
     (store_dir / BIB_STORE_MANIFEST).write_text(manifest.model_dump_json(indent=2))
     log.info("bib_store: wrote %d bibliographies -> %s", len(records), store_dir)
+    _retire_undeclared(store_dir, {record.path for record in records}, stamp)
     return manifest
+
+
+def _retire_undeclared(store_dir: Path, served: set[str], stamp: str) -> list[Path]:
+    """Move every ``*.bib`` / ``*.bib.part`` the manifest does not serve aside.
+
+    The destination is ``<store_dir>/_retired/<stamp>/<file name>``; each move is
+    logged as a warning naming the bibliography. Returns the new paths.
+    """
+    retired_dir = store_dir / BIB_STORE_RETIRED_SUBDIR / stamp
+    moved: list[Path] = []
+    for path in sorted([*store_dir.glob("*.bib"), *store_dir.glob("*.bib.part")]):
+        if path.name in served:
+            continue
+        retired_dir.mkdir(parents=True, exist_ok=True)
+        target = path.replace(retired_dir / path.name)
+        log.warning(
+            "bib_store: %s is not declared by any exported spec; moved %s -> %s",
+            path.name.split(".bib", 1)[0],
+            path,
+            target,
+        )
+        moved.append(target)
+    return moved

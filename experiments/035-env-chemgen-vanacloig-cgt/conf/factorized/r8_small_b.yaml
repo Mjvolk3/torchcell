@@ -1,0 +1,11 @@
+# Round 8 (see r8_small_a.yaml). Card B, first job: 1 and 2 layers at prior weight 0.001.
+- {name: L1_lam1e-3_f0, folds: [0], cgt_layers: 1, cgt_lambda: 0.001, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}
+- {name: L1_lam1e-3_f1, folds: [1], cgt_layers: 1, cgt_lambda: 0.001, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}
+- {name: L1_lam1e-3_f2, folds: [2], cgt_layers: 1, cgt_lambda: 0.001, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}
+- {name: L1_lam1e-3_f3, folds: [3], cgt_layers: 1, cgt_lambda: 0.001, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}
+- {name: L1_lam1e-3_f4, folds: [4], cgt_layers: 1, cgt_lambda: 0.001, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}
+- {name: L2_lam1e-3_f0, folds: [0], cgt_layers: 2, cgt_lambda: 0.001, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}
+- {name: L2_lam1e-3_f1, folds: [1], cgt_layers: 2, cgt_lambda: 0.001, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}
+- {name: L2_lam1e-3_f2, folds: [2], cgt_layers: 2, cgt_lambda: 0.001, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}
+- {name: L2_lam1e-3_f3, folds: [3], cgt_layers: 2, cgt_lambda: 0.001, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}
+- {name: L2_lam1e-3_f4, folds: [4], cgt_layers: 2, cgt_lambda: 0.001, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}

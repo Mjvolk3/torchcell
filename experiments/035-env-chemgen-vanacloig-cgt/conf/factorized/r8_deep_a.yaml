@@ -1,0 +1,8 @@
+# Round 8 (see r8_small_a.yaml). Card A, second job: 8 layers at prior weight 0, and
+# fold 0 of round 2's weight 1 as the budget continuation.
+- {name: L8_lam0_f0, folds: [0], cgt_layers: 8, cgt_lambda: 0.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}
+- {name: L8_lam0_f1, folds: [1], cgt_layers: 8, cgt_lambda: 0.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}
+- {name: L8_lam0_f2, folds: [2], cgt_layers: 8, cgt_lambda: 0.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}
+- {name: L8_lam0_f3, folds: [3], cgt_layers: 8, cgt_lambda: 0.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}
+- {name: L8_lam0_f4, folds: [4], cgt_layers: 8, cgt_lambda: 0.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}
+- {name: L8_lam1_f0, folds: [0], cgt_layers: 8, cgt_lambda: 1.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 200, seeds: [0], cgt_heads: 9}

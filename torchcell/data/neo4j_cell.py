@@ -1347,6 +1347,21 @@ def _label_values(label_df: pd.DataFrame, label: str) -> np.ndarray[Any, Any]:
     return label_df[label].dropna().to_numpy()
 
 
+def _print_label_stats(label_df: pd.DataFrame, labels: list[str]) -> None:
+    """Print count, min, max, mean and population std (ddof 0) of each label column.
+
+    Missing values are dropped first (``_label_values``); numbers print to four decimals.
+    """
+    for label in labels:
+        values = _label_values(label_df, label)
+        print(f"\n{label} statistics (original):")
+        print(f"  Count: {len(values)}")
+        print(f"  Min: {values.min():.4f}")
+        print(f"  Max: {values.max():.4f}")
+        print(f"  Mean: {values.mean():.4f}")
+        print(f"  Std: {values.std():.4f}")
+
+
 def main_transform_standardization() -> None:
     """Test standardization of labels using LabelNormalizationTransform with metabolic network."""
     import os.path as osp
@@ -1457,14 +1472,7 @@ def main_transform_standardization() -> None:
     labels = ["fitness", "gene_interaction"]
 
     # Print statistics of original data using dataset.label_df
-    for label in labels:
-        values = _label_values(dataset.label_df, label)
-        print(f"\n{label} statistics (original):")
-        print(f"  Count: {len(values)}")
-        print(f"  Min: {values.min():.4f}")
-        print(f"  Max: {values.max():.4f}")
-        print(f"  Mean: {values.mean():.4f}")
-        print(f"  Std: {values.std():.4f}")
+    _print_label_stats(dataset.label_df, labels)
 
     # Configure normalization to use standard (z-score) normalization for both labels
     norm_configs = {

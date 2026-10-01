@@ -48,12 +48,13 @@ A key is never inferred from the shape of a name.
 from __future__ import annotations
 
 import logging
+import os
 import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 from torchcell.literature.bib import (
     fetch_bibtex_entries,
@@ -350,9 +351,10 @@ def validate_generated_at(stamp: str) -> str:
 
     ``datetime.now(UTC).isoformat()`` gives ``YYYY-MM-DDTHH:MM:SS[.ffffff]+00:00``;
     the stamp names a ``_retired/`` directory, so anything else (a path separator,
-    ``..``) is refused by value before the store is touched.
+    ``..``, or a well-shaped but impossible date such as month 13) is refused by
+    value before the store is touched.
     """
-    if not _GENERATED_AT_RE.fullmatch(stamp):
+    if not (_GENERATED_AT_RE.fullmatch(stamp) and _parses_as_datetime(stamp)):
         raise ValueError(
             "generated_at must be a UTC ISO timestamp "
             f"(YYYY-MM-DDTHH:MM:SS[.ffffff]+00:00), got {stamp!r}"
@@ -360,19 +362,37 @@ def validate_generated_at(stamp: str) -> str:
     return stamp
 
 
+def _parses_as_datetime(stamp: str) -> bool:
+    """True when ``datetime.fromisoformat`` accepts ``stamp`` (a real date and time)."""
+    try:
+        datetime.fromisoformat(stamp)
+    except ValueError:
+        return False
+    return True
+
+
 def _carried_records(
     store_dir: Path, declared: list[BibSpec], exported: set[str]
 ) -> dict[str, BibRecord]:
     """Previous-manifest records of declared specs this run does not re-export.
 
-    A record is carried only when its file is on disk with the manifest's sha256;
-    otherwise the export is refused by name, because carrying it would advertise a
-    file the store does not have. No previous manifest carries nothing.
+    A full export (every declared spec re-exported) carries nothing and never reads
+    the previous manifest, so a full run repairs a store whose manifest is damaged.
+    On a subset run, a previous manifest that does not validate is refused naming
+    it; a record is carried only when its file is on disk with the manifest's
+    sha256, otherwise the export is refused by name, because carrying it would
+    advertise a file the store does not have. No previous manifest carries nothing.
     """
     manifest_path = store_dir / BIB_STORE_MANIFEST
-    if not manifest_path.is_file():
+    if {spec.name for spec in declared} <= exported or not manifest_path.is_file():
         return {}
-    previous = BibStoreManifest.model_validate_json(manifest_path.read_text())
+    try:
+        previous = BibStoreManifest.model_validate_json(manifest_path.read_text())
+    except ValidationError as err:
+        raise ValueError(
+            f"cannot carry bibliographies forward: the previous manifest "
+            f"{manifest_path} does not validate; run a full export"
+        ) from err
     carried: dict[str, BibRecord] = {}
     for spec in declared:
         record = previous.get(spec.name)
@@ -466,7 +486,7 @@ def export_bib_store(
         if name in fresh or name in carried
     ]
     manifest = BibStoreManifest(bibs=records, generated_at=stamp)
-    (store_dir / BIB_STORE_MANIFEST).write_text(manifest.model_dump_json(indent=2))
+    _write_manifest(store_dir, manifest)
     log.info(
         "bib_store: wrote %d bibliographies (%d exported, %d carried) -> %s",
         len(records),
@@ -478,13 +498,37 @@ def export_bib_store(
     return manifest
 
 
+def _write_manifest(store_dir: Path, manifest: BibStoreManifest) -> None:
+    """Write ``manifest.json`` atomically: a temporary file beside it, then
+    ``os.replace``, so a failed write never leaves a truncated manifest.
+    """
+    final = store_dir / BIB_STORE_MANIFEST
+    temp = store_dir / f"{BIB_STORE_MANIFEST}.tmp"
+    temp.write_text(manifest.model_dump_json(indent=2))
+    os.replace(temp, final)
+
+
+def _retired_target(retired_dir: Path, name: str) -> Path:
+    """``<retired_dir>/<name>``, or ``<name>.<n>`` with the smallest free ``n >= 1``
+    when an earlier run with the same stamp already retired a file of that name, so
+    a retired file is never overwritten.
+    """
+    target = retired_dir / name
+    n = 0
+    while target.exists():
+        n += 1
+        target = retired_dir / f"{name}.{n}"
+    return target
+
+
 def _retire_undeclared(store_dir: Path, declared: set[str], stamp: str) -> list[Path]:
     """Move undeclared ``*.bib`` files and leftover ``*.bib.part`` files aside.
 
     A ``<name>.bib`` stays when ``<name>`` is a spec the repo declares (served or
     not); every other one, and every ``*.bib.part`` (staging a successful export
     has already renamed), moves to ``<store_dir>/_retired/<stamp>/`` with a warning
-    naming it. Returns the new paths.
+    naming it; a name already retired under the same stamp gets a numeric suffix
+    rather than being overwritten. Returns the new paths.
     """
     retired_dir = store_dir / BIB_STORE_RETIRED_SUBDIR / stamp
     moved: list[Path] = []
@@ -492,7 +536,7 @@ def _retire_undeclared(store_dir: Path, declared: set[str], stamp: str) -> list[
         if path.name in declared:
             continue
         retired_dir.mkdir(parents=True, exist_ok=True)
-        target = path.replace(retired_dir / path.name)
+        target = path.replace(_retired_target(retired_dir, path.name))
         reason = (
             "is a leftover staging file"
             if path.name.endswith(".part")

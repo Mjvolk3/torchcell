@@ -112,3 +112,14 @@ Now `export_bib_store` takes `declared` (every spec `discover_bib_specs` finds; 
 `generated_at` names the `_retired/` directory, and `"../../escaped"` moved a file outside `_bib/`; it is now validated (`validate_generated_at`) against the exporter's own format `YYYY-MM-DDTHH:MM:SS[.ffffff]+00:00` and refused by value before anything is touched. A Makefile value that is not one key is refused in `parse_makefile_collections` with the Makefile path in the message (the `BibScope` validator alone did not name the file).
 
 Tests: `test_subset_run_carries_the_other_declared_bibliographies_forward`, `test_subset_run_still_retires_a_spec_removed_from_the_repo`, `test_subset_run_refuses_to_carry_a_broken_record_by_name`, `test_spec_removed_from_the_repo_is_unserved_and_moved_aside` (replaces the test that pinned a 404 after a fewer-spec run), `test_exported_spec_must_be_declared`, `test_generated_at_outside_the_exporter_format_is_refused`, `test_a_makefile_value_that_is_not_one_key_is_refused_naming_the_makefile` in [[tests.torchcell.literature.test_bib_store]].
+
+## 2026.10.01 - Damaged manifest, atomic write, stamp parse, retire collisions (delta review of PR #589)
+
+- A full export (every declared spec re-exported) no longer reads the previous manifest, so a truncated manifest, or one carrying an unknown field under `extra="forbid"`, cannot block the remedy the refusals name. A subset run still reads it and, when it does not validate, refuses with `cannot carry bibliographies forward: the previous manifest <path> does not validate; run a full export`.
+- `manifest.json` is written atomically (`manifest.json.tmp` beside it, then `os.replace`), so a failed write cannot leave a truncated manifest.
+- `validate_generated_at` also parses the stamp with `datetime.fromisoformat`, so a well-shaped impossible date (`2026-13-99T99:99:99+00:00`) is refused.
+- A file retired under a stamp that already holds that name is moved to `<name>.<n>` (smallest free `n`), never overwriting; chosen over refusing because it cannot fail a run after the manifest is written and never loses a file.
+
+Left out: locking between concurrent runs (to be filed as an issue by the coordinator).
+
+Tests: `test_full_export_over_a_truncated_manifest_succeeds`, `test_subset_export_over_a_truncated_manifest_is_refused`, `test_failed_manifest_write_leaves_the_previous_manifest_byte_identical`, `test_an_impossible_date_in_the_right_shape_is_refused`, `test_retiring_twice_under_one_stamp_never_overwrites` in [[tests.torchcell.literature.test_bib_store]].

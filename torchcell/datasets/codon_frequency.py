@@ -1,9 +1,10 @@
-# torchcell/datasets/fungal_up_down_transformer.py
-# [[torchcell.datasets.fungal_up_down_transformer]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/fungal_up_down_transformer.py
-# Test file: torchcell/datasets/test_fungal_up_down_transformer.py
+# torchcell/datasets/codon_frequency.py
+# [[torchcell.datasets.codon_frequency]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/codon_frequency.py
+# Test file: tests/torchcell/datasets/test_codon_frequency.py
 """Embedding dataset of per-gene CDS codon frequencies for S. cerevisiae."""
 
+import logging
 from collections.abc import Callable
 from typing import Any, cast
 
@@ -17,6 +18,8 @@ from torchcell.sequence.genome.scerevisiae.s288c import (
     SCerevisiaeGene,
     SCerevisiaeGenome,
 )
+
+log = logging.getLogger(__name__)
 
 
 class CodonFrequencyDataset(BaseEmbeddingDataset):
@@ -59,8 +62,15 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
         return None
 
     def process(self) -> None:
-        """Compute codon frequencies for each gene and save the collated dataset."""
+        """Compute codon frequencies for each gene and save the collated dataset.
+
+        A gene whose CDS ``compute_codon_frequency`` refuses (empty, length not a
+        multiple of three, or a base other than A/T/G/C) is excluded from the dataset.
+        Each skip is logged at WARNING with the gene id and the refusal message, and
+        the total is logged once at the end.
+        """
         data_list = []
+        skipped = 0
 
         genome = cast(SCerevisiaeGenome, self.genome)
         for gene_id in tqdm(genome.gene_set):
@@ -69,7 +79,9 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
             # Check if the sequence is valid for codon frequency computation
             try:
                 codon_frequency = compute_codon_frequency(sequence)
-            except ValueError:
+            except ValueError as error:
+                log.warning("skipping %s: %s", gene_id, error)
+                skipped += 1
                 continue
 
             # Create a Data object
@@ -78,6 +90,9 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
                 self.model_name: torch.tensor(codon_frequency.values()).unsqueeze(0)
             }
             data_list.append(data)
+
+        if skipped:
+            log.warning("skipped %d gene(s) whose CDS has no codon frequency", skipped)
 
         if self.pre_transform:
             data_list = [self.pre_transform(data) for data in data_list]

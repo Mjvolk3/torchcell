@@ -750,3 +750,9 @@ uses the default `overwrite=True` while four 027 jobs held `data.db`. Plan:
 - `drop_chrmt` left `_feature_index` and `_go_genes` built from the pre-drop database, so Q0010 still resolved as CURRENT. It now resets both, and the next access rebuilds without chrmt (Q0010 resolves as RETIRED). In the usual flow, drop right after construction, the caches were empty and nothing changes.
 - `main` builds with `overwrite=False`.
 - Evidence: `tests/torchcell/sequence/genome/scerevisiae/test_s288c_synthetic.py` (`test_five_prime_intron_without_a_usable_cds_is_refused`, `test_cds_without_orf_classification_names_the_cds`, `test_unstranded_gene_is_refused_at_construction`, `test_get_seq_with_an_id_reverse_complements_and_refuses_a_named_chromosome`, `test_drop_chrmt_rebuilds_the_locus_index_and_go_genes`, `test_main_builds_under_data_root_with_overwrite_false`).
+
+## 2026.09.30 - drop_empty_go resets the locus index and GO map (issue #570)
+
+- Previous behavior: `drop_empty_go` removed genes from `_gene_set` and the database but kept a warm `_feature_index` and `_go_genes`, the stale-cache class PR #568 fixed for `drop_chrmt`. A dropped gene still resolved as CURRENT through `resolve_gene_name`.
+- Fix: `drop_empty_go` sets `_feature_index = None` and `_go_genes = None` after the commit, as `drop_chrmt` does, so both rebuild from the post-drop gene set.
+- Evidence: `tests/torchcell/sequence/genome/scerevisiae/test_s288c_synthetic.py::test_drop_empty_go_rebuilds_the_locus_index_and_go_genes` (YBL001W resolves RETIRED after the drop; the index lists the five surviving genes; `go_genes` is a fresh map with the exact three terms). A dropped gene has no GO term, so it never appeared in `go_genes`; the observable stale cache was the locus index.

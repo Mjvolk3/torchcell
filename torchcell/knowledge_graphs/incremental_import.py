@@ -56,6 +56,7 @@ node that already exists is expected and must be left as is.
 from __future__ import annotations
 
 import csv
+import os
 import re
 import shutil
 import sys
@@ -91,6 +92,9 @@ REFERENCE_ANALYSIS_FILENAME = "incremental-reference-analysis.json"
 INCREMENTAL_HEADER_SUFFIX = "-header.incremental.csv"
 ID_LABEL = "Entity"
 """The label whose ``id`` uniqueness constraint keys the global id space."""
+
+FILTERING_SUFFIX = ".filtering"
+"""Suffix of the staged rewrite of a part file, written under ``unfiltered/``."""
 
 _DELIMITER = "\t"
 _QUOTE = "'"
@@ -476,6 +480,12 @@ def filter_existing_edges(
     earlier run dropped stays dropped. A rerun (e.g. a retried increment job) only drops
     more. The ``unfiltered/`` copy is written once, by the first run that drops a row of
     that file, and never overwritten. The summary counts this run's drops only.
+
+    Crash-atomic: the filtered rows are written to ``unfiltered/<part>.filtering`` and
+    renamed over the part file with ``os.replace``. A crash before the rename leaves the
+    part file intact (and the staged file behind, overwritten by the next run); the
+    staged file never matches neo4j-admin's ``<Type>-part.*`` pattern because it lives
+    in the subdirectory.
     """
     groups = discover_csv_groups(out_dir)
     checked: dict[str, int] = {}
@@ -511,7 +521,12 @@ def filter_existing_edges(
                             sample.append([group.label, pair[0], pair[1]])
                         continue
                     kept.append(line)
-            original.write_text("".join(kept), encoding="utf-8")
+            # crash-atomic: write the filtered rows beside the backup (outside the
+            # `<Type>-part.*` pattern neo4j-admin reads), then rename over the part file,
+            # so a crash leaves either the old or the new file, never a truncated one
+            staged = backup.parent / f"{original.name}{FILTERING_SUFFIX}"
+            staged.write_text("".join(kept), encoding="utf-8")
+            os.replace(staged, original)
     summary = ExistingEdgeFilter(checked=checked, existing=dropped, sample=sample)
     (out_dir / EXISTING_EDGES_FILENAME).write_text(
         summary.model_dump_json(indent=2), encoding="utf-8"

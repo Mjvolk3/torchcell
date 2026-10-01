@@ -18,7 +18,9 @@ reads (no Neo4j). Expected values, derived from the source:
   first with two ``{"s", "e"}`` rows and the second with one.
 - ``filter_existing_edges`` filters the CURRENT part file on every run, so a rerun only
   drops more; a row the first run dropped never comes back, and the ``unfiltered/``
-  backup keeps the first run's original (issue #538).
+  backup keeps the first run's original (issue #538). The rewrite is staged under
+  ``unfiltered/`` and renamed over the part file, so a crash before the rename leaves
+  the part file intact (issue #570).
 - ``main`` prints ``checked <sum of distinct pairs>``, ``dropped <n_existing>`` and the
   nonzero per-type counts, or ``none``.
 """
@@ -489,6 +491,57 @@ def test_filter_existing_edges_rerun_is_idempotent(out_dir: Path) -> None:
     assert part.read_text(encoding="utf-8") == ""
     assert backup.read_text(encoding="utf-8") == original
     assert summary.existing == {"ExperimentMemberOf": 1, "GenomeMemberOf": 0}
+
+
+def test_filter_existing_edges_crash_before_rename_leaves_the_part_intact(
+    out_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A crash between the staged write and ``os.replace`` leaves the part file whole.
+
+    The filtered rows go to ``unfiltered/ExperimentMemberOf-part000.csv.filtering`` and
+    are renamed over the part file (issue #570). With ``os.replace`` raising once, the
+    part file still holds both original rows, the staged file holds the one kept row,
+    and nothing new matches ``discover_csv_groups``' part pattern. The rerun then
+    completes the rewrite and consumes the staged file.
+    """
+    import os
+
+    part = out_dir / "ExperimentMemberOf-part000.csv"
+    original = part.read_text(encoding="utf-8")
+    staged = out_dir / "unfiltered" / "ExperimentMemberOf-part000.csv.filtering"
+    real_replace = os.replace
+    calls: list[tuple[str, str]] = []
+
+    def crash_once(src: str | Path, dst: str | Path) -> None:
+        calls.append((str(src), str(dst)))
+        if len(calls) == 1:
+            raise OSError("simulated crash")
+        real_replace(src, dst)
+
+    monkeypatch.setattr(os, "replace", crash_once)
+
+    def lookup(group: CsvGroup, pairs: list[tuple[str, str]]) -> set[tuple[str, str]]:
+        return {p for p in pairs if p == ("e2", "D1")}
+
+    with pytest.raises(OSError, match="^simulated crash$"):
+        filter_existing_edges(out_dir, lookup)
+    assert calls == [(str(staged), str(part))]
+    assert part.read_text(encoding="utf-8") == original
+    assert staged.read_text(encoding="utf-8") == (
+        f"e1\t\tD1\t{Q}ExperimentMemberOf{Q}\n"
+    )
+    group = next(
+        g for g in discover_csv_groups(out_dir) if g.label == "ExperimentMemberOf"
+    )
+    assert group.part_paths == [str(part)]
+
+    summary = filter_existing_edges(out_dir, lookup)
+    assert summary.existing == {"ExperimentMemberOf": 1, "GenomeMemberOf": 0}
+    assert part.read_text(encoding="utf-8") == f"e1\t\tD1\t{Q}ExperimentMemberOf{Q}\n"
+    assert not staged.exists()
+    assert sorted(p.name for p in (out_dir / "unfiltered").iterdir()) == [
+        "ExperimentMemberOf-part000.csv"
+    ]
 
 
 def test_filter_existing_edges_caps_the_sample_at_twenty(tmp_path: Path) -> None:

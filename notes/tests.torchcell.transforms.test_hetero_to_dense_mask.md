@@ -14,3 +14,8 @@ Five to nine tests, 93 to 100 percent. Out-of-range indices, an edge type with n
 
 - Retired: the row-only padding of a per-node `[N, N]` tensor; an edge into the padding row passing the filter.
 - Now asserted: `pair` padded to the exact `[4, 4]` matrix; edges `3 -> 0` and `0 -> 3` dropped from `adj_mask` while `0 -> 1` stays and `edge_index` keeps all three; reaction 2 of 2 padded to 3 dropped from `inc_mask`.
+
+## 2026.09.30 - Square padding is opt-in by name (issue #570)
+
+- Retired the shape guess: `pair` (`[3, 3]`) is padded to `[4, 4]` only when listed in `square_attrs`; unlisted, it comes back `[4, 3]` (`test_an_unlisted_feature_dimension_equal_to_n_is_padded_on_rows_only`).
+- New: `square_attrs` applies per node type (`test_square_attrs_apply_only_to_their_node_type`); a listed `[3, 2]` or missing attribute raises the exact `ValueError` (`test_a_listed_attribute_that_is_not_square_is_refused_by_name`); `__repr__` shows `square_attrs`.

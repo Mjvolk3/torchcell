@@ -114,12 +114,13 @@
            <div itemprop="articleBody">
              
   <h1>Source code for torchcell.datasets.codon_frequency</h1><div class="highlight"><pre>
-<span></span><span class="c1"># torchcell/datasets/fungal_up_down_transformer.py</span>
-<span class="c1"># [[torchcell.datasets.fungal_up_down_transformer]]</span>
-<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/fungal_up_down_transformer.py</span>
-<span class="c1"># Test file: torchcell/datasets/test_fungal_up_down_transformer.py</span>
+<span></span><span class="c1"># torchcell/datasets/codon_frequency.py</span>
+<span class="c1"># [[torchcell.datasets.codon_frequency]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/codon_frequency.py</span>
+<span class="c1"># Test file: tests/torchcell/datasets/test_codon_frequency.py</span>
 <span class="sd">"""Embedding dataset of per-gene CDS codon frequencies for S. cerevisiae."""</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
@@ -133,6 +134,8 @@
     <span class="n">SCerevisiaeGene</span><span class="p">,</span>
     <span class="n">SCerevisiaeGenome</span><span class="p">,</span>
 <span class="p">)</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="CodonFrequencyDataset">
@@ -185,8 +188,15 @@
 <div class="viewcode-block" id="CodonFrequencyDataset.process">
 <a class="viewcode-back" href="../../../generated/torchcell.datasets.CodonFrequencyDataset.html#torchcell.datasets.CodonFrequencyDataset.process">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Compute codon frequencies for each gene and save the collated dataset."""</span>
+<span class="w">        </span><span class="sd">"""Compute codon frequencies for each gene and save the collated dataset.</span>
+
+<span class="sd">        A gene whose CDS ``compute_codon_frequency`` refuses (empty, length not a</span>
+<span class="sd">        multiple of three, or a base other than A/T/G/C) is excluded from the dataset.</span>
+<span class="sd">        Each skip is logged at WARNING with the gene id and the refusal message, and</span>
+<span class="sd">        the total is logged once at the end.</span>
+<span class="sd">        """</span>
         <span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">skipped</span> <span class="o">=</span> <span class="mi">0</span>
 
         <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">gene_id</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">):</span>
@@ -195,7 +205,9 @@
             <span class="c1"># Check if the sequence is valid for codon frequency computation</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">codon_frequency</span> <span class="o">=</span> <span class="n">compute_codon_frequency</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span>
-            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"skipping </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">gene_id</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+                <span class="n">skipped</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="k">continue</span>
 
             <span class="c1"># Create a Data object</span>
@@ -204,6 +216,9 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">codon_frequency</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
             <span class="p">}</span>
             <span class="n">data_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">skipped</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"skipped </span><span class="si">%d</span><span class="s2"> gene(s) whose CDS has no codon frequency"</span><span class="p">,</span> <span class="n">skipped</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_transform</span><span class="p">:</span>
             <span class="n">data_list</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pre_transform</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">data_list</span><span class="p">]</span>

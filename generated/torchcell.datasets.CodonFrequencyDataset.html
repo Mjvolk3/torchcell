@@ -146,6 +146,10 @@
 <dt class="sig sig-object py" id="torchcell.datasets.CodonFrequencyDataset.process">
 <span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/codon_frequency.html#CodonFrequencyDataset.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.CodonFrequencyDataset.process" title="Link to this definition"></a></dt>
 <dd><p>Compute codon frequencies for each gene and save the collated dataset.</p>
+<p>A gene whose CDS <code class="docutils literal notranslate"><span class="pre">compute_codon_frequency</span></code> refuses (empty, length not a
+multiple of three, or a base other than A/T/G/C) is excluded from the dataset.
+Each skip is logged at WARNING with the gene id and the refusal message, and
+the total is logged once at the end.</p>
 </dd></dl>
 
 </dd></dl>

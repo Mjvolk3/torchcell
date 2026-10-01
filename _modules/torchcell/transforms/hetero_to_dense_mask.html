@@ -122,6 +122,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data.datapipes</span><span class="w"> </span><span class="kn">import</span> <span class="n">functional_transform</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseTransform</span>
 
+<span class="n">RESERVED_NODE_ATTRS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"pos"</span><span class="p">,</span> <span class="s2">"mask"</span><span class="p">,</span> <span class="s2">"num_nodes"</span><span class="p">,</span> <span class="s2">"node_ids"</span><span class="p">)</span>
+<span class="sd">"""Node attributes the transform handles by name; never padded as square matrices."""</span>
+
 
 <div class="viewcode-block" id="HeteroToDenseMask">
 <a class="viewcode-back" href="../../../generated/torchcell.transforms.hetero_to_dense_mask.HeteroToDenseMask.html#torchcell.transforms.hetero_to_dense_mask.HeteroToDenseMask">[docs]</a>
@@ -134,29 +137,57 @@
 
 <span class="sd">    A mask entry is set only when both endpoints are real (original) nodes, so an edge</span>
 <span class="sd">    into a padding row or past the input's node count is dropped from the mask (it</span>
-<span class="sd">    stays in ``edge_index``). A node tensor is padded with zeros along every one of</span>
-<span class="sd">    its first two axes whose size equals the original node count, so a per-node</span>
-<span class="sd">    ``[N, N]`` matrix becomes ``[N_pad, N_pad]``. A feature axis that happens to equal</span>
-<span class="sd">    ``N`` is padded too: the transform cannot tell it from a node axis.</span>
+<span class="sd">    stays in ``edge_index``). A node tensor whose first axis equals the original node</span>
+<span class="sd">    count ``N`` is padded with zero rows. Only the attributes named in ``square_attrs``</span>
+<span class="sd">    are also padded on their second axis, so a listed per-node ``[N, N]`` matrix</span>
+<span class="sd">    becomes ``[N_pad, N_pad]``; an unlisted ``[N, d]`` tensor keeps its ``d`` columns</span>
+<span class="sd">    even when ``d == N`` (the shape cannot tell a feature axis from a node axis).</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        num_nodes_dict (Dict[str, int], optional): Dictionary mapping node types to</span>
 <span class="sd">            their desired number of nodes. If not provided for a node type, will</span>
 <span class="sd">            use the maximum number of nodes found for that type. (default: None)</span>
+<span class="sd">        square_attrs (Dict[str, List[str]], optional): Per node type, the names of</span>
+<span class="sd">            the ``[N, N, ...]`` node attributes to pad on both axes. A listed</span>
+<span class="sd">            attribute that is absent or not ``[N, N, ...]``, or a node type the data</span>
+<span class="sd">            does not have, raises ``ValueError`` in ``forward``; a reserved name</span>
+<span class="sd">            (``RESERVED_NODE_ATTRS`` or a leading underscore) raises ``ValueError``</span>
+<span class="sd">            at construction. (default: None, no square attributes)</span>
 <span class="sd">    """</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_nodes_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Store the optional per-node-type target node counts.</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">num_nodes_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">square_attrs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Store the per-node-type target node counts and square attribute names.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            num_nodes_dict: Optional mapping of node type to target node count.</span>
+<span class="sd">            square_attrs: Optional mapping of node type to the per-node square</span>
+<span class="sd">                attributes padded on both axes.</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_nodes_dict</span> <span class="o">=</span> <span class="n">num_nodes_dict</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">square_attrs</span> <span class="o">=</span> <span class="n">square_attrs</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">node_type</span><span class="p">,</span> <span class="n">attrs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">square_attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">RESERVED_NODE_ATTRS</span> <span class="ow">or</span> <span class="n">attr</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"square attribute </span><span class="si">{</span><span class="n">node_type</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2"> is reserved: the "</span>
+                        <span class="sa">f</span><span class="s2">"transform handles </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">RESERVED_NODE_ATTRS</span><span class="p">)</span><span class="si">}</span><span class="s2"> and "</span>
+                        <span class="s2">"underscore names itself, never as a square matrix"</span>
+                    <span class="p">)</span>
 
 <div class="viewcode-block" id="HeteroToDenseMask.forward">
 <a class="viewcode-back" href="../../../generated/torchcell.transforms.hetero_to_dense_mask.HeteroToDenseMask.html#torchcell.transforms.hetero_to_dense_mask.HeteroToDenseMask.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">HeteroData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HeteroData</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Add dense masks, pad node attributes, and return the transformed data."""</span>
+        <span class="n">unknown</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">square_attrs</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">node_types</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"square_attrs names node types </span><span class="si">{</span><span class="n">unknown</span><span class="si">}</span><span class="s2"> absent from the data; "</span>
+                <span class="sa">f</span><span class="s2">"its node types are </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">node_types</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
         <span class="c1"># First determine number of nodes for each node type</span>
         <span class="n">num_nodes_dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">orig_num_nodes_dict</span> <span class="o">=</span> <span class="p">{</span>
@@ -240,6 +271,28 @@
             <span class="n">num_nodes</span> <span class="o">=</span> <span class="n">num_nodes_dict</span><span class="p">[</span><span class="n">node_type</span><span class="p">]</span>
             <span class="n">orig_num_nodes</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">num_nodes</span>
 
+            <span class="n">square</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">square_attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node_type</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">square</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">attr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">store</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"square attribute </span><span class="si">{</span><span class="n">node_type</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2"> is missing from the "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">node_type</span><span class="si">}</span><span class="s2"> store"</span>
+                    <span class="p">)</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">store</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+                    <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">2</span>
+                    <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">orig_num_nodes</span>
+                    <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">orig_num_nodes</span>
+                <span class="p">):</span>
+                    <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">())</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"square attribute </span><span class="si">{</span><span class="n">node_type</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2"> must be a tensor of "</span>
+                        <span class="sa">f</span><span class="s2">"shape [</span><span class="si">{</span><span class="n">orig_num_nodes</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">orig_num_nodes</span><span class="si">}</span><span class="s2">, ...], got </span><span class="si">{</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+
             <span class="c1"># Create mask to indicate original vs padded nodes</span>
             <span class="n">store</span><span class="o">.</span><span class="n">mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_nodes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
             <span class="n">store</span><span class="o">.</span><span class="n">mask</span><span class="p">[:</span><span class="n">orig_num_nodes</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
@@ -260,21 +313,15 @@
             <span class="c1"># checked a second node tensor (2026.09.26).</span>
             <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">store</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
                 <span class="c1"># Skip special attributes, non-tensor attributes, and already processed attributes</span>
-                <span class="k">if</span> <span class="n">attr</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">[</span>
-                    <span class="s2">"x"</span><span class="p">,</span>
-                    <span class="s2">"pos"</span><span class="p">,</span>
-                    <span class="s2">"mask"</span><span class="p">,</span>
-                    <span class="s2">"num_nodes"</span><span class="p">,</span>
-                    <span class="s2">"node_ids"</span><span class="p">,</span>
-                <span class="p">]:</span>
+                <span class="k">if</span> <span class="n">attr</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">RESERVED_NODE_ATTRS</span><span class="p">:</span>
                     <span class="k">continue</span>
 
                 <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="n">orig_num_nodes</span><span class="p">:</span>
                     <span class="n">size</span> <span class="o">=</span> <span class="p">[</span><span class="n">num_nodes</span> <span class="o">-</span> <span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">())[</span><span class="mi">1</span><span class="p">:]</span>
                     <span class="n">padded_value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">value</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">size</span><span class="p">)],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-                    <span class="c1"># A per-node matrix ([N, N, ...]) is padded on its columns too</span>
-                    <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="n">orig_num_nodes</span><span class="p">:</span>
+                    <span class="c1"># a listed per-node matrix ([N, N, ...]) is padded on its columns too</span>
+                    <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">square</span><span class="p">:</span>
                         <span class="n">size</span> <span class="o">=</span> <span class="p">[</span><span class="n">num_nodes</span><span class="p">,</span> <span class="n">num_nodes</span> <span class="o">-</span> <span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span>
                             <span class="n">value</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
                         <span class="p">)[</span><span class="mi">2</span><span class="p">:]</span>
@@ -287,10 +334,13 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Return a string representation including the node-count overrides."""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_nodes_dict</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">()"</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(num_nodes_dict=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_nodes_dict</span><span class="si">}</span><span class="s2">)"</span></div>
+<span class="w">        </span><span class="sd">"""Return a string representation including the non-default arguments."""</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_nodes_dict</span><span class="p">:</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"num_nodes_dict=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_nodes_dict</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">square_attrs</span><span class="p">:</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"square_attrs=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">square_attrs</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span></div>
 
 </pre></div>
 

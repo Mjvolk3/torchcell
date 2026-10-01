@@ -146,6 +146,11 @@ session in production; any callable in tests). Originals are kept under an
 earlier run dropped stays dropped. A rerun (e.g. a retried increment job) only drops
 more. The <code class="docutils literal notranslate"><span class="pre">unfiltered/</span></code> copy is written once, by the first run that drops a row of
 that file, and never overwritten. The summary counts this run’s drops only.</p>
+<p>Crash-atomic: the filtered rows are written to <code class="docutils literal notranslate"><span class="pre">unfiltered/&lt;part&gt;.filtering</span></code> and
+renamed over the part file with <code class="docutils literal notranslate"><span class="pre">os.replace</span></code>. A crash before the rename leaves the
+part file intact (and the staged file behind, overwritten by the next run); the
+staged file never matches neo4j-admin’s <code class="docutils literal notranslate"><span class="pre">&lt;Type&gt;-part.*</span></code> pattern because it lives
+in the subdirectory.</p>
 </dd></dl>
 
 </section>

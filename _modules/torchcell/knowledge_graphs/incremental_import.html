@@ -172,6 +172,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
@@ -207,6 +208,9 @@
 <span class="n">INCREMENTAL_HEADER_SUFFIX</span> <span class="o">=</span> <span class="s2">"-header.incremental.csv"</span>
 <span class="n">ID_LABEL</span> <span class="o">=</span> <span class="s2">"Entity"</span>
 <span class="sd">"""The label whose ``id`` uniqueness constraint keys the global id space."""</span>
+
+<span class="n">FILTERING_SUFFIX</span> <span class="o">=</span> <span class="s2">".filtering"</span>
+<span class="sd">"""Suffix of the staged rewrite of a part file, written under ``unfiltered/``."""</span>
 
 <span class="n">_DELIMITER</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\t</span><span class="s2">"</span>
 <span class="n">_QUOTE</span> <span class="o">=</span> <span class="s2">"'"</span>
@@ -630,6 +634,12 @@
 <span class="sd">    earlier run dropped stays dropped. A rerun (e.g. a retried increment job) only drops</span>
 <span class="sd">    more. The ``unfiltered/`` copy is written once, by the first run that drops a row of</span>
 <span class="sd">    that file, and never overwritten. The summary counts this run's drops only.</span>
+
+<span class="sd">    Crash-atomic: the filtered rows are written to ``unfiltered/&lt;part&gt;.filtering`` and</span>
+<span class="sd">    renamed over the part file with ``os.replace``. A crash before the rename leaves the</span>
+<span class="sd">    part file intact (and the staged file behind, overwritten by the next run); the</span>
+<span class="sd">    staged file never matches neo4j-admin's ``&lt;Type&gt;-part.*`` pattern because it lives</span>
+<span class="sd">    in the subdirectory.</span>
 <span class="sd">    """</span>
     <span class="n">groups</span> <span class="o">=</span> <span class="n">discover_csv_groups</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
     <span class="n">checked</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -665,7 +675,12 @@
                             <span class="n">sample</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">group</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
                         <span class="k">continue</span>
                     <span class="n">kept</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-            <span class="n">original</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">kept</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+            <span class="c1"># crash-atomic: write the filtered rows beside the backup (outside the</span>
+            <span class="c1"># `&lt;Type&gt;-part.*` pattern neo4j-admin reads), then rename over the part file,</span>
+            <span class="c1"># so a crash leaves either the old or the new file, never a truncated one</span>
+            <span class="n">staged</span> <span class="o">=</span> <span class="n">backup</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">original</span><span class="o">.</span><span class="n">name</span><span class="si">}{</span><span class="n">FILTERING_SUFFIX</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">staged</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">kept</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">staged</span><span class="p">,</span> <span class="n">original</span><span class="p">)</span>
     <span class="n">summary</span> <span class="o">=</span> <span class="n">ExistingEdgeFilter</span><span class="p">(</span><span class="n">checked</span><span class="o">=</span><span class="n">checked</span><span class="p">,</span> <span class="n">existing</span><span class="o">=</span><span class="n">dropped</span><span class="p">,</span> <span class="n">sample</span><span class="o">=</span><span class="n">sample</span><span class="p">)</span>
     <span class="p">(</span><span class="n">out_dir</span> <span class="o">/</span> <span class="n">EXISTING_EDGES_FILENAME</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
         <span class="n">summary</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span>

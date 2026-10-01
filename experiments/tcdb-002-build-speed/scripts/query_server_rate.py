@@ -28,22 +28,35 @@ records_per_s, bytes).
 ``--fetch-workers 1,4,8`` instead measures the partitioned raw stage (stage 3): it
 builds ``Neo4jQueryRaw`` on the same block once with ``fetch_workers=0`` (one session,
 the baseline) and then once per listed N with ``fetch_workers=N`` (the block carries
-``{partition}``, so it is split into 16 ``e.id``-prefix partitions plus the guard),
-asserts every LMDB key and value, ``experiment_reference_index.json`` and
-``gene_set.json`` identical to the baseline, and writes
-``results/query_server_rate_fetch_workers.csv`` (fetch_workers, records, seconds,
-records_per_s, identical_to_one_session):
+``{partition}``, so it is split into ``e.id``-prefix partitions plus the guard: 16 at
+``--prefix-length 1``, 256 at 2), asserts every LMDB key and value in cursor order,
+``experiment_reference_index.json`` and ``gene_set.json`` identical to the baseline
+(a streamed sha256, so a multi-million-record block never sits in memory), and writes
+``results/query_server_rate_fetch_workers.csv`` (dataset, fetch_workers,
+prefix_length, records, seconds, records_per_s, identical_to_one_session,
+parent_peak_gb, worker_peak_gb; the peaks are the process-lifetime maxima of this
+process and of its largest fetch worker, read after each arm, so they only grow):
 
     sbatch experiments/tcdb-002-build-speed/scripts/gh_query_fetch_workers.slurm
+
+``--dataset EnvChemgenHoepfner2014Dataset --fetch-workers 8 --prefix-length 2
+--cleanup`` runs the same on the 3.1M-record Hoepfner block, the setting a
+multi-million-record block needs (``prefix_length`` 1 would hold 16 partitions of
+about 195k rendered records in flight at 8 workers), removing each arm's build
+directory once it is hashed, so the disk holds one 40 GB raw store at a time:
+
+    sbatch experiments/tcdb-002-build-speed/scripts/gh_query_fetch_workers_hoepfner.slurm
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import os
 import os.path as osp
+import resource
 import shutil
 import tempfile
 import time
@@ -54,9 +67,11 @@ from neo4j import GraphDatabase
 
 RESULTS_DIR = osp.join(osp.dirname(osp.dirname(osp.abspath(__file__))), "results")
 
-BLOCK = """
+DEFAULT_DATASET = "EnvChemgenVanacloig2022Dataset"
+
+BLOCK_TEMPLATE = """
 MATCH (dataset:Dataset)<-[:ExperimentMemberOf]-(e:Experiment)
-WHERE dataset.id = 'EnvChemgenVanacloig2022Dataset'{partition}
+WHERE dataset.id = '{dataset}'{partition}
 MATCH (e)<-[:GenotypeMemberOf]-(g:Genotype)
 MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
 WHERE ALL(p IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]
@@ -66,6 +81,13 @@ WITH DISTINCT e, ref
  ORDER BY e.id
 RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
 """
+
+BLOCK = BLOCK_TEMPLATE.replace("{dataset}", DEFAULT_DATASET)
+
+
+def block_query(dataset: str) -> str:
+    """The marked block for one served dataset (``{partition}`` kept for the workers)."""
+    return BLOCK_TEMPLATE.replace("{dataset}", dataset)
 
 
 def stream(
@@ -81,23 +103,48 @@ def stream(
     return n, nbytes
 
 
-def raw_outputs(raw: Any) -> tuple[list[tuple[bytes, bytes]], bytes, bytes]:
-    """A raw stage's LMDB items and its reference-index and gene-set file bytes."""
+def raw_digest(raw: Any) -> tuple[str, int]:
+    """sha256 over a raw stage's LMDB items in cursor order (key length, key, value
+    length, value) and its reference-index and gene-set files; and the record count.
+
+    Streams the store, so the digest of a multi-million-record block costs no memory;
+    two raw stages with equal digests hold the same keys and values in the same order
+    and the same two files.
+    """
     import lmdb
 
-    env = lmdb.open(raw.lmdb_dir, readonly=True, lock=False)
-    with env.begin() as txn:
-        items = [(bytes(k), bytes(v)) for k, v in txn.cursor()]
+    digest = hashlib.sha256()
+    n = 0
+    env = lmdb.open(raw.lmdb_dir, readonly=True, lock=False, readahead=True)
+    with env.begin(buffers=True) as txn:
+        for key, value in txn.cursor():
+            digest.update(len(key).to_bytes(8, "little"))
+            digest.update(key)
+            digest.update(len(value).to_bytes(8, "little"))
+            digest.update(value)
+            n += 1
     env.close()
-    with open(osp.join(raw.raw_dir, "experiment_reference_index.json"), "rb") as fh:
-        index = fh.read()
-    with open(osp.join(raw.raw_dir, "gene_set.json"), "rb") as fh:
-        genes = fh.read()
-    return items, index, genes
+    for name in ("experiment_reference_index.json", "gene_set.json"):
+        with open(osp.join(raw.raw_dir, name), "rb") as fh:
+            data = fh.read()
+        digest.update(len(data).to_bytes(8, "little"))
+        digest.update(data)
+    return digest.hexdigest(), n
+
+
+def peak_rss_gb(who: int) -> float:
+    """Process-lifetime peak resident set in GB (``ru_maxrss`` is in KB on Linux)."""
+    return resource.getrusage(who).ru_maxrss / 1e6
 
 
 def fetch_workers_mode(
-    counts: list[int], gene_set: list[str], scratch_root: str, out: str
+    dataset: str,
+    counts: list[int],
+    prefix_length: int,
+    gene_set: list[str],
+    scratch_root: str,
+    out: str,
+    cleanup: bool,
 ) -> None:
     """Time Neo4jQueryRaw on the marked block per fetch_workers; check identity."""
     from torchcell.data.neo4j_query_raw import Neo4jQueryRaw
@@ -105,6 +152,7 @@ def fetch_workers_mode(
     uri = os.environ["NEO4J_URI"]
     user = os.environ["NEO4J_USER"]
     password = os.environ["NEO4J_PASSWORD"]
+    query = block_query(dataset)
     rows: list[dict[str, Any]] = []
     baseline = None
     for workers in [0, *counts]:
@@ -115,31 +163,39 @@ def fetch_workers_mode(
             username=user,
             password=password,
             root_dir=root,
-            query=BLOCK,  # carries the {partition} marker
+            query=query,  # carries the {partition} marker
             cypher_kwargs={"gene_set": gene_set},
             fetch_workers=workers,
+            partition_prefix_length=prefix_length,
         )
         seconds = time.perf_counter() - t
         raw.close_lmdb()
-        result = raw_outputs(raw)
+        digest, n = raw_digest(raw)
         if baseline is None:
-            baseline = result
-        identical = result == baseline
-        n = len(result[0])
+            baseline = digest
+        identical = digest == baseline
         rows.append(
             {
+                "dataset": dataset,
                 "fetch_workers": workers,
+                "prefix_length": prefix_length if workers else 0,
                 "records": n,
                 "seconds": round(seconds, 1),
                 "records_per_s": round(n / seconds, 1),
                 "identical_to_one_session": identical,
+                "parent_peak_gb": round(peak_rss_gb(resource.RUSAGE_SELF), 2),
+                "worker_peak_gb": round(peak_rss_gb(resource.RUSAGE_CHILDREN), 2),
             }
         )
         print(
-            f"fetch_workers {workers}: {n:,} records in {seconds:.1f} s, "
-            f"{n / seconds:,.0f}/s, identical to one session: {identical}",
+            f"{dataset} fetch_workers {workers} prefix {rows[-1]['prefix_length']}: "
+            f"{n:,} records in {seconds:.1f} s, {n / seconds:,.0f}/s, identical to "
+            f"one session: {identical}, peak parent {rows[-1]['parent_peak_gb']} GB, "
+            f"largest worker {rows[-1]['worker_peak_gb']} GB",
             flush=True,
         )
+        if cleanup:
+            shutil.rmtree(root)
         if not identical:
             raise SystemExit(f"fetch_workers={workers} differs from one session")
     os.makedirs(osp.dirname(out), exist_ok=True)
@@ -160,15 +216,34 @@ def main() -> None:
         default=None,
         help="comma-separated worker counts: measure the partitioned raw stage only",
     )
+    parser.add_argument(
+        "--dataset",
+        default=DEFAULT_DATASET,
+        help="served Dataset id of the block (--fetch-workers mode)",
+    )
+    parser.add_argument(
+        "--prefix-length",
+        type=int,
+        default=1,
+        help="Neo4jQueryRaw.partition_prefix_length for the worker arms",
+    )
+    parser.add_argument(
+        "--cleanup",
+        action="store_true",
+        help="remove each arm's build directory once its digest is taken",
+    )
     args = parser.parse_args()
     if args.fetch_workers is not None:
         with open(args.gene_set) as fh:
             genes = json.load(fh)
         fetch_workers_mode(
+            args.dataset,
             [int(n) for n in args.fetch_workers.split(",")],
+            args.prefix_length,
             genes,
             args.scratch_root,
             args.out or osp.join(RESULTS_DIR, "query_server_rate_fetch_workers.csv"),
+            args.cleanup,
         )
         return
     args.out = args.out or osp.join(RESULTS_DIR, "query_server_rate.csv")

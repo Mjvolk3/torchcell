@@ -1,6 +1,7 @@
 """LMDB-backed aggregation of experiment/reference pairs into grouped entries."""
 
 import json
+import logging
 import os
 from abc import ABC, abstractmethod
 from typing import Any, cast
@@ -16,6 +17,8 @@ from torchcell.datamodels import (
     ModelStrict,
     Phenotype,
 )
+
+log = logging.getLogger(__name__)
 
 
 class ExperimentInfo(ModelStrict):
@@ -116,7 +119,12 @@ class Aggregator(ABC):
             self.env.close()
             self.env = None
 
-    def process(self, input_path: str, output_path: str) -> None:
+    def process(
+        self,
+        input_path: str,
+        output_path: str,
+        key_groups: dict[str, list[bytes]] | None = None,
+    ) -> None:
         """Read pairs from input LMDB, group by aggregate key, and write groups out.
 
         Two streaming passes, never the whole dataset in memory. The previous
@@ -129,19 +137,32 @@ class Aggregator(ABC):
         STORED record bytes -- they were written by upstream ``model_dump`` calls,
         so a reconstruct-and-redump would be an identity round trip. Group order
         is first-occurrence (dict insertion order), matching the old output.
+
+        ``key_groups``, when given, IS pass 1's result and pass 1 is not run: the
+        grouping key to the input keys, groups in the order a cursor walk first meets
+        them and keys in cursor order within each group (cursor order is
+        lexicographic in the key bytes). ``Neo4jCellDataset.process`` builds it from
+        ``aggregate_key_raw`` while the raw stage writes the input
+        (``RawStageGrouping``). Both reads open with readahead: pass 1 is a cursor
+        walk, and pass 2's gets run in cursor order too, which on a cold store read
+        2,630 MB/s with readahead against 213 MB/s without
+        (experiments/tcdb-002-build-speed/results/query_build_cost_probe.csv).
         """
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         self._init_lmdb(readonly=False)  # Initialize LMDB for writing
 
-        env_input = lmdb.open(input_path, readonly=True, readahead=False)
+        env_input = lmdb.open(input_path, readonly=True, readahead=True)
 
-        # Pass 1: group input keys by the raw-record aggregation hash.
-        key_groups: dict[str, list[bytes]] = {}
-        with env_input.begin(write=False) as txn_input:
-            cursor = txn_input.cursor()
-            for key, value in tqdm(cursor, desc="Aggregation pass 1: grouping"):
-                agg_key = self.aggregate_key_raw(json.loads(value.decode("utf-8")))
-                key_groups.setdefault(agg_key, []).append(bytes(key))
+        if key_groups is None:
+            # Pass 1: group input keys by the raw-record aggregation hash.
+            key_groups = {}
+            with env_input.begin(write=False) as txn_input:
+                cursor = txn_input.cursor()
+                for key, value in tqdm(cursor, desc="Aggregation pass 1: grouping"):
+                    agg_key = self.aggregate_key_raw(json.loads(value.decode("utf-8")))
+                    key_groups.setdefault(agg_key, []).append(bytes(key))
+        else:
+            log.info("Aggregation pass 1 skipped: grouping computed by the raw stage")
 
         # Pass 2: write each group as a JSON array of the stored records.
         total_groups = len(key_groups)

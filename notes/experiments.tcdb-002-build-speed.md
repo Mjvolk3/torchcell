@@ -944,6 +944,52 @@ record whose genotype is a list fails while being written instead of in the late
 gene-set pass; the index builder validates only the reference of each group's
 representative. Stage 2 (the aggregation's grouping pass) is next.
 
+### Query build stage 2 implemented: grouping during the stream, folded passes, readahead
+
+`Neo4jQueryRaw` takes record observers (called with a dict equal to `json.loads` of
+each stored value); `Neo4jCellDataset.process` builds the deduplicator and
+aggregator before the raw stage and registers a `RawStageGrouping` observer that
+records each record's grouping key (`aggregate_key_raw` / `duplicate_key`) and,
+when the aggregator is the first stage, a per-record summary (experiment type,
+label name, dataset name, perturbation count, scalar phenotype values).
+`Aggregator.process` and `Deduplicator.process` take that precomputed grouping and
+skip their pass 1 (keys in the order pass 1 produced them, lexicographic in the
+`data_<i>` key); when none is given they run exactly as before, and a raw LMDB left
+by an earlier run takes that path, logged. `_write_folded_indices` writes
+`experiment_types.json`, `label_df.parquet` and the three JSON indices in the old
+cursor order from the summaries, so their standalone passes are skipped. Every
+whole-store cursor walk now opens LMDB with `readahead=True`; single-record reads
+keep it off. Measured cold on the 030 processed store (`scripts/readahead_cold_read.py`,
+`results/readahead_cold_read.csv`, 50,000 values in cursor order): 218 MB/s off,
+2,881 and 2,825 MB/s on, 13x.
+
+Equivalence: `tests/torchcell/data/test_neo4j_cell_single_pass.py` builds the
+dataset twice from 40 synthetic records (two experiment types, a group whose
+cursor-first key differs from its numeric-first key), in both layouts, with the
+aggregator alone and with a deduplicator in front: the raw, deduplication,
+aggregation and processed LMDBs are equal key for key, all seven files are
+byte-equal, and the skipped passes are proven skipped by call counts.
+`scripts/cell_single_pass_slice_check.py` (`results/cell_single_pass_slice_check.csv`)
+does the same on the 21,184 real 033 records with the 033 build's
+`GenotypeEnvironmentAggregator`: identical in both layouts.
+
+Speed on the slice (ms per record, CPU, stores in page cache): aggregation
+`process` 0.202 (two passes) to 0.025 (pass 2 only); the observer costs 0.133 (most
+of it the 033 aggregator's `Environment(**env)` per record, cacheable per distinct
+environment on that branch); `compute_phenotype_info` 0.055, `label_df` 0.222 and
+the three indices 0.056 each are folded into 0.003 of file writing. Total of these
+steps 0.671 to 0.185 ms per record; the whole build on the slice 1.52 to 1.02 ms
+(inline) and about 1.52 to 0.90 (pointer). On job 2929 these steps took 3.97 h wall
+against 1.19 h of CPU, the difference being the re-reads now removed; hypothesis:
+0.5 to 0.8 h wall at 6.39M. Not folded: the lazily computed gene indices (readahead
+only), and `measurements_per_entry`, which lives in the 033 script.
+
+Projection for the whole 033-shaped build (hypothesis): stage 1 raw 0.2 ms per
+record client CPU plus the 1.36 h server residual, stage 2 about 0.5 to 0.8 h, so
+about 2 h against 7 h 48 min; the server residual is the next target (parallel
+Cypher partitions, one session per dataset block) and needs a slurm smoke query to
+measure.
+
 ### Duplicate node blobs removed (2026.09.30)
 
 `serialized_data` is gone from genotype, segregant genotype, perturbation, crispr construct, environment perturbation and all 13 phenotype classes (fitness, gene interaction, gene essentiality, synthetic lethality, synthetic rescue, calmorph, microarray / rnaseq / pseudobulk expression, visual score, metabolite, protein abundance, environment response), in `torchcell/adapters/cell_adapter.py` and `biocypher/config/torchcell_schema_config.yaml`. Each is a sub-object of the experiment record, so its full copy is in the Experiment blob or the interned constant it points to; the reference-side phenotype and environment perturbation nodes are sub-objects of the experiment reference blob. Node ids are still sha256 of the sub-object's model_dump, so ids and edges do not change.

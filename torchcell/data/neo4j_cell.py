@@ -9,7 +9,7 @@ import json
 import logging
 import os
 import os.path as osp
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from enum import Enum, auto
 from typing import Any, cast
 
@@ -19,6 +19,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import torch
+from attrs import define, field
 from pydantic import field_validator
 from sortedcontainers import SortedDict
 from torch_geometric.data import Dataset, HeteroData
@@ -29,7 +30,7 @@ from torchcell.data.cell_data import to_cell_data
 from torchcell.data.deduplicate import Deduplicator
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.data.graph_processor import GraphProcessor
-from torchcell.data.neo4j_query_raw import Neo4jQueryRaw
+from torchcell.data.neo4j_query_raw import Neo4jQueryRaw, RecordObserver
 from torchcell.database.connection import neo4j_connection_settings
 from torchcell.datamodels import (
     EXPERIMENT_REFERENCE_TYPE_MAP,
@@ -161,6 +162,86 @@ def parse_genome(genome: SCerevisiaeGenome | None) -> ParsedGenome | None:
         data = {}
         data["gene_set"] = genome.gene_set
         return ParsedGenome(**data)
+
+
+LABEL_NAME_CANDIDATES: tuple[str, ...] = tuple(
+    sorted(
+        {
+            experiment_class.__annotations__["phenotype"]
+            .model_fields["label_name"]
+            .default
+            for experiment_class in EXPERIMENT_TYPE_MAP.values()
+        }
+    )
+)
+"""Every label name ``label_df`` can have a column for: ``phenotype_info`` is the
+phenotype classes of the build's experiment types, read through the same
+``__annotations__["phenotype"]`` expression, so its label names are a subset of these."""
+
+
+@define
+class RawStageGrouping:
+    """Raw-stage record observer: the first grouping stage's pass 1, done while writing.
+
+    ``Neo4jQueryRaw.process`` calls it with ``(index, record)`` for every record it
+    writes, ``record`` equal to ``json.loads`` of the stored value, which is exactly
+    what the grouping stage's pass 1 reads off the raw LMDB. It keeps the grouping
+    (``key_fn`` is ``Aggregator.aggregate_key_raw`` or ``Deduplicator.duplicate_key``)
+    and, when ``summarize`` is set, the fields the processed-store passes read per
+    record: experiment type, phenotype label name, dataset name, perturbation count,
+    and the phenotype's scalar values under each name in ``LABEL_NAME_CANDIDATES``.
+    """
+
+    key_fn: Callable[[dict[str, Any]], str]
+    summarize: bool
+    groups: dict[str, list[int]] = field(factory=dict)
+    summaries: list[tuple[str, str, str, int, tuple[tuple[str, Any], ...]]] = field(
+        factory=list
+    )
+
+    def __call__(self, index: int, record: dict[str, Any]) -> None:
+        """Record one written record's grouping key (and summary)."""
+        self.groups.setdefault(self.key_fn(record), []).append(index)
+        if self.summarize:
+            if index != len(self.summaries):
+                raise ValueError(
+                    f"records must be observed in order; got {index} after "
+                    f"{len(self.summaries)} records"
+                )
+            experiment = record["experiment"]
+            phenotype = experiment["phenotype"]
+            # label_df's per-value rule, minus the NaN test (applied per column at
+            # write time, as label_df applies it only to the build's label names).
+            values = tuple(
+                (name, phenotype[name])
+                for name in LABEL_NAME_CANDIDATES
+                if name in phenotype
+                and phenotype[name] is not None
+                and not isinstance(phenotype[name], (dict, list, tuple))
+            )
+            self.summaries.append(
+                (
+                    experiment["experiment_type"],
+                    phenotype["label_name"],
+                    experiment["dataset_name"],
+                    len(experiment["genotype"]["perturbations"]),
+                    values,
+                )
+            )
+
+    def key_groups(self) -> dict[str, list[bytes]]:
+        """The grouping as pass 1 builds it from a cursor walk of the raw LMDB.
+
+        Raw keys are ``data_<i>`` and a cursor walks them lexicographically, so each
+        group's keys are ordered by ``str(i)`` and groups by their first key.
+        """
+        ordered = sorted(
+            ((sorted(members, key=str), key) for key, members in self.groups.items()),
+            key=lambda item: str(item[0][0]),
+        )
+        return {
+            key: [f"data_{i}".encode() for i in members] for members, key in ordered
+        }
 
 
 class ProcessingStep(Enum):
@@ -359,8 +440,13 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         root_dir: str,
         query: str,
         gene_set: GeneSet,
+        record_observers: Sequence[RecordObserver] = (),
     ) -> Neo4jQueryRaw:
-        """Query Neo4j and load the raw experiment records for the gene set."""
+        """Query Neo4j and load the raw experiment records for the gene set.
+
+        ``record_observers`` see every record the raw stage writes (see
+        ``RecordObserver``); they see nothing when the raw LMDB already exists.
+        """
         cypher_kwargs: dict[str, str | int | float | list[Any]] = {
             "gene_set": list(gene_set)
         }
@@ -377,6 +463,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
             io_workers=10,  # IDEA simple for new, might need to parameterize
             num_workers=10,
             cypher_kwargs=cypher_kwargs,
+            record_observers=list(record_observers),
         )
         return raw_db  # break point here
 
@@ -424,7 +511,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
 
     def compute_phenotype_info(self) -> None:
         """Compute and cache the phenotype type information from the raw data."""
-        self._init_lmdb_read()
+        self._init_lmdb_read(readahead=True)
         experiment_types = set()
 
         with self.env.begin() as txn:
@@ -446,21 +533,10 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         """Run the conversion, deduplication, and processing pipeline into LMDB."""
         # IDEA consider dependency injection for processing steps
         # We don't inject becaue of unique query process.
-        raw_db = self.load_raw(
-            self.uri,
-            self.username,
-            self.password,
-            self.root,
-            cast(str, self.query),
-            self.gene_set,
-        )
 
         # Before this point each holds a class; here it is replaced by an instance.
-        self.converter = (
-            cast("type[Converter]", self.converter)(root=self.root, query=raw_db)
-            if self.converter
-            else None
-        )
+        # The deduplicator and aggregator are built BEFORE the raw stage so the first
+        # of them that reads the raw records can group them as they are written.
         self.deduplicator = (
             cast("type[Deduplicator]", self.deduplicator)(root=self.root)
             if self.deduplicator
@@ -471,6 +547,48 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
             if self.aggregator
             else None
         )
+        # A converter rewrites the records, so nothing downstream of it can be
+        # grouped off the raw ones. Otherwise the first grouping stage's pass 1 runs
+        # during the raw stage; when that stage is the aggregation, the processed
+        # store's per-record passes are folded in too (_write_folded_indices).
+        grouping: RawStageGrouping | None = None
+        grouped_step: ProcessingStep | None = None
+        if self.converter is None and self.deduplicator is not None:
+            grouping = RawStageGrouping(
+                key_fn=self.deduplicator.duplicate_key, summarize=False
+            )
+            grouped_step = ProcessingStep.DEDUPLICATION
+        elif self.converter is None and self.aggregator is not None:
+            grouping = RawStageGrouping(
+                key_fn=self.aggregator.aggregate_key_raw, summarize=True
+            )
+            grouped_step = ProcessingStep.AGGREGATION
+
+        raw_db = self.load_raw(
+            self.uri,
+            self.username,
+            self.password,
+            self.root,
+            cast(str, self.query),
+            self.gene_set,
+            record_observers=[grouping] if grouping is not None else [],
+        )
+        self.converter = (
+            cast("type[Converter]", self.converter)(root=self.root, query=raw_db)
+            if self.converter
+            else None
+        )
+        # The grouping is complete only if the raw stage wrote the LMDB in this run;
+        # a raw LMDB left by an earlier run was never observed, and its grouping
+        # stage then runs its own pass 1.
+        key_groups = (
+            grouping.key_groups()
+            if grouping is not None and raw_db.raw_stage_ran
+            else None
+        )
+        if grouping is not None and key_groups is None:
+            log.info("Raw LMDB predates this run: grouping stage runs its own pass 1")
+        folded = False
 
         self.processing_steps = self._determine_processing_steps()
 
@@ -491,12 +609,18 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
                 current_step = next_step
                 continue
 
+            step_groups = key_groups if next_step == grouped_step else None
             if next_step == ProcessingStep.CONVERSION:
                 cast(Converter, self.converter).process(input_path, output_path)
             elif next_step == ProcessingStep.DEDUPLICATION:
-                cast(Deduplicator, self.deduplicator).process(input_path, output_path)
+                cast(Deduplicator, self.deduplicator).process(
+                    input_path, output_path, step_groups
+                )
             elif next_step == ProcessingStep.AGGREGATION:
-                cast(Aggregator, self.aggregator).process(input_path, output_path)
+                cast(Aggregator, self.aggregator).process(
+                    input_path, output_path, step_groups
+                )
+                folded = step_groups is not None
             elif next_step == ProcessingStep.PROCESSED:
                 self._copy_lmdb(input_path, output_path)
 
@@ -508,17 +632,94 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
 
             current_step = next_step
 
-        # Compute phenotype info - used in get item
-        self.compute_phenotype_info()
-        # Compute and cache label DataFrame explicitly
-        self._label_df = self.label_df
+        if folded:
+            assert grouping is not None and key_groups is not None
+            self._write_folded_indices(grouping, key_groups)
+        else:
+            # Compute phenotype info - used in get item
+            self.compute_phenotype_info()
+            # Compute and cache label DataFrame explicitly
+            self._label_df = self.label_df
         # clean up raw db
         raw_db.env = None
+
+    def _write_folded_indices(
+        self, grouping: RawStageGrouping, key_groups: dict[str, list[bytes]]
+    ) -> None:
+        """Write what the processed-store passes would, from the raw-stage summaries.
+
+        Writes ``experiment_types.json`` (``compute_phenotype_info``),
+        ``label_df.parquet`` (``label_df``), and the phenotype-label, dataset-name and
+        perturbation-count index files, so none of those passes reads the store; the
+        properties load the files. Valid only when the processed store is the
+        aggregation of the raw records (no converter, no deduplicator): processed
+        entry ``g`` is ``key_groups``' ``g``-th group with its records in that order.
+        Every pass walked the processed store with a cursor, i.e. entries in the
+        lexicographic order of ``str(g)``, and that order is reproduced here: it
+        fixes the first-seen key order of each index, the insertion order of the
+        experiment-type set, the label table's row order, and which value
+        label_df's last-non-NaN-wins rule keeps. ``label_df`` read each value off a
+        re-validated experiment; the summaries read it off the stored dict, which
+        tests/torchcell/data/test_neo4j_cell_single_pass.py proves equal.
+        """
+        members = [[int(k[5:]) for k in keys] for keys in key_groups.values()]
+        cursor_order = sorted(range(len(members)), key=str)
+        summaries = grouping.summaries
+        experiment_types: set[str] = set()
+        phenotype_label_index: dict[str, set[int]] = {}
+        dataset_name_index: dict[str, set[int]] = {}
+        perturbation_count_index: dict[int, set[int]] = {}
+        for g in cursor_order:
+            for i in members[g]:
+                experiment_type, label_name, dataset_name, n_perts, _ = summaries[i]
+                experiment_types.add(experiment_type)
+                phenotype_label_index.setdefault(label_name, set()).add(g)
+                dataset_name_index.setdefault(dataset_name, set()).add(g)
+                perturbation_count_index.setdefault(n_perts, set()).add(g)
+        self._write_json_with_lock(
+            osp.join(self.processed_dir, "experiment_types.json"),
+            list(experiment_types),
+        )
+
+        label_names = [
+            phenotype.model_fields["label_name"].default
+            for phenotype in self.phenotype_info
+        ]
+        data_dict: dict[str, list[Any]] = {
+            "index": [],
+            **{label_name: [] for label_name in label_names},
+        }
+        for g in cursor_order:
+            row: dict[str, Any] = {"index": g}
+            for label_name in label_names:
+                row[label_name] = np.nan
+            for i in members[g]:
+                for label_name, value in summaries[i][4]:
+                    if label_name in row and not np.isnan(value):
+                        row[label_name] = value
+            for column, value in row.items():
+                data_dict[column].append(value)
+        self._label_df = pd.DataFrame(data_dict)
+        self._label_df.to_parquet(osp.join(self.processed_dir, "label_df.parquet"))
+
+        self._write_json_with_lock(
+            osp.join(self.processed_dir, "phenotype_label_index.json"),
+            {k: sorted(v) for k, v in phenotype_label_index.items()},
+        )
+        self._write_json_with_lock(
+            osp.join(self.processed_dir, "dataset_name_index.json"),
+            {k: sorted(v) for k, v in dataset_name_index.items()},
+        )
+        self._write_json_with_lock(
+            osp.join(self.processed_dir, "perturbation_count_index.json"),
+            {str(k): sorted(v) for k, v in perturbation_count_index.items()},
+        )
 
     def _copy_lmdb(self, src_path: str, dst_path: str) -> None:
         """Copy an LMDB database from the source path to the destination path."""
         os.makedirs(os.path.dirname(dst_path), exist_ok=True)
-        env_src = lmdb.open(src_path, readonly=True)
+        # A cursor walk: readahead (see Neo4jQueryRaw._init_lmdb).
+        env_src = lmdb.open(src_path, readonly=True, readahead=True)
         env_dst = lmdb.open(dst_path, map_size=int(1e12))
 
         with env_src.begin() as txn_src, env_dst.begin(write=True) as txn_dst:
@@ -625,14 +826,17 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
 
         return processed_graph
 
-    def _init_lmdb_read(self) -> None:
-        """Open the LMDB environment for read access."""
-        """Initialize the LMDB environment."""
+    def _init_lmdb_read(self, readahead: bool = False) -> None:
+        """Open the LMDB environment for read access.
+
+        ``readahead=True`` for the whole-store cursor walks (index and label passes),
+        off for ``get``'s random access (see ``Neo4jQueryRaw._init_lmdb``).
+        """
         self.env = lmdb.open(
             osp.join(self.processed_dir, "lmdb"),
             readonly=True,
             lock=False,
-            readahead=False,
+            readahead=readahead,
             meminit=False,
             max_readers=256,
             max_spare_txns=16,
@@ -684,7 +888,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         }
 
         # Open LMDB for reading
-        self._init_lmdb_read()
+        self._init_lmdb_read(readahead=True)
 
         # Iterate through all entries in the database
         with self.env.begin() as txn:
@@ -741,7 +945,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         # value type is dynamic: set[int] during build, converted to list[int] below
         phenotype_label_index: dict[str, Any] = {}
 
-        self._init_lmdb_read()
+        self._init_lmdb_read(readahead=True)
 
         with self.env.begin() as txn:
             cursor = txn.cursor()
@@ -797,7 +1001,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         # value type is dynamic: set[int] during build, converted to list[int] below
         dataset_name_index: dict[str, Any] = {}
 
-        self._init_lmdb_read()
+        self._init_lmdb_read(readahead=True)
 
         with self.env.begin() as txn:
             cursor = txn.cursor()
@@ -851,7 +1055,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         # value type is dynamic: set[int] during build, converted to list[int] below
         perturbation_count_index: dict[int, Any] = {}
 
-        self._init_lmdb_read()
+        self._init_lmdb_read(readahead=True)
 
         with self.env.begin() as txn:
             cursor = txn.cursor()
@@ -916,7 +1120,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         print("Computing is any perturbed gene index...")
         is_any_perturbed_gene_index: dict[str, set[int]] = {}
 
-        self._init_lmdb_read()
+        self._init_lmdb_read(readahead=True)
 
         try:
             # Stream the cursor: materializing the entries first held the entire
@@ -993,7 +1197,7 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         print("Computing is any deletion gene index...")
         index: dict[str, set[int]] = {}
 
-        self._init_lmdb_read()
+        self._init_lmdb_read(readahead=True)
         try:
             # Stream the cursor: materializing the entries first held the entire
             # store's values in RAM (517 GB on the 025 build, over any cap).

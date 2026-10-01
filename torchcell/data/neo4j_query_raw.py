@@ -11,7 +11,7 @@ import multiprocessing as mp
 import os
 import os.path as osp
 import shutil
-from collections.abc import Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from concurrent.futures import ProcessPoolExecutor
 from itertools import chain
 from typing import Any, cast
@@ -168,20 +168,29 @@ def _dumps(obj: Any) -> str:
     return json.dumps(obj, default=lambda o: o.model_dump())
 
 
+RecordObserver = Callable[[int, dict[str, Any]], None]
+"""Called by ``Neo4jQueryRaw.process`` once per written record, in record order, with
+the record index and a dict equal to ``json.loads`` of the value written under
+``data_<index>``. Sub-dicts of a cached environment or reference are SHARED between
+records, so an observer must not mutate the dict."""
+
+
 @define
 class _CachedEnvironment:
-    """A validated environment and the JSON it contributes to an experiment record."""
+    """A validated environment, the JSON it contributes to a record, and that parsed."""
 
     model: Environment
     fragment: str
+    parsed: dict[str, Any]
 
 
 @define
 class _CachedReference:
-    """A validated experiment reference, its stored JSON, and its index hash."""
+    """A validated experiment reference, its stored JSON parsed and not, its hash."""
 
     model: Any
     fragment: str
+    parsed: dict[str, Any]
     index_hash: str
 
 
@@ -228,6 +237,12 @@ class Neo4jQueryRaw:
     # TORCHCELL_KG_VERSION), ``pinned``, a release id, or a ``major.minor`` version;
     # resolved to a database name at fetch time by ``releases.resolve_database``.
     version: str | None = None
+    # Called once per record as ``process`` writes it (see ``RecordObserver``), so a
+    # later stage can compute what it would otherwise re-read the LMDB for.
+    record_observers: list[RecordObserver] = field(factory=list)
+    # True once ``process`` has written the LMDB in this instance, i.e. the observers
+    # have seen every record; False when the LMDB already existed on disk.
+    raw_stage_ran: bool = field(init=False, default=False)
     _stream: _StreamState = field(init=False, factory=_StreamState, repr=False)
 
     def __attrs_post_init__(self) -> None:
@@ -304,8 +319,14 @@ class Neo4jQueryRaw:
             )
         return found
 
-    def _init_lmdb(self, readonly: bool = True) -> None:
-        """Initialize the LMDB environment."""
+    def _init_lmdb(self, readonly: bool = True, readahead: bool = False) -> None:
+        """Initialize the LMDB environment.
+
+        ``readahead`` is for whole-store cursor walks: on a cold 025 processed LMDB a
+        cursor walk read 2,630 MB/s with it and 213 MB/s without
+        (experiments/tcdb-002-build-speed/results/query_build_cost_probe.csv). Random
+        single-record access keeps it off.
+        """
         if self.env is not None:
             self.close_lmdb()
         self.env = lmdb.open(
@@ -313,7 +334,7 @@ class Neo4jQueryRaw:
             map_size=int(1e12),
             readonly=readonly,
             lock=not readonly,
-            readahead=False,
+            readahead=readahead,
             meminit=False,
         )
 
@@ -354,7 +375,10 @@ class Neo4jQueryRaw:
                 else resolve_pointers(environment, constants)
             )
             model = Environment(**source)
-            hit = _CachedEnvironment(model=model, fragment=_dumps(model))
+            fragment = _dumps(model)
+            hit = _CachedEnvironment(
+                model=model, fragment=fragment, parsed=json.loads(fragment)
+            )
             cache[key] = hit
         return hit
 
@@ -377,12 +401,12 @@ class Neo4jQueryRaw:
                 resolved["experiment_reference_type"]
             ](**resolved)
             fragment = _dumps(model)
+            parsed = json.loads(fragment)
             hit = _CachedReference(
                 model=model,
                 fragment=fragment,
-                index_hash=compute_sha256_hash(
-                    json.dumps(json.loads(fragment), sort_keys=True)
-                ),
+                parsed=parsed,
+                index_hash=compute_sha256_hash(json.dumps(parsed, sort_keys=True)),
             )
             cache[ref_serialized] = hit
         return hit
@@ -390,15 +414,16 @@ class Neo4jQueryRaw:
     @staticmethod
     def _experiment_json(
         experiment: Any, environment: _CachedEnvironment
-    ) -> tuple[str, dict[str, Any]]:
+    ) -> tuple[str, dict[str, Any], dict[str, str]]:
         """``_dumps(experiment)`` with the environment's cached JSON spliced in.
 
         ``json.dumps`` of a str-keyed dict is ``{`` + ``"k": v`` joined by ``, `` +
         ``}``, so dumping every field but the environment and inserting the cached
         fragment at the environment's position reproduces the whole-record bytes. The
         field order is the model's (Experiment classes declare no computed or excluded
-        fields, which the length check enforces). Returns the JSON and the dump of
-        the other fields, whose ``genotype`` the gene set is read from.
+        fields, which the length check enforces). Returns the JSON, the dump of the
+        other fields (whose ``genotype`` the gene set is read from), and each field's
+        JSON fragment.
         """
         fields = type(experiment).model_fields
         dump = experiment.model_dump(exclude={"environment"})
@@ -407,12 +432,12 @@ class Neo4jQueryRaw:
                 f"{type(experiment).__name__} dumps fields {sorted(dump)}, not its "
                 f"declared fields {list(fields)} without the environment"
             )
-        parts = [
-            f"{json.dumps(name)}: "
-            + (environment.fragment if name == "environment" else _dumps(dump[name]))
+        fragments = {
+            name: environment.fragment if name == "environment" else _dumps(dump[name])
             for name in fields
-        ]
-        return "{" + ", ".join(parts) + "}", dump
+        }
+        parts = [f"{json.dumps(name)}: {frag}" for name, frag in fragments.items()]
+        return "{" + ", ".join(parts) + "}", dump, fragments
 
     def _write_batch(
         self, batch: list[tuple[int, dict[str, Any], str]], constants: dict[str, Any]
@@ -479,7 +504,9 @@ class Neo4jQueryRaw:
                         ref_serialized, new_references[ref_serialized], constants
                     )
                 )
-                experiment_json, dump = self._experiment_json(experiment, environment)
+                experiment_json, dump, fragments = self._experiment_json(
+                    experiment, environment
+                )
                 data_json = (
                     '{"experiment": '
                     + experiment_json
@@ -491,6 +518,20 @@ class Neo4jQueryRaw:
                 stream.reference_members.setdefault(reference.index_hash, []).append(i)
                 for gene_name in self.extract_systematic_gene_names(dump["genotype"]):
                     stream.gene_set.add(gene_name)
+                if self.record_observers:
+                    # json.loads of the concatenation is the composition of the parts'
+                    # parses, so this dict equals json.loads(data_json).
+                    record = {
+                        "experiment": {
+                            name: environment.parsed
+                            if name == "environment"
+                            else json.loads(frag)
+                            for name, frag in fragments.items()
+                        },
+                        "experiment_reference": reference.parsed,
+                    }
+                    for observer in self.record_observers:
+                        observer(i, record)
 
     def _reference_index_from_groups(
         self, groups: list[list[int]]
@@ -588,6 +629,7 @@ class Neo4jQueryRaw:
         self._reference_index_from_groups(groups)
         self.gene_set = self._stream.gene_set
         self._stream = _StreamState()
+        self.raw_stage_ran = True
 
     def _write_records(self, records: Iterator[Any]) -> int:
         """Write each query record as ``data_<i>``; return the number written."""
@@ -738,7 +780,7 @@ class Neo4jQueryRaw:
             # process() serialized it from model_dump(), so json.loads returns
             # byte-identical structure to what the old path re-dumped and hashed.
             log.info("Computing experiment reference index (streaming)...")
-            self._init_lmdb(readonly=True)
+            self._init_lmdb(readonly=True, readahead=True)
             hash_to_indices: dict[str, list[int]] = {}
             with self.env.begin() as txn:
                 cursor = txn.cursor()
@@ -794,8 +836,7 @@ class Neo4jQueryRaw:
     def compute_gene_set(self) -> GeneSet:
         """Return the GeneSet of all perturbed genes found across cached records."""
         gene_set = GeneSet()
-        if self.env is None:
-            self._init_lmdb()
+        self._init_lmdb(readahead=True)
 
         with self.env.begin() as txn:
             cursor = txn.cursor()

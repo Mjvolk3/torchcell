@@ -136,11 +136,13 @@ ARM_SHORT = {
     "kl_0.01": "1e-2",
     "kl_0.1": "0.1",
     "kl_1": "1",
-    RANDOM: "random",
+    RANDOM: "r1e-3",
+    "random_0.1": "r0.1",
+    "random_1": "r1",
 }
 # Drawn back to front, so no penalty (gray) is on top and never hidden.
 CURVE_ARMS = [
-    (RANDOM, "KL λ = 0.001, random graphs", ARM_COLOR[RANDOM], "--"),
+    ("random_1", "KL λ = 1, random graphs", ARM_COLOR["random_1"], "--"),
     ("kl_1", "KL λ = 1", ARM_COLOR["kl_1"], "-"),
     ("kl_0.1", "KL λ = 0.1", ARM_COLOR["kl_0.1"], "-"),
     ("kl_0.001", "KL λ = 0.001", ARM_COLOR["kl_0.001"], "-"),
@@ -410,7 +412,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
         color=RED,
     )
     c.text(
-        XPOS[RANDOM],
+        XPOS["random_0.1"],
         0.75,
         "vs its\nrewired\ntarget",
         ha="center",
@@ -436,7 +438,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
     _not_logged(d, XPOS["kl_0"], 2.3e2, ARM_COLOR["kl_0"])
     _not_logged(d, XPOS["mask"], 2.3e2, ARM_COLOR["mask"])
     d.text(
-        XPOS[RANDOM],
+        XPOS["random_0.1"],
         1.25e3,
         "vs its\nrewired\ntarget",
         ha="center",
@@ -472,7 +474,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
         if sub.empty:
             continue
         m = sub.groupby("epoch")["value"].mean().reindex(PROBE_EPOCHS)
-        ls = "--" if arm == RANDOM else "-"
+        ls = "--" if arm.startswith("random_") else "-"
         e.plot(
             xs,
             m.to_numpy(),
@@ -553,7 +555,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
     f.yaxis.set_major_locator(MultipleLocator(0.01))
     f.set_ylabel("Held-out Pearson, biological − random graphs")
     f.set_xlabel("same λ, same seed")
-    f.set_title("λ = 0.001: biology above random at ep 29, n.s.")
+    f.set_title("Biology beats random graphs by ≈0.017 at λ ≥ 0.1")
     for reading, label in (
         ("fixed", "epoch 29"),
         ("max", "max over epochs"),

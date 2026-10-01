@@ -3,37 +3,62 @@
 \section{The random-graph control: biology or any target\secstatus{todo}}
 \label{sec:control}
 
-The control arm keeps everything of the $\lambda = 10^{-3}$ control except the graphs:
-each of the nine is rewired before the model sees it, by double-edge swaps that keep
-every gene's degree, five swaps per edge, seeded by the run seed
+The control arm keeps everything of the biological arm at the same $\lambda$ except the
+graphs: each of the nine is rewired before the model sees it, by double-edge swaps that
+keep every gene's degree, five swaps per edge, seeded by the run seed
 (\texttt{cgt\_s0\_r\_kl\_rand\_031}, \texttt{torchcell.graph.rewire}). The prior pulls
 the heads toward the rewired graphs and the edge diagnostics are scored against them.
-The arm was written to run at the best $\lambda$ of the sweep; the sweep's best was not
-known at submission, so it ran at $10^{-3}$, the 010 operating point.
+The arm ran first at $10^{-3}$, the 010 operating point, with three seeds, and in round
+1b at the two $\lambda$ where the biological prior's gain is largest, $10^{-1}$ and 1,
+with five seeds each (Delta jobs 22461957 to 22461967). The paired comparisons below use
+seeds 1 to 3, the seeds the biological arms have.
 
 \notesec{The heads learn the random graphs, less completely}
-Edge recall at degree against the rewired graphs reaches 0.814 at epoch 29 and the
-divergence 983 (Figure~\ref{fig:sweep}c, d), against 0.906 and 337 for the biological
-graphs at the same $\lambda$. A random graph of the same degree sequence is a target the
-attention can and does move toward, but it does not get as close in 30 epochs. Whether
-that is because the biological graphs are more compatible with the point loss, or
-because the rewired graphs are less clustered and so harder to represent with a
-low-rank attention, is not separated by anything logged.
+Edge recall at degree against the rewired graphs reaches 0.814 at $10^{-3}$ and 0.822 at
+$10^{-1}$ and 1, with divergence 980, 902 and 904 (Figure~\ref{fig:sweep}c, d;
+Table~\ref{tab:diag}), against 0.906 to 0.915 and 337 to 298 for the biological graphs at
+the same $\lambda$. A random graph of the same degree sequence is a target the attention
+can and does move toward, but it does not get as close in 30 epochs at any $\lambda$,
+and raising $\lambda$ a hundredfold closes none of the gap. Whether that is because the
+biological graphs are more compatible with the point loss, or because the rewired graphs
+are less clustered and so harder to represent with a low-rank attention, is not separated
+by anything logged.
 
 \notesec{At $\lambda = 10^{-3}$ the accuracy question is underpowered}
 On the fixed-epoch reading the three random-graph seeds give 0.417, 0.433 and 0.410,
 against 0.429, 0.438 and 0.430 for the biological graphs on the same seeds and 0.424,
-0.425 and 0.425 with no penalty. The biological graphs are
-above the random ones on every seed, by 0.012, 0.005 and 0.020; the random ones straddle
-no penalty, with paired differences of $-0.008$, $+0.008$ and $-0.015$ (mean $-0.005$,
-paired $t = -0.7$, $p = 0.56$). At the max-over-epochs reading the three arms are 0.451,
-0.447 and 0.448 (random against no penalty $p = 0.86$), and at minimum validation loss
-0.444, 0.444 and 0.440 ($p = 0.66$). The effect being tested at this $\lambda$ is the
-0.005 to 0.013 that the biological prior adds over no penalty at epoch 29, and three
-seeds of a control whose own seed spread is 0.012 cannot resolve it. The question the
-control was designed to answer, whether the biology or the conditioning carries the gain,
-is open, and it is answerable only where the gain is large: at $\lambda = 1$ the
-biological prior is 0.021 to 0.023 above no penalty on every seed, so the rewired graphs
-at $\lambda = 1$ would separate a 0.02 effect from the 0.001 to 0.012 seed spread seen
-here. That arm (\texttt{model.graph\_regularization.graph\_reg\_lambda=1} on
-\texttt{cgt\_s0\_r\_kl\_rand\_031}) runs in round 1b with five seeds, Section~6.
+0.425 and 0.425 with no penalty. The biological graphs are above the random ones on every
+seed, by 0.012, 0.005 and 0.020 (mean $+0.012$, paired $t = 2.8$, $p = 0.11$); the random
+ones straddle no penalty, with paired differences of $-0.008$, $+0.008$ and $-0.015$
+(mean $-0.005$, $t = -0.7$, $p = 0.56$). At the max-over-epochs reading the three arms
+are 0.451, 0.447 and 0.448 (biological minus random $p = 0.44$), and at minimum
+validation loss 0.444, 0.444 and 0.440 ($p = 0.86$). The effect being tested at this
+$\lambda$ is the 0.005 to 0.013 that the biological prior adds over no penalty at epoch
+29, and three seeds of a control whose own seed spread is 0.012 cannot resolve it.
+
+\notesec{At $\lambda = 10^{-1}$ and 1 the biology separates from the conditioning}
+The five random-graph seeds give $0.430 \pm 0.006$ at $10^{-1}$ and $0.427 \pm 0.004$
+at $\lambda = 1$ on the fixed-epoch reading, $0.437 \pm 0.003$ and $0.435 \pm 0.004$ at
+the max over epochs, and $0.434 \pm 0.004$ and $0.430 \pm 0.006$ at minimum validation
+loss (Table~\ref{tab:arms}). Paired on seeds 1 to 3, the biological graphs are above the
+random ones on every seed under every reading (Figure~\ref{fig:sweep}f). At $10^{-1}$
+the differences are $+0.019$, $+0.017$ and $+0.015$ at epoch 29 (mean $+0.017$,
+$t = 14.5$, $p = 0.005$), $+0.025$, $+0.017$ and $+0.014$ at the max ($+0.018$,
+$t = 5.6$, $p = 0.03$) and $+0.029$, $+0.014$ and $+0.014$ at minimum loss ($+0.019$,
+$t = 3.9$, $p = 0.06$). At $\lambda = 1$ they are $+0.014$, $+0.018$ and $+0.020$ at
+epoch 29 ($+0.017$, $t = 8.8$, $p = 0.013$), $+0.018$, $+0.015$ and $+0.012$ at the max
+($+0.015$, $t = 8.3$, $p = 0.014$) and $+0.027$, $+0.006$ and $+0.003$ at minimum loss
+($+0.012$, $t = 1.6$, $p = 0.26$). Against no penalty the random arms are not the
+biological arms: at epoch 29 they sit at or just above it ($+0.003$ at $10^{-1}$,
+$p = 0.52$; $+0.004$ at 1, up on every seed, $p = 0.16$), where the biological prior is
+$+0.020$ and $+0.022$ above; at the max over epochs they are below it on every seed, by
+$-0.012$ at $10^{-1}$ ($t = -6.1$, $p = 0.026$) and $-0.011$ at 1 ($t = -12.2$,
+$p = 0.007$), with a minimum validation point loss of 0.813 and 0.816 against 0.801
+(Table~\ref{tab:diag}). A strong prior toward degree-matched random graphs therefore
+removes little of the late decline and lowers the peak; the fixed-epoch gain of the
+biological prior is not reproduced by conditioning on any graph of the same degree
+sequence. The gain over random at the peak reading, 0.015 to 0.018, is larger than the
+biological arm's own gain over no penalty there (0.004 to 0.006), because most of it is
+the random arm falling below no penalty rather than the biological arm rising above it.
+What the biological graphs buy a best-checkpoint deployment remains at most 0.006; what
+they buy a fixed-budget run is 0.02, and that 0.02 is theirs.

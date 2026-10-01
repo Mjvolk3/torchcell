@@ -1041,6 +1041,12 @@ class Bloom2019Dataset(ExperimentDataset):
                 f"{phenotypes.shape[0]} phenotype rows, expected {N_SEGREGANTS}"
             )
 
+        # One float64 Series per served condition, keyed by segregant id: indexing it
+        # by an id is a scalar for the type checker (a ``.loc`` row read is typed
+        # ``Any | Series``), and the cell values are the same float64s.
+        served: dict[str, pd.Series[float]] = {
+            col: phenotypes[col].astype("float64") for col in self.conditions
+        }
         references = {
             col: self._reference(spec) for col, spec in self.conditions.items()
         }
@@ -1068,9 +1074,8 @@ class Bloom2019Dataset(ExperimentDataset):
                         )
                     seen.add(seg_id)
                     counts.append(genotype.n_blocks)
-                    row = phenotypes.loc[seg_id]
                     for col, spec in self.conditions.items():
-                        value = float(row[col])
+                        value = float(served[col][seg_id])
                         if np.isnan(value):
                             raise ValueError(f"{seg_id}/{col}: NaN in the release")
                         experiment = SegregantGrowthExperiment(

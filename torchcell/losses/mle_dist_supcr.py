@@ -43,8 +43,34 @@ class AdaptiveWeighting:
             return 0.9
 
 
+def _exponential_temperature(
+    init_temp: float, final_temp: float, epoch: int, max_epochs: int
+) -> float:
+    """``init * (final / init) ** (epoch / max_epochs)``."""
+    return float(init_temp * (final_temp / init_temp) ** (epoch / max_epochs))
+
+
+def _cosine_temperature(
+    init_temp: float, final_temp: float, epoch: int, max_epochs: int
+) -> float:
+    """``final + 0.5 * (init - final) * (1 + cos(pi * epoch / max_epochs))``."""
+    return final_temp + 0.5 * (init_temp - final_temp) * (
+        1 + math.cos(math.pi * epoch / max_epochs)
+    )
+
+
+TEMPERATURE_SCHEDULES = {
+    "cosine": _cosine_temperature,
+    "exponential": _exponential_temperature,
+}
+
+
 class TemperatureScheduler:
-    """Manages temperature scheduling for SupCR loss."""
+    """Manages temperature scheduling for SupCR loss.
+
+    ``schedule`` must be one of ``TEMPERATURE_SCHEDULES`` ("cosine", "exponential");
+    any other name raises ``ValueError`` at construction.
+    """
 
     def __init__(
         self,
@@ -53,23 +79,20 @@ class TemperatureScheduler:
         schedule: str = "exponential",
     ):
         """Store the initial/final temperatures and schedule type."""
+        if schedule not in TEMPERATURE_SCHEDULES:
+            raise ValueError(
+                f"Unknown temperature schedule {schedule!r}; valid schedules: "
+                f"{', '.join(TEMPERATURE_SCHEDULES)}"
+            )
         self.init_temp = init_temp
         self.final_temp = final_temp
         self.schedule = schedule
 
     def get_temperature(self, epoch: int, max_epochs: int = 1000) -> float:
         """Get temperature based on training epoch."""
-        if self.schedule == "exponential":
-            return float(
-                self.init_temp
-                * (self.final_temp / self.init_temp) ** (epoch / max_epochs)
-            )
-        elif self.schedule == "cosine":
-            return self.final_temp + 0.5 * (self.init_temp - self.final_temp) * (
-                1 + math.cos(math.pi * epoch / max_epochs)
-            )
-        else:
-            return self.init_temp
+        return TEMPERATURE_SCHEDULES[self.schedule](
+            self.init_temp, self.final_temp, epoch, max_epochs
+        )
 
 
 class BufferedWeightedDistLoss(nn.Module):
@@ -188,8 +211,10 @@ class BufferedWeightedDistLoss(nn.Module):
 
         # Check if we have enough samples
         if self.total_samples < self.min_samples:
-            # Not enough samples yet, return zero loss
-            return torch.tensor(0.0, device=device), torch.zeros(2, device=device)
+            # Not enough samples yet: zero loss and one zero per phenotype dim
+            return torch.tensor(0.0, device=device), torch.zeros(
+                targets.size(1), device=device
+            )
 
         # Get buffer samples
         buffer_preds, buffer_targets = self.get_buffer_samples()
@@ -348,8 +373,10 @@ class BufferedWeightedSupCRCell(nn.Module):
 
         # Check if we have enough samples
         if self.total_samples < self.min_samples:
-            # Not enough samples yet, return zero loss
-            return torch.tensor(0.0, device=device), torch.zeros(2, device=device)
+            # Not enough samples yet: zero loss and one zero per label dim
+            return torch.tensor(0.0, device=device), torch.zeros(
+                labels.size(1), device=device
+            )
 
         # Update temperature if provided
         if temperature is not None:
@@ -516,6 +543,8 @@ class MleDistSupCR(nn.Module):
             self.current_epoch[0] = epoch
 
         device = predictions.device
+        # Width of every per-dimension log, including a switched-off term's zeros
+        num_dims = targets.size(1)
 
         # Initialize loss components
         total_loss = torch.tensor(0.0, device=device)
@@ -562,7 +591,7 @@ class MleDistSupCR(nn.Module):
         else:
             # Set to zero for consistency in logging
             mse_val = torch.tensor(0.0, device=device)
-            mse_dims = torch.zeros(2, device=device)  # Assuming 2 dimensions
+            mse_dims = torch.zeros(num_dims, device=device)
             loss_dict.update(
                 {"mse_loss": 0.0, "mse_dim_losses": mse_dims, "weighted_mse": 0.0}
             )
@@ -588,7 +617,7 @@ class MleDistSupCR(nn.Module):
         else:
             # Set to zero for consistency in logging
             dist_val = torch.tensor(0.0, device=device)
-            dist_dims = torch.zeros(2, device=device)  # Assuming 2 dimensions
+            dist_dims = torch.zeros(num_dims, device=device)
             loss_dict.update(
                 {"dist_loss": 0.0, "dist_dim_losses": dist_dims, "weighted_dist": 0.0}
             )
@@ -624,7 +653,7 @@ class MleDistSupCR(nn.Module):
         else:
             # Set to zero for consistency in logging
             supcr_val = torch.tensor(0.0, device=device)
-            supcr_dims = torch.zeros(2, device=device)  # Assuming 2 dimensions
+            supcr_dims = torch.zeros(num_dims, device=device)
             loss_dict.update(
                 {
                     "supcr_loss": 0.0,

@@ -1070,28 +1070,31 @@ class TestNormalizationBranches:
         assert torch.isnan(mixed[0])
         assert mixed[1].item() == pytest.approx(1.0, abs=1e-7)
 
-    def test_an_unknown_strategy_is_accepted_at_construction_and_refused_at_use(
-        self,
-    ) -> None:
-        """Finding: the constructor stores any strategy string without checking it.
+    def test_an_unknown_strategy_is_refused_at_construction(self) -> None:
+        """The constructor refuses a strategy outside minmax, robust, standard (#529).
 
-        ``LabelNormalizationTransform.__init__`` (regression_to_classification.py:63)
-        records ``config["strategy"]`` verbatim; only ``normalize``/``denormalize``
-        (lines 88, 108) refuse it, so a misspelled config survives until the first
-        batch. Pinned until the constructor validates the strategy.
+        A misspelled config fails before the first batch, with the same message the COO
+        transform uses (PR #558). The strategy is checked before the column lookup: the
+        ``growth`` label is also absent from the frame, and the strategy error wins.
         """
-        norm = LabelNormalizationTransform(
-            _five_point_dataset(), {"fitness": {"strategy": "zscore"}}
+        message = (
+            r"^Unknown normalization strategy 'zscore' for label 'fitness'; "
+            r"valid strategies: minmax, robust, standard$"
         )
-        assert norm.stats["fitness"]["strategy"] == "zscore"
+        with pytest.raises(ValueError, match=message):
+            LabelNormalizationTransform(
+                _five_point_dataset(), {"fitness": {"strategy": "zscore"}}
+            )
         with pytest.raises(
-            ValueError, match=r"^Unknown normalization strategy: zscore$"
+            ValueError,
+            match=(
+                r"^Unknown normalization strategy 'zscore' for label 'growth'; "
+                r"valid strategies: minmax, robust, standard$"
+            ),
         ):
-            norm.normalize(torch.tensor([1.0]), "fitness")
-        with pytest.raises(
-            ValueError, match=r"^Unknown normalization strategy: zscore$"
-        ):
-            norm.denormalize(torch.tensor([1.0]), "fitness")
+            LabelNormalizationTransform(
+                _five_point_dataset(), {"growth": {"strategy": "zscore"}}
+            )
 
     def test_a_label_absent_from_the_dataset_is_refused(self) -> None:
         """A configured label missing from ``label_df`` fails the constructor."""
@@ -1193,19 +1196,24 @@ class TestBinningBranches:
         assert soft[0].tolist() == pytest.approx([1 / (1 + e), e / (1 + e)], abs=1e-7)
         assert torch.isnan(soft[1]).all()
 
-    def test_soft_labels_that_underflow_stay_all_zero(self) -> None:
-        """Finding: an underflowed Gaussian row is left at zero, not normalized.
+    def test_soft_labels_that_would_underflow_put_all_mass_on_the_nearest_center(
+        self,
+    ) -> None:
+        """A row whose raw Gaussian weights all underflow is still a distribution (#529).
 
         Edges [0, 0.001, 100]: min width 0.001, sigma 0.003, centers [0.0005, 50.0005].
         The value 100 sits 99.9995 and 49.9995 from them, 33333 and 16666 sigmas, so both
-        ``exp`` terms are 0.0 and the ``sum > 0`` guard (regression_to_classification.py
-        :217) skips the division, leaving a row that sums to 0 rather than 1. Pinned
-        until the row falls back to a one-hot on the nearest center.
+        ``exp`` weights are 0.0 in float32 and the old code left the row [0, 0]. The row
+        is now a softmax of the log-weights (the PR #558 rule for the COO transform): the
+        log-weights differ by 0.5 * (33333^2 - 16666^2), about 4.2e8, so the nearer
+        center takes all of the mass, [0, 1]. A row of zeros is not a distribution, and
+        renormalizing in log space is exact where no floor would be. The value 0.0005 is
+        on the first center: [1, 0].
         """
         soft = EqualWidthStrategy().compute_soft_labels(
             torch.tensor([100.0, 0.0005]), torch.tensor([0.0, 1e-3, 100.0]), "x", 3
         )
-        assert soft.tolist() == [[0.0, 0.0], [1.0, 0.0]]
+        assert soft.tolist() == [[0.0, 1.0], [1.0, 0.0]]
 
     def test_categorical_inverse_draws_seeded_uniforms_bin_by_bin(self) -> None:
         """Edges [0..4]; argmax rows [2, 0, 2, NaN]. Under seed 42 the draws go to bin 0
@@ -1249,16 +1257,18 @@ class TestBinningBranches:
     def test_soft_inverse_is_a_windowed_expectation_only_away_from_the_edges(
         self,
     ) -> None:
-        """Finding: the soft inverse is deterministic and edge-dependent.
+        """The soft inverse is deterministic and edge-dependent, as documented (#529).
 
-        The ``inverse`` docstring promises "random sampling within bins", but the soft
-        branch (regression_to_classification.py:469-500) returns a probability-weighted
-        mean over a 5-bin window around the peak, and falls back to the bare peak center
-        when that window would cross an edge. On edges 0..6 (centers 0.5..5.5):
-        probabilities proportional to [1, 1, 3, 2, 1, 1] peak at bin 2, window bins 0-4,
+        The ``inverse`` docstring used to promise "random sampling within bins" for
+        every type; it now states that the soft branch draws nothing: the softmax of the
+        row is averaged over the centers in a 5-bin window around the argmax, and the
+        argmax center is returned when that window would cross an edge. The callers pass
+        model logits and read a point estimate, so the code is kept and the docstring
+        fixed. On edges 0..6 (centers 0.5..5.5): probabilities proportional to
+        [1, 1, 3, 2, 1, 1] peak at bin 2, window bins 0-4,
         (0.5 + 1.5 + 3 * 2.5 + 2 * 3.5 + 4.5) / 8 = 21 / 8 = 2.625; a peak at bin 1 has
         a clipped window and returns its center 1.5; a uniform row peaks at bin 0, 0.5.
-        Pinned until the docstring and the edge behavior agree.
+        A different seed gives the same values.
         """
         six_points: Any = SimpleNamespace(
             label_df=pd.DataFrame({"fitness": [0.0, 6.0]})
@@ -1284,36 +1294,47 @@ class TestBinningBranches:
         )
         values = six.inverse(_gene(logits))["gene"]["fitness"]
         assert values.tolist() == pytest.approx([2.625, 1.5, 0.5], abs=1e-6)
+        reseeded = six.inverse(_gene(logits), seed=7)["gene"]["fitness"]
+        assert torch.equal(reseeded, values)
 
-    def test_an_unknown_label_type_bins_nothing_and_inverts_to_nan(self) -> None:
-        """Finding: an unrecognized ``label_type`` is a silent no-op forward, NaN back.
+    def test_an_unknown_label_type_is_refused_by_name(self) -> None:
+        """An unknown ``label_type`` raises instead of passing through unbinned (#529).
 
-        ``forward`` (regression_to_classification.py:389-407) has no else branch, so the
-        label stays continuous; ``inverse`` (446-523) likewise, so every row becomes NaN.
-        With ``store_continuous=False`` no ``fitness_continuous`` copy is written.
-        Pinned until an unknown label type raises.
+        It used to leave the label continuous forward and turn every row to NaN on the
+        inverse. The constructor now refuses it with the PR #558 message. A config
+        changed after construction is refused the same way by ``forward`` and
+        ``inverse``, before either writes anything (no ``fitness_continuous`` copy,
+        although ``store_continuous`` defaults on). The type is lower-cased first, so
+        "Soft" is accepted.
         """
-        binning = _binning("bogus", store_continuous=False)
-        out = binning(_gene(torch.tensor([0.5, 2.5])))
-        assert out["gene"]["fitness"].tolist() == [0.5, 2.5]
-        assert "fitness_continuous" not in out["gene"]
-        back = binning.inverse(_gene(torch.tensor([[0.0, 1.0, 0.0, 0.0]])))
-        assert back["gene"]["fitness"].shape == (1,)
-        assert torch.isnan(back["gene"]["fitness"]).all()
+        message = (
+            r"^Unknown label_type 'bogus' for label 'fitness'; "
+            r"valid label types: categorical, ordinal, soft$"
+        )
+        with pytest.raises(ValueError, match=message):
+            _binning("bogus")
+        binning = _binning("Soft")
+        binning.label_configs["fitness"]["label_type"] = "bogus"
+        data = _gene(torch.tensor([0.5, 2.5]))
+        with pytest.raises(ValueError, match=message):
+            binning(data)
+        assert data["gene"]["fitness"].tolist() == [0.5, 2.5]
+        assert "fitness_continuous" not in data["gene"]
+        with pytest.raises(ValueError, match=message):
+            binning.inverse(_gene(torch.tensor([[0.0, 1.0, 0.0, 0.0]])))
 
-    def test_inverse_of_a_list_fails_before_its_own_conversion(self) -> None:
-        """Finding: the list-to-tensor conversion in ``inverse`` is unreachable.
+    def test_inverse_converts_a_list_prediction_before_reading_its_device(self) -> None:
+        """A list prediction is converted to a tensor first, as ``forward`` does (#529).
 
-        ``inverse`` reads ``data["gene"][label].device`` (regression_to_classification.py
-        :418) before the ``isinstance`` conversion at 427-428, so a list prediction raises
-        ``AttributeError`` where ``forward`` would have converted it. Pinned until the
-        device lookup follows the conversion.
+        ``inverse`` used to read ``.device`` on the raw list and raise ``AttributeError``.
+        Now [[1, 0, 0]] has one ordinal crossing, so bin 1 = [1, 2) and the first seed-42
+        draw 0.8822692632675171 gives 1 + 0.88227 = 1.88227, the same as the tensor input.
         """
         binning = _binning("ordinal")
-        with pytest.raises(
-            AttributeError, match=r"^'list' object has no attribute 'device'$"
-        ):
-            binning.inverse(_gene([[1.0, 0.0, 0.0]]))
+        from_list = binning.inverse(_gene([[1.0, 0.0, 0.0]]))["gene"]["fitness"]
+        assert from_list.tolist() == pytest.approx([1.8822692632675171], abs=1e-6)
+        from_tensor = binning.inverse(_gene(torch.tensor([[1.0, 0.0, 0.0]])))
+        assert torch.equal(from_list, from_tensor["gene"]["fitness"])
 
 
 class TestInverseComposeBranches:

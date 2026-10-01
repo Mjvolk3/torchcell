@@ -45,6 +45,7 @@ import torch
 from dotenv import load_dotenv
 from scipy.stats import pearsonr, spearmanr
 from sortedcontainers import SortedDict
+from torch_geometric.data import HeteroData
 
 from torchcell.data.cell_data import to_cell_data
 from torchcell.data.neo4j_cell import create_graph_from_gene_set
@@ -89,8 +90,7 @@ GRAPH_REG_CONFIG = {
     "graph_reg_layer": 1,
     "row_sampling_rate": 1.0,
     "regularized_heads": {
-        name: {"layer": 1, "head": i, "lambda": 0.001}
-        for i, name in enumerate(GRAPHS)
+        name: {"layer": 1, "head": i, "lambda": 0.001} for i, name in enumerate(GRAPHS)
     },
 }
 # `pooling` now defaults to "sum"; the 010 runs used "mean", and the class
@@ -133,17 +133,15 @@ BASE_GENE_SET = os.environ.get("BASE_GENE_SET", "genome")
 def load_records() -> tuple[np.ndarray, np.ndarray, dict[str, np.ndarray], list[str]]:
     """Perturbed gene names per record, labels, splits, gene vocabulary."""
     label_df = pd.read_parquet(osp.join(BUILD_DIR, "processed", "label_df.parquet"))
-    with open(osp.join(BUILD_DIR, "processed", "is_any_perturbed_gene_index.json")) as f:
+    with open(
+        osp.join(BUILD_DIR, "processed", "is_any_perturbed_gene_index.json")
+    ) as f:
         gene_index = json.load(f)
     with open(osp.join(BUILD_DIR, "data_module_cache", "index_seed_42.json")) as f:
         split_index = json.load(f)
 
     record_ids = np.sort(label_df["index"].to_numpy())
-    y = (
-        label_df.set_index("index")
-        .loc[record_ids, "gene_interaction"]
-        .to_numpy()
-    )
+    y = label_df.set_index("index").loc[record_ids, "gene_interaction"].to_numpy()
     id_to_row = {int(r): i for i, r in enumerate(record_ids)}
 
     gene_names = sorted(gene_index.keys())
@@ -212,16 +210,11 @@ def score(
         n = chunk.shape[0]
         pert = torch.from_numpy(chunk.reshape(-1)).to(device)
         batch_assign = torch.arange(n, device=device).repeat_interleave(3)
-        batch = {
-            "gene": type(
-                "G",
-                (),
-                {
-                    "perturbation_indices": pert,
-                    "perturbation_indices_batch": batch_assign,
-                },
-            )()
-        }
+        # The model reads the genotype count from batch.num_graphs (issue #523).
+        batch = HeteroData()
+        batch.num_graphs = n
+        batch["gene"].perturbation_indices = pert
+        batch["gene"].perturbation_indices_batch = batch_assign
         preds, _ = model(cell_graph, batch, return_attention=False)
         out[start : start + n] = preds.squeeze(-1).float().cpu().numpy()
     # The model is trained on standardized labels; report raw units.
@@ -242,12 +235,16 @@ def main() -> None:
     row_genes, y, splits, gene_names = load_records()
     cell_graph, embeddings = build_cell_graph()
     node_ids = list(cell_graph["gene"].node_ids)
-    print(f"cell graph: {len(node_ids)} genes, model gene_num {MODEL_KWARGS['gene_num']}")
+    print(
+        f"cell graph: {len(node_ids)} genes, model gene_num {MODEL_KWARGS['gene_num']}"
+    )
 
     # Map the build's gene vocabulary onto the model's index space.
     node_to_idx = {g: i for i, g in enumerate(node_ids)}
     missing = [g for g in gene_names if g not in node_to_idx]
-    assert not missing, f"{len(missing)} build genes absent from the cell graph, e.g. {missing[:5]}"
+    assert not missing, (
+        f"{len(missing)} build genes absent from the cell graph, e.g. {missing[:5]}"
+    )
     remap = np.array([node_to_idx[g] for g in gene_names], dtype=np.int64)
     idx_triples = remap[row_genes]
 
@@ -266,7 +263,9 @@ def main() -> None:
             learnable_embedding_config=LEARNABLE_EMBEDDING_CONFIG,
             **MODEL_KWARGS,
         ).to(device)
-        ckpt = torch.load(osp.join(CKPT_ROOT, rel), map_location="cpu", weights_only=False)
+        ckpt = torch.load(
+            osp.join(CKPT_ROOT, rel), map_location="cpu", weights_only=False
+        )
         state = {
             k[len("model.") :]: v
             for k, v in ckpt["state_dict"].items()
@@ -298,12 +297,8 @@ def main() -> None:
             rows.append(
                 {"model": tag, "split": split, "recorded_pearson": recorded} | m
             )
-            np.save(
-                osp.join(RESULTS_DIR, f"cgt_predictions_{tag}_{split}.npy"), p
-            )
-            np.save(
-                osp.join(RESULTS_DIR, f"cgt_record_rows_{split}.npy"), sel
-            )
+            np.save(osp.join(RESULTS_DIR, f"cgt_predictions_{tag}_{split}.npy"), p)
+            np.save(osp.join(RESULTS_DIR, f"cgt_record_rows_{split}.npy"), sel)
 
         # The nine graphs must not touch the forward pass. Rebuilding the same
         # weights with the graph term switched off has to reproduce every

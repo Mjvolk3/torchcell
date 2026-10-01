@@ -756,3 +756,24 @@ uses the default `overwrite=True` while four 027 jobs held `data.db`. Plan:
 - Previous behavior: `drop_empty_go` removed genes from `_gene_set` and the database but kept a warm `_feature_index` and `_go_genes`, the stale-cache class PR #568 fixed for `drop_chrmt`. A dropped gene still resolved as CURRENT through `resolve_gene_name`.
 - Fix: `drop_empty_go` sets `_feature_index = None` and `_go_genes = None` after the commit, as `drop_chrmt` does, so both rebuild from the post-drop gene set.
 - Evidence: `tests/torchcell/sequence/genome/scerevisiae/test_s288c_synthetic.py::test_drop_empty_go_rebuilds_the_locus_index_and_go_genes` (YBL001W resolves RETIRED after the drop; the index lists the five surviving genes; `go_genes` is a fresh map with the exact three terms). A dropped gene has no GO term, so it never appeared in `go_genes`; the observable stale cache was the locus index.
+
+## 2026.10.01 - overwrite defaults to False; data.db records its source
+
+Previous behavior:
+
+- `overwrite` defaulted to `True`, and that branch called `gffutils.create_db(..., force=True)` straight onto `<genome_root>/data.db`, which unlinks the file and writes a new one in place. Every construction that omitted the argument (46 under `torchcell/`, 49 under `experiments/`) rebuilt the shared database, and every process reading it in that window failed with `FileNotFoundError` or read a half-written file.
+- With `overwrite=False` nothing was ever built: an absent `data.db` surfaced only at the first `genome.db` access, as `FileNotFoundError: Database not found at ...` from `GffutilsConnectionManager`.
+- `data.db` was not tied to the genomes-tier pins. `resolve` verifies the GFF's sha256 on every construction, but the database built from it carried no record of which GFF or which `create_db` arguments produced it, so `overwrite=False` would open a database built from any other file.
+- `__reduce_ex__` reconstructed with the original `overwrite`, so a genome built with `overwrite=True` and pickled to DataLoader or DDP workers rebuilt `data.db` once per worker.
+
+Now:
+
+- `overwrite` defaults to `False`. `False` builds `data.db` only when it is absent; otherwise it opens it after `check_genome_database_source` confirms the record inside equals this genome's `GenomeDatabaseSource` (assembly set, GFF filename, GFF sha256 hashed from the bytes `resolve` returned, `keep_order`, `merge_strategy`, `sort_attribute_values`). No record, or a different one, raises `GenomeDatabaseSourceError` naming the database, the expected source and the exact deliberate rebuild call. `True` rebuilds unconditionally.
+- `build_genome_database` writes to `data.db.<random>.building` in the same directory, adds the one-row `torchcell_genome_db_source` table, sets mode 0644 and `os.replace`s it onto `data.db`. The record lives inside the database so the two are replaced by one atomic rename; a reader opens either the old complete file or the new one.
+- `__reduce_ex__` reconstructs with `overwrite=False`; the original value returns through the pickled state.
+
+Operational consequence: every `data.db` built before this change has no record and is refused. Each machine's dev tree needs one deliberate rebuild while no job reads it, `SCerevisiaeGenome(genome_root=$DATA_ROOT/data/sgd/genome, go_root=$DATA_ROOT/data/go, overwrite=True)`. Processes still running pre-change code that rebuild with the old default write a database without a record, which new code then refuses.
+
+Left open (measured on the synthetic release, `probe_drop.py` in the fix scratchpad): `drop_chrmt` and `drop_empty_go` delete rows from the shared `data.db` in place and commit, and gffutils' `FeatureDB.delete` defaults to `make_backup=True`, copying the whole database to `data.db.bak` on every call. After one `drop_chrmt`, a second default construction on the same root reported genes `YAL001C, YAL002W, YBL001W, YBL002W, YCL001W` (Q0010 gone) and the directory held `data.db, data.db.bak`. The source record does not detect this, because the GFF and the build arguments are unchanged.
+
+Tests: `tests/torchcell/sequence/genome/scerevisiae/test_s288c_synthetic.py` (`test_overwrite_defaults_to_false`, `test_default_builds_an_absent_database_once_then_reuses_it`, `test_overwrite_true_rebuilds_when_asked`, `test_database_without_a_source_record_is_refused`, `test_database_built_from_a_different_gff_is_refused`, `test_source_table_with_two_rows_is_refused`, `test_unpickling_an_overwrite_true_genome_does_not_rebuild`). Memory: genome-overwrite-true-rebuild-race.

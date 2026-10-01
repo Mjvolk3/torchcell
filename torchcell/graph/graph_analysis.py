@@ -299,7 +299,7 @@ def go_gaf_investigation() -> None:
     DATA_ROOT = cast("str", os.getenv("DATA_ROOT"))
 
     genome = SCerevisiaeGenome(  # type: ignore[call-arg]  # legacy: data_root is not a valid kwarg; fixing would change runtime behavior
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=False
     )
     genome.drop_chrmt()
     genome.drop_empty_go()
@@ -526,7 +526,7 @@ def old_main() -> None:
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
         go_root=osp.join(DATA_ROOT, "data/go"),
-        overwrite=True,
+        overwrite=False,
     )
     graph = SCerevisiaeGraph(
         sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
@@ -629,7 +629,7 @@ def main() -> None:
     DATA_ROOT = cast("str", os.getenv("DATA_ROOT"))
 
     genome = SCerevisiaeGenome(  # type: ignore[call-arg]  # legacy: data_root is not a valid kwarg; fixing would change runtime behavior
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=False
     )
     graph = SCerevisiaeGraph(  # type: ignore[call-arg]  # legacy: data_root is not a valid kwarg; fixing would change runtime behavior
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome

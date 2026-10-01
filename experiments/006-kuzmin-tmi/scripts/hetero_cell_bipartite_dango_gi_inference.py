@@ -171,7 +171,7 @@ def main(cfg: DictConfig) -> None:
     genome_root = osp.join(DATA_ROOT, "data/sgd/genome")
     go_root = osp.join(DATA_ROOT, "data/go")
 
-    genome = SCerevisiaeGenome(genome_root=genome_root, go_root=go_root, overwrite=True)
+    genome = SCerevisiaeGenome(genome_root=genome_root, go_root=go_root, overwrite=False)
     genome.drop_empty_go()
 
     # Setup graph

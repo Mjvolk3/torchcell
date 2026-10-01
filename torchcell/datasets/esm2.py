@@ -190,7 +190,7 @@ if __name__ == "__main__":
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     genome = SCerevisiaeGenome(
-        genome_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"), overwrite=True
+        genome_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"), overwrite=False
     )
 
     model_names = [key for key in Esm2Dataset.MODEL_TO_WINDOW.keys()]

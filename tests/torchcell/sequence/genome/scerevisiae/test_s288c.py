@@ -31,6 +31,7 @@ def genome():
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
         go_root=osp.join(DATA_ROOT, "data/go"),
+        overwrite=False,  # never rebuild the shared data.db from a test
     )
     return genome
 

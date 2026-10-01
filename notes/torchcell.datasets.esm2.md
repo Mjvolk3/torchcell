@@ -14,3 +14,7 @@ created: 1790813170649
 - **Backbone.** Built only inside `process` (PyG runs it only when the store is absent); the dead post-`super` rebuild branch was removed.
 
 A rebuilt store differs on disk: `[n_genes, D]` instead of flat, and the `_no_dubious_uncharacterized` stores zero Dubious and Uncharacterized genes. Tests: [[tests.torchcell.datasets.test_esm2]].
+
+## 2026.10.01 - genome built with overwrite=False
+
+The `SCerevisiaeGenome` construction here passed `overwrite=True`, rebuilding the shared `data.db` under every other reader. It now passes `overwrite=False`, which opens the existing database after checking its source record (see [[torchcell.sequence.genome.scerevisiae.s288c]]).

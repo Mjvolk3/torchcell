@@ -6,8 +6,8 @@
 The genomes-tier ``resolve`` is stubbed at its import site
 (``torchcell.sequence.genome.scerevisiae.s288c.resolve``) to map each release filename
 onto a file written by the fixture, and ``data.db`` is built by the fixture with the
-same ``gffutils.create_db`` arguments the constructor uses, so the genome is built with
-``overwrite=False``. ``go.obo`` is written too, so ``download_url`` is never reached
+module's own ``build_genome_database`` (the constructor's build, source record
+included), so the genome is built with ``overwrite=False``. ``go.obo`` is written too, so ``download_url`` is never reached
 (one test stubs it to pin the missing-file branch).
 
 Fixture (GFF coordinates are 1-based inclusive; Python slices are ``[start - 1:end]``):
@@ -55,10 +55,12 @@ feature falls inside its region. Expected values, derived from the source:
   post-drop gene set with the same three terms.
 """
 
+import hashlib
 import os
 import os.path as osp
 import pickle
 import re
+import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -66,6 +68,7 @@ from typing import Any
 import gffutils
 import pandas as pd
 import pytest
+from attrs import fields as attrs_fields
 from gffutils.exceptions import FeatureNotFoundError
 from sortedcontainers import SortedDict, SortedSet
 
@@ -75,6 +78,8 @@ from torchcell.sequence.data import GeneSet
 from torchcell.sequence.genome.scerevisiae.s288c import (
     GeneNameResolution,
     GeneNameStatus,
+    GenomeDatabaseSource,
+    GenomeDatabaseSourceError,
     SCerevisiaeGenome,
 )
 
@@ -243,13 +248,14 @@ def write_release(root: Path) -> dict[str, str]:
 def build_db(gff_path: str, genome_root: Path) -> None:
     """Seed data.db exactly as ``SCerevisiaeGenome(overwrite=True)`` would."""
     genome_root.mkdir(parents=True, exist_ok=True)
-    gffutils.create_db(
+    s288c.build_genome_database(
         gff_path,
-        dbfn=str(genome_root / "data.db"),
-        force=True,
-        keep_order=True,
-        merge_strategy="merge",
-        sort_attribute_values=True,
+        str(genome_root / "data.db"),
+        s288c.genome_database_source(
+            SCerevisiaeGenome.ASSEMBLY_SET,
+            f"saccharomyces_cerevisiae_{VERSION}.gff",
+            gff_path,
+        ),
     )
 
 
@@ -1343,3 +1349,172 @@ def test_main_builds_under_data_root_with_overwrite_false(
         "genome.gene_set: GeneSet(size=2, items=['YAL001C', 'YAL002W'])\n\n"
     )
     assert os.listdir(tmp_path) == []
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.01: overwrite defaults to False; data.db carries its source record.
+# --------------------------------------------------------------------------- #
+
+GFF_NAME = f"saccharomyces_cerevisiae_{VERSION}.gff"
+
+
+def _expected_source(release: dict[str, str]) -> GenomeDatabaseSource:
+    """The record a build from the fixture GFF carries, sha256 computed here."""
+    return GenomeDatabaseSource(
+        assembly_set="sgd_S288C_R64-4-1_20230830",
+        gff_filename=GFF_NAME,
+        gff_sha256=hashlib.sha256(Path(release[GFF_NAME]).read_bytes()).hexdigest(),
+        keep_order=True,
+        merge_strategy="merge",
+        sort_attribute_values=True,
+    )
+
+
+def _db_identity(db_path: Path) -> tuple[int, int]:
+    st = db_path.stat()
+    return (st.st_ino, st.st_mtime_ns)
+
+
+def _rebuild_call(release: dict[str, str]) -> str:
+    return (
+        f"SCerevisiaeGenome(genome_root={release['__genome_root__']!r}, "
+        f"go_root={release['__go_root__']!r}, overwrite=True)"
+    )
+
+
+def test_overwrite_defaults_to_false() -> None:
+    """Omitting ``overwrite`` must never rebuild the shared database."""
+    assert attrs_fields(SCerevisiaeGenome).overwrite.default is False
+
+
+def test_default_builds_an_absent_database_once_then_reuses_it(
+    release: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """No data.db: the first default construction builds it (one create_db call, the
+    source recorded inside); the second opens the same file, same inode and mtime.
+    """
+    create_calls: list[str] = []
+    real_create_db = gffutils.create_db
+
+    def recording_create_db(data: str, dbfn: str, **kwargs: Any) -> Any:
+        create_calls.append(data)
+        return real_create_db(data, dbfn=dbfn, **kwargs)
+
+    monkeypatch.setattr(gffutils, "create_db", recording_create_db)
+    genome_root = Path(release["__genome_root__"])
+    db_path = genome_root / "data.db"
+
+    first = SCerevisiaeGenome(
+        genome_root=str(genome_root), go_root=release["__go_root__"]
+    )
+    assert first.overwrite is False
+    assert create_calls == [release[GFF_NAME]]
+    assert os.listdir(genome_root) == ["data.db"]
+    assert db_path.stat().st_mode & 0o777 == 0o644
+    assert s288c.read_genome_database_source(str(db_path)) == _expected_source(release)
+    built = _db_identity(db_path)
+
+    second = SCerevisiaeGenome(
+        genome_root=str(genome_root), go_root=release["__go_root__"]
+    )
+    assert create_calls == [release[GFF_NAME]]
+    assert _db_identity(db_path) == built
+    assert list(second.gene_set) == list(first.gene_set)
+
+
+def test_overwrite_true_rebuilds_when_asked(release: dict[str, str]) -> None:
+    """An explicit ``overwrite=True`` replaces data.db (a new inode) and re-records."""
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    before = db_path.stat().st_ino
+    with db_path.open("rb"):  # a reader holding the old file keeps it
+        SCerevisiaeGenome(
+            genome_root=release["__genome_root__"],
+            go_root=release["__go_root__"],
+            overwrite=True,
+        )
+    assert db_path.stat().st_ino != before
+    assert os.listdir(release["__genome_root__"]) == ["data.db"]
+    assert s288c.read_genome_database_source(str(db_path)) == _expected_source(release)
+
+
+def test_database_without_a_source_record_is_refused(release: dict[str, str]) -> None:
+    """A data.db built by plain gffutils (every pre-2026.10.01 build) has no record:
+    opening it with ``overwrite=False`` raises with the deliberate rebuild call, and
+    the file is left untouched.
+    """
+    genome_root = Path(release["__genome_root__"])
+    genome_root.mkdir()
+    db_path = genome_root / "data.db"
+    gffutils.create_db(release[GFF_NAME], dbfn=str(db_path), **s288c.CREATE_DB_KWARGS)
+    before = _db_identity(db_path)
+    expected = _expected_source(release)
+    message = (
+        f"{db_path} carries no torchcell_genome_db_source record, so it cannot be "
+        f"shown to have been built from sgd_S288C_R64-4-1_20230830/{GFF_NAME} "
+        f"(sha256 {expected.gff_sha256}). Rebuild it deliberately, once, while no "
+        f"job reads it: {_rebuild_call(release)}"
+    )
+    with pytest.raises(GenomeDatabaseSourceError) as exc:
+        SCerevisiaeGenome(genome_root=str(genome_root), go_root=release["__go_root__"])
+    assert str(exc.value) == message
+    assert _db_identity(db_path) == before
+
+
+def test_database_built_from_a_different_gff_is_refused(
+    release: dict[str, str],
+) -> None:
+    """The pinned GFF changed after data.db was built: the recorded sha256 no longer
+    matches, so the stale database is refused, never silently reused.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    stale = _expected_source(release)
+    with open(release[GFF_NAME], "a") as fh:
+        fh.write("chrI\tSGD\tregion\t50\t55\t.\t+\t.\tID=EXTRA\n")
+    current = _expected_source(release)
+    assert stale.gff_sha256 != current.gff_sha256
+    message = (
+        f"{db_path} was built from {stale.model_dump()} but this genome's source is "
+        f"{current.model_dump()}. Rebuild it deliberately, once, while no job reads "
+        f"it: {_rebuild_call(release)}"
+    )
+    with pytest.raises(GenomeDatabaseSourceError) as exc:
+        SCerevisiaeGenome(
+            genome_root=release["__genome_root__"], go_root=release["__go_root__"]
+        )
+    assert str(exc.value) == message
+
+
+def test_source_table_with_two_rows_is_refused(release: dict[str, str]) -> None:
+    """The record table must hold exactly one row; two is a defect, named."""
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    conn = sqlite3.connect(db_path)
+    conn.execute("INSERT INTO torchcell_genome_db_source (record) VALUES ('{}')")
+    conn.commit()
+    conn.close()
+    with pytest.raises(GenomeDatabaseSourceError) as exc:
+        s288c.read_genome_database_source(str(db_path))
+    assert str(exc.value) == (
+        f"{db_path}: torchcell_genome_db_source holds 2 rows, expected exactly 1"
+    )
+
+
+def test_unpickling_an_overwrite_true_genome_does_not_rebuild(
+    release: dict[str, str],
+) -> None:
+    """A genome built with ``overwrite=True`` and sent to a worker by pickle opens the
+    parent's database (same inode and mtime); ``overwrite`` itself round-trips.
+    """
+    genome = SCerevisiaeGenome(
+        genome_root=release["__genome_root__"],
+        go_root=release["__go_root__"],
+        overwrite=True,
+    )
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    built = _db_identity(db_path)
+    restored = pickle.loads(pickle.dumps(genome))
+    assert restored.overwrite is True
+    assert _db_identity(db_path) == built
+    assert list(restored.gene_set) == list(genome.gene_set)

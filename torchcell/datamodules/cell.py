@@ -7,17 +7,19 @@
 import hashlib
 import json
 import logging
+import math
 import os
 import os.path as osp
 import random
 from collections import defaultdict
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from typing import Any, cast
 
 import lightning as L
 import pandas as pd
 import torch
 from pydantic import BaseModel, Field, model_validator
+from torch.utils.data import DataLoader as TorchDataLoader
 from torch_geometric.loader import DataLoader, PrefetchLoader
 
 from torchcell.datamodels import ModelStrict
@@ -107,7 +109,13 @@ class DataModuleIndexDetails(ModelStrict):
                     }
                 )
 
-        df = pd.DataFrame(summary_data)
+        # Explicit columns so a details object with no index data yields an EMPTY frame
+        # with its columns (and ``__str__`` its "(empty)" form) rather than a column-less
+        # frame on which ``df["split"]`` raises ``KeyError``.
+        df = pd.DataFrame(
+            summary_data,
+            columns=["split", "index_type", "key", "count", "ratio", "total"],
+        ).astype({"count": int, "ratio": float, "total": int})
 
         # Create a categorical column for 'split' with the desired order
         df["split"] = pd.Categorical(
@@ -177,22 +185,28 @@ class DataModuleIndex(ModelStrict):
 class DatasetIndexSplit(ModelStrict):
     """Per-dataset index lists grouped by train/val/test split."""
 
-    train: dict[str | int, list[int]] = None  # type: ignore[assignment]  # pydantic field: keep declared type + None default (changing either alters validation/runtime)
-    val: dict[str | int, list[int]] = None  # type: ignore[assignment]  # pydantic field: keep declared type + None default (changing either alters validation/runtime)
-    test: dict[str | int, list[int]] = None  # type: ignore[assignment]  # pydantic field: keep declared type + None default (changing either alters validation/runtime)
+    train: dict[str | int, list[int]]
+    val: dict[str | int, list[int]]
+    test: dict[str | int, list[int]]
 
 
 def overlap_dataset_index_split(
     dataset_index: dict[str | int, list[int]], data_module_index: DataModuleIndex
 ) -> DatasetIndexSplit:
-    """Intersect each dataset's indices with the train/val/test split indices."""
+    """Intersect each dataset's indices with the train/val/test split indices.
+
+    A split that holds none of the datasets is an EMPTY dict, not ``None``: an empty
+    overlap is a legitimate outcome (e.g. a small subset whose test split draws from one
+    dataset only), and the experiment 003 plotting scripts that call this treat an empty
+    split as "nothing to draw".
+    """
     train_set = set(data_module_index.train)
     val_set = set(data_module_index.val)
     test_set = set(data_module_index.test)
 
-    train_dict = {}
-    val_dict = {}
-    test_dict = {}
+    train_dict: dict[str | int, list[int]] = {}
+    val_dict: dict[str | int, list[int]] = {}
+    test_dict: dict[str | int, list[int]] = {}
 
     for dataset_name, indices in dataset_index.items():
         train_indices = sorted(list(set(indices) & train_set))
@@ -206,11 +220,7 @@ def overlap_dataset_index_split(
         if test_indices:
             test_dict[dataset_name] = test_indices
 
-    return DatasetIndexSplit(
-        train=train_dict if train_dict else None,  # type: ignore[arg-type]  # field accepts None default (see DatasetIndexSplit); type kept as-is
-        val=val_dict if val_dict else None,  # type: ignore[arg-type]  # field accepts None default (see DatasetIndexSplit); type kept as-is
-        test=test_dict if test_dict else None,  # type: ignore[arg-type]  # field accepts None default (see DatasetIndexSplit); type kept as-is
-    )
+    return DatasetIndexSplit(train=train_dict, val=val_dict, test=test_dict)
 
 
 class CellDataModule(L.LightningDataModule):
@@ -230,7 +240,7 @@ class CellDataModule(L.LightningDataModule):
         split_indices: str | list[str] | None = None,
         follow_batch: list[str] | None = None,
         train_shuffle: bool = True,
-        collate_fn: object | None = None,
+        collate_fn: Callable[[list[Any]], Any] | None = None,
         val_batch_size: int | None = None,
         pinned_test_indices: Iterable[int] | None = None,
         pinned_split_indices: Mapping[str, Iterable[int]] | None = None,
@@ -310,6 +320,14 @@ class CellDataModule(L.LightningDataModule):
             if split_indices
             else []
         )
+        # The split is defined BY these keys: a record is placed only through the keys
+        # that hold it, so with none every record lands in no split and the module would
+        # train on nothing without an error. Refused here, before the index is computed.
+        if not self.split_indices:
+            raise ValueError(
+                "split_indices is required: name at least one split index of the dataset "
+                "(e.g. 'phenotype_label_index'); without one every record lands in no split"
+            )
         self._index: DataModuleIndex | None = None
         self._index_details: DataModuleIndexDetails | None = None
         if follow_batch is None:
@@ -492,11 +510,6 @@ class CellDataModule(L.LightningDataModule):
         remaining = all_indices - (
             final_splits["train"] | final_splits["val"] | final_splits["test"]
         )
-        target_ratios = {
-            "train": self.train_ratio,
-            "val": self.val_ratio,
-            "test": 1 - self.train_ratio - self.val_ratio,
-        }
 
         for index_name in self.split_indices:
             original_index = getattr(self.dataset, index_name)
@@ -512,11 +525,29 @@ class CellDataModule(L.LightningDataModule):
                 }
                 total_count = sum(current_counts.values()) + len(key_remaining)
 
+                # Targets partition the key exactly: test is the REMAINDER, as in the
+                # first-pass slicing, not ``int(n * (1 - train - val))``, whose ratio is
+                # 0.09999999999999995 in floating point and so gave a 10-record key a test
+                # target of 0 (and a ZeroDivisionError below).
+                target_train = int(self.train_ratio * total_count)
+                target_val = int(self.val_ratio * total_count)
+                target_counts = {
+                    "train": target_train,
+                    "val": target_val,
+                    "test": total_count - target_train - target_val,
+                }
+                empty_targets = [
+                    split for split, target in target_counts.items() if target == 0
+                ]
+                if empty_targets:
+                    raise ValueError(
+                        f"Key {key!r} of {index_name} has {len(key_remaining)} record(s) "
+                        f"left to balance, but its {total_count} "
+                        f"records give a target of 0 for {empty_targets}; balancing needs "
+                        f"at least {math.ceil(1 / self.val_ratio)} records per such key"
+                    )
+
                 for idx in key_remaining:
-                    target_counts = {
-                        split: int(total_count * ratio)
-                        for split, ratio in target_ratios.items()
-                    }
                     best_split = min(
                         ["train", "val", "test"],
                         key=lambda x: (
@@ -568,6 +599,21 @@ class CellDataModule(L.LightningDataModule):
             log.info(
                 f"Splits after full pinning: train={len(final_splits['train'])} "
                 f"val={len(final_splits['val'])} test={len(final_splits['test'])}"
+            )
+
+        # Every record of the pool must be placed. A record under no split-index key is
+        # never reached by the key-driven assignment above, and dropping it silently
+        # would be a data loss.
+        orphans = sorted(
+            all_indices
+            - (final_splits["train"] | final_splits["val"] | final_splits["test"])
+        )
+        if orphans:
+            shown = ", ".join(map(str, orphans[:10]))
+            more = f", ... ({len(orphans)} in all)" if len(orphans) > 10 else ""
+            raise ValueError(
+                f"{len(orphans)} record(s) sit under no key of {self.split_indices} and "
+                f"would land in no split: [{shown}{more}]"
             )
 
         # Create DataModuleIndexDetails object
@@ -636,12 +682,19 @@ class CellDataModule(L.LightningDataModule):
         dataset: Any,  # dynamic dataset/Subset passed through to the loaders
         shuffle: bool = False,
         batch_size: int | None = None,
-    ) -> DataLoader | PrefetchLoader:
+    ) -> TorchDataLoader[Any] | PrefetchLoader:
+        """Build the loader for ``dataset``: PyG's by default, torch's for a custom collate.
+
+        PyG's ``DataLoader`` pops any ``collate_fn`` and installs its own ``Collater``, so
+        a caller's function (e.g. experiment 006's ``LazyCollater``) would never run. When
+        ``collate_fn`` is given the plain torch ``DataLoader`` is used with it instead, and
+        ``follow_batch`` is not applied: that collate owns the batching.
+        """
         # Use provided batch_size or fall back to self.batch_size
         if batch_size is None:
             batch_size = self.batch_size
 
-        dataloader_kwargs = {
+        dataloader_kwargs: dict[str, Any] = {
             "batch_size": batch_size,
             "shuffle": shuffle,
             "num_workers": self.num_workers,
@@ -649,7 +702,6 @@ class CellDataModule(L.LightningDataModule):
             if self.num_workers > 0
             else False,
             "pin_memory": self.pin_memory,
-            "follow_batch": self.follow_batch,
             # THE SAME GUARD AS `prefetch_factor` BELOW, and for the same reason -- this one
             # was missed when that fix landed (commit 2cca6d83), so num_workers=0 was still
             # unconstructible afterwards. `timeout` is a WORKER-QUEUE timeout, so at
@@ -674,29 +726,33 @@ class CellDataModule(L.LightningDataModule):
             "prefetch_factor": (self.prefetch_factor if self.num_workers > 0 else None),
         }
 
-        # Add collate_fn if provided
+        loader: TorchDataLoader[Any]
         if self.collate_fn is not None:
-            dataloader_kwargs["collate_fn"] = self.collate_fn
-
-        loader = DataLoader(dataset, **dataloader_kwargs)
+            loader = TorchDataLoader(
+                dataset, collate_fn=self.collate_fn, **dataloader_kwargs
+            )
+        else:
+            loader = DataLoader(
+                dataset, follow_batch=self.follow_batch, **dataloader_kwargs
+            )
         if self.prefetch:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             return PrefetchLoader(loader, device=device)
         return loader
 
-    def train_dataloader(self) -> DataLoader | PrefetchLoader:
+    def train_dataloader(self) -> TorchDataLoader[Any] | PrefetchLoader:
         """Return a dataloader over the training subset."""
         return self._get_dataloader(self.train_dataset, shuffle=self.train_shuffle)
 
-    def val_dataloader(self) -> DataLoader | PrefetchLoader:
+    def val_dataloader(self) -> TorchDataLoader[Any] | PrefetchLoader:
         """Return a dataloader over the validation subset."""
         return self._get_dataloader(self.val_dataset, batch_size=self.val_batch_size)
 
-    def test_dataloader(self) -> DataLoader | PrefetchLoader:
+    def test_dataloader(self) -> TorchDataLoader[Any] | PrefetchLoader:
         """Return a dataloader over the test subset."""
         return self._get_dataloader(self.test_dataset)
 
-    def all_dataloader(self) -> DataLoader | PrefetchLoader:
+    def all_dataloader(self) -> TorchDataLoader[Any] | PrefetchLoader:
         """Return a dataloader over the entire dataset."""
         return self._get_dataloader(self.dataset)
 

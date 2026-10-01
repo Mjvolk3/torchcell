@@ -111,7 +111,8 @@ def main():
         )
 
         # Create loss function
-        criterion = DCellLoss(alpha=0.3, use_auxiliary_losses=True)
+        # Ma et al. 2018 sum over non-root subsystems (issue #554)
+        criterion = DCellLoss(alpha=0.3, use_auxiliary_losses=True, aux_reduction="sum")
 
         # Run the model multiple times to ensure stable behavior
         print("\nRunning forward pass with model...")

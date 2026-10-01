@@ -698,6 +698,7 @@ class DCellOpt(nn.Module):
 
         outputs = {
             "linear_outputs": linear_outputs,
+            "root_key": f"GO:{int(root_term_idx)}",
             "term_activations": term_activations,
             "all_activations_tensor": all_activations,  # Keep tensor version
             "activation_mask": activation_mask,

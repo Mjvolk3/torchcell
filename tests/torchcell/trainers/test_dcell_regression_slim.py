@@ -72,7 +72,9 @@ def _models() -> dict[str, nn.Module]:
 
 
 def _task(**kwargs: Any) -> DCellRegressionSlimTask:
-    return DCellRegressionSlimTask(_models(), target="fitness", **kwargs)
+    return DCellRegressionSlimTask(
+        _models(), target="fitness", aux_reduction="sum", **kwargs
+    )
 
 
 def _loader() -> DataLoader[HeteroData]:
@@ -99,14 +101,16 @@ def _record_wandb(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
 
 
 def test_init_passes_alpha_to_the_loss_and_builds_six_metric_collections() -> None:
-    """``alpha`` reaches ``DCellLoss``; subsystem and root collections per split."""
+    """``alpha`` and ``aux_reduction`` reach ``DCellLoss``; collections per split."""
     models = _models()
-    task = DCellRegressionSlimTask(models, target="fitness", alpha=0.7)
+    task = DCellRegressionSlimTask(
+        models, target="fitness", alpha=0.7, aux_reduction="mean"
+    )
     assert dict(task.named_children())["dcell"] is models["dcell"]
     assert dict(task.named_children())["dcell_linear"] is models["dcell_linear"]
     assert task.automatic_optimization is False
     assert type(task.loss) is DCellLoss
-    assert task.loss.alpha == 0.7
+    assert (task.loss.alpha, task.loss.aux_reduction) == (0.7, "mean")
     names = ["MAE", "MSE", "Pearson", "RMSE", "Spearman"]
     collections = {
         "train_": task.train_metrics,
@@ -125,7 +129,11 @@ def test_configure_optimizers_is_adam_over_dcell_then_linear_parameters() -> Non
     """One Adam group: lr and weight decay as given, dcell parameters then the heads."""
     models = _models()
     task = DCellRegressionSlimTask(
-        models, target="fitness", learning_rate=3e-3, weight_decay=1e-4
+        models,
+        target="fitness",
+        learning_rate=3e-3,
+        weight_decay=1e-4,
+        aux_reduction="sum",
     )
     optimizer = task.configure_optimizers()
     assert type(optimizer) is torch.optim.Adam

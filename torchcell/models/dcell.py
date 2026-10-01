@@ -352,6 +352,7 @@ class DCell(nn.Module):
         # Prepare outputs dictionary
         outputs = {
             "linear_outputs": linear_outputs,
+            "root_key": f"GO:{root_term_idx}",
             "term_activations": term_activations,
             "stratum_outputs": {},
         }

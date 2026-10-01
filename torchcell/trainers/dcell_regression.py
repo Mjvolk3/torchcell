@@ -1,7 +1,7 @@
 """Lightning training task for DCell graph-based fitness regression."""
 
 import os.path as osp
-from typing import cast
+from typing import Literal, cast
 
 import lightning as L
 import matplotlib.pyplot as plt
@@ -44,6 +44,8 @@ class DCellRegressionTask(L.LightningModule):
         weight_decay: float = 1e-5,
         batch_size: int | None = None,
         train_wt_diff: bool = True,
+        *,
+        aux_reduction: Literal["sum", "mean"],
         **kwargs: object,
     ) -> None:
         """Set up models, loss, optimizer config, and metric collections.
@@ -57,6 +59,8 @@ class DCellRegressionTask(L.LightningModule):
             weight_decay: Adam weight decay.
             batch_size: Batch size used for logging.
             train_wt_diff: Whether to train on wild-type differences.
+            aux_reduction: ``DCellLoss`` reduction of the non-root subsystem MSEs,
+                ``"sum"`` (Ma et al. 2018) or ``"mean"``; required.
             **kwargs: Additional keyword arguments.
 
         Raises:
@@ -82,7 +86,7 @@ class DCellRegressionTask(L.LightningModule):
         self.x_name = "x"
         self.x_batch_name = "batch"
 
-        self.loss = DCellLoss()
+        self.loss = DCellLoss(aux_reduction=aux_reduction)
 
         # optimizer
         self.learning_rate = learning_rate
@@ -145,7 +149,9 @@ class DCellRegressionTask(L.LightningModule):
         """
         linear_outputs = {name: out.squeeze(-1) for name, out in y_hat.items()}
         loss, _ = self.loss(
-            linear_outputs["GO:ROOT"], {"linear_outputs": linear_outputs}, y
+            linear_outputs["GO:ROOT"],
+            {"linear_outputs": linear_outputs, "root_key": "GO:ROOT"},
+            y,
         )
         return cast(torch.Tensor, loss)
 

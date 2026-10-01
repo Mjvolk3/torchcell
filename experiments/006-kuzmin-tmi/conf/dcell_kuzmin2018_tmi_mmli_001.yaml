@@ -69,7 +69,7 @@ regression_task:
   dcell_loss:
     alpha: 0.3 # Weight for auxiliary losses
     use_auxiliary_losses: true # default true  # Whether to use losses from non-root subsystems
-    aux_reduction: "sum" # Ma et al. 2018 sum over non-root subsystems; runs before 2026-09-30 used "mean" (issue #554)
+    aux_reduction: "mean" # 2026-09-30 (issue #554): the historical runs of this config reduced with the mean, but the old int_dcell path also counted the root head and broadcast the auxiliary term over [B, B] (issue #578), so neither "mean" nor "sum" reproduces their loss
 
   is_weighted_phenotype_loss: false
 

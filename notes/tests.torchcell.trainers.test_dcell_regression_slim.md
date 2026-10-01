@@ -18,4 +18,4 @@ The three findings of this file are retired. The tests run with the constructed 
 
 ## 2026.09.30 - Loss values under the paper's sum (issue #554)
 
-Pinned loss is now 1.7 at alpha 0.3 and 0.75 + 0.7 * 19/6 = 2.9666667 at alpha 0.7 (were 1.225 and 1.8583333 under the mean). Gradient signs and the Adam-step deltas are unchanged.
+The task is built with `aux_reduction="sum"` (the init test checks `"mean"` reaches the loss). Pinned loss is 1.7 at alpha 0.3 and 0.75 + 0.7 * 19/6 = 2.9666667 at alpha 0.7 (were 1.225 and 1.8583333 under the mean). Gradient signs and the Adam-step deltas are unchanged.

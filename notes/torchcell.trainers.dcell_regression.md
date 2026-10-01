@@ -21,3 +21,7 @@ Previous behavior and the fix:
 Evidence: `tests/torchcell/trainers/test_dcell_regression.py` (`test_loss_feeds_the_root_as_prediction_and_every_head_as_auxiliary`, `test_one_training_step_logs_closed_form_values_and_takes_one_adam_step`, `test_validate_logs_root_suffixed_correlations_like_train_and_test`, `test_unknown_target_is_rejected_at_construction`, `test_each_epoch_best_checkpoint_is_logged_once_at_its_own_step`, `test_training_without_a_checkpoint_callback_logs_no_artifact`, `test_sanity_check_predictions_stay_out_of_the_first_box_plot`).
 
 Left as is: on non-plotting epochs the box-plot buffers keep accumulating and are plotted, with older epochs' predictions, at the next plotting epoch.
+
+## 2026.09.30 - Required aux_reduction and declared root key (issue #554)
+
+The constructor takes a required keyword-only `aux_reduction` (`"sum"` for Ma et al. 2018, `"mean"` for the pre-2026-09-30 reduction) and passes it to `DCellLoss`; `_loss` declares `root_key="GO:ROOT"`, the conftest-style head name of the root. Issue #554, PR #574.

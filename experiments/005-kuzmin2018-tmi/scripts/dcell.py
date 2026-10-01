@@ -340,12 +340,11 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Configure DCellLoss
-    alpha = wandb.config.regression_task.get("dcell_loss", {}).get("alpha", 0.3)
-    use_auxiliary_losses = wandb.config.regression_task.get("dcell_loss", {}).get(
-        "use_auxiliary_losses", True
-    )
-
-    aux_reduction = wandb.config.regression_task["dcell_loss"]["aux_reduction"]
+    # Every DCellLoss argument is read from the config, with no defaults (issue #554)
+    dcell_loss_cfg = wandb.config.regression_task["dcell_loss"]
+    alpha = dcell_loss_cfg["alpha"]
+    use_auxiliary_losses = dcell_loss_cfg["use_auxiliary_losses"]
+    aux_reduction = dcell_loss_cfg["aux_reduction"]
 
     loss_func = DCellLoss(
         alpha=alpha,

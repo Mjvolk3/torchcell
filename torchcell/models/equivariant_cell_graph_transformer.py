@@ -976,10 +976,13 @@ class ObservedLabelEncoder(nn.Module):
     +0.0045 -- a pathway with nothing requiring it.)
 
     A 100%-MASKED FORWARD IS NOT THE UNCONDITIONED MODEL. With no label observed the
-    features are [0, 0], but this module still adds ``gate * proj([0, 0])``, one constant
-    offset, to every gene token (see ``__init__``). Only a call with
-    ``observed_values=None`` skips the encoder and is the unconditioned model, so a metric
-    from an all-masked pass is the unconditioned model plus that offset (issue #566).
+    features are [0, 0], but this module still adds ``gate * proj([0, 0])`` to every gene
+    token (see ``__init__``). In eval that offset is the same vector on every token; in
+    train the dropout inside ``proj`` makes it differ per token; under
+    ``gate_mode="rezero"`` it is zero at init (gate 0) and grows with the learned gate.
+    Only a call with ``observed_values=None`` skips the encoder and is the unconditioned
+    model, so a metric from an all-masked pass is the unconditioned model plus that
+    offset (issue #566).
     """
 
     def __init__(self, hidden_dim: int, dropout: float = 0.1, gate_mode: str = "on"):
@@ -992,9 +995,10 @@ class ObservedLabelEncoder(nn.Module):
                 init 0). Defaults to forced-on because the whole point is to push
                 gradient through the conditioning pathway. With everything masked the
                 features are [0, 0], but the forced-on gate still adds
-                ``proj([0, 0]) = W2 relu(b1) + b2``, the same offset on every token, so
-                a 100%-masked (validation) forward is NOT an identity; ``rezero`` is the
-                identity at init.
+                ``proj([0, 0]) = W2 relu(b1) + b2`` (in eval the same offset on every
+                token; in train the dropout makes it differ per token), so a
+                100%-masked forward is NOT an identity; ``rezero`` is the identity at
+                init.
         """
         super().__init__()
         self.proj = nn.Sequential(
@@ -1005,7 +1009,8 @@ class ObservedLabelEncoder(nn.Module):
         )
         # Defaults to FORCED ON: the whole point is to push gradient through the
         # conditioning pathway. With everything masked the features are [0, 0] and the
-        # forward adds the constant offset proj([0, 0]) to every token (not an identity).
+        # forward adds proj([0, 0]) to every token (not an identity; the same vector per
+        # token in eval, per-token dropout noise in train).
         self.gate_mode = gate_mode
         self.gate: nn.Parameter | torch.Tensor
         if gate_mode == "on":

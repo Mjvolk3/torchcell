@@ -315,7 +315,10 @@ def main(cfg: DictConfig) -> None:
     # `perturbation_indices_ptr` to assign perturbed genes to genotypes for the local
     # predictor (without it batch_assign is None and the local term is all zeros), and
     # `gene.ptr`, which the collater always builds. Before PRs #549/#571 the datamodules
-    # discarded this collater and PyG's Collater applied this same list.
+    # discarded this collater and PyG's Collater applied the datamodule's list: this list
+    # from 53c257c22 (2025-11-13, slurm 073, 076, 078-084 as committed), the default
+    # ["x", "x_pert"] before it (slurm 062-065, 069 as committed; local term inert). The
+    # working tree at run time is not recoverable from git.
     follow_batch_list = ["x", "x_pert", "perturbation_indices"]
     lazy_collater = LazyCollater(dataset, follow_batch=follow_batch_list)
     print("LazyCollater initialized for zero-copy batching")

@@ -1138,10 +1138,12 @@ class MultitaskCGTTask(L.LightningModule):
     #
     # WHAT k=0 COMPUTES (issue #566). At k=0 the observed set is EMPTY and every encoded
     # feature is [0, 0], but the call still passes `observed_values`/`observed_mask`, so
-    # the observed-label encoder runs and adds `gate * proj([0, 0])`, one constant offset,
-    # to every gene token before the Perceiver and the cross-gene mixing. The k=0 pass is
-    # therefore the unconditioned model PLUS that per-token offset, not the unconditioned
-    # model itself (only `observed_values=None` skips the encoder), and
+    # the observed-label encoder runs and adds `gate * proj([0, 0])` to every gene token
+    # before the Perceiver and the cross-gene mixing. In eval that offset is the same
+    # vector on every token; in train (k=0 is also drawn there) the dropout inside `proj`
+    # makes it differ per token; under `gate_mode="rezero"` it is zero at init (gate 0).
+    # The k=0 pass is therefore the unconditioned model PLUS that offset, not the
+    # unconditioned model itself (only `observed_values=None` skips the encoder), and
     # `val/.../pearson_per_feature@k0` is not the same forward as a non-masked arm. The
     # k>0 numbers are an imputation capability, not a better genotype->expression score;
     # conditioning_gain_after_genotype.json measured the gene-gene signal to be ORTHOGONAL
@@ -1255,9 +1257,9 @@ class MultitaskCGTTask(L.LightningModule):
                 self._cache_masked_metric(
                     head, head_outputs, targets, masks, hidden, k, stage
                 )
-                # k=0 reveals nothing, but the encoder still adds `proj([0, 0])` to every
-                # token, so this pass is the unconditioned model plus that constant offset
-                # (issue #566). Cache it under the STANDARD namespace as well, so
+                # k=0 reveals nothing, but the encoder still adds `gate * proj([0, 0])`
+                # to every token (the same vector per token here, in eval), so this pass is
+                # the unconditioned model plus that offset (issue #566). Cache it under the STANDARD namespace as well, so
                 # `val/mean/pearson_per_feature` exists: the scorer reads that key and the
                 # best-metric ModelCheckpoint monitors it. A v9 masked run's value there
                 # is its k=0 pass, not a forward identical to a v8 arm. (Its absence is
@@ -1418,9 +1420,11 @@ class MultitaskCGTTask(L.LightningModule):
         Factored out so the masked-label path can publish the SAME canonical metrics at
         k=0, which is what the scorer reads and what the best-metric checkpoint monitors.
         At k=0 nothing is revealed, but the forward still runs the observed-label encoder
-        on an all-masked input, which adds the constant ``proj([0, 0])`` to every gene
-        token (issue #566): a masked arm's `val/mean/pearson_per_feature` is the
-        unconditioned model plus that offset, not the same forward as a non-masked arm.
+        on an all-masked input, which adds ``gate * proj([0, 0])`` to every gene token
+        (issue #566; the same vector per token in eval, where this metric is computed;
+        zero at init under ``gate_mode="rezero"``): a masked arm's
+        `val/mean/pearson_per_feature` is the unconditioned model plus that offset, not
+        the same forward as a non-masked arm.
         Duplicating the logic instead of sharing it would let the two drift, and a
         metric that silently means something different per config is worse than no
         metric.

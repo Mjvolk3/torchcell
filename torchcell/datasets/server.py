@@ -176,8 +176,18 @@ def _contained_file(base: Path, rel_path: str, root: Path) -> Path:
 
 
 def _raw_key_dir(config: DataServerConfig, citation_key: str) -> Path:
+    """Resolve + containment-check a citation-key directory under the raw mirror.
+
+    An underscore-prefixed name is a service directory, never a citation key
+    (``_list_raw_keys`` hides it), so it answers exactly like an absent key. The
+    literature server's ``_key_dir`` applies the same rule.
+    """
     base = (config.raw_root / citation_key).resolve()
-    if not base.is_relative_to(config.raw_root.resolve()) or not base.is_dir():
+    if (
+        citation_key.startswith("_")
+        or not base.is_relative_to(config.raw_root.resolve())
+        or not base.is_dir()
+    ):
         raise HTTPException(status_code=404, detail="unknown citation key")
     return base
 

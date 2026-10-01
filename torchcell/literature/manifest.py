@@ -184,19 +184,23 @@ def _role_for(rel_path: str) -> str:
         return ROLE_ANNOTATIONS
     if rel_path.startswith("si/si_data/"):
         return ROLE_SI_DATA
-    if rel_path.startswith("si/") and rel_path.endswith(".pdf"):
-        return ROLE_SI_PDF
-    if rel_path.startswith("si/") and rel_path.endswith(".md"):
-        return ROLE_SI_OCR
-    # Loose SI files (not a PDF/markdown and not already under si/si_data/) are
-    # released supplementary data tables, e.g. hoepfner's ``si/Table_S5.xls``.
-    if rel_path.startswith("si/"):
-        return ROLE_SI_DATA
-    # MinerU byproducts: extracted figures and layout JSON, for paper and SI.
+    # MinerU byproducts, for paper and SI alike: ``_run_mineru.py`` copies
+    # ``<stem>_content_list.json``, ``<stem>_middle.json`` and ``images/`` next
+    # to every PDF it OCRs, so ``si/si1_middle.json`` and ``si/images/*.jpg`` are
+    # OCR sidecars and must win over the loose-SI rule below.
     if "images/" in rel_path and rel_path.endswith((".jpg", ".jpeg", ".png")):
         return ROLE_OCR_IMAGE
     if rel_path.endswith(("_content_list.json", "_middle.json")):
         return ROLE_OCR_LAYOUT
+    if rel_path.startswith("si/") and rel_path.endswith(".pdf"):
+        return ROLE_SI_PDF
+    if rel_path.startswith("si/") and rel_path.endswith(".md"):
+        return ROLE_SI_OCR
+    # Loose SI files (not a PDF/markdown, not an OCR sidecar and not already
+    # under si/si_data/) are released supplementary data tables, e.g.
+    # hoepfner's ``si/Table_S5.xls``.
+    if rel_path.startswith("si/"):
+        return ROLE_SI_DATA
     # Large released quantitative tables kept beside the paper (data-only keys
     # such as xue2025/lopez, and the ``data/`` companion of captured papers).
     if rel_path.startswith("data/"):

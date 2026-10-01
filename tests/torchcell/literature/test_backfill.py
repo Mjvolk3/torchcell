@@ -34,6 +34,16 @@ MinerU output); only citation-key directories (no leading ``_``, at least one fi
 manifests; an existing manifest is read on skip and a corrupt one raises
 ``CorruptManifestError`` naming its path; two Zotero items sharing a citation key raise
 ``DuplicateCitationKeyError`` listing both item keys.
+
+2026.09.30 (issue #564): MinerU sidecars under ``si/`` are OCR byproducts, not SI data.
+``_run_mineru.py`` copies ``<stem>_content_list.json``, ``<stem>_middle.json`` and
+``images/`` next to every PDF it OCRs, so ``si/si1_middle.json`` and
+``si/si1_content_list.json`` are ``ocr_layout`` and ``si/images/*.jpg`` is ``ocr_image``,
+exactly as their ``paper_*`` and ``images/`` counterparts. ``si/si_data/`` keeps
+``si_data`` even for a released file whose name looks like a sidecar, and a loose
+``si/`` table is still ``si_data``. The full role table of a captured key is pinned on
+the live layout of ``avsecEffectiveGeneExpression2021`` (one SI PDF, one image per
+side here).
 """
 
 import hashlib
@@ -62,6 +72,7 @@ from torchcell.literature.manifest import (
     MANIFEST_FILENAME,
     Manifest,
     _role_for,
+    build_manifest,
     sha256_file,
 )
 from torchcell.literature.zotero import ZoteroLibrary
@@ -207,6 +218,60 @@ def test_role_for_new_branches() -> None:
     assert _role_for("paper.pdf") == "paper_pdf"
     assert _role_for("si/si_data/a.xlsx") == "si_data"
     assert _role_for("images/a.jpg") == "ocr_image"
+
+
+def test_role_for_mineru_sidecars_under_si_are_ocr_roles() -> None:
+    assert _role_for("si/si1_middle.json") == "ocr_layout"
+    assert _role_for("si/si1_content_list.json") == "ocr_layout"
+    assert _role_for("si/si12_middle.json") == "ocr_layout"
+    assert _role_for("si/images/ab12.jpg") == "ocr_image"
+    assert _role_for("si/images/ab12.png") == "ocr_image"
+    # Released files keep their data role: si/si_data/ wins over every OCR rule, and
+    # a loose SI table that is not a sidecar is still si_data.
+    assert _role_for("si/si_data/images/plate.png") == "si_data"
+    assert _role_for("si/si_data/run_middle.json") == "si_data"
+    assert _role_for("si/Table_S2.json") == "si_data"
+    assert _role_for("si/si1.pdf") == "si_pdf"
+    assert _role_for("si/si1.md") == "si_ocr"
+
+
+def test_captured_key_full_role_table(tmp_path: Path) -> None:
+    """Every file MinerU and capture leave in an avsec-shaped key, with its role and
+    default source, in ``build_manifest``'s sorted walk order.
+    """
+    key = tmp_path / "avsecEffectiveGeneExpression2021"
+    names = [
+        "images/3a34.jpg",
+        "paper.md",
+        "paper.pdf",
+        "paper_content_list.json",
+        "paper_middle.json",
+        "si/images/77aa.jpg",
+        "si/si1.md",
+        "si/si1.pdf",
+        "si/si1_content_list.json",
+        "si/si1_middle.json",
+    ]
+    for name in names:
+        (key / name).parent.mkdir(parents=True, exist_ok=True)
+        (key / name).write_bytes(name.encode())
+
+    manifest = build_manifest(
+        key, citation_key=key.name, created_at=_FROZEN, provenance_complete=False
+    )
+
+    assert [(r.path, r.role, r.source) for r in manifest.files] == [
+        ("images/3a34.jpg", "ocr_image", None),
+        ("paper.md", "paper_ocr", "mineru-ocr"),
+        ("paper.pdf", "paper_pdf", None),
+        ("paper_content_list.json", "ocr_layout", None),
+        ("paper_middle.json", "ocr_layout", None),
+        ("si/images/77aa.jpg", "ocr_image", None),
+        ("si/si1.md", "si_ocr", "mineru-ocr"),
+        ("si/si1.pdf", "si_pdf", None),
+        ("si/si1_content_list.json", "ocr_layout", None),
+        ("si/si1_middle.json", "ocr_layout", None),
+    ]
 
 
 def test_backfill_offline_hashes_and_roundtrips(tmp_path: Path) -> None:

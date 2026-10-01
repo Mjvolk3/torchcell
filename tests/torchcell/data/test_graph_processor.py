@@ -36,7 +36,8 @@ edges every reaction is kept; the DCell union {0, 2} zeroes the state of rows (1
 contracts. ``w_growth`` has one source, the stored cell-graph tensor, in all three
 masking processors; a ``subsystem`` attribute (list or tensor) is no longer read; the
 incidence cache is rebuilt when a different cell graph arrives; ``Unperturbed`` skips a
-phenotype with no statistic name; DCell always writes ``perturbation_indices_batch``;
+phenotype with no statistic name; DCell writes no per-sample
+``perturbation_indices_batch`` (``follow_batch`` builds it at collate);
 the neighbor processor writes the [NaN] placeholder.
 """
 
@@ -48,7 +49,7 @@ import pytest
 import torch
 from pydantic import BaseModel
 from sortedcontainers import SortedDict
-from torch_geometric.data import HeteroData
+from torch_geometric.data import Batch, HeteroData
 
 from torchcell.data.cell_data import to_cell_data
 from torchcell.data.graph_processor import (
@@ -413,16 +414,17 @@ def test_every_masking_processor_returns_the_stored_w_growth(processor: Any) -> 
 
 def test_a_tensor_subsystem_does_not_touch_the_stored_w_growth() -> None:
     """Contract (issue #527): a tensor-valued ``subsystem`` is not decoded at all; the
-    stored w_growth [1, 0, 1] is returned exactly. Before the fix the tensor branch
+    stored w_growth [0, 1, 0], the opposite of any "1 = Growth" reading of [1, 0, 1], is
+    returned exactly. Before the fix the tensor branch
     compared each 0-d tensor with the string "Growth" and always produced [0, 0, 0].
     """
     graph = _small_graph(reactions=True)
     graph["reaction"].subsystem = torch.tensor([1, 0, 1])
-    graph["reaction"].w_growth = torch.tensor([1.0, 0.0, 1.0])
+    graph["reaction"].w_growth = torch.tensor([0.0, 1.0, 0.0])
     out = LazySubgraphRepresentation().process(
         graph, PHENOTYPES, [_record(["YAL002W"], 0.9)]
     )
-    assert out["reaction"].w_growth.tolist() == [1.0, 0.0, 1.0]
+    assert out["reaction"].w_growth.tolist() == [0.0, 1.0, 0.0]
 
 
 @pytest.mark.parametrize("processor", MASKING_PROCESSORS, ids=["sub", "inc", "lazy"])
@@ -538,7 +540,7 @@ def test_the_cache_is_rebuilt_for_same_size_graphs_with_different_edges(
     different graph: ``build_cache`` on it reports a fresh build (3 incidence pairs,
     as in ``test_incidence_reuses_a_built_cache_across_samples``) and gene 0's list
     becomes [2] (the edge (0, 1) now at position 2). An equal-content copy of the first
-    graph is recognised: ``build_cache`` returns the zero report.
+    graph is recognized: ``build_cache`` returns the zero report.
     """
     instance = processor()
     instance.build_cache(_small_graph())
@@ -714,8 +716,8 @@ def test_dcell_on_the_conftest_hierarchy_zeroes_each_perturbed_annotation(
     dcell_graph: HeteroData,
 ) -> None:
     """Records {YAL003W} (se 0.1) and {YAL001C, YAL003W}: the union is genes {0, 2}, so
-    the template rows (1, 0) and (2, 2) get state 0 and (1, 1), (2, 3) keep 1. The batch
-    vector lists record 0 once and record 1 twice. With [VisualScorePhenotype,
+    the template rows (1, 0) and (2, 2) get state 0 and (1, 1), (2, 3) keep 1. No
+    per-sample ``perturbation_indices_batch`` is written. With [VisualScorePhenotype,
     FitnessPhenotype] fitness sits at type 1 and its se at statistic type 0. The graph
     has no gene ``x``, so none is copied.
     """
@@ -727,7 +729,7 @@ def test_dcell_on_the_conftest_hierarchy_zeroes_each_perturbed_annotation(
     gene = out["gene"]
     assert "x" not in gene
     assert gene.perturbation_indices.tolist() == [0, 2]
-    assert gene.perturbation_indices_batch.tolist() == [0, 1, 1]
+    assert "perturbation_indices_batch" not in gene
     assert gene.pert_mask.tolist() == [True, False, True, False]
     assert out["gene_ontology"].go_gene_strata_state.tolist() == [
         [1, 0, 1, 0],
@@ -748,26 +750,39 @@ def test_dcell_on_the_conftest_hierarchy_zeroes_each_perturbed_annotation(
     ]
 
 
-def test_dcell_with_a_gene_outside_the_graph_writes_an_empty_batch_vector(
+def test_dcell_with_a_gene_outside_the_graph_collates_through_follow_batch(
     dcell_graph: HeteroData,
 ) -> None:
-    """Contract (issue #527): ``perturbation_indices_batch`` is always written so every
-    sample collates uniformly. YBR001C is not a node: perturbation_indices and the batch
-    vector are both the empty long tensor, the state is unchanged, and the name is still
-    listed in perturbed_genes. The gene_interaction label is absent, so values are the
-    [NaN] placeholder and no statistic key is written.
+    """Contract (issue #527 review): DCell writes no per-sample
+    ``perturbation_indices_batch``; ``follow_batch=["perturbation_indices"]`` builds it at
+    collate and handles a sample with no perturbed node. YBR001C is not a node:
+    perturbation_indices is empty, the state is unchanged, and the name is still listed
+    in perturbed_genes. Collating that sample after one perturbing YAL002W (node 1)
+    gives perturbation_indices [1] owned by sample 0, i.e. batch vector [0]. A
+    per-sample empty key would not collate: PyG increments any key containing "batch"
+    by its max, which an empty tensor lacks. The gene_interaction label is absent, so
+    values are the [NaN] placeholder and no statistic key is written.
     """
-    out = DCellGraphProcessor().process(
-        _named(dcell_graph), INTERACTION_ONLY, [_record(["YBR001C"], 0.5)]
+    graph = _named(dcell_graph)
+    outside = DCellGraphProcessor().process(
+        graph, INTERACTION_ONLY, [_record(["YBR001C"], 0.5)]
     )
-    gene = out["gene"]
+    gene = outside["gene"]
     assert gene.perturbed_genes == ["YBR001C"]
     assert gene.perturbation_indices.tolist() == []
-    batch = gene.perturbation_indices_batch
-    assert (batch.dtype, batch.tolist()) == (torch.long, [])
-    assert out["gene_ontology"].go_gene_strata_state[:, 3].tolist() == [1, 1, 1, 1]
+    assert "perturbation_indices_batch" not in gene
+    assert outside["gene_ontology"].go_gene_strata_state[:, 3].tolist() == [1, 1, 1, 1]
     assert torch.isnan(gene.phenotype_values).tolist() == [True]
     assert not any(key.startswith("phenotype_stat") for key in gene.keys())
+
+    inside = DCellGraphProcessor().process(
+        graph, INTERACTION_ONLY, [_record(["YAL002W"], 0.5)]
+    )
+    batch = Batch.from_data_list(
+        [inside, outside], follow_batch=["perturbation_indices"]
+    )
+    assert batch["gene"].perturbation_indices.tolist() == [1]
+    assert batch["gene"].perturbation_indices_batch.tolist() == [0]
 
 
 def test_dcell_without_a_state_tensor_copies_only_the_term_names(
@@ -781,7 +796,7 @@ def test_dcell_without_a_state_tensor_copies_only_the_term_names(
         "num_nodes": 3,
         "node_ids": ["GO:0", "GO:1", "GO:2"],
     }
-    assert out["gene"].perturbation_indices_batch.tolist() == [0]
+    assert "perturbation_indices_batch" not in out["gene"]
 
 
 def test_neighbor_process_fails_even_without_a_perturbation() -> None:

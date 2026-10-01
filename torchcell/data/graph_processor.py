@@ -2258,28 +2258,11 @@ class DCellGraphProcessor(GraphProcessor):
         )
         processed_graph["gene"].pert_mask = pert_mask
 
-        # Group perturbation indices by experiment for batch processing
-        batch_indices = []
-        batch_mapping = {}  # Maps experiment index to list of perturbation indices
-
-        for i, item in enumerate(data):
-            perturbed_genes = [
-                p.systematic_gene_name
-                for p in cast(Experiment, item["experiment"]).genotype.perturbations
-            ]
-            gene_indices = [
-                node_ids.index(gene) for gene in perturbed_genes if gene in node_ids
-            ]
-
-            batch_indices.extend([i] * len(gene_indices))
-            batch_mapping[i] = gene_indices
-
-        # Batch index of each perturbation, needed for processing by experiment.
-        # Always written (empty when no perturbed gene is a node) so every sample
-        # carries the key and Batch.from_data_list collates uniformly.
-        processed_graph["gene"].perturbation_indices_batch = torch.tensor(
-            batch_indices, dtype=torch.long, device=self.device
-        )
+        # No per-sample ``perturbation_indices_batch`` is written: the collated batch
+        # vector comes from ``follow_batch=["perturbation_indices"]``, which handles a
+        # sample with no perturbed node. A per-sample key would not collate, since PyG
+        # increments any key containing "batch" by ``value.max() + 1`` and an empty
+        # tensor has no max (issue #527 review).
 
         # Process gene ontology if it exists in cell_graph
         if "gene_ontology" in cell_graph.node_types:

@@ -6,6 +6,9 @@ from torch_geometric.data import HeteroData
 from torch_geometric.data.datapipes import functional_transform
 from torch_geometric.transforms import BaseTransform
 
+RESERVED_NODE_ATTRS = ("x", "pos", "mask", "num_nodes", "node_ids")
+"""Node attributes the transform handles by name; never padded as square matrices."""
+
 
 @functional_transform("hetero_to_dense_mask")
 class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)
@@ -28,8 +31,10 @@ class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform i
             use the maximum number of nodes found for that type. (default: None)
         square_attrs (Dict[str, List[str]], optional): Per node type, the names of
             the ``[N, N, ...]`` node attributes to pad on both axes. A listed
-            attribute that is absent or not ``[N, N, ...]`` raises ``ValueError``.
-            (default: None, no square attributes)
+            attribute that is absent or not ``[N, N, ...]``, or a node type the data
+            does not have, raises ``ValueError`` in ``forward``; a reserved name
+            (``RESERVED_NODE_ATTRS`` or a leading underscore) raises ``ValueError``
+            at construction. (default: None, no square attributes)
     """
 
     def __init__(
@@ -46,9 +51,23 @@ class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform i
         """
         self.num_nodes_dict = num_nodes_dict or {}
         self.square_attrs = square_attrs or {}
+        for node_type, attrs in self.square_attrs.items():
+            for attr in attrs:
+                if attr in RESERVED_NODE_ATTRS or attr.startswith("_"):
+                    raise ValueError(
+                        f"square attribute {node_type}.{attr} is reserved: the "
+                        f"transform handles {', '.join(RESERVED_NODE_ATTRS)} and "
+                        "underscore names itself, never as a square matrix"
+                    )
 
     def forward(self, data: HeteroData) -> HeteroData:
         """Add dense masks, pad node attributes, and return the transformed data."""
+        unknown = sorted(set(self.square_attrs) - set(data.node_types))
+        if unknown:
+            raise ValueError(
+                f"square_attrs names node types {unknown} absent from the data; "
+                f"its node types are {sorted(data.node_types)}"
+            )
         # First determine number of nodes for each node type
         num_nodes_dict = {}
         orig_num_nodes_dict = {
@@ -134,7 +153,12 @@ class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform i
 
             square = self.square_attrs.get(node_type, [])
             for attr in square:
-                value = getattr(store, attr, None)
+                if attr not in store:
+                    raise ValueError(
+                        f"square attribute {node_type}.{attr} is missing from the "
+                        f"{node_type} store"
+                    )
+                value = store[attr]
                 if not (
                     isinstance(value, Tensor)
                     and value.dim() >= 2
@@ -169,13 +193,7 @@ class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform i
             # checked a second node tensor (2026.09.26).
             for attr in list(store.keys()):
                 # Skip special attributes, non-tensor attributes, and already processed attributes
-                if attr.startswith("_") or attr in [
-                    "x",
-                    "pos",
-                    "mask",
-                    "num_nodes",
-                    "node_ids",
-                ]:
+                if attr.startswith("_") or attr in RESERVED_NODE_ATTRS:
                     continue
 
                 value = getattr(store, attr)

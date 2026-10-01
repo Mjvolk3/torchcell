@@ -19,3 +19,4 @@ Five to nine tests, 93 to 100 percent. Out-of-range indices, an edge type with n
 
 - Retired the shape guess: `pair` (`[3, 3]`) is padded to `[4, 4]` only when listed in `square_attrs`; unlisted, it comes back `[4, 3]` (`test_an_unlisted_feature_dimension_equal_to_n_is_padded_on_rows_only`).
 - New: `square_attrs` applies per node type (`test_square_attrs_apply_only_to_their_node_type`); a listed `[3, 2]` or missing attribute raises the exact `ValueError` (`test_a_listed_attribute_that_is_not_square_is_refused_by_name`); `__repr__` shows `square_attrs`.
+- Review follow-up: `test_a_reserved_name_in_square_attrs_is_refused_at_construction` (six names, exact message), `test_an_unknown_node_type_in_square_attrs_is_refused` (exact message), and the missing-attribute message is now `square attribute gene.missing is missing from the gene store`.

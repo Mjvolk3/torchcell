@@ -243,8 +243,10 @@ docker run --rm --entrypoint bash \
         python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small --config-name kg_increment 'datasets=[$DATASET_LIST]'
         # this container runs as root (pip needs the image's site-packages); hand the
         # output to the neo4j user, which runs the import, and keep it host-readable
-        # world-writable as well: the host-side existing-edge filter rewrites the edge
-        # part files in place before the import (a transient staging directory)
+        # world-writable as well: the host-side existing-edge filter stages each
+        # filtered edge part file under unfiltered/ and os.replace()s it over the
+        # original before the import (a transient staging directory); the replaced
+        # file is a new inode owned by the job user, umask mode, still readable by 7474
         OUT_DIR=\$(dirname \$(cat biocypher_file_name.txt))
         chown -R 7474:7474 /var/lib/neo4j/\$OUT_DIR && chmod -R a+rwX /var/lib/neo4j/\$OUT_DIR
         echo INCREMENT_CALL=\$(cat biocypher_file_name.txt)" 2>&1 | tee "$GEN_LOG"

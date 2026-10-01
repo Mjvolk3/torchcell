@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchcell"
-version = "1.5.0"
+version = "1.6.0"
 description = "Provenance-first experimental data for the S. cerevisiae virtual cell: sha256-pinned dataset loaders, a knowledge graph, and models"
 readme = "README.md"
 authors = [{ name = "Michael Volk", email = "michaeljvolk7@gmail.com" }]

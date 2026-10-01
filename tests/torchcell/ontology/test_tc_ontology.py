@@ -15,9 +15,9 @@ is read as the real table: 26 nodes, of which 22 sit under five Biolink parents
 (environmental exposure 4, genotype 2, information content entity 2, nucleic acid
 entity 1, phenotypic feature 13) and 4 are auto-mapped by name (dataset, genome,
 genotype, publication); 13 edges under five relations (coexists with 1, genetically
-associated with 1, mentions 1, part of 6, participates in 4); 10 concepts in all. Two
-Findings are pinned: the compact headers are the literals 16 and 11 whatever the schema
-holds, and list-valued edge endpoints print as Python list reprs. A fully mapped
+associated with 1, mentions 1, part of 6, participates in 4); 10 concepts in all. The
+compact headers count the schema (26 and 13 here, 3 and 2 for the small schema), and a
+list-valued edge endpoint prints its types joined by `` | `` (issue #532). A fully mapped
 three-node schema exercises the no-warning branches of both formats; ``BioCypher`` is
 replaced by a recorder for the two delegating printers, so nothing is fetched.
 """
@@ -183,47 +183,44 @@ def test_real_schema_compact_table(
     assert not any("Warning" in line for line in lines)
 
 
-def test_compact_headers_are_hardcoded_counts(
+def test_compact_headers_count_the_schema(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Finding: the compact headers print the literals ``NODES (16 total)`` and ``EDGES
-    (11 total)`` (tc_ontology.py:147 and 160) whatever the schema holds; the real schema
-    has 26 nodes and 13 edges, and the three-node test schema prints the same 16 and 11.
-    Pinned until the headers use ``len(nodes)`` and ``len(edges)``.
+    """The compact headers print ``len(nodes)`` and ``len(edges)`` (issue #532; they were
+    the literals 16 and 11): the committed schema has 26 nodes and 13 edges, the small
+    test schema 3 nodes and 2 edges (its stray string entry is neither).
     """
     monkeypatch.chdir(tmp_path)
     from torchcell.ontology.tc_ontology import print_schema_mappings
 
     small = tmp_path / "schema.yaml"
     small.write_text(yaml.safe_dump(SCHEMA))
-    for path in (REAL_SCHEMA, small):
+    for path, n_nodes, n_edges in ((REAL_SCHEMA, 26, 13), (small, 3, 2)):
         print_schema_mappings(str(path), compact=True)
         lines = _lines(capsys.readouterr().out)
-        assert "📦 NODES (16 total)" in lines
-        assert "🔗 EDGES (11 total)" in lines
+        assert f"📦 NODES ({n_nodes} total)" in lines
+        assert f"🔗 EDGES ({n_edges} total)" in lines
 
 
-def test_real_schema_expanded_prints_list_endpoints_as_python_reprs(
+def test_real_schema_expanded_joins_list_endpoints_with_a_bar(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Finding: an edge whose ``source`` or ``target`` is a list in the YAML is printed
-    with the list's Python repr (tc_ontology.py:234-236), brackets and quotes included.
-    Single endpoints print bare. Pinned until list endpoints are joined.
+    """An edge whose ``source`` or ``target`` is a list in the YAML prints its types
+    joined by `` | `` in YAML order (issue #532; it printed the Python list repr), and a
+    single endpoint prints bare.
     """
     monkeypatch.chdir(tmp_path)
     from torchcell.ontology.tc_ontology import print_schema_mappings
 
     print_schema_mappings(str(REAL_SCHEMA), compact=False)
     lines = _lines(capsys.readouterr().out)
+    assert "└─ genotype member of: genotype | segregant genotype → experiment" in lines
     assert (
-        "└─ genotype member of: ['genotype', 'segregant genotype'] → experiment"
-        in lines
-    )
-    assert (
-        "└─ environment member of: environment → ['experiment', 'experiment reference']"
+        "└─ environment member of: environment → experiment | experiment reference"
         in lines
     )
     assert "└─ publication mentions experiment: publication → experiment" in lines
+    assert not any("['" in line for line in lines)
     assert "✓ 4 nodes auto-mapped by name matching" in lines
 
 

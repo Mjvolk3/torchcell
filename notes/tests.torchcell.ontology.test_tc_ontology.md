@@ -15,3 +15,7 @@ The module header called it untested; it is the tooling behind `make tc-onto`. A
 Three to ten tests, 86 to 100 percent. The real schema's full compact table (26 nodes, 13 edges, 10 concepts; this test changes with every schema edit, deliberately); a fully mapped schema in both formats prints no warning and skips node properties; a schema with neither auto-mapped nor unmapped nodes prints neither line; the BioCypher printers delegate with `offline=True` through a recorder; `main` argument handling.
 
 Findings: the compact headers are hardcoded "NODES (16 total)" and "EDGES (11 total)" while the real schema has 26 and 13 (lines 147, 160); list-valued edge endpoints print as Python list reprs (234-236).
+
+## 2026.09.30 - Findings Retired (Issue #532)
+
+Both findings are retired. The compact headers read `NODES (26 total)` / `EDGES (13 total)` for the committed schema and `3` / `2` for the small test schema; list endpoints print joined by ` | `, for example `genotype member of: genotype | segregant genotype → experiment`, and no line carries a list repr.

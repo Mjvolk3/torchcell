@@ -393,15 +393,14 @@ def test_transform_item_round_trips_a_stored_record_to_typed_objects(
     assert type(item["reference"]) is FitnessExperimentReference
 
 
-def test_transform_item_builds_the_reference_twice(
+def test_transform_item_builds_the_reference_once(
     tmp_path: Path, no_git: None, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: ``transform_item`` repeats ``reference = self.reference_class(...)``
-    (experiment_dataset.py:639-640), so every item validates its reference twice and
-    discards the first; the returned value is unaffected. The count is taken by wrapping
-    the real class's ``__init__`` for this test only (a counting subclass would enter
-    the schema's subclass discovery and break the ontology tree tests). Pinned until the
-    duplicate line is removed, when the count becomes 1.
+    """``transform_item`` validates each item's reference exactly once (issue #532 removed
+    a repeated construction whose result was discarded) and returns it equal to the
+    stored reference. The count is taken by wrapping the real class's ``__init__`` for
+    this test only (a counting subclass would enter the schema's subclass discovery and
+    break the ontology tree tests).
     """
     dataset = _build(tmp_path)
     original_init = FitnessExperimentReference.__init__
@@ -413,24 +412,27 @@ def test_transform_item_builds_the_reference_twice(
 
     monkeypatch.setattr(FitnessExperimentReference, "__init__", counting_init)
     item = dataset.transform_item(dataset[0])
-    assert len(constructions) == 2
+    assert len(constructions) == 1
     assert item["reference"] == REF_A
 
 
-def test_serialize_for_hashing_sorts_only_top_level_keys_of_a_model() -> None:
-    """Finding: a reference MODEL is serialized as ``json.dumps(dict(sorted(dump)))``,
-    which sorts the top-level keys only, while a plain dict is dumped with
-    ``sort_keys=True`` at every depth, so the same reference hashes differently as a
-    model and as its dump (nested ``environment_reference`` keys are in declaration
-    order in the first). The reference index always hashes the stored dict, so the
-    split is invisible there. Pinned until the model branch sorts recursively.
+def test_serialize_for_hashing_sorts_a_model_at_every_depth_like_its_dump() -> None:
+    """A reference MODEL serializes as ``json.dumps(model_dump(), sort_keys=True)``, the
+    same string as its dump, so the two hash identically (issue #532; the model branch
+    used to sort only the top-level keys). The dict path the reference index takes is
+    unchanged: the three fixture records hash to the literal ids the pre-fix code
+    produced (records 0 and 1 share ``REF_A``), derived before the change.
     """
     as_model = serialize_for_hashing(REF_A)
     as_dict = serialize_for_hashing(REF_A.model_dump())
     assert as_dict == json.dumps(REF_A.model_dump(), sort_keys=True)
-    assert as_model == json.dumps(dict(sorted(REF_A.model_dump().items())))
-    assert as_model != as_dict
-    assert json.loads(as_model) == json.loads(as_dict)
+    assert as_model == as_dict
+    assert compute_sha256_hash(as_model) == compute_sha256_hash(as_dict)
+    assert process_reference_batch([_dumped(i) for i in range(3)]) == [
+        "876b784e62a6ab10648633428717e705928a8fe482777bf22ae6f669d1b06b67",
+        "876b784e62a6ab10648633428717e705928a8fe482777bf22ae6f669d1b06b67",
+        "ff9a316637247adede6125984948d241b524fa1e1949146bbfbc64c6c7f34683",
+    ]
 
 
 def test_reference_ids_ignore_key_order_at_every_depth() -> None:

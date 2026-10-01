@@ -25,6 +25,7 @@ manifest is read), while a present file, ``/files`` and ``/manifest`` all reach 
 corrupt manifest and surface as 500 with the pydantic ``ValidationError`` behind it.
 """
 
+import argparse
 import hashlib
 import json
 import re
@@ -306,22 +307,29 @@ def test_unknown_or_escaping_citation_key_is_404(client: TestClient, path: str) 
     assert resp.json() == {"detail": "unknown citation key"}
 
 
-def test_service_directories_are_reachable_as_citation_keys(client: TestClient) -> None:
-    """Finding: ``_list_citation_keys`` hides underscore directories (server.py:179-190),
-    but ``_key_dir`` (server.py:152-158) only checks containment and ``is_dir``, so a
-    service directory answers as a citation key: ``_sync_reports`` lists and streams its
-    report, and ``_bib`` answers 500 because its store ``manifest.json`` is read as a
-    paper ``Manifest``. Pinned until ``_key_dir`` refuses service directories.
+def test_service_directories_answer_as_unknown_citation_keys(
+    client: TestClient,
+) -> None:
+    """An underscore directory is a service store, never a citation key, on every
+    ``/keys`` route: ``_sync_reports`` and ``_bib`` answer the same clean 404 as an
+    absent key, while ``/bib`` keeps serving the bibliography store on its own route.
     """
-    files = client.get("/keys/_sync_reports/files", headers=HEADERS)
-    assert files.status_code == 200
-    assert files.json() == [
-        {"path": "report.json", "role": "other", "bytes": 2, "sha256": None}
-    ]
-    art = client.get("/keys/_sync_reports/artifact/report.json", headers=HEADERS)
-    assert (art.status_code, art.content) == (200, b"{}")
-    bib = client.get("/keys/_bib/files", headers=HEADERS)
-    assert (bib.status_code, bib.text) == (500, "Internal Server Error")
+    for path in (
+        "/keys/_sync_reports/files",
+        "/keys/_sync_reports/manifest",
+        "/keys/_sync_reports/artifact/report.json",
+        "/keys/_bib/files",
+        "/keys/_bib/manifest",
+        "/keys/_bib/artifact/paper.bib",
+    ):
+        resp = client.get(path, headers=HEADERS)
+        assert (path, resp.status_code, resp.json()) == (
+            path,
+            404,
+            {"detail": "unknown citation key"},
+        )
+    bib = client.get("/bib/paper", headers=HEADERS)
+    assert (bib.status_code, bib.content) == (200, BIB_BYTES)
 
 
 # --- /keys/{ck}/artifact/{path} ----------------------------------------------------- #
@@ -480,18 +488,20 @@ def test_search_cap_truncates(
     assert body["truncated"] is True
 
 
-def test_search_reports_truncated_when_hits_exactly_fill_the_cap(
+def test_search_is_not_truncated_when_hits_exactly_fill_the_cap(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: the cap check runs after each append (server.py:323-326), so when the
-    hit count equals the cap the loop breaks and reports ``truncated`` True although
-    no further key would have matched. With the cap at 3 all three keys match ``key20``
-    and none is dropped. Pinned until the check looks for a next hit.
+    """``truncated`` means a hit was dropped: with the cap at 3 all three keys match
+    ``key20``, none is dropped, so the result is complete and ``truncated`` is False.
     """
     monkeypatch.setattr(server, "SEARCH_RESULT_CAP", 3)
     body = client.get("/search", params={"q": "key20"}, headers=HEADERS).json()
-    assert len(body["hits"]) == 3
-    assert body["truncated"] is True
+    assert [h["citation_key"] for h in body["hits"]] == [
+        "alphaKey2020",
+        "bareKey2021",
+        "corruptKey2022",
+    ]
+    assert body["truncated"] is False
 
 
 # --- /bib --------------------------------------------------------------------------- #
@@ -661,9 +671,10 @@ def test_gen_key_prints_a_key_and_the_matching_keys_file_line(
 def test_main_runs_uvicorn_with_config_or_override_host_and_port(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """No overrides: the config's host and port. ``--host``/``--port`` win, except that
-    ``--port 0`` is falsy and falls back to the config port (server.py:381). Each run
-    logs the mirror and the bound address it hands to ``uvicorn.run``.
+    """No overrides: the config's host and port. ``--host``/``--port`` win, and
+    ``--port 0`` is honored (an ephemeral port, the usual meaning of 0 to a socket
+    bind): the parsed ``args.port`` is 0 and ``0`` is what reaches ``uvicorn.run``.
+    Each run logs the mirror and the bound address it hands to ``uvicorn.run``.
     """
     caplog.set_level("INFO", logger="torchcell.literature.server")
     _clear_key_env(monkeypatch)
@@ -678,6 +689,17 @@ def test_main_runs_uvicorn_with_config_or_override_host_and_port(
         calls.append((app, host, port))
 
     monkeypatch.setattr(uvicorn, "run", fake_run)
+    parsed: list[argparse.Namespace] = []
+    real_parse_args = argparse.ArgumentParser.parse_args
+
+    def recording_parse_args(
+        self: argparse.ArgumentParser, *args: Any, **kwargs: Any
+    ) -> argparse.Namespace:
+        namespace: argparse.Namespace = real_parse_args(self, *args, **kwargs)
+        parsed.append(namespace)
+        return namespace
+
+    monkeypatch.setattr(argparse.ArgumentParser, "parse_args", recording_parse_args)
     for argv in (
         ["server"],
         ["server", "--host", "127.0.0.1", "--port", "9200"],
@@ -685,10 +707,11 @@ def test_main_runs_uvicorn_with_config_or_override_host_and_port(
     ):
         monkeypatch.setattr(sys, "argv", argv)
         server.main()
+    assert [ns.port for ns in parsed] == [None, 9200, 0]
     assert [(host, port) for _, host, port in calls] == [
         ("0.0.0.0", 9100),
         ("127.0.0.1", 9200),
-        ("0.0.0.0", 9100),
+        ("0.0.0.0", 0),
     ]
     app = calls[0][0]
     assert isinstance(app, FastAPI)
@@ -697,5 +720,5 @@ def test_main_runs_uvicorn_with_config_or_override_host_and_port(
     assert [r.getMessage() for r in caplog.records] == [
         f"literature endpoint: serving {mirror} on 0.0.0.0:9100",
         f"literature endpoint: serving {mirror} on 127.0.0.1:9200",
-        f"literature endpoint: serving {mirror} on 0.0.0.0:9100",
+        f"literature endpoint: serving {mirror} on 0.0.0.0:0",
     ]

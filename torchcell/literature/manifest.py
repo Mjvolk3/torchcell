@@ -212,6 +212,20 @@ def _role_for(rel_path: str) -> str:
     return "other"
 
 
+def _is_mineru_output(rel_path: str) -> bool:
+    """Whether a file is markdown MinerU writes, by its location.
+
+    ``ocr.ocr_artifact`` OCRs ``paper.pdf`` and each ``si/si*.pdf`` and MinerU writes
+    the markdown beside its PDF, so its outputs are exactly ``paper.md`` and the
+    ``.md`` files directly under ``si/``. Any other text file (a top-level born-digital
+    ``thesis.txt``, say) carries the ``paper_ocr`` role but no OCR step ran on it.
+    """
+    if rel_path == "paper.md":
+        return True
+    parts = rel_path.split("/")
+    return len(parts) == 2 and parts[0] == "si" and parts[1].endswith(".md")
+
+
 def build_manifest(
     artifact_dir: Path,
     *,
@@ -257,8 +271,7 @@ def build_manifest(
             continue
         rel = str(path.relative_to(artifact_dir))
         role = _role_for(rel)
-        # OCR markdown has no external source; tag it as produced by MinerU.
-        default_source = "mineru-ocr" if role in (ROLE_PAPER_OCR, ROLE_SI_OCR) else None
+        default_source = "mineru-ocr" if _is_mineru_output(rel) else None
         files.append(
             ArtifactRecord(
                 path=rel,

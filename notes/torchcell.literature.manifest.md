@@ -13,3 +13,7 @@ This module exists to give every captured paper a single, serializable record of
 - `build_manifest` scans an artifact directory, hashes and sizes every file, and tags each with a role (paper PDF, SI PDF, OCR markdown, SI data, MinerU byproducts) so the manifest is a complete inventory, not a curated subset.
 - `ArtifactRecord` carries optional retrieval + processing sub-records so provenance survives serialize/reload -- one general per-file record serving papers, supplements, and dataset raw files alike.
 - `si_expected` vs captured `si_data` gives a completeness check (what the paper says should exist vs what we actually mirrored); `si_data_sources` records the external repos so reproduction never needs the publisher.
+
+## 2026.09.30 - mineru-ocr source by location
+
+Issue #525. Previously `build_manifest` gave every `paper_ocr` or `si_ocr` file `source="mineru-ocr"`, so a top-level born-digital `thesis.txt` recorded an OCR step that never ran. Now `_is_mineru_output` decides by location: only `paper.md` and `.md` files directly under `si/` (where `ocr.ocr_artifact` has MinerU write its markdown beside each PDF) get the default source; roles are unchanged. Evidence: `test_mineru_source_is_given_by_location_not_by_role` in [[tests.torchcell.literature.test_backfill]]. Existing on-disk manifests change only when rebuilt with `--force`.

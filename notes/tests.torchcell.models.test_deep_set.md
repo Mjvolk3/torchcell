@@ -15,3 +15,7 @@ Ten tests: permutation invariance of the set pooling as an exact identity (`asse
 Ten to nineteen tests, 80 to 99 percent (the one missing branch is unreachable behind the assert at line 44). Relabeling the sets swaps their output rows; an empty set id gets the zero vector; mean pooling times the set size equals sum pooling; batch norm in training makes one set's output depend on the other set's nodes while layer norm does not, and permutation invariance holds under both; dropout at p=1 zeroes the output in training and does nothing in eval; the skip connection applies only to the middle node block; every block shares one activation object.
 
 Findings: an `aggregation` other than sum or mean set after construction gives `UnboundLocalError` (lines 144-147); `main()` turns on autograd anomaly detection and never turns it off (155).
+
+## 2026.09.30 - Findings retired (issue #525)
+
+Now asserted: `aggregation="max"` raises `ValueError` with the exact message at construction and, after reassignment, at forward; `main()` computes its loss with anomaly detection on (spy on `MSELoss.forward`) and leaves it off on return.

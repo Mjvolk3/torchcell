@@ -347,7 +347,7 @@ def main() -> None:
 
     config = DataServerConfig.from_env()
     host = args.host or config.host
-    port = args.port or config.port
+    port = config.port if args.port is None else args.port
     log.info(
         "dataset endpoint: store %s, raw %s on %s:%d",
         config.store_root,

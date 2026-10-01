@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from torchcell.literature.capture import _collection_names, _pdf_sources_and_md5
 from torchcell.literature.manifest import (
@@ -43,6 +43,29 @@ LIBRARY_SUBDIR = "torchcell-library"
 
 # Top-level Manifest metadata fields whose absence marks incomplete provenance.
 _METADATA_FIELDS = ("doi", "title", "zotero_item_key")
+
+
+class CorruptManifestError(ValueError):
+    """An existing ``manifest.json`` does not parse as a :class:`Manifest`."""
+
+
+class DuplicateCitationKeyError(ValueError):
+    """Two or more Zotero items resolve to the same citation key."""
+
+
+def is_citation_key_dir(path: Path) -> bool:
+    """Whether a mirror subdirectory is a citation-key directory.
+
+    A citation-key directory is a directory whose name does not start with ``_``
+    (``_bib``, ``_sync_reports`` and other underscore stores belong to the mirror, not
+    to a paper) and that holds at least one file somewhere below it (an empty
+    directory has nothing to pin).
+    """
+    return (
+        path.is_dir()
+        and not path.name.startswith("_")
+        and any(child.is_file() for child in path.rglob("*"))
+    )
 
 
 class KeyBackfillResult(BaseModel):
@@ -88,11 +111,31 @@ def library_root(data_root: str | Path) -> Path:
 
 
 def build_citation_index(lib: ZoteroLibrary) -> dict[str, dict[str, Any]]:
-    """Map every library item's citation key to the item (one paginated scan)."""
+    """Map every library item's citation key to the item (one paginated scan).
+
+    Raises:
+        DuplicateCitationKeyError: Two or more items resolve to one citation key; the
+            message lists every such key with all of its item keys, since picking one
+            item would attach the wrong paper's metadata to a directory.
+    """
     items: list[dict[str, Any]] = with_zotero_retry(
         lambda: lib.zot.everything(lib.zot.items())
     )
-    return {_resolve_citation_key(item): item for item in items}
+    by_key: dict[str, list[dict[str, Any]]] = {}
+    for item in items:
+        by_key.setdefault(_resolve_citation_key(item), []).append(item)
+    duplicates = {
+        key: [item["key"] for item in group]
+        for key, group in by_key.items()
+        if len(group) > 1
+    }
+    if duplicates:
+        listed = "; ".join(
+            f"{key}: {', '.join(item_keys)}"
+            for key, item_keys in sorted(duplicates.items())
+        )
+        raise DuplicateCitationKeyError(f"Zotero items share a citation key ({listed})")
+    return {key: group[0] for key, group in by_key.items()}
 
 
 def _enriched_manifest(
@@ -101,17 +144,20 @@ def _enriched_manifest(
     """Build a manifest enriched with the item's Zotero metadata."""
     data = item["data"]
     sources, zotero_md5 = _pdf_sources_and_md5(lib, item)
+    doi = data.get("DOI") or None
+    title = data.get("title") or None
     return build_manifest(
         artifact_dir,
         citation_key=citation_key,
-        doi=data.get("DOI") or None,
-        title=data.get("title") or None,
+        doi=doi,
+        title=title,
         library_id=lib.config.library_id,
         zotero_item_key=item["key"],
         collections=_collection_names(lib, data.get("collections", [])),
         sources=sources,
         zotero_md5=zotero_md5,
-        provenance_complete=True,
+        # line 44: a missing doi or title marks incomplete provenance
+        provenance_complete=doi is not None and title is not None,
     )
 
 
@@ -133,11 +179,32 @@ def backfill_key(
         dry_run: Build the manifest but do not write it.
 
     Returns:
-        The per-key outcome (mode, file count, provenance completeness).
+        The per-key outcome (mode, file count, provenance completeness). A skipped
+        key reports the values recorded in its existing manifest.
+
+    Raises:
+        CorruptManifestError: Without ``force``, the existing manifest does not
+            parse as a :class:`Manifest`.
     """
     citation_key = artifact_dir.name
-    if (artifact_dir / MANIFEST_FILENAME).exists() and not force:
-        return KeyBackfillResult(citation_key=citation_key, mode="skipped")
+    existing_path = artifact_dir / MANIFEST_FILENAME
+    if existing_path.exists() and not force:
+        try:
+            existing = Manifest.model_validate_json(existing_path.read_text())
+        except ValidationError as err:
+            raise CorruptManifestError(
+                f"Existing manifest {existing_path} is not a valid Manifest: {err}"
+            ) from err
+        return KeyBackfillResult(
+            citation_key=citation_key,
+            mode="skipped",
+            n_files=len(existing.files),
+            provenance_complete=existing.provenance_complete,
+            null_metadata=[
+                name for name in _METADATA_FIELDS if getattr(existing, name) is None
+            ],
+            doi=existing.doi,
+        )
 
     item = (citation_index or {}).get(citation_key)
     if item is not None and lib is not None:
@@ -176,6 +243,10 @@ def backfill_mirror(
 
     Dynamically scans for directories lacking (or, with ``force``, already having) a
     manifest -- the set of keys is never hardcoded, so the mirror can keep growing.
+    Only citation-key directories are visited (:func:`is_citation_key_dir`): a
+    directory whose name starts with ``_`` and a directory holding no file are not
+    citation keys, get no manifest and do not appear in the report. Loose files at
+    the root are ignored.
 
     Args:
         root: The ``torchcell-library`` directory (or a fixture mirror root).
@@ -197,7 +268,7 @@ def backfill_mirror(
         log.info("Backfill: indexed %d Zotero items", len(citation_index))
 
     results: list[KeyBackfillResult] = []
-    for artifact_dir in sorted(p for p in root.iterdir() if p.is_dir()):
+    for artifact_dir in sorted(p for p in root.iterdir() if is_citation_key_dir(p)):
         result = backfill_key(
             artifact_dir,
             citation_index=citation_index,

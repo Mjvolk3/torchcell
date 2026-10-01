@@ -19,27 +19,27 @@ Fixture bytes and their digests (``hashlib.sha256(b).hexdigest()``, checked in P
 - ``thesis.pdf`` = ``b"%PDF-1.5 thesis"`` (15), ``thesis.txt`` = one line of text (12)
 
 ``build_manifest`` walks ``sorted(rglob("*"))``, so the files of the paper key are
-listed images/fig1.jpg, paper.md, paper.pdf, si/si1.pdf. Offline, only the OCR roles
-get a default source (``"mineru-ocr"``). Enriched, the Zotero children are listed SI
+listed images/fig1.jpg, paper.md, paper.pdf, si/si1.pdf. Offline, only the markdown
+MinerU writes (``paper.md`` and ``si/*.md``, by location) gets a default source
+(``"mineru-ocr"``). Enriched, the Zotero children are listed SI
 first; ``pdf_attachments`` sorts the main article first, so ``paper.pdf`` gets ATT1 (md5
 ``"md5main"``) and ``si/si1.pdf`` gets ATT2 (no md5 in Zotero, so ``zotero_md5`` None);
 the item's collection keys ``["C1", "C9"]`` resolve to ``["yeast", "C9"]`` (C9 is not in
 the library, so its key is kept).
 
-Findings pinned here (source lines in ``torchcell/literature/backfill.py`` unless
-named): an enriched manifest is ``provenance_complete=True`` even when Zotero has no DOI
-or title (line 114), although line 44 says their absence marks incomplete provenance; a
-top-level ``thesis.txt`` (a born-digital extraction, per ``manifest._role_for``) is
-tagged ``source="mineru-ocr"`` (``manifest.py`` line 261); every subdirectory of the
-mirror, including a non-key one such as ``_bib``, is treated as a citation key (line
-200); an existing ``manifest.json`` is skipped without being read, so a corrupt one
-survives and the skipped result reports ``provenance_complete=True`` (lines 139-140);
-two Zotero items resolving to one citation key keep the later one silently (line 95).
+2026.09.30 (issue #525): the five Phase 13 Findings are retired. An enriched manifest
+is ``provenance_complete`` only when Zotero gives both a DOI and a title; a top-level
+``thesis.txt`` is ``paper_ocr`` with no source (only ``paper.md`` and ``si/*.md`` are
+MinerU output); only citation-key directories (no leading ``_``, at least one file) get
+manifests; an existing manifest is read on skip and a corrupt one raises
+``CorruptManifestError`` naming its path; two Zotero items sharing a citation key raise
+``DuplicateCitationKeyError`` listing both item keys.
 """
 
 import hashlib
 import json
 import logging
+import re
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -304,22 +304,26 @@ def test_offline_manifest_is_written_exactly(tmp_path: Path, frozen: None) -> No
     )
 
 
-def test_born_digital_thesis_text_is_tagged_as_mineru_ocr(
+def test_mineru_source_is_given_by_location_not_by_role(
     tmp_path: Path, frozen: None
 ) -> None:
-    """Finding: a top-level ``thesis.txt`` is a born-digital extraction by
-    ``_role_for``'s own comment, yet ``build_manifest`` (manifest.py line 261) gives
-    every ``paper_ocr`` file ``source="mineru-ocr"``, so the backfill records an OCR
-    step that never ran. Pinned until the default source distinguishes the two.
+    """``mineru-ocr`` marks only what ``ocr_artifact`` writes: ``paper.md`` beside
+    ``paper.pdf`` and ``si/<stem>.md`` beside each SI PDF. A top-level born-digital
+    ``thesis.txt`` keeps the ``paper_ocr`` role but no source, and a nested
+    ``si/extra/notes.md`` (``si_ocr`` by role, but not where MinerU writes) has none.
     """
     key = tmp_path / "lopezThesis2024"
-    key.mkdir()
+    (key / "si" / "extra").mkdir(parents=True)
     (key / "thesis.pdf").write_bytes(b"%PDF-1.5 thesis")
     (key / "thesis.txt").write_bytes(b"thesis text\n")
+    (key / "si" / "si1.md").write_bytes(_MD)
+    (key / "si" / "extra" / "notes.md").write_bytes(_MD)
     backfill_key(key)
     assert _read(key / MANIFEST_FILENAME)["files"] == [
+        _record("si/extra/notes.md", "si_ocr", 33, _SHA_MD),
+        _record("si/si1.md", "si_ocr", 33, _SHA_MD, "mineru-ocr"),
         _record("thesis.pdf", "paper_pdf", 15, _SHA_THESIS_PDF),
-        _record("thesis.txt", "paper_ocr", 12, _SHA_THESIS_TXT, "mineru-ocr"),
+        _record("thesis.txt", "paper_ocr", 12, _SHA_THESIS_TXT),
     ]
 
 
@@ -391,13 +395,12 @@ def test_enriched_manifest_carries_zotero_metadata_and_attachment_sources(
     ]
 
 
-def test_enriched_manifest_without_doi_or_title_still_claims_complete(
+def test_enriched_manifest_without_doi_or_title_is_incomplete(
     tmp_path: Path, frozen: None, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: backfill.py line 114 passes ``provenance_complete=True`` for every
-    Zotero match, while line 44 says a missing doi/title/zotero_item_key marks
-    incomplete provenance. An item with an empty DOI and no title is reported in
-    ``null_metadata`` yet written as complete. Pinned until the two agree.
+    """A Zotero match with an empty DOI and no title is enriched (item key, sources)
+    but ``provenance_complete=False``, in the result and in the written manifest, as
+    backfill.py's ``_METADATA_FIELDS`` comment says a missing doi or title marks.
     """
     key = tmp_path / "noDoiKey2019"
     key.mkdir()
@@ -410,7 +413,7 @@ def test_enriched_manifest_without_doi_or_title_still_claims_complete(
         "citation_key": "noDoiKey2019",
         "mode": "enriched",
         "n_files": 1,
-        "provenance_complete": True,
+        "provenance_complete": False,
         "null_metadata": ["doi", "title"],
         "doi": None,
     }
@@ -420,7 +423,42 @@ def test_enriched_manifest_without_doi_or_title_still_claims_complete(
         None,
         [],
     )
-    assert written["provenance_complete"] is True
+    assert (written["zotero_item_key"], written["provenance_complete"]) == (
+        "ITEM1",
+        False,
+    )
+
+
+@pytest.mark.parametrize(
+    ("data", "complete", "null_metadata"),
+    [
+        ({"DOI": "10.1000/fake", "title": ""}, False, ["title"]),
+        ({"DOI": "", "title": "A fake paper"}, False, ["doi"]),
+        ({"DOI": "10.1000/fake", "title": "A fake paper"}, True, []),
+    ],
+)
+def test_enriched_completeness_needs_both_doi_and_title(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    data: dict[str, str],
+    complete: bool,
+    null_metadata: list[str],
+) -> None:
+    """Either field missing alone is enough to mark the manifest incomplete."""
+    key = tmp_path / "halfKey2019"
+    key.mkdir()
+    (key / "paper.pdf").write_bytes(_PDF)
+    item = _item("ITEM1", {"citationKey": "halfKey2019", **data})
+    library = make_library(monkeypatch, _zot([item]))
+    result = backfill_key(
+        key, citation_index=build_citation_index(library), lib=library
+    )
+    assert (result.mode, result.provenance_complete, result.null_metadata) == (
+        "enriched",
+        complete,
+        null_metadata,
+    )
+    assert _read(key / MANIFEST_FILENAME)["provenance_complete"] is complete
 
 
 def test_a_matched_item_without_a_library_is_written_offline(
@@ -438,40 +476,71 @@ def test_a_matched_item_without_a_library_is_written_offline(
     assert _read(paper / MANIFEST_FILENAME)["zotero_item_key"] is None
 
 
-def test_citation_index_keys_by_native_then_extra_and_last_duplicate_wins(
+def test_citation_index_keys_by_native_then_extra(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Finding: two items resolving to one key collapse to the LATER item with no
-    warning (dict comprehension, line 95). Pinned until duplicates are refused.
-    """
-    first = _item("A", {"citationKey": "dupKey2020", "title": "first"})
-    second = _item("B", {"citationKey": "dupKey2020", "title": "second"})
+    """A native ``citationKey`` and an ``extra`` ``Citation Key:`` line both index."""
+    native = _item("A", {"citationKey": "nativeKey2020", "title": "first"})
     extra = _item("C", {"extra": "tex.x: 1\nCitation Key: extraKey2021"})
-    library = make_library(monkeypatch, FakeZot(items=[first, extra, second]))
+    library = make_library(monkeypatch, FakeZot(items=[native, extra]))
     index = build_citation_index(library)
     assert {key: item["key"] for key, item in index.items()} == {
-        "dupKey2020": "B",
+        "nativeKey2020": "A",
         "extraKey2021": "C",
     }
 
 
-def test_existing_manifest_is_skipped_unread_even_when_corrupt(tmp_path: Path) -> None:
-    """Finding: the skip test is ``exists()`` only (lines 139-140). A corrupt
-    manifest is left in place, and the skipped result reports ``n_files=0`` and
-    ``provenance_complete=True`` whatever the file says. Pinned until skip validates.
+def test_citation_index_refuses_items_sharing_a_citation_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Two items resolving to one key (here one native, one via ``extra``) raise
+    ``DuplicateCitationKeyError`` naming the key and both item keys in scan order;
+    picking either would attach one paper's metadata to the other's directory.
+    """
+    first = _item("A", {"citationKey": "dupKey2020", "title": "first"})
+    other = _item("C", {"citationKey": "soloKey2021"})
+    second = _item("B", {"extra": "Citation Key: dupKey2020", "title": "second"})
+    library = make_library(monkeypatch, FakeZot(items=[first, other, second]))
+    with pytest.raises(
+        bf.DuplicateCitationKeyError,
+        match=r"^Zotero items share a citation key \(dupKey2020: A, B\)$",
+    ):
+        build_citation_index(library)
+
+
+def test_existing_corrupt_manifest_raises_with_its_path(tmp_path: Path) -> None:
+    """Without ``force`` an existing manifest is read; one that does not parse raises
+    ``CorruptManifestError`` naming its path and is left in place (``force`` is the
+    way to rebuild it).
     """
     paper = _make_exact_key(tmp_path)
     (paper / MANIFEST_FILENAME).write_text("not json")
+    with pytest.raises(
+        bf.CorruptManifestError,
+        match=rf"^Existing manifest {re.escape(str(paper / MANIFEST_FILENAME))} is not a valid "
+        r"Manifest: 1 validation error for Manifest\n",
+    ):
+        backfill_key(paper)
+    assert (paper / MANIFEST_FILENAME).read_text() == "not json"
+
+
+def test_skipped_key_reports_what_its_existing_manifest_records(
+    tmp_path: Path, frozen: None
+) -> None:
+    """A skipped key's result carries the existing manifest's file count, completeness
+    and null metadata, not the model defaults.
+    """
+    paper = _make_exact_key(tmp_path)
+    backfill_key(paper)
     result = backfill_key(paper)
     assert result.model_dump() == {
         "citation_key": "fakePaperKey2020",
         "mode": "skipped",
-        "n_files": 0,
-        "provenance_complete": True,
-        "null_metadata": [],
+        "n_files": 4,
+        "provenance_complete": False,
+        "null_metadata": ["doi", "title", "zotero_item_key"],
         "doi": None,
     }
-    assert (paper / MANIFEST_FILENAME).read_text() == "not json"
 
 
 def test_force_rehashes_changed_bytes_and_dry_run_leaves_the_old_manifest(
@@ -497,39 +566,31 @@ def test_force_rehashes_changed_bytes_and_dry_run_leaves_the_old_manifest(
     assert (fresh["path"], fresh["bytes"], fresh["sha256"]) == ("paper.pdf", 15, edited)
 
 
-def test_mirror_scan_takes_every_subdirectory_as_a_key_and_ignores_files(
+def test_mirror_scan_visits_only_citation_key_directories(
     tmp_path: Path, frozen: None
 ) -> None:
-    """Finding: ``backfill_mirror`` treats EVERY subdirectory as a citation key (line
-    200), so the mirror's non-key ``_bib`` store gets a manifest of its own; an empty
-    directory gets a manifest listing no files. Loose files at the root are ignored.
-    Pinned until the scan filters non-key directories.
+    """Only citation-key directories get manifests: ``_bib`` (leading underscore), an
+    empty directory and a directory holding only empty subdirectories are not keys,
+    get no manifest and are absent from the report. Loose root files are ignored.
     """
     _make_exact_key(tmp_path)
     (tmp_path / "_bib").mkdir()
     (tmp_path / "_bib" / "paper.bib").write_bytes(b"@article{a,}\n")
     (tmp_path / "emptyKey2000").mkdir()
+    (tmp_path / "hollowKey2001" / "si").mkdir(parents=True)
     (tmp_path / "README.txt").write_text("not a key")
 
     report = backfill_mirror(tmp_path, use_zotero=False)
 
     assert [(r.citation_key, r.mode, r.n_files) for r in report.results] == [
-        ("_bib", "offline", 1),
-        ("emptyKey2000", "offline", 0),
-        ("fakePaperKey2020", "offline", 4),
+        ("fakePaperKey2020", "offline", 4)
     ]
-    assert _read(tmp_path / "_bib" / MANIFEST_FILENAME)["files"] == [
-        _record(
-            "paper.bib",
-            "other",
-            13,
-            "e108d2a13ec55c7385439422efbadaf13de68bbe875ab7060fdb697ac1dbe823",
-        )
+    assert sorted(p.name for p in tmp_path.rglob(MANIFEST_FILENAME)) == [
+        MANIFEST_FILENAME
     ]
-    assert _read(tmp_path / "emptyKey2000" / MANIFEST_FILENAME) == _manifest(
-        "emptyKey2000", []
-    )
-    assert not (tmp_path / "README.txt.json").exists()
+    assert (tmp_path / "fakePaperKey2020" / MANIFEST_FILENAME).is_file()
+    assert sorted(p.name for p in (tmp_path / "_bib").iterdir()) == ["paper.bib"]
+    assert list((tmp_path / "emptyKey2000").iterdir()) == []
 
 
 def test_zotero_mode_without_credentials_refuses_before_writing(

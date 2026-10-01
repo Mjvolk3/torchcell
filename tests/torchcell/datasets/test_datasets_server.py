@@ -19,9 +19,10 @@ listed entry is 404 ``file not found``, a manifest entry that escapes its key di
 is 400, an unknown or escaping citation key is 404, and a manifest or index that does not
 parse is 500 (a key with no manifest stays a clean 404). ``--gen-key`` prints a
 ``TC_DATA_KEYS_FILE`` line and starts nothing; ``main`` hands ``uvicorn.run`` the config
-host and port unless overridden, with ``--port 0`` falling back to the config.
+host and port unless overridden, and ``--port 0`` is passed through as 0.
 """
 
+import argparse
 import hashlib
 import json
 import re
@@ -528,8 +529,9 @@ def test_main_runs_uvicorn_with_config_or_override_host_and_port(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     """No overrides: the config's host (default 0.0.0.0) and ``TC_DATA_PORT``.
-    ``--host``/``--port`` win, except that ``--port 0`` is falsy and falls back to the
-    config port (server.py:351). Each run logs both roots and the bound address.
+    ``--host``/``--port`` win, and ``--port 0`` is honored (an ephemeral port, the
+    usual meaning of 0 to a socket bind): the parsed ``args.port`` is 0 and ``0`` is
+    what reaches ``uvicorn.run``. Each run logs both roots and the bound address.
     """
     caplog.set_level("INFO", logger="torchcell.datasets.server")
     _clear_data_env(monkeypatch)
@@ -546,6 +548,17 @@ def test_main_runs_uvicorn_with_config_or_override_host_and_port(
         calls.append((app, host, port))
 
     monkeypatch.setattr(uvicorn, "run", fake_run)
+    parsed: list[argparse.Namespace] = []
+    real_parse_args = argparse.ArgumentParser.parse_args
+
+    def recording_parse_args(
+        self: argparse.ArgumentParser, *args: Any, **kwargs: Any
+    ) -> argparse.Namespace:
+        namespace: argparse.Namespace = real_parse_args(self, *args, **kwargs)
+        parsed.append(namespace)
+        return namespace
+
+    monkeypatch.setattr(argparse.ArgumentParser, "parse_args", recording_parse_args)
     for argv in (
         ["tc-data"],
         ["tc-data", "--host", "127.0.0.1", "--port", "9200"],
@@ -553,14 +566,15 @@ def test_main_runs_uvicorn_with_config_or_override_host_and_port(
     ):
         monkeypatch.setattr(sys, "argv", argv)
         server.main()
+    assert [ns.port for ns in parsed] == [None, 9200, 0]
     assert [(host, port) for _, host, port in calls] == [
         ("0.0.0.0", 9100),
         ("127.0.0.1", 9200),
-        ("0.0.0.0", 9100),
+        ("0.0.0.0", 0),
     ]
     assert calls[0][0].state.config.store_root == store
     assert [r.getMessage() for r in caplog.records] == [
         f"dataset endpoint: store {store}, raw {raw} on 0.0.0.0:9100",
         f"dataset endpoint: store {store}, raw {raw} on 127.0.0.1:9200",
-        f"dataset endpoint: store {store}, raw {raw} on 0.0.0.0:9100",
+        f"dataset endpoint: store {store}, raw {raw} on 0.0.0.0:0",
     ]

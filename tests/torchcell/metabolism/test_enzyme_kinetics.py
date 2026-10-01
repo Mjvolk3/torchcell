@@ -14,9 +14,8 @@ counts every row carrying the value, before the wildtype filter; ``selection_rul
 joins the rungs with `` -> ``; ``nearest_{T:g}C`` formats 37.5 as ``37.5`` and 30.0 as
 ``30``; ``temperature_delta_c`` is ``|T - target|`` on both sides of the target), the
 PubMed id normalization (``12345.0`` to ``"12345"``), a zero ``k_cat`` kept as a real
-value rather than a gap, and a Finding: with an EVEN number of tied rows the median
-falls between two values and ``min`` returns whichever of the two nearest rows comes
-first, so row order decides. Retrieval runs on a fake ``subprocess.run`` that serves
+value rather than a gap, and (2026.09.30, issue #525, Finding retired) the even tie:
+the lower median is chosen whatever the row order. Retrieval runs on a fake ``subprocess.run`` that serves
 canned OED envelopes (no curl, no network): paging stops at ``total``, a short final
 page, the incomplete-paging and wrong-shape errors, the exact reproduction command, and
 the mirror round trip under ``tmp_path`` with the sha256 of the compact sorted JSON
@@ -205,8 +204,7 @@ def test_full_cascade_returns_the_exact_resolved_record() -> None:
     """Rows: a 30 C mutant (999), wildtype at 25 C (5.0, pmid 111), 35 C (7.0, pmid
     222) and 50 C (8.0), and a wildtype row with no k_cat. Four rows carry k_cat, so
     ``n_candidates`` is 4 although only three survive the wildtype rung. 25 and 35 C
-    tie at delta 5; the median of (5, 7) is 6, both are 1 away, and the first listed
-    (25 C) wins. The substrate is taken from the chosen row when none is passed.
+    tie at delta 5; the lower median of (5, 7) is 5, so the 25 C row wins. The substrate is taken from the chosen row when none is passed.
     """
     cands = [
         _rec(enzymetype="mutant", temperature=30.0, kcat_value=999.0),
@@ -235,20 +233,42 @@ def test_full_cascade_returns_the_exact_resolved_record() -> None:
     }
 
 
-def test_even_number_of_ties_lets_row_order_decide() -> None:
-    """Finding: the module docstring promises the median tie-break "avoids letting an
-    arbitrary row order decide", but with two tied rows (1.0 and 3.0, median 2.0) both
-    are 1.0 from the median and ``min`` (enzyme_kinetics.py:308-311) returns the first
-    listed, so reversing the rows flips the answer from 1.0 to 3.0. Pinned until the
-    tie-break picks a side of the median deterministically.
+def test_even_number_of_ties_takes_the_lower_median_in_any_row_order() -> None:
+    """The median tie-break does not let row order decide: two tied rows (1.0 and 3.0)
+    resolve to the lower median 1.0 in both orders, and four (1, 2, 3, 4) to 2.0 in
+    every rotation, so the resolved value is always one measured row.
     """
     rows = [_rec(kcat_value=1.0), _rec(kcat_value=3.0)]
     forward = resolve_parameter(rows, KineticKind.KCAT, "P00000")
     backward = resolve_parameter(rows[::-1], KineticKind.KCAT, "P00000")
     assert forward is not None and backward is not None
-    assert (forward.value, backward.value) == (1.0, 3.0)
+    assert (forward.value, backward.value) == (1.0, 1.0)
+    four = [_rec(kcat_value=v) for v in (3.0, 1.0, 4.0, 2.0)]
+    picked = []
+    for shift in range(4):
+        resolved = resolve_parameter(
+            four[shift:] + four[:shift], KineticKind.KCAT, "P00000"
+        )
+        assert resolved is not None
+        picked.append(resolved.value)
+    assert picked == [2.0, 2.0, 2.0, 2.0]
     assert forward.selection_rule == backward.selection_rule
     assert forward.selection_rule == "wildtype_only -> nearest_30C -> median_of_ties"
+
+
+def test_rows_sharing_the_median_value_resolve_to_the_same_row_in_any_order() -> None:
+    """Two tied rows with the same k_cat but different PubMed ids and pH: the chosen
+    row is the one whose serialized content sorts first (pmid 111, pH 6.5), not the
+    first listed.
+    """
+    rows = [
+        _rec(kcat_value=2.0, kcat_pubmedid=222.0, ph=7.5),
+        _rec(kcat_value=2.0, kcat_pubmedid=111.0, ph=6.5),
+    ]
+    for order in (rows, rows[::-1]):
+        p = resolve_parameter(order, KineticKind.KCAT, "P00000")
+        assert p is not None
+        assert (p.value, p.pubmed_id, p.ph) == (2.0, "111", 6.5)
 
 
 def test_rule_string_without_wildtype_and_with_a_custom_target() -> None:

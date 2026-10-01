@@ -24,9 +24,9 @@ to the zero vector, so its output row is ``set_layers(0)``; with node layers pre
 every set output in train mode and is the identity in eval. On
 ``DeepSet(4, 8, 3, 3, 2, skip_node=True)`` only the 8->8 middle node block gets a skip
 (4->8 and 8->3 differ in width), so ``x_node = b2(b1(b0(x)) + b0(x))``. ``main()`` is run
-with its printed shape lines pinned and the anomaly-detection side effect recorded as a
-Finding. Changing ``aggregation`` after construction bypasses the constructor guard and
-the forward raises ``UnboundLocalError``, also a Finding.
+with its printed shape lines pinned and anomaly detection off again after it returns. An
+unknown ``aggregation`` raises ``ValueError`` naming it, at construction and at forward
+(2026.09.30, issue #525: both Findings retired).
 """
 
 from typing import cast
@@ -78,7 +78,10 @@ def test_constructor_rejects_unknown_norm_activation_and_aggregation() -> None:
         DeepSet(4, 8, 3, 2, 2, norm="rms")
     with pytest.raises(AssertionError, match="Invalid activation type"):
         DeepSet(4, 8, 3, 2, 2, activation="swish")
-    with pytest.raises(AssertionError, match="Invalid aggregation method"):
+    with pytest.raises(
+        ValueError,
+        match=r"^Unknown aggregation 'max'; expected one of \('sum', 'mean'\)$",
+    ):
         DeepSet(4, 8, 3, 2, 2, aggregation="max")
 
 
@@ -307,35 +310,45 @@ def test_activation_name_selects_the_block_activation_and_is_validated() -> None
         DeepSet(4, 8, 3, 3, 2, activation="nope")
 
 
-def test_aggregation_changed_after_construction_raises_unbound_local() -> None:
-    """Finding: the ``sum``/``mean`` guard runs only in ``__init__`` (deep_set.py:46);
-    ``forward`` has no else branch (lines 144-147), so an attribute set to ``"max"``
-    later reaches ``set_layers_forward`` with ``x_aggregated`` unbound. Pinned until
-    ``forward`` raises a named error for an unknown aggregation.
+def test_aggregation_changed_after_construction_raises_value_error_at_forward() -> None:
+    """``forward`` re-checks the attribute: set to ``"max"`` after construction, it
+    raises the same named ``ValueError`` as the constructor, before any layer runs.
     """
     model = _layer_model()
     model.aggregation = "max"
-    with pytest.raises(UnboundLocalError, match="x_aggregated"):
+    with pytest.raises(
+        ValueError,
+        match=r"^Unknown aggregation 'max'; expected one of \('sum', 'mean'\)$",
+    ):
         model(_x(), BATCH)
 
 
-def test_main_prints_the_demo_shapes_and_leaves_anomaly_detection_on(
-    capsys: pytest.CaptureFixture[str],
+def test_main_prints_the_demo_shapes_and_leaves_anomaly_detection_off(
+    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: ``main()`` calls ``torch.autograd.set_detect_anomaly(True)``
-    (deep_set.py:155) and never restores it, so anomaly detection stays on for the rest
-    of the process. The shape lines follow from 100 nodes in 5 sets of 20 with
-    ``in_channels`` 10 and ``out_channels`` 8. Pinned until ``main`` scopes the setting.
+    """``main()`` enables anomaly detection only inside its forward/backward: the
+    loss is computed with it on (recorded by a ``MSELoss.forward`` spy) and it is off
+    again when ``main`` returns. The shape lines follow from 100 nodes in 5 sets of 20
+    with ``in_channels`` 10 and ``out_channels`` 8.
     """
     assert not torch.is_anomaly_enabled()
+    seen: list[bool] = []
+    real_forward = torch.nn.MSELoss.forward
+
+    def spy(self: torch.nn.MSELoss, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+        seen.append(torch.is_anomaly_enabled())
+        return real_forward(self, a, b)
+
+    monkeypatch.setattr(torch.nn.MSELoss, "forward", spy)
     try:
         torch.manual_seed(0)
         from torchcell.models.deep_set import main
 
         main()
-        assert torch.is_anomaly_enabled()
+        after = torch.is_anomaly_enabled()
     finally:
         torch.autograd.set_detect_anomaly(False)
+    assert (seen, after) == ([True], False)
     lines = capsys.readouterr().out.splitlines()
     assert lines[:6] == [
         "x shape: torch.Size([100, 10])",

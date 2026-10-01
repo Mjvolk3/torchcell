@@ -86,6 +86,16 @@ parses with no bump, so `main` is "latest" between releases.
 A message whose tag is not in `allowed_tags`, or whose tag is lowercase, does not parse
 and does not contribute to a release.
 
+When a push does bump the version, the same workflow builds the wheel and sdist
+(`build_command` in `[tool.semantic_release]`), attaches them to the GitHub release
+and publishes them to [PyPI](https://pypi.org/project/torchcell/) through trusted
+publishing: the `pypi` environment on the job is registered on pypi.org as the
+publisher for `semantic-release.yaml`, and PyPI mints a short-lived token from the job's
+OIDC identity, so no PyPI secret is stored in the repository. A push with no bumping tag
+publishes nothing. The wheel carries the `torchcell` package and its data files
+(`[tool.setuptools.package-data]`), not `tests/`, `experiments/` or `notes/`; check a
+build locally with `python -m build` followed by `python -m twine check dist/*`.
+
 ## Adding a dataset page
 
 A dataset page under `docs/source/datasets/<organism>/` follows the section contract on the {doc}`../datasets/index` page: introduction and terms, the draw.io diagram, the record dumps, the data tables and figures with one exploration, the supported query and its results from a named release, the download section, sourced caveats, and the provenance table. The checklist before opening the PR:

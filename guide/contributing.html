@@ -283,6 +283,15 @@ parses with no bump, so <code class="docutils literal notranslate"><span class="
 </table>
 <p>A message whose tag is not in <code class="docutils literal notranslate"><span class="pre">allowed_tags</span></code>, or whose tag is lowercase, does not parse
 and does not contribute to a release.</p>
+<p>When a push does bump the version, the same workflow builds the wheel and sdist
+(<code class="docutils literal notranslate"><span class="pre">build_command</span></code> in <code class="docutils literal notranslate"><span class="pre">[tool.semantic_release]</span></code>), attaches them to the GitHub release
+and publishes them to <a class="reference external" href="https://pypi.org/project/torchcell/">PyPI</a> through trusted
+publishing: the <code class="docutils literal notranslate"><span class="pre">pypi</span></code> environment on the job is registered on pypi.org as the
+publisher for <code class="docutils literal notranslate"><span class="pre">semantic-release.yaml</span></code>, and PyPI mints a short-lived token from the job’s
+OIDC identity, so no PyPI secret is stored in the repository. A push with no bumping tag
+publishes nothing. The wheel carries the <code class="docutils literal notranslate"><span class="pre">torchcell</span></code> package and its data files
+(<code class="docutils literal notranslate"><span class="pre">[tool.setuptools.package-data]</span></code>), not <code class="docutils literal notranslate"><span class="pre">tests/</span></code>, <code class="docutils literal notranslate"><span class="pre">experiments/</span></code> or <code class="docutils literal notranslate"><span class="pre">notes/</span></code>; check a
+build locally with <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">build</span></code> followed by <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">twine</span> <span class="pre">check</span> <span class="pre">dist/*</span></code>.</p>
 </section>
 <section id="adding-a-dataset-page">
 <h2>Adding a dataset page<a class="headerlink" href="#adding-a-dataset-page" title="Link to this heading"></a></h2>

@@ -100,8 +100,10 @@ def fetch(zot: zotero.Zotero, doc: str, version: int | None) -> tuple[str, list[
         sys.exit(f"nothing published for {doc} yet")
 
     # Attachments oldest-first, so --version 1 is the first build published.
+    # Every page is read: pyzotero returns at most 100 children per request, so a
+    # first-page read would pick a stale "latest" version past 100 (issue #563).
     atts = sorted(
-        (c for c in zot.children(parent["key"])
+        (c for c in zot.everything(zot.children(parent["key"]))
          if c["data"].get("itemType") == "attachment"),
         key=lambda c: c["data"].get("filename", ""),
     )

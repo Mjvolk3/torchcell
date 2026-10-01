@@ -398,9 +398,13 @@ def existing_hashes(zot: zotero.Zotero, parent_key: str) -> dict[str, str]:
     hashing it. The filename is written by this script and is the only thing that
     survives into the Zotero UI, so if the two ever disagree the filename is what
     a human would go by.
+
+    Every page of children is read (`everything`): pyzotero returns at most 100
+    rows per request, so past 100 versions a first-page read would miss an
+    existing build and upload it again as new (issue #563).
     """
     out = {}
-    for ch in zot.children(parent_key):
+    for ch in zot.everything(zot.children(parent_key)):
         d = ch["data"]
         fn = d.get("filename") or d.get("title") or ""
         m = re.search(r"_(\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2})_([0-9a-f]{8})\.pdf$", fn)

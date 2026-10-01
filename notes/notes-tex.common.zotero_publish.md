@@ -136,3 +136,7 @@ now strips either `main` or the document's own name, so every already-published
 filename stays byte-identical and a collection's version history remains one
 sequence instead of splitting at the rename. The default stem is the document
 directory's leaf, and `--clean` means `<doc>-clean`.
+
+## 2026.10.01 - Existing versions are read from every page (issue #563)
+
+`existing_hashes` read `zot.children(parent_key)` without `everything(...)`, so only the first 100 child attachments were seen; past 100 versions an already-published build would have been uploaded again as new. It now reads `zot.everything(zot.children(parent_key))`. Only that read changed; what is uploaded and when is unchanged. The same fix applies to `notes-tex/common/zotero_comments.py` `fetch`, whose "latest version" was the newest of the first 100 attachments. Tests: [[tests.torchcell.literature.test_notes_tex_zotero_paging]].

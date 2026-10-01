@@ -7,7 +7,13 @@
 (``torchcell.literature.zotero.zotero``) by :class:`FakeZot` from ``_fake_zotero.py``,
 which has no write methods, so nothing here can create, modify or upload a Zotero item.
 The collection-creating branch of ``collection_key(create_if_missing=True)`` is a write
-and is deliberately not exercised.
+and is deliberately not exercised; ``create_if_missing=True`` is called only on a name
+that exists, where the fake's missing ``create_collections`` would raise if a create
+were attempted.
+
+Paging: ``FakeZot`` answers at most 100 rows per request and pages through
+``everything``/``follow`` like pyzotero, so a lookup that reads only the first page
+misses a collection at position 120 of a 150-collection library (issue #563).
 
 Retry arithmetic: delay = ``base_delay * 2 ** attempt + uniform(0, base_delay)``; with
 ``uniform`` stubbed to 0.25 and ``base_delay`` 2.0 the two delays before the third
@@ -228,6 +234,85 @@ def test_collection_key_lookup(monkeypatch: pytest.MonkeyPatch) -> None:
         ),
     ):
         lib.collection_key("missing")
+
+
+def _big_library(target_index: int = 120, n: int = 150) -> list[dict[str, Any]]:
+    """``n`` top-level collections ``C000``.. named ``coll-000``.., with the one at
+    ``target_index`` renamed ``torchcell`` (key ``TCROOT01``).
+    """
+    rows = [collection(f"C{i:03d}", f"coll-{i:03d}") for i in range(n)]
+    rows[target_index] = collection("TCROOT01", "torchcell")
+    return rows
+
+
+def test_list_collections_reads_every_page(monkeypatch: pytest.MonkeyPatch) -> None:
+    """All 150 collections come back in API order: page one plus one followed page."""
+    rows = _big_library()
+    zot = FakeZot(collections=rows)
+    lib = make_library(monkeypatch, zot)
+    assert [c["key"] for c in lib.list_collections()] == [c["key"] for c in rows]
+    assert zot.calls == [("collections",), ("everything",), ("follow",)]
+
+
+def test_collection_key_finds_name_past_first_page(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A collection at position 120 (page two) resolves; this failed before #563."""
+    lib = make_library(monkeypatch, FakeZot(collections=_big_library()))
+    assert lib.collection_key("torchcell") == "TCROOT01"
+
+
+def test_collection_key_create_if_missing_finds_page_two_and_creates_nothing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``create_if_missing=True`` on a name past page one returns its key, no create.
+
+    ``FakeZot`` has no ``create_collections``, so a create attempt would raise
+    ``AttributeError``; the recorded calls are reads only.
+    """
+    zot = FakeZot(collections=_big_library())
+    lib = make_library(monkeypatch, zot)
+    assert lib.collection_key("torchcell", create_if_missing=True) == "TCROOT01"
+    assert zot.calls == [("collections",), ("everything",), ("follow",)]
+
+
+def test_collection_key_refuses_ambiguous_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Two collections sharing a name: a refusal naming each key and its parent path."""
+    zot = FakeZot(
+        collections=[
+            collection("R", "torchcell"),
+            collection("T", "torchcell-topics", parent="R"),
+            collection("N", "notes-tex", parent="R"),
+            collection("M1", "microbe-perturb-seq", parent="T"),
+            collection("M2", "microbe-perturb-seq", parent="N"),
+            collection("M3", "Microbe-Perturb-Seq"),
+        ]
+    )
+    lib = make_library(monkeypatch, zot)
+    with pytest.raises(ValueError) as excinfo:
+        lib.collection_key("microbe-perturb-seq")
+    assert str(excinfo.value) == (
+        "Zotero collection 'microbe-perturb-seq' is ambiguous: 3 collections share "
+        "the name: M1 under torchcell/torchcell-topics; M2 under torchcell/notes-tex; "
+        "M3 at the top level. Address it by collection key."
+    )
+
+
+def test_collection_tree_root_and_children_past_first_page(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Root at position 120 and its child at 149 are both found from one paged listing."""
+    rows = _big_library()
+    rows[149] = collection("TCKID001", "torchcell-topics", parent="TCROOT01")
+    zot = FakeZot(collections=rows)
+    lib = make_library(monkeypatch, zot)
+    assert lib.collection_tree("torchcell") == [
+        CollectionNode(key="TCROOT01", name="torchcell", path="torchcell"),
+        CollectionNode(
+            key="TCKID001", name="torchcell-topics", path="torchcell/torchcell-topics"
+        ),
+    ]
+    assert zot.calls == [("collections",), ("everything",), ("follow",)]
 
 
 def test_collection_tree_depth_first_with_paths(

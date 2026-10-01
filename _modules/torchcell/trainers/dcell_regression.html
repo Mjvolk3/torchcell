@@ -117,7 +117,6 @@
 <span></span><span class="sd">"""Lightning training task for DCell graph-based fitness regression."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">tracemalloc</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">lightning</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">L</span>
@@ -145,6 +144,8 @@
 
 <span class="n">style_file_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">torchcell</span><span class="o">.</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">"torchcell.mplstyle"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="n">style_file_path</span><span class="p">)</span>
+
+<span class="n">PLOTTED_TARGETS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"fitness"</span><span class="p">,</span> <span class="s2">"genetic_interaction_score"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="DCellRegressionTask">
@@ -175,8 +176,15 @@
 <span class="sd">            batch_size: Batch size used for logging.</span>
 <span class="sd">            train_wt_diff: Whether to train on wild-type differences.</span>
 <span class="sd">            **kwargs: Additional keyword arguments.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If ``target`` has no box plot (not in ``PLOTTED_TARGETS``).</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">target</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">PLOTTED_TARGETS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Unknown target '</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">': expected one of </span><span class="si">{</span><span class="n">PLOTTED_TARGETS</span><span class="si">}</span><span class="s2">."</span>
+            <span class="p">)</span>
         <span class="c1"># models</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">models</span> <span class="o">=</span> <span class="n">models</span>
 
@@ -221,7 +229,6 @@
 
         <span class="c1"># wandb model artifact logging</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">last_logged_best_step</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">tracemalloc</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_submodel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return a submodel registered via ``setattr`` in ``__init__``.</span>
@@ -254,6 +261,18 @@
         <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">dcell_linear_output</span><span class="p">)</span></div>
 
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_hat</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Apply ``DCellLoss(predictions, outputs, target)`` to the head outputs.</span>
+
+<span class="sd">        The root head is the prediction; every head (the loss skips ``GO:ROOT``)</span>
+<span class="sd">        goes in ``outputs["linear_outputs"]`` for the auxiliary term.</span>
+<span class="sd">        """</span>
+        <span class="n">linear_outputs</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">out</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">out</span> <span class="ow">in</span> <span class="n">y_hat</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">loss</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span>
+            <span class="n">linear_outputs</span><span class="p">[</span><span class="s2">"GO:ROOT"</span><span class="p">],</span> <span class="p">{</span><span class="s2">"linear_outputs"</span><span class="p">:</span> <span class="n">linear_outputs</span><span class="p">},</span> <span class="n">y</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span>
+
 <div class="viewcode-block" id="DCellRegressionTask.on_train_start">
 <a class="viewcode-back" href="../../../generated/torchcell.trainers.dcell_regression.DCellRegressionTask.html#torchcell.trainers.dcell_regression.DCellRegressionTask.on_train_start">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">on_train_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -274,7 +293,7 @@
         <span class="n">y</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">fitness</span>
         <span class="n">opt</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">LightningOptimizer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">())</span>
         <span class="n">opt</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
-        <span class="n">loss</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span><span class="n">y_hat</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_submodel</span><span class="p">(</span><span class="s2">"dcell"</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loss</span><span class="p">(</span><span class="n">y_hat</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">manual_backward</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>  <span class="c1"># error on this line</span>
         <span class="n">opt</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
@@ -287,7 +306,6 @@
         <span class="n">y_hat_subsystems</span> <span class="o">=</span> <span class="n">y_hat_stacked</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="c1"># Log</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">"train_loss"</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">train_metrics</span><span class="p">(</span><span class="n">y_hat_subsystems</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">train_metrics</span><span class="p">(</span><span class="n">y_hat_root</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="c1"># Logging the correlation coefficients</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
@@ -332,7 +350,7 @@
         <span class="c1"># Extract the batch vector</span>
         <span class="n">y_hat</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">fitness</span>
-        <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span><span class="n">y_hat</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_submodel</span><span class="p">(</span><span class="s2">"dcell"</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loss</span><span class="p">(</span><span class="n">y_hat</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">batch</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">"val_loss"</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="c1"># Flatten</span>
@@ -340,7 +358,6 @@
         <span class="n">y_hat_stacked</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">v</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">y_hat</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
         <span class="n">y_hat_subsystems</span> <span class="o">=</span> <span class="n">y_hat_stacked</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="c1"># Log</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">val_metrics</span><span class="p">(</span><span class="n">y_hat_subsystems</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">val_metrics</span><span class="p">(</span><span class="n">y_hat_root</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="c1"># Logging the correlation coefficients</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
@@ -356,27 +373,28 @@
             <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-            <span class="s2">"val_pearson"</span><span class="p">,</span>
+            <span class="s2">"val_pearson_root"</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pearson_corr</span><span class="p">(</span><span class="n">y_hat_root</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
             <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
             <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
-            <span class="s2">"val_spearman"</span><span class="p">,</span>
+            <span class="s2">"val_spearman_root"</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">spearman_corr</span><span class="p">(</span><span class="n">y_hat_root</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span>
             <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
             <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="c1"># the sanity check runs before training and is never plotted</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">sanity_checking</span><span class="p">:</span>
+            <span class="k">return</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">true_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">true_values</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">detach</span><span class="p">()],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
-            <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">predictions</span><span class="p">,</span> <span class="n">y_hat_subsystems</span><span class="o">.</span><span class="n">detach</span><span class="p">()],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span>
-        <span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">predictions</span><span class="p">,</span> <span class="n">y_hat_root</span><span class="o">.</span><span class="n">detach</span><span class="p">()],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="DCellRegressionTask.on_validation_epoch_end">
 <a class="viewcode-back" href="../../../generated/torchcell.trainers.dcell_regression.DCellRegressionTask.html#torchcell.trainers.dcell_regression.DCellRegressionTask.on_validation_epoch_end">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">on_validation_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Log val metrics, render box plots, and checkpoint best model to W&amp;B."""</span>
+<span class="w">        </span><span class="sd">"""Log val metrics and, on plotting epochs, the root-prediction box plot."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val_metrics</span><span class="o">.</span><span class="n">compute</span><span class="p">(),</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">val_metrics</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
 
@@ -388,39 +406,56 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">==</span> <span class="s2">"fitness"</span><span class="p">:</span>
             <span class="n">fig</span> <span class="o">=</span> <span class="n">fitness</span><span class="o">.</span><span class="n">box_plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">true_values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span> <span class="o">==</span> <span class="s2">"genetic_interaction_score"</span><span class="p">:</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="n">fig</span> <span class="o">=</span> <span class="n">genetic_interaction_score</span><span class="o">.</span><span class="n">box_plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">true_values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span><span class="p">)</span>
         <span class="n">wandb</span><span class="o">.</span><span class="n">log</span><span class="p">({</span><span class="s2">"binned_values_box_plot"</span><span class="p">:</span> <span class="n">wandb</span><span class="o">.</span><span class="n">Image</span><span class="p">(</span><span class="n">fig</span><span class="p">)})</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
         <span class="c1"># Clear the stored values for the next epoch</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">true_values</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="DCellRegressionTask.on_train_epoch_start">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.dcell_regression.DCellRegressionTask.html#torchcell.trainers.dcell_regression.DCellRegressionTask.on_train_epoch_start">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_train_epoch_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Log the checkpoint the previous epoch saved, if it is a new best."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_best_checkpoint</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="DCellRegressionTask.on_train_end">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.dcell_regression.DCellRegressionTask.html#torchcell.trainers.dcell_regression.DCellRegressionTask.on_train_end">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_train_end</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Log the checkpoint the final epoch saved, if it is a new best."""</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_best_checkpoint</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_best_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Log the best checkpoint as a W&amp;B artifact once per global step.</span>
+
+<span class="sd">        With validation every epoch, ``ModelCheckpoint`` saves in ``on_train_epoch_end``</span>
+<span class="sd">        after every module hook of that epoch, so the first module hooks that see the</span>
+<span class="sd">        epoch's checkpoint are the next ``on_train_epoch_start`` and, for the last</span>
+<span class="sd">        epoch, ``on_train_end``; the global step there is the step it was saved at.</span>
+<span class="sd">        With checkpointing disabled there is nothing to log.</span>
+<span class="sd">        """</span>
         <span class="n">current_global_step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_step</span>
-        <span class="c1"># HACK</span>
-        <span class="c1"># Get the current memory usage</span>
-        <span class="n">current</span><span class="p">,</span> <span class="n">peak</span> <span class="o">=</span> <span class="n">tracemalloc</span><span class="o">.</span><span class="n">get_traced_memory</span><span class="p">()</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"======"</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Current memory usage is </span><span class="si">{</span><span class="n">current</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">10</span><span class="o">**</span><span class="mi">6</span><span class="si">}</span><span class="s2">MB; Peak was </span><span class="si">{</span><span class="n">peak</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">10</span><span class="o">**</span><span class="mi">6</span><span class="si">}</span><span class="s2">MB"</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"======"</span><span class="p">)</span>
-
-        <span class="c1"># Stop tracing memory allocations</span>
-        <span class="n">tracemalloc</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
-        <span class="n">ckpt</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">ModelCheckpoint</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">checkpoint_callback</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">ckpt</span><span class="o">.</span><span class="n">best_model_path</span> <span class="ow">and</span> <span class="n">current_global_step</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_logged_best_step</span><span class="p">:</span>
-            <span class="c1"># Save model as a W&amp;B artifact</span>
-            <span class="n">artifact</span> <span class="o">=</span> <span class="n">wandb</span><span class="o">.</span><span class="n">Artifact</span><span class="p">(</span>
-                <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"model-global_step-</span><span class="si">{</span><span class="n">current_global_step</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-                <span class="nb">type</span><span class="o">=</span><span class="s2">"model"</span><span class="p">,</span>
-                <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Model on validation epoch end step - </span><span class="si">{</span><span class="n">current_global_step</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-                <span class="n">metadata</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="p">),</span>
-            <span class="p">)</span>
-            <span class="n">artifact</span><span class="o">.</span><span class="n">add_file</span><span class="p">(</span><span class="n">ckpt</span><span class="o">.</span><span class="n">best_model_path</span><span class="p">)</span>
-            <span class="n">wandb</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">last_logged_best_step</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">current_global_step</span>  <span class="c1"># update the last logged step</span>
-            <span class="p">)</span></div>
-
+        <span class="n">ckpt</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">ModelCheckpoint</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">trainer</span><span class="o">.</span><span class="n">checkpoint_callback</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">ckpt</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="ow">not</span> <span class="n">ckpt</span><span class="o">.</span><span class="n">best_model_path</span>
+            <span class="ow">or</span> <span class="n">current_global_step</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_logged_best_step</span>
+        <span class="p">):</span>
+            <span class="k">return</span>
+        <span class="c1"># Save model as a W&amp;B artifact</span>
+        <span class="n">artifact</span> <span class="o">=</span> <span class="n">wandb</span><span class="o">.</span><span class="n">Artifact</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"model-global_step-</span><span class="si">{</span><span class="n">current_global_step</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="nb">type</span><span class="o">=</span><span class="s2">"model"</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Best model checkpoint at step - </span><span class="si">{</span><span class="n">current_global_step</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hparams</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">artifact</span><span class="o">.</span><span class="n">add_file</span><span class="p">(</span><span class="n">ckpt</span><span class="o">.</span><span class="n">best_model_path</span><span class="p">)</span>
+        <span class="n">wandb</span><span class="o">.</span><span class="n">log_artifact</span><span class="p">(</span><span class="n">artifact</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_logged_best_step</span> <span class="o">=</span> <span class="n">current_global_step</span>
 
 <div class="viewcode-block" id="DCellRegressionTask.test_step">
 <a class="viewcode-back" href="../../../generated/torchcell.trainers.dcell_regression.DCellRegressionTask.html#torchcell.trainers.dcell_regression.DCellRegressionTask.test_step">[docs]</a>
@@ -428,7 +463,7 @@
 <span class="w">        </span><span class="sd">"""Run a test step and log loss, regression metrics, and correlations."""</span>
         <span class="n">y_hat</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">fitness</span>
-        <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span><span class="n">y_hat</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_submodel</span><span class="p">(</span><span class="s2">"dcell"</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loss</span><span class="p">(</span><span class="n">y_hat</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">batch</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="c1"># Flatten</span>
         <span class="n">y_hat_root</span> <span class="o">=</span> <span class="n">y_hat</span><span class="p">[</span><span class="s2">"GO:ROOT"</span><span class="p">]</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
@@ -436,7 +471,6 @@
         <span class="n">y_hat_subsystems</span> <span class="o">=</span> <span class="n">y_hat_stacked</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="c1">#</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">"test_loss"</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">sync_dist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">test_metrics</span><span class="p">(</span><span class="n">y_hat_subsystems</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">test_metrics</span><span class="p">(</span><span class="n">y_hat_root</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="c1"># Logging the correlation coefficients</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>

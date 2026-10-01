@@ -186,3 +186,9 @@ is by rank or by log ratio to each dataset's own center, never by value.
 ## 2026.09.29 - Showcase page (group 3)
 
 Shown on `docs/source/datasets/scerevisiae/amino-acid-betaxanthin.md` ([[experiments.034-showcase-datasets.scripts.amino_acid_betaxanthin]]). The dev store's content sha256 equals release `2026.09.21-ab6d8c5d`'s. Measured there: Spearman between Mulleder mM and the Cooper ratio over the shared genes is -0.006 to 0.059 on the seven single-amino-acid keys, and between the kept and ledger rows of the duplicated Table 4 identifiers (39 to 47 pairs) -0.021 to 0.133. The duplicate strains do not reproduce each other, which bears on how much a Cooper value can say about a gene.
+
+## 2026.09.30 - Raw sha256 pin verified at build time
+
+Issue #518; the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes (#518); PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: no (symlink); refused deposit leaving a directory: partial (a refused second file left the first deposited).
+
+Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `TABLE4_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.

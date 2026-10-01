@@ -68,6 +68,7 @@ from typing import Any
 import pandas as pd
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import MEDIA_LIBRARY, SYNBASE
 from torchcell.datamodels.schema import (
@@ -815,18 +816,43 @@ def test_download_links_the_verified_mirror_file(
 def test_download_refuses_a_digest_off_the_manifest(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The expected digest is the MANIFEST's, not ``DATA_SHA256``; nothing is linked."""
+    """The expected digest is the MANIFEST's, not ``DATA_SHA256``; the refusal is a
+    ``RawSha256MismatchError`` naming the mirror file, and nothing is linked.
+    """
     data_root = tmp_path / "dr"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     _mirror(data_root, b"tampered", "ab" * 32)
     dataset = _bare_dataset(tmp_path / "build")
-    with pytest.raises(RuntimeError) as err:
+    with pytest.raises(RawSha256MismatchError) as err:
         dataset.download()
     assert str(err.value) == (
-        f"{v.DATA_FILENAME} sha256 mismatch: got "
-        f"{hashlib.sha256(b'tampered').hexdigest()}, expected {'ab' * 32}"
+        f"sha256 mismatch for {v.raw_mirror_dir(str(data_root)) / v.DATA_REL}: "
+        f"expected {'ab' * 32}, observed {hashlib.sha256(b'tampered').hexdigest()}"
     )
-    assert not (tmp_path / "build" / "raw").exists()
+    assert list((tmp_path / "build" / "raw").iterdir()) == []
+
+
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #524's sweep): with the count matrix already in ``raw/`` PyG
+    skips ``download()``, so ``process()`` verifies it against ``DATA_SHA256`` first and
+    raises ``RawSha256MismatchError`` naming it and both digests before a row is read;
+    no store is written and the file is left as found.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(v, [v.DATA_FILENAME])
+    raw = staged.root / "raw" / v.DATA_FILENAME
+    with pytest.raises(RawSha256MismatchError) as err:
+        v.EnvChemgenVanacloig2022Dataset(root=str(staged.root))
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw}: expected "
+        "e29eb02769ce2180d632020dc612a7f3e14a124fc7f1e0e33f9d41b6f4e4a85a, "
+        f"observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
 
 
 def test_download_refuses_a_mirror_missing_the_file_or_its_record(

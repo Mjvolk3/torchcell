@@ -50,12 +50,10 @@ universe (any not resolving would be logged + dropped -- empirically zero drops,
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/ohnuki2018
 # Test file: tests/torchcell/datasets/scerevisiae/test_ohnuki2018.py
 
-import hashlib
 import logging
 import os
 import os.path as osp
 import pickle
-import shutil
 from collections.abc import Callable
 from typing import Any
 
@@ -63,7 +61,12 @@ import lmdb
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    copy_verified,
+    post_process,
+    verify_raw_files,
+)
 from torchcell.datamodels.schema import (
     CalMorphExperiment,
     CalMorphExperimentReference,
@@ -163,17 +166,14 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
                         "portal is the historical source; recover the file and deposit it, "
                         "then rebuild (sha256 verified)."
                     )
-                shutil.copyfile(src, dest)
-            digest = hashlib.sha256(open(dest, "rb").read()).hexdigest()
-            if digest != spec["sha256"]:
-                raise RuntimeError(
-                    f"{filename} sha256 mismatch: got {digest}, "
-                    f"expected {spec['sha256']}"
-                )
+                copy_verified(src, dest, spec["sha256"])
 
     @post_process
     def process(self) -> None:
         """Load raw TSVs, build CalMorph experiments, and write the LMDB store."""
+        verify_raw_files(
+            self.raw_dir, {name: spec["sha256"] for name, spec in _RAW_FILES.items()}
+        )
         df_mutant = pd.read_csv(osp.join(self.raw_dir, "ess1112data.tsv"), sep="\t")
         df_wt = pd.read_csv(osp.join(self.raw_dir, "wt114data.tsv"), sep="\t")
 

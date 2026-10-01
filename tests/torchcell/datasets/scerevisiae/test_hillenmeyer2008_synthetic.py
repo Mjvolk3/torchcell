@@ -45,6 +45,8 @@ from pathlib import Path
 
 import pytest
 
+from torchcell.data import RawSha256MismatchError
+from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.media import YPD_LIQUID
 from torchcell.datamodels.schema import (
     AssayType,
@@ -620,11 +622,12 @@ def test_download_refuses_a_mirror_file_whose_bytes_changed(
     expected = hashlib.sha256(matrix.read_bytes()).hexdigest()
     matrix.write_text("tampered\n")
     got = hashlib.sha256(b"tampered\n").hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(f"het.txt sha256 mismatch: got {got}, expected {expected}"),
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         m.HetHillenmeyer2008Dataset(root=str(tmp_path / "het"), genome=_StubGenome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {matrix}: expected {expected}, observed {got}"
+    )
+    assert not (tmp_path / "het" / "raw" / "het.txt").exists()
 
 
 def test_download_refuses_a_file_missing_from_the_mirror(
@@ -660,12 +663,14 @@ def test_a_tampered_genome_tier_is_refused_at_build_time(
         m.HetHillenmeyer2008Dataset(root=str(tmp_path / "het"), genome=_StubGenome())
 
 
-def test_process_rechecks_the_matrix_sha256_at_build_time(
-    tmp_path: Path, data_root: Path
+def test_process_rechecks_the_raw_files_sha256_at_build_time(
+    tmp_path: Path, data_root: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A raw matrix written directly (so ``download()`` is skipped) whose bytes differ
-    from the manifest pin is refused by ``process()`` itself.
+    from the manifest pin is refused by ``process()`` itself, with
+    ``RawSha256MismatchError`` naming the raw file and both digests, before any store.
     """
+    monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
     raw = tmp_path / "het" / "raw"
     raw.mkdir(parents=True)
     files = _source_files()
@@ -676,14 +681,13 @@ def test_process_rechecks_the_matrix_sha256_at_build_time(
     )
     got = hashlib.sha256((files["het.ratio_result_nm.pub"] + "\n").encode()).hexdigest()
     expected = hashlib.sha256(files["het.ratio_result_nm.pub"].encode()).hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"het.ratio_result_nm.pub sha256 mismatch at build time: got {got}, "
-            f"expected {expected}"
-        ),
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         m.HetHillenmeyer2008Dataset(root=str(tmp_path / "het"), genome=_StubGenome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw / 'het.ratio_result_nm.pub'}: expected {expected}, "
+        f"observed {got}"
+    )
+    assert list((tmp_path / "het" / "processed").iterdir()) == []
 
 
 def test_deposit_manifest_records_each_wayback_retrieval(data_root: Path) -> None:

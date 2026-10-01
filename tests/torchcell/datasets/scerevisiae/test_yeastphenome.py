@@ -45,6 +45,7 @@ from typing import Any
 import pandas as pd
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.schema import (
     EnvironmentResponseExperiment,
     EnvironmentResponseExperimentReference,
@@ -350,8 +351,9 @@ def test_download_skips_present_files_and_fetches_missing_ones_from_the_pin(
 def test_download_refuses_bytes_off_the_pin_and_writes_nothing(
     synthetic: YeastPhenomeDataset, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Fetched bytes whose sha256 is not the screen's pin raise with both digests, and
-    the destination file is not created.
+    """Fetched bytes whose sha256 is not the screen's pin raise
+    ``RawSha256MismatchError`` naming the URL and both digests, and neither the
+    destination file nor a ``.partial`` is created.
     """
     screen_e = {"pmid": "99999905", "stem": "synthetic_e", "valuez_sha256": "1" * 64}
     monkeypatch.setattr(yp_mod, "SCREENS", [screen_e])
@@ -359,12 +361,38 @@ def test_download_refuses_bytes_off_the_pin_and_writes_nothing(
         urllib.request, "urlopen", lambda request, timeout: _Response(b"drifted")
     )
     got = hashlib.sha256(b"drifted").hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=f"^synthetic_e valuez sha256 mismatch: got {got}, expected {'1' * 64}$",
-    ):
+    before = sorted(p.name for p in Path(synthetic.raw_dir).iterdir())
+    with pytest.raises(RawSha256MismatchError) as err:
         synthetic.download()
+    assert str(err.value) == (
+        f"sha256 mismatch for {yp_mod.YP_RAW}/99999905/synthetic_e_valuez.txt: "
+        f"expected {'1' * 64}, observed {got}"
+    )
     assert not (Path(synthetic.raw_dir) / _raw_name(screen_e)).exists()
+    assert sorted(p.name for p in Path(synthetic.raw_dir).iterdir()) == before
+
+
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #518's sweep): with every screen's NPV file already in ``raw/``
+    PyG skips ``download()``, so ``process()`` verifies each against its
+    ``valuez_sha256`` first. The first screen off its pin raises
+    ``RawSha256MismatchError`` naming it and both digests; no store is written.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(yp_mod, [_raw_name(s) for s in yp_mod.SCREENS])
+    raw = staged.root / "raw" / _raw_name(yp_mod.SCREENS[0])
+    with pytest.raises(RawSha256MismatchError) as err:
+        YeastPhenomeDataset(root=str(staged.root))
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw}: expected "
+        "264a4f2c6d8da3c66ea376f04554d7e950d825cd853da2a47c7439f3860ab149, "
+        f"observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
 
 
 def test_items_retype_through_the_environment_response_classes(

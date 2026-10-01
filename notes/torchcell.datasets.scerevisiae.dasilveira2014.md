@@ -28,3 +28,9 @@ verified, 127 mutant records × up to 147 lipid species.**
   147/147), not Yeast9 `s_NNNN` — so `target_metabolite_ids=None`; the lipid→ChEBI map is
   emitted to `preprocess/lipid_chebi.csv` for a follow-up.
 - Background `BY4741` (evidence-based: BY4741 WT control row), YPD liquid 30 C. 0 ORFs dropped.
+
+## 2026.09.30 - Raw sha256 pin verified at build time
+
+Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: yes; refused deposit leaving a directory: n/a.
+
+Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `DATA_SHA256`, `CHEBI_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.

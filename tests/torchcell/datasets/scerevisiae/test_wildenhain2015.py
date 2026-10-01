@@ -39,6 +39,7 @@ from typing import Any
 
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import MEDIA_LIBRARY, SC
 from torchcell.datamodels.schema import (
@@ -705,15 +706,59 @@ def test_mirror_paths_and_relpaths(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_deposit_refuses_a_source_with_the_wrong_digest(tmp_path: Path) -> None:
     csv_path, aid_path = _sources(tmp_path, b"wrong", _AID_BYTES)
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RawSha256MismatchError) as info:
         w.deposit_raw_mirror(
             csv_path=csv_path, aid_path=aid_path, data_root=str(tmp_path / "dr")
         )
     got = hashlib.sha256(b"wrong").hexdigest()
     assert str(info.value) == (
-        f"{csv_path} sha256 mismatch: got {got}, expected {w.DATA_SHA256}"
+        f"sha256 mismatch for {csv_path}: expected {w.DATA_SHA256}, observed {got}"
     )
     assert not (tmp_path / "dr").exists()
+
+
+def test_deposit_refuses_a_later_source_before_writing_an_earlier_one(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Both sources are verified before either is written: with the datapoint export
+    on its (repointed) pin and the AID description off its pin, the refusal names the
+    description and no mirror directory exists.
+    """
+    _pin(monkeypatch, _CSV_BYTES, _AID_BYTES)
+    csv_path, aid_path = _sources(tmp_path, _CSV_BYTES, b"{}")
+    with pytest.raises(RawSha256MismatchError) as info:
+        w.deposit_raw_mirror(
+            csv_path=csv_path, aid_path=aid_path, data_root=str(tmp_path / "dr")
+        )
+    assert str(info.value) == (
+        f"sha256 mismatch for {aid_path}: expected "
+        f"{hashlib.sha256(_AID_BYTES).hexdigest()}, "
+        f"observed {hashlib.sha256(b'{}').hexdigest()}"
+    )
+    assert not (tmp_path / "dr").exists()
+
+
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #518's sweep): with both files already in ``raw/`` PyG skips
+    ``download()``, so ``process()`` verifies them against ``DATA_SHA256`` and
+    ``AID_SHA256`` first. The datapoint export off its pin raises
+    ``RawSha256MismatchError`` naming it and both digests; no store is written.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(w, [w.DATA_FILENAME, w.AID_FILENAME])
+    raw = staged.root / "raw" / w.DATA_FILENAME
+    with pytest.raises(RawSha256MismatchError) as info:
+        w.EnvChemgenWildenhain2015Dataset(root=str(staged.root))
+    assert str(info.value) == (
+        f"sha256 mismatch for {raw}: expected "
+        "c461c679b63ac56045cef0f03ed9bcbb8e7f9c12146f1fc7cc8ac0c113188d64, "
+        f"observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
 
 
 def test_deposit_refuses_an_existing_mirror_file_with_other_bytes(
@@ -860,13 +905,14 @@ def test_download_refuses_a_missing_file_and_a_digest_mismatch(
         _bare(tmp_path / "ds").download()
     assert str(info.value) == f"required raw artifact missing from mirror: {aid_mirror}"
     aid_mirror.write_bytes(b"{}")
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RawSha256MismatchError) as info:
         _bare(tmp_path / "ds").download()
     got = hashlib.sha256(b"{}").hexdigest()
     assert str(info.value) == (
-        f"aid_1159580_description.json sha256 mismatch: got {got}, "
-        f"expected {hashlib.sha256(_AID_BYTES).hexdigest()}"
+        f"sha256 mismatch for {aid_mirror}: expected "
+        f"{hashlib.sha256(_AID_BYTES).hexdigest()}, observed {got}"
     )
+    assert not (tmp_path / "ds" / "raw" / "aid_1159580_description.json").exists()
 
 
 def test_build_links_the_mirror_into_raw_then_builds(

@@ -34,11 +34,12 @@ hand-built ``EnvironmentResponseExperiment``: Benomyl 30 g/L (the "30 mg/mL" cel
 SGA_DM_SELECTION, 26.0 C (a derivation, recorded in ``_TEMPERATURE.note``), aerobic, a
 ``duration_hours`` gap; ``n_samples`` 3 screens, no uncertainty (none released).
 
-Findings pinned (source lines in ``costanzo2021.py``): the sha256 pin is checked only
-inside ``download``, which PyG calls only when the raw file is absent (lines 595-622),
-so a failed check leaves the copied bytes in ``raw/`` and the next construction builds
-from them unverified; a refused ``deposit_raw_mirror`` has already created the mirror's
-``data/`` directory (line 516, before the check at 518); a blank Systematic Name is resolved as the string
+The sha256 contract (issue #524, fixed): ``download`` hashes the mirror file before
+copying, so a refusal leaves nothing in ``raw/``; ``process`` verifies the file in
+``raw/`` against the pin before reading a row; ``deposit_raw_mirror`` checks the source
+before creating any mirror directory.
+
+Findings pinned (source lines in ``costanzo2021.py``): a blank Systematic Name is resolved as the string
 ``"nan"`` (line 770); a repeated row is stored twice with no ledger entry (lines
 769-821); an AMBIGUOUS drop keeps no candidate list (lines 776-784).
 """
@@ -56,6 +57,7 @@ from typing import Any, cast
 import pandas as pd
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.compound_identity import (
     CompoundResolutionStatus,
     resolve_compound_identity,
@@ -687,14 +689,13 @@ def _mirror_file(data_root: Path) -> Path:
     return path
 
 
-def test_a_failed_sha256_check_leaves_bytes_the_next_build_uses_unverified(
+def test_a_failed_sha256_check_leaves_nothing_in_raw_and_every_retry_refuses(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: ``download`` copies the mirror file into ``raw/`` BEFORE hashing it and
-    does not remove it on a mismatch (lines 616-622). PyG calls ``download`` only when
-    the raw file is missing, so the next construction skips the check and builds from
-    the unverified bytes. Pinned until a mismatch deletes the copy (or ``process``
-    verifies the pin itself).
+    """Contract (issue #524): ``download`` hashes the mirror file BEFORE copying, so a
+    mirror file off the pin raises ``RawSha256MismatchError`` naming the mirror path and
+    both digests, ``raw/`` stays empty (no copy, no ``.partial``), and the next
+    construction runs ``download`` again and refuses again instead of building.
     """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     _two_conditions(monkeypatch)
@@ -704,17 +705,18 @@ def test_a_failed_sha256_check_leaves_bytes_the_next_build_uses_unverified(
     root = str(tmp_path / "build")
     genome = cast(SCerevisiaeGenome, _FullStub())
 
-    with pytest.raises(RuntimeError) as err:
-        c.EnvChemgenCostanzo2021Dataset(root=root, genome=genome)
-    assert str(err.value) == (
-        f"{c._S1_FILENAME} sha256 mismatch: got {digest}, expected "
-        "f6c313de416ce8cc6ae87e2020b4389bd4adeb07cdb6a438aecaf1e45e6228ad"
+    mirror = Path(c.raw_mirror_dir(str(data_root))) / c._S1_RAW_RELPATH
+    expected = (
+        f"sha256 mismatch for {mirror}: expected "
+        f"f6c313de416ce8cc6ae87e2020b4389bd4adeb07cdb6a438aecaf1e45e6228ad, "
+        f"observed {digest}"
     )
-    left = Path(root) / "raw" / c._S1_FILENAME
-    assert hashlib.sha256(left.read_bytes()).hexdigest() == digest
-
-    rebuilt = c.EnvChemgenCostanzo2021Dataset(root=root, genome=genome)
-    assert len(rebuilt) == 8
+    for _ in range(2):
+        with pytest.raises(RawSha256MismatchError) as err:
+            c.EnvChemgenCostanzo2021Dataset(root=root, genome=genome)
+        assert str(err.value) == expected
+        assert os.listdir(Path(root) / "raw") == []
+        assert not (Path(root) / "processed" / "lmdb").exists()
 
 
 def test_download_copies_from_the_mirror_and_verifies_the_pin(
@@ -822,29 +824,26 @@ def test_manual_recipe_names_the_url_the_file_and_the_real_pin() -> None:
     )
 
 
-def test_deposit_refuses_a_source_off_the_pin_after_creating_the_mirror_dir(
+def test_deposit_refuses_a_source_off_the_pin_before_creating_the_mirror_dir(
     tmp_path: Path,
 ) -> None:
-    """Finding: ``deposit_raw_mirror`` makes ``<mirror>/data/`` (line 516) before it
-    checks the source digest (line 518), so a refused deposit leaves an empty mirror
-    directory behind. Pinned until the check runs first.
+    """Contract (issue #524): ``deposit_raw_mirror`` checks the source digest before it
+    creates anything, so a refused deposit leaves no mirror directory behind.
     """
     source = tmp_path / "S1.xlsx"
     source.write_bytes(b"not the released file")
     digest = hashlib.sha256(b"not the released file").hexdigest()
     data_root = tmp_path / "dr"
-    with pytest.raises(RuntimeError) as err:
+    with pytest.raises(RawSha256MismatchError) as err:
         c.deposit_raw_mirror(
             source_xlsx=str(source), retrieved_at="x", data_root=str(data_root)
         )
     assert str(err.value) == (
-        f"{source} sha256 {digest} != pinned "
-        "f6c313de416ce8cc6ae87e2020b4389bd4adeb07cdb6a438aecaf1e45e6228ad; "
-        "refusing to deposit"
+        f"sha256 mismatch for {source}: expected "
+        "f6c313de416ce8cc6ae87e2020b4389bd4adeb07cdb6a438aecaf1e45e6228ad, "
+        f"observed {digest}"
     )
-    mirror = Path(c.raw_mirror_dir(str(data_root)))
-    assert os.listdir(mirror / "data") == []
-    assert not (mirror / "manifest.json").exists()
+    assert not data_root.exists()
 
 
 def test_deposit_refuses_to_overwrite_a_differing_mirror_file(
@@ -892,23 +891,26 @@ def test_schema_classes_raw_file_and_the_inline_stubs() -> None:
         dataset.create_experiment()
 
 
-def test_download_called_on_an_existing_raw_file_hashes_it_in_place(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Called directly, ``download`` skips the copy and still checks the pin (the
-    branch PyG never reaches, since it calls ``download`` only for a missing file).
+    """Contract (issue #524): with Data File S1 already in ``raw/`` PyG skips
+    ``download``, so ``process`` verifies it first. A file off the pin raises
+    ``RawSha256MismatchError`` naming the file and both digests before any row is read;
+    no store is written and the file is left as found.
     """
-    monkeypatch.setenv("DATA_ROOT", str(tmp_path / "no-mirror"))
-    dataset = _dataset()
-    dataset.root = str(tmp_path)
-    (tmp_path / "raw").mkdir()
-    (tmp_path / "raw" / c._S1_FILENAME).write_bytes(b"local bytes")
-    digest = hashlib.sha256(b"local bytes").hexdigest()
-    with pytest.raises(RuntimeError) as err:
-        dataset.download()
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(c, [c._S1_FILENAME])
+    raw = staged.root / "raw" / c._S1_FILENAME
+    with pytest.raises(RawSha256MismatchError) as err:
+        c.EnvChemgenCostanzo2021Dataset(
+            root=str(staged.root), genome=cast(SCerevisiaeGenome, _FullStub())
+        )
     assert str(err.value) == (
-        f"{c._S1_FILENAME} sha256 mismatch: got {digest}, expected {c._S1_SHA256}"
+        f"sha256 mismatch for {raw}: expected "
+        "f6c313de416ce8cc6ae87e2020b4389bd4adeb07cdb6a438aecaf1e45e6228ad, "
+        f"observed {staged.observed}"
     )
-    monkeypatch.setattr(c, "_S1_SHA256", digest)
-    dataset.download()
-    assert (tmp_path / "raw" / c._S1_FILENAME).read_bytes() == b"local bytes"
+    assert os.listdir(staged.root / "processed") == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed

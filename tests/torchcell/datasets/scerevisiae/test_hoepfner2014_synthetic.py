@@ -59,6 +59,8 @@ from typing import Any
 import openpyxl
 import pytest
 
+from torchcell.data import RawSha256MismatchError
+from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.media import YPD_LIQUID
 from torchcell.datamodels.schema import (
     AssayType,
@@ -788,25 +790,26 @@ def test_download_links_the_mirror_only_when_its_bytes_match_the_pinned_sha256(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """With a mirror at ``$DATA_ROOT/torchcell-raw/<key>/``, a mirror file whose digest
-    is not the pinned Dryad digest raises with both digests; with the pins repointed at
-    the fixture's digests each absent raw file is symlinked, a raw file already present
-    (``Table_S1.xls``, a plain copy) is left as it is, and the build runs to its thirteen
-    records.
+    is not the pinned Dryad digest raises ``RawSha256MismatchError`` with both digests
+    and links nothing; with the pins repointed at the fixture's digests each absent raw
+    file is symlinked, a raw file already present (``Table_S1.xls``, a plain copy) is
+    left as it is, and the build runs to its thirteen records under the real build-time
+    check.
     """
+    monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     _write_genomes_tier(data_root)
     mirror = data_root / "torchcell-raw" / _CITATION_KEY
     _write_raw(mirror)
     digest = hashlib.sha256((mirror / "HIP_scores.txt").read_bytes()).hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=(
-            f"raw mirror {mirror / 'HIP_scores.txt'} sha256 mismatch: got {digest}, "
-            f"expected {m._DRYAD_FILES['HIP_scores.txt']['sha256']}"
-        ),
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         m.EnvChemgenHoepfner2014Dataset(root=str(tmp_path / "a"), genome=_StubGenome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {mirror / 'HIP_scores.txt'}: expected "
+        f"{m._DRYAD_FILES['HIP_scores.txt']['sha256']}, observed {digest}"
+    )
+    assert list((tmp_path / "a" / "raw").iterdir()) == []
     monkeypatch.setattr(m, "_DRYAD_FILES", _digests(mirror))
     raw = tmp_path / "b" / "raw"
     raw.mkdir(parents=True)
@@ -843,8 +846,10 @@ def test_download_fetches_a_file_the_mirror_lacks_and_verifies_the_pin(
 ) -> None:
     """When the mirror has no ``HOP_scores.txt``, ``download()`` runs the recorded Dryad
     retrieval: ``_dryad_get`` (stubbed here, no network) streams the body, which is
-    written and hashed chunk by chunk; a body whose digest is not the pin raises with
-    both digests, the right body is kept as a plain file beside the two symlinks.
+    written to a ``.partial`` sibling and hashed chunk by chunk; a body whose digest is
+    not the pin raises ``RawSha256MismatchError`` naming the URL and both digests and
+    leaves no HOP file in ``raw/``; the right body is renamed into place as a plain file
+    beside the two symlinks.
     """
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
@@ -865,12 +870,15 @@ def test_download_fetches_a_file_the_mirror_lacks_and_verifies_the_pin(
 
     monkeypatch.setattr(m, "_dryad_get", fake_dryad_get)
     wrong = hashlib.sha256(b"wrong body").hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=f"HOP_scores.txt sha256 mismatch: got {wrong}, expected {pins['HOP_scores.txt']['sha256']}",
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         m.EnvChemgenHoepfner2014Dataset(root=str(tmp_path / "a"), genome=_StubGenome())
-    assert (tmp_path / "a" / "raw" / "HOP_scores.txt").read_bytes() == b"wrong body"
+    assert str(err.value) == (
+        "sha256 mismatch for https://datadryad.org/downloads/file_stream/4834609: "
+        f"expected {pins['HOP_scores.txt']['sha256']}, observed {wrong}"
+    )
+    assert sorted(p.name for p in (tmp_path / "a" / "raw").iterdir()) == [
+        "HIP_scores.txt"
+    ]
     dataset = m.EnvChemgenHoepfner2014Dataset(
         root=str(tmp_path / "b"), genome=_StubGenome()
     )
@@ -885,25 +893,24 @@ def test_download_fetches_a_file_the_mirror_lacks_and_verifies_the_pin(
 def test_deposit_raw_mirror_records_the_dryad_retrieval_per_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A source file whose digest is not the pin is copied, then refused with both
-    digests; with the pins repointed the manifest lists the three files with the
-    ``_dryad_get`` retriever and the Dryad DOI as the SI source.
+    """A source file whose digest is not the pin is refused with
+    ``RawSha256MismatchError`` and both digests BEFORE anything is copied, so no mirror
+    directory exists afterwards; with the pins repointed the manifest lists the three
+    files with the ``_dryad_get`` retriever and the Dryad DOI as the SI source.
     """
     source = tmp_path / "source"
     _write_raw(source)
     data_root = tmp_path / "data_root"
-    dest = data_root / "torchcell-raw" / _CITATION_KEY / "HIP_scores.txt"
     digest = hashlib.sha256((source / "HIP_scores.txt").read_bytes()).hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=(
-            f"{dest} sha256 {digest} != pinned "
-            f"{m._DRYAD_FILES['HIP_scores.txt']['sha256']}; refusing to record"
-        ),
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         m.deposit_raw_mirror(
             source_dir=source, retrieved_at="2026-09-27", data_root=str(data_root)
         )
+    assert str(err.value) == (
+        f"sha256 mismatch for {source / 'HIP_scores.txt'}: expected "
+        f"{m._DRYAD_FILES['HIP_scores.txt']['sha256']}, observed {digest}"
+    )
+    assert not data_root.exists()
     digests = _digests(source)
     monkeypatch.setattr(m, "_DRYAD_FILES", digests)
     root = m.deposit_raw_mirror(
@@ -984,3 +991,26 @@ def test_a_repeated_orf_row_is_stored_twice_under_one_genotype(
     )
     assert dataset[12]["experiment"]["phenotype"]["environment_response"] == 0.99
     assert dataset[9]["experiment"]["phenotype"]["environment_response"] == 1.0
+
+
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #518's sweep): with the three Dryad files already in ``raw/`` PyG
+    skips ``download()``, so ``process()`` verifies each against ``_DRYAD_FILES`` first.
+    ``HIP_scores.txt`` off its pin raises ``RawSha256MismatchError`` naming it and both
+    digests before a row is read; no store is written and the file is left as found.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(m, ["HIP_scores.txt", "HOP_scores.txt", "Table_S1.xls"])
+    raw = staged.root / "raw" / "HIP_scores.txt"
+    with pytest.raises(RawSha256MismatchError) as err:
+        m.EnvChemgenHoepfner2014Dataset(root=str(staged.root), genome=_StubGenome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw}: expected "
+        "dbc5041defea9c046da0890d5e569f97d5f7afbf50ea0885f539ea8e5980cd24, "
+        f"observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed

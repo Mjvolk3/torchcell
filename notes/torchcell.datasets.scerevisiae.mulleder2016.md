@@ -145,3 +145,9 @@ A read-only Fable 5.1 agent graded eight recorded claims against the mirror, the
 ## 2026.09.29 - Showcase page (group 3)
 
 Shown on `docs/source/datasets/scerevisiae/amino-acid-betaxanthin.md` ([[experiments.034-showcase-datasets.scripts.amino_acid_betaxanthin]]). The dev store's content sha256 differs from release `2026.09.21-ab6d8c5d`: every record differs only in `environment.media` (dev `SM_AGAR` from the 2026.09.23 rebuild, served `SM` stub); no phenotype field differs. The page's caveats cite the 2026.09.29 re-verification (#487, #488, #489, claim M3) and the open medium-state question (#143).
+
+## 2026.09.30 - Raw sha256 pin verified at build time
+
+Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: no; refused deposit leaving a directory: n/a.
+
+Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `DATA_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.

@@ -43,7 +43,6 @@ proteome ``?download=1`` URL works, but it 403s for the metabolome file, which i
 via the Zenodo API content endpoint instead.
 """
 
-import hashlib
 import logging
 import math
 import os
@@ -57,7 +56,12 @@ import lmdb
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    post_process,
+    verify_raw_files,
+    write_verified,
+)
 from torchcell.datamodels.media import SM_DEFERRED
 from torchcell.datamodels.schema import (
     Environment,
@@ -147,13 +151,7 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
         req = urllib.request.Request(DATA_URL, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=300) as resp:
             data = resp.read()
-        got = hashlib.sha256(data).hexdigest()
-        if got != DATA_SHA256:
-            raise RuntimeError(
-                f"Zelezniak proteome sha256 mismatch: got {got}, expected {DATA_SHA256}"
-            )
-        with open(dest, "wb") as handle:
-            handle.write(data)
+        write_verified(data, dest, DATA_SHA256, DATA_URL)
         log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(data))
 
     @staticmethod
@@ -173,6 +171,7 @@ class ProteomeZelezniak2018Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Aggregate the proteome matrix into per-strain experiments and write LMDB."""
+        verify_raw_files(self.raw_dir, {DATA_FILENAME: DATA_SHA256})
         df = pd.read_csv(osp.join(self.raw_dir, DATA_FILENAME), sep="\t")
         bad = df[~df["ORF"].astype(str).str.match(_SYSTEMATIC_RE)]
         if len(bad):
@@ -373,14 +372,7 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
         )
         with urllib.request.urlopen(req, timeout=300) as resp:
             data = resp.read()
-        got = hashlib.sha256(data).hexdigest()
-        if got != METABOLITE_DATA_SHA256:
-            raise RuntimeError(
-                f"Zelezniak metabolome sha256 mismatch: got {got}, "
-                f"expected {METABOLITE_DATA_SHA256}"
-            )
-        with open(dest, "wb") as handle:
-            handle.write(data)
+        write_verified(data, dest, METABOLITE_DATA_SHA256, METABOLITE_DATA_URL)
         log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(data))
 
     @staticmethod
@@ -408,6 +400,9 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Aggregate the metabolome matrix into per-strain experiments and write LMDB."""
+        verify_raw_files(
+            self.raw_dir, {METABOLITE_DATA_FILENAME: METABOLITE_DATA_SHA256}
+        )
         df = pd.read_csv(osp.join(self.raw_dir, METABOLITE_DATA_FILENAME), sep="\t")
         nonwt = df[df["genotype"] != _WT]["genotype"].astype(str)
         bad = nonwt[~nonwt.str.match(_SYSTEMATIC_RE)]

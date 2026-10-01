@@ -59,7 +59,6 @@ import logging
 import os
 import os.path as osp
 import pickle
-import shutil
 from collections.abc import Callable
 from typing import Any
 
@@ -67,7 +66,12 @@ import lmdb
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    copy_verified,
+    post_process,
+    verify_raw_files,
+)
 from torchcell.datamodels.calmorph_labels import CALMORPH_STATISTICS
 from torchcell.datamodels.schema import (
     CalMorphExperiment,
@@ -188,29 +192,11 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
         for fname, expected in ((MUTANT_FILE, MUTANT_SHA256), (WT_FILE, WT_SHA256)):
             dest = osp.join(self.raw_dir, fname)
             if osp.exists(dest):
-                got = _sha256(dest)
-                if got != expected:
-                    raise RuntimeError(
-                        f"{fname} sha256 mismatch in raw dir: got {got}, "
-                        f"expected {expected}"
-                    )
                 continue
             src = osp.join(mirror_dir, fname)
             if not osp.exists(src):
                 raise RuntimeError(f"mirror file missing: {src}")
-            src_digest = _sha256(src)
-            if src_digest != expected:
-                raise RuntimeError(
-                    f"{fname} sha256 mismatch in mirror: got {src_digest}, "
-                    f"expected {expected}"
-                )
-            shutil.copyfile(src, dest)
-            dest_digest = _sha256(dest)
-            if dest_digest != expected:
-                raise RuntimeError(
-                    f"{fname} sha256 mismatch after copy: got {dest_digest}, "
-                    f"expected {expected}"
-                )
+            copy_verified(src, dest, expected)
             log.info(
                 "Copied %s from mirror (%d bytes, sha256 verified)",
                 fname,
@@ -220,6 +206,7 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Load raw tsvs, build quadruple-deletion CalMorph experiments, write LMDB."""
+        verify_raw_files(self.raw_dir, {MUTANT_FILE: MUTANT_SHA256, WT_FILE: WT_SHA256})
         df_mutant = pd.read_csv(osp.join(self.raw_dir, MUTANT_FILE), sep="\t")
         df_wt = pd.read_csv(osp.join(self.raw_dir, WT_FILE), sep="\t")
 

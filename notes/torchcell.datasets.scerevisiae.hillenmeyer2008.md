@@ -375,3 +375,9 @@ TS 20151207003548 het / 20151207003024 hom) and a `method` string describing the
 control-set keying, the typed media, the gapped temperature, the duration magnitude, the
 dose canonicalization and the three drop rules. The exact strings this round ran with are
 in the scratch driver `hm_verify.py`.
+
+## 2026.09.30 - Raw sha256 pin verified at build time
+
+Issue #518 (sweep); the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: matrix already re-checked in `process()`; key and controls files download-only; PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: no (symlink); refused deposit leaving a directory: n/a (records source digest).
+
+Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against raw-mirror manifest, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.

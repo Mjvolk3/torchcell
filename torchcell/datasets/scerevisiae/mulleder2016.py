@@ -29,7 +29,6 @@ Amino acids are NATIVE Yeast9 metabolites, so ``target_metabolite_ids`` (amino a
 deferred to a follow-up that sources the ids from YeastGEM (never guessed).
 """
 
-import hashlib
 import logging
 import os
 import os.path as osp
@@ -42,7 +41,12 @@ import lmdb
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    post_process,
+    verify_raw_files,
+    write_verified,
+)
 from torchcell.datamodels.media import SM_AGAR
 from torchcell.datamodels.schema import (
     Environment,
@@ -139,18 +143,13 @@ class AminoAcidMulleder2016Dataset(ExperimentDataset):
         req = urllib.request.Request(DATA_URL, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=300) as resp:
             data = resp.read()
-        got = hashlib.sha256(data).hexdigest()
-        if got != DATA_SHA256:
-            raise RuntimeError(
-                f"Mulleder Table S3 sha256 mismatch: got {got}, expected {DATA_SHA256}"
-            )
-        with open(dest, "wb") as handle:
-            handle.write(data)
+        write_verified(data, dest, DATA_SHA256, DATA_URL)
         log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(data))
 
     @post_process
     def process(self) -> None:
         """Parse Table S3 into per-ORF Metabolite experiments and write LMDB."""
+        verify_raw_files(self.raw_dir, {DATA_FILENAME: DATA_SHA256})
         path = osp.join(self.raw_dir, DATA_FILENAME)
         conc = pd.read_excel(path, sheet_name=_CONC_SHEET)
         summary = pd.read_excel(path, sheet_name=_SUMMARY_SHEET)

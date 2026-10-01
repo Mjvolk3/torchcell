@@ -72,7 +72,12 @@ import pandas as pd
 from pydantic import BaseModel
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    link_verified,
+    post_process,
+    verify_raw_files,
+)
 from torchcell.datamodels.compound_identity import (
     resolve_compound_identity,
     resolved_compound,
@@ -584,15 +589,8 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         src = raw_mirror_dir(data_root) / DATA_REL
         if not src.exists():
             raise RuntimeError(f"required raw artifact missing from mirror: {src}")
-        got = _sha256(src)
-        if got != expected:
-            raise RuntimeError(
-                f"{DATA_FILENAME} sha256 mismatch: got {got}, expected {expected}"
-            )
         os.makedirs(self.raw_dir, exist_ok=True)
-        dest = osp.join(self.raw_dir, DATA_FILENAME)
-        if not osp.exists(dest):
-            os.symlink(src, dest)
+        link_verified(src, osp.join(self.raw_dir, DATA_FILENAME), expected)
         log.info(
             "Vanacloig 2022 raw matrix linked into %s (sha256 verified)", self.raw_dir
         )
@@ -722,6 +720,7 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Recompute per-(gene, compound) log2 responses from raw counts; write LMDB."""
+        verify_raw_files(self.raw_dir, {DATA_FILENAME: DATA_SHA256})
         df = self._load_matrix()
         sample_cols = [c for c in df.columns if c not in ("gene", "std_name")]
         control_by_batch: dict[str, list[str]] = {}

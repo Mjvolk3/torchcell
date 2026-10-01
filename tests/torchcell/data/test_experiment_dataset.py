@@ -27,6 +27,11 @@ the reference index groups by first sighting, ``A -> [0, 1]`` then ``B -> [2]``;
 index covering only record 0 leaves records 1 and 2 uncovered and fails the build's
 coverage assertion. The tc-data download path is exercised with a fake
 ``DatasetClient`` (no socket) whose archives are built here with ``tarfile``.
+
+2026.09.30 (issues #518, #524, #528, #537): the raw-file sha256 helpers every pinned
+loader shares. ``b"abc"`` hashes to ``ba7816bf...15ad`` (the FIPS 180-2 test vector);
+each refusal is a ``RawSha256MismatchError`` whose message names the file (or URL), the
+expected and the observed digest, and leaves the destination exactly as it was.
 """
 
 import io
@@ -47,11 +52,18 @@ from torchcell import __version__
 from torchcell.data import compute_sha256_hash
 from torchcell.data.experiment_dataset import (
     ExperimentDataset,
+    RawSha256MismatchError,
     _compute_reference_hash_parallel,
     canonical_json,
+    copy_verified,
+    file_sha256,
+    link_verified,
     post_process,
     process_reference_batch,
     serialize_for_hashing,
+    verify_raw_files,
+    verify_sha256,
+    write_verified,
 )
 from torchcell.datamodels.media import SGA_DM_SELECTION
 from torchcell.datamodels.schema import (
@@ -566,3 +578,102 @@ def test_archive_without_a_build_manifest_is_refused(
         f"toy_slug/toy_slug-archive.tar.xz unpacked without preprocess/{MANIFEST_FILENAME}"
     )
     assert ToyDataset.calls == []
+
+
+_ABC = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+_ZEROS = "0" * 64
+
+
+def test_file_sha256_reads_in_chunks_and_follows_a_symlink(tmp_path: Path) -> None:
+    """The digest is the same whatever the chunk size, and a symlink hashes its target."""
+    path = tmp_path / "abc"
+    path.write_bytes(b"abc")
+    link = tmp_path / "link"
+    link.symlink_to(path)
+    assert file_sha256(path) == _ABC
+    assert file_sha256(path, chunk_size=1) == _ABC
+    assert file_sha256(link) == _ABC
+
+
+def test_verify_sha256_and_verify_raw_files_name_the_file_and_both_digests(
+    tmp_path: Path,
+) -> None:
+    """A matching pin returns None; the first mismatching pin in mapping order raises
+    with the exact message and the three attributes.
+    """
+    (tmp_path / "a.txt").write_bytes(b"abc")
+    (tmp_path / "b.txt").write_bytes(b"abc")
+    verify_sha256(tmp_path / "a.txt", _ABC)
+    verify_raw_files(str(tmp_path), {"a.txt": _ABC, "b.txt": _ABC})
+    with pytest.raises(RawSha256MismatchError) as err:
+        verify_raw_files(str(tmp_path), {"a.txt": _ABC, "b.txt": _ZEROS})
+    assert str(err.value) == (
+        f"sha256 mismatch for {tmp_path / 'b.txt'}: expected {_ZEROS}, observed {_ABC}"
+    )
+    assert (err.value.path, err.value.expected, err.value.observed) == (
+        str(tmp_path / "b.txt"),
+        _ZEROS,
+        _ABC,
+    )
+    assert isinstance(err.value, RuntimeError)
+
+
+def test_write_verified_writes_only_a_matching_payload(tmp_path: Path) -> None:
+    """A payload off the pin raises naming the source and writes nothing (no
+    ``.partial`` either); a matching one lands byte for byte.
+    """
+    dest = tmp_path / "out.txt"
+    with pytest.raises(RawSha256MismatchError) as err:
+        write_verified(b"abc", dest, _ZEROS, "https://example.org/out.txt")
+    assert str(err.value) == (
+        f"sha256 mismatch for https://example.org/out.txt: expected {_ZEROS}, "
+        f"observed {_ABC}"
+    )
+    assert list(tmp_path.iterdir()) == []
+    write_verified(b"abc", dest, _ABC, "https://example.org/out.txt")
+    assert dest.read_bytes() == b"abc"
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["out.txt"]
+
+
+def test_copy_verified_hashes_the_source_before_writing(tmp_path: Path) -> None:
+    """A source off the pin raises naming the SOURCE and leaves an existing destination
+    untouched; a matching source replaces the destination with no ``.partial`` left.
+    """
+    src = tmp_path / "src.txt"
+    src.write_bytes(b"abc")
+    dest_dir = tmp_path / "raw"
+    dest_dir.mkdir()
+    dest = dest_dir / "dest.txt"
+    dest.write_bytes(b"old")
+    with pytest.raises(RawSha256MismatchError) as err:
+        copy_verified(src, dest, _ZEROS)
+    assert str(err.value) == (
+        f"sha256 mismatch for {src}: expected {_ZEROS}, observed {_ABC}"
+    )
+    assert dest.read_bytes() == b"old"
+    copy_verified(src, dest, _ABC)
+    assert dest.read_bytes() == b"abc"
+    assert [p.name for p in dest_dir.iterdir()] == ["dest.txt"]
+
+
+def test_link_verified_links_only_a_matching_source_and_keeps_an_existing_link(
+    tmp_path: Path,
+) -> None:
+    """A source off the pin raises and creates no link; a matching source is linked;
+    a second call (even for another verified source) keeps the first link.
+    """
+    src = tmp_path / "src.txt"
+    src.write_bytes(b"abc")
+    other = tmp_path / "other.txt"
+    other.write_bytes(b"abc")
+    dest = tmp_path / "raw.txt"
+    with pytest.raises(RawSha256MismatchError) as err:
+        link_verified(src, dest, _ZEROS)
+    assert str(err.value) == (
+        f"sha256 mismatch for {src}: expected {_ZEROS}, observed {_ABC}"
+    )
+    assert not dest.is_symlink() and not dest.exists()
+    link_verified(src, dest, _ABC)
+    assert dest.is_symlink() and dest.readlink() == src
+    link_verified(other, dest, _ABC)
+    assert dest.readlink() == src

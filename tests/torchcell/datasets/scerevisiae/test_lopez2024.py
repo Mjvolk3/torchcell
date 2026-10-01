@@ -23,12 +23,13 @@ import socket
 import statistics
 import subprocess
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import openpyxl
 import pandas as pd
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.schema import (
     Environment,
     Genotype,
@@ -412,7 +413,8 @@ def test_download_reads_the_library_mirror_and_verifies_sha256(
     """With no raw file, ``download()`` copies from ``$DATA_ROOT/torchcell-library/
     lopezSystemsMetabolicEngineering2024/data/`` and checks the pinned digest. A missing
     mirror file raises naming the path; a mirror file holding ``b"not the real workbook"``
-    is copied and then rejected with its actual sha256 (55b4751d...) and the pinned one.
+    is rejected with ``RawSha256MismatchError`` naming it, the pinned sha256 and its
+    actual one (55b4751d...) BEFORE the copy, so ``raw/`` stays empty.
     """
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
@@ -425,10 +427,39 @@ def test_download_reads_the_library_mirror_and_verifies_sha256(
     (mirror / m._XLSX_FILENAME).write_bytes(b"not the real workbook")
     digest = hashlib.sha256(b"not the real workbook").hexdigest()
     assert digest.startswith("55b4751d")
-    with pytest.raises(
-        RuntimeError, match=f"sha256 mismatch: got {digest}, expected {m._XLSX_SHA256}"
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         m.IsobutanolScreenLopez2024Dataset(root=str(tmp_path / "b"), genome=_genome())
-    assert (tmp_path / "b" / "raw" / m._XLSX_FILENAME).read_bytes() == (
-        b"not the real workbook"
+    assert str(err.value) == (
+        f"sha256 mismatch for {mirror / m._XLSX_FILENAME}: expected "
+        f"{m._XLSX_SHA256}, observed {digest}"
     )
+    assert list((tmp_path / "b" / "raw").iterdir()) == []
+
+
+@pytest.mark.parametrize(
+    "dataset_cls",
+    [m.IsobutanolScreenLopez2024Dataset, m.IsobutanolValidatedLopez2024Dataset],
+)
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    dataset_cls: Any, off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #518's sweep): with the workbook already in ``raw/`` PyG skips
+    ``download()``, so each screen's ``process()`` verifies it against ``_XLSX_SHA256``
+    first and raises ``RawSha256MismatchError`` naming it and both digests before a row
+    is read; no store is written and the file is left as found.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(m, [m._XLSX_FILENAME])
+    raw = staged.root / "raw" / m._XLSX_FILENAME
+    with pytest.raises(RawSha256MismatchError) as err:
+        dataset_cls(root=str(staged.root), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw}: expected {m._XLSX_SHA256}, "
+        f"observed {staged.observed}"
+    )
+    assert m._XLSX_SHA256 == (
+        "f97cf13c2d40c2a0a374475001dcf4dc8493429314661c6960d5f019ce23889b"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed

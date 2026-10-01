@@ -35,6 +35,9 @@ per amino acid; every record's reference is that table, n = 1 per amino acid, SE
   cell (``n.d.``) aborts the build with the ``float()`` message;
 - ``download()`` on a faked ``urlopen``: the request (URL, User-Agent, timeout 300), the
   sha256 refusal with its exact message and no file written, and the write on a match;
+- ``process()`` verifying the raw workbook against ``DATA_SHA256`` before reading a
+  sheet, so a file already in ``raw/`` (which ``download()`` returns early on) is refused
+  at build time (issue #518's sweep);
 - ``main()`` under a stubbed ``load_dotenv`` and a ``tmp_path`` ``DATA_ROOT``.
 """
 
@@ -53,6 +56,7 @@ from typing import Any
 import openpyxl
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.media import SM, SM_AGAR
 from torchcell.datamodels.schema import (
     Environment,
@@ -243,19 +247,40 @@ def test_missing_summary_amino_acid_raises(tmp_path: Path) -> None:
         m.AminoAcidMulleder2016Dataset(root=str(root))
 
 
-def test_download_trusts_a_present_file_without_hashing(
+def test_download_leaves_a_present_file_to_the_build_check(
     dataset: m.AminoAcidMulleder2016Dataset,
 ) -> None:
-    """Finding: the docstring says ``download()`` verifies the sha256, but an already
-    present raw file returns early unverified (source line 135). The synthetic workbook
-    does not match the pinned digest, yet ``download()`` returns, leaves the bytes
-    untouched and never reaches ``urlopen`` (the conftest guard would raise if it did).
+    """An already present raw file makes ``download()`` return early: the bytes are left
+    untouched and ``urlopen`` is never reached (the conftest guard would raise if it
+    did). The pin is enforced on that file by ``process()``, asserted next.
     """
     dest = Path(dataset.root) / "raw" / m.DATA_FILENAME
     before = dest.read_bytes()
     assert hashlib.sha256(before).hexdigest() != m.DATA_SHA256
     dataset.download()
     assert dest.read_bytes() == before
+
+
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #518's sweep): with Table S3 already in ``raw/`` PyG skips
+    ``download()``, so ``process()`` verifies it against ``DATA_SHA256`` first and
+    raises ``RawSha256MismatchError`` naming it and both digests before a sheet is read;
+    no store is written and the file is left as found.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(m, [m.DATA_FILENAME])
+    raw = staged.root / "raw" / m.DATA_FILENAME
+    with pytest.raises(RawSha256MismatchError) as err:
+        m.AminoAcidMulleder2016Dataset(root=str(staged.root))
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw}: expected {m.DATA_SHA256}, "
+        f"observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
 
 
 def test_n_replicates_is_one_even_for_a_strain_with_three_raw_rows(
@@ -427,14 +452,12 @@ def test_download_refuses_a_payload_with_the_wrong_sha256(
     payload = b"not the Mendeley workbook"
     calls = _fake_urlopen(monkeypatch, payload)
     got = hashlib.sha256(payload).hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"Mulleder Table S3 sha256 mismatch: got {got}, expected {m.DATA_SHA256}"
-        ),
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         dataset.download()
-    assert not dest.exists()
+    assert str(err.value) == (
+        f"sha256 mismatch for {m.DATA_URL}: expected {m.DATA_SHA256}, observed {got}"
+    )
+    assert sorted(p.name for p in dest.parent.iterdir()) == []
     assert len(calls) == 1
     request, timeout = calls[0]
     assert request.full_url == m.DATA_URL

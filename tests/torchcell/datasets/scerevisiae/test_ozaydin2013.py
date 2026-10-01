@@ -51,6 +51,7 @@ from typing import Any
 import openpyxl
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import Genotype, VisualScoreExperiment
 from torchcell.datasets.scerevisiae import ozaydin2013 as m
@@ -190,23 +191,21 @@ def test_download_refuses_a_body_under_ten_thousand_bytes(
 def test_download_refuses_a_ten_thousand_byte_body_with_the_wrong_sha256(
     dataset: m.CarotenoidOzaydin2013Dataset, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Exactly 10,000 bytes passes the size floor and fails the pin with the
-    download-side message (``on download``, no path), writing nothing.
+    """Exactly 10,000 bytes passes the size floor and fails the pin with
+    ``RawSha256MismatchError`` naming the SI URL and both digests, writing nothing.
     """
     dest = _si_path(dataset)
     dest.unlink()
     payload = b"y" * 10000
     _fake_urlopen(monkeypatch, payload)
     digest = hashlib.sha256(payload).hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"Ozaydin SI sha256 mismatch on download: got {digest}, "
-            f"expected {m._SI_SHA256}"
-        ),
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         dataset.download()
-    assert not dest.exists()
+    assert str(err.value) == (
+        f"sha256 mismatch for {dataset.si_url}: expected {m._SI_SHA256}, "
+        f"observed {digest}"
+    )
+    assert list(dest.parent.iterdir()) == []
 
 
 def test_download_writes_a_body_matching_the_pin(
@@ -425,3 +424,26 @@ def test_main_prints_length_and_first_record(
     capsys.readouterr()
     m.main()
     assert capsys.readouterr().out == f"len = 5\n{first}\n"
+
+
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #518's sweep): with the SI already in ``raw/`` PyG skips
+    ``download()``, so ``process()`` verifies it against ``_SI_SHA256`` first and raises
+    ``RawSha256MismatchError`` naming it and both digests before a row is read; no store
+    is written and the file is left as found.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(m, [m.CarotenoidOzaydin2013Dataset.si_filename])
+    raw = staged.root / "raw" / m.CarotenoidOzaydin2013Dataset.si_filename
+    with pytest.raises(RawSha256MismatchError) as err:
+        m.CarotenoidOzaydin2013Dataset(root=str(staged.root))
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw}: expected "
+        "4818726e352ead3cb739fd9becf08a0c04d14b8a8761732184214344447507f0, "
+        f"observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed

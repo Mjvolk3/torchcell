@@ -17,3 +17,7 @@ Unit pins on the built instance: `_resolve_systematic` returns a `gene_set` memb
 Finding (pinned as the code behaves): the `gene_set` membership check in `_resolve_systematic` is case-sensitive while only the alias lookup upper-cases, so a lowercase systematic name (`ygl205w`) is unresolvable and raises. No real record is affected because the sheet carries common names only.
 
 Not covered, with reason: `main()` (needs the real genome and `DATA_ROOT`), the `download()` success log (needs the real sha256-pinned workbook), and the `preprocess_raw` / `create_experiment` stubs. `coverage run` over this file: 27.9% -> 94% of `xue2025.py` (uncovered: 199->214, 219, 418, 422, 427-439). Twelve tests; Phase 5 of [[plan.test-suite-buildout.2026.09.25]].
+
+## 2026.09.30 - Raw sha256 pin enforced at build time
+
+Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.

@@ -42,11 +42,14 @@ Findings pinned (source lines in ``cachera2023.py``), citing issue #509 (the pap
 screen plate is YPD-G418, it states no temperature, and the score is an HSV colony-color
 value): every record stores ``Media(name="SC", is_synthetic=True)`` at 30 C (lines
 339-342) with ``measurement_type`` ``cri_spa_corrected_fluorescence_intensity_24h``
-(line 65). The sha256 pin is checked only inside ``download``, which PyG calls only when
-the raw file is absent, so a raw file placed under ``raw/`` builds unverified
-(lines 167-183). A blank count reads as one colony (line 256), so a released std is
+(line 65). A blank count reads as one colony (line 256), so a released std is
 discarded. The dataset gene set carries the non-S288C names ``CYP76AD1`` and ``DOD``
 (the cassette additions, ``extract_systematic_gene_names`` takes every perturbation).
+
+The sha256 contract (issue #528, fixed): ``process`` verifies the CSV in ``raw/`` against
+``DATA_SHA256`` before reading a row, so a file placed there by hand is refused; the
+tests that build from the synthetic CSV run under the conftest recorder in place of that
+byte check.
 """
 
 from __future__ import annotations
@@ -66,6 +69,7 @@ from typing import Any, cast
 import pandas as pd
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.schema import (
     Environment,
     GeneAdditionPerturbation,
@@ -475,24 +479,28 @@ def test_process_refuses_without_a_genome(
     )
 
 
-def test_a_raw_file_off_the_pin_builds_unverified(
-    built: c.BetaxanthinCachera2023Dataset,
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: the synthetic CSV is not the pinned file, yet the build ran, because the
-    sha256 check lives in ``download`` (lines 175-183) and PyG calls ``download`` only
-    when the raw file is absent. Calling ``download`` directly on the same file refuses
-    with both digests. Pinned until ``process`` verifies the pin itself.
+    """Contract (issue #528): with the CSV already in ``raw/`` PyG skips ``download``,
+    so ``process`` verifies it against ``DATA_SHA256`` first and raises
+    ``RawSha256MismatchError`` naming the file and both digests; no store is written and
+    the file is left as found.
     """
-    assert len(built) == 5
-    dest = osp.join(built.raw_dir, c.DATA_FILENAME)
-    digest = hashlib.sha256(Path(dest).read_bytes()).hexdigest()
-    assert digest != c.DATA_SHA256
-    with pytest.raises(RuntimeError) as excinfo:
-        built.download()
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(c, [c.DATA_FILENAME])
+    raw = staged.root / "raw" / c.DATA_FILENAME
+    with pytest.raises(RawSha256MismatchError) as excinfo:
+        c.BetaxanthinCachera2023Dataset(
+            root=str(staged.root), genome=cast(SCerevisiaeGenome, _StubGenome())
+        )
     assert str(excinfo.value) == (
-        f"CRI-SPA data sha256 mismatch for {dest}: got {digest}, "
-        f"expected {c.DATA_SHA256}"
+        f"sha256 mismatch for {raw}: expected {c.DATA_SHA256}, "
+        f"observed {staged.observed}"
     )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
 
 
 class _Response:
@@ -546,11 +554,11 @@ def test_download_refuses_a_response_off_the_pin_and_writes_nothing(
     data = b"y" * 10000
     _fake_urlopen(monkeypatch, data, [])
     dataset = _bare(tmp_path)
-    with pytest.raises(RuntimeError) as excinfo:
+    with pytest.raises(RawSha256MismatchError) as excinfo:
         dataset.download()
     assert str(excinfo.value) == (
-        f"CRI-SPA data sha256 mismatch on download: got "
-        f"{hashlib.sha256(data).hexdigest()}, expected {c.DATA_SHA256}"
+        f"sha256 mismatch for {c.DATA_URL}: expected {c.DATA_SHA256}, "
+        f"observed {hashlib.sha256(data).hexdigest()}"
     )
     assert os.listdir(tmp_path / "raw") == []
 
@@ -559,7 +567,7 @@ def test_download_writes_a_response_on_the_pin_then_accepts_it_in_place(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """With the pin set to the payload's digest the bytes land verbatim; a second call
-    finds the file, re-hashes it and returns without a request.
+    finds the file and returns without a request (``process`` verifies it at build).
     """
     data = b"z" * 10000
     monkeypatch.setattr(c, "DATA_SHA256", hashlib.sha256(data).hexdigest())

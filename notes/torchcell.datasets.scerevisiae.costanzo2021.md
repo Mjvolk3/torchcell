@@ -156,3 +156,9 @@ env_chemgen_costanzo2021: FAIL
 ## 2026.09.12 - Data File S1 now carries a typed manual_browser retrieval record
 
 `RetrievalMethod.manual_browser` exists, so the raw mirror's `manifest.json` records a typed `RetrievalRecord` (method `manual_browser`, `SCIENCE_SI_URL` as the source, the `MANUAL_RECIPE` as the `retrieval_command` parameter, and the sha256 of the deposited bytes) instead of `retrieval=None`, and the manifest is `provenance_complete=True`. With allele-bearing perturbation types now exempt from the spelling and round-trip checks in `verification/common.py`, `L1 canonical_gene_names` passes and the dataset is `env_chemgen_costanzo2021: PASS`.
+
+## 2026.09.30 - Raw sha256 pin verified at build time
+
+Issue #524; the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes (#524); PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: yes (#524); refused deposit leaving a directory: yes (#524, mkdir before hash).
+
+Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `_S1_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.

@@ -89,7 +89,12 @@ import pandas as pd
 from pydantic import BaseModel
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    link_verified,
+    post_process,
+    verify_raw_files,
+)
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import (
     YNB_GLUCOSE_SOLID,
@@ -458,7 +463,9 @@ _CHROM_ORDER = {name: i for i, name in enumerate(_CHROM_NAMES)}
 CHROM_TO_GENOME_INDEX = {name: i + 1 for i, name in enumerate(_CHROM_NAMES)}
 
 
-def encode_blocks(calls: np.ndarray, markers: list[Marker]) -> list[HaplotypeBlock]:
+def encode_blocks(
+    calls: np.ndarray[Any, Any], markers: list[Marker]
+) -> list[HaplotypeBlock]:
     """Run-length encode one segregant's sorted calls into per-chromosome blocks.
 
     ``calls`` is aligned with ``markers`` (already sorted by chromosome, position). A block
@@ -488,7 +495,9 @@ def encode_blocks(calls: np.ndarray, markers: list[Marker]) -> list[HaplotypeBlo
     return blocks
 
 
-def expand_blocks(blocks: list[HaplotypeBlock], markers: list[Marker]) -> np.ndarray:
+def expand_blocks(
+    blocks: list[HaplotypeBlock], markers: list[Marker]
+) -> np.ndarray[Any, Any]:
     """Inverse of ``encode_blocks``: the int8 call at every sorted marker position."""
     out = np.zeros(len(markers), dtype=np.int8)
     i = 0
@@ -846,15 +855,9 @@ class Bloom2019Dataset(ExperimentDataset):
             src = raw_mirror_dir(data_root) / rel[name]
             if not src.exists():
                 raise RuntimeError(f"required raw artifact missing from mirror: {src}")
-            expected = manifest_sha256(manifest, rel[name])
-            got = _sha256(src)
-            if got != expected:
-                raise RuntimeError(
-                    f"{name} sha256 mismatch: got {got}, expected {expected}"
-                )
-            dest = osp.join(self.raw_dir, name)
-            if not osp.exists(dest):
-                os.symlink(src, dest)
+            link_verified(
+                src, osp.join(self.raw_dir, name), manifest_sha256(manifest, rel[name])
+            )
         log.info("Bloom 2019 raw files linked into %s (sha256 verified)", self.raw_dir)
 
     # ---- environment / phenotype builders -------------------------------------
@@ -988,6 +991,14 @@ class Bloom2019Dataset(ExperimentDataset):
 
         data_root = _data_root()
         self._manifest = load_manifest(data_root)
+        rel = raw_relpaths()
+        verify_raw_files(
+            self.raw_dir,
+            {
+                name: manifest_sha256(self._manifest, rel[name])
+                for name in self.raw_file_names
+            },
+        )
         os.makedirs(self.preprocess_dir, exist_ok=True)
         info = read_cross_table(
             osp.join(self.raw_dir, XLS_NAME), osp.join(self.raw_dir, README_NAME)

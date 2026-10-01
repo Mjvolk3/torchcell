@@ -29,8 +29,10 @@ table's four tokens give three records and the first-seen name VMA2 is stored. L
 8 + 2 because the in-table duplicate is collapsed without a ledger entry (a Finding).
 All eight records share the one non-stress reference, so the reference index is
 [[0, ..., 7]]; ``gene_set.json`` is the eight ORFs sorted. Refusals pinned with their
-exact messages: the missing raw mirror, a sha256 mismatch naming both digests (in
-``download`` and in ``deposit_raw_mirror``), an existing mirror file with other bytes,
+exact messages: the missing raw mirror, a ``RawSha256MismatchError`` naming the file and
+both digests (in ``download`` before the copy, in ``deposit_raw_mirror`` before any
+mirror directory exists, and in ``process`` for a file placed in ``raw/`` by hand,
+issue #518's sweep), an existing mirror file with other bytes,
 a missing genome, a per-stress checksum miss, and a stress table absent from the PDF.
 """
 
@@ -45,6 +47,7 @@ from typing import Any, cast
 
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import YPD_AGAR
 from torchcell.datamodels.schema import (
@@ -660,37 +663,35 @@ def test_download_copies_from_the_mirror_then_refuses_a_digest_mismatch(
     mirrored.write_bytes(b"not the pinned pdf")
     dataset = _dataset()
     dataset.root = str(tmp_path / "ds")
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RawSha256MismatchError) as info:
         dataset.download()
     got = hashlib.sha256(b"not the pinned pdf").hexdigest()
     assert str(info.value) == (
-        f"paper.pdf sha256 mismatch: got {got}, expected {a._PDF_SHA256}"
+        f"sha256 mismatch for {mirrored}: expected {a._PDF_SHA256}, observed {got}"
     )
-    assert (tmp_path / "ds" / "raw" / "paper.pdf").read_bytes() == b"not the pinned pdf"
+    # The mirror is hashed before the copy: nothing, not even a partial, lands in raw/.
+    assert list((tmp_path / "ds" / "raw").iterdir()) == []
 
 
-def test_download_verifies_a_present_raw_file_without_the_mirror(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A present ``raw/paper.pdf`` is verified in place; the (absent) mirror is not read.
-    With the pin set to the file's digest the call returns; with the real pin it raises.
+    """Contract: with ``raw/paper.pdf`` present PyG skips ``download``, so ``process``
+    verifies it against the pin first and raises ``RawSha256MismatchError`` before any
+    table is parsed; no store is written and the file is left as found.
     """
-    monkeypatch.setenv("DATA_ROOT", str(tmp_path / "no_mirror_here"))
-    raw = tmp_path / "ds" / "raw"
-    raw.mkdir(parents=True)
-    (raw / "paper.pdf").write_bytes(b"synthetic")
-    dataset = _dataset()
-    dataset.root = str(tmp_path / "ds")
-    got = hashlib.sha256(b"synthetic").hexdigest()
-    with pytest.raises(RuntimeError) as info:
-        dataset.download()
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(a, ["paper.pdf"])
+    raw = staged.root / "raw" / "paper.pdf"
+    with pytest.raises(RawSha256MismatchError) as info:
+        a.EnvChemgenAuesukaree2009Dataset(root=str(staged.root))
     assert str(info.value) == (
-        f"paper.pdf sha256 mismatch: got {got}, expected {a._PDF_SHA256}"
+        f"sha256 mismatch for {raw}: expected {a._PDF_SHA256}, "
+        f"observed {staged.observed}"
     )
-    monkeypatch.setattr(a, "_PDF_SHA256", got)
-    dataset.download()
-    assert (raw / "paper.pdf").read_bytes() == b"synthetic"
-    assert not (tmp_path / "no_mirror_here").exists()
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
 
 
 def test_raw_mirror_dir_prefers_the_argument_then_the_environment(
@@ -721,18 +722,17 @@ def test_deposit_refuses_a_source_with_the_wrong_digest(tmp_path: Path) -> None:
     source = tmp_path / "paper.pdf"
     source.write_bytes(b"wrong bytes")
     got = hashlib.sha256(b"wrong bytes").hexdigest()
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RawSha256MismatchError) as info:
         a.deposit_raw_mirror(
             source_pdf=str(source),
             retrieved_at="2026-01-01T00:00:00+00:00",
             data_root=str(tmp_path / "dr"),
         )
     assert str(info.value) == (
-        f"{source} sha256 {got} != pinned {a._PDF_SHA256}; refusing to deposit"
+        f"sha256 mismatch for {source}: expected {a._PDF_SHA256}, observed {got}"
     )
-    mirror = tmp_path / "dr" / "torchcell-raw" / a.CITATION_KEY
-    assert not (mirror / "paper" / "paper.pdf").exists()
-    assert not (mirror / "manifest.json").exists()
+    # The source is checked before any mirror directory is created.
+    assert not (tmp_path / "dr").exists()
 
 
 def test_deposit_refuses_an_existing_mirror_file_with_other_bytes(

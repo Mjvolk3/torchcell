@@ -105,3 +105,9 @@ A read-only Fable 5.1 agent graded twenty recorded claims against the mirror, Me
 - PXD036062 is not in PRIDE; MassIVE MSV000090136 holds raw `.wiff`, the 74,825,469,404 B DIA-NN report, the spectral library and a plate-layout file, no protein matrix. The Cell SI was not inspected (no `si/` in the mirror) and the y5k app has a "Download" tab whose content was not retrievable, so the mirror-once argument rests on the Key Resources Table and MassIVE.
 - BY4741 and kanMX for the KO strains come from the cited collections (refs 5 and 94), not from a Messner sentence about the KOs.
 - The paper table's "vector (1830)" is the first record's protein count; per-record counts run 1,441 to 1,849 and the union is 1,850. The served protein count (1,667 vs 1,850 in two memories) is unverified.
+
+## 2026.09.30 - Raw sha256 pin verified at build time
+
+Issue #528; the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes (#528, present file skipped); PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: no; refused deposit leaving a directory: n/a.
+
+Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `MATRIX_SHA256`, `METADATA_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.

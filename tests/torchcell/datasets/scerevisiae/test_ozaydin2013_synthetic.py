@@ -36,7 +36,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 import socket
 from pathlib import Path
 from typing import Any
@@ -44,6 +43,8 @@ from typing import Any
 import openpyxl
 import pytest
 
+from torchcell.data import RawSha256MismatchError
+from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.schema import (
     Environment,
     Genotype,
@@ -305,19 +306,18 @@ def test_data_csv_gene_set_and_build_manifest(
     )
 
 
-def test_download_rejects_a_present_file_with_the_wrong_sha256(
-    dataset: m.CarotenoidOzaydin2013Dataset,
+def test_process_rejects_a_present_file_with_the_wrong_sha256(
+    dataset: m.CarotenoidOzaydin2013Dataset, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """PyG skips ``download()`` when the raw file exists; called directly it hashes the
-    present file and raises naming the path, the actual digest and the pinned one.
+    """PyG skips ``download()`` when the raw file exists, so ``process()`` hashes the
+    present file first and raises ``RawSha256MismatchError`` naming the path, the pinned
+    digest and the actual one.
     """
+    monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
     dest = Path(dataset.root) / "raw" / dataset.si_filename
     digest = hashlib.sha256(dest.read_bytes()).hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"Ozaydin SI sha256 mismatch for {dest}: got {digest}, "
-            f"expected {m._SI_SHA256}"
-        ),
-    ):
-        dataset.download()
+    with pytest.raises(RawSha256MismatchError) as err:
+        dataset.process()
+    assert str(err.value) == (
+        f"sha256 mismatch for {dest}: expected {m._SI_SHA256}, observed {digest}"
+    )

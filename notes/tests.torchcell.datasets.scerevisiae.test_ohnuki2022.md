@@ -15,3 +15,7 @@ Both TSVs are written into `<root>/raw/`; the genome stub implements only `resol
 Three to twelve tests, 86 to 100 percent. `transform_item`; inert `preprocess_raw` and `create_experiment`; the drop ledger as logged (`['YBR001C']`, then `['YGL013C', 'YDR011W']`, then the retained count); a clean base-only matrix (CV None, nothing logged); a non-numeric reference cell raising `ValueError`; `default_genome` called once when no genome is passed; `download` with the pins patched to the synthetic files, a skip of verified raw files once the mirror is gone, the "sha256 mismatch after copy" refusal; `main`.
 
 Findings: a duplicated ORF gives two records; the reference mean skips a blank cell (line 313) while a blank mutant cell drops the whole strain (239).
+
+## 2026.09.30 - Raw sha256 pin enforced at build time
+
+Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.

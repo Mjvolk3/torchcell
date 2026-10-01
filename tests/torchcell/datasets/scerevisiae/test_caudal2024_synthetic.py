@@ -54,6 +54,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.schema import (
     Environment,
     GenePerturbationType,
@@ -223,11 +224,25 @@ def _write_raw(raw: Path) -> None:
         (raw / name).write_bytes(data)
 
 
+def _write_peter_tier(data_root: Path) -> None:
+    """The Peter tier listing the synthetic tarball and matrices (their build-time pins)."""
+    raw = _raw_bytes()
+    _write_tier(
+        data_root,
+        PETER2018_1011,
+        {
+            name: raw[name]
+            for name in (m.REFGENE_TAR_NAME, m.PRESENCE_NAME, m.COPYNUMBER_NAME)
+        },
+    )
+
+
 @pytest.fixture
 def root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     _write_sgd_tier(data_root)
+    _write_peter_tier(data_root)
     root = tmp_path / "caudal"
     _write_raw(root / "raw")
     return root
@@ -491,6 +506,7 @@ def test_a_matched_isolate_missing_from_every_gene_header_raises(
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     _write_sgd_tier(data_root)
+    _write_peter_tier(data_root)
     raw = tmp_path / "caudal" / "raw"
     _write_raw(raw)
     presence = {**_PRESENCE, "BBB": ["1"] * 6}
@@ -535,14 +551,7 @@ def _write_mirror(data_root: Path) -> dict[str, bytes]:
     zip_path = data_root / m.CAUDAL_ZIP_REL
     zip_path.parent.mkdir(parents=True)
     zip_path.write_bytes(raw[m.CAUDAL_ZIP_BASENAME])
-    _write_tier(
-        data_root,
-        PETER2018_1011,
-        {
-            name: raw[name]
-            for name in (m.REFGENE_TAR_NAME, m.PRESENCE_NAME, m.COPYNUMBER_NAME)
-        },
-    )
+    _write_peter_tier(data_root)
     return raw
 
 
@@ -550,21 +559,21 @@ def test_download_refuses_a_mirror_zip_whose_sha256_is_not_the_pin(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """The fixture zip is not the released bytes, so the pinned Caudal digest fails
-    with both digests named.
+    with ``RawSha256MismatchError`` naming the mirror zip and both digests, and nothing
+    is linked for it.
     """
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     _write_sgd_tier(data_root)
     raw = _write_mirror(data_root)
     got = hashlib.sha256(raw[m.CAUDAL_ZIP_BASENAME]).hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"{m.CAUDAL_ZIP_BASENAME} sha256 mismatch: got {got}, "
-            f"expected {m.CAUDAL_ZIP_SHA256}"
-        ),
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         m.CaudalPanTranscriptome2024Dataset(root=str(tmp_path / "caudal"))
+    assert str(err.value) == (
+        f"sha256 mismatch for {data_root / m.CAUDAL_ZIP_REL}: expected "
+        f"{m.CAUDAL_ZIP_SHA256}, observed {got}"
+    )
+    assert not (tmp_path / "caudal" / "raw" / m.CAUDAL_ZIP_BASENAME).exists()
 
 
 def test_download_refuses_a_missing_mirror_zip(

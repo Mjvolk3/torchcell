@@ -28,12 +28,13 @@ import json
 import math
 import socket
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import openpyxl
 import pandas as pd
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.schema import (
     Environment,
     Genotype,
@@ -490,8 +491,9 @@ def test_download_reads_the_library_mirror_and_verifies_sha256(
 ) -> None:
     """With no raw file, ``download()`` copies ``$DATA_ROOT/torchcell-library/xue2025/
     data/<xlsx>`` and checks the pinned digest: a missing mirror file raises naming the
-    path; ``b"not the real workbook"`` is copied into ``raw/`` and rejected with its own
-    sha256 (55b4751d...) against the pinned one.
+    path; ``b"not the real workbook"`` is rejected with ``RawSha256MismatchError``
+    naming the mirror file, the pin and its own sha256 (55b4751d...) BEFORE the copy, so
+    ``raw/`` stays empty.
     """
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
@@ -504,10 +506,32 @@ def test_download_reads_the_library_mirror_and_verifies_sha256(
     (mirror / m.DATA_FILENAME).write_bytes(b"not the real workbook")
     digest = hashlib.sha256(b"not the real workbook").hexdigest()
     assert digest.startswith("55b4751d")
-    with pytest.raises(
-        RuntimeError, match=f"sha256 mismatch: got {digest}, expected {m.DATA_SHA256}"
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         m.FattyAcidXue2025Dataset(root=str(tmp_path / "b"), genome=_genome())
-    assert (tmp_path / "b" / "raw" / m.DATA_FILENAME).read_bytes() == (
-        b"not the real workbook"
+    assert str(err.value) == (
+        f"sha256 mismatch for {mirror / m.DATA_FILENAME}: expected {m.DATA_SHA256}, "
+        f"observed {digest}"
     )
+    assert list((tmp_path / "b" / "raw").iterdir()) == []
+
+
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #518's sweep): with the workbook already in ``raw/`` PyG skips
+    ``download()``, so ``process()`` verifies it against ``DATA_SHA256`` first and raises
+    ``RawSha256MismatchError`` naming it and both digests before a sheet is read; no
+    store is written and the file is left as found.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(m, [m.DATA_FILENAME])
+    raw = staged.root / "raw" / m.DATA_FILENAME
+    with pytest.raises(RawSha256MismatchError) as err:
+        m.FattyAcidXue2025Dataset(root=str(staged.root), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw}: expected {m.DATA_SHA256}, "
+        f"observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed

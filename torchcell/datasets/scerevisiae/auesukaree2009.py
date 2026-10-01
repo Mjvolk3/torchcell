@@ -88,13 +88,11 @@ methanol 55, 1-propanol 125, heat 178, NaCl 42, H2O2 30 = 525 categorical record
 dropped.
 """
 
-import hashlib
 import logging
 import os
 import os.path as osp
 import pickle
 import re
-import shutil
 import subprocess
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -105,7 +103,13 @@ import lmdb
 from pydantic import BaseModel, Field
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    copy_verified,
+    post_process,
+    verify_raw_files,
+    verify_sha256,
+)
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import YPD_AGAR
 from torchcell.datamodels.schema import (
@@ -432,12 +436,8 @@ def deposit_raw_mirror(
     """
     root = Path(raw_mirror_dir(data_root))
     dest = root / _PDF_RAW_RELPATH
+    verify_sha256(source_pdf, _PDF_SHA256)
     dest.parent.mkdir(parents=True, exist_ok=True)
-    digest = sha256_file(Path(source_pdf))
-    if digest != _PDF_SHA256:
-        raise RuntimeError(
-            f"{source_pdf} sha256 {digest} != pinned {_PDF_SHA256}; refusing to deposit"
-        )
     if dest.exists():
         if sha256_file(dest) != _PDF_SHA256:
             raise RuntimeError(f"{dest} exists with a different sha256; refusing")
@@ -551,13 +551,8 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
                     f"raw-mirror PDF not found: {src}. Deposit it with "
                     "deposit_raw_mirror() from the library mirror's paper.pdf."
                 )
-            shutil.copyfile(src, dest)
-        digest = hashlib.sha256(open(dest, "rb").read()).hexdigest()
-        if digest != _PDF_SHA256:
-            raise RuntimeError(
-                f"{_PDF_FILENAME} sha256 mismatch: got {digest}, expected {_PDF_SHA256}"
-            )
-        log.info("Verified %s (sha256 %s)", dest, _PDF_SHA256)
+            copy_verified(src, dest, _PDF_SHA256)
+            log.info("Verified %s (sha256 %s)", dest, _PDF_SHA256)
 
     def _parse_tables(self) -> dict[str, list[str]]:
         """Extract {stress: [gene tokens]} from the born-digital PDF text layer.
@@ -747,6 +742,7 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Parse the six stress tables into categorical records; write LMDB + drop log."""
+        verify_raw_files(self.raw_dir, {_PDF_FILENAME: _PDF_SHA256})
         tables = self._parse_tables()
         publication = Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
         pub_dump = publication.model_dump()

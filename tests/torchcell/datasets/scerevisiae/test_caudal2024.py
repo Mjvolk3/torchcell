@@ -54,9 +54,12 @@ from tests.torchcell.datasets.scerevisiae.test_caudal2024_synthetic import (
     _PRESENCE,
     _matrix_gz,
     _write_mirror,
+    _write_peter_tier,
     _write_raw,
     _write_sgd_tier,
 )
+from torchcell.data import RawSha256MismatchError
+from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.schema import ReferenceGenome
 from torchcell.datasets.scerevisiae import caudal2024 as m
 
@@ -87,6 +90,7 @@ def root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     _write_sgd_tier(data_root)
+    _write_peter_tier(data_root)
     root = tmp_path / "caudal"
     _write_raw(root / "raw")
     return root
@@ -97,6 +101,7 @@ def _root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, table: bytes) -> Path
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     _write_sgd_tier(data_root)
+    _write_peter_tier(data_root)
     root = tmp_path / "caudal"
     _write_raw(root / "raw")
     (root / "raw" / m.CAUDAL_ZIP_BASENAME).write_bytes(table)
@@ -219,15 +224,16 @@ def test_a_regular_member_that_cannot_be_extracted_loses_its_variants_silently(
     assert variants == ["YBR001W"]
 
 
-def test_a_stale_raw_matrix_is_kept_and_built_from(
+def test_a_stale_raw_matrix_is_refused_at_build_time(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: ``download`` resolves and verifies the mirror copies but skips the link
-    when ``raw/<name>`` already exists (line 324), and ``process`` reads ``raw/``. A
-    leftover presence matrix in which AAA carries X3 (``YAL005C``) is therefore used, so
-    AAA loses the ``YAL005C`` absence the verified mirror matrix implies. Pinned until an
-    existing raw file is checked against its source.
+    """Contract (issue #518's sweep): ``download`` links only what ``raw/`` lacks, so a
+    leftover presence matrix (AAA carrying X3, ``YAL005C``) stays in place, and
+    ``process`` verifies it against the genomes tier's pin before reading it: the build
+    raises ``RawSha256MismatchError`` naming the raw file, the tier pin and the stale
+    digest, and no store is written.
     """
+    monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     _write_sgd_tier(data_root)
@@ -245,17 +251,17 @@ def test_a_stale_raw_matrix_is_kept_and_built_from(
     raw = tmp_path / "caudal" / "raw"
     raw.mkdir(parents=True)
     stale = {**_PRESENCE, "AAA": ["1", "1", "1", "1", "0", "1"]}
-    (raw / m.PRESENCE_NAME).write_bytes(_matrix_gz(stale, _COLUMNS))
-    dataset = m.CaudalPanTranscriptome2024Dataset(root=str(tmp_path / "caudal"))
-    assert not os.path.islink(raw / m.PRESENCE_NAME)
+    stale_bytes = _matrix_gz(stale, _COLUMNS)
+    (raw / m.PRESENCE_NAME).write_bytes(stale_bytes)
+    with pytest.raises(RawSha256MismatchError) as err:
+        m.CaudalPanTranscriptome2024Dataset(root=str(tmp_path / "caudal"))
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw / m.PRESENCE_NAME}: expected "
+        f"{hashlib.sha256(raw_bytes[m.PRESENCE_NAME]).hexdigest()}, "
+        f"observed {hashlib.sha256(stale_bytes).hexdigest()}"
+    )
     assert [os.path.islink(raw / n) for n in m.RAW_FILES] == [True, True, False, True]
-    assert [
-        (p["systematic_gene_name"], p["perturbation_type"])
-        for p in dataset[0]["experiment"]["genotype"]["perturbations"]
-    ] == [
-        ("2-EC1118_1F14_0012g", "natural_gene_presence"),
-        ("Q0010", "sequence_variant"),
-    ]
+    assert list((tmp_path / "caudal" / "processed").iterdir()) == []
 
 
 def test_main_builds_under_data_root_and_prints_record_zero(

@@ -57,6 +57,7 @@ import lmdb
 import pandas as pd
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import SED_URA_G418
 from torchcell.datamodels.schema import (
@@ -698,13 +699,20 @@ def test_deposit_raw_mirror_records_the_derived_table_and_the_esm_design(
     staging, tsv_sha, design_sha = _staged_raw(tmp_path, "staging")
     tsv_path = staging / ln.TSV_FILENAME
     design_path = staging / ln.DESIGN_D_FILENAME
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"{tsv_path} sha256 mismatch: got {tsv_sha}, expected {ln.TSV_SHA256}"
-        ),
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         ln.deposit_raw_mirror(enrichment_path=tsv_path, design_d_path=design_path)
+    assert str(err.value) == (
+        f"sha256 mismatch for {tsv_path}: expected {ln.TSV_SHA256}, observed {tsv_sha}"
+    )
+    assert not (data_root / "torchcell-raw").exists()
+    # A second source off its pin is caught before the first is written either.
+    monkeypatch.setattr(ln, "TSV_SHA256", tsv_sha)
+    with pytest.raises(RawSha256MismatchError) as err:
+        ln.deposit_raw_mirror(enrichment_path=tsv_path, design_d_path=design_path)
+    assert str(err.value) == (
+        f"sha256 mismatch for {design_path}: expected {ln.DESIGN_D_SHA256}, "
+        f"observed {design_sha}"
+    )
     assert not (data_root / "torchcell-raw").exists()
 
     monkeypatch.setattr(ln, "TSV_SHA256", tsv_sha)
@@ -793,13 +801,13 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
 
     (mirror / ln.DESIGN_D_REL).write_bytes(b"drifted upstream")
     drifted = _sha256(mirror / ln.DESIGN_D_REL)
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"{ln.DESIGN_D_FILENAME} sha256 mismatch: got {drifted}, expected {design_sha}"
-        ),
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         ln.CrisprMagicLian2019Dataset(root=str(tmp_path / "c"), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {mirror / ln.DESIGN_D_REL}: expected {design_sha}, "
+        f"observed {drifted}"
+    )
+    assert not (tmp_path / "c" / "raw" / ln.DESIGN_D_FILENAME).exists()
     (mirror / ln.DESIGN_D_REL).unlink()
     with pytest.raises(
         RuntimeError,
@@ -808,3 +816,26 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
         ),
     ):
         ln.CrisprMagicLian2019Dataset(root=str(tmp_path / "d"), genome=_genome())
+
+
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #518's sweep): with both files already in ``raw/`` PyG skips
+    ``download()``, so ``process()`` verifies them against ``TSV_SHA256`` and
+    ``DESIGN_D_SHA256`` first. The TSV off its pin raises ``RawSha256MismatchError``
+    naming it and both digests before a row is read; no store is written.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(ln, [ln.TSV_FILENAME, ln.DESIGN_D_FILENAME])
+    raw = staged.root / "raw" / ln.TSV_FILENAME
+    with pytest.raises(RawSha256MismatchError) as err:
+        ln.CrisprMagicLian2019Dataset(root=str(staged.root), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw}: expected "
+        "f9af849f97a2d460c3a6d628308491ec3966c6cc2a7f6cad130848d2bad32647, "
+        f"observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert _sha256(raw) == staged.observed

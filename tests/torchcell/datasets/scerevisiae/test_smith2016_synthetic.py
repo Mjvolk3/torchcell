@@ -58,6 +58,7 @@ import lmdb
 import openpyxl
 import pytest
 
+from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import SC_URA
 from torchcell.datamodels.schema import (
@@ -589,13 +590,21 @@ def test_deposit_raw_mirror_pins_hashes_and_writes_the_manifest(
     staging, effect_sha, guide_sha = _staged_workbooks(tmp_path, "staging")
     effect_path = staging / s.EFFECT_FILENAME
     guide_path = staging / s.GUIDE_FILENAME
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"{effect_path} sha256 mismatch: got {effect_sha}, expected {s.EFFECT_SHA256}"
-        ),
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         s.deposit_raw_mirror(effect_path=effect_path, guide_path=guide_path)
+    assert str(err.value) == (
+        f"sha256 mismatch for {effect_path}: expected {s.EFFECT_SHA256}, "
+        f"observed {effect_sha}"
+    )
+    assert not (data_root / "torchcell-raw").exists()
+    # The guide workbook off its pin is caught before the effect workbook is written.
+    monkeypatch.setattr(s, "EFFECT_SHA256", effect_sha)
+    with pytest.raises(RawSha256MismatchError) as err:
+        s.deposit_raw_mirror(effect_path=effect_path, guide_path=guide_path)
+    assert str(err.value) == (
+        f"sha256 mismatch for {guide_path}: expected {s.GUIDE_SHA256}, "
+        f"observed {guide_sha}"
+    )
     assert not (data_root / "torchcell-raw").exists()
 
     monkeypatch.setattr(s, "EFFECT_SHA256", effect_sha)
@@ -708,13 +717,13 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
 
     (mirror / s.EFFECT_REL).write_bytes(b"drifted upstream")
     drifted = _sha256(mirror / s.EFFECT_REL)
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"{s.EFFECT_FILENAME} sha256 mismatch: got {drifted}, expected {effect_sha}"
-        ),
-    ):
+    with pytest.raises(RawSha256MismatchError) as err:
         s.CrispriChemgenSmith2016Dataset(root=str(tmp_path / "c"), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {mirror / s.EFFECT_REL}: expected {effect_sha}, "
+        f"observed {drifted}"
+    )
+    assert list((tmp_path / "c" / "raw").iterdir()) == []
     (mirror / s.EFFECT_REL).unlink()
     with pytest.raises(
         RuntimeError,
@@ -723,3 +732,26 @@ def test_download_links_the_verified_mirror_and_refuses_drift_or_absence(
         ),
     ):
         s.CrispriChemgenSmith2016Dataset(root=str(tmp_path / "d"), genome=_genome())
+
+
+def test_a_raw_file_off_the_pin_is_refused_at_build_time(
+    off_pin_raw: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #518's sweep): with both workbooks already in ``raw/`` PyG skips
+    ``download()``, so ``process()`` verifies them against ``EFFECT_SHA256`` and
+    ``GUIDE_SHA256`` first. The effect workbook off its pin raises
+    ``RawSha256MismatchError`` naming it and both digests; no store is written.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    staged = off_pin_raw(s, [s.EFFECT_FILENAME, s.GUIDE_FILENAME])
+    raw = staged.root / "raw" / s.EFFECT_FILENAME
+    with pytest.raises(RawSha256MismatchError) as err:
+        s.CrispriChemgenSmith2016Dataset(root=str(staged.root), genome=_genome())
+    assert str(err.value) == (
+        f"sha256 mismatch for {raw}: expected "
+        "02962e51e492b0505e8595fc1c80fab5fca8a8c8f05e05969dbff18ddff71cd0, "
+        f"observed {staged.observed}"
+    )
+    assert list((staged.root / "processed").iterdir()) == []
+    assert not (staged.root / "preprocess").exists()
+    assert _sha256(raw) == staged.observed

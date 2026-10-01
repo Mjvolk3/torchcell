@@ -37,6 +37,8 @@ from typing import Any, cast
 
 import pytest
 
+from torchcell.data import RawSha256MismatchError
+from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.schema import (
     Environment,
     Genotype,
@@ -265,16 +267,17 @@ def test_requires_an_injected_genome(tmp_path: Path) -> None:
         m.BetaxanthinCachera2023Dataset(root=str(_root(tmp_path)), genome=None)
 
 
-def test_download_rejects_a_present_file_with_the_wrong_sha256(
-    dataset: m.BetaxanthinCachera2023Dataset,
+def test_process_rejects_a_present_file_with_the_wrong_sha256(
+    dataset: m.BetaxanthinCachera2023Dataset, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """A rebuild over the synthetic CSV under the real build-time check raises
+    ``RawSha256MismatchError`` naming the file and both digests, before any row is read.
+    """
+    monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
     dest = Path(dataset.root) / "raw" / m.DATA_FILENAME
     digest = hashlib.sha256(dest.read_bytes()).hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"CRI-SPA data sha256 mismatch for {dest}: got {digest}, "
-            f"expected {m.DATA_SHA256}"
-        ),
-    ):
-        dataset.download()
+    with pytest.raises(RawSha256MismatchError) as err:
+        dataset.process()
+    assert str(err.value) == (
+        f"sha256 mismatch for {dest}: expected {m.DATA_SHA256}, observed {digest}"
+    )

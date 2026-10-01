@@ -15,3 +15,7 @@ Both TSVs are written into `<root>/raw/`; the genome stub implements only `resol
 Four to eleven tests, 94 to 100 percent. The ledger; duplicate and blank-ORF rows; a wild-type column that is "n.d." everywhere refused with "CV measurement ACV103_A1B cannot be NaN"; `default_genome()`; both files copied.
 
 Findings: blank or whitespace-only ORF rows are dropped with no log line while the count reads "0 dropped for naming" (lines 224-226); `create_experiment` returns None (254); duplicate spellings give two records.
+
+## 2026.09.30 - Raw sha256 pin enforced at build time
+
+Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.

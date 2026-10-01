@@ -72,6 +72,8 @@ import pandas as pd
 import pydantic
 import pytest
 
+from torchcell.data import RawSha256MismatchError
+from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.schema import (
     CalMorphExperiment,
     CalMorphExperimentReference,
@@ -271,25 +273,26 @@ def test_side_files(dataset: m.ScmdOhya2005Dataset) -> None:
     assert {"CalMorphExperiment", "CalMorphPhenotype"} <= set(manifest["closure"])
 
 
-def test_download_verifies_present_files_and_needs_the_mirror(
+def test_build_refuses_present_files_off_the_pin_and_download_needs_the_mirror(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Called on a root holding the synthetic matrices, ``download()`` hashes the first
-    file and raises with its digest and the pinned one; on an empty root it names the
-    missing mirror path under ``$DATA_ROOT``.
+    """Contract (issue #537's sweep): with the matrices already in ``raw/`` PyG skips
+    ``download()``, so ``process()`` verifies them against ``_RAW_FILES`` before a row
+    is read; the synthetic ``mt4718data.tsv`` is refused with ``RawSha256MismatchError``
+    naming it and both digests. On an empty root ``download()`` names the missing
+    mirror path under ``$DATA_ROOT``.
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path / "data_root"))
     dataset = m.ScmdOhya2005Dataset(root=str(_root(tmp_path)), genome=_genome())
     dest = Path(dataset.root) / "raw" / "mt4718data.tsv"
     digest = hashlib.sha256(dest.read_bytes()).hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"mt4718data.tsv sha256 mismatch: got {digest}, "
-            f"expected {m._RAW_FILES['mt4718data.tsv']['sha256']}"
-        ),
-    ):
-        dataset.download()
+    monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
+    with pytest.raises(RawSha256MismatchError) as err:
+        dataset.process()
+    assert str(err.value) == (
+        f"sha256 mismatch for {dest}: expected "
+        f"{m._RAW_FILES['mt4718data.tsv']['sha256']}, observed {digest}"
+    )
     mirror = tmp_path / "data_root" / m._MIRROR_DIR
     with pytest.raises(
         RuntimeError,

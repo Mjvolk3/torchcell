@@ -48,6 +48,8 @@ from typing import Any
 import lmdb
 import pytest
 
+from torchcell.data import RawSha256MismatchError
+from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.media import SC
 from torchcell.datamodels.schema import (
     Environment,
@@ -373,8 +375,15 @@ def test_deposit_refuses_a_hash_mismatch(tmp_path: Path) -> None:
         f"{module.TABLE4_SHA256}  {module.TABLE4_NAME}\n"
         f"{module.LEGENDS_SHA256}  {module.LEGENDS_NAME}\n"
     )
-    with pytest.raises(RuntimeError, match="refusing to deposit"):
+    observed = hashlib.sha256(b"Sysname\tNAME\n").hexdigest()
+    with pytest.raises(RawSha256MismatchError) as excinfo:
         module.deposit_raw_mirror(source_dir=staged, data_root=str(tmp_path))
+    assert str(excinfo.value) == (
+        f"sha256 mismatch for {staged / module.TABLE4_NAME}: expected "
+        f"{module.TABLE4_SHA256}, observed {observed}"
+    )
+    # Both files are verified before anything is written: no mirror directory.
+    assert not module.raw_mirror_dir(str(tmp_path)).exists()
 
 
 # ---- end-to-end build ------------------------------------------------------------ #
@@ -756,21 +765,26 @@ def test_side_files_gene_set_reference_index_and_sourced_values(
     assert list(sourced["peak_notes"]) == list(PEAK_KEYS)
 
 
-def test_a_raw_file_placed_in_raw_dir_is_never_sha256_checked(
-    built: AminoAcidCooper2010Dataset,
+def test_a_raw_file_placed_in_raw_dir_is_refused_at_build_time(
+    off_pin_raw: Any,
 ) -> None:
-    """Finding: the Table 4 pin is enforced only inside ``download()`` (lines 1102 to
-    1107), and PyG calls ``download()`` only when ``raw/`` lacks the file. The synthetic
-    table in ``raw/`` does not carry the pinned sha256, and the build consumed it without
-    a check. Pinned until ``process()`` verifies the raw file it reads.
+    """Contract (issue #518): PyG skips ``download()`` when ``raw/`` already holds Table
+    4, so ``process()`` verifies the file against the pin before reading a row. A file
+    off the pin raises ``RawSha256MismatchError`` naming the file and both digests, no
+    store is written, and the file is left as found so every retry refuses again.
     """
-    raw = Path(built.raw_dir) / module.TABLE4_NAME
-    digest = hashlib.sha256(raw.read_bytes()).hexdigest()
-    assert digest != module.TABLE4_SHA256
-    assert module.TABLE4_SHA256 == (
-        "3c56cd492b4cab51249358e90c7e9731982960eb619e45b8850093e616a471fb"
+    staged = off_pin_raw(module, [module.TABLE4_NAME])
+    raw = staged.root / "raw" / module.TABLE4_NAME
+    with pytest.raises(RawSha256MismatchError) as excinfo:
+        AminoAcidCooper2010Dataset(root=str(staged.root), genome=_Genome())
+    assert str(excinfo.value) == (
+        f"sha256 mismatch for {raw}: expected "
+        "3c56cd492b4cab51249358e90c7e9731982960eb619e45b8850093e616a471fb, "
+        f"observed {staged.observed}"
     )
-    assert len(built) == 5
+    assert os.listdir(staged.root / "processed") == []
+    assert not (staged.root / "preprocess").exists()
+    assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
 
 
 def _mirror_table(data_root: Path) -> Path:
@@ -813,11 +827,12 @@ def test_download_refuses_a_mirror_file_with_the_wrong_sha256(
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     source = _mirror_table(data_root)
     digest = hashlib.sha256(source.read_bytes()).hexdigest()
-    with pytest.raises(RuntimeError) as excinfo:
+    with pytest.raises(RawSha256MismatchError) as excinfo:
         AminoAcidCooper2010Dataset(root=str(tmp_path / "ds"), genome=_Genome())
     assert str(excinfo.value) == (
-        f"raw mirror {source} sha256 mismatch: got {digest}, expected "
-        "3c56cd492b4cab51249358e90c7e9731982960eb619e45b8850093e616a471fb"
+        f"sha256 mismatch for {source}: expected "
+        f"3c56cd492b4cab51249358e90c7e9731982960eb619e45b8850093e616a471fb, "
+        f"observed {digest}"
     )
     assert os.listdir(tmp_path / "ds" / "raw") == []
 
@@ -826,8 +841,10 @@ def test_download_links_a_verified_mirror_file_and_builds_from_it(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """With the pin set to the synthetic table's sha256, ``download()`` symlinks the
-    mirror file into ``raw/`` and the build reads it: five records.
+    mirror file into ``raw/`` and the build, with the real build-time check, reads it:
+    five records.
     """
+    monkeypatch.setattr(module, "verify_raw_files", verify_raw_files)
     data_root = tmp_path / "data_root"
     _write_essentiality_store(data_root)
     monkeypatch.setenv("DATA_ROOT", str(data_root))

@@ -96,7 +96,12 @@ import pandas as pd
 from pydantic import BaseModel
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    link_verified,
+    post_process,
+    verify_raw_files,
+)
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import YPBA, YPBM, YPBO
 from torchcell.datamodels.schema import (
@@ -565,15 +570,8 @@ class FattyAcidSmith2006Dataset(ExperimentDataset):
         src = raw_mirror_dir(data_root) / XLS_REL
         if not src.exists():
             raise RuntimeError(f"required raw artifact missing from mirror: {src}")
-        got = _sha256(src)
-        if got != expected:
-            raise RuntimeError(
-                f"{XLS_FILENAME} sha256 mismatch: got {got}, expected {expected}"
-            )
         os.makedirs(self.raw_dir, exist_ok=True)
-        dest = osp.join(self.raw_dir, XLS_FILENAME)
-        if not osp.exists(dest):
-            os.symlink(src, dest)
+        link_verified(src, osp.join(self.raw_dir, XLS_FILENAME), expected)
         log.info("Smith 2006 raw table linked into %s (sha256 verified)", self.raw_dir)
 
     def _read_table(self) -> pd.DataFrame:
@@ -650,6 +648,7 @@ class FattyAcidSmith2006Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Parse the ordinal score table into per-(strain, condition) records; write LMDB."""
+        verify_raw_files(self.raw_dir, {XLS_FILENAME: XLS_SHA256})
         if self.genome is None:
             raise RuntimeError(
                 "FattyAcidSmith2006Dataset requires a genome for systematic-name "

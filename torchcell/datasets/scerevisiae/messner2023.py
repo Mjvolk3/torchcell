@@ -54,21 +54,24 @@ grown in synthetic minimal (SM) liquid medium at 30 C.
 """
 
 import glob
-import hashlib
 import logging
 import math
 import os
 import os.path as osp
 import pickle
 import re
-import shutil
 from typing import Any
 
 import lmdb
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    copy_verified,
+    post_process,
+    verify_raw_files,
+)
 from torchcell.datamodels.media import SM
 from torchcell.datamodels.schema import (
     Environment,
@@ -175,8 +178,9 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
     def download(self) -> None:
         """Copy the hash-pinned matrix + metadata from the library mirror to raw_dir.
 
-        The mirror is the canonical source (Mendeley fetched once); we verify each
-        file's sha256 after copy and never touch a live Mendeley URL.
+        The mirror is the canonical source (Mendeley fetched once); each file's sha256
+        is verified before the copy (and again at build time by ``process``), and no
+        live Mendeley URL is touched.
         """
         os.makedirs(self.raw_dir, exist_ok=True)
         mirror = osp.join(
@@ -195,16 +199,7 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
                     f"Messner mirror file missing: {src}. The mirror is canonical; "
                     f"restore it from backup (fetched once from Mendeley {MENDELEY_DOI})."
                 )
-            h = hashlib.sha256()
-            with open(src, "rb") as fh:
-                for chunk in iter(lambda: fh.read(1 << 20), b""):
-                    h.update(chunk)
-            if h.hexdigest() != expected:
-                raise RuntimeError(
-                    f"Messner {filename} sha256 mismatch: got {h.hexdigest()}, "
-                    f"expected {expected}"
-                )
-            shutil.copy2(src, dest)
+            copy_verified(src, dest, expected)
             log.info(
                 "Copied %s from mirror (%d bytes, sha256 verified)",
                 filename,
@@ -214,6 +209,10 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Aggregate the proteome matrix into per-strain experiments and write LMDB."""
+        verify_raw_files(
+            self.raw_dir,
+            {MATRIX_FILENAME: MATRIX_SHA256, METADATA_FILENAME: METADATA_SHA256},
+        )
         matrix = pd.read_csv(osp.join(self.raw_dir, MATRIX_FILENAME))
         id_col = matrix.columns[0]  # "Protein.Group" (UniProt accession)
         matrix = matrix.set_index(id_col)

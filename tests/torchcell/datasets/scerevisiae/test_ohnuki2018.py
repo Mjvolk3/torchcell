@@ -58,6 +58,8 @@ import pandas as pd
 import pydantic
 import pytest
 
+from torchcell.data import RawSha256MismatchError
+from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.schema import (
     CalMorphExperiment,
     CalMorphExperimentReference,
@@ -244,21 +246,26 @@ def test_side_files(dataset: m.ScmdOhnuki2018Dataset) -> None:
     assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.ohnuki2018"
 
 
-def test_download_verifies_present_files_and_needs_the_mirror(
+def test_build_refuses_present_files_off_the_pin_and_download_needs_the_mirror(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """Contract (issue #537's sweep): with the matrices already in ``raw/`` PyG skips
+    ``download()``, so ``process()`` verifies them against ``_RAW_FILES`` before a row
+    is read; the synthetic ``ess1112data.tsv`` is refused with ``RawSha256MismatchError``
+    naming it and both digests. On an empty root ``download()`` names the missing
+    mirror path under ``$DATA_ROOT``.
+    """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path / "data_root"))
     dataset = m.ScmdOhnuki2018Dataset(root=str(_root(tmp_path)), genome=_genome())
     dest = Path(dataset.root) / "raw" / "ess1112data.tsv"
     digest = hashlib.sha256(dest.read_bytes()).hexdigest()
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            f"ess1112data.tsv sha256 mismatch: got {digest}, "
-            f"expected {m._RAW_FILES['ess1112data.tsv']['sha256']}"
-        ),
-    ):
-        dataset.download()
+    monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
+    with pytest.raises(RawSha256MismatchError) as err:
+        dataset.process()
+    assert str(err.value) == (
+        f"sha256 mismatch for {dest}: expected "
+        f"{m._RAW_FILES['ess1112data.tsv']['sha256']}, observed {digest}"
+    )
     mirror = tmp_path / "data_root" / m._MIRROR_DIR
     with pytest.raises(
         RuntimeError,

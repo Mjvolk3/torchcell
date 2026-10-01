@@ -75,20 +75,23 @@ has 127 mutant rows (+ 3 WT controls). We keep all 127 released mutant rows and 
 129-vs-127 discrepancy.
 """
 
-import hashlib
 import logging
 import os
 import os.path as osp
 import pickle
 import re
-import shutil
 from typing import Any, cast
 
 import lmdb
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    copy_verified,
+    post_process,
+    verify_raw_files,
+)
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
@@ -180,13 +183,8 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
                     f"library mirror data file not found: {src}. This dataset's source is "
                     f"the sha256-pinned {filename} in the torchcell-library mirror."
                 )
-            shutil.copyfile(src, dest)
-        digest = hashlib.sha256(open(dest, "rb").read()).hexdigest()
-        if digest != sha256:
-            raise RuntimeError(
-                f"{filename} sha256 mismatch: got {digest}, expected {sha256}"
-            )
-        log.info("Verified %s (sha256 %s)", dest, sha256)
+            copy_verified(src, dest, sha256)
+            log.info("Verified %s (sha256 %s)", dest, sha256)
 
     def download(self) -> None:
         """Copy the pinned Table S4 + Table S10 from the library mirror and verify."""
@@ -225,6 +223,9 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Parse the Quant sheet into per-mutant Metabolite experiments and write LMDB."""
+        verify_raw_files(
+            self.raw_dir, {DATA_FILENAME: DATA_SHA256, CHEBI_FILENAME: CHEBI_SHA256}
+        )
         if self.genome is None:
             raise RuntimeError(
                 "MetaboliteDaSilveira2014Dataset requires an injected SCerevisiaeGenome "

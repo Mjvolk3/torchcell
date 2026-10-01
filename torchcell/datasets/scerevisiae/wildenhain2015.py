@@ -73,7 +73,13 @@ from typing import Any, Literal
 from pydantic import BaseModel
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process
+from torchcell.data import (
+    ExperimentDataset,
+    link_verified,
+    post_process,
+    verify_raw_files,
+    verify_sha256,
+)
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import SC
 from torchcell.datamodels.schema import (
@@ -372,10 +378,11 @@ def deposit_raw_mirror(
         ),
     }
     files: list[ArtifactRecord] = []
+    # Both sources are verified before anything is written, so a refusal leaves no
+    # mirror directory and no partial deposit behind.
+    for src, expected, _ in sources.values():
+        verify_sha256(src, expected)
     for relpath, (src, expected, retrieval) in sources.items():
-        got = _sha256(src)
-        if got != expected:
-            raise RuntimeError(f"{src} sha256 mismatch: got {got}, expected {expected}")
         dest = root / relpath
         dest.parent.mkdir(parents=True, exist_ok=True)
         if dest.exists():
@@ -556,15 +563,9 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
             src = raw_mirror_dir(data_root) / relpath
             if not src.exists():
                 raise RuntimeError(f"required raw artifact missing from mirror: {src}")
-            expected = manifest_sha256(manifest, relpath)
-            got = _sha256(src)
-            if got != expected:
-                raise RuntimeError(
-                    f"{name} sha256 mismatch: got {got}, expected {expected}"
-                )
-            dest = osp.join(self.raw_dir, name)
-            if not osp.exists(dest):
-                os.symlink(src, dest)
+            link_verified(
+                src, osp.join(self.raw_dir, name), manifest_sha256(manifest, relpath)
+            )
         log.info(
             "Wildenhain 2015 raw files linked into %s (sha256 verified)", self.raw_dir
         )
@@ -749,6 +750,9 @@ class EnvChemgenWildenhain2015Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Collapse the datapoint export into the CGM matrix; write LMDB."""
+        verify_raw_files(
+            self.raw_dir, {DATA_FILENAME: DATA_SHA256, AID_FILENAME: AID_SHA256}
+        )
         cells, n_rows, n_non_strain = self._collapse_matrix()
         source_records = len(cells)
 

@@ -304,3 +304,56 @@ explain it: with 28 to 32 training compounds the score of a held-out compound tr
 nearest training analog, and even inside Wildenhain's 5,160 compounds structure predicts a
 chemical-genetic profile weakly. The gains available are in the data: more compounds in the
 same assay, a correctly defined input (#500, #501, #504 to #507), and a dose axis.
+
+## 2026.09.30 - Round 8 setup: the transformer verdict was a training defect, not a verdict
+
+The user's reading of diagram 1 in
+[[experiments.035-env-chemgen-vanacloig-cgt.mermaid.cgt-compound]]: a molecule added to the
+medium is a perturbation of the cell state, a Type I operator like the deletion operator, and
+the factorized model never lets it be one; the compound meets the strain only at the bilinear
+head. Before building that operator (stage 2), the 0.061 of round 2 had to be understood,
+and two measurements say it was never a converged number.
+
+**Not converged.** Round 2's history (`results/factorized/r2_cgt/cgt_bil_prior1_history.csv`,
+replayed to W&B by `wandb_replay_history.py`): validation centered Spearman 0.004 at epoch 1,
+0.044 at 10, 0.097 at 20, monotone to the last checkpoint; the selected step was 1,026 to
+1,140 of 1,140 in four of five folds; train loss 0.72 to 0.44 and still falling. The flattening
+of the last three evals coincides with OneCycle annealing to zero. The table model gets 3,000
+full-batch epochs; the transformer got 20.
+
+**The graph prior dominated the loss.** Smoke `smoke_r8.yaml` (slurm 3071, 8 layers, 2 epochs)
+with the new per-step logging: penalty 23,256 and 46,815 against a data loss of 0.6 to 0.8;
+gradient norm 6,922 to 8,529 under a clip of 10, so the task gradient reached the weights
+scaled by about 1/700. `default.yaml` set `graph_reg_lambda: 1.0` after the 025 sweep, where
+the data loss was over millions of pairs; 010 trains at 0.001. In round 2's own history the
+penalty fell 39,734 to 613 while validation crept up: the model learned the graph prior first
+and the task as the prior allowed. The one-layer arm, in addition, had no prior at all
+because the regularized layer is index 1 (fixed in `build_encoder`: layer `min(1, L - 1)`,
+per-head lambda 1, the single scale `cgt_lambda`).
+
+**Footprint (slurm 3071).** 8 layers at 128 strains per step: 31.4 GB allocated, 34 s per
+epoch; at 64 strains 27.7 GB, 53 s. 1 layer: 8.4 GB, 10.5 s. A card is 44.4 GiB and a
+process holds 4 to 5 GB over its allocation (jobs 3072 and 3073 OOM'd packing 8 + 1 layers),
+so the 8-layer arms run alone and the small arms two per card.
+
+**Round 8** (`r8_small_{a,b}.yaml`, slurm 3074 and 3075; `r8_deep_{a,b}.yaml`, 3078 and 3079
+chained behind them): layers in {1, 2, 8} at 9 heads, prior weight in {0, 0.001, 1}, 200
+epochs, one fold per process, fold seed 0, every epoch logging train loss, penalty, gradient
+norm, learning rate, validation and held-out centered Spearman, the per-compound validation
+scores, wall time and peak memory. First live curves (partial, in flight): `L1_lam0_f0`
+held-out 0.292 at epoch 9 and 0.258 at 73 with train loss 0.061; `L1_lam1e-3_f0` 0.288 at
+epoch 30; the cancelled `L8_lam0_f0` 0.012 at epoch 9. Depth slows learning on its own, so
+the 8-layer chain was trimmed to two folds per weight.
+
+**Stage 2, the environment operator** (`head: operator`, `EnvironmentOperator` in
+`train_factorized.py`; CPU smoke `smoke_env.yaml` passed): the compound token $e_c$ from the
+fingerprint MLP acts on every gene of the strain's post-deletion state $H \in \mathbb{R}^{B
+\times N \times d}$ through a per-gene, per-head sigmoid gate, $H + \beta\, a \odot v_c$, with
+$\beta$ a ReZero scalar at zero so the model starts as the identity; the readout is invariant
+over the genome, the deleted rows summed, the mean over genes and the token, through an MLP
+beside the gene bias and compound offset. Both readouts are linear in the update, so the
+pooled term is $\overline{a}\, v_c$ and the $B \times C \times N \times d$ state is never
+materialized. Round 9 (`r9_operator.yaml`, `r9_control.yaml`, slurm 3080 and 3081 chained
+behind the deep chains): operator versus the bilinear head on the same one-layer, prior-0.001
+encoder, 100 epochs, five folds on each of fold seeds 0 to 2, for the 123-evaluation paired
+comparison against ridge.

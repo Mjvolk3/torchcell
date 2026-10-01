@@ -53,7 +53,6 @@ fitness phenotype:
     represented_as: node
     properties:
         fitness: float
-        serialized_data: str
 
 phenotype member of:
     is_a: participates in
@@ -101,7 +100,7 @@ class CellAdapter:
 def test_graph_schema_from_yaml_splits_nodes_and_edges() -> None:
     schema = graph_schema_from_yaml(SCHEMA_YAML)
     assert schema["dataset"] == GraphSchemaEntry(kind="node", properties=[])
-    assert schema["fitness phenotype"].properties == ["fitness", "serialized_data"]
+    assert schema["fitness phenotype"].properties == ["fitness"]
     edge = schema["phenotype member of"]
     assert edge.kind == "edge"
     assert edge.source == ["fitness phenotype"]

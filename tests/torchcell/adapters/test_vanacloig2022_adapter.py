@@ -135,8 +135,10 @@ def test_dosed_perturbation_carries_its_typed_solvent_gap() -> None:
     # the gapped field is None and the dose is NOT gapped: an IC30 basis is known
     assert perturbation.solvent is None
     assert perturbation.concentration.basis is DoseBasis.IC30
+    # the gap travels in the Experiment blob (inside its environment), not the node
+    assert perturbation.model_dump()["provenance_gaps"]
     node = CellAdapter._environment_perturbation_node_from(perturbation)
-    assert json.loads(node.get_properties()["serialized_data"])["provenance_gaps"]
+    assert "serialized_data" not in node.get_properties()
 
 
 def test_barcoded_deletion_projects_as_a_perturbation_node() -> None:
@@ -162,7 +164,9 @@ def test_barcoded_deletion_projects_as_a_perturbation_node() -> None:
     props = nodes[0].get_properties()
     assert props["systematic_gene_name"] == "YAL001C"
     assert props["perturbation_type"] == "barcoded_kanmx_deletion"
-    assert json.loads(props["serialized_data"])["barcode"] == "ACGTACGTACGTACGTACGT"
+    # the barcode travels in the Experiment blob (inside its genotype), not the node
+    assert "serialized_data" not in props
+    assert perturbation.model_dump()["barcode"] == "ACGTACGTACGTACGTACGT"
     assert (
         nodes[0].get_id()
         == hashlib.sha256(
@@ -187,4 +191,4 @@ def test_environment_response_properties_project_the_typed_axes() -> None:
     assert props["measurement_type"] == "log2_ratio"
     assert props["assay_type"] == "pooled_competitive_growth_barcode"
     assert props["environment_response_se"] is not None
-    assert json.loads(props["serialized_data"]) == phenotype.model_dump()
+    assert "serialized_data" not in props

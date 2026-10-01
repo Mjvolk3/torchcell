@@ -10,7 +10,6 @@ the tables rather than eyeballed.
 from __future__ import annotations
 
 import inspect
-import json
 import os.path as osp
 import re
 from typing import Any, cast
@@ -106,7 +105,7 @@ def test_the_carbon_source_factor_becomes_an_environment_perturbation_node() -> 
     assert node.get_label() == "environment perturbation"
     props = node.get_properties()
     assert props["perturbation_type"] == "environment_physical"
-    assert json.loads(props["serialized_data"]) == perturbation.model_dump()
+    assert "serialized_data" not in props
 
 
 def test_the_ordinal_phenotype_projects_its_typed_call() -> None:

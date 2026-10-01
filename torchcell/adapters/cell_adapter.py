@@ -32,10 +32,7 @@ from torchcell.datamodels.identity import (
     media_identity,
     temperature_identity,
 )
-from torchcell.datamodels.interned_constant import (
-    INTERNED_CONSTANT_LABEL,
-    split_experiment_dump,
-)
+from torchcell.datamodels.interned_constant import split_experiment_dump
 from torchcell.fast_csv import RenderedChunk, RowSpecs
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
 
@@ -822,16 +819,27 @@ class CellAdapter:
                 properties={"serialized_data": json.dumps(pointered)},
             )
         ]
+        # Literal label: the ontology coherence check reads emitted labels from the
+        # source statically (torchcell/datamodels/ontology_checks.py).
         for ref, kind, payload in constants:
             nodes.append(
                 BioCypherNode(
                     node_id=ref,
-                    preferred_id=INTERNED_CONSTANT_LABEL,
-                    node_label=INTERNED_CONSTANT_LABEL,
+                    preferred_id="interned constant",
+                    node_label="interned constant",
                     properties={"kind": kind, "serialized_data": payload},
                 )
             )
         return nodes
+
+    # --- No serialized_data on sub-object nodes ---
+    # Genotype, segregant genotype, perturbation, crispr construct, environment
+    # perturbation and every phenotype node carry ONLY their queryable scalar
+    # properties. Their full typed record is a sub-object of the experiment record,
+    # so it is already held byte for byte in the Experiment blob (or the interned
+    # constant it points to); a reference-side phenotype or environment perturbation
+    # is likewise inside the experiment reference blob. The node id is still the
+    # sha256 of the sub-object's model_dump, so ids and edges are unchanged.
 
     @data_chunker
     def _genotype_node(self, data: dict[str, Any], method_name: str) -> BioCypherNode:
@@ -847,7 +855,6 @@ class CellAdapter:
                 "systematic_gene_names": genotype.systematic_gene_names,
                 "perturbed_gene_names": genotype.perturbed_gene_names,
                 "perturbation_types": genotype.perturbation_types,
-                "serialized_data": json.dumps(genotype.model_dump()),
             },
         )
 
@@ -855,7 +862,7 @@ class CellAdapter:
     # A SegregantGenotype has no gene-keyed perturbations, so it gets its own node
     # method (never a branch inside _genotype_node, which every served dataset
     # fingerprints). The node id is the sha256 of the whole model_dump, hashed once;
-    # the blocks travel in serialized_data.
+    # the blocks travel in the Experiment blob's interned-constant genotype.
 
     @staticmethod
     def _segregant_genotype_node_from(genotype: Any) -> BioCypherNode:
@@ -872,7 +879,6 @@ class CellAdapter:
                 "parent_1": genotype.parent_1.name,
                 "parent_2": genotype.parent_2.name,
                 "n_blocks": len(genotype.blocks),
-                "serialized_data": json.dumps(genotype.model_dump()),
             },
         )
 
@@ -906,7 +912,6 @@ class CellAdapter:
                     # KanMxDeletion/GeneAddition types the metabolite/morphology
                     # datasets use, so read it defensively.
                     "strain_id": getattr(perturbation, "strain_id", None),
-                    "serialized_data": json.dumps(perturbation.model_dump()),
                 },
             )
             nodes.append(node)
@@ -943,7 +948,6 @@ class CellAdapter:
                 "library_pool": construct.library_pool,
                 "effector_plasmid_uri": construct.effector_plasmid_uri,
                 "effector_plasmid_sha256": construct.effector_plasmid_sha256,
-                "serialized_data": json.dumps(construct.model_dump()),
             },
         )
 
@@ -1065,7 +1069,6 @@ class CellAdapter:
                     if dose is not None and dose.unit is not None
                     else None
                 ),
-                "serialized_data": json.dumps(perturbation.model_dump()),
             },
         )
 
@@ -1214,7 +1217,6 @@ class CellAdapter:
             "label_statistic_name": label_statistic_name,
             "fitness": fitness,
             "fitness_std": fitness_std,
-            "serialized_data": json.dumps(phenotype.model_dump()),
         }
 
         return BioCypherNode(
@@ -1245,7 +1247,6 @@ class CellAdapter:
             "label_statistic_name": label_statistic_name,
             "gene_interaction": gene_interaction,
             "gene_interaction_p_value": gene_interaction_p_value,
-            "serialized_data": json.dumps(phenotype.model_dump()),
         }
 
         return BioCypherNode(
@@ -1272,7 +1273,6 @@ class CellAdapter:
             "graph_level": graph_level,
             "label_name": label_name,
             "is_essential": is_essential,
-            "serialized_data": json.dumps(phenotype.model_dump()),
         }
 
         return BioCypherNode(
@@ -1305,7 +1305,6 @@ class CellAdapter:
             "label_statistic_name": label_statistic_name,
             "is_synthetic_lethal": is_synthetic_lethal,
             "synthetic_lethality_statistic_score": synthetic_lethality_statistic_score,
-            "serialized_data": json.dumps(phenotype.model_dump()),
         }
 
         return BioCypherNode(
@@ -1336,7 +1335,6 @@ class CellAdapter:
             "label_statistic_name": label_statistic_name,
             "is_synthetic_rescue": is_synthetic_rescue,
             "synthetic_rescue_statistic_score": synthetic_rescue_statistic_score,
-            "serialized_data": json.dumps(phenotype.model_dump()),
         }
 
         return BioCypherNode(
@@ -1347,7 +1345,7 @@ class CellAdapter:
         )
 
     # --- Environment response phenotype (chemogenomic / segregant growth) ---
-    # The typed record is serialized_data; the scalar response, its SE and the two
+    # The typed record is in the Experiment blob; the scalar response, its SE and two
     # typed axes (measurement_type = WHAT the number is, assay_type = HOW it was
     # measured) are projected so a condition-response query never has to parse JSON.
     # A categorical or ordinal screen carries no number, so its call is projected too:
@@ -1371,7 +1369,6 @@ class CellAdapter:
             "category": str(category.value) if category is not None else None,
             "category_label": phenotype.category_label,
             "screen_id": phenotype.screen_id,
-            "serialized_data": json.dumps(phenotype.model_dump()),
         }
 
     @data_chunker
@@ -1432,7 +1429,6 @@ class CellAdapter:
                 "label_statistic_name": label_statistic_name,
                 "fitness": fitness,
                 "fitness_std": fitness_std,
-                "serialized_data": json.dumps(phenotype.model_dump()),
             }
 
             node = BioCypherNode(
@@ -1465,7 +1461,6 @@ class CellAdapter:
                 "label_statistic_name": label_statistic_name,
                 "gene_interaction": gene_interaction,
                 "gene_interaction_p_value": gene_interaction_p_value,
-                "serialized_data": json.dumps(phenotype.model_dump()),
             }
 
             node = BioCypherNode(
@@ -1494,7 +1489,6 @@ class CellAdapter:
                 "graph_level": graph_level,
                 "label_name": label_name,
                 "is_essential": is_essential,
-                "serialized_data": json.dumps(phenotype.model_dump()),
             }
 
             node = BioCypherNode(
@@ -1527,7 +1521,6 @@ class CellAdapter:
                 "label_statistic_name": label_statistic_name,
                 "is_synthetic_lethal": is_synthetic_lethal,
                 "synthetic_lethality_statistic_score": statistic_score,
-                "serialized_data": json.dumps(phenotype.model_dump()),
             }
 
             node = BioCypherNode(
@@ -1562,7 +1555,6 @@ class CellAdapter:
                 "label_statistic_name": label_statistic_name,
                 "is_synthetic_rescue": is_synthetic_rescue,
                 "synthetic_rescue_statistic_score": synthetic_rescue_statistic_score,
-                "serialized_data": json.dumps(phenotype.model_dump()),
             }
 
             node = BioCypherNode(
@@ -1599,7 +1591,6 @@ class CellAdapter:
             )
             if calmorph_coefficient_of_variation
             else None,
-            "serialized_data": json.dumps(phenotype.model_dump()),
         }
 
         return BioCypherNode(
@@ -1636,7 +1627,6 @@ class CellAdapter:
                 )
                 if calmorph_coefficient_of_variation
                 else None,
-                "serialized_data": json.dumps(phenotype.model_dump()),
             }
 
             node = BioCypherNode(
@@ -1670,7 +1660,6 @@ class CellAdapter:
                 if phenotype.expression_log2_ratio_se is not None
                 else None
             ),
-            "serialized_data": json.dumps(phenotype.model_dump()),
         }
         return BioCypherNode(
             node_id=phenotype_id,
@@ -1698,7 +1687,6 @@ class CellAdapter:
                     if phenotype.expression_log2_ratio_se is not None
                     else None
                 ),
-                "serialized_data": json.dumps(phenotype.model_dump()),
             }
             nodes.append(
                 BioCypherNode(
@@ -1725,7 +1713,6 @@ class CellAdapter:
             "expression_tpm": json.dumps(phenotype.expression_tpm),
             "measurement_type": phenotype.measurement_type,
             "n_mapped_reads": phenotype.n_mapped_reads,
-            "serialized_data": json.dumps(phenotype.model_dump()),
         }
         return BioCypherNode(
             node_id=phenotype_id,
@@ -1748,7 +1735,6 @@ class CellAdapter:
                 "expression_tpm": json.dumps(phenotype.expression_tpm),
                 "measurement_type": phenotype.measurement_type,
                 "n_mapped_reads": phenotype.n_mapped_reads,
-                "serialized_data": json.dumps(phenotype.model_dump()),
             }
             nodes.append(
                 BioCypherNode(
@@ -1776,7 +1762,6 @@ class CellAdapter:
             "dispersion": phenotype.dispersion,
             "n_cells": phenotype.n_cells,
             "measurement_type": phenotype.measurement_type,
-            "serialized_data": json.dumps(phenotype.model_dump()),
         }
 
     @data_chunker
@@ -1829,7 +1814,6 @@ class CellAdapter:
             "n_replicates": phenotype.n_replicates,
             "target_product": phenotype.target_product,
             "target_metabolite_id": phenotype.target_metabolite_id,
-            "serialized_data": json.dumps(phenotype.model_dump()),
         }
         return BioCypherNode(
             node_id=phenotype_id,
@@ -1853,7 +1837,6 @@ class CellAdapter:
                 "n_replicates": phenotype.n_replicates,
                 "target_product": phenotype.target_product,
                 "target_metabolite_id": phenotype.target_metabolite_id,
-                "serialized_data": json.dumps(phenotype.model_dump()),
             }
             nodes.append(
                 BioCypherNode(
@@ -1884,7 +1867,6 @@ class CellAdapter:
                 else None
             ),
             "measurement_type": phenotype.measurement_type,
-            "serialized_data": json.dumps(phenotype.model_dump()),
         }
         return BioCypherNode(
             node_id=phenotype_id,
@@ -1911,7 +1893,6 @@ class CellAdapter:
                     else None
                 ),
                 "measurement_type": phenotype.measurement_type,
-                "serialized_data": json.dumps(phenotype.model_dump()),
             }
             nodes.append(
                 BioCypherNode(
@@ -1942,7 +1923,6 @@ class CellAdapter:
                 else None
             ),
             "measurement_type": phenotype.measurement_type,
-            "serialized_data": json.dumps(phenotype.model_dump()),
         }
         return BioCypherNode(
             node_id=phenotype_id,
@@ -1969,7 +1949,6 @@ class CellAdapter:
                     else None
                 ),
                 "measurement_type": phenotype.measurement_type,
-                "serialized_data": json.dumps(phenotype.model_dump()),
             }
             nodes.append(
                 BioCypherNode(

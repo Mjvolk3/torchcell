@@ -52,7 +52,7 @@ def test_pseudobulk_properties_keep_scalars_typed_and_dict_as_json() -> None:
     assert props["measurement_type"] == "pseudobulk_scrnaseq_log2fc"
     assert props["label_name"] == "expression_log2_ratio"
     assert props["label_statistic_name"] == "dispersion"
-    assert json.loads(props["serialized_data"]) == phenotype.model_dump()
+    assert "serialized_data" not in props
 
 
 def test_environment_perturbation_node_is_content_addressed() -> None:
@@ -67,7 +67,7 @@ def test_environment_perturbation_node_is_content_addressed() -> None:
     assert props["inchikey"] == "FAPWRFPIFSIZLT-UHFFFAOYSA-M"
     assert props["concentration_value"] == 0.4
     assert props["concentration_unit"] == "M"
-    assert json.loads(props["serialized_data"]) == perturbation.model_dump()
+    assert "serialized_data" not in props
     # the same perturbation in another environment yields the same node id
     assert (
         CellAdapter._environment_perturbation_node_from(

@@ -91,7 +91,9 @@ def test_both_perturbations_become_distinct_environment_perturbation_nodes() -> 
     assert ph_props["compound_name"] == "hydrochloric acid"
     assert ph_props["concentration_value"] == 4.5
     assert acid_node.get_properties()["factor"] is None
-    serialized = json.loads(ph_props["serialized_data"])
+    # the full record travels in the Experiment blob (inside its environment)
+    assert "serialized_data" not in ph_props
+    serialized = json.loads(json.dumps(ph.model_dump()))
     assert serialized["factor"] == "pH"
     assert serialized["magnitude"]["value"] == 4.5
     assert serialized["agent"]["name"] == "hydrochloric acid"

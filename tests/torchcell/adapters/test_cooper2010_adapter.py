@@ -96,4 +96,4 @@ def test_metabolite_phenotype_node_is_keyed_on_the_serialized_phenotype() -> Non
     props = node.get_properties()
     assert props["measurement_type"] == MEASUREMENT_TYPE
     assert json.loads(props["metabolite_level"])["glutamine+valine"] == 1.154314489
-    assert json.loads(props["serialized_data"]) == phenotype.model_dump()
+    assert "serialized_data" not in props

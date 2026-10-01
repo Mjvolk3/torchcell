@@ -13,3 +13,7 @@ created: 1790409479197
 ## 2026.09.30 - Build-time sha256 pin fixtures
 
 Two fixtures for the loader pin check (issues #518, #524, #528, #537). `raw_pin_calls` (module scope, autouse) replaces `verify_raw_files` in the 30 pinned loader modules with a recorder that demands each pinned file exist in `raw/` and records `(module, raw dir, pins)`, because the synthetic raw files the loader and adapter tests build from cannot carry the real pins. `off_pin_raw` restores the real check on one loader module and fills a fresh root's `raw/` with off-pin bytes, returning the root and their sha256, so each loader's refusal test drives the constructor path PyG takes when `raw/` is already populated.
+
+## 2026.09.30 - CGT fixture batch carries num_graphs (issue #523)
+
+`make_batch` sets `batch.num_graphs = 3`, the attribute a collated PyG `Batch` carries and the CGT now reads as the genotype count.

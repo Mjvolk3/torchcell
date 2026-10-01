@@ -59,7 +59,7 @@ def context_of(
 ) -> torch.Tensor:
     """Return the raw attended context [N, d] for one strain."""
     idx = torch.tensor(pert, dtype=torch.long)
-    _, context = transform(h_genes, idx, torch.zeros(len(pert), dtype=torch.long))
+    _, context = transform(h_genes, idx, torch.zeros(len(pert), dtype=torch.long), 1)
     return context[0]
 
 

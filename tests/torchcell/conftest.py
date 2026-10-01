@@ -88,6 +88,8 @@ def make_batch() -> HeteroData:
     batch["gene"].perturbation_indices_batch = torch.tensor(
         [0, 0, 1, 2, 2, 2], dtype=torch.long
     )
+    # A collated PyG Batch carries num_graphs; the CGT reads it as the genotype count.
+    batch.num_graphs = 3
     return batch
 
 

@@ -254,7 +254,7 @@ def score(
         n = chunk.shape[0]
         pert = torch.from_numpy(chunk.reshape(-1)).to(device)
         assign = torch.arange(n, device=device).repeat_interleave(3)
-        H_pert, _ = model.perturbation_transform(H_genes, pert, assign)
+        H_pert, _ = model.perturbation_transform(H_genes, pert, assign, n)
         preds = model.perturbation_head(h_cls, H_pert, pert, assign)
         out[start : start + n] = preds.squeeze(-1).float().cpu().numpy()
     return out

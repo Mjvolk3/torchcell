@@ -57,3 +57,7 @@ gap entirely.
 
 At hidden 24 x 3 layers the whole model is **191,541 parameters**, of which 158,568 are the
 6,607 x 24 learnable gene embedding.
+
+## 2026.09.30 - num_parameters counts the flux layer (issue #523 follow-on)
+
+The parent's `num_parameters["total"]` is now `sum(p.numel() for p in self.parameters())`, which already includes the metabolism heads and the flux layer. The override therefore no longer adds the heads to the total (that would double count); it adds one entry per head plus a `flux_layer` entry when a flux layer is attached. Before, the flux layer was never counted (8063 reported against 8449 real on the test flux model). `experiments/026-metabolism-flux/scripts/train_flux.py` records this dict as `n_parameters`, so its `total` for flux runs was short by the flux layer's size. Test: `test_num_parameters_counts_the_flux_layer` in [[tests.torchcell.models.test_cell_graph_transformer_metabolism]].

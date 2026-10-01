@@ -16,8 +16,9 @@ reads (no Neo4j). Expected values, derived from the source:
   ``--nodes`` / ``--relationships`` per group in label order.
 - ``query_existing_edges`` with ``batch_size=2`` on three pairs runs two queries, the
   first with two ``{"s", "e"}`` rows and the second with one.
-- ``filter_existing_edges`` re-reads ``unfiltered/`` on a second run, so a row the first
-  run dropped comes back when the second lookup no longer lists it (Finding).
+- ``filter_existing_edges`` filters the CURRENT part file on every run, so a rerun only
+  drops more; a row the first run dropped never comes back, and the ``unfiltered/``
+  backup keeps the first run's original (issue #538).
 - ``main`` prints ``checked <sum of distinct pairs>``, ``dropped <n_existing>`` and the
   nonzero per-type counts, or ``none``.
 """
@@ -453,14 +454,16 @@ def test_query_existing_edges_batches_and_returns_the_union(out_dir: Path) -> No
     assert len(session.calls) == 2
 
 
-def test_filter_existing_edges_rerun_reads_the_backup(out_dir: Path) -> None:
-    """Finding: a second run filters from ``unfiltered/``, not from the current file.
+def test_filter_existing_edges_rerun_is_idempotent(out_dir: Path) -> None:
+    """A rerun filters the current file: run 1's drop stays dropped, run 2 drops more.
 
-    Run 1 drops e2->D1. Run 2's lookup is asked only about the pairs in the CURRENT
-    file ([e1->D1]) and reports e1->D1, but the rows are re-read from the backup, so
-    e2->D1, which run 1 found in the store, is written back (incremental_import.py lines
-    481 and 493 to 508). Pinned until the rerun reads the current file or re-checks
-    every backup pair.
+    Run 1 drops e2->D1. Run 2's lookup is asked about the pairs in the current file
+    ([e1->D1]) and reports e1->D1, so the part file ends empty; e2->D1, which run 1
+    found in the store, is NOT written back (it used to be, because run 2 re-read
+    ``unfiltered/``; issue #538). Reading the current output, rather than refusing a
+    rerun, keeps a retried increment job working, and is safe because an incremental
+    import never deletes a relationship. The backup still holds run 1's original, and
+    the summary counts run 2's single drop.
     """
     part = out_dir / "ExperimentMemberOf-part000.csv"
     backup = out_dir / "unfiltered" / "ExperimentMemberOf-part000.csv"
@@ -479,7 +482,11 @@ def test_filter_existing_edges_rerun_reads_the_backup(out_dir: Path) -> None:
 
     summary = filter_existing_edges(out_dir, second)
     assert asked == [[("e1", "D1")]]
-    assert part.read_text(encoding="utf-8") == f"e2\t\tD1\t{Q}ExperimentMemberOf{Q}\n"
+    assert part.read_text(encoding="utf-8") == ""
+    assert backup.read_text(encoding="utf-8") == original
+    summary_again = filter_existing_edges(out_dir, lambda g, pairs: set())
+    assert summary_again.checked == {"ExperimentMemberOf": 0, "GenomeMemberOf": 2}
+    assert part.read_text(encoding="utf-8") == ""
     assert backup.read_text(encoding="utf-8") == original
     assert summary.existing == {"ExperimentMemberOf": 1, "GenomeMemberOf": 0}
 

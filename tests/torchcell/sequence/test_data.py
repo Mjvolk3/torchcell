@@ -10,18 +10,18 @@ the source:
 - ``calculate_window_bounds(40, 61, strand, 30, 100)``: the gene is 21 bp, the flank is
   ``(30 - 21) // 2 = 4``, so the raw window is ``(36, 65)``, 29 bp. The one-base
   correction adds upstream: ``start - 1`` on ``+`` gives ``(35, 65)``, ``end + 1`` on
-  ``-`` gives ``(36, 66)``. A strand that is neither matches no branch and the 29 bp
-  window is returned (Finding).
-- ``calculate_window_undersized`` with a strand other than ``+``/``-`` binds neither
-  window variable and raises ``UnboundLocalError`` (Finding).
+  ``-`` gives ``(36, 66)``. A strand that is neither is refused by name with
+  ``ValueError`` before any arithmetic (issue #538).
+- ``calculate_window_undersized`` with a strand other than ``+``/``-`` raises
+  ``ValueError`` naming the strand (issue #538).
 - ``compute_codon_frequency("ATGGCGGCGCTGAAA")``: five codons ATG, GCG, GCG, CTG, AAA, so
   GCG = 2/5 = 0.4, ATG = CTG = AAA = 1/5 = 0.2, the other 60 codons 0.0. The repr sorts by
   frequency with a stable sort over the SortedDict's alphabetical key order, so the
   0.2 tie resolves to AAA, ATG (CTG drops out of the top three).
-- ``GeneSet.__repr__`` has branches for sizes above and below 3 only; size 3 returns None
-  and ``repr`` raises ``TypeError`` (Finding).
-- ``get_chr_from_description`` returns None for a description with neither a chromosome
-  nor a mitochondrion location (Finding against its ``-> int`` annotation).
+- ``GeneSet.__repr__`` lists every member when the size is at most 3 and the first
+  three plus ``...`` above that (issue #538 fixed the size-3 gap).
+- ``get_chr_from_description`` raises ``ValueError`` quoting a description with neither
+  a chromosome nor a mitochondrion location (issue #538).
 """
 
 import logging
@@ -476,14 +476,18 @@ def test_compute_codon_frequency_refuses_bad_cds() -> None:
     assert str(ambiguous.value) == message
 
 
-def test_compute_codon_frequency_empty_cds_divides_by_zero() -> None:
-    """Finding: the empty CDS passes the validator (0 % 3 == 0, the empty set is a subset).
+def test_compute_codon_frequency_empty_cds_is_refused() -> None:
+    """An empty CDS is refused at validation by name, never divided by zero codons.
 
-    It then divides by ``total_codons = 0`` at data.py line 694. Pinned until the
-    validator refuses an empty CDS.
+    ``0 % 3 == 0`` and the empty set is a subset, so the length/alphabet check alone let
+    it through to ``count / 0`` (issue #538). The ValueError keeps the codon-frequency
+    dataset's ``except ValueError: continue`` skip working for empty CDSs.
     """
-    with pytest.raises(ZeroDivisionError):
+    with pytest.raises(ValueError) as empty:
         compute_codon_frequency("")
+    assert str(empty.value) == (
+        "Empty CDS string; a codon frequency needs at least one codon."
+    )
 
 
 def test_codon_frequency_repr_top_three_and_tie_order() -> None:
@@ -516,14 +520,18 @@ def test_codon_frequency_repr_flags_wrong_size_and_bad_sum() -> None:
     )
 
 
-def test_geneset_repr_size_three_raises() -> None:
-    """Finding: ``GeneSet.__repr__`` covers ``> 3`` and ``< 3`` only (data.py 130 to 133).
+def test_geneset_repr_size_three_and_four() -> None:
+    """Size 3 lists all three members with no ellipsis; size 4 shows three plus ``...``.
 
-    Size 3 falls through and returns None, so ``repr`` raises TypeError. Pinned until the
-    ``elif`` becomes ``else``.
+    Size 3 used to fall between the ``> 3`` and ``< 3`` branches and return None
+    (issue #538).
     """
-    with pytest.raises(TypeError, match="__repr__ returned non-string"):
-        repr(GeneSet(["YAL001C", "YAL002W", "YAL003W"]))
+    assert repr(GeneSet(["YAL003W", "YAL001C", "YAL002W"])) == (
+        "GeneSet(size=3, items=['YAL001C', 'YAL002W', 'YAL003W'])"
+    )
+    assert repr(GeneSet(["YAL004W", "YAL003W", "YAL001C", "YAL002W"])) == (
+        "GeneSet(size=4, items=['YAL001C', 'YAL002W', 'YAL003W']...)"
+    )
 
 
 def test_geneset_sorts_and_deduplicates() -> None:
@@ -534,15 +542,26 @@ def test_geneset_sorts_and_deduplicates() -> None:
 
 
 def test_get_chr_from_description_non_mito_location_and_no_tag() -> None:
-    """Finding: a non-mitochondrial location and a tagless description both return None.
+    """A description with no chromosome tag and no mitochondrion location is refused.
 
-    The loop skips the ``[location=plastid]`` part and falls off the end (data.py line
-    321), against the ``-> int`` annotation. The first chromosome tag wins when a
-    location precedes it. Pinned until unmatched descriptions raise.
+    The ``ValueError`` quotes the description, honoring the ``-> int`` annotation instead
+    of returning None (issue #538). A chromosome tag after a non-mitochondrial location
+    still resolves.
     """
-    assert get_chr_from_description("ref|X| [location=plastid] [top=circular]") is None
-    assert get_chr_from_description("no tags here") is None
+    with pytest.raises(ValueError) as plastid:
+        get_chr_from_description("ref|X| [location=plastid] [top=circular]")
+    assert str(plastid.value) == (
+        "Description has no [chromosome=...] or [location=mitochondrion] tag: "
+        "'ref|X| [location=plastid] [top=circular]'"
+    )
+    with pytest.raises(ValueError) as tagless:
+        get_chr_from_description("no tags here")
+    assert str(tagless.value) == (
+        "Description has no [chromosome=...] or [location=mitochondrion] tag: "
+        "'no tags here'"
+    )
     assert get_chr_from_description("[location=plastid] [chromosome=XVI]") == 16
+    assert get_chr_from_description("[location=mitochondrion] [top=circular]") == 0
 
 
 def test_roman_to_int_subtractive_pairs_and_refusal() -> None:
@@ -554,14 +573,14 @@ def test_roman_to_int_subtractive_pairs_and_refusal() -> None:
         roman_to_int("XZ")
 
 
-def test_calculate_window_undersized_unknown_strand_unbound() -> None:
-    """Finding: a strand other than ``+``/``-`` binds no window variable (data.py 414 to 420).
+def test_calculate_window_undersized_unknown_strand_refused() -> None:
+    """A strand other than ``+``/``-`` is refused with a ValueError naming it.
 
-    The assertion line then raises UnboundLocalError instead of a named refusal. Pinned
-    until the function raises ValueError for an unknown strand.
+    It used to bind no window variable and raise UnboundLocalError (issue #538).
     """
-    with pytest.raises(UnboundLocalError, match="end_window"):
+    with pytest.raises(ValueError) as unknown:
         calculate_window_undersized(10, 50, ".", 20)
+    assert str(unknown.value) == "Strand must be '+' or '-', got '.'"
 
 
 def test_calculate_window_bounds_undersized_delegates_by_strand() -> None:
@@ -570,16 +589,22 @@ def test_calculate_window_bounds_undersized_delegates_by_strand() -> None:
     assert calculate_window_bounds(10, 20, "-", 5, 100) == (15, 20)
 
 
-def test_calculate_window_bounds_unknown_strand_returns_short_window() -> None:
-    """Finding: an unknown strand skips the one-base parity fix (data.py 493 to 504).
+def test_calculate_window_bounds_odd_flank_is_exact_and_unknown_strand_refused() -> (
+    None
+):
+    """Every returned window is exactly the requested length; an unknown strand is refused.
 
-    21 bp gene, 30 bp window: flank (30 - 21) // 2 = 4 gives (36, 65), 29 bp, returned
-    as is; ``+`` and ``-`` give (35, 65) and (36, 66). Pinned until the strand is
-    validated.
+    21 bp gene (40, 61), 30 bp window: flank (30 - 21) // 2 = 4 gives (36, 65), 29 bp.
+    The odd base goes upstream: ``+`` moves the start to 36 - 1 = 35, giving (35, 65),
+    65 - 35 = 30; ``-`` moves the end to 65 + 1 = 66, giving (36, 66), 66 - 36 = 30.
+    A ``.`` strand has no upstream, so it is refused by name before the arithmetic
+    instead of returning the 29 bp (36, 65) (issue #538).
     """
-    assert calculate_window_bounds(40, 61, ".", 30, 100) == (36, 65)
     assert calculate_window_bounds(40, 61, "+", 30, 100) == (35, 65)
     assert calculate_window_bounds(40, 61, "-", 30, 100) == (36, 66)
+    with pytest.raises(ValueError) as unknown:
+        calculate_window_bounds(40, 61, ".", 30, 100)
+    assert str(unknown.value) == "Strand must be '+' or '-', got '.'"
 
 
 def test_calculate_window_bounds_symmetric_clips_to_shorter_flank() -> None:
@@ -592,16 +617,18 @@ def test_calculate_window_bounds_symmetric_clips_to_shorter_flank() -> None:
     assert calculate_window_bounds_symmetric(90, 98, 30, 100) == (88, 100)
 
 
-def test_dna_selection_missing_start_is_type_error() -> None:
-    """Finding: the ``mode="before"`` validator compares ``None > end`` (data.py line 58).
+def test_dna_selection_missing_start_is_named_validation_error() -> None:
+    """A payload without ``start`` is a pydantic missing-field error at ``start``.
 
-    A payload without ``start`` raises a bare TypeError rather than a pydantic missing
-    field error. Pinned until the validator guards absent keys.
+    The start/end check now runs after field validation (issue #538), so it never
+    compares ``None > end`` and raises a bare TypeError.
     """
-    with pytest.raises(TypeError, match="'>' not supported"):
+    with pytest.raises(ValidationError) as missing:
         DnaSelectionResult.model_validate(
             {"id": "x", "chromosome": 1, "strand": "+", "end": 3, "seq": "A"}
         )
+    errors = missing.value.errors()
+    assert [(e["loc"], e["type"]) for e in errors] == [(("start",), "missing")]
 
 
 def test_dna_selection_refusal_messages() -> None:

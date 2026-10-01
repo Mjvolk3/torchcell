@@ -15,3 +15,8 @@ Thirteen tests with `aiohttp` replaced by a fake session, `asyncio.sleep` stubbe
 Thirteen to seventeen tests, 93 to 100 percent. Two concurrent fetches share one 11-GET download; `max_retries=0` makes no request; the chunks-of-50 split in `main_get_all_genes`. Two tests carry `# test-quality: allow` because their targets return None and the side effects are asserted.
 
 Findings: a total fetch failure is written to disk as 11 nulls and later skipped as already cached (lines 100-113, 265); `SCerevisiaeGenome()` is built with its defaults, a relative root and `overwrite=True` (299).
+
+## 2026.09.30 - Findings retired (issue #538)
+
+- Retired: a total fetch failure cached as 11 nulls and skipped forever; `main_get_all_genes` building `SCerevisiaeGenome()` with its defaults.
+- Now asserted: the exact `ValueError` naming every failed key, no file and no stored data, a later `download_genes` refetching (110 GETs); a one-endpoint failure naming only `go_details`; the genome built at `$DATA_ROOT/data/sgd/genome` and `$DATA_ROOT/data/go` with `overwrite=False` and `load_dotenv` called once inside `main_get_all_genes`.

@@ -19,3 +19,8 @@ Findings: a 5' intron with no CDS, or with no Verified CDS, raises `UnboundLocal
 ## 2026.09.30 - Plus-strand 5' window (issue #543)
 
 Retired the Finding that the `+` 5' window included the first CDS base. Now asserted: YAL002W `window_five_prime(5)` is `CHR_I[28:33] = TAGGA` at `(28, 33)`, the undersized window is `CHR_I[0:33]`, and window 40 is refused as `7bp outside`.
+
+## 2026.09.30 - Findings retired (issue #538)
+
+- Retired: the unbound `feature` for a 5' intron with no usable CDS, the "not found" read of a CDS without `orf_classification`, the `.`-strand gene with `seq` None, `get_seq` accepting a FASTA key, the stale `feature_index`/`go_genes` after `drop_chrmt`, and `main`'s `overwrite=True`.
+- Now asserted: the exact `ValueError` messages (gene id, CDS id and span, strand), `get_seq` refusing a FASTA key, an absent chromosome number and a `.` strand by name, Q0010 resolving as RETIRED and GO:0000002 mapping to YAL002W only after the drop, and `overwrite=False` in `main`. The `self.id` and `FeatureNotFoundError` findings remain pinned.

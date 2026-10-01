@@ -574,29 +574,43 @@ def test_candidate_names_duplicate_is_kept_once() -> None:
     ]
 
 
-def test_hydrate_is_stripped_before_monohydrate_and_dihydrate() -> None:
-    """Finding: ``hydrate`` precedes ``monohydrate``/``dihydrate`` in ``_SALT_QUALIFIERS``.
+def test_monohydrate_and_dihydrate_are_stripped_whole() -> None:
+    """``monohydrate``/``dihydrate`` precede ``hydrate`` in ``_SALT_QUALIFIERS``.
 
-    The replace loop (media.py lines 339 to 340) removes the ``hydrate`` substring
-    first, leaving ``mono`` / ``di`` behind, so ``L-cysteine hydrochloride monohydrate``
-    never yields the candidate ``l-cysteine`` and the two longer qualifiers never
-    match. Pinned until the longer qualifiers are stripped first.
+    Stripping ``hydrate`` first used to leave ``l-cysteine mono`` and ``calcium chloride
+    di`` (issue #538). Now the bare species is the second candidate, and a plain
+    ``hydrate`` is still stripped.
     """
     assert _candidate_names("L-cysteine hydrochloride monohydrate") == [
         "l-cysteine hydrochloride monohydrate",
-        "l-cysteine mono",
+        "l-cysteine",
     ]
-    assert _candidate_names("calcium chloride dihydrate")[1] == "calcium chloride di"
+    assert _candidate_names("l-cysteine monohydrate") == [
+        "l-cysteine monohydrate",
+        "l-cysteine",
+    ]
+    assert _candidate_names("calcium chloride dihydrate") == [
+        "calcium chloride dihydrate",
+        "calcium chloride",
+        "l-calcium chloride dihydrate",
+        "l-calcium chloride",
+    ]
+    assert _candidate_names("glucose hydrate")[:2] == ["glucose hydrate", "glucose"]
 
 
-def test_normalize_keeps_punctuation_despite_its_docstring() -> None:
-    """Finding: ``_normalize`` claims to "drop punctuation a model never carries".
+def test_normalize_drops_sentence_punctuation_and_keeps_name_punctuation() -> None:
+    """``_normalize`` drops ``. ; ! ? "`` and keeps what chemical names carry.
 
-    It lowercases, strips, collapses whitespace and turns a curly apostrophe into a
-    straight one; no punctuation is dropped (media.py lines 316 to 321). Pinned until
-    the docstring or the function changes.
+    The docstring promised dropped punctuation and none was dropped (issue #538). Commas,
+    hyphens, parentheses, ``+``, colons and apostrophes stay (``2,3-...``,
+    ``(r)-pantothenate``, ``mg(2+)``, ``chebi:4167``, ``5'-amp``); the curly apostrophe
+    is straightened and the whitespace a dropped mark leaves is collapsed.
     """
-    assert _normalize("  L-Glu\u2019s,   Acid. ") == "l-glu's, acid."
+    assert _normalize("  L-Glu\u2019s,   Acid. ") == "l-glu's, acid"
+    assert _normalize('"(R)-Pantothenate"; ') == "(r)-pantothenate"
+    assert _normalize("Mg(2+)!?") == "mg(2+)"
+    assert _normalize("CHEBI:4167") == "chebi:4167"
+    assert _normalize("2,3-Bisphosphoglycerate") == "2,3-bisphosphoglycerate"
 
 
 def test_diff_bounds_sc_minus_sc_ura_is_exactly_uracil(

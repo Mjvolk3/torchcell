@@ -16,12 +16,13 @@ Endpoint URLs are ``osp.join(sgd_url, locusID, endpoint)``, so for ``YAL001C`` t
 
 2026.09.30 (Phase 16). Added: two concurrent ``fetch_data`` calls on one gene share one
 download (11 GETs, not 22) and a later call issues none; ``max_retries=0`` returns None
-without a GET; a download whose every endpoint fails still writes the 11 keys as JSON
-``null`` (with the default 10 retries: 110 GETs and backoff delays ``2**0 .. 2**8`` per
-endpoint, 9 sleeps each, 99 in all), and ``download_genes`` then skips that locus as
-already cached (Finding); ``main_get_all_genes`` builds ``SCerevisiaeGenome()`` with its
-defaults and runs one ``download_gene_chunk`` per 50 loci, so 120 loci give chunks of
-50, 50 and 20 with ``create_gene`` and ``is_validated=False``.
+without a GET; a download whose every endpoint fails (with the default 10 retries: 110
+GETs and backoff delays ``2**0 .. 2**8`` per endpoint, 9 sleeps each, 99 in all) raises
+a ValueError naming the 11 failed keys and writes no file, so ``download_genes`` fetches
+the locus again on the next run (issue #538); ``main_get_all_genes`` opens the genome
+under ``$DATA_ROOT`` with ``overwrite=False`` and runs one ``download_gene_chunk`` per 50
+loci, so 120 loci give chunks of 50, 50 and 20 with ``create_gene`` and
+``is_validated=False``.
 """
 
 import asyncio
@@ -361,28 +362,34 @@ def test_zero_retries_returns_none_without_a_request(
     assert session.urls == []
 
 
-def test_failed_download_is_cached_as_nulls_and_then_skipped(  # test-quality: allow returns None; asserts the file, GETs, sleeps and factory calls it causes
+def test_failed_download_raises_and_caches_nothing(  # test-quality: allow returns None; asserts the error, file, GETs, sleeps and factory calls it causes
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     session: type[FakeSession],
     sleeps: list[float],
 ) -> None:
-    """Finding: a download where every GET fails still writes ``<locus>.json``.
+    """A download where every GET fails raises, writes no file and stores no data.
 
-    ``fetch_data`` only raises when ``_data`` is empty, but ``download_data`` stores a
-    None under each of the 11 keys (sgd.py lines 100 to 113), so the locus is written
-    as nulls and ``download_genes`` later skips it as "already exists" (line 265).
-    Pinned until a failed endpoint aborts the write.
+    It used to store None under each of the 11 keys and write them as JSON nulls, which
+    ``download_genes`` then skipped forever as "already exists" (issue #538). Now the
+    ValueError names every failed key, and a later ``download_genes`` builds the gene
+    again and issues the 110 GETs anew.
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     gene_dir = tmp_path / "data/sgd/genome/genes"
     session.mode = "error"
     gene = sgd.create_gene("YAL001C", False)
-    asyncio.run(gene.fetch_data())
+    with pytest.raises(ValueError) as failed:
+        asyncio.run(gene.fetch_data())
+    keys = ["locus", *ENDPOINTS]
+    assert str(failed.value) == (
+        f"SGD fetch failed for YAL001C: {keys} returned no data after every retry; "
+        "nothing was cached"
+    )
     assert len(session.urls) == 11 * 10
     assert sleeps == [2**i for i in range(9)] * 11
-    nulls = {key: None for key in ["locus", *ENDPOINTS]}
-    assert json.loads((gene_dir / "YAL001C.json").read_text()) == nulls
+    assert os.listdir(gene_dir) == []
+    assert gene._data == {}
     session.urls = []
     made: list[str] = []
 
@@ -390,8 +397,29 @@ def test_failed_download_is_cached_as_nulls_and_then_skipped(  # test-quality: a
         made.append(locus)
         return sgd.create_gene(locus, validated)
 
-    asyncio.run(sgd.download_genes(["YAL001C"], factory, False))
-    assert (made, session.urls) == ([], [])
+    with pytest.raises(ValueError, match="SGD fetch failed for YAL001C"):
+        asyncio.run(sgd.download_genes(["YAL001C"], factory, False))
+    assert (made, len(session.urls)) == (["YAL001C"], 110)
+
+
+def test_partial_download_failure_names_only_the_failed_endpoint(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, session: type[FakeSession]
+) -> None:
+    """One failed endpoint is enough to refuse the write; the error names just it."""
+
+    async def no_go(self: Gene) -> None:
+        return None
+
+    monkeypatch.setattr(Gene, "go_details", no_go)
+    gene = Gene(locusID="YAL001C", is_validated=False, base_data_dir=str(tmp_path))
+    with pytest.raises(ValueError) as failed:
+        asyncio.run(gene.fetch_data())
+    assert str(failed.value) == (
+        "SGD fetch failed for YAL001C: ['go_details'] returned no data after every "
+        "retry; nothing was cached"
+    )
+    assert os.listdir(tmp_path) == []
+    assert len(session.urls) == 10
 
 
 class _GenomeStub:
@@ -407,15 +435,18 @@ class _GenomeStub:
 def test_main_get_all_genes_chunks_by_fifty(  # test-quality: allow returns None; asserts the constructor call and chunks it causes
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Finding: ``SCerevisiaeGenome()`` is built with no arguments (sgd.py line 299).
+    """The genome opens under ``$DATA_ROOT`` with ``overwrite=False``; 50 loci per chunk.
 
-    That is the relative ``data/sgd/genome`` root with ``overwrite=True`` (memory note
-    genome-overwrite-true-rebuild-race). The 120 loci go out as chunks of 50, 50, 20,
-    each with ``create_gene`` and validation off. Pinned until ``main_get_all_genes``
-    takes a root and builds with ``overwrite=False``.
+    It used to be ``SCerevisiaeGenome()``, the relative ``data/sgd/genome`` root with
+    ``overwrite=True`` (issue #538; memory note genome-overwrite-true-rebuild-race).
+    ``load_dotenv`` is stubbed so the repo ``.env`` is not read. The 120 loci go out as
+    chunks of 50, 50, 20, each with ``create_gene`` and validation off.
     """
     import torchcell.sequence.genome.scerevisiae.s288c as s288c
 
+    dotenv_calls: list[object] = []
+    monkeypatch.setattr(sgd, "load_dotenv", lambda *a, **k: dotenv_calls.append(a))
+    monkeypatch.setenv("DATA_ROOT", "/data-root")
     _GenomeStub.calls = []
     monkeypatch.setattr(s288c, "SCerevisiaeGenome", _GenomeStub)
     seen: list[tuple[list[str], object, bool]] = []
@@ -427,7 +458,17 @@ def test_main_get_all_genes_chunks_by_fifty(  # test-quality: allow returns None
 
     monkeypatch.setattr(sgd, "download_gene_chunk", fake_chunk)
     sgd.main_get_all_genes()
-    assert _GenomeStub.calls == [((), {})]
+    assert dotenv_calls == [()]
+    assert _GenomeStub.calls == [
+        (
+            (),
+            {
+                "genome_root": "/data-root/data/sgd/genome",
+                "go_root": "/data-root/data/go",
+                "overwrite": False,
+            },
+        )
+    ]
     ids = [f"Y{i:03d}" for i in range(120)]
     assert [chunk for chunk, _, _ in seen] == [ids[:50], ids[50:100], ids[100:]]
     assert {(fn, flag) for _, fn, flag in seen} == {(sgd.create_gene, False)}

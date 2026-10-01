@@ -62,3 +62,10 @@ workflow has been red since 2026-07-16 and the lint workflow since 2026-07-14 (o
 unformatted test file). `data_root()` now reads the variable when a `Gene` is built or
 `download_genes` runs, raising the same error then; `Gene.base_data_dir` gets its default
 from a factory. No fallback: a missing data root still stops the first real use.
+
+## 2026.09.30 - A failed SGD fetch is never cached; main opens the genome under DATA_ROOT (issue #538)
+
+- `download_data` stored None for every endpoint that failed all retries and wrote the file anyway, so a total failure was cached as 11 nulls and `download_genes` skipped it forever as "already exists". Any failed endpoint now raises `ValueError` naming the failed keys, and nothing is stored or written, so the next run refetches the locus. One failed locus therefore stops a `main_get_all_genes` run loudly; a rerun skips the loci already cached.
+- `main_get_all_genes` built `SCerevisiaeGenome()` with its defaults (relative `data/sgd/genome`, `overwrite=True`). It now uses `$DATA_ROOT/data/sgd/genome` and `$DATA_ROOT/data/go` with `overwrite=False`.
+- `load_dotenv()` moved from import time into `main_get_all_genes`; `data_root()` already reads `DATA_ROOT` at call time.
+- Evidence: `tests/torchcell/graph/test_graph_sgd.py` (`test_failed_download_raises_and_caches_nothing`, `test_partial_download_failure_names_only_the_failed_endpoint`, `test_main_get_all_genes_chunks_by_fifty`).

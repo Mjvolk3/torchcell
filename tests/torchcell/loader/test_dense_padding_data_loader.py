@@ -12,22 +12,24 @@ Padding to the longer graph appends one row to graph 2. Floats pad with
 ``FLOAT_PADDING_VALUE = 1e-5`` (not zero), integers with ``-1``; bool tensors go through a
 long ``-1`` pad, get their mask from it, and come back as bool with ``False`` in the pad.
 ``edge_index`` pads along its edge dimension, so graph 2's ``[[0], [1]]`` becomes
-``[[0, -1], [1, -1]]``. Every mask is ``value != padding`` and lands in ``mask_dict``
+``[[0, -1], [1, -1]]``. Every mask is True on the positions a graph's own values fill
+(from its length along the padded axis) and False on padding, and lands in ``mask_dict``
 under the store key (``"gene"``, the edge-type tuple, or the attribute name itself for
 the global store). ``num_nodes`` sums to 5 with the per-graph list ``[3, 2]`` kept.
 
-2026.09.30, Phase 16: the recursion, key-name, storage and dataset branches. A dict or
-list of int tensors ``[1, 2]`` and ``[3]`` collated with ``non_float_padding_value=-7``
-pads the bare tensors with -7 but the nested ones with the module default -1, because
-the recursive calls (``dense_padding_data_loader.py:190`` and ``:204``) do not forward the
-padding arguments. A key containing ``edge_index`` (so ``hyperedge_index`` too) pads
-``[[0, 1], [2, 3]]`` and ``[[4], [5]]`` along the edge axis to ``[[4, -1], [5, -1]]``. A
-float64 tensor takes the non-float32 branch yet still pads with 1e-5 and stays float64.
-A stored value equal to the pad (an id of -1, a feature of 1e-5) is masked False like
-the pad itself. The shared-memory worker path, the two TensorFrame branches (torch_frame
-is not installed, so ``torch_geometric.typing.torch_frame`` is ``object``) and the
-``OnDiskDataset`` indirection (two ``Data`` graphs with ``x = [[1], [2]]`` and ``[[3]]``,
-written to ``tmp_path``) are pinned against the dense batch they produce.
+2026.09.30, Phase 16: the recursion, key-name, storage and dataset branches. A key
+containing ``edge_index`` (so ``hyperedge_index`` too) pads ``[[0, 1], [2, 3]]`` and
+``[[4], [5]]`` along the edge axis to ``[[4, -1], [5, -1]]``. A float64 tensor takes the
+non-float32 branch yet still pads with 1e-5 and stays float64. The shared-memory worker
+path and the ``OnDiskDataset`` indirection (two ``Data`` graphs with ``x = [[1], [2]]``
+and ``[[3]]``, written to ``tmp_path``) are pinned against the dense batch they produce.
+
+2026.09.30, issue #538: a dict or list of int tensors ``[1, 2]`` and ``[3]`` collated with
+``non_float_padding_value=-7`` pads the nested tensors with -7 too (the recursion now
+forwards both padding values); a stored value equal to the pad (an id of -1, a feature
+of 1e-5) stays True in the mask; the worker path no longer reads the pre-2.0 flags; and
+both TensorFrame branches refuse with the same ``NotImplementedError`` (torch_frame is
+not installed, so ``torch_geometric.typing.torch_frame`` is ``object``).
 """
 
 from collections import namedtuple
@@ -304,14 +306,12 @@ def test_data_loader_yields_one_dense_batch_and_drops_a_passed_collate_fn() -> N
     )
 
 
-def test_nested_mappings_and_lists_ignore_a_custom_integer_pad() -> None:
-    """Finding: the recursion drops the caller's padding values.
+def test_nested_mappings_and_lists_honor_a_custom_pad() -> None:
+    """The recursion forwards the caller's padding values to nested tensors.
 
-    A bare tensor honors ``non_float_padding_value=-7``; the same tensors inside a dict or
-    a list are padded with the default -1 because ``_dense_padded_collate`` recurses without
-    forwarding ``float_padding_value`` / ``non_float_padding_value``
-    (``dense_padding_data_loader.py:190-192`` and ``:204-206``). Pinned until the
-    recursive calls pass them on.
+    A bare tensor, the same tensors inside a dict and inside a list all pad with
+    ``non_float_padding_value=-7``; a nested float pads with ``float_padding_value=0.5``.
+    The nested ones used to fall back to the module defaults (issue #538).
     """
     ones, three = torch.tensor([1, 2]), torch.tensor([3])
     bare, bare_mask = dpl._dense_padded_collate(
@@ -322,12 +322,21 @@ def test_nested_mappings_and_lists_ignore_a_custom_integer_pad() -> None:
     nested, nested_mask = dpl._dense_padded_collate(
         "k", [{"a": ones}, {"a": three}], [], [], non_float_padding_value=-7
     )
-    assert nested["a"].tolist() == [[1, 2], [3, -1]]
+    assert nested["a"].tolist() == [[1, 2], [3, -7]]
     assert nested_mask["a"].tolist() == [[True, True], [True, False]]
-    listed, _ = dpl._dense_padded_collate(
+    listed, listed_mask = dpl._dense_padded_collate(
         "k", [[ones], [three]], [], [], non_float_padding_value=-7
     )
-    assert listed[0].tolist() == [[1, 2], [3, -1]]
+    assert listed[0].tolist() == [[1, 2], [3, -7]]
+    assert listed_mask[0].tolist() == [[True, True], [True, False]]
+    floats, _ = dpl._dense_padded_collate(
+        "k",
+        [{"f": torch.tensor([1.0, 2.0])}, {"f": torch.tensor([3.0])}],
+        [],
+        [],
+        float_padding_value=0.5,
+    )
+    assert floats["f"].tolist() == [[1.0, 2.0], [3.0, 0.5]]
 
 
 def test_any_key_containing_edge_index_pads_along_the_edge_axis() -> None:
@@ -363,75 +372,68 @@ def test_float64_keeps_its_dtype_and_pads_with_the_float_value() -> None:
     assert mask.tolist() == [[True, True], [True, False]]
 
 
-def test_a_real_value_equal_to_the_pad_is_masked_as_padding() -> None:
-    """Finding: the mask is ``value != pad`` (``dense_padding_data_loader.py:161``).
+def test_a_real_value_equal_to_the_pad_stays_unmasked() -> None:
+    """The mask comes from each graph's length, so a real value equal to the pad is True.
 
-    A genuine id of -1 and a genuine feature of exactly 1e-5 are indistinguishable from
-    padding, so both are masked False in an otherwise full row. Pinned until the mask is
-    built from the per-graph lengths instead of from the values.
+    A genuine id of -1 and a genuine feature of exactly 1e-5 in two full graphs used to
+    be masked False like padding (issue #538). Both graphs have two nodes, so every
+    position is True; a third, one-node graph is padded and only its pad row is False,
+    although its pad and graph a's real values are the same numbers.
     """
     a, b = HeteroData(), HeteroData()
     a["gene"].ids = torch.tensor([-1, 5])
     b["gene"].ids = torch.tensor([7, 8])
     a["gene"].x = torch.tensor([[1e-5], [2.0]])
     b["gene"].x = torch.tensor([[3.0], [4.0]])
+    c = HeteroData()
+    c["gene"].ids = torch.tensor([9])
+    c["gene"].x = torch.tensor([[6.0]])
     batch = dense_padded_from_data_list([a, b])
-    assert batch.mask_dict["gene"]["ids"].tolist() == [[False, True], [True, True]]
-    assert batch.mask_dict["gene"]["x"].tolist() == [
-        [[False], [True]],
+    assert batch.mask_dict["gene"]["ids"].tolist() == [[True, True], [True, True]]
+    assert batch.mask_dict["gene"]["x"].tolist() == [[[True], [True]], [[True], [True]]]
+    padded = dense_padded_from_data_list([a, c])
+    assert padded["gene"].ids.tolist() == [[-1, 5], [9, -1]]
+    assert padded.mask_dict["gene"]["ids"].tolist() == [[True, True], [True, False]]
+    assert padded.mask_dict["gene"]["x"].tolist() == [
         [[True], [True]],
+        [[True], [False]],
     ]
 
 
-def test_worker_branch_without_pt20_reads_a_flag_torch_geometric_lacks(
+def test_worker_branch_ignores_the_pre_2_0_flags(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Finding: the pre-2.0 fallback reads ``torch_geometric.typing.WITH_PT112``.
+    """The worker path always allocates untyped shared storage; no pre-2.0 flag is read.
 
-    The installed torch_geometric defines ``WITH_PT113`` and no ``WITH_PT112``, so in a
-    worker with ``WITH_PT20`` false the collate raises ``AttributeError``
-    (``dense_padding_data_loader.py:151``). Pinned until the branch is removed or reads
-    a flag that exists.
-    """
-    monkeypatch.setattr(torch.utils.data, "get_worker_info", lambda: object())
-    monkeypatch.setattr(pyg_typing, "WITH_PT20", False)
-    with pytest.raises(AttributeError, match="has no attribute 'WITH_PT112'"):
-        dense_padded_from_data_list(_pair())
-
-
-@pytest.mark.parametrize("with_pt112", [True, False])
-def test_legacy_shared_storage_paths_give_the_same_batch(
-    monkeypatch: pytest.MonkeyPatch, with_pt112: bool
-) -> None:
-    """With the pre-2.0 flags forced, both typed-storage allocations produce exactly the
-    main-process batch: ``x`` padded with 1e-5 and ``ids`` with -1.
+    With ``WITH_PT20`` forced False and no ``WITH_PT112`` defined, the collate used to
+    raise ``AttributeError`` on the undefined flag (issue #538). The dead fallbacks are
+    gone, so the worker batch equals the main-process batch: ``x`` padded with 1e-5 and
+    ``ids`` with -1.
     """
     plain = dense_padded_from_data_list(_pair())
     monkeypatch.setattr(torch.utils.data, "get_worker_info", lambda: object())
     monkeypatch.setattr(pyg_typing, "WITH_PT20", False)
-    monkeypatch.setattr(pyg_typing, "WITH_PT112", with_pt112, raising=False)
+    assert not hasattr(pyg_typing, "WITH_PT112")
     shared = dense_padded_from_data_list(_pair())
     torch.testing.assert_close(shared["gene"].x, plain["gene"].x, atol=0, rtol=0)
     assert shared["gene"].ids.tolist() == [[10, 11, 12], [20, 21, -1]]
     assert torch.equal(shared[EDGE].edge_index, plain[EDGE].edge_index)
 
 
-def test_tensor_frames_are_refused_by_collate_and_break_the_collater() -> None:
-    """The attribute collate raises its own ``NotImplementedError``.
+def test_tensor_frames_are_refused_by_collate_and_by_the_collater() -> None:
+    """Both TensorFrame branches raise the same named ``NotImplementedError``.
 
-    Finding: the collater's TensorFrame branch calls ``torch_frame.cat``, and without
-    torch_frame installed ``torch_frame`` is the placeholder ``object``, so a batch of
-    frames raises ``AttributeError`` (``dense_padding_data_loader.py:373``). Pinned until
-    that branch refuses the way the attribute collate does.
+    The collater's branch used to call ``torch_frame.cat``, which without torch_frame
+    installed is the placeholder ``object``, so a batch of frames raised
+    ``AttributeError`` (issue #538). TensorFrame support was never implemented or
+    tested, so the branch now refuses rather than being implemented.
     """
-    with pytest.raises(
-        NotImplementedError,
-        match=r"^Dense padding collation for TensorFrames is not supported \(tested\) yet\.$",
-    ):
+    message = (
+        r"^Dense padding collation for TensorFrames is not supported \(tested\) yet\.$"
+    )
+    with pytest.raises(NotImplementedError, match=message):
         dpl._dense_padded_collate("t", [TensorFrame(), TensorFrame()], [], [])
-    with pytest.raises(
-        AttributeError, match="type object 'object' has no attribute 'cat'"
-    ):
+    with pytest.raises(NotImplementedError, match=message):
         DensePaddingCollater([])([TensorFrame()])
 
 

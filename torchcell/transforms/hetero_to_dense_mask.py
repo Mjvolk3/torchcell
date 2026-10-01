@@ -14,6 +14,13 @@ class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform i
     Edge attributes are preserved in their original sparse format for memory
     efficiency while adjacency/incidence matrices become boolean dense masks.
 
+    A mask entry is set only when both endpoints are real (original) nodes, so an edge
+    into a padding row or past the input's node count is dropped from the mask (it
+    stays in ``edge_index``). A node tensor is padded with zeros along every one of
+    its first two axes whose size equals the original node count, so a per-node
+    ``[N, N]`` matrix becomes ``[N_pad, N_pad]``. A feature axis that happens to equal
+    ``N`` is padded too: the transform cannot tell it from a node axis.
+
     Args:
         num_nodes_dict (Dict[str, int], optional): Dictionary mapping node types to
             their desired number of nodes. If not provided for a node type, will
@@ -32,6 +39,9 @@ class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform i
         """Add dense masks, pad node attributes, and return the transformed data."""
         # First determine number of nodes for each node type
         num_nodes_dict = {}
+        orig_num_nodes_dict = {
+            node_type: data[node_type].num_nodes for node_type in data.node_types
+        }
         for node_type in data.node_types:
             if node_type in self.num_nodes_dict:
                 num_nodes = self.num_nodes_dict[node_type]
@@ -59,9 +69,10 @@ class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform i
                     device=edge_index.device,
                 )
 
-                # Fill the mask with valid edges
-                valid_edges = (edge_index[0] < src_num_nodes) & (
-                    edge_index[1] < dst_num_nodes
+                # Fill the mask with edges between real nodes; padding rows and
+                # columns stay False
+                valid_edges = (edge_index[0] < orig_num_nodes_dict[src]) & (
+                    edge_index[1] < orig_num_nodes_dict[dst]
                 )
                 valid_edge_index = edge_index[:, valid_edges]
 
@@ -88,9 +99,10 @@ class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform i
                     device=hyperedge_index.device,
                 )
 
-                # Fill in the incidence matrix from the hyperedge_index
-                valid_edges = (hyperedge_index[0] < src_num_nodes) & (
-                    hyperedge_index[1] < dst_num_nodes
+                # Fill in the incidence matrix from the hyperedge_index, real
+                # nodes only
+                valid_edges = (hyperedge_index[0] < orig_num_nodes_dict[src]) & (
+                    hyperedge_index[1] < orig_num_nodes_dict[dst]
                 )
                 valid_he_index = hyperedge_index[:, valid_edges]
 
@@ -141,6 +153,14 @@ class HeteroToDenseMask(BaseTransform):  # type: ignore[misc]  # BaseTransform i
                 if isinstance(value, Tensor) and value.size(0) == orig_num_nodes:
                     size = [num_nodes - value.size(0)] + list(value.size())[1:]
                     padded_value = torch.cat([value, value.new_zeros(size)], dim=0)
+                    # A per-node matrix ([N, N, ...]) is padded on its columns too
+                    if value.dim() >= 2 and value.size(1) == orig_num_nodes:
+                        size = [num_nodes, num_nodes - value.size(1)] + list(
+                            value.size()
+                        )[2:]
+                        padded_value = torch.cat(
+                            [padded_value, padded_value.new_zeros(size)], dim=1
+                        )
                     setattr(store, attr, padded_value)
 
         return data

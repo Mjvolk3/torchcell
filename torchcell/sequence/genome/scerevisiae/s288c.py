@@ -141,15 +141,32 @@ class SCerevisiaeGene(Gene):
             cds_features = [
                 feature for feature in features if feature.featuretype == "CDS"
             ]
+            if len(cds_features) == 0:
+                raise ValueError(
+                    f"Gene {self.id} has a five_prime_UTR_intron but no CDS feature"
+                )
             if len(cds_features) == 1:
                 feature = cds_features[0]
             # sometimes we have more than one CDS, we need to select the one we have most confidence in with "Verified" ORF
-            elif len(cds_features) > 1:
+            else:
+                for cds in cds_features:
+                    # A ValueError, not KeyError: __getitem__ reads KeyError as
+                    # "gene not found", which would hide the malformed CDS.
+                    if "orf_classification" not in cds.attributes:
+                        raise ValueError(
+                            f"Gene {self.id}: CDS {cds.id} at {cds.start}..{cds.end} "
+                            "has no orf_classification attribute"
+                        )
                 verified_orfs = [
                     feature
                     for feature in cds_features
                     if feature.attributes["orf_classification"][0] == "Verified"
                 ]
+                if len(verified_orfs) == 0:
+                    raise ValueError(
+                        f"Gene {self.id} has a five_prime_UTR_intron and "
+                        f"{len(cds_features)} CDS features, none Verified"
+                    )
                 if len(verified_orfs) == 1:
                     feature = verified_orfs[0]
                 if len(verified_orfs) > 1:
@@ -177,6 +194,11 @@ class SCerevisiaeGene(Gene):
         self.start = feature.start
         self.end = feature.end
         self.strand = feature.strand
+        if self.strand not in ("+", "-"):
+            raise ValueError(
+                f"Gene {self.id} has strand {self.strand!r}; a gene needs '+' or '-' "
+                "to orient its sequence and windows"
+            )
 
         # dna sequence
         chr = self.chr_to_nc[self.chromosome]
@@ -492,7 +514,7 @@ class SCerevisiaeGenome(Genome):
         init=False, default=None, repr=False
     )
     # Cached all-feature index (upper-cased) backing resolve_gene_name.
-    _feature_index: dict[str, Any] = field(init=False, default=None, repr=False)
+    _feature_index: dict[str, Any] | None = field(init=False, default=None, repr=False)
     # Use factory to ensure GO DAG is not pickled
     _go_dag: GODag | None = field(init=False, factory=lambda: None, repr=False)
     _obo_path: str | None = field(init=False, default=None, repr=False)
@@ -861,17 +883,27 @@ class SCerevisiaeGenome(Genome):
     def get_seq(
         self, chr: int | str, start: int, end: int, strand: str
     ) -> DnaSelectionResult:
-        """Return the DNA sequence for the given chromosome region and strand."""
-        chr_num = chr
-        if isinstance(chr, int):
-            chr = self.chr_to_nc[chr]
+        """Return the DNA sequence for the given chromosome region and strand.
+
+        ``chr`` is the chromosome number (0 is the mitochondrion), the number that
+        ``DnaSelectionResult.chromosome`` stores; a FASTA key or any other string is
+        refused by name, as is a strand other than ``+``/``-``.
+        """
+        if not isinstance(chr, int) or chr not in self.chr_to_nc:
+            raise ValueError(
+                f"Chromosome must be one of the chromosome numbers "
+                f"{sorted(self.chr_to_nc)}, got {chr!r}"
+            )
+        if strand not in ("+", "-"):
+            raise ValueError(f"Strand must be '+' or '-', got {strand!r}")
+        fasta_key = self.chr_to_nc[chr]
         if strand == "+":
-            seq = self.fasta_dna[chr].seq[start:end]
-        elif strand == "-":
-            seq = self.fasta_dna[chr].seq[start:end].reverse_complement()
+            seq = self.fasta_dna[fasta_key].seq[start:end]
+        else:
+            seq = self.fasta_dna[fasta_key].seq[start:end].reverse_complement()
         return DnaSelectionResult(
             id=self.id,  # type: ignore[attr-defined]  # no 'id' on genome (pre-existing)
-            chromosome=chr_num,  # type: ignore[arg-type]  # chr_num is int when chr is int (pre-existing contract)
+            chromosome=chr,
             strand=strand,
             start=start,
             end=end,
@@ -926,6 +958,11 @@ class SCerevisiaeGenome(Genome):
 
         # Commit the changes to the database
         self.db.conn.commit()
+
+        # The locus index and the GO-to-genes map were built from the pre-drop
+        # database; reset them so the next access rebuilds without chrmt.
+        self._feature_index = None
+        self._go_genes = None
 
     def drop_empty_go(self) -> None:
         """Remove genes that have no GO terms from the database and gene set."""
@@ -986,7 +1023,7 @@ def main() -> None:
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
         go_root=osp.join(DATA_ROOT, "data/go"),
-        overwrite=True,
+        overwrite=False,
     )
     print(f"genome.gene_set: {genome.gene_set}")
     # orf_classes = []

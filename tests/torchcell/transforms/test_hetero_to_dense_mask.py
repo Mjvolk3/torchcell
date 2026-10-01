@@ -13,12 +13,13 @@ three genes with ``pos = [[0, 1], [2, 3], [4, 5]]``, a per-gene ``[3, 3]`` matri
 ``names`` and a ``node_ids`` tensor; a ``physical`` edge list ``[[0, 7], [1, 1]]`` (the
 second column names gene 7, which does not exist), a ``dead`` edge list ``[[7], [8]]``,
 a hyperedge list ``[[5], [0]]`` naming reaction 5 of 2, and an edge type carrying only an
-``edge_attr``. The validity filter is ``index < target count``, so with genes padded to 4
-the physical mask holds only (0, 1), the dead mask and the incidence mask are all False,
-and the attribute-only edge type gets neither mask. The node-attribute padding pads a
-tensor whose first dimension equals the ORIGINAL node count (``pos``, ``pair``) by
-``4 - 3 = 1`` zero row and leaves everything else (``other`` of length 5, the list, and
-``node_ids`` by name) as it was.
+``edge_attr``. The validity filter is ``index < ORIGINAL count`` on both endpoints, so
+with genes padded to 4 the physical mask holds only (0, 1), the dead mask and the
+incidence mask are all False, and the attribute-only edge type gets neither mask. The
+node-attribute padding pads ``pos`` by ``4 - 3 = 1`` zero row and the per-gene ``[3, 3]``
+``pair`` by one zero row AND one zero column, to ``[4, 4]``, and leaves everything else
+(``other`` of length 5, the list, and ``node_ids`` by name) as it was (issue #538 fixed
+the row-only padding and the padded-count filter).
 """
 
 import pytest
@@ -146,13 +147,11 @@ def test_an_edge_type_without_an_index_gets_no_mask() -> None:
 
 
 def test_padding_extends_pos_and_node_sized_tensors_and_leaves_the_rest() -> None:
-    """``pos`` and ``pair`` gain one zero row; ``other`` (length 5), the list of names
-    and ``node_ids`` (skipped by name) are unchanged.
+    """``pos`` gains one zero row; the gene-by-gene ``pair`` gains a zero row and a zero
+    column, ``[3, 3]`` to ``[4, 4]``; ``other`` (length 5), the list of names and
+    ``node_ids`` (skipped by name) are unchanged.
 
-    Finding: the per-node test is ``value.size(0) == orig_num_nodes``
-    (``hetero_to_dense_mask.py:141``), so a gene-by-gene matrix is padded along its rows
-    only and comes back ``[4, 3]``, not ``[4, 4]``. Pinned until square per-node
-    attributes are padded on both axes or declared unsupported.
+    ``pair`` used to be padded on its rows only and came back ``[4, 3]`` (issue #538).
     """
     out = HeteroToDenseMask(num_nodes_dict={"gene": 4})(_edge_case_graph())
     gene = out["gene"]
@@ -162,7 +161,12 @@ def test_padding_extends_pos_and_node_sized_tensors_and_leaves_the_rest() -> Non
     torch.testing.assert_close(
         gene.pair,
         torch.tensor(
-            [[0.0, 1.0, 2.0], [3.0, 4.0, 5.0], [6.0, 7.0, 8.0], [0.0, 0.0, 0.0]]
+            [
+                [0.0, 1.0, 2.0, 0.0],
+                [3.0, 4.0, 5.0, 0.0],
+                [6.0, 7.0, 8.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ]
         ),
     )
     assert torch.equal(gene.other, torch.arange(5))
@@ -170,18 +174,26 @@ def test_padding_extends_pos_and_node_sized_tensors_and_leaves_the_rest() -> Non
     assert torch.equal(gene.node_ids, torch.tensor([7, 8, 9]))
 
 
-def test_an_edge_into_the_padding_row_passes_the_validity_filter() -> None:
-    """Finding: validity is checked against the PADDED count, not the original one.
+def test_an_edge_touching_the_padding_row_is_dropped_from_the_mask() -> None:
+    """Validity is checked against the ORIGINAL node count on both endpoints.
 
-    With three genes padded to four, an edge ``3 -> 0`` names a gene that does not exist
-    in the input, yet ``3 < 4`` so it is written to ``adj_mask[3, 0]`` while
-    ``mask[3]`` marks row 3 as padding (``hetero_to_dense_mask.py:63-69``). Pinned until
-    the filter uses the original node count.
+    With three genes padded to four, ``3 -> 0`` and ``0 -> 3`` each name the padding
+    gene 3, so neither reaches ``adj_mask``; ``0 -> 1`` does. The first used to pass
+    ``3 < 4`` and set ``adj_mask[3, 0]`` on a row ``mask[3]`` marks as padding (issue
+    #538). The index itself keeps all three columns. The same filter holds for an
+    incidence: reaction 2 of 2 padded to 3 is dropped.
     """
     data = _graph()
-    data["gene", "physical", "gene"].edge_index = torch.tensor([[3], [0]])
-    out = HeteroToDenseMask(num_nodes_dict={"gene": 4})(data)
+    data["gene", "physical", "gene"].edge_index = torch.tensor([[3, 0, 0], [0, 3, 1]])
+    data["reaction", "rmr", "metabolite"].hyperedge_index = torch.tensor(
+        [[2, 1], [0, 1]]
+    )
+    out = HeteroToDenseMask(num_nodes_dict={"gene": 4, "reaction": 3})(data)
     expected = torch.zeros(4, 4, dtype=torch.bool)
-    expected[3, 0] = True
+    expected[0, 1] = True
     assert torch.equal(out["gene", "physical", "gene"].adj_mask, expected)
+    assert out["gene", "physical", "gene"].edge_index.tolist() == [[3, 0, 0], [0, 3, 1]]
     assert torch.equal(out["gene"].mask, torch.tensor([True, True, True, False]))
+    incidence = torch.zeros(3, 2, dtype=torch.bool)
+    incidence[1, 1] = True
+    assert torch.equal(out["reaction", "rmr", "metabolite"].inc_mask, incidence)

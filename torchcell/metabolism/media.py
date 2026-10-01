@@ -236,11 +236,14 @@ _NOT_MODELED_ROLES = frozenset(
 # --------------------------------------------------------------------------- #
 
 #: Salt / hydrate / stereo qualifiers that a GEM never carries on the species name.
+#: Stripped by substring in this order, so a qualifier must precede any shorter one it
+#: contains: ``monohydrate`` and ``dihydrate`` before ``hydrate``, else ``hydrate`` is
+#: cut out of them first and leaves ``mono`` / ``di`` behind.
 _SALT_QUALIFIERS = (
     "hydrochloride",
-    "hydrate",
     "monohydrate",
     "dihydrate",
+    "hydrate",
     "anhydrous",
     "sodium salt",
     "potassium salt",
@@ -313,11 +316,19 @@ _DISSOCIATION: dict[str, tuple[str, ...]] = {
 }
 
 
+#: Punctuation that never appears in a metabolite name or identifier: sentence marks
+#: and double quotes. Hyphens, commas, parentheses, brackets, apostrophes, colons and
+#: ``+`` are kept, since names (``2,3-...``, ``(r)-pantothenate``, ``mg(2+)``,
+#: ``5'-amp``) and CURIEs (``chebi:4167``) carry them.
+_DROPPED_PUNCTUATION = re.compile(r'[.;!?"]')
+
+
 def _normalize(name: str) -> str:
-    """Lowercase, collapse whitespace, drop punctuation a model never carries."""
+    """Lowercase, straighten apostrophes, drop ``. ; ! ? "``, collapse whitespace."""
     text = name.strip().lower()
     text = text.replace("’", "'")
-    text = re.sub(r"\s+", " ", text)
+    text = _DROPPED_PUNCTUATION.sub("", text)
+    text = re.sub(r"\s+", " ", text).strip()
     return text
 
 

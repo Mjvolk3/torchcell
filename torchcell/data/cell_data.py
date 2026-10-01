@@ -196,9 +196,12 @@ def _process_metabolism_hypergraph(
 
 
 def compute_strata(go_graph: nx.DiGraph) -> dict[str, int]:
-    """Compute strata (topological levels) for GO graph from leaves to root.
+    """Compute strata (topological levels) for a GO graph whose edges are child -> parent.
 
-    A stratum contains nodes that can be processed in parallel.
+    A stratum contains nodes that can be processed in parallel. Stratum 0 holds the
+    roots, and every term's stratum is greater than each of its parents', so DCell
+    processes the strata in descending order (leaves to root). Terms on a cycle share
+    one stratum, and a descendant of a cycle gets a later stratum than the cycle.
 
     Args:
         go_graph: NetworkX DiGraph with GO terms as nodes
@@ -206,8 +209,8 @@ def compute_strata(go_graph: nx.DiGraph) -> dict[str, int]:
     Returns:
         Dictionary mapping node -> stratum number
     """
-    # Build a reversed graph where edges point from child to parent
-    # This matches the natural flow of information from specific to general terms
+    # Reverse to parent -> child edges, so a node's in-degree counts its parents and
+    # Kahn's pass starts from the roots
     reversed_graph = go_graph.reverse(copy=True)
 
     # Initialize tracking variables
@@ -216,7 +219,7 @@ def compute_strata(go_graph: nx.DiGraph) -> dict[str, int]:
         in_degree[node] = reversed_graph.in_degree(node)
 
     # Start with nodes that have no incoming edges (in_degree = 0)
-    # These are the leaf nodes in the original graph
+    # These are the roots of the original graph (terms with no parent)
     queue = deque([node for node, degree in in_degree.items() if degree == 0])
 
     # Initialize strata assignments
@@ -251,32 +254,21 @@ def compute_strata(go_graph: nx.DiGraph) -> dict[str, int]:
             f"Warning: {len(unassigned)} nodes not assigned to strata due to cycles in the GO graph."
         )
 
-        # Handle cycles by assigning remaining nodes to strata higher than any existing one
+        # Handle cycles by assigning remaining nodes to strata higher than any existing one.
+        # Every node Kahn's pass left is in a cycle or below one, so it still has an
+        # unassigned parent: peeling nodes with no remaining parent never starts.
+        # Collapse each cycle (strongly connected component) to one unit instead, then
+        # order the units parent-first: a cycle shares one stratum and each of its
+        # descendants comes after it, as in the acyclic pass.
         if unassigned:
-            # Use a simple topological sort algorithm to handle the remaining nodes
-            remaining_graph = go_graph.subgraph(unassigned).copy()
-
-            # Iteratively find nodes with no outgoing edges and assign them to strata
-            while remaining_graph.nodes():
-                # Find nodes with no outgoing edges in the remaining graph
-                sinks = [
-                    n
-                    for n in remaining_graph.nodes()
-                    if remaining_graph.out_degree(n) == 0
-                ]
-
-                if not sinks:  # If there are no sinks, there must be a cycle
-                    # Just assign all remaining nodes to the next stratum and break
-                    for node in remaining_graph.nodes():
+            remaining_graph = go_graph.subgraph(unassigned)
+            # condensation keeps the child -> parent direction; reverse it to go
+            # parent -> child, so a generation's parents are all in earlier ones
+            components = nx.condensation(remaining_graph)
+            for generation in nx.topological_generations(components.reverse(copy=True)):
+                for component in generation:
+                    for node in components.nodes[component]["members"]:
                         strata[node] = current_stratum
-                    break
-
-                # Assign current stratum to these sink nodes
-                for node in sinks:
-                    strata[node] = current_stratum
-                    remaining_graph.remove_node(node)
-
-                # Move to next stratum
                 current_stratum += 1
 
     return strata
@@ -321,7 +313,6 @@ def _process_gene_ontology(
         # Store gene set for each GO term
         if "gene_set" in data:
             gene_set = data["gene_set"]
-            x_features[term_idx, 0] = len(gene_set)
             term_gene_count = 0
 
             # Create gene-to-GO edges and track genes for each GO term
@@ -336,8 +327,10 @@ def _process_gene_ontology(
                     term_to_gene_dict[term_idx].append(gene_idx)
                     term_gene_count += 1
 
-            # Store the count of genes for this term
+            # Store the count of genes for this term; the feature counts the same
+            # genes, those in the base graph, not the raw annotation set size
             term_gene_counts[term_idx] = term_gene_count
+            x_features[term_idx, 0] = term_gene_count
             max_genes_per_term = max(max_genes_per_term, term_gene_count)
 
     # Process GO hierarchy (parent-child relationships)

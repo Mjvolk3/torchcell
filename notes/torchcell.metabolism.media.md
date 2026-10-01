@@ -56,3 +56,9 @@ amino acids is also flattened to the single supplement rate.
 
 Used by [[experiments.007-kuzmin-tm.scripts.fba_screen_medium]] to rerun the Yeast9 FBA
 baseline of Fig. 2d on the medium the trigenic screens were scored on.
+
+## 2026.09.30 - Hydrate qualifiers and punctuation in name normalization (issue #538)
+
+- `_SALT_QUALIFIERS` listed `hydrate` before `monohydrate`/`dihydrate`, and the substring strip left `l-cysteine mono` and `calcium chloride di`. The longer qualifiers now come first, so `l-cysteine monohydrate` yields `l-cysteine` and `calcium chloride dihydrate` yields `calcium chloride`.
+- `_normalize` claimed to drop punctuation and dropped none. It now drops `. ; ! ? "` (marks no metabolite name or identifier carries) and keeps hyphens, commas, parentheses, brackets, apostrophes, colons and `+`, which names (`2,3-...`, `(r)-pantothenate`, `mg(2+)`) and CURIEs (`chebi:4167`) need. Both sides of every match go through `_normalize`, so the change is symmetric.
+- Evidence: `tests/torchcell/metabolism/test_media.py` (`test_monohydrate_and_dihydrate_are_stripped_whole`, `test_normalize_drops_sentence_punctuation_and_keeps_name_punctuation`).

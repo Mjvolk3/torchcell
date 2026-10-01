@@ -41,3 +41,7 @@ Retired the Finding that the `+` 5' window included the first CDS base. Now asse
 ## 2026.10.01 - Third review additions
 
 New tests: the record field sets pinned to `RECORD_VERSION`; current-version records with an extra, a missing or an extra `source` field, a non-integer version and a non-object record each refused with the exact `GenomeDatabaseRecordError` message and the file unchanged; `overwrite=True` refusing to downgrade a version 2 record; a write on a shallow copy, deep copy or pickle never changing the original's gene set, cache, log or database; the `(pid, token)` owner and a fresh token per unpickled instance; replay order asserted on the applied calls; the pid range with liveness forced false; and `guard_real_genome_root` for `data`, `slow`, unmarked and autouse.
+
+## 2026.10.01 - Fourth review additions
+
+New tests: unreadable files (truncated, garbage, zero length, zeroed page) migrated on the default path with exactly one `data.db.untrusted` and rebuilt by `overwrite=True`; rows sqlite cannot read behind a readable record; the sqlite message in the reason; a non-JSON record; `overwrite=True` over a version-0 record; a two-error validation summary; sha256 unchanged for the non-integer and non-object refusals; field names and annotations pinned; the guard's tier-absent and root-absent returns; the autouse fixture's body; a copy keeping an assigned gene set; a dead-pid name without the `.building` suffix left alone.

@@ -40,3 +40,7 @@ New helper `require_trusted_genome_database(genome_root)`: data-gated tests call
 ## 2026.10.01 - guard_real_genome_root
 
 The autouse fixture's body is now the plain helper `guard_real_genome_root(node, data_root)`, where `data_root` is a callable invoked only for `data`/`slow` tests, so an unmarked test never resolves `DATA_ROOT`. It is tested hermetically in `test_s288c_synthetic.py`.
+
+## 2026.10.01 - Fixture body is a plain function
+
+`never_migrate_a_real_genome_root(request)` is a plain function registered unchanged as the autouse fixture `_never_migrate_a_real_genome_root`, so the test that calls it with a data-marked request and `DATA_ROOT` on a legacy root exercises the fixture's exact body.

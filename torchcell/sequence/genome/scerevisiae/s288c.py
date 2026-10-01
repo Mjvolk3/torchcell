@@ -18,6 +18,7 @@ import sqlite3
 import stat
 import tempfile
 import weakref
+from contextlib import closing
 from enum import StrEnum
 from itertools import product
 from pathlib import Path
@@ -741,16 +742,19 @@ def write_genome_database(
 
 
 def _read_record_json(db_path: str) -> str | None:
-    """The raw record JSON stored inside ``db_path``, or None when it carries none."""
-    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
-    has_table = conn.execute(
-        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (SOURCE_TABLE,)
-    ).fetchone()
-    if has_table is None:
-        conn.close()
-        return None
-    rows = conn.execute(f"SELECT record FROM {SOURCE_TABLE}").fetchall()
-    conn.close()
+    """The raw record JSON stored inside ``db_path``, or None when it carries none.
+
+    A file sqlite cannot read raises ``sqlite3.DatabaseError``; the connection is
+    closed on every path.
+    """
+    with closing(sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)) as conn:
+        has_table = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+            (SOURCE_TABLE,),
+        ).fetchone()
+        if has_table is None:
+            return None
+        rows = conn.execute(f"SELECT record FROM {SOURCE_TABLE}").fetchall()
     if len(rows) != 1:
         raise GenomeDatabaseSourceError(
             f"{db_path}: {SOURCE_TABLE} holds {len(rows)} rows, expected exactly 1"
@@ -769,10 +773,17 @@ def read_genome_database_record(db_path: str) -> GenomeDatabaseRecord | None:
 def record_version(db_path: str, raw: str) -> int:
     """The ``version`` of the record JSON ``raw`` read from ``db_path``; 0 when absent
     (records written before versioning). A version newer than this checkout's raises
-    :class:`GenomeDatabaseVersionError`; a record that is not a JSON object, or whose
-    version is not an integer, raises :class:`GenomeDatabaseRecordError`.
+    :class:`GenomeDatabaseVersionError`; a record that is not valid JSON, not a JSON
+    object, or whose version is not an integer, raises
+    :class:`GenomeDatabaseRecordError`.
     """
-    data = json.loads(raw)
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise GenomeDatabaseRecordError(
+            f"{db_path} carries a record that is not valid JSON ({exc}). "
+            f"{_UPDATE_CHECKOUT}"
+        ) from exc
     if not isinstance(data, dict):
         raise GenomeDatabaseRecordError(
             f"{db_path} carries a record that is not a JSON object ({type(data).__name__})"
@@ -794,14 +805,24 @@ def record_version(db_path: str, raw: str) -> int:
 
 
 def refuse_newer_record(db_path: str) -> None:
-    """Raise :class:`GenomeDatabaseVersionError` when ``db_path`` exists and carries a
-    record newer than this checkout: even an explicit ``overwrite=True`` must not
-    downgrade a database written by newer code.
+    """Refuse an explicit rebuild over a database written by newer code.
+
+    Raises :class:`GenomeDatabaseVersionError` when ``db_path`` carries a record newer
+    than this checkout (``overwrite=True`` must not downgrade it), and
+    :class:`GenomeDatabaseRecordError` when its record is not valid JSON, not a JSON
+    object, or has a non-integer version (it may be newer code's). Returns when
+    ``db_path`` is absent, carries no record, or is a file sqlite cannot read (a
+    killed in-place rebuild): such a file carries no newer record, so the rebuild
+    proceeds and repairs it.
     """
-    if osp.exists(db_path):
+    if not osp.exists(db_path):
+        return
+    try:
         raw = _read_record_json(db_path)
-        if raw is not None:
-            record_version(db_path, raw)
+    except sqlite3.DatabaseError:  # unreadable: it carries no newer record
+        return
+    if raw is not None:
+        record_version(db_path, raw)
 
 
 def untrusted_reason(
@@ -818,7 +839,10 @@ def untrusted_reason(
     raises :class:`GenomeDatabaseSourceError`: the pinned GFF changed, which is a real
     source change, not a migration.
     """
-    raw = _read_record_json(db_path)
+    try:
+        raw = _read_record_json(db_path)
+    except sqlite3.DatabaseError as exc:
+        return f"sqlite cannot read it ({exc})"
     if raw is None:
         return f"it carries no {SOURCE_TABLE} record"
     version = record_version(db_path, raw)
@@ -842,9 +866,11 @@ def untrusted_reason(
             f"source is {expected.model_dump()}. Rebuild it deliberately, once, while "
             f"no job reads it: {rebuild_call}"
         )
-    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
-    featuretype_counts, relations_count = _database_counts(conn)
-    conn.close()
+    try:
+        with closing(sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)) as conn:
+            featuretype_counts, relations_count = _database_counts(conn)
+    except sqlite3.DatabaseError as exc:
+        return f"sqlite cannot read it ({exc})"
     if (featuretype_counts, relations_count) != (
         record.featuretype_counts,
         record.relations_count,
@@ -862,6 +888,16 @@ def untrusted_reason(
             f"{counter}, {record.change_counter} recorded)"
         )
     return None
+
+
+def _content_digest_or_none(db_path: str) -> str | None:
+    """:func:`database_content_digest` of an untrusted file, or None when sqlite
+    cannot read its rows (then it differs from any fresh build and is kept).
+    """
+    try:
+        return database_content_digest(db_path)
+    except sqlite3.DatabaseError:
+        return None
 
 
 def migrate_genome_database(
@@ -889,7 +925,7 @@ def migrate_genome_database(
     try:
         if untrusted_reason(db_path, expected, rebuild_call) is None:
             return
-        if database_content_digest(db_path) == database_content_digest(tmp_path):
+        if _content_digest_or_none(db_path) == database_content_digest(tmp_path):
             os.replace(tmp_path, db_path)
             log.warning(
                 "genome database %s was not trusted (%s); its rows equal a fresh "
@@ -975,14 +1011,22 @@ class SCerevisiaeGenome(Genome):
     * ``False`` (the default): build it when absent. When present, open it if its
       record (:class:`GenomeDatabaseRecord`) names this genome's source and its row
       counts and change counter still match. A record for a different source (the
-      pinned GFF changed) raises :class:`GenomeDatabaseSourceError`. A database with
-      no record, or written in place after its build, was built or modified by code
-      from before 2026.10.01; it is migrated (:func:`migrate_genome_database`). This
-      is a stated one-time migration of a database that cannot be trusted, not a
-      fallback: the replacement is built from the same sha256-pinned GFF. When the
-      root is not writable, a build or migration raises
-      :class:`GenomeRootNotWritableError` and the untrusted file is never opened.
-    * ``True``: rebuild it unconditionally (atomically). Pass it only deliberately.
+      pinned GFF changed) raises :class:`GenomeDatabaseSourceError`; a record of a
+      newer version raises :class:`GenomeDatabaseVersionError`; a record this
+      checkout cannot read at its own version raises
+      :class:`GenomeDatabaseRecordError`. A database with no record, an older
+      record, rows or a change counter that no longer match the record, or a file
+      sqlite cannot read at all (an in-place rebuild by pre-2026.10.01 code that was
+      killed mid-write) is untrusted and migrated (:func:`migrate_genome_database`).
+      This is a stated one-time migration of a database that cannot be trusted, not a
+      fallback: the replacement is built from the same sha256-pinned GFF, and an
+      unreadable file is kept as ``data.db.untrusted``. When the root is not
+      writable, a build or migration raises :class:`GenomeRootNotWritableError` and
+      the untrusted file is never opened by gffutils.
+    * ``True``: rebuild it (atomically), also over an unreadable file, unless it
+      carries a record of a newer version (:class:`GenomeDatabaseVersionError`) or
+      one this checkout cannot read (:class:`GenomeDatabaseRecordError`). Pass it
+      only deliberately.
 
     Construction also removes this host's ``data.db.*.building`` files whose writer
     pid is dead (a build killed mid-way), when the root is writable.
@@ -1029,8 +1073,9 @@ class SCerevisiaeGenome(Genome):
         init=False, factory=lambda: secrets.token_hex(8), repr=False
     )
     # Every write this instance made, in order, so a copy can be rebuilt from the
-    # shared file: ("delete", ids) or ("remove_deprecated_go_terms", []).
-    _db_writes: list[tuple[str, list[str]]] = field(
+    # shared file: ("delete", ids) or ("remove_deprecated_go_terms", ()). Entries are
+    # immutable tuples, so a copy's new list never shares anything mutable.
+    _db_writes: list[tuple[str, tuple[str, ...]]] = field(
         init=False, factory=list, repr=False
     )
 
@@ -1181,7 +1226,7 @@ class SCerevisiaeGenome(Genome):
         state["_instance_token"] = secrets.token_hex(8)
         # Mutable state a copy must not share (copy.copy passes ``state`` by
         # reference): the write log, and the gene-set cache the drops edit in place.
-        state["_db_writes"] = [(op, list(ids)) for op, ids in self._db_writes]
+        state["_db_writes"] = list(self._db_writes)
         if self._gene_set is not None:
             state["_gene_set"] = GeneSet(self._gene_set)
 
@@ -1234,7 +1279,7 @@ class SCerevisiaeGenome(Genome):
                     self._apply_write(op, ids)
         return super().db
 
-    def _apply_write(self, op: str, ids: list[str]) -> None:
+    def _apply_write(self, op: str, ids: tuple[str, ...]) -> None:
         """Apply one logged write to this instance's private copy (no backup file)."""
         db = super().db
         assert db is not None
@@ -1252,8 +1297,9 @@ class SCerevisiaeGenome(Genome):
     def _write(self, op: str, ids: list[str]) -> None:
         """Make or reuse the private copy, apply ``op`` to it, and log it."""
         self._writable_db()
-        self._apply_write(op, ids)
-        self._db_writes.append((op, ids))
+        entry = (op, tuple(ids))
+        self._apply_write(*entry)
+        self._db_writes.append(entry)
 
     def remove_deprecated_go_terms(self) -> None:
         """Drop GO terms absent from or obsolete in the GO DAG in this instance's copy."""

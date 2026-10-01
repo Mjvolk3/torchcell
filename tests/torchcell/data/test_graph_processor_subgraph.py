@@ -403,10 +403,9 @@ def test_lazy_marks_invalid_reactions_but_keeps_all_of_them() -> None:
     """Perturbing gene 0 invalidates r1 only: reaction pert_mask [T, F, F], mask
     [F, T, T], node_ids [0, 1, 2]. The gpr mask is per gene (False only where the gene
     is deleted: position 0), the rmr mask follows the reaction: positions 0 and 1 (r1)
-    are False. Finding: w_growth is [0, 0, 0], not the cell graph's [1, 0, 0]:
-    _add_reaction_data (graph_processor.py:1720-1723) returns the tensor recomputed from
-    a ``subsystem`` attribute the cell graph does not carry, and ignores
-    cell_graph["reaction"].w_growth.
+    are False. w_growth is the cell graph's stored [1, 0, 0], returned whole (issue
+    #527; before the fix Lazy recomputed it from a ``subsystem`` attribute the
+    ``to_cell_data`` graph does not carry and returned [0, 0, 0]).
     """
     cell_graph = _cell_graph()
     out = LazySubgraphRepresentation().process(cell_graph, PHENOTYPES, SINGLE)
@@ -415,8 +414,8 @@ def test_lazy_marks_invalid_reactions_but_keeps_all_of_them() -> None:
     assert reaction.num_nodes == 3
     assert reaction.pert_mask.tolist() == [True, False, False]
     assert reaction.mask.tolist() == [False, True, True]
-    assert reaction.w_growth.tolist() == [0.0, 0.0, 0.0]
-    assert cell_graph["reaction"].w_growth.tolist() == [1.0, 0.0, 0.0]
+    assert reaction.w_growth.tolist() == [1.0, 0.0, 0.0]
+    assert reaction.w_growth is cell_graph["reaction"].w_growth
     assert out[GPR].hyperedge_index is cell_graph[GPR].hyperedge_index
     assert out[GPR].mask.tolist() == [False, True, True]
     assert out[GPR].num_edges == 3
@@ -428,12 +427,12 @@ def test_lazy_marks_invalid_reactions_but_keeps_all_of_them() -> None:
     assert out["metabolite"].mask.tolist() == [True, True, True]
 
 
-def test_lazy_reads_w_growth_from_a_subsystem_list_when_present() -> None:
-    """With cell_graph["reaction"].subsystem = ["Growth", "Other", "Other"] the
-    recomputed w_growth is [1, 0, 0] (graph_processor.py:1591-1597, list branch).
+def test_lazy_ignores_a_subsystem_list_and_returns_the_stored_w_growth() -> None:
+    """A ``subsystem`` list that contradicts the stored tensor (Growth at r3, not r1)
+    is not read: the output is the stored w_growth [1, 0, 0] (issue #527, one source).
     """
     cell_graph = _cell_graph()
-    cell_graph["reaction"].subsystem = ["Growth", "Other", "Other"]
+    cell_graph["reaction"].subsystem = ["Other", "Other", "Growth"]
     out = LazySubgraphRepresentation().process(cell_graph, PHENOTYPES, SINGLE)
     assert out["reaction"].w_growth.tolist() == [1.0, 0.0, 0.0]
 

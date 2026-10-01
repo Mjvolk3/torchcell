@@ -23,6 +23,40 @@ from torchcell.datamodels import (
 from torchcell.profiling.timing import time_method
 
 
+def _gene_edge_indices(cell_graph: HeteroData) -> dict[Any, torch.Tensor]:
+    """Return the gene-to-gene ``edge_index`` tensors an incidence cache is built from."""
+    return {
+        et: cell_graph[et].edge_index
+        for et in cell_graph.edge_types
+        if et[0] == "gene" and et[2] == "gene"
+    }
+
+
+def _incidence_source_matches(
+    built_from: tuple[int, dict[Any, torch.Tensor]], cell_graph: HeteroData
+) -> bool:
+    """Whether an incidence cache built from ``built_from`` is valid for ``cell_graph``.
+
+    The cache stores, per gene-gene edge type, the edge positions touching each gene, so
+    it depends on exactly the gene count and those ``edge_index`` tensors. A tensor that
+    is the same object as the recorded one matches in O(1); otherwise the contents are
+    compared, and on a match the record is re-pointed at the new tensor so the next
+    call takes the O(1) path (a processor and graph pickled into a DataLoader worker
+    compare contents once, then never again).
+    """
+    num_genes, built_edges = built_from
+    edges = _gene_edge_indices(cell_graph)
+    if num_genes != cell_graph["gene"].num_nodes or built_edges.keys() != edges.keys():
+        return False
+    for et, edge_index in edges.items():
+        if built_edges[et] is edge_index:
+            continue
+        if not torch.equal(built_edges[et], edge_index):
+            return False
+        built_edges[et] = edge_index
+    return True
+
+
 class GraphProcessor(ABC):
     """Abstract base class for processors that build per-sample graphs."""
 
@@ -225,26 +259,6 @@ class SubgraphRepresentation(GraphProcessor):
     ) -> dict[str, Any]:
         max_reaction_idx = cell_graph["reaction"].num_nodes
 
-        # Create Growth subsystem indicator first (before any conditional returns)
-        w_growth = torch.zeros(max_reaction_idx, dtype=torch.float, device=self.device)
-
-        # Check if subsystem attribute exists
-        if hasattr(cell_graph["reaction"], "subsystem"):
-            # Check data type and structure
-            subsystems = cell_graph["reaction"].subsystem
-
-            # Populate the w_growth tensor
-            for i in range(max_reaction_idx):
-                if isinstance(subsystems, list):
-                    if i < len(subsystems) and subsystems[i] == "Growth":
-                        w_growth[i] = 1.0
-                elif torch.is_tensor(subsystems):
-                    if subsystems[i] == "Growth":
-                        w_growth[i] = 1.0
-                elif hasattr(subsystems, "__getitem__"):
-                    if subsystems[i] == "Growth":
-                        w_growth[i] = 1.0
-
         # If no GPR relationship exists, assume all reactions are valid.
         if ("gene", "gpr", "reaction") not in cell_graph.edge_types:
             valid_reactions = torch.arange(max_reaction_idx, device=self.device)
@@ -262,12 +276,10 @@ class SubgraphRepresentation(GraphProcessor):
             )
             reaction_map = torch.arange(max_reaction_idx, device=self.device)
 
-            # Include w_growth in the return dictionary
             return {
                 "valid_reactions": valid_reactions,
                 "gene_map": gene_map.tolist(),
                 "reaction_map": reaction_map.tolist(),
-                "w_growth": w_growth,
             }
 
         # Process gene–reaction (GPR) edges
@@ -343,12 +355,10 @@ class SubgraphRepresentation(GraphProcessor):
         ].num_edges = new_gpr_edge_index.size(1)
         integrated_subgraph["gene", "gpr", "reaction"].pert_mask = ~edge_mask
 
-        # Include w_growth in the return
         return {
             "valid_reactions": valid_reactions,
             "gene_map": gene_map.tolist(),
             "reaction_map": reaction_map.tolist(),
-            "w_growth": w_growth,
         }
 
     def _add_reaction_data(
@@ -363,7 +373,8 @@ class SubgraphRepresentation(GraphProcessor):
         integrated_subgraph["reaction"].num_nodes = len(valid_reactions)
         integrated_subgraph["reaction"].node_ids = valid_reactions.tolist()
 
-        # Subset w_growth to valid reactions if it exists in cell_graph
+        # w_growth has one source: the tensor ``to_cell_data`` stores on the cell
+        # graph (1 for a Growth-subsystem reaction). Subset it to the kept reactions.
         if hasattr(cell_graph["reaction"], "w_growth"):
             w_growth = cell_graph["reaction"].w_growth
             integrated_subgraph["reaction"].w_growth = w_growth[valid_reactions]
@@ -594,13 +605,16 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         self.device: torch.device = torch.device("cpu")
         self.masks: dict[str, dict[str, torch.Tensor]] = {}
         self._edge_incidence_cache: dict[Any, list[torch.Tensor]] | None = None
+        # (gene count, gene-gene edge_index per edge type) the cache was built from
+        self._incidence_built_from: tuple[int, dict[Any, torch.Tensor]] | None = None
 
     @property
     def edge_incidence_cache(self) -> dict[Any, list[torch.Tensor]]:
         """Lazily build and return edge incidence cache.
 
         Maps each node to tensor of edge positions where that node appears.
-        Built once on first access, then cached for all subsequent calls.
+        Built on first use and rebuilt whenever a different cell graph arrives (see
+        ``_build_incidence_cache``).
         """
         if self._edge_incidence_cache is None:
             raise RuntimeError(
@@ -626,7 +640,9 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         """
         import time
 
-        if self._edge_incidence_cache is not None:
+        if self._incidence_built_from is not None and _incidence_source_matches(
+            self._incidence_built_from, cell_graph
+        ):
             return {"total_time_ms": 0.0, "num_edge_types": 0, "total_edges": 0}
 
         start = time.time()
@@ -658,11 +674,22 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         For each gene node, stores tensor of edge positions (indices) where
         that gene appears as either source or destination.
 
-        Complexity: O(E) per edge type, one-time cost
+        Complexity: O(E) per edge type, one-time cost per cell graph
         Memory: O(E) total across all edge types
+
+        The cache is tied to the graph it was built from: the gene count and the
+        gene-gene ``edge_index`` tensors, the only inputs it depends on. When a
+        different graph arrives the cache is REBUILT rather than refused, because the
+        cache is a pure function of the graph and a processor may legitimately serve
+        several graphs (one per dataset, or a test and a benchmark graph); reusing it
+        across graphs read edge positions of the wrong graph and emitted node index -1
+        (issue #527). The per-call check is an identity test per edge type, O(1) for
+        the usual single-graph dataset.
         """
-        if self._edge_incidence_cache is not None:
-            return  # Already built
+        if self._incidence_built_from is not None and _incidence_source_matches(
+            self._incidence_built_from, cell_graph
+        ):
+            return  # built from this graph
 
         num_genes = cell_graph["gene"].num_nodes
         cache = {}
@@ -692,6 +719,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
                 ]
 
         self._edge_incidence_cache = cache
+        self._incidence_built_from = (num_genes, _gene_edge_indices(cell_graph))
 
     @time_method
     def _initialize_masks(self, cell_graph: HeteroData) -> None:
@@ -847,7 +875,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         """Process gene-gene edge types using incidence-based filtering.
 
         Algorithm:
-        1. Build incidence cache on first call (lazy initialization)
+        1. Build incidence cache for this graph (no-op when already built from it)
         2. Compute node relabeling mapping once for all edge types
         3. For each edge type:
            - Use incidence map to directly find edges touching removed nodes
@@ -859,9 +887,8 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         - d = average degree of removed nodes
         - E' = number of kept edges (for filtering/relabeling)
         """
-        # Build cache on first use
-        if self._edge_incidence_cache is None:
-            self._build_incidence_cache(cell_graph)
+        # Build the cache on first use, or rebuild it for a different graph
+        self._build_incidence_cache(cell_graph)
 
         # Pre-compute gene mapping ONCE (not per edge type)
         num_genes = cell_graph["gene"].num_nodes
@@ -919,26 +946,6 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
     ) -> dict[str, Any]:
         max_reaction_idx = cell_graph["reaction"].num_nodes
 
-        # Create Growth subsystem indicator first (before any conditional returns)
-        w_growth = torch.zeros(max_reaction_idx, dtype=torch.float, device=self.device)
-
-        # Check if subsystem attribute exists
-        if hasattr(cell_graph["reaction"], "subsystem"):
-            # Check data type and structure
-            subsystems = cell_graph["reaction"].subsystem
-
-            # Populate the w_growth tensor
-            for i in range(max_reaction_idx):
-                if isinstance(subsystems, list):
-                    if i < len(subsystems) and subsystems[i] == "Growth":
-                        w_growth[i] = 1.0
-                elif torch.is_tensor(subsystems):
-                    if subsystems[i] == "Growth":
-                        w_growth[i] = 1.0
-                elif hasattr(subsystems, "__getitem__"):
-                    if subsystems[i] == "Growth":
-                        w_growth[i] = 1.0
-
         # If no GPR relationship exists, assume all reactions are valid.
         if ("gene", "gpr", "reaction") not in cell_graph.edge_types:
             valid_reactions = torch.arange(max_reaction_idx, device=self.device)
@@ -956,12 +963,10 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
             )
             reaction_map = torch.arange(max_reaction_idx, device=self.device)
 
-            # Include w_growth in the return dictionary
             return {
                 "valid_reactions": valid_reactions,
                 "gene_map": gene_map.tolist(),
                 "reaction_map": reaction_map.tolist(),
-                "w_growth": w_growth,
             }
 
         # Process gene–reaction (GPR) edges
@@ -1037,12 +1042,10 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         ].num_edges = new_gpr_edge_index.size(1)
         integrated_subgraph["gene", "gpr", "reaction"].pert_mask = ~edge_mask
 
-        # Include w_growth in the return
         return {
             "valid_reactions": valid_reactions,
             "gene_map": gene_map.tolist(),
             "reaction_map": reaction_map.tolist(),
-            "w_growth": w_growth,
         }
 
     def _add_reaction_data(
@@ -1057,7 +1060,8 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         integrated_subgraph["reaction"].num_nodes = len(valid_reactions)
         integrated_subgraph["reaction"].node_ids = valid_reactions.tolist()
 
-        # Subset w_growth to valid reactions if it exists in cell_graph
+        # w_growth has one source: the tensor ``to_cell_data`` stores on the cell
+        # graph (1 for a Growth-subsystem reaction). Subset it to the kept reactions.
         if hasattr(cell_graph["reaction"], "w_growth"):
             w_growth = cell_graph["reaction"].w_growth
             integrated_subgraph["reaction"].w_growth = w_growth[valid_reactions]
@@ -1280,13 +1284,16 @@ class LazySubgraphRepresentation(GraphProcessor):
         self.device: torch.device = torch.device("cpu")
         self.masks: dict[str, dict[str, torch.Tensor]] = {}
         self._edge_incidence_cache: dict[Any, list[torch.Tensor]] | None = None
+        # (gene count, gene-gene edge_index per edge type) the cache was built from
+        self._incidence_built_from: tuple[int, dict[Any, torch.Tensor]] | None = None
 
     @property
     def edge_incidence_cache(self) -> dict[Any, list[torch.Tensor]]:
         """Lazily build and return edge incidence cache.
 
         Maps each node to tensor of edge positions where that node appears.
-        Built once on first access, then cached for all subsequent calls.
+        Built on first use and rebuilt whenever a different cell graph arrives (see
+        ``_build_incidence_cache``).
         """
         if self._edge_incidence_cache is None:
             raise RuntimeError(
@@ -1312,7 +1319,9 @@ class LazySubgraphRepresentation(GraphProcessor):
         """
         import time
 
-        if self._edge_incidence_cache is not None:
+        if self._incidence_built_from is not None and _incidence_source_matches(
+            self._incidence_built_from, cell_graph
+        ):
             return {"total_time_ms": 0.0, "num_edge_types": 0, "total_edges": 0}
 
         start = time.time()
@@ -1344,11 +1353,22 @@ class LazySubgraphRepresentation(GraphProcessor):
         For each gene node, stores tensor of edge positions (indices) where
         that gene appears as either source or destination.
 
-        Complexity: O(E) per edge type, one-time cost
+        Complexity: O(E) per edge type, one-time cost per cell graph
         Memory: O(E) total across all edge types
+
+        The cache is tied to the graph it was built from: the gene count and the
+        gene-gene ``edge_index`` tensors, the only inputs it depends on. When a
+        different graph arrives the cache is REBUILT rather than refused, because the
+        cache is a pure function of the graph and a processor may legitimately serve
+        several graphs (one per dataset, or a test and a benchmark graph); reusing it
+        across graphs read edge positions of the wrong graph and emitted node index -1
+        (issue #527). The per-call check is an identity test per edge type, O(1) for
+        the usual single-graph dataset.
         """
-        if self._edge_incidence_cache is not None:
-            return  # Already built
+        if self._incidence_built_from is not None and _incidence_source_matches(
+            self._incidence_built_from, cell_graph
+        ):
+            return  # built from this graph
 
         num_genes = cell_graph["gene"].num_nodes
         cache = {}
@@ -1378,6 +1398,7 @@ class LazySubgraphRepresentation(GraphProcessor):
                 ]
 
         self._edge_incidence_cache = cache
+        self._incidence_built_from = (num_genes, _gene_edge_indices(cell_graph))
 
     @time_method
     def _initialize_masks(self, cell_graph: HeteroData) -> None:
@@ -1550,9 +1571,8 @@ class LazySubgraphRepresentation(GraphProcessor):
 
         Model must apply edge masks during message passing.
         """
-        # Build cache on first use
-        if self._edge_incidence_cache is None:
-            self._build_incidence_cache(cell_graph)
+        # Build the cache on first use, or rebuild it for a different graph
+        self._build_incidence_cache(cell_graph)
 
         # Get perturbed nodes
         perturbed_nodes = gene_info["remove_subset"]
@@ -1590,22 +1610,6 @@ class LazySubgraphRepresentation(GraphProcessor):
         """
         max_reaction_idx = cell_graph["reaction"].num_nodes
 
-        w_growth = torch.zeros(max_reaction_idx, dtype=torch.float, device=self.device)
-
-        if hasattr(cell_graph["reaction"], "subsystem"):
-            subsystems = cell_graph["reaction"].subsystem
-
-            for i in range(max_reaction_idx):
-                if isinstance(subsystems, list):
-                    if i < len(subsystems) and subsystems[i] == "Growth":
-                        w_growth[i] = 1.0
-                elif torch.is_tensor(subsystems):
-                    if subsystems[i] == "Growth":
-                        w_growth[i] = 1.0
-                elif hasattr(subsystems, "__getitem__"):
-                    if subsystems[i] == "Growth":
-                        w_growth[i] = 1.0
-
         # If no GPR edges, all reactions are valid
         if ("gene", "gpr", "reaction") not in cell_graph.edge_types:
             # Keep all reactions
@@ -1621,7 +1625,6 @@ class LazySubgraphRepresentation(GraphProcessor):
                 "valid_reactions": valid_reactions,
                 "gene_map": gene_map.tolist(),
                 "reaction_map": reaction_map.tolist(),
-                "w_growth": w_growth,
             }
 
         # Get FULL GPR edge_index (zero-copy reference)
@@ -1701,7 +1704,6 @@ class LazySubgraphRepresentation(GraphProcessor):
             "valid_reactions": valid_reactions,
             "gene_map": gene_map.tolist(),
             "reaction_map": reaction_map.tolist(),
-            "w_growth": w_growth,
         }
 
     def _add_reaction_data(
@@ -1721,10 +1723,11 @@ class LazySubgraphRepresentation(GraphProcessor):
         integrated_subgraph["reaction"].num_nodes = len(valid_reactions)
         integrated_subgraph["reaction"].node_ids = valid_reactions.tolist()
 
-        # Return full w_growth (reference, no filtering since valid_reactions contains all indices)
+        # w_growth has one source, the tensor ``to_cell_data`` stores on the cell
+        # graph, as for SubgraphRepresentation; every reaction is kept, so it is
+        # returned whole (a reference, no copy).
         if hasattr(cell_graph["reaction"], "w_growth"):
-            w_growth = reaction_info["w_growth"]
-            integrated_subgraph["reaction"].w_growth = w_growth
+            integrated_subgraph["reaction"].w_growth = cell_graph["reaction"].w_growth
 
     def _process_metabolic_network(
         self,
@@ -1923,9 +1926,9 @@ class Unperturbed(GraphProcessor):
         phenotype_fields = []
         for phenotype in phenotype_info:
             phenotype_fields.append(phenotype.model_fields["label_name"].default)
-            phenotype_fields.append(
-                phenotype.model_fields["label_statistic_name"].default
-            )
+            stat_name = phenotype.model_fields["label_statistic_name"].default
+            if stat_name:
+                phenotype_fields.append(stat_name)
 
         # Add experiment data
         for field in phenotype_fields:
@@ -2271,11 +2274,12 @@ class DCellGraphProcessor(GraphProcessor):
             batch_indices.extend([i] * len(gene_indices))
             batch_mapping[i] = gene_indices
 
-        # Add batch indices for perturbations - needed for processing by experiment
-        if batch_indices:
-            processed_graph["gene"].perturbation_indices_batch = torch.tensor(
-                batch_indices, dtype=torch.long, device=self.device
-            )
+        # Batch index of each perturbation, needed for processing by experiment.
+        # Always written (empty when no perturbed gene is a node) so every sample
+        # carries the key and Batch.from_data_list collates uniformly.
+        processed_graph["gene"].perturbation_indices_batch = torch.tensor(
+            batch_indices, dtype=torch.long, device=self.device
+        )
 
         # Process gene ontology if it exists in cell_graph
         if "gene_ontology" in cell_graph.node_types:
@@ -2669,7 +2673,18 @@ class NeighborSubgraphRepresentation(GraphProcessor):
             integrated_subgraph["gene"]["phenotype_sample_indices"] = torch.tensor(
                 all_sample_indices, dtype=torch.long, device=self.device
             )
-            integrated_subgraph["gene"]["phenotype_types"] = phenotype_types
+        else:
+            # The placeholder the subgraph processors write: one NaN at type 0, sample 0
+            integrated_subgraph["gene"]["phenotype_values"] = torch.tensor(
+                [float("nan")], dtype=torch.float, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_type_indices"] = torch.tensor(
+                [0], dtype=torch.long, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_sample_indices"] = torch.tensor(
+                [0], dtype=torch.long, device=self.device
+            )
+        integrated_subgraph["gene"]["phenotype_types"] = phenotype_types
         if all_stat_values:
             integrated_subgraph["gene"]["phenotype_stat_values"] = torch.tensor(
                 all_stat_values, dtype=torch.float, device=self.device

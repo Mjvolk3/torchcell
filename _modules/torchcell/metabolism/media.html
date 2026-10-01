@@ -361,11 +361,14 @@
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 
 <span class="c1">#: Salt / hydrate / stereo qualifiers that a GEM never carries on the species name.</span>
+<span class="c1">#: Stripped by substring in this order, so a qualifier must precede any shorter one it</span>
+<span class="c1">#: contains: ``monohydrate`` and ``dihydrate`` before ``hydrate``, else ``hydrate`` is</span>
+<span class="c1">#: cut out of them first and leaves ``mono`` / ``di`` behind.</span>
 <span class="n">_SALT_QUALIFIERS</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"hydrochloride"</span><span class="p">,</span>
-    <span class="s2">"hydrate"</span><span class="p">,</span>
     <span class="s2">"monohydrate"</span><span class="p">,</span>
     <span class="s2">"dihydrate"</span><span class="p">,</span>
+    <span class="s2">"hydrate"</span><span class="p">,</span>
     <span class="s2">"anhydrous"</span><span class="p">,</span>
     <span class="s2">"sodium salt"</span><span class="p">,</span>
     <span class="s2">"potassium salt"</span><span class="p">,</span>
@@ -438,11 +441,19 @@
 <span class="p">}</span>
 
 
+<span class="c1">#: Punctuation that never appears in a metabolite name or identifier: sentence marks</span>
+<span class="c1">#: and double quotes. Hyphens, commas, parentheses, brackets, apostrophes, colons and</span>
+<span class="c1">#: ``+`` are kept, since names (``2,3-...``, ``(r)-pantothenate``, ``mg(2+)``,</span>
+<span class="c1">#: ``5'-amp``) and CURIEs (``chebi:4167``) carry them.</span>
+<span class="n">_DROPPED_PUNCTUATION</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">'[.;!?"]'</span><span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalize</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Lowercase, collapse whitespace, drop punctuation a model never carries."""</span>
+<span class="w">    </span><span class="sd">"""Lowercase, straighten apostrophes, drop ``. ; ! ? "``, collapse whitespace."""</span>
     <span class="n">text</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"’"</span><span class="p">,</span> <span class="s2">"'"</span><span class="p">)</span>
-    <span class="n">text</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\s+"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">_DROPPED_PUNCTUATION</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\s+"</span><span class="p">,</span> <span class="s2">" "</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">text</span>
 
 

@@ -169,15 +169,16 @@
 
 <div class="viewcode-block" id="DnaSelectionResult.end_leq_start">
 <a class="viewcode-back" href="../../../generated/torchcell.sequence.DnaSelectionResult.html#torchcell.sequence.DnaSelectionResult.end_leq_start">[docs]</a>
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">end_leq_start</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Validate that start is not greater than end."""</span>
-        <span class="n">start</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"start"</span><span class="p">)</span>
-        <span class="n">end</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"end"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">start</span> <span class="o">&gt;</span> <span class="n">end</span><span class="p">:</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">end_leq_start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"DnaSelectionResult"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Validate that start is not greater than end.</span>
+
+<span class="sd">        Runs after field validation, so a payload missing ``start`` or ``end`` is</span>
+<span class="sd">        refused by pydantic's own missing-field error naming the field.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Start must be less than end"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">values</span></div>
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 
 <div class="viewcode-block" id="DnaSelectionResult.check_strand">
@@ -262,14 +263,13 @@
                     <span class="sa">f</span><span class="s2">"All items in gene_set must be str, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">item</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>  <span class="c1"># type: ignore[return]  # pre-existing gap: size==3 returns None</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Return a summary representation showing size and first items."""</span>
         <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">limited_items</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="p">)[:</span><span class="mi">3</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
             <span class="k">return</span> <span class="sa">f</span><span class="s2">"GeneSet(size=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">, items=</span><span class="si">{</span><span class="n">limited_items</span><span class="si">}</span><span class="s2">...)"</span>
-        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">"GeneSet(size=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">, items=</span><span class="si">{</span><span class="n">limited_items</span><span class="si">}</span><span class="s2">)"</span></div>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"GeneSet(size=</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">, items=</span><span class="si">{</span><span class="n">limited_items</span><span class="si">}</span><span class="s2">)"</span></div>
 
 
 
@@ -457,7 +457,7 @@
 
 <div class="viewcode-block" id="get_chr_from_description">
 <a class="viewcode-back" href="../../../generated/torchcell.sequence.get_chr_from_description.html#torchcell.sequence.get_chr_from_description">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">get_chr_from_description</span><span class="p">(</span><span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>  <span class="c1"># type: ignore[return]  # pre-existing: None for unmatched descriptions</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_chr_from_description</span><span class="p">(</span><span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Extracts the chromosome number from a given description string.</span>
 
 <span class="sd">    Processes a description string containing either a chromosome</span>
@@ -474,7 +474,9 @@
 <span class="sd">        int: Chromosome number.  Returns 0 if the location is mitochondrion.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If the Roman numeral conversion fails due to invalid format.</span>
+<span class="sd">        ValueError: If the description carries neither a ``[chromosome=...]`` tag</span>
+<span class="sd">            nor a ``[location=mitochondrion]`` tag.</span>
+<span class="sd">        KeyError: If the chromosome tag is not a Roman numeral.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; get_chr_from_description("[chromosome=IX] some other info")</span>
@@ -493,7 +495,11 @@
         <span class="k">elif</span> <span class="n">part</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"[location="</span><span class="p">):</span>
             <span class="c1"># we assign mitochondiral DNA to chromosome 0 as convenience</span>
             <span class="k">if</span> <span class="n">part</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">"[location="</span><span class="p">)</span> <span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"mitochondrion"</span><span class="p">:</span>
-                <span class="k">return</span> <span class="mi">0</span></div>
+                <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="s2">"Description has no [chromosome=...] or [location=mitochondrion] tag: "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">description</span><span class="si">!r}</span><span class="s2">"</span>
+    <span class="p">)</span></div>
 
 
 
@@ -569,6 +575,7 @@
 <span class="sd">        tuple[int, int]: The calculated start and end points of the window.</span>
 
 <span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If ``strand`` is neither "+" nor "-".</span>
 <span class="sd">        AssertionError: If the resulting window size doesn't match the</span>
 <span class="sd">            specified `window_size`.</span>
 
@@ -587,6 +594,8 @@
     <span class="k">elif</span> <span class="n">strand</span> <span class="o">==</span> <span class="s2">"-"</span><span class="p">:</span>
         <span class="n">start_window</span> <span class="o">=</span> <span class="n">end</span> <span class="o">-</span> <span class="n">window_size</span>
         <span class="n">end_window</span> <span class="o">=</span> <span class="n">end</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Strand must be '+' or '-', got </span><span class="si">{</span><span class="n">strand</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">assert</span> <span class="p">(</span><span class="n">end_window</span> <span class="o">-</span> <span class="n">start_window</span><span class="p">)</span> <span class="o">==</span> <span class="n">window_size</span><span class="p">,</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">"Window sizing is incorrect. Window is larger than </span><span class="si">{</span><span class="n">window_size</span><span class="si">}</span><span class="s2">bp"</span>
     <span class="p">)</span>
@@ -614,9 +623,10 @@
 <span class="sd">        tuple[int, int]: The calculated start and end points of the window.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If the end position is out of bounds of the chromosome,</span>
-<span class="sd">            if the start position is greater than or equal to the end position,</span>
-<span class="sd">            or if the window size is greater than the chromosome length.</span>
+<span class="sd">        ValueError: If the strand is neither "+" nor "-", if the end position is</span>
+<span class="sd">            out of bounds of the chromosome, if the start position is greater than</span>
+<span class="sd">            or equal to the end position, or if the window size is greater than</span>
+<span class="sd">            the chromosome length.</span>
 
 <span class="sd">    Examples:</span>
 <span class="sd">        &gt;&gt;&gt; calculate_window_bounds(0, 20, "+", 40, 100)</span>
@@ -628,6 +638,8 @@
 <span class="sd">        &gt;&gt;&gt; calculate_window_bounds(0, 20, "-", 40, 100)</span>
 <span class="sd">        (0, 40)</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">strand</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"+"</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Strand must be '+' or '-', got </span><span class="si">{</span><span class="n">strand</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">end</span> <span class="o">&gt;</span> <span class="n">chromosome_length</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"End position is out of bounds of chromosome"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="n">end</span><span class="p">:</span>
@@ -674,6 +686,9 @@
         <span class="n">start_window</span> <span class="o">-=</span> <span class="mi">1</span>
     <span class="k">elif</span> <span class="nb">abs</span><span class="p">((</span><span class="n">end_window</span> <span class="o">-</span> <span class="n">start_window</span><span class="p">)</span> <span class="o">-</span> <span class="n">window_size</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">strand</span> <span class="o">==</span> <span class="s2">"-"</span><span class="p">:</span>
         <span class="n">end_window</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">assert</span> <span class="n">end_window</span> <span class="o">-</span> <span class="n">start_window</span> <span class="o">==</span> <span class="n">window_size</span><span class="p">,</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Window is </span><span class="si">{</span><span class="n">end_window</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_window</span><span class="si">}</span><span class="s2"> bp, requested </span><span class="si">{</span><span class="n">window_size</span><span class="si">}</span><span class="s2"> bp"</span>
+    <span class="p">)</span>
     <span class="k">assert</span> <span class="n">start_window</span> <span class="o">&lt;=</span> <span class="n">start</span><span class="p">,</span> <span class="s2">"Start window must be leq start."</span>
     <span class="k">assert</span> <span class="n">end_window</span> <span class="o">&gt;=</span> <span class="n">end</span><span class="p">,</span> <span class="s2">"End window must be geq end."</span>
     <span class="k">return</span> <span class="n">start_window</span><span class="p">,</span> <span class="n">end_window</span></div>
@@ -847,11 +862,19 @@
 <span class="w">    </span><span class="sd">"""Compute relative codon frequencies for a coding sequence.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        cds_str: Coding sequence whose length must be a multiple of three.</span>
+<span class="sd">        cds_str: Coding sequence whose length must be a positive multiple of three.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        A CodonFrequency mapping every codon to its relative frequency.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the CDS is empty, its length is not a multiple of three, or</span>
+<span class="sd">            it carries a base other than A, T, G, C.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">cds_str</span> <span class="o">==</span> <span class="s2">""</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"Empty CDS string; a codon frequency needs at least one codon."</span>
+        <span class="p">)</span>
     <span class="n">nucleotides</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"A"</span><span class="p">,</span> <span class="s2">"T"</span><span class="p">,</span> <span class="s2">"G"</span><span class="p">,</span> <span class="s2">"C"</span><span class="p">]</span>
     <span class="n">all_codons</span> <span class="o">=</span> <span class="p">[</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">codon</span><span class="p">)</span> <span class="k">for</span> <span class="n">codon</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="n">nucleotides</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">3</span><span class="p">)]</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cds_str</span><span class="p">)</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">set</span><span class="p">(</span><span class="n">cds_str</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">nucleotides</span><span class="p">)):</span>

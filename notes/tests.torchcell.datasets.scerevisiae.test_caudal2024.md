@@ -15,3 +15,7 @@ Findings: an existing raw file is never re-hashed (line 324); a blank `systemati
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Finding retired: `test_a_stale_raw_matrix_is_kept_and_built_from` is now `test_a_stale_raw_matrix_is_refused_at_build_time` (the matrices are verified against the genomes tier). Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.10.01 - Fix PR for the pinned findings
+
+Retired the bare StopIteration and silent unextractable-member findings (issue #541): a zip with zero or two `.tab` members raises `MissingTabMemberError` and a forced unextractable member raises `UnextractableMemberError`, both with exact messages. The blank `systematic_name` finding stays pinned as record-changing (459,790 affected rows in the built isolates).

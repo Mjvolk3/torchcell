@@ -15,3 +15,7 @@ Findings: a repeated `ptbs` label keeps only the first row with no log and no ba
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Finding retired: `test_a_stale_raw_file_is_kept_and_used_even_though_the_mirror_verifies` is now `test_a_stale_raw_file_is_refused_at_build_time_though_the_mirror_verifies`. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.10.01 - Fix PR for the pinned findings
+
+Retired the first-row-wins and control-environment findings (issue #541). The two-batch fixture now asserts `RepeatedPtbsLabelError` (exact message, empty `processed/`); the label lookup runs on a one-row-per-label fixture; a Heat table asserts `UnknownConditionError`.

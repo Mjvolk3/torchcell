@@ -28,7 +28,7 @@ holds for a missing name); alias map YPL999W -> YKL001C, OLDSYM -> YGR055W.
     DEG_Control_bc_YGR055W.csv    15S_RRNA only: no resolvable gene, skipped
 
 ``ptbs``: control rows bc-YAL012W (120.4 cells, sd 1.25), WT (500, 1.0), bc-YBR020W-1
-twice (33.6 cells, sd 0.75 first; the first row wins), NaCl rows bc-YAL012W (80, 2.0) and
+(33.6 cells, sd 0.75; one row per label, as in the release), NaCl rows bc-YAL012W (80, 2.0) and
 WT (400, 1.1). ``n_cells`` = round(cell_number): 120, 34. References: control logFC 0
 over the five control genes with WT 1.0 / 500; NaCl logFC 0 over YKL001C, YGR055W with
 WT 1.1 / 400.
@@ -107,14 +107,9 @@ _FCS = {
 _PTBS = {
     "control": pd.DataFrame(
         {
-            "assignment_consensus2": [
-                "bc-YAL012W",
-                "WT",
-                "bc-YBR020W-1",
-                "bc-YBR020W-1",
-            ],
-            "cell_number": [120.4, 500.0, 33.6, 99.0],
-            "sd_lvscore_scaledFU2": [1.25, 1.0, 0.75, 9.9],
+            "assignment_consensus2": ["bc-YAL012W", "WT", "bc-YBR020W-1"],
+            "cell_number": [120.4, 500.0, 33.6],
+            "sd_lvscore_scaledFU2": [1.25, 1.0, 0.75],
         }
     ),
     "NaCl": pd.DataFrame(
@@ -340,12 +335,7 @@ def test_ptb_table_normalizes_the_hyphenated_genotype_label(
 ) -> None:
     ptbs = dataset._load_ptbs("unused")
     assert sorted(ptbs) == ["NaCl", "control"]
-    assert ptbs["control"].index.tolist() == [
-        "bc_YAL012W",
-        "WT",
-        "bc_YBR020W-1",
-        "bc_YBR020W-1",
-    ]
+    assert ptbs["control"].index.tolist() == ["bc_YAL012W", "WT", "bc_YBR020W-1"]
     assert m.NadalRibellesPerturbSeq2025Dataset._ptb_scalars(None, "WT") == (None, None)
 
 

@@ -468,6 +468,10 @@ class DroppedStrain(BaseModel):
     n_records: int = Field(
         description="non-empty condition cells lost with this strain"
     )
+    candidates: list[str] = Field(
+        default_factory=list,
+        description="the live genes an AMBIGUOUS name could mean (empty otherwise)",
+    )
 
 
 class DropLog(BaseModel):
@@ -482,6 +486,45 @@ class DropLog(BaseModel):
     n_dropped_records: int
     dropped_by_status: dict[str, int] = Field(default_factory=dict)
     dropped: list[DroppedStrain] = Field(default_factory=list)
+
+
+class BlankSystematicNameError(ValueError):
+    """A Data File S1 row carries no ``Systematic Name``, so it names no strain."""
+
+
+class RepeatedStrainRowError(ValueError):
+    """Two Data File S1 rows describe the same strain, so its cells would be stored twice."""
+
+
+def _check_strain_rows(frame: pd.DataFrame) -> None:
+    """Refuse a blank ``Systematic Name`` and a strain that appears on two rows.
+
+    Rows are named by their spreadsheet row (header = row 1, first data row = row 2).
+    A strain is the stripped (``Systematic Name``, ``Strain ID``) pair: the released
+    sheet (sha256 ``f6c313de...``) has 4,429 rows, none blank and none repeated
+    (issue #524), so both checks refuse only a sheet that differs from it.
+    """
+    names = frame["Systematic Name"]
+    blank_rows = [
+        int(i) + 2
+        for i, value in zip(frame.index, names, strict=True)
+        if pd.isna(value) or not str(value).strip()
+    ]
+    if blank_rows:
+        raise BlankSystematicNameError(
+            f"Data File S1 sheet rows {blank_rows} have a blank 'Systematic Name'; "
+            "a row without an identifier names no strain, refusing to resolve it"
+        )
+    first_row: dict[tuple[str, str], int] = {}
+    for i, name, strain_id in zip(frame.index, names, frame["Strain ID"], strict=True):
+        key = (str(name).strip(), str(strain_id).strip())
+        if key in first_row:
+            raise RepeatedStrainRowError(
+                f"Data File S1 repeats strain {key[0]} ({key[1]}) at sheet rows "
+                f"{first_row[key]} and {int(i) + 2}; one strain is one row, refusing "
+                "to store its condition cells twice"
+            )
+        first_row[key] = int(i) + 2
 
 
 RAW_MIRROR_REL = f"torchcell-raw/{CITATION_KEY}"
@@ -758,6 +801,7 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
             }
             for spec in _CONDITIONS
         ]
+        _check_strain_rows(frame)
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -780,6 +824,7 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
                             resolved_to=resolution.systematic_name,
                             feature_type=resolution.feature_type,
                             n_records=n_cells,
+                            candidates=resolution.candidates,
                         )
                     )
                     continue

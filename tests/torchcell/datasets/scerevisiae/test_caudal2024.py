@@ -29,8 +29,9 @@ YAL001C tpm 2.5, count round(22.5) = 22; YBR001W tpm 2.5, count round(16.25) = 1
 genotypes are the synthetic file's, unchanged.
 
 Refusals: a table without ``tpm`` is pandas' ``Usecols do not match columns, columns
-expected but not found: ['tpm']``; a zip with no ``.tab`` member raises a bare
-``StopIteration`` (a Finding). SGD FASTA whose last record is a chromosome keeps it; an
+expected but not found: ['tpm']``; a zip without exactly one ``.tab`` member raises
+``MissingTabMemberError`` naming the archive and its members, and a tarball member that
+cannot be extracted raises ``UnextractableMemberError`` (issue #541, fixed 2026.10.01). SGD FASTA whose last record is a chromosome keeps it; an
 untagged record in the middle is dropped. ``main`` prints the streaming line of the base
 class, ``len = 2``, record 0's perturbation-type counts (presence 1, variant 1, absence
 1, in that order), its 2 phenotype genes and the S288C genome reference.
@@ -139,9 +140,14 @@ def test_a_row_with_a_blank_gene_is_dropped_without_a_trace(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Finding: ``_load_caudal`` groups by (Strain, systematic_name) with pandas' default
-    ``dropna=True`` (caudal2024.py line 463), so a row whose ``systematic_name`` is blank
+    ``dropna=True`` (caudal2024.py line 509), so a row whose ``systematic_name`` is blank
     (AAA, 7 counts) vanishes from the record, the reference and the logs, and is not
     stored as a ``"nan"`` gene either. Pinned until a blank gene is refused or counted.
+
+    Left open in issue #541 as RECORD-CHANGING: the released table has 470,944 such rows
+    (459,790 of them in the 943 built isolates, every isolate affected), carrying an
+    ``ORF`` value and a ``pan_absence`` class (443,612 ``absent``), so counting or keeping
+    them changes stored records.
     """
     table = _zip({"final.tab": _RELEASED_HEADER + _RELEASED_ROWS})
     dataset = m.CaudalPanTranscriptome2024Dataset(
@@ -166,20 +172,26 @@ def test_a_table_without_tpm_is_refused_by_the_column_read(
         )
 
 
-def test_a_zip_without_a_tab_member_raises_a_bare_stop_iteration(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize(
+    ("members", "tabs"),
+    [(["final.csv"], "[]"), (["a.tab", "b.tab"], "['a.tab', 'b.tab']")],
+)
+def test_a_zip_without_exactly_one_tab_member_is_refused_by_name(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, members: list[str], tabs: str
 ) -> None:
-    """Finding: the member lookup is ``next(n for n in zf.namelist() if
-    n.endswith(".tab"))`` (line 448) with no default, so an archive holding only
-    ``final.csv`` raises ``StopIteration`` with no message naming the archive. Pinned
-    until the lookup raises a named error.
+    """No ``.tab`` member, or two, raises ``MissingTabMemberError`` naming the archive,
+    the ``.tab`` members found and every member, instead of a bare ``StopIteration``
+    or a silent first pick.
     """
-    table = _zip({"final.csv": "Strain,systematic_name,count,tpm\n"})
-    with pytest.raises(StopIteration) as excinfo:
-        m.CaudalPanTranscriptome2024Dataset(
-            root=str(_root(tmp_path, monkeypatch, table))
-        )
-    assert excinfo.value.args == ()
+    table = _zip({name: "Strain,systematic_name,count,tpm\n" for name in members})
+    root = _root(tmp_path, monkeypatch, table)
+    with pytest.raises(m.MissingTabMemberError) as excinfo:
+        m.CaudalPanTranscriptome2024Dataset(root=str(root))
+    assert str(excinfo.value) == (
+        f"{root / 'raw' / m.CAUDAL_ZIP_BASENAME} must hold exactly one '.tab' member, "
+        f"found {tabs}; members: {members}"
+    )
+    assert not (root / "processed" / "lmdb").exists()
 
 
 def test_sgd_chromosomes_keeps_a_final_chromosome_and_drops_a_middle_plasmid(
@@ -197,15 +209,14 @@ def test_sgd_chromosomes_keeps_a_final_chromosome_and_drops_a_middle_plasmid(
     assert m._sgd_chromosomes(str(path)) == {"I": "ACGT", "XVI": "GGCC"}
 
 
-def test_a_regular_member_that_cannot_be_extracted_loses_its_variants_silently(
+def test_a_regular_member_that_cannot_be_extracted_is_refused(
     root: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: the ``extracted is None`` guard (lines 522-523) is unreachable for a real
-    archive, since ``tarfile`` returns a file object for every member that passes
-    ``isfile()``. Forced here by returning None for ``YAL001C.fasta``: that gene's
-    variant for SACE_YAU disappears with no log, and the all-isolates check still passes
-    because both isolates appear in the other gene files. Pinned as the guard's behavior
-    until it is removed or made to raise.
+    """The ``extracted is None`` guard is unreachable for a real archive (all 6,015
+    members of the pinned tarball extract), since ``tarfile`` returns a file object for
+    every member that passes ``isfile()``. Forced here by returning None for
+    ``YAL001C.fasta``: the build raises ``UnextractableMemberError`` naming the tarball
+    and the member, instead of dropping that gene's variants with no log.
     """
     original = tarfile.TarFile.extractfile
 
@@ -215,13 +226,14 @@ def test_a_regular_member_that_cannot_be_extracted_loses_its_variants_silently(
         return original(self, member)
 
     monkeypatch.setattr(tarfile.TarFile, "extractfile", extractfile)
-    dataset = m.CaudalPanTranscriptome2024Dataset(root=str(root))
-    variants = [
-        p["systematic_gene_name"]
-        for p in dataset[1]["experiment"]["genotype"]["perturbations"]
-        if p["perturbation_type"] == "sequence_variant"
-    ]
-    assert variants == ["YBR001W"]
+    with pytest.raises(m.UnextractableMemberError) as excinfo:
+        m.CaudalPanTranscriptome2024Dataset(root=str(root))
+    assert str(excinfo.value) == (
+        f"{root / 'raw' / m.REFGENE_TAR_NAME}: member 'YAL001C.fasta' is a regular "
+        "file but tarfile returned no file object for it; refusing to drop its variants"
+    )
+    assert not (root / "preprocess" / "sequence_variants.parquet").exists()
+    assert not (root / "processed" / "lmdb").exists()
 
 
 def test_a_stale_raw_matrix_is_refused_at_build_time(

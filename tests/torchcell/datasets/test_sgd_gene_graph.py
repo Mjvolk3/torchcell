@@ -17,27 +17,27 @@ Fixture (node insertion order is the output order):
     YBR001C   None    3000.0  0    30.0    3.0  300    600  1           None
     YCR001W   300     5000.0  8.0  50.0    5.0  500    800  2           [10, 20]
 
-Chromosomes and pathways are small integers so that ``set`` iteration order is
-deterministic (an int hashes to itself; SGD's real values are display-name strings,
-whose set order changes with ``PYTHONHASHSEED``).
+Chromosomes and pathways are small integers here; SGD's real values are display-name
+strings, and the ``PYTHONHASHSEED`` test builds on strings in two subprocesses.
 
-Expected values, derived from lines 80 to 160 of the source:
+Expected values (issue #518 contract, fixed 2026.10.01):
 
 * ``length`` values collected are [100, 300] (None skipped); ``torch.median`` of an even
   count returns the LOWER middle, 100, so YBR001C's missing length becomes 100.
-* ``pi`` values collected are [4.0, 0, 8.0] (0 is not None, so it is collected); median
-  4.0. YBR001C's 0 is falsy, so ``0 or 4.0`` replaces it with 4.0.
-* Unnormalized rows (``chrom_pathways``) are the raw values with those two fills.
+* ``pi`` values collected are [4.0, 0, 8.0]; YBR001C's 0 is a value, not a missing
+  entry, so it is stored as 0 (only None takes the median).
+* Unnormalized rows (``chrom_pathways``) are the raw values with the one length fill.
 * Normalized rows (``normalized_chrom_pathways``) are ``(x - min) / (max - min)`` with
   min/max over the COLLECTED values: length (100, 300), mw (1000, 5000), pi (0, 8),
   median (10, 50), mad (1, 5), start (100, 500), end (400, 800). YBR001C: length
-  (100-100)/200 = 0, mw 2000/4000 = 0.5, pi (4-0)/8 = 0.5, the rest 0.5; YAL001C: pi
+  (100-100)/200 = 0, mw 2000/4000 = 0.5, pi 0/8 = 0, the rest 0.5; YAL001C: pi
   4/8 = 0.5, the rest 0; YCR001W: all 1.
-* ``chromosome_index`` is ``list(unique_chromosomes).index(chrom)`` taken while the set is
-  still growing: YAL001C sees {2} -> 0, YBR001C sees {1, 2} -> index of 1 = 0, YCR001W
-  sees {1, 2} -> index of 2 = 1. So [0, 0, 1].
-* ``pathways_indices``: YAL001C sees {20} -> [0]; YBR001C has none -> []; YCR001W sees
-  {10, 20} -> [0, 1]. Collated: [0, 0, 1] with slices [0, 1, 1, 3].
+* ``chromosome_index`` is the position in the sorted vocabulary [1, 2]: YAL001C (2) -> 1,
+  YBR001C (1) -> 0, YCR001W (2) -> 1. So [1, 0, 1].
+* ``pathways_indices`` are positions in the sorted vocabulary [10, 20]: YAL001C [20] ->
+  [1]; YBR001C none -> []; YCR001W [10, 20] -> [0, 1]. Collated: [1, 0, 1] with slices
+  [0, 1, 1, 3].
+* A constant feature under normalization raises ``ConstantFeatureError``.
 * ``categorical_features`` = {"chromosome": {"num_values": 2}, "pathways":
   {"num_values": 2}}.
 """
@@ -45,6 +45,8 @@ Expected values, derived from lines 80 to 160 of the source:
 from __future__ import annotations
 
 import os
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -53,7 +55,10 @@ import pytest
 import torch
 from torch_geometric.data import Data
 
-from torchcell.datasets.sgd_gene_graph import GraphEmbeddingDataset
+from torchcell.datasets.sgd_gene_graph import (
+    ConstantFeatureError,
+    GraphEmbeddingDataset,
+)
 
 _FEATURES = (
     "length",
@@ -87,24 +92,23 @@ def _graph() -> nx.Graph:
 
 RAW_ROWS = [
     [100.0, 1000.0, 4.0, 10.0, 1.0, 100.0, 400.0],
-    [100.0, 3000.0, 4.0, 30.0, 3.0, 300.0, 600.0],
+    [100.0, 3000.0, 0.0, 30.0, 3.0, 300.0, 600.0],
     [300.0, 5000.0, 8.0, 50.0, 5.0, 500.0, 800.0],
 ]
 NORMALIZED_ROWS = [
     [0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0],
-    [0.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+    [0.0, 0.5, 0.0, 0.5, 0.5, 0.5, 0.5],
     [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
 ]
 
 
-def test_unnormalized_build_fills_none_and_zero_with_the_lower_median(
+def test_unnormalized_build_fills_only_none_with_the_lower_median(
     tmp_path: Path,
 ) -> None:
     """``chrom_pathways``: exact ids, feature rows, categorical indices and file set.
 
-    Finding: a feature equal to 0 is treated as missing (line 107, ``node_data["pi"] or
-    median``), so YBR001C's released pI of 0 is stored as the median 4.0, while the 0 still
-    counts toward the min used for normalization. Pinned until the fill tests ``is None``.
+    YBR001C's missing length takes the lower median 100; its pI of 0 is kept as 0, not
+    replaced by the median 4.0 (issue #518).
     """
     dataset = GraphEmbeddingDataset(
         root=str(tmp_path / "raw_build"), graph=_graph(), model_name="chrom_pathways"
@@ -113,8 +117,8 @@ def test_unnormalized_build_fills_none_and_zero_with_the_lower_median(
     assert data.id == ["YAL001C", "YBR001C", "YCR001W"]
     assert list(data.embeddings) == ["chrom_pathways"]
     assert torch.equal(data.embeddings["chrom_pathways"], torch.tensor(RAW_ROWS))
-    assert torch.equal(data.chromosome_index, torch.tensor([0, 0, 1]))
-    assert torch.equal(data.pathways_indices, torch.tensor([0, 0, 1]))
+    assert torch.equal(data.chromosome_index, torch.tensor([1, 0, 1]))
+    assert torch.equal(data.pathways_indices, torch.tensor([1, 0, 1]))
     assert torch.equal(dataset.slices["pathways_indices"], torch.tensor([0, 1, 1, 3]))
     assert dataset.categorical_features == {
         "chromosome": {"num_values": 2},
@@ -158,28 +162,65 @@ def test_normalized_build_min_max_scales_every_feature(tmp_path: Path) -> None:
     )
 
 
-def test_categorical_index_is_not_a_function_of_the_category(tmp_path: Path) -> None:
-    """Finding: indices are positions in a set that is still growing (lines 120 to 153).
-
-    YAL001C and YCR001W are both on chromosome 2 but get indices 0 and 1; YAL001C
-    (chromosome 2) and YBR001C (chromosome 1) share index 0. Pathway 20 is index 0 on
-    YAL001C and index 1 on YCR001W. An embedding table keyed by these indices therefore
-    does not map one category to one row; with string categories the positions also
-    change with ``PYTHONHASHSEED``. Pinned until the indices come from a finished,
-    sorted vocabulary.
+def test_categorical_index_is_a_function_of_the_category(tmp_path: Path) -> None:
+    """One category, one index: both chromosome-2 genes get 1, chromosome 1 gets 0, and
+    pathway 20 is index 1 wherever it appears (sorted vocabularies, issue #518).
     """
     dataset = GraphEmbeddingDataset(
         root=str(tmp_path / "cat"), graph=_graph(), model_name="chrom_pathways"
     )
-    chromosome_of = {"YAL001C": 2, "YBR001C": 1, "YCR001W": 2}
     index_of = dict(
         zip(dataset._data.id, dataset._data.chromosome_index.tolist(), strict=True)
     )
-    assert index_of == {"YAL001C": 0, "YBR001C": 0, "YCR001W": 1}
-    assert chromosome_of["YAL001C"] == chromosome_of["YCR001W"]
-    assert index_of["YAL001C"] != index_of["YCR001W"]
-    assert dataset[0].pathways_indices.tolist() == [0]
+    assert index_of == {"YAL001C": 1, "YBR001C": 0, "YCR001W": 1}
+    assert dataset[0].pathways_indices.tolist() == [1]
     assert dataset[2].pathways_indices.tolist() == [0, 1]
+
+
+_HASHSEED_SCRIPT = """
+import sys
+import networkx as nx
+from torchcell.datasets.sgd_gene_graph import GraphEmbeddingDataset
+
+chromosomes = ["Chromosome XVI", "Chromosome I", "Chromosome Mito", "Chromosome IV"]
+pathways = [f"pathway {name}" for name in "qwertyuiopasdfgh"]
+graph = nx.Graph()
+for i in range(8):
+    graph.add_node(
+        f"Y{i:03d}",
+        length=100 + i, molecular_weight=1000.0 + i, pi=4.0 + i, median_value=10.0 + i,
+        median_abs_dev_value=1.0 + i, start=100 + i, end=400 + i,
+        chromosome=chromosomes[i % 4],
+        pathways=[pathways[(3 * i) % 16], pathways[(5 * i + 1) % 16]],
+    )
+dataset = GraphEmbeddingDataset(root=sys.argv[1], graph=graph, model_name="chrom_pathways")
+print(dataset._data.chromosome_index.tolist())
+print(dataset._data.pathways_indices.tolist())
+"""
+
+
+def test_categorical_indices_do_not_depend_on_pythonhashseed(tmp_path: Path) -> None:
+    """The same string-keyed graph built in two interpreters with PYTHONHASHSEED 1 and
+    2 yields identical indices, equal to the sorted-vocabulary positions: chromosomes
+    sort I, IV, Mito, XVI; the 12 pathways in use sort by their letter.
+    """
+    outputs = []
+    for seed in ("1", "2"):
+        env = {**os.environ, "PYTHONHASHSEED": seed}
+        result = subprocess.run(
+            [sys.executable, "-c", _HASHSEED_SCRIPT, str(tmp_path / f"seed{seed}")],
+            env=env,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        outputs.append(result.stdout.splitlines()[-2:])
+    order = "qwertyuiopasdfgh"
+    used = [order[k] for i in range(8) for k in ((3 * i) % 16, (5 * i + 1) % 16)]
+    vocabulary = sorted(set(used))
+    expected_pathways = [vocabulary.index(letter) for letter in used]
+    assert outputs[0] == outputs[1]
+    assert outputs[0] == [str([3, 0, 2, 1, 3, 0, 2, 1]), str(expected_pathways)]
 
 
 def test_second_construction_loads_from_disk_without_reprocessing(
@@ -290,8 +331,8 @@ def test_missing_node_attribute_raises_key_error_naming_it(
     tmp_path: Path, missing: str
 ) -> None:
     """Every attribute is read with ``node_data[...]``, so a node without one raises
-    ``KeyError`` with that attribute's name (``pi`` in the collection loop, line 82;
-    ``chromosome`` and ``pathways`` in the feature loop, lines 115 to 117).
+    ``KeyError`` with that attribute's name (``pi`` in the collection loop;
+    ``chromosome`` and ``pathways`` in the pass that builds the sorted vocabularies).
     """
     graph = _graph()
     del graph.nodes["YBR001C"][missing]
@@ -304,7 +345,7 @@ def test_missing_node_attribute_raises_key_error_naming_it(
 
 def test_feature_missing_on_every_node_raises_in_min(tmp_path: Path) -> None:
     """A feature that is None on every gene leaves an empty value list; ``median`` of it
-    does not raise but ``min`` does (line 95), with torch's empty-reduction message.
+    does not raise but ``min`` does, with torch's empty-reduction message.
     """
     graph = _graph()
     for node in graph.nodes:
@@ -318,16 +359,39 @@ def test_feature_missing_on_every_node_raises_in_min(tmp_path: Path) -> None:
         )
 
 
-def test_single_gene_normalization_divides_zero_by_zero(tmp_path: Path) -> None:
-    """Finding: with one gene every feature has max == min, so min-max scaling (lines 141
-    to 143) computes 0 / 0 and stores NaN in all seven columns, with no error. Pinned
-    until a constant feature is guarded.
+def test_single_gene_normalization_refuses_every_constant_feature(
+    tmp_path: Path,
+) -> None:
+    """With one gene every feature has max == min: normalization raises
+    ``ConstantFeatureError`` naming all seven features and their value, and writes no
+    feature file, instead of storing 0 / 0 = NaN.
     """
     graph = nx.Graph()
     graph.add_node("YAL001C", **_node((100, 1000.0, 4.0, 10.0, 1.0, 100, 400), 2, [20]))
-    dataset = GraphEmbeddingDataset(
-        root=str(tmp_path / "one"), graph=graph, model_name="normalized_chrom_pathways"
+    with pytest.raises(ConstantFeatureError) as excinfo:
+        GraphEmbeddingDataset(
+            root=str(tmp_path / "one"),
+            graph=graph,
+            model_name="normalized_chrom_pathways",
+        )
+    assert str(excinfo.value) == (
+        "features {'length': 100, 'molecular_weight': 1000.0, 'pi': 4.0, "
+        "'median_value': 10.0, 'median_abs_dev_value': 1.0, 'start': 100, 'end': 400} "
+        "take one value on every gene; min-max normalization would divide 0 by 0, "
+        "refusing to store NaN"
     )
-    row = dataset._data.embeddings["normalized_chrom_pathways"]
-    assert row.shape == (1, 7)
-    assert torch.isnan(row).all().item() is True
+    assert not (
+        tmp_path / "one" / "processed" / "normalized_chrom_pathways.pt"
+    ).exists()
+
+
+def test_a_constant_feature_is_kept_when_not_normalizing(tmp_path: Path) -> None:
+    """The refusal belongs to min-max scaling only: one gene builds unnormalized."""
+    graph = nx.Graph()
+    graph.add_node("YAL001C", **_node((100, 1000.0, 4.0, 10.0, 1.0, 100, 400), 2, [20]))
+    dataset = GraphEmbeddingDataset(
+        root=str(tmp_path / "one_raw"), graph=graph, model_name="chrom_pathways"
+    )
+    assert torch.equal(
+        dataset._data.embeddings["chrom_pathways"], torch.tensor([RAW_ROWS[0]])
+    )

@@ -162,3 +162,11 @@ env_chemgen_costanzo2021: FAIL
 Issue #524; the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes (#524); PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: yes (#524); refused deposit leaving a directory: yes (#524, mkdir before hash).
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `_S1_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.01 - Strain-row refusals and AMBIGUOUS candidates (issue #524)
+
+Previous behavior: a blank `Systematic Name` was passed to the resolver as the string `"nan"` and logged as a RETIRED drop named `"nan"`; a strain repeated on two rows was written twice with no ledger entry; an AMBIGUOUS drop kept no candidate list.
+
+Fix: `_check_strain_rows` runs after the sheet is read and before any directory or store is created. A blank or whitespace name raises `BlankSystematicNameError` naming the sheet rows; a repeated stripped (`Systematic Name`, `Strain ID`) pair raises `RepeatedStrainRowError` naming both sheet rows. `DroppedStrain` gains `candidates` (the resolver's list, empty except for AMBIGUOUS).
+
+Evidence on the pinned Data File S1 (sha256 `f6c313de...`): 4,429 rows, 0 blank names, 0 repeated strains, 0 AMBIGUOUS drops in the built drop log (15 drops: 12 non_gene_feature, 3 retired). No stored record changes; a rebuilt `dropped_records.json` gains `"candidates": []` on each of its 15 entries. Tests: `test_a_blank_systematic_name_is_refused_before_any_store`, `test_a_whitespace_systematic_name_is_refused_as_blank`, `test_a_repeated_strain_row_is_refused_naming_both_rows`, `test_the_same_orf_under_another_strain_id_is_not_a_repeat`, `test_drop_log_is_written_exactly`.

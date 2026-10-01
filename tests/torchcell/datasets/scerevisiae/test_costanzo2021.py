@@ -11,7 +11,7 @@ resolver, so nothing here needs the raw mirror or a built LMDB.
 columns, one header written ``" benomyl "`` to exercise the strip + lower-case lookup),
 with ``_CONDITIONS`` cut to Benomyl and Galactose and a stub resolver (``_StubGenome``
 plus ``AMB1`` -> AMBIGUOUS and every unknown name -> RETIRED, as the real resolver does).
-Nine rows, in order, with (Benomyl, Galactose):
+Seven rows, in order, with (Benomyl, Galactose):
 
 1. YAL001C TFC3 dma1 (0.1, 0.2) -> records 0, 1 (KanMX deletion named TFC3)
 2. YFL039C ACT1 act1-101 tsa1 (-0.5, blank) -> record 2 (ts allele)
@@ -21,15 +21,13 @@ Nine rows, in order, with (Benomyl, Galactose):
    ``perturbed_gene_name`` "YAR044W" (the source ORF, line 731)
 5. YER108C (0.9, 0.9) -> dropped, non_gene_feature, 2 cells
 6. YAR037W (0.8, blank) -> dropped, retired, 1 cell
-7. `` YAL001C `` TFC3 `` dma1 `` (0.1, 0.2) -> records 6, 7 (row 1 repeated, padded)
-8. blank Systematic Name (0.5, blank) -> dropped as ``"nan"``, retired, 1 cell
-9. AMB1 (0.7, 0.7) -> dropped, ambiguous, resolved_to None, 2 cells
+7. AMB1 (0.7, 0.7) -> dropped, ambiguous, resolved_to None, candidates
+   [YAL001C, YFL039C], 2 cells
 
-So 8 records from 5 of 9 strains; 4 strains and 2 + 1 + 1 + 2 = 6 cells dropped, by
-status {non_gene_feature: 1, retired: 2, ambiguous: 1}; the ledger is sorted by source
-name, "AMB1" < "YAR037W" < "YER108C" < "nan" (upper case sorts before lower). Every
-record shares the one reference (differential 0 on SGA_DM_SELECTION at 26 C), so the
-reference index is one entry over members 0..7. Records are compared whole against a
+So 6 records from 4 of 7 strains; 3 strains and 2 + 1 + 2 = 5 cells dropped, by status
+{non_gene_feature: 1, retired: 1, ambiguous: 1}; the ledger is sorted by source name,
+"AMB1" < "YAR037W" < "YER108C". Every record shares the one reference (differential 0 on
+SGA_DM_SELECTION at 26 C), so the reference index is one entry over members 0..5. Records are compared whole against a
 hand-built ``EnvironmentResponseExperiment``: Benomyl 30 g/L (the "30 mg/mL" cell) on
 SGA_DM_SELECTION, 26.0 C (a derivation, recorded in ``_TEMPERATURE.note``), aerobic, a
 ``duration_hours`` gap; ``n_samples`` 3 screens, no uncertainty (none released).
@@ -39,9 +37,11 @@ copying, so a refusal leaves nothing in ``raw/``; ``process`` verifies the file 
 ``raw/`` against the pin before reading a row; ``deposit_raw_mirror`` checks the source
 before creating any mirror directory.
 
-Findings pinned (source lines in ``costanzo2021.py``): a blank Systematic Name is resolved as the string
-``"nan"`` (line 770); a repeated row is stored twice with no ledger entry (lines
-769-821); an AMBIGUOUS drop keeps no candidate list (lines 776-784).
+The strain-row contract (issue #524, fixed 2026.10.01): a blank Systematic Name raises
+``BlankSystematicNameError`` and a strain on two rows (the sheet-row-2 strain again, padded)
+raises ``RepeatedStrainRowError``, both before any store is opened; an AMBIGUOUS drop
+records the resolver's candidate list. The released sheet has neither a blank name nor a
+repeated strain (0 of 4,429 rows), so no stored record changes.
 """
 
 from __future__ import annotations
@@ -281,8 +281,6 @@ _SHEET_ROWS: list[tuple[Any, ...]] = [
     ("YAR044W", None, None, "dma2", 0.3, None),
     ("YER108C", None, None, "dma3", 0.9, 0.9),
     ("YAR037W", None, None, "dma4", 0.8, None),
-    (" YAL001C ", "TFC3", None, " dma1 ", 0.1, 0.2),
-    (None, None, None, "dma9", 0.5, None),
     ("AMB1", None, None, "dma8", 0.7, 0.7),
 ]
 
@@ -309,10 +307,14 @@ class _FullStub(_StubGenome):
         return super().resolve_gene_name(name)
 
 
-def _write_xlsx(path: Path, columns: list[str] | None = None) -> None:
+def _write_xlsx(
+    path: Path,
+    columns: list[str] | None = None,
+    rows: list[tuple[Any, ...]] | None = None,
+) -> None:
     """The released layout: a decoy first sheet, then the differential-fitness sheet."""
     header = columns or [*_ID_COLUMNS, " benomyl ", "Galactose"]
-    frame = pd.DataFrame(_SHEET_ROWS, columns=header)
+    frame = pd.DataFrame(rows or _SHEET_ROWS, columns=header)
     with pd.ExcelWriter(path) as writer:
         pd.DataFrame({"Condition": ["Benomyl"]}).to_excel(
             writer, sheet_name=c._CONDITIONS_SHEET, index=False
@@ -332,7 +334,7 @@ def _two_conditions(monkeypatch: pytest.MonkeyPatch) -> None:
 def sheet_built(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> c.EnvChemgenCostanzo2021Dataset:
-    """The nine-row xlsx of the module docstring, read by the real ``pd.read_excel``."""
+    """The seven-row xlsx of the module docstring, read by the real ``pd.read_excel``."""
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     _two_conditions(monkeypatch)
     (tmp_path / "raw").mkdir()
@@ -397,7 +399,7 @@ def _reference() -> dict[str, Any]:
 def test_sheet_build_writes_the_records_in_row_then_condition_order(
     sheet_built: c.EnvChemgenCostanzo2021Dataset,
 ) -> None:
-    """Rows 1, 2, 3, 4, 7 kept; within a row, Benomyl before Galactose; blanks skipped."""
+    """Rows 1, 2, 3, 4 kept; within a row, Benomyl before Galactose; blanks skipped."""
     got = [
         (
             p["systematic_gene_name"],
@@ -418,8 +420,6 @@ def test_sheet_build_writes_the_records_in_row_then_condition_order(
         ("YFL039C", "act1-102", "tsa2", benomyl, -0.25),
         ("YFL039C", "act1-102", "tsa2", galactose, 0.0),
         ("YAR042W", "YAR044W", "dma2", benomyl, 0.3),
-        ("YAL001C", "TFC3", "dma1", benomyl, 0.1),
-        ("YAL001C", "TFC3", "dma1", galactose, 0.2),
     ]
 
 
@@ -486,21 +486,19 @@ def test_ts_allele_edge_record_and_the_medium_condition_record(
 def test_drop_log_is_written_exactly(
     sheet_built: c.EnvChemgenCostanzo2021Dataset,
 ) -> None:
-    """Finding: an AMBIGUOUS drop keeps no candidate list (``DroppedStrain`` has no
-    field for it), and a blank Systematic Name is resolved and logged as ``"nan"``
-    (``str(nan)``, line 770). Pinned until the ledger records candidates and a blank
-    identifier is refused rather than resolved.
+    """The ledger in full: an AMBIGUOUS drop carries the resolver's two candidates, the
+    other drops an empty candidate list (issue #524).
     """
     log = json.loads((Path(sheet_built.root) / c._DROPPED_FILENAME).read_text())
     assert log == {
         "dataset": "EnvChemgenCostanzo2021Dataset",
         "rule": c.DROP_RULE,
-        "n_source_strains": 9,
-        "n_kept_strains": 5,
-        "n_kept_records": 8,
-        "n_dropped_strains": 4,
-        "n_dropped_records": 6,
-        "dropped_by_status": {"non_gene_feature": 1, "retired": 2, "ambiguous": 1},
+        "n_source_strains": 7,
+        "n_kept_strains": 4,
+        "n_kept_records": 6,
+        "n_dropped_strains": 3,
+        "n_dropped_records": 5,
+        "dropped_by_status": {"non_gene_feature": 1, "retired": 1, "ambiguous": 1},
         "dropped": [
             {
                 "source_name": "AMB1",
@@ -508,6 +506,7 @@ def test_drop_log_is_written_exactly(
                 "resolved_to": None,
                 "feature_type": None,
                 "n_records": 2,
+                "candidates": ["YAL001C", "YFL039C"],
             },
             {
                 "source_name": "YAR037W",
@@ -515,6 +514,7 @@ def test_drop_log_is_written_exactly(
                 "resolved_to": "YAR037W",
                 "feature_type": None,
                 "n_records": 1,
+                "candidates": [],
             },
             {
                 "source_name": "YER108C",
@@ -522,33 +522,94 @@ def test_drop_log_is_written_exactly(
                 "resolved_to": "YER109C",
                 "feature_type": "blocked_reading_frame",
                 "n_records": 2,
-            },
-            {
-                "source_name": "nan",
-                "status": "retired",
-                "resolved_to": "nan",
-                "feature_type": None,
-                "n_records": 1,
+                "candidates": [],
             },
         ],
     }
 
 
-def test_a_repeated_row_is_stored_twice_under_one_reference(
+def test_one_reference_covers_every_record(
     sheet_built: c.EnvChemgenCostanzo2021Dataset,
 ) -> None:
-    """Finding: row 7 repeats row 1 (padding stripped) and is written again as records
-    6 and 7, with no ledger entry; the loader never deduplicates a strain (lines
-    769-821). One shared reference covers all eight records. Pinned until a repeated
-    (strain, condition) cell is refused or merged.
-    """
-    assert sheet_built[6]["experiment"] == sheet_built[0]["experiment"]
-    assert sheet_built[7]["experiment"] == sheet_built[1]["experiment"]
+    """All six records share the one reference, so the index is one entry."""
     index = sheet_built.experiment_reference_index
     assert index is not None
     (entry,) = index
-    assert entry.member_indices == [0, 1, 2, 3, 4, 5, 6, 7]
+    assert entry.member_indices == [0, 1, 2, 3, 4, 5]
     assert entry.reference.model_dump() == _reference()
+
+
+def _refused_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, extra: tuple[Any, ...]
+) -> pytest.ExceptionInfo[ValueError]:
+    """Build over the seven rows plus ``extra`` (sheet row 9); return the refusal."""
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    _two_conditions(monkeypatch)
+    (tmp_path / "raw").mkdir()
+    _write_xlsx(tmp_path / "raw" / c._S1_FILENAME, rows=[*_SHEET_ROWS, extra])
+    with pytest.raises(ValueError) as err:
+        c.EnvChemgenCostanzo2021Dataset(
+            root=str(tmp_path), genome=cast(SCerevisiaeGenome, _FullStub())
+        )
+    assert not (tmp_path / "processed" / "lmdb").exists()
+    assert not (tmp_path / c._DROPPED_FILENAME).exists()
+    return err
+
+
+def test_a_blank_systematic_name_is_refused_before_any_store(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A row with no Systematic Name names no strain: refused with its sheet row (9),
+    not resolved as the string ``"nan"`` and dropped as RETIRED.
+    """
+    err = _refused_build(tmp_path, monkeypatch, (None, None, None, "dma9", 0.5, None))
+    assert type(err.value) is c.BlankSystematicNameError
+    assert str(err.value) == (
+        "Data File S1 sheet rows [9] have a blank 'Systematic Name'; a row without an "
+        "identifier names no strain, refusing to resolve it"
+    )
+
+
+def test_a_whitespace_systematic_name_is_refused_as_blank(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    err = _refused_build(tmp_path, monkeypatch, ("  ", None, None, "dma9", 0.5, None))
+    assert type(err.value) is c.BlankSystematicNameError
+    assert str(err.value).startswith("Data File S1 sheet rows [9] have a blank")
+
+
+def test_a_repeated_strain_row_is_refused_naming_both_rows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Row 9 repeats the row-2 strain with padding (`` YAL001C ``, `` dma1 ``): refused,
+    naming the stripped strain and both sheet rows, instead of storing its two cells a
+    second time with no ledger entry.
+    """
+    err = _refused_build(
+        tmp_path, monkeypatch, (" YAL001C ", "TFC3", None, " dma1 ", 0.1, 0.2)
+    )
+    assert type(err.value) is c.RepeatedStrainRowError
+    assert str(err.value) == (
+        "Data File S1 repeats strain YAL001C (dma1) at sheet rows 2 and 9; one strain "
+        "is one row, refusing to store its condition cells twice"
+    )
+
+
+def test_the_same_orf_under_another_strain_id_is_not_a_repeat(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Rows 3 and 4 share YFL039C as two alleles (tsa1, tsa2): two strains, both built."""
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    _two_conditions(monkeypatch)
+    (tmp_path / "raw").mkdir()
+    _write_xlsx(tmp_path / "raw" / c._S1_FILENAME, rows=_SHEET_ROWS[1:3])
+    dataset = c.EnvChemgenCostanzo2021Dataset(
+        root=str(tmp_path), genome=cast(SCerevisiaeGenome, _FullStub())
+    )
+    assert [
+        dataset[i]["experiment"]["genotype"]["perturbations"][0]["strain_id"]
+        for i in range(len(dataset))
+    ] == ["tsa1", "tsa2", "tsa2"]
 
 
 def test_side_files_gene_set_and_reference_index(
@@ -562,7 +623,7 @@ def test_side_files_gene_set_and_reference_index(
         "YFL039C",
     ]
     stored = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in stored] == [[0, 1, 2, 3, 4, 5, 6, 7]]
+    assert [entry["member_indices"] for entry in stored] == [[0, 1, 2, 3, 4, 5]]
 
 
 def test_every_condition_dose_maps_to_its_typed_concentration() -> None:
@@ -736,7 +797,7 @@ def test_download_copies_from_the_mirror_and_verifies_the_pin(
         root=str(root), genome=cast(SCerevisiaeGenome, _FullStub())
     )
     assert (root / "raw" / c._S1_FILENAME).read_bytes() == source.read_bytes()
-    assert len(built) == 8
+    assert len(built) == 6
 
 
 class _FrozenDatetime:

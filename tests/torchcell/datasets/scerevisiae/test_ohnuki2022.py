@@ -27,10 +27,8 @@ means A101_A 2.0, C103_A1B 4.0, ACV103_A1B 0.5, CCV103_A1B 0.75.
   two background collisions in file order, ``['YGL013C', 'YDR011W']``, then "Processing
   ... (2 strains)".
 - a clean base-only matrix (``A101_A``, ``C103_A1B``; no CV trait, so
-  ``calmorph_coefficient_of_variation`` is None) with YAL001C twice (1.0 2.0 and 3.0 4.0)
-  and a reference with a blank cell: wt1 1.0 (blank), wt2 3.0 5.0, so the reference means
-  are A101_A (1.0 + 3.0) / 2 = 2.0 and C103_A1B 5.0 / 1 = 5.0 (``mean`` skips NaN). No
-  drop line is logged.
+  ``calmorph_coefficient_of_variation`` is None): YAL001C 1.0 2.0 against wt1 1.0 3.0 and
+  wt2 3.0 5.0, reference means 2.0 and 4.0. No drop line is logged.
 - ``download`` with the two module sha256 pins replaced by the digests of the synthetic
   files (they are read at call time, line 188): an empty ``raw/`` is filled from
   ``$DATA_ROOT/torchcell-library/ohnukiHighthroughputPlatformYeast2022/data`` and the
@@ -41,10 +39,13 @@ means A101_A 2.0, C103_A1B 4.0, ACV103_A1B 0.5, CCV103_A1B 0.75.
 - the default-genome path (``genome=None`` calls ``default_genome()`` once, line 233) and
   ``main`` with the dataset class replaced by a recorder.
 
-Findings pinned here: the same ORF listed twice gives two records with identical
-genotypes (no duplicate check before line 278); and the reference mean silently skips a
-blank reference cell (line 313) while a blank mutant cell drops the whole strain (line
-239), so "never impute" holds for the mutants only.
+2026.10.01 (issue #533): the Phase 15 findings are retired. A target ORF listed twice
+(after name reconciliation) is refused by name instead of giving two records of one
+genotype, and a blank reference cell is refused instead of the reference mean skipping
+it, so "never impute" holds for the reference as it does for the mutants (a blank mutant
+cell still drops its strain, the documented YGL141W case). On the released tables both
+inputs occur 0 times (0 repeated ORFs in 1982 rows, 0 blank cells in the 749 x 501
+reference table), so no stored record changes.
 """
 
 from __future__ import annotations
@@ -348,69 +349,104 @@ def test_drop_ledger_is_logged_in_file_order(
     ]
 
 
-def test_clean_base_only_matrix_keeps_duplicates_and_skips_blank_reference_cells(
+def _base_only_root(
+    tmp_path: Path, mutant_rows: list[list[str]], wt_rows: list[list[str]]
+) -> Path:
+    root = tmp_path / "clean"
+    (root / "raw").mkdir(parents=True)
+    _write_tsv(root / "raw" / m.MUTANT_FILE, ["ORF", "A101_A", "C103_A1B"], mutant_rows)
+    _write_tsv(root / "raw" / m.WT_FILE, ["NAME", "A101_A", "C103_A1B"], wt_rows)
+    return root
+
+
+def test_clean_base_only_matrix(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
     """Base-only traits give ``calmorph_coefficient_of_variation=None``; no drop line is
-    logged when nothing drops.
-
-    Finding: YAL001C listed twice gives two records with the same quadruple genotype,
-    nothing deduplicates the target ORF. Finding: the reference C103_A1B is 5.0, the
-    mean of the one non-blank replicate, so a blank reference cell is skipped while a
-    blank mutant cell drops the strain. Pinned until the loader refuses both.
+    logged when nothing drops; the reference means are (1.0 + 3.0) / 2 = 2.0 and
+    (3.0 + 5.0) / 2 = 4.0.
     """
-    root = tmp_path / "clean"
-    (root / "raw").mkdir(parents=True)
-    _write_tsv(
-        root / "raw" / m.MUTANT_FILE,
-        ["ORF", "A101_A", "C103_A1B"],
-        [["YAL001C", "1.0", "2.0"], ["YAL001C", "3.0", "4.0"]],
-    )
-    _write_tsv(
-        root / "raw" / m.WT_FILE,
-        ["NAME", "A101_A", "C103_A1B"],
-        [["wt1", "1.0", ""], ["wt2", "3.0", "5.0"]],
+    root = _base_only_root(
+        tmp_path,
+        [["YAL001C", "1.0", "2.0"]],
+        [["wt1", "1.0", "3.0"], ["wt2", "3.0", "5.0"]],
     )
     with caplog.at_level(logging.INFO, logger=m.log.name):
         dataset = m.ScmdOhnuki2022Dataset(root=str(root), genome=_genome())
     messages = [r.getMessage() for r in caplog.records if r.name == m.log.name]
-    assert messages == ["Processing Ohnuki 2022 CalMorph morphology (2 strains)..."]
-    assert len(dataset) == 2
-    genotype = Genotype(
-        perturbations=[
-            KanMxDeletionPerturbation(
-                systematic_gene_name="YAL001C", perturbed_gene_name="YAL001C"
+    assert messages == ["Processing Ohnuki 2022 CalMorph morphology (1 strains)..."]
+    assert len(dataset) == 1
+    assert (
+        dataset[0]["experiment"]
+        == CalMorphExperiment(
+            dataset_name="ScmdOhnuki2022Dataset",
+            genotype=Genotype(
+                perturbations=[
+                    KanMxDeletionPerturbation(
+                        systematic_gene_name="YAL001C", perturbed_gene_name="YAL001C"
+                    ),
+                    *_background(),
+                ]
             ),
-            *_background(),
-        ]
+            environment=_ENVIRONMENT,
+            phenotype=CalMorphPhenotype(
+                calmorph={"A101_A": 1.0, "C103_A1B": 2.0},
+                calmorph_coefficient_of_variation=None,
+            ),
+        ).model_dump()
     )
-    for index, values in enumerate(([1.0, 2.0], [3.0, 4.0])):
-        assert (
-            dataset[index]["experiment"]
-            == CalMorphExperiment(
-                dataset_name="ScmdOhnuki2022Dataset",
-                genotype=genotype,
-                environment=_ENVIRONMENT,
-                phenotype=CalMorphPhenotype(
-                    calmorph={"A101_A": values[0], "C103_A1B": values[1]},
-                    calmorph_coefficient_of_variation=None,
-                ),
-            ).model_dump()
-        )
-        assert (
-            dataset[index]["reference"]
-            == CalMorphExperimentReference(
-                dataset_name="ScmdOhnuki2022Dataset",
-                genome_reference=ReferenceGenome(
-                    species="Saccharomyces cerevisiae", strain="BY4741"
-                ),
-                environment_reference=_ENVIRONMENT,
-                phenotype_reference=CalMorphPhenotype(
-                    calmorph={"A101_A": 2.0, "C103_A1B": 5.0},
-                    calmorph_coefficient_of_variation=None,
-                ),
-            ).model_dump()
-        )
+    assert (
+        dataset[0]["reference"]
+        == CalMorphExperimentReference(
+            dataset_name="ScmdOhnuki2022Dataset",
+            genome_reference=ReferenceGenome(
+                species="Saccharomyces cerevisiae", strain="BY4741"
+            ),
+            environment_reference=_ENVIRONMENT,
+            phenotype_reference=CalMorphPhenotype(
+                calmorph={"A101_A": 2.0, "C103_A1B": 4.0},
+                calmorph_coefficient_of_variation=None,
+            ),
+        ).model_dump()
+    )
+
+
+def test_repeated_target_orf_refuses(tmp_path: Path) -> None:
+    """YAL001C listed twice (once as " yal001c", equal after strip, uppercase and
+    reconciliation) is refused by name instead of giving two records of one genotype;
+    no LMDB store is written.
+    """
+    root = _base_only_root(
+        tmp_path,
+        [["YAL001C", "1.0", "2.0"], [" yal001c", "3.0", "4.0"]],
+        [["wt1", "1.0", "3.0"], ["wt2", "3.0", "5.0"]],
+    )
+    with pytest.raises(ValueError) as info:
+        m.ScmdOhnuki2022Dataset(root=str(root), genome=_genome())
+    assert str(info.value) == (
+        "Ohnuki 2022 quad1982data.tsv lists 1 target ORF(s) more than once after name "
+        "reconciliation: ['YAL001C']"
+    )
+    assert not (root / "processed" / "lmdb").exists()
+
+
+def test_blank_reference_cell_refuses(tmp_path: Path) -> None:
+    """A blank reference cell (wt1 C103_A1B) is refused, naming the trait and its blank
+    count, instead of the mean being taken over the one remaining replicate; a blank
+    mutant cell drops its strain, so neither side is ever imputed.
+    """
+    root = _base_only_root(
+        tmp_path,
+        [["YAL001C", "1.0", "2.0"]],
+        [["wt1", "1.0", ""], ["wt2", "3.0", "5.0"]],
+    )
+    with pytest.raises(ValueError) as info:
+        m.ScmdOhnuki2022Dataset(root=str(root), genome=_genome())
+    assert str(info.value) == (
+        "Ohnuki 2022 wt749data.tsv has blank reference cell(s) {'C103_A1B': 1}; the "
+        "3Delta reference mean is never imputed"
+    )
+    assert not (root / "processed" / "lmdb").exists()
 
 
 def test_non_numeric_reference_cell_refuses(tmp_path: Path) -> None:

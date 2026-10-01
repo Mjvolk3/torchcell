@@ -221,6 +221,16 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
         df_mutant["systematic_gene_name"] = reconcile_systematic_names(
             self.genome, df_mutant["ORF"], label="Ohnuki 2022"
         )
+        # One strain per target ORF (0 repeats among the 1982 released rows): a repeat
+        # would store two records of one genotype, so it is refused, not stored twice.
+        repeated = df_mutant.loc[
+            df_mutant["systematic_gene_name"].duplicated(), "systematic_gene_name"
+        ].tolist()
+        if repeated:
+            raise ValueError(
+                f"Ohnuki 2022 {MUTANT_FILE} lists {len(repeated)} target ORF(s) more "
+                f"than once after name reconciliation: {repeated}"
+            )
 
         # Drop the single strain with missing CalMorph values (never impute).
         has_all = df_mutant[feature_cols].notna().all(axis=1)
@@ -295,7 +305,19 @@ class ScmdOhnuki2022Dataset(ExperimentDataset):
     def _calculate_wt_reference(
         self, df_wt: pd.DataFrame, feature_cols: list[str]
     ) -> CalMorphPhenotype:
-        """Aggregate the 749 replicate 3Delta profiles into one mean reference phenotype."""
+        """Aggregate the 749 replicate 3Delta profiles into one mean reference phenotype.
+
+        A blank reference cell is refused, as a blank mutant cell drops its strain: the
+        reference mean is never taken over a subset of the replicates (0 blank cells in
+        the released 749 x 501 table).
+        """
+        blank = df_wt[feature_cols].isna().sum()
+        blank = blank[blank > 0]
+        if len(blank):
+            raise ValueError(
+                f"Ohnuki 2022 {WT_FILE} has blank reference cell(s) "
+                f"{blank.to_dict()}; the 3Delta reference mean is never imputed"
+            )
         wt_means = {
             col: float(pd.to_numeric(df_wt[col], errors="raise").mean())
             for col in feature_cols

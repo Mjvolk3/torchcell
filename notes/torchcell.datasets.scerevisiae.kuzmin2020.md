@@ -125,3 +125,11 @@ The published trigenic score needs the double-mutant query strain's own fitness,
 - One record per distinct double-mutant query strain, 201 of them, with the query pair as the genotype and the query strain id on both perturbations (main `4c4a4f950`).
 - The released S5 standard deviation is stored as a bootstrap SE over the conservative lower end of the 12 to 24 colony measurements the SI describes.
 - Digenic records serialize byte-identically, which is what lets the served graph take the additions as a superset admission [[torchcell.knowledge_graphs.incremental-admission]].
+
+## 2026.10.01 - Issue #533 Refusals and an Entry Point Under DATA_ROOT
+
+- An array strain that is neither `tsa` nor `dma` used to be stored as an `SgaAllelePerturbation` by Dmf, Dmi, Tmf and Tmi, a guess with no evidence. `_array_perturbation_type` now refuses it with the same named `ValueError` as the 2018 loaders (0 of 934,595 Table S1 and S3 rows).
+- A blank SD used to be stored as `fitness_std` NaN on Smf, Dmf (both record kinds) and Tmf. `_reported_sd` stores None, matching the empty uncertainty fields; the SI defines no meaning for a blank (`kuzminExploringWholegenomeDuplicate2020/si/si1.md` lists only "12. Combined mutant fitness standard deviation", line 229). Measured on the real tables: 0 blank St.dev. among the 472 Smf rows and 201 query-strain records, 0 blank SDs in S1 and S3.
+- A Table S5 "Double mutant" tm number listed twice fanned the left merge out into two records of one strain. `_double_mutant_query_strain_rows` now refuses it (0 of 240 released rows repeat).
+- `main` built only `TmiKuzmin2020Dataset()` at the relative default root; it now builds all five under `$DATA_ROOT/data/torchcell/<loader>_kuzmin2020` and refuses an unset `DATA_ROOT` through `torchcell.graph.sgd.data_root`.
+- Observation, not changed: 24,193 digenic (query strain, array strain) keys occur in both S1 and S3 with different values (no row is a full duplicate); both are stored, as before.

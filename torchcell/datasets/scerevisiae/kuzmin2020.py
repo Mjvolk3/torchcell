@@ -91,6 +91,34 @@ RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN = "double_mutant_query_strain"
 _QUERY_STRAIN_FITNESS_TOL = 1e-3
 
 
+def _array_perturbation_type(array_strain_id: str) -> str:
+    """The perturbation class of an SGA array strain, read off its strain id.
+
+    ``tsa`` strains are temperature-sensitive alleles and ``dma`` strains KanMX
+    deletions, the two arrays of Tables S1 and S3. Any other strain id is refused
+    rather than guessed: nothing records its perturbation class (0 of the 934,595
+    Table S1 and S3 rows has another array strain).
+    """
+    if "tsa" in array_strain_id:
+        return "temperature_sensitive"
+    if "dma" in array_strain_id:
+        return "KanMX_deletion"
+    raise ValueError(
+        f"array strain {array_strain_id!r} is neither a 'tsa' (temperature-sensitive "
+        "allele) nor a 'dma' (KanMX deletion) strain; its perturbation type is unknown"
+    )
+
+
+def _reported_sd(std_val: Any) -> Any:
+    """A fitness SD as stored: None for a blank cell, the released value otherwise.
+
+    The SI defines no meaning for a blank SD cell, so a blank is stored as "no value
+    reported" (None, matching the empty uncertainty fields) rather than as a float NaN
+    (0 blank SDs among the Table S1, S3 and S5 rows the loaders store).
+    """
+    return None if pd.isna(std_val) else std_val
+
+
 def _combined_mutant_uncertainty(std_val: Any) -> dict[str, Any]:
     """Ontology fields for a double/triple-mutant-fitness sample SD over colonies.
 
@@ -163,13 +191,24 @@ def _double_mutant_query_strain_rows(
     ("YAL015C+YDL227C_tm461") -- so the tm number is what the merge keys on, against
     the TRIGENIC rows. Fitness and SD come from S5; a strain S5 leaves blank falls
     back to the (4-decimal, SD-less) S1/S3 column, and a strain with neither is
-    dropped.
+    dropped. A tm number listed twice among S5's "Double mutant" rows is refused, since
+    the left merge would fan it out into one record per listing (0 of the 240 released
+    rows repeat).
     """
     rows = df_trigenic.drop_duplicates(subset=["Query strain ID"]).copy()
     rows["query_strain_tm"] = rows["Query strain ID"].str.rsplit("_", n=1).str[-1]
     df_s5_double = df_s5[df_s5["Mutant type"] == "Double mutant"][
         ["Query Strain ID", "Fitness", "St.dev."]
     ]
+    repeated = df_s5_double["Query Strain ID"][
+        df_s5_double["Query Strain ID"].duplicated()
+    ].tolist()
+    if repeated:
+        raise ValueError(
+            f"Table S5 lists {len(repeated)} 'Double mutant' query strain(s) more than "
+            f"once: {repeated}; the tm-number join would store each strain once per "
+            "listing"
+        )
     rows = rows.merge(
         df_s5_double, left_on="query_strain_tm", right_on="Query Strain ID", how="left"
     )
@@ -336,7 +375,7 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
 
         phenotype = FitnessPhenotype(
             fitness=row["Fitness"],
-            fitness_std=row["St.dev."],
+            fitness_std=_reported_sd(row["St.dev."]),
             **_combined_mutant_uncertainty(row["St.dev."]),
         )
 
@@ -520,13 +559,7 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
             lambda x: "KanMX_deletion" if "Δ" in x else "allele"
         )
         df["array_perturbation_type"] = df["Array strain ID"].apply(
-            lambda x: (
-                "temperature_sensitive"
-                if "tsa" in x
-                else "KanMX_deletion"
-                if "dma" in x
-                else "unknown"
-            )
+            _array_perturbation_type
         )
 
         # Calculate phenotype reference std (the DIGENIC mean, as served)
@@ -594,14 +627,8 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
                     perturbed_gene_name=array_allele_name.split("_")[0],
                     strain_id=row["Array strain ID"],
                 )
-            elif array_perturbation_type == "temperature_sensitive":
+            else:  # temperature_sensitive; _array_perturbation_type admits no third
                 perturbation = SgaTsAllelePerturbation(
-                    systematic_gene_name=array_systematic_name,
-                    perturbed_gene_name=array_allele_name.split("_")[0],
-                    strain_id=row["Array strain ID"],
-                )
-            else:  # unknown or other types
-                perturbation = SgaAllelePerturbation(
                     systematic_gene_name=array_systematic_name,
                     perturbed_gene_name=array_allele_name.split("_")[0],
                     strain_id=row["Array strain ID"],
@@ -624,7 +651,9 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
             else _combined_mutant_uncertainty(row["fitness_std"])
         )
         phenotype = FitnessPhenotype(
-            fitness=row["fitness"], fitness_std=row["fitness_std"], **uncertainty
+            fitness=row["fitness"],
+            fitness_std=_reported_sd(row["fitness_std"]),
+            **uncertainty,
         )
 
         phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=None)
@@ -772,13 +801,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
             lambda x: "KanMX_deletion" if "Δ" in x else "allele"
         )
         df["array_perturbation_type"] = df["Array strain ID"].apply(
-            lambda x: (
-                "temperature_sensitive"
-                if "tsa" in x
-                else "KanMX_deletion"
-                if "dma" in x
-                else "unknown"
-            )
+            _array_perturbation_type
         )
 
         # Calculate phenotype reference std
@@ -853,14 +876,6 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
                     strain_id=row["Array strain ID"],
                 )
             )
-        else:
-            perturbations.append(
-                SgaAllelePerturbation(
-                    systematic_gene_name=row["Array systematic name"],
-                    perturbed_gene_name=row["Array allele name"].split("_")[0],
-                    strain_id=row["Array strain ID"],
-                )
-            )
 
         genotype = Genotype(perturbations=perturbations)
         assert len(genotype) == 3, "Genotype must have 3 perturbations."
@@ -871,7 +886,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         environment_reference = environment.model_copy()
 
         phenotype = FitnessPhenotype(
-            fitness=row["fitness"], fitness_std=row["fitness_std"]
+            fitness=row["fitness"], fitness_std=_reported_sd(row["fitness_std"])
         )
 
         phenotype_reference = FitnessPhenotype(
@@ -1019,13 +1034,7 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
             lambda x: "KanMX_deletion" if "Δ" in x else "allele"
         )
         df["array_perturbation_type"] = df["Array strain ID"].apply(
-            lambda x: (
-                "temperature_sensitive"
-                if "tsa" in x
-                else "KanMX_deletion"
-                if "dma" in x
-                else "unknown"
-            )
+            _array_perturbation_type
         )
 
         df = df.replace("'", "_prime", regex=True)
@@ -1075,14 +1084,6 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         elif row["array_perturbation_type"] == "KanMX_deletion":
             perturbations.append(
                 SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=row["Array systematic name"],
-                    perturbed_gene_name=row["Array allele name"].split("_")[0],
-                    strain_id=row["Array strain ID"],
-                )
-            )
-        else:
-            perturbations.append(
-                SgaAllelePerturbation(
                     systematic_gene_name=row["Array systematic name"],
                     perturbed_gene_name=row["Array allele name"].split("_")[0],
                     strain_id=row["Array strain ID"],
@@ -1244,13 +1245,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
             lambda x: "KanMX_deletion" if "Δ" in x else "allele"
         )
         df["array_perturbation_type"] = df["Array strain ID"].apply(
-            lambda x: (
-                "temperature_sensitive"
-                if "tsa" in x
-                else "KanMX_deletion"
-                if "dma" in x
-                else "unknown"
-            )
+            _array_perturbation_type
         )
 
         df = df.replace("'", "_prime", regex=True)
@@ -1323,14 +1318,6 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
                     strain_id=row["Array strain ID"],
                 )
             )
-        else:
-            perturbations.append(
-                SgaAllelePerturbation(
-                    systematic_gene_name=row["Array systematic name"],
-                    perturbed_gene_name=row["Array allele name"].split("_")[0],
-                    strain_id=row["Array strain ID"],
-                )
-            )
 
         genotype = Genotype(perturbations=perturbations)
         assert len(genotype) == 3, "Genotype must have 3 perturbations."
@@ -1374,14 +1361,19 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
 
 
 def main() -> None:
-    """Build and print summaries of the Kuzmin 2020 datasets for testing."""
-    # Test the datasets
+    """Build all five Kuzmin 2020 datasets under ``$DATA_ROOT`` and print a summary."""
+    from dotenv import load_dotenv
+
+    from torchcell.graph.sgd import data_root
+
+    load_dotenv()
+    root = osp.join(data_root(), "data/torchcell")
     datasets = [
-        # SmfKuzmin2020Dataset(),
-        # DmfKuzmin2020Dataset(),
-        # TmfKuzmin2020Dataset(),
-        # DmiKuzmin2020Dataset(),
-        TmiKuzmin2020Dataset()
+        SmfKuzmin2020Dataset(root=osp.join(root, "smf_kuzmin2020")),
+        DmfKuzmin2020Dataset(root=osp.join(root, "dmf_kuzmin2020")),
+        TmfKuzmin2020Dataset(root=osp.join(root, "tmf_kuzmin2020")),
+        DmiKuzmin2020Dataset(root=osp.join(root, "dmi_kuzmin2020")),
+        TmiKuzmin2020Dataset(root=osp.join(root, "tmi_kuzmin2020")),
     ]
 
     for dataset in datasets:

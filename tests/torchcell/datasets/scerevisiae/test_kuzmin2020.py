@@ -19,7 +19,7 @@ paths on xlsx tables under ``tmp_path`` (title row first, the loaders read
 =====  ======================  ===============  ===============  ====  ====  =====  =====  =====  =====
 table  query strain            query alleles    array strain     type  comb  sd     query  eps    p
 =====  ======================  ===============  ===============  ====  ====  =====  =====  =====  =====
-S1     YBR160W+YDL227C_tsq508  cdc28-4+hoΔ      YCR002C_sn1      dig   0.61  blank  0.83   -0.12  0.03
+S1     YBR160W+YDL227C_tsq508  cdc28-4+hoΔ      YCR002C_tsa1     dig   0.61  blank  0.83   -0.12  0.03
 S1     YBR160W+YML107C_tm801   cdc28-4+pml39Δ   YBR001C_tsa100   tri   0.3   0.02   0.55   -0.2   0.001
 S3     YBR160W+YDL227C_tsq508  cdc28-4+hoΔ      YAL048C_dma5203  dig   0.72  0.05   0.83   0.04   0.4
 S3     YBR160W+YML107C_tm801   cdc28-4+pml39Δ   YAL048C_dma5203  tri   0.25  0.03   0.55   -0.1   0.01
@@ -31,9 +31,9 @@ Table S5: single mutants CDC28 (``cdc28-4``, sn tsq508, 0.83, St.dev. blank) and
 - Smf: CDC28 as an ``SgaAllelePerturbation`` (Gene1 verbatim, strain ``tsq508``) and GEM1
   as a KanMX deletion (0.95 / 0.01, labeled ``sample_sd`` n 4, se 0.005); the reference
   is fitness 1.0 with no SD.
-- Dmf: the S1 then S3 digenic crosses, the allele query paired with ``YCR002C_sn1``
-  (neither ``dma`` nor ``tsa``: stored as an ``SgaAllelePerturbation``, line 604) at 0.61
-  with a blank SD, and with gem1 at 0.72 / 0.05 (se 0.025); then ONE record for tm801
+- Dmf: the S1 then S3 digenic crosses, the allele query paired with the ts array
+  ``YCR002C_tsa1`` at 0.61 with a blank SD (stored as ``fitness_std`` None, no
+  uncertainty), and with gem1 at 0.72 / 0.05 (se 0.025); then ONE record for tm801
   although it appears in both S1 and S3 (drop_duplicates on the strain id), with S5's
   0.5 / 0.006 labeled ``bootstrap_se`` over ``N_SAMPLES_QUERY_STRAIN_FITNESS = 12``
   colonies (the SI's 12 to 24 colony measurements, lower end), se 0.006 undivided.
@@ -44,15 +44,17 @@ Table S5: single mutants CDC28 (``cdc28-4``, sn tsq508, 0.83, St.dev. blank) and
   0.04 (p 0.4) at edge level. Tmi: -0.2 (p 0.001) and -0.1 (p 0.01) at hyperedge level.
 - ``subset_n=1`` samples position 1 of two with ``random_state=42``.
 
-Findings pinned here: a blank SD is stored as ``fitness_std`` NaN on the Smf and Dmf
-digenic records (lines 339 and 627 pass the raw cell; only the uncertainty fields go
-through ``pd.isna``); a Table S5 "Double mutant" row listed twice doubles that strain's
-record (the left merge on the tm number, line 173, fans out); ``main`` builds only Tmi,
-at the class default ``root="data/torchcell/tmi_kuzmin2020"`` relative to the working
-directory (line 1384).
+2026.10.01 (issue #533): the Phase 15 findings are retired. A blank SD is stored as
+``fitness_std`` None (not a float NaN) on Smf, Dmf and Tmf; an array strain that is
+neither ``tsa`` nor ``dma`` (``YCR002C_sn1``) is refused by every loader that reads the
+array column with a named ``ValueError``, where Dmf, Dmi, Tmf and Tmi used to store it as
+an ``SgaAllelePerturbation``; a Table S5 "Double mutant" row listed twice is refused
+instead of fanning the left merge out into two records; ``main`` builds all five loaders
+under ``$DATA_ROOT/data/torchcell``. On the released tables each refused input occurs 0
+times (0 blank SDs among stored rows, 0 other array strains in 934,595 S1 and S3 rows,
+0 repeated tm numbers among 240 S5 "Double mutant" rows), so no stored record changes.
 """
 
-import math
 import os
 import os.path as osp
 import zipfile
@@ -105,9 +107,10 @@ TSQ = "YBR160W+YDL227C_tsq508"
 TM801 = "YBR160W+YML107C_tm801"
 TSA = "YBR001C_tsa100"
 DMA = "YAL048C_dma5203"
+TSA_CDC10 = "YCR002C_tsa1"
 SN = "YCR002C_sn1"
 S1_ROWS: list[list[Any]] = [
-    [TSQ, "cdc28-4+hoΔ", SN, "cdc10-1", "digenic", 0.61, None, 0.83, 0.7, -0.12, 0.03],
+    [TSQ, "cdc28-4+hoΔ", TSA_CDC10, "cdc10-1", "digenic", 0.61, None, 0.83, 0.7, -0.12, 0.03],
     [TM801, "cdc28-4+pml39Δ", TSA, "nth2-5001", "trigenic", 0.3, 0.02, 0.55, 0.8, -0.2, 0.001],
 ]  # fmt: skip
 S3_ROWS: list[list[Any]] = [
@@ -137,8 +140,8 @@ PUBLICATION = Publication(
     doi="10.1126/science.aaz5667",
     doi_url="https://www.science.org/doi/10.1126/science.aaz5667",
 )
-CDC10_UNKNOWN = SgaAllelePerturbation(
-    systematic_gene_name="YCR002C", perturbed_gene_name="cdc10-1", strain_id=SN
+CDC10_TS = SgaTsAllelePerturbation(
+    systematic_gene_name="YCR002C", perturbed_gene_name="cdc10-1", strain_id=TSA_CDC10
 )
 GEM1 = SgaKanMxDeletionPerturbation(
     systematic_gene_name="YAL048C", perturbed_gene_name="gem1", strain_id=DMA
@@ -172,20 +175,26 @@ def write_xlsx(path: Path, columns: list[str], rows: list[list[Any]]) -> None:
     pd.DataFrame(rows, columns=columns).to_excel(path, index=False, startrow=1)
 
 
-def write_tables(folder: Path, s5_rows: list[list[Any]] = S5_ROWS) -> None:
+def write_tables(
+    folder: Path, s5_rows: list[list[Any]] = S5_ROWS, s1_rows: list[list[Any]] = S1_ROWS
+) -> None:
     """Write Tables S1, S3 and S5 into ``folder``."""
     folder.mkdir(parents=True, exist_ok=True)
-    write_xlsx(folder / S1_NAME, S13_COLUMNS, S1_ROWS)
+    write_xlsx(folder / S1_NAME, S13_COLUMNS, s1_rows)
     write_xlsx(folder / S3_NAME, S13_COLUMNS, S3_ROWS)
     write_xlsx(folder / S5_NAME, S5_COLUMNS, s5_rows)
 
 
 def build(
-    tmp_path: Path, cls: type[Any], s5_rows: list[list[Any]] = S5_ROWS, **kw: Any
+    tmp_path: Path,
+    cls: type[Any],
+    s5_rows: list[list[Any]] = S5_ROWS,
+    s1_rows: list[list[Any]] = S1_ROWS,
+    **kw: Any,
 ) -> Any:
     """Build ``cls`` under ``tmp_path/<class name>`` from the three tables."""
     root = tmp_path / cls.__name__
-    write_tables(root / "raw", s5_rows)
+    write_tables(root / "raw", s5_rows, s1_rows)
     return cls(root=str(root), **kw)
 
 
@@ -252,23 +261,16 @@ def stored(ds: Any, key: str) -> list[dict[str, Any]]:
     return [ds[i][key] for i in range(len(ds))]
 
 
-def pop_nan_std(experiment: dict[str, Any]) -> None:
-    """Remove a NaN ``fitness_std`` after asserting it is a float NaN."""
-    value = experiment["phenotype"].pop("fitness_std")
-    assert isinstance(value, float) and math.isnan(value)
-
-
 def test_smf_allele_single_and_blank_sd(tmp_path: Path) -> None:
     """Smf: CDC28 (``Allele1`` "cdc28-4", no "delta") becomes an SGA allele, GEM1 a KanMX
     deletion with ``sample_sd`` n 4 (se 0.005); the reference is fitness 1.0, no SD.
-
-    Finding: CDC28's blank St.dev. is stored as ``fitness_std`` NaN with every
-    uncertainty field None. Pinned until a blank SD maps to None.
+    CDC28's blank St.dev. is stored as ``fitness_std`` None with every uncertainty field
+    None: the SI defines no meaning for a blank, so it is "no value reported".
     """
     name = "SmfKuzmin2020Dataset"
     ds = build(tmp_path, k.SmfKuzmin2020Dataset)
     experiments = stored(ds, "experiment")
-    pop_nan_std(experiments[0])
+    assert experiments[0]["phenotype"]["fitness_std"] is None
     expected = [
         fitness(
             name,
@@ -296,7 +298,6 @@ def test_smf_allele_single_and_blank_sd(tmp_path: Path) -> None:
             **labeled(0.01, UncertaintyType.sample_sd, 4),
         ),
     ]
-    expected[0]["phenotype"].pop("fitness_std")
     assert experiments == expected
     assert experiments[1]["phenotype"]["fitness_se"] == 0.005
     assert stored(ds, "reference") == [fitness_reference(name, None)] * 2
@@ -305,20 +306,19 @@ def test_smf_allele_single_and_blank_sd(tmp_path: Path) -> None:
 def test_dmf_allele_query_unknown_array_and_s5_disagreement(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Dmf: the allele query x unknown-array cross (blank SD), the allele query x gem1
-    cross (0.72 / 0.05, se 0.025), then ONE tm801 record with Table S5's 0.5 / 0.006
-    as ``bootstrap_se`` over 12 colonies, se 0.006 (the S1/S3 column's 0.55 is not used).
-    The join logs its match count and the 0.05 disagreement as a warning.
-
-    Finding: record 0's blank SD is stored as ``fitness_std`` NaN.
+    """Dmf: the allele query x ts-array cross (blank SD, stored as ``fitness_std`` None
+    with no uncertainty), the allele query x gem1 cross (0.72 / 0.05, se 0.025), then ONE
+    tm801 record with Table S5's 0.5 / 0.006 as ``bootstrap_se`` over 12 colonies, se
+    0.006 (the S1/S3 column's 0.55 is not used). The join logs its match count and the
+    0.05 disagreement as a warning.
     """
     name = "DmfKuzmin2020Dataset"
     with caplog.at_level("INFO", logger=k.log.name):
         ds = build(tmp_path, k.DmfKuzmin2020Dataset)
     experiments = stored(ds, "experiment")
-    pop_nan_std(experiments[0])
+    assert experiments[0]["phenotype"]["fitness_std"] is None
     expected = [
-        fitness(name, [cdc28(TSQ), CDC10_UNKNOWN], 0.61, None),
+        fitness(name, [cdc28(TSQ), CDC10_TS], 0.61, None),
         fitness(
             name,
             [GEM1, cdc28(TSQ)],
@@ -334,7 +334,6 @@ def test_dmf_allele_query_unknown_array_and_s5_disagreement(
             **labeled(0.006, UncertaintyType.bootstrap_se, 12),
         ),
     ]
-    expected[0]["phenotype"].pop("fitness_std")
     assert experiments == expected
     assert [e["phenotype"]["fitness_se"] for e in experiments] == [None, 0.025, 0.006]
     assert stored(ds, "reference") == [fitness_reference(name, None)] * 3
@@ -354,24 +353,46 @@ def test_dmf_allele_query_unknown_array_and_s5_disagreement(
     ]
 
 
-def test_dmf_repeated_s5_double_mutant_row_doubles_the_strain_record(
-    tmp_path: Path,
-) -> None:
-    """Finding: with the tm801 "Double mutant" row listed twice in Table S5, the left
-    merge on the tm number returns two rows for the one strain, so Dmf stores two
-    identical tm801 records (4 in all). Pinned until the join refuses a duplicated key.
+def test_dmf_refuses_a_repeated_s5_double_mutant_row(tmp_path: Path) -> None:
+    """With the tm801 "Double mutant" row listed twice in Table S5, the build refuses
+    before the left merge on the tm number could fan the one strain out into two
+    records, and no LMDB store is written.
     """
-    ds = build(tmp_path, k.DmfKuzmin2020Dataset, s5_rows=[*S5_ROWS, S5_DOUBLE])
-    assert len(ds) == 4
-    assert ds.df["Query strain ID"].tolist() == [TSQ, TSQ, TM801, TM801]
-    record = fitness(
-        "DmfKuzmin2020Dataset",
-        [cdc28(TM801), PML39_TM801],
-        0.5,
-        0.006,
-        **labeled(0.006, UncertaintyType.bootstrap_se, 12),
+    with pytest.raises(ValueError) as info:
+        build(tmp_path, k.DmfKuzmin2020Dataset, s5_rows=[*S5_ROWS, S5_DOUBLE])
+    assert str(info.value) == (
+        "Table S5 lists 1 'Double mutant' query strain(s) more than once: ['tm801']; "
+        "the tm-number join would store each strain once per listing"
     )
-    assert [ds[2]["experiment"], ds[3]["experiment"]] == [record, record]
+    assert not (tmp_path / "DmfKuzmin2020Dataset" / "processed" / "lmdb").exists()
+
+
+UNKNOWN_DIGENIC = [TSQ, "cdc28-4+hoΔ", SN, "cdc10-1", "digenic", 0.61, 0.01, 0.83, 0.7, -0.12, 0.03]  # fmt: skip
+UNKNOWN_TRIGENIC = [TM801, "cdc28-4+pml39Δ", SN, "cdc10-1", "trigenic", 0.3, 0.02, 0.55, 0.7, -0.2, 0.001]  # fmt: skip
+
+
+@pytest.mark.parametrize(
+    "cls",
+    [
+        k.DmfKuzmin2020Dataset,
+        k.DmiKuzmin2020Dataset,
+        k.TmfKuzmin2020Dataset,
+        k.TmiKuzmin2020Dataset,
+    ],
+)
+def test_unknown_array_strain_type_refuses_the_build(
+    tmp_path: Path, cls: type[Any]
+) -> None:
+    """``YCR002C_sn1`` is neither a ``tsa`` nor a ``dma`` strain, so nothing records its
+    perturbation class: every loader that reads the array column refuses it by name
+    instead of storing it as an ``SgaAllelePerturbation``.
+    """
+    with pytest.raises(ValueError) as info:
+        build(tmp_path, cls, s1_rows=[UNKNOWN_DIGENIC, UNKNOWN_TRIGENIC])
+    assert str(info.value) == (
+        "array strain 'YCR002C_sn1' is neither a 'tsa' (temperature-sensitive allele) "
+        "nor a 'dma' (KanMX deletion) strain; its perturbation type is unknown"
+    )
 
 
 def test_tmf_allele_first_query_and_ts_array(tmp_path: Path) -> None:
@@ -390,14 +411,14 @@ def test_tmf_allele_first_query_and_ts_array(tmp_path: Path) -> None:
 
 
 def test_dmi_and_tmi_allele_records(tmp_path: Path) -> None:
-    """Dmi stores the digenic crosses at edge level (-0.12 p 0.03 with the unknown array
-    as an SGA allele; 0.04 p 0.4); Tmi the trigenic rows at hyperedge level (-0.2 p 0.001
+    """Dmi stores the digenic crosses at edge level (-0.12 p 0.03 against the ts array
+    cdc10-1; 0.04 p 0.4); Tmi the trigenic rows at hyperedge level (-0.2 p 0.001
     against the ts array; -0.1 p 0.01 against gem1).
     """
     dmi = build(tmp_path, k.DmiKuzmin2020Dataset)
     assert stored(dmi, "experiment") == [
         interaction(
-            "DmiKuzmin2020Dataset", [cdc28(TSQ), CDC10_UNKNOWN], -0.12, 0.03, "edge"
+            "DmiKuzmin2020Dataset", [cdc28(TSQ), CDC10_TS], -0.12, 0.03, "edge"
         ),
         interaction("DmiKuzmin2020Dataset", [GEM1, cdc28(TSQ)], 0.04, 0.4, "edge"),
     ]
@@ -526,30 +547,64 @@ def test_items_retype_through_the_declared_classes(
     assert typed["publication"] == PUBLICATION
 
 
-def test_main_builds_tmi_under_the_working_directory(
+MAIN_BUILDS = [
+    (k.SmfKuzmin2020Dataset, "smf_kuzmin2020", 2),
+    (k.DmfKuzmin2020Dataset, "dmf_kuzmin2020", 3),
+    (k.TmfKuzmin2020Dataset, "tmf_kuzmin2020", 2),
+    (k.DmiKuzmin2020Dataset, "dmi_kuzmin2020", 2),
+    (k.TmiKuzmin2020Dataset, "tmi_kuzmin2020", 2),
+]
+
+
+def test_main_builds_all_five_under_data_root(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Finding: ``main`` builds only ``TmiKuzmin2020Dataset()`` (the other four are
-    commented out) at the class default root, which is relative, so the store lands under
-    the working directory, not ``$DATA_ROOT``. Its stdout is the build's index line, then
-    the class, the length and the first item. Pinned until ``main`` takes a root under ``$DATA_ROOT``.
+    """``main`` builds Smf, Dmf, Tmf, Dmi and Tmi at
+    ``$DATA_ROOT/data/torchcell/<loader>_kuzmin2020``, nothing under the working
+    directory. Its stdout is the five builds' index lines, then per loader the class, the
+    length and the first item (the same item a build at any other root stores).
     """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
-    reference = build(tmp_path / "reference", k.TmiKuzmin2020Dataset)
-    first = repr(reference[0])
-    reference.close_lmdb()
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **kw: False)
+    firsts = []
+    for cls, _, _ in MAIN_BUILDS:
+        reference = build(tmp_path / "reference", cls)
+        firsts.append(repr(reference[0]))
+        reference.close_lmdb()
     capsys.readouterr()
+    data_root = tmp_path / "data_root"
+    for _, folder, _ in MAIN_BUILDS:
+        write_tables(data_root / "data" / "torchcell" / folder / "raw")
     work = tmp_path / "work"
-    write_tables(work / "data" / "torchcell" / "tmi_kuzmin2020" / "raw")
+    work.mkdir()
     monkeypatch.chdir(work)
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
     k.main()
     assert capsys.readouterr().out == (
-        "Computing experiment_reference_index (streaming)...\n"
-        f"Testing TmiKuzmin2020Dataset:\nLength: 2\nFirst item: {first}\n\n\n"
+        "Computing experiment_reference_index (streaming)...\n" * 5
+        + "".join(
+            f"Testing {cls.__name__}:\nLength: {n}\nFirst item: {first}\n\n\n"
+            for (cls, _, n), first in zip(MAIN_BUILDS, firsts, strict=True)
+        )
     )
-    assert (
-        work / "data" / "torchcell" / "tmi_kuzmin2020" / "processed" / "lmdb"
-    ).is_dir()
+    for _, folder, _ in MAIN_BUILDS:
+        assert (
+            data_root / "data" / "torchcell" / folder / "processed" / "lmdb"
+        ).is_dir()
+    assert list(work.iterdir()) == []
+
+
+def test_main_refuses_an_unset_data_root(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With ``DATA_ROOT`` unset ``main`` refuses before building anything, instead of
+    building at a root relative to the working directory.
+    """
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **kw: False)
+    monkeypatch.delenv("DATA_ROOT")
+    with pytest.raises(ValueError) as info:
+        k.main()
+    assert str(info.value) == (
+        "DATA_ROOT environment variable is not set. Please set it in your .env file."
+    )
 
 
 # ---------------------------------------------------------------------------------------

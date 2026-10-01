@@ -19,3 +19,8 @@ Findings: a duplicated ORF gives two records; the reference mean skips a blank c
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.10.01 - Issue #533 Findings Retired
+
+- Retired: a repeated ORF giving two records and the reference mean skipping a blank cell.
+- Now asserted: `test_repeated_target_orf_refuses` and `test_blank_reference_cell_refuses` with exact messages and no LMDB written; `test_clean_base_only_matrix` keeps the base-only path.

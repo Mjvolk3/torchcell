@@ -29,3 +29,7 @@ Findings (pinned as the code behaves):
 - `TmfKuzmin2020Dataset` stores `fitness_std` with no `fitness_uncertainty` labeling, so `fitness_se` is `None` on every record and on the reference, unlike `TmfKuzmin2018Dataset`.
 
 Gates: `ruff format` / `ruff check`, `scripts/run-mypy.sh`, `pytest` under `env -u DATA_ROOT` (sentinel absent afterwards), `scripts/test_quality_check.py`. 9 test functions, 13 test cases with the reopen parametrization. Phase 5 of [[plan.test-suite-buildout.2026.09.25]].
+
+## 2026.10.01 - Issue #533 Findings Retired
+
+- Retired: the Dmf query-strain fallback record's `fitness_std` NaN; it is now asserted None and compared in the full dump. The tm99 trigenic array is now the ts strain `YCR002C_tsa1` (an unknown array is refused, pinned in `test_kuzmin2020.py`).

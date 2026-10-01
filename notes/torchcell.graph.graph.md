@@ -48,3 +48,8 @@ A total of 306 new GO terms would be added to G_raw from G.
 ## 2025.04.29
 
 The reason for `GeneMultiGraph` is that `pyg` `from_networkx` only takes type `nx.Graph` and `nx.Digraph`, if we make multigraph just a list of these objects then we just loop over them and use function to get multigraph object.
+
+## 2026.10.01 - Issue #533 main Opens the Genome with overwrite=False
+
+- `main` built the genome with `overwrite=True`; it now passes `overwrite=False`, since a rebuild races any concurrent reader of the shared genome.
+- Left open: `create_go_subgraph` keeps only the last evidence row per (gene, term), so `filter_go_IGI` depends on row order. On the real SGD gene files (6,607 JSONs, 196,943 non-obsolete GO rows, 67,178 pairs) 29,893 pairs have more than one evidence row and 1,935 mix IGI with other evidence: 800 are removed now though non-IGI evidence exists, 1,135 are kept only because a non-IGI row comes last. Fixing it changes the built GO graph, so it is out of a record-neutral PR.

@@ -33,7 +33,7 @@ an ``SgaAllelePerturbation`` wherever it appears: the digenic query (after the `
   digenic query single cdc28-4 0.83 (strain id the full query strain); no SD on any. The
   reference SD is the mean over ALL rows of the SD column, NaN skipped:
   (0.05 + 0.02 + 0.04) / 3 = 0.036666666666666674, se half of it.
-- Dmf: rows 0 and 1 (0.61 with the blank SD; 0.72 / 0.05, ``sample_sd`` over
+- Dmf: rows 0 and 1 (0.61 with the blank SD, stored as None; 0.72 / 0.05, ``sample_sd`` over
   ``N_SAMPLES_COMBINED_MUTANT = 4`` colonies, se 0.05 / 2 = 0.025), then the query pairs
   tm801 (0.55) and tm802 (0.66) with no uncertainty (the 12 to 24 colony bootstrap SD of a
   query strain lives in Data File S4, not a raw file of this loader). The reference SD is
@@ -46,16 +46,19 @@ an ``SgaAllelePerturbation`` wherever it appears: the digenic query (after the `
   Tmi with ``subset_n=1`` keep their second record.
 - ``download``: ``download_url`` is faked to drop a zip holding the table; every loader
   asks for the same hosted archive, extracts it and deletes the zip.
-- An array strain that is neither ``tsa`` nor ``dma`` (``YCR002C_sn77``) is refused.
+- An array strain that is neither ``tsa`` nor ``dma`` (``YCR002C_sn77``) is refused by
+  all five loaders with the same named ``ValueError``.
 
-Findings pinned here: Smf raises ``UnboundLocalError`` on an unknown array type instead of
-a named refusal (``genotype`` is never bound, lines 336 to 370); the Dmf digenic record
-with a blank SD stores ``fitness_std`` as a float NaN, not None (line 638 passes the raw
-cell, only the uncertainty fields go through ``pd.isna``); a repeated digenic row is
-stored twice by Dmf and Dmi (no duplicate check), while Smf deduplicates the array allele.
+2026.10.01 (issue #533): the Phase 15 findings are retired. Smf refuses an unknown array
+type by name instead of failing with ``UnboundLocalError`` (and the other four refuse it
+before their genotype assertion); a blank Dmf or Tmf SD is stored as ``fitness_std`` None,
+not a float NaN (the SI defines no meaning for a blank, so it is "no value reported");
+a repeated digenic (query strain, array strain) cross is refused by Dmf and Dmi instead of
+being stored twice. On the real Data S1 table each of these inputs occurs 0 times (0
+other array strains, 0 blank SDs and 0 repeated crosses in 501,510 rows), so no stored
+record changes.
 """
 
-import math
 import os
 import os.path as osp
 import zipfile
@@ -254,25 +257,19 @@ def test_dmf_allele_pairs_and_blank_sd(tmp_path: Path) -> None:
     """Dmf: the two digenic crosses (allele query x ts array, allele query x KanMX
     array), then the two trigenic query strains, each an allele + deletion pair tagged
     with the full strain id and carrying no uncertainty. The reference SD is the digenic
-    mean with the blank skipped, 0.05.
-
-    Finding: record 0's blank SD is stored as ``fitness_std`` NaN (a float that never
-    equals itself), with every uncertainty field None; it is popped and checked with
-    ``math.isnan`` before the dump comparison. Pinned until the loader maps a blank SD
-    to None.
+    mean with the blank skipped, 0.05. Record 0's blank SD is stored as ``fitness_std``
+    None with every uncertainty field None, not as a float NaN.
     """
     name = "DmfKuzmin2018Dataset"
     ds = build(tmp_path, k.DmfKuzmin2018Dataset)
     experiments = stored(ds, "experiment")
-    blank_sd = experiments[0]["phenotype"].pop("fitness_std")
-    assert isinstance(blank_sd, float) and math.isnan(blank_sd)
+    assert experiments[0]["phenotype"]["fitness_std"] is None
     expected = [
         fitness(name, [cdc28(TSQ), NTH2_TS], 0.61, None),
         fitness(name, [cdc28(TSQ), GEM1], 0.72, 0.05),
         fitness(name, [cdc28(TM801), PML39_TM801], 0.55, None),
         fitness(name, [NUP60_TM802, cdc28(TM802)], 0.66, None),
     ]
-    assert expected[0]["phenotype"].pop("fitness_std") is None
     assert experiments == expected
     assert [e["phenotype"]["fitness_se"] for e in experiments] == [
         None,
@@ -346,81 +343,54 @@ def test_dmi_and_tmi_allele_records(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    ("cls", "rows", "error", "message"),
+    ("cls", "rows"),
     [
-        (
-            k.SmfKuzmin2018Dataset,
-            [UNKNOWN_DIGENIC],
-            UnboundLocalError,
-            "cannot access local variable 'genotype' where it is not associated with a "
-            "value",
-        ),
-        (
-            k.DmfKuzmin2018Dataset,
-            [UNKNOWN_DIGENIC, UNKNOWN_TRIGENIC],
-            AssertionError,
-            "Genotype must have 2 perturbations.",
-        ),
-        (
-            k.DmiKuzmin2018Dataset,
-            [UNKNOWN_DIGENIC],
-            AssertionError,
-            "Genotype must have 2 perturbations.",
-        ),
-        (
-            k.TmfKuzmin2018Dataset,
-            [UNKNOWN_TRIGENIC],
-            AssertionError,
-            "Genotype must have 3 perturbations.",
-        ),
-        (
-            k.TmiKuzmin2018Dataset,
-            [UNKNOWN_TRIGENIC],
-            AssertionError,
-            "Genotype must have 3 perturbations.",
-        ),
+        (k.SmfKuzmin2018Dataset, [UNKNOWN_DIGENIC]),
+        (k.DmfKuzmin2018Dataset, [UNKNOWN_DIGENIC, UNKNOWN_TRIGENIC]),
+        (k.DmiKuzmin2018Dataset, [UNKNOWN_DIGENIC]),
+        (k.TmfKuzmin2018Dataset, [UNKNOWN_TRIGENIC]),
+        (k.TmiKuzmin2018Dataset, [UNKNOWN_TRIGENIC]),
     ],
 )
 def test_unknown_array_strain_type_refuses_the_build(
-    tmp_path: Path,
-    cls: type[Any],
-    rows: list[list[Any]],
-    error: type[BaseException],
-    message: str,
+    tmp_path: Path, cls: type[Any], rows: list[list[Any]]
 ) -> None:
-    """``YCR002C_sn77`` is neither ``tsa`` nor ``dma``, so its ``array_perturbation_type``
-    is "unknown" and no array perturbation is appended: Dmf and Dmi stop at the two-gene
-    assertion, Tmf and Tmi at the three-gene one.
-
-    Finding: Smf's array branch has no fallback either, and its ``genotype`` is never
-    bound, so it fails with ``UnboundLocalError`` rather than a named refusal. The 2020
-    loaders store the same strain as an ``SgaAllelePerturbation``. Pinned until the 2018
-    loaders decide one behavior.
+    """``YCR002C_sn77`` is neither ``tsa`` nor ``dma``, so nothing records its
+    perturbation class: all five loaders refuse it by name while classifying the array
+    column, before any genotype is built (Smf used to fail with ``UnboundLocalError``,
+    the other four at their genotype-size assertion). No LMDB store is written.
     """
-    with pytest.raises(error) as info:
+    with pytest.raises(ValueError) as info:
         build(tmp_path, cls, rows)
-    assert type(info.value) is error
-    assert str(info.value) == message
+    assert str(info.value) == (
+        "array strain 'YCR002C_sn77' is neither a 'tsa' (temperature-sensitive allele) "
+        "nor a 'dma' (KanMX deletion) strain; its perturbation type is unknown"
+    )
+    assert not (tmp_path / cls.__name__ / "processed" / "lmdb").exists()
 
 
-def test_repeated_digenic_row_is_stored_twice_by_dmf_and_dmi(tmp_path: Path) -> None:
-    """Finding: nothing deduplicates a repeated digenic row, so Dmf and Dmi each store
-    the cdc28-4 x gem1 cross twice (identical experiments), while Smf deduplicates the
-    array allele and keeps one gem1 single plus the one query single. Pinned until the
-    loaders refuse or merge a repeated cross.
+@pytest.mark.parametrize("cls", [k.DmfKuzmin2018Dataset, k.DmiKuzmin2018Dataset])
+def test_repeated_digenic_cross_is_refused_by_dmf_and_dmi(
+    tmp_path: Path, cls: type[Any]
+) -> None:
+    """The cdc28-4 x gem1 cross listed twice is refused by name, naming the repeated
+    (query strain, array strain) pair, instead of being stored as two records of one
+    cross. No LMDB store is written.
+    """
+    with pytest.raises(ValueError) as info:
+        build(tmp_path, cls, [ROWS[1], ROWS[1]])
+    assert str(info.value) == (
+        "Kuzmin 2018 Data S1 lists 1 digenic cross(es) more than once (query strain, "
+        "array strain): [('YBR160W+YDL227C_tsq508', 'YAL048C_dma5203')]"
+    )
+    assert not (tmp_path / cls.__name__ / "processed" / "lmdb").exists()
+
+
+def test_repeated_digenic_row_gives_smf_one_single_per_allele(tmp_path: Path) -> None:
+    """Smf deduplicates the array allele, so the repeated cdc28-4 x gem1 row still gives
+    one gem1 single plus the one query single.
     """
     rows = [ROWS[1], ROWS[1]]
-    dmf = build(tmp_path, k.DmfKuzmin2018Dataset, rows)
-    assert (
-        stored(dmf, "experiment")
-        == [fitness("DmfKuzmin2018Dataset", [cdc28(TSQ), GEM1], 0.72, 0.05)] * 2
-    )
-    dmi = build(tmp_path, k.DmiKuzmin2018Dataset, rows)
-    assert (
-        stored(dmi, "experiment")
-        == [interaction("DmiKuzmin2018Dataset", [cdc28(TSQ), GEM1], 0.04, 0.4, "edge")]
-        * 2
-    )
     smf = build(tmp_path, k.SmfKuzmin2018Dataset, rows)
     assert stored(smf, "experiment") == [
         fitness("SmfKuzmin2018Dataset", [GEM1], 0.95, None),

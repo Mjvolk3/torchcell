@@ -81,6 +81,54 @@ RECORD_KIND_DIGENIC_ARRAY_CROSS = "digenic_array_cross"
 RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN = "double_mutant_query_strain"
 
 
+def _array_perturbation_type(array_strain_id: str) -> str:
+    """The perturbation class of an SGA array strain, read off its strain id.
+
+    ``tsa`` strains are temperature-sensitive alleles and ``dma`` strains KanMX
+    deletions, the two arrays of Data S1. Any other strain id is refused rather than
+    guessed: nothing records its perturbation class (0 of the 501,510 Data S1 rows
+    has another array strain).
+    """
+    if "tsa" in array_strain_id:
+        return "temperature_sensitive"
+    if "dma" in array_strain_id:
+        return "KanMX_deletion"
+    raise ValueError(
+        f"array strain {array_strain_id!r} is neither a 'tsa' (temperature-sensitive "
+        "allele) nor a 'dma' (KanMX deletion) strain; its perturbation type is unknown"
+    )
+
+
+def _reported_sd(std_val: Any) -> Any:
+    """A fitness SD as stored: None for a blank cell, the released value otherwise.
+
+    The SI defines no meaning for a blank SD cell, so a blank is stored as "no value
+    reported" (None, matching the empty uncertainty fields) rather than as a float NaN
+    (0 of the 501,510 Data S1 rows has a blank SD).
+    """
+    return None if pd.isna(std_val) else std_val
+
+
+def _refuse_repeated_crosses(df_digenic: pd.DataFrame) -> None:
+    """Refuse a digenic (query strain, array strain) cross listed more than once.
+
+    Data S1 lists every digenic cross once (0 repeats among its 410,399 digenic rows).
+    A repeat would be stored as two records of one cross, and nothing records which
+    value is right, so it is refused instead of being stored twice or merged.
+    """
+    repeated = df_digenic[
+        df_digenic.duplicated(subset=["Query strain ID", "Array strain ID"])
+    ]
+    if len(repeated):
+        crosses = list(
+            zip(repeated["Query strain ID"], repeated["Array strain ID"], strict=True)
+        )
+        raise ValueError(
+            f"Kuzmin 2018 Data S1 lists {len(crosses)} digenic cross(es) more than "
+            f"once (query strain, array strain): {crosses}"
+        )
+
+
 def _combined_mutant_uncertainty(std_val: Any) -> dict[str, Any]:
     """Ontology fields for a combined-mutant-fitness sample SD over colonies.
 
@@ -258,13 +306,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
             lambda x: "KanMX_deletion" if "Δ" in x else "allele"
         )
         df["array_perturbation_type"] = df["Array strain ID"].apply(
-            lambda x: (
-                "temperature_sensitive"
-                if "tsa" in x
-                else "KanMX_deletion"
-                if "dma" in x
-                else "unknown"
-            )
+            _array_perturbation_type
         )
         self.phenotype_reference_std = df[
             "Combined mutant fitness standard deviation"
@@ -322,7 +364,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
                     ]
                 )
 
-            elif "allele" in row["query_perturbation_type"]:
+            else:  # "allele", the only other query type preprocess_raw assigns
                 genotype = Genotype(
                     perturbations=[
                         SgaAllelePerturbation(
@@ -346,19 +388,8 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
                     ]
                 )
 
-            elif "allele" in row["array_perturbation_type"]:
-                genotype = Genotype(
-                    perturbations=[
-                        SgaAllelePerturbation(
-                            systematic_gene_name=row["Array systematic name"],
-                            perturbed_gene_name=row["Array allele name"],
-                            strain_id=row["Array strain ID"],
-                        )
-                    ]
-                )
-
-            # Only array has ts
-            elif "temperature_sensitive" in row["array_perturbation_type"]:
+            # Only array has ts; _array_perturbation_type admits no third type.
+            else:
                 genotype = Genotype(
                     perturbations=[
                         SgaTsAllelePerturbation(
@@ -515,6 +546,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         df_trigenic = df[df["Combined mutant type"] == "trigenic"].copy()
         # Select doubles only
         df = df[df["Combined mutant type"] == "digenic"].copy()
+        _refuse_repeated_crosses(df)
 
         df["Query allele name no ho"] = (
             df["Query allele name"].str.replace("hoΔ", "").str.replace("+", "")
@@ -536,13 +568,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
             lambda x: "KanMX_deletion" if "Δ" in x else "allele"
         )
         df["array_perturbation_type"] = df["Array strain ID"].apply(
-            lambda x: (
-                "temperature_sensitive"
-                if "tsa" in x
-                else "KanMX_deletion"
-                if "dma" in x
-                else "unknown"
-            )
+            _array_perturbation_type
         )
         # Reference noise stays the DIGENIC combined-mutant mean, as served.
         self.phenotype_reference_std = df[
@@ -635,7 +661,9 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
             uncertainty: dict[str, Any] = {}
         else:
             fitness = row["Combined mutant fitness"]
-            fitness_std = row["Combined mutant fitness standard deviation"]
+            fitness_std = _reported_sd(
+                row["Combined mutant fitness standard deviation"]
+            )
             uncertainty = _combined_mutant_uncertainty(fitness_std)
         phenotype = FitnessPhenotype(
             fitness=fitness, fitness_std=fitness_std, **uncertainty
@@ -784,13 +812,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
             lambda x: "KanMX_deletion" if "Δ" in x else "allele"
         )
         df["array_perturbation_type"] = df["Array strain ID"].apply(
-            lambda x: (
-                "temperature_sensitive"
-                if "tsa" in x
-                else "KanMX_deletion"
-                if "dma" in x
-                else "unknown"
-            )
+            _array_perturbation_type
         )
         self.phenotype_reference_std = df[
             "Combined mutant fitness standard deviation"
@@ -874,7 +896,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         # Phenotype based on temperature
         tmf_key = "Combined mutant fitness"
         tmf_std_key = "Combined mutant fitness standard deviation"
-        tmf_std = row[tmf_std_key]
+        tmf_std = _reported_sd(row[tmf_std_key])
         phenotype = FitnessPhenotype(
             fitness=row[tmf_key],
             fitness_std=tmf_std,
@@ -1003,6 +1025,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         ]
         # Select doubles only
         df = df[df["Combined mutant type"] == "digenic"].copy()
+        _refuse_repeated_crosses(df)
 
         df["Query allele name no ho"] = (
             df["Query allele name"].str.replace("hoΔ", "").str.replace("+", "")
@@ -1024,13 +1047,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
             lambda x: "KanMX_deletion" if "Δ" in x else "allele"
         )
         df["array_perturbation_type"] = df["Array strain ID"].apply(
-            lambda x: (
-                "temperature_sensitive"
-                if "tsa" in x
-                else "KanMX_deletion"
-                if "dma" in x
-                else "unknown"
-            )
+            _array_perturbation_type
         )
 
         # replace delta symbol for neo4j import
@@ -1244,13 +1261,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
             lambda x: "KanMX_deletion" if "Δ" in x else "allele"
         )
         df["array_perturbation_type"] = df["Array strain ID"].apply(
-            lambda x: (
-                "temperature_sensitive"
-                if "tsa" in x
-                else "KanMX_deletion"
-                if "dma" in x
-                else "unknown"
-            )
+            _array_perturbation_type
         )
 
         # replace delta symbol for neo4j import

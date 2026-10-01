@@ -24,26 +24,26 @@ DOI ``10.2/bbb`` in ArticleIdList; 333 has no DOI, so ``doi``/``doi_url`` are No
 2026.09.30 (Phase 15): the same three-node graph and canned Entrez, plus
 
 - the gene-file threshold: ``process`` counts only ``*.json`` names under
-  ``$DATA_ROOT/data/sgd/genome/genes`` (line 168) and fetches below 100 (line 173), so
+  ``$DATA_ROOT/data/sgd/genome/genes`` (line 166) and fetches below 100 (line 171), so
   a missing directory counts 0 and 99 ``.json`` plus one ``.txt`` still counts 99; both
   call the (faked) ``main_get_all_genes`` once, 100 ``.json`` calls it zero times. With
-  ``DATA_ROOT`` unset the directory falls back to the relative ``data/data/sgd/genome/
-  genes`` under the working directory (line 165).
+  ``DATA_ROOT`` unset the build is refused by ``torchcell.graph.sgd.data_root``.
 - the content-hash collapse the essentiality showcase page reports (1,329 stored records,
   1,140 graph nodes): the node id is ``sha256(json.dumps(experiment.model_dump()))``
   (``cell_adapter.py`` line 527), the experiment excludes the publication, so the two
   YCR001W records (PubMed 222 and 333) hash to one id: 3 records, 2 ids.
 - the assumed environment the showcase page documents (``# HACK ... all meta data is
-  guessed``, lines 215 to 242): YEPD, solid, not synthetic, 30 C, already pinned on every
+  guessed``, lines 213 to 240): YEPD, solid, not synthetic, 30 C, already pinned on every
   record by the full-dump equality of the first test, with the reference phenotype
   ``is_essential=False`` pinned again through ``transform_item``.
 - ``main`` with the genome, the graph and the dataset replaced by recorders.
 
-Findings pinned here: ``main`` builds the genome with ``overwrite=True`` (line 294), the
-setting that races a concurrent rebuild, and constructs the dataset at the class default
-``root="data/torchcell/gene_essentiality_sgd"``, relative to the working directory rather
-than under ``$DATA_ROOT`` (line 303). The gene-directory check falls back to the relative
-path ``"data"`` when ``DATA_ROOT`` is unset instead of refusing (line 165).
+2026.10.01 (issue #533): the Phase 15 findings are retired. ``main`` builds the genome
+with ``overwrite=False`` (``overwrite=True`` races a concurrent rebuild of the shared
+genome) and the dataset at ``$DATA_ROOT/data/torchcell/gene_essentiality_sgd``; the
+gene-directory check refuses an unset ``DATA_ROOT`` instead of falling back to the
+relative path ``"data"``. The content-hash collapse above is an adapter matter
+(``cell_adapter.py``) and stays pinned here as observed behavior.
 """
 
 from __future__ import annotations
@@ -449,13 +449,13 @@ def test_gene_file_threshold_counts_json_files_only(
     assert len(dataset) == 3
 
 
-def test_unset_data_root_reads_genes_under_the_working_directory(
+def test_unset_data_root_refuses_the_build(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: with ``DATA_ROOT`` unset the gene directory is the RELATIVE path
-    ``data/data/sgd/genome/genes`` (``os.environ.get("DATA_ROOT", "data")``, line 165), so
-    100 ``.json`` files under ``<cwd>/data/data/sgd/genome/genes`` satisfy the check and
-    no fetch runs. Pinned until the check refuses an unset ``DATA_ROOT``.
+    """With ``DATA_ROOT`` unset the gene-directory check refuses with the named
+    ``data_root`` error instead of reading a directory relative to the working directory:
+    100 ``.json`` files under ``<cwd>/data/data/sgd/genome/genes`` are not consulted, no
+    fetch runs and no LMDB store is written.
     """
     monkeypatch.delenv("DATA_ROOT")
     monkeypatch.chdir(tmp_path)
@@ -463,11 +463,14 @@ def test_unset_data_root_reads_genes_under_the_working_directory(
     _install_entrez(monkeypatch)
     calls: list[None] = []
     monkeypatch.setattr(m, "main_get_all_genes", lambda: calls.append(None))
-    dataset = m.GeneEssentialitySgdDataset(
-        root=str(tmp_path / "gene_essentiality_sgd"), scerevisiae_graph=_graph()
+    root = tmp_path / "gene_essentiality_sgd"
+    with pytest.raises(ValueError) as info:
+        m.GeneEssentialitySgdDataset(root=str(root), scerevisiae_graph=_graph())
+    assert str(info.value) == (
+        "DATA_ROOT environment variable is not set. Please set it in your .env file."
     )
     assert calls == []
-    assert len(dataset) == 3
+    assert not (root / "processed" / "lmdb").exists()
 
 
 def test_no_raw_stage(dataset: m.GeneEssentialitySgdDataset) -> None:
@@ -491,10 +494,8 @@ def test_main_wires_genome_graph_and_dataset(
     """``main`` builds the genome from ``$DATA_ROOT/data/sgd/genome`` and ``data/go``, the
     graph from the SGD, STRING and TFLink roots with that genome, and the dataset with that
     graph, then prints the dataset. The three classes are recorders, so nothing is built.
-
-    Finding: the genome is built with ``overwrite=True`` (line 294) and the dataset at its
-    default relative ``root`` (line 303, no ``root`` argument). Pinned until ``main`` uses
-    ``overwrite=False`` and a root under ``$DATA_ROOT``.
+    The genome is opened with ``overwrite=False`` (never rebuilt under a concurrent
+    reader) and the dataset is rooted at ``$DATA_ROOT/data/torchcell/gene_essentiality_sgd``.
     """
     import torchcell.graph as graph_module
     import torchcell.sequence.genome.scerevisiae.s288c as s288c_module
@@ -526,7 +527,7 @@ def test_main_wires_genome_graph_and_dataset(
     assert calls[0][1] == {
         "genome_root": f"{tmp_path}/data/sgd/genome",
         "go_root": f"{tmp_path}/data/go",
-        "overwrite": True,
+        "overwrite": False,
     }
     graph_kwargs = calls[1][1]
     assert set(graph_kwargs) == {"sgd_root", "string_root", "tflink_root", "genome"}
@@ -534,6 +535,7 @@ def test_main_wires_genome_graph_and_dataset(
     assert graph_kwargs["string_root"] == f"{tmp_path}/data/string"
     assert graph_kwargs["tflink_root"] == f"{tmp_path}/data/tflink"
     assert type(graph_kwargs["genome"]) is _Genome
-    assert list(calls[2][1]) == ["scerevisiae_graph"]
+    assert list(calls[2][1]) == ["root", "scerevisiae_graph"]
+    assert calls[2][1]["root"] == f"{tmp_path}/data/torchcell/gene_essentiality_sgd"
     assert type(calls[2][1]["scerevisiae_graph"]) is _Graph
     assert capsys.readouterr().out == "GeneEssentialitySgdDataset(3)\n"

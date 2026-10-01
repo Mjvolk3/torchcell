@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img src="./notes/assets/images/Fig1-torchcell-overview-abc.png" alt="TorchCell overview: literature and public databases feed an ontology and a knowledge graph (a); reference data and experiment data (b); persistent entities, the encoder, perturbation, and decoder path, and contingent observations (c)" />
+  <img src="https://raw.githubusercontent.com/Mjvolk3/torchcell/main/notes/assets/images/Fig1-torchcell-overview-abc.png" alt="TorchCell overview: literature and public databases feed an ontology and a knowledge graph (a); reference data and experiment data (b); persistent entities, the encoder, perturbation, and decoder path, and contingent observations (c)" />
 </p>
 
 Documentation: <https://mjvolk3.github.io/torchcell/>

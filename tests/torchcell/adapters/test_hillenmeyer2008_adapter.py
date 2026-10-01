@@ -10,7 +10,6 @@ are keyed on.
 
 from __future__ import annotations
 
-import json
 import os.path as osp
 from typing import Any
 
@@ -99,4 +98,4 @@ def test_environment_response_properties_carry_the_screen_and_the_derived_se() -
     assert props["measurement_type"] == "log2_ratio"
     assert props["assay_type"] == "pooled_competitive_growth_barcode"
     assert props["screen_id"] == phenotype.screen_id
-    assert json.loads(props["serialized_data"]) == phenotype.model_dump()
+    assert "serialized_data" not in props

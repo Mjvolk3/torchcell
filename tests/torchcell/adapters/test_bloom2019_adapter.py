@@ -59,7 +59,7 @@ def test_segregant_genotype_node_is_content_addressed() -> None:
     assert props["cross"] == "A" and props["segregant_id"] == "A01_01"
     assert props["parent_1"] == "BYa" and props["parent_2"] == "RMx"
     assert props["n_blocks"] == 2
-    assert json.loads(props["serialized_data"]) == genotype.model_dump()
+    assert "serialized_data" not in props
     assert CellAdapter._segregant_genotype_node_from(_genotype()).get_id() == expected
 
 
@@ -95,4 +95,4 @@ def test_environment_response_properties_project_the_typed_axes() -> None:
     assert props["measurement_type"] == "control_regression_residual"
     assert props["assay_type"] == "colony_size_array"
     assert props["label_name"] == "environment_response"
-    assert json.loads(props["serialized_data"]) == phenotype.model_dump()
+    assert "serialized_data" not in props

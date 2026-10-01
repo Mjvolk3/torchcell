@@ -57,13 +57,17 @@ genome:
         strain: str
         serialized_data: str
 
+# No serialized_data on genotype, segregant genotype, perturbation, crispr construct,
+# environment perturbation or any phenotype class: each is a sub-object of the
+# experiment record, whose full typed copy is the Experiment blob (reference-side
+# phenotypes and environment perturbations: the experiment reference blob). These
+# nodes carry only their queryable scalars; ids are still sha256 of the model_dump.
 genotype:
     represented_as: node
     properties:
         systematic_gene_names: list
         perturbed_gene_names: list
         perturbation_types: list
-        serialized_data: str
 
 perturbation:
     is_a: genotype
@@ -74,13 +78,12 @@ perturbation:
         perturbation_type: str
         description: str
         strain_id: str
-        serialized_data: str
 
 # A haploid segregant of a biparental cross: a haplotype MOSAIC against two pinned
 # parent assemblies (SegregantGenotype), not a list of gene perturbations. It IS a
 # genotype (is_a), so genotype-level queries reach it; the gene-keyed properties of
 # the plain genotype node are absent here and evaluate to null. Blocks travel in
-# serialized_data.
+# the Experiment blob (an interned constant).
 segregant genotype:
     is_a: genotype
     represented_as: node
@@ -90,7 +93,6 @@ segregant genotype:
         parent_1: str
         parent_2: str
         n_blocks: int
-        serialized_data: str
 
 # The engineered CRISPR machinery a perturbation was made with (CrisprConstruct): the
 # guide spacer + the Cas effector fusion + the library sub-pool it was screened in. It
@@ -112,7 +114,6 @@ crispr construct:
         library_pool: str
         effector_plasmid_uri: str
         effector_plasmid_sha256: str
-        serialized_data: str
 
 environment:
     is_a: environmental exposure
@@ -140,7 +141,8 @@ temperature:
 
 # The environment axis of perturbation: an added compound (small molecule), a physical
 # factor, or a biologic agent, content-addressed like a gene perturbation. Compound and
-# concentration are projected for small molecules; the typed record is serialized_data.
+# concentration are projected for small molecules; the typed record is in the Experiment
+# blob (inside its environment).
 environment perturbation:
     is_a: environmental exposure
     represented_as: node
@@ -152,7 +154,6 @@ environment perturbation:
         inchikey: str
         concentration_value: float
         concentration_unit: str
-        serialized_data: str
 
 # TODO expand out to include different phenotypes.
 # PHENOTYPES START
@@ -165,7 +166,6 @@ fitness phenotype:
         label_statistic_name: str
         fitness: float
         fitness_std: float
-        serialized_data: str
 
 gene interaction phenotype:
     is_a: phenotypic feature
@@ -176,7 +176,6 @@ gene interaction phenotype:
         label_statistic_name: str
         gene_interaction: float
         gene_interaction_p_value: float
-        serialized_data: str
 
 gene essentiality phenotype:
     is_a: phenotypic feature
@@ -185,7 +184,6 @@ gene essentiality phenotype:
         graph_level: str
         label_name: str
         is_essential: bool
-        serialized_data: str
 
 synthetic lethality phenotype:
     is_a: phenotypic feature
@@ -196,7 +194,6 @@ synthetic lethality phenotype:
         label_statistic_name: str
         is_synthetic_lethal: bool
         synthetic_lethality_statistic_score: float
-        serialized_data: str
 
 synthetic rescue phenotype:
     is_a: phenotypic feature
@@ -207,7 +204,6 @@ synthetic rescue phenotype:
         label_statistic_name: str
         is_synthetic_rescue: bool
         synthetic_rescue_statistic_score: float
-        serialized_data: str
 
 calmorph phenotype:
     is_a: phenotypic feature
@@ -218,7 +214,6 @@ calmorph phenotype:
         label_statistic_name: str
         calmorph: str
         calmorph_coefficient_of_variation: str
-        serialized_data: str
 
 microarray expression phenotype:
     is_a: phenotypic feature
@@ -229,7 +224,6 @@ microarray expression phenotype:
         label_statistic_name: str
         expression_log2_ratio: str
         expression_log2_ratio_se: str
-        serialized_data: str
 
 rnaseq expression phenotype:
     is_a: phenotypic feature
@@ -241,7 +235,6 @@ rnaseq expression phenotype:
         expression_tpm: str
         measurement_type: str
         n_mapped_reads: int
-        serialized_data: str
 
 # Single-cell Perturb-seq collapsed to pseudobulk per genotype (Nadal-Ribelles 2025):
 # per-gene log2 fold-change vs the same-condition WT as a JSON string, plus the two
@@ -257,7 +250,6 @@ pseudobulk expression phenotype:
         dispersion: float
         n_cells: int
         measurement_type: str
-        serialized_data: str
 
 visual score phenotype:
     is_a: phenotypic feature
@@ -270,7 +262,6 @@ visual score phenotype:
         n_replicates: int
         target_product: str
         target_metabolite_id: str
-        serialized_data: str
 
 metabolite phenotype:
     is_a: phenotypic feature
@@ -282,7 +273,6 @@ metabolite phenotype:
         metabolite_level: str
         metabolite_level_se: str
         measurement_type: str
-        serialized_data: str
 
 protein abundance phenotype:
     is_a: phenotypic feature
@@ -294,7 +284,6 @@ protein abundance phenotype:
         protein_abundance: str
         protein_abundance_se: str
         measurement_type: str
-        serialized_data: str
 
 # A strain's signed growth/fitness RESPONSE in a perturbed environment
 # (EnvironmentResponsePhenotype): chemogenomic screens and the segregant growth
@@ -318,7 +307,6 @@ environment response phenotype:
         category: str
         category_label: str
         screen_id: str
-        serialized_data: str
 # PHENOTYPES END
 
 # RELATIONSHIPS

@@ -11,7 +11,6 @@ carries the screen id the records are keyed on.
 
 from __future__ import annotations
 
-import json
 import os.path as osp
 from typing import Any, cast
 
@@ -109,7 +108,7 @@ def test_environment_perturbation_node_projects_the_compound_identity() -> None:
     assert nodes[0].get_id() == expected
     props = nodes[0].get_properties()
     assert props["inchikey"] == "IAZDPXIOMUYVGZ-UHFFFAOYSA-N"
-    assert json.loads(props["serialized_data"]) == perturbation.model_dump()
+    assert "serialized_data" not in props
 
 
 def test_environment_response_phenotype_node_carries_the_screen_id() -> None:
@@ -138,4 +137,4 @@ def test_environment_response_phenotype_node_carries_the_screen_id() -> None:
     props = node.get_properties()
     assert props["screen_id"] == "0077"
     assert props["environment_response"] == -3.25
-    assert json.loads(props["serialized_data"]) == phenotype.model_dump()
+    assert "serialized_data" not in props

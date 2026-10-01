@@ -5,7 +5,6 @@ this dataset's three environment edits and categorical readout reach the graph.
 
 from __future__ import annotations
 
-import json
 import os.path as osp
 from typing import Any, cast
 
@@ -75,4 +74,6 @@ def test_the_categorical_readout_projects_its_typed_call_and_source_symbol() -> 
     assert props["category_label"] == "+"
     assert props["assay_type"] == "biosensor_readout"
     assert props["environment_response"] is None
-    assert json.loads(props["serialized_data"])["units"] == m.UNITS
+    # the full record (units included) travels in the Experiment blob, not here
+    assert "serialized_data" not in props
+    assert phenotype.model_dump()["units"] == m.UNITS

@@ -5,7 +5,6 @@ modality's construct (including the CRISPRd donor) reaches the graph as its own 
 
 from __future__ import annotations
 
-import json
 import os.path as osp
 
 import torchcell.adapters.lian2019_adapter as adapter_module
@@ -64,7 +63,8 @@ def test_the_deletion_donor_rides_on_the_perturbation_not_the_construct() -> Non
     """The donor rides the perturbation, the spacer rides the construct.
 
     ``donor_sequence`` is a ``CrisprDeletionPerturbation`` field, so it reaches the graph
-    through the perturbation node's serialized_data rather than the construct's.
+    through the perturbation (in the Experiment blob's genotype) rather than the
+    construct.
     """
     spacer, donor = split_deletion_cassette(ACS1_CASSETTE)
     perturbation = crispr_perturbation("YAL054C", "ACS1", "d", spacer, donor)
@@ -72,6 +72,4 @@ def test_the_deletion_donor_rides_on_the_perturbation_not_the_construct() -> Non
     assert node.get_properties()["guide_sequence"] == spacer
     assert "donor_sequence" not in node.get_properties()
     assert perturbation.model_dump()["donor_sequence"] == donor
-    assert (
-        json.loads(node.get_properties()["serialized_data"])["guide_sequence"] == spacer
-    )
+    assert "serialized_data" not in node.get_properties()

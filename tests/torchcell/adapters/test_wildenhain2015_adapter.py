@@ -8,7 +8,6 @@ reach the graph as properties, or a CGM cell joins nothing.
 
 from __future__ import annotations
 
-import json
 import os.path as osp
 
 import torchcell.adapters.wildenhain2015_adapter as adapter_module
@@ -78,7 +77,9 @@ def test_compound_node_carries_the_cid_and_the_inchikey() -> None:
     assert props["inchikey"] == "MWOOGOJBHIARFG-UHFFFAOYSA-N"
     assert props["concentration_value"] == 20.0
     assert props["concentration_unit"] == "uM"
-    payload = json.loads(props["serialized_data"])
+    # the full record travels in the Experiment blob (inside its environment)
+    assert "serialized_data" not in props
+    payload = environment.perturbations[0].model_dump()
     assert payload["compound"]["pubchem_cid"] == 1183
     assert payload["solvent"]["name"] == "DMSO"
 
@@ -103,4 +104,4 @@ def test_environment_response_properties_project_the_z_score_axes() -> None:
     assert props["category"] == "sensitive"
     assert props["category_label"] == "Active / sensitive"
     assert props["environment_response_se"] == 1.0
-    assert json.loads(props["serialized_data"]) == phenotype.model_dump()
+    assert "serialized_data" not in props

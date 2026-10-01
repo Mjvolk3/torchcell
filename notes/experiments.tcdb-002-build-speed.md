@@ -846,3 +846,11 @@ server sent, and computes the reference index, gene set and phenotype label inde
 while streaming would remove about 4 h of the 7 h 48 min, before touching the
 aggregation stage. `scripts/query_build_cost_probe.py` (in progress) measures the
 per-step costs on the 033 build's records.
+
+### Duplicate node blobs removed (2026.09.30)
+
+`serialized_data` is gone from genotype, segregant genotype, perturbation, crispr construct, environment perturbation and all 13 phenotype classes (fitness, gene interaction, gene essentiality, synthetic lethality, synthetic rescue, calmorph, microarray / rnaseq / pseudobulk expression, visual score, metabolite, protein abundance, environment response), in `torchcell/adapters/cell_adapter.py` and `biocypher/config/torchcell_schema_config.yaml`. Each is a sub-object of the experiment record, so its full copy is in the Experiment blob or the interned constant it points to; the reference-side phenotype and environment perturbation nodes are sub-objects of the experiment reference blob. Node ids are still sha256 of the sub-object's model_dump, so ids and edges do not change.
+
+Kept: experiment, experiment reference, interned constant (the canonical blobs the query loader reads), and genome, environment, media, temperature, publication (environment, media and temperature ids are content identities that merge dumps from different datasets, so their blob is the stating dataset's own copy; genome and publication are not owned by this change).
+
+Measured on full build job 2959 (before): Genotype 1,345 B per row (blob about 1,007 B), EnvironmentResponsePhenotype 1,724 B per row, all phenotype classes 30.1 GB with 6 GB of expression blobs. Measured on the 1,000-record SmfKuzmin2018 subset (JSON size of node properties, scratch `subset_prop_bytes.py`): genotype 853.9 to 226.6 B, perturbation 934.2 to 329.9 B, fitness phenotype 620.6 to 295.7 B per node; 9,007 nodes and 9,004 edges before and after, pool path equal to in-process path. Hypothesis (untested on a full build): Genotype falls to about 340 B per row (about 7.6 GB from 30.2 GB), the phenotype classes lose at least the 6 GB of expression blobs plus about half of the environment response bytes. Changing the property set of served classes means the next graph is a full rebuild, not an incremental admission.

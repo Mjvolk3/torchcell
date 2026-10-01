@@ -91,7 +91,6 @@ def test_every_node_method_property_is_declared() -> None:
             "dispersion",
             "n_cells",
             "measurement_type",
-            "serialized_data",
         },
         "environment perturbation": {
             "perturbation_type",
@@ -101,7 +100,6 @@ def test_every_node_method_property_is_declared() -> None:
             "inchikey",
             "concentration_value",
             "concentration_unit",
-            "serialized_data",
         },
     }
     for label, properties in emitted.items():

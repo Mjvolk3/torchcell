@@ -61,6 +61,4 @@ def test_the_library_pool_is_a_queryable_construct_property() -> None:
         broad_node.get_id()
         == hashlib.sha256(json.dumps(broad.model_dump()).encode("utf-8")).hexdigest()
     )
-    assert (
-        json.loads(broad_node.get_properties()["serialized_data"]) == broad.model_dump()
-    )
+    assert "serialized_data" not in broad_node.get_properties()

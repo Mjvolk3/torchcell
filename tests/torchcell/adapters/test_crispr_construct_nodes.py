@@ -2,8 +2,8 @@
 """Unit tests for the ``crispr construct`` node and its edge to a perturbation.
 
 A CRISPR screen's effector, spacer and library sub-pool are the reagent identity of the
-strain, and before this class they existed in the graph only inside a perturbation's
-``serialized_data``. The construct is its own node class rather than extra properties on
+strain, and before this class they existed in the graph only inside the experiment
+record's blob. The construct is its own node class rather than extra properties on
 ``perturbation``, because ``perturbation`` is a served graph class whose property set
 cannot change without a full rebuild.
 """
@@ -78,7 +78,7 @@ def test_crispr_construct_node_is_content_addressed_and_projects_the_reagent() -
     assert props["library_pool"] == "gene_tiling_20bp"
     assert props["effector_plasmid_uri"] is None
     assert props["effector_plasmid_sha256"] is None
-    assert json.loads(props["serialized_data"]) == construct.model_dump()
+    assert "serialized_data" not in props
     # Two equal constructs are one node, which is what lets the reagent join records.
     assert CellAdapter._crispr_construct_node_from(_construct()).get_id() == expected
 
@@ -166,7 +166,6 @@ def test_graph_schema_declares_the_construct_class_and_its_edge() -> None:
         "library_pool",
         "effector_plasmid_uri",
         "effector_plasmid_sha256",
-        "serialized_data",
     }
     edge = schema["crispr construct member of"]
     assert edge["represented_as"] == "edge"

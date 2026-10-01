@@ -112,7 +112,7 @@ IDENTITY_FIELDS: tuple[str, ...] = (
 # Properties every phenotype node class carries regardless of family, so they carry
 # no information about WHICH phenotype the class models.
 PHENOTYPE_ENVELOPE_PROPERTIES: frozenset[str] = frozenset(
-    {"graph_level", "label_name", "label_statistic_name", "serialized_data"}
+    {"graph_level", "label_name", "label_statistic_name"}
 )
 
 # Attribute chains the adapter walks, and the model each is rooted in. These are the
@@ -461,8 +461,22 @@ def cell_adapter_source() -> str:
     return (REPO_ROOT / CELL_ADAPTER_RELPATH).read_text(encoding="utf-8")
 
 
+CONTENT_ADDRESSED_NODE_CLASSES: frozenset[str] = frozenset({"interned constant"})
+"""Node classes reached by id lookup, not traversal, by design.
+
+An ``interned constant`` holds a sub-object of an Experiment record once; the
+Experiment blob points at it by its content id and the query loader fetches it by that
+id (torchcell/datamodels/interned_constant.py). An edge per Experiment would add one
+row per record (52.7M) for a link the blob already carries, so none is declared.
+"""
+
+
 def isolated_graph_node_classes(schema: dict[str, GraphSchemaEntry]) -> list[str]:
-    """Node classes no edge class connects (invisible to any traversal query)."""
+    """Node classes no edge class connects (invisible to any traversal query).
+
+    Content-addressed storage classes (``CONTENT_ADDRESSED_NODE_CLASSES``) are
+    excluded: they are reached by id, which is their documented access path.
+    """
     connected: set[str] = set()
     for entry in schema.values():
         if entry.kind == "edge":
@@ -470,7 +484,9 @@ def isolated_graph_node_classes(schema: dict[str, GraphSchemaEntry]) -> list[str
     return sorted(
         name
         for name, entry in schema.items()
-        if entry.kind == "node" and name not in connected
+        if entry.kind == "node"
+        and name not in connected
+        and name not in CONTENT_ADDRESSED_NODE_CLASSES
     )
 
 

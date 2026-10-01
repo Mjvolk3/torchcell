@@ -151,9 +151,11 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.vanacloig2022.EnvChemgenVanacloig2022Dataset.download">
 <span class="sig-name descname"><span class="pre">download</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/vanacloig2022.html#EnvChemgenVanacloig2022Dataset.download"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.vanacloig2022.EnvChemgenVanacloig2022Dataset.download" title="Link to this definition"></a></dt>
-<dd><p>Link the manifest-listed mirror file into <code class="docutils literal notranslate"><span class="pre">raw/</span></code> and verify its sha256.</p>
-<p>The mirror + its recorded sha256 is canonical; the GEO URL is retrieval metadata
-that <code class="docutils literal notranslate"><span class="pre">deposit_raw_mirror</span></code> re-runs, never a live build dependency.</p>
+<dd><p>Link the mirror file into <code class="docutils literal notranslate"><span class="pre">raw/</span></code> after verifying it against <code class="docutils literal notranslate"><span class="pre">DATA_SHA256</span></code>.</p>
+<p>The mirror + the <code class="docutils literal notranslate"><span class="pre">DATA_SHA256</span></code> pin is canonical; the GEO URL is retrieval
+metadata that <code class="docutils literal notranslate"><span class="pre">deposit_raw_mirror</span></code> re-runs, never a live build dependency. The
+manifest is the retrieval record and must carry the pin, else
+<code class="docutils literal notranslate"><span class="pre">ManifestPinMismatchError</span></code> names both digests.</p>
 </dd></dl>
 
 <dl class="py method">

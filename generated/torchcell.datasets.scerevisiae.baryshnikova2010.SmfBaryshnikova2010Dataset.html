@@ -151,7 +151,9 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset.download">
 <span class="sig-name descname"><span class="pre">download</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/baryshnikova2010.html#SmfBaryshnikova2010Dataset.download"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.baryshnikova2010.SmfBaryshnikova2010Dataset.download" title="Link to this definition"></a></dt>
-<dd><p>Symlink the manifest-listed mirror file into <code class="docutils literal notranslate"><span class="pre">raw/</span></code> and verify its sha256.</p>
+<dd><p>Symlink the mirror file into <code class="docutils literal notranslate"><span class="pre">raw/</span></code> after verifying it against <code class="docutils literal notranslate"><span class="pre">XLS_SHA256</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">XLS_SHA256</span></code> is the one pin; the manifest is the retrieval record and must
+carry the same digest, else <code class="docutils literal notranslate"><span class="pre">ManifestPinMismatchError</span></code> names both.</p>
 </dd></dl>
 
 <dl class="py method">

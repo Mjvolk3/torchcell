@@ -190,6 +190,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExperimentDataset</span><span class="p">,</span>
+    <span class="n">check_manifest_pin</span><span class="p">,</span>
     <span class="n">link_verified</span><span class="p">,</span>
     <span class="n">post_process</span><span class="p">,</span>
     <span class="n">verify_raw_files</span><span class="p">,</span>
@@ -698,19 +699,21 @@
 <div class="viewcode-block" id="EnvChemgenVanacloig2022Dataset.download">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.vanacloig2022.EnvChemgenVanacloig2022Dataset.html#torchcell.datasets.scerevisiae.vanacloig2022.EnvChemgenVanacloig2022Dataset.download">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Link the manifest-listed mirror file into ``raw/`` and verify its sha256.</span>
+<span class="w">        </span><span class="sd">"""Link the mirror file into ``raw/`` after verifying it against ``DATA_SHA256``.</span>
 
-<span class="sd">        The mirror + its recorded sha256 is canonical; the GEO URL is retrieval metadata</span>
-<span class="sd">        that ``deposit_raw_mirror`` re-runs, never a live build dependency.</span>
+<span class="sd">        The mirror + the ``DATA_SHA256`` pin is canonical; the GEO URL is retrieval</span>
+<span class="sd">        metadata that ``deposit_raw_mirror`` re-runs, never a live build dependency. The</span>
+<span class="sd">        manifest is the retrieval record and must carry the pin, else</span>
+<span class="sd">        ``ManifestPinMismatchError`` names both digests.</span>
 <span class="sd">        """</span>
         <span class="n">data_root</span> <span class="o">=</span> <span class="n">_data_root</span><span class="p">()</span>
         <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
-        <span class="n">expected</span> <span class="o">=</span> <span class="n">manifest_sha256</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">DATA_REL</span><span class="p">)</span>
+        <span class="n">check_manifest_pin</span><span class="p">(</span><span class="n">DATA_REL</span><span class="p">,</span> <span class="n">manifest_sha256</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">DATA_REL</span><span class="p">),</span> <span class="n">DATA_SHA256</span><span class="p">)</span>
         <span class="n">src</span> <span class="o">=</span> <span class="n">raw_mirror_dir</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span> <span class="o">/</span> <span class="n">DATA_REL</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">src</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"required raw artifact missing from mirror: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">link_verified</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">),</span> <span class="n">expected</span><span class="p">)</span>
+        <span class="n">link_verified</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">),</span> <span class="n">DATA_SHA256</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Vanacloig 2022 raw matrix linked into </span><span class="si">%s</span><span class="s2"> (sha256 verified)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span>
         <span class="p">)</span></div>

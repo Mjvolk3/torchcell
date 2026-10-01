@@ -105,3 +105,19 @@ The live endpoint reports 5 artifacts, all `supported`. Through the tunnel, `Dat
 ## 2026.09.30 - Zero-ssh access is the user contract
 
 The downloads guide and the README now give users one thing to set, `TC_DATA_URL=http://torchcell-database.ncsa.illinois.edu:8724`, plus a named key; no account on the host and no tunnel. The ssh tunnel in the section above is a maintainer path for the days before the OpenStack security-group rule opens port 8724 and must not appear in user-facing text. Two items remain on the maintainer side before the public URL answers: the security-group rule for 8724 (user-only, OpenStack console), and TLS in front of the endpoint, since the plain-HTTP port sends the `X-API-Key` header in clear across the internet. The simplest TLS front is a reverse proxy on the VM (Caddy or nginx with a Let's Encrypt or NCSA certificate on 443) forwarding to `127.0.0.1:8724`, after which the documented URL becomes `https://torchcell-database.ncsa.illinois.edu/data` or similar and 8724 can stay closed.
+
+## 2026.10.01 - The `.env` route and how keys are issued, checked
+
+Checked with a throwaway project directory holding a `.env` with dummy values (python-dotenv is a packaged dependency, `env/requirements.txt`):
+
+| Case | `TC_DATA_URL` reaches the loader |
+|---|---|
+| `.env` beside the script, script only imports a loader, no `load_dotenv()` | no (`DatasetClient.from_env()` raises `KeyError: 'TC_DATA_URL'`; a loader would build from the publisher files, with no error) |
+| script calls `load_dotenv()` first, run from the project directory | yes |
+| same script run from another working directory | yes (python-dotenv searches upward from the calling script) |
+| script in a subdirectory of the project | yes |
+| `python -c` in the project directory | yes (interactive sessions search from the working directory) |
+
+torchcell reads the two variables from the process environment (`experiment_dataset.py` `_download`, `DatasetClient.from_env`) and no module on the loader import path calls `load_dotenv()`. The README and the downloads guide now say: export the two variables, or put them in `.env` and call `load_dotenv()` before constructing a loader.
+
+Keys are minted, one per person or group: `python -m torchcell.datasets.server --gen-key <name>` on the endpoint host prints the plaintext (given to the user once) and the `{name: sha256hex}` entry for `TC_DATA_KEYS_FILE`. The server builds its key table at startup (`DataServerConfig.from_env`), so a new key is accepted only after a restart; deleting an entry and restarting revokes it. One key exists today (`mjvolk3`). The downloads guide gained a Keys section saying this.

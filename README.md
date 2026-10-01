@@ -40,18 +40,28 @@ the query, and the download commands.
 | [Amino acids and betaxanthin](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/amino-acid-betaxanthin.html) | Amino acids, Mulleder 2016 (4,678); amine peaks, Cooper 2010 (4,313); betaxanthin, Cachera 2023 (4,719) |
 
 With an endpoint URL and a key (see [Downloading datasets](https://mjvolk3.github.io/torchcell/guide/downloads.html)),
-a loader fetches its archive instead of building:
+a loader fetches its archive instead of building. Export the two variables in the shell:
 
 ```bash
 export TC_DATA_URL=http://torchcell-database.ncsa.illinois.edu:8724
 export TC_DATA_API_KEY=<your key>
 ```
 
+or put the same two lines, without `export`, in a `.env` file in your project and load
+it before constructing a loader:
+
 ```python
+from dotenv import load_dotenv
+
+load_dotenv()  # reads the .env beside this script or in a parent directory
+
 from torchcell.datasets.scerevisiae.mulleder2016 import AminoAcidMulleder2016Dataset
 
 dataset = AminoAcidMulleder2016Dataset(root="data/torchcell/amino_acid_mulleder2016")
 ```
+
+The loader reads the two variables from the process environment and does not read `.env`
+itself. With `TC_DATA_URL` unset it builds from the publisher's files instead.
 
 The full collection served by the knowledge graph (51 datasets, 52.7 million
 experiments at release 2026.09.21) is listed on the

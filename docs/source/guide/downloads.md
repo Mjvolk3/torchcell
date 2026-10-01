@@ -10,8 +10,8 @@ loader consumed are served from the same endpoint, hash-pinned by their `manifes
 The endpoint is `http://torchcell-database.ncsa.illinois.edu:8724`, on the database
 host, serving the archive store and the raw mirror from the Taiga project storage. A
 user needs nothing but that URL and a key: no account on the host, no ssh. Ask the
-maintainers for a named API key; every request except `/health` carries the key in the
-`X-API-Key` header. The store currently holds `gene_essentiality_sgd`,
+maintainers for a named API key (the Keys section below says how one is issued); every request except `/health`
+carries the key in the `X-API-Key` header. The store currently holds `gene_essentiality_sgd`,
 `smf_costanzo2016`, `amino_acid_cooper2010`, `amino_acid_mulleder2016` and
 `betaxanthin_cachera2023`; `GET /datasets` is the authoritative list.
 
@@ -62,6 +62,21 @@ curl -H "X-API-Key: $TC_DATA_API_KEY" "$TC_DATA_URL/raw"
 curl -H "X-API-Key: $TC_DATA_API_KEY" "$TC_DATA_URL/raw/<citation_key>/files"
 ```
 
+## Keys
+
+A key is issued per person or group by a maintainer; there is no self-service sign-up.
+Each key has a name, the endpoint stores only its sha256, and the plaintext is shown
+once, at the moment it is made. To issue one, on the endpoint host:
+
+```bash
+python -m torchcell.datasets.server --gen-key <name>
+```
+
+It prints the plaintext key, which goes to the user, and a `{"<name>": "<sha256hex>"}`
+line, which is added to the JSON file `TC_DATA_KEYS_FILE` points at. The service reads
+that file when it starts, so restart it for a new key to be accepted. Deleting an entry
+and restarting revokes that key and no other.
+
 ## Environment variables
 
 | Variable | Where | Meaning |
@@ -81,6 +96,24 @@ LMDB is absent fetches, verifies and unpacks its artifact instead of downloading
 publisher files and running `process()`. If the endpoint has no artifact compatible
 with the installed version the loader raises and names the slug; it never falls back
 to the publisher path while the variable is set.
+
+The two variables are read from the process environment. Either export them in the
+shell, as in the curl section, or put the same two lines, without `export`, in a `.env`
+file in your project and load it before constructing a loader:
+
+```python
+from dotenv import load_dotenv
+
+load_dotenv()  # reads the .env beside this script or in a parent directory
+
+from torchcell.datasets.scerevisiae.costanzo2016 import SmfCostanzo2016Dataset
+
+dataset = SmfCostanzo2016Dataset(root="data/torchcell/smf_costanzo2016")
+```
+
+torchcell does not read `.env` on its own. A `.env` with no `load_dotenv()` call leaves
+`TC_DATA_URL` unset, and the loader then downloads the publisher files and builds, with
+no error. `load_dotenv()` never overrides a variable that is already exported.
 
 ```python
 from torchcell.datasets.client import DatasetClient, unpack_artifact

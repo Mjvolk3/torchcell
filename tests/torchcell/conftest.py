@@ -510,3 +510,24 @@ def off_pin_raw(
         return OffPinRoot(root, hashlib.sha256(OFF_PIN_BYTES).hexdigest())
 
     return stage
+
+
+def require_trusted_genome_database(genome_root: str) -> None:
+    """Fail a data-gated test, by name, before it would build or migrate a REAL
+    genome database: a test must never perform the first migration of a shared root.
+
+    ``genome_database_untrusted_reason`` only reads. When it names a reason, the
+    operator constructs ``SCerevisiaeGenome`` on that root once, outside the tests.
+    """
+    from torchcell.sequence.genome.scerevisiae.s288c import (
+        genome_database_untrusted_reason,
+    )
+
+    reason = genome_database_untrusted_reason(genome_root)
+    if reason is not None:
+        pytest.fail(
+            f"refusing to build or migrate the real genome database "
+            f"{osp.join(genome_root, 'data.db')} from a test: {reason}. Construct "
+            f"SCerevisiaeGenome(genome_root={genome_root!r}, ...) once outside the "
+            "tests, then rerun."
+        )

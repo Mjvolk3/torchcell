@@ -69,6 +69,7 @@ from typing import Any, cast
 import pandas as pd
 import pytest
 
+from tests.torchcell.conftest import require_trusted_genome_database
 from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.schema import (
     Environment,
@@ -660,6 +661,7 @@ def test_cachera_build_smoke(tmp_path: Path) -> None:
     (root / "raw").mkdir(parents=True)
     shutil.copy(_MIRROR_CSV, root / "raw" / "GA1_2_4_6.csv")
 
+    require_trusted_genome_database(_GENOME_DIR)
     genome = SCerevisiaeGenome(
         genome_root=_GENOME_DIR, go_root=_GO_DIR, overwrite=False
     )
@@ -705,6 +707,7 @@ def test_cachera_varying_deletion_carries_the_canonical_common_name(
     (root / "raw").mkdir(parents=True)
     shutil.copy(_MIRROR_CSV, root / "raw" / "GA1_2_4_6.csv")
 
+    require_trusted_genome_database(_GENOME_DIR)
     genome = SCerevisiaeGenome(
         genome_root=_GENOME_DIR, go_root=_GO_DIR, overwrite=False
     )

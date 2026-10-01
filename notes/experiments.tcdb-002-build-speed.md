@@ -990,6 +990,35 @@ about 2 h against 7 h 48 min; the server residual is the next target (parallel
 Cypher partitions, one session per dataset block) and needs a slurm smoke query to
 measure.
 
+### The server is not the bound: query server rate on the Vanacloig block (job 3102)
+
+`scripts/query_server_rate.py` under slurm (`gh_query_server_rate.slurm`, 8 CPUs /
+32 GB; `results/query_server_rate.csv`), the Vanacloig 2022 block of the 033 query
+against the served graph (inline layout, 143,218 records, 2,132 MB of strings, the
+033 build's 6,607-gene set):
+
+| mode | sessions | records/s | seconds |
+|---|--:|--:|--:|
+| stream only, first touch (cold page cache) | 1 | 7,856 | 18.2 |
+| `Neo4jQueryRaw.process` (stage 1 raw stage, writes the LMDB) | 1 | 1,806 | 79.3 |
+| stream, 16 id-prefix partitions, warm | 1 | 25,205 | 5.7 |
+| same | 2 | 34,528 | 4.1 |
+| same | 4 | 30,832 | 4.6 |
+| same | 8 | 29,663 | 4.8 |
+
+Warm, one session streams 25,000 records/s and two sessions 34,500; more sessions
+add nothing. The single-pass raw stage runs at 1,806 records/s on one client
+process, 2.5x job 2929's 716/s, and is now bound by the client's per-record
+validation (about 0.4 ms) at 14x below what the server delivers. At that rate the
+033 build's raw stage is 59 min against 2 h 29 min. Hypothesis for stage 3:
+partition each block by the first hex character of `e.id` (16 ranges, each still
+`ORDER BY e.id`, consumed in prefix order so the record sequence equals the
+single-session order and the LMDB stays byte-identical), validate in N worker
+processes, and let the parent assign indices, run the observers and write; at 8
+workers the client reaches about 15,000 records/s and the server about 25,000, so
+the raw stage of a 6.39M-record build takes about 10 min of fetch plus the parent's
+0.18 ms per record (about 20 min), against 2 h 29 min.
+
 ### Duplicate node blobs removed (2026.09.30)
 
 `serialized_data` is gone from genotype, segregant genotype, perturbation, crispr construct, environment perturbation and all 13 phenotype classes (fitness, gene interaction, gene essentiality, synthetic lethality, synthetic rescue, calmorph, microarray / rnaseq / pseudobulk expression, visual score, metabolite, protein abundance, environment response), in `torchcell/adapters/cell_adapter.py` and `biocypher/config/torchcell_schema_config.yaml`. Each is a sub-object of the experiment record, so its full copy is in the Experiment blob or the interned constant it points to; the reference-side phenotype and environment perturbation nodes are sub-objects of the experiment reference blob. Node ids are still sha256 of the sub-object's model_dump, so ids and edges do not change.

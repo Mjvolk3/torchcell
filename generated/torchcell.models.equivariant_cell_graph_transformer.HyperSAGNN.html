@@ -183,11 +183,13 @@ masked self-attention within perturbation sets.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>embeddings</strong> – Tensor of shape [total_pert_genes, hidden_channels]</p></li>
-<li><p><strong>batch_indices</strong> – Tensor of shape [total_pert_genes] indicating set membership</p></li>
+<li><p><strong>batch_indices</strong> – Tensor of shape [total_pert_genes] indicating set membership.
+Any integer ids; they need not be contiguous or start at 0.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Perturbation representations with shape [num_batches, hidden_channels]</p>
+<dd class="field-even"><p>Perturbation representations with shape [num_batches, hidden_channels],
+one row per DISTINCT set id, in ascending id order.</p>
 </dd>
 </dl>
 </dd></dl>

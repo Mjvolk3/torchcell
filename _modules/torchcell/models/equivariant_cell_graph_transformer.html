@@ -359,16 +359,20 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            embeddings: Tensor of shape [total_pert_genes, hidden_channels]</span>
-<span class="sd">            batch_indices: Tensor of shape [total_pert_genes] indicating set membership</span>
+<span class="sd">            batch_indices: Tensor of shape [total_pert_genes] indicating set membership.</span>
+<span class="sd">                Any integer ids; they need not be contiguous or start at 0.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Perturbation representations with shape [num_batches, hidden_channels]</span>
+<span class="sd">            Perturbation representations with shape [num_batches, hidden_channels],</span>
+<span class="sd">            one row per DISTINCT set id, in ascending id order.</span>
 <span class="sd">        """</span>
         <span class="n">device</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">device</span>
         <span class="n">total_nodes</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-        <span class="c1"># Get unique batches</span>
-        <span class="n">unique_batches</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">batch_indices</span><span class="p">)</span>
+        <span class="c1"># Renumber the set ids to 0..num_batches-1 (ascending id order). The output has</span>
+        <span class="c1"># one row per distinct id, so scattering by the raw id VALUE would index past the</span>
+        <span class="c1"># end for non-contiguous ids such as {0, 2}.</span>
+        <span class="n">unique_batches</span><span class="p">,</span> <span class="n">set_index</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">batch_indices</span><span class="p">,</span> <span class="n">return_inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">num_batches</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_batches</span><span class="p">)</span>
 
         <span class="c1"># Compute static embeddings for all perturbed genes</span>
@@ -410,7 +414,7 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">torch_scatter</span><span class="w"> </span><span class="kn">import</span> <span class="n">scatter_mean</span>
 
         <span class="n">set_representations</span> <span class="o">=</span> <span class="n">scatter_mean</span><span class="p">(</span>
-            <span class="n">squared_diff</span><span class="p">,</span> <span class="n">batch_indices</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dim_size</span><span class="o">=</span><span class="n">num_batches</span>
+            <span class="n">squared_diff</span><span class="p">,</span> <span class="n">set_index</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dim_size</span><span class="o">=</span><span class="n">num_batches</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">set_representations</span><span class="p">)</span>  <span class="c1"># [num_batches, hidden_channels]</span></div>
@@ -781,6 +785,7 @@
         <span class="n">H_genes</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
         <span class="n">perturbation_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
         <span class="n">batch_assignment</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Apply equivariant perturbation transformation.</span>
 
@@ -788,6 +793,11 @@
 <span class="sd">            H_genes: [N, d] - wildtype gene embeddings</span>
 <span class="sd">            perturbation_indices: [total_pert_genes] - indices of perturbed genes</span>
 <span class="sd">            batch_assignment: [total_pert_genes] - batch index for each perturbed gene</span>
+<span class="sd">            batch_size: Number of genotypes in the batch. Passed explicitly (the model</span>
+<span class="sd">                reads ``batch.num_graphs``) because a genotype with no perturbed gene</span>
+<span class="sd">                has no entry in ``batch_assignment``: ``max + 1`` would drop a trailing</span>
+<span class="sd">                one. A genotype with no entry gets a zero context at every layer, so its</span>
+<span class="sd">                row is the layer stack applied with ``attended = 0``.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            A tuple ``(H_genes_pert, context)``:</span>
@@ -797,7 +807,11 @@
 <span class="sd">              separately so downstream heads can condition on it directly (the</span>
 <span class="sd">              concat/bilinear/FiLM arms all need c_b, not only h_i + c_b).</span>
 <span class="sd">        """</span>
-        <span class="n">batch_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">batch_assignment</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">batch_assignment</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">batch_assignment</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="o">&gt;=</span> <span class="n">batch_size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"batch_assignment holds genotype index </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">batch_assignment</span><span class="o">.</span><span class="n">max</span><span class="p">())</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"but batch_size is </span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
         <span class="n">N</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">H_genes</span><span class="o">.</span><span class="n">shape</span>
 
         <span class="n">H_genes_pert_list</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1123,9 +1137,11 @@
 <span class="sd">            dropout: Dropout probability.</span>
 <span class="sd">            gate_mode: ``on`` (fixed 1.0, the default) or ``rezero`` (learned scalar,</span>
 <span class="sd">                init 0). Defaults to forced-on because the whole point is to push</span>
-<span class="sd">                gradient through the conditioning pathway; with everything masked the</span>
-<span class="sd">                encoded features are zero anyway, so a 100%-masked (validation) forward</span>
-<span class="sd">                is still an identity.</span>
+<span class="sd">                gradient through the conditioning pathway. With everything masked the</span>
+<span class="sd">                features are [0, 0], but the forced-on gate still adds</span>
+<span class="sd">                ``proj([0, 0]) = W2 relu(b1) + b2``, the same offset on every token, so</span>
+<span class="sd">                a 100%-masked (validation) forward is NOT an identity; ``rezero`` is the</span>
+<span class="sd">                identity at init.</span>
 <span class="sd">        """</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">proj</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
@@ -1135,8 +1151,8 @@
             <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="c1"># Defaults to FORCED ON: the whole point is to push gradient through the</span>
-        <span class="c1"># conditioning pathway. With everything masked the encoded features are all zero</span>
-        <span class="c1"># anyway, so a 100%-masked (validation) forward is still identity.</span>
+        <span class="c1"># conditioning pathway. With everything masked the features are [0, 0] and the</span>
+        <span class="c1"># forward adds the constant offset proj([0, 0]) to every token (not an identity).</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gate_mode</span> <span class="o">=</span> <span class="n">gate_mode</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gate</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span> <span class="o">|</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
         <span class="k">if</span> <span class="n">gate_mode</span> <span class="o">==</span> <span class="s2">"on"</span><span class="p">:</span>
@@ -2149,7 +2165,9 @@
 <span class="sd">                so it does NOT transfer to an organism without an interactome.</span>
 <span class="sd">            observed_label_config: Optional masked-prediction conditioning, letting the</span>
 <span class="sd">                decoder see a fraction of the measured labels and predict the rest. Inert</span>
-<span class="sd">                without cross-gene mixing, and identity at validation (100% masked).</span>
+<span class="sd">                without cross-gene mixing. A 100%-masked forward is NOT an identity under</span>
+<span class="sd">                the default forced-on gate: it adds the constant ``proj([0, 0])`` to every</span>
+<span class="sd">                token. Only ``observed_values=None`` skips the encoder.</span>
 <span class="sd">            post_perturbation_mixing_config: Optional Perceiver-style mixing BETWEEN gene</span>
 <span class="sd">                tokens after the perturbation is applied -- the channel that makes</span>
 <span class="sd">                ``observed_label_config`` able to do anything.</span>
@@ -2870,9 +2888,9 @@
 <span class="sd">                prediction, or None. Only consumed when the model was built with an</span>
 <span class="sd">                ``observed_label_config``.</span>
 <span class="sd">            observed_mask: [batch, N] boolean companion to ``observed_values``, True where</span>
-<span class="sd">                a value is observed. At validation everything is masked, so the forward</span>
-<span class="sd">                pass is identical to the unconditioned model and the metric stays</span>
-<span class="sd">                comparable across arms.</span>
+<span class="sd">                a value is observed. Passing an all-False mask is NOT the unconditioned</span>
+<span class="sd">                model: the forced-on encoder still adds ``proj([0, 0])`` to every token.</span>
+<span class="sd">                Pass ``observed_values=None`` to skip the encoder.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            predictions: [batch_size, 1] gene interaction predictions</span>
@@ -3021,10 +3039,14 @@
         <span class="n">H_genes</span> <span class="o">=</span> <span class="n">H_squeezed</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>  <span class="c1"># [N, d]</span>
 
         <span class="c1"># 5. Apply EQUIVARIANT perturbation transformation (Type I Virtual Instrument)</span>
+        <span class="c1"># The genotype count comes from the batch object, not from the assignment</span>
+        <span class="c1"># vector: a genotype with no perturbed gene (wildtype) has no entry there, so</span>
+        <span class="c1"># ``max + 1`` silently dropped a trailing one and every head returned a row short.</span>
         <span class="n">H_genes_pert</span><span class="p">,</span> <span class="n">pert_context</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">perturbation_transform</span><span class="p">(</span>
             <span class="n">H_genes</span><span class="p">,</span>
             <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices</span><span class="p">,</span>
             <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices_batch</span><span class="p">,</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">num_graphs</span><span class="p">),</span>
         <span class="p">)</span>  <span class="c1"># [batch, N, d] each - EQUIVARIANT!</span>
 
         <span class="c1"># 5b. Pair-(p, i) routing. Without this the ONLY strain-dependent quantity is a</span>
@@ -3164,10 +3186,18 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">num_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Count parameters in each component."""</span>
+<span class="w">        </span><span class="sd">"""Count parameters in each component.</span>
+
+<span class="sd">        Every entry is that block's own ``parameters()`` size (trainable or not), and</span>
+<span class="sd">        ``total`` is ``sum(p.numel() for p in self.parameters())``, so a size table read</span>
+<span class="sd">        from ``total`` is the module's real size. ``gene_embedding`` and</span>
+<span class="sd">        ``embedding_preprocessor`` are always present (0 when disabled); every other</span>
+<span class="sd">        optional block appears only when it is built. On this class the block entries sum</span>
+<span class="sd">        to ``total``; a subclass that registers more modules adds its own entries.</span>
+<span class="sd">        """</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">count_params</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
 
         <span class="n">counts</span> <span class="o">=</span> <span class="p">{</span>
             <span class="c1"># None when learnable embeddings are disabled (content features only).</span>
@@ -3189,13 +3219,21 @@
             <span class="s2">"perturbation_transform"</span><span class="p">:</span> <span class="n">count_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">perturbation_transform</span><span class="p">),</span>
             <span class="s2">"perturbation_head"</span><span class="p">:</span> <span class="n">count_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">perturbation_head</span><span class="p">),</span>
         <span class="p">}</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_head</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">counts</span><span class="p">[</span><span class="s2">"global_head"</span><span class="p">]</span> <span class="o">=</span> <span class="n">count_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">global_head</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_gene_head</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">counts</span><span class="p">[</span><span class="s2">"per_gene_head"</span><span class="p">]</span> <span class="o">=</span> <span class="n">count_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">per_gene_head</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_metabolite_head</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">counts</span><span class="p">[</span><span class="s2">"per_metabolite_head"</span><span class="p">]</span> <span class="o">=</span> <span class="n">count_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">per_metabolite_head</span><span class="p">)</span>
-        <span class="n">counts</span><span class="p">[</span><span class="s2">"total"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">optional</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"perturbation_propagation"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">perturbation_propagation</span><span class="p">,</span>
+            <span class="s2">"observed_label_encoder"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed_label_encoder</span><span class="p">,</span>
+            <span class="s2">"cross_gene_mixing"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cross_gene_mixing</span><span class="p">,</span>
+            <span class="s2">"post_perturbation_mixing"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_perturbation_mixing</span><span class="p">,</span>
+            <span class="s2">"global_head"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_head</span><span class="p">,</span>
+            <span class="s2">"per_gene_head"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_gene_head</span><span class="p">,</span>
+            <span class="s2">"bilinear"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">bilinear</span><span class="p">,</span>
+            <span class="s2">"response_basis"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_basis</span><span class="p">,</span>
+            <span class="s2">"per_metabolite_head"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_metabolite_head</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">optional</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">module</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">counts</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">count_params</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+        <span class="n">counts</span><span class="p">[</span><span class="s2">"total"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">counts</span></div>
 
 

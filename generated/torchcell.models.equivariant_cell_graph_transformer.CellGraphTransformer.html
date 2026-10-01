@@ -211,9 +211,9 @@ intensive: it forces the manual softmax path, which materializes a
 prediction, or None. Only consumed when the model was built with an
 <code class="docutils literal notranslate"><span class="pre">observed_label_config</span></code>.</p></li>
 <li><p><strong>observed_mask</strong> – [batch, N] boolean companion to <code class="docutils literal notranslate"><span class="pre">observed_values</span></code>, True where
-a value is observed. At validation everything is masked, so the forward
-pass is identical to the unconditioned model and the metric stays
-comparable across arms.</p></li>
+a value is observed. Passing an all-False mask is NOT the unconditioned
+model: the forced-on encoder still adds <code class="docutils literal notranslate"><span class="pre">proj([0,</span> <span class="pre">0])</span></code> to every token.
+Pass <code class="docutils literal notranslate"><span class="pre">observed_values=None</span></code> to skip the encoder.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -230,6 +230,12 @@ representations: Dict with embeddings, attention weights (if requested), losses,
 <dt class="sig sig-object py" id="torchcell.models.equivariant_cell_graph_transformer.CellGraphTransformer.num_parameters">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_parameters</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchcell.models.equivariant_cell_graph_transformer.CellGraphTransformer.num_parameters" title="Link to this definition"></a></dt>
 <dd><p>Count parameters in each component.</p>
+<p>Every entry is that block’s own <code class="docutils literal notranslate"><span class="pre">parameters()</span></code> size (trainable or not), and
+<code class="docutils literal notranslate"><span class="pre">total</span></code> is <code class="docutils literal notranslate"><span class="pre">sum(p.numel()</span> <span class="pre">for</span> <span class="pre">p</span> <span class="pre">in</span> <span class="pre">self.parameters())</span></code>, so a size table read
+from <code class="docutils literal notranslate"><span class="pre">total</span></code> is the module’s real size. <code class="docutils literal notranslate"><span class="pre">gene_embedding</span></code> and
+<code class="docutils literal notranslate"><span class="pre">embedding_preprocessor</span></code> are always present (0 when disabled); every other
+optional block appears only when it is built. On this class the block entries sum
+to <code class="docutils literal notranslate"><span class="pre">total</span></code>; a subclass that registers more modules adds its own entries.</p>
 </dd></dl>
 
 </dd></dl>

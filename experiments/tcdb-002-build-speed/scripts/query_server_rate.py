@@ -24,6 +24,17 @@ Runs under slurm only (it touches the served store):
 
 Writes ``results/query_server_rate.csv`` (mode, sessions, records, seconds,
 records_per_s, bytes).
+
+``--fetch-workers 1,4,8`` instead measures the partitioned raw stage (stage 3): it
+builds ``Neo4jQueryRaw`` on the same block once with ``fetch_workers=0`` (one session,
+the baseline) and then once per listed N with ``fetch_workers=N`` (the block carries
+``{partition}``, so it is split into 16 ``e.id``-prefix partitions plus the guard),
+asserts every LMDB key and value, ``experiment_reference_index.json`` and
+``gene_set.json`` identical to the baseline, and writes
+``results/query_server_rate_fetch_workers.csv`` (fetch_workers, records, seconds,
+records_per_s, identical_to_one_session):
+
+    sbatch experiments/tcdb-002-build-speed/scripts/gh_query_fetch_workers.slurm
 """
 
 from __future__ import annotations
@@ -34,6 +45,7 @@ import json
 import os
 import os.path as osp
 import shutil
+import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
@@ -69,12 +81,97 @@ def stream(
     return n, nbytes
 
 
+def raw_outputs(raw: Any) -> tuple[list[tuple[bytes, bytes]], bytes, bytes]:
+    """A raw stage's LMDB items and its reference-index and gene-set file bytes."""
+    import lmdb
+
+    env = lmdb.open(raw.lmdb_dir, readonly=True, lock=False)
+    with env.begin() as txn:
+        items = [(bytes(k), bytes(v)) for k, v in txn.cursor()]
+    env.close()
+    with open(osp.join(raw.raw_dir, "experiment_reference_index.json"), "rb") as fh:
+        index = fh.read()
+    with open(osp.join(raw.raw_dir, "gene_set.json"), "rb") as fh:
+        genes = fh.read()
+    return items, index, genes
+
+
+def fetch_workers_mode(
+    counts: list[int], gene_set: list[str], scratch_root: str, out: str
+) -> None:
+    """Time Neo4jQueryRaw on the marked block per fetch_workers; check identity."""
+    from torchcell.data.neo4j_query_raw import Neo4jQueryRaw
+
+    uri = os.environ["NEO4J_URI"]
+    user = os.environ["NEO4J_USER"]
+    password = os.environ["NEO4J_PASSWORD"]
+    rows: list[dict[str, Any]] = []
+    baseline = None
+    for workers in [0, *counts]:
+        root = tempfile.mkdtemp(prefix=f"fetch_workers_{workers}_", dir=scratch_root)
+        t = time.perf_counter()
+        raw = Neo4jQueryRaw(
+            uri=uri,
+            username=user,
+            password=password,
+            root_dir=root,
+            query=BLOCK,  # carries the {partition} marker
+            cypher_kwargs={"gene_set": gene_set},
+            fetch_workers=workers,
+        )
+        seconds = time.perf_counter() - t
+        raw.close_lmdb()
+        result = raw_outputs(raw)
+        if baseline is None:
+            baseline = result
+        identical = result == baseline
+        n = len(result[0])
+        rows.append(
+            {
+                "fetch_workers": workers,
+                "records": n,
+                "seconds": round(seconds, 1),
+                "records_per_s": round(n / seconds, 1),
+                "identical_to_one_session": identical,
+            }
+        )
+        print(
+            f"fetch_workers {workers}: {n:,} records in {seconds:.1f} s, "
+            f"{n / seconds:,.0f}/s, identical to one session: {identical}",
+            flush=True,
+        )
+        if not identical:
+            raise SystemExit(f"fetch_workers={workers} differs from one session")
+    os.makedirs(osp.dirname(out), exist_ok=True)
+    with open(out, "w", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+    print(f"wrote {out}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gene-set", required=True, help="JSON list of genes")
     parser.add_argument("--scratch-root", required=True)
-    parser.add_argument("--out", default=osp.join(RESULTS_DIR, "query_server_rate.csv"))
+    parser.add_argument("--out", default=None)
+    parser.add_argument(
+        "--fetch-workers",
+        default=None,
+        help="comma-separated worker counts: measure the partitioned raw stage only",
+    )
     args = parser.parse_args()
+    if args.fetch_workers is not None:
+        with open(args.gene_set) as fh:
+            genes = json.load(fh)
+        fetch_workers_mode(
+            [int(n) for n in args.fetch_workers.split(",")],
+            genes,
+            args.scratch_root,
+            args.out or osp.join(RESULTS_DIR, "query_server_rate_fetch_workers.csv"),
+        )
+        return
+    args.out = args.out or osp.join(RESULTS_DIR, "query_server_rate.csv")
 
     from torchcell.data.neo4j_query_raw import Neo4jQueryRaw
     from torchcell.database.connection import neo4j_connection_settings

@@ -16,9 +16,9 @@ const TABS: {title: string; href: string; body: string}[] = [
     body: 'What TorchCell is, the typed experiment record, and where each part lives.',
   },
   {
-    title: 'Database',
-    href: '/database/',
-    body: 'The served Neo4j knowledge graph: browser, Bolt URI, releases.',
+    title: 'Benchmark',
+    href: '/benchmark/',
+    body: 'Fixed splits, standard baselines, and a board per dataset. Upload predictions; the server scores them.',
   },
   {
     title: 'Ontology',
@@ -26,19 +26,19 @@ const TABS: {title: string; href: string; body: string}[] = [
     body: 'The schema of experiment records, as an interactive explorer.',
   },
   {
+    title: 'Database',
+    href: '/database/',
+    body: 'The served Neo4j knowledge graph: browser, Bolt URI, releases.',
+  },
+  {
+    title: 'Query',
+    href: '/query/',
+    body: 'Planned shortcuts for querying by chemical, gene, or homolog similarity.',
+  },
+  {
     title: 'Docs',
     href: '/docs/',
     body: 'Links to the Sphinx guide, the dataset pages, and the API reference.',
-  },
-  {
-    title: 'Benchmark',
-    href: '/benchmark/',
-    body: 'Fixed splits, standard baselines, and a board per dataset. Upload predictions; the server scores them.',
-  },
-  {
-    title: 'Milestones',
-    href: '/milestones/',
-    body: 'Planned work, tracked as GitHub milestones.',
   },
   {
     title: 'Tutorials',
@@ -51,9 +51,9 @@ const TABS: {title: string; href: string; body: string}[] = [
     body: 'One standard card per dataset: a diagram, a blurb, and a shared notation.',
   },
   {
-    title: 'Query',
-    href: '/query/',
-    body: 'Planned shortcuts for querying by chemical, gene, or homolog similarity.',
+    title: 'Milestones',
+    href: '/milestones/',
+    body: 'Planned work, tracked as GitHub milestones.',
   },
 ];
 

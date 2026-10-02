@@ -43,13 +43,11 @@ from torchcell.datamodels.schema import (
     Environment,
     Genotype,
     KanMxDeletionPerturbation,
-    Media,
     MetaboliteExperiment,
     MetaboliteExperimentReference,
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
-    Temperature,
 )
 from torchcell.datasets.scerevisiae import cachera2023 as m
 from torchcell.sequence.genome.scerevisiae.s288c import (
@@ -128,8 +126,7 @@ def dataset(tmp_path: Path) -> m.BetaxanthinCachera2023Dataset:
 
 
 _ENVIRONMENT = Environment(
-    media=Media(name="SC", state="solid", is_synthetic=True),
-    temperature=Temperature(value=30),
+    media=m.CACHERA_YPD_G418, temperature=None, provenance_gaps=[m.TEMPERATURE_GAP]
 )
 _REFERENCE = MetaboliteExperimentReference(
     dataset_name="BetaxanthinCachera2023Dataset",

@@ -34,12 +34,15 @@ What this measures, and why each part is here
    a loader's object and its recipe is the finding, not a detail. A loader that emits a
    bare ``Media(...)`` literal is parsed out of that literal; one that imports a shared
    library constant (``mulleder2016`` since issue 143) is read from ``MEDIA_LIBRARY`` by
-   the key its ``library_key`` names, which is the same object the loader imports.
+   the key its ``library_key`` names, which is the same object the loader imports; one
+   that defines a loader-local constant (``cachera2023`` since issue 509) is imported
+   from the module and attribute its ``loader_module`` / ``loader_attr`` name.
 7. **Sourced vs rescaled supplements.** Suthers' absolute 0.165 mmol/gDW/h against the
    ``glucose_rate * 0.05`` our older scripts compute, at the glucose rate those scripts
    use, so the size of the divergence is a measured number rather than an assertion.
 """
 
+import importlib
 import json
 import os
 import os.path as osp
@@ -77,8 +80,10 @@ DATASET_MEDIA_LITERALS: list[dict[str, str]] = [
     {
         "dataset": "cachera2023 (betaxanthin)",
         "path": "torchcell/datasets/scerevisiae/cachera2023.py",
-        "literal": 'media=Media(name="SC", state="solid", is_synthetic=True),',
-        "recipe_key": "SC",
+        "literal": "media=CACHERA_YPD_G418,",
+        "loader_module": "torchcell.datasets.scerevisiae.cachera2023",
+        "loader_attr": "CACHERA_YPD_G418",
+        "recipe_key": "YPD",
     },
     {
         "dataset": "ozaydin2013 (beta-carotene)",
@@ -373,11 +378,14 @@ def main() -> None:
 
     for spec in DATASET_MEDIA_LITERALS:
         line = locate_literal(spec["path"], spec["literal"])
-        emitted = (
-            MEDIA_LIBRARY[spec["library_key"]]
-            if "library_key" in spec
-            else media_from_literal(spec["literal"])
-        )
+        if "library_key" in spec:
+            emitted = MEDIA_LIBRARY[spec["library_key"]]
+        elif "loader_attr" in spec:
+            emitted = getattr(
+                importlib.import_module(spec["loader_module"]), spec["loader_attr"]
+            )
+        else:
+            emitted = media_from_literal(spec["literal"])
         record, _ = coverage_record(
             f"{spec['dataset']} as emitted", emitted, model, index, policy
         )

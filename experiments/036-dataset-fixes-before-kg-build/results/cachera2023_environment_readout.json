@@ -1,0 +1,55 @@
+{
+  "issue": 509,
+  "dev_store": "$DATA_ROOT/data/torchcell/betaxanthin_cachera2023/processed",
+  "scratch_store": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-cachera-medium-readout/betaxanthin_cachera2023/processed",
+  "before_dev": {
+    "records": 4719,
+    "media (experiment + reference environments)": {
+      "{\"name\": \"SC\", \"state\": \"solid\", \"is_synthetic\": true, \"base_medium\": null, \"components\": []}": 9438
+    },
+    "temperature": {
+      "30.0 Celsius": 9438
+    },
+    "environment_provenance_gaps": {
+      "[]": 9438
+    },
+    "measurement_type (experiment + reference phenotypes)": {
+      "cri_spa_corrected_fluorescence_intensity_24h": 9438
+    }
+  },
+  "after_scratch": {
+    "records": 4719,
+    "media (experiment + reference environments)": {
+      "{\"name\": \"YPD + G418 (solid, 2% agar; Cachera 2023 final CRI-SPA screen plate)\", \"state\": \"solid\", \"is_synthetic\": false, \"base_medium\": \"YPD\", \"components\": [[\"yeast extract\", \"1.0\", \"percent_w/v\"], [\"peptone\", \"2.0\", \"percent_w/v\"], [\"D-glucose\", \"2.0\", \"percent_w/v\"], [\"agar\", \"2.0\", \"percent_w/v\"], [\"G418 (geneticin)\", \"200.0\", \"ug/mL\"]]}": 9438
+    },
+    "temperature": {
+      "None": 9438
+    },
+    "environment_provenance_gaps": {
+      "[[\"temperature\", \"not_reported_by_primary\"]]": 9438
+    },
+    "measurement_type (experiment + reference phenotypes)": {
+      "cri_spa_corrected_hsv_yellowness_24h": 9438
+    }
+  },
+  "outside_environment": {
+    "records_compared": 4719,
+    "genotype_differs": 0,
+    "metabolite_level_or_n_differs": 0
+  },
+  "temperature_search": {
+    "paper_md_sha256": "5fb7310dacb44bc04fc121a990e4ccc70020c9598877c4b074656e91fc4f32d5",
+    "paper_md_matches": [],
+    "si_zip_sha256": "a8a52cccdd10764d2d00b3c7c27221d7c61f418b20ba7cb05cd8e59beaeccb15",
+    "si_matches_by_document": {
+      "Supp Methods S1.pdf": [],
+      "Supp Methods S2.pdf": [],
+      "Supplementary Figure S8.pptx": [],
+      "Supplementary Material.docx": [
+        "all subunit export from nucleus; required for growth at low temperature                    ",
+        "                   Protein required for fermentation at low temperature; plays a role in th",
+        "; regulates abundance of Rsa1p; required for growth at high temperature; similar to human Z"
+      ]
+    }
+  }
+}

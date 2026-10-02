@@ -6,10 +6,15 @@
 
 Cachera et al. 2023 (Nucleic Acids Research, doi:10.1093/nar/gkad656) used CRI-SPA to
 transfer four betaxanthin-biosynthesis genes into each strain of the ~4800-strain yeast
-knockout (YKO) collection, then read out per-colony **betaxanthin** (a yellow, naturally
-fluorescent plant metabolite) by image analysis. The "CRI-SPA score" is a
-corrected/normalized colony fluorescence intensity -- a quantitative proxy for
-betaxanthin level (it can be negative because it is population-centered).
+knockout (YKO) collection, then read out per-colony **betaxanthin** (a yellow plant
+metabolite) by image analysis. The "CRI-SPA score" is a corrected/normalized colony
+YELLOWNESS score, the geometric mean of Value and Saturation of the colony's pixels in
+HSV color space (paper line 58), not a fluorescence measurement -- a quantitative proxy
+for betaxanthin level (it can be negative because it is population-centered).
+
+Environment (issue #509): the final screen plate is solid YPD with 200 mg/l G418
+(``CACHERA_YPD_G418``, every value quoted from the mirror OCR), and the paper states no
+growth temperature, so ``temperature=None`` with a typed ``ProvenanceGap``.
 
 Source: the paper's Data Availability points to the CRI-SPA GitHub repo
 (github.com/pc2912/CRI-SPA_repo). We ingest `GA1_2_4_6.csv` -- the gene-level
@@ -17,7 +22,7 @@ corrected+filtered dataset combining screen replicates 1/2/4/6 -- using the 24 h
 `corrected_mean_intensity` (mean/std/count) as the betaxanthin level + SE + n.
 
 Maps to `MetabolitePhenotype` (WS4): `metabolite_level = {"betaxanthin": score}` with
-`measurement_type = "cri_spa_corrected_fluorescence_intensity_24h"`. Gene names in the
+`measurement_type = "cri_spa_corrected_hsv_yellowness_24h"`. Gene names in the
 source are COMMON names, so a genome is required to resolve them to systematic ORF ids
 (same pattern as Sameith); unresolved names + control/NaN rows are excluded and logged.
 The varying deletion stores the genome's own standard name as `perturbed_gene_name`
@@ -44,7 +49,11 @@ from torchcell.data import (
     verify_raw_files,
     write_verified,
 )
+from torchcell.datamodels.compound_identity import resolved_compound
+from torchcell.datamodels.media import YPD
 from torchcell.datamodels.schema import (
+    Concentration,
+    ConcentrationUnit,
     Environment,
     Experiment,
     ExperimentReference,
@@ -52,22 +61,138 @@ from torchcell.datamodels.schema import (
     Genotype,
     KanMxDeletionPerturbation,
     Media,
+    MediaComponent,
+    MediaComponentRole,
     MetaboliteExperiment,
     MetaboliteExperimentReference,
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
-    Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.scerevisiae.smith2006 import canonical_common_names
 from torchcell.sequence.genome.scerevisiae import GeneNameStatus, SCerevisiaeGenome
+from torchcell.verification.report import Provenance
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-MEASUREMENT_TYPE = "cri_spa_corrected_fluorescence_intensity_24h"
 TARGET_METABOLITE = "betaxanthin"
+
+# --------------------------------------------------------------------------- #
+# Paper anchors (issue #509). Every quote below is a verbatim substring of the mirror
+# OCR (MinerU output, so LaTeX markup is kept as written); the line is that file's.
+# --------------------------------------------------------------------------- #
+CITATION_KEY = "cacheraCRISPAHighthroughputMethod2023"
+PAPER_MD = "paper.md"
+PAPER_MD_SHA256 = "5fb7310dacb44bc04fc121a990e4ccc70020c9598877c4b074656e91fc4f32d5"
+_PAPER = Provenance(
+    source_uri=PAPER_MD, citation_key=CITATION_KEY, sha256=PAPER_MD_SHA256
+)
+
+# line 58: the readout is a color score from image pixels, not a fluorescence intensity.
+READOUT_QUOTE = (
+    "filter taking the geometric mean of Value and Saturation of image pixels in the "
+    "HSV color space"
+)
+# line 58: the color score was calibrated on YPD.
+READOUT_MEDIUM_QUOTE = "which was our observation on YPD media"
+# line 117: the plate the screen colonies grew on.
+SCREEN_PLATE_QUOTE = (
+    "we picked cells from each of the four colonies obtained for each strain on the "
+    "final CRI-SPA screen plate (YPD-G418)"
+)
+# line 31: YPD recipe deferral, agar and G418 doses on solid medium.
+YPD_RECIPE_QUOTE = (
+    "YPD and synthetic complete (SC) media, and SC drop out media were prepared as "
+    "described by Sherman et al. (28)"
+)
+AGAR_QUOTE = "For growth on solid medium, $2 0 \\ \\mathrm { g / l }$ agar was added."
+G418_QUOTE = (
+    "For selection on solid medium, plates were supplemented with "
+    "$2 0 0 ~ \\mathrm { { m g / l } }$ geneticin (G418)"
+)
+
+#: What the stored level IS: the 24 h ``corrected_mean_intensity`` column of
+#: ``GA1_2_4_6.csv``, an HSV yellowness score (``READOUT_QUOTE``), corrected for plate
+#: position. The word "intensity" in the column name is the image Value/Saturation
+#: intensity, not fluorescence.
+MEASUREMENT_TYPE = "cri_spa_corrected_hsv_yellowness_24h"
+
+
+def _paper_sv(value: object, quote: str, note: str | None = None) -> SourcedValue:
+    """A SourcedValue pinned to the Cachera mirror OCR (quote + sha256)."""
+    return SourcedValue(value=value, provenance=_PAPER, quote=quote, note=note)
+
+
+SOURCED_VALUES: dict[str, SourcedValue] = {
+    "measurement_type": _paper_sv(
+        MEASUREMENT_TYPE,
+        READOUT_QUOTE,
+        note="line 58; a colony-color score, so the name says HSV yellowness",
+    ),
+    "screen_medium": _paper_sv("solid YPD + G418", SCREEN_PLATE_QUOTE, note="line 117"),
+    "readout_medium": _paper_sv("YPD", READOUT_MEDIUM_QUOTE, note="line 58"),
+    "ypd_recipe": _paper_sv(
+        "YPD per Sherman et al. (ref 28)",
+        YPD_RECIPE_QUOTE,
+        note="line 31; Sherman et al. is not mirrored, so the YPD ingredient amounts "
+        "are the library YPD root's (Tong and Boone 2006 YEPD), which this sentence "
+        "does not restate",
+    ),
+    "agar": _paper_sv("20 g/l", AGAR_QUOTE, note="line 31"),
+    "g418": _paper_sv("200 mg/l", G418_QUOTE, note="line 31"),
+}
+
+CACHERA_YPD_G418: Media = Media(
+    name="YPD + G418 (solid, 2% agar; Cachera 2023 final CRI-SPA screen plate)",
+    state="solid",
+    is_synthetic=False,
+    base_medium="YPD",
+    components=[
+        *YPD.components,
+        MediaComponent(
+            compound=resolved_compound("agar"),
+            role=MediaComponentRole.gelling_agent,
+            concentration=Concentration(value=2.0, unit=ConcentrationUnit.percent_w_v),
+            provenance=[SOURCED_VALUES["agar"]],
+        ),
+        MediaComponent(
+            compound=resolved_compound("G418 (geneticin)"),
+            role=MediaComponentRole.selection_agent,
+            concentration=Concentration(value=200.0, unit=ConcentrationUnit.ug_per_ml),
+            provenance=[SOURCED_VALUES["g418"]],
+            note="selects the kanMX marker of the YKO deletion (CRI-SPA step 5)",
+        ),
+    ],
+    provenance=[
+        SOURCED_VALUES["screen_medium"],
+        SOURCED_VALUES["ypd_recipe"],
+        SOURCED_VALUES["readout_medium"],
+    ],
+)
+"""The final CRI-SPA screen plate: library ``YPD`` root components plus the paper's own
+agar and G418 doses. Loader-local on purpose (as ``COOPER_SC`` is): ``media.py`` is a
+value surface of the served graph, so editing it would touch every YPD dataset."""
+
+#: No growth temperature in the paper. Measured by
+#: ``experiments/036-dataset-fixes-before-kg-build/scripts/cachera2023_environment_readout.py``
+#: (2026.10.02, issue #509): the mirror ``paper.md`` has 0 matches for a degree sign,
+#: ``\circ``, "temperature" or a two-digit number followed by C, and the SI archive's
+#: four documents (Supplementary Material.docx, Supp Methods S1/S2, Figure S8) have 3,
+#: all SGD gene descriptions ("required for growth at low temperature") in a hit table.
+TEMPERATURE_GAP = ProvenanceGap(
+    field="temperature",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=_PAPER,
+    note="no growth or incubation temperature is stated in the paper or its SI "
+    "(gkad656_supplemental_files.zip); the loader formerly stored an unsourced 30 C",
+)
 
 
 # The constant engineered background transferred by CRI-SPA into every YKO strain: the
@@ -328,9 +453,9 @@ class BetaxanthinCachera2023Dataset(ExperimentDataset):
                 *_betaxanthin_cassette(),
             ]
         )
+        # Issue #509: YPD + G418 screen plate (line 117), no stated temperature.
         environment = Environment(
-            media=Media(name="SC", state="solid", is_synthetic=True),
-            temperature=Temperature(value=30),
+            media=CACHERA_YPD_G418, temperature=None, provenance_gaps=[TEMPERATURE_GAP]
         )
         phenotype = MetabolitePhenotype(
             metabolite_level={TARGET_METABOLITE: row["level"]},

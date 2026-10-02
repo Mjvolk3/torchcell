@@ -256,13 +256,13 @@ def _metabolite(
         metabolite_level={"betaxanthin": level},
         metabolite_level_se={"betaxanthin": se},
         n_replicates={"betaxanthin": n},
-        measurement_type="cri_spa_corrected_fluorescence_intensity",
+        measurement_type="cri_spa_corrected_hsv_yellowness",
         target_metabolite_ids=target,
     )
     reference_phenotype = MetabolitePhenotype(
         metabolite_level={"betaxanthin": 1.0},
         n_replicates={"betaxanthin": 1},
-        measurement_type="cri_spa_corrected_fluorescence_intensity",
+        measurement_type="cri_spa_corrected_hsv_yellowness",
     )
     return {
         "experiment": MetaboliteExperiment(
@@ -299,7 +299,7 @@ def test_metabolite_duplicates_merge_elementwise_with_summed_replicates(
     assert phenotype.metabolite_level_se is not None
     assert phenotype.metabolite_level_se["betaxanthin"] == pytest.approx(0.25)
     assert phenotype.n_replicates == {"betaxanthin": 5}
-    assert phenotype.measurement_type == "cri_spa_corrected_fluorescence_intensity"
+    assert phenotype.measurement_type == "cri_spa_corrected_hsv_yellowness"
     assert phenotype.target_metabolite_ids == {"betaxanthin": "s_9999"}
     assert experiment.dataset_name == "cachera+other"
     genotype = experiment.genotype

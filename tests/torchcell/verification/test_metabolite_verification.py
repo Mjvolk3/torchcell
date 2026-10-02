@@ -40,7 +40,7 @@ from torchcell.verification.report import Level, Provenance
 
 PROV = Provenance(source_uri="test://synthetic", citation_key="test2023")
 GENES = ["YMR056C", "YBR085W", "YJR155W"]
-MTYPE = "cri_spa_corrected_fluorescence_intensity_24h"
+MTYPE = "cri_spa_corrected_hsv_yellowness_24h"
 
 
 def _phenotype(level: float, *, ref: bool = False) -> MetabolitePhenotype:

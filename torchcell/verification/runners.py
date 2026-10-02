@@ -453,7 +453,7 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
         "provenance": Provenance(
             source_uri="https://raw.githubusercontent.com/pc2912/CRI-SPA_repo/main/GA1_2_4_6.csv",
             citation_key="cacheraCRISPAHighthroughputMethod2023",
-            method="CRI-SPA corrected colony fluorescence intensity (24h) as betaxanthin proxy",
+            method="CRI-SPA corrected colony HSV yellowness score (24h) as betaxanthin proxy",
             page="CRI-SPA GitHub GA1_2_4_6.csv (replicates 1/2/4/6)",
         ),
     },

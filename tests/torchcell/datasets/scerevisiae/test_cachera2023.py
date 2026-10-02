@@ -38,11 +38,13 @@ background at level 0.0), so the index is [[0, 1, 2, 3, 4]]; the gene set holds 
 varying ORFs plus the four cassette identifiers ``CYP76AD1``, ``DOD``, ``YBR249C``,
 ``YPR060C`` (nine names, sorted).
 
-Findings pinned (source lines in ``cachera2023.py``), citing issue #509 (the paper's
-screen plate is YPD-G418, it states no temperature, and the score is an HSV colony-color
-value): every record stores ``Media(name="SC", is_synthetic=True)`` at 30 C (lines
-339-342) with ``measurement_type`` ``cri_spa_corrected_fluorescence_intensity_24h``
-(line 65). A blank count reads as one colony (line 256), so a released std is
+Issue #509 (fixed 2026.10.02): every record and its reference store the paper's final
+screen plate, ``CACHERA_YPD_G418`` (library YPD root + 2% agar + 200 ug/ml G418, each
+quoted from the mirror OCR), ``temperature=None`` with a typed
+``not_reported_by_primary`` gap, and ``measurement_type``
+``cri_spa_corrected_hsv_yellowness_24h`` (the score is an HSV colony-color value, line 58
+of ``paper.md``). Formerly ``Media(name="SC", is_synthetic=True)`` at 30 C with a
+fluorescence ``measurement_type``. Findings still pinned: a blank count reads as one colony (line 256), so a released std is
 discarded. The dataset gene set carries the non-S288C names ``CYP76AD1`` and ``DOD``
 (the cassette additions, ``extract_systematic_gene_names`` takes every perturbation).
 
@@ -76,13 +78,11 @@ from torchcell.datamodels.schema import (
     GeneAdditionPerturbation,
     Genotype,
     KanMxDeletionPerturbation,
-    Media,
     MetaboliteExperiment,
     MetaboliteExperimentReference,
     MetabolitePhenotype,
     Publication,
     ReferenceGenome,
-    Temperature,
 )
 from torchcell.datasets.scerevisiae import cachera2023 as c
 from torchcell.sequence.genome.scerevisiae.s288c import (
@@ -225,8 +225,7 @@ def _cassette() -> list[GeneAdditionPerturbation]:
 
 def _environment() -> Environment:
     return Environment(
-        media=Media(name="SC", state="solid", is_synthetic=True),
-        temperature=Temperature(value=30),
+        media=c.CACHERA_YPD_G418, temperature=None, provenance_gaps=[c.TEMPERATURE_GAP]
     )
 
 
@@ -248,7 +247,7 @@ def _experiment(
             metabolite_level={"betaxanthin": level},
             metabolite_level_se={"betaxanthin": se},
             n_replicates={"betaxanthin": n},
-            measurement_type="cri_spa_corrected_fluorescence_intensity_24h",
+            measurement_type="cri_spa_corrected_hsv_yellowness_24h",
             target_metabolite_ids=None,
         ),
     )
@@ -265,7 +264,7 @@ def _reference() -> dict[str, Any]:
             metabolite_level={"betaxanthin": 0.0},
             metabolite_level_se=None,
             n_replicates={"betaxanthin": 1},
-            measurement_type="cri_spa_corrected_fluorescence_intensity_24h",
+            measurement_type="cri_spa_corrected_hsv_yellowness_24h",
         ),
     ).model_dump()
 
@@ -370,14 +369,13 @@ def test_a_blank_count_discards_the_released_std(
     assert rest == expected
 
 
-def test_environment_and_readout_disagree_with_the_paper_issue_509(
+def test_environment_and_readout_match_the_paper_issue_509(
     built: c.BetaxanthinCachera2023Dataset,
 ) -> None:
-    """Finding (issue #509): every record and its reference store SC, synthetic, solid,
-    at 30 C (lines 339-342) with a fluorescence ``measurement_type`` (line 65), where the
-    paper's final screen plate is YPD-G418, no temperature is stated, and the score is an
-    HSV colony-color value. Pinned until #509 lands a sourced YPD + G418 medium, a
-    temperature gap and a color-score measurement type.
+    """Issue #509: every record and its reference store the final CRI-SPA screen plate
+    (solid YPD + 2% agar + 200 ug/ml G418, complex), no temperature with a typed
+    ``not_reported_by_primary`` gap, and an HSV yellowness ``measurement_type``. The
+    loader used to store synthetic SC at 30 C with a fluorescence measurement type.
     """
     environments = {
         json.dumps(built[i]["experiment"]["environment"], sort_keys=True)
@@ -385,18 +383,45 @@ def test_environment_and_readout_disagree_with_the_paper_issue_509(
     }
     assert environments == {json.dumps(_environment().model_dump(), sort_keys=True)}
     record = built[0]
-    media = record["experiment"]["environment"]["media"]
-    assert (media["name"], media["state"], media["is_synthetic"]) == (
-        "SC",
+    env = record["experiment"]["environment"]
+    media = env["media"]
+    assert (media["state"], media["is_synthetic"], media["base_medium"]) == (
         "solid",
-        True,
+        False,
+        "YPD",
     )
-    assert record["experiment"]["environment"]["temperature"]["value"] == 30.0
+    assert media["name"].startswith("YPD + G418")
+    assert [
+        (
+            comp["compound"]["name"],
+            comp["role"],
+            comp["concentration"]["value"],
+            comp["concentration"]["unit"],
+        )
+        for comp in media["components"]
+    ] == [
+        ("yeast extract", "complex_ingredient", 1.0, "percent_w/v"),
+        ("peptone", "complex_ingredient", 2.0, "percent_w/v"),
+        ("D-glucose", "carbon_source", 2.0, "percent_w/v"),
+        ("agar", "gelling_agent", 2.0, "percent_w/v"),
+        ("G418 (geneticin)", "selection_agent", 200.0, "ug/mL"),
+    ]
+    assert media["components"][-1]["provenance"][0]["quote"] == (
+        "For selection on solid medium, plates were supplemented with "
+        "$2 0 0 ~ \\mathrm { { m g / l } }$ geneticin (G418)"
+    )
+    assert env["temperature"] is None
+    assert [(g["field"], g["reason"]) for g in env["provenance_gaps"]] == [
+        ("temperature", "not_reported_by_primary")
+    ]
     assert record["reference"]["environment_reference"] == _environment().model_dump()
     assert {
         built[i]["experiment"]["phenotype"]["measurement_type"]
         for i in range(len(built))
-    } == {"cri_spa_corrected_fluorescence_intensity_24h"}
+    } | {
+        built[i]["reference"]["phenotype_reference"]["measurement_type"]
+        for i in range(len(built))
+    } == {"cri_spa_corrected_hsv_yellowness_24h"}
 
 
 def test_every_record_shares_one_reference_and_the_gene_set_has_the_cassette(
@@ -682,8 +707,9 @@ def test_cachera_build_smoke(tmp_path: Path) -> None:
     ptypes = Counter(p.perturbation_type for p in exp.genotype.perturbations)
     assert ptypes == {"kanmx_deletion": 1, "gene_addition": 4}
 
-    # synthetic medium (the field whose absence made the stale on-disk LMDB fail)
-    assert exp.environment.media.is_synthetic is True
+    # complex YPD + G418 screen plate (issue #509; formerly synthetic SC)
+    assert exp.environment.media.is_synthetic is False
+    assert exp.environment.temperature is None
 
     assert record["publication"]["pubmed_id"] == "37572348"
 
@@ -765,3 +791,34 @@ def test_cachera_varying_deletion_carries_the_canonical_common_name(
     }
     assert additions["YBR249C"] == "ARO4"
     assert additions["YPR060C"] == "ARO7"
+
+
+_PAPER_MD = osp.join(_DATA_ROOT, "torchcell-library", c.CITATION_KEY, c.PAPER_MD)
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not osp.exists(_PAPER_MD), reason="requires the Cachera paper.md mirror"
+)
+def test_every_sourced_quote_is_on_its_line_of_the_pinned_paper_issue_509() -> None:
+    """Each issue #509 quote is a verbatim substring of the pinned OCR, on its line."""
+    data = Path(_PAPER_MD).read_bytes()
+    assert hashlib.sha256(data).hexdigest() == c.PAPER_MD_SHA256
+    lines = data.decode("utf-8").split("\n")
+    found = {
+        key: [n for n, line in enumerate(lines, 1) if sv.quote in line]
+        for key, sv in c.SOURCED_VALUES.items()
+    }
+    assert found == {
+        "measurement_type": [58],
+        "screen_medium": [117],
+        "readout_medium": [58],
+        "ypd_recipe": [31],
+        "agar": [31],
+        "g418": [31],
+    }
+    assert not [
+        line
+        for line in lines
+        if "\u00b0" in line or "\\circ" in line or "temperature" in line.lower()
+    ]

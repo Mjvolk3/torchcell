@@ -35,12 +35,18 @@ import json
 import os
 import os.path as osp
 import re
+import sys
 
+import numpy as np
 import pandas as pd
 import wandb
 import wandb_workspaces.reports.v2 as wr
 import wandb_workspaces.workspaces as ws
 from dotenv import load_dotenv
+
+sys.path.insert(0, osp.dirname(__file__))
+from train_factorized import CELL_TABLE, EMBEDDING_DIR, PREDICTIONS  # noqa: E402
+from vanacloig_data import load_cells, make_folds  # noqa: E402
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
@@ -48,18 +54,25 @@ EXPERIMENT = osp.join(os.environ["EXPERIMENT_ROOT"], "035-env-chemgen-vanacloig-
 RESULTS = osp.join(EXPERIMENT, "results")
 ENTITY = "zhao-group"
 PROJECT = "torchcell_035-env-chemgen-vanacloig-cgt"
-VIEW_NAME = "035 rounds 8 to 11: cell graph transformer arms grouped"
+VIEW_NAME = "035 rounds 8 to 12: cell graph transformer arms grouped"
 VIEW_TAG = "035-r8-r11"
 # Pinned after the first `save_as_new_view()`; None creates the view and prints its id.
 VIEW_ID: str | None = "sy9905pud6q"
 X = "epoch"
-SWEEP = re.compile(r"^(r8_(small|deep|mid)_[a-z]|r9_\w+|r10_\w+|r11_\w+)$")
+SWEEP = re.compile(r"^(r8_(small|deep|mid)_[a-z]|r9_\w+|r10_\w+|r11_\w+|r12_\w+)$")
 
 PROTOCOL = {
     "r8": "fit on training compounds, epoch picked on 4 validation compounds, 1 seed",
     "r9": "fit on the non-test pool, fixed 50 epochs keeping the last, 3 seeds averaged",
     "r10": "fit on the non-test pool, fixed 50 epochs keeping the last, 3 seeds averaged",
     "r11": "fit on the non-test pool, fixed 50 epochs keeping the last, 3 seeds averaged",
+    "r12": "fit on training compounds, epoch picked on 4 validation compounds, 1 seed",
+}
+
+LOSS_COLUMNS = {
+    "curve/train_loss_full_standardized_mse": "train_loss_full",
+    "curve/validation_loss_standardized_mse": "val_loss",
+    "curve/held_out_loss_standardized_mse": "test_loss",
 }
 
 SECTIONS: list[tuple[str, list[tuple[str, list[str]]]]] = [
@@ -84,10 +97,32 @@ SECTIONS: list[tuple[str, list[tuple[str, list[str]]]]] = [
         ],
     ),
     (
-        "2 training side",
+        "2 loss (MSE on the standardized response, every strain; per-epoch curves exist "
+        "for runs from round 11 on)",
         [
             (
-                "train loss (MSE on the standardized response)",
+                "validation loss, by epoch (4 validation compounds; in-sample for "
+                "pool-fit arms)",
+                ["curve/validation_loss_standardized_mse"],
+            ),
+            (
+                "train loss over all fitted compounds, by epoch",
+                ["curve/train_loss_full_standardized_mse"],
+            ),
+            (
+                "held-out loss, by epoch (the fold's test compounds)",
+                ["curve/held_out_loss_standardized_mse"],
+            ),
+            (
+                "train, validation and held-out loss on one axis",
+                [
+                    "curve/train_loss_full_standardized_mse",
+                    "curve/validation_loss_standardized_mse",
+                    "curve/held_out_loss_standardized_mse",
+                ],
+            ),
+            (
+                "train loss of the last batch of the epoch (every run)",
                 ["curve/train_loss_standardized_mse"],
             ),
             ("graph prior penalty (unweighted KL sum)", ["curve/graph_prior_penalty"]),
@@ -132,7 +167,7 @@ def curves(history: pd.DataFrame) -> pd.DataFrame:
     """Per-epoch means over the run's seeds, under the shared key names."""
     history = history.assign(epoch=history["epoch"].round().astype(int))
     mean = history.groupby("epoch").mean(numeric_only=True)
-    return pd.DataFrame(
+    curve = pd.DataFrame(
         {
             "curve/held_out_centered_spearman": mean["test_centered_mean"],
             "curve/validation_centered_spearman": mean["val_centered_mean"],
@@ -144,11 +179,40 @@ def curves(history: pd.DataFrame) -> pd.DataFrame:
             "curve/minutes": mean["seconds"] / 60,
         }
     )
+    # the losses over every strain are logged per epoch from round 11 on; a history
+    # written before that has no such columns and the run gets final values only
+    for key, column in LOSS_COLUMNS.items():
+        if column in mean:
+            curve[key] = mean[column]
+    return curve
+
+
+def final_losses(
+    cells, y: np.ndarray, sweep: str, name: str, fold: int, fold_seed: int, fit_on: str
+) -> dict[str, float]:
+    """Standardized MSE of the run's saved (seed-averaged) prediction, per compound set."""
+    split = make_folds(len(cells.compounds), 5, 4, fold_seed)[fold]
+    fitted = split.train if fit_on == "train" else sorted(split.train + split.val)
+    prediction = np.load(
+        osp.join(PREDICTIONS, sweep, f"{name}_fold{fold}_seed{fold_seed}.npy")
+    ).astype(np.float64)
+    residual = (prediction - y) / np.nanstd(y[:, fitted])
+
+    def mse(columns: list[int]) -> float:
+        return float(np.nanmean(residual[:, columns] ** 2))
+
+    return {
+        "final/train_loss_standardized_mse": mse(fitted),
+        "final/validation_loss_standardized_mse": mse(split.val),
+        "final/held_out_loss_standardized_mse": mse(split.test),
+    }
 
 
 def label_and_relog(api: wandb.Api) -> dict[str, dict[str, object]]:
     """Group every finished round 8 to 11 run by arm and log its shared-key curves."""
     ridge = ridge_reference()
+    cells = load_cells(CELL_TABLE, osp.join(EMBEDDING_DIR, "fcfp4_count.npz"))
+    y = cells.matrix(cells.response)
     groups: dict[str, dict[str, object]] = {}
     for run in api.runs(f"{ENTITY}/{PROJECT}", filters={"state": "finished"}):
         sweeps = [t for t in run.tags if SWEEP.match(t)]
@@ -178,7 +242,15 @@ def label_and_relog(api: wandb.Api) -> dict[str, dict[str, object]]:
                 (ensemble["spearman"].to_numpy() - reference).mean()
             ),
             "final/held_out_compounds": len(ensemble),
-        }
+        } | final_losses(
+            cells,
+            y,
+            sweep,
+            run.name,
+            int(ensemble["fold"].iloc[0]),
+            fold_seed,
+            run.config.get("fit_on", "train"),
+        )
         if not run.config.get("curves_relogged"):
             live = wandb.init(
                 entity=ENTITY,
@@ -198,6 +270,9 @@ def label_and_relog(api: wandb.Api) -> dict[str, dict[str, object]]:
             live.config.update({"curves_relogged": True}, allow_val_change=True)
             live.finish()
             run = api.run(f"{ENTITY}/{PROJECT}/{run.id}")
+        for key, value in final.items():
+            run.summary[key] = value
+        run.summary.update()
         run.group = arm
         run.config["arm"] = arm
         run.config["round"] = rnd
@@ -251,6 +326,22 @@ def populate_view() -> str:
                 wr.BarPlot(
                     title="median centered Spearman on the held-out compounds",
                     metrics=["final/median_centered_spearman_held_out"],
+                    layout=wr.Layout(w=12, h=8),
+                ),
+                wr.BarPlot(
+                    title="validation loss of the saved prediction (standardized MSE; "
+                    "in-sample for pool-fit arms)",
+                    metrics=["final/validation_loss_standardized_mse"],
+                    layout=wr.Layout(w=12, h=8),
+                ),
+                wr.BarPlot(
+                    title="held-out loss of the saved prediction (standardized MSE)",
+                    metrics=["final/held_out_loss_standardized_mse"],
+                    layout=wr.Layout(w=12, h=8),
+                ),
+                wr.BarPlot(
+                    title="train loss of the saved prediction (standardized MSE)",
+                    metrics=["final/train_loss_standardized_mse"],
                     layout=wr.Layout(w=12, h=8),
                 ),
             ],

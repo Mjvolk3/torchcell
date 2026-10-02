@@ -681,10 +681,20 @@ def train_seed(
             # the held-out compounds at this step, logged for visibility only; the
             # selected step is still chosen on the validation compounds
             test = centered_val_score(ctx.y, full, pool, fold.test)
+            # the same loss the model is trained on (MSE on the standardized response),
+            # over every strain, for the fitted, validation and held-out compounds
+            residual = (full - ctx.y) / y_sd
+
+            def standardized_mse(columns: list[int]) -> float:
+                return float(np.nanmean(residual[:, columns] ** 2))
+
             record = {
                 "step": step + 1,
                 "epoch": (step + 1) / steps_per_epoch,
                 "train_loss": float(loss.detach()),
+                "train_loss_full": standardized_mse(train),
+                "val_loss": standardized_mse(fold.val),
+                "test_loss": standardized_mse(fold.test),
                 "penalty": float(penalty),
                 "grad_norm": float(grad_norm),
                 "lr": float(scheduler.get_last_lr()[0]),

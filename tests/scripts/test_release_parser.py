@@ -86,7 +86,7 @@ def test_the_last_30_real_subjects_bump_as_recorded(parser: object) -> None:
 
 
 def test_a_deliberate_release_or_compatibility_commit_bumps(parser: object) -> None:
-    """Only REL, DB and API bump; a FEAT or FIX landing keeps main at "latest"."""
+    """Only REL, DB, PATCH and API bump; a FEAT or FIX landing keeps main at "latest"."""
     assert (
         _bump(parser, "REL: 1.6, the release the 2026.10 KG build serializes under")
         == "MINOR"
@@ -99,6 +99,10 @@ def test_a_deliberate_release_or_compatibility_commit_bumps(parser: object) -> N
         _bump(parser, "DB(supported_queries): deprecate solid_growth_025 in 1.3")
         == "PATCH"
     )
+    assert (
+        _bump(parser, "PATCH(release): cut 1.6.1 so the PyPI page carries the README")
+        == "PATCH"
+    )
     assert _bump(parser, "API(datamodels): rename Phenotype.graph_level") == "MAJOR"
     assert (
         _bump(parser, "FEAT(showcase): amino acids + betaxanthin page") == "NO_RELEASE"
@@ -107,7 +111,7 @@ def test_a_deliberate_release_or_compatibility_commit_bumps(parser: object) -> N
 
 
 def test_tag_map_levels_and_the_breaking_markers(parser: object) -> None:
-    """API is major; REL minor; DB patch; FEAT, ENH, DEP, DEV, REV, FIX, BUG, BLD, MAINT,
+    """API is major; REL minor; DB and PATCH patch; FEAT, ENH, DEP, DEV, REV, FIX, BUG, BLD, MAINT,
     PERF, DOC, DOCS, NOTE, TST, TEST, STY, CI, BENCH no bump; "!" and a BREAKING CHANGE
     paragraph force a major on any tag; an unknown tag does not parse.
     """
@@ -115,6 +119,7 @@ def test_tag_map_levels_and_the_breaking_markers(parser: object) -> None:
         "API": "MAJOR",
         "REL": "MINOR",
         "DB": "PATCH",
+        "PATCH": "PATCH",
         "FEAT": "NO_RELEASE", "ENH": "NO_RELEASE", "DEP": "NO_RELEASE", "DEV": "NO_RELEASE",
         "REV": "NO_RELEASE", "FIX": "NO_RELEASE", "BUG": "NO_RELEASE", "BLD": "NO_RELEASE",
         "MAINT": "NO_RELEASE", "PERF": "NO_RELEASE",

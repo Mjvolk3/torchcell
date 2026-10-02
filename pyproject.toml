@@ -313,10 +313,12 @@ commit_parser = "scripts/release_parser.py:TorchcellCommitParser"
 
 [tool.semantic_release.commit_parser_options]
 # Tag map (notes/versioning.md, 2026.09.29, second section): a version bump is a
-# deliberate act, never a side effect of landing work. Only three tags bump: API (major),
+# deliberate act, never a side effect of landing work. Only four tags bump: API (major),
 # REL (minor, a deliberate source release, cut before a KG build), DB (patch, a database
 # compatibility change: a new release snapshot, a supported-query registry change, a
-# schema closure change). Everything else, FEAT and FIX included, is allowed with no bump
+# schema closure change) and PATCH (patch, a deliberate source patch release with no
+# interface or database change: a packaging, README or documentation correction that has
+# to reach PyPI). Everything else, FEAT and FIX included, is allowed with no bump
 # so main stays "latest" between releases; the earlier map (FEAT minor, FIX patch) moved
 # main from 1.2.1 to 1.5.0 in one evening. "!" or a "BREAKING CHANGE:" paragraph on any
 # tag still forces a major.
@@ -340,9 +342,10 @@ allowed_tags = [
     "STY",
     "TST",
     "REL",
+    "PATCH",
     "FEAT",
     "TEST",
 ]
 major_tags = ["API"]
 minor_tags = ["REL"]
-patch_tags = ["DB"]
+patch_tags = ["DB", "PATCH"]

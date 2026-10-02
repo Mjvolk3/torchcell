@@ -16,8 +16,9 @@ reads ``TAG(scope)!: subject`` but has no ``major_tags``: a major bump comes onl
 This parser is the conventional parser plus ``major_tags``, so the tag map in
 ``pyproject.toml`` keeps its meaning. Since the second 2026.09.29 revision a bump is
 deliberate: ``API`` major; ``REL`` minor (a source release, cut before a KG build); ``DB``
-patch (a database compatibility change); every other allowed tag, ``FEAT`` and ``FIX``
-included, parses with no bump. ``!`` and ``BREAKING CHANGE:`` still force a major. Loaded by file path:
+patch (a database compatibility change) and, since 2026.10.01, ``PATCH`` patch (a source
+patch release with no interface or database change); every other allowed tag, ``FEAT``
+and ``FIX`` included, parses with no bump. ``!`` and ``BREAKING CHANGE:`` still force a major. Loaded by file path:
 ``commit_parser = "scripts/release_parser.py:TorchcellCommitParser"`` (python-semantic-
 release resolves ``path.py:Class`` relative to the working directory, which is the
 checkout in the release action). Imports only ``semantic_release``, so it needs no

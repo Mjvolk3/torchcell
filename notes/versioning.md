@@ -229,3 +229,17 @@ The workflow also gains a manual path, `gh workflow run semantic-release.yaml -f
 The release run on the `REL` commit (36933195045) bumped 1.5.0 to 1.6.0, tagged `v1.6.0`, built the wheel and sdist and attached them to the GitHub release; its PyPI step failed with `invalid-publisher` ("valid token, but no corresponding publisher"), because no trusted publisher was registered on pypi.org yet. After the publisher was added (repository `Mjvolk3/torchcell`, workflow `semantic-release.yaml`, environment `pypi`), `gh workflow run semantic-release.yaml -f tag=v1.6.0` (run 36936717998) published the tag: PyPI and the GitHub release now hold the same two files, `torchcell-1.6.0-py3-none-any.whl` (2,458,862 bytes) and `torchcell-1.6.0.tar.gz` (2,059,663 bytes).
 
 Every release produces two runs of the workflow. The first, on the releasing commit, bumps and publishes. The second, on the bot's own bump commit (titled with the version, here "1.6.0"), finds nothing to release and skips both publish steps while ending green; its step list still shows "Publish dist to PyPI", greyed out. A green run titled with the version is therefore not evidence of a publish: read the first run, or check `https://pypi.org/pypi/torchcell/<version>/json`.
+
+## 2026.10.01 - PATCH, a source patch release
+
+The tag map had one patch tag, `DB`, defined as a database compatibility change, so a small source release could only be cut as a minor (`REL`) or mislabeled as a database change. `PATCH` fills that gap: a deliberate source patch release with no interface or database change, for a packaging, README or documentation correction that has to reach PyPI. PyPI freezes the project description per release, so a README fix is visible there only in a new version.
+
+| Bump | Tag | Meaning |
+|---|---|---|
+| major | `API` | a public interface changes |
+| minor | `REL` | a source release, cut before a KG build |
+| patch | `DB` | a database compatibility change |
+| patch | `PATCH` | a source patch release, no interface or database change |
+| none | everything else, `FEAT` and `FIX` included | no release |
+
+Bumps stay deliberate: `FIX` and `DOCS` still release nothing. The first use is 1.6.1, which carries the README corrected after 1.6.0 (the overview figure by absolute URL, one dataset per line in the download table). Files: `patch_tags` and `allowed_tags` in `pyproject.toml`, the parser docstring, `tests/scripts/test_release_parser.py` (the level map and a `PATCH(release): ...` subject), and the table in `docs/source/guide/contributing.md`.

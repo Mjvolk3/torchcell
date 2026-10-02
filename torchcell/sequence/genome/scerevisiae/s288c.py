@@ -751,8 +751,11 @@ def genome_database_source(
 
 def _change_counter(db_path: str) -> int:
     """Sqlite's file change counter: header bytes 24-27, big-endian."""
-    with open(db_path, "rb") as fh:
-        header = fh.read(28)
+    try:
+        with open(db_path, "rb") as fh:
+            header = fh.read(28)
+    except FileNotFoundError as exc:
+        raise _vanished(db_path, exc) from exc
     return int.from_bytes(header[24:28], "big")
 
 
@@ -986,8 +989,11 @@ def _committed_record_json(db_path: str) -> str | None:
     )
     os.close(fd)
     try:
-        shutil.copyfile(db_path, copy_path)
-        shutil.copyfile(db_path + "-journal", copy_path + "-journal")
+        try:
+            shutil.copyfile(db_path, copy_path)
+            shutil.copyfile(db_path + "-journal", copy_path + "-journal")
+        except FileNotFoundError as exc:
+            raise _vanished(exc.filename or db_path, exc) from exc
         try:
             with closing(sqlite3.connect(copy_path)) as conn:
                 conn.execute("SELECT 1 FROM sqlite_master").fetchone()
@@ -1104,14 +1110,19 @@ def untrusted_reason(
 
 def _journal_moved_to_kept(db_path: str) -> bool:
     """``data.db`` is byte-identical to the kept copy, a kept journal sits beside the
-    copy, and ``data.db`` has no journal of its own: a migrator moved the hot journal
-    and was killed before renaming the fresh build in. The torn file's cheap checks
-    pass, so this is what marks it untrusted.
+    copy, and rolling the kept copy back with that journal changes it: a migrator
+    moved the hot journal and was killed before renaming the fresh build in. The torn
+    file's cheap checks pass, so this is what marks it untrusted. A journal of
+    ``data.db``'s own does not clear it: a pre-2026.10.01 writer holding a
+    transaction on the torn file has one, and the file is still torn (a ``data.db``
+    byte-equal to a kept file whose rollback changes it is torn whatever companion it
+    has). The comparison is a full byte read of both files, and when they are equal
+    the rollback runs on a private copy in the temp dir.
     """
     if osp.basename(db_path) != GENOME_DB_FILENAME:
         return False
     kept = osp.join(osp.dirname(db_path), UNTRUSTED_DB_FILENAME)
-    if not osp.isfile(kept + "-journal") or osp.lexists(db_path + "-journal"):
+    if not osp.isfile(kept + "-journal"):
         return False
     if not osp.isfile(kept):
         return False
@@ -1120,6 +1131,8 @@ def _journal_moved_to_kept(db_path: str) -> bool:
             return False
     except PermissionError:  # another user's kept copy: not this file's journal pair
         return False
+    except FileNotFoundError as exc:
+        raise _vanished(exc.filename or db_path, exc) from exc
     return not _rollback_equals(kept, db_path)
 
 
@@ -1135,14 +1148,20 @@ def _rollback_equals(kept: str, db_path: str) -> bool:
     )
     os.close(fd)
     try:
-        shutil.copyfile(kept, copy_path)
-        shutil.copyfile(kept + "-journal", copy_path + "-journal")
+        try:
+            shutil.copyfile(kept, copy_path)
+            shutil.copyfile(kept + "-journal", copy_path + "-journal")
+        except FileNotFoundError as exc:
+            raise _vanished(exc.filename or kept, exc) from exc
         try:
             with closing(sqlite3.connect(copy_path)) as conn:
                 conn.execute("SELECT 1 FROM sqlite_master").fetchone()
         except sqlite3.DatabaseError:
             return False
-        return filecmp.cmp(copy_path, db_path, shallow=False)
+        try:
+            return filecmp.cmp(copy_path, db_path, shallow=False)
+        except FileNotFoundError as exc:
+            raise _vanished(db_path, exc) from exc
     finally:
         _remove_if_present(copy_path)
         _remove_if_present(copy_path + "-journal")
@@ -1457,6 +1476,30 @@ class SCerevisiaeGenome(Genome):
     A ``data.db`` that is a symlink to a trusted database is followed and read. When
     the target is untrusted, or ``overwrite=True``, the build is renamed onto the
     LINK, which becomes a regular file; the target is never written.
+
+    When a migration kept a pair (``data.db.untrusted`` and
+    ``data.db.untrusted-journal``) and ``data.db`` is byte-equal to the kept copy
+    while the kept journal undoes nothing, ``data.db`` is trusted, but every
+    construction pays a full byte comparison of the two files plus a rollback of the
+    kept pair on a private copy in the temp dir (about +30 ms per construction at
+    real size, measured by the eighth review) for as long as the kept pair exists.
+    The way out is to move ``data.db.untrusted`` and ``data.db.untrusted-journal`` out
+    of the root by hand once they are no longer wanted as evidence.
+
+    Known limits:
+
+    * A kept journal that is foreign (another database's) or has a corrupted size
+      field makes the rollback check report ``data.db`` as torn at every
+      construction, so every construction migrates again with a WARNING and a reader
+      of a read-only root gets :class:`GenomeRootNotWritableError`. Only tampering
+      with the kept files produced this; no natural path to it was found.
+    * A process killed with SIGKILL inside that rollback check leaves its private
+      copy (about 15 MB) in the temp dir. Later constructions do not remove it; only
+      the dead-pid sweep run by the next private-copy creation (a ``drop_*`` write)
+      does.
+    * A kept journal this user cannot read beside a kept copy this user can read
+      raises ``PermissionError``. sqlite gives a journal the database's mode, so this
+      arises only when someone changes the journal's mode by hand.
     """
 
     #: The assembly set in the genomes tier this class reads its release files from.

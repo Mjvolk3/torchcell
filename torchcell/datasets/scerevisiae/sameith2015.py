@@ -1939,7 +1939,7 @@ def main() -> None:
     genome = SCerevisiaeGenome(
         genome_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"),
         go_root=osp.join(cast(str, DATA_ROOT), "data/go"),
-        overwrite=True,
+        overwrite=False,
     )
 
     print("=" * 80)

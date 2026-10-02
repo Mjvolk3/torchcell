@@ -1757,7 +1757,7 @@ if __name__ == "__main__":
     genome = SCerevisiaeGenome(
         genome_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"),
         go_root=osp.join(cast(str, DATA_ROOT), "data/go"),
-        overwrite=True,
+        overwrite=False,
     )
 
     dataset = MicroarrayKemmeren2014Dataset(

@@ -58,3 +58,25 @@ New tests cover:
 - **Committed-record peek.** A `None` result re-raises the sqlite error. Peek copies go to the temp dir under sweepable names and are swept when their process is dead. Only the rollback code triggers a peek. A committed version-2 record under a raw version-1 page is refused on both paths. A two-row committed record names `data.db`.
 - **Paths and non-regular files.** Genome roots with `?`, `#` and `%41`. A FIFO, a dangling symlink and a symlink loop named `data.db`; the FIFO case runs in a daemon thread so a regression fails instead of hanging.
 - **In-place rebuild under a reader.** The empty-meta named error, and an unrelated `TypeError` left untouched.
+
+## 2026.10.02 - Eighth review additions
+
+From the reviewer's verified diff:
+
+- the false positive of the moved-journal check, on both paths;
+- a `data.db` that vanishes mid-migration;
+- the lock being exclusive (a `LOCK_SH` holder blocks a migration);
+- roots with URI characters through the digest and a drop;
+- a relative `genome_root`.
+
+Added here:
+
+- a vanish before the keep copy;
+- the kept copy's mode on the explicit-rebuild path;
+- garbage plus a cold journal under `overwrite=True` (contract: not hot, nothing kept);
+- the moved-journal state requiring a kept journal, and comparing content not stat;
+- the identity check seeing inode and size;
+- the symlink contract (followed when trusted; replaced, target never written, otherwise);
+- a raw version-2 record over a committed current one naming `data.db`.
+
+The four-process test now starts plain subprocesses instead of forking the pytest process. The `os.fork` test stays, because the fork behaviour (a forked child must not delete its parent's private copy) is what it tests. The file passed 30 of 30 consecutive runs.

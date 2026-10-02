@@ -167,14 +167,19 @@ estimate, or a service-unit budget.
   2026-10-02: Fair Tree with weights fairshare 10,000, age 1,000 (maxes after 2 days),
   partition 1,000, job size and QOS 0; usage decays with a one-day half-life. The account is
   ranked first, then the user inside it, so burning one account down (bfjt after the 025
-  rounds: fairshare 0.064, about 640 points) does not touch the others (bbub and bflt about
-  3,000 points, the head of the gpuA40x4 queue was 2,336). **Spread a large batch across the
-  accounts we may charge**, and re-account a pending job without resubmitting:
-  `scontrol update JobId=<id> Account=<account>` (priority recalculates within minutes).
-  Balances are per account (a 20 h A40 node job is about 40 SU), and bflt and bgcg are
-  other projects' awards, so charging training to them needs the PI's consent; bbub
-  (multimodal ML) is the natural second account for 025. Hypothesis, untested: an account
-  that carries a few node-days of our usage drops toward bfjt's share within days.
+  rounds: fairshare 0.064, priority 988 with 1,319 jobs above it) does not touch the others
+  (bbub, bflt, bgcg about 3,000 points, which was the top of the gpuA40x4 pending queue on
+  2026-10-02). **The GPU accounts are a pool** (user, 2026-10-02: "we don't care about
+  spending on whichever allocation right now, we are pooling them"): use whichever account
+  is available to us to get jobs through, and spread a large batch across all of them so
+  no single account's share is burned down. Re-account a pending job without resubmitting,
+  and move the QOS with it, because on Delta the QOS is named after the account and a job
+  left on the old QOS pends forever with reason `InvalidQOS`:
+  `scontrol update JobId=<id> Account=<account> QOS=<account>` (priority recalculates
+  within minutes). A 30-epoch 025 job on four A40s drew about 28 SU from the balance.
+  Hypothesis, untested: an account that carries a few node-days of our usage drops toward
+  bfjt's share within days, which is the reason to spread rather than move everything to
+  one account.
 - **Partitions and measured waits** (all users, 7 days to 2026-10-01, 4-GPU jobs; re-measure
   with `python3 ~/qwait.py <since> gpuA40x4,gpuA100x4 -a` on the login node before quoting):
 

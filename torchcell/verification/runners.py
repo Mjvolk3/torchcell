@@ -490,12 +490,23 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "metabolite_zelezniak2018": {
         "root": "data/torchcell/metabolite_zelezniak2018",
-        "expected_count": 95,
-        "reference_centered": False,  # arbitrary batch-corrected SRM signal, not centered
+        # One record per (strain, protocol) since issue #595: 95 protocol-1 + 18
+        # protocol-2 + 16 protocol-3 strains (scratch build of the pinned release).
+        "expected_count": 129,
+        "reference_centered": False,  # per-protocol WT baseline, not centered
+        # Must equal the loader's ZELEZNIAK_METABOLITE_PROTOCOLS measurement_types
+        # (pinned by tests/torchcell/datasets/scerevisiae/test_zelezniak2018.py).
+        "protocol_measurement_types": frozenset(
+            {
+                "lc_srm_signal_batch_corrected_uncalibrated_dataset1",
+                "lc_srm_ion_pair_external_calibration_batch_corrected_unit_unstated_dataset2",
+                "lc_srm_hilic_external_calibration_batch_corrected_unit_unstated_dataset3",
+            }
+        ),
         "provenance": Provenance(
             source_uri="https://zenodo.org/api/records/1320289/files/metabolites_dataset.data_prep.tsv/content",
             citation_key="zelezniakMachineLearningPredicts2018",
-            method="SRM-MS/MS targeted metabolomics, batch-corrected signal; per-strain mean over pooled replicates",
+            method="LC-SRM targeted metabolomics, three protocols kept separate (Dataset 1 uncalibrated signal, Datasets 2/3 externally calibrated); per-(strain, protocol) mean over that protocol's replicates vs the same-protocol WT",
             page="Zenodo 10.5281/zenodo.1320288 metabolites_dataset.data_prep.tsv",
         ),
     },
@@ -625,6 +636,7 @@ def run_metabolite(data_root: str) -> bool:
             provenance=spec["provenance"],
             expected_count=spec.get("expected_count", len(records)),
             reference_centered=spec.get("reference_centered", True),
+            protocol_measurement_types=spec.get("protocol_measurement_types"),
         )
         if ohya_genes:
             report.add(

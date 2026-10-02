@@ -21,14 +21,19 @@ count, SE = SD / sqrt(n)):
     YER004W  YBR002C 20, 24        -> mean 22.0, SD sqrt(8), SE 2.0, n 2
     bad_ko   YAL001C 99            -> KO_ORF fails the nuclear-ORF regex: skipped
 
-Metabolome fixture (``metabolites_dataset.data_prep.tsv``; rows pooled across the
-``dataset`` protocol column per metabolite):
+Metabolome fixture (``metabolites_dataset.data_prep.tsv``; one record per (protocol,
+strain), aggregated over that protocol's rows only, issue #595):
 
-    WT       pyr      2, 4 (protocols 1, 2) -> mean 3.0, SE 1.0, n 2
-    WT       3pg;2pg  10                    -> n 1, SE NaN
-    YDR003W  pyr      1, 3                  -> mean 2.0, SE 1.0, n 2
-    YDR003W  atp      5, 5                  -> mean 5.0, SE 0.0, n 2 (WT never measured atp)
-    YER004W  3pg;2pg  7                     -> n 1, SE NaN -> all-NaN SE collapses to None
+    WT       pyr      protocol 1: 2         -> protocol-1 reference, n 1, SE NaN
+    WT       pyr      protocol 2: 4         -> protocol-2 reference, n 1, SE NaN
+    WT       3pg;2pg  protocol 1: 10        -> protocol-1 reference, n 1, SE NaN
+    YDR003W  pyr      protocol 1: 1, 3      -> record 0: mean 2.0, SE 1.0, n 2
+    YDR003W  atp      protocol 1: 5, 5      -> record 0: mean 5.0, SE 0.0, n 2 (no WT atp)
+    YER004W  3pg;2pg  protocol 1: 7         -> record 1: n 1, all-NaN SE collapses to None
+    YDR003W  pyr      protocol 2: 6, 8      -> record 2: mean 7.0, SE 1.0, n 2
+
+Records are ordered by (protocol, strain). Before issue #595 the WT pyr baseline was the
+pooled 3.0 (n 2) and protocol-2 rows joined the protocol-1 strain mean.
 
 2026.09.30 (Phase 12): the uncovered paths. ``download()`` for both loaders runs against a
 fake ``urllib.request.urlopen`` that records the ``Request`` (URL, User-Agent, timeout
@@ -48,11 +53,20 @@ repeated (ORF, strain, replicate) row, a blank value and a non-finite value, nam
 strain (WT included);
 an all-blank protein refuses there too instead of in schema validation. Exact messages are
 asserted. The pinned release has 0 of each (264,264 rows), so stored records are unchanged.
+
+2026.10.02 (issue #595): the metabolome keeps its three LC-SRM protocols apart. One record
+per (protocol, strain), the reference is the same-protocol WT, the measurement_type names
+the protocol, and the issue's two example cells (WT ``3pg;2pg``, YIL042C ``r5p``) are
+pinned on their verbatim raw values. An unknown protocol, a protocol without WT rows, a
+(strain, protocol) sharing no metabolite with its WT, and a repeated (metabolite,
+replicate) id inside one protocol each refuse with an exact message. The protocol quotes
+are audited against the mirrored ``paper.md`` when the mirror is mounted.
 """
 
 import hashlib
 import json
 import math
+import os
 import socket
 import urllib.request
 from pathlib import Path
@@ -79,17 +93,25 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.scerevisiae import zelezniak2018
 from torchcell.datasets.scerevisiae.zelezniak2018 import (
+    CALIBRATED_UNIT_GAP,
+    METABOLITE_DATA_FILENAME,
+    METABOLITE_SOURCED_VALUES,
+    ZELEZNIAK_METABOLITE_PROTOCOLS,
+    MetaboliteZelezniak2018Dataset,
+    ProteomeZelezniak2018Dataset,
+    ZelezniakMetaboliteProtocol,
+)
+from torchcell.datasets.scerevisiae.zelezniak2018 import (
     DATA_FILENAME as PROTEOME_FILENAME,
 )
 from torchcell.datasets.scerevisiae.zelezniak2018 import (
     MEASUREMENT_TYPE as PROTEOME_MEASUREMENT_TYPE,
 )
-from torchcell.datasets.scerevisiae.zelezniak2018 import (
-    METABOLITE_DATA_FILENAME,
-    METABOLITE_MEASUREMENT_TYPE,
-    MetaboliteZelezniak2018Dataset,
-    ProteomeZelezniak2018Dataset,
-)
+from torchcell.verification import runners
+from torchcell.verification.sourced import audit_sourced_value
+
+MTYPE_1 = ZELEZNIAK_METABOLITE_PROTOCOLS[1].measurement_type
+MTYPE_2 = ZELEZNIAK_METABOLITE_PROTOCOLS[2].measurement_type
 
 # --------------------------------------------------------------------------- #
 # Shared expected pieces
@@ -132,9 +154,11 @@ METABOLITE_ROWS = [
     ("atp", "C00002", "ATP", 1, "YDR003W", 1, 5.0),
     ("atp", "C00002", "ATP", 1, "YDR003W", 2, 5.0),
     ("3pg;2pg", "C00197;C00631", "3-Phospho-D-glycerate", 1, "YER004W", 1, 7.0),
+    ("pyr", "C00022", "Pyruvate", 2, "YDR003W", 1, 6.0),
+    ("pyr", "C00022", "Pyruvate", 2, "YDR003W", 2, 8.0),
 ]
 
-S_ID_MAP = {"pyr": "s_1399", "3pg;2pg": "s_0188", "atp": "s_0434"}
+S_ID_MAP = {"pyr": "s_1399", "3pg;2pg": "s_0188", "atp": "s_0434", "r5p": "s_stub_r5p"}
 
 
 def _write_tsv(path: Path, header: list[str], rows: list[tuple[Any, ...]]) -> None:
@@ -379,48 +403,52 @@ def metabolome(
 def test_metabolome_len_side_files_and_s_id_map_argument(
     metabolome: tuple[MetaboliteZelezniak2018Dataset, Path, list[dict[str, str]]],
 ) -> None:
-    """Two strains; the mapper is called once with the deduplicated metabolite -> KEGG map.
+    """Three (protocol, strain) records; the mapper is called once with the deduplicated
+    metabolite -> KEGG map.
 
-    ``preprocess/data.csv`` reports ``n_metabolites`` per strain (2 for YDR003W, 1 for
-    YER004W); the gene set is the two KO ORFs.
+    ``preprocess/data.csv`` reports the protocol and ``n_metabolites`` per record, ordered
+    by (protocol, strain): YDR003W twice (protocols 1 and 2). The gene set is still the
+    two KO ORFs.
     """
     ds, root, calls = metabolome
-    assert len(ds) == 2
+    assert len(ds) == 3
     assert calls == [{"pyr": "C00022", "3pg;2pg": "C00197;C00631", "atp": "C00002"}]
     assert (root / "preprocess" / "data.csv").read_text() == (
-        "orf,n_metabolites\nYDR003W,2\nYER004W,1\n"
+        "orf,dataset,n_metabolites\nYDR003W,1,2\nYER004W,1,1\nYDR003W,2,1\n"
     )
     _assert_side_files(root, MetaboliteZelezniak2018Dataset, ["YDR003W", "YER004W"])
 
 
-def test_metabolome_record_0_reference_restricted_to_measured_keys(
+def _ydr003w() -> Genotype:
+    return Genotype(
+        perturbations=[
+            KanMxDeletionPerturbation(
+                systematic_gene_name="YDR003W", perturbed_gene_name="YDR003W"
+            )
+        ]
+    )
+
+
+def test_metabolome_record_0_reference_is_the_same_protocol_wt(
     metabolome: tuple[MetaboliteZelezniak2018Dataset, Path, list[dict[str, str]]],
 ) -> None:
-    """Record 0 = YDR003W: levels pyr 2.0 / atp 5.0, SEs 1.0 / 0.0; reference has pyr ONLY.
-
-    WT never measured atp, so the reference phenotype is restricted to {pyr} with the WT
-    aggregate (mean 3.0, SE 1.0, n 2). ``target_metabolite_ids`` is the stub map filtered
-    to the phenotype's keys on both sides. Genotype uses the ORF as both names (no gene
-    name column in the metabolome file). The dumps are compared exactly: the SEs 1.0,
-    0.0 and 1.0 are exact under pandas ``std() / sqrt(n)``.
+    """Record 0 = YDR003W on protocol 1: pyr 2.0 / atp 5.0, SEs 1.0 / 0.0; reference has
+    pyr ONLY, at the protocol-1 WT value 2.0 (n 1), never the pooled 3.0 of protocols 1
+    and 2. WT never measured atp, so the reference is restricted to {pyr}; its single
+    replicate gives an all-NaN SE, stored as None. Genotype uses the ORF as both names
+    (no gene name column in the metabolome file). The dumps are compared exactly.
     """
     ds, _, _ = metabolome
     record = ds[0]
     expected = MetaboliteExperiment(
         dataset_name="MetaboliteZelezniak2018Dataset",
-        genotype=Genotype(
-            perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name="YDR003W", perturbed_gene_name="YDR003W"
-                )
-            ]
-        ),
+        genotype=_ydr003w(),
         environment=ENVIRONMENT,
         phenotype=MetabolitePhenotype(
             metabolite_level={"pyr": 2.0, "atp": 5.0},
             metabolite_level_se={"pyr": 1.0, "atp": 0.0},
             n_replicates={"pyr": 2, "atp": 2},
-            measurement_type=METABOLITE_MEASUREMENT_TYPE,
+            measurement_type=MTYPE_1,
             target_metabolite_ids={"pyr": "s_1399", "atp": "s_0434"},
         ),
     )
@@ -429,10 +457,10 @@ def test_metabolome_record_0_reference_restricted_to_measured_keys(
         genome_reference=BY4741,
         environment_reference=ENVIRONMENT,
         phenotype_reference=MetabolitePhenotype(
-            metabolite_level={"pyr": 3.0},
-            metabolite_level_se={"pyr": 1.0},
-            n_replicates={"pyr": 2},
-            measurement_type=METABOLITE_MEASUREMENT_TYPE,
+            metabolite_level={"pyr": 2.0},
+            metabolite_level_se=None,
+            n_replicates={"pyr": 1},
+            measurement_type=MTYPE_1,
             target_metabolite_ids={"pyr": "s_1399"},
         ),
     )
@@ -443,6 +471,34 @@ def test_metabolome_record_0_reference_restricted_to_measured_keys(
         MetaboliteExperiment.model_validate(record["experiment"]).model_dump()
         == record["experiment"]
     )
+
+
+def test_metabolome_record_2_is_the_protocol_2_record_of_the_same_strain(
+    metabolome: tuple[MetaboliteZelezniak2018Dataset, Path, list[dict[str, str]]],
+) -> None:
+    """Record 2 = YDR003W on protocol 2: pyr 7.0 (6, 8), SE 1.0, n 2, against the
+    protocol-2 WT pyr 4.0. The protocol-1 rows (1, 3) are not in it, and it carries the
+    protocol-2 measurement_type on both sides.
+    """
+    ds, _, _ = metabolome
+    record = ds[2]
+    expected = MetaboliteExperiment(
+        dataset_name="MetaboliteZelezniak2018Dataset",
+        genotype=_ydr003w(),
+        environment=ENVIRONMENT,
+        phenotype=MetabolitePhenotype(
+            metabolite_level={"pyr": 7.0},
+            metabolite_level_se={"pyr": 1.0},
+            n_replicates={"pyr": 2},
+            measurement_type=MTYPE_2,
+            target_metabolite_ids={"pyr": "s_1399"},
+        ),
+    )
+    reference = record["reference"]["phenotype_reference"]
+    assert record["experiment"] == expected.model_dump()
+    assert reference["metabolite_level"] == {"pyr": 4.0}
+    assert reference["n_replicates"] == {"pyr": 1}
+    assert reference["measurement_type"] == MTYPE_2
 
 
 def test_metabolome_record_1_all_nan_se_collapses_to_none(
@@ -470,7 +526,7 @@ def test_metabolome_record_1_all_nan_se_collapses_to_none(
         "metabolite_level": {"3pg;2pg": 7.0},
         "metabolite_level_se": None,
         "n_replicates": {"3pg;2pg": 1},
-        "measurement_type": METABOLITE_MEASUREMENT_TYPE,
+        "measurement_type": MTYPE_1,
         "target_metabolite_ids": {"3pg;2pg": "s_0188"},
     }
     reference = record["reference"]["phenotype_reference"]
@@ -480,18 +536,205 @@ def test_metabolome_record_1_all_nan_se_collapses_to_none(
     assert reference["target_metabolite_ids"] == {"3pg;2pg": "s_0188"}
 
 
-def test_metabolome_reference_index_splits_on_restricted_reference(
+def test_metabolome_reference_index_splits_on_protocol_and_restriction(
     metabolome: tuple[MetaboliteZelezniak2018Dataset, Path, list[dict[str, str]]],
 ) -> None:
-    """Two distinct references (pyr-restricted vs 3pg;2pg-restricted) -> two entries."""
+    """Three distinct references: protocol-1 {pyr}, protocol-1 {3pg;2pg}, protocol-2 {pyr}."""
     _, root, _ = metabolome
     index = json.loads(
         (root / "preprocess" / "experiment_reference_index.json").read_text()
     )
-    assert [e["member_indices"] for e in index] == [[0], [1]]
+    assert [e["member_indices"] for e in index] == [[0], [1], [2]]
     assert [
-        list(e["reference"]["phenotype_reference"]["metabolite_level"]) for e in index
-    ] == [["pyr"], ["3pg;2pg"]]
+        (
+            e["reference"]["phenotype_reference"]["measurement_type"],
+            e["reference"]["phenotype_reference"]["metabolite_level"],
+        )
+        for e in index
+    ] == [
+        (MTYPE_1, {"pyr": 2.0}),
+        (MTYPE_1, {"3pg;2pg": 10.0}),
+        (MTYPE_2, {"pyr": 4.0}),
+    ]
+
+
+# Issue #595's two example cells, rows copied verbatim from the pinned release
+# (sha256 c4429fd8...): WT 3pg;2pg and YIL042C r5p, each measured by protocols 1 and 2.
+ISSUE_595_ROWS = [
+    ("3pg;2pg", "C00197;C00631", "3PG", 1, "WT", 1, 850.2700803858073),
+    ("3pg;2pg", "C00197;C00631", "3PG", 2, "WT", 1, 0.387544549099187),
+    ("r5p", "C00117", "R5P", 1, "WT", 1, 900.0),
+    ("r5p", "C00117", "R5P", 2, "WT", 1, 0.7),
+    ("r5p", "C00117", "R5P", 1, "YIL042C", 1, 1130.5742167158426),
+    ("r5p", "C00117", "R5P", 2, "YIL042C", 1, 0.8147119220654774),
+    ("r5p", "C00117", "R5P", 2, "YIL042C", 2, 0.8534622605378177),
+    ("r5p", "C00117", "R5P", 2, "YIL042C", 3, 0.5775148013063441),
+    ("3pg;2pg", "C00197;C00631", "3PG", 1, "YIL042C", 1, 800.0),
+    ("3pg;2pg", "C00197;C00631", "3PG", 2, "YIL042C", 1, 0.4),
+]
+
+
+def test_issue_595_example_cells_are_kept_per_protocol(
+    tmp_path: Path, s_id_calls: list[dict[str, str]]
+) -> None:
+    """Contract (issue #595): YIL042C ``r5p`` was stored as mean 283.205, SE 282.456,
+    n 4 (protocol 1's 1130.574 pooled with protocol 2's 0.815, 0.853, 0.578), and the WT
+    ``3pg;2pg`` reference as mean 425.329, SE 424.941, n 2. Now YIL042C is two records:
+    protocol 1 stores r5p 1130.574 (n 1) against WT 3pg;2pg 850.270, protocol 2 stores
+    the mean of its three replicates (n 3) against WT 3pg;2pg 0.388.
+    """
+    ds = MetaboliteZelezniak2018Dataset(
+        root=str(_metabolite_root(tmp_path, ISSUE_595_ROWS))
+    )
+    assert len(ds) == 2
+    p1, p2 = ds[0], ds[1]
+    assert p1["experiment"]["phenotype"]["measurement_type"] == MTYPE_1
+    assert p1["experiment"]["phenotype"]["metabolite_level"]["r5p"] == (
+        1130.5742167158426
+    )
+    assert p1["experiment"]["phenotype"]["n_replicates"]["r5p"] == 1
+    assert p1["reference"]["phenotype_reference"]["metabolite_level"]["3pg;2pg"] == (
+        850.2700803858073
+    )
+    assert p1["reference"]["phenotype_reference"]["n_replicates"]["3pg;2pg"] == 1
+
+    reps = [0.8147119220654774, 0.8534622605378177, 0.5775148013063441]
+    mean = sum(reps) / 3
+    sd = math.sqrt(sum((v - mean) ** 2 for v in reps) / 2)
+    phenotype = p2["experiment"]["phenotype"]
+    assert phenotype["measurement_type"] == MTYPE_2
+    assert phenotype["metabolite_level"]["r5p"] == pytest.approx(mean, rel=1e-12)
+    assert phenotype["metabolite_level_se"]["r5p"] == pytest.approx(
+        sd / math.sqrt(3), rel=1e-12
+    )
+    assert phenotype["n_replicates"]["r5p"] == 3
+    reference = p2["reference"]["phenotype_reference"]
+    assert reference["measurement_type"] == MTYPE_2
+    assert reference["metabolite_level"]["3pg;2pg"] == 0.387544549099187
+    assert reference["n_replicates"]["3pg;2pg"] == 1
+    assert round(mean, 6) == 0.748563
+
+
+def test_metabolome_unknown_protocol_refuses(
+    tmp_path: Path, s_id_calls: list[dict[str, str]]
+) -> None:
+    """A ``dataset`` value with no sourced protocol refuses: its unit is unknown."""
+    rows = [
+        ("pyr", "C00022", "Pyruvate", 1, "WT", 1, 2.0),
+        ("pyr", "C00022", "Pyruvate", 4, "YDR003W", 1, 1.0),
+    ]
+    with pytest.raises(RuntimeError) as info:
+        MetaboliteZelezniak2018Dataset(root=str(_metabolite_root(tmp_path, rows)))
+    assert str(info.value) == (
+        "Zelezniak metabolome protocol(s) [4] have no sourced "
+        "ZelezniakMetaboliteProtocol; their unit and calibration are unknown"
+    )
+
+
+def test_metabolome_protocol_without_wt_refuses(
+    tmp_path: Path, s_id_calls: list[dict[str, str]]
+) -> None:
+    """Strain rows on protocol 2 with WT only on protocol 1 refuse: never a
+    cross-protocol reference.
+    """
+    rows = [
+        ("pyr", "C00022", "Pyruvate", 1, "WT", 1, 2.0),
+        ("pyr", "C00022", "Pyruvate", 2, "YDR003W", 1, 1.0),
+    ]
+    with pytest.raises(RuntimeError) as info:
+        MetaboliteZelezniak2018Dataset(root=str(_metabolite_root(tmp_path, rows)))
+    assert str(info.value) == (
+        "Zelezniak metabolome protocol 2 has strain rows but no WT rows; its records "
+        "would have no same-protocol reference"
+    )
+
+
+def test_metabolome_no_shared_metabolite_with_the_protocol_wt_refuses(
+    tmp_path: Path, s_id_calls: list[dict[str, str]]
+) -> None:
+    """A (strain, protocol) whose metabolites the same-protocol WT never measured
+    refuses before an empty reference reaches the schema.
+    """
+    rows = [
+        ("pyr", "C00022", "Pyruvate", 1, "WT", 1, 2.0),
+        ("atp", "C00002", "ATP", 1, "YDR003W", 1, 5.0),
+    ]
+    with pytest.raises(RuntimeError) as info:
+        MetaboliteZelezniak2018Dataset(root=str(_metabolite_root(tmp_path, rows)))
+    assert str(info.value) == (
+        "Zelezniak metabolome strain YDR003W protocol 1 shares no metabolite with "
+        "that protocol's WT; its reference would be empty"
+    )
+
+
+def test_metabolome_repeated_replicate_within_a_protocol_refuses(
+    tmp_path: Path, s_id_calls: list[dict[str, str]]
+) -> None:
+    """``n`` is the row count, so a repeated (metabolite, replicate) id inside one
+    protocol refuses; the same replicate id under two protocols is not a repeat.
+    """
+    rows = [
+        ("pyr", "C00022", "Pyruvate", 1, "WT", 1, 2.0),
+        ("pyr", "C00022", "Pyruvate", 2, "WT", 1, 4.0),
+        ("pyr", "C00022", "Pyruvate", 1, "YDR003W", 1, 1.0),
+        ("pyr", "C00022", "Pyruvate", 2, "YDR003W", 1, 1.5),
+        ("pyr", "C00022", "Pyruvate", 2, "YDR003W", 1, 1.5),
+    ]
+    with pytest.raises(RuntimeError) as info:
+        MetaboliteZelezniak2018Dataset(root=str(_metabolite_root(tmp_path, rows)))
+    assert str(info.value) == (
+        "Zelezniak metabolome strain YDR003W protocol 2: 2 rows share a (metabolite, "
+        "replicate) id, first pyr replicate 1; a repeated replicate would count as an "
+        "extra replicate"
+    )
+
+
+def test_protocols_record_unit_and_calibration_per_protocol() -> None:
+    """Protocol 1 is the only uncalibrated one and keeps the "NOT a concentration" unit;
+    protocols 2 and 3 are calibrated with a typed unit gap. The verifier registry
+    declares exactly these measurement_types.
+    """
+    p1, p2, p3 = (ZELEZNIAK_METABOLITE_PROTOCOLS[d] for d in (1, 2, 3))
+    assert sorted(ZELEZNIAK_METABOLITE_PROTOCOLS) == [1, 2, 3]
+    assert (p1.calibrated, p2.calibrated, p3.calibrated) == (False, True, True)
+    assert p1.unit is not None and "NOT a concentration" in p1.unit
+    assert p1.unit_gap is None
+    for p in (p2, p3):
+        assert p.unit is None
+        assert p.unit_gap == CALIBRATED_UNIT_GAP
+        assert "NOT a concentration" not in p.measurement_type
+    assert len({p.measurement_type for p in (p1, p2, p3)}) == 3
+    assert runners.METABOLITE_DATASETS["metabolite_zelezniak2018"][
+        "protocol_measurement_types"
+    ] == frozenset(p.measurement_type for p in (p1, p2, p3))
+
+
+@pytest.mark.parametrize("unit", ["mM", None])
+def test_protocol_requires_exactly_one_of_unit_and_gap(unit: str | None) -> None:
+    """A unit with a gap, and neither, both refuse."""
+    with pytest.raises(ValueError, match="exactly one of unit and unit_gap"):
+        ZelezniakMetaboliteProtocol(
+            dataset=9,
+            measurement_type="x",
+            calibrated=True,
+            unit=unit,
+            unit_gap=CALIBRATED_UNIT_GAP if unit else None,
+            sources=(),
+        )
+
+
+def test_protocol_quotes_are_verbatim_in_the_mirrored_paper() -> None:
+    """Every protocol quote is still a substring of the pinned ``paper.md`` bytes."""
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    data_root = os.environ.get("DATA_ROOT")
+    root = None if data_root is None else Path(data_root) / "torchcell-library"
+    if root is None or not root.is_dir():
+        pytest.skip("torchcell-library mirror not mounted")
+    for key, value in METABOLITE_SOURCED_VALUES.items():
+        result = audit_sourced_value(value, root)
+        assert result.passed, f"{key}: {result.message}"
 
 
 def test_metabolome_non_systematic_genotype_raises_before_mapping(

@@ -311,3 +311,72 @@ def test_gene_addition_is_outside_the_strain_signature_and_gene_set() -> None:
     dup = _result(records, "genotype_uniqueness")
     assert dup.message == "1 deletion sets appear in multiple records"
     assert metabolite_gene_set(records) == {"YMR056C"}
+
+
+# --- issue #595: datasets released under several protocols -------------------- #
+PROTOCOLS = frozenset({"protocol_a", "protocol_b"})
+
+
+def _protocol_records() -> list[dict[str, Any]]:
+    """YMR056C on protocols a and b, YBR085W on protocol a; references match."""
+    records = []
+    for gene, mtype in [
+        ("YMR056C", "protocol_a"),
+        ("YMR056C", "protocol_b"),
+        ("YBR085W", "protocol_a"),
+    ]:
+        record = _record(gene, 1.0, ref_level=5.0)
+        record["experiment"]["phenotype"]["measurement_type"] = mtype
+        record["reference"]["phenotype_reference"]["measurement_type"] = mtype
+        records.append(record)
+    return records
+
+
+def test_protocol_split_passes_one_record_per_strain_and_protocol() -> None:
+    """The same strain on two declared protocols is two records, not a duplicate."""
+    kwargs: dict[str, Any] = {
+        "reference_centered": False,
+        "protocol_measurement_types": PROTOCOLS,
+    }
+    records = _protocol_records()
+    unique = _result(records, "genotype_uniqueness", **kwargs)
+    assert unique.passed is True
+    assert unique.message == "3 unique (strain, protocol) pairs, one record each"
+    mtype = _result(records, "measurement_type_consistent", **kwargs)
+    assert mtype.passed is True
+    assert mtype.message == (
+        "2 declared protocol measurement_types, each record's reference on its own "
+        "protocol"
+    )
+    # Without the declaration the same table fails both checks.
+    assert _result(records, "genotype_uniqueness").passed is False
+    assert _result(records, "measurement_type_consistent").passed is False
+
+
+def test_protocol_split_fails_a_cross_protocol_reference_and_an_undeclared_type() -> (
+    None
+):
+    """A reference on another protocol, and a type outside the declaration, both fail."""
+    kwargs: dict[str, Any] = {
+        "reference_centered": False,
+        "protocol_measurement_types": PROTOCOLS,
+    }
+    records = _protocol_records()
+    records[1]["reference"]["phenotype_reference"]["measurement_type"] = "protocol_a"
+    records[2]["experiment"]["phenotype"]["measurement_type"] = "protocol_c"
+    records[2]["reference"]["phenotype_reference"]["measurement_type"] = "protocol_c"
+    result = _result(records, "measurement_type_consistent", **kwargs)
+    assert result.passed is False
+    assert result.message == (
+        "1 undeclared measurement_types, 1 records whose reference is on another "
+        "protocol"
+    )
+    assert result.details == {
+        "measurement_types": ["protocol_a", "protocol_b", "protocol_c"],
+        "undeclared": ["protocol_c"],
+        "n_reference_protocol_differs": 1,
+    }
+    records = _protocol_records()
+    records.append(_protocol_records()[0])
+    dup = _result(records, "genotype_uniqueness", **kwargs)
+    assert dup.message == "1 (strain, protocol) pairs appear in multiple records"

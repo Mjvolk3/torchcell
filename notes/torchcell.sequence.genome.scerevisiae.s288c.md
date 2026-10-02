@@ -883,3 +883,31 @@ Tests (`tests/torchcell/sequence/genome/scerevisiae/test_s288c_synthetic.py`):
 - `test_own_journal_means_no_moved_journal_state` renamed `test_kept_journal_that_undoes_nothing_stays_trusted_beside_an_own_journal`: the file stays trusted because the kept journal undoes nothing, not because of its own journal
 - `test_explicit_rebuild_over_garbage_with_a_cold_journal_keeps_nothing` (docstring corrected, default path added) and `test_garbage_file_beside_a_really_hot_journal_is_kept_with_a_warning` (both paths)
 - Mutation check on this head (paired file only): J4, V22, V25, V28, V31 and 12 further mutants of this round's code (each new catch removed or widened to `OSError`, plus V9, J3, H2 re-applied) are all killed, 17 of 17.
+
+## 2026.10.02 - Ninth review round
+
+What was wrong (reviewer, ninth round, at b0025524e):
+
+- **The private copy for drops raised unnamed errors during an old-code rebuild (a regression from main).** `_writable_db` backed up the PATH `data.db`, not the connection the instance reads, and `replay = not osp.exists(source_path)` was also true for an owner's first copy once `data.db` was gone. After a trusted read, an old-code rebuild that had unlinked `data.db`, left it at zero bytes, or filled it with an empty `meta` table made `drop_chrmt()` raise `sqlite3.OperationalError` or a bare `TypeError` (main: OK with 6579 genes in the last two). In a mixed-version run 12 of 38 drops raised the unnamed `TypeError`, and each failure left its `mkstemp` copy in the temp dir.
+- **Migrating the K2 torn file under an old-code transaction overwrote the kept journal.** `_keep_copy` found the bytes equal and left the kept pair, then `install_genome_database` moved the writer's live `data.db-journal` onto `data.db.untrusted-journal`, so the kept pair no longer rolled back to the committed file.
+- Smaller: `_keep_copy` raised a bare `FileNotFoundError` when the kept file was removed by hand during a migration; the "vanished" message said "migrating or rebuilding" for pure readers too; the tests matched only the substring "vanished", so a wrong file name survived (mutants D6, D24); a catch widened to `OSError` in `_journal_moved_to_kept` survived (D10); a vanished file read as change counter 0 survived (D3).
+
+What changed:
+
+- `_writable_db`: `replay` requires an earlier private copy; otherwise the copy is a backup of the instance's own connection (the inode it has been reading). A `sqlite3.DatabaseError` is classified by `require_damage` and otherwise named; a copy with an empty `meta` is named; the copy (and any `-journal`) is removed on every failure path, including errors that propagate unnamed (the lazy first read).
+- `_keep_copy` returns whether it left the kept pair; a kept file that vanished before the comparison counts as different. `install_genome_database(..., kept_as_is)` removes `data.db`'s own companion instead of overwriting a kept companion that already exists, and returns what it removed. The one WARNING of a migration or explicit rebuild now says the kept copy "already held these bytes and was left in place" and names any companion removed that way (`_kept_wording`); it says "(replacing any earlier one)" only when the kept file was replaced.
+- `_vanished`: "while this process was reading, migrating or rebuilding it".
+- Known limit added to the class docstring: the `require_damage` exists/stat race on an unreadable `data.db` (two unlinks around one expression) raises a bare `FileNotFoundError`.
+
+Tests (`tests/torchcell/sequence/genome/scerevisiae/test_s288c_synthetic.py`):
+
+- `test_first_write_copies_the_file_this_instance_reads_during_an_old_code_rebuild` (unlinked, zero bytes, empty meta; root listing and temp dir pinned)
+- `test_migrating_a_torn_file_under_an_old_code_transaction_keeps_the_moved_journal` (full WARNING; the kept pair rolls back to the committed file)
+- `test_explicit_rebuild_beside_an_equal_kept_pair_names_the_removed_journal`
+- `test_install_beside_a_kept_pair_never_overwrites_a_kept_companion_left_in_place` (4 cases)
+- `test_keep_copy_reports_whether_it_left_the_kept_pair`, `test_keep_copy_replaces_a_kept_file_removed_before_its_comparison`
+- `test_replay_with_the_private_copy_and_data_db_gone_is_named_and_leaves_no_copy`, `test_replay_from_a_data_db_without_metadata_is_named_and_leaves_no_copy` (zero bytes, empty meta), `test_replay_from_a_damaged_data_db_is_named_and_leaves_no_copy`, `test_a_failed_lazy_first_write_leaves_no_copy`
+- `test_io_error_at_the_kept_byte_comparison_is_not_relabeled_as_vanished` (D10); `test_permission_denied_is_not_relabeled_as_vanished` gains the `_journal_moved_to_kept` site, where EACCES returns not-torn by design
+- Every vanished-file test asserts the full message with the vanished file's name (`_vanished_message`); `test_data_db_vanishing_before_the_change_counter_read_is_named` also asserts `genome_database_untrusted_reason` raises (D3). The K2 kill-point test pins the new "left in place" wording.
+- Mutation check on this tree (paired file only, `mutate_r10.py`): the reviewer's D3, D6, D10, D24 and 20 mutants of this round's lines in `_writable_db`, `_keep_copy`, `install_genome_database` and the WARNING wording are all killed, 24 of 24 (W7, an unreadable copy `meta` counted as present, first survived and is killed by the zero-byte replay case).
+- The paired file passed 10 of 10 consecutive runs (259 tests each).

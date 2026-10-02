@@ -5384,3 +5384,62 @@ def test_replay_from_a_damaged_data_db_is_named_and_leaves_no_copy(
     )
     assert os.listdir(private_tmp) == []
     assert (_identity(db_path), _sha(db_path)) == before
+
+
+def test_unpickled_first_write_copies_the_writers_copy_not_the_rewritten_shared_file(
+    release: dict[str, str], private_tmp: Path
+) -> None:
+    """An unpickled instance reads its writer's private copy. When pre-2026.10.01 code
+    rewrites the shared file in place after the unpickle, the unpickled instance's
+    first write still copies the writer's copy (no replay from the shared file), so a
+    gene old code deleted from the shared file stays in this instance.
+    """
+    build_db(release[GFF_NAME], _root(release))
+    genome = _construct(release)
+    genome.drop_chrmt()
+    clone = pickle.loads(pickle.dumps(genome))
+    _old_code_delete(_root(release) / "data.db", "YAL001C")
+    clone.drop_empty_go()
+    remaining = [f.id for f in clone.db.features_of_type("gene")]
+    assert "YAL001C" in remaining
+    assert "Q0010" not in remaining
+    assert clone._private_db_path != genome._private_db_path
+
+
+def test_rows_differ_migration_beside_an_equal_kept_copy_says_it_was_left_in_place(
+    release: dict[str, str], caplog: pytest.LogCaptureFixture
+) -> None:
+    """A migration killed after keeping a file whose rows differ leaves the kept copy
+    byte-equal to data.db; the next migration leaves it in place and its WARNING says so.
+    """
+    build_db(release[GFF_NAME], _root(release))
+    db_path = _root(release) / "data.db"
+    _old_code_delete(db_path, "Q0010")
+    kept = _root(release) / "data.db.untrusted"
+    shutil.copyfile(db_path, kept)
+    with caplog.at_level(logging.WARNING, logger=s288c.__name__):
+        _construct(release)
+    assert [r.getMessage() for r in caplog.records] == [
+        f"genome database {db_path} was not trusted (its row counts differ from its "
+        "record (features 15 vs 16 recorded, relations 8 vs 8 recorded)); its rows "
+        f"differ from a fresh build, so it was kept as {kept} (which already held "
+        "these bytes and was left in place) and replaced by the recorded build"
+    ]
+
+
+def test_an_interrupted_first_write_leaves_no_copy(
+    release: dict[str, str], private_tmp: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A KeyboardInterrupt during the first write's copy propagates and removes the copy."""
+    build_db(release[GFF_NAME], _root(release))
+    genome = _construct(release)
+    assert "Q0010" in genome.gene_set
+
+    def interrupt(path: str) -> int:
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(s288c, "_meta_rows_or_zero", interrupt)
+    with pytest.raises(KeyboardInterrupt):
+        genome.drop_chrmt()
+    assert os.listdir(private_tmp) == []
+    assert genome._private_db_path is None

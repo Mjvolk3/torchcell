@@ -96,10 +96,40 @@ export type UserPublic = {
   user_id: string;
   display_name: string;
   affiliation: string | null;
+  /** Name of the identity provider the account signs in through (from CILogon). */
+  identity_provider: string | null;
   created_at: string;
 };
 
-export type UserPrivate = UserPublic & {email: string; email_verified: boolean};
+export type UserPrivate = UserPublic & {email: string; approved: boolean};
+
+/** What an account may edit about itself; both fields are public. */
+export type ProfileUpdate = {display_name: string; affiliation: string | null};
+
+/**
+ * Why a sign-in ended without a session. The API sends one of these to the account
+ * page as `#login_error=<code>` (torchcell.benchmark.oidc.LoginError).
+ */
+export const LOGIN_ERRORS = {
+  denied: 'The sign-in was cancelled, or the identity provider refused it.',
+  failed: 'The sign-in could not be verified. Start it again from this page.',
+  unavailable: 'CILogon could not be reached. Try again in a few minutes.',
+  no_email:
+    'That identity provider did not release an email address. Sign in with a provider that does, such as your institution.',
+  idp_not_allowed: 'Accounts cannot be opened through that identity provider.',
+  email_not_allowed: 'Accounts cannot be opened with that email address.',
+  email_in_use:
+    'An account already uses that email address through another identity provider. Sign in with the provider you used first.',
+  too_many_accounts:
+    'Too many new accounts were opened from this network today. Try again tomorrow.',
+  disabled: 'This account is disabled.',
+} as const;
+
+export type LoginErrorCode = keyof typeof LOGIN_ERRORS;
+
+export function isLoginErrorCode(value: string): value is LoginErrorCode {
+  return Object.prototype.hasOwnProperty.call(LOGIN_ERRORS, value);
+}
 
 export type UserHistoryRow = LeaderboardRow & {dataset_slug: string};
 
@@ -119,15 +149,6 @@ export type SubmissionMetadata = {
   external_data_description: string | null;
   hyperparameters: Record<string, string | number | boolean>;
 };
-
-export type SignupRequest = {
-  email: string;
-  password: string;
-  display_name: string;
-  affiliation?: string;
-};
-
-export type LoginRequest = {email: string; password: string};
 
 export type MessageResponse = {message: string};
 
@@ -258,10 +279,16 @@ export interface BenchApi {
 
   health(): Promise<unknown>;
 
-  signup(body: SignupRequest): Promise<MessageResponse>;
-  verify(token: string): Promise<MessageResponse>;
-  login(body: LoginRequest): Promise<TokenResponse>;
+  /**
+   * URL that starts a sign-in. The browser navigates to it (a plain link, not a
+   * fetch); the API redirects to CILogon and, after the sign-in, back to the account
+   * page with `#login_code=<code>` or `#login_error=<reason>`. Null in mock mode.
+   */
+  loginUrl(): string | null;
+  /** Trades the one-time sign-in code for a bearer token. A code works once. */
+  exchange(code: string): Promise<TokenResponse>;
   me(accessToken: string): Promise<UserPrivate>;
+  updateProfile(accessToken: string, profile: ProfileUpdate): Promise<UserPrivate>;
 
   datasets(): Promise<BenchmarkDatasetPublic[]>;
   dataset(slug: string): Promise<BenchmarkDatasetPublic>;
@@ -337,10 +364,15 @@ function createHttpApi(baseUrl: string): BenchApi {
 
     health: () => request<unknown>('/health'),
 
-    signup: (body) => postJson<MessageResponse>('/auth/signup', body),
-    verify: (token) => postJson<MessageResponse>('/auth/verify', {token}),
-    login: (body) => postJson<TokenResponse>('/auth/login', body),
+    loginUrl: () => `${baseUrl}/auth/login`,
+    exchange: (code) => postJson<TokenResponse>('/auth/exchange', {code}),
     me: (accessToken) => request<UserPrivate>('/auth/me', {headers: bearer(accessToken)}),
+    updateProfile: (accessToken, profile) =>
+      request<UserPrivate>('/auth/profile', {
+        method: 'POST',
+        headers: {...bearer(accessToken), 'Content-Type': 'application/json'},
+        body: JSON.stringify(profile),
+      }),
 
     datasets: () => request<BenchmarkDatasetPublic[]>('/datasets'),
     dataset: (slug) =>
@@ -399,23 +431,24 @@ function createMockApi(baseUrl: string, mockBaseUrl: string): BenchApi {
     return (await res.json()) as T;
   }
 
-  const notSent: MessageResponse = {message: 'Mock mode: no request was sent.'};
-
   return {
     baseUrl,
     mock: true,
 
     health: () => Promise.resolve({status: 'mock'}),
 
-    signup: () => Promise.resolve(notSent),
-    verify: () => Promise.resolve(notSent),
-    login: () =>
+    loginUrl: () => null,
+    exchange: () =>
       Promise.resolve({
         access_token: 'mock-token',
         token_type: 'bearer',
         expires_at: '9999-01-01T00:00:00Z',
       }),
     me: () => fixture<UserPrivate>('me'),
+    async updateProfile(_accessToken, profile) {
+      // Nothing is sent or stored: the fixture is returned with the edit applied.
+      return {...(await fixture<UserPrivate>('me')), ...profile};
+    },
 
     datasets: () => fixture<BenchmarkDatasetPublic[]>('datasets'),
     async dataset(slug) {

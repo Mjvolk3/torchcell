@@ -177,6 +177,10 @@ export function History({history}: {history: UserHistory}): ReactNode {
             {user.affiliation ?? 'none'}
           </li>
           <li>
+            <span className={styles.factLabel}>Signs in through</span>
+            {user.identity_provider ?? 'not applicable'}
+          </li>
+          <li>
             <span className={styles.factLabel}>Joined</span>
             {fmtDate(user.created_at)}
           </li>

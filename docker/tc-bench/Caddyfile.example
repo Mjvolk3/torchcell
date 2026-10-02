@@ -5,6 +5,9 @@
 #   https://<host>/            the built website (static files)
 #   https://<host>/api/v1/...  the benchmark API on the host's loopback port 8725
 #
+# With this layout TC_BENCH_PUBLIC_URL is https://<host>, and the callback URL to
+# register with CILogon is https://<host>/api/v1/auth/callback.
+#
 # This is the ONLY public entry point. It needs TCP 443 (and 80 for the ACME challenge
 # and the redirect) opened in the VM's OpenStack security group; nothing here opens
 # them. On torchcell-database.ncsa.illinois.edu a Let's Encrypt certificate already
@@ -19,7 +22,8 @@ bench.example.org {
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"
-		X-Frame-Options "DENY"
+		# SAMEORIGIN, not DENY: the ontology explorer is framed by the site itself.
+		X-Frame-Options "SAMEORIGIN"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		-Server
 	}

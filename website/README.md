@@ -102,7 +102,7 @@ npm run gen-mock   # rewrites static/mock/*.json, deterministic
 | :-- | :-- | :-- |
 | Leaderboard | `/benchmark/leaderboard/` | Board and charts per dataset. `?dataset=<slug>` preselects one |
 | Submit | `/benchmark/submit/` | Quota, metadata form, CSV upload, scores or rejection reasons |
-| Account | `/benchmark/account/` | Sign up, log in, log out, own submissions. `?verify=<token>` confirms an email |
+| Account | `/benchmark/account/` | Sign in through CILogon, edit the public profile, sign out, own submissions. The API returns here with `#login_code=<code>` or `#login_error=<reason>` |
 | User history | `/benchmark/user/?id=<user_id>` | Public record of one user's scored submissions |
 
 The access token is kept in `sessionStorage` and sent as `Authorization: Bearer <token>`.

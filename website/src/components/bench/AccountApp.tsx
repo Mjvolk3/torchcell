@@ -1,12 +1,13 @@
 import React, {useEffect, useState, type FormEvent, type ReactNode} from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
-import {useLocation} from '@docusaurus/router';
 import {
+  LOGIN_ERRORS,
+  isLoginErrorCode,
   type BenchApi,
-  type MessageResponse,
   type SubmissionResult,
   type TokenResponse,
+  type UserPrivate,
 } from '@site/src/lib/benchApi';
 import {useBenchApi} from '@site/src/lib/useBenchApi';
 import {useBenchSession, type BenchSession} from '@site/src/lib/benchAuth';
@@ -24,139 +25,153 @@ import {
 } from './common';
 import styles from './bench.module.css';
 
-/** Shows the outcome of a form request: nothing while idle, then the message or error. */
-function RequestOutcome({state}: {state: LoadState<MessageResponse>}): ReactNode {
+/** What the API put in the URL fragment when it sent the browser back here. */
+type LoginReturn = {code: string | null; error: string | null};
+
+// A sign-in ends with a full page load of this page carrying `#login_code=...` or
+// `#login_error=...`. The fragment is read once per page load and removed from the
+// address bar at once, so a reload or a shared link never replays it. The exchange is
+// kept at module level for the same reason: a code works once, and the component may
+// mount more than once.
+let loginReturn: LoginReturn | undefined;
+let exchangeRequest: Promise<TokenResponse> | undefined;
+
+function takeLoginReturn(): LoginReturn {
+  if (loginReturn === undefined) {
+    const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    loginReturn = {code: fragment.get('login_code'), error: fragment.get('login_error')};
+    if (loginReturn.code !== null || loginReturn.error !== null) {
+      const {pathname, search} = window.location;
+      window.history.replaceState(window.history.state, '', `${pathname}${search}`);
+    }
+  }
+  return loginReturn;
+}
+
+/** Finishes a sign-in: trades the one-time code for the session token. */
+function CompleteSignIn({
+  api,
+  code,
+  onSignedIn,
+}: {
+  api: BenchApi;
+  code: string;
+  onSignedIn: (token: TokenResponse) => void;
+}): ReactNode {
+  const [state, setState] = useState<LoadState<TokenResponse>>({status: 'loading'});
+
+  useEffect(() => {
+    let cancelled = false;
+    exchangeRequest ??= api.exchange(code);
+    exchangeRequest.then(
+      (token) => {
+        if (!cancelled) {
+          onSignedIn(token);
+        }
+      },
+      (error: unknown) => {
+        if (!cancelled) {
+          setState(failureState<TokenResponse>(error));
+        }
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [api, code, onSignedIn]);
+
   switch (state.status) {
-    case 'idle':
-    case 'loading':
-      return null;
-    case 'ok':
-      return (
-        <div className={clsx(styles.notice, styles.noticeOk)} role="status">
-          {state.data.message}
-        </div>
-      );
     case 'unreachable':
       return <ApiUnreachable url={state.url} />;
     case 'error':
-      return <ErrorNotice message={state.message} reasons={state.reasons} />;
+      return (
+        <ErrorNotice
+          message="The sign-in could not be completed. Start it again below."
+          reasons={[state.message, ...state.reasons]}
+        />
+      );
+    default:
+      return <p className={styles.muted}>Completing sign-in</p>;
   }
 }
 
-/** Confirms an email address when the page is opened with ?verify=<token>. */
-function VerifyEmail({api, token}: {api: BenchApi; token: string}): ReactNode {
-  const [state] = useLoad(() => api.verify(token), [api, token]);
+function SignInPanel({
+  api,
+  onSignedIn,
+}: {
+  api: BenchApi;
+  onSignedIn: (token: TokenResponse) => void;
+}): ReactNode {
+  const loginUrl = api.loginUrl();
   return (
-    <div className={styles.panel}>
-      <p className={styles.panelTitle}>Email confirmation</p>
-      {state.status === 'loading' ? <p className={styles.muted}>Confirming</p> : null}
-      <RequestOutcome state={state} />
+    <div className={clsx(styles.panel, styles.stack)}>
+      <p className={styles.panelTitle}>Sign in</p>
+      <p>
+        Sign-in is handled by CILogon. Choose your university or institute from its
+        list; ORCID, GitHub, Google and Microsoft are there too. The first sign-in opens
+        your account, and there is no password to set here.
+      </p>
+      {loginUrl === null ? (
+        <button
+          type="button"
+          className="button button--primary"
+          onClick={() => {
+            void api.exchange('mock').then(onSignedIn);
+          }}>
+          Sign in (mock session)
+        </button>
+      ) : (
+        // A plain link: the browser has to leave the site for CILogon.
+        <a className="button button--primary" href={loginUrl}>
+          Sign in with CILogon
+        </a>
+      )}
     </div>
   );
 }
 
-function LoginForm({api, onLogin}: {api: BenchApi; onLogin: (t: TokenResponse) => void}): ReactNode {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [state, setState] = useState<LoadState<MessageResponse>>({status: 'idle'});
-
-  const onSubmit = (event: FormEvent<HTMLFormElement>): void => {
-    event.preventDefault();
-    setState({status: 'loading'});
-    api.login({email: email.trim(), password}).then(onLogin, (error: unknown) =>
-      setState(failureState<MessageResponse>(error)),
-    );
-  };
-
-  return (
-    <form className={clsx(styles.panel, styles.stack)} onSubmit={onSubmit}>
-      <p className={styles.panelTitle}>Log in</p>
-      <label className={styles.field}>
-        <span className={styles.fieldLabel}>Email</span>
-        <input
-          className={styles.input}
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </label>
-      <label className={styles.field}>
-        <span className={styles.fieldLabel}>Password</span>
-        <input
-          className={styles.input}
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </label>
-      <button
-        type="submit"
-        className="button button--primary"
-        disabled={state.status === 'loading'}>
-        Log in
-      </button>
-      <RequestOutcome state={state} />
-    </form>
-  );
-}
-
-function SignupForm({api}: {api: BenchApi}): ReactNode {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [affiliation, setAffiliation] = useState('');
-  const [state, setState] = useState<LoadState<MessageResponse>>({status: 'idle'});
+function ProfileForm({
+  api,
+  accessToken,
+  me,
+  onSaved,
+}: {
+  api: BenchApi;
+  accessToken: string;
+  me: UserPrivate;
+  onSaved: (saved: UserPrivate) => void;
+}): ReactNode {
+  const [displayName, setDisplayName] = useState(me.display_name);
+  const [affiliation, setAffiliation] = useState(me.affiliation ?? '');
+  const [state, setState] = useState<LoadState<UserPrivate>>({status: 'idle'});
 
   const onSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
     setState({status: 'loading'});
     api
-      .signup({
-        email: email.trim(),
-        password,
+      .updateProfile(accessToken, {
         display_name: displayName.trim(),
-        ...(affiliation.trim() === '' ? {} : {affiliation: affiliation.trim()}),
+        affiliation: affiliation.trim() === '' ? null : affiliation.trim(),
       })
       .then(
-        (data) => setState({status: 'ok', data}),
-        (error: unknown) => setState(failureState<MessageResponse>(error)),
+        (data) => {
+          setState({status: 'ok', data});
+          onSaved(data);
+        },
+        (error: unknown) => setState(failureState<UserPrivate>(error)),
       );
   };
 
   return (
     <form className={clsx(styles.panel, styles.stack)} onSubmit={onSubmit}>
-      <p className={styles.panelTitle}>Sign up</p>
-      <label className={styles.field}>
-        <span className={styles.fieldLabel}>Email</span>
-        <input
-          className={styles.input}
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </label>
-      <label className={styles.field}>
-        <span className={styles.fieldLabel}>Password</span>
-        <input
-          className={styles.input}
-          type="password"
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </label>
+      <p className={styles.panelTitle}>Public profile</p>
       <label className={styles.field}>
         <span className={styles.fieldLabel}>Display name (public)</span>
         <input
           className={styles.input}
           autoComplete="nickname"
+          minLength={2}
+          maxLength={60}
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           required
@@ -167,6 +182,7 @@ function SignupForm({api}: {api: BenchApi}): ReactNode {
         <input
           className={styles.input}
           autoComplete="organization"
+          maxLength={120}
           value={affiliation}
           onChange={(e) => setAffiliation(e.target.value)}
         />
@@ -175,9 +191,17 @@ function SignupForm({api}: {api: BenchApi}): ReactNode {
         type="submit"
         className="button button--secondary"
         disabled={state.status === 'loading'}>
-        Sign up
+        Save profile
       </button>
-      <RequestOutcome state={state} />
+      {state.status === 'ok' ? (
+        <div className={clsx(styles.notice, styles.noticeOk)} role="status">
+          Profile saved.
+        </div>
+      ) : null}
+      {state.status === 'unreachable' ? <ApiUnreachable url={state.url} /> : null}
+      {state.status === 'error' ? (
+        <ErrorNotice message={state.message} reasons={state.reasons} />
+      ) : null}
     </form>
   );
 }
@@ -252,9 +276,12 @@ function SignedIn({
 }): ReactNode {
   const [meState, reloadMe] = useLoad(() => api.me(accessToken), [api, accessToken]);
   const [mineState, reloadMine] = useLoad(() => api.mine(accessToken), [api, accessToken]);
+  // The profile as last saved from this page. Showing it directly, rather than loading
+  // the account again, keeps the form and its confirmation on screen.
+  const [savedProfile, setSavedProfile] = useState<UserPrivate | null>(null);
 
   // A stored token the API no longer accepts is dropped, which returns the page to
-  // the logged-out forms.
+  // the sign-in panel.
   const tokenRejected = meState.status === 'error' && meState.httpStatus === 401;
   const {logOut} = session;
   useEffect(() => {
@@ -266,47 +293,62 @@ function SignedIn({
   return (
     <>
       <LoadGate state={meState} onRetry={reloadMe}>
-        {(me) => (
-          <div className={styles.panel}>
-            <p className={styles.panelTitle}>{me.display_name}</p>
-            <ul className={styles.facts}>
-              <li>
-                <span className={styles.factLabel}>Email</span>
-                {me.email} ({me.email_verified ? 'confirmed' : 'not confirmed'})
-              </li>
-              <li>
-                <span className={styles.factLabel}>Affiliation</span>
-                {me.affiliation ?? 'none'}
-              </li>
-              <li>
-                <span className={styles.factLabel}>Session ends</span>
-                {session.expiresAt ? fmtDateTime(session.expiresAt) : 'unknown'}
-              </li>
-            </ul>
-            {me.email_verified ? null : (
-              <p>
-                Submitting requires a confirmed email address. Open the link in the
-                confirmation email to confirm it.
-              </p>
-            )}
-            <div className={styles.actions}>
-              <Link className="button button--primary button--sm" to="/benchmark/submit">
-                Submit predictions
-              </Link>
-              <Link
-                className="button button--secondary button--sm"
-                to={`/benchmark/user?id=${encodeURIComponent(me.user_id)}`}>
-                Public history
-              </Link>
-              <button
-                type="button"
-                className="button button--secondary button--sm"
-                onClick={session.logOut}>
-                Log out
-              </button>
+        {(loaded) => {
+          const me = savedProfile ?? loaded;
+          return (
+            <div className={styles.columns}>
+              <div className={styles.panel}>
+                <p className={styles.panelTitle}>{me.display_name}</p>
+                <ul className={styles.facts}>
+                  <li>
+                    <span className={styles.factLabel}>Email</span>
+                    {me.email}
+                  </li>
+                  <li>
+                    <span className={styles.factLabel}>Signed in through</span>
+                    {me.identity_provider ?? 'CILogon'}
+                  </li>
+                  <li>
+                    <span className={styles.factLabel}>Affiliation</span>
+                    {me.affiliation ?? 'none'}
+                  </li>
+                  <li>
+                    <span className={styles.factLabel}>Session ends</span>
+                    {session.expiresAt ? fmtDateTime(session.expiresAt) : 'unknown'}
+                  </li>
+                </ul>
+                {me.approved ? null : (
+                  <p>
+                    This account is waiting for approval by a maintainer. You can submit
+                    once it is approved.
+                  </p>
+                )}
+                <div className={styles.actions}>
+                  <Link className="button button--primary button--sm" to="/benchmark/submit">
+                    Submit predictions
+                  </Link>
+                  <Link
+                    className="button button--secondary button--sm"
+                    to={`/benchmark/user?id=${encodeURIComponent(me.user_id)}`}>
+                    Public history
+                  </Link>
+                  <button
+                    type="button"
+                    className="button button--secondary button--sm"
+                    onClick={session.logOut}>
+                    Sign out
+                  </button>
+                </div>
+              </div>
+              <ProfileForm
+                api={api}
+                accessToken={accessToken}
+                me={me}
+                onSaved={setSavedProfile}
+              />
             </div>
-          </div>
-        )}
+          );
+        }}
       </LoadGate>
       <h2>My submissions</h2>
       <p>
@@ -323,20 +365,26 @@ function SignedIn({
 function Account(): ReactNode {
   const api = useBenchApi();
   const session = useBenchSession();
-  const location = useLocation();
-  const verifyToken = new URLSearchParams(location.search).get('verify');
+  const [returned] = useState(takeLoginReturn);
 
+  if (session.accessToken !== null) {
+    return <SignedIn api={api} session={session} accessToken={session.accessToken} />;
+  }
   return (
     <>
-      {verifyToken !== null ? <VerifyEmail api={api} token={verifyToken} /> : null}
-      {session.accessToken !== null ? (
-        <SignedIn api={api} session={session} accessToken={session.accessToken} />
-      ) : (
-        <div className={styles.columns}>
-          <LoginForm api={api} onLogin={session.logIn} />
-          <SignupForm api={api} />
-        </div>
-      )}
+      {returned.error !== null ? (
+        <ErrorNotice
+          message={
+            isLoginErrorCode(returned.error)
+              ? LOGIN_ERRORS[returned.error]
+              : LOGIN_ERRORS.failed
+          }
+        />
+      ) : null}
+      {returned.code !== null ? (
+        <CompleteSignIn api={api} code={returned.code} onSignedIn={session.logIn} />
+      ) : null}
+      <SignInPanel api={api} onSignedIn={session.logIn} />
     </>
   );
 }

@@ -19,14 +19,18 @@
 # narrow tables. The submission archives are plain zip files and go on Taiga.
 #
 # Requires (from docker/tc-bench/tc-bench.env copied to .env.tc-bench, or the shell):
-#   TC_BENCH_SECRETS_DIR      host dir holding db_password, jwt_secret, smtp_password and
-#                             admin_keys.json, readable by TC_BENCH_UID (mode 640 or 600)
+#   TC_BENCH_SECRETS_DIR      host dir holding db_password, jwt_secret,
+#                             cilogon_client_secret and admin_keys.json, readable by
+#                             TC_BENCH_UID (mode 640 or 600)
 #   TC_BENCH_DATASETS_ROOT    host dir of benchmark bundles (mounted read-only)
 #   TC_BENCH_SUBMISSIONS_ROOT host dir for submission archives (the one writable mount)
 #   TC_BENCH_UID              uid:gid the API runs as (Radiant: 1000:555647)
 #   TC_BENCH_ACCOUNT_URL      public URL of the website's account page
+#   TC_BENCH_PUBLIC_URL       public base URL of this API as a browser reaches it; the
+#                             callback registered with CILogon is this URL plus
+#                             /api/v1/auth/callback
+#   TC_BENCH_CILOGON_CLIENT_ID  the client registered at https://cilogon.org/oauth2/register
 #   TC_BENCH_CORS_ORIGINS     comma-separated origins of the website
-#   TC_BENCH_SMTP_HOST, TC_BENCH_SMTP_USERNAME, TC_BENCH_SMTP_SENDER
 #
 # First run:
 #   docker compose --env-file .env.tc-bench -f docker-compose.tc-bench.yml build
@@ -81,7 +85,7 @@ services:
     secrets:
       - db_password
       - jwt_secret
-      - smtp_password
+      - cilogon_client_secret
       - admin_keys
     volumes:
       - "${TC_BENCH_DATASETS_ROOT}:/data/datasets:ro"
@@ -97,12 +101,9 @@ services:
       TC_BENCH_ADMIN_KEYS_FILE: /run/secrets/admin_keys
       TC_BENCH_ACCOUNT_URL: "${TC_BENCH_ACCOUNT_URL}"
       TC_BENCH_CORS_ORIGINS: "${TC_BENCH_CORS_ORIGINS}"
-      TC_BENCH_EMAIL_BACKEND: smtp
-      TC_BENCH_SMTP_HOST: "${TC_BENCH_SMTP_HOST}"
-      TC_BENCH_SMTP_PORT: "${TC_BENCH_SMTP_PORT:-587}"
-      TC_BENCH_SMTP_USERNAME: "${TC_BENCH_SMTP_USERNAME}"
-      TC_BENCH_SMTP_PASSWORD_FILE: /run/secrets/smtp_password
-      TC_BENCH_SMTP_SENDER: "${TC_BENCH_SMTP_SENDER}"
+      TC_BENCH_PUBLIC_URL: "${TC_BENCH_PUBLIC_URL}"
+      TC_BENCH_CILOGON_CLIENT_ID: "${TC_BENCH_CILOGON_CLIENT_ID}"
+      TC_BENCH_CILOGON_CLIENT_SECRET_FILE: /run/secrets/cilogon_client_secret
       # Behind the reverse proxy the client address is the last X-Forwarded-For entry.
       TC_BENCH_TRUST_PROXY: "1"
       TC_BENCH_REQUIRE_APPROVAL: "${TC_BENCH_REQUIRE_APPROVAL:-0}"
@@ -125,8 +126,8 @@ secrets:
     file: "${TC_BENCH_SECRETS_DIR}/db_password"
   jwt_secret:
     file: "${TC_BENCH_SECRETS_DIR}/jwt_secret"
-  smtp_password:
-    file: "${TC_BENCH_SECRETS_DIR}/smtp_password"
+  cilogon_client_secret:
+    file: "${TC_BENCH_SECRETS_DIR}/cilogon_client_secret"
   admin_keys:
     file: "${TC_BENCH_SECRETS_DIR}/admin_keys.json"
 
@@ -137,5 +138,5 @@ networks:
   # No route out and no published ports: the database is reachable by the API only.
   tc-bench-internal:
     internal: true
-  # The API's way out, for SMTP.
+  # The API's way out, to reach CILogon (discovery, signing keys, token endpoint).
   tc-bench-egress:

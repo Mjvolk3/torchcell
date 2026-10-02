@@ -7,9 +7,12 @@
 
 Three tables:
 
-- ``users``: one row per account. ``email_canonical`` is unique and is what enforces one
-  account per address family (see :func:`torchcell.benchmark.security.canonical_email`).
-- ``email_tokens``: one-time confirmation tokens, stored as sha256, with an expiry.
+- ``users``: one row per account. The account key is the identity CILogon asserts,
+  ``(oidc_issuer, oidc_subject)``, which is unique. ``email_canonical`` is unique too
+  and is what enforces one account per address family (see
+  :func:`torchcell.benchmark.security.canonical_email`). No password is stored.
+- ``login_codes``: one-time sign-in codes, stored as sha256, with an expiry. The
+  callback issues one and the account page trades it for a session token.
 - ``submissions``: one row per ATTEMPT, rejected ones included, because the quota counts
   attempts. A scored row holds its validation and test scores as JSON in the shape of
   :class:`torchcell.benchmark.grading.SplitScores`, its integrity flags, and the path
@@ -39,6 +42,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     create_engine,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -118,36 +122,43 @@ class Base(DeclarativeBase):
 
 
 class User(Base):
-    """An account."""
+    """An account, keyed by the identity its sign-in provider asserts."""
 
     __tablename__ = "users"
+    __table_args__ = (
+        UniqueConstraint("oidc_issuer", "oidc_subject", name="uq_users_oidc_identity"),
+    )
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    # Both are null only for the system account that holds the baselines.
+    oidc_issuer: Mapped[str | None] = mapped_column(String(255))
+    oidc_subject: Mapped[str | None] = mapped_column(String(255))
+    idp: Mapped[str | None] = mapped_column(String(255))
+    idp_name: Mapped[str | None] = mapped_column(String(255))
     email: Mapped[str] = mapped_column(String(320))
     email_canonical: Mapped[str] = mapped_column(String(320), unique=True)
     display_name: Mapped[str] = mapped_column(String(60))
     affiliation: Mapped[str | None] = mapped_column(String(120))
-    password_hash: Mapped[str] = mapped_column(String(255))
-    email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     approved: Mapped[bool] = mapped_column(Boolean, default=False)
     disabled: Mapped[bool] = mapped_column(Boolean, default=False)
     is_system: Mapped[bool] = mapped_column(Boolean, default=False)
-    failed_logins: Mapped[int] = mapped_column(Integer, default=0)
-    locked_until: Mapped[datetime | None] = mapped_column(UtcDateTime())
     signup_address_hash: Mapped[str | None] = mapped_column(String(64), index=True)
     created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow)
+    last_login_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
 
     submissions: Mapped[list[Submission]] = relationship(back_populates="user")
 
 
-class EmailToken(Base):
-    """A one-time email confirmation token (the sha256, never the token)."""
+class LoginCode(Base):
+    """A one-time sign-in code (the sha256, never the code)."""
 
-    __tablename__ = "email_tokens"
+    __tablename__ = "login_codes"
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-    token_sha256: Mapped[str] = mapped_column(String(64), unique=True)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    code_sha256: Mapped[str] = mapped_column(String(64), unique=True)
     expires_at: Mapped[datetime] = mapped_column(UtcDateTime())
     used_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
     created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow)

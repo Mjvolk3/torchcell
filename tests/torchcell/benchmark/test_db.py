@@ -3,10 +3,11 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/benchmark/test_db.py
 """``torchcell.benchmark.db`` on an in-memory SQLite database.
 
-What the schema must guarantee: three tables with the named indexes, a unique canonical
-email (the one-account rule), timestamps that come back timezone-aware in UTC whatever
-offset went in and that refuse a naive value, JSON columns that round-trip nested data,
-and column defaults (unverified, unapproved, enabled, zero failed logins).
+What the schema must guarantee: three tables with the named indexes, a unique sign-in
+identity and a unique canonical email (the one-account rules), no password column,
+one-time sign-in codes that are unique and go with their account, timestamps that come
+back timezone-aware in UTC whatever offset went in and that refuse a naive value, JSON
+columns that round-trip nested data, and column defaults (unapproved, enabled).
 """
 
 from datetime import UTC, datetime, timedelta, timezone
@@ -22,6 +23,7 @@ from sqlalchemy.schema import CreateTable
 from torchcell.benchmark.db import (
     BOARD_STATUSES,
     Base,
+    LoginCode,
     Submission,
     SubmissionStatus,
     User,
@@ -47,7 +49,8 @@ def _user(**overrides: Any) -> User:
         "email": "alice@example.org",
         "email_canonical": "alice@example.org",
         "display_name": "Alice",
-        "password_hash": "hash",
+        "oidc_issuer": "https://cilogon.org",
+        "oidc_subject": "http://cilogon.org/serverA/users/1",
         "created_at": NOW,
     }
     return User(**{**fields, **overrides})
@@ -59,10 +62,13 @@ def test_schema_tables_and_indexes() -> None:
     init_schema(engine)  # creating twice is a no-op
     inspector = inspect(engine)
     assert sorted(inspector.get_table_names()) == [
-        "email_tokens",
+        "login_codes",
         "submissions",
         "users",
     ]
+    columns = {str(column["name"]) for column in inspector.get_columns("users")}
+    assert {"oidc_issuer", "oidc_subject", "idp", "idp_name"} <= columns
+    assert not any("password" in name for name in columns)
     assert sorted(str(i["name"]) for i in inspector.get_indexes("submissions")) == [
         "ix_submissions_dataset_status",
         "ix_submissions_user_created",
@@ -75,13 +81,18 @@ def test_schema_renders_for_postgresql() -> None:
         table.name: str(CreateTable(table).compile(dialect=postgresql.dialect()))
         for table in Base.metadata.sorted_tables
     }
-    assert list(ddl) == ["users", "email_tokens", "submissions"]
+    assert list(ddl) == ["users", "login_codes", "submissions"]
     assert "val_scores JSONB" in ddl["submissions"]
     assert "flags JSONB NOT NULL" in ddl["submissions"]
     assert "created_at TIMESTAMP WITH TIME ZONE NOT NULL" in ddl["submissions"]
     assert "FOREIGN KEY(user_id) REFERENCES users (id)" in ddl["submissions"]
     assert "UNIQUE (email_canonical)" in ddl["users"]
-    assert "ON DELETE CASCADE" in ddl["email_tokens"]
+    assert (
+        "CONSTRAINT uq_users_oidc_identity UNIQUE (oidc_issuer, oidc_subject)"
+        in ddl["users"]
+    )
+    assert "ON DELETE CASCADE" in ddl["login_codes"]
+    assert "UNIQUE (code_sha256)" in ddl["login_codes"]
 
 
 def test_status_values() -> None:
@@ -107,22 +118,74 @@ def test_user_defaults(sessions: sessionmaker[Session]) -> None:
         session.commit()
         user = session.scalars(select(User)).one()
         assert len(user.id) == 32
-        assert (user.email_verified, user.approved, user.disabled, user.is_system) == (
-            False,
-            False,
-            False,
-            False,
-        )
-        assert user.failed_logins == 0
-        assert user.locked_until is None
+        assert (user.approved, user.disabled, user.is_system) == (False, False, False)
         assert user.affiliation is None
+        assert user.idp is None and user.idp_name is None
+        assert user.last_login_at is None
 
 
 def test_canonical_email_is_unique(sessions: sessionmaker[Session]) -> None:
     with sessions() as session:
         session.add(_user())
-        session.add(_user(email="a.lice@example.org"))
-        with pytest.raises(IntegrityError):
+        session.add(_user(email="a.lice@example.org", oidc_subject="another"))
+        with pytest.raises(IntegrityError, match="email_canonical"):
+            session.commit()
+
+
+def test_sign_in_identity_is_unique(sessions: sessionmaker[Session]) -> None:
+    with sessions() as session:
+        session.add(_user())
+        session.add(_user(email_canonical="bob@example.org"))
+        with pytest.raises(IntegrityError, match="oidc_issuer"):
+            session.commit()
+
+
+def test_accounts_without_an_identity_can_coexist(
+    sessions: sessionmaker[Session],
+) -> None:
+    # The baselines account has no sign-in identity; null pairs do not collide.
+    with sessions() as session:
+        for name in ("one", "two"):
+            session.add(
+                _user(
+                    email_canonical=f"{name}@torchcell.invalid",
+                    oidc_issuer=None,
+                    oidc_subject=None,
+                )
+            )
+        session.commit()
+        assert session.scalars(select(User.oidc_subject)).all() == [None, None]
+
+
+def test_login_codes_are_unique_and_belong_to_an_account(
+    sessions: sessionmaker[Session],
+) -> None:
+    with sessions() as session:
+        user = _user()
+        session.add(user)
+        session.flush()
+        session.add(
+            LoginCode(
+                user_id=user.id,
+                code_sha256="a" * 64,
+                expires_at=NOW + timedelta(minutes=2),
+                created_at=NOW,
+            )
+        )
+        session.commit()
+        stored = session.scalars(select(LoginCode)).one()
+        assert stored.user_id == user.id
+        assert stored.used_at is None
+        assert stored.expires_at - stored.created_at == timedelta(minutes=2)
+        session.add(
+            LoginCode(
+                user_id=user.id,
+                code_sha256="a" * 64,
+                expires_at=NOW + timedelta(minutes=2),
+                created_at=NOW,
+            )
+        )
+        with pytest.raises(IntegrityError, match="code_sha256"):
             session.commit()
 
 

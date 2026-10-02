@@ -14,8 +14,9 @@ passes through them:
 - :mod:`torchcell.benchmark.integrity`: flags on the validation and test pair.
 - :mod:`torchcell.benchmark.ratelimit`: the per-account submission quota.
 - :mod:`torchcell.benchmark.storage`: the zip archive kept for every scored submission.
-- :mod:`torchcell.benchmark.security`, :mod:`torchcell.benchmark.mailer`,
-  :mod:`torchcell.benchmark.db`: accounts, email confirmation, and the SQL schema.
+- :mod:`torchcell.benchmark.oidc`, :mod:`torchcell.benchmark.security`,
+  :mod:`torchcell.benchmark.db`: sign-in through CILogon, session tokens and the
+  account policy, and the SQL schema.
 - :mod:`torchcell.benchmark.app`: the FastAPI service that ties them together.
 
 Nothing here imports torch, PyG, or a dataset loader, so the service image stays slim

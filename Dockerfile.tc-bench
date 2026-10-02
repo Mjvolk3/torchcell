@@ -18,7 +18,9 @@ RUN pip install --no-cache-dir \
     "sqlalchemy>=2.0.30" \
     "psycopg[binary]>=3.2" \
     "pyjwt>=2.9" \
-    "argon2-cffi>=23.1" \
+    "authlib>=1.8" \
+    "httpx2>=2.13" \
+    "itsdangerous>=2.2" \
     "numpy>=2.0"
 
 WORKDIR /app

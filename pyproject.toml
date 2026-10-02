@@ -154,6 +154,7 @@ disallow_untyped_decorators = false
 module = [
     "GEOparse", "GEOparse.*",
     "adjustText", "adjustText.*",
+    "authlib", "authlib.*",
     "bibtexparser", "bibtexparser.*",
     "biocypher", "biocypher.*",
     "calm", "calm.*",

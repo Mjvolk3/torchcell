@@ -5,11 +5,24 @@
 
 """``tc-bench``: the HTTP service behind the public benchmark leaderboard.
 
-Reading the board needs no account. Submitting needs an account with a confirmed email
-address, a bearer token from ``/auth/login``, and quota (see
-:mod:`torchcell.benchmark.ratelimit`). A submission is a multipart upload of a
-predictions CSV and a metadata JSON; the server validates both with the pydantic models
-of :mod:`torchcell.benchmark.submission`, rejects a malformed upload with explicit
+Reading the board needs no account. Submitting needs an account, a bearer token, and
+quota (see :mod:`torchcell.benchmark.ratelimit`). There are no passwords: a person
+signs in at CILogon with their institution, and the service keeps the identity CILogon
+asserts (see :mod:`torchcell.benchmark.oidc`). Sign-in is three steps:
+
+1. The account page sends the browser to ``GET /auth/login``, which redirects to
+   CILogon with a ``state``, a ``nonce`` and a PKCE challenge. Those three are kept in
+   a signed, short-lived cookie scoped to the sign-in routes.
+2. CILogon redirects back to ``GET /auth/callback``. The response is verified, the
+   account is found or created, and the browser is sent to the account page with a
+   one-time sign-in code in the URL fragment (or an error code when refused).
+3. The account page posts the code to ``POST /auth/exchange`` and receives the bearer
+   token. The code works once and expires within minutes, so the address bar and the
+   browser history only ever hold a spent code, and the token never appears in a URL.
+
+A submission is a multipart upload of a predictions CSV and a metadata JSON; the
+server validates both with the pydantic models of
+:mod:`torchcell.benchmark.submission`, rejects a malformed upload with explicit
 reasons (HTTP 422), and otherwise grades it, flags it, archives it as a zip and returns
 the scores with the status ``provisional``. An admin (``X-API-Key``, the same named-key
 scheme as ``tc-data``) promotes a reproduced submission to ``verified``, withdraws one,
@@ -30,16 +43,21 @@ environment-driven (``TC_BENCH_*``), with every secret read from a file:
 - ``TC_BENCH_SUBMISSIONS_ROOT``: where scored submissions are archived.
 - ``TC_BENCH_JWT_SECRET_FILE``: the session signing secret (32 bytes or more).
 - ``TC_BENCH_ADMIN_KEYS_FILE``: JSON ``{name: sha256hex}`` of the admin keys.
-- ``TC_BENCH_ACCOUNT_URL``: public URL of the site's account page; the confirmation
-  link is this URL with ``?verify=<token>``.
+- ``TC_BENCH_ACCOUNT_URL``: public URL of the site's account page; sign-in ends there.
+- ``TC_BENCH_PUBLIC_URL``: public base URL of this service as the browser reaches it,
+  without the ``/api/v1`` prefix. The callback registered with CILogon is this URL
+  plus ``/api/v1/auth/callback`` and must match the registration exactly.
+- ``TC_BENCH_CILOGON_CLIENT_ID``, ``TC_BENCH_CILOGON_CLIENT_SECRET_FILE``: the client
+  registered at https://cilogon.org/oauth2/register.
 - ``TC_BENCH_CORS_ORIGINS``: comma-separated origins of the website.
-- ``TC_BENCH_EMAIL_BACKEND``: ``smtp`` (with ``TC_BENCH_SMTP_HOST``, ``_PORT`` (587),
-  ``_USERNAME``, ``_PASSWORD_FILE``, ``_SENDER``) or ``console`` (local development).
 - Optional: ``TC_BENCH_HOST`` (127.0.0.1), ``TC_BENCH_PORT`` (8725),
   ``TC_BENCH_TRUST_PROXY`` (``1`` when behind the reverse proxy, so the client address
   is read from ``X-Forwarded-For``), ``TC_BENCH_REQUIRE_APPROVAL`` (``1`` to hold new
-  accounts until an admin approves them), ``TC_BENCH_BLOCKED_DOMAINS_FILE`` (one email
-  domain per line), ``TC_BENCH_ALLOWED_DOMAIN_SUFFIXES`` (comma-separated).
+  accounts until an admin approves them), ``TC_BENCH_ALLOWED_IDPS_FILE`` (one identity
+  provider entity id per line; unset accepts every provider CILogon offers),
+  ``TC_BENCH_BLOCKED_DOMAINS_FILE`` (one email domain per line),
+  ``TC_BENCH_ALLOWED_DOMAIN_SUFFIXES`` (comma-separated),
+  ``TC_BENCH_OIDC_METADATA_URL`` (CILogon's discovery document by default).
 """
 
 from __future__ import annotations
@@ -51,8 +69,11 @@ from collections.abc import Callable, Iterator
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Any, Literal, Self
+from urllib.parse import urlencode
 
+import httpx2
 import uvicorn
+from authlib.integrations.base_client import OAuthError
 from dotenv import load_dotenv
 from fastapi import (
     APIRouter,
@@ -65,22 +86,24 @@ from fastapi import (
     UploadFile,
     status,
 )
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
+from joserfc.errors import JoseError
 from pydantic import (
     BaseModel,
     ConfigDict,
-    EmailStr,
     Field,
     SecretStr,
     StringConstraints,
     ValidationError,
     model_validator,
 )
-from sqlalchemy import URL, Engine, func, select
+from sqlalchemy import URL, Engine, delete, func, select
 from sqlalchemy.orm import Session
 from starlette.datastructures import Headers
+from starlette.middleware.sessions import SessionMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from torchcell.api_keys import API_KEY_HEADER, ApiKeys, print_minted_key
@@ -94,7 +117,7 @@ from torchcell.benchmark.bundle import (
 )
 from torchcell.benchmark.db import (
     BOARD_STATUSES,
-    EmailToken,
+    LoginCode,
     Submission,
     SubmissionStatus,
     User,
@@ -106,28 +129,31 @@ from torchcell.benchmark.db import (
 )
 from torchcell.benchmark.grading import SplitScores, score
 from torchcell.benchmark.integrity import IntegrityPolicy, flag_submission, oriented
-from torchcell.benchmark.mailer import (
-    ConsoleMailer,
-    Mailer,
-    SmtpConfig,
-    SmtpMailer,
-    confirmation_message,
+from torchcell.benchmark.oidc import (
+    CILOGON_METADATA_URL,
+    DISPLAY_NAME_MAX_LENGTH,
+    DISPLAY_NAME_MIN_LENGTH,
+    LOGIN_STATE_COOKIE,
+    LOGIN_STATE_MAX_AGE_SECONDS,
+    Identity,
+    LoginError,
+    LoginRefused,
+    OidcConfig,
+    build_provider,
+    callback_url,
+    identity_from_claims,
 )
 from torchcell.benchmark.ratelimit import QuotaStatus, SubmissionLimits, evaluate_quota
 from torchcell.benchmark.security import (
-    DUMMY_PASSWORD_HASH,
     JWT_SECRET_MIN_BYTES,
-    PASSWORD_MAX_LENGTH,
-    PASSWORD_MIN_LENGTH,
     AccountPolicy,
     canonical_email,
     decode_access_token,
+    derive_key,
     hash_client_address,
-    hash_password,
     hash_token,
     issue_access_token,
     new_one_time_token,
-    verify_password,
 )
 from torchcell.benchmark.storage import archive_submission
 from torchcell.benchmark.submission import (
@@ -148,15 +174,11 @@ DEFAULT_PORT = 8725
 ADMIN_KEYS_FILE_VAR = "TC_BENCH_ADMIN_KEYS_FILE"
 MAX_METADATA_BYTES = 16 * 1024
 MULTIPART_OVERHEAD_BYTES = 64 * 1024
-MAX_LIVE_EMAIL_TOKENS = 3
 SIGNUP_WINDOW = timedelta(hours=24)
 BASELINE_USER_EMAIL = "baselines@torchcell.invalid"
 BASELINE_USER_NAME = "TorchCell baselines"
-SIGNUP_MESSAGE = (
-    "If the address can register, a confirmation link was sent to it. "
-    "The account is active once the link is opened."
-)
-LOGIN_FAILED = "invalid email or password"
+LOGIN_CODE_FRAGMENT = "login_code"
+LOGIN_ERROR_FRAGMENT = "login_error"
 
 
 class BenchServerConfig(BaseModel):
@@ -171,8 +193,7 @@ class BenchServerConfig(BaseModel):
     admin_keys: ApiKeys
     account_url: str = Field(description="Public URL of the website's account page.")
     cors_origins: tuple[str, ...]
-    email_backend: Literal["smtp", "console"]
-    smtp: SmtpConfig | None = None
+    oidc: OidcConfig
     host: str = DEFAULT_HOST
     port: int = DEFAULT_PORT
     trust_proxy: bool = False
@@ -182,10 +203,8 @@ class BenchServerConfig(BaseModel):
     integrity: IntegrityPolicy = IntegrityPolicy()
     account_policy: AccountPolicy = AccountPolicy()
     access_token_ttl: timedelta = timedelta(hours=12)
-    email_token_ttl: timedelta = timedelta(hours=24)
+    login_code_ttl: timedelta = timedelta(minutes=2)
     max_signups_per_address: int = 5
-    max_failed_logins: int = 5
-    lockout: timedelta = timedelta(minutes=15)
 
     @model_validator(mode="after")
     def _check(self) -> Self:
@@ -193,8 +212,6 @@ class BenchServerConfig(BaseModel):
             raise ValueError(
                 f"jwt secret must be at least {JWT_SECRET_MIN_BYTES} bytes"
             )
-        if self.email_backend == "smtp" and self.smtp is None:
-            raise ValueError("email_backend 'smtp' needs the smtp settings")
         return self
 
     @classmethod
@@ -213,17 +230,15 @@ class BenchServerConfig(BaseModel):
             port=int(env.get("TC_BENCH_DB_PORT", "5432")),
             database=env["TC_BENCH_DB_NAME"],
         ).render_as_string(hide_password=False)
-        backend = env["TC_BENCH_EMAIL_BACKEND"]
-        smtp = (
-            SmtpConfig(
-                host=env["TC_BENCH_SMTP_HOST"],
-                port=int(env.get("TC_BENCH_SMTP_PORT", "587")),
-                username=env["TC_BENCH_SMTP_USERNAME"],
-                password=SecretStr(secret_file("TC_BENCH_SMTP_PASSWORD_FILE")),
-                sender=env["TC_BENCH_SMTP_SENDER"],
+        idps_file = env.get("TC_BENCH_ALLOWED_IDPS_FILE")
+        allowed_idps = (
+            frozenset(
+                line.strip()
+                for line in Path(idps_file).read_text(encoding="utf-8").splitlines()
+                if line.strip()
             )
-            if backend == "smtp"
-            else None
+            if idps_file
+            else frozenset()
         )
         blocked_file = env.get("TC_BENCH_BLOCKED_DOMAINS_FILE")
         blocked = (
@@ -253,64 +268,59 @@ class BenchServerConfig(BaseModel):
                     for o in env["TC_BENCH_CORS_ORIGINS"].split(",")
                     if o.strip()
                 ),
-                "email_backend": backend,
-                "smtp": smtp,
+                "oidc": OidcConfig(
+                    client_id=env["TC_BENCH_CILOGON_CLIENT_ID"],
+                    client_secret=SecretStr(
+                        secret_file("TC_BENCH_CILOGON_CLIENT_SECRET_FILE")
+                    ),
+                    redirect_uri=callback_url(env["TC_BENCH_PUBLIC_URL"], API_PREFIX),
+                    metadata_url=env.get(
+                        "TC_BENCH_OIDC_METADATA_URL", CILOGON_METADATA_URL
+                    ),
+                ),
                 "host": env.get("TC_BENCH_HOST", DEFAULT_HOST),
                 "port": int(env.get("TC_BENCH_PORT", str(DEFAULT_PORT))),
                 "trust_proxy": env.get("TC_BENCH_TRUST_PROXY", "0") == "1",
                 "require_approval": env.get("TC_BENCH_REQUIRE_APPROVAL", "0") == "1",
                 "account_policy": AccountPolicy(
-                    blocked_domains=blocked, allowed_domain_suffixes=suffixes
+                    blocked_domains=blocked,
+                    allowed_domain_suffixes=suffixes,
+                    allowed_idps=allowed_idps,
                 ),
             }
         )
 
 
-def build_mailer(config: BenchServerConfig) -> Mailer:
-    """The mailer ``config`` selects."""
-    if config.smtp is not None:
-        return SmtpMailer(config.smtp)
-    return ConsoleMailer()
-
-
 # ---------------------------------------------------------------- request and response
 
 DisplayName = Annotated[
-    str, StringConstraints(strip_whitespace=True, min_length=2, max_length=60)
+    str,
+    StringConstraints(
+        strip_whitespace=True,
+        min_length=DISPLAY_NAME_MIN_LENGTH,
+        max_length=DISPLAY_NAME_MAX_LENGTH,
+    ),
 ]
 Affiliation = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)
 ]
-Password = Annotated[
-    str,
-    StringConstraints(min_length=PASSWORD_MIN_LENGTH, max_length=PASSWORD_MAX_LENGTH),
-]
 
 
-class SignupRequest(BaseModel):
-    """Body of ``POST /auth/signup``."""
+class ExchangeRequest(BaseModel):
+    """Body of ``POST /auth/exchange``."""
 
     model_config = ConfigDict(extra="forbid")
 
-    email: EmailStr
-    password: Password
+    code: Annotated[str, StringConstraints(min_length=1, max_length=256)]
+
+
+class ProfileRequest(BaseModel):
+    """Body of ``POST /auth/profile``: what the board shows about the account."""
+
+    model_config = ConfigDict(extra="forbid")
+
     display_name: DisplayName
     affiliation: Affiliation | None = None
-
-
-class VerifyRequest(BaseModel):
-    """Body of ``POST /auth/verify``."""
-
-    token: Annotated[str, StringConstraints(min_length=1, max_length=256)]
-
-
-class LoginRequest(BaseModel):
-    """Body of ``POST /auth/login``."""
-
-    email: EmailStr
-    password: Annotated[
-        str, StringConstraints(min_length=1, max_length=PASSWORD_MAX_LENGTH)
-    ]
 
 
 class ReviewRequest(BaseModel):
@@ -346,6 +356,9 @@ class UserPublic(BaseModel):
     user_id: str
     display_name: str
     affiliation: str | None
+    identity_provider: str | None = Field(
+        description="Name of the provider the account signs in through."
+    )
     created_at: datetime
 
 
@@ -353,7 +366,6 @@ class MeResponse(UserPublic):
     """The signed-in account as its owner sees it."""
 
     email: str
-    email_verified: bool
     approved: bool
 
 
@@ -420,6 +432,7 @@ def _user_public(user: User) -> UserPublic:
         user_id=user.id,
         display_name=user.display_name,
         affiliation=user.affiliation,
+        identity_provider=user.idp_name,
         created_at=user.created_at,
     )
 
@@ -512,17 +525,18 @@ def create_app(
     config: BenchServerConfig,
     *,
     engine: Engine | None = None,
-    mailer: Mailer | None = None,
+    oidc_transport: Any = None,
     clock: Callable[[], datetime] = utcnow,
 ) -> FastAPI:
     """Build the FastAPI app bound to ``config``.
 
-    ``engine``, ``mailer`` and ``clock`` default to what ``config`` describes and the
-    wall clock; tests pass their own.
+    ``engine`` and ``clock`` default to what ``config`` describes and the wall clock.
+    ``oidc_transport`` replaces the HTTP transport of the calls to the identity
+    provider; tests pass one that answers as CILogon.
     """
     db_engine = engine or make_engine(config.database_url.get_secret_value())
     sessions = make_session_factory(db_engine)
-    outbox = mailer or build_mailer(config)
+    provider = build_provider(config.oidc, oidc_transport)
     bundles = load_bundles(config.datasets_root)
     secret = config.jwt_secret.get_secret_value()
 
@@ -530,8 +544,9 @@ def create_app(
         title=APP_TITLE,
         summary="Accounts, submissions and leaderboards of the TorchCell benchmark.",
         description=(
-            "Reading datasets and leaderboards needs no account. Submitting needs a "
-            "confirmed account and a bearer token. Submit predictions, not scores: the "
+            "Reading datasets and leaderboards needs no account. Submitting needs an "
+            "account (sign in through CILogon) and a bearer token. Submit predictions, "
+            "not scores: the "
             "server validates the upload against the dataset's template, grades it on "
             "the validation and test splits, and returns the result."
         ),
@@ -545,6 +560,18 @@ def create_app(
         max_bytes=config.max_upload_bytes
         + MAX_METADATA_BYTES
         + MULTIPART_OVERHEAD_BYTES,
+    )
+    # Holds the state, nonce and PKCE verifier of a sign-in in progress, signed, for
+    # the few minutes between the redirect to CILogon and the callback. It is sent only
+    # to the sign-in routes and is not the session: that is the bearer token.
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=derive_key(secret, "login-state"),
+        session_cookie=LOGIN_STATE_COOKIE,
+        max_age=LOGIN_STATE_MAX_AGE_SECONDS,
+        path=config.oidc.cookie_path,
+        same_site="lax",
+        https_only=config.oidc.secure,
     )
     app.add_middleware(
         CORSMiddleware,
@@ -755,20 +782,19 @@ def create_app(
 
     # ------------------------------------------------------------------------- auth
 
-    @router.post("/auth/signup", response_model=Message, status_code=201, tags=["auth"])
-    def signup(
-        body: SignupRequest, request: Request, session: Session = Depends(get_session)
-    ) -> Message:
-        """Create an account and email a confirmation link.
+    def back(fragment: str, value: str) -> RedirectResponse:
+        """Send the browser to the account page with one value in the URL fragment."""
+        return RedirectResponse(
+            f"{config.account_url}#{urlencode({fragment: value})}", status_code=303
+        )
 
-        The answer is the same whether or not the address already has an account, so
-        the route cannot be used to list who is registered.
-        """
-        now = clock()
-        blocked = config.account_policy.rejection_reason(body.email)
-        if blocked is not None:
-            raise HTTPException(status_code=422, detail=blocked)
-        address_hash = hash_client_address(client_address(request), secret)
+    def register(
+        session: Session, identity: Identity, address: str, now: datetime
+    ) -> User:
+        """Create the account of a first sign-in, or refuse it with a reason."""
+        if config.account_policy.rejection_reason(identity.email) is not None:
+            raise LoginRefused(LoginError.EMAIL_NOT_ALLOWED)
+        address_hash = hash_client_address(address, secret)
         recent = session.scalar(
             select(func.count())
             .select_from(User)
@@ -778,103 +804,129 @@ def create_app(
             )
         )
         if (recent or 0) >= config.max_signups_per_address:
-            raise HTTPException(
-                status_code=429, detail="too many signups; try tomorrow"
-            )
-        canonical = canonical_email(body.email)
-        user = session.scalar(select(User).where(User.email_canonical == canonical))
-        if user is None:
-            user = User(
-                id=new_id(),
-                email=body.email.lower(),
-                email_canonical=canonical,
-                display_name=body.display_name,
-                affiliation=body.affiliation,
-                password_hash=hash_password(body.password),
-                approved=not config.require_approval,
-                signup_address_hash=address_hash,
-                created_at=now,
-            )
-            session.add(user)
-            session.flush()
-        live_tokens = session.scalar(
-            select(func.count())
-            .select_from(EmailToken)
-            .where(
-                EmailToken.user_id == user.id,
-                EmailToken.used_at.is_(None),
-                EmailToken.expires_at > now,
-            )
+            raise LoginRefused(LoginError.TOO_MANY_ACCOUNTS)
+        canonical = canonical_email(identity.email)
+        # One account per address family: the same address arriving through a second
+        # identity provider is refused, not merged, so it can neither open a second
+        # account nor take over the first.
+        if session.scalar(select(User.id).where(User.email_canonical == canonical)):
+            raise LoginRefused(LoginError.EMAIL_IN_USE)
+        user = User(
+            id=new_id(),
+            oidc_issuer=identity.issuer,
+            oidc_subject=identity.subject,
+            idp=identity.idp,
+            idp_name=identity.idp_name,
+            email=identity.email.lower(),
+            email_canonical=canonical,
+            display_name=identity.display_name,
+            approved=not config.require_approval,
+            signup_address_hash=address_hash,
+            created_at=now,
         )
-        if not user.email_verified and (live_tokens or 0) < MAX_LIVE_EMAIL_TOKENS:
-            token, token_hash = new_one_time_token()
+        session.add(user)
+        session.flush()
+        return user
+
+    def complete_login(claims: dict[str, Any], address: str) -> str:
+        """Find or create the account behind verified ``claims``; return a sign-in code."""
+        now = clock()
+        identity = identity_from_claims(claims)
+        if not config.account_policy.idp_allowed(identity.idp):
+            raise LoginRefused(LoginError.IDP_NOT_ALLOWED)
+        with sessions() as session:
+            user = session.scalar(
+                select(User).where(
+                    User.oidc_issuer == identity.issuer,
+                    User.oidc_subject == identity.subject,
+                )
+            )
+            if user is None:
+                user = register(session, identity, address, now)
+            if user.disabled:
+                raise LoginRefused(LoginError.DISABLED)
+            user.last_login_at = now
+            session.execute(
+                delete(LoginCode).where(
+                    LoginCode.user_id == user.id, LoginCode.expires_at <= now
+                )
+            )
+            code, code_hash = new_one_time_token()
             session.add(
-                EmailToken(
+                LoginCode(
                     id=new_id(),
                     user_id=user.id,
-                    token_sha256=token_hash,
-                    expires_at=now + config.email_token_ttl,
+                    code_sha256=code_hash,
+                    expires_at=now + config.login_code_ttl,
                     created_at=now,
                 )
             )
-            subject, text = confirmation_message(
-                user.display_name,
-                f"{config.account_url}?verify={token}",
-                int(config.email_token_ttl.total_seconds() // 3600),
-            )
-            outbox.send(user.email, subject, text)
-        session.commit()
-        return Message(message=SIGNUP_MESSAGE)
-
-    @router.post("/auth/verify", response_model=Message, tags=["auth"])
-    def verify_email(
-        body: VerifyRequest, session: Session = Depends(get_session)
-    ) -> Message:
-        """Confirm an address with the one-time token from the confirmation mail."""
-        now = clock()
-        token = session.scalar(
-            select(EmailToken).where(EmailToken.token_sha256 == hash_token(body.token))
-        )
-        if token is None or token.used_at is not None or token.expires_at <= now:
-            raise HTTPException(status_code=400, detail="invalid or expired token")
-        token.used_at = now
-        user = session.get_one(User, token.user_id)
-        user.email_verified = True
-        session.commit()
-        return Message(message="address confirmed; you can sign in")
-
-    @router.post("/auth/login", response_model=TokenResponse, tags=["auth"])
-    def login(
-        body: LoginRequest, session: Session = Depends(get_session)
-    ) -> TokenResponse:
-        """Exchange an email and password for a bearer token."""
-        now = clock()
-        user = session.scalar(
-            select(User).where(User.email_canonical == canonical_email(body.email))
-        )
-        if user is None or user.is_system:
-            verify_password(DUMMY_PASSWORD_HASH, body.password)
-            raise HTTPException(status_code=401, detail=LOGIN_FAILED)
-        if user.locked_until is not None and user.locked_until > now:
-            raise HTTPException(
-                status_code=429, detail="too many failed sign-ins; try later"
-            )
-        if not verify_password(user.password_hash, body.password):
-            user.failed_logins += 1
-            if user.failed_logins >= config.max_failed_logins:
-                user.failed_logins = 0
-                user.locked_until = now + config.lockout
             session.commit()
-            raise HTTPException(status_code=401, detail=LOGIN_FAILED)
+        return code
+
+    @router.get("/auth/login", tags=["auth"], status_code=302)
+    async def login(request: Request) -> RedirectResponse:
+        """Start a sign-in: redirect the browser to CILogon."""
+        try:
+            redirect: RedirectResponse = await provider.authorize_redirect(
+                request, config.oidc.redirect_uri
+            )
+        except httpx2.HTTPError:
+            return back(LOGIN_ERROR_FRAGMENT, LoginError.UNAVAILABLE)
+        return redirect
+
+    @router.get("/auth/callback", tags=["auth"], status_code=303)
+    async def callback(request: Request) -> RedirectResponse:
+        """Finish a sign-in: verify CILogon's response and return to the account page.
+
+        The account page receives ``#login_code=<one-time code>`` on success and
+        ``#login_error=<reason>`` otherwise (see
+        :class:`torchcell.benchmark.oidc.LoginError`).
+        """
+        try:
+            token = await provider.authorize_access_token(request)
+        except OAuthError as error:
+            log.info("sign-in refused by the provider or the state check: %s", error)
+            refused = error.error == "access_denied"
+            return back(
+                LOGIN_ERROR_FRAGMENT,
+                LoginError.DENIED if refused else LoginError.FAILED,
+            )
+        except JoseError as error:
+            log.warning("sign-in ID token did not verify: %s", error)
+            return back(LOGIN_ERROR_FRAGMENT, LoginError.FAILED)
+        except httpx2.HTTPError as error:
+            log.warning("identity provider unreachable: %s", error)
+            return back(LOGIN_ERROR_FRAGMENT, LoginError.UNAVAILABLE)
+        claims = token.get("userinfo")
+        if claims is None:
+            return back(LOGIN_ERROR_FRAGMENT, LoginError.FAILED)
+        try:
+            code = await run_in_threadpool(
+                complete_login, dict(claims), client_address(request)
+            )
+        except LoginRefused as refusal:
+            return back(LOGIN_ERROR_FRAGMENT, refusal.error)
+        return back(LOGIN_CODE_FRAGMENT, code)
+
+    @router.post("/auth/exchange", response_model=TokenResponse, tags=["auth"])
+    def exchange(
+        body: ExchangeRequest, session: Session = Depends(get_session)
+    ) -> TokenResponse:
+        """Trade the one-time sign-in code from the callback for a bearer token."""
+        now = clock()
+        row = session.scalar(
+            select(LoginCode)
+            .where(LoginCode.code_sha256 == hash_token(body.code))
+            .with_for_update()
+        )
+        if row is None or row.used_at is not None or row.expires_at <= now:
+            raise HTTPException(status_code=400, detail="invalid or expired code")
+        row.used_at = now
+        user = session.get_one(User, row.user_id)
+        session.commit()
         if user.disabled:
             raise HTTPException(status_code=403, detail="this account is disabled")
-        if not user.email_verified:
-            raise HTTPException(
-                status_code=403, detail="confirm your email address first"
-            )
-        user.failed_logins = 0
-        user.locked_until = None
-        session.commit()
         # Wall clock, not ``clock``: the token library checks ``iat`` and ``exp`` against
         # the wall clock when it decodes, so a token must be issued on the same one.
         token, expires_at = issue_access_token(
@@ -886,10 +938,21 @@ def create_app(
     def me(user: User = Depends(current_user)) -> MeResponse:
         """The signed-in account."""
         return MeResponse(
-            **_user_public(user).model_dump(),
-            email=user.email,
-            email_verified=user.email_verified,
-            approved=user.approved,
+            **_user_public(user).model_dump(), email=user.email, approved=user.approved
+        )
+
+    @router.post("/auth/profile", response_model=MeResponse, tags=["auth"])
+    def update_profile(
+        body: ProfileRequest,
+        user: User = Depends(current_user),
+        session: Session = Depends(get_session),
+    ) -> MeResponse:
+        """Set the display name and affiliation the board shows for the account."""
+        user.display_name = body.display_name
+        user.affiliation = body.affiliation
+        session.commit()
+        return MeResponse(
+            **_user_public(user).model_dump(), email=user.email, approved=user.approved
         )
 
     # --------------------------------------------------------------------- datasets
@@ -1136,7 +1199,7 @@ def create_app(
         _: str = Depends(require_admin),
         session: Session = Depends(get_session),
     ) -> Message:
-        """Disable an account: its tokens stop working and it cannot sign in."""
+        """Disable an account: its tokens stop working and it cannot sign in again."""
         return set_user_flags(session, user_id, disabled=True)
 
     @router.post(
@@ -1164,8 +1227,6 @@ def create_app(
                 email=BASELINE_USER_EMAIL,
                 email_canonical=BASELINE_USER_EMAIL,
                 display_name=BASELINE_USER_NAME,
-                password_hash=DUMMY_PASSWORD_HASH,
-                email_verified=True,
                 approved=True,
                 is_system=True,
                 created_at=now,

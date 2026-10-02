@@ -90,9 +90,24 @@ const DATASETS = [
 ];
 
 const USERS = [
-  {user_id: 'mock-user-a', display_name: 'Mock User A', affiliation: 'Mock Institute'},
-  {user_id: 'mock-user-b', display_name: 'Mock User B', affiliation: null},
-  {user_id: 'mock-baselines', display_name: 'Mock Baselines', affiliation: null},
+  {
+    user_id: 'mock-user-a',
+    display_name: 'Mock User A',
+    affiliation: 'Mock Institute',
+    identity_provider: 'Mock University',
+  },
+  {
+    user_id: 'mock-user-b',
+    display_name: 'Mock User B',
+    affiliation: null,
+    identity_provider: 'Mock University',
+  },
+  {
+    user_id: 'mock-baselines',
+    display_name: 'Mock Baselines',
+    affiliation: null,
+    identity_provider: null,
+  },
 ];
 
 // One entry per mock submission: [user index, method, family, encoding, status,
@@ -180,7 +195,7 @@ write('me', {
   ...USERS[0],
   created_at: isoDay(0),
   email: 'mock-user-a@example.invalid',
-  email_verified: true,
+  approved: true,
 });
 
 write('quota', {

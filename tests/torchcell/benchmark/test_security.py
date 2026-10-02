@@ -1,49 +1,40 @@
 # tests/torchcell/benchmark/test_security.py
 # [[tests.torchcell.benchmark.test_security]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/benchmark/test_security.py
-"""``torchcell.benchmark.security``: hashing, tokens, and address canonicalization.
+"""``torchcell.benchmark.security``: tokens, derived keys, and the account policy.
 
 The canonical form is what the unique-account check compares, so the cases that matter
 are the ones that would otherwise let one person hold two accounts: a ``+tag``, Gmail
 dots, ``googlemail.com``, and letter case. A token signed with another secret, a token
-past its expiry, and a token from another issuer all decode to None.
+past its expiry, and a token from another issuer all decode to None. The module holds
+no password code: sign-in is CILogon's, tested in ``test_oidc.py`` and ``test_app.py``.
 """
 
+import base64
 import hashlib
 import hmac
+import json
 from datetime import UTC, datetime, timedelta
 
 import jwt
 import pytest
 
 from torchcell.benchmark.security import (
-    DUMMY_PASSWORD_HASH,
     JWT_ALGORITHM,
     JWT_ISSUER,
     AccountPolicy,
     canonical_email,
     decode_access_token,
+    derive_key,
     email_domain,
     hash_client_address,
-    hash_password,
     hash_token,
     issue_access_token,
     new_one_time_token,
-    verify_password,
 )
 
 SECRET = "s" * 40
 NOW = datetime.now(UTC).replace(microsecond=0)
-
-
-def test_password_hash_round_trip() -> None:
-    stored = hash_password("correct horse battery")
-    assert stored.startswith("$argon2id$")
-    assert stored != hash_password("correct horse battery")  # salted
-    assert verify_password(stored, "correct horse battery") is True
-    assert verify_password(stored, "correct horse batterY") is False
-    assert verify_password("not-a-hash", "anything") is False
-    assert verify_password(DUMMY_PASSWORD_HASH, "anything") is False
 
 
 @pytest.mark.parametrize(
@@ -80,6 +71,18 @@ def test_account_policy() -> None:
     )
 
 
+def test_account_policy_identity_providers() -> None:
+    uiuc = "urn:mace:incommon:uiuc.edu"
+    anyone = AccountPolicy()
+    assert anyone.idp_allowed(uiuc) is True
+    assert anyone.idp_allowed(None) is True
+    listed = AccountPolicy(allowed_idps=frozenset({uiuc}))
+    assert listed.idp_allowed(uiuc) is True
+    assert listed.idp_allowed("http://google.com/accounts/o8/id") is False
+    # With a list, a sign-in that names no provider cannot be shown to be listed.
+    assert listed.idp_allowed(None) is False
+
+
 def test_access_token_round_trip() -> None:
     token, expires_at = issue_access_token("user-1", SECRET, timedelta(hours=12), NOW)
     assert expires_at == NOW + timedelta(hours=12)
@@ -109,16 +112,23 @@ def test_access_token_rejections() -> None:
         algorithm=JWT_ALGORITHM,
     )
     assert decode_access_token(no_expiry, SECRET) is None
-    unsigned = jwt.encode(
-        {
-            "sub": "user-1",
-            "iat": NOW,
-            "exp": NOW + timedelta(hours=1),
-            "iss": JWT_ISSUER,
-        },
-        None,
-        algorithm="none",
+
+    # An unsigned token (``alg: none``), assembled by hand: header, claims, no signature.
+    def segment(data: dict[str, object]) -> str:
+        raw = json.dumps(data).encode()
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
+
+    stamp = int(NOW.timestamp())
+    unsigned = ".".join(
+        [
+            segment({"alg": "none", "typ": "JWT"}),
+            segment(
+                {"sub": "user-1", "iat": stamp, "exp": stamp + 3600, "iss": JWT_ISSUER}
+            ),
+            "",
+        ]
     )
+    assert jwt.decode(unsigned, options={"verify_signature": False})["sub"] == "user-1"
     assert decode_access_token(unsigned, SECRET) is None
 
 
@@ -127,6 +137,15 @@ def test_one_time_token_is_stored_as_its_hash() -> None:
     assert stored == hashlib.sha256(token.encode()).hexdigest() == hash_token(token)
     assert len(token) == 43  # 32 random bytes, urlsafe base64 without padding
     assert new_one_time_token()[0] != token
+
+
+def test_derived_keys_differ_by_purpose_and_secret() -> None:
+    key = derive_key(SECRET, "login-state")
+    assert key == hmac.new(SECRET.encode(), b"login-state", "sha256").hexdigest()
+    assert len(key) == 64
+    assert key != SECRET
+    assert key != derive_key(SECRET, "another-purpose")
+    assert key != derive_key("t" * 40, "login-state")
 
 
 def test_client_address_hash_is_keyed() -> None:

@@ -3,29 +3,34 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/benchmark/test_app.py
 """``torchcell.benchmark.app`` (tc-bench) end to end, in process.
 
-The app runs on a SQLite file, the ``toy-fitness`` bundle of ``conftest.py``, a
-``MemoryMailer`` whose outbox holds the confirmation links, and a settable clock (the
-quota reads it; session tokens use the wall clock). Scores are asserted against the
-hand-worked values: the labels themselves score Pearson 1 on both splits, and the
-validation predictions 2, 1, 3, 4 against the labels 1, 2, 3, 4 score Pearson 0.8.
+The app runs on a SQLite file, the ``toy-fitness`` bundle of ``conftest.py``, the
+in-process identity provider of ``_fake_idp.py`` in place of CILogon, and a settable
+clock (the quota and the sign-in codes read it; session tokens use the wall clock).
+Scores are asserted against the hand-worked values: the labels themselves score Pearson
+1 on both splits, and the validation predictions 2, 1, 3, 4 against the labels
+1, 2, 3, 4 score Pearson 0.8.
 
-Covered: the signup, confirm and sign-in sequence and each way it is refused; one
-account per canonical address; lockout after five wrong passwords; the public dataset
-routes and their sha256 header; a scored submission, its archive and its board row; a
-rejected submission and its reasons; the quota (one hour apart, three per 24 hours,
-rejected attempts counted); the upload size guard; the integrity flag; admin verify,
-withdraw, approve, disable and baselines; and ``BenchServerConfig.from_env``.
+Covered: the sign-in sequence (redirect with state, nonce and PKCE; callback; one-time
+code; bearer token) and each way it is refused (a forged or replayed state, an ID token
+with the wrong nonce, audience, issuer, expiry or signature, a provider that is down, a
+cancelled sign-in, a missing email, a provider or domain the policy excludes, a second
+identity on one address, too many new accounts from one address, a disabled account);
+the profile route; the public dataset routes and their sha256 header; a scored
+submission, its archive and its board row; a rejected submission and its reasons; the
+quota (one hour apart, three per 24 hours, rejected attempts counted); the upload size
+guard; the integrity flag; admin verify, withdraw, approve, disable and baselines; and
+``BenchServerConfig.from_env``.
 """
 
 import io
 import json
-import re
 import sys
 import zipfile
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 import uvicorn
@@ -33,21 +38,26 @@ from fastapi.testclient import TestClient
 from pydantic import SecretStr, ValidationError
 from sqlalchemy import create_engine, select
 
+from tests.torchcell.benchmark._fake_idp import (
+    CLIENT_ID,
+    CLIENT_SECRET,
+    GOOGLE,
+    UIUC,
+    UIUC_NAME,
+    FakeIdp,
+    person,
+)
 from torchcell.api_keys import ApiKeys
 from torchcell.benchmark import app as app_module
-from torchcell.benchmark.app import (
-    API_PREFIX,
-    SIGNUP_MESSAGE,
-    BenchServerConfig,
-    build_mailer,
-    create_app,
-)
-from torchcell.benchmark.db import User, init_schema, make_session_factory
-from torchcell.benchmark.mailer import ConsoleMailer, MemoryMailer, SmtpMailer
+from torchcell.benchmark.app import API_PREFIX, BenchServerConfig, create_app
+from torchcell.benchmark.db import LoginCode, User, init_schema, make_session_factory
+from torchcell.benchmark.oidc import CILOGON_METADATA_URL, OidcConfig
+from torchcell.benchmark.security import AccountPolicy
 
 SLUG = "toy-fitness"
 ADMIN = {"X-API-Key": "admin-key-123"}
-PASSWORD = "a-long-passphrase"
+SERVICE = "https://bench.example"
+ACCOUNT_URL = "https://site.example/benchmark/account/"
 T0 = datetime(2026, 10, 1, 12, 0, 0, tzinfo=UTC)
 METADATA: dict[str, Any] = {
     "method_name": "ridge on one-hot",
@@ -79,15 +89,21 @@ class Bench:
         """Build the app on a SQLite file under ``tmp_path``."""
         self.submissions_root = tmp_path / "submissions"
         self.submissions_root.mkdir()
+        self.idp = FakeIdp()
         self.config = BenchServerConfig(
             database_url=SecretStr("postgresql+psycopg://unused"),
             datasets_root=datasets_root,
             submissions_root=self.submissions_root,
             jwt_secret=SecretStr("j" * 40),
             admin_keys=ApiKeys.from_pairs("ops:admin-key-123"),
-            account_url="https://site.example/benchmark/account",
+            account_url=ACCOUNT_URL,
             cors_origins=("https://site.example",),
-            email_backend="console",
+            oidc=OidcConfig(
+                client_id=CLIENT_ID,
+                client_secret=SecretStr(CLIENT_SECRET),
+                redirect_uri=f"{SERVICE}{API_PREFIX}/auth/callback",
+                metadata_url=self.idp.metadata_url,
+            ),
             **overrides,
         )
         self.engine = create_engine(
@@ -96,42 +112,61 @@ class Bench:
         )
         init_schema(self.engine)
         self.sessions = make_session_factory(self.engine)
-        self.mailer = MemoryMailer()
         self.clock = Clock()
-        self.client = TestClient(
-            create_app(
-                self.config, engine=self.engine, mailer=self.mailer, clock=self.clock
-            )
+        self.app = create_app(
+            self.config,
+            engine=self.engine,
+            oidc_transport=self.idp.transport(),
+            clock=self.clock,
         )
+        self.client = TestClient(self.app, base_url=SERVICE)
 
     def url(self, path: str) -> str:
         """The full URL path of an API route."""
         return f"{API_PREFIX}{path}"
 
-    def last_token(self) -> str:
-        """The confirmation token in the newest mail."""
-        match = re.search(r"\?verify=(\S+)", self.mailer.outbox[-1][2])
-        assert match is not None
-        return match.group(1)
+    def start(self, client: TestClient | None = None) -> str:
+        """Begin a sign-in; return the provider URL the browser is sent to."""
+        response = (client or self.client).get(
+            self.url("/auth/login"), follow_redirects=False
+        )
+        assert response.status_code == 302
+        return str(response.headers["location"])
+
+    def sign_in(
+        self,
+        claims: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        **overrides: Any,
+    ) -> dict[str, str]:
+        """Run a whole sign-in as ``claims``; return the account page's URL fragment."""
+        callback = self.idp.authorize(self.start(), claims or person(), **overrides)
+        return self.finish(callback, headers)
+
+    def finish(
+        self, callback: str, headers: dict[str, str] | None = None
+    ) -> dict[str, str]:
+        """Request ``callback``; return the fragment of the account page redirect."""
+        response = self.client.get(callback, headers=headers, follow_redirects=False)
+        assert response.status_code == 303
+        target = urlsplit(response.headers["location"])
+        assert f"{target.scheme}://{target.netloc}{target.path}" == ACCOUNT_URL
+        assert target.query == ""
+        return {key: values[0] for key, values in parse_qs(target.fragment).items()}
+
+    def exchange(self, code: str) -> Any:
+        """Trade a sign-in code for a token (the response, whatever its status)."""
+        return self.client.post(self.url("/auth/exchange"), json={"code": code})
 
     def register(
         self, email: str = "alice@example.org", name: str = "Alice"
     ) -> dict[str, str]:
-        """Sign up, confirm, sign in; return the bearer header."""
-        signup = self.client.post(
-            self.url("/auth/signup"),
-            json={"email": email, "password": PASSWORD, "display_name": name},
-        )
-        assert signup.status_code == 201
-        verify = self.client.post(
-            self.url("/auth/verify"), json={"token": self.last_token()}
-        )
-        assert verify.status_code == 200
-        login = self.client.post(
-            self.url("/auth/login"), json={"email": email, "password": PASSWORD}
-        )
-        assert login.status_code == 200
-        return {"Authorization": f"Bearer {login.json()['access_token']}"}
+        """Sign in as a new person; return the bearer header."""
+        fragment = self.sign_in(person(email, name))
+        assert set(fragment) == {"login_code"}
+        token = self.exchange(fragment["login_code"])
+        assert token.status_code == 200
+        return {"Authorization": f"Bearer {token.json()['access_token']}"}
 
     def submit(
         self,
@@ -184,176 +219,259 @@ def test_security_headers_and_cors(bench: Bench) -> None:
 # --------------------------------------------------------------------------- auth
 
 
-def test_signup_confirm_login_sequence(bench: Bench) -> None:
-    body = {"email": "Alice@Example.org", "password": PASSWORD, "display_name": "Alice"}
-    signup = bench.client.post(bench.url("/auth/signup"), json=body)
-    assert signup.status_code == 201
-    assert signup.json() == {"message": SIGNUP_MESSAGE}
-    to, subject, text = bench.mailer.outbox[0]
-    assert to == "alice@example.org"
-    assert subject == "Confirm your TorchCell benchmark account"
-    assert "https://site.example/benchmark/account?verify=" in text
+def test_sign_in_sequence(bench: Bench) -> None:
+    location = bench.start()
+    provider = urlsplit(location)
+    query = {key: values[0] for key, values in parse_qs(provider.query).items()}
+    assert f"{provider.scheme}://{provider.netloc}{provider.path}" == (
+        "https://idp.example/authorize"
+    )
+    assert query["redirect_uri"] == "https://bench.example/api/v1/auth/callback"
+    assert query["scope"] == "openid email profile org.cilogon.userinfo"
+    assert query["code_challenge_method"] == "S256"
+    assert len(query["state"]) >= 20 and len(query["nonce"]) >= 20
+    assert len(query["code_challenge"]) == 43  # base64url of a sha256
 
-    credentials = {"email": "alice@example.org", "password": PASSWORD}
-    before = bench.client.post(bench.url("/auth/login"), json=credentials)
-    assert before.status_code == 403
-    assert before.json() == {"detail": "confirm your email address first"}
-
-    token = bench.last_token()
-    assert bench.client.post(
-        bench.url("/auth/verify"), json={"token": token}
-    ).json() == {"message": "address confirmed; you can sign in"}
-    reused = bench.client.post(bench.url("/auth/verify"), json={"token": token})
-    assert reused.status_code == 400
-    assert reused.json() == {"detail": "invalid or expired token"}
-
-    login = bench.client.post(bench.url("/auth/login"), json=credentials)
-    assert login.status_code == 200
-    assert login.json()["token_type"] == "bearer"
+    fragment = bench.finish(bench.idp.authorize(location, person("Alice@Example.org")))
+    assert set(fragment) == {"login_code"}
+    token = bench.exchange(fragment["login_code"])
+    assert token.status_code == 200
+    assert token.json()["token_type"] == "bearer"
     me = bench.client.get(
         bench.url("/auth/me"),
-        headers={"Authorization": f"Bearer {login.json()['access_token']}"},
+        headers={"Authorization": f"Bearer {token.json()['access_token']}"},
     ).json()
     assert me["email"] == "alice@example.org"
     assert me["display_name"] == "Alice"
-    assert (me["email_verified"], me["approved"]) == (True, True)
+    assert me["identity_provider"] == UIUC_NAME
+    assert me["approved"] is True
     assert me["created_at"] == "2026-10-01T12:00:00Z"
+    assert "email_verified" not in me
+    with bench.sessions() as session:
+        user = session.scalars(select(User)).one()
+        assert (user.oidc_issuer, user.idp) == ("https://idp.example", UIUC)
+        assert user.oidc_subject == "http://cilogon.org/serverA/users/Alice@Example.org"
+        assert user.last_login_at == T0
 
 
-def test_confirmation_token_expires(bench: Bench) -> None:
-    bench.client.post(
-        bench.url("/auth/signup"),
-        json={"email": "a@example.org", "password": PASSWORD, "display_name": "Al"},
-    )
-    bench.clock.now = T0 + timedelta(hours=24)
-    expired = bench.client.post(
-        bench.url("/auth/verify"), json={"token": bench.last_token()}
-    )
-    assert expired.status_code == 400
+def test_login_state_cookie_is_scoped_and_signed(bench: Bench) -> None:
+    response = bench.client.get(bench.url("/auth/login"), follow_redirects=False)
+    cookie = response.headers["set-cookie"]
+    name, _, value = cookie.partition(";")[0].partition("=")
+    assert name == "tc_bench_login"
+    attributes = {part.strip().lower() for part in cookie.split(";")[1:]}
+    assert {"httponly", "secure", "samesite=lax", "max-age=600"} <= attributes
+    assert "path=/api/v1/auth" in attributes
+    # The cookie is signed with a key derived from the session secret, not with it.
+    assert bench.config.jwt_secret.get_secret_value() not in value
+    # No other route sets a cookie: the session itself is a bearer token.
+    assert "set-cookie" not in bench.client.get(bench.url("/health")).headers
+
+
+def test_sign_in_code_works_once_and_expires(bench: Bench) -> None:
+    code = bench.sign_in()["login_code"]
+    assert bench.exchange(code).status_code == 200
+    reused = bench.exchange(code)
+    assert reused.status_code == 400
+    assert reused.json() == {"detail": "invalid or expired code"}
+    assert bench.exchange("never-issued").status_code == 400
+
+    late = bench.sign_in()["login_code"]
+    bench.clock.now = T0 + timedelta(minutes=2)
+    assert bench.exchange(late).status_code == 400
+    with bench.sessions() as session:
+        stored = session.scalars(select(LoginCode.code_sha256)).all()
+        assert len(stored) == 2 and code not in stored and late not in stored
+    # The next sign-in clears this account's expired codes, spent or not.
+    bench.sign_in()
+    with bench.sessions() as session:
+        codes = session.scalars(select(LoginCode)).all()
+        assert [(c.used_at, c.expires_at) for c in codes] == [
+            (None, T0 + timedelta(minutes=4))
+        ]
+
+
+def test_second_sign_in_reuses_the_account(bench: Bench) -> None:
+    first = bench.register()
+    bench.clock.now = T0 + timedelta(days=1)
+    second = bench.register()
+    ids = {
+        bench.client.get(bench.url("/auth/me"), headers=h).json()["user_id"]
+        for h in (first, second)
+    }
+    assert len(ids) == 1
+    with bench.sessions() as session:
+        user = session.scalars(select(User)).one()
+        assert (user.created_at, user.last_login_at) == (T0, T0 + timedelta(days=1))
+
+
+def test_callback_refuses_a_forged_or_replayed_state(bench: Bench) -> None:
+    location = bench.start()
+    callback = bench.idp.authorize(location, person())
+    forged = callback.replace("state=", "state=x")
+    assert bench.finish(forged) == {"login_error": "failed"}
+    assert bench.idp.token_requests == 0  # refused before the code was spent
+
+    # A callback that arrives in a browser that never started the sign-in is refused:
+    # the state is only valid together with that browser's cookie.
+    other_browser = TestClient(bench.app, base_url=SERVICE)
+    stolen = other_browser.get(callback, follow_redirects=False)
+    assert stolen.headers["location"] == f"{ACCOUNT_URL}#login_error=failed"
+
+    callback = bench.idp.authorize(bench.start(), person())
+    assert set(bench.finish(callback)) == {"login_code"}
+    assert bench.finish(callback) == {"login_error": "failed"}  # replay
+    with bench.sessions() as session:
+        assert len(session.scalars(select(User)).all()) == 1
 
 
 @pytest.mark.parametrize(
-    ("body", "field"),
+    "override",
     [
-        (
-            {"email": "not-an-email", "password": PASSWORD, "display_name": "Al"},
-            "email",
-        ),
-        (
-            {"email": "a@example.org", "password": "short", "display_name": "Al"},
-            "password",
-        ),
-        (
-            {"email": "a@example.org", "password": PASSWORD, "display_name": "A"},
-            "display_name",
-        ),
-        (
-            {
-                "email": "a@example.org",
-                "password": PASSWORD,
-                "display_name": "Al",
-                "is_admin": 1,
-            },
-            "is_admin",
-        ),
+        {"nonce": "a-nonce-from-another-sign-in"},
+        {"aud": "cilogon:/client_id/someone-else"},
+        {"iss": "https://evil.example"},
+        {"exp": 1_000_000_000},
+        {"foreign_signature": True},
     ],
+    ids=["nonce", "audience", "issuer", "expired", "signature"],
 )
-def test_signup_body_validation(bench: Bench, body: dict[str, Any], field: str) -> None:
-    response = bench.client.post(bench.url("/auth/signup"), json=body)
-    assert response.status_code == 422
-    assert response.json()["detail"][0]["loc"] == ["body", field]
-    assert bench.mailer.outbox == []
+def test_callback_refuses_an_id_token_that_does_not_verify(
+    bench: Bench, override: dict[str, Any]
+) -> None:
+    assert bench.sign_in(person(), **override) == {"login_error": "failed"}
+    assert bench.idp.token_requests == 1  # the token was fetched, then refused
+    with bench.sessions() as session:
+        assert session.scalars(select(User)).all() == []
+
+
+def test_callback_reports_a_cancelled_sign_in(bench: Bench) -> None:
+    state = parse_qs(urlsplit(bench.start()).query)["state"][0]
+    cancelled = bench.finish(
+        bench.url(f"/auth/callback?error=access_denied&state={state}")
+    )
+    assert cancelled == {"login_error": "denied"}
+    other = bench.finish(bench.url(f"/auth/callback?error=server_error&state={state}"))
+    assert other == {"login_error": "failed"}
+
+
+def test_provider_outage_is_reported_not_raised(
+    bench: Bench, tmp_path: Path, datasets_root: Path
+) -> None:
+    callback = bench.idp.authorize(bench.start(), person())
+    bench.idp.down = True
+    assert bench.finish(callback) == {"login_error": "unavailable"}
+
+    (tmp_path / "fresh").mkdir()
+    fresh = Bench(tmp_path / "fresh", datasets_root)
+    fresh.idp.down = True  # discovery itself fails on the first sign-in
+    response = fresh.client.get(fresh.url("/auth/login"), follow_redirects=False)
+    assert response.status_code == 303
+    assert response.headers["location"] == f"{ACCOUNT_URL}#login_error=unavailable"
+
+
+def test_sign_in_without_an_email_is_refused(bench: Bench) -> None:
+    assert bench.sign_in(person(email=None, sub="orcid-1")) == {
+        "login_error": "no_email"
+    }
+    assert bench.sign_in(person(email="not-an-address", sub="orcid-2")) == {
+        "login_error": "failed"
+    }
+    with bench.sessions() as session:
+        assert session.scalars(select(User)).all() == []
 
 
 def test_one_account_per_canonical_address(bench: Bench) -> None:
     bench.register("alice@gmail.com")
-    again = bench.client.post(
-        bench.url("/auth/signup"),
-        json={
-            "email": "a.lice+two@googlemail.com",
-            "password": PASSWORD,
-            "display_name": "Al",
-        },
+    # The same mailbox through another identity is refused, not merged.
+    second = bench.sign_in(
+        person("a.lice+two@googlemail.com", sub="google-oauth2|123", idp=GOOGLE)
     )
-    # Same answer as a fresh signup, no second account, no second mail.
-    assert again.status_code == 201
-    assert again.json() == {"message": SIGNUP_MESSAGE}
-    assert len(bench.mailer.outbox) == 1
+    assert second == {"login_error": "email_in_use"}
     with bench.sessions() as session:
         assert session.scalars(select(User.email_canonical)).all() == [
             "alice@gmail.com"
         ]
 
 
-def test_unconfirmed_signup_can_be_repeated_three_times(bench: Bench) -> None:
-    body = {"email": "a@example.org", "password": PASSWORD, "display_name": "Al"}
-    for _ in range(5):
-        assert (
-            bench.client.post(bench.url("/auth/signup"), json=body).status_code == 201
-        )
-    # three live tokens at most, so the fourth and fifth signups send nothing
-    assert len(bench.mailer.outbox) == 3
-
-
-def test_signups_per_address_are_limited(bench: Bench) -> None:
+def test_new_accounts_per_address_are_limited(bench: Bench) -> None:
     for i in range(5):
-        body = {
-            "email": f"user{i}@example.org",
-            "password": PASSWORD,
-            "display_name": "Al",
-        }
-        assert (
-            bench.client.post(bench.url("/auth/signup"), json=body).status_code == 201
-        )
-    sixth = bench.client.post(
-        bench.url("/auth/signup"),
-        json={"email": "user5@example.org", "password": PASSWORD, "display_name": "Al"},
-    )
-    assert sixth.status_code == 429
-    assert sixth.json() == {"detail": "too many signups; try tomorrow"}
+        bench.register(f"user{i}@example.org")
+    assert bench.sign_in(person("user5@example.org")) == {
+        "login_error": "too_many_accounts"
+    }
+    # an existing account still signs in from that address
+    assert set(bench.sign_in(person("user0@example.org"))) == {"login_code"}
     bench.clock.now = T0 + timedelta(hours=24, seconds=1)
-    later = bench.client.post(
-        bench.url("/auth/signup"),
-        json={"email": "user5@example.org", "password": PASSWORD, "display_name": "Al"},
-    )
-    assert later.status_code == 201
+    assert set(bench.sign_in(person("user5@example.org"))) == {"login_code"}
 
 
-def test_blocked_domain_cannot_register(tmp_path: Path, datasets_root: Path) -> None:
-    from torchcell.benchmark.security import AccountPolicy
-
+def test_account_policy_limits_who_can_register(
+    tmp_path: Path, datasets_root: Path
+) -> None:
     bench = Bench(
         tmp_path,
         datasets_root,
-        account_policy=AccountPolicy(blocked_domains=frozenset({"mailinator.com"})),
+        account_policy=AccountPolicy(
+            blocked_domains=frozenset({"mailinator.com"}),
+            allowed_idps=frozenset({UIUC}),
+        ),
     )
-    response = bench.client.post(
-        bench.url("/auth/signup"),
-        json={"email": "x@mailinator.com", "password": PASSWORD, "display_name": "Al"},
-    )
-    assert response.status_code == 422
-    assert response.json() == {"detail": "addresses at mailinator.com cannot register"}
+    assert bench.sign_in(person("x@mailinator.com")) == {
+        "login_error": "email_not_allowed"
+    }
+    assert bench.sign_in(person("bob@example.org", idp=GOOGLE)) == {
+        "login_error": "idp_not_allowed"
+    }
+    assert bench.sign_in(person("carol@example.org", idp=None)) == {
+        "login_error": "idp_not_allowed"
+    }
+    assert set(bench.sign_in(person("dana@example.org"))) == {"login_code"}
+    with bench.sessions() as session:
+        assert session.scalars(select(User.email)).all() == ["dana@example.org"]
 
 
-def test_login_failures_and_lockout(bench: Bench) -> None:
-    bench.register()
-    wrong = {"email": "alice@example.org", "password": "wrong-password-x"}
-    unknown = bench.client.post(
-        bench.url("/auth/login"),
-        json={"email": "nobody@example.org", "password": PASSWORD},
+def test_display_name_comes_from_the_claims_and_can_be_edited(bench: Bench) -> None:
+    fragment = bench.sign_in(person("grace.hopper@example.org", name=None))
+    token = bench.exchange(fragment["login_code"]).json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    me = bench.client.get(bench.url("/auth/me"), headers=headers).json()
+    assert (me["display_name"], me["affiliation"]) == ("grace.hopper", None)
+
+    updated = bench.client.post(
+        bench.url("/auth/profile"),
+        headers=headers,
+        json={"display_name": "  Grace Hopper ", "affiliation": "Navy"},
     )
-    assert unknown.status_code == 401
-    assert unknown.json() == {"detail": "invalid email or password"}
-    for _ in range(5):
-        attempt = bench.client.post(bench.url("/auth/login"), json=wrong)
-        assert attempt.status_code == 401
-        assert attempt.json() == {"detail": "invalid email or password"}
-    good = {"email": "alice@example.org", "password": PASSWORD}
-    locked = bench.client.post(bench.url("/auth/login"), json=good)
-    assert locked.status_code == 429
-    assert locked.json() == {"detail": "too many failed sign-ins; try later"}
-    bench.clock.now = T0 + timedelta(minutes=15)
-    assert bench.client.post(bench.url("/auth/login"), json=good).status_code == 200
+    assert updated.status_code == 200
+    assert (updated.json()["display_name"], updated.json()["affiliation"]) == (
+        "Grace Hopper",
+        "Navy",
+    )
+    history = bench.client.get(bench.url(f"/users/{me['user_id']}/submissions")).json()
+    assert history["user"] == {
+        "user_id": me["user_id"],
+        "display_name": "Grace Hopper",
+        "affiliation": "Navy",
+        "identity_provider": UIUC_NAME,
+        "created_at": "2026-10-01T12:00:00Z",
+    }
+    for body, field in [
+        ({"display_name": "G"}, "display_name"),
+        ({"display_name": "Grace", "email": "x@example.org"}, "email"),
+        ({"display_name": "Grace", "approved": True}, "approved"),
+    ]:
+        refused = bench.client.post(
+            bench.url("/auth/profile"), headers=headers, json=body
+        )
+        assert refused.status_code == 422
+        assert refused.json()["detail"][0]["loc"] == ["body", field]
+    assert (
+        bench.client.post(
+            bench.url("/auth/profile"), json={"display_name": "Grace"}
+        ).status_code
+        == 401
+    )
 
 
 def test_routes_that_need_a_session(bench: Bench) -> None:
@@ -620,6 +738,7 @@ def test_board_is_sorted_by_test_score_and_history_is_public(
         "user_id",
         "display_name",
         "affiliation",
+        "identity_provider",
         "created_at",
     }
     assert [s["dataset_slug"] for s in history["submissions"]] == [SLUG]
@@ -677,12 +796,7 @@ def test_disabled_account_loses_access(bench: Bench) -> None:
     )
     assert disabled.json() == {"message": f"user {user_id} updated"}
     assert bench.client.get(bench.url("/auth/me"), headers=headers).status_code == 401
-    login = bench.client.post(
-        bench.url("/auth/login"),
-        json={"email": "alice@example.org", "password": PASSWORD},
-    )
-    assert login.status_code == 403
-    assert login.json() == {"detail": "this account is disabled"}
+    assert bench.sign_in() == {"login_error": "disabled"}
     assert (
         bench.client.post(
             bench.url("/admin/users/nope/disable"), headers=ADMIN
@@ -724,12 +838,16 @@ def test_baselines_use_the_grader_and_skip_the_quota(
     assert {row["display_name"] for row in board} == {"TorchCell baselines"}
     with bench.sessions() as session:
         assert session.scalars(select(User.is_system)).all() == [True]
-    # the system account cannot be signed in to
-    login = bench.client.post(
-        bench.url("/auth/login"),
-        json={"email": "baselines@torchcell.invalid", "password": PASSWORD},
-    )
-    assert login.status_code in (401, 422)
+    # The system account has no sign-in identity, so no sign-in can reach it, and its
+    # address is in the reserved ``.invalid`` domain, which is not a valid email claim.
+    with bench.sessions() as session:
+        system = session.scalars(select(User)).one()
+        assert (system.oidc_issuer, system.oidc_subject) == (None, None)
+    assert bench.sign_in(person("baselines@torchcell.invalid")) == {
+        "login_error": "failed"
+    }
+    with bench.sessions() as session:
+        assert len(session.scalars(select(User)).all()) == 1
     rejected = bench.submit(ADMIN, b"bad", knn, path="/admin/baselines")
     assert rejected.status_code == 422
 
@@ -740,7 +858,8 @@ def test_baselines_use_the_grader_and_skip_the_quota(
 def _env(tmp_path: Path, datasets_root: Path) -> dict[str, str]:
     (tmp_path / "db_password").write_text("p@ss/word\n")
     (tmp_path / "jwt_secret").write_text("k" * 48 + "\n")
-    (tmp_path / "smtp_password").write_text("smtp-secret\n")
+    (tmp_path / "cilogon_secret").write_text("cilogon-secret\n")
+    (tmp_path / "idps.txt").write_text(f"{UIUC}\n\nhttps://orcid.org/oauth/authorize\n")
     (tmp_path / "admin_keys.json").write_text(json.dumps({"ops": "0" * 64}))
     (tmp_path / "blocked.txt").write_text("Mailinator.com\n\ntrashmail.com\n")
     return {
@@ -752,13 +871,12 @@ def _env(tmp_path: Path, datasets_root: Path) -> dict[str, str]:
         "TC_BENCH_SUBMISSIONS_ROOT": str(tmp_path),
         "TC_BENCH_JWT_SECRET_FILE": str(tmp_path / "jwt_secret"),
         "TC_BENCH_ADMIN_KEYS_FILE": str(tmp_path / "admin_keys.json"),
-        "TC_BENCH_ACCOUNT_URL": "https://site.example/benchmark/account",
+        "TC_BENCH_ACCOUNT_URL": ACCOUNT_URL,
+        "TC_BENCH_PUBLIC_URL": "https://bench.example/bench/",
+        "TC_BENCH_CILOGON_CLIENT_ID": CLIENT_ID,
+        "TC_BENCH_CILOGON_CLIENT_SECRET_FILE": str(tmp_path / "cilogon_secret"),
+        "TC_BENCH_ALLOWED_IDPS_FILE": str(tmp_path / "idps.txt"),
         "TC_BENCH_CORS_ORIGINS": "https://site.example, https://mjvolk3.github.io",
-        "TC_BENCH_EMAIL_BACKEND": "smtp",
-        "TC_BENCH_SMTP_HOST": "smtp.example.org",
-        "TC_BENCH_SMTP_USERNAME": "bench",
-        "TC_BENCH_SMTP_PASSWORD_FILE": str(tmp_path / "smtp_password"),
-        "TC_BENCH_SMTP_SENDER": "noreply@example.org",
         "TC_BENCH_BLOCKED_DOMAINS_FILE": str(tmp_path / "blocked.txt"),
         "TC_BENCH_ALLOWED_DOMAIN_SUFFIXES": ".edu, .ac.uk",
         "TC_BENCH_TRUST_PROXY": "1",
@@ -788,32 +906,48 @@ def test_config_from_env(
     assert (config.trust_proxy, config.require_approval) == (True, False)
     assert config.account_policy.blocked_domains == {"mailinator.com", "trashmail.com"}
     assert config.account_policy.allowed_domain_suffixes == (".edu", ".ac.uk")
-    assert config.smtp is not None
-    assert (config.smtp.host, config.smtp.port) == ("smtp.example.org", 587)
-    assert config.smtp.password.get_secret_value() == "smtp-secret"
+    assert config.account_policy.allowed_idps == {
+        UIUC,
+        "https://orcid.org/oauth/authorize",
+    }
+    assert config.oidc.client_id == CLIENT_ID
+    assert config.oidc.client_secret.get_secret_value() == "cilogon-secret"
+    # A service published under a path prefix registers that prefix in its callback,
+    # and the sign-in cookie is scoped to the same prefix.
+    assert config.oidc.redirect_uri == (
+        "https://bench.example/bench/api/v1/auth/callback"
+    )
+    assert config.oidc.cookie_path == "/bench/api/v1/auth"
+    assert config.oidc.secure is True
+    assert config.oidc.metadata_url == CILOGON_METADATA_URL
     assert config.admin_keys.hashes == {"ops": "0" * 64}
-    assert "p@ss" not in repr(config) and "kkkk" not in repr(config)
-    assert isinstance(build_mailer(config), SmtpMailer)
+    for secret in ("p@ss", "kkkk", "cilogon-secret"):
+        assert secret not in repr(config)
 
 
-def test_config_console_backend_and_missing_variable(
+def test_config_optional_and_missing_variables(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, datasets_root: Path
 ) -> None:
     env = _env(tmp_path, datasets_root)
-    console = {k: v for k, v in env.items() if "SMTP" not in k}
-    console["TC_BENCH_EMAIL_BACKEND"] = "console"
-    _set_env(monkeypatch, console)
+    del env["TC_BENCH_ALLOWED_IDPS_FILE"]
+    env["TC_BENCH_OIDC_METADATA_URL"] = "https://test.cilogon.org/.well-known/x"
+    _set_env(monkeypatch, env)
     config = BenchServerConfig.from_env()
-    assert config.smtp is None
-    assert isinstance(build_mailer(config), ConsoleMailer)
+    assert config.account_policy.allowed_idps == frozenset()
+    assert config.oidc.metadata_url == "https://test.cilogon.org/.well-known/x"
 
-    del console["TC_BENCH_JWT_SECRET_FILE"]
-    _set_env(monkeypatch, console)
-    with pytest.raises(KeyError, match="TC_BENCH_JWT_SECRET_FILE"):
-        BenchServerConfig.from_env()
+    for required in (
+        "TC_BENCH_JWT_SECRET_FILE",
+        "TC_BENCH_PUBLIC_URL",
+        "TC_BENCH_CILOGON_CLIENT_ID",
+        "TC_BENCH_CILOGON_CLIENT_SECRET_FILE",
+    ):
+        _set_env(monkeypatch, {k: v for k, v in env.items() if k != required})
+        with pytest.raises(KeyError, match=required):
+            BenchServerConfig.from_env()
 
 
-def test_config_refuses_a_short_secret_and_smtp_without_settings(
+def test_config_refuses_a_short_secret(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, datasets_root: Path
 ) -> None:
     env = _env(tmp_path, datasets_root)
@@ -821,19 +955,6 @@ def test_config_refuses_a_short_secret_and_smtp_without_settings(
     _set_env(monkeypatch, env)
     with pytest.raises(ValidationError, match="jwt secret must be at least 32 bytes"):
         BenchServerConfig.from_env()
-    with pytest.raises(
-        ValidationError, match="email_backend 'smtp' needs the smtp settings"
-    ):
-        BenchServerConfig(
-            database_url=SecretStr("postgresql+psycopg://unused"),
-            datasets_root=datasets_root,
-            submissions_root=tmp_path,
-            jwt_secret=SecretStr("j" * 40),
-            admin_keys=ApiKeys(hashes={}),
-            account_url="https://site.example/account",
-            cors_origins=(),
-            email_backend="smtp",
-        )
 
 
 def test_trust_proxy_reads_the_forwarded_address(
@@ -841,18 +962,13 @@ def test_trust_proxy_reads_the_forwarded_address(
 ) -> None:
     bench = Bench(tmp_path, datasets_root, trust_proxy=True, max_signups_per_address=1)
 
-    def signup(email: str, forwarded: str) -> int:
-        response = bench.client.post(
-            bench.url("/auth/signup"),
-            json={"email": email, "password": PASSWORD, "display_name": "Al"},
-            headers={"X-Forwarded-For": forwarded},
-        )
-        return int(response.status_code)
+    def sign_in(email: str, forwarded: str) -> set[str]:
+        return set(bench.sign_in(person(email), headers={"X-Forwarded-For": forwarded}))
 
-    assert signup("a@example.org", "198.51.100.9, 203.0.113.7") == 201
+    assert sign_in("a@example.org", "198.51.100.9, 203.0.113.7") == {"login_code"}
     # same proxy-appended address, different client-supplied prefix: limited
-    assert signup("b@example.org", "10.0.0.1, 203.0.113.7") == 429
-    assert signup("c@example.org", "203.0.113.8") == 201
+    assert sign_in("b@example.org", "10.0.0.1, 203.0.113.7") == {"login_error"}
+    assert sign_in("c@example.org", "203.0.113.8") == {"login_code"}
 
 
 # ---------------------------------------------------------------------------- cli
@@ -872,9 +988,7 @@ def test_main_gen_admin_key(
 def test_main_runs_uvicorn_on_loopback_by_default(  # test-quality: allow main() reports only through the patched uvicorn.run
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, datasets_root: Path
 ) -> None:
-    env = {k: v for k, v in _env(tmp_path, datasets_root).items() if "SMTP" not in k}
-    env["TC_BENCH_EMAIL_BACKEND"] = "console"
-    _set_env(monkeypatch, env)
+    _set_env(monkeypatch, _env(tmp_path, datasets_root))
     engine = create_engine(f"sqlite:///{tmp_path / 'main.db'}")
     monkeypatch.setattr(app_module, "make_engine", lambda url: engine)
     started: dict[str, Any] = {}
@@ -888,7 +1002,7 @@ def test_main_runs_uvicorn_on_loopback_by_default(  # test-quality: allow main()
     from sqlalchemy import inspect
 
     assert sorted(inspect(engine).get_table_names()) == [
-        "email_tokens",
+        "login_codes",
         "submissions",
         "users",
     ]

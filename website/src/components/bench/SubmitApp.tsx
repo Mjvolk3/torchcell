@@ -240,7 +240,7 @@ function SubmitForm({accessToken}: {accessToken: string}): ReactNode {
 
   if (quotaState.status === 'error' && quotaState.httpStatus === 401) {
     return (
-      <ErrorNotice message="Your session is no longer valid. Log out on the account page and log in again." />
+      <ErrorNotice message="Your session is no longer valid. Sign out on the account page and sign in again." />
     );
   }
 
@@ -449,8 +449,8 @@ function Submit(): ReactNode {
   if (session.accessToken === null) {
     return (
       <div className={styles.empty}>
-        <p className={styles.emptyTitle}>Log in to submit</p>
-        <p>Submitting requires an account with a confirmed email address.</p>
+        <p className={styles.emptyTitle}>Sign in to submit</p>
+        <p>Submitting requires an account. Sign in through CILogon on the account page.</p>
         <Link className="button button--primary" to="/benchmark/account">
           Go to the account page
         </Link>

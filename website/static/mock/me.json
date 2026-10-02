@@ -2,7 +2,8 @@
   "user_id": "mock-user-a",
   "display_name": "Mock User A",
   "affiliation": "Mock Institute",
+  "identity_provider": "Mock University",
   "created_at": "2000-01-01T12:00:00Z",
   "email": "mock-user-a@example.invalid",
-  "email_verified": true
+  "approved": true
 }

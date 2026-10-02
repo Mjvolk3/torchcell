@@ -202,3 +202,93 @@ Each step that changes the shared Radiant VM is listed so it can be reviewed fir
 - **Verification pipeline.** The LLM-driven reproduction of a submission from its issue
   form; today `verify` is a manual admin call.
 - **Password reset** and account deletion routes are not written.
+
+## 2026.10.02 - Sign-in moved to CILogon
+
+Accounts no longer have passwords. A person signs in at CILogon (OpenID Connect) with
+their institution, or with ORCID, GitHub, Google or Microsoft, and the service keeps the
+identity CILogon asserts. This supersedes the email-and-password design above: decision 8
+(a confirmed email address as the first layer), the `mailer.py` and argon2 rows of the
+file table, the SMTP secret in decision 12, the `auth/{signup,verify,login,me}` routes,
+and the open question on password reset, which no longer applies.
+
+### Why CILogon, and why inside the API
+
+- iCloudBiofoundry already signs users in through CILogon, behind an `oauth2-proxy`
+  service whose cookie the backend resolves to an email (`iBioFoundry/ibiofoundry-backend`,
+  `backend/app/deps.py`). That cookie is scoped to its own domain, so it cannot be reused
+  here, and a cookie-based proxy would force the website and the API onto one parent
+  domain.
+- The flow therefore runs inside `tc-bench` with Authlib's Starlette client. No container
+  is added on the borrowed VM, the session stays a bearer token so the static site can be
+  hosted anywhere, and the full CILogon claims are available, `idp` and `idp_name` among
+  them, which the proxy's `/userinfo` does not pass on.
+- Authlib performs every protocol step (discovery, `state`, `nonce`, PKCE S256, the token
+  exchange, and ID token verification against CILogon's keys). The code owned here is the
+  three routes and the account rules.
+
+### What changed
+
+| Path | Change |
+|:--|:--|
+| `torchcell/benchmark/oidc.py` | NEW: `OidcConfig`, `Identity`, `LoginError`, `identity_from_claims`, `build_provider` |
+| `torchcell/benchmark/app.py` | `GET /auth/login`, `GET /auth/callback`, `POST /auth/exchange`, `POST /auth/profile`; signup, verify and password login removed |
+| `torchcell/benchmark/db.py` | `users` keyed by `(oidc_issuer, oidc_subject)`, with `idp`, `idp_name`, `last_login_at`; no password column; `login_codes` replaces `email_tokens` |
+| `torchcell/benchmark/security.py` | password hashing removed; `AccountPolicy.allowed_idps`; `derive_key` |
+| `torchcell/benchmark/mailer.py` | REMOVED, with its test: nothing sends mail |
+| `tests/torchcell/benchmark/_fake_idp.py` | NEW: an in-process OpenID provider with a real RSA key, used through the HTTP transport |
+| `website/src/components/bench/AccountApp.tsx` | one "Sign in with CILogon" link, the code exchange, a public-profile form |
+| `docker-compose.tc-bench.yml`, `Dockerfile.tc-bench`, `docker/tc-bench/*` | `cilogon_client_secret` replaces the SMTP secret; `TC_BENCH_PUBLIC_URL`, `TC_BENCH_CILOGON_CLIENT_ID` |
+
+### Decisions
+
+1. **The account key is `(iss, sub)`.** CILogon's `sub` is stable for one person at one
+   identity provider. The email address is stored and must be present, and its canonical
+   form stays unique.
+2. **A second identity on the same address is refused, not merged.** Merging by email
+   would let whichever provider releases an address claim the account that already holds
+   it.
+3. **The browser never sees the session token in a URL.** The callback redirects to the
+   account page with a one-time code in the URL fragment; the page removes it from the
+   address bar and posts it to `/auth/exchange`. The code is stored as its sha256, works
+   once, and expires after two minutes.
+4. **The sign-in state lives in a signed cookie, scoped to the sign-in routes.** It holds
+   the `state`, `nonce` and PKCE verifier for at most ten minutes, is `HttpOnly`,
+   `SameSite=Lax`, `Secure` when the callback is HTTPS, and is signed with a key derived
+   from the session secret. A callback that arrives in a browser without that cookie is
+   refused.
+5. **A refused sign-in carries a code, never provider text.** `LoginError` has nine
+   values; the account page maps each to a sentence.
+6. **Policy levers kept from the first design:** new accounts per client address per
+   24 hours, admin approval, blocked or required email domains. New:
+   `TC_BENCH_ALLOWED_IDPS_FILE` restricts sign-in to listed providers.
+
+### Verification
+
+- `pytest tests/torchcell/benchmark`: 172 passed. Against the fake provider the tests
+  cover the redirect parameters, a forged state, a callback in another browser, a
+  replayed callback, an ID token with the wrong nonce, audience, issuer, expiry or
+  signature, a cancelled sign-in, a provider outage at discovery and at the token
+  endpoint, a missing or malformed email, the policy refusals, and code reuse and expiry.
+- `ruff`, strict `mypy` (27 files), `scripts/check_paired_tests.py` and
+  `scripts/test_quality_check.py` are clean.
+- A browser run in headless Chromium (19 of 19 checks): a non-mock build of the site, the
+  service on a loopback port with the fake provider's authorization endpoint served by
+  the same process. Sign in, the address bar without a code afterwards, the token in
+  `sessionStorage` only, reload, profile edit, the submit page accepting the session,
+  sign out, and a refused sign-in with its reason.
+- Checked against the real service: CILogon's discovery document lists PKCE `S256`,
+  `RS256`, the four scopes requested, and the `idp` and `idp_name` claims.
+- Not run: a sign-in against CILogon itself. That needs a registered client, which needs
+  the public callback URL, which needs the hosting decision.
+
+### Before it can go live
+
+1. Decide the public URL of the API (`TC_BENCH_PUBLIC_URL`).
+2. Register a client at <https://cilogon.org/oauth2/register> with the callback
+   `<public URL>/api/v1/auth/callback` and the scopes `openid`, `email`, `profile`,
+   `org.cilogon.userinfo`. CILogon approves registrations by hand.
+3. Put the client id in `.env.tc-bench` and the client secret in the
+   `cilogon_client_secret` file, then follow the runbook above.
+4. Decide whether `TC_BENCH_ALLOWED_IDPS_FILE` restricts providers and whether
+   `TC_BENCH_REQUIRE_APPROVAL` is on.

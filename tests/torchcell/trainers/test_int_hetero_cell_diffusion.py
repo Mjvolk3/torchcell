@@ -30,15 +30,18 @@ import networkx as nx
 import pytest
 import torch
 from sortedcontainers import SortedDict
+from torch import nn
 from torch_geometric.data import Batch, HeteroData
 
 from tests.torchcell.trainers.test_int_hetero_cell import (
     TASKS,
     Z_P,
+    P,
     Y,
     _attach,
     _column,
     _coo,
+    _DiffusionSquaredError,
     _Fixed,
     _Log,
     _make,
@@ -48,6 +51,7 @@ from tests.torchcell.trainers.test_int_hetero_cell import (
 )
 from torchcell.graph.graph import GeneGraph, GeneMultiGraph
 from torchcell.losses.diffusion_loss import DiffusionLoss
+from torchcell.losses.logcosh import LogCoshLoss
 from torchcell.models.hetero_cell_bipartite_dango_diff_gi import GeneInteractionDiff
 from torchcell.sequence import GeneSet
 from torchcell.trainers.int_hetero_cell import DiffusionRegressionTask
@@ -127,7 +131,7 @@ def test_diffusion_eval_stages_score_mse_and_never_call_the_loss(
     model units, not ``loss_func`` (never called), logged as ``{stage}/inference_mse``
     (a float) and ``{stage}/loss``. Only validation keeps it for the epoch average.
     """
-    loss_func = _SquaredError()
+    loss_func = _DiffusionSquaredError()
     task = _make(DiffusionRegressionTask, loss_func=loss_func)
     log = _record(monkeypatch, task)
     loss, _, _ = task._shared_step(_coo(), 0, stage)
@@ -146,9 +150,8 @@ def test_diffusion_train_components_log_like_every_other_loss(
     """The diffusion task logs loss components through the shared logger: a
     one-element tensor as its value, a [1, 2] tensor element by element (``vec_0``,
     ``vec_1``), a plain number (``count`` 3) as is, an empty tensor not at all. It
-    used to log the vector's mean 1.5 under one key and drop the number. An unnamed
-    loss on a model without ``z_p`` is called ``(pred, target)``, not with a third
-    ``None``.
+    used to log the vector's mean 1.5 under one key and drop the number. The
+    ``DiffusionLoss`` is called ``(pred, target, z_p)`` with no epoch.
     """
     components = {
         "one": torch.tensor(0.1),
@@ -156,18 +159,19 @@ def test_diffusion_train_components_log_like_every_other_loss(
         "empty": torch.tensor([]),
         "count": 3,
     }
-    loss_func = _SquaredError("pair", components)
-    task = _make(DiffusionRegressionTask, _Fixed(z_p=None), loss_func=loss_func)
+    loss_func = _DiffusionSquaredError("pair", components)
+    task = _make(DiffusionRegressionTask, loss_func=loss_func)
     log = _record(monkeypatch, task)
     task._shared_step(_coo(), 0, "train")
     args, kwargs = loss_func.calls[0]
-    assert (len(args), kwargs) == (2, {})
+    assert ([a.tolist() for a in args], kwargs) == ([_column(P), _column(Y), Z_P], {})
     assert log.names == [
         "train/one",
         "train/vec_0",
         "train/vec_1",
         "train/count",
         "train/loss",
+        "train/z_p_norm",
     ]
     assert log.values == pytest.approx(
         {
@@ -176,6 +180,7 @@ def test_diffusion_train_components_log_like_every_other_loss(
             "train/vec_1": 2.0,
             "train/count": 3.0,
             "train/loss": 2.0,
+            "train/z_p_norm": 5.0,
         }
     )
 
@@ -192,6 +197,27 @@ def test_diffusion_train_requires_a_loss_only_on_the_train_stage() -> None:
         task._shared_step(_coo(), 0, "train")
     loss, _, _ = task._shared_step(_coo(), 0, "val")
     assert loss.item() == 2.0
+
+
+@pytest.mark.parametrize(
+    ("loss_func", "name"),
+    [(LogCoshLoss(reduction="mean"), "LogCoshLoss"), (nn.MSELoss(), "MSELoss")],
+)
+def test_a_non_diffusion_loss_is_refused_at_construction(
+    loss_func: nn.Module, name: str
+) -> None:
+    """The 006 diffusion script also offers ``loss: logcosh`` (and ``icloss``); with
+    those the task would train on the model's all-zero training placeholders (on
+    ``main`` ``LogCoshLoss`` raised ``TypeError`` at the first step). Any loss that is
+    not a ``DiffusionLoss`` is refused by name when the task is built.
+    """
+    message = (
+        f"DiffusionRegressionTask trains with a DiffusionLoss, got {name}: in "
+        "training mode the diffusion model returns all-zero placeholder predictions, "
+        "so any other loss would train on them"
+    )
+    with pytest.raises(ValueError, match="^" + re.escape(message) + "$"):
+        _make(DiffusionRegressionTask, loss_func=loss_func)
 
 
 def test_diffusion_loss_on_a_model_without_z_p_is_refused_by_name(
@@ -415,7 +441,11 @@ def test_both_tasks_share_one_step_except_the_stage_loss(
         task = _make(
             cls,
             _Fixed(graph_reg_loss=torch.tensor(0.25)),
-            loss_func=_SquaredError("pair", components),
+            loss_func=(
+                _DiffusionSquaredError("pair", components)
+                if cls is DiffusionRegressionTask
+                else _SquaredError("pair", components)
+            ),
         )
         log = _record(monkeypatch, task)
         loss, _, _ = task._shared_step(_coo(), 0, stage)

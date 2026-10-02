@@ -94,10 +94,14 @@ def normalize_accumulation_schedule(
         is_int = isinstance(key, int) and not isinstance(key, bool) and key >= 0
         is_digits = isinstance(key, str) and re.fullmatch(r"[0-9]+", key) is not None
         if not (is_int or is_digits):
-            raise ValueError(
-                f"grad_accumulation_schedule key {key!r} is not an integer epoch; "
-                "a YAML flow mapping needs a space after the colon: write {0: 16}, "
+            hint = (
+                "; a YAML flow mapping needs a space after the colon: write {0: 16}, "
                 "not {0:16}"
+                if isinstance(key, str) and ":" in key
+                else ""
+            )
+            raise ValueError(
+                f"grad_accumulation_schedule key {key!r} is not an integer epoch{hint}"
             )
         if isinstance(steps, bool) or not isinstance(steps, int) or steps < 1:
             raise ValueError(
@@ -264,13 +268,16 @@ class RegressionTask(L.LightningModule):
 
     def _batch_device(self, batch: HeteroData) -> torch.device:
         """The device of the batch's first gene tensor, else of the model."""
+        device: torch.device
         if hasattr(batch["gene"], "x"):
-            return cast(torch.device, batch["gene"].x.device)
-        if hasattr(batch["gene"], "perturbation_indices"):
-            return cast(torch.device, batch["gene"].perturbation_indices.device)
-        if hasattr(batch["gene"], "phenotype_values"):
-            return cast(torch.device, batch["gene"].phenotype_values.device)
-        return next(self.model.parameters()).device
+            device = batch["gene"].x.device
+        elif hasattr(batch["gene"], "perturbation_indices"):
+            device = batch["gene"].perturbation_indices.device
+        elif hasattr(batch["gene"], "phenotype_values"):
+            device = batch["gene"].phenotype_values.device
+        else:
+            device = next(self.model.parameters()).device
+        return device
 
     def _place_cell_graph(self, batch: HeteroData) -> torch.device:
         """Move the cell graph to the batch's device (cached) and return the device."""
@@ -369,8 +376,10 @@ class RegressionTask(L.LightningModule):
             self._log_loss_components(
                 stage, output[1] if len(output) > 1 else {}, batch_size
             )
-            return cast(torch.Tensor, output[0])
-        return cast(torch.Tensor, output)
+            loss: torch.Tensor = output[0]
+            return loss
+        bare: torch.Tensor = output
+        return bare
 
     def _shared_step(
         self, batch: HeteroData, batch_idx: int, stage: str = "train"
@@ -636,7 +645,7 @@ class RegressionTask(L.LightningModule):
         A metric error propagates. An epoch with no update logs what torchmetrics
         computes for it (NaN, with its warning).
         """
-        computed = cast(dict[str, torch.Tensor], collection.compute())
+        computed: dict[str, torch.Tensor] = collection.compute()
         for name, value in computed.items():
             self.log(name, value, sync_dist=True)
         collection.reset()
@@ -783,11 +792,20 @@ class RegressionTask(L.LightningModule):
         A ReduceLROnPlateau scheduler is stepped here, once per validation epoch
         outside the sanity check, on ``PLATEAU_MONITOR`` (``val/gene_interaction/MSE``)
         as just computed: validation runs inside the training epoch, so this is where
-        the monitor is fresh, and an epoch without validation does not step it.
+        the monitor is fresh, and an epoch without validation does not step it. A
+        validation epoch whose collection received no rows is refused rather than
+        stepped on NaN.
         """
+        val_rows = self.val_metrics["MSE"].update_count
         computed = self._log_metrics(self.val_metrics)
         sch = self._active_scheduler()
         if not self.trainer.sanity_checking and isinstance(sch, ReduceLROnPlateau):
+            if val_rows == 0:
+                raise ValueError(
+                    f"ReduceLROnPlateau monitors {PLATEAU_MONITOR}, which received no "
+                    "validation rows this epoch (every target NaN or no batch); "
+                    "refusing to step it on NaN"
+                )
             sch.step(computed[PLATEAU_MONITOR])
         self._log_metrics(self.val_transformed_metrics)
 
@@ -868,7 +886,9 @@ class RegressionTask(L.LightningModule):
 class DiffusionRegressionTask(RegressionTask):
     """``RegressionTask`` for a diffusion decoder (006 ``hetero_cell_bipartite_dango_diff_gi``).
 
-    Two differences, both from the model's contract: in training mode
+    ``loss_func`` must be a ``DiffusionLoss`` (or None for evaluation only): any other
+    loss would train on the placeholders. Two differences, both from the model's
+    contract: in training mode
     ``GeneInteractionDiff`` returns all-zero placeholders instead of predictions (its
     diffusion loss trains the decoder from the targets and ``z_p``), so train-stage
     predictions are not scored; and validation and test score the MSE of the sampled
@@ -913,6 +933,13 @@ class DiffusionRegressionTask(RegressionTask):
             inverse_transform=inverse_transform,
             execution_mode=execution_mode,
         )
+        if loss_func is not None and not isinstance(loss_func, DiffusionLoss):
+            raise ValueError(
+                f"DiffusionRegressionTask trains with a DiffusionLoss, got "
+                f"{type(loss_func).__name__}: in training mode the diffusion model "
+                "returns all-zero placeholder predictions, so any other loss would "
+                "train on them"
+            )
         self.train_diffusion_loss: list[torch.Tensor] = []
         self.val_mse_during_inference: list[torch.Tensor] = []
 

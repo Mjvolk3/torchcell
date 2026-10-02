@@ -51,6 +51,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torch_geometric.data import Batch, HeteroData
 
+from torchcell.losses.diffusion_loss import DiffusionLoss
 from torchcell.losses.isomorphic_cell_loss import ICLoss
 from torchcell.losses.logcosh import LogCoshLoss
 from torchcell.losses.mle_dist_supcr import MleDistSupCR
@@ -224,6 +225,23 @@ class _SquaredError(nn.Module):
         return (loss, self.components)
 
 
+class _DiffusionSquaredError(DiffusionLoss):
+    """``DiffusionLoss`` by type only (the loss ``DiffusionRegressionTask`` requires):
+    the squared error of ``_SquaredError`` with its modes, every call recorded.
+    """
+
+    def __init__(self, mode: str = "bare", components: Any = None) -> None:
+        nn.Module.__init__(self)
+        self.inner = _SquaredError(mode, components)
+
+    @property
+    def calls(self) -> list[tuple[tuple[Any, ...], dict[str, Any]]]:
+        return self.inner.calls
+
+    def forward(self, *args: Any, **kwargs: Any) -> Any:
+        return self.inner(*args, **kwargs)
+
+
 class _ScriptedPointDist(PointDistGraphReg):
     """``PointDistGraphReg`` by type only: returns ``(0.5, components)``, records calls."""
 
@@ -297,7 +315,11 @@ def _make(cls: Any, model: nn.Module | None = None, **overrides: Any) -> Any:
     kwargs: dict[str, Any] = dict(
         optimizer_config={"type": "AdamW", "learning_rate": 1e-2},
         lr_scheduler_config=None,
-        loss_func=_SquaredError(),
+        loss_func=(
+            _DiffusionSquaredError()
+            if cls is DiffusionRegressionTask
+            else _SquaredError()
+        ),
         device="cpu",
     )
     kwargs.update(overrides)
@@ -1487,13 +1509,18 @@ def test_train_epoch_end_logs_resets_plots_and_steps_the_scheduler(
 def test_plateau_scheduler_steps_on_val_mse_at_validation_end_only(
     cls: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Any, no_cuda: None
 ) -> None:
-    """A ``ReduceLROnPlateau`` is stepped once per validation epoch on the val MSE just
-    computed, (1 + 4 + 1) / 3 = 2.0; never during the sanity check, and never at the
-    train epoch end, which used to call ``step()`` with no metric and raised
-    ``TypeError`` at the first epoch end (issue #614). One step sets ``best`` to 2.0
-    and leaves the rate at 1.0.
+    """A ``ReduceLROnPlateau`` is stepped once per validation epoch on the
+    ORIGINAL-unit val MSE just computed; never during the sanity check, and never at
+    the train epoch end, which used to call ``step()`` with no metric and raised
+    ``TypeError`` at the first epoch end (issue #614).
+
+    With the real 006 inverse (v -> 2 v + 2) the two MSEs differ: normalized targets
+    [0, 1.5, -1.5] against p = [1, 3, -2] give the transformed MSE 7 / 6, and the
+    originals [2, 5, -1] against the inverted [4, 8, -2] give 14 / 3, the value that
+    reaches ``step``. One step sets ``best`` to 14 / 3 and leaves the rate at 1.0.
     """
-    task = _make(cls)
+    task = _make(cls, inverse_transform=_normalizer())
+    batch = _coo([0.0, 1.5, -1.5], original=Y)
     _attach(task, tmp_path)
     _record(monkeypatch, task)
     plateau = ReduceLROnPlateau(
@@ -1508,20 +1535,50 @@ def test_plateau_scheduler_steps_on_val_mse_at_validation_end_only(
 
     monkeypatch.setattr(plateau, "step", step)
     monkeypatch.setattr(task, "lr_schedulers", lambda: [plateau])
-    task._shared_step(_coo(), 0, "val")
+    task._shared_step(batch, 0, "val")
     task.trainer.state.stage = RunningStage.SANITY_CHECKING
     task.on_validation_epoch_end()
     assert seen == []
     task.trainer.state.stage = RunningStage.VALIDATING
-    task._shared_step(_coo(), 0, "val")
+    task._shared_step(batch, 0, "val")
     task.on_validation_epoch_end()
-    assert seen == [2.0]
+    assert seen == [pytest.approx(14 / 3, rel=1e-6)]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)  # the empty train collections
         task.on_train_epoch_end()
-    assert seen == [2.0]
-    assert plateau.best == 2.0
+    assert seen == [pytest.approx(14 / 3, rel=1e-6)]
+    assert plateau.best == pytest.approx(14 / 3, rel=1e-6)
     assert plateau.optimizer.param_groups[0]["lr"] == 1.0
+
+
+@pytest.mark.parametrize("cls", TASKS)
+def test_plateau_on_a_validation_epoch_with_no_rows_is_refused(
+    cls: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    """A validation epoch whose targets are all NaN updates no collection, so its MSE
+    is NaN; stepping the plateau scheduler on it would count a bad epoch. It is
+    refused by name instead; without a plateau scheduler the same epoch just logs
+    NaN.
+    """
+    task = _make(cls)
+    _attach(task, tmp_path)
+    _record(monkeypatch, task)
+    plateau = ReduceLROnPlateau(torch.optim.SGD(task.parameters(), lr=1.0))
+    monkeypatch.setattr(task, "lr_schedulers", lambda: plateau)
+    task._shared_step(_coo([float("nan")] * 3), 0, "val")
+    task.trainer.state.stage = RunningStage.VALIDATING
+    message = (
+        "ReduceLROnPlateau monitors val/gene_interaction/MSE, which received no "
+        "validation rows this epoch (every target NaN or no batch); refusing to step "
+        "it on NaN"
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        with pytest.raises(ValueError, match="^" + re.escape(message) + "$"):
+            task.on_validation_epoch_end()
+        monkeypatch.setattr(task, "lr_schedulers", lambda: None)
+        task.on_validation_epoch_end()
+    assert plateau.last_epoch == 0
 
 
 @pytest.mark.parametrize("cls", TASKS)
@@ -1772,9 +1829,9 @@ def test_the_five_corrected_006_configs_load_an_integer_schedule(
     assert capsys.readouterr().out == expected * 2
 
 
-NOT_AN_EPOCH = (
-    "is not an integer epoch; a YAML flow mapping needs a space after the colon: "
-    "write {0: 16}, not {0:16}"
+NOT_AN_EPOCH = "is not an integer epoch"
+YAML_HINT = (
+    "; a YAML flow mapping needs a space after the colon: write {0: 16}, not {0:16}"
 )
 NOT_A_STEP_COUNT = "is not a positive integer number of accumulation steps"
 
@@ -1783,8 +1840,14 @@ NOT_A_STEP_COUNT = "is not a positive integer number of accumulation steps"
 @pytest.mark.parametrize(
     ("schedule", "message"),
     [
-        ({"0:16": None}, f"grad_accumulation_schedule key '0:16' {NOT_AN_EPOCH}"),
-        ({"0:8": None}, f"grad_accumulation_schedule key '0:8' {NOT_AN_EPOCH}"),
+        (
+            {"0:16": None},
+            f"grad_accumulation_schedule key '0:16' {NOT_AN_EPOCH}{YAML_HINT}",
+        ),
+        (
+            {"0:8": None},
+            f"grad_accumulation_schedule key '0:8' {NOT_AN_EPOCH}{YAML_HINT}",
+        ),
         ({"1.5": 2}, f"grad_accumulation_schedule key '1.5' {NOT_AN_EPOCH}"),
         ({-1: 2}, f"grad_accumulation_schedule key -1 {NOT_AN_EPOCH}"),
         ({True: 2}, f"grad_accumulation_schedule key True {NOT_AN_EPOCH}"),
@@ -1820,7 +1883,9 @@ def test_no_scheduler_returns_the_bare_optimizer_over_model_and_loss_parameters(
     ``learning_rate`` (1e-2) and ``weight_decay`` 1e-3 passed through, one parameter
     group holding the task's parameters, which include a learnable loss parameter.
     """
-    loss_func = _SquaredError()
+    loss_func = (
+        _DiffusionSquaredError() if cls is DiffusionRegressionTask else _SquaredError()
+    )
     w = nn.Parameter(torch.ones(()))
     loss_func.register_parameter("w", w)
     model = _Fixed()
@@ -1983,12 +2048,15 @@ def test_plot_samples_hands_concatenated_columns_latents_and_box_plot(
     true [2, 5, -1] and predictions [1, 3, -2], lifted to columns.
 
     ``Visualization(default_root_dir, max_points=1000)`` gets ``(predictions, true,
-    {"z_p": Z}, loss name, epoch 3, None, stage=...)``. The oversmoothing log is the
+    {"z_p": Z}, loss class name, epoch 3, None, stage=...)``. The oversmoothing log is the
     centered Frobenius norm of Z: mean (3, 4), deviations (0, 0), (-3, -4), (3, 4),
     sqrt 50 (numpy). The box plot gets the first columns.
     """
     visual, logged = _record_plots(monkeypatch)
-    task = _make(cls, loss_func=LogCoshLoss())
+    loss_func = (
+        _DiffusionSquaredError() if cls is DiffusionRegressionTask else LogCoshLoss()
+    )
+    task = _make(cls, loss_func=loss_func)
     _attach(task, tmp_path, epoch=3)
     samples = {
         "true_values": [torch.tensor([2.0, 5.0]), torch.tensor([-1.0])],
@@ -2002,7 +2070,7 @@ def test_plot_samples_hands_concatenated_columns_latents_and_box_plot(
     assert predictions.tolist() == _column(P) and true_values.tolist() == _column(Y)
     assert list(latents) == ["z_p"] and latents["z_p"].tolist() == Z_P
     assert (loss_name, epoch, stamp, kwargs) == (
-        "LogCoshLoss",
+        "_DiffusionSquaredError" if cls is DiffusionRegressionTask else "LogCoshLoss",
         3,
         None,
         {"stage": "val_sample"},

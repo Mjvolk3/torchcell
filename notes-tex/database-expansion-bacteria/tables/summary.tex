@@ -5,67 +5,66 @@
 \caption[]{Summary of the fifty, split at the tranche-1 line. \emph{Tr. 1} and
 \emph{Tr. 2} count rows; \emph{Genotypes}, \emph{Instances} and \emph{Meas.} sum the row
 axes over all fifty and are lower bounds, since a row with no count contributes nothing.
-The fifty name 52 joins, 49 of them to a dataset already built.}
+The fifty name 61 joins, 50 of them to a dataset already built.}
 \label{tab:bsummary}
 \begin{tabular}{@{}l r r r r r@{}}
 \toprule
  & Tr. 1 & Tr. 2 & Genotypes & Instances & Meas. \\
 \midrule
 \multicolumn{6}{@{}l}{\emph{By host}}\\
-E. coli & 12 & 23 & 2,968,285 & $3.0\times 10^{7}$ & $3.0\times 10^{8}$ \\
-P. putida & 8 & 7 & 214,741 & $2.4\times 10^{6}$ & $6.4\times 10^{6}$ \\
+E. coli & 11 & 24 & 2,999,637 & $3.0\times 10^{7}$ & $3.0\times 10^{8}$ \\
+P. putida & 9 & 6 & 25,542 & $2.4\times 10^{6}$ & $6.4\times 10^{6}$ \\
 \midrule
 \multicolumn{6}{@{}l}{\emph{By tier}}\\
-tier 1 & 8 & 9 & 2,666,704 & $3.1\times 10^{7}$ & $3.0\times 10^{8}$ \\
-tier 2 & 2 & 6 & 311,385 & $1.2\times 10^{6}$ & $1.4\times 10^{6}$ \\
-tier 3 & 3 & 7 & 204,653 & $4.2\times 10^{4}$ & $7.1\times 10^{6}$ \\
-tier 4 & 7 & 8 & 284 & $1.9\times 10^{3}$ & $3.9\times 10^{6}$ \\
+tier 1 & 7 & 12 & 2,707,059 & $3.1\times 10^{7}$ & $3.0\times 10^{8}$ \\
+tier 2 & 2 & 6 & 306,616 & $1.2\times 10^{6}$ & $1.3\times 10^{6}$ \\
+tier 3 & 3 & 4 & 11,120 & $1.4\times 10^{4}$ & $7.1\times 10^{6}$ \\
+tier 4 & 8 & 8 & 384 & $2.4\times 10^{3}$ & $3.9\times 10^{6}$ \\
 \midrule
 \multicolumn{6}{@{}l}{\emph{By class}}\\
-Aggregation / support & 0 & 3 & 17,022 & $1.7\times 10^{4}$ & $6.6\times 10^{4}$ \\
-CRISPR library screen & 1 & 5 & 303,848 & $1.2\times 10^{6}$ & $1.7\times 10^{6}$ \\
-Combinatorial design & 1 & 0 & 24 & 84 & 168 \\
+Aggregation / support & 0 & 1 & 8,888 & $8.9\times 10^{3}$ & $3.6\times 10^{4}$ \\
+CRISPR library screen & 0 & 7 & 330,848 & $1.3\times 10^{6}$ & $1.7\times 10^{6}$ \\
+Combinatorial design & 1 & 1 & 104 & 161 & 322 \\
 Fitness / chemical genomics & 2 & 2 & 15,977 & $1.6\times 10^{6}$ & $9.8\times 10^{6}$ \\
-Genetic interaction & 0 & 3 & 918,141 & $2.9\times 10^{5}$ & $2.9\times 10^{5}$ \\
-Metabolome / flux & 1 & 1 & 3,896 & $3.4\times 10^{4}$ & $2.6\times 10^{8}$ \\
-Modality / backbone & 0 & 1 & 185,401 & $1.9\times 10^{4}$ & $1.9\times 10^{4}$ \\
-Multi-omics campaign & 1 & 3 & 37 & 440 & $1.5\times 10^{6}$ \\
-Production campaign & 4 & 1 & 694 & $3.1\times 10^{3}$ & $2.2\times 10^{6}$ \\
-Proteome & 0 & 3 & 7 & 134 & $3.1\times 10^{5}$ \\
+Genetic interaction & 0 & 4 & 930,545 & $3.5\times 10^{5}$ & $3.5\times 10^{5}$ \\
+Metabolome / flux & 1 & 2 & 3,899 & $3.4\times 10^{4}$ & $2.6\times 10^{8}$ \\
+Multi-omics campaign & 1 & 2 & 29 & 361 & $1.5\times 10^{6}$ \\
+Production campaign & 6 & 2 & 732 & $3.5\times 10^{3}$ & $2.2\times 10^{6}$ \\
+Proteome & 0 & 2 & 6 & 132 & $3.1\times 10^{5}$ \\
 Tolerance / robustness & 3 & 0 & 100 & 271 & 271 \\
 Transcriptome & 2 & 0 & 93 & $1.4\times 10^{3}$ & $6.2\times 10^{6}$ \\
-Translation / turnover & 0 & 2 & 2 & 15 & $4.8\times 10^{4}$ \\
-Transposon fitness & 5 & 6 & 1,737,784 & $2.9\times 10^{7}$ & $2.9\times 10^{7}$ \\
+Translation / turnover & 0 & 1 & 1 & 13 & $4.2\times 10^{4}$ \\
+Transposon fitness & 4 & 6 & 1,733,957 & $2.9\times 10^{7}$ & $2.9\times 10^{7}$ \\
 \midrule
 \multicolumn{6}{@{}l}{\emph{By sequence basis}}\\
-K-12+guide & 1 & 5 & 303,848 & $1.2\times 10^{6}$ & $1.7\times 10^{6}$ \\
-K-12+transposon & 4 & 1 & 1,709,208 & $2.7\times 10^{7}$ & $2.7\times 10^{7}$ \\
-K-12-KO & 5 & 3 & 19,932 & $1.7\times 10^{6}$ & $2.7\times 10^{8}$ \\
+K-12+guide & 0 & 7 & 330,848 & $1.3\times 10^{6}$ & $1.7\times 10^{6}$ \\
+K-12+transposon & 3 & 2 & 1,709,208 & $2.7\times 10^{7}$ & $2.7\times 10^{7}$ \\
+K-12-KO & 5 & 4 & 19,935 & $1.7\times 10^{6}$ & $2.7\times 10^{8}$ \\
 K-12-KO x KO & 0 & 3 & 918,141 & $2.9\times 10^{5}$ & $2.9\times 10^{5}$ \\
+K-12-KO+guide & 0 & 1 & 12,404 & $6.4\times 10^{4}$ & $6.4\times 10^{4}$ \\
 KT2440+guide & 2 & 0 & 492 & $1.5\times 10^{3}$ & $2.1\times 10^{6}$ \\
 KT2440+promoter & 0 & 1 & 12 & 36 & $7.2\times 10^{4}$ \\
-KT2440+transposon & 1 & 6 & 213,977 & $2.4\times 10^{6}$ & $2.4\times 10^{6}$ \\
-engineered-chassis & 2 & 2 & 288 & $2.1\times 10^{3}$ & $2.2\times 10^{5}$ \\
+KT2440+transposon & 1 & 4 & 24,749 & $2.4\times 10^{6}$ & $2.4\times 10^{6}$ \\
+engineered-chassis & 4 & 2 & 317 & $2.4\times 10^{3}$ & $2.1\times 10^{5}$ \\
 engineered-chassis+guide & 1 & 0 & 24 & 84 & 168 \\
-evolved-WGS & 2 & 0 & 53 & 177 & 177 \\
-reference-only & 2 & 9 & 17,051 & $1.8\times 10^{4}$ & $3.6\times 10^{6}$ \\
+evolved-WGS & 2 & 2 & 136 & 264 & $3.5\times 10^{4}$ \\
+reference-only & 2 & 4 & 8,913 & $9.7\times 10^{3}$ & $3.5\times 10^{6}$ \\
 \midrule
 \multicolumn{6}{@{}l}{\emph{Other attributes}}\\
-carries a time axis & 7 & 3 & 4,086 & $1.2\times 10^{5}$ & $9.7\times 10^{6}$ \\
-mirrors a built yeast dataset & 20 & 29 & 3,183,026 & $3.2\times 10^{7}$ & $3.1\times 10^{8}$ \\
-needs a phenotype class the substrate lacks & 0 & 1 & 0 & 297 & $2.3\times 10^{4}$ \\
-has a join to a built dataset & 20 & 29 & 3,183,026 & $3.2\times 10^{7}$ & $3.1\times 10^{8}$ \\
-figures sourced this pass & 20 & 28 & 3,027,610 & $3.2\times 10^{7}$ & $3.1\times 10^{8}$ \\
-figures from recall, to confirm & 0 & 2 & 155,416 & $1.6\times 10^{5}$ & $1.6\times 10^{5}$ \\
-data location confirmed live & 15 & 15 & 813,316 & $4.8\times 10^{6}$ & $2.8\times 10^{8}$ \\
-per-record values not released & 1 & 3 & 302,765 & $3.0\times 10^{5}$ & $3.0\times 10^{5}$ \\
-a corpus, not net new until split & 2 & 3 & 21,771 & $1.6\times 10^{6}$ & $3.4\times 10^{6}$ \\
-instances a reported count & 6 & 8 & 757,736 & $1.8\times 10^{6}$ & $2.7\times 10^{8}$ \\
-instances a product of the axes & 12 & 16 & 1,584,415 & $3.0\times 10^{7}$ & $3.3\times 10^{7}$ \\
-instances an estimate & 2 & 6 & 840,875 & $2.5\times 10^{5}$ & $3.7\times 10^{5}$ \\
-dimensionality reported, not estimated & 16 & 24 & 2,958,417 & $3.2\times 10^{7}$ & $3.0\times 10^{8}$ \\
+carries a time axis & 9 & 5 & 31,118 & $1.4\times 10^{5}$ & $9.7\times 10^{6}$ \\
+mirrors a built yeast dataset & 20 & 30 & 3,025,179 & $3.2\times 10^{7}$ & $3.1\times 10^{8}$ \\
+has a join to a built dataset & 20 & 30 & 3,025,179 & $3.2\times 10^{7}$ & $3.1\times 10^{8}$ \\
+figures sourced this pass & 20 & 29 & 2,869,764 & $3.2\times 10^{7}$ & $3.1\times 10^{8}$ \\
+figures from recall, to confirm & 0 & 1 & 155,415 & $1.6\times 10^{5}$ & $1.6\times 10^{5}$ \\
+data location confirmed live & 14 & 20 & 850,417 & $4.9\times 10^{6}$ & $2.8\times 10^{8}$ \\
+per-record values not released & 2 & 4 & 302,794 & $3.0\times 10^{5}$ & $3.0\times 10^{5}$ \\
+a corpus, not net new until split & 2 & 1 & 13,637 & $1.6\times 10^{6}$ & $3.4\times 10^{6}$ \\
+instances a reported count & 7 & 10 & 762,101 & $1.9\times 10^{6}$ & $2.7\times 10^{8}$ \\
+instances a product of the axes & 11 & 16 & 1,607,605 & $3.0\times 10^{7}$ & $3.3\times 10^{7}$ \\
+instances an estimate & 2 & 4 & 655,473 & $2.3\times 10^{5}$ & $3.4\times 10^{5}$ \\
+dimensionality reported, not estimated & 16 & 26 & 2,808,705 & $3.2\times 10^{7}$ & $3.0\times 10^{8}$ \\
 \midrule
-Total & 20 & 30 & 3,183,026 & $3.2\times 10^{7}$ & $3.1\times 10^{8}$ \\
+Total & 20 & 30 & 3,025,179 & $3.2\times 10^{7}$ & $3.1\times 10^{8}$ \\
 \bottomrule
 \end{tabular}
 \end{table}

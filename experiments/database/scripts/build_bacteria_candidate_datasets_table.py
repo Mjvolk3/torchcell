@@ -127,6 +127,10 @@ Klass = Literal[
     "Multi-omics campaign",
     "Modality / backbone",
     "Aggregation / support",
+    # Single-cell shape under perturbation, the bacterial counterpart of the built
+    # yeast CalMorph data. Separate from Transcriptome because the measured unit is a
+    # segmented cell rather than a culture.
+    "Morphology / imaging",
 ]
 
 # How the total genomic content of one strain would be reconstructed. The same hard
@@ -146,6 +150,15 @@ SeqBasis = Literal[
     "K-12-KO x KO",  # a constructed double mutant; both loci cataloged
     "K-12+transposon",  # mapped insertion site, barcoded
     "K-12+guide",  # genome unedited; the perturbation is a cassette plus a guide
+    # A cataloged deletion carrying a guide plasmid, which is the basis a measured
+    # gene PAIR sits on when one member is deleted and the other knocked down. The
+    # two halves resolve to different namespaces, a Keio allele and a 20-nt spacer,
+    # and the pair is only addressable because both are cataloged.
+    "K-12-KO+guide",
+    # A cataloged single-ORF overexpression clone, the ASKA collection. The genome is
+    # unedited and the perturbation is extra copies of one native ORF on a plasmid,
+    # which is the opposite sign to a deletion and must not be merged with one.
+    "K-12+ORF-plasmid",
     "KT2440-KO",
     "KT2440+transposon",
     "KT2440+guide",
@@ -4232,9 +4245,887 @@ CANDIDATES: list[Candidate] = [
             ),
         ],
     ),
+    Candidate(
+        name="Foo 2014 isopentenol tolerance",
+        organism="E. coli",
+        citation="Foo JL, Jensen HM, Dahl RH, George K, Keasling JD, Lee TS, "
+        "Leong S, Mukhopadhyay A. Improving microbial biogasoline "
+        "production in Escherichia coli using tolerance engineering. "
+        "mBio 2014;5:e01932-14",
+        url="https://doi.org/10.1128/mBio.01932-14",
+        klass="Production campaign",
+        tier=2,
+        genotypes_n=9,
+        genotypes="9 released: 8 tolerance genes plus the control",
+        env_n=1,
+        env="1 production condition",
+        instances_n=9,
+        instances_basis="reported",
+        phenotype="isopentenol titer in mg per liter at 48 h, mean and SD over 3 replicates",
+        dim=1,
+        dim_basis="reported",
+        seq_basis="engineered-chassis",
+        modality="single-gene overexpression on a production chassis",
+        isoprenol="direct",
+        product="isopentenol",
+        why="The word biogasoline in the title is isoprenol: the paper opens "
+        "``Isopentenol (3-methyl-3-buten-1-ol) is an important target "
+        "compound'', and isopentenol and isoprenol are the same molecule, so "
+        "this is an isoprenol row under the older name. It is the only "
+        "E. coli isoprenol campaign that releases numeric titers. Table 1 "
+        "gives mg per liter with SD for the 8 tolerance genes that reduced the "
+        "isopentenol growth lag, metR, ibpA, nrdH, soxS, mdlB, fpr, gidB and "
+        "yqhD, against an 834 plus or minus 5 mg per liter control, which is "
+        "what earns tier 2 on one cleared bar as the only released E. coli "
+        "isoprenol production data. A second layer is genuinely deposited and "
+        "is larger than the titers: GEO GSE53138 holds 6 arrays, 3 with and 3 "
+        "without 0.2 percent isopentenol, on a 4,254-probe platform, which is "
+        "an isoprenol-stress transcriptome rather than a genotype axis because "
+        "all 6 are one strain. The host is DH1 and the tolerance alleles were "
+        "amplified from MG1655, so the two backgrounds are mixed within one "
+        "strain. The 40-gene candidate screen behind the 8 winners is "
+        "figure-only, and the methods state sampling at 150 and 390 minutes "
+        "while only the 150-minute arrays were deposited.",
+        accession="GEO GSE53138 (GSM1282891-GSM1282896, platform GPL14649); mBio Table 1 and Tables S2-S4",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
+        time_axis="titers sampled at 24, 48 and 72 h; Table 1 releases 48 h",
+        schema_need="a transcriptome measured against a dosed inhibitor on an "
+        "unperturbed genotype, which is an environment-response record rather than a "
+        "gene-perturbation record",
+        analog=Analog(
+            dataset="Lopez 2024 isobutanol",
+            why="alcohol tolerance genes scored on a production chassis",
+        ),
+        synergy=[
+            Synergy(
+                partner="Lopez 2024 isobutanol",
+                partner_status="supported",
+                join="alcohol tolerance",
+                yields="alcohol tolerance genes scored on a production chassis",
+            ),
+            Synergy(
+                partner="Wang 2015 isoprenol tolerance",
+                partner_status="candidate",
+                join="isoprenol",
+                yields="tolerance genes by overexpression against tolerance by deletion",
+            ),
+        ],
+    ),
+    Candidate(
+        name="Wang 2022 P. putida isoprenoids",
+        organism="P. putida",
+        citation="Wang X, Baidoo EEK, Kakumanu R, Xie S, Mukhopadhyay A, Lee "
+        "TS. Engineering isoprenoids production in metabolically "
+        "versatile microbial host Pseudomonas putida. Biotechnology for "
+        "Biofuels and Bioproducts 2022;15:137",
+        url="https://doi.org/10.1186/s13068-022-02235-6",
+        klass="Production campaign",
+        tier=4,
+        genotypes_n=18,
+        genotypes="18 registry-resolved, 16 multi-gene",
+        env_n=20,
+        env="20 medium and supplement conditions",
+        instances_n=380,
+        instances_basis="product",
+        phenotype="isoprenol, epi-isozizaene, limonene and cineole titers in mg per liter, plus growth and glucose",
+        dim=1,
+        dim_basis="reported",
+        seq_basis="engineered-chassis",
+        modality="heterologous pathway plus chromosomal deletion",
+        isoprenol="direct",
+        product="isoprenol, epi-isozizaene",
+        why="The first isoprenol production in this host, and the row with the "
+        "most multi-gene genotypes of any isoprenol campaign: 16 of its 18 "
+        "registry-resolved strains carry either the 3-gene phaABC deletion at "
+        "PP_5003 to PP_5005, a 5-to-8-gene heterologous operon, or both. Best "
+        "titer 104 mg per liter from 2 percent glucose at 48 h, and 25 mg per "
+        "liter from p-coumarate, which makes it the only isoprenol row with an "
+        "aromatic carbon source. Two further deletions are informative for "
+        "cross-referencing: crc at PP_5292, and PP_2675, the isoprenol "
+        "catabolism gene, which sits immediately beside the PP_2674 ethanol "
+        "dehydrogenase that Yang 2019 deletes in the same host. Every per-strain "
+        "titer is figure-only, which is why this is blocked rather than "
+        "buildable: the data statement points at JBEI's Experiment Data Depot "
+        "with no study identifier, and that host returned HTTP 502 when checked. "
+        "Four further assayed genotypes, two single and one double deletion of "
+        "ppc and pycAB plus a crc overexpression strain, carry no strain "
+        "identifier and no locus tags at all. The authors also record that "
+        "``the polyploid property nature of P. putida may increase the "
+        "instability of using a high-copy plasmid'', with colony-to-colony "
+        "variation observed.",
+        accession="JBEI registry JPUB_019914 to JPUB_019988; JBEI Experiment Data Depot with no study id (HTTP 502 when checked)",
+        accession_confirmed=False,
+        status="blocked",
+        confidence="sourced",
+        time_axis="sampled at 0, 24, 48 h, and to 72 h for the sesquiterpene",
+        schema_need="a titer for several products measured on one genotype, so the "
+        "phenotype is a vector over product identity rather than one label",
+        analog=Analog(
+            dataset="Ozaydin 2013 beta-carotene",
+            why="heterologous isoprenoid pathway plus host deletions",
+        ),
+        synergy=[
+            Synergy(
+                partner="Ozaydin 2013 beta-carotene",
+                partner_status="supported",
+                join="isoprenoid pathway",
+                yields="heterologous isoprenoid pathway plus host deletions",
+            ),
+            Synergy(
+                partner="Yang 2019 mevalonate from ethanol",
+                partner_status="candidate",
+                join="PP_2674 and PP_2675 neighborhood",
+                yields="two alcohol-catabolism deletions in adjacent loci",
+            ),
+        ],
+    ),
+    Candidate(
+        name="Rachwalski 2024 mobile CRISPRi",
+        organism="E. coli",
+        citation="Rachwalski K, Tu MM, Madden SJ, French S, Hansen DM, Brown "
+        "ED. A mobile CRISPRi collection enables genetic interaction "
+        "studies for the essential genes of Escherichia coli. Cell "
+        "Reports Methods 2024;4:100693",
+        url="https://doi.org/10.1016/j.crmeth.2023.100693",
+        klass="Genetic interaction",
+        tier=1,
+        genotypes_n=12404,
+        genotypes="12,404 gene pairs plus 357 knockdowns",
+        env_n=12,
+        env="2 media at 6 inducer levels",
+        instances_n=63552,
+        instances_basis="reported",
+        phenotype="normalized colony growth, mean of 2 replicates, no dispersion released",
+        dim=1,
+        dim_basis="reported",
+        seq_basis="K-12-KO+guide",
+        modality="essential-gene knockdown crossed with a cataloged deletion",
+        why="The only measured pairwise genetic-interaction axis at scale in "
+        "either host, and it is released in full rather than as hits. Three "
+        "knockdown constructs, of lolA, pssA and mreD, were conjugated into the "
+        "whole Keio collection, giving 4,017 distinct deletions crossed against "
+        "each, and the entire 356-guide collection was separately crossed into a "
+        "lpp deletion. Supplementary Tables S2A, S3 and S4A carry a normalized "
+        "growth value for every pair at every condition with no gaps, so the "
+        "negative results are present and not only the 68 suppressors and 9 "
+        "enhancers of lolA knockdown. The pairing is what makes it valuable here: "
+        "an essential gene reachable only by knockdown, crossed with a "
+        "non-essential gene reachable only by deletion, is a combination no "
+        "deletion collection can produce. Three cautions for the loader. The "
+        "methods list five inducer levels and omit 100 nanograms per milliliter, "
+        "which the table headers do carry, so trusting the prose drops a sixth of "
+        "the dose response. Table S4A holds 4,542 rows for 4,017 unique "
+        "deletions, with 485 labels repeated up to five times and no plate or "
+        "well key to separate them. And replicate TYPE is contradictory, called "
+        "technical in the methods and biological in three figure captions.",
+        accession="Zenodo 10.5281/zenodo.10214517 (1.4 GB and 364 MB image archives plus analysis code); Tables S1-S4 as xlsx; vector pFD152 is Addgene 125546",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
+        schema_need="a genotype combining a cataloged deletion with a guide-borne "
+        "knockdown, so one perturbation is an edit to the genome and the other is not",
+        analog=Analog(
+            dataset="Costanzo 2016 SGA",
+            why="pairwise gene-gene fitness across a cataloged array",
+        ),
+        synergy=[
+            Synergy(
+                partner="Costanzo 2016 SGA",
+                partner_status="supported",
+                join="pairwise gene pairs",
+                yields="pairwise gene-gene fitness across a cataloged array",
+            ),
+            Synergy(
+                partner="Baba 2006",
+                partner_status="candidate",
+                join="Keio collection",
+                yields="the deletion half of every measured pair",
+            ),
+        ],
+    ),
+    Candidate(
+        name="Royet 2025 KT2440 metal Tn-seq",
+        organism="P. putida",
+        citation="Royet K, Kergoat L, Lutz S, Oriol C, Parisot N, Schori C, "
+        "Ahrens CH, Rodrigue A, Gueguen E. High-throughput Tn-seq "
+        "screens identify both known and novel Pseudomonas putida "
+        "KT2440 genes involved in metal tolerance. Environmental "
+        "Microbiology 2025;27:e70095",
+        url="https://doi.org/10.1111/1462-2920.70095",
+        klass="Transposon fitness",
+        tier=1,
+        genotypes_n=5729,
+        genotypes="5,729 genes, 600 essential in LB",
+        env_n=4,
+        env="4 metals at one dose each",
+        instances_n=22916,
+        instances_basis="product",
+        phenotype="gene-level log2 fold change of insertion reads, metal against LB, with a permutation q",
+        dim=1,
+        dim_basis="reported",
+        seq_basis="KT2440+transposon",
+        modality="mariner transposon insertion",
+        why="A complete released matrix, which is rarer than a large one: "
+        "Supplementary Table S5 carries a log2 fold change and a "
+        "Benjamini-Hochberg q for all 5,729 genes under each of cobalt, copper, "
+        "zinc and cadmium, with no missing values, so the 22,916 records include "
+        "every null and not only the 25 retained hits. Table S4 adds a "
+        "four-level essentiality call per gene from a hidden Markov model, 600 "
+        "essential and 4,458 non-essential, on 105,349 within-gene TA sites "
+        "against 129,002 genome-wide. Sequence provenance is unusually good: the "
+        "laboratory isolate was itself resequenced for this work and deposited as "
+        "CP036494 at 100 percent average nucleotide identity to the canonical "
+        "AE015451.2, and the 12 raw runs map one-to-one onto the six pools by an "
+        "SRA isolate attribute whose read counts match Table S3 exactly. Two "
+        "limits are structural rather than fixable. The design is non-barcoded "
+        "mariner Tn-seq, so the only addressable genotype unit is the GENE and no "
+        "per-mutant record can ever be built from it, which is the opposite of a "
+        "barcoded library. And there is no multi-gene axis: every screened "
+        "genotype carries one insertion, with only a roxS roxR double and a "
+        "pvdMNOE operon deletion built by hand for validation. All supplementary "
+        "numbers are stored as text strings under merged headers.",
+        accession="SRA PRJNA1175559 (SRR31057760-SRR31057771); figshare 10.6084/m9.figshare.28676777; genome CP036494",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
+        schema_need="a fitness record whose genotype is a gene rather than a strain, "
+        "because a non-barcoded insertion pool is never resolvable to a clone",
+        analog=Analog(
+            dataset="Hillenmeyer 2008 HIP/HOP",
+            why="genome-wide fitness across dosed chemical stress",
+        ),
+        synergy=[
+            Synergy(
+                partner="Hillenmeyer 2008 HIP/HOP",
+                partner_status="supported",
+                join="condition panel",
+                yields="genome-wide fitness across dosed chemical stress",
+            ),
+            Synergy(
+                partner="Thompson 2020 fatty acid and alcohol",
+                partner_status="candidate",
+                join="KT2440 gene set",
+                yields="metal stress beside carbon-source fitness in one host",
+            ),
+        ],
+    ),
+    Candidate(
+        name="Hawkins 2020 mismatch-CRISPRi",
+        organism="E. coli",
+        citation="Hawkins JS, Silvis MR, Koo BM, Peters JM, Osadnik H, Jost M, "
+        "Hearne CC, Weissman JS, Todor H, Gross CA. Mismatch-CRISPRi "
+        "reveals the co-varying expression-fitness relationships of "
+        "essential genes in Escherichia coli and Bacillus subtilis. "
+        "Cell Systems 2020;11:523-535.e9",
+        url="https://doi.org/10.1016/j.cels.2020.09.009",
+        klass="CRISPR library screen",
+        tier=1,
+        genotypes_n=27000,
+        genotypes="about 27,000 guides over 270 essential genes",
+        env_n=1,
+        env="1 medium",
+        instances_n=27000,
+        instances_basis="product",
+        phenotype="relative fitness in doublings against wild type, mean and SD over 4 replicates",
+        dim=1,
+        dim_basis="reported",
+        seq_basis="K-12+guide",
+        modality="graded CRISPRi knockdown by guide mismatch",
+        why="A dose axis on an essential gene, which no deletion collection can "
+        "carry. Each essential gene is targeted by 100 guides, 10 fully matched "
+        "plus 9 singly mismatched variants of each, so knockdown is titrated "
+        "rather than switched, and the paper reports a per-gene "
+        "expression-fitness curve over 17 sliding activity bins for all 270 "
+        "E. coli essential genes. Table S3 releases per-guide fitness with SD "
+        "and the 20-nucleotide spacer, which is the element that distinguishes "
+        "the genotypes, and 1,000 non-targeting controls give a measured noise "
+        "floor of 0.0825. The guide count is arithmetic over two sourced "
+        "figures, 270 analyzed genes times 100 guides: the paper states only "
+        "that the libraries exceed 30,000 elements and never splits that between "
+        "the two species, so the exact E. coli library size is unstated. Three "
+        "cautions. The knockdown LEVEL is a linear-model prediction, not a "
+        "measurement, at a cross-validated R-squared of 0.56, and a preliminary "
+        "version of that model was used to design the libraries, so the dose "
+        "must be typed as an imputed covariate. Guides whose fully matched "
+        "member proved non-functional had their whole series excluded before the "
+        "released curves, so Table S3 and the curve tables are different "
+        "populations. And the article is not open access, so the supplementary "
+        "workbooks need a manual retrieval before they can be mirrored.",
+        accession="SRA PRJNA574461 (86 runs, 38 E. coli; experiment titles carry the condition); Tables S1-S12 as xlsx behind a paywall",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
+        time_axis="sampled before and after about 10 doublings, with a third point at 15 for 2 of 4 replicates",
+        schema_need="a graded knockdown whose level is a model prediction rather than a "
+        "measured quantity, so the dose carries its own uncertainty",
+        analog=Analog(
+            dataset="Smith 2016 CRISPRi",
+            why="essential-gene knockdown reachable only by interference",
+        ),
+        synergy=[
+            Synergy(
+                partner="Smith 2016 CRISPRi",
+                partner_status="supported",
+                join="guide library",
+                yields="essential-gene knockdown reachable only by interference",
+            ),
+            Synergy(
+                partner="Rachwalski 2024 mobile CRISPRi",
+                partner_status="candidate",
+                join="essential gene set",
+                yields="a knockdown dose axis beside a knockdown by deletion cross",
+            ),
+        ],
+    ),
+    Candidate(
+        name="Silvis 2021 CRISPRi morphology",
+        organism="E. coli",
+        citation="Silvis MR, Rajendram M, Shi H, Osadnik H, Gray AN, Cesar S, "
+        "Peters JM, Hearne CC, Kumar P, Todor H, Huang KC, Gross CA. "
+        "Morphological and transcriptional responses to CRISPRi "
+        "knockdown of essential genes in Escherichia coli. mBio "
+        "2021;12:e02561-21",
+        url="https://doi.org/10.1128/mBio.02561-21",
+        klass="Morphology / imaging",
+        tier=2,
+        genotypes_n=548,
+        genotypes="548 targeting guides over 522 genes",
+        env_n=2,
+        env="2 induction levels",
+        instances_n=585,
+        instances_basis="reported",
+        phenotype="median cell length and width with their coefficients of variation",
+        dim=4,
+        dim_basis="reported",
+        seq_basis="K-12+guide",
+        modality="CRISPRi knockdown",
+        why="The only route to a bacterial cell-shape phenotype under gene "
+        "perturbation, which is the one modality the built yeast morphology data "
+        "has no bacterial counterpart for, and that is what earns tier 2 on one "
+        "cleared bar. Table S3 releases median length, median width and a robust "
+        "coefficient of variation for each, over 346 uninduced and 239 induced "
+        "strain-conditions, summarizing 2,646,096 segmented cells of which "
+        "2,257,926 passed a stated width filter. Table S2 adds pooled relative "
+        "fitness with 4 replicate columns and individually measured growth rate "
+        "and lag. Correcting a common assumption about this paper, there is NO "
+        "RNA-seq in it: the transcriptional half of the title is a 4-gene "
+        "quantitative PCR panel plus promoter reporters, both figure-only, so no "
+        "expression vector can be taken from it. Three further limits. None of "
+        "the images, contours or per-cell measurements were deposited anywhere, "
+        "so the provenance chain for 2.6 million measured cells terminates at a "
+        "65-kilobyte workbook. The imaging replicate count is never stated. And "
+        "induction, timepoint and plate format are confounded, uninduced read at "
+        "3.5 hours in 96-well plates with a plate-median correction and induced "
+        "at 5.5 hours in 384-well plates, so the two are not a dose axis. 163 of "
+        "548 strains are flagged contaminated and the flag must travel with the "
+        "record.",
+        accession="SRA PRJNA669343 (fitness) and PRJNA728203 (strain purity); Tables S1-S3 as xlsx; no image repository",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
+        schema_need="a shape phenotype whose measured unit is a segmented cell, "
+        "summarized per strain as a location and a dispersion for each dimension",
+        analog=Analog(
+            dataset="Ohya 2005 morphology",
+            why="single-cell shape features under gene perturbation",
+        ),
+        synergy=[
+            Synergy(
+                partner="Ohya 2005 morphology",
+                partner_status="supported",
+                join="morphology features",
+                yields="single-cell shape features under gene perturbation",
+            ),
+            Synergy(
+                partner="Hawkins 2020 mismatch-CRISPRi",
+                partner_status="candidate",
+                join="essential gene set",
+                yields="shape and fitness on a shared guide-reachable gene set",
+            ),
+        ],
+    ),
+    Candidate(
+        name="Choe 2019 genome-reduced ALE",
+        organism="E. coli",
+        citation="Choe D, Lee JH, Yoo M, Hwang S, Sung BH, Cho S, Palsson B, "
+        "Kim SC, Cho BK. Adaptive laboratory evolution of a "
+        "genome-reduced Escherichia coli. Nature Communications "
+        "2019;10:935",
+        url="https://doi.org/10.1038/s41467-019-08888-6",
+        klass="Multi-omics campaign",
+        tier=3,
+        genotypes_n=3,
+        genotypes="3 strains, 31 resequenced populations",
+        env_n=1,
+        env="1 evolving condition",
+        instances_n=10,
+        instances_basis="reported",
+        phenotype="matched transcriptome and ribosome-profiling RPKM over 3,457 genes",
+        dim=3457,
+        dim_basis="reported",
+        seq_basis="evolved-WGS",
+        modality="adaptive laboratory evolution on a reduced genome",
+        why="The only matched transcriptome and translatome in either host, and "
+        "the densest per-instance vector in the table: Supplementary Data 6 "
+        "releases RPKM for all 3,457 genes across 6 RNA-seq samples and "
+        "Supplementary Data 7 the ribosome-protected-fragment RPKM plus "
+        "translational efficiency over the same gene set, so expression and "
+        "translation are measured on one strain pair. Supplementary Data 5 adds "
+        "839 sigma-70 binding peaks. The genotype side is the problem and it is "
+        "not a small one: all 31 resequenced samples are POPULATIONS, every "
+        "variant table gives allele frequency against a timepoint, and the "
+        "flagship evolved strain has no released variant list of its own, so a "
+        "per-clone genotype would have to be produced by thresholding day-62 "
+        "frequencies, a call the authors never made. The reduced parent MS56 has "
+        "no sequence accession, only a laboratory URL behind a bot wall, so "
+        "total genomic content is reachable for the MG1655 lineage and not for "
+        "the reduced one. The evolution environment is non-stationary by design, "
+        "lysogeny broth supplement falling from 0.1 percent to zero over 62 days, "
+        "and the released trajectory is cell density rather than growth rate, so "
+        "early and late passages are not the same condition. Gene identifiers in "
+        "both expression tables are bare gene names with no locus tag.",
+        accession="ENA PRJEB21199 (51 runs: 31 WGS, 6 RNA-seq, 8 Ribo-seq, 6 ChIP-seq); Supplementary Data 1-7 as xlsx; MG1655 is NC_000913.3, MS56 has no accession",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
+        time_axis="populations resequenced at 20 timepoints over 62 days, 807 generations",
+        schema_need="a genotype that is a population allele-frequency vector rather "
+        "than one strain, and a reference that is itself a reduced derivative with no "
+        "deposited assembly",
+        analog=Analog(
+            dataset="Caudal 2024 pan-transcriptome",
+            why="expression across genetically distinct backgrounds",
+        ),
+        synergy=[
+            Synergy(
+                partner="Caudal 2024 pan-transcriptome",
+                partner_status="supported",
+                join="gene set",
+                yields="expression across genetically distinct backgrounds",
+            ),
+            Synergy(
+                partner="PRECISE-1K",
+                partner_status="candidate",
+                join="MG1655 gene set",
+                yields="an evolved reduced genome against a large expression compendium",
+            ),
+        ],
+    ),
+    Candidate(
+        name="Yang 2019 mevalonate from ethanol",
+        organism="P. putida",
+        citation="Yang J, Son JH, Kim H, Cho S, Na JG, Yeon YJ, Lee J. "
+        "Mevalonate production from ethanol by direct conversion "
+        "through acetyl-CoA using recombinant Pseudomonas putida, a "
+        "novel biocatalyst for terpenoid production. Microbial Cell "
+        "Factories 2019;18:168",
+        url="https://doi.org/10.1186/s12934-019-1213-y",
+        klass="Production campaign",
+        tier=4,
+        genotypes_n=11,
+        genotypes="11 strains, 9 multi-gene, up to 9 perturbed loci",
+        env_n=6,
+        env="6 conditions including 3 pH levels",
+        instances_n=63,
+        instances_basis="product",
+        phenotype="mevalonate, ethanol and acetate titers with growth and medium pH",
+        dim=5,
+        dim_basis="reported",
+        seq_basis="engineered-chassis",
+        modality="stacked chromosomal deletion plus heterologous pathway",
+        isoprenol="precursor",
+        product="mevalonate",
+        why="The deepest deletion stacking of any row in either host and the "
+        "cleanest sequence definition, which is the opposite of what its data "
+        "statement suggests. Five chromosomal deletions accumulate in order, "
+        "endA, endX, qedH-I, qedH-II and phaG, each identified by a GenBank gene "
+        "identifier and each with its upstream and downstream homology-arm "
+        "primers released, so the deletion BOUNDARIES are pinned rather than "
+        "implied; the method is markerless with sucrose counter-selection, so no "
+        "marker is left unaccounted for. All six heterologous genes are released "
+        "as literal codon-optimized nucleotide sequences totaling 9,283 bases "
+        "including the ribosome-binding regions. The deepest strain carries 5 "
+        "deletions plus 4 heterologous genes in one genotype. Two cautions. The "
+        "data statement reads ``Not applicable'' in full, so every titer is "
+        "figure-only and only a handful of values with standard deviations "
+        "survive in prose, which is why this is blocked. And the locus tags are "
+        "absent from the paper: PP_3375, PP_2451, PP_2674, PP_2679 and PP_1408 "
+        "were DERIVED from the stated gene identifiers rather than quoted, and "
+        "must be recorded as derived. PP_2674 sits beside the PP_2675 isoprenol "
+        "catabolism gene that Wang 2022 deletes in the same host.",
+        accession="GenBank gene ids for all five deleted loci and accessions for all six heterologous genes; Additional file 2 holds the codon-optimized sequences; no data deposit",
+        accession_confirmed=True,
+        status="blocked",
+        confidence="sourced",
+        time_axis="metabolic time courses to 27 h in flask, 3 days in the fermenter",
+        schema_need="a genotype stacking five markerless deletions with four "
+        "heterologous genes, where the deletion boundary is given by primer rather "
+        "than by coordinate",
+        analog=Analog(
+            dataset="Ozaydin 2013 beta-carotene",
+            why="stacked host deletions feeding a heterologous isoprenoid route",
+        ),
+        synergy=[
+            Synergy(
+                partner="Ozaydin 2013 beta-carotene",
+                partner_status="supported",
+                join="mevalonate pathway",
+                yields="stacked host deletions feeding a heterologous isoprenoid route",
+            ),
+            Synergy(
+                partner="Wang 2022 P. putida isoprenoids",
+                partner_status="candidate",
+                join="PP_2674 and PP_2675 neighborhood",
+                yields="two alcohol-catabolism deletions in adjacent loci",
+            ),
+        ],
+    ),
+    Candidate(
+        name="Niu 2019 pinene evolved",
+        organism="E. coli",
+        citation="Niu FX, Huang YB, Ji LN, Liu JZ. Genomic and transcriptional "
+        "changes in response to pinene tolerance and overproduction in "
+        "evolved Escherichia coli. Synthetic and Systems Biotechnology "
+        "2019;4:113-119",
+        url="https://doi.org/10.1016/j.synbio.2019.05.001",
+        klass="Combinatorial design",
+        tier=4,
+        genotypes_n=80,
+        genotypes="77 single-target strains plus 2 six-target combinations",
+        env_n=1,
+        env="1 pinene dose",
+        instances_n=77,
+        instances_basis="reported",
+        phenotype="ratio of growth and of pinene titer against the unactivated parent, 3 replicates",
+        dim=2,
+        dim_basis="reported",
+        seq_basis="evolved-WGS",
+        modality="CRISPR activation and interference on an evolved host",
+        isoprenol="precursor",
+        product="pinene",
+        why="Two properties worth the row. First, a complete released "
+        "perturbation result rather than a hit list: Supplementary Tables 3 and "
+        "4 carry both a growth ratio and a pinene ratio for all 57 activation "
+        "and all 20 interference targets, with every guide sequence in Table 1, "
+        "and two six-target combination strains cross activation of flgFGH, "
+        "sufBCDS, dusB, rpoA, yehA and hslU in one strain and interference of "
+        "ydiJ, yjbQ, prpR, marR, fabR and cedA in another. Second, a "
+        "374-variant table that is the only evolved-strain genotype in either "
+        "host carrying b-numbers and absolute coordinates with reference and "
+        "alternate bases, all at frequency 1.00. That table comes with a caveat "
+        "that must travel with it: reads were aligned to MG1655 while the parent "
+        "is BW25113, with no stated parental subtraction, so an unknown and "
+        "probably large share of the 374 calls are background differences "
+        "between the two K-12 strains rather than evolution-acquired mutations. "
+        "It is a genotype description against MG1655, not a validated mutation "
+        "list. The reads themselves were never deposited. No absolute pinene "
+        "titer appears anywhere, only ratios, and the 182-gene quantitative PCR "
+        "panel is figure-only. A 2020 erratum attaches to the citation and "
+        "corrects only a competing-interest statement.",
+        accession="Supplementary mmc1.docx holds the 374-variant table with b-numbers, all guide sequences, and both ratio tables; no sequence-data accession",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
+        schema_need="an evolved genotype released as a variant list against a "
+        "reference that is not its own parent, so the call set needs a provenance gap "
+        "rather than a clean edit list",
+        analog=Analog(
+            dataset="Lian 2019 CRISPR-AID",
+            why="activation and interference over one gene set",
+        ),
+        synergy=[
+            Synergy(
+                partner="Lian 2019 CRISPR-AID",
+                partner_status="supported",
+                join="activation and interference",
+                yields="activation and interference over one gene set",
+            ),
+            Synergy(
+                partner="Tian 2019 isopentenol CRISPRi",
+                partner_status="candidate",
+                join="multiplex guide array",
+                yields="two multiplex guide campaigns toward isoprenoid products",
+            ),
+        ],
+    ),
+    Candidate(
+        name="Reyes 2011 n-butanol library",
+        organism="E. coli",
+        citation="Reyes LH, Almario MP, Kao KC. Genomic library screens for "
+        "genes involved in n-butanol tolerance in Escherichia coli. "
+        "PLoS ONE 2011;6:e17678",
+        url="https://doi.org/10.1371/journal.pone.0017678",
+        klass="Tolerance / robustness",
+        tier=4,
+        genotypes_n=14,
+        genotypes="14 released of 140 assayed",
+        env_n=2,
+        env="2 butanol levels",
+        instances_n=14,
+        instances_basis="reported",
+        phenotype="two growth-rate statistics per gene with a t-test p, 4 biological replicates",
+        dim=2,
+        dim_basis="reported",
+        seq_basis="K-12+ORF-plasmid",
+        modality="cataloged single-ORF overexpression and single deletion",
+        isoprenol="analog",
+        product="n-butanol",
+        why="The only row that scores overexpression and deletion of the same "
+        "trait side by side from cataloged collections: 55 ASKA overexpression "
+        "clones and 84 Keio deletions were assayed individually after a pooled "
+        "enrichment of a roughly 14,000-clone genomic library at sevenfold "
+        "coverage. Both halves resolve to public collections, so the sequence "
+        "basis is clean on both signs of perturbation. What limits it badly is "
+        "release: only the 14 winners carry values, 11 overexpression and 3 "
+        "deletion, and the 126 other assayed genotypes are not figure-locked but "
+        "unrecoverable, never plotted per gene. The array-CGH enrichment layer is "
+        "deposited as GEO GSE26223, 16 two-color arrays on a 4,062-row platform, "
+        "but its replicates are technical rather than biological and the mapping "
+        "from the 193 enriched genes to the 55 that were picked is not released. "
+        "The paper disagrees with itself on the candidate count, 193 in one place "
+        "and 194 in another, and on the first enrichment rung, 0.5 percent in the "
+        "results against 0 percent in the methods; both readings must be "
+        "recorded. One of the 3 deletion hits, rph, is self-flagged as an "
+        "artifact because the host background already carries an inactivating "
+        "frameshift there, so that record needs a reliability flag. The "
+        "overexpression induction level is never stated.",
+        accession="GEO GSE26223 (GSM643831-GSM643846, platform GPL8984); Tables 3 and 5 hold the 14 released genotypes; ASKA and Keio collections for the strains",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
+        schema_need="a matched over- and under-expression pair of the same gene on one "
+        "trait, which is what a dosage-aware model needs and no built row provides",
+        analog=Analog(
+            dataset="Lopez 2024 isobutanol",
+            why="alcohol tolerance over a cataloged collection",
+        ),
+        synergy=[
+            Synergy(
+                partner="Lopez 2024 isobutanol",
+                partner_status="supported",
+                join="alcohol tolerance",
+                yields="alcohol tolerance over a cataloged collection",
+            ),
+            Synergy(
+                partner="Foo 2014 isopentenol tolerance",
+                partner_status="candidate",
+                join="alcohol tolerance by overexpression",
+                yields="two overexpression tolerance screens on different alcohols",
+            ),
+        ],
+    ),
+    Candidate(
+        name="Zou 2022 P. putida furfural",
+        organism="P. putida",
+        citation="Zou L, Jin X, Tao Y, Zheng Z, Ouyang J. Unraveling the "
+        "mechanism of furfural tolerance in engineered Pseudomonas "
+        "putida by genomics. Frontiers in Microbiology 2022;13:1035263",
+        url="https://doi.org/10.3389/fmicb.2022.1035263",
+        klass="Tolerance / robustness",
+        tier=4,
+        genotypes_n=20,
+        genotypes="20 strains, a 5-gene deletion parent and an evolved derivative",
+        env_n=6,
+        env="6 inhibitor conditions",
+        instances_n=18,
+        instances_basis="reported",
+        phenotype="growth plus furfural, HMF and acetate concentrations, 2 replicates",
+        dim=4,
+        dim_basis="reported",
+        seq_basis="evolved-WGS",
+        modality="adaptive evolution plus single-gene overexpression",
+        isoprenol="analog",
+        product="furfural",
+        why="A cross-host counterpart to the built yeast furfural screen, which "
+        "is the reason to want it: furfural tolerance measured in a bacterial "
+        "host on a defined genotype series, against the same inhibitor a yeast "
+        "CRISPR screen already covers. Supplementary Tables S3 to S6 release the "
+        "mock-hydrolysate time courses as numbers, with optical density, furfural, "
+        "HMF and acetate per timepoint for the parent and the evolved strain. The "
+        "evolved reads are deposited as SRR19970103, which makes this the only "
+        "evolved row here whose variant calls can be reproduced. The parent is "
+        "itself a 5-gene deletion, of gcd plus the four gtsABCD genes, and the "
+        "evolved derivative carries 37 further mutations after four months of "
+        "escalating furfural. Three limits. Only 11 of the 37 mutations are "
+        "individually listed; the other 26 are counted by class in Table S7 and "
+        "never named, so the evolved genotype is incomplete as released and "
+        "recoverable only by re-calling the deposited reads. The parent was never "
+        "sequenced and variants were called against the public reference, so the "
+        "37 calls conflate furfural selection with the deletion construction and "
+        "with lab drift, which the paper does not acknowledge. Every recombinant "
+        "strain phenotype is figure-only, and every uncertainty in the paper is a "
+        "two-point standard deviation.",
+        accession="SRA PRJNA855347 (SRR19970103, SAMN29490017); Data_Sheet_1.docx holds Tables S1-S7; reference NC_002947.4",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
+        time_axis="hydrolysate courses sampled to 72 h",
+        schema_need="an evolved genotype whose released variant list is a partial "
+        "enumeration plus per-class counts, with no parental resequencing to subtract",
+        analog=Analog(
+            dataset="Lian 2019 CRISPR-AID",
+            why="furfural tolerance on a defined perturbation series",
+        ),
+        synergy=[
+            Synergy(
+                partner="Lian 2019 CRISPR-AID",
+                partner_status="supported",
+                join="furfural",
+                yields="furfural tolerance on a defined perturbation series",
+            ),
+            Synergy(
+                partner="Borchert 2023 lignin tolerance",
+                partner_status="candidate",
+                join="KT2440 inhibitor panel",
+                yields="furfural beside the lignin-stream inhibitors in one host",
+            ),
+        ],
+    ),
+    Candidate(
+        name="Li 2021 mevalonate flux",
+        organism="E. coli",
+        citation="Li Y, Xian H, Xu Y, Zhu Y, Sun Z, Wang Q, Qi Q. Fine tuning "
+        "the glycolytic flux ratio of EP-bifido pathway for mevalonate "
+        "production by enhancing glucose-6-phosphate dehydrogenase and "
+        "CRISPRi suppressing 6-phosphofructose kinase in Escherichia "
+        "coli. Microbial Cell Factories 2021;20:32",
+        url="https://doi.org/10.1186/s12934-021-01526-1",
+        klass="Metabolome / flux",
+        tier=4,
+        genotypes_n=3,
+        genotypes="3 strains with a released flux map",
+        env_n=1,
+        env="1 labeling condition",
+        instances_n=3,
+        instances_basis="reported",
+        phenotype="fitted net flux for 198 reactions with 90 percent confidence bounds",
+        dim=198,
+        dim_basis="reported",
+        seq_basis="K-12-KO",
+        modality="promoter replacement plus CRISPRi knockdown",
+        isoprenol="precursor",
+        product="mevalonate",
+        why="Worth the row for its flux layer alone, which is released in full "
+        "where the titers are not: Additional file 2 carries 198 reaction rows "
+        "per strain with a best fit plus lower and upper 90 percent bounds, in "
+        "both absolute and normalized units, with the fit diagnostics printed, "
+        "so a carbon-flux phenotype vector can be ingested directly. The "
+        "perturbation design pairs a 5-level synthetic promoter series over zwf, "
+        "whose relative strengths are released, with CRISPRi of pfkA in a "
+        "pfkA-positive host, because deleting pfkA in this background caused a "
+        "severe growth defect. Serious defects to record. The paper states NO "
+        "replicate count, has no statistics section and reports no error "
+        "statistic anywhere, so nothing from it can carry an uncertainty. Its "
+        "CRISPRi axis is three guide positions, not a strength series, and the "
+        "repression depth was explicitly never measured, so there is no dose "
+        "coordinate. Mevalonate titers are figure-only for about 22 of its 27 "
+        "strains. And the flux supplement covers a different strain set than the "
+        "text claims: the control's map is absent and a fourth strain's map is "
+        "present but never discussed, so the released fluxes cannot be matched to "
+        "the published figure.",
+        accession="Additional file 2 (xlsx) holds the 198-reaction flux maps; promoters are iGEM Anderson registry parts; no data accession",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
+        schema_need="a fitted flux distribution as the phenotype, where each value "
+        "carries an interval from the fit rather than a replicate standard deviation",
+        analog=Analog(
+            dataset="Zelezniak 2018 metabolome",
+            why="internal flux state under targeted perturbation",
+        ),
+        synergy=[
+            Synergy(
+                partner="Zelezniak 2018 metabolome",
+                partner_status="supported",
+                join="central carbon reactions",
+                yields="internal flux state under targeted perturbation",
+            ),
+            Synergy(
+                partner="Ishii 2007",
+                partner_status="candidate",
+                join="central carbon flux",
+                yields="two fitted flux sets on a shared reaction network",
+            ),
+        ],
+    ),
 ]
 
 EXCLUDED: list[Excluded] = [
+    # Five isoprenoid papers from the 300-publication sweep, each dropped on a rule
+    # rather than on low value. Recorded so the verification is not repeated.
+    Excluded(
+        name="Mi 2014, geranic acid in P. putida DSM 12264",
+        rule="no-sequence",
+        reason=(
+            "The host is DSM 12264, a solvent-tolerant strain that is not KT2440, and "
+            "no genome accession for it appears anywhere in the paper. PP_ locus tags "
+            "therefore do not apply and the chassis genome is unidentified, so there "
+            "is no route to the total genomic content of any strain. The enzyme "
+            "responsible for the key endogenous geraniol oxidation is also unidentified, "
+            "stated by the authors as a hypothesis. Two comparisons made in KT2440, the "
+            "host actually of interest, are reported as data not shown"
+        ),
+    ),
+    Excluded(
+        name="Chen 2013, lycopene by chromosomal evolution in E. coli",
+        rule="no-sequence",
+        reason=(
+            "The perturbation is triclosan-driven tandem gene amplification, and its "
+            "extent is quantified only as about 30 copies by quantitative PCR of a "
+            "single gene against one reference gene. The amplicon boundaries were never "
+            "sequenced or mapped and no strain was resequenced, so an array of unstated "
+            "extent cannot be written as a genome sequence, and mutations hitchhiking "
+            "through six rounds of escalating selection are unknown. The released "
+            "phenotype tables are good, with mean and SD for 20 strains, but the "
+            "perturbation axis itself, triclosan dose against copy number, is "
+            "figure-only"
+        ),
+    ),
+    Excluded(
+        name="Huang 2022, pinene by shotgun library in E. coli MG1655",
+        rule="no-per-record-data",
+        reason=(
+            "The data availability statement reads Not applicable, there is no results "
+            "table of any kind, and only two absolute titers plus three percentages are "
+            "recoverable from prose. The library screen also did not work as a screen: a "
+            "library of more than ten to the fifth transformants yielded four surviving "
+            "colonies, which the authors attribute to loss during construction or "
+            "pinene toxicity, so there is no genotype-phenotype matrix to ingest. "
+            "Insert boundaries for the four clones and insertion coordinates for the "
+            "three promoter replacements are both unstated"
+        ),
+    ),
+    Excluded(
+        name="Mireles 2026, long-chain alcohol metabolism in P. putida",
+        rule="no-per-record-data",
+        reason=(
+            "Sequencing data are available from the corresponding author upon "
+            "reasonable request, with no deposit and no accession, and the evolved-clone "
+            "phenotype is figure-only, so genotype and phenotype cannot both be taken as "
+            "released values. The released variant table also disagrees with the text, "
+            "84 per-clone calls against 91 claimed, and labels one mutation PP_1802 "
+            "where the text argues from PP_1801. Separately it is off this table's "
+            "phenotype axis: the alcohols are C16 and C20 used as sole carbon sources "
+            "and the paper states that toxicity is absent, so it measures catabolism "
+            "rather than tolerance"
+        ),
+    ),
+    Excluded(
+        name="Hernandez-Arranz 2019, isoprenoid precursors in P. putida",
+        rule="no-per-record-data",
+        reason=(
+            "Lycopene is reported in two incompatible ways that cannot be joined. The "
+            "one table of measurements gives nanograms per milliliter by chromatography "
+            "for four strains, all of them the lowest producers, while every other "
+            "result is an absorbance normalized to cell density and expressed as a fold "
+            "change against a control. The headline fifty-fold strain has no absolute "
+            "value, so ten of fourteen genotypes carry only a ratio. There is no strain "
+            "table, no supplementary file, and no accession of any kind, and the "
+            "perturbed native genes are never given a locus tag"
+        ),
+    ),
     Excluded(
         name="Multi-host cell-factory capacity resource (modeled yields)",
         rule="not-a-dataset",

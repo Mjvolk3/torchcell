@@ -1,0 +1,29 @@
+{
+  "ontology": "biolink 3.2.1",
+  "root_node": "entity",
+  "retrieval_command": "curl -fsSL --retry 3 -o biocypher/ontology/biolink-model-v3.2.1.owl.ttl https://github.com/biolink/biolink-model/raw/v3.2.1/biolink-model.owl.ttl",
+  "file": {
+    "path": "biolink-model-v3.2.1.owl.ttl",
+    "role": "ontology",
+    "bytes": 451318,
+    "sha256": "a3e47f5a42e4e0e6b4c715f8f4dbbeef5e77683621fa9ad57d15b7d048707d1a",
+    "source": "https://github.com/biolink/biolink-model/raw/v3.2.1/biolink-model.owl.ttl",
+    "zotero_md5": null,
+    "retrieval": {
+      "method": "direct_url",
+      "source_url": "https://github.com/biolink/biolink-model/raw/v3.2.1/biolink-model.owl.ttl",
+      "retriever": "torchcell.literature.retrieve.direct_url",
+      "params": {
+        "url": "https://github.com/biolink/biolink-model/raw/v3.2.1/biolink-model.owl.ttl"
+      },
+      "sha256": "a3e47f5a42e4e0e6b4c715f8f4dbbeef5e77683621fa9ad57d15b7d048707d1a",
+      "retrieved_at": "2026-10-02T21:49:16Z",
+      "last_check": {
+        "checked_at": "2026-10-02T21:51:28Z",
+        "produced_sha256": "a3e47f5a42e4e0e6b4c715f8f4dbbeef5e77683621fa9ad57d15b7d048707d1a",
+        "matches": true
+      }
+    },
+    "processing": null
+  }
+}

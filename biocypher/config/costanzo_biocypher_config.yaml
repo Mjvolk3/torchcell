@@ -3,6 +3,14 @@
 biocypher:
   offline: true
   debug: false
+  # Head ontology: the sha256-pinned local mirror of Biolink 3.2.1 (issue #619),
+  # never BioCypher's default GitHub URL, so generation does not depend on the
+  # network. The path is relative to the repo root, the working directory of a host build;
+  # provenance in biocypher/ontology/biolink-model-v3.2.1.owl.ttl.provenance.json,
+  # checked by torchcell.knowledge_graphs.head_ontology before BioCypher is built.
+  head_ontology:
+    url: biocypher/ontology/biolink-model-v3.2.1.owl.ttl
+    root_node: entity
   schema_config_path: config/costanzo_schema_config.yaml
   cache_directory: .cache
 

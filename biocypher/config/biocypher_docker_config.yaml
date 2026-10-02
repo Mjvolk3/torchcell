@@ -3,6 +3,15 @@
 biocypher:
   offline: true
   debug: false
+  # Head ontology: the sha256-pinned local mirror of Biolink 3.2.1 (issue #619),
+  # never BioCypher's default GitHub URL, so generation does not depend on the
+  # network. The path is inside the generation container, which mounts
+  # $BUILD_ROOT/database/biocypher (a copy of the repo biocypher/) at /var/lib/neo4j/biocypher;
+  # provenance in biocypher/ontology/biolink-model-v3.2.1.owl.ttl.provenance.json,
+  # checked by torchcell.knowledge_graphs.head_ontology before BioCypher is built.
+  head_ontology:
+    url: /var/lib/neo4j/biocypher/ontology/biolink-model-v3.2.1.owl.ttl
+    root_node: entity
   schema_config_path: config/torchcell_schema_config.yaml
   output_directory: data/build2neo
 

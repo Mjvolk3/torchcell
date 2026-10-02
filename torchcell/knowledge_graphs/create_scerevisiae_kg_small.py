@@ -30,6 +30,7 @@ from torchcell.build_telemetry import BuildPhase, ResourceSampler
 from torchcell.fast_csv import FastCsvSink, build_row_specs
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
+from torchcell.knowledge_graphs.head_ontology import verify_head_ontology
 from torchcell.knowledge_graphs.incremental_import import (
     INCREMENTAL_CALL_FILENAME,
     prepare_incremental_import,
@@ -143,6 +144,9 @@ def main(cfg: DictConfig) -> None:
     output_directory = osp.join(DATA_ROOT, BIOCYPHER_OUT_PATH, time_str)
     print(output_directory)
     print("=========")
+    # The head ontology must be the sha256-pinned local Biolink mirror, never
+    # BioCypher's default GitHub URL (live rebuild job 3182 died on a 504 there).
+    verify_head_ontology(BIOCYPHER_CONFIG_PATH)
     bc = BioCypher(
         output_directory=output_directory,
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,

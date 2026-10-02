@@ -222,6 +222,14 @@ markers = [
 ]
 # pytest-timeout: import-all and Lightning fast_dev_run tests can hang rather than fail.
 timeout = 300
+# Collection is confined to tests/. The repository root also holds experiment scripts
+# named test_*.py (experiments/*/scripts/), and two of them build a dataset under
+# $DATA_ROOT at import, so an editor's whole-repository discovery (rootdir, no path
+# argument) built smf_kuzmin2018 into the sentinel data root on 2026-10-02 and failed
+# every concurrent session's empty-sentinel check. `testpaths` covers a bare `pytest`;
+# `norecursedirs` (pytest's defaults plus `experiments`) covers `pytest .`.
+testpaths = ["tests"]
+norecursedirs = ["*.egg", ".*", "_darcs", "build", "CVS", "dist", "node_modules", "venv", "{arch}", "experiments"]
 
 [tool.torchcell.test_exceptions]
 # The ONE exception table for the paired-test gate (scripts/check_paired_tests.py): a

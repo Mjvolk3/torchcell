@@ -27,3 +27,24 @@ Both Findings are retired. An early-closed generator now ends with `close`; an e
 ## 2026.10.01 - Review: mid-query failure
 
 A fetch that yields one record then raises leaves an empty `raw/lmdb` and no staging directory; a retry re-runs the query and stores all three records. A leftover `raw/lmdb.partial` is refused by name before any query.
+
+## 2026.10.01 - Phase 19: partition rendering, the fetch-worker task, fetch_constants
+
+36 cases (21 before).
+
+- `partition_queries` on a hand-written two-block query (lowercase `union all`): 34 partitions, four of them pinned by whole-string equality (prefix and guard of each block); prefix length 2 gives 257 per block with the guard regex `{2}`; five refusals with their exact messages (prefix length 0, marker twice, marker absent from block 1, a bare UNION, ordering by `e.name`).
+- `_render_partition` run in process with `_PARTITION_WORKER` set to the fixture view: three rows whose LMDB values equal the stored serialization byte for byte, the reference index hash (sha256 of the sorted-key reference dump), the perturbed genes and no payload; `PROCESS_BATCH` 2 renders [2, 1], 1000 renders [3]; a split observer's `prepare` results ride along; an empty partition renders nothing; a missing worker is an assertion.
+- `fetch_constants` against the recording fake driver: the exact Cypher, `ids` as the parameter, a session without `fetch_size`, verified payloads parsed; a missing id raises `KeyError` naming the sorted first three after the driver closed.
+
+Finding: a corrupt constant payload raises inside the session and `driver.close()` (neo4j_query_raw.py:453) is not in a `finally`, so the driver is left open (`fetch_query` closes in one, :428-429).
+
+Coverage of `torchcell/data/neo4j_query_raw.py` from this file: 79% -> 89% (the partitioned pool path is covered by `test_neo4j_query_raw_partitioned.py`).
+
+## 2026.10.02 - Audit round 2 corrections
+
+38 cases.
+
+- The two-character prefix test now uses whole-string equality for four partitions.
+- New, pointer layout through `_render_partition`. Records carry `$ref` pointers for environment and phenotype (id = sha256 of the field's JSON). Partition A (records 0, 1) fetches sorted({E, P0, P1}) once, with E deduplicated. Partition B (record 2) fetches only [P2], because `_PARTITION_CONSTANTS` persists across partitions. Partition C (record 0 again) fetches nothing. Every rendered value is byte-identical to the inline serialization. Mutants replacing the constants by `{}` per partition, or sending unsorted or duplicated ids, die.
+- New: `CONSTANT_CACHE_MAX`. With `PROCESS_BATCH` 1 the shared environment is validated once at the default cap and twice at cap 1, because the full cache is cleared before the next batch. The rows are identical. The `>` mutant dies.
+- Reach of the `driver.close()` finding (:453): latent, because the error aborts the build anyway.

@@ -740,6 +740,11 @@
             <span class="n">fetch_workers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fetch_workers</span><span class="p">,</span>
             <span class="n">partition_prefix_length</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_prefix_length</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="c1"># The raw view opens raw/lmdb on construction, and the next stage opens the</span>
+        <span class="c1"># same path as its input. lmdb &gt;= 2.0 refuses a second environment on a path</span>
+        <span class="c1"># already open in the process, so the view's handle is closed here; its</span>
+        <span class="c1"># readers reopen it through _init_lmdb when called.</span>
+        <span class="n">raw_db</span><span class="o">.</span><span class="n">close_lmdb</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">converter</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">cast</span><span class="p">(</span><span class="s2">"type[Converter]"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">converter</span><span class="p">)(</span><span class="n">root</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">raw_db</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">converter</span>
@@ -806,9 +811,7 @@
             <span class="c1"># Compute phenotype info - used in get item</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">compute_phenotype_info</span><span class="p">()</span>
             <span class="c1"># Compute and cache label DataFrame explicitly</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_label_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_df</span>
-        <span class="c1"># clean up raw db</span>
-        <span class="n">raw_db</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="kc">None</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_label_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_df</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_write_folded_indices</span><span class="p">(</span>

@@ -28,9 +28,9 @@ from neo4j import GraphDatabase
 
 QUERY = """
 MATCH (m:Media)
-OPTIONAL MATCH (m)<-[r]-(x)
+OPTIONAL MATCH (m)-[r]-()
 RETURN m.name AS name, m.state AS state, m.serialized_data AS serialized_data,
-       count(r) AS in_edges
+       count(r) AS n_edges
 ORDER BY name, state
 """
 
@@ -49,7 +49,7 @@ def media_rows(
                     {
                         "name": record["name"],
                         "state": record["state"],
-                        "in_edges": record["in_edges"],
+                        "n_edges": record["n_edges"],
                         "base_medium": (payload.get("base_medium") or {}).get("name")
                         if isinstance(payload.get("base_medium"), dict)
                         else payload.get("base_medium"),
@@ -81,7 +81,7 @@ def main() -> None:
     fields = [
         "name",
         "state",
-        "in_edges",
+        "n_edges",
         "base_medium",
         "n_components",
         "n_dropouts",

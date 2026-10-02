@@ -147,6 +147,12 @@ cd "$PROJECT_ROOT/experiments" || exit 1
 MASTER_ADDR=$(hostname); export MASTER_ADDR
 MASTER_PORT=$(shuf -i 10000-65500 -n 1); export MASTER_PORT
 export NUM_WORKERS=$((SLURM_CPUS_PER_TASK - 2))
+# GPUs per job. The header asks for 4; a job sharing compute-5-7 with another group
+# overrides it at submit (`sbatch --gres=gpu:2 --export=ALL,GPUS=2 ...`) and keeps the
+# effective batch with `trainer.devices=2 data_module.batch_size=512`. torchrun must
+# match the allocation or the extra ranks find no device.
+GPUS="${GPUS:-4}"
+echo "gpus        : $GPUS (torchrun nproc_per_node)"
 
 singularity exec --nv "$MAIN_REPO/rockylinux_9.sif" bash -c "
 source \$HOME/miniconda3/bin/activate
@@ -171,7 +177,7 @@ assert torchcell.__file__.startswith('$PROJECT_ROOT'), torchcell.__file__
 print('torchcell:', torchcell.__file__)
 PY
 
-torchrun --standalone --nnodes=1 --nproc_per_node=4 \
+torchrun --standalone --nnodes=1 --nproc_per_node=$GPUS \
   $PROJECT_ROOT/$EXP_REL/scripts/equivariant_cell_graph_transformer.py \
   --config-name $CONFIG_NAME \
   data_module.num_workers=\$NUM_WORKERS ${OVERRIDES[*]}

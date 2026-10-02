@@ -495,7 +495,10 @@ class RegressionTask(LightningModule):
 
         An epoch with no finite-target sample has no MSE, RMSE or Pearson; it is
         refused by name rather than logged as NaN, since validation MSE is the key
-        the LR scheduler and checkpointing monitor. A one-sample epoch logs its MSE
+        the checkpoint callbacks monitor (``configure_optimizers`` also names it as
+        the ReduceLROnPlateau monitor, but under manual optimization this task never
+        steps that scheduler, so the learning rate stays constant). A one-sample
+        epoch logs its MSE
         and RMSE, and Pearson as NaN (a correlation needs two samples). Under
         ``execution_mode="dataloader_profiling"`` the model never runs, so there are
         no metrics and nothing is logged.
@@ -621,7 +624,12 @@ class RegressionTask(LightningModule):
             self.val_samples = _empty_samples()
 
     def configure_optimizers(self) -> OptimizerLRSchedulerConfig:
-        """Build and return the optimizer and learning-rate scheduler."""
+        """Build and return the optimizer and learning-rate scheduler.
+
+        The ReduceLROnPlateau scheduler is built and registered, but this task uses
+        manual optimization and never calls ``lr_schedulers().step()``, so Lightning
+        does not step it and the learning rate stays at its configured value.
+        """
         optimizer_class = getattr(torch.optim, self._hp.optimizer_config["type"])
         optimizer_params = {
             k: v for k, v in self._hp.optimizer_config.items() if k != "type"

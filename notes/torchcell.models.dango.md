@@ -533,3 +533,5 @@ DANGO is a powerful framework for predicting higher-order genetic interactions, 
 * Seeded forward outputs are unchanged for every valid batch.
 
 Tests: [[tests.torchcell.models.test_dango]].
+
+* Review follow-up: a negative set id is refused by the same named `ValueError` as one at or above `num_sets` (before, `bincount` raised a bare `RuntimeError`).

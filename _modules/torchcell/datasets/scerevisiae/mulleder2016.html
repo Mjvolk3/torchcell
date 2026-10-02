@@ -136,10 +136,36 @@
 <span class="sd">Determinant), the same central tendency the paper's Z-scores are computed against.</span>
 
 <span class="sd">Maps to ``MetabolitePhenotype`` (WS4): ``metabolite_level = {amino_acid -&gt; mM}`` with</span>
-<span class="sd">``measurement_type = "intracellular_concentration_mM"``. The genome-wide screen is n=1</span>
-<span class="sd">per strain (single culture; the 237x QC sample is for analytical performance, not</span>
-<span class="sd">per-strain averaging -- Methods "Yeast" / "Quantification of Amino Acids in High</span>
-<span class="sd">Throughput"), so ``n_replicates = 1`` per amino acid and ``metabolite_level_se = None``.</span>
+<span class="sd">``measurement_type = "intracellular_concentration_mM"``. ``metabolite_level_se = None``:</span>
+<span class="sd">no sheet releases a per-strain error.</span>
+
+<span class="sd">Per-strain ``n_replicates`` (issue #488) is COUNTED from the released ``data_raw`` sheet</span>
+<span class="sd">("Raw concentration data of the cell extract in [uM]; includes QC sample and slow</span>
+<span class="sd">growing strains", Overview sheet): for each released ORF and amino acid, the number of</span>
+<span class="sd">``data_raw`` rows for that ORF with a value in that amino-acid column. On the pinned</span>
+<span class="sd">workbook 4,487 of the 4,678 released ORFs have one row and 191 have two to four (167 x 2,</span>
+<span class="sd">20 x 3, 4 x 4); 8 cells on 6 of those multi-row rows are blank, so 7 ORF x amino-acid</span>
+<span class="sd">counts of 5 strains are below the strain's row count. What is PUBLISHED about repeated</span>
+<span class="sd">measurement is only ``SOURCED_VALUES["repeat_screen"]``: the 479 lowest-concentration</span>
+<span class="sd">strains were re-plated and the analysis repeated (batch 12). How a strain's two to four</span>
+<span class="sd">rows become its one released mM value is NOT published. That the released value is the</span>
+<span class="sd">mean of the normalized rows is a diagnostic inference from the 2026.09.29 re-verification</span>
+<span class="sd">(scratch script ``mulleder_multi_average_test.py``, report</span>
+<span class="sd">``notes/assets/verification/2026.09.29/mulleder2016.md``, claim M2: the mean of the</span>
+<span class="sd">normalized rows fits better than the best single row for 180 of the 191 strains), not a</span>
+<span class="sd">published statement. The 237 QC injections (``QC_*`` identifiers, no ORF) are a pooled</span>
+<span class="sd">extract for analytical performance and are never counted for a strain.</span>
+
+<span class="sd">Reference ``n_replicates`` (issue #489) is the number of strains the population robust</span>
+<span class="sd">mean was estimated over, counted from the released concentration sheet (4,678, equal to</span>
+<span class="sd">the published ``SOURCED_VALUES["n_profiled_strains"]``). The Minimum Covariance</span>
+<span class="sd">Determinant (``SOURCED_VALUES["reference_estimator"]``) down-weights outlying strains,</span>
+<span class="sd">so this is a population estimate over 4,678 different deletion strains, NOT 4,678</span>
+<span class="sd">replicate measurements of one sample; read it as the size of the population the</span>
+<span class="sd">reference summarizes. Decision recorded 2026.10.02 and open to revision: the schema's</span>
+<span class="sd">``n_replicates`` ("number of independent replicates") has no population-estimate</span>
+<span class="sd">field, and the previous value 1 described neither.</span>
+
 <span class="sd">Amino acids are NATIVE Yeast9 metabolites, so ``target_metabolite_ids`` (amino acid -&gt;</span>
 <span class="sd">``s_NNNN``) is populatable for constraint-based-model linkage; left ``None`` here and</span>
 <span class="sd">deferred to a follow-up that sources the ids from YeastGEM (never guessed).</span>
@@ -180,6 +206,8 @@
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourcedValue</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -187,6 +215,7 @@
 <span class="n">MEASUREMENT_TYPE</span> <span class="o">=</span> <span class="s2">"intracellular_concentration_mM"</span>
 <span class="n">_CONC_SHEET</span> <span class="o">=</span> <span class="s2">"intracellular_concentration_mM"</span>
 <span class="n">_SUMMARY_SHEET</span> <span class="o">=</span> <span class="s2">"robust_summary_statistics"</span>
+<span class="n">_RAW_SHEET</span> <span class="o">=</span> <span class="s2">"data_raw"</span>
 <span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">)</span>
 
 <span class="c1"># Mendeley Data 10.17632/bnzdhd6ck8.1 -&gt; Table_S3_Complete_Dataset.xls (direct, pinned).</span>
@@ -196,6 +225,58 @@
 <span class="p">)</span>
 <span class="n">DATA_FILENAME</span> <span class="o">=</span> <span class="s2">"Table_S3_Complete_Dataset.xls"</span>
 <span class="n">DATA_SHA256</span> <span class="o">=</span> <span class="s2">"a7fcb4bc8aa5e394e7f6e2b99e327eaa88fa04111ab5602fc7cb3445f653802e"</span>
+
+<span class="c1"># Mirrored paper (MinerU OCR); every SOURCED_VALUES quote is a verbatim substring of it.</span>
+<span class="n">CITATION_KEY</span> <span class="o">=</span> <span class="s2">"mullederFunctionalMetabolomicsDescribes2016"</span>
+<span class="n">PAPER_MD</span> <span class="o">=</span> <span class="s2">"paper.md"</span>
+<span class="n">PAPER_MD_SHA256</span> <span class="o">=</span> <span class="s2">"20412bec5b930d1fa43d326d8f9baca267130ddef5fdaa804f19e1209f925e6e"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_sv</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A ``SourcedValue`` anchored to the mirrored ``paper.md`` by sha256."""</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="n">PAPER_MD</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">PAPER_MD_SHA256</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"MinerU OCR of the publisher PDF (mirrored artifact)"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="n">SOURCED_VALUES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"reference_estimator"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="s2">"Minimum Covariance Determinant robust mean over the profiled strains"</span><span class="p">,</span>
+        <span class="s2">"We used the Minimum Covariance Determinant (MCD) estimator to obtain robust "</span>
+        <span class="s2">"values for mean, standard deviation, correlation and covariance for each amino "</span>
+        <span class="s2">"acid (Figures 1 and 2A)."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"paper.md line 387; the reference metabolite_level is the "</span>
+        <span class="s2">"robust_summary_statistics 'mean (mM)' column. MCD down-weights outlying "</span>
+        <span class="s2">"strains, so it is a population estimate, not replicates of one sample"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"n_profiled_strains"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="mi">4678</span><span class="p">,</span>
+        <span class="s2">"Eventually, we completed a metabolic profile for 4678 yeast deletion strains"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"paper.md line 395; the reference n_replicates is COUNTED from the "</span>
+        <span class="s2">"released concentration sheet at build time (4,678 on the pinned workbook, "</span>
+        <span class="s2">"equal to this value). Line 387 says the MCD average is over 'all analyzed "</span>
+        <span class="s2">"strains'; that this set is exactly the 4,678 released strains is supported, "</span>
+        <span class="s2">"not proven, by refitting an MCD on them (experiments/036-dataset-fixes-"</span>
+        <span class="s2">"before-kg-build/scripts/mulleder2016_replicates.py)"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"repeat_screen"</span><span class="p">:</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="mi">479</span><span class="p">,</span>
+        <span class="s2">"In a second screening round, the 479 deletion strains that showed lowest "</span>
+        <span class="s2">"metabolite concentrations were arranged on 6 additional plates and the "</span>
+        <span class="s2">"analysis was repeated (batch 12)."</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"paper.md line 341; the only published statement about measuring a "</span>
+        <span class="s2">"strain more than once. How repeated rows combine into the released value "</span>
+        <span class="s2">"is not stated"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">}</span>
 
 <span class="c1"># 19 amino acids measured (20 proteinogenic minus cysteine); the exact sheet columns.</span>
 <span class="n">AMINO_ACIDS</span> <span class="o">=</span> <span class="p">[</span>
@@ -221,6 +302,15 @@
 <span class="p">]</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">MissingRawMeasurementError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A released ORF x amino acid with no value in the ``data_raw`` sheet.</span>
+
+<span class="sd">    ``n_replicates`` is counted from ``data_raw``; a released value with zero raw</span>
+<span class="sd">    measurements behind it has no count. The pinned workbook has none (every one of the</span>
+<span class="sd">    4,678 x 19 released cells has at least one raw value).</span>
+<span class="sd">    """</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">InvalidConcentrationError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A Table S3 concentration cell that is blank or not a finite number.</span>
 
@@ -238,6 +328,26 @@
         <span class="sa">f</span><span class="s2">"Mulleder Table S3: </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">amino_acid</span><span class="si">}</span><span class="s2"> concentration </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2"> is not a "</span>
         <span class="s2">"finite number"</span>
     <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_raw_counts</span><span class="p">(</span><span class="n">raw_counts</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Per amino acid, the ``data_raw`` rows of ``orf`` that carry a value.</span>
+
+<span class="sd">    Raises ``MissingRawMeasurementError`` for an ORF absent from ``data_raw`` or an</span>
+<span class="sd">    amino acid with no raw value for it (the pinned workbook has neither).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">orf</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">raw_counts</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">MissingRawMeasurementError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Mulleder Table S3: released ORF </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2"> has no data_raw row"</span>
+        <span class="p">)</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">raw_counts</span><span class="p">[</span><span class="n">AMINO_ACIDS</span><span class="p">]</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="p">{</span><span class="n">aa</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">aa</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">AMINO_ACIDS</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)}</span>
+    <span class="n">empty</span> <span class="o">=</span> <span class="p">[</span><span class="n">aa</span> <span class="k">for</span> <span class="n">aa</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">empty</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">MissingRawMeasurementError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Mulleder Table S3: released ORF </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2"> has no data_raw value for </span><span class="si">{</span><span class="n">empty</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">counts</span>
 
 
 <div class="viewcode-block" id="AminoAcidMulleder2016Dataset">
@@ -297,6 +407,11 @@
         <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">)</span>
         <span class="n">conc</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="n">_CONC_SHEET</span><span class="p">)</span>
         <span class="n">summary</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="n">_SUMMARY_SHEET</span><span class="p">)</span>
+        <span class="n">raw</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="n">_RAW_SHEET</span><span class="p">)</span>
+        <span class="c1"># Per ORF x amino acid: how many data_raw rows carry a value (issue #488).</span>
+        <span class="c1"># QC rows have no ORF and drop out of the groupby.</span>
+        <span class="n">raw_counts</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"ORF"</span><span class="p">)[</span><span class="n">AMINO_ACIDS</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="n">raw_row_counts</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"ORF"</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
 
         <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">aa</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="n">AMINO_ACIDS</span> <span class="k">if</span> <span class="n">aa</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">conc</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
@@ -332,6 +447,8 @@
                 <span class="p">{</span>
                     <span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span>
                     <span class="o">**</span><span class="p">{</span><span class="n">aa</span><span class="p">:</span> <span class="n">_concentration</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">aa</span><span class="p">],</span> <span class="n">orf</span><span class="p">,</span> <span class="n">aa</span><span class="p">)</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="n">AMINO_ACIDS</span><span class="p">},</span>
+                    <span class="s2">"n_replicates"</span><span class="p">:</span> <span class="n">_raw_counts</span><span class="p">(</span><span class="n">raw_counts</span><span class="p">,</span> <span class="n">orf</span><span class="p">),</span>
+                    <span class="s2">"n_raw_rows"</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">raw_row_counts</span><span class="p">[</span><span class="n">orf</span><span class="p">]),</span>
                 <span class="p">}</span>
             <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
@@ -342,9 +459,18 @@
             <span class="n">n_collision_rows</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">collisions</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span>
-            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span>
+        <span class="c1"># Reference n: the strains the population robust mean summarizes (issue #489).</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_reference_strains</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+        <span class="n">n_rows</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="n">r</span><span class="p">[</span><span class="s2">"n_raw_rows"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">])</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Mulleder: data_raw rows per released ORF </span><span class="si">%s</span><span class="s2">; reference n_replicates </span><span class="si">%d</span><span class="s2"> "</span>
+            <span class="s2">"(strains the robust mean summarizes)"</span><span class="p">,</span>
+            <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">n_rows</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_n_reference_strains</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="p">[{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">"n_replicates"</span><span class="p">}</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"data.csv"</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
         <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
@@ -402,16 +528,21 @@
         <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">media</span><span class="o">=</span><span class="n">SM_AGAR</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">))</span>
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
             <span class="n">metabolite_level</span><span class="o">=</span><span class="p">{</span><span class="n">aa</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="n">aa</span><span class="p">]</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="n">AMINO_ACIDS</span><span class="p">},</span>
-            <span class="n">metabolite_level_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># genome-wide screen is n=1 per strain; no per-strain SE</span>
-            <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span><span class="n">aa</span><span class="p">:</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="n">AMINO_ACIDS</span><span class="p">},</span>
+            <span class="n">metabolite_level_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># no sheet releases a per-strain error</span>
+            <span class="c1"># data_raw measurements behind each value (module docstring, issue #488)</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n_replicates"</span><span class="p">]),</span>
             <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
             <span class="n">target_metabolite_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># deferred: amino acid -&gt; Yeast9 s_NNNN (YeastGEM)</span>
         <span class="p">)</span>
         <span class="c1"># Reference = WT-equivalent baseline (population robust mean per amino acid).</span>
+        <span class="c1"># n = the strains the MCD estimate summarizes (issue #489), not replicates of</span>
+        <span class="c1"># one sample: MCD down-weights outliers, so this is a population estimate.</span>
         <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
             <span class="n">metabolite_level</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference_levels</span><span class="p">),</span>
             <span class="n">metabolite_level_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span><span class="n">aa</span><span class="p">:</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference_levels</span><span class="p">},</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="p">{</span>
+                <span class="n">aa</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_reference_strains</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference_levels</span>
+            <span class="p">},</span>
             <span class="n">measurement_type</span><span class="o">=</span><span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">experiment</span> <span class="o">=</span> <span class="n">MetaboliteExperiment</span><span class="p">(</span>

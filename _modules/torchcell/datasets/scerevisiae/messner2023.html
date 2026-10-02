@@ -160,6 +160,12 @@
 <span class="sd">  cross-refs) so this proteome is joinable with the ORF-keyed Zelezniak2018 proteome.</span>
 <span class="sd">  All 1,850 map (incl. the mito-encoded ``P00410`` -&gt; ``Q0250``/COX2); an unmapped id</span>
 <span class="sd">  raises rather than being silently dropped.</span>
+<span class="sd">- **Gene names from SGD, not the filename (issue #485).** ``systematic_gene_name`` is</span>
+<span class="sd">  the metadata ``ORF`` (uppercased) and stays the join key. ``perturbed_gene_name`` is</span>
+<span class="sd">  that ORF's ``gene=`` standard name in the same SGD GFF, else the uppercase ORF (no</span>
+<span class="sd">  standard name, or the ORF is no GFF feature ID in that release). The token after</span>
+<span class="sd">  the ORF in the sample Filename is never read: on real filenames it is sometimes a</span>
+<span class="sd">  number (``10_9_hpr57_ko_YBL007C_2824_0.49`` is SLA1) or a lowercase ORF.</span>
 
 <span class="sd">The value is a LINEAR (not log2) batch-corrected MaxLFQ quantity</span>
 <span class="sd">(``measurement_type = "swath_ms_maxlfq_batch_corrected_quantity"``); log2 is applied</span>
@@ -176,6 +182,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.parse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
@@ -239,13 +246,11 @@
 <span class="sd">    """</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">build_uniprot_to_orf_map</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Map UniProt accession -&gt; systematic ORF from the SGD S288C GFF.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_sgd_gff_path</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Path of the SGD S288C reference GFF under ``$DATA_ROOT`` (or ``data_root``).</span>
 
-<span class="sd">    Authoritative source: the ``protein_id=UniProtKB:&lt;acc&gt;`` cross-references in the</span>
-<span class="sd">    SGD reference GFF (``$DATA_ROOT/data/sgd/genome/*/saccharomyces_cerevisiae_*.gff``,</span>
-<span class="sd">    the same file :class:`SCerevisiaeGenome` uses). The first ORF token on a line</span>
-<span class="sd">    carrying a UniProt id is taken as that accession's ORF. Never invents ids.</span>
+<span class="sd">    ``$DATA_ROOT/data/sgd/genome/*/saccharomyces_cerevisiae_*.gff``, the same file</span>
+<span class="sd">    :class:`SCerevisiaeGenome` uses; the first glob match is read.</span>
 <span class="sd">    """</span>
     <span class="n">root</span> <span class="o">=</span> <span class="n">data_root</span> <span class="k">if</span> <span class="n">data_root</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
     <span class="n">pattern</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
@@ -254,8 +259,18 @@
     <span class="n">gffs</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">gffs</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SGD GFF not found under </span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gffs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_uniprot_to_orf_map</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Map UniProt accession -&gt; systematic ORF from the SGD S288C GFF.</span>
+
+<span class="sd">    Authoritative source: the ``protein_id=UniProtKB:&lt;acc&gt;`` cross-references in the</span>
+<span class="sd">    SGD reference GFF (see :func:`_sgd_gff_path`). The first ORF token on a line</span>
+<span class="sd">    carrying a UniProt id is taken as that accession's ORF. Never invents ids.</span>
+<span class="sd">    """</span>
     <span class="n">up2orf</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">gffs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">_sgd_gff_path</span><span class="p">(</span><span class="n">data_root</span><span class="p">))</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">handle</span><span class="p">:</span>
             <span class="k">if</span> <span class="s2">"UniProtKB:"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
                 <span class="k">continue</span>
@@ -268,6 +283,36 @@
             <span class="k">for</span> <span class="n">acc</span> <span class="ow">in</span> <span class="n">_UNIPROT_RE</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">cols</span><span class="p">[</span><span class="mi">8</span><span class="p">]):</span>
                 <span class="n">up2orf</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">acc</span><span class="p">,</span> <span class="n">orf_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">up2orf</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_orf_to_gene_name_map</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Map nuclear systematic ORF -&gt; SGD standard gene name, from the SGD S288C GFF.</span>
+
+<span class="sd">    Every GFF feature whose ``ID`` attribute IS a nuclear systematic ORF (``gene``,</span>
+<span class="sd">    ``pseudogene``, ``transposable_element_gene``, ``blocked_reading_frame`` in</span>
+<span class="sd">    R64-4-1) contributes one entry: its ``gene=`` attribute, percent-decoded (GFF3</span>
+<span class="sd">    escapes ``(`` and ``)``, so ``MF%28ALPHA%291`` is ``MF(ALPHA)1``), or the ORF itself</span>
+<span class="sd">    when the feature has no ``gene=`` (no standard name). The first feature per ORF</span>
+<span class="sd">    wins. An ORF that is no feature's ``ID`` (retired or renamed in this GFF release)</span>
+<span class="sd">    is absent from the map; the caller decides what to store for it.</span>
+<span class="sd">    """</span>
+    <span class="n">orf2name</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">_sgd_gff_path</span><span class="p">(</span><span class="n">data_root</span><span class="p">))</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"#"</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">9</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">attrs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">kv</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">";"</span><span class="p">)</span> <span class="k">if</span> <span class="s2">"="</span> <span class="ow">in</span> <span class="n">kv</span><span class="p">)</span>
+            <span class="n">feature_id</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ID"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">_NUCLEAR_ORF_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">feature_id</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"gene"</span><span class="p">)</span>
+            <span class="n">orf2name</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                <span class="n">feature_id</span><span class="p">,</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">unquote</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="n">feature_id</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">orf2name</span>
 
 
 <div class="viewcode-block" id="ProteomeMessner2023Dataset">
@@ -358,6 +403,11 @@
                 <span class="sa">f</span><span class="s2">"(e.g. </span><span class="si">{</span><span class="n">unmapped</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">); refusing to silently drop."</span>
             <span class="p">)</span>
         <span class="n">matrix</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">up2orf</span><span class="p">)</span>
+        <span class="c1"># Gene names come from SGD by systematic name (issue #485), never from the</span>
+        <span class="c1"># sample Filename: 156 real filenames carry a plate-position number where the</span>
+        <span class="c1"># name would be (``10_9_hpr57_ko_YBL007C_2824_0.49`` is SLA1) and 1,182 a</span>
+        <span class="c1"># lowercase ORF. Rule: the GFF ``gene=`` standard name, else the uppercase ORF.</span>
+        <span class="n">orf2name</span> <span class="o">=</span> <span class="n">build_orf_to_gene_name_map</span><span class="p">()</span>
 
         <span class="n">meta</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">METADATA_FILENAME</span><span class="p">))</span>
         <span class="n">by_filename</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"Filename"</span><span class="p">)</span>
@@ -390,6 +440,8 @@
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">n_bad_orf</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">not_in_gff</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">n_not_in_gff_rows</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">ko_cols</span><span class="p">:</span>
             <span class="c1"># Metadata ORF casing is inconsistent (e.g. "YML009c", "YAL043C-a");</span>
             <span class="c1"># systematic names are uppercase -- normalize, never drop on case alone.</span>
@@ -406,11 +458,16 @@
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">no_wt</span><span class="p">)</span><span class="si">}</span><span class="s2"> protein(s) no WT sample measured (e.g. </span><span class="si">{</span><span class="n">no_wt</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">); "</span>
                     <span class="s2">"the reference has no value for them"</span>
                 <span class="p">)</span>
+            <span class="k">if</span> <span class="n">deletion_orf</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">orf2name</span><span class="p">:</span>
+                <span class="c1"># Rule "ORF not an SGD GFF feature ID": no standard name to read, so</span>
+                <span class="c1"># the name is the uppercase ORF (counted in the build log below).</span>
+                <span class="n">not_in_gff</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">deletion_orf</span><span class="p">)</span>
+                <span class="n">n_not_in_gff_rows</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="s2">"filename"</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
                     <span class="s2">"orf"</span><span class="p">:</span> <span class="n">deletion_orf</span><span class="p">,</span>
-                    <span class="s2">"gene"</span><span class="p">:</span> <span class="n">_gene_from_filename</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">deletion_orf</span><span class="p">),</span>
+                    <span class="s2">"gene"</span><span class="p">:</span> <span class="n">orf2name</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">deletion_orf</span><span class="p">,</span> <span class="n">deletion_orf</span><span class="p">),</span>
                     <span class="s2">"abundance"</span><span class="p">:</span> <span class="n">abundance</span><span class="p">,</span>
                 <span class="p">}</span>
             <span class="p">)</span>
@@ -420,6 +477,12 @@
             <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span>
             <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">[</span><span class="s2">"abundance"</span><span class="p">]),</span>
             <span class="n">n_bad_orf</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Messner: </span><span class="si">%d</span><span class="s2"> KO strains (</span><span class="si">%d</span><span class="s2"> ORFs) whose ORF is no SGD GFF feature ID; "</span>
+            <span class="s2">"perturbed_gene_name = the ORF for them"</span><span class="p">,</span>
+            <span class="n">n_not_in_gff_rows</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">not_in_gff</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
             <span class="p">[</span>
@@ -527,23 +590,6 @@
         <span class="k">return</span> <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span></div>
 </div>
 
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_gene_from_filename</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Standard gene name from the sample Filename, falling back to the ORF.</span>
-
-<span class="sd">    Filenames look like ``10_9_hpr1_ko_YAL059W_ECM1_0.47`` -- the token immediately</span>
-<span class="sd">    after the deletion ORF is the standard gene name (or a lowercased ORF when no</span>
-<span class="sd">    standard name exists). The ORF token is matched case-insensitively (metadata</span>
-<span class="sd">    casing is inconsistent). Falls back to the systematic ORF if not parseable.</span>
-<span class="sd">    """</span>
-    <span class="n">parts</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">)</span>
-    <span class="n">upper</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">orf</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">in</span> <span class="n">upper</span><span class="p">:</span>
-        <span class="n">i</span> <span class="o">=</span> <span class="n">upper</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">orf</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
-        <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="ow">and</span> <span class="n">parts</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]:</span>
-            <span class="k">return</span> <span class="n">parts</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">orf</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

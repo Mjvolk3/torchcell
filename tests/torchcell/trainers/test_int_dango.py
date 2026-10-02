@@ -544,14 +544,12 @@ def test_one_forward_step_equals_the_two_forward_protocol_bit_for_bit(
             ).items()
         }
         assert computed["MSE"] == ref_mse
-        assert computed == pytest.approx(BEFORE_METRICS, rel=1e-6)
+        assert computed == BEFORE_METRICS
 
     if epoch == 4:
-        assert log.values == pytest.approx(BEFORE_LUU_E4, rel=1e-6)
+        assert log.values == BEFORE_LUU_E4
     else:
-        assert log.values["train/loss"] == pytest.approx(
-            BEFORE_LUU_E4["train/interaction_loss"], rel=1e-6
-        )
+        assert log.values["train/loss"] == BEFORE_LUU_E4["train/interaction_loss"]
 
     loss.backward()
     ref_loss.backward()

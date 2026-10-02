@@ -22,3 +22,8 @@ Commit `9f995c828` ("dango works", 2025-05-08) changed `RegressionTask.forward` 
 - `grad_accumulation_schedule` other than None and a scheduler `type` other than `ReduceLROnPlateau` are refused at construction; the dead accumulation branches and `current_accumulation_steps` are removed. Every 005/006 Dango config resolves to null and ReduceLROnPlateau.
 
 Tests: [[tests.torchcell.trainers.test_int_dango]].
+
+### Review follow-up (PR #635)
+
+- `experiments/006-kuzmin-tmi/scripts/dango.py` returns after `wandb.finish()` under `execution_mode == "dataloader_profiling"`, since the task logs no validation metrics there and the script read `trainer.callback_metrics["val/gene_interaction/MSE"]` after fit.
+- The ReduceLROnPlateau scheduler is built but never stepped: this task uses manual optimization and never calls `lr_schedulers().step()`, so the learning rate stays at its configured value. The docstrings now say so; the behavior is unchanged here and tracked as its own issue. `val/gene_interaction/MSE` is the checkpoint callbacks' monitored key.

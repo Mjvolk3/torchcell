@@ -114,26 +114,49 @@
            <div itemprop="articleBody">
              
   <h1>Source code for torchcell.datasets.scerevisiae.synth_leth_db</h1><div class="highlight"><pre>
-<span></span><span class="sd">"""SynLethDB-derived yeast synthetic lethality and synthetic rescue datasets."""</span>
+<span></span><span class="sd">"""SynLethDB-derived yeast synthetic lethality and synthetic rescue datasets.</span>
 
-<span class="c1"># torchcell/datasets/scerevisiae/syn_leth_db_yeast</span>
-<span class="c1"># [[torchcell.datasets.scerevisiae.syn_leth_db_yeast]]</span>
-<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/syn_leth_db_yeast</span>
-<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_syn_leth_db_yeast.py</span>
+<span class="sd">Gene resolution (issue #597). Every row of ``Yeast_SL.csv`` and ``Yeast_SR.csv`` names</span>
+<span class="sd">both genes twice: a gene name (``n1.name``, ``n2.name``) and an NCBI Entrez Gene id</span>
+<span class="sd">(``n1.identifier``, ``n2.identifier``). Each side is resolved by its Entrez id through the</span>
+<span class="sd">RefSeq R64 annotation ``ncbi_genomic.gff`` (``GeneID`` -&gt; ``locus_tag``), pinned by</span>
+<span class="sd">sha256 and read from ``&lt;genome_root&gt;/S288C_reference_genome_R64-4-1_20230830/``. The gene</span>
+<span class="sd">name is a cross-check: ``SCerevisiaeGenome.resolve_gene_name`` (standard name before</span>
+<span class="sd">alias, the prime of ``IMP2'`` kept) must give the same current gene, or the row is</span>
+<span class="sd">dropped under a named rule in ``preprocess/dropped_records.json``. A row naming one gene</span>
+<span class="sd">on both sides is dropped too, since the release does not say what such a pair means.</span>
+<span class="sd">After resolution no unordered ORF pair may repeat (``DuplicateOrfPairError``).</span>
+
+<span class="sd">The old resolution (a name -&gt; ORF dict in which a later gene's alias overwrote an</span>
+<span class="sd">earlier gene's standard name, and ``rstrip("'")`` turned ``IMP2'`` into ``IMP2``) stored</span>
+<span class="sd">872 of 14,000 SL and 119 of 6,948 SR records under the wrong ORF.</span>
+<span class="sd">"""</span>
+
+<span class="c1"># torchcell/datasets/scerevisiae/synth_leth_db</span>
+<span class="c1"># [[torchcell.datasets.scerevisiae.synth_leth_db]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/synth_leth_db</span>
+<span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_synth_leth_db.py</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ExperimentDataset</span><span class="p">,</span>
+    <span class="n">post_process</span><span class="p">,</span>
+    <span class="n">verify_raw_files</span><span class="p">,</span>
+    <span class="n">verify_sha256</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Environment</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
@@ -155,6 +178,49 @@
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
+<span class="c1">#: The raw SynLethDB release files, pinned to the bytes the served build consumed</span>
+<span class="c1">#: (``$DATA_ROOT/data/torchcell/synth_{lethality,rescue}_yeast_synth_leth_db/raw/``,</span>
+<span class="c1">#: 14,000 and 6,948 data rows).</span>
+<span class="n">SL_CSV_NAME</span> <span class="o">=</span> <span class="s2">"Yeast_SL.csv"</span>
+<span class="n">SL_CSV_SHA256</span> <span class="o">=</span> <span class="s2">"091e04dbab80044324970feea4a5fc933df0ab7c887042fd87419173129c56ca"</span>
+<span class="n">SR_CSV_NAME</span> <span class="o">=</span> <span class="s2">"Yeast_SR.csv"</span>
+<span class="n">SR_CSV_SHA256</span> <span class="o">=</span> <span class="s2">"d84fba780cfa55d59f4844324f5c203f85f09bcfe50bfff6de06169ade2a18f4"</span>
+
+<span class="c1">#: The RefSeq annotation of the R64 assembly (header ``#!genome-build-accession</span>
+<span class="c1">#: NCBI_Assembly:GCF_000146045.2``, ``#!annotation-source SGD R64-4-1``) that maps an</span>
+<span class="c1">#: Entrez Gene id to its ORF. It sits beside the SGD release files under the genome's</span>
+<span class="c1">#: ``genome_root``; it is NOT part of the genomes-tier set ``sgd_S288C_R64-4-1_20230830``</span>
+<span class="c1">#: (scripts/migrate_genomes_tier.py), and NCBI now serves an R64-5-1 annotation under</span>
+<span class="c1">#: the same accession, so these bytes cannot be re-fetched; the pin is the record.</span>
+<span class="n">NCBI_GFF_RELPATH</span> <span class="o">=</span> <span class="s2">"S288C_reference_genome_R64-4-1_20230830/ncbi_genomic.gff"</span>
+<span class="n">NCBI_GFF_SHA256</span> <span class="o">=</span> <span class="s2">"8200def54936659721e3f7b4484d725667ed4e23492edefbbca667b8430209c4"</span>
+
+<span class="c1">#: GFF feature types whose ``Dbxref`` ``GeneID`` names a locus (``locus_tag``).</span>
+<span class="n">_NCBI_LOCUS_TYPES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"pseudogene"</span><span class="p">})</span>
+
+<span class="c1">#: Drop rules, in the order a row is tested against them.</span>
+<span class="n">RULE_ENTREZ_NOT_IN_GFF</span> <span class="o">=</span> <span class="s2">"entrez_id_not_in_ncbi_gff"</span>
+<span class="n">RULE_NAME_DISAGREES</span> <span class="o">=</span> <span class="s2">"gene_name_disagrees_with_entrez_id"</span>
+<span class="n">RULE_SELF_PAIR</span> <span class="o">=</span> <span class="s2">"same_gene_on_both_sides"</span>
+
+<span class="n">_RULE_DESCRIPTIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">RULE_ENTREZ_NOT_IN_GFF</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"an Entrez id on the row has no gene or pseudogene feature in the pinned "</span>
+        <span class="s2">"ncbi_genomic.gff, so the side cannot be resolved by its id; the name alone is "</span>
+        <span class="s2">"not used in its place"</span>
+    <span class="p">),</span>
+    <span class="n">RULE_NAME_DISAGREES</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"the gene name on the row does not resolve (standard name before alias, through "</span>
+        <span class="s2">"SCerevisiaeGenome.resolve_gene_name) to the current gene its Entrez id maps to, "</span>
+        <span class="s2">"so the two identifiers the release gives for one side contradict each other"</span>
+    <span class="p">),</span>
+    <span class="n">RULE_SELF_PAIR</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"both sides resolve to one gene (the release gives the same name and the same "</span>
+        <span class="s2">"Entrez id on both sides); the release does not say what a gene paired with "</span>
+        <span class="s2">"itself means, so no meaning is assigned and the row is not stored"</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
 
 <span class="k">class</span><span class="w"> </span><span class="nc">BlankPubmedIdError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A SynLethDB row with a blank or whitespace-only ``r.pubmed_id``.</span>
@@ -165,6 +231,54 @@
 <span class="sd">    """</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">EntrezGeneIdConflictError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One ``GeneID`` in the NCBI GFF carries two different ``locus_tag`` values."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DuplicateOrfPairError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Two kept rows resolve to the same unordered ORF pair.</span>
+
+<span class="sd">    With Entrez resolution the pinned files have none; the nine the old name map</span>
+<span class="sd">    stored (7 SL, 2 SR) were all artifacts of its alias overwrite.</span>
+<span class="sd">    """</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MissingGenomeError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A build was started without the genome the gene cross-check needs."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DroppedRow</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One source row a drop rule removed, with both sides as the release gives them."""</span>
+
+    <span class="n">source_row</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n1_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n1_entrez</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n2_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n2_entrez</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">detail</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DropRule</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One drop rule and the source rows it removed."""</span>
+
+    <span class="n">rule</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DroppedRow</span><span class="p">]</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Every drop rule applied to a build, and the files the resolution read."""</span>
+
+    <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">source_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">kept_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">dropped_records</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">entrez_source_path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">entrez_source_sha256</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DropRule</span><span class="p">]</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_read_synlethdb_csv</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Read a SynLethDB CSV with ``r.pubmed_id`` as text, refusing a blank PMID.</span>
 
@@ -172,9 +286,13 @@
 
 <span class="sd">    Reading the PMID as text keeps it verbatim (``"18676811"``, or</span>
 <span class="sd">    ``"24125552;19918932"`` for a row citing two papers); read as a number, one blank</span>
-<span class="sd">    cell would turn the whole column float and every PMID into ``"111.0"``.</span>
+<span class="sd">    cell would turn the whole column float and every PMID into ``"111.0"``. The Entrez</span>
+<span class="sd">    ids are read as integers; a blank or non-integer id raises from pandas.</span>
 <span class="sd">    """</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s2">"r.pubmed_id"</span><span class="p">:</span> <span class="nb">str</span><span class="p">})</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s2">"r.pubmed_id"</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="s2">"n1.identifier"</span><span class="p">:</span> <span class="s2">"int64"</span><span class="p">,</span> <span class="s2">"n2.identifier"</span><span class="p">:</span> <span class="s2">"int64"</span><span class="p">},</span>
+    <span class="p">)</span>
     <span class="n">blank</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"r.pubmed_id"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">blank</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
         <span class="k">raise</span> <span class="n">BlankPubmedIdError</span><span class="p">(</span>
@@ -182,6 +300,221 @@
             <span class="sa">f</span><span class="s2">"(first at row </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">blank</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2">)"</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">ncbi_gff_path</span><span class="p">(</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Where the genome's directory keeps the pinned ``ncbi_genomic.gff``."""</span>
+    <span class="k">return</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">genome</span><span class="o">.</span><span class="n">genome_root</span><span class="p">,</span> <span class="n">NCBI_GFF_RELPATH</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_entrez_to_orf</span><span class="p">(</span><span class="n">gff_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Map every Entrez Gene id in the pinned NCBI GFF to its ORF (``locus_tag``).</span>
+
+<span class="sd">    The file is verified against ``NCBI_GFF_SHA256`` before it is read. Only ``gene``</span>
+<span class="sd">    and ``pseudogene`` features count; a ``GeneID`` that names two different locus</span>
+<span class="sd">    tags raises ``EntrezGeneIdConflictError``.</span>
+<span class="sd">    """</span>
+    <span class="n">verify_sha256</span><span class="p">(</span><span class="n">gff_path</span><span class="p">,</span> <span class="n">NCBI_GFF_SHA256</span><span class="p">)</span>
+    <span class="n">mapping</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">gff_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"#"</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">fields</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">9</span> <span class="ow">or</span> <span class="n">fields</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_NCBI_LOCUS_TYPES</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">attributes</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">kv</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">";"</span><span class="p">)</span> <span class="k">if</span> <span class="n">kv</span><span class="p">)</span>
+            <span class="n">gene_ids</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">ref</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="s2">"GeneID:"</span><span class="p">)</span> <span class="p">:]</span>
+                <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">attributes</span><span class="p">[</span><span class="s2">"Dbxref"</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">ref</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"GeneID:"</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gene_ids</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">EntrezGeneIdConflictError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">gff_path</span><span class="si">}</span><span class="s2">: feature </span><span class="si">{</span><span class="n">attributes</span><span class="p">[</span><span class="s1">'ID'</span><span class="p">]</span><span class="si">}</span><span class="s2"> carries </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">gene_ids</span><span class="p">)</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="s2">"GeneID cross-references"</span>
+                <span class="p">)</span>
+            <span class="n">entrez</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">gene_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">locus_tag</span> <span class="o">=</span> <span class="n">attributes</span><span class="p">[</span><span class="s2">"locus_tag"</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">mapping</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">entrez</span><span class="p">,</span> <span class="n">locus_tag</span><span class="p">)</span> <span class="o">!=</span> <span class="n">locus_tag</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">EntrezGeneIdConflictError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">gff_path</span><span class="si">}</span><span class="s2">: GeneID </span><span class="si">{</span><span class="n">entrez</span><span class="si">}</span><span class="s2"> names both </span><span class="si">{</span><span class="n">mapping</span><span class="p">[</span><span class="n">entrez</span><span class="p">]</span><span class="si">}</span><span class="s2"> and "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">locus_tag</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+    <span class="k">return</span> <span class="n">mapping</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_side</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">entrez</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="n">entrez_to_orf</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``(orf, None, detail)`` when the side resolves, else ``(None, rule, detail)``."""</span>
+    <span class="n">orf</span> <span class="o">=</span> <span class="n">entrez_to_orf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">entrez</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">orf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">RULE_ENTREZ_NOT_IN_GFF</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (Entrez </span><span class="si">{</span><span class="n">entrez</span><span class="si">}</span><span class="s2">): not in the GFF"</span>
+    <span class="n">resolution</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">is_current_gene</span> <span class="ow">and</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span> <span class="o">==</span> <span class="n">orf</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">orf</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (Entrez </span><span class="si">{</span><span class="n">entrez</span><span class="si">}</span><span class="s2">) -&gt; </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">RULE_NAME_DISAGREES</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (Entrez </span><span class="si">{</span><span class="n">entrez</span><span class="si">}</span><span class="s2">) -&gt; </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2"> by id, but the name resolves "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span><span class="si">}</span><span class="s2"> "</span>
+        <span class="sa">f</span><span class="s2">"(candidates </span><span class="si">{</span><span class="n">resolution</span><span class="o">.</span><span class="n">candidates</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_pairs</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="n">entrez_to_orf</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Add ``n{1,2}.systematic_name``, ``drop_rule`` and ``drop_detail`` to every row.</span>
+
+<span class="sd">    A side resolves to the ORF its Entrez id maps to, and only when its gene name</span>
+<span class="sd">    resolves to that same current gene. A row is dropped by the first rule it meets:</span>
+<span class="sd">    a side's Entrez id absent from the GFF, a side's name disagreeing with its id</span>
+<span class="sd">    (``n1`` is tested before ``n2``), then both sides being one gene. Kept rows have</span>
+<span class="sd">    ``drop_rule`` None.</span>
+<span class="sd">    """</span>
+    <span class="n">n1_orfs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">n2_orfs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">details</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">n1</span><span class="p">,</span> <span class="n">e1</span><span class="p">,</span> <span class="n">n2</span><span class="p">,</span> <span class="n">e2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"n1.name"</span><span class="p">],</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"n1.identifier"</span><span class="p">],</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"n2.name"</span><span class="p">],</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"n2.identifier"</span><span class="p">],</span>
+        <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">orf1</span><span class="p">,</span> <span class="n">rule1</span><span class="p">,</span> <span class="n">detail1</span> <span class="o">=</span> <span class="n">_resolve_side</span><span class="p">(</span><span class="n">n1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">e1</span><span class="p">),</span> <span class="n">genome</span><span class="p">,</span> <span class="n">entrez_to_orf</span><span class="p">)</span>
+        <span class="n">orf2</span><span class="p">,</span> <span class="n">rule2</span><span class="p">,</span> <span class="n">detail2</span> <span class="o">=</span> <span class="n">_resolve_side</span><span class="p">(</span><span class="n">n2</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">e2</span><span class="p">),</span> <span class="n">genome</span><span class="p">,</span> <span class="n">entrez_to_orf</span><span class="p">)</span>
+        <span class="n">rule</span> <span class="o">=</span> <span class="n">rule1</span> <span class="ow">or</span> <span class="n">rule2</span>
+        <span class="k">if</span> <span class="n">rule</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">orf1</span> <span class="o">==</span> <span class="n">orf2</span><span class="p">:</span>
+            <span class="n">rule</span> <span class="o">=</span> <span class="n">RULE_SELF_PAIR</span>
+        <span class="n">n1_orfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">orf1</span><span class="p">)</span>
+        <span class="n">n2_orfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">orf2</span><span class="p">)</span>
+        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rule</span><span class="p">)</span>
+        <span class="n">details</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n1 </span><span class="si">{</span><span class="n">detail1</span><span class="si">}</span><span class="s2">; n2 </span><span class="si">{</span><span class="n">detail2</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">"n1.systematic_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">n1_orfs</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">"n2.systematic_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">n2_orfs</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">"drop_rule"</span><span class="p">]</span> <span class="o">=</span> <span class="n">rules</span>
+    <span class="n">out</span><span class="p">[</span><span class="s2">"drop_detail"</span><span class="p">]</span> <span class="o">=</span> <span class="n">details</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">drop_log</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">resolved</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">gff_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DropLog</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Build the ledger of a resolved frame (from :func:`resolve_pairs`)."""</span>
+    <span class="n">rules</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="p">(</span><span class="n">RULE_ENTREZ_NOT_IN_GFF</span><span class="p">,</span> <span class="n">RULE_NAME_DISAGREES</span><span class="p">,</span> <span class="n">RULE_SELF_PAIR</span><span class="p">):</span>
+        <span class="n">hit</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="n">resolved</span><span class="p">[</span><span class="s2">"drop_rule"</span><span class="p">]</span> <span class="o">==</span> <span class="n">rule</span><span class="p">]</span>
+        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">DropRule</span><span class="p">(</span>
+                <span class="n">rule</span><span class="o">=</span><span class="n">rule</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="n">_RULE_DESCRIPTIONS</span><span class="p">[</span><span class="n">rule</span><span class="p">],</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">hit</span><span class="p">),</span>
+                <span class="n">rows</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">DroppedRow</span><span class="p">(</span>
+                        <span class="n">source_row</span><span class="o">=</span><span class="n">source_row</span><span class="p">,</span>
+                        <span class="n">n1_name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.name"</span><span class="p">]),</span>
+                        <span class="n">n1_entrez</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n1.identifier"</span><span class="p">]),</span>
+                        <span class="n">n2_name</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.name"</span><span class="p">]),</span>
+                        <span class="n">n2_entrez</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"n2.identifier"</span><span class="p">]),</span>
+                        <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"drop_detail"</span><span class="p">]),</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">source_row</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                        <span class="n">hit</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">hit</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="s2">"records"</span><span class="p">),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="p">)</span>
+                <span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">kept</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">resolved</span><span class="p">[</span><span class="s2">"drop_rule"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">DropLog</span><span class="p">(</span>
+        <span class="n">dataset</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span>
+        <span class="n">source_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">resolved</span><span class="p">),</span>
+        <span class="n">kept_records</span><span class="o">=</span><span class="n">kept</span><span class="p">,</span>
+        <span class="n">dropped_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">resolved</span><span class="p">)</span> <span class="o">-</span> <span class="n">kept</span><span class="p">,</span>
+        <span class="n">entrez_source_path</span><span class="o">=</span><span class="n">gff_path</span><span class="p">,</span>
+        <span class="n">entrez_source_sha256</span><span class="o">=</span><span class="n">NCBI_GFF_SHA256</span><span class="p">,</span>
+        <span class="n">rules</span><span class="o">=</span><span class="n">rules</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">refuse_duplicate_pairs</span><span class="p">(</span><span class="n">kept</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise ``DuplicateOrfPairError`` when two kept rows name one unordered ORF pair."""</span>
+    <span class="n">pairs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="nb">frozenset</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="n">kept</span><span class="p">[</span><span class="s2">"n1.systematic_name"</span><span class="p">],</span> <span class="n">kept</span><span class="p">[</span><span class="s2">"n2.systematic_name"</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">repeated</span> <span class="o">=</span> <span class="p">{</span><span class="n">pair</span> <span class="k">for</span> <span class="n">pair</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">Counter</span><span class="p">(</span><span class="n">pairs</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">repeated</span><span class="p">:</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">pair</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">kept</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">pairs</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pair</span> <span class="ow">in</span> <span class="n">repeated</span>
+        <span class="p">]</span>
+        <span class="k">raise</span> <span class="n">DuplicateOrfPairError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">repeated</span><span class="p">)</span><span class="si">}</span><span class="s2"> ORF pair(s) repeat across kept rows </span><span class="si">{</span><span class="n">rows</span><span class="si">}</span><span class="s2">: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">repeated</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_write_synlethdb_lmdb</span><span class="p">(</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="s2">"SynthLethalityYeastSynthLethDbDataset | SynthRescueYeastSynthLethDbDataset"</span><span class="p">,</span>
+    <span class="n">csv_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Resolve, ledger and write one SynLethDB file (shared by both datasets)."""</span>
+    <span class="n">genome</span> <span class="o">=</span> <span class="n">_require_genome</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">_read_synlethdb_csv</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)</span>
+    <span class="n">resolved</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">ledger</span> <span class="o">=</span> <span class="n">drop_log</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">resolved</span><span class="p">,</span> <span class="n">ncbi_gff_path</span><span class="p">(</span><span class="n">genome</span><span class="p">))</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ledger</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">kept</span> <span class="o">=</span> <span class="n">resolved</span><span class="p">[</span><span class="n">resolved</span><span class="p">[</span><span class="s2">"drop_rule"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()]</span>
+    <span class="n">refuse_duplicate_pairs</span><span class="p">(</span><span class="n">kept</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">rule</span><span class="o">.</span><span class="n">n_records</span> <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">ledger</span><span class="o">.</span><span class="n">rules</span><span class="p">)</span> <span class="o">!=</span> <span class="n">ledger</span><span class="o">.</span><span class="n">dropped_records</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"SynLethDB drop accounting does not add up"</span><span class="p">)</span>
+
+    <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e12</span><span class="p">))</span>
+    <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">row</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tqdm</span><span class="p">(</span><span class="n">kept</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">kept</span><span class="p">))):</span>
+            <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
+                <span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span>
+            <span class="p">)</span>
+            <span class="n">serialized_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                    <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                    <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+            <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">serialized_data</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">"</span><span class="si">%s</span><span class="s2">: wrote </span><span class="si">%d</span><span class="s2"> of </span><span class="si">%d</span><span class="s2"> rows (</span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">ledger</span><span class="o">.</span><span class="n">kept_records</span><span class="p">,</span>
+        <span class="n">ledger</span><span class="o">.</span><span class="n">source_records</span><span class="p">,</span>
+        <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">rule</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">n_records</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ledger</span><span class="o">.</span><span class="n">rules</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_require_genome</span><span class="p">(</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SCerevisiaeGenome</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">genome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">MissingGenomeError</span><span class="p">(</span>
+            <span class="s2">"SynLethDB gene resolution needs the SCerevisiaeGenome passed as genome="</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">genome</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_preprocess</span><span class="p">(</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="n">resolved_genome</span> <span class="o">=</span> <span class="n">_require_genome</span><span class="p">(</span><span class="n">genome</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">resolve_pairs</span><span class="p">(</span>
+        <span class="n">df</span><span class="p">,</span> <span class="n">resolved_genome</span><span class="p">,</span> <span class="n">load_entrez_to_orf</span><span class="p">(</span><span class="n">ncbi_gff_path</span><span class="p">(</span><span class="n">resolved_genome</span><span class="p">))</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="SynthLethalityYeastSynthLethDbDataset">
@@ -198,34 +531,15 @@
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build the gene-name mapping from the genome and initialize the dataset."""</span>
+<span class="w">        </span><span class="sd">"""Keep the genome for a build, then release it once the dataset is ready."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_build_gene_name_mapping</span><span class="p">()</span>
-        <span class="c1"># delete to remove: cannot pickle 'sqlite3.Connection' object</span>
-        <span class="k">del</span> <span class="n">genome</span>
-        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_build_gene_name_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Map gene names, systematic IDs, and aliases to systematic names."""</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"Building gene name to systematic name mapping..."</span><span class="p">)</span>
-        <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">genome</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">all_features</span><span class="p">()):</span>
-            <span class="k">if</span> <span class="n">feature</span><span class="o">.</span><span class="n">featuretype</span> <span class="o">==</span> <span class="s2">"gene"</span><span class="p">:</span>
-                <span class="n">systematic_name</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">id</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">[</span><span class="n">systematic_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">systematic_name</span>
-                <span class="k">if</span> <span class="s2">"gene"</span> <span class="ow">in</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">:</span>
-                    <span class="n">gene_name</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">[</span><span class="n">gene_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">systematic_name</span>
-                <span class="k">if</span> <span class="s2">"Alias"</span> <span class="ow">in</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="s2">"Alias"</span><span class="p">]:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span> <span class="o">=</span> <span class="n">systematic_name</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Return the raw synthetic-lethality CSV filename."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"Yeast_SL.csv"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">SL_CSV_NAME</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">processed_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -273,60 +587,18 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Add systematic-name columns for both interacting genes."""</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"Converting gene names to systematic names..."</span><span class="p">)</span>
-        <span class="n">df</span><span class="p">[</span><span class="s2">"n1.systematic_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"n1.name"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_systematic_name</span><span class="p">)</span>
-        <span class="n">df</span><span class="p">[</span><span class="s2">"n2.systematic_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"n2.name"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_systematic_name</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">df</span></div>
-
-
-<div class="viewcode-block" id="SynthLethalityYeastSynthLethDbDataset.get_systematic_name">
-<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.get_systematic_name">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_systematic_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Return the systematic name for a gene, falling back to the input name."""</span>
-        <span class="c1"># Remove the prime character if present</span>
-        <span class="n">clean_gene_name</span> <span class="o">=</span> <span class="n">gene_name</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"'"</span><span class="p">)</span>
-
-        <span class="n">systematic_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">clean_gene_name</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">systematic_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Warning: No systematic name found for gene </span><span class="si">{</span><span class="n">gene_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">gene_name</span>  <span class="c1"># Return original name if no match found</span>
-
-        <span class="k">return</span> <span class="n">systematic_name</span></div>
+<span class="w">        </span><span class="sd">"""Resolve both sides of every row by Entrez id (see :func:`resolve_pairs`)."""</span>
+        <span class="k">return</span> <span class="n">_preprocess</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span> <span class="n">df</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SynthLethalityYeastSynthLethDbDataset.process">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthLethalityYeastSynthLethDbDataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Read the raw CSV, build experiments, and write them to LMDB."""</span>
+<span class="w">        </span><span class="sd">"""Verify the raw CSV, resolve and ledger its rows, and write the LMDB."""</span>
+        <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">SL_CSV_NAME</span><span class="p">:</span> <span class="n">SL_CSV_SHA256</span><span class="p">})</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing Synthetic Lethality Yeast Data..."</span><span class="p">)</span>
-
-        <span class="n">raw_data_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">_read_synlethdb_csv</span><span class="p">(</span><span class="n">raw_data_path</span><span class="p">)</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
-
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e12</span><span class="p">))</span>
-
-        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)):</span>
-                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span>
-                <span class="p">)</span>
-
-                <span class="n">serialized_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-                    <span class="p">{</span>
-                        <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                        <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                        <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                    <span class="p">}</span>
-                <span class="p">)</span>
-                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">serialized_data</span><span class="p">)</span>
-
-        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+        <span class="n">_write_synlethdb_lmdb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">SL_CSV_NAME</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="SynthLethalityYeastSynthLethDbDataset.create_experiment">
@@ -410,34 +682,15 @@
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pre_transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build the gene-name mapping from the genome and initialize the dataset."""</span>
+<span class="w">        </span><span class="sd">"""Keep the genome for a build, then release it once the dataset is ready."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">genome</span> <span class="o">=</span> <span class="n">genome</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_build_gene_name_mapping</span><span class="p">()</span>
-        <span class="c1"># delete to remove: cannot pickle 'sqlite3.Connection' object</span>
-        <span class="k">del</span> <span class="n">genome</span>
-        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">io_workers</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">pre_transform</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_build_gene_name_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Map gene names, systematic IDs, and aliases to systematic names."""</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"Building gene name to systematic name mapping..."</span><span class="p">)</span>
-        <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">genome</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">all_features</span><span class="p">()):</span>
-            <span class="k">if</span> <span class="n">feature</span><span class="o">.</span><span class="n">featuretype</span> <span class="o">==</span> <span class="s2">"gene"</span><span class="p">:</span>
-                <span class="n">systematic_name</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">id</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">[</span><span class="n">systematic_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">systematic_name</span>
-                <span class="k">if</span> <span class="s2">"gene"</span> <span class="ow">in</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">:</span>
-                    <span class="n">gene_name</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">[</span><span class="n">gene_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">systematic_name</span>
-                <span class="k">if</span> <span class="s2">"Alias"</span> <span class="ow">in</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">feature</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="s2">"Alias"</span><span class="p">]:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span> <span class="o">=</span> <span class="n">systematic_name</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Return the raw synthetic-rescue CSV filename."""</span>
-        <span class="k">return</span> <span class="p">[</span><span class="s2">"Yeast_SR.csv"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">SR_CSV_NAME</span><span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">processed_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -485,61 +738,18 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">preprocess_raw</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Add systematic-name columns for both interacting genes."""</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"Converting gene names to systematic names..."</span><span class="p">)</span>
-        <span class="n">df</span><span class="p">[</span><span class="s2">"n1.systematic_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"n1.name"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_systematic_name</span><span class="p">)</span>
-        <span class="n">df</span><span class="p">[</span><span class="s2">"n2.systematic_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"n2.name"</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_systematic_name</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">df</span></div>
-
-
-<div class="viewcode-block" id="SynthRescueYeastSynthLethDbDataset.get_systematic_name">
-<a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.get_systematic_name">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_systematic_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Return the systematic name for a gene, falling back to the input name."""</span>
-        <span class="c1"># Remove the prime character if present</span>
-        <span class="n">clean_gene_name</span> <span class="o">=</span> <span class="n">gene_name</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"'"</span><span class="p">)</span>
-
-        <span class="n">systematic_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_name_to_systematic</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">clean_gene_name</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">systematic_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Warning: No systematic name found for gene </span><span class="si">{</span><span class="n">gene_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">gene_name</span>  <span class="c1"># Return original name if no match found</span>
-
-        <span class="k">return</span> <span class="n">systematic_name</span></div>
+<span class="w">        </span><span class="sd">"""Resolve both sides of every row by Entrez id (see :func:`resolve_pairs`)."""</span>
+        <span class="k">return</span> <span class="n">_preprocess</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span> <span class="n">df</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SynthRescueYeastSynthLethDbDataset.process">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.html#torchcell.datasets.scerevisiae.synth_leth_db.SynthRescueYeastSynthLethDbDataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Read the raw CSV, build experiments, and write them to LMDB."""</span>
+<span class="w">        </span><span class="sd">"""Verify the raw CSV, resolve and ledger its rows, and write the LMDB."""</span>
+        <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">SR_CSV_NAME</span><span class="p">:</span> <span class="n">SR_CSV_SHA256</span><span class="p">})</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Processing Synthetic Rescue Yeast Data..."</span><span class="p">)</span>
-
-        <span class="n">raw_data_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_file_names</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">_read_synlethdb_csv</span><span class="p">(</span><span class="n">raw_data_path</span><span class="p">)</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess_raw</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
-
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e12</span><span class="p">))</span>
-
-        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)):</span>
-                <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">row</span>
-                <span class="p">)</span>
-
-                <span class="n">serialized_data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
-                    <span class="p">{</span>
-                        <span class="s2">"experiment"</span><span class="p">:</span> <span class="n">experiment</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                        <span class="s2">"reference"</span><span class="p">:</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                        <span class="s2">"publication"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
-                    <span class="p">}</span>
-                <span class="p">)</span>
-                <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">serialized_data</span><span class="p">)</span>
-
-        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+        <span class="n">_write_synlethdb_lmdb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">SR_CSV_NAME</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="SynthRescueYeastSynthLethDbDataset.create_experiment">

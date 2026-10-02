@@ -855,3 +855,31 @@ CI (pydantic 2.13.5, pydantic-core 2.46.5) reported a record's two validation er
 - The refusal of a record seen in the copy taken for keeping names `data.db`, not the private copy.
 - The class docstring states the lock contract (no timeout; trusted readers never take it; SIGKILL releases it; a forked child keeps it until it exits) and the symlink contract (a link to a trusted database is followed; an untrusted target or `overwrite=True` replaces the link with a regular file and never writes the target).
 - Not named, deliberately: during an old-code in-place rebuild, a first read at the "absent" stage raises `FileNotFoundError` and at the "zero bytes" stage `sqlite3.OperationalError` (main behaves the same). Naming them is not a two-line change at the same site, so it was left.
+
+## 2026.10.02 - Eighth review round
+
+What was wrong (reviewer, eighth round, at 4c8f1fcab):
+
+- **Vanished files at 7 more sites.** The named "vanished" error covered only `_identity` and the copy for keeping. A `data.db` or companion unlinked by pre-2026.10.01 code still raised a bare `FileNotFoundError` from `_change_counter` (in and out of the root lock), the byte comparison in `_journal_moved_to_kept`, the kept-journal copy and the comparison in `_rollback_equals`, and the copies of a hot `data.db` and its journal in `_committed_record_json` (default and `overwrite=True`).
+- **Torn file trusted under an old-code transaction.** `_journal_moved_to_kept` returned False whenever `data.db` had a journal of its own. In the K2 state (a migrator killed after moving the hot journal beside the kept copy) an old-code writer holding a transaction on `data.db` has such a journal, cold because it holds RESERVED, and the torn file read as trusted.
+- **Untested location of the rollback copy.** Nothing pinned that `_rollback_equals` copies into the temp dir under a name the dead-pid sweep matches (mutants V22, V25 survived).
+
+What changed:
+
+- `_change_counter`, `_committed_record_json`, `_journal_moved_to_kept` and `_rollback_equals` turn `FileNotFoundError` (only that; a `PermissionError` propagates) into `GenomeDatabaseUnavailableError` naming the vanished file. The reviewer's deterministic unlink harness gives all 12 cases named or OK.
+- `_journal_moved_to_kept` no longer looks at `data.db`'s own journal: a `data.db` byte-equal to a kept file whose rollback changes it is torn whatever companion it has. The false-positive state of the previous round (a fresh build equal to a kept pair whose journal undoes nothing) stays trusted, and a root with no kept journal still does no byte comparison.
+- Class docstring: the kept-pair-equal state costs every construction a byte comparison plus a rollback on a private copy (about +30 ms at real size, reviewer's measurement) for as long as the kept pair exists. The way out is to move `data.db.untrusted` and `data.db.untrusted-journal` out of the root by hand once they are no longer wanted as evidence. Known limits: a foreign or size-corrupted kept journal makes every construction re-migrate (tampering only, no natural path found); a SIGKILL inside the rollback check leaves a copy of about 15 MB in the temp dir that only a later `drop_*` sweep removes; an unreadable kept journal beside a readable kept file raises `PermissionError`.
+- The H2 contract is stated exactly: a garbage `data.db` beside a really hot journal reads `SQLITE_READONLY_ROLLBACK` and the pair is kept with a WARNING on both paths; only a journal sqlite itself treats as cold is removed, without a WARNING, by `overwrite=True`, and the default path keeps even that pair with a WARNING.
+
+Tests (`tests/torchcell/sequence/genome/scerevisiae/test_s288c_synthetic.py`):
+
+- `test_torn_file_stays_untrusted_while_an_old_code_writer_holds_a_transaction`
+- `test_data_db_vanishing_before_the_change_counter_read_is_named`
+- `test_kept_journal_vanishing_before_the_rollback_is_named`
+- `test_journal_vanishing_before_the_committed_peek_is_named`
+- `test_kept_pair_rollback_check_runs_in_the_temp_dir_for_a_read_only_root`
+- `test_data_db_vanishing_before_the_kept_byte_comparison_is_named` and `test_data_db_vanishing_before_the_rollback_comparison_is_named`
+- `test_permission_denied_is_not_relabeled_as_vanished` (six sites; kills the catch-widening mutants V28, V31 and their analogues at the new sites)
+- `test_own_journal_means_no_moved_journal_state` renamed `test_kept_journal_that_undoes_nothing_stays_trusted_beside_an_own_journal`: the file stays trusted because the kept journal undoes nothing, not because of its own journal
+- `test_explicit_rebuild_over_garbage_with_a_cold_journal_keeps_nothing` (docstring corrected, default path added) and `test_garbage_file_beside_a_really_hot_journal_is_kept_with_a_warning` (both paths)
+- Mutation check on this head (paired file only): J4, V22, V25, V28, V31 and 12 further mutants of this round's code (each new catch removed or widened to `OSError`, plus V9, J3, H2 re-applied) are all killed, 17 of 17.

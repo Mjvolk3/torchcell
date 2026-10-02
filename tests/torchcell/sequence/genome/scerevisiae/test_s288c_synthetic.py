@@ -74,6 +74,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+from contextlib import closing
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -4332,9 +4333,13 @@ def test_keep_copy_compares_content_not_stat(tmp_path: Path) -> None:
     assert not copy.exists()
 
 
-def test_own_journal_means_no_moved_journal_state(release: dict[str, str]) -> None:
-    """data.db byte-identical to the kept copy, a kept journal present, but data.db
-    also has a (non-hot) journal of its own: not the crash state, so trusted.
+def test_kept_journal_that_undoes_nothing_stays_trusted_beside_an_own_journal(
+    release: dict[str, str],
+) -> None:
+    """data.db byte-identical to the kept copy, a kept journal present that rolls
+    back as a no-op, and a (non-hot) journal of data.db's own: trusted, because the
+    rollback leaves the kept copy unchanged. data.db's own journal is not consulted
+    (a torn file with one is the held-transaction test below).
     """
     build_db(release[GFF_NAME], Path(release["__genome_root__"]))
     root = Path(release["__genome_root__"])
@@ -4600,19 +4605,68 @@ def test_explicit_rebuild_kept_copy_takes_the_original_mode(
 
 
 def test_explicit_rebuild_over_garbage_with_a_cold_journal_keeps_nothing(
-    release: dict[str, str],
+    release: dict[str, str], caplog: pytest.LogCaptureFixture
 ) -> None:
     """Contract: a journal counts as hot only when sqlite reports a rollback is due
-    (``SQLITE_READONLY_ROLLBACK``). Beside a file that is not a database at all,
-    sqlite reports NOTADB instead, so the explicit rebuild treats the journal as cold:
-    it removes it and keeps nothing (there are no committed pages to protect).
+    (``SQLITE_READONLY_ROLLBACK``). A journal sqlite itself treats as cold beside a
+    file that is not a database is removed by ``overwrite=True`` without a WARNING,
+    and nothing is kept. The default path keeps even that pair, with a WARNING.
+    A garbage file beside a really hot journal is the next test.
     """
     root = _root(release)
     db_path = root / "data.db"
-    db_path.write_bytes(b"\x07 not a database \x00" * 4096)
+    garbage = b"\x07 not a database \x00" * 4096
+    db_path.write_bytes(garbage)
     (root / "data.db-journal").write_bytes(b"\x00" * 512)
-    _construct(release, overwrite=True)
+    assert s288c._has_hot_journal(str(db_path)) is False
+    with caplog.at_level(logging.WARNING, logger=s288c.__name__):
+        _construct(release, overwrite=True)
     assert os.listdir(root) == ["data.db"]
+    assert [r.levelname for r in caplog.records] == []
+    _assert_recorded(release, db_path)
+    db_path.write_bytes(garbage)
+    (root / "data.db-journal").write_bytes(b"\x00" * 512)
+    with caplog.at_level(logging.WARNING, logger=s288c.__name__):
+        _construct(release)
+    assert sorted(os.listdir(root)) == [
+        "data.db",
+        "data.db.untrusted",
+        "data.db.untrusted-journal",
+    ]
+    assert (root / "data.db.untrusted").read_bytes() == garbage
+    assert (root / "data.db.untrusted-journal").read_bytes() == b"\x00" * 512
+    assert [r.levelname for r in caplog.records] == ["WARNING"]
+    _assert_recorded(release, db_path)
+
+
+@pytest.mark.parametrize("overwrite", [False, True])
+def test_garbage_file_beside_a_really_hot_journal_is_kept_with_a_warning(
+    release: dict[str, str], caplog: pytest.LogCaptureFixture, overwrite: bool
+) -> None:
+    """A file whose header was destroyed beside a really hot journal reads
+    ``SQLITE_READONLY_ROLLBACK``, not NOTADB: the journal is hot, and on both paths
+    the pair is kept as data.db.untrusted with one WARNING.
+    """
+    root = _root(release)
+    build_db(release[GFF_NAME], root)
+    db_path = root / "data.db"
+    _leave_hot_journal(db_path)
+    with open(db_path, "r+b") as fh:
+        fh.write(b"\x00" * 100)
+    db_bytes = db_path.read_bytes()
+    journal_bytes = (root / "data.db-journal").read_bytes()
+    assert s288c._has_hot_journal(str(db_path)) is True
+    with caplog.at_level(logging.WARNING, logger=s288c.__name__):
+        _construct(release, overwrite=overwrite)
+    assert sorted(os.listdir(root)) == [
+        "data.db",
+        "data.db.untrusted",
+        "data.db.untrusted-journal",
+    ]
+    assert (root / "data.db.untrusted").read_bytes() == db_bytes
+    assert (root / "data.db.untrusted-journal").read_bytes() == journal_bytes
+    assert [r.levelname for r in caplog.records] == ["WARNING"]
+    assert "data.db.untrusted" in caplog.records[0].getMessage()
     _assert_recorded(release, db_path)
 
 
@@ -4755,4 +4809,221 @@ def test_rollback_of_an_unreadable_kept_pair_is_not_equal(tmp_path: Path) -> Non
     db.write_bytes(kept.read_bytes())
     before = set(os.listdir(tempfile.gettempdir()))
     assert s288c._rollback_equals(str(kept), str(db)) is False
+    assert set(os.listdir(tempfile.gettempdir())) == before
+
+
+_HELD_WRITER = """
+import sqlite3, sys
+c = sqlite3.connect(sys.argv[1], isolation_level=None)
+c.execute("BEGIN IMMEDIATE")
+c.execute("UPDATE features SET source = 'zz' WHERE rowid IN (SELECT rowid FROM features LIMIT 2)")
+print("held", flush=True)
+sys.stdin.readline()
+c.execute("ROLLBACK")
+"""
+
+
+def test_torn_file_stays_untrusted_while_an_old_code_writer_holds_a_transaction(
+    release: dict[str, str],
+) -> None:
+    """K2 (journal moved beside the kept copy) while a pre-2026.10.01 writer has an
+    open transaction on data.db: its own journal exists but is not hot, and the torn
+    file must still be reported (reviewer, eighth round: J4).
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    root = Path(release["__genome_root__"])
+    db_path = root / "data.db"
+    subprocess.run([sys.executable, "-c", _SILENT_HOT_WRITER, str(db_path)])
+    shutil.copyfile(db_path, root / "data.db.untrusted")
+    os.replace(root / "data.db-journal", root / "data.db.untrusted-journal")
+    moved = (
+        "its hot journal was moved beside data.db.untrusted by a migration that did "
+        "not finish"
+    )
+    assert s288c.untrusted_reason(str(db_path), _expected_source(release), "c") == moved
+    writer = subprocess.Popen(
+        [sys.executable, "-c", _HELD_WRITER, str(db_path)],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    assert writer.stdout is not None
+    try:
+        assert writer.stdout.readline() == "held\n"
+        assert (root / "data.db-journal").exists()
+        assert (
+            s288c.untrusted_reason(str(db_path), _expected_source(release), "c")
+            == moved
+        )
+    finally:
+        writer.communicate("go\n", timeout=30)
+
+
+def test_data_db_vanishing_before_the_change_counter_read_is_named(
+    release: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A trusted reader whose data.db is unlinked by an old-code rebuild between the
+    count read and the change-counter read gets the named error.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    real = s288c._change_counter
+
+    def unlink_then_read(path: str) -> int:
+        if path == str(db_path):
+            os.remove(db_path)
+        return real(path)
+
+    monkeypatch.setattr(s288c, "_change_counter", unlink_then_read)
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError, match="vanished"):
+        _construct(release)
+
+
+def test_kept_journal_vanishing_before_the_rollback_is_named(tmp_path: Path) -> None:
+    kept = tmp_path / "data.db.untrusted"
+    kept.write_bytes(b"x" * 4096)
+    db = tmp_path / "data.db"
+    db.write_bytes(b"x" * 4096)
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError, match="vanished"):
+        s288c._rollback_equals(str(kept), str(db))
+
+
+def test_journal_vanishing_before_the_committed_peek_is_named(tmp_path: Path) -> None:
+    db = tmp_path / "data.db"
+    db.write_bytes(b"x" * 4096)
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError, match="vanished"):
+        s288c._committed_record_json(str(db))
+
+
+def test_kept_pair_rollback_check_runs_in_the_temp_dir_for_a_read_only_root(
+    release: dict[str, str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The rollback check of the moved-journal state copies the kept pair into the
+    temp dir, never into the genome root: a reader that cannot write the root opens
+    the trusted file, and nothing is left in the temp dir (reviewer, eighth round:
+    V22, V25).
+    """
+    root = _root(release)
+    build_db(release[GFF_NAME], root)
+    db_path = root / "data.db"
+    work = tmp_path / "work.db"
+    shutil.copyfile(db_path, work)
+    subprocess.run([sys.executable, "-c", _SILENT_HOT_WRITER, str(work)])
+    shutil.copyfile(str(work) + "-journal", str(db_path) + "-journal")
+    _construct(release)
+    listing = sorted(os.listdir(root))
+    assert listing == ["data.db", "data.db.untrusted", "data.db.untrusted-journal"]
+    seen: list[str] = []
+    real = tempfile.mkstemp
+
+    def spy(*args: Any, **kwargs: Any) -> tuple[int, str]:
+        fd, path = real(*args, **kwargs)
+        seen.append(path)
+        return fd, path
+
+    before = set(os.listdir(tempfile.gettempdir()))
+    monkeypatch.setattr(tempfile, "mkstemp", spy)
+    os.chmod(root, 0o555)
+    try:
+        genome = _construct(release)
+        assert sorted(f.id for f in genome.db.features_of_type("gene")) == ALL_GENES
+    finally:
+        os.chmod(root, 0o755)
+    assert sorted(os.listdir(root)) == listing
+    assert [osp.dirname(p) for p in seen] == [tempfile.gettempdir()]
+    name = s288c._PRIVATE_COPY.match(osp.basename(seen[0]))
+    assert name is not None
+    assert name["pid"] == str(os.getpid())
+    assert name["host"] == socket.gethostname()
+    assert set(os.listdir(tempfile.gettempdir())) == before
+
+
+@pytest.mark.parametrize(
+    "site",
+    [
+        "_identity",
+        "_copy_preserving_mode",
+        "_change_counter",
+        "_committed_record_json",
+        "_rollback_equals",
+        "_rollback_equals_compare",
+    ],
+)
+def test_permission_denied_is_not_relabeled_as_vanished(
+    tmp_path: Path, site: str
+) -> None:
+    """Only ``FileNotFoundError`` is named "vanished": a file this user may not read
+    (EACCES) propagates as ``PermissionError`` from every site that names a vanished
+    file, never as :class:`GenomeDatabaseUnavailableError`.
+    """
+    locked_dir = tmp_path / "locked"
+    locked_dir.mkdir()
+    valid = tmp_path / "valid.db"
+    with closing(sqlite3.connect(valid)) as conn:
+        conn.execute("CREATE TABLE t (x INTEGER)")
+        conn.commit()
+    (tmp_path / "valid.db-journal").write_bytes(b"")
+    # data.db has the rolled-back copy's size, so the comparison opens it.
+    db = tmp_path / "data.db"
+    db.write_bytes(valid.read_bytes())
+    (tmp_path / "data.db-journal").write_bytes(b"x" * 512)
+    kept = tmp_path / "data.db.untrusted"
+    kept.write_bytes(b"x" * 4096)
+    (tmp_path / "data.db.untrusted-journal").write_bytes(b"x" * 512)
+    calls = {
+        "_identity": lambda: s288c._identity(str(locked_dir / "data.db")),
+        "_rollback_equals_compare": lambda: s288c._rollback_equals(str(valid), str(db)),
+        "_copy_preserving_mode": lambda: s288c._copy_preserving_mode(
+            str(db), str(tmp_path / "copy.db")
+        ),
+        "_change_counter": lambda: s288c._change_counter(str(db)),
+        "_committed_record_json": lambda: s288c._committed_record_json(str(db)),
+        "_rollback_equals": lambda: s288c._rollback_equals(str(kept), str(db)),
+    }
+    locked = (
+        locked_dir
+        if site == "_identity"
+        else kept
+        if site == "_rollback_equals"
+        else db
+    )
+    locked.chmod(0)
+    try:
+        with pytest.raises(PermissionError) as exc:
+            calls[site]()
+    finally:
+        locked.chmod(0o700)
+    assert exc.value.errno == errno.EACCES
+
+
+def test_data_db_vanishing_before_the_kept_byte_comparison_is_named(
+    tmp_path: Path,
+) -> None:
+    """A kept pair sits in the root and data.db has been unlinked (old code's
+    create_db(force=True)) before the byte comparison: the named error.
+    """
+    (tmp_path / "data.db.untrusted").write_bytes(b"x" * 4096)
+    (tmp_path / "data.db.untrusted-journal").write_bytes(b"x" * 512)
+    db = tmp_path / "data.db"
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
+        s288c._journal_moved_to_kept(str(db))
+    assert str(exc.value).startswith(f"{db} vanished while this process")
+
+
+def test_data_db_vanishing_before_the_rollback_comparison_is_named(
+    tmp_path: Path,
+) -> None:
+    """The kept pair rolls back in its private copy, then data.db is gone before the
+    copy is compared with it: the named error, and the private copy is removed.
+    """
+    kept = tmp_path / "data.db.untrusted"
+    with closing(sqlite3.connect(kept)) as conn:
+        conn.execute("CREATE TABLE t (x INTEGER)")
+        conn.commit()
+    (tmp_path / "data.db.untrusted-journal").write_bytes(b"")
+    db = tmp_path / "data.db"
+    before = set(os.listdir(tempfile.gettempdir()))
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
+        s288c._rollback_equals(str(kept), str(db))
+    assert str(exc.value).startswith(f"{db} vanished while this process")
     assert set(os.listdir(tempfile.gettempdir())) == before

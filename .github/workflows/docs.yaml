@@ -210,12 +210,45 @@ jobs:
             fi
           done
 
-      - name: Fail a pull request whose supported query drifts
+      - name: Check the base branch the same way
         if: github.event_name == 'pull_request'
         run: |
-          code="$(jq -r '.exit_code' "$RUNNER_TEMP/query-drift.json")"
-          if [ "$code" != "0" ]; then
-            echo "::error::a supported query drifts against the newest release snapshot;"
+          # A pull request is judged on the drift IT introduces. While main itself drifts
+          # against the newest snapshot (a schema or loader change awaiting the next KG
+          # build, filed as before-next-kg-build issues by the push run), every pull
+          # request inherits that drift through its merge ref; failing them all would
+          # block unrelated work. So the same check runs on the base branch and the next
+          # step compares the two drift sets.
+          git fetch --depth=1 origin "${{ github.base_ref }}"
+          git worktree add "$RUNNER_TEMP/base" FETCH_HEAD
+          set +e
+          PYTHONPATH="$RUNNER_TEMP/base" python -m torchcell.knowledge_graphs.supported_queries \
+            --repo-root "$RUNNER_TEMP/base" check --json > "$RUNNER_TEMP/query-drift-base.json"
+          status=$?
+          set -e
+          if [ "$status" -gt 1 ]; then
+            echo "::error::the supported-query check crashed on the base branch (exit $status)"
+            exit "$status"
+          fi
+
+      - name: Fail a pull request that introduces supported-query drift
+        if: github.event_name == 'pull_request'
+        run: |
+          # A drift is identified by (query_id, kind, detail). One present in the pull
+          # request and absent from the base branch is new and fails the check; one
+          # present in both is inherited and only reported.
+          new="$(jq -n --slurpfile pr "$RUNNER_TEMP/query-drift.json" \
+                       --slurpfile base "$RUNNER_TEMP/query-drift-base.json" '
+            def keys(r): [r.results[] | .drifts[] | "\(.query_id)\t\(.kind)\t\(.detail)"];
+            (keys($pr[0]) - keys($base[0]))[]')"
+          inherited="$(jq -r '[.results[] | .drifts[] | .query_id] | unique | join(", ")' \
+                       "$RUNNER_TEMP/query-drift-base.json")"
+          if [ -n "$inherited" ]; then
+            echo "::notice::drift inherited from ${{ github.base_ref }} (not judged here): $inherited"
+          fi
+          if [ -n "$new" ]; then
+            echo "::error::this pull request introduces supported-query drift against the newest release snapshot:"
+            printf '%s\n' "$new" | sed 's/^/::error::  /'
             echo "::error::fix the query or schema, or deprecate the query in its registry entry."
             exit 1
           fi

@@ -39,10 +39,11 @@ import torch
 from lightning.pytorch.trainer.states import RunningStage
 from torch import nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torch_geometric.data import HeteroData
+from torch_geometric.data import Batch, HeteroData
 from torchmetrics import Metric, MetricCollection
 
 from torchcell.losses.dango import DangoLoss, LinearUntilUniform, PreThenPost
+from torchcell.models.dango import Dango
 from torchcell.trainers.int_dango import RegressionTask
 
 NEIGH = "string12_0_neighborhood"
@@ -66,11 +67,12 @@ SCHED_006 = {
     "eps": 1e-10,
 }
 METRIC_NAMES = ["MSE", "Pearson", "RMSE"]
-MASK_MESSAGE = (
-    "The shape of the mask [3, 1] at index 0 does not match the shape of the indexed "
-    "tensor [2, 1] at index 0"
-)
 SIX = {"MSE": 2.5, "Pearson": 1.0, "RMSE": math.sqrt(2.5)}
+EMPTY_SAMPLES: dict[str, Any] = {
+    "true_values": [],
+    "predictions": [],
+    "integrated_embeddings": None,
+}
 
 
 def _six(stage: str) -> dict[str, Any]:
@@ -235,7 +237,6 @@ def test_init_registers_six_metric_collections_and_saves_hparams(
             f"{stage}/transformed/gene_interaction/{m}" for m in METRIC_NAMES
         ]
     assert task.automatic_optimization is False
-    assert task.current_accumulation_steps == 1
     assert sorted(task._hp.keys()) == [
         "batch_size",
         "cell_graph",
@@ -251,32 +252,66 @@ def test_init_registers_six_metric_collections_and_saves_hparams(
         "plot_every_n_epochs",
         "plot_sample_ceiling",
     ]
-    assert task.train_samples == {
-        "true_values": [],
-        "predictions": [],
-        "latents": {"integrated_embeddings": []},
-    }
+    assert task.train_samples == EMPTY_SAMPLES
+    assert task.val_samples == EMPTY_SAMPLES
 
 
-def test_forward_calls_model_on_cell_graph_and_keeps_only_integrated_embeddings(
+def test_init_refuses_an_accumulation_schedule_and_a_scheduler_it_does_not_build(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Issue #616 item 6. ``grad_accumulation_schedule`` was only tested for None, so
+    {0: 4} still stepped on every batch; and ``lr_scheduler_config["type"]`` was
+    dropped, so "CosineAnnealingLR" built a ReduceLROnPlateau. Both are now refused at
+    construction with the full message (a missing type is refused too). Every 005/006
+    Dango config sets the schedule to null or omits it and names ReduceLROnPlateau, so
+    no config changes behavior.
+    """
+    with pytest.raises(ValueError) as accumulation:
+        _task(monkeypatch, grad_accumulation_schedule={0: 4})
+    assert str(accumulation.value) == (
+        "int_dango.RegressionTask does not implement gradient accumulation; "
+        "grad_accumulation_schedule must be None, got {0: 4}"
+    )
+    with pytest.raises(ValueError) as cosine:
+        _task(monkeypatch, lr_scheduler_config={"type": "CosineAnnealingLR"})
+    assert str(cosine.value) == (
+        "int_dango.RegressionTask builds only ReduceLROnPlateau; "
+        "lr_scheduler_config type is 'CosineAnnealingLR'"
+    )
+    with pytest.raises(ValueError) as missing:
+        _task(monkeypatch, lr_scheduler_config={"mode": "min"})
+    assert str(missing.value) == (
+        "int_dango.RegressionTask builds only ReduceLROnPlateau; "
+        "lr_scheduler_config type is None"
+    )
+
+
+def test_forward_calls_model_once_and_returns_its_outputs_dict_unchanged(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A HeteroData batch has no ``device`` attribute, so the device comes from
-    ``perturbation_indices``; the representations dict carries only
-    ``integrated_embeddings`` (None when the model omits it).
+    ``perturbation_indices``; the second element is the model's own outputs dict (the
+    same object, with ``reconstructions``), so the step needs no second forward.
     """
     task, _ = _task(monkeypatch)
     batch = _batch(TARGET)
+    returned: list[dict[str, Any]] = []
+    model = _scripted(task)
+    model.register_forward_hook(lambda m, i, o: returned.append(o[1]))
     predictions, reps = task(batch)
     assert predictions.tolist() == PRED
-    assert list(reps) == ["integrated_embeddings"]
+    assert reps is returned[0]
+    assert sorted(reps) == ["integrated_embeddings", "reconstructions"]
     assert reps["integrated_embeddings"].tolist() == EMB
-    assert _scripted(task).calls[0] == (task.cell_graph, batch)
+    assert reps["reconstructions"][NEIGH].tolist() == RECON_N
+    assert model.calls == [(task.cell_graph, batch)]
     assert task._cell_graph_device == torch.device("cpu")
 
-    bare, _ = _task(monkeypatch, model=_Scripted(torch.tensor(PRED), None))
+    bare, _ = _task(
+        monkeypatch, model=_Scripted(torch.tensor(PRED), None, with_recon=False)
+    )
     _, reps = bare(batch)
-    assert reps == {"integrated_embeddings": None}
+    assert reps == {}
 
 
 # --- the shared step with DangoLoss ------------------------------------------------- #
@@ -355,19 +390,180 @@ def test_shared_step_dango_loss_reconstruction_matches_numpy_oracle(
     assert log.values["train/reconstruction_loss"] == pytest.approx(oracle, rel=1e-6)
 
 
-def test_shared_step_with_dango_loss_runs_the_model_twice(
-    monkeypatch: pytest.MonkeyPatch,
+def _real_cell_graph() -> HeteroData:
+    """The four-gene graph of tests/torchcell/models/test_dango.py."""
+    graph = HeteroData()
+    graph["gene"].num_nodes = 4
+    graph["gene", NEIGH, "gene"].edge_index = torch.tensor(
+        [[0, 1, 1, 2, 3], [1, 0, 2, 1, 2]]
+    )
+    graph["gene", FUSION, "gene"].edge_index = torch.tensor([[0, 3], [3, 0]])
+    return graph
+
+
+def _real_batch() -> Batch:
+    """Triples [0, 1, 2], [1, 2, 3] and the pair [0, 3]; targets 0.1, -0.2, 0.05."""
+    data = []
+    for genes, value in (([0, 1, 2], 0.1), ([1, 2, 3], -0.2), ([0, 3], 0.05)):
+        genotype = HeteroData()
+        genotype["gene"].num_nodes = 4
+        genotype["gene"].perturbation_indices = torch.tensor(genes)
+        genotype["gene"].phenotype_values = torch.tensor([value])
+        data.append(genotype)
+    return Batch.from_data_list(data, follow_batch=["perturbation_indices"])
+
+
+def _real_dango() -> Dango:
+    torch.manual_seed(0)
+    return Dango(gene_num=4, edge_types=[NEIGH, FUSION], hidden_channels=8, num_heads=2)
+
+
+def _dense(graph: HeteroData, edge_type: str) -> torch.Tensor:
+    adj = torch.zeros(4, 4)
+    index = graph["gene", edge_type, "gene"].edge_index
+    adj[index[0], index[1]] = 1.0
+    return adj
+
+
+def test_shared_step_with_dango_loss_runs_the_model_once(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
 ) -> None:
-    """Finding: with ``DangoLoss`` the step calls the model once through ``self(batch)``
-    (int_dango.py:214) and again for the reconstructions (int_dango.py:262), so every
-    training/validation step runs the full pretrain GNN, meta-embedding and HyperSAGNN
-    twice. Values are unaffected because ``Dango`` has no dropout.
-    Pinned until the reconstructions are taken from the first forward.
+    """Issue #616 item 1. The step used to call the model through ``self(batch)`` and
+    again for the reconstructions, because ``forward`` returned only
+    ``integrated_embeddings`` and the ``DangoLoss`` branch needed ``reconstructions``
+    (both introduced together in 9f995c828, "dango works"). It now calls it once:
+    the scripted model records one call, and a forward hook on the real ``Dango``
+    with ``DangoLoss`` fires once per step.
     """
     task, _ = _task(monkeypatch)
     batch = _batch(TARGET)
     task._shared_step(batch, 0, "train")
-    assert _scripted(task).calls == [(task.cell_graph, batch), (task.cell_graph, batch)]
+    assert _scripted(task).calls == [(task.cell_graph, batch)]
+
+    model = _real_dango()
+    hooks: list[int] = []
+    model.register_forward_hook(lambda m, i, o: hooks.append(1))
+    real, _ = _task(monkeypatch, model=None, loss_func=_dango_loss())
+    real.model = model
+    real.cell_graph = _real_cell_graph()
+    real._shared_step(_real_batch(), 0, "train")
+    assert hooks == [1]
+
+
+# Captured from the pre-fix code (main at 4a179a2e1, two forwards per step) by running
+# this file's real-Dango step in a scratch script and printing float.hex of every value.
+BEFORE_LUU_E4 = {
+    "train/reconstruction_loss": 0.22111916542053223,
+    "train/interaction_loss": 0.008982975035905838,
+    "train/weighted_reconstruction_loss": 0.17689533531665802,
+    "train/weighted_interaction_loss": 0.0017965950537472963,
+    "train/alpha": 0.800000011920929,
+    "train/loss": 0.17869192361831665,
+    "train/integrated_embeddings_norm": 0.4157995879650116,
+}
+BEFORE_METRICS = {
+    "MSE": 0.01808621548116207,
+    "Pearson": 0.3456900715827942,
+    "RMSE": 0.13448500633239746,
+}
+
+
+@pytest.mark.parametrize(
+    ("scheduler", "epoch", "alpha"),
+    [(LinearUntilUniform(10), 4, 0.8), (PreThenPost(10), 12, 0.0)],
+)
+def test_one_forward_step_equals_the_two_forward_protocol_bit_for_bit(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Any,
+    scheduler: LinearUntilUniform | PreThenPost,
+    epoch: int,
+    alpha: float,
+) -> None:
+    """Issue #616 item 1: removing the second forward changes no value. The real seeded
+    ``Dango`` (G 4, H 8, two heads) is stepped once with ``DangoLoss``; the old protocol
+    is replayed beside it on an identically seeded model (predictions from call 1,
+    reconstructions from call 2). The loss and every logged component are EQUAL
+    (``==`` on float32), and so are all six epoch metrics. ``Dango`` has no dropout, so
+    the second call's reconstructions were bit-identical to the first's.
+
+    Pinned pre-fix values (``LinearUntilUniform(10)`` at epoch 4, captured from the
+    two-forward code, ``BEFORE_LUU_E4``): loss 0.17869192361831665
+    (``0x1.6df608p-3``) = 0.8 * recon 0.22111916542053223 + 0.2 * log-cosh
+    0.008982975035905838; MSE 0.01808621548116207, Pearson 0.3456900715827942. Under
+    ``PreThenPost(10)`` at epoch 12 the loss is the log-cosh term alone.
+
+    Gradients are equal up to float32 summation order only: with both terms active the
+    shared GNN now accumulates both upstream gradients before backpropagating once,
+    instead of backpropagating each forward graph separately; the largest difference
+    measured on this step was 9.3e-10 (LinearUntilUniform) and 0 (PreThenPost, one
+    term). No reported value depends on it.
+    """
+    loss_func = DangoLoss(
+        edge_types=[NEIGH, FUSION],
+        lambda_values={NEIGH: 0.1, FUSION: 1.0},
+        scheduler=scheduler,
+    )
+    graph = _real_cell_graph()
+    batch = _real_batch()
+    task, log = _task(monkeypatch, loss_func=loss_func)
+    task.model = _real_dango()
+    task.cell_graph = graph
+    _attach(task, tmp_path, epoch)
+    loss, _, _ = task._shared_step(batch, 0, "train")
+
+    reference = _real_dango()
+    first, _ = reference(graph, batch)
+    _, second = reference(graph, batch)
+    targets = batch["gene"].phenotype_values.view(-1, 1)
+    ref_loss, ref_parts = loss_func(
+        first.view(-1, 1),
+        targets,
+        second["reconstructions"],
+        {e: _dense(graph, e) for e in (NEIGH, FUSION)},
+        current_epoch=epoch,
+    )
+    norm = second["integrated_embeddings"].norm(p=2, dim=-1).mean()
+
+    assert loss.item() == ref_loss.item()
+    expected = {f"train/{k}": float(v) for k, v in ref_parts.items()}
+    expected["train/loss"] = ref_loss.item()
+    expected["train/integrated_embeddings_norm"] = norm.item()
+    assert log.values == expected
+    assert log.values["train/alpha"] == pytest.approx(alpha)
+
+    ref_mse = float(((first - targets.view(-1)) ** 2).mean())
+    for space in ("gene_interaction", "transformed/gene_interaction"):
+        computed = {
+            k.rsplit("/", 1)[1]: v
+            for k, v in _computed(
+                task._metrics(
+                    "train_metrics"
+                    if space == "gene_interaction"
+                    else "train_transformed_metrics"
+                )
+            ).items()
+        }
+        assert computed["MSE"] == ref_mse
+        assert computed == pytest.approx(BEFORE_METRICS, rel=1e-6)
+
+    if epoch == 4:
+        assert log.values == pytest.approx(BEFORE_LUU_E4, rel=1e-6)
+    else:
+        assert log.values["train/loss"] == pytest.approx(
+            BEFORE_LUU_E4["train/interaction_loss"], rel=1e-6
+        )
+
+    loss.backward()
+    ref_loss.backward()
+    for (name, p), (_, q) in zip(
+        task.model.named_parameters(), reference.named_parameters(), strict=True
+    ):
+        # The step's zero-weight dummy term gives parameters outside the active loss
+        # (the reconstruction heads under PreThenPost after the transition) a zero
+        # gradient where the bare reference has None.
+        assert p.grad is not None, name
+        ref_grad = torch.zeros_like(p) if q.grad is None else q.grad
+        torch.testing.assert_close(p.grad, ref_grad, atol=1e-8, rtol=0.0)
 
 
 # --- the shared step with other losses ---------------------------------------------- #
@@ -478,54 +674,89 @@ def test_shared_step_reshapes_scalar_and_keeps_first_target_column(
     assert loss2.item() == pytest.approx(2.5)
 
 
-def test_shared_step_nan_target_is_masked_for_metrics_but_not_for_the_loss(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
-) -> None:
-    """Finding: NaN targets are removed before both metric updates
-    (int_dango.py:351-356, 381-386) but the loss sees them (int_dango.py:284-290), so the
-    interaction loss is NaN for any NaN target. Whether the STEP loss is NaN depends on
-    the schedule: under ``LinearUntilUniform`` (the 006 schedule, here epoch 12) the
-    total is alpha * recon + (1 - alpha) * NaN = NaN at every epoch (at epoch 0 it is
-    0 * NaN = NaN); under ``PreThenPost`` before its transition see the next test. The
-    metrics see the two finite pairs [1, 3] vs [2, 5]: MSE 2.5. Not shown reachable in
-    the 006 data. Pinned until the loss is masked as the metrics are.
-    """
-    task, log = _task(monkeypatch, model=_Scripted(torch.tensor([1.0, 0.0, 3.0]), None))
-    _attach(task, tmp_path, epoch=12)
-    loss, _, _ = task._shared_step(_batch([2.0, float("nan"), 5.0]), 0, "val")
-    assert math.isnan(loss.item())
-    assert math.isnan(log.values["val/interaction_loss"])
-    assert _computed(task._metrics("val_metrics"))["val/gene_interaction/MSE"] == 2.5
-    transformed = _computed(task._metrics("val_transformed_metrics"))
-    assert transformed["val/transformed/gene_interaction/MSE"] == 2.5
-
-
-def test_shared_step_nan_target_under_pre_then_post_keeps_a_finite_loss(
+@pytest.mark.parametrize(
+    ("scheduler", "epoch", "alpha"),
+    [
+        (LinearUntilUniform(10), 12, 0.5),
+        (LinearUntilUniform(10), 0, 1.0),
+        (PreThenPost(10), 0, 1.0),
+        (PreThenPost(10), 10, 0.0),
+    ],
+)
+def test_shared_step_masks_nan_targets_before_the_loss_under_both_schedules(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Any,
+    scheduler: LinearUntilUniform | PreThenPost,
+    epoch: int,
+    alpha: float,
 ) -> None:
-    """Finding (schedule dependence of the NaN-loss finding): ``PreThenPost(10)`` at
-    epoch 0 (the 005 default schedule) returns total = recon and never multiplies the
-    NaN interaction loss, so the step loss is the finite reconstruction loss 0.1180556,
-    ``train/interaction_loss`` is NaN and ``train/weighted_interaction_loss`` is
-    zeros_like(NaN) = 0. After the transition the step loss would be NaN.
-    Pinned until the loss is masked as the metrics are.
+    """Issue #616 item 3. Predictions [1, 0, 3] against targets [2, NaN, 5]: the NaN
+    pair is dropped before the loss with the mask the transformed metrics use, so the
+    interaction loss is the log-cosh of the two finite pairs, 0.8793917, under both
+    schedules (it used to be NaN, making the ``LinearUntilUniform`` step loss NaN at
+    every epoch and the ``PreThenPost`` loss NaN after its transition). Step loss =
+    alpha * 0.1180556 + (1 - alpha) * 0.8793917. Both metric spaces see the same two
+    pairs: MSE 2.5. Logs keep batch_size 3, the genotype count.
     """
     loss_func = DangoLoss(
         edge_types=[NEIGH, FUSION],
         lambda_values={NEIGH: 0.1, FUSION: 1.0},
-        scheduler=PreThenPost(transition_epoch=10),
+        scheduler=scheduler,
     )
     task, log = _task(
         monkeypatch,
         model=_Scripted(torch.tensor([1.0, 0.0, 3.0]), None),
         loss_func=loss_func,
     )
+    _attach(task, tmp_path, epoch)
+    loss, _, _ = task._shared_step(_batch([2.0, float("nan"), 5.0]), 0, "val")
+    expected = alpha * RECON_LOSS + (1 - alpha) * LOGCOSH
+    assert loss.item() == pytest.approx(expected, rel=1e-6)
+    values = log.values
+    assert values["val/interaction_loss"] == pytest.approx(LOGCOSH, rel=1e-6)
+    assert values["val/weighted_interaction_loss"] == pytest.approx(
+        (1 - alpha) * LOGCOSH, rel=1e-6, abs=1e-12
+    )
+    assert values["val/loss"] == pytest.approx(expected, rel=1e-6)
+    assert values["val/alpha"] == pytest.approx(alpha)
+    assert set(log.batch_sizes.values()) == {3}
+    assert _computed(task._metrics("val_metrics"))["val/gene_interaction/MSE"] == 2.5
+    transformed = _computed(task._metrics("val_transformed_metrics"))
+    assert transformed["val/transformed/gene_interaction/MSE"] == 2.5
+
+
+def test_shared_step_generic_loss_also_receives_only_finite_pairs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The mask applies to every loss: a plain MSE gets the [2, 1] finite pairs
+    [[1], [3]] vs [[2], [5]] and returns 2.5 (it would be NaN unmasked).
+    """
+    loss_func = _TupleLoss()
+    task, _ = _task(
+        monkeypatch,
+        model=_Scripted(torch.tensor([1.0, 0.0, 3.0]), torch.tensor(EMB)),
+        loss_func=loss_func,
+    )
     loss, _, _ = task._shared_step(_batch([2.0, float("nan"), 5.0]), 0, "train")
-    assert math.isfinite(loss.item())
-    assert loss.item() == pytest.approx(RECON_LOSS, rel=1e-6)
-    nan_logs = sorted(n for n, v, _ in log.calls if math.isnan(v))
-    assert nan_logs == ["train/interaction_loss"]
-    assert log.values["train/weighted_interaction_loss"] == 0.0
+    assert loss.item() == 5.0
+    pred, target, emb = loss_func.args[0]
+    assert pred.tolist() == [[1.0], [3.0]] and target.tolist() == [[2.0], [5.0]]
+    assert emb.tolist() == EMB
+
+
+def test_shared_step_refuses_a_batch_whose_targets_are_all_nan(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A batch with no finite target has no loss; it is refused by name instead of
+    yielding a NaN (or, under ``PreThenPost``, a reconstruction-only) step loss.
+    """
+    task, log = _task(monkeypatch, model=_Scripted(torch.tensor([1.0, 0.0, 3.0]), None))
+    with pytest.raises(ValueError) as excinfo:
+        task._shared_step(_batch([float("nan")] * 3), 7, "train")
+    assert str(excinfo.value) == (
+        "train batch 7: all 3 targets are NaN, so the loss and metrics are undefined"
+    )
+    assert log.calls == []
 
 
 @pytest.mark.parametrize(
@@ -572,52 +803,46 @@ class _ConstLoss(nn.Module):
         return args[0].sum() * 0.0 + 1.0
 
 
-def test_count_mismatch_from_an_empty_genotype_raises_in_the_loss(
+@pytest.mark.parametrize("loss_kind", ["dango", "shape_blind"])
+def test_shared_step_refuses_fewer_predictions_than_targets(
+    monkeypatch: pytest.MonkeyPatch, loss_kind: str
+) -> None:
+    """Issue #616 item 2 at the trainer boundary: two predictions for three targets
+    (what a trailing empty genotype used to produce) are refused by name before any
+    loss or metric, whatever the loss. Previously ``DangoLoss`` raised a broadcast
+    error, and a shape-blind loss either hit an IndexError at the metric mask or, with
+    all-NaN targets, finished the step with mismatched batch sizes in the logs.
+    """
+    loss_func = _dango_loss() if loss_kind == "dango" else _ConstLoss()
+    task, log = _task(monkeypatch, loss_func=loss_func)
+    with pytest.raises(ValueError) as excinfo:
+        task._shared_step(_batch([2.0, 5.0, 4.0]), 3, "val")
+    assert str(excinfo.value) == (
+        "val batch 3: the model returned 2 predictions for 3 targets"
+    )
+    assert log.calls == []
+    assert task._metrics("val_metrics")["val/gene_interaction/MSE"].update_count == 0
+
+
+def test_learning_rate_and_step_logs_share_the_genotype_count(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Finding (the model-side empty-genotype finding, seen from the trainer): two
-    predictions for three targets (a trailing genotype with no perturbation indices)
-    make ``DangoLoss`` raise at the log-cosh broadcast, before any metric update.
-    Pinned until ``HyperSAGNN`` sizes its output by the number of graphs.
+    """``training_step`` logs ``learning_rate`` with len(phenotype_values) and the step
+    logs use predictions.size(0); the boundary check makes them equal: 3 genotypes,
+    one with a NaN target, log batch_size 3 everywhere.
     """
-    task, _ = _task(monkeypatch)
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            "The size of tensor a (2) must match the size of tensor b (3) at "
-            "non-singleton dimension 0"
-        ),
-    ):
-        task._shared_step(_batch([2.0, 5.0, 4.0]), 0, "train")
-
-
-def test_count_mismatch_with_a_shape_blind_loss_raises_at_the_metric_mask(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """With a loss that ignores shapes, the same mismatch reaches
-    ``predictions[mask]`` (int_dango.py:355), where the [3, 1] target mask cannot index
-    the [2, 1] predictions.
-    """
-    task, _ = _task(monkeypatch, loss_func=_ConstLoss())
-    with pytest.raises(IndexError, match=re.escape(MASK_MESSAGE)):
-        task._shared_step(_batch([2.0, 5.0, 4.0]), 0, "train")
-
-
-def test_learning_rate_log_batch_size_counts_targets_not_predictions(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """``training_step`` logs ``learning_rate`` with len(phenotype_values) while the step
-    logs use predictions.size(0). They can differ only when the counts disagree; with
-    all-NaN targets both metric updates are skipped, so a shape-blind loss lets the step
-    finish: ``train/loss`` carries batch_size 2 and ``learning_rate`` batch_size 3.
-    """
-    task, log = _task(monkeypatch, loss_func=_ConstLoss())
+    task, log = _task(
+        monkeypatch,
+        model=_Scripted(torch.tensor([1.0, 0.0, 3.0]), torch.tensor(EMB)),
+        loss_func=_ConstLoss(),
+    )
     _wire_optimizer(monkeypatch, task)
-    task.training_step(_batch([float("nan")] * 3), 0)
-    sizes = log.batch_sizes
-    assert sizes["train/loss"] == 2
-    assert sizes["train/integrated_embeddings_norm"] == 2
-    assert sizes["learning_rate"] == 3
+    task.training_step(_batch([2.0, float("nan"), 5.0]), 0)
+    assert log.batch_sizes == {
+        "train/loss": 3,
+        "train/integrated_embeddings_norm": 3,
+        "learning_rate": 3,
+    }
 
 
 class _Affine(nn.Module):
@@ -805,22 +1030,16 @@ def test_training_step_backward_clip_step_zero_grad_and_lr_log(
     )
 
 
-def test_training_step_ignores_the_accumulation_schedule_values(
+def test_training_step_steps_the_optimizer_on_every_batch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Finding: ``grad_accumulation_schedule`` is only tested for None
-    (int_dango.py:450, 455); nothing sets ``current_accumulation_steps`` from it, so
-    {0: 4} still divides the loss by 1 and steps on every batch. Every 005/006 Dango
-    config sets it to null, so no reported run is affected.
-    Pinned until the schedule is applied per epoch (as ``int_hetero_cell`` does).
+    """No accumulation (a schedule is refused at construction): each batch backpropagates
+    the undivided loss 2.5 and steps once; clipping off means no clip call.
     """
-    task, _ = _task(
-        monkeypatch, loss_func=_PlainLoss(), grad_accumulation_schedule={0: 4}
-    )
+    task, _ = _task(monkeypatch, loss_func=_PlainLoss())
     events, backward, clipped = _wire_optimizer(monkeypatch, task)
     task.training_step(_batch(TARGET), 0)
     task.training_step(_batch(TARGET), 1)
-    assert task.current_accumulation_steps == 1
     assert backward == [pytest.approx(2.5), pytest.approx(2.5)]
     assert events == ["step", "zero_grad", "step", "zero_grad"]
     assert clipped == []
@@ -882,46 +1101,72 @@ class _Const(Metric):
         return torch.tensor(1.25)
 
 
-def test_compute_metrics_safely_skips_only_the_two_known_messages(
+def test_log_epoch_metrics_propagates_every_metric_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Metrics raising "Needs at least two samples" or "No samples to concatenate" are
-    dropped from the result; any other ValueError propagates.
+    """Issue #616 item 4. ``_compute_metrics_safely`` swallowed two torchmetrics messages
+    that torchmetrics 1.8.2 never raises; it is gone, and nothing is swallowed: a
+    metric raising "Needs at least two samples, got 1" propagates (the collection
+    orders metrics by name, so it is computed first and nothing is logged).
     """
-    task, _ = _task(monkeypatch)
-    collection = MetricCollection(
-        {
-            "a": _Raises("Needs at least two samples, got 1"),
-            "b": _Raises("No samples to concatenate"),
-            "c": _Const(),
-        }
+    task, log = _task(monkeypatch)
+    task.val_metrics = MetricCollection(
+        {"c": _Const(), "a": _Raises("Needs at least two samples, got 1")}
     )
-    assert {
-        k: float(v) for k, v in task._compute_metrics_safely(collection).items()
-    } == {"c": 1.25}
-    with pytest.raises(ValueError, match=re.escape("bad shape")):
-        task._compute_metrics_safely(MetricCollection({"d": _Raises("bad shape")}))
+    task._metrics("val_metrics").update()
+    with pytest.raises(
+        ValueError, match=re.escape("Needs at least two samples, got 1")
+    ):
+        task._log_epoch_metrics("val_metrics")
+    assert log.calls == []
 
 
-def test_compute_metrics_safely_returns_nan_on_empty_and_single_sample_epochs(
+def test_log_epoch_metrics_refuses_an_empty_epoch_and_logs_nan_pearson_for_one_sample(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Finding: with the installed torchmetrics no stage metric raises the two guarded
-    messages (int_dango.py:489-496 is dead code): an epoch with no valid target returns
-    NaN for MSE, Pearson and RMSE, and a one-sample epoch returns MSE 1 and Pearson NaN.
-    These NaNs are what ``on_*_epoch_end`` would log, and val MSE is the scheduler and
-    checkpoint monitor. Pinned until the guard checks the update count instead.
+    """Issue #616 item 4. An epoch with no finite-target sample used to log NaN for MSE,
+    RMSE and Pearson, and validation MSE is the scheduler and checkpoint monitor; it is
+    now refused by name, before anything is logged. A one-sample epoch logs MSE 1 and
+    RMSE 1 for prediction 1 vs target 2, and Pearson NaN (undefined for one sample),
+    then resets the collection.
     """
-    task, _ = _task(monkeypatch)
-    empty = task._compute_metrics_safely(task._metrics("val_metrics"))
-    assert sorted(empty) == [f"val/gene_interaction/{m}" for m in METRIC_NAMES]
-    assert all(math.isnan(float(v)) for v in empty.values())
-    single = task._metrics("val_metrics")
-    single.update(torch.tensor([1.0]), torch.tensor([2.0]))
-    one = {k: float(v) for k, v in task._compute_metrics_safely(single).items()}
-    assert one["val/gene_interaction/MSE"] == 1.0
-    assert one["val/gene_interaction/RMSE"] == 1.0
-    assert math.isnan(one["val/gene_interaction/Pearson"])
+    task, log = _task(monkeypatch)
+    with pytest.raises(ValueError) as excinfo:
+        task._log_epoch_metrics("val_metrics")
+    assert str(excinfo.value) == (
+        "val/gene_interaction/MSE: the epoch ended with no sample with a finite "
+        "target, so the metric is undefined"
+    )
+    assert log.calls == []
+
+    task._metrics("val_metrics").update(torch.tensor([1.0]), torch.tensor([2.0]))
+    task._log_epoch_metrics("val_metrics")
+    assert [(n, kw) for n, _, kw in log.calls] == [
+        (f"val/gene_interaction/{m}", {"sync_dist": True}) for m in METRIC_NAMES
+    ]
+    values = log.values
+    assert values["val/gene_interaction/MSE"] == 1.0
+    assert values["val/gene_interaction/RMSE"] == 1.0
+    assert math.isnan(values["val/gene_interaction/Pearson"])
+    for metric in task._metrics("val_metrics").values():
+        assert metric.update_count == 0
+
+
+def test_epoch_ends_log_no_metrics_under_dataloader_profiling(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    """``execution_mode="dataloader_profiling"`` (the 006 ``_dataloader_profile`` and
+    ``_086_dataloader`` configs) never runs the model, so no metric is updated; the
+    train and validation epoch ends log nothing instead of refusing the empty epoch.
+    """
+    task, log = _task(monkeypatch, execution_mode="dataloader_profiling")
+    _attach(task, tmp_path, epoch=0)
+    task._shared_step(_batch(TARGET), 0, "train")
+    task._shared_step(_batch(TARGET), 0, "val")
+    log.calls.clear()
+    task.on_train_epoch_end()
+    task.on_validation_epoch_end()
+    assert log.calls == []
 
 
 def test_on_train_epoch_end_logs_both_metric_spaces_and_resets(
@@ -967,20 +1212,17 @@ def test_epoch_start_hooks_reset_samples_only_on_plot_epochs(
     trainer.fit_loop.epoch_progress.current.completed = 1
     task.on_train_epoch_start()
     task.on_validation_epoch_start()
-    empty = {
-        "true_values": [],
-        "predictions": [],
-        "latents": {"integrated_embeddings": []},
-    }
-    assert task.train_samples == empty and task.val_samples == empty
+    assert task.train_samples == EMPTY_SAMPLES and task.val_samples == EMPTY_SAMPLES
 
 
 def test_on_validation_epoch_end_plots_only_outside_sanity_check(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Any
 ) -> None:
     """Epoch 1 (plot epoch): during the sanity check the samples are kept and nothing is
-    plotted; afterwards ``_plot_samples(val_samples, "val_sample")`` runs once and the
-    accumulators are emptied. Metrics are logged in both cases.
+    plotted; in the real validation epoch that follows (start hook, one step)
+    ``_plot_samples(val_samples, "val_sample")`` runs once and the accumulators are
+    emptied. Metrics are logged in both cases (each epoch has its own step, since an
+    epoch with no sample is refused).
     """
     task, log = _task(monkeypatch, loss_func=_PlainLoss())
     trainer = _attach(task, tmp_path, epoch=1)
@@ -1001,26 +1243,31 @@ def test_on_validation_epoch_end_plots_only_outside_sanity_check(
             assert metric.update_count == 0
 
     trainer.state.stage = RunningStage.VALIDATING
+    task.on_validation_epoch_start()
+    task._shared_step(_batch(TARGET), 0, "val")
     task.on_validation_epoch_end()
     assert plotted == [(1, "val_sample")]
     assert task.val_samples["true_values"] == []
 
 
 # --- sample collection and plotting ------------------------------------------------- #
-def test_train_sample_collection_respects_the_ceiling_and_indexes_gene_rows(
+def test_train_sample_collection_respects_the_ceiling_and_keeps_the_last_gene_table(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Any
 ) -> None:
     """Ceiling 3, batches of 2, plot epoch: batch 1 is kept whole; batch 2 keeps
-    ``randperm(2)[:1]`` (seed 0); batch 3 is dropped. The latents of batch 2 are
-    ``integrated_embeddings[idx]``, i.e. a GENE row picked by a SAMPLE index (the
-    embeddings are per gene, [3, 2]); batch 1 appends the whole gene table.
+    ``randperm(2)[:1]`` (seed 0); batch 3's samples are dropped. Issue #616 item 5: the
+    gene table is per gene, so it is neither indexed by a sample index (batch 2 used to
+    store ``EMB[idx]``, a gene row) nor stacked; the buffer holds the LAST step's whole
+    table, here 2 * EMB after ``w`` is set to 2 before batch 3.
     """
     task, _ = _task(monkeypatch, loss_func=_PlainLoss(), plot_sample_ceiling=3)
     _attach(task, tmp_path, epoch=1)
     task._shared_step(_batch(TARGET), 0, "train")
     torch.manual_seed(0)
     task._shared_step(_batch(TARGET), 1, "train")
-    task._shared_step(_batch(TARGET), 2, "train")
+    with torch.no_grad():
+        _scripted(task).w.fill_(2.0)
+    task._shared_step(_batch([4.0, 12.0]), 2, "train")
     torch.manual_seed(0)
     idx = torch.randperm(2)[:1]
     samples = task.train_samples
@@ -1032,9 +1279,8 @@ def test_train_sample_collection_respects_the_ceiling_and_indexes_gene_rows(
         [[1.0], [3.0]],
         [[PRED[int(idx)]]],
     ]
-    assert [t.tolist() for t in samples["latents"]["integrated_embeddings"]] == [
-        EMB,
-        [EMB[int(idx)]],
+    assert samples["integrated_embeddings"].tolist() == [
+        [2 * v for v in row] for row in EMB
     ]
 
 
@@ -1077,7 +1323,7 @@ def _record_plots(monkeypatch: pytest.MonkeyPatch) -> tuple[list[Any], list[Any]
     return visual, logged
 
 
-def test_plot_epoch_hands_exact_arrays_and_a_duplicated_gene_table_smoothness(
+def test_plot_epoch_hands_exact_arrays_and_the_single_gene_table_smoothness(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Any
 ) -> None:
     """Two training batches on plot epoch 1, then ``on_train_epoch_end``:
@@ -1085,13 +1331,11 @@ def test_plot_epoch_hands_exact_arrays_and_a_duplicated_gene_table_smoothness(
     [[1], [3], [1], [3]], targets [[2], [5], [2], [5]], empty latents, the loss class
     name, epoch 1, None, stage "train_sample"; the box plot gets the first columns.
 
-    Finding: each training step appends the whole [num_genes, H] embedding table
-    (int_dango.py:422-424), so the logged ``oversmoothing_integrated_embeddings`` is the
-    Frobenius norm of the table stacked once per batch: sqrt(2) * ||EMB - mean|| here
-    (EMB centered: rows (0, -1/3), (-3, -10/3), (3, 11/3); squared norm 0 + 1/9 + 9 +
-    100/9 + 9 + 121/9 = 42.667, so sqrt(2 * 42.667) = 9.2376), growing as
-    sqrt(number of collected batches). Pinned until the latents are per sample or the
-    table is logged once.
+    Issue #616 item 5: the logged ``oversmoothing_integrated_embeddings`` is the
+    Frobenius norm of ONE centered gene table, ||EMB - mean|| (EMB centered: rows
+    (0, -1/3), (-3, -10/3), (3, 11/3); squared norm 0 + 1/9 + 9 + 100/9 + 9 + 121/9 =
+    128/3, norm 6.5320), whatever the number of batches. It used to stack the table
+    once per batch, logging sqrt(2) * 6.5320 = 9.2376 here.
     """
     visual, logged = _record_plots(monkeypatch)
     task, _ = _task(monkeypatch)
@@ -1109,9 +1353,10 @@ def test_plot_epoch_hands_exact_arrays_and_a_duplicated_gene_table_smoothness(
     centered = np.array(EMB) - np.array(EMB).mean(axis=0)
     single = float(np.linalg.norm(centered))
     assert single**2 == pytest.approx(128 / 3)
+    assert single == pytest.approx(6.5319726, rel=1e-6)
     assert logged[0] == {
         "train_sample/oversmoothing_integrated_embeddings": pytest.approx(
-            math.sqrt(2) * single, rel=1e-6
+            single, rel=1e-6
         )
     }
     assert logged[1] == {
@@ -1121,11 +1366,7 @@ def test_plot_epoch_hands_exact_arrays_and_a_duplicated_gene_table_smoothness(
         )
     }
     assert len(logged) == 2
-    assert task.train_samples == {
-        "true_values": [],
-        "predictions": [],
-        "latents": {"integrated_embeddings": []},
-    }
+    assert task.train_samples == EMPTY_SAMPLES
 
 
 def test_plot_samples_noop_on_empty_and_skips_box_plot_for_all_nan_targets(
@@ -1137,13 +1378,13 @@ def test_plot_samples_noop_on_empty_and_skips_box_plot_for_all_nan_targets(
     visual, logged = _record_plots(monkeypatch)
     task, _ = _task(monkeypatch)
     _attach(task, tmp_path, epoch=1)
-    task._plot_samples({"true_values": [], "predictions": []}, "val_sample")
+    task._plot_samples(dict(EMPTY_SAMPLES), "val_sample")
     assert (visual, logged) == ([], [])
     task._plot_samples(
         {
             "true_values": [torch.tensor([float("nan"), float("nan")])],
             "predictions": [torch.tensor([1.0, 2.0])],
-            "latents": {"integrated_embeddings": []},
+            "integrated_embeddings": None,
         },
         "val_sample",
     )
@@ -1189,19 +1430,18 @@ def test_configure_optimizers_matches_the_006_config_exactly(
     ) == ("min", 0.2, 3, 1e-4, "rel", 2, [1e-9], 1e-10)
 
 
-def test_configure_optimizers_renames_learning_rate_and_ignores_scheduler_type(
+def test_configure_optimizers_renames_learning_rate_and_strips_the_scheduler_type(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """``learning_rate`` becomes ``lr``. Finding: ``lr_scheduler_config["type"]`` is
-    dropped (int_dango.py:660-663); a "CosineAnnealingLR" config still builds a
-    ReduceLROnPlateau from the remaining keys. Every 005/006 Dango config says
-    ReduceLROnPlateau, so no reported run is affected.
-    Pinned until the type selects the scheduler or an unknown type is refused.
+    """``learning_rate`` becomes ``lr``; the (validated) scheduler ``type`` key is not
+    passed to ReduceLROnPlateau and the remaining keys are (mode "max"). Any other
+    type is refused at construction, see
+    ``test_init_refuses_an_accumulation_schedule_and_a_scheduler_it_does_not_build``.
     """
     task, _ = _task(
         monkeypatch,
         optimizer_config={"type": "SGD", "learning_rate": 0.5},
-        lr_scheduler_config={"type": "CosineAnnealingLR", "mode": "max"},
+        lr_scheduler_config={"type": "ReduceLROnPlateau", "mode": "max"},
     )
     config = task.configure_optimizers()
     optimizer = config["optimizer"]
@@ -1213,11 +1453,13 @@ def test_configure_optimizers_renames_learning_rate_and_ignores_scheduler_type(
     assert type(scheduler) is ReduceLROnPlateau and scheduler.mode == "max"
 
 
-def test_plot_samples_subsamples_to_the_ceiling_with_one_shared_permutation(
+def test_plot_samples_subsamples_genotypes_to_the_ceiling_but_never_the_gene_table(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Any
 ) -> None:
     """Ceiling 2, three collected samples: one ``randperm(3)[:2]`` (seed 0) indexes the
-    targets, the predictions and the latents alike, and ``max_points`` is the ceiling.
+    targets and the predictions alike, and ``max_points`` is the ceiling. The gene
+    table is per gene, so the smoothness is that of the whole [3, 2] table (it used to
+    be indexed by the genotype permutation, picking gene rows by sample index).
     """
     visual, logged = _record_plots(monkeypatch)
     task, _ = _task(monkeypatch, plot_sample_ceiling=2)
@@ -1228,7 +1470,7 @@ def test_plot_samples_subsamples_to_the_ceiling_with_one_shared_permutation(
         {
             "true_values": [torch.tensor([[10.0], [20.0]]), torch.tensor([[30.0]])],
             "predictions": [torch.tensor([[1.0], [2.0]]), torch.tensor([[3.0]])],
-            "latents": {"integrated_embeddings": [latents]},
+            "integrated_embeddings": latents,
         },
         "train_sample",
     )
@@ -1238,8 +1480,10 @@ def test_plot_samples_subsamples_to_the_ceiling_with_one_shared_permutation(
     args, _ = visual[1]
     assert args[0][:, 0].tolist() == [[1.0, 2.0, 3.0][i] for i in idx]
     assert args[1][:, 0].tolist() == [[10.0, 20.0, 30.0][i] for i in idx]
-    picked = latents[idx].double().numpy()
-    expected = float(np.linalg.norm(picked - picked.mean(axis=0)))
+    table = latents.double().numpy()
+    expected = float(np.linalg.norm(table - table.mean(axis=0)))
+    # rows centered on (5/3, 2): squared norm 25/9 + 4 + 4/9 + 0 + 49/9 + 4 = 50/3
+    assert expected == pytest.approx(math.sqrt(50 / 3), rel=1e-12)
     assert logged[0] == {
         "train_sample/oversmoothing_integrated_embeddings": pytest.approx(
             expected, rel=1e-6

@@ -176,8 +176,15 @@
 <span class="c1">#</span>
 <span class="c1"># Experimental design:</span>
 <span class="c1"># - 2 biological replicates (two independently inoculated cultures)</span>
-<span class="c1"># - Each culture profiled in technical replicate (dye-swap: mutant-Cy5/ref-Cy3 and mutant-Cy3/ref-Cy5)</span>
-<span class="c1"># - Total: 4 measurements per gene per deletion mutant (2 biological × 2 dye orientations)</span>
+<span class="c1"># - Each culture profiled in technical replicate with the dyes swapped. GEO labels</span>
+<span class="c1">#   ch1 = Cy5 and ch2 = Cy3 on every array of the six series, and source_name_ch1/ch2</span>
+<span class="c1">#   say which channel holds the common reference pool ("refpool"; "ref1" on 193</span>
+<span class="c1">#   GSE42217 arrays) and which the deletion or wildtype culture. On the "-a" arrays</span>
+<span class="c1">#   the reference pool is in Cy5 and the deletion in Cy3; the "-b" arrays are the</span>
+<span class="c1">#   swap. Measured 2026-09-28 on the raw SOFT files: 3061 of 3061 arrays name the</span>
+<span class="c1">#   reference in exactly one channel, and the deleted gene's own probes read lower</span>
+<span class="c1">#   in the deletion channel on 702 of 705 arrays that carry one.</span>
+<span class="c1"># - Total: 4 measurements per gene per deletion mutant (2 biological x 2 dye orientations)</span>
 <span class="c1"># - Common reference RNA (WT pool) used in dye-swap on each microarray</span>
 <span class="c1"># - Applies to 1,484 deletion mutants (gene-specific regulators focus)</span>
 <span class="c1">#</span>
@@ -483,41 +490,36 @@
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">systematic_gene_name</span><span class="p">:</span>
                     <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Skipping </span><span class="si">{</span><span class="n">common_name</span><span class="si">}</span><span class="s2"> from title - cannot resolve"</span><span class="p">)</span>
 
-            <span class="c1"># Check characteristics_ch2 for confirmation</span>
-            <span class="n">characteristics_ch2</span> <span class="o">=</span> <span class="n">gsm</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"characteristics_ch2"</span><span class="p">,</span> <span class="p">[])</span>
-
-            <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">characteristics_ch2</span><span class="p">:</span>
-                <span class="k">if</span> <span class="s2">"genotype/variation:"</span> <span class="ow">in</span> <span class="n">char</span><span class="p">:</span>
+            <span class="c1"># Check the channel characteristics for confirmation. The deletion is in</span>
+            <span class="c1"># ch2 on the "-a" arrays and in ch1 on the "-b" arrays (the dye swap), so</span>
+            <span class="c1"># both channels are read; the other one names the reference pool.</span>
+            <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"characteristics_ch1"</span><span class="p">,</span> <span class="s2">"characteristics_ch2"</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">gsm</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="p">[]):</span>
+                    <span class="k">if</span> <span class="s2">"genotype/variation:"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">char</span><span class="p">:</span>
+                        <span class="k">continue</span>
                     <span class="n">genotype</span> <span class="o">=</span> <span class="n">char</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"genotype/variation:"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="s2">"-del"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">genotype</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">is_deletion</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">is_wildtype</span> <span class="o">=</span> <span class="kc">False</span>
 
-                    <span class="c1"># Note: "refpool" in ch2 means this is a dye-swap sample, NOT a wildtype</span>
-                    <span class="c1"># The deletion mutant is in ch1, reference in ch2</span>
-                    <span class="k">if</span> <span class="s2">"-del"</span> <span class="ow">in</span> <span class="n">genotype</span><span class="p">:</span>
-                        <span class="c1"># This is a deletion mutant sample</span>
-                        <span class="n">is_deletion</span> <span class="o">=</span> <span class="kc">True</span>
-                        <span class="n">is_wildtype</span> <span class="o">=</span> <span class="kc">False</span>
-
-                        <span class="c1"># Only extract gene name if we haven't already tried from title</span>
-                        <span class="k">if</span> <span class="ow">not</span> <span class="n">gene_resolved_from_title</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">systematic_gene_name</span><span class="p">:</span>
-                            <span class="n">gene_part</span> <span class="o">=</span> <span class="n">genotype</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"-del"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-                            <span class="c1"># Remove [HS1991] or similar prefixes if present</span>
-                            <span class="k">if</span> <span class="s2">"]"</span> <span class="ow">in</span> <span class="n">gene_part</span><span class="p">:</span>
-                                <span class="n">gene_part</span> <span class="o">=</span> <span class="n">gene_part</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"]"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-                            <span class="n">common_name</span> <span class="o">=</span> <span class="n">gene_part</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-                            <span class="n">systematic_gene_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_gene_name_comprehensive</span><span class="p">(</span>
-                                <span class="n">common_name</span><span class="p">,</span>
-                                <span class="n">common_to_systematic</span><span class="p">,</span>
-                                <span class="n">systematic_to_strain</span><span class="p">,</span>
-                                <span class="n">already_assigned</span><span class="p">,</span>
+                    <span class="c1"># Only extract gene name if we haven't already tried from title</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">gene_resolved_from_title</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">systematic_gene_name</span><span class="p">:</span>
+                        <span class="n">gene_part</span> <span class="o">=</span> <span class="n">genotype</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"-del"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                        <span class="c1"># Remove [HS1991] or similar prefixes if present</span>
+                        <span class="k">if</span> <span class="s2">"]"</span> <span class="ow">in</span> <span class="n">gene_part</span><span class="p">:</span>
+                            <span class="n">gene_part</span> <span class="o">=</span> <span class="n">gene_part</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"]"</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                        <span class="n">common_name</span> <span class="o">=</span> <span class="n">gene_part</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+                        <span class="n">systematic_gene_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_gene_name_comprehensive</span><span class="p">(</span>
+                            <span class="n">common_name</span><span class="p">,</span>
+                            <span class="n">common_to_systematic</span><span class="p">,</span>
+                            <span class="n">systematic_to_strain</span><span class="p">,</span>
+                            <span class="n">already_assigned</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">systematic_gene_name</span><span class="p">:</span>
+                            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">"Skipping </span><span class="si">{</span><span class="n">common_name</span><span class="si">}</span><span class="s2"> from characteristics - cannot resolve"</span>
                             <span class="p">)</span>
-                            <span class="k">if</span> <span class="ow">not</span> <span class="n">systematic_gene_name</span><span class="p">:</span>
-                                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                                    <span class="sa">f</span><span class="s2">"Skipping </span><span class="si">{</span><span class="n">common_name</span><span class="si">}</span><span class="s2"> from characteristics - cannot resolve"</span>
-                                <span class="p">)</span>
-
-            <span class="c1"># Note: We do NOT check characteristics_ch1 for refpool</span>
-            <span class="c1"># In two-channel microarrays, ch1 is ALWAYS the reference pool</span>
-            <span class="c1"># Only ch2 determines if this sample is a deletion mutant or wildtype</span>
 
             <span class="c1"># Final check: Only mark as wildtype if no deletion was found</span>
             <span class="c1"># Most samples should be deletion mutants (with or without dye-swap)</span>
@@ -667,10 +669,8 @@
             <span class="p">)</span>
             <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"First 10 missing genes: </span><span class="si">{</span><span class="n">missing_genes</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-        <span class="c1"># Validate log2 ratios against original GEO data</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_log2_ratios</span><span class="p">(</span>
-            <span class="n">deletion_samples_by_gene</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">,</span> <span class="n">systematic_to_strain</span>
-        <span class="p">)</span>
+        <span class="c1"># Check the channel assignment on the deleted genes' own probes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_channel_assignment</span><span class="p">(</span><span class="n">deletion_samples_by_gene</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">)</span>
 
         <span class="c1"># Choose processing method based on process_workers</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_workers</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -717,13 +717,13 @@
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
             <span class="c1"># Process each unique gene deletion (collect replicate-level data)</span>
             <span class="k">for</span> <span class="n">gene_name</span><span class="p">,</span> <span class="n">gsm_list</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">deletion_samples_by_gene</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
-                <span class="c1"># Collect expression data from all dye-swap replicates (replicate-level, not averaged)</span>
-                <span class="n">replicate_expressions</span><span class="p">,</span> <span class="n">n_replicates</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_collect_replicate_expressions</span><span class="p">(</span><span class="n">gsm_list</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">)</span>
+                <span class="c1"># Per-array (deletion, refpool) signal pairs, one pair per array</span>
+                <span class="n">replicate_pairs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collect_replicate_pairs_static</span><span class="p">(</span>
+                    <span class="n">gsm_list</span><span class="p">,</span> <span class="n">probe_to_gene_map</span>
                 <span class="p">)</span>
 
                 <span class="c1"># Skip if no expression data was extracted</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">replicate_expressions</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">replicate_pairs</span><span class="p">:</span>
                     <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No expression data for gene </span><span class="si">{</span><span class="n">gene_name</span><span class="si">}</span><span class="s2">, skipping..."</span><span class="p">)</span>
                     <span class="k">continue</span>
 
@@ -754,23 +754,11 @@
                     <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown strain </span><span class="si">{</span><span class="n">strain</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">gene_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
                     <span class="k">continue</span>
 
-                <span class="c1"># Extract refpool from deletion samples' Cy3 channel</span>
-                <span class="c1"># This is the actual refpool at the scale of the deletion experiment</span>
-                <span class="n">deletion_refpool</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_refpool_from_deletion_samples</span><span class="p">(</span>
-                    <span class="n">gsm_list</span><span class="p">,</span> <span class="n">probe_to_gene_map</span>
-                <span class="p">)</span>
-
-                <span class="c1"># Skip if no refpool data</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">deletion_refpool</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No refpool data extracted for </span><span class="si">{</span><span class="n">gene_name</span><span class="si">}</span><span class="s2">, skipping..."</span><span class="p">)</span>
-                    <span class="k">continue</span>
-
                 <span class="c1"># Create experiment with correct n_replicates for reference</span>
                 <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_expression_experiment</span><span class="p">(</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                     <span class="n">sample_info</span><span class="p">,</span>
-                    <span class="n">replicate_expressions</span><span class="p">,</span>  <span class="c1"># Pass replicate-level data (List[float] per gene)</span>
-                    <span class="n">deletion_refpool</span><span class="p">,</span>  <span class="c1"># Use actual refpool from deletion samples (already averaged)</span>
+                    <span class="n">replicate_pairs</span><span class="p">,</span>
                     <span class="n">refpool_n_replicates</span><span class="p">,</span>  <span class="c1"># Number of WT samples refpool was measured in</span>
                 <span class="p">)</span>
 
@@ -884,15 +872,15 @@
         <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">for</span> <span class="n">gene_name</span><span class="p">,</span> <span class="n">gsm_list</span> <span class="ow">in</span> <span class="n">batch_items</span><span class="p">:</span>
-            <span class="c1"># Collect expression data from all dye-swap replicates (replicate-level, not averaged)</span>
-            <span class="n">replicate_expressions</span><span class="p">,</span> <span class="n">n_replicates</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">MicroarrayKemmeren2014Dataset</span><span class="o">.</span><span class="n">_collect_replicate_expressions_static</span><span class="p">(</span>
+            <span class="c1"># Per-array (deletion, refpool) signal pairs, one pair per array</span>
+            <span class="n">replicate_pairs</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">MicroarrayKemmeren2014Dataset</span><span class="o">.</span><span class="n">_collect_replicate_pairs_static</span><span class="p">(</span>
                     <span class="n">gsm_list</span><span class="p">,</span> <span class="n">probe_to_gene_map</span>
                 <span class="p">)</span>
             <span class="p">)</span>
 
             <span class="c1"># Skip if no expression data was extracted</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">replicate_expressions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">replicate_pairs</span><span class="p">:</span>
                 <span class="k">continue</span>
 
             <span class="c1"># Determine strain from systematic_to_strain map - REQUIRED</span>
@@ -915,22 +903,12 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">continue</span>
 
-            <span class="c1"># Extract refpool from deletion samples' Cy3 channel</span>
-            <span class="n">deletion_refpool</span> <span class="o">=</span> <span class="n">MicroarrayKemmeren2014Dataset</span><span class="o">.</span><span class="n">_extract_refpool_from_deletion_samples_static</span><span class="p">(</span>
-                <span class="n">gsm_list</span><span class="p">,</span> <span class="n">probe_to_gene_map</span>
-            <span class="p">)</span>
-
-            <span class="c1"># Skip if no refpool data</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">deletion_refpool</span><span class="p">:</span>
-                <span class="k">continue</span>
-
             <span class="c1"># Create experiment with correct n_replicates for reference</span>
             <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">MicroarrayKemmeren2014Dataset</span><span class="o">.</span><span class="n">create_expression_experiment</span><span class="p">(</span>
                     <span class="n">dataset_name</span><span class="p">,</span>
                     <span class="n">sample_info</span><span class="p">,</span>
-                    <span class="n">replicate_expressions</span><span class="p">,</span>  <span class="c1"># Pass replicate-level data (List[float] per gene)</span>
-                    <span class="n">deletion_refpool</span><span class="p">,</span>  <span class="c1"># Use actual refpool from deletion samples (already averaged)</span>
+                    <span class="n">replicate_pairs</span><span class="p">,</span>
                     <span class="n">refpool_n_replicates</span><span class="p">,</span>  <span class="c1"># Number of WT samples refpool was measured in</span>
                 <span class="p">)</span>
             <span class="p">)</span>
@@ -952,159 +930,106 @@
         <span class="k">return</span> <span class="n">results</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_collect_replicate_expressions_static</span><span class="p">(</span>
-        <span class="n">gsm_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SortedDict</span><span class="p">,</span> <span class="n">SortedDict</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Static version of _collect_replicate_expressions for multiprocessing.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_channel_columns</span><span class="p">(</span><span class="n">gsm</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Signal columns of the test culture and of the common reference pool, read</span>
+<span class="sd">        from GEO's own channel metadata.</span>
 
-<span class="sd">        NOTE: Returns REPLICATE-LEVEL data, not averaged values.</span>
-<span class="sd">        The averaging will be done on log2 scale in create_expression_experiment.</span>
+<span class="sd">        Every array of the six series names the reference pool in the ``source_name``</span>
+<span class="sd">        of exactly one channel ("refpool", or "ref1" on 193 GSE42217 arrays) and gives</span>
+<span class="sd">        that channel's dye in ``label_ch1`` / ``label_ch2`` (Cy5 for ch1 and Cy3 for ch2</span>
+<span class="sd">        throughout). Measured 2026-09-28 on the raw SOFT files: 3061 of 3061 arrays.</span>
+<span class="sd">        The sample title is not consulted: on the "-a" arrays the reference pool is in</span>
+<span class="sd">        Cy5, the reverse of what the title suffix was once taken to mean, and the</span>
+<span class="sd">        deleted gene's own probes confirm GEO's labels on 702 of 705 arrays.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            tuple: (replicate_expressions, n_replicates)</span>
-<span class="sd">                - replicate_expressions: Dict[gene, List[float]] - LINEAR scale values per replicate</span>
-<span class="sd">                - n_replicates: Dict[gene, int] - number of replicates per gene</span>
+<span class="sd">            (test_column, reference_column), for example</span>
+<span class="sd">            ("Signal Norm_Cy3", "Signal Norm_Cy5") on a "-a" array.</span>
 <span class="sd">        """</span>
-        <span class="c1"># Collect all expression data (LINEAR scale, replicate-level)</span>
-        <span class="n">all_expressions</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">gsm</span><span class="o">.</span><span class="n">metadata</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"source_name_ch1"</span><span class="p">,</span> <span class="p">[</span><span class="s2">""</span><span class="p">])[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"source_name_ch2"</span><span class="p">,</span> <span class="p">[</span><span class="s2">""</span><span class="p">])[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="p">]</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label_ch1"</span><span class="p">,</span> <span class="p">[</span><span class="s2">""</span><span class="p">])[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"label_ch2"</span><span class="p">,</span> <span class="p">[</span><span class="s2">""</span><span class="p">])[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="p">]</span>
+        <span class="n">is_reference</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"ref"</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">"-del"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">is_reference</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">gsm</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: expected the reference pool in exactly one channel, "</span>
+                <span class="sa">f</span><span class="s2">"source names </span><span class="si">{</span><span class="n">names</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">is_reference</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">reference_dye</span><span class="p">,</span> <span class="n">test_dye</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="n">reference</span><span class="p">],</span> <span class="n">labels</span><span class="p">[</span><span class="mi">1</span> <span class="o">-</span> <span class="n">reference</span><span class="p">]</span>
+        <span class="k">if</span> <span class="p">{</span><span class="n">reference_dye</span><span class="p">,</span> <span class="n">test_dye</span><span class="p">}</span> <span class="o">!=</span> <span class="p">{</span><span class="s2">"Cy5"</span><span class="p">,</span> <span class="s2">"Cy3"</span><span class="p">}:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">gsm</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: channel labels </span><span class="si">{</span><span class="n">labels</span><span class="si">}</span><span class="s2"> are not one Cy5 and one Cy3"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Signal Norm_</span><span class="si">{</span><span class="n">test_dye</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Signal Norm_</span><span class="si">{</span><span class="n">reference_dye</span><span class="si">}</span><span class="s2">"</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_channels_from_gsm_static</span><span class="p">(</span>
+        <span class="n">gsm</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SortedDict</span><span class="p">,</span> <span class="n">SortedDict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Per-gene (test, reference) normalized signals of one array.</span>
+
+<span class="sd">        Both values of a gene come from the same table row, so the pair shares its</span>
+<span class="sd">        spot. Rows whose probe is not in the map and rows with a non-numeric cell are</span>
+<span class="sd">        skipped; a gene with two probes keeps the last row, as before.</span>
+<span class="sd">        """</span>
+        <span class="n">test_column</span><span class="p">,</span> <span class="n">reference_column</span> <span class="o">=</span> <span class="n">MicroarrayKemmeren2014Dataset</span><span class="o">.</span><span class="n">_channel_columns</span><span class="p">(</span>
+            <span class="n">gsm</span>
+        <span class="p">)</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">gsm</span><span class="o">.</span><span class="n">table</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"ID_REF"</span><span class="p">,</span> <span class="n">test_column</span><span class="p">,</span> <span class="n">reference_column</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">column</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">gsm</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: column </span><span class="si">{</span><span class="n">column</span><span class="si">!r}</span><span class="s2"> missing from the sample table"</span>
+                <span class="p">)</span>
+
+        <span class="n">test_data</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
+        <span class="n">reference_data</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">probe_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ID_REF"</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">probe_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">probe_to_gene_map</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">gene</span> <span class="o">=</span> <span class="n">probe_to_gene_map</span><span class="p">[</span><span class="n">probe_id</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">test_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">test_column</span><span class="p">])</span>
+                <span class="n">reference_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">reference_column</span><span class="p">])</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">test_data</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_value</span>
+            <span class="n">reference_data</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">reference_value</span>
+
+        <span class="k">return</span> <span class="n">test_data</span><span class="p">,</span> <span class="n">reference_data</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_collect_replicate_pairs_static</span><span class="p">(</span>
+        <span class="n">gsm_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SortedDict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Per-gene list of (deletion, refpool) signal pairs, one pair per array.</span>
+
+<span class="sd">        The pairs feed ``create_expression_experiment``, which takes the log2 ratio</span>
+<span class="sd">        within each array before averaging over arrays.</span>
+<span class="sd">        """</span>
+        <span class="n">pairs</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">gsm</span> <span class="ow">in</span> <span class="n">gsm_list</span><span class="p">:</span>
-            <span class="n">expr_data</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">MicroarrayKemmeren2014Dataset</span><span class="o">.</span><span class="n">_extract_expression_from_gsm_static</span><span class="p">(</span>
+            <span class="n">deletion</span><span class="p">,</span> <span class="n">refpool</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">MicroarrayKemmeren2014Dataset</span><span class="o">.</span><span class="n">_extract_channels_from_gsm_static</span><span class="p">(</span>
                     <span class="n">gsm</span><span class="p">,</span> <span class="n">probe_to_gene_map</span>
                 <span class="p">)</span>
             <span class="p">)</span>
-            <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">expr_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">gene</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_expressions</span><span class="p">:</span>
-                    <span class="n">all_expressions</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="n">all_expressions</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-
-        <span class="c1"># Count replicates per gene (for tracking)</span>
-        <span class="n">n_replicates</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">all_expressions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">n_replicates</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">all_expressions</span><span class="p">,</span> <span class="n">n_replicates</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_expression_from_gsm_static</span><span class="p">(</span>
-        <span class="n">gsm</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SortedDict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Static version of _extract_expression_from_gsm for multiprocessing.</span>
-
-<span class="sd">        Handles dye-swap design:</span>
-<span class="sd">        - Sample ending in '-a': Cy5 = deletion, Cy3 = refpool</span>
-<span class="sd">        - Sample ending in '-b': Cy5 = refpool, Cy3 = deletion (dye swap)</span>
-
-<span class="sd">        This function extracts the deletion mutant channel, accounting for dye swaps.</span>
-<span class="sd">        """</span>
-        <span class="n">expression_data</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-
-        <span class="c1"># Get the expression table from the GSM</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="s2">"table"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">gsm</span><span class="o">.</span><span class="n">table</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">table</span> <span class="o">=</span> <span class="n">gsm</span><span class="o">.</span><span class="n">table</span>
-
-            <span class="c1"># Check for expected columns</span>
-            <span class="k">if</span> <span class="s2">"ID_REF"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">expression_data</span>
-
-            <span class="c1"># Determine which channel contains deletion mutant expression</span>
-            <span class="c1"># This must account for dye-swap design to extract the correct biological sample</span>
-            <span class="n">expression_column</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="s2">"Signal Norm_Cy5"</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span>
-                <span class="ow">and</span> <span class="s2">"Signal Norm_Cy3"</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span>
-            <span class="p">):</span>
-                <span class="c1"># Determine which channel has deletion mutant based on sample name</span>
-                <span class="n">title</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">gsm</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="p">[</span><span class="s2">""</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="s2">"metadata"</span><span class="p">)</span>
-                    <span class="k">else</span> <span class="s2">""</span>
-                <span class="p">)</span>
-
-                <span class="c1"># Check for dye-swap pattern</span>
-                <span class="k">if</span> <span class="s2">"-a"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="s2">"_a"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">title</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"a"</span><span class="p">):</span>
-                    <span class="c1"># Standard orientation: deletion in Cy5, refpool in Cy3</span>
-                    <span class="n">expression_column</span> <span class="o">=</span> <span class="s2">"Signal Norm_Cy5"</span>
-                <span class="k">elif</span> <span class="s2">"-b"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="s2">"_b"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">title</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"b"</span><span class="p">):</span>
-                    <span class="c1"># Dye swap: deletion in Cy3, refpool in Cy5</span>
-                    <span class="n">expression_column</span> <span class="o">=</span> <span class="s2">"Signal Norm_Cy3"</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># Default to Cy5 for samples without clear dye-swap naming</span>
-                    <span class="n">expression_column</span> <span class="o">=</span> <span class="s2">"Signal Norm_Cy5"</span>
-            <span class="k">elif</span> <span class="s2">"VALUE"</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="n">expression_column</span> <span class="o">=</span> <span class="s2">"VALUE"</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">expression_data</span>
-
-            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-                <span class="n">probe_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ID_REF"</span><span class="p">]))</span>
-
-                <span class="c1"># Map probe ID to gene name</span>
-                <span class="k">if</span> <span class="n">probe_to_gene_map</span> <span class="ow">and</span> <span class="n">probe_id</span> <span class="ow">in</span> <span class="n">probe_to_gene_map</span><span class="p">:</span>
-                    <span class="n">gene</span> <span class="o">=</span> <span class="n">probe_to_gene_map</span><span class="p">[</span><span class="n">probe_id</span><span class="p">]</span>
-                    <span class="k">try</span><span class="p">:</span>
-                        <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">expression_column</span><span class="p">])</span>
-                        <span class="n">expression_data</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-                    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
-                        <span class="k">continue</span>
-
-        <span class="k">return</span> <span class="n">expression_data</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_refpool_from_deletion_samples_static</span><span class="p">(</span>
-        <span class="n">gsm_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SortedDict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Static version of _extract_refpool_from_deletion_samples for multiprocessing."""</span>
-        <span class="n">refpool_values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-
-        <span class="k">for</span> <span class="n">gsm</span> <span class="ow">in</span> <span class="n">gsm_list</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="s2">"table"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">gsm</span><span class="o">.</span><span class="n">table</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">continue</span>
-
-            <span class="n">table</span> <span class="o">=</span> <span class="n">gsm</span><span class="o">.</span><span class="n">table</span>
-            <span class="k">if</span> <span class="s2">"ID_REF"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="k">continue</span>
-
-            <span class="c1"># Determine which channel has refpool based on sample name</span>
-            <span class="n">title</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">gsm</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="p">[</span><span class="s2">""</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="s2">"metadata"</span><span class="p">)</span> <span class="k">else</span> <span class="s2">""</span>
-            <span class="p">)</span>
-
-            <span class="c1"># Check for dye-swap pattern</span>
-            <span class="k">if</span> <span class="s2">"-a"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="s2">"_a"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">title</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"a"</span><span class="p">):</span>
-                <span class="n">refpool_column</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="s2">"Signal Norm_Cy3"</span>  <span class="c1"># Standard: deletion in Cy5, refpool in Cy3</span>
-                <span class="p">)</span>
-            <span class="k">elif</span> <span class="s2">"-b"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="s2">"_b"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">title</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"b"</span><span class="p">):</span>
-                <span class="n">refpool_column</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="s2">"Signal Norm_Cy5"</span>  <span class="c1"># Dye swap: deletion in Cy3, refpool in Cy5</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Default to Cy3 as refpool</span>
-                <span class="n">refpool_column</span> <span class="o">=</span> <span class="s2">"Signal Norm_Cy3"</span>
-
-            <span class="c1"># Extract refpool values</span>
-            <span class="k">if</span> <span class="n">refpool_column</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-                    <span class="n">probe_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ID_REF"</span><span class="p">]))</span>
-                    <span class="k">if</span> <span class="n">probe_id</span> <span class="ow">in</span> <span class="n">probe_to_gene_map</span><span class="p">:</span>
-                        <span class="n">gene</span> <span class="o">=</span> <span class="n">probe_to_gene_map</span><span class="p">[</span><span class="n">probe_id</span><span class="p">]</span>
-                        <span class="k">try</span><span class="p">:</span>
-                            <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">refpool_column</span><span class="p">])</span>
-                            <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                                <span class="k">if</span> <span class="n">gene</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">refpool_values</span><span class="p">:</span>
-                                    <span class="n">refpool_values</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-                                <span class="n">refpool_values</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-                        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
-                            <span class="k">continue</span>
-
-        <span class="c1"># Average refpool values across samples</span>
-        <span class="n">averaged_refpool</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">refpool_values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">averaged_refpool</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">averaged_refpool</span>
+            <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">deletion_value</span> <span class="ow">in</span> <span class="n">deletion</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">gene</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pairs</span><span class="p">:</span>
+                    <span class="n">pairs</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">pairs</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">deletion_value</span><span class="p">,</span> <span class="n">refpool</span><span class="p">[</span><span class="n">gene</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">pairs</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_process_wt_references</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
@@ -1277,74 +1202,6 @@
             <span class="n">refpool_n_replicates</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_wt_reference_with_std</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">wt_gsm_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SortedDict</span><span class="p">,</span> <span class="n">SortedDict</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Calculate average wildtype expression values and std from GSM objects.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            tuple: (mean_expression, std_expression)</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wt_gsm_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"No wildtype samples found, returning empty reference"</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">SortedDict</span><span class="p">(),</span> <span class="n">SortedDict</span><span class="p">()</span>
-
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Calculating reference from </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wt_gsm_list</span><span class="p">)</span><span class="si">}</span><span class="s2"> wildtype samples"</span><span class="p">)</span>
-
-        <span class="c1"># Collect all expression values per gene</span>
-        <span class="n">all_expressions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-
-        <span class="k">for</span> <span class="n">gsm</span> <span class="ow">in</span> <span class="n">wt_gsm_list</span><span class="p">:</span>
-            <span class="n">expr_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_expression_from_gsm</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">expr_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">gene</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_expressions</span><span class="p">:</span>
-                    <span class="n">all_expressions</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="n">all_expressions</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-
-        <span class="c1"># Calculate mean and std</span>
-        <span class="n">wt_mean_expression</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-        <span class="n">wt_std_expression</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-
-        <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">all_expressions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">wt_mean_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-            <span class="n">wt_std_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mf">0.0</span>
-
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Calculated reference for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wt_mean_expression</span><span class="p">)</span><span class="si">}</span><span class="s2"> genes"</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">wt_mean_expression</span><span class="p">,</span> <span class="n">wt_std_expression</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_wt_reference_from_gsm</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">wt_gsm_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SortedDict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Calculate average wildtype expression values from GSM objects.</span>
-<span class="sd">        DEPRECATED: Use _calculate_wt_reference_with_std instead.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wt_gsm_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"No wildtype samples found, returning empty reference"</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">SortedDict</span><span class="p">()</span>
-
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Calculating reference from </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wt_gsm_list</span><span class="p">)</span><span class="si">}</span><span class="s2"> wildtype samples"</span><span class="p">)</span>
-
-        <span class="c1"># Aggregate expression across all WT samples</span>
-        <span class="n">all_expression</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-        <span class="n">gene_counts</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-
-        <span class="k">for</span> <span class="n">gsm</span> <span class="ow">in</span> <span class="n">wt_gsm_list</span><span class="p">:</span>
-            <span class="n">expr_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_expression_from_gsm</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">expr_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">gene</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_expression</span><span class="p">:</span>
-                    <span class="n">all_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-                    <span class="n">gene_counts</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-                <span class="n">all_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">+=</span> <span class="n">value</span>
-                <span class="n">gene_counts</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
-
-        <span class="c1"># Calculate mean</span>
-        <span class="n">wt_reference</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">(</span>
-            <span class="p">{</span><span class="n">gene</span><span class="p">:</span> <span class="n">all_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">/</span> <span class="n">gene_counts</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">all_expression</span><span class="p">}</span>
-        <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">wt_reference</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_probe_to_gene_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gse</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Extract probe ID to gene name mapping from GEO platform annotation."""</span>
         <span class="n">probe_to_gene</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1422,238 +1279,18 @@
 
         <span class="k">return</span> <span class="n">probe_to_gene</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_expression_from_gsm</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">gsm</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SortedDict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Extract deletion mutant expression values from a GSM object.</span>
-
-<span class="sd">        Handles dye-swap design:</span>
-<span class="sd">        - Sample ending in '-a': Cy5 = deletion, Cy3 = refpool</span>
-<span class="sd">        - Sample ending in '-b': Cy5 = refpool, Cy3 = deletion (dye swap)</span>
-
-<span class="sd">        This function extracts the deletion mutant channel, accounting for dye swaps.</span>
-<span class="sd">        """</span>
-        <span class="n">expression_data</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-
-        <span class="c1"># Get the expression table from the GSM</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="s2">"table"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">gsm</span><span class="o">.</span><span class="n">table</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># The table contains probe IDs and expression values</span>
-            <span class="c1"># We need to map probes to genes</span>
-            <span class="n">table</span> <span class="o">=</span> <span class="n">gsm</span><span class="o">.</span><span class="n">table</span>
-
-            <span class="c1"># Check for expected columns</span>
-            <span class="k">if</span> <span class="s2">"ID_REF"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"ID_REF column not found. Available columns: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
-                <span class="p">)</span>
-                <span class="k">return</span> <span class="n">expression_data</span>
-
-            <span class="c1"># Determine which channel contains deletion mutant expression</span>
-            <span class="c1"># This must account for dye-swap design to extract the correct biological sample</span>
-            <span class="n">expression_column</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="s2">"Signal Norm_Cy5"</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span>
-                <span class="ow">and</span> <span class="s2">"Signal Norm_Cy3"</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span>
-            <span class="p">):</span>
-                <span class="c1"># Determine which channel has deletion mutant based on sample name</span>
-                <span class="n">title</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="n">gsm</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="p">[</span><span class="s2">""</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
-                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="s2">"metadata"</span><span class="p">)</span>
-                    <span class="k">else</span> <span class="s2">""</span>
-                <span class="p">)</span>
-
-                <span class="c1"># Check for dye-swap pattern</span>
-                <span class="k">if</span> <span class="s2">"-a"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="s2">"_a"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">title</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"a"</span><span class="p">):</span>
-                    <span class="c1"># Standard orientation: deletion in Cy5, refpool in Cy3</span>
-                    <span class="n">expression_column</span> <span class="o">=</span> <span class="s2">"Signal Norm_Cy5"</span>
-                <span class="k">elif</span> <span class="s2">"-b"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="s2">"_b"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">title</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"b"</span><span class="p">):</span>
-                    <span class="c1"># Dye swap: deletion in Cy3, refpool in Cy5</span>
-                    <span class="n">expression_column</span> <span class="o">=</span> <span class="s2">"Signal Norm_Cy3"</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="c1"># Default to Cy5 for samples without clear dye-swap naming</span>
-                    <span class="n">expression_column</span> <span class="o">=</span> <span class="s2">"Signal Norm_Cy5"</span>
-            <span class="k">elif</span> <span class="s2">"VALUE"</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="n">expression_column</span> <span class="o">=</span> <span class="s2">"VALUE"</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"No suitable expression column found. Available: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
-                <span class="p">)</span>
-                <span class="k">return</span> <span class="n">expression_data</span>
-
-            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-                <span class="n">probe_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span>
-                    <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ID_REF"</span><span class="p">])</span>
-                <span class="p">)</span>  <span class="c1"># Convert to int first to avoid '1.0'</span>
-
-                <span class="c1"># Map probe ID to gene name</span>
-                <span class="k">if</span> <span class="n">probe_to_gene_map</span> <span class="ow">and</span> <span class="n">probe_id</span> <span class="ow">in</span> <span class="n">probe_to_gene_map</span><span class="p">:</span>
-                    <span class="n">gene</span> <span class="o">=</span> <span class="n">probe_to_gene_map</span><span class="p">[</span><span class="n">probe_id</span><span class="p">]</span>
-                    <span class="c1"># Skip conversion here - probe_to_gene_map already has the gene names we need</span>
-                    <span class="c1"># Converting 15000+ genes per sample is too slow</span>
-                    <span class="k">try</span><span class="p">:</span>
-                        <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">expression_column</span><span class="p">])</span>
-                        <span class="c1"># Keep all expression values (including negative log2 ratios)</span>
-                        <span class="n">expression_data</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-                    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
-                        <span class="k">continue</span>
-
-            <span class="c1"># Log if we didn't extract any expression data</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">expression_data</span> <span class="ow">and</span> <span class="n">probe_to_gene_map</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"No expression data extracted. Probe map size: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">probe_to_gene_map</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
-                <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">expression_data</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_refpool_from_deletion_samples</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">gsm_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SortedDict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Extract refpool values from deletion samples' Cy3 or Cy5 channel.</span>
-
-<span class="sd">        In deletion samples, dye-swap design means:</span>
-<span class="sd">        - Sample ending in '-a': Cy5 = deletion, Cy3 = refpool</span>
-<span class="sd">        - Sample ending in '-b': Cy5 = refpool, Cy3 = deletion (dye swap)</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            SortedDict: Average refpool expression values at deletion experiment scale</span>
-<span class="sd">        """</span>
-        <span class="n">refpool_values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-
-        <span class="k">for</span> <span class="n">gsm</span> <span class="ow">in</span> <span class="n">gsm_list</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="s2">"table"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">gsm</span><span class="o">.</span><span class="n">table</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">continue</span>
-
-            <span class="n">table</span> <span class="o">=</span> <span class="n">gsm</span><span class="o">.</span><span class="n">table</span>
-            <span class="k">if</span> <span class="s2">"ID_REF"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="k">continue</span>
-
-            <span class="c1"># Determine which channel has refpool based on sample name</span>
-            <span class="n">title</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="n">gsm</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="p">[</span><span class="s2">""</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="s2">"metadata"</span><span class="p">)</span> <span class="k">else</span> <span class="s2">""</span>
-            <span class="p">)</span>
-
-            <span class="c1"># Check for dye-swap pattern</span>
-            <span class="k">if</span> <span class="s2">"-a"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="s2">"_a"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">title</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"a"</span><span class="p">):</span>
-                <span class="n">refpool_column</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="s2">"Signal Norm_Cy3"</span>  <span class="c1"># Standard: deletion in Cy5, refpool in Cy3</span>
-                <span class="p">)</span>
-            <span class="k">elif</span> <span class="s2">"-b"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="s2">"_b"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">title</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"b"</span><span class="p">):</span>
-                <span class="n">refpool_column</span> <span class="o">=</span> <span class="p">(</span>
-                    <span class="s2">"Signal Norm_Cy5"</span>  <span class="c1"># Dye swap: deletion in Cy3, refpool in Cy5</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># Default to Cy3 as refpool</span>
-                <span class="n">refpool_column</span> <span class="o">=</span> <span class="s2">"Signal Norm_Cy3"</span>
-
-            <span class="c1"># Extract refpool values</span>
-            <span class="k">if</span> <span class="n">refpool_column</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-                    <span class="n">probe_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ID_REF"</span><span class="p">]))</span>
-                    <span class="k">if</span> <span class="n">probe_id</span> <span class="ow">in</span> <span class="n">probe_to_gene_map</span><span class="p">:</span>
-                        <span class="n">gene</span> <span class="o">=</span> <span class="n">probe_to_gene_map</span><span class="p">[</span><span class="n">probe_id</span><span class="p">]</span>
-                        <span class="k">try</span><span class="p">:</span>
-                            <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">refpool_column</span><span class="p">])</span>
-                            <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                                <span class="k">if</span> <span class="n">gene</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">refpool_values</span><span class="p">:</span>
-                                    <span class="n">refpool_values</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-                                <span class="n">refpool_values</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-                        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
-                            <span class="k">continue</span>
-
-        <span class="c1"># Average refpool values across samples</span>
-        <span class="n">averaged_refpool</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">refpool_values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">averaged_refpool</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">averaged_refpool</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_refpool_from_wt_gsm</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">gsm</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">gsm</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SortedDict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Extract refpool expression values from a WT GSM object.</span>
+<span class="w">        </span><span class="sd">"""Reference-pool signals of one wildtype array, positive values only.</span>
 
-<span class="sd">        In WT samples (GSE42215, GSE42217, GSE42240, GSE42241):</span>
-<span class="sd">        - Some samples: wt vs. refpool (wt in Cy5, refpool in Cy3)</span>
-<span class="sd">        - Other samples: refpool vs. wt (refpool in Cy5, wt in Cy3)</span>
-
-<span class="sd">        We need to determine which channel contains refpool and extract it.</span>
+<span class="sd">        The wildtype series (GSE42215, GSE42217, GSE42240, GSE42241) hybridize a</span>
+<span class="sd">        wildtype culture against the same reference pool as the deletions, in both dye</span>
+<span class="sd">        orientations. The channel comes from GEO's metadata (``_channel_columns``);</span>
+<span class="sd">        the wildtype culture is the other channel and is not used.</span>
 <span class="sd">        """</span>
-        <span class="n">expression_data</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="s2">"table"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">gsm</span><span class="o">.</span><span class="n">table</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">expression_data</span>
-
-        <span class="n">table</span> <span class="o">=</span> <span class="n">gsm</span><span class="o">.</span><span class="n">table</span>
-
-        <span class="c1"># Check for expected columns</span>
-        <span class="k">if</span> <span class="s2">"ID_REF"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"ID_REF column not found"</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">expression_data</span>
-
-        <span class="c1"># We need both Cy5 and Cy3 to extract refpool</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="s2">"Signal Norm_Cy5"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span>
-            <span class="ow">or</span> <span class="s2">"Signal Norm_Cy3"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span>
-        <span class="p">):</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Missing Cy5 or Cy3 columns, cannot extract refpool"</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">expression_data</span>
-
-        <span class="c1"># Determine hybridization direction from sample metadata</span>
-        <span class="n">title</span> <span class="o">=</span> <span class="n">gsm</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"title"</span><span class="p">,</span> <span class="p">[</span><span class="s2">""</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="s2">"metadata"</span><span class="p">)</span> <span class="k">else</span> <span class="s2">""</span>
-        <span class="n">geo_accession</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">gsm</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"geo_accession"</span><span class="p">,</span> <span class="p">[</span><span class="s2">""</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="s2">"metadata"</span><span class="p">)</span>
-            <span class="k">else</span> <span class="s2">""</span>
-        <span class="p">)</span>
-
-        <span class="c1"># Debug logging</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Processing WT sample </span><span class="si">{</span><span class="n">geo_accession</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-        <span class="c1"># Determine which channel has refpool based on title or metadata</span>
-        <span class="c1"># The VALUE column represents log2(Cy5/Cy3)</span>
-        <span class="c1"># If VALUE is positive when wt &gt; refpool, then wt is in Cy5</span>
-        <span class="c1"># If VALUE is negative when wt &lt; refpool, then wt is in Cy5</span>
-
-        <span class="c1"># For WT samples, we need to look at the VALUE to infer direction</span>
-        <span class="c1"># If most VALUEs are near 0, it's wt vs refpool (both similar)</span>
-        <span class="c1"># We can also check the title pattern</span>
-
-        <span class="n">refpool_column</span> <span class="o">=</span> <span class="s2">"Signal Norm_Cy3"</span>  <span class="c1"># Default assumption</span>
-
-        <span class="c1"># Try to parse from title</span>
-        <span class="n">title_lower</span> <span class="o">=</span> <span class="n">title</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="k">if</span> <span class="s2">"refpool"</span> <span class="ow">in</span> <span class="n">title_lower</span><span class="p">:</span>
-            <span class="c1"># Look for patterns like "refpool vs wt" or "wt vs refpool"</span>
-            <span class="k">if</span> <span class="s2">"refpool vs"</span> <span class="ow">in</span> <span class="n">title_lower</span> <span class="ow">or</span> <span class="s2">"refpool-"</span> <span class="ow">in</span> <span class="n">title_lower</span><span class="p">:</span>
-                <span class="c1"># refpool is first, so it's in Cy5</span>
-                <span class="n">refpool_column</span> <span class="o">=</span> <span class="s2">"Signal Norm_Cy5"</span>
-            <span class="k">elif</span> <span class="s2">"vs refpool"</span> <span class="ow">in</span> <span class="n">title_lower</span> <span class="ow">or</span> <span class="s2">"-refpool"</span> <span class="ow">in</span> <span class="n">title_lower</span><span class="p">:</span>
-                <span class="c1"># refpool is second, so it's in Cy3</span>
-                <span class="n">refpool_column</span> <span class="o">=</span> <span class="s2">"Signal Norm_Cy3"</span>
-
-        <span class="c1"># Alternative: check sample name patterns</span>
-        <span class="c1"># GSE42215 samples often have patterns in their names</span>
-        <span class="k">if</span> <span class="s2">"-a"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="s2">"_a"</span> <span class="ow">in</span> <span class="n">title</span><span class="p">:</span>
-            <span class="n">refpool_column</span> <span class="o">=</span> <span class="s2">"Signal Norm_Cy3"</span>  <span class="c1"># Standard orientation</span>
-        <span class="k">elif</span> <span class="s2">"-b"</span> <span class="ow">in</span> <span class="n">title</span> <span class="ow">or</span> <span class="s2">"_b"</span> <span class="ow">in</span> <span class="n">title</span><span class="p">:</span>
-            <span class="n">refpool_column</span> <span class="o">=</span> <span class="s2">"Signal Norm_Cy5"</span>  <span class="c1"># Dye swap</span>
-
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Using </span><span class="si">{</span><span class="n">refpool_column</span><span class="si">}</span><span class="s2"> as refpool channel"</span><span class="p">)</span>
-
-        <span class="c1"># Extract refpool values</span>
-        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-            <span class="n">probe_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ID_REF"</span><span class="p">]))</span>
-
-            <span class="k">if</span> <span class="n">probe_to_gene_map</span> <span class="ow">and</span> <span class="n">probe_id</span> <span class="ow">in</span> <span class="n">probe_to_gene_map</span><span class="p">:</span>
-                <span class="n">gene</span> <span class="o">=</span> <span class="n">probe_to_gene_map</span><span class="p">[</span><span class="n">probe_id</span><span class="p">]</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">refpool_column</span><span class="p">])</span>
-                    <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Only keep positive values</span>
-                        <span class="n">expression_data</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-                <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
-                    <span class="k">continue</span>
-
-        <span class="k">return</span> <span class="n">expression_data</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">refpool</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_channels_from_gsm_static</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SortedDict</span><span class="p">({</span><span class="n">gene</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">refpool</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">})</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_load_mating_type_map</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Load mating type information from supplementary Table S1.</span>
@@ -2054,173 +1691,65 @@
         <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unique gene deletions: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">deletion_samples_by_gene</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_log2_ratios</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_channel_assignment</span><span class="p">(</span>
         <span class="n">deletion_samples_by_gene</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]],</span>
         <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
-        <span class="n">systematic_to_strain</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Validate that our calculated log2 ratios match the original GEO data.</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Fraction of deletion arrays on which the deleted gene reads lower in the</span>
+<span class="sd">        deletion channel than in the reference channel.</span>
 
-<span class="sd">        IMPORTANT: The VALUE column in GEO follows standard microarray convention:</span>
-<span class="sd">        VALUE = log2(Cy3/Cy5) = log2(refpool/deletion) = log2(reference/test)</span>
-
-<span class="sd">        This means:</span>
-<span class="sd">        - Negative VALUE: deletion has HIGHER expression than refpool</span>
-<span class="sd">        - Positive VALUE: deletion has LOWER expression than refpool</span>
-
-<span class="sd">        For biological interpretation, log2(deletion/refpool) would be more intuitive</span>
-<span class="sd">        (positive = upregulated), but we validate against GEO's convention here.</span>
+<span class="sd">        A deleted gene's transcript is absent from the deletion culture, so with the</span>
+<span class="sd">        channels assigned correctly the median log2(deletion / refpool) over that</span>
+<span class="sd">        gene's probes is negative; a swapped assignment makes it positive. Every array</span>
+<span class="sd">        whose deleted gene has a probe on the platform is checked. On the real data</span>
+<span class="sd">        (2026-09-28) 702 of 705 such arrays are negative under GEO's channel labels</span>
+<span class="sd">        and 10 of 705 under the former title rule. Returns NaN when no array can be</span>
+<span class="sd">        checked; warns below 0.9.</span>
 <span class="sd">        """</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">=== Validating Log2 Ratios ==="</span><span class="p">)</span>
+        <span class="n">probes_by_gene</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">probe_id</span><span class="p">,</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">probe_to_gene_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">probes_by_gene</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">gene</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">probe_id</span><span class="p">)</span>
 
-        <span class="c1"># Debug: Check refpool reference</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">=== Refpool Reference Debug ==="</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"wt_expression_BY4742"</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">wt_expression_BY4742</span><span class="p">:</span>
-            <span class="n">sample_genes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wt_expression_BY4742</span><span class="o">.</span><span class="n">keys</span><span class="p">())[:</span><span class="mi">5</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">sample_genes</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Refpool BY4742 </span><span class="si">{</span><span class="n">gene</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">wt_expression_BY4742</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span>
+        <span class="n">checked</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">negative</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">gene_name</span><span class="p">,</span> <span class="n">gsm_list</span> <span class="ow">in</span> <span class="n">deletion_samples_by_gene</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">gene_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">probes_by_gene</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">probe_ids</span> <span class="o">=</span> <span class="n">probes_by_gene</span><span class="p">[</span><span class="n">gene_name</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">gsm</span> <span class="ow">in</span> <span class="n">gsm_list</span><span class="p">:</span>
+                <span class="n">test_column</span><span class="p">,</span> <span class="n">reference_column</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">MicroarrayKemmeren2014Dataset</span><span class="o">.</span><span class="n">_channel_columns</span><span class="p">(</span><span class="n">gsm</span><span class="p">)</span>
                 <span class="p">)</span>
-
-        <span class="c1"># Sample a subset of genes for validation</span>
-        <span class="n">genes_to_validate</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">deletion_samples_by_gene</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span>
-            <span class="p">:</span> <span class="nb">min</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">deletion_samples_by_gene</span><span class="p">))</span>
-        <span class="p">]</span>
-
-        <span class="n">original_ratios</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">calculated_ratios</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="k">for</span> <span class="n">gene_idx</span><span class="p">,</span> <span class="n">gene_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">genes_to_validate</span><span class="p">):</span>
-            <span class="n">gsm_list</span> <span class="o">=</span> <span class="n">deletion_samples_by_gene</span><span class="p">[</span><span class="n">gene_name</span><span class="p">]</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">gsm_list</span><span class="p">:</span>
-                <span class="k">continue</span>
-
-            <span class="c1"># Skip genes whose strain has no WT reference (the refpool comes from the</span>
-            <span class="c1"># array's Cy5/Cy3 channels directly, validated below).</span>
-            <span class="n">strain</span> <span class="o">=</span> <span class="n">systematic_to_strain</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gene_name</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">strain</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"BY4741"</span><span class="p">,</span> <span class="s2">"BY4742"</span><span class="p">):</span>
-                <span class="k">continue</span>
-
-            <span class="c1"># Get first GSM for this gene</span>
-            <span class="n">gsm</span> <span class="o">=</span> <span class="n">gsm_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
-            <span class="c1"># Debug: Show first few probes for first gene</span>
-            <span class="k">if</span> <span class="n">gene_idx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">=== Debug for gene </span><span class="si">{</span><span class="n">gene_name</span><span class="si">}</span><span class="s2"> ==="</span><span class="p">)</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"GSM: </span><span class="si">{</span><span class="n">gsm</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'geo_accession'</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="s1">''</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-            <span class="c1"># Extract original log2 ratios from VALUE column</span>
-            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="s2">"table"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">gsm</span><span class="o">.</span><span class="n">table</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">table</span> <span class="o">=</span> <span class="n">gsm</span><span class="o">.</span><span class="n">table</span>
+                <span class="n">rows</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="n">table</span><span class="p">[</span><span class="s2">"ID_REF"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">probe_ids</span><span class="p">)]</span>
+                <span class="n">deletion</span> <span class="o">=</span> <span class="n">rows</span><span class="p">[</span><span class="n">test_column</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+                <span class="n">refpool</span> <span class="o">=</span> <span class="n">rows</span><span class="p">[</span><span class="n">reference_column</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+                <span class="n">positive</span> <span class="o">=</span> <span class="p">(</span><span class="n">deletion</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">refpool</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">positive</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                    <span class="k">continue</span>
+                <span class="n">checked</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">ratio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">deletion</span><span class="p">[</span><span class="n">positive</span><span class="p">]</span> <span class="o">/</span> <span class="n">refpool</span><span class="p">[</span><span class="n">positive</span><span class="p">]))</span>
+                <span class="k">if</span> <span class="n">ratio</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">negative</span> <span class="o">+=</span> <span class="mi">1</span>
 
-                <span class="c1"># Debug: Show available columns for first gene</span>
-                <span class="k">if</span> <span class="n">gene_idx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Available columns: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">)[:</span><span class="mi">10</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-                <span class="k">if</span> <span class="s2">"VALUE"</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span> <span class="ow">and</span> <span class="s2">"ID_REF"</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                    <span class="n">probe_count</span> <span class="o">=</span> <span class="mi">0</span>
-                    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
-                        <span class="n">probe_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"ID_REF"</span><span class="p">]))</span>
-                        <span class="k">if</span> <span class="n">probe_id</span> <span class="ow">in</span> <span class="n">probe_to_gene_map</span><span class="p">:</span>
-                            <span class="n">probe_gene</span> <span class="o">=</span> <span class="n">probe_to_gene_map</span><span class="p">[</span><span class="n">probe_id</span><span class="p">]</span>
-                            <span class="c1"># We don't need refpool_ref anymore - just validate Cy5/Cy3 directly</span>
-                            <span class="k">try</span><span class="p">:</span>
-                                <span class="c1"># Original log2 ratio from GEO (VALUE column = log2(Cy3/Cy5))</span>
-                                <span class="n">original</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"VALUE"</span><span class="p">])</span>
-
-                                <span class="c1"># VALUE = log2(Cy3/Cy5) = log2(refpool/deletion)</span>
-                                <span class="c1"># This is standard microarray convention: log2(reference/test)</span>
-
-                                <span class="k">if</span> <span class="p">(</span>
-                                    <span class="s2">"Signal Norm_Cy5"</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span>
-                                    <span class="ow">and</span> <span class="s2">"Signal Norm_Cy3"</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">columns</span>
-                                <span class="p">):</span>
-                                    <span class="n">cy5</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
-                                        <span class="n">row</span><span class="p">[</span><span class="s2">"Signal Norm_Cy5"</span><span class="p">]</span>
-                                    <span class="p">)</span>  <span class="c1"># Deletion mutant</span>
-                                    <span class="n">cy3</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"Signal Norm_Cy3"</span><span class="p">])</span>  <span class="c1"># Refpool</span>
-
-                                    <span class="c1"># Calculate log2(Cy3/Cy5) to match VALUE convention</span>
-                                    <span class="k">if</span> <span class="n">cy5</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                                        <span class="n">calculated</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span>
-                                            <span class="n">cy3</span> <span class="o">/</span> <span class="n">cy5</span>
-                                        <span class="p">)</span>  <span class="c1"># Note: Cy3/Cy5, not Cy5/Cy3</span>
-                                    <span class="k">else</span><span class="p">:</span>
-                                        <span class="k">continue</span>
-
-                                    <span class="c1"># Debug first few probes of first gene</span>
-                                    <span class="k">if</span> <span class="n">gene_idx</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">probe_count</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
-                                        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                                            <span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Probe </span><span class="si">{</span><span class="n">probe_id</span><span class="si">}</span><span class="s2"> -&gt; Gene </span><span class="si">{</span><span class="n">probe_gene</span><span class="si">}</span><span class="s2">: "</span>
-                                            <span class="sa">f</span><span class="s2">"Original=</span><span class="si">{</span><span class="n">original</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, Calculated=</span><span class="si">{</span><span class="n">calculated</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">, "</span>
-                                            <span class="sa">f</span><span class="s2">"Diff=</span><span class="si">{</span><span class="nb">abs</span><span class="p">(</span><span class="n">original</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">calculated</span><span class="p">)</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span>
-                                        <span class="p">)</span>
-                                        <span class="n">probe_count</span> <span class="o">+=</span> <span class="mi">1</span>
-
-                                    <span class="n">original_ratios</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">original</span><span class="p">)</span>
-                                    <span class="n">calculated_ratios</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">calculated</span><span class="p">)</span>
-                            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
-                                <span class="k">continue</span>
-
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">original_ratios</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">10</span><span class="p">:</span>
-            <span class="c1"># Calculate correlation</span>
-            <span class="n">correlation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">original_ratios</span><span class="p">,</span> <span class="n">calculated_ratios</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-
-            <span class="c1"># Calculate RMSE</span>
-            <span class="n">rmse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
-                <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">original_ratios</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">calculated_ratios</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">checked</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"Channel assignment check: no deletion array carries a probe for its "</span>
+                <span class="s2">"own deleted gene"</span>
             <span class="p">)</span>
-
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Validation samples: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">original_ratios</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Correlation between original and calculated log2 ratios: </span><span class="si">{</span><span class="n">correlation</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)</span>
+        <span class="n">fraction</span> <span class="o">=</span> <span class="n">negative</span> <span class="o">/</span> <span class="n">checked</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Channel assignment check: deleted gene lower in the deletion channel on "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">negative</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="n">checked</span><span class="si">}</span><span class="s2"> arrays (</span><span class="si">{</span><span class="n">fraction</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">fraction</span> <span class="o">&lt;</span> <span class="mf">0.9</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">"Channel assignment check: fewer than 90 percent of arrays show the "</span>
+                <span class="s2">"deleted gene depleted; the channel metadata may be wrong"</span>
             <span class="p">)</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"RMSE: </span><span class="si">{</span><span class="n">rmse</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="n">correlation</span> <span class="o">&lt;</span> <span class="mf">0.8</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"WARNING: Low correlation (</span><span class="si">{</span><span class="n">correlation</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">) between original and calculated ratios!"</span>
-                <span class="p">)</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                    <span class="s2">"This may indicate issues with refpool extraction or processing."</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"✓ Good correlation - refpool references appear correct"</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Not enough data points for validation"</span><span class="p">)</span>
-
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"==="</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_collect_replicate_expressions</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">gsm_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SortedDict</span><span class="p">,</span> <span class="n">SortedDict</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Collect expression values from technical replicates (dye-swaps).</span>
-
-<span class="sd">        NOTE: This method returns REPLICATE-LEVEL data, not averaged values.</span>
-<span class="sd">        The averaging will be done on log2 scale in create_expression_experiment.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            tuple: (replicate_expressions, n_replicates)</span>
-<span class="sd">                - replicate_expressions: Dict[gene, List[float]] - LINEAR scale values per replicate</span>
-<span class="sd">                - n_replicates: Dict[gene, int] - number of replicates per gene</span>
-<span class="sd">        """</span>
-        <span class="c1"># Collect all expression data (LINEAR scale, replicate-level)</span>
-        <span class="n">all_expressions</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-
-        <span class="k">for</span> <span class="n">gsm</span> <span class="ow">in</span> <span class="n">gsm_list</span><span class="p">:</span>
-            <span class="n">expr_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_expression_from_gsm</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">expr_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">gene</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_expressions</span><span class="p">:</span>
-                    <span class="n">all_expressions</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-                <span class="n">all_expressions</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-
-        <span class="c1"># Count replicates per gene (for tracking)</span>
-        <span class="n">n_replicates</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">all_expressions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">n_replicates</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">all_expressions</span><span class="p">,</span> <span class="n">n_replicates</span>
+        <span class="k">return</span> <span class="n">fraction</span>
 
 <div class="viewcode-block" id="MicroarrayKemmeren2014Dataset.create_expression_experiment">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.kemmeren2014.MicroarrayKemmeren2014Dataset.html#torchcell.datasets.scerevisiae.kemmeren2014.MicroarrayKemmeren2014Dataset.create_expression_experiment">[docs]</a>
@@ -2228,11 +1757,19 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">create_expression_experiment</span><span class="p">(</span>
         <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">sample_info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-        <span class="n">replicate_expressions</span><span class="p">:</span> <span class="n">SortedDict</span><span class="p">,</span>
-        <span class="n">refpool_expression</span><span class="p">:</span> <span class="n">SortedDict</span><span class="p">,</span>
+        <span class="n">replicate_pairs</span><span class="p">:</span> <span class="n">SortedDict</span><span class="p">,</span>
         <span class="n">refpool_n_replicates</span><span class="p">:</span> <span class="n">SortedDict</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Build an experiment, reference, and publication from sample expression data."""</span>
+<span class="w">        </span><span class="sd">"""Build an experiment, reference, and publication from per-array signal pairs.</span>
+
+<span class="sd">        ``replicate_pairs`` maps a gene to its (deletion, refpool) normalized signals,</span>
+<span class="sd">        one pair per array (``_collect_replicate_pairs_static``). The log2 ratio is</span>
+<span class="sd">        taken within each array, log2(deletion / refpool), so the two-color design</span>
+<span class="sd">        cancels the spot; the mean, sample SD, SE and variance are then taken over the</span>
+<span class="sd">        arrays. An array on which either signal is not positive is dropped for that</span>
+<span class="sd">        gene. The stored linear ``expression`` is the mean deletion signal and the</span>
+<span class="sd">        reference ``expression`` the mean refpool signal over the same arrays.</span>
+<span class="sd">        """</span>
         <span class="c1"># Genome reference - strain MUST be specified (BY4741 or BY4742)</span>
         <span class="k">if</span> <span class="s2">"strain"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sample_info</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -2263,58 +1800,43 @@
         <span class="p">)</span>
         <span class="n">environment_reference</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">()</span>
 
-        <span class="c1"># CRITICAL: Compute log2 ratios PER REPLICATE, then average on log2 scale</span>
-        <span class="c1"># This is mathematically correct: mean(log2(x)) ≠ log2(mean(x))</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">refpool_expression</span><span class="p">:</span>
-            <span class="c1"># Cannot create experiment without refpool - return None to signal skip</span>
-            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
-
-        <span class="c1"># Step 1: Compute log2 ratios per replicate, then aggregate statistics on log2 scale</span>
+        <span class="c1"># Within-array log2 ratios, then statistics over the arrays on the log2 scale</span>
         <span class="n">mean_log2_ratios</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
         <span class="n">log2_se</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
         <span class="n">log2_variance</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
         <span class="n">n_replicates_dict</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-        <span class="n">mean_expression</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>  <span class="c1"># Also compute mean LINEAR expression for QC</span>
+        <span class="n">mean_expression</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>  <span class="c1"># Mean LINEAR deletion signal (for QC)</span>
+        <span class="n">refpool_expression</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>  <span class="c1"># Mean LINEAR refpool signal (reference)</span>
 
-        <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">replicate_values</span> <span class="ow">in</span> <span class="n">replicate_expressions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">gene</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">refpool_expression</span> <span class="ow">or</span> <span class="n">refpool_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">continue</span>  <span class="c1"># Skip genes not in refpool or with invalid refpool values</span>
-
-            <span class="c1"># Compute log2 ratio for EACH replicate (correct order of operations!)</span>
-            <span class="n">log2_ratios_per_replicate</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">rep_value</span> <span class="ow">in</span> <span class="n">replicate_values</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">rep_value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Skip invalid values</span>
-                    <span class="c1"># NOTE: GEO stores log2(refpool/deletion), but torchcell convention is</span>
-                    <span class="c1"># log2(deletion/refpool) where positive = upregulated, negative = downregulated.</span>
-                    <span class="c1"># We negate to transform from GEO convention to torchcell convention.</span>
-                    <span class="n">log2_ratio</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">rep_value</span> <span class="o">/</span> <span class="n">refpool_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">])</span>
-                    <span class="n">log2_ratios_per_replicate</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">log2_ratio</span><span class="p">)</span>
-
-            <span class="c1"># Skip genes with no valid replicates</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">log2_ratios_per_replicate</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">pairs</span> <span class="ow">in</span> <span class="n">replicate_pairs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">kept</span> <span class="o">=</span> <span class="p">[(</span><span class="n">d</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">pairs</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">r</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">kept</span><span class="p">:</span>
                 <span class="k">continue</span>
 
-            <span class="c1"># Compute statistics on log2 scale</span>
-            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">log2_ratios_per_replicate</span><span class="p">)</span>
-            <span class="n">mean_log2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">log2_ratios_per_replicate</span><span class="p">)</span>
+            <span class="n">log2_ratios_per_array</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">d</span> <span class="o">/</span> <span class="n">r</span><span class="p">))</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">]</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">log2_ratios_per_array</span><span class="p">)</span>
+            <span class="n">mean_log2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">log2_ratios_per_array</span><span class="p">))</span>
 
+            <span class="n">se_log2</span><span class="p">:</span> <span class="nb">float</span>
+            <span class="n">var_log2</span><span class="p">:</span> <span class="nb">float</span>
             <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">sd_log2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">log2_ratios_per_replicate</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                <span class="n">se_log2</span> <span class="o">=</span> <span class="n">sd_log2</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+                <span class="n">sd_log2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">log2_ratios_per_array</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+                <span class="n">se_log2</span> <span class="o">=</span> <span class="n">sd_log2</span> <span class="o">/</span> <span class="n">n</span><span class="o">**</span><span class="mf">0.5</span>
                 <span class="n">var_log2</span> <span class="o">=</span> <span class="n">sd_log2</span><span class="o">**</span><span class="mi">2</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># n=1: SE and variance are undefined</span>
-                <span class="n">se_log2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-                <span class="n">var_log2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                <span class="n">se_log2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)</span>
+                <span class="n">var_log2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">"nan"</span><span class="p">)</span>
 
             <span class="n">mean_log2_ratios</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">mean_log2</span>
             <span class="n">log2_se</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">se_log2</span>
             <span class="n">log2_variance</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">var_log2</span>
             <span class="n">n_replicates_dict</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span>
-            <span class="n">mean_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">replicate_values</span><span class="p">)</span>  <span class="c1"># For QC purposes</span>
+            <span class="n">mean_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">]))</span>
+            <span class="n">refpool_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">r</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">]))</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">mean_log2_ratios</span><span class="p">:</span>
-            <span class="c1"># No matching genes between expression and refpool - return None to signal skip</span>
+            <span class="c1"># No array with both signals positive - return None to signal skip</span>
             <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
 
         <span class="c1"># Create phenotype with new schema fields</span>

@@ -213,7 +213,7 @@
 
 <span class="sd">    Microarray gene expression data for 82 single mutant yeast strains with</span>
 <span class="sd">    deletions in general stress transcription factors (GSTFs). All single mutants</span>
-<span class="sd">    are from the yeast deletion library (BY4742, mata, KanMX marker).</span>
+<span class="sd">    are from the yeast deletion library (BY4742, MATalpha, KanMX marker).</span>
 
 <span class="sd">    Data source: GEO accession GSE42536</span>
 <span class="sd">    Paper: Sameith et al. (2015) BMC Biology</span>
@@ -878,8 +878,9 @@
 <span class="sd">            log2_ratio_variance: Variance for log2 ratios (optional)</span>
 <span class="sd">            n_replicates: Number of replicates per gene (optional)</span>
 <span class="sd">        """</span>
-        <span class="c1"># BY4742 for single mutants (from deletion library)</span>
-        <span class="c1"># Paper: "Single mutants taken from Deletion library" = BY4742, mata</span>
+        <span class="c1"># BY4742 (MATalpha) for every single mutant. Paper: "All single mutants and</span>
+        <span class="c1"># most double mutants carry the mating type matα and are in the genetic</span>
+        <span class="c1"># background of BY4742."</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
             <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"BY4742"</span>
         <span class="p">)</span>
@@ -1086,14 +1087,22 @@
             <span class="c1"># Create canonical genotype key (sorted to handle order-independence)</span>
             <span class="n">genotype_key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">([</span><span class="n">gstf1_sys</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">gstf2_sys</span><span class="o">.</span><span class="n">upper</span><span class="p">()]))</span>
 
-            <span class="c1"># EXTRACT STRAIN FROM COMMENTS COLUMN</span>
+            <span class="c1"># Strain from the comments column. Paper: "All single mutants and most</span>
+            <span class="c1"># double mutants carry the mating type matα and are in the genetic</span>
+            <span class="c1"># background of BY4742. Few double mutants carry the mating type matA and</span>
+            <span class="c1"># are in the genetic background of BY4741." The SI marks those few with a</span>
+            <span class="c1"># "MATa" comment (4 of the 72 passed pairs), and GEO's own sample</span>
+            <span class="c1"># characteristics carry "strain: BY4741" on exactly those four (checked</span>
+            <span class="c1"># 2026-09-28 on GSE42536). BY4741 is the MATa strain and BY4742 the</span>
+            <span class="c1"># MATalpha strain, so a MATa comment means BY4741; "mata" is a prefix of</span>
+            <span class="c1"># "matalpha", hence the order of the tests.</span>
             <span class="n">comments</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"comments"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">comments</span><span class="p">):</span>
-                <span class="n">comments_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">comments</span><span class="p">)</span>
-                <span class="k">if</span> <span class="s2">"MATa"</span> <span class="ow">in</span> <span class="n">comments_str</span><span class="p">:</span>
-                    <span class="n">strain</span> <span class="o">=</span> <span class="s2">"BY4742"</span>  <span class="c1"># mata mating type</span>
-                <span class="k">elif</span> <span class="s2">"MATα"</span> <span class="ow">in</span> <span class="n">comments_str</span> <span class="ow">or</span> <span class="s2">"matA"</span> <span class="ow">in</span> <span class="n">comments_str</span><span class="p">:</span>
-                    <span class="n">strain</span> <span class="o">=</span> <span class="s2">"BY4741"</span>  <span class="c1"># matA/alpha mating type</span>
+                <span class="n">lowered</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">comments</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="k">if</span> <span class="s2">"matα"</span> <span class="ow">in</span> <span class="n">lowered</span> <span class="ow">or</span> <span class="s2">"matalpha"</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
+                    <span class="n">strain</span> <span class="o">=</span> <span class="s2">"BY4742"</span>
+                <span class="k">elif</span> <span class="s2">"mata"</span> <span class="ow">in</span> <span class="n">lowered</span><span class="p">:</span>
+                    <span class="n">strain</span> <span class="o">=</span> <span class="s2">"BY4741"</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">strain</span> <span class="o">=</span> <span class="s2">"BY4742"</span>  <span class="c1"># Default for comments without mating type</span>
             <span class="k">else</span><span class="p">:</span>
@@ -1976,8 +1985,8 @@
 <span class="sd">            n_replicates: Number of replicates per gene (optional)</span>
 <span class="sd">            strain: Strain background (BY4742 or BY4741), extracted from Excel comments</span>
 <span class="sd">        """</span>
-        <span class="c1"># USE PROVIDED STRAIN (not hardcoded!)</span>
-        <span class="c1"># Extracted from Excel "comments" column: "MATa" → BY4742, "MATα" → BY4741</span>
+        <span class="c1"># Per-pair strain from the SI comments column: "MATa" -&gt; BY4741, otherwise</span>
+        <span class="c1"># BY4742 (see _load_authoritative_gstf_pairs).</span>
         <span class="n">genome_reference</span> <span class="o">=</span> <span class="n">ReferenceGenome</span><span class="p">(</span>
             <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="n">strain</span>
         <span class="p">)</span>

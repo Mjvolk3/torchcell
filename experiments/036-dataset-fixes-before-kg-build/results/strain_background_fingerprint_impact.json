@@ -1,0 +1,393 @@
+{
+  "base_schema": "/home/michaelvolk/Documents/projects/torchcell/torchcell/datamodels/schema.py",
+  "manifest": "/scratch/projects/torchcell/database/kg_manifest.json",
+  "manifest_release": "2026.10.02-833970cd",
+  "changed_symbols": [
+    "BarcodedKanMxDeletionPerturbation"
+  ],
+  "added_symbols": [
+    "AlleleEdit",
+    "BackgroundAllele",
+    "ConditionalAlleleClass",
+    "ConditionalAllelePerturbation",
+    "ConstructedOrf",
+    "CultureEnvironment",
+    "CultureFormat",
+    "EndpointRule",
+    "GenomicSpan",
+    "HashableProvenanceGapMixin",
+    "HeterozygousDeletionPerturbation",
+    "MatingType",
+    "OrfHistoryRelation",
+    "PreCulture",
+    "PreCultureSource",
+    "StrainBackground",
+    "StrainConstruction",
+    "StrainEnvironmentResponseExperiment",
+    "StrainEnvironmentResponseExperimentReference",
+    "StrainReferenceGenome",
+    "Zygosity"
+  ],
+  "removed_symbols": [],
+  "n_served_datasets": 51,
+  "n_served_datasets_moved": 2,
+  "datasets": [
+    {
+      "dataset_class": "AminoAcidCooper2010Dataset",
+      "loader": "torchcell/datasets/scerevisiae/cooper2010.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "AminoAcidMulleder2016Dataset",
+      "loader": "torchcell/datasets/scerevisiae/mulleder2016.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "BetaxanthinCachera2023Dataset",
+      "loader": "torchcell/datasets/scerevisiae/cachera2023.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "Bloom2019Dataset",
+      "loader": "torchcell/datasets/scerevisiae/bloom2019.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "CarotenoidOzaydin2013Dataset",
+      "loader": "torchcell/datasets/scerevisiae/ozaydin2013.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "CaudalPanTranscriptome2024Dataset",
+      "loader": "torchcell/datasets/scerevisiae/caudal2024.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "CrisprMagicLian2019Dataset",
+      "loader": "torchcell/datasets/scerevisiae/lian2019.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "CrispriChemgenSmith2016Dataset",
+      "loader": "torchcell/datasets/scerevisiae/smith2016.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "CrispriMormino2022Dataset",
+      "loader": "torchcell/datasets/scerevisiae/mormino2022.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "DmMicroarraySameith2015Dataset",
+      "loader": "torchcell/datasets/scerevisiae/sameith2015.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "DmfCostanzo2016Dataset",
+      "loader": "torchcell/datasets/scerevisiae/costanzo2016.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "DmfKuzmin2018Dataset",
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2018.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "DmfKuzmin2020Dataset",
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2020.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "DmiCostanzo2016Dataset",
+      "loader": "torchcell/datasets/scerevisiae/costanzo2016.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "DmiKuzmin2018Dataset",
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2018.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "DmiKuzmin2020Dataset",
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2020.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "EnvChemgenAuesukaree2009Dataset",
+      "loader": "torchcell/datasets/scerevisiae/auesukaree2009.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "EnvChemgenCostanzo2021Dataset",
+      "loader": "torchcell/datasets/scerevisiae/costanzo2021.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "EnvChemgenHoepfner2014Dataset",
+      "loader": "torchcell/datasets/scerevisiae/hoepfner2014.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "EnvChemgenMota2024Dataset",
+      "loader": "torchcell/datasets/scerevisiae/mota2024.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "EnvChemgenVanacloig2022Dataset",
+      "loader": "torchcell/datasets/scerevisiae/vanacloig2022.py",
+      "n_changed_symbols_in_closure": 6,
+      "changed_symbols_in_closure": "BarcodedKanMxDeletionPerturbation;ConstructedOrf;GenomicSpan;HashableProvenanceGapMixin;OrfHistoryRelation;StrainConstruction",
+      "stale_vs_served": "BarcodedKanMxDeletionPerturbation;ConstructedOrf;GenomicSpan;HashableProvenanceGapMixin;OrfHistoryRelation;StrainConstruction"
+    },
+    {
+      "dataset_class": "EnvChemgenWildenhain2015Dataset",
+      "loader": "torchcell/datasets/scerevisiae/wildenhain2015.py",
+      "n_changed_symbols_in_closure": 6,
+      "changed_symbols_in_closure": "BarcodedKanMxDeletionPerturbation;ConstructedOrf;GenomicSpan;HashableProvenanceGapMixin;OrfHistoryRelation;StrainConstruction",
+      "stale_vs_served": "BarcodedKanMxDeletionPerturbation;ConstructedOrf;GenomicSpan;HashableProvenanceGapMixin;OrfHistoryRelation;StrainConstruction"
+    },
+    {
+      "dataset_class": "FattyAcidSmith2006Dataset",
+      "loader": "torchcell/datasets/scerevisiae/smith2006.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "FattyAcidXue2025Dataset",
+      "loader": "torchcell/datasets/scerevisiae/xue2025.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "GeneEssentialitySgdDataset",
+      "loader": "torchcell/datasets/scerevisiae/sgd.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "HetHillenmeyer2008Dataset",
+      "loader": "torchcell/datasets/scerevisiae/hillenmeyer2008.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "HomHillenmeyer2008Dataset",
+      "loader": "torchcell/datasets/scerevisiae/hillenmeyer2008.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "IsobutanolScreenLopez2024Dataset",
+      "loader": "torchcell/datasets/scerevisiae/lopez2024.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "IsobutanolValidatedLopez2024Dataset",
+      "loader": "torchcell/datasets/scerevisiae/lopez2024.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "MetaboliteDaSilveira2014Dataset",
+      "loader": "torchcell/datasets/scerevisiae/dasilveira2014.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "MetaboliteZelezniak2018Dataset",
+      "loader": "torchcell/datasets/scerevisiae/zelezniak2018.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "MicroarrayKemmeren2014Dataset",
+      "loader": "torchcell/datasets/scerevisiae/kemmeren2014.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "NadalRibellesPerturbSeq2025Dataset",
+      "loader": "torchcell/datasets/scerevisiae/nadal_ribelles2025.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "OrganicAcidYoshida2012Dataset",
+      "loader": "torchcell/datasets/scerevisiae/yoshida2012.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "ProteomeMessner2023Dataset",
+      "loader": "torchcell/datasets/scerevisiae/messner2023.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "ProteomeZelezniak2018Dataset",
+      "loader": "torchcell/datasets/scerevisiae/zelezniak2018.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "ScmdOhnuki2018Dataset",
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2018.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "ScmdOhnuki2022Dataset",
+      "loader": "torchcell/datasets/scerevisiae/ohnuki2022.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "ScmdOhya2005Dataset",
+      "loader": "torchcell/datasets/scerevisiae/ohya2005.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "SmMicroarraySameith2015Dataset",
+      "loader": "torchcell/datasets/scerevisiae/sameith2015.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "SmfBaryshnikova2010Dataset",
+      "loader": "torchcell/datasets/scerevisiae/baryshnikova2010.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "SmfCostanzo2016Dataset",
+      "loader": "torchcell/datasets/scerevisiae/costanzo2016.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "SmfKuzmin2018Dataset",
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2018.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "SmfKuzmin2020Dataset",
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2020.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "SmfODuibhir2014Dataset",
+      "loader": "torchcell/datasets/scerevisiae/oduibhir2014.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "SynthLethalityYeastSynthLethDbDataset",
+      "loader": "torchcell/datasets/scerevisiae/synth_leth_db.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "SynthRescueYeastSynthLethDbDataset",
+      "loader": "torchcell/datasets/scerevisiae/synth_leth_db.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "TmfKuzmin2018Dataset",
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2018.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "TmfKuzmin2020Dataset",
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2020.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "TmiKuzmin2018Dataset",
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2018.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    },
+    {
+      "dataset_class": "TmiKuzmin2020Dataset",
+      "loader": "torchcell/datasets/scerevisiae/kuzmin2020.py",
+      "n_changed_symbols_in_closure": 0,
+      "changed_symbols_in_closure": "",
+      "stale_vs_served": ""
+    }
+  ]
+}

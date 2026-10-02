@@ -28,7 +28,9 @@ Three properties the projections hold to:
 2. **Absence is part of identity.** A field that is ``None`` stays ``None`` in the
    projection rather than being omitted, so an environment whose temperature is a
    typed ``ProvenanceGap`` is a DIFFERENT environment from one at 30 C, not a
-   coincidental match.
+   coincidental match. One documented exception: the ``CultureEnvironment`` fields
+   added by #507 (``ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS``) are projected only when
+   set, so a culture environment that states nothing extra joins the plain one.
 3. **Order is not identity.** Components, dropouts and perturbations are sorted by
    their own canonical encoding, so two loaders listing the same ingredients in a
    different order agree.
@@ -54,34 +56,46 @@ from typing import Any
 
 from torchcell.datamodels.compound_identity import normalize_compound_name
 from torchcell.datamodels.schema import (
+    BackgroundAllele,
     BiologicPerturbation,
     Compound,
     Concentration,
+    CultureEnvironment,
+    CultureFormat,
     Environment,
     EnvironmentPhysicalPerturbation,
+    GenomicSpan,
     Media,
     MediaComponent,
+    PreCulture,
     SmallMoleculePerturbation,
     Solvent,
+    StrainBackground,
     Temperature,
 )
 
 __all__ = [
     "BIOLOGIC_PERTURBATION_IDENTITY_FIELDS",
     "COMPOUND_IDENTITY_PRECEDENCE",
+    "BACKGROUND_ALLELE_IDENTITY_FIELDS",
     "CONCENTRATION_IDENTITY_FIELDS",
+    "CULTURE_FORMAT_IDENTITY_FIELDS",
     "ENVIRONMENT_IDENTITY_FIELDS",
+    "ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS",
     "MEDIA_COMPONENT_IDENTITY_FIELDS",
     "MEDIA_IDENTITY_FIELDS",
     "PHYSICAL_PERTURBATION_IDENTITY_FIELDS",
+    "PRE_CULTURE_IDENTITY_FIELDS",
     "SMALL_MOLECULE_IDENTITY_FIELDS",
     "SOLVENT_IDENTITY_FIELDS",
+    "STRAIN_BACKGROUND_IDENTITY_FIELDS",
     "TEMPERATURE_IDENTITY_FIELDS",
     "compound_identity_key",
     "environment_identity",
     "environment_perturbation_identity",
     "identity_sha256",
     "media_identity",
+    "strain_background_identity",
     "temperature_identity",
 ]
 
@@ -138,6 +152,47 @@ ENVIRONMENT_IDENTITY_FIELDS: tuple[str, ...] = (
     "aerobicity",
     "duration_hours",
     "duration_generations",
+)
+ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS: tuple[str, ...] = (
+    "culture_format",
+    "pre_culture",
+    "auxotroph_supplements",
+)
+"""``CultureEnvironment`` fields (#507). Each is projected only when SET, so a
+``CultureEnvironment`` that states none of them has the same id as the plain
+``Environment`` with the same composition (the two classes join at the environment
+node); once set, a field is part of identity like any other."""
+CULTURE_FORMAT_IDENTITY_FIELDS: tuple[str, ...] = (
+    "vessel",
+    "working_volume_ul",
+    "shaking_rpm",
+    "inoculum_cells",
+    "inoculum_cells_per_strain",
+    "inoculum_od600",
+    "endpoint",
+)
+PRE_CULTURE_IDENTITY_FIELDS: tuple[str, ...] = (
+    "source",
+    "medium",
+    "generations",
+    "duration_hours",
+    "od600_at_transfer",
+)
+BACKGROUND_ALLELE_IDENTITY_FIELDS: tuple[str, ...] = (
+    "systematic_gene_name",
+    "allele_name",
+    "edit",
+    "functional",
+    "zygosity",
+    "cassette",
+    "deleted_span",
+)
+STRAIN_BACKGROUND_IDENTITY_FIELDS: tuple[str, ...] = (
+    "name",
+    "reference_strain",
+    "mating_type",
+    "ploidy",
+    "alleles",
 )
 
 
@@ -273,14 +328,46 @@ def environment_perturbation_identity(perturbation: Any) -> dict[str, Any]:
     )
 
 
+def _culture_format_identity(culture: CultureFormat) -> dict[str, Any]:
+    """Project a culture format onto its physical settings (provenance dropped)."""
+    return {
+        "vessel": culture.vessel,
+        "working_volume_ul": culture.working_volume_ul,
+        "shaking_rpm": culture.shaking_rpm,
+        "inoculum_cells": culture.inoculum_cells,
+        "inoculum_cells_per_strain": culture.inoculum_cells_per_strain,
+        "inoculum_od600": culture.inoculum_od600,
+        "endpoint": None if culture.endpoint is None else culture.endpoint.value,
+    }
+
+
+def _pre_culture_identity(pre_culture: PreCulture) -> dict[str, Any]:
+    """Project a pre-culture onto what the cells were grown in and for how long.
+
+    ``source_label`` (the source's verbatim token) and provenance are dropped: the
+    typed ``source`` already carries what the token means.
+    """
+    return {
+        "source": pre_culture.source.value,
+        "medium": (
+            None if pre_culture.medium is None else media_identity(pre_culture.medium)
+        ),
+        "generations": pre_culture.generations,
+        "duration_hours": pre_culture.duration_hours,
+        "od600_at_transfer": pre_culture.od600_at_transfer,
+    }
+
+
 def environment_identity(environment: Environment) -> dict[str, Any]:
     """Project an environment onto medium, temperature, edits, oxygen and duration.
 
     ``provenance_gaps`` is dropped, but what a gap MEANS is kept: the gapped field is
     ``None``, and a ``None`` temperature projects as ``None``, so a record that never
-    carried a temperature does not merge with one measured at 30 C.
+    carried a temperature does not merge with one measured at 30 C. A
+    ``CultureEnvironment``'s protocol fields (``ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS``)
+    are added only when set.
     """
-    return {
+    identity: dict[str, Any] = {
         "media": media_identity(environment.media),
         "temperature": (
             None
@@ -296,6 +383,70 @@ def environment_identity(environment: Environment) -> dict[str, Any]:
         "aerobicity": environment.aerobicity,
         "duration_hours": environment.duration_hours,
         "duration_generations": environment.duration_generations,
+    }
+    if not isinstance(environment, CultureEnvironment):
+        return identity
+    if environment.culture_format is not None:
+        identity["culture_format"] = _culture_format_identity(
+            environment.culture_format
+        )
+    if environment.pre_culture is not None:
+        identity["pre_culture"] = _pre_culture_identity(environment.pre_culture)
+    if environment.auxotroph_supplements is not None:
+        identity["auxotroph_supplements"] = _sorted_identities(
+            [
+                _media_component_identity(component)
+                for component in environment.auxotroph_supplements
+            ]
+        )
+    return identity
+
+
+def _span_identity(span: GenomicSpan | None) -> dict[str, Any] | None:
+    """Project an R64 interval onto its coordinates and assembly release."""
+    if span is None:
+        return None
+    return {
+        "chromosome": span.chromosome,
+        "start": span.start,
+        "end": span.end,
+        "assembly": span.assembly,
+    }
+
+
+def _background_allele_identity(allele: BackgroundAllele) -> dict[str, Any]:
+    """Project an allele onto its locus, designation, edit, function and zygosity."""
+    return {
+        "systematic_gene_name": allele.systematic_gene_name,
+        "allele_name": allele.allele_name,
+        "edit": allele.edit.value,
+        "functional": allele.functional,
+        "zygosity": None if allele.zygosity is None else allele.zygosity.value,
+        "cassette": allele.cassette,
+        "deleted_span": _span_identity(allele.deleted_span),
+    }
+
+
+def strain_background_identity(background: StrainBackground) -> dict[str, Any]:
+    """Project a strain background onto its genome content, dropping who stated it.
+
+    Two datasets that both state BY4741 (one quoting its paper, one carrying a
+    pending-review gap) produce different ``model_dump``s and so different ``genome``
+    node ids; this projection is the join key that says they state the same strain:
+    name, reference, mating type, ploidy and the sorted allele set. ``parents``,
+    ``construction``, provenance and gaps are dropped. Not used for node ids (the
+    ``genome`` node id is unchanged); it is the cross-dataset comparison key.
+    """
+    return {
+        "name": background.name,
+        "reference_strain": background.reference_strain,
+        "mating_type": (
+            None if background.mating_type is None else background.mating_type.value
+        ),
+        "ploidy": background.ploidy,
+        "alleles": _sorted_identities(
+            [_background_allele_identity(allele) for allele in background.alleles]
+        ),
     }
 
 

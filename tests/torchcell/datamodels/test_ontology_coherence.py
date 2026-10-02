@@ -165,17 +165,31 @@ def test_experiment_and_reference_share_a_phenotype_class(kind: str) -> None:
 
 @pytest.mark.parametrize("kind", EXPERIMENT_KINDS)
 def test_every_experiment_family_uses_the_shared_environment_class(kind: str) -> None:
-    """Environment is never narrowed per family, on either side of the pair.
+    """The medium is never put behind a per-family type, on either side of the pair.
 
-    A family-specific environment class would put the medium behind a per-family
-    type, and the cross-dataset aggregate at the YPD level would stop being
-    expressible.
+    A family-specific environment class that moved or retyped the medium would put
+    it behind a per-family type, and the cross-dataset aggregate at the YPD level
+    would stop being expressible. The one sanctioned narrowing is a SUBCLASS that
+    only adds slots (#507: ``CultureEnvironment`` adds the culture protocol,
+    ``StrainReferenceGenome`` the typed strain background) and keeps the shared
+    ``media`` field and the shared ``Environment`` identity projection; the list of
+    such subclasses is closed, so a new one fails here until it is named.
     """
+    allowed_environments = {s.Environment, s.CultureEnvironment}
+    allowed_genomes = {s.ReferenceGenome, s.StrainReferenceGenome}
     experiment = EXPERIMENT_TYPES[kind]
     reference = EXPERIMENT_REFERENCE_TYPES[kind]
-    assert experiment.model_fields["environment"].annotation is s.Environment
-    assert reference.model_fields["environment_reference"].annotation is s.Environment
-    assert reference.model_fields["genome_reference"].annotation is s.ReferenceGenome
+    for annotation in (
+        experiment.model_fields["environment"].annotation,
+        reference.model_fields["environment_reference"].annotation,
+    ):
+        assert annotation in allowed_environments
+        assert annotation.model_fields["media"].annotation is s.Media
+    assert reference.model_fields["genome_reference"].annotation in allowed_genomes
+    assert (
+        experiment.model_fields["environment"].annotation
+        is reference.model_fields["environment_reference"].annotation
+    )
 
 
 # --------------------------------------------------------------------------- #

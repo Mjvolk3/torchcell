@@ -28,6 +28,7 @@ from torchcell.datamodels import schema
 from torchcell.datamodels.schema import (
     AllelePerturbation,
     BarcodedKanMxDeletionPerturbation,
+    ConditionalAllelePerturbation,
     CopyNumberVariantPerturbation,
     CrisprActivationPerturbation,
     CrisprConstruct,
@@ -40,6 +41,7 @@ from torchcell.datamodels.schema import (
     GeneAdditionPerturbation,
     GenePerturbation,
     GenePerturbationType,
+    HeterozygousDeletionPerturbation,
     KanMxDeletionPerturbation,
     MarkerDeletionPerturbation,
     MeanDeletionPerturbation,
@@ -141,6 +143,12 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         **_SYS,
         "barcode": "ACGTACGTACGTACGTACGT",
         "collection": "Euroscarf MATa deletion set",
+    },
+    HeterozygousDeletionPerturbation: {**_SYS, "cassette": "kanMX4"},
+    ConditionalAllelePerturbation: {
+        **_SYS,
+        "allele_class": "temperature_sensitive",
+        "allele_name": "tfc3-1",
     },
     NatMxDeletionPerturbation: {**_SYS},
     MeanDeletionPerturbation: {**_SYS, "num_duplicates": 2},

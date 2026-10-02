@@ -43,10 +43,19 @@ LANE_ROOTS: dict[str, tuple[str, ...]] = {
         "SegregantGenotype",
         "SegregantParent",
         "HaplotypeBlock",
+        # Strain background (issue #507): the parent strain's genome content, its
+        # alleles against the reference, and how a deletion strain was constructed.
+        "StrainBackground",
+        "BackgroundAllele",
+        "GenomicSpan",
+        "StrainConstruction",
+        "ConstructedOrf",
     ),
     "environment": (
         "Environment",
         "EnvironmentPerturbation",
+        "CultureFormat",
+        "PreCulture",
         "Media",
         "MediaComponent",
         "Compound",

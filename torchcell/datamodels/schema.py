@@ -21,7 +21,377 @@ from torchcell.verification.sourced import ProvenanceGap, SourcedValue
 # from torchcell.datasets.dataset_registry import dataset_registry
 
 
+class ProvenanceGapMixin(ModelStrict):
+    """Mixin giving a model a ``provenance_gaps`` list of typed field-absences.
+
+    Shared by ``Phenotype``, ``Environment``, and ``Compound`` so a field the source does
+    not carry -- a phenotype ``n_samples`` a secondary curation layer dropped, an
+    environment ``temperature`` YeastPhenome never recorded, a compound ``inchikey`` no
+    resolver could map -- is a documented, typed ABSENCE (with a reason + ``looked_in``)
+    rather than a guess or a silent None. Two invariants keep it honest and
+    machine-checkable: (1) each ``gap.field`` names a real field on the concrete model
+    (checked against ``model_fields``, so inherited fields resolve too); (2) a gapped
+    field must be ``None`` -- you cannot both store a value and declare it missing.
+    ``provenance_gaps`` itself cannot be gapped.
+    """
+
+    provenance_gaps: list[ProvenanceGap] = Field(
+        default_factory=list,
+        description="documented, typed ABSENCES of a sourced value for a field on this "
+        "model (e.g. a phenotype n_samples, or an environment temperature the curation "
+        "layer did not carry). An honest typed gap -- never a guess. The gapped field "
+        "must be None (enforced below).",
+    )
+
+    @model_validator(mode="after")
+    def validate_provenance_gaps(self) -> "ProvenanceGapMixin":
+        """Each ProvenanceGap must name a real field on this model, and that field must
+        be None (you cannot both store a value and declare it missing).
+        """
+        model_fields = type(self).model_fields
+        for gap in self.provenance_gaps:
+            if gap.field not in model_fields:
+                raise ValueError(
+                    f"provenance_gap field '{gap.field}' is not a field of "
+                    f"{type(self).__name__}"
+                )
+            if gap.field == "provenance_gaps":
+                raise ValueError("provenance_gaps cannot itself be gapped")
+            if getattr(self, gap.field) is not None:
+                raise ValueError(
+                    f"field '{gap.field}' has a ProvenanceGap but is not None "
+                    "(cannot both store a value and declare it missing)"
+                )
+        return self
+
+    def gapped_fields(self) -> set[str]:
+        """Names of the fields this record declares as typed absences."""
+        return {gap.field for gap in self.provenance_gaps}
+
+
+class HashableProvenanceGapMixin(ProvenanceGapMixin):
+    """``ProvenanceGapMixin`` for a model that must stay hashable.
+
+    A frozen pydantic model hashes the tuple of its field values, so a ``list`` field
+    (``provenance_gaps``) makes it unhashable. ``Genotype.__eq__`` compares
+    perturbations as a ``set``, so a gene-perturbation leaf that carries typed gaps
+    must hash; it hashes its canonical JSON instead, which agrees with pydantic's
+    field-wise ``__eq__`` (equal models dump to equal JSON). List this mixin FIRST in
+    a leaf's bases: pydantic keeps the first ``__hash__`` it finds in the bases, and
+    a frozen parent leaf carries a generated one.
+    """
+
+    def __hash__(self) -> int:
+        """Hash the canonical JSON dump (the list fields are not hashable)."""
+        return hash(self.model_dump_json())
+
+
+def _require_value_or_gap(model: ProvenanceGapMixin, fields: tuple[str, ...]) -> None:
+    """Raise unless every named field is set or carries a typed ``ProvenanceGap``.
+
+    The strain-background contract (#500, #507): every element is either sourced or
+    a declared absence, never a silent ``None``. An empty list counts as unset.
+    """
+    gapped = model.gapped_fields()
+    for name in fields:
+        value = getattr(model, name)
+        if (value is None or value == []) and name not in gapped:
+            raise ValueError(
+                f"{type(model).__name__}.{name} is unset and carries no ProvenanceGap "
+                "(an unsourced element must be a typed gap, never a silent None)"
+            )
+        if value == []:
+            raise ValueError(
+                f"{type(model).__name__}.{name} is an empty list; use None with a "
+                "ProvenanceGap for an absent source"
+            )
+
+
 # Genotype
+# --------------------------------------------------------------------------- #
+# Strain background (issue #507, decided once for #500 #504 #505 #506).
+#
+# Every allele here is an edit against the S288C R64 reference assembly: the
+# sequence torchcell's genome reads is S288C, so a BY4741 record differs from it at
+# MAT (R64 is MATalpha), at four auxotrophic loci, and at the screened locus. The
+# background is everything the strain carries that is CONSTANT across the
+# collection and shared with the record's reference strain; the experiment's
+# ``Genotype`` keeps only what the screen varies. It hangs off the reference genome
+# (``StrainReferenceGenome``, not ``Genotype``) so pooled one-perturbation semantics,
+# perturbation counts and every gene-keyed consumer are untouched, and so it is
+# stored once per reference (the LMDB interns the whole reference; the graph writes
+# it on the ``genome`` and ``experiment reference`` nodes), never once per record.
+# Only the new classes below carry it, so no served dataset's closure moves until
+# its loader opts in (``StrainEnvironmentResponseExperiment``).
+# Design + worked examples: ``[[torchcell.datamodels.strain-background]]``.
+# --------------------------------------------------------------------------- #
+SYSTEMATIC_GENE_PATTERN = r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$"
+"""A nuclear ORF / ncRNA / mitochondrial systematic name (the ``GenePerturbation``
+pattern, restated so the background classes do not reach into that validator)."""
+
+
+class MatingType(StrEnum):
+    """Mating-type locus state. The R64 reference (S288C) is MATalpha, so a MATa
+    strain differs from the reference IN SEQUENCE at MAT (chrIII), not only in label.
+    """
+
+    a = "a"
+    alpha = "alpha"
+    a_alpha = "a/alpha"
+
+
+REFERENCE_MATING_TYPE: MatingType = MatingType.alpha
+"""S288C R64 carries MATALPHA1 (YCR040W) and MATALPHA2 (YCR039C) at MAT."""
+
+
+class Zygosity(StrEnum):
+    """How many of a background's chromosome copies carry an allele.
+
+    - ``haploid``: the only copy of a haploid genome.
+    - ``homozygous``: both copies of a diploid.
+    - ``heterozygous``: one copy of a diploid; the other copy is the R64 allele.
+    """
+
+    haploid = "haploid"
+    homozygous = "homozygous"
+    heterozygous = "heterozygous"
+
+
+class AlleleEdit(StrEnum):
+    """How a background allele's sequence differs from the R64 locus.
+
+    - ``full_deletion``: the ORF removed with no marker left (the BY ``delta0``
+      designer deletions: leu2-delta0, ura3-delta0, met15-delta0, lys2-delta0).
+    - ``partial_deletion``: an internal deletion that leaves ORF flanks
+      (his3-delta1).
+    - ``cassette_replacement``: the ORF replaced by a cassette named in ``cassette``
+      (can1-delta::STE2pr-Sp_his5, pdr1-delta::natMX).
+    - ``sequence_variant``: an in-place change (a point or nonsense mutation).
+    """
+
+    full_deletion = "full_deletion"
+    partial_deletion = "partial_deletion"
+    cassette_replacement = "cassette_replacement"
+    sequence_variant = "sequence_variant"
+
+
+ALLELE_EDIT_SO: dict[AlleleEdit, tuple[str, str]] = {
+    AlleleEdit.full_deletion: ("SO:0000159", "deletion"),
+    AlleleEdit.partial_deletion: ("SO:0000159", "deletion"),
+    AlleleEdit.cassette_replacement: ("SO:0000159", "deletion"),
+    AlleleEdit.sequence_variant: ("SO:0001060", "sequence_variant"),
+}
+"""Sequence Ontology mechanism of each edit kind (the same pinned pairs the
+gene-perturbation leaves use)."""
+
+
+class GenomicSpan(ModelStrict):
+    """A 1-based, end-inclusive interval on one chromosome of the R64 assembly.
+
+    ``assembly`` names the R64 release the coordinates were read from (coordinates
+    shift between releases), e.g. ``"R64-4-1"``.
+    """
+
+    chromosome: str
+    start: int
+    end: int
+    assembly: str
+
+    @model_validator(mode="after")
+    def _check_span(self) -> "GenomicSpan":
+        """Positions are 1-based and ordered; chromosome and assembly are named."""
+        if self.start < 1 or self.end < self.start:
+            raise ValueError(
+                f"GenomicSpan needs 1 <= start <= end, got {self.start}..{self.end}"
+            )
+        if not self.chromosome.strip() or not self.assembly.strip():
+            raise ValueError("GenomicSpan needs a chromosome and an assembly name")
+        return self
+
+
+class BackgroundAllele(ProvenanceGapMixin):
+    """One allele a strain background carries, as an edit against R64.
+
+    ``allele_name`` is the designation verbatim as the source writes it
+    (``his3Δ1``, ``can1Δ::STE2pr-Sp_his5``); ``gene_name`` is the CURRENT R64
+    standard name (``MET17`` for the ``met15Δ0`` allele); ``systematic_gene_name``
+    is the R64 ORF the edit sits in. ``functional`` says whether the allele keeps the
+    gene's function (False for every BY marker allele), which is what per-locus
+    dosage reads. ``cassette`` is required for a ``cassette_replacement`` and
+    forbidden otherwise.
+
+    Sourcing contract: ``provenance`` (quote + sha256) or a typed ``ProvenanceGap`` on
+    ``provenance``, never neither. A literature-standard allele whose source is not
+    mirrored (the BY alleles before Brachmann 1998 is mirrored) is ASSERTED with a
+    ``deferred_pending_source_review`` gap naming the paper that would close it, so the
+    record carries the allele and says plainly that it is unverified. ``zygosity``
+    likewise is set or gapped (Hoepfner's whi2 nonsense allele has no stated
+    zygosity). ``deleted_span`` is optional (coordinates are rarely published).
+    """
+
+    systematic_gene_name: str
+    gene_name: str
+    allele_name: str
+    edit: AlleleEdit
+    functional: bool = Field(
+        description="True if the allele keeps the gene's function; False for a null"
+    )
+    zygosity: Zygosity | None = Field(
+        description="copies of the background carrying it; None only with a gap"
+    )
+    cassette: str | None = Field(
+        default=None,
+        description="cassette that replaced the ORF, verbatim (e.g. 'STE2pr-Sp_his5', "
+        "'natMX', 'KlURA3'); set iff edit == cassette_replacement",
+    )
+    deleted_span: GenomicSpan | None = Field(
+        default=None, description="removed R64 interval, when the source gives it"
+    )
+    provenance: list[SourcedValue] | None = Field(
+        default=None,
+        description="quotes that state this allele; None only with a gap on "
+        "'provenance' (an asserted-but-unsourced allele)",
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def _validate_systematic(cls, v: str) -> str:
+        """The allele sits in a real R64 feature (systematic-name pattern)."""
+        if not re.match(SYSTEMATIC_GENE_PATTERN, v):
+            raise ValueError(f"Invalid systematic gene name {v!r}")
+        return v
+
+    @model_validator(mode="after")
+    def _check_allele(self) -> "BackgroundAllele":
+        """Cassette iff cassette_replacement; provenance and zygosity set or gapped."""
+        if (self.edit is AlleleEdit.cassette_replacement) != (
+            self.cassette is not None
+        ):
+            raise ValueError(
+                "cassette is required for a cassette_replacement and forbidden for "
+                f"edit={self.edit.value}"
+            )
+        _require_value_or_gap(self, ("provenance", "zygosity"))
+        return self
+
+    @property
+    def mechanism_so(self) -> tuple[str, str]:
+        """(SO id, SO name) of this allele's edit."""
+        return ALLELE_EDIT_SO[self.edit]
+
+    @property
+    def is_sourced(self) -> bool:
+        """True when neither the allele nor its zygosity is a declared gap."""
+        return not self.provenance_gaps
+
+
+class StrainBackground(ProvenanceGapMixin):
+    """The genome content a strain carries beyond R64, constant across a collection.
+
+    ``name`` is the strain or lineage label the records join on (``BY4741``,
+    ``BY4743``, or a descriptive name for an SGA progeny pool); it must equal
+    ``StrainReferenceGenome.strain``. ``parents`` are the strains it was made from, verbatim
+    (``["BY4741", "BY4742"]`` for BY4743; the SGA query and array for a progeny
+    pool). ``construction`` is a one-line method statement (how the background was
+    made, e.g. an SGA cross and its selections). ``reference_strain`` is the sequenced
+    strain every allele is an edit against; it is pinned to S288C because the edit
+    list of a non-S288C background against R64 would be thousands of variants, which
+    this object is not for.
+
+    ``mating_type`` and ``provenance`` are set or gapped (a typed absence, never a
+    silent None). A haploid background is MATa or MATalpha; every allele's zygosity
+    must fit the ploidy (``haploid`` in a haploid, ``homozygous``/``heterozygous`` in a
+    diploid). A gene carries one allele entry, or two heterozygous entries for a
+    compound heterozygote.
+    """
+
+    name: str
+    reference_strain: Literal["S288C"] = "S288C"
+    parents: list[str] | None = Field(
+        default=None, description="strains this background was made from, verbatim"
+    )
+    construction: str | None = Field(
+        default=None, description="how the background was made, one line"
+    )
+    mating_type: MatingType | None = Field(
+        description="MAT locus state; None only with a gap on 'mating_type'"
+    )
+    ploidy: Literal["haploid", "diploid"]
+    alleles: list[BackgroundAllele] = Field(
+        default_factory=list,
+        description="every non-R64 allele of the background, each sourced or gapped",
+    )
+    provenance: list[SourcedValue] | None = Field(
+        default=None,
+        description="quotes stating the strain name / mating type / ploidy; None only "
+        "with a gap on 'provenance'",
+    )
+
+    @model_validator(mode="after")
+    def _check_background(self) -> "StrainBackground":
+        """Sourced-or-gapped, MAT vs ploidy, zygosity vs ploidy, one entry per locus."""
+        if not self.name.strip():
+            raise ValueError("StrainBackground.name cannot be empty")
+        _require_value_or_gap(self, ("mating_type", "provenance"))
+        if self.ploidy == "haploid" and self.mating_type is MatingType.a_alpha:
+            raise ValueError("a haploid background cannot be MATa/MATalpha")
+        allowed = (
+            {Zygosity.haploid}
+            if self.ploidy == "haploid"
+            else {Zygosity.homozygous, Zygosity.heterozygous}
+        )
+        by_gene: dict[str, list[BackgroundAllele]] = {}
+        for allele in self.alleles:
+            if allele.zygosity is not None and allele.zygosity not in allowed:
+                raise ValueError(
+                    f"{allele.allele_name}: zygosity {allele.zygosity.value} does not "
+                    f"fit a {self.ploidy} background"
+                )
+            by_gene.setdefault(allele.systematic_gene_name, []).append(allele)
+        for gene, entries in by_gene.items():
+            if len(entries) == 1:
+                continue
+            if len(entries) > 2 or any(
+                e.zygosity is not Zygosity.heterozygous for e in entries
+            ):
+                raise ValueError(
+                    f"{gene}: more than one allele entry is allowed only as two "
+                    "heterozygous alleles of a diploid (a compound heterozygote)"
+                )
+        return self
+
+    def alleles_at(self, systematic_gene_name: str) -> list[BackgroundAllele]:
+        """The background's allele entries at one locus (empty = the R64 allele)."""
+        return [
+            a for a in self.alleles if a.systematic_gene_name == systematic_gene_name
+        ]
+
+    def functional_copies(self, systematic_gene_name: str) -> int:
+        """Functional copies of a gene in the UNPERTURBED background.
+
+        Ploidy copies minus the copies carrying a non-functional background allele:
+        BY4743 ``his3Δ1/his3Δ1`` -> 0, ``LYS2/lys2Δ0`` -> 1, an untouched gene -> 2.
+        Raises when an allele at the locus has a gapped zygosity, since the count is
+        then not determined by the record.
+        """
+        copies = 1 if self.ploidy == "haploid" else 2
+        for allele in self.alleles_at(systematic_gene_name):
+            if allele.functional:
+                continue
+            if allele.zygosity is None:
+                raise ValueError(
+                    f"{allele.allele_name}: zygosity is a ProvenanceGap, so the "
+                    "functional copy number at this locus is undetermined"
+                )
+            copies -= 2 if allele.zygosity is Zygosity.homozygous else 1
+        return copies
+
+    @property
+    def is_fully_sourced(self) -> bool:
+        """True when the background and every allele carry no declared gap."""
+        return not self.provenance_gaps and all(a.is_sourced for a in self.alleles)
+
+
 class ReferenceGenome(ModelStrict):
     """Reference genome identified by species and strain.
 
@@ -32,11 +402,43 @@ class ReferenceGenome(ModelStrict):
     the deviation from this baseline (e.g. a HIP heterozygous deletion drops one
     autosomal gene from 2 -> 1 copies in a diploid). Defaults to ``"haploid"`` so all
     existing haploid datasets stay valid.
+
+    A typed strain background is carried by the subclass ``StrainReferenceGenome``
+    (#507), not by a field here: this class is in the schema closure of every served
+    dataset, and any field added to it would mark every built store stale.
     """
 
     species: str
     strain: str
     ploidy: Literal["haploid", "diploid"] = "haploid"
+
+
+class StrainReferenceGenome(ReferenceGenome):
+    """A ``ReferenceGenome`` that states its typed ``StrainBackground`` (#507).
+
+    ``background`` holds the mating type and every allele the strain carries beyond
+    R64, each sourced or a typed gap. Its ``name`` equals ``strain`` and its ``ploidy``
+    equals ``ploidy``, so the free ``strain`` string and the typed object cannot
+    disagree. Used by ``StrainEnvironmentResponseExperimentReference``; the record
+    stores it once per reference (the LMDB interns the whole reference; the graph
+    writes it on the ``genome`` and ``experiment reference`` nodes).
+    """
+
+    background: StrainBackground
+
+    @model_validator(mode="after")
+    def _check_background_agrees(self) -> "StrainReferenceGenome":
+        """The background names the same strain and ploidy as the reference."""
+        if self.background.name != self.strain:
+            raise ValueError(
+                f"background name {self.background.name!r} != strain {self.strain!r}"
+            )
+        if self.background.ploidy != self.ploidy:
+            raise ValueError(
+                f"background ploidy {self.background.ploidy!r} != ploidy "
+                f"{self.ploidy!r}"
+            )
+        return self
 
 
 # --------------------------------------------------------------------------- #
@@ -248,6 +650,93 @@ class CrisprConstruct(ModelStrict):
         return self
 
 
+class StrainConstruction(ModelStrict):
+    """Where one physical deletion strain came from in its collection.
+
+    Two strains that delete the same ORF can differ in background mutations, tags and
+    behavior (Hillenmeyer: "some gene deletions were constructed more than once, in
+    different batches"; Hoepfner Table S5 traces secondary mutations by construction
+    Lab and Batch), so the construction record is a strain discriminator: two records
+    of one ORF whose construction differs are two strains, not two replicates. All
+    fields are verbatim source tokens; ``None`` = the source does not give it.
+    """
+
+    strain_accession: str | None = Field(
+        default=None,
+        description="collection accession of the strain (e.g. a Euroscarf 'Y0xxxx' id)",
+    )
+    lab: str | None = Field(
+        default=None, description="constructing lab, verbatim (Hoepfner Table S5 'Lab')"
+    )
+    batch: str | None = Field(
+        default=None,
+        description="construction batch, verbatim (Hillenmeyer 'chr4_3', Table S5 'Batch')",
+    )
+    plate: str | None = Field(default=None, description="collection plate, verbatim")
+    well: str | None = Field(
+        default=None, description="collection well / row_column, verbatim"
+    )
+
+    @model_validator(mode="after")
+    def _check_any(self) -> "StrainConstruction":
+        """An empty construction record says nothing; leave the field None instead."""
+        if all(
+            v is None
+            for v in (
+                self.strain_accession,
+                self.lab,
+                self.batch,
+                self.plate,
+                self.well,
+            )
+        ):
+            raise ValueError("StrainConstruction needs at least one field")
+        return self
+
+
+class OrfHistoryRelation(StrEnum):
+    """How the ORF a strain was built against relates to the current R64 gene.
+
+    - ``merged``: the source ORF was merged into the current gene (the strain deleted
+      only the old ORF's interval, part of the current gene).
+    - ``reannotated``: the same locus with shifted boundaries.
+    - ``alias``: a pure renaming, same interval.
+    """
+
+    merged = "merged"
+    reannotated = "reannotated"
+    alias = "alias"
+
+
+class ConstructedOrf(HashableProvenanceGapMixin):
+    """The ORF annotation a deletion strain was BUILT against, when not the current gene.
+
+    The YKO strains deleted ORFs as annotated around 2000. When that ORF has since
+    been merged or reannotated, the perturbation's ``systematic_gene_name`` stays the
+    CURRENT gene (so gene-keyed joins work) and this record states what was physically
+    deleted: the source ORF name verbatim, its relation to the current gene, and the
+    deleted interval. Two strains whose ``constructed_orf`` differ are different
+    perturbations and must never be averaged into one record (#505 G3, #506 finding
+    4). ``relation`` and ``deleted_span`` are set or gapped.
+    """
+
+    source_systematic_name: str = Field(
+        description="ORF name the strain was built against, verbatim (e.g. 'YAR044W')"
+    )
+    relation: OrfHistoryRelation | None = Field(
+        description="relation to the current gene; None only with a gap"
+    )
+    deleted_span: GenomicSpan | None = Field(
+        description="R64 interval the cassette replaced; None only with a gap"
+    )
+
+    @model_validator(mode="after")
+    def _check_constructed(self) -> "ConstructedOrf":
+        """Relation and deleted span are set or carry a typed gap."""
+        _require_value_or_gap(self, ("relation", "deleted_span"))
+        return self
+
+
 # --------------------------------------------------------------------------- #
 # AXIS 1 -- presence/absence leaves.
 # --------------------------------------------------------------------------- #
@@ -270,7 +759,9 @@ class KanMxDeletionPerturbation(DeletionPerturbation, ModelStrict):
     deletion_type: str = "KanMX"
 
 
-class BarcodedKanMxDeletionPerturbation(KanMxDeletionPerturbation, ModelStrict):
+class BarcodedKanMxDeletionPerturbation(
+    HashableProvenanceGapMixin, KanMxDeletionPerturbation, ModelStrict
+):
     """A KanMX deletion strain that carries the molecular barcode it was screened by.
 
     A pooled competitive-growth screen (Bar-seq, HIP/HOP) does not read colonies, it reads
@@ -280,10 +771,18 @@ class BarcodedKanMxDeletionPerturbation(KanMxDeletionPerturbation, ModelStrict):
     the Yeast Knockout Collection HOM/HET pool, ...), because two collections can hold the
     same ORF deletion with different background mutations and different barcodes.
 
-    Both fields are nullable: a study that reports only the ORF resolves to the plain
-    ``KanMxDeletionPerturbation`` semantics with no barcode asserted, so scaffolding a
-    loader before the barcode table is mirrored is a typed absence rather than a guess.
-    A separate leaf (not fields added to ``KanMxDeletionPerturbation``) is deliberate --
+    This is the leaf for every whole-locus kanMX deletion a chemogenomic loader serves:
+    a haploid deletion in a haploid background (Wildenhain, Vanacloig) and a homozygous
+    deletion in a diploid background (HOP: Hillenmeyer hom, Hoepfner HOP); zygosity is
+    read from the reference's ploidy. ``cassette`` names the exact cassette
+    (``kanMX4`` for the YKO, sourced to Giaever 2014); ``barcode`` is the UPTAG (or the
+    only tag a source names) and ``downtag_barcode`` the DNTAG; ``construction`` records
+    the strain's accession / lab / batch / plate; ``constructed_orf`` states the
+    physically deleted ORF when it is not the current gene.
+
+    Every new field is nullable and gappable: ``None`` with a ``ProvenanceGap`` (e.g. a
+    barcode table not yet mirrored) is a typed absence rather than a guess. A separate
+    leaf (not fields added to ``KanMxDeletionPerturbation``) is deliberate --
     ``KanMxDeletionPerturbation`` is inside 33 served dataset closures and any field added
     to it would force a full rebuild of every one of them.
     """
@@ -291,13 +790,87 @@ class BarcodedKanMxDeletionPerturbation(KanMxDeletionPerturbation, ModelStrict):
     perturbation_type: Literal["barcoded_kanmx_deletion"] = "barcoded_kanmx_deletion"  # type: ignore[assignment]
     barcode: str | None = Field(
         default=None,
-        description="the molecular barcode (UPTAG/DNTAG 20-mer) the strain is counted by "
-        "in a pooled assay; None when the source released no barcode",
+        description="the molecular barcode (UPTAG, or the only tag the source names) the "
+        "strain is counted by in a pooled assay; None when the source released no barcode",
+    )
+    downtag_barcode: str | None = Field(
+        default=None,
+        description="the DNTAG 20-mer when the source releases both tags; None otherwise",
     )
     collection: str | None = Field(
         default=None,
         description="the physical deletion collection the strain came from, verbatim from "
         "the source (e.g. 'Euroscarf MATa deletion set'); None when unsourced",
+    )
+    cassette: str | None = Field(
+        default=None,
+        description="the exact replacement cassette, e.g. 'kanMX4' (pFA6-kanMX4, Giaever "
+        "2014); None when unsourced",
+    )
+    construction: StrainConstruction | None = Field(
+        default=None, description="accession / lab / batch / plate of this strain"
+    )
+    constructed_orf: ConstructedOrf | None = Field(
+        default=None,
+        description="the ORF the strain was built against when it is not the current "
+        "gene (merged / reannotated); None when they coincide",
+    )
+
+
+class HeterozygousDeletionPerturbation(
+    HashableProvenanceGapMixin, PresenceAbsencePerturbation, ModelStrict
+):
+    """One allele of a diploid replaced by a deletion cassette (HIP / het collection).
+
+    Replaces the ``EngineeredCopyNumberPerturbation(copy_number=1,
+    reference_copy_number=2)`` encoding for HIP-style data (#506 point 3). A
+    heterozygous deletion is an ALLELE edit, not a dosage statement: the copy-number
+    form asserted "1 of 2 working copies" even at loci where the background was
+    already null (BY4743 ``his3Δ1/his3Δ1``: 0 working copies before and after). The
+    functional dose is now DERIVED from this leaf plus the reference's
+    ``StrainBackground`` (``heterozygous_deletion_functional_copies``).
+
+    The gene stays PRESENT on the other allele, so ``state="present"``; the SO mechanism
+    is the ``deletion`` of one allele. It is deliberately NOT a ``DeletionPerturbation``
+    subclass, so an "every knockout" filter (``issubclass(_, DeletionPerturbation)``)
+    does not count a heterozygote as an absent gene. ``replaced_allele`` names which
+    allele the cassette replaced when the background is itself heterozygous at the
+    locus (BY4743 ``LYS2/lys2Δ0``, ``MET15/met15Δ0``); set or gap it there.
+    """
+
+    description: str = (
+        "Heterozygous deletion: one allele of a diploid replaced by a cassette"
+    )
+    perturbation_type: Literal["heterozygous_deletion"] = "heterozygous_deletion"
+    state: str = "present"
+    mechanism_so_id: str = "SO:0000159"
+    mechanism_so_name: str = "deletion"
+    provenance: str = "engineered"
+    cassette: str | None = Field(
+        default=None,
+        description="the replacement cassette, e.g. 'kanMX4'; None only when unsourced",
+    )
+    barcode: str | None = Field(
+        default=None, description="UPTAG (or the only tag named); None if unreleased"
+    )
+    downtag_barcode: str | None = Field(
+        default=None, description="DNTAG 20-mer; None if unreleased"
+    )
+    collection: str | None = Field(
+        default=None,
+        description="the collection, verbatim (e.g. 'YSC1055 OpenBiosystems')",
+    )
+    construction: StrainConstruction | None = Field(
+        default=None, description="accession / lab / batch / plate of this strain"
+    )
+    constructed_orf: ConstructedOrf | None = Field(
+        default=None,
+        description="the ORF the strain was built against when it is not the current gene",
+    )
+    replaced_allele: str | None = Field(
+        default=None,
+        description="allele the cassette replaced, verbatim (e.g. 'LYS2' or 'lys2Δ0'), "
+        "when the background is heterozygous at this locus; None otherwise",
     )
 
 
@@ -420,6 +993,68 @@ class SgaAllelePerturbation(AllelePerturbation, ModelStrict):
     )
     strain_id: str = Field(description="'Strain ID' in raw data.")
     allele_perturbation_type: str = "SGA"
+
+
+class ConditionalAlleleClass(StrEnum):
+    """How a conditional allele of an essential gene reduces its function.
+
+    - ``temperature_sensitive``: an amino-acid-substitution allele, null at the
+      restrictive temperature (``cdc28-4``).
+    - ``damp``: Decreased Abundance by mRNA Perturbation, a marker inserted in the 3'
+      UTR.
+    - ``promoter_replacement``: the native promoter replaced by a regulatable one
+      (e.g. a tetO promoter shut off by doxycycline).
+
+    An allele of UNKNOWN class is not a member: it is ``allele_class=None`` with a
+    ``ProvenanceGap`` (one encoding of "unknown", never a fourth enum value).
+    """
+
+    temperature_sensitive = "temperature_sensitive"
+    damp = "damp"
+    promoter_replacement = "promoter_replacement"
+
+
+class ConditionalAllelePerturbation(
+    HashableProvenanceGapMixin, SequencePerturbation, ModelStrict
+):
+    """A conditional (hypomorphic) allele of an essential gene, class possibly unknown.
+
+    A haploid null of an essential gene is not viable, so a screen that reports an
+    essential gene as a "deletion strain" (Wildenhain: 33 such strains, #504) screened
+    a conditional allele whose identity the release does not carry. This leaf records
+    the gene with a typed allele class, the allele designation, the marker and the
+    collection, each set or gapped: until the strain table is mirrored,
+    ``allele_class=None`` with a ``deferred_pending_source_review`` gap naming the table
+    that resolves it. ``allele_class`` is REQUIRED to be set or gapped. The SO mechanism
+    is the generic ``sequence_variant`` (the specific edit is not yet known).
+    """
+
+    description: str = (
+        "Conditional allele of an essential gene (ts, DAmP, promoter replacement)"
+    )
+    perturbation_type: Literal["conditional_allele"] = "conditional_allele"
+    provenance: str = "engineered"
+    allele_class: ConditionalAlleleClass | None = Field(
+        description="how the allele reduces function; None only with a gap"
+    )
+    allele_name: str | None = Field(
+        default=None, description="allele designation verbatim, e.g. 'cdc28-4'"
+    )
+    marker: str | None = Field(
+        default=None, description="selection marker carried with the allele, verbatim"
+    )
+    collection: str | None = Field(
+        default=None, description="the collection the strain came from, verbatim"
+    )
+    construction: StrainConstruction | None = Field(
+        default=None, description="accession / lab / batch / plate of this strain"
+    )
+
+    @model_validator(mode="after")
+    def _check_allele_class(self) -> "ConditionalAllelePerturbation":
+        """An unknown allele class is a typed gap, never a silent None."""
+        _require_value_or_gap(self, ("allele_class",))
+        return self
 
 
 # Change to AggregateDeletionPerturbation, or AggDeletionPerturbation
@@ -939,6 +1574,8 @@ GenePerturbationType = (
     | MarkerDeletionPerturbation
     | KanMxDeletionPerturbation
     | BarcodedKanMxDeletionPerturbation
+    | HeterozygousDeletionPerturbation
+    | ConditionalAllelePerturbation
     | NatMxDeletionPerturbation
     | CrisprDeletionPerturbation
     | GeneAdditionPerturbation
@@ -1007,6 +1644,39 @@ class Genotype(ModelStrict):
             return NotImplemented
 
         return set(self.perturbations) == set(other.perturbations)
+
+
+def heterozygous_deletion_functional_copies(
+    background: StrainBackground, perturbation: HeterozygousDeletionPerturbation
+) -> int | None:
+    """Functional copies left at the deleted locus, respecting the background.
+
+    In a diploid background with no allele at the locus the answer is 1 (the usual
+    HIP haploinsufficiency case). Where the background is already null on both copies
+    (BY4743 ``his3Δ1/his3Δ1``) it is 0, before and after. Where the background is
+    heterozygous (``LYS2/lys2Δ0``) it depends on which allele the cassette replaced:
+    1 if ``replaced_allele`` names the null background allele, 0 if it names anything
+    else (the functional copy). ``None`` means the record does not determine it: the
+    background is heterozygous at the locus and ``replaced_allele`` is unset.
+    """
+    if background.ploidy != "diploid":
+        raise ValueError("a heterozygous deletion needs a diploid background")
+    gene = perturbation.systematic_gene_name
+    before = background.functional_copies(gene)
+    null_het = [
+        a
+        for a in background.alleles_at(gene)
+        if not a.functional and a.zygosity is Zygosity.heterozygous
+    ]
+    if before == 0:
+        return 0
+    if not null_het:
+        return before - 1
+    if perturbation.replaced_allele is None:
+        return None
+    if perturbation.replaced_allele in {a.allele_name for a in null_het}:
+        return before
+    return before - 1
 
 
 # Environment
@@ -1113,50 +1783,6 @@ class PhysicalFactor(StrEnum):
     radiation = "radiation"
 
 
-class ProvenanceGapMixin(ModelStrict):
-    """Mixin giving a model a ``provenance_gaps`` list of typed field-absences.
-
-    Shared by ``Phenotype``, ``Environment``, and ``Compound`` so a field the source does
-    not carry -- a phenotype ``n_samples`` a secondary curation layer dropped, an
-    environment ``temperature`` YeastPhenome never recorded, a compound ``inchikey`` no
-    resolver could map -- is a documented, typed ABSENCE (with a reason + ``looked_in``)
-    rather than a guess or a silent None. Two invariants keep it honest and
-    machine-checkable: (1) each ``gap.field`` names a real field on the concrete model
-    (checked against ``model_fields``, so inherited fields resolve too); (2) a gapped
-    field must be ``None`` -- you cannot both store a value and declare it missing.
-    ``provenance_gaps`` itself cannot be gapped.
-    """
-
-    provenance_gaps: list[ProvenanceGap] = Field(
-        default_factory=list,
-        description="documented, typed ABSENCES of a sourced value for a field on this "
-        "model (e.g. a phenotype n_samples, or an environment temperature the curation "
-        "layer did not carry). An honest typed gap -- never a guess. The gapped field "
-        "must be None (enforced below).",
-    )
-
-    @model_validator(mode="after")
-    def validate_provenance_gaps(self) -> "ProvenanceGapMixin":
-        """Each ProvenanceGap must name a real field on this model, and that field must
-        be None (you cannot both store a value and declare it missing).
-        """
-        model_fields = type(self).model_fields
-        for gap in self.provenance_gaps:
-            if gap.field not in model_fields:
-                raise ValueError(
-                    f"provenance_gap field '{gap.field}' is not a field of "
-                    f"{type(self).__name__}"
-                )
-            if gap.field == "provenance_gaps":
-                raise ValueError("provenance_gaps cannot itself be gapped")
-            if getattr(self, gap.field) is not None:
-                raise ValueError(
-                    f"field '{gap.field}' has a ProvenanceGap but is not None "
-                    "(cannot both store a value and declare it missing)"
-                )
-        return self
-
-
 class Compound(ProvenanceGapMixin):
     """Chemical identity of a small molecule, keyed by a canonical InChIKey.
 
@@ -1260,7 +1886,11 @@ class Solvent(ModelStrict):
     """The vehicle a compound was dissolved in and its final fraction in the medium.
 
     ``compound`` optionally carries the vehicle's typed chemical identity (a reused
-    ``Compound``); ``name`` remains the plain label for the common case.
+    ``Compound``); ``name`` remains the plain label for the common case. A vehicle the
+    source does not state (Hoepfner's concentrated stocks above the 200 uM solubility
+    ceiling of its 2% DMSO normalization) is ``SmallMoleculePerturbation.solvent=None``
+    with a ``ProvenanceGap`` on ``solvent``; this class is not itself a gap carrier
+    because it sits in the schema closure of every small-molecule dataset (#507).
     """
 
     name: str = Field(description="solvent name, e.g. 'DMSO' | 'water' | 'ethanol'")
@@ -1541,6 +2171,117 @@ EnvironmentPerturbationType = (
 )
 
 
+class EndpointRule(StrEnum):
+    """When a culture was read out (the endpoint is part of what was measured).
+
+    - ``fixed_duration``: after a stated time (``Environment.duration_hours``).
+    - ``fixed_generations``: after a stated number of doublings
+      (``Environment.duration_generations``), e.g. serial pooled passages.
+    - ``until_control_saturation``: when the vehicle-only control saturated, a
+      variable time (Wildenhain: "approximately 18 h or until solvent-treated control
+      cultures were saturated").
+    """
+
+    fixed_duration = "fixed_duration"
+    fixed_generations = "fixed_generations"
+    until_control_saturation = "until_control_saturation"
+
+
+class CultureFormat(ProvenanceGapMixin):
+    """The physical culture a measurement was grown in.
+
+    Vessel, working volume, agitation, inoculum and endpoint rule are part of the
+    environment: a static 100 uL microwell culture and a shaken 1.6 mL deep-well
+    culture differ in aeration and in how many generations fit before saturation.
+    Every field is optional; a field the source does not state can be a typed gap.
+    ``vessel`` is verbatim (``"96-well plate"``, ``"24-well plate (Greiner 662102)"``).
+    ``shaking_rpm`` 0.0 means static. ``inoculum_cells`` counts cells per culture;
+    ``inoculum_cells_per_strain`` is the pooled-screen form (cells of each strain).
+    """
+
+    vessel: str | None = None
+    working_volume_ul: float | None = None
+    shaking_rpm: float | None = None
+    inoculum_cells: float | None = None
+    inoculum_cells_per_strain: float | None = None
+    inoculum_od600: float | None = None
+    endpoint: EndpointRule | None = None
+    provenance: list[SourcedValue] = Field(
+        default_factory=list,
+        description="sourced (quote + sha256) justifications for the stated fields",
+    )
+
+    @model_validator(mode="after")
+    def _check_culture(self) -> "CultureFormat":
+        """Volumes, agitation and inocula are non-negative."""
+        for name in (
+            "working_volume_ul",
+            "shaking_rpm",
+            "inoculum_cells",
+            "inoculum_cells_per_strain",
+            "inoculum_od600",
+        ):
+            value = getattr(self, name)
+            if value is not None and value < 0:
+                raise ValueError(f"CultureFormat.{name} must be non-negative")
+        return self
+
+
+class PreCultureSource(StrEnum):
+    """What the screened culture was inoculated FROM.
+
+    - ``frozen_stock``: straight from a frozen pool, no pre-culture (Hillenmeyer's
+      negative generation counts: "taken directly from the freezer").
+    - ``overnight_culture``: an overnight culture of unstated phase.
+    - ``log_phase_culture``: grown to log phase before treatment (Hillenmeyer's
+      positive counts: "grown overnight until log phase (OD600= 2.0)").
+    - ``thaw_recovery``: thawed and recovered briefly in medium (Hoepfner HOP:
+      "thawed and recovered for 3 h in YPD").
+    """
+
+    frozen_stock = "frozen_stock"
+    overnight_culture = "overnight_culture"
+    log_phase_culture = "log_phase_culture"
+    thaw_recovery = "thaw_recovery"
+
+
+class PreCulture(ProvenanceGapMixin):
+    """The culture step BEFORE treatment, which sets the cells' state at time zero.
+
+    A signed generation count in a source (Hillenmeyer ``-5gen`` vs ``5gen``) encodes
+    two facts: the magnitude is the treatment exposure
+    (``Environment.duration_generations``), and the SIGN says whether a pre-culture
+    happened (negative = ``frozen_stock``; positive = a YPD log-phase pre-culture of
+    about 10 generations). ``source_label`` keeps the source token verbatim so the
+    split is auditable. ``medium`` is ``None`` for a ``frozen_stock`` start.
+    """
+
+    source: PreCultureSource
+    medium: Media | None = None
+    generations: float | None = None
+    duration_hours: float | None = None
+    od600_at_transfer: float | None = None
+    source_label: str | None = Field(
+        default=None,
+        description="the source's own token for this step, verbatim (e.g. '-5gen')",
+    )
+    provenance: list[SourcedValue] = Field(
+        default_factory=list,
+        description="sourced (quote + sha256) justifications for the stated fields",
+    )
+
+    @model_validator(mode="after")
+    def _check_preculture(self) -> "PreCulture":
+        """A frozen-stock start has no pre-culture medium; quantities are non-negative."""
+        if self.source is PreCultureSource.frozen_stock and self.medium is not None:
+            raise ValueError("a frozen_stock start has no pre-culture medium")
+        for name in ("generations", "duration_hours", "od600_at_transfer"):
+            value = getattr(self, name)
+            if value is not None and value < 0:
+                raise ValueError(f"PreCulture.{name} must be non-negative")
+        return self
+
+
 class Environment(ProvenanceGapMixin):
     """Experimental environment: base medium + temperature + optional perturbations.
 
@@ -1552,6 +2293,9 @@ class Environment(ProvenanceGapMixin):
     ``duration_hours`` is the optional treatment time. ``temperature`` is optional: a
     secondary curation layer (YeastPhenome) may not carry it, in which case it is a
     ``ProvenanceGap`` (``field='temperature'``), NOT a guessed value.
+
+    The culture protocol (#507) lives on the subclass ``CultureEnvironment``, not
+    here: this class is in the schema closure of every served dataset.
     """
 
     media: Media
@@ -1584,6 +2328,43 @@ class Environment(ProvenanceGapMixin):
                 f"aerobicity must be aerobic/anaerobic/microaerobic, got {v!r}"
             )
         return v
+
+
+class CultureEnvironment(Environment):
+    """An ``Environment`` that also states its culture protocol (#507 point 8).
+
+    Same medium, temperature, perturbations, oxygen regime and duration as the base
+    class (so the medium-level cross-dataset aggregate is unchanged: ``media`` is the
+    same field holding the same ``Media``), plus three optional, gappable slots:
+
+    - ``culture_format``: vessel, working volume, shaking, inoculum, endpoint rule.
+    - ``pre_culture``: the step before treatment, including what a SIGNED generation
+      count means (Hillenmeyer ``-5gen``: from the freezer; ``5gen``: after a YPD
+      log-phase pre-culture). ``duration_generations`` always holds the magnitude.
+    - ``auxotroph_supplements``: nutrients added to the base medium to complement the
+      strain background's auxotrophies (His/Leu/Ura/Met for a BY strain on a minimal
+      medium). They sit beside ``media`` rather than inside it, so the base medium
+      stays the shared, joinable entity and the strain-specific addition is explicit.
+
+    ``None`` means not stated; a ``ProvenanceGap`` on the field says why. A separate
+    class (not fields on ``Environment``) because ``Environment`` is in the schema
+    closure of every served dataset and a new field there would mark every built store
+    stale; the chemogenomic experiment classes declare this type explicitly, so
+    pydantic serializes these fields.
+    """
+
+    culture_format: CultureFormat | None = Field(
+        default=None,
+        description="vessel / volume / shaking / inoculum / endpoint; None if unstated",
+    )
+    pre_culture: PreCulture | None = Field(
+        default=None, description="the culture step before treatment; None if unstated"
+    )
+    auxotroph_supplements: list[MediaComponent] | None = Field(
+        default=None,
+        description="nutrients added to complement the background's auxotrophies; None "
+        "if unstated (a typed gap when the source implies but does not name them)",
+    )
 
 
 # Phenotype
@@ -3072,6 +3853,48 @@ class EnvironmentResponseExperiment(Experiment, ModelStrict):
 
 
 # --------------------------------------------------------------------------- #
+# Strain-resolved environment response (#507): the chemogenomic family whose
+# reference states a typed StrainBackground and whose environment states its
+# culture protocol. Its own experiment_type, so the reconstruction maps resolve it
+# to the classes that declare StrainReferenceGenome / CultureEnvironment
+# explicitly (pydantic v2 serializes a field by its DECLARED type, so a subclass
+# instance in a base-typed slot would lose its fields). The base family and every
+# class it is built from are untouched, so no other served dataset's schema
+# closure moves. The phenotype is the same EnvironmentResponsePhenotype.
+# --------------------------------------------------------------------------- #
+class StrainEnvironmentResponseExperimentReference(
+    EnvironmentResponseExperimentReference, ModelStrict
+):
+    """Reference for a strain-resolved environment response (typed background).
+
+    ``genome_reference`` is a ``StrainReferenceGenome`` (mating type + every background
+    allele, sourced or gapped); ``environment_reference`` is a ``CultureEnvironment``.
+    """
+
+    experiment_reference_type: str = "strain_environment_response"
+    # Narrowed to subclasses: this family states its background and culture protocol.
+    genome_reference: StrainReferenceGenome
+    environment_reference: CultureEnvironment
+    phenotype_reference: EnvironmentResponsePhenotype
+
+
+class StrainEnvironmentResponseExperiment(EnvironmentResponseExperiment, ModelStrict):
+    """A strain's response to an environmental perturbation, with a typed background.
+
+    The chemogenomic loaders (Vanacloig, Wildenhain, Hillenmeyer, Hoepfner) emit this
+    family: the screened edit stays in ``genotype`` (a typed deletion leaf, so pooled
+    one-perturbation semantics hold), the strain background rides on the reference's
+    ``StrainReferenceGenome``, and the culture protocol on a ``CultureEnvironment``.
+    """
+
+    experiment_type: str = "strain_environment_response"
+    environment: CultureEnvironment  # narrowed: this family states its culture protocol
+    # Redeclared (same type): torchcell.data reads ``__annotations__["phenotype"]``,
+    # which holds only a class's OWN annotations.
+    phenotype: EnvironmentResponsePhenotype
+
+
+# --------------------------------------------------------------------------- #
 # Segregant (meiotic recombinant) genotypes -- a haplotype MOSAIC, not a gene edit.
 #
 # A segregant of a biparental cross carries no engineered perturbation and is not
@@ -3231,6 +4054,7 @@ ExperimentType = (
     | MetaboliteExperiment
     | ProteinAbundanceExperiment
     | EnvironmentResponseExperiment
+    | StrainEnvironmentResponseExperiment
     | SegregantGrowthExperiment
 )
 
@@ -3249,6 +4073,7 @@ ExperimentReferenceType = (
     | MetaboliteExperimentReference
     | ProteinAbundanceExperimentReference
     | EnvironmentResponseExperimentReference
+    | StrainEnvironmentResponseExperimentReference
     | SegregantGrowthExperimentReference
 )
 
@@ -3267,6 +4092,7 @@ EXPERIMENT_TYPE_MAP = {
     "metabolite": MetaboliteExperiment,
     "protein_abundance": ProteinAbundanceExperiment,
     "environment_response": EnvironmentResponseExperiment,
+    "strain_environment_response": StrainEnvironmentResponseExperiment,
     "segregant_growth": SegregantGrowthExperiment,
 }
 
@@ -3284,6 +4110,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "metabolite": MetaboliteExperimentReference,
     "protein_abundance": ProteinAbundanceExperimentReference,
     "environment_response": EnvironmentResponseExperimentReference,
+    "strain_environment_response": StrainEnvironmentResponseExperimentReference,
     "segregant_growth": SegregantGrowthExperimentReference,
 }
 

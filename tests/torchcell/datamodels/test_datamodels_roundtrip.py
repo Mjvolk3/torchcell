@@ -55,6 +55,38 @@ FIELD_VALUES: dict[str, Any] = {
 
 # class qualname -> keyword arguments; committed when a validator wants a specific shape.
 EXAMPLES: dict[str, dict[str, Any]] = {
+    "torchcell.datamodels.schema.BackgroundAllele": {
+        "systematic_gene_name": "YOR202W",
+        "gene_name": "HIS3",
+        "allele_name": "his3Δ1",
+        "edit": "partial_deletion",
+        "functional": False,
+        "zygosity": "haploid",
+        "provenance_gaps": [
+            {"field": "provenance", "reason": "deferred_pending_source_review"}
+        ],
+    },
+    "torchcell.datamodels.schema.StrainBackground": {
+        "name": "BY4741",
+        "mating_type": "a",
+        "ploidy": "haploid",
+        "provenance_gaps": [
+            {"field": "provenance", "reason": "deferred_pending_source_review"}
+        ],
+    },
+    "torchcell.datamodels.schema.StrainConstruction": {"lab": "Lab 14", "batch": "3"},
+    "torchcell.datamodels.schema.StrainReferenceGenome": {
+        "species": "Saccharomyces cerevisiae",
+        "strain": "BY4741",
+        "background": {
+            "name": "BY4741",
+            "mating_type": "a",
+            "ploidy": "haploid",
+            "provenance_gaps": [
+                {"field": "provenance", "reason": "deferred_pending_source_review"}
+            ],
+        },
+    },
     "torchcell.datamodels.schema.Concentration": {"value": 1.0, "unit": "mM"},
     "torchcell.datamodels.schema.EnvironmentResponsePhenotype": {
         "measurement_type": "log2_ratio",

@@ -476,3 +476,7 @@ A read-only Fable 5.1 agent graded seven recorded claims against the mirror, the
 - "Four measurements" is 2 arrays x 2 probes; GSE42536 holds at most 2 arrays per mutant (20 singles have 1). #482.
 - The KanMX-first / NatMX-second marker assignment on double mutants has no source (the paper names haploid transformation, random spore analysis or tetrad dissection), and six singles are lab remakes. #480.
 - The reference RNA is BY4742 wild type on all 287 arrays, so after the strain fix the four BY4741 records' `genome_reference` differs from the reference RNA's strain; a schema decision raised on PR #460.
+
+## 2026.10.02 - main() builds the genome with overwrite=False
+
+`main()` constructed `SCerevisiaeGenome(..., overwrite=True)`, an explicit rebuild of the shared `data.db` on every run. It now passes `overwrite=False` (PR #605), which opens the verified shared database, or builds/migrates it once, under the root lock.

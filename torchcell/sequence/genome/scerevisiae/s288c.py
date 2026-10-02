@@ -999,7 +999,7 @@ def _committed_record_json(db_path: str) -> str | None:
         _remove_if_present(copy_path + "-journal")
 
 
-def _read_record_json_checked(db_path: str) -> str | None:
+def _read_record_json_checked(db_path: str, name: str | None = None) -> str | None:
     """:func:`_read_record_json`, except that a hot rollback journal (which makes the
     read fail with ``SQLITE_READONLY_ROLLBACK``) does not hide a record this checkout
     must refuse: the committed record is checked first (a newer version or an
@@ -1008,12 +1008,12 @@ def _read_record_json_checked(db_path: str) -> str | None:
     one: the file plus its journal, rolled back in a private copy.
     """
     try:
-        return _read_record_json(db_path)
+        return _read_record_json(db_path, name=name)
     except sqlite3.DatabaseError as exc:
         if getattr(exc, "sqlite_errorcode", None) == sqlite3.SQLITE_READONLY_ROLLBACK:
             peeked = _committed_record_json(db_path)
             if peeked is not None:
-                check_record(db_path, peeked)
+                check_record(name or db_path, peeked)
         raise
 
 
@@ -1038,7 +1038,10 @@ def check_record(db_path: str, raw: str) -> GenomeDatabaseRecord | str:
 
 
 def untrusted_reason(
-    db_path: str, expected: GenomeDatabaseSource, rebuild_call: str
+    db_path: str,
+    expected: GenomeDatabaseSource,
+    rebuild_call: str,
+    name: str | None = None,
 ) -> str | None:
     """Why the existing ``db_path`` cannot be trusted, or None when it can.
 
@@ -1049,21 +1052,23 @@ def untrusted_reason(
     differs from the record (any other write in place). A record of a higher version
     raises :class:`GenomeDatabaseVersionError`, and a record for a different source
     raises :class:`GenomeDatabaseSourceError`: the pinned GFF changed, which is a real
-    source change, not a migration.
+    source change, not a migration. ``name`` is the path named in those refusals
+    (``data.db`` when ``db_path`` is a private copy of it).
     """
+    shown = name or db_path
     try:
-        raw = _read_record_json_checked(db_path)
+        raw = _read_record_json_checked(db_path, name=shown)
     except sqlite3.DatabaseError as exc:
         require_damage(db_path, exc)
         return f"sqlite cannot read it ({exc})"
     if raw is None:
         return f"it carries no {SOURCE_TABLE} record"
-    record = check_record(db_path, raw)
+    record = check_record(shown, raw)
     if isinstance(record, str):
         return record
     if record.source != expected:
         raise GenomeDatabaseSourceError(
-            f"{db_path} was built from {record.source.model_dump()} but this genome's "
+            f"{shown} was built from {record.source.model_dump()} but this genome's "
             f"source is {expected.model_dump()}. Rebuild it deliberately, once, while "
             f"no job reads it: {rebuild_call}"
         )
@@ -1111,9 +1116,36 @@ def _journal_moved_to_kept(db_path: str) -> bool:
     if not osp.isfile(kept):
         return False
     try:
-        return filecmp.cmp(db_path, kept, shallow=False)
+        if not filecmp.cmp(db_path, kept, shallow=False):
+            return False
     except PermissionError:  # another user's kept copy: not this file's journal pair
         return False
+    return not _rollback_equals(kept, db_path)
+
+
+def _rollback_equals(kept: str, db_path: str) -> bool:
+    """Whether ``kept`` rolled back with its journal (in a private copy in the temp
+    dir) is byte-identical to ``db_path``: then the journal undoes nothing and
+    ``db_path`` is not a torn file (a fresh build can equal a kept copy whose hot
+    journal never reached its pages).
+    """
+    fd, copy_path = tempfile.mkstemp(
+        prefix=f"torchcell-genome-{socket.gethostname()}-{os.getpid()}-peek",
+        suffix=".db",
+    )
+    os.close(fd)
+    try:
+        shutil.copyfile(kept, copy_path)
+        shutil.copyfile(kept + "-journal", copy_path + "-journal")
+        try:
+            with closing(sqlite3.connect(copy_path)) as conn:
+                conn.execute("SELECT 1 FROM sqlite_master").fetchone()
+        except sqlite3.DatabaseError:
+            return False
+        return filecmp.cmp(copy_path, db_path, shallow=False)
+    finally:
+        _remove_if_present(copy_path)
+        _remove_if_present(copy_path + "-journal")
 
 
 def _has_hot_journal(db_path: str) -> bool:
@@ -1163,12 +1195,26 @@ def _copy_preserving_mode(db_path: str, copy_path: str) -> None:
     the mode of the file it preserves, so other users of a group-writable root can
     read the kept copy as they could the original.
     """
-    shutil.copyfile(db_path, copy_path)
-    os.chmod(copy_path, stat.S_IMODE(os.stat(db_path).st_mode))
+    try:
+        shutil.copyfile(db_path, copy_path)
+        os.chmod(copy_path, stat.S_IMODE(os.stat(db_path).st_mode))
+    except FileNotFoundError as exc:
+        raise _vanished(db_path, exc) from exc
+
+
+def _vanished(path: str, exc: FileNotFoundError) -> GenomeDatabaseUnavailableError:
+    return GenomeDatabaseUnavailableError(
+        f"{path} vanished while this process was migrating or rebuilding it ({exc}); "
+        "another process (pre-2026.10.01 code) is rebuilding it. Every file is left "
+        "alone. Retry when it has finished."
+    )
 
 
 def _identity(path: str) -> tuple[int, int, int]:
-    st = os.stat(path)
+    try:
+        st = os.stat(path)
+    except FileNotFoundError as exc:
+        raise _vanished(path, exc) from exc
     return (st.st_ino, st.st_size, st.st_mtime_ns)
 
 
@@ -1234,7 +1280,10 @@ def migrate_genome_database(
                     reason,
                 )
                 return
-            copy_trusted = untrusted_reason(copy_path, expected, rebuild_call) is None
+            copy_trusted = (
+                untrusted_reason(copy_path, expected, rebuild_call, name=db_path)
+                is None
+            )
             kept = osp.join(db_dir, UNTRUSTED_DB_FILENAME)
             _keep_copy(copy_path, kept, db_path)
             install_genome_database(tmp_path, db_path, kept)
@@ -1397,6 +1446,17 @@ class SCerevisiaeGenome(Genome):
 
     Construction also removes this host's ``data.db.*.building`` files whose writer
     pid is dead (a build killed mid-way), when the root is writable.
+
+    The root lock (an exclusive ``flock`` on the genome-root directory) is taken only
+    by a migration and by an explicit rebuild, never by a reader of a trusted file. It
+    has no timeout: a migrator or rebuilder waits behind a stopped holder (for
+    example a SIGSTOPped process) for as long as the holder is stopped. A holder
+    killed with SIGKILL releases it, and a child forked while the lock is held keeps
+    it until the child exits.
+
+    A ``data.db`` that is a symlink to a trusted database is followed and read. When
+    the target is untrusted, or ``overwrite=True``, the build is renamed onto the
+    LINK, which becomes a regular file; the target is never written.
     """
 
     #: The assembly set in the genomes tier this class reads its release files from.

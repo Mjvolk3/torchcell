@@ -360,3 +360,7 @@ A read-only Fable 5.1 agent graded eight recorded claims against the mirror, Tab
 - The "Output Statistics" and "Known Limitations" above are stale for the raw file the loader consumes: Table S1 has 1484 unique ORFs, YDR443C appears once (SSN2), and YCR087C-A is in GEO (`lug1-del-3-a/-b`) and in the dev LMDB.
 - GEO's `strain` field says BY4742 for the ten MATa deletions; strain must keep coming from Table S1; #483.
 - Every record carries 6169 ORFs; 6127 is the graph-mapped subset, not a loader or paper count.
+
+## 2026.10.02 - main() builds the genome with overwrite=False
+
+`main()` constructed `SCerevisiaeGenome(..., overwrite=True)`, an explicit rebuild of the shared `data.db` on every run. It now passes `overwrite=False` (PR #605), which opens the verified shared database, or builds/migrates it once, under the root lock.

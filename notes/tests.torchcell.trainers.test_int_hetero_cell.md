@@ -67,3 +67,23 @@ Reach of each finding (from audit 2; reach not re-measured here):
 | H8 string keys sorted as text | Latent: every config has a single key |
 | H9 diffusion train metrics score zeros | Reached: 006 `hetero_cell_bipartite_dango_diff_gi.yaml` |
 | `{0:16}` schedule | The five configs above |
+
+## 2026.10.02 - Findings retired by the issue #614 fix
+
+Retired `Finding:` pins, now asserting the corrected contract (exact values and full messages):
+
+- Plateau: `test_plateau_scheduler_steps_on_val_mse_at_validation_end_only` (stepped once on the val MSE 2.0, not during the sanity check, not at the train epoch end) and `test_fast_dev_run_with_a_plateau_scheduler_steps_it_on_the_logged_val_mse` (one real epoch completes; `last_epoch` 1, `best` equals the logged val MSE, rate still 1e-2). `test_a_missing_or_unknown_scheduler_type_is_refused_at_construction` replaces the silent-plateau pin.
+- Schedules: `test_the_five_corrected_006_configs_load_an_integer_schedule` (16 or 8 steps from epoch 0, from the loaded mapping and from the string-keyed `wandb.config` copy), `test_digit_string_keys_are_integer_epochs_in_numeric_order` ({"0": 3, "2": 2, "10": 4} gives 3, 2, 2, 4, 4 at epochs 1, 2, 5, 10, 12), `test_a_schedule_that_is_not_epochs_to_step_counts_is_refused_at_construction` (ten refusals, `"0:16"` first).
+- Batch size: `test_batch_size_is_num_graphs_and_a_batch_without_it_is_refused` (a real `Batch` of 12 `gene.x` rows is 3; the perturbation and COO batches are 3), `test_every_log_of_a_gene_x_batch_carries_the_genotype_count` (all four logs `batch_size=3`, effective batch size 6, not 24), `test_effective_batch_size_counts_the_trainer_world_size` (DDP over two devices: 3 x 2 x 2 = 12).
+- Losses: `test_unnamed_losses_receive_only_predictions_and_targets`, `test_plain_mse_loss_gets_two_arguments_with_or_without_z_p`, `test_a_z_p_loss_on_a_model_without_z_p_is_refused_by_name`, `test_point_dist_graph_reg_gets_representations_and_logs_every_component` (`vec_0`, `vec_1` now logged).
+- Units: `test_unit_mismatches_are_refused_by_name` (`TypeError` for a list inverse; `ValueError` before the model for originals without an inverse).
+- Metrics: `test_log_metrics_logs_and_resets_and_an_empty_epoch_logs_nan`, `test_a_metric_error_propagates_from_the_epoch_end`.
+- Hyperparameters: `test_batch_size_and_device_are_accepted_but_neither_saved_nor_read` (the eleven saved names listed).
+
+Still pinned: `test_coo_layout_is_read_positionally_not_by_sample_or_type` (a fitness-only batch is scored as gene interaction). It now also pins the real collated layout (`phenotype_types` one list per genotype, `phenotype_sample_indices` [0, 0]) and the new refusal of a batch whose genotype count differs from the prediction rows. The buffer test runs the diffusion task on validation only; its train epoch end moved to the diffusion tests.
+
+## 2026.10.02 - Review fixes on PR #637
+
+- `test_plateau_scheduler_steps_on_val_mse_at_validation_end_only` runs with the real inverse: the step receives the original-unit MSE 14 / 3, not the transformed 7 / 6, so a scheduler stepped on the transformed collection fails.
+- New `test_plateau_on_a_validation_epoch_with_no_rows_is_refused`.
+- `_make` gives `DiffusionRegressionTask` the `_DiffusionSquaredError` stand-in (a `DiffusionLoss` by type), since the task now refuses any other loss.

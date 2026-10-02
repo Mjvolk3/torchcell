@@ -27,3 +27,16 @@ Findings (source `torchcell/trainers/int_hetero_cell.py`):
 - `test_two_shared_steps_drifted_apart[val]` now asserts the exact `RegressionTask` side: loss 2.25 and `{"val/vec_0": 1.0, "val/vec_1": 2.0, "val/n": 3.0, "val/graph_reg_loss": 0.25, "val/loss": 2.25, "val/z_p_norm": 5.0}`.
 - The real-model test reseeds inside `torch.random.fork_rng()`, so the global RNG is left unchanged.
 - Reach (audit 2): the zero-prediction train metrics (H9) are reached by 006 `hetero_cell_bipartite_dango_diff_gi.yaml` via `hetero_cell_bipartite_dango_diff_gi.py`; the validation and test `F.mse_loss` path is reached by the same config; the other drift items are latent.
+
+## 2026.10.02 - Findings retired by the issue #614 fix
+
+- `test_real_diffusion_model_train_placeholders_are_not_scored` replaces the zero-placeholder pin: with the real `GeneInteractionDiff` in training mode two train batches update neither train collection and keep no plot sample, one INFO record announces the skip, and in eval mode the sampled predictions (not all zero) are exactly what the val collection receives.
+- `test_both_tasks_share_one_step_except_the_stage_loss` replaces the drift pin: on train both tasks give 2.25 and the same logs; on val the diffusion task logs `val/inference_mse` 2.0 and adds the same graph term (2.25).
+- `test_diffusion_train_components_log_like_every_other_loss`: a [1, 2] tensor logs `vec_0`, `vec_1`, a number logs as is, an unnamed loss gets two arguments.
+- `test_diffusion_train_requires_a_loss_only_on_the_train_stage`: `ValueError("No loss function provided")`, no bare `assert`.
+- New: `test_diffusion_loss_on_a_model_without_z_p_is_refused_by_name`, `test_diffusion_train_epoch_end_logs_no_train_metric_and_steps_the_scheduler` (only `train/avg_diffusion_loss` 2.0 is logged; the scheduler is stepped once).
+
+## 2026.10.02 - Review fixes on PR #637
+
+- New `test_a_non_diffusion_loss_is_refused_at_construction` (`LogCoshLoss`, `nn.MSELoss`, full message).
+- The component test now uses the `DiffusionLoss`-typed stand-in, called `(pred, target, z_p)`.

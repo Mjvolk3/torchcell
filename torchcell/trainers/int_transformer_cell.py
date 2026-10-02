@@ -11,7 +11,12 @@ import wandb
 from lightning.pytorch.core.optimizer import LightningOptimizer
 from torch.optim.lr_scheduler import LRScheduler, ReduceLROnPlateau
 from torch_geometric.data import HeteroData
-from torchmetrics import MeanSquaredError, MetricCollection, PearsonCorrCoef
+from torchmetrics import (
+    MeanSquaredError,
+    MetricCollection,
+    PearsonCorrCoef,
+    SpearmanCorrCoef,
+)
 
 from torchcell.losses.logcosh import LogCoshLoss
 from torchcell.losses.mle_dist_supcr import MleDistSupCR
@@ -185,6 +190,13 @@ class RegressionTask(L.LightningModule):
         # Create metrics for each stage
         for stage in ["train", "val", "test"]:
             metrics_dict = reg_metrics.clone(prefix=f"{stage}/gene_interaction/")
+            # Spearman on the held-out splits only: it keeps every prediction in
+            # memory until compute, fine for 37,673 pinned triples and not for 2.3M
+            # training rows. The rank metric is what the replicate reproducibility of
+            # the trigenic score (Spearman 0.23 to 0.77 by pair class on the 030
+            # build) is compared against.
+            if stage != "train":
+                metrics_dict.add_metrics({"Spearman": SpearmanCorrCoef()})
             setattr(self, f"{stage}_metrics", metrics_dict)
 
             # Add metrics operating in transformed space
@@ -196,11 +208,10 @@ class RegressionTask(L.LightningModule):
             # Fitness metrics exist only on the joint path, so a single-label run's
             # module list and checkpoint are unchanged.
             if fitness_lambda is not None:
-                setattr(
-                    self,
-                    f"{stage}_fitness_metrics",
-                    reg_metrics.clone(prefix=f"{stage}/fitness/"),
-                )
+                fitness_metrics = reg_metrics.clone(prefix=f"{stage}/fitness/")
+                if stage != "train":
+                    fitness_metrics.add_metrics({"Spearman": SpearmanCorrCoef()})
+                setattr(self, f"{stage}_fitness_metrics", fitness_metrics)
                 setattr(
                     self,
                     f"{stage}_transformed_fitness_metrics",

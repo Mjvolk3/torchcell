@@ -18,6 +18,7 @@ import sqlite3
 import stat
 import tempfile
 import weakref
+from collections.abc import Mapping, Sequence
 from contextlib import closing
 from enum import StrEnum
 from itertools import product
@@ -770,6 +771,16 @@ def read_genome_database_record(db_path: str) -> GenomeDatabaseRecord | None:
     return GenomeDatabaseRecord.model_validate_json(raw)
 
 
+def validation_summary(errors: Sequence[Mapping[str, Any]]) -> str:
+    """``loc: msg`` for each pydantic error, sorted by location then message, so the
+    summary is the same whatever order a pydantic version reports the errors in.
+    """
+    keyed = sorted(
+        (tuple(str(part) for part in err["loc"]), str(err["msg"])) for err in errors
+    )
+    return "; ".join(f"{'.'.join(loc)}: {msg}" for loc, msg in keyed)
+
+
 def record_version(db_path: str, raw: str) -> int:
     """The ``version`` of the record JSON ``raw`` read from ``db_path``; 0 when absent
     (records written before versioning). A version newer than this checkout's raises
@@ -851,10 +862,7 @@ def untrusted_reason(
     try:
         record = GenomeDatabaseRecord.model_validate_json(raw)
     except ValidationError as exc:
-        summary = "; ".join(
-            f"{'.'.join(str(part) for part in err['loc'])}: {err['msg']}"
-            for err in exc.errors()
-        )
+        summary = validation_summary(exc.errors())
         raise GenomeDatabaseRecordError(
             f"{db_path} carries a version {version} record that this checkout cannot "
             f"read ({exc.error_count()} errors: {summary}); it was written by code "

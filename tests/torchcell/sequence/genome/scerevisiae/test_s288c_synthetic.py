@@ -2367,8 +2367,8 @@ def test_record_field_sets_are_pinned_to_the_record_version() -> None:
         ),
         (
             lambda r: (r.pop("relations_count"), r.update(extra_field=1)),
-            "2 errors: relations_count: Field required; extra_field: Extra inputs "
-            "are not permitted",
+            "2 errors: extra_field: Extra inputs are not permitted; "
+            "relations_count: Field required",
         ),
         (
             lambda r: r["source"].update(extra_field=1),
@@ -2817,3 +2817,18 @@ def test_rows_sqlite_cannot_read_behind_a_readable_record_are_untrusted(
         "data.db.untrusted",
     ]
     assert list(genome.gene_set) == ALL_GENES
+
+
+def test_validation_summary_is_independent_of_pydantic_error_order() -> None:
+    """Two errors in either order give one string, sorted by location then message
+    (pydantic 2.12 and 2.13 report them in different orders).
+    """
+    first = {"loc": ("relations_count",), "msg": "Field required"}
+    second = {"loc": ("extra_field",), "msg": "Extra inputs are not permitted"}
+    nested = {"loc": ("source", "extra_field"), "msg": "Extra inputs are not permitted"}
+    expected = (
+        "extra_field: Extra inputs are not permitted; relations_count: Field "
+        "required; source.extra_field: Extra inputs are not permitted"
+    )
+    assert s288c.validation_summary([first, second, nested]) == expected
+    assert s288c.validation_summary([nested, second, first]) == expected

@@ -133,7 +133,9 @@ Each step that changes the shared Radiant VM is listed so it can be reviewed fir
 
 1. Decide the host name and whether the site is served from GitHub Pages or the proxy.
 2. Copy `docker/tc-bench/tc-bench.env.example` to `.env.tc-bench`, create the four secret
-   files it describes, and create the datasets and submissions directories on Taiga.
+   files it describes, and create the datasets and submissions directories on Taiga. The
+   example defaults to `/mnt/zhao5/mjvolk3/projects/torchcell/data/torchcell/tc-bench/`
+   (`datasets/` and `submissions/`), beside the `tc-data` store and the raw mirror.
 3. Build bundles into the datasets directory (`python -m torchcell.benchmark.bundle`).
 4. `docker compose --env-file .env.tc-bench -f docker-compose.tc-bench.yml build`, mint an
    admin key with `--gen-admin-key`, start `tc-bench-db`, run `--init-db`, then `up -d`.

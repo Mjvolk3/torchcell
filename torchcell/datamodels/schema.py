@@ -1756,6 +1756,17 @@ class FitnessPhenotype(Phenotype, ModelStrict):
         default=None,
         description="What one sample in n_samples is (colony, screen, ...).",
     )
+    screen_id: str | None = Field(
+        default=None,
+        description="the SCREEN this measurement came from, when one publication "
+        "releases the same (genotype, environment) from more than one screen with "
+        "different values (Kuzmin 2020: the main diagnostic-array screen of Table S1 "
+        "and the pilot genome-wide-array screens of Table S3 share 24,193 digenic "
+        "crosses). Same meaning as EnvironmentResponsePhenotype.screen_id: it keeps "
+        "two measurements of one strain from different screens distinguishable "
+        "instead of storing two values nothing tells apart. None when the source "
+        "releases one screen per measurement.",
+    )
 
     @field_validator("fitness")
     def validate_fitness(cls, v: float) -> float:
@@ -1871,6 +1882,14 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
     )
     gene_interaction_p_value: float | None = Field(
         default=None, description="p-value of gene interaction"
+    )
+    screen_id: str | None = Field(
+        default=None,
+        description="the SCREEN this interaction score came from, when one "
+        "publication releases the same (genotype, environment) from more than one "
+        "screen with different scores (Kuzmin 2020 Tables S1 and S3). Same meaning as "
+        "FitnessPhenotype.screen_id; None when the source releases one screen per "
+        "measurement.",
     )
 
     @field_validator("gene_interaction")

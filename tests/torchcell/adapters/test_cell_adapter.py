@@ -784,6 +784,7 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "label_statistic_name": "fitness_se",
             "fitness": 0.5,
             "fitness_std": 0.1,
+            "screen_id": None,
         },
     ),
     (
@@ -799,6 +800,7 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "label_statistic_name": "gene_interaction_p_value",
             "gene_interaction": -0.2,
             "gene_interaction_p_value": 0.01,
+            "screen_id": None,
         },
     ),
     (

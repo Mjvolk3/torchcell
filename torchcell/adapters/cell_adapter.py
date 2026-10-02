@@ -1217,6 +1217,9 @@ class CellAdapter:
             "label_statistic_name": label_statistic_name,
             "fitness": fitness,
             "fitness_std": fitness_std,
+            # The screen a measurement came from (Kuzmin 2020 main vs pilot screens,
+            # issue #602); None for a source with one screen per measurement.
+            "screen_id": phenotype.screen_id,
         }
 
         return BioCypherNode(
@@ -1247,6 +1250,7 @@ class CellAdapter:
             "label_statistic_name": label_statistic_name,
             "gene_interaction": gene_interaction,
             "gene_interaction_p_value": gene_interaction_p_value,
+            "screen_id": phenotype.screen_id,
         }
 
         return BioCypherNode(
@@ -1429,6 +1433,7 @@ class CellAdapter:
                 "label_statistic_name": label_statistic_name,
                 "fitness": fitness,
                 "fitness_std": fitness_std,
+                "screen_id": phenotype.screen_id,
             }
 
             node = BioCypherNode(
@@ -1461,6 +1466,7 @@ class CellAdapter:
                 "label_statistic_name": label_statistic_name,
                 "gene_interaction": gene_interaction,
                 "gene_interaction_p_value": gene_interaction_p_value,
+                "screen_id": phenotype.screen_id,
             }
 
             node = BioCypherNode(

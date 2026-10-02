@@ -135,6 +135,7 @@ def _fitness_json(fitness: float) -> dict[str, Any]:
         "fitness_uncertainty": None,
         "fitness_uncertainty_type": None,
         "sample_unit": None,
+        "screen_id": None,
     }
 
 

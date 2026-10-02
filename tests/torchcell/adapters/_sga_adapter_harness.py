@@ -167,6 +167,8 @@ def _phenotype_props(phenotype: Any) -> dict[str, Any]:
     else:
         props["gene_interaction"] = phenotype.gene_interaction
         props["gene_interaction_p_value"] = phenotype.gene_interaction_p_value
+    # Issue #602: both phenotypes project the screen a measurement came from.
+    props["screen_id"] = phenotype.screen_id
     return props
 
 

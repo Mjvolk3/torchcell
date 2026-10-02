@@ -421,7 +421,9 @@ def test_serialize_for_hashing_sorts_a_model_at_every_depth_like_its_dump() -> N
     same string as its dump, so the two hash identically (issue #532; the model branch
     used to sort only the top-level keys). The dict path the reference index takes is
     unchanged: the three fixture records hash to the literal ids the pre-fix code
-    produced (records 0 and 1 share ``REF_A``), derived before the change.
+    produced (records 0 and 1 share ``REF_A``), derived before the change. 2026.10.02
+    (issue #602): the ids were re-derived once ``FitnessPhenotype`` gained
+    ``screen_id``, which every reference dump now carries as ``null``.
     """
     as_model = serialize_for_hashing(REF_A)
     as_dict = serialize_for_hashing(REF_A.model_dump())
@@ -429,9 +431,9 @@ def test_serialize_for_hashing_sorts_a_model_at_every_depth_like_its_dump() -> N
     assert as_model == as_dict
     assert compute_sha256_hash(as_model) == compute_sha256_hash(as_dict)
     assert process_reference_batch([_dumped(i) for i in range(3)]) == [
-        "876b784e62a6ab10648633428717e705928a8fe482777bf22ae6f669d1b06b67",
-        "876b784e62a6ab10648633428717e705928a8fe482777bf22ae6f669d1b06b67",
-        "ff9a316637247adede6125984948d241b524fa1e1949146bbfbc64c6c7f34683",
+        "4369f092c5679d133fd8eec58878f5fe6fc333edfad33a87f7f5fdd3b67986ea",
+        "4369f092c5679d133fd8eec58878f5fe6fc333edfad33a87f7f5fdd3b67986ea",
+        "19e8ef0706efb5ef0e9f488d6171d069ec83d73b89720f86987b4f688107519f",
     ]
 
 

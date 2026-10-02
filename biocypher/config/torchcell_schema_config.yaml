@@ -157,6 +157,9 @@ environment perturbation:
 
 # TODO expand out to include different phenotypes.
 # PHENOTYPES START
+# fitness and gene interaction phenotypes project screen_id, the screen a measurement
+# came from when one source releases a (genotype, environment) from two screens
+# (Kuzmin 2020 Table S1 main vs Table S3 pilot screens, issue #602).
 fitness phenotype:
     is_a: phenotypic feature
     represented_as: node
@@ -166,6 +169,7 @@ fitness phenotype:
         label_statistic_name: str
         fitness: float
         fitness_std: float
+        screen_id: str
 
 gene interaction phenotype:
     is_a: phenotypic feature
@@ -176,6 +180,7 @@ gene interaction phenotype:
         label_statistic_name: str
         gene_interaction: float
         gene_interaction_p_value: float
+        screen_id: str
 
 gene essentiality phenotype:
     is_a: phenotypic feature

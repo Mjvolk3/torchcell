@@ -55,6 +55,8 @@ times (0 blank SDs among stored rows, 0 other array strains in 934,595 S1 and S3
 0 repeated tm numbers among 240 S5 "Double mutant" rows), so no stored record changes.
 """
 
+import hashlib
+import json
 import os
 import os.path as osp
 import zipfile
@@ -105,6 +107,9 @@ S13_COLUMNS = [
 ]
 S5_COLUMNS = ["Mutant type", "Allele1", "ORF1", "Gene1", "Query Strain ID", "Fitness", "St.dev."]  # fmt: skip
 TSQ = "YBR160W+YDL227C_tsq508"
+MAIN = "kuzmin2020_s1_diagnostic_array"
+PILOT = "kuzmin2020_s3_pilot_genome_wide_arrays"
+S5_SCREEN = "kuzmin2020_s5_query_fitness_array"
 TM801 = "YBR160W+YML107C_tm801"
 TSA = "YBR001C_tsa100"
 DMA = "YAL048C_dma5203"
@@ -177,12 +182,15 @@ def write_xlsx(path: Path, columns: list[str], rows: list[list[Any]]) -> None:
 
 
 def write_tables(
-    folder: Path, s5_rows: list[list[Any]] = S5_ROWS, s1_rows: list[list[Any]] = S1_ROWS
+    folder: Path,
+    s5_rows: list[list[Any]] = S5_ROWS,
+    s1_rows: list[list[Any]] = S1_ROWS,
+    s3_rows: list[list[Any]] = S3_ROWS,
 ) -> None:
     """Write Tables S1, S3 and S5 into ``folder``."""
     folder.mkdir(parents=True, exist_ok=True)
     write_xlsx(folder / S1_NAME, S13_COLUMNS, s1_rows)
-    write_xlsx(folder / S3_NAME, S13_COLUMNS, S3_ROWS)
+    write_xlsx(folder / S3_NAME, S13_COLUMNS, s3_rows)
     write_xlsx(folder / S5_NAME, S5_COLUMNS, s5_rows)
 
 
@@ -191,11 +199,12 @@ def build(
     cls: type[Any],
     s5_rows: list[list[Any]] = S5_ROWS,
     s1_rows: list[list[Any]] = S1_ROWS,
+    s3_rows: list[list[Any]] = S3_ROWS,
     **kw: Any,
 ) -> Any:
     """Build ``cls`` under ``tmp_path/<class name>`` from the three tables."""
     root = tmp_path / cls.__name__
-    write_tables(root / "raw", s5_rows, s1_rows)
+    write_tables(root / "raw", s5_rows, s1_rows, s3_rows)
     return cls(root=str(root), **kw)
 
 
@@ -232,7 +241,12 @@ def fitness_reference(name: str, sd: float | None) -> dict[str, Any]:
 
 
 def interaction(
-    name: str, perturbations: list[Any], value: float, p: float, level: str
+    name: str,
+    perturbations: list[Any],
+    value: float,
+    p: float,
+    level: str,
+    screen_id: str,
 ) -> dict[str, Any]:
     """A Kuzmin 2020 interaction experiment dump at graph level ``level``."""
     return GeneInteractionExperiment(
@@ -240,7 +254,10 @@ def interaction(
         genotype=Genotype(perturbations=perturbations),
         environment=ENVIRONMENT,
         phenotype=GeneInteractionPhenotype(
-            gene_interaction=value, gene_interaction_p_value=p, graph_level=level
+            gene_interaction=value,
+            gene_interaction_p_value=p,
+            graph_level=level,
+            screen_id=screen_id,
         ),
     ).model_dump()
 
@@ -284,6 +301,7 @@ def test_smf_allele_single_and_blank_sd(tmp_path: Path) -> None:
             ],
             0.83,
             None,
+            screen_id=S5_SCREEN,
         ),
         fitness(
             name,
@@ -296,6 +314,7 @@ def test_smf_allele_single_and_blank_sd(tmp_path: Path) -> None:
             ],
             0.95,
             0.01,
+            screen_id=S5_SCREEN,
             **labeled(0.01, UncertaintyType.sample_sd, 4),
         ),
     ]
@@ -319,12 +338,13 @@ def test_dmf_allele_query_ts_array_and_s5_disagreement(
     experiments = stored(ds, "experiment")
     assert experiments[0]["phenotype"]["fitness_std"] is None
     expected = [
-        fitness(name, [cdc28(TSQ), CDC10_TS], 0.61, None),
+        fitness(name, [cdc28(TSQ), CDC10_TS], 0.61, None, screen_id=MAIN),
         fitness(
             name,
             [GEM1, cdc28(TSQ)],
             0.72,
             0.05,
+            screen_id=PILOT,
             **labeled(0.05, UncertaintyType.sample_sd, 4),
         ),
         fitness(
@@ -332,6 +352,7 @@ def test_dmf_allele_query_ts_array_and_s5_disagreement(
             [cdc28(TM801), PML39_TM801],
             0.5,
             0.006,
+            screen_id=S5_SCREEN,
             **labeled(0.006, UncertaintyType.bootstrap_se, 12),
         ),
     ]
@@ -423,8 +444,8 @@ def test_tmf_allele_first_query_and_ts_array(tmp_path: Path) -> None:
     name = "TmfKuzmin2020Dataset"
     ds = build(tmp_path, k.TmfKuzmin2020Dataset)
     assert stored(ds, "experiment") == [
-        fitness(name, [CDC28_SPLIT, PML39_SPLIT, NTH2_TS], 0.3, 0.02),
-        fitness(name, [CDC28_SPLIT, PML39_SPLIT, GEM1], 0.25, 0.03),
+        fitness(name, [CDC28_SPLIT, PML39_SPLIT, NTH2_TS], 0.3, 0.02, screen_id=MAIN),
+        fitness(name, [CDC28_SPLIT, PML39_SPLIT, GEM1], 0.25, 0.03, screen_id=PILOT),
     ]
     assert (0.02 + 0.03) / 2 == 0.025
     assert stored(ds, "reference") == [fitness_reference(name, 0.025)] * 2
@@ -441,8 +462,8 @@ def test_tmf_blank_sd_is_stored_as_none(tmp_path: Path) -> None:
     experiments = stored(ds, "experiment")
     assert experiments[0]["phenotype"]["fitness_std"] is None
     assert experiments == [
-        fitness(name, [CDC28_SPLIT, PML39_SPLIT, NTH2_TS], 0.3, None),
-        fitness(name, [CDC28_SPLIT, PML39_SPLIT, GEM1], 0.25, 0.03),
+        fitness(name, [CDC28_SPLIT, PML39_SPLIT, NTH2_TS], 0.3, None, screen_id=MAIN),
+        fitness(name, [CDC28_SPLIT, PML39_SPLIT, GEM1], 0.25, 0.03, screen_id=PILOT),
     ]
     assert stored(ds, "reference") == [fitness_reference(name, 0.03)] * 2
 
@@ -455,9 +476,11 @@ def test_dmi_and_tmi_allele_records(tmp_path: Path) -> None:
     dmi = build(tmp_path, k.DmiKuzmin2020Dataset)
     assert stored(dmi, "experiment") == [
         interaction(
-            "DmiKuzmin2020Dataset", [cdc28(TSQ), CDC10_TS], -0.12, 0.03, "edge"
+            "DmiKuzmin2020Dataset", [cdc28(TSQ), CDC10_TS], -0.12, 0.03, "edge", MAIN
         ),
-        interaction("DmiKuzmin2020Dataset", [GEM1, cdc28(TSQ)], 0.04, 0.4, "edge"),
+        interaction(
+            "DmiKuzmin2020Dataset", [GEM1, cdc28(TSQ)], 0.04, 0.4, "edge", PILOT
+        ),
     ]
     assert (
         stored(dmi, "reference")
@@ -471,6 +494,7 @@ def test_dmi_and_tmi_allele_records(tmp_path: Path) -> None:
             -0.2,
             0.001,
             "hyperedge",
+            MAIN,
         ),
         interaction(
             "TmiKuzmin2020Dataset",
@@ -478,6 +502,7 @@ def test_dmi_and_tmi_allele_records(tmp_path: Path) -> None:
             -0.1,
             0.01,
             "hyperedge",
+            PILOT,
         ),
     ]
     assert (
@@ -654,6 +679,119 @@ def test_main_refuses_an_unset_data_root(
     assert list(tmp_path.iterdir()) == []
 
 
+# Issue #602: one (query strain, array strain) cross released in BOTH Table S1 (main
+# diagnostic-array screen) and Table S3 (pilot genome-wide-array screen), S3 spelling
+# the array allele differently ("CDC10-ph" against S1's "cdc10-1").
+PILOT_REPEAT_DIGENIC = [TSQ, "cdc28-4+hoΔ", TSA_CDC10, "CDC10-ph", "digenic", 0.55, 0.02, 0.83, 0.7, -0.12, 0.03]  # fmt: skip
+PILOT_REPEAT_TRIGENIC = [TM801, "cdc28-4+pml39Δ", TSA, "NTH2-PH", "trigenic", 0.28, 0.01, 0.55, 0.8, -0.15, 0.002]  # fmt: skip
+
+
+def experiment_id(dump: dict[str, Any]) -> str:
+    """The knowledge-graph experiment id: sha256 of the experiment dump's JSON."""
+    return hashlib.sha256(json.dumps(dump).encode("utf-8")).hexdigest()
+
+
+def test_a_cross_in_both_screens_is_two_records_named_by_screen(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Issue #602: the TSQ x cdc10-1 cross is in S1 (0.61, eps -0.12 p 0.03) and in S3
+    (0.55 / 0.02, the SAME eps -0.12 p 0.03). Both measurements are kept, each with the
+    screen it came from, and the array strain keeps ONE name, Table S1's "cdc10-1",
+    although S3 calls it "CDC10-ph". The two Dmi records differ ONLY in ``screen_id``, so
+    their experiment ids differ only because of it; the old dump (no screen) gave both
+    the same id.
+    """
+    s3_rows = [PILOT_REPEAT_DIGENIC, *S3_ROWS]
+    with caplog.at_level("INFO", logger=k.log.name):
+        dmf = build(tmp_path, k.DmfKuzmin2020Dataset, s3_rows=s3_rows)
+    assert (
+        "INFO",
+        "Table S3 names 1 array strain(s) differently from Table S1 (1 rows); the "
+        "Table S1 name is used",
+    ) in [(r.levelname, r.getMessage()) for r in caplog.records]
+    name = "DmfKuzmin2020Dataset"
+    assert stored(dmf, "experiment")[:2] == [
+        fitness(name, [cdc28(TSQ), CDC10_TS], 0.61, None, screen_id=MAIN),
+        fitness(
+            name,
+            [cdc28(TSQ), CDC10_TS],
+            0.55,
+            0.02,
+            screen_id=PILOT,
+            **labeled(0.02, UncertaintyType.sample_sd, 4),
+        ),
+    ]
+    dmi = build(tmp_path, k.DmiKuzmin2020Dataset, s3_rows=s3_rows)
+    main, pilot = stored(dmi, "experiment")[:2]
+    assert main == interaction("DmiKuzmin2020Dataset", [cdc28(TSQ), CDC10_TS], -0.12, 0.03, "edge", MAIN)  # fmt: skip
+    assert pilot == {**main, "phenotype": {**main["phenotype"], "screen_id": PILOT}}
+    assert experiment_id(main) != experiment_id(pilot)
+    for dump in (main, pilot):
+        dump["phenotype"].pop("screen_id")
+    assert experiment_id(main) == experiment_id(pilot)
+
+
+def test_a_triple_in_both_screens_keeps_both_with_the_s1_array_name(
+    tmp_path: Path,
+) -> None:
+    """The tm801 x nth2-5001 triple is in S1 (0.3, tau -0.2) and S3 (0.28, tau -0.15,
+    array named "NTH2-PH"): Tmf and Tmi each store both, tagged main then pilot, and
+    both name the array allele "nth2-5001".
+    """
+    s3_rows = [PILOT_REPEAT_TRIGENIC, *S3_ROWS]
+    tmf = build(tmp_path, k.TmfKuzmin2020Dataset, s3_rows=s3_rows)
+    assert stored(tmf, "experiment")[:2] == [
+        fitness(
+            "TmfKuzmin2020Dataset",
+            [CDC28_SPLIT, PML39_SPLIT, NTH2_TS],
+            0.3,
+            0.02,
+            screen_id=MAIN,
+        ),  # fmt: skip
+        fitness(
+            "TmfKuzmin2020Dataset",
+            [CDC28_SPLIT, PML39_SPLIT, NTH2_TS],
+            0.28,
+            0.01,
+            screen_id=PILOT,
+        ),  # fmt: skip
+    ]
+    tmi = build(tmp_path, k.TmiKuzmin2020Dataset, s3_rows=s3_rows)
+    assert stored(tmi, "experiment")[:2] == [
+        interaction(
+            "TmiKuzmin2020Dataset",
+            [CDC28_SPLIT, PML39_SPLIT, NTH2_TS],
+            -0.2,
+            0.001,
+            "hyperedge",
+            MAIN,
+        ),  # fmt: skip
+        interaction(
+            "TmiKuzmin2020Dataset",
+            [CDC28_SPLIT, PML39_SPLIT, NTH2_TS],
+            -0.15,
+            0.002,
+            "hyperedge",
+            PILOT,
+        ),  # fmt: skip
+    ]
+
+
+def test_two_names_for_one_array_strain_within_one_table_are_refused(
+    tmp_path: Path,
+) -> None:
+    """A strain named two ways inside ONE table has no main-screen spelling to prefer,
+    so the build refuses it by name instead of storing two names for one strain.
+    """
+    renamed = [*S3_ROWS[0][:3], "gem1-x", *S3_ROWS[0][4:]]
+    with pytest.raises(ValueError) as info:
+        build(tmp_path, k.DmiKuzmin2020Dataset, s3_rows=[renamed, *S3_ROWS])
+    assert str(info.value) == (
+        "Table S3 gives 1 array strain(s) more than one 'Array allele name': "
+        "['YAL048C_dma5203']"
+    )
+
+
 # ---------------------------------------------------------------------------------------
 # Data-gated tests on the real supplementary tables.
 # ---------------------------------------------------------------------------------------
@@ -812,7 +950,9 @@ def test_query_strain_record_is_the_query_pair(built: tuple[Any, pd.DataFrame]) 
 @pytest.mark.slow
 @_needs_raw
 def test_digenic_record_unchanged(built: tuple[Any, pd.DataFrame]) -> None:
-    """Regression: a digenic record equals the object the old path produced."""
+    """Regression: a digenic record equals the object the old path produced, plus the
+    main-screen ``screen_id`` (issue #602; this cross is in Table S1 only).
+    """
     from torchcell.datamodels.media import SGA_TM_SELECTION
     from torchcell.datamodels.schema import (
         Environment,
@@ -867,6 +1007,85 @@ def test_digenic_record_unchanged(built: tuple[Any, pd.DataFrame]) -> None:
             fitness_uncertainty_type=UncertaintyType.sample_sd,
             n_samples=4,
             sample_unit=SampleUnit.colony,
+            screen_id=k.SCREEN_ID_MAIN,
         ),
     )
     assert experiment.model_dump() == expected.model_dump()
+
+
+# Issue #602, the example pair: the digenic cross gpb2 x tfc3 is released in both
+# screens with different values, and S3 spells the array allele "tfc3-g349e".
+_BOTH_SCREENS_QUERY = "YAL056W+YDL227C_tm1888"
+_BOTH_SCREENS_ARRAY = "YAL001C_tsa508"
+
+
+@pytest.fixture(scope="module")
+def dmi_frame(raw: tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]) -> pd.DataFrame:
+    """The Dmi preprocessed frame of the released tables."""
+    df_s1, df_s3, _ = raw
+    dataset = k.DmiKuzmin2020Dataset.__new__(k.DmiKuzmin2020Dataset)
+    return dataset.preprocess_raw(df_s1.copy(), df_s3.copy())
+
+
+@pytest.mark.data
+@pytest.mark.slow
+@_needs_raw
+def test_issue_602_pair_is_two_records_one_per_screen(
+    built: tuple[Any, pd.DataFrame], dmi_frame: pd.DataFrame
+) -> None:
+    """The issue's example cross: Dmf stores S1's 0.9558 / 0.0188 as the main screen and
+    S3's 0.8746 / 0.0171 as the pilot screen, Dmi S1's epsilon -0.013157 and S3's
+    0.008843; every record names the array allele "tfc3-G349E" (Table S1's spelling).
+    """
+    _, dmf = built
+    rows = dmf[
+        (dmf["Query strain ID"] == _BOTH_SCREENS_QUERY)
+        & (dmf["Array strain ID"] == _BOTH_SCREENS_ARRAY)
+    ]
+    phenotypes = [
+        k.DmfKuzmin2020Dataset.create_experiment("dmf", row)[0].phenotype
+        for _, row in rows.iterrows()
+    ]
+    assert [(p.screen_id, p.fitness, p.fitness_std) for p in phenotypes] == [
+        (k.SCREEN_ID_MAIN, 0.9558, 0.0188),
+        (k.SCREEN_ID_PILOT, 0.8746, 0.0171),
+    ]
+    assert rows["Array allele name"].tolist() == ["tfc3-G349E"] * 2
+    dmi = dmi_frame[
+        (dmi_frame["Query strain ID"] == _BOTH_SCREENS_QUERY)
+        & (dmi_frame["Array strain ID"] == _BOTH_SCREENS_ARRAY)
+    ]
+    experiments = [
+        k.DmiKuzmin2020Dataset.create_experiment("dmi", row)[0]
+        for _, row in dmi.iterrows()
+    ]
+    assert [
+        (e.phenotype.screen_id, e.phenotype.gene_interaction) for e in experiments
+    ] == [(k.SCREEN_ID_MAIN, -0.013157), (k.SCREEN_ID_PILOT, 0.008843)]
+    genotypes = [e.genotype for e in experiments]
+    assert all(isinstance(g, Genotype) for g in genotypes)
+    assert {
+        p.perturbed_gene_name
+        for g in genotypes
+        if isinstance(g, Genotype)
+        for p in g.perturbations
+    } == {"gpb2", "tfc3-G349E"}
+
+
+@pytest.mark.data
+@pytest.mark.slow
+@_needs_raw
+def test_released_digenic_rows_per_screen_and_one_name_per_array(
+    dmi_frame: pd.DataFrame,
+) -> None:
+    """Dmi keeps all 632,797 digenic rows, 537,911 from the main screen and 94,886 from
+    the pilot screen, and after the S1-spelling rule each of the 4,553 array strains has
+    exactly one allele name (70 shared strains had two before, issue #602).
+    """
+    assert dmi_frame["screen_id"].value_counts().to_dict() == {
+        k.SCREEN_ID_MAIN: 537_911,
+        k.SCREEN_ID_PILOT: 94_886,
+    }
+    names = dmi_frame.groupby("Array strain ID")["Array allele name"].nunique()
+    assert (names == 1).all()
+    assert len(names) == 4_553

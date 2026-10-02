@@ -1,0 +1,147 @@
+{
+  "script": "experiments/036-dataset-fixes-before-kg-build/scripts/kuzmin2020_screen_source.py",
+  "raw_dir": "/scratch/projects/torchcell-scratch/data/torchcell/dmf_kuzmin2020/raw",
+  "raw_overlap": {
+    "digenic": {
+      "rows_s1": 537911,
+      "rows_s3": 94886,
+      "rows_total": 632797,
+      "distinct_keys": 608604,
+      "keys_in_both": 24193,
+      "fitness_differs": 24179,
+      "fitness_and_sd_identical": 0,
+      "score_and_p_identical": 0,
+      "array_allele_name_differs": 1460
+    },
+    "trigenic": {
+      "rows_s1": 256861,
+      "rows_s3": 44937,
+      "rows_total": 301798,
+      "distinct_keys": 290355,
+      "keys_in_both": 11443,
+      "fitness_differs": 11436,
+      "fitness_and_sd_identical": 0,
+      "score_and_p_identical": 0,
+      "array_allele_name_differs": 686
+    },
+    "array_strains": {
+      "s1": 1172,
+      "s3": 4540,
+      "shared": 1159,
+      "shared_with_two_names": 70,
+      "shared_with_two_names_case_only": 19,
+      "examples": {
+        "YAL001C_tsa508": [
+          "tfc3-G349E",
+          "tfc3-g349e"
+        ],
+        "YBL041W_tsa1064": [
+          "PRE7-ph",
+          "pre7-5001"
+        ],
+        "YMR166C_dma3761": [
+          "ymr166c\u0394",
+          "mme1\u0394"
+        ]
+      }
+    }
+  },
+  "preprocessed": {
+    "SmfKuzmin2020Dataset": {
+      "rows": 472,
+      "rows_per_screen_id": {
+        "kuzmin2020_s5_query_fitness_array": 472
+      },
+      "experiment_ids": {
+        "records": 472,
+        "distinct_experiment_ids": 472,
+        "distinct_experiment_ids_without_screen_id": 472,
+        "genotype_environment_groups": 472,
+        "groups_with_more_than_one_record": 0,
+        "group_sizes": {},
+        "multi_groups_main_plus_pilot": 0
+      }
+    },
+    "DmfKuzmin2020Dataset": {
+      "rows": 632998,
+      "rows_per_screen_id": {
+        "kuzmin2020_s1_diagnostic_array": 537911,
+        "kuzmin2020_s3_pilot_genome_wide_arrays": 94886,
+        "kuzmin2020_s5_query_fitness_array": 201
+      },
+      "array_strains": 4553,
+      "array_strains_with_more_than_one_name": 0,
+      "experiment_ids": {
+        "records": 632998,
+        "distinct_experiment_ids": 632998,
+        "distinct_experiment_ids_without_screen_id": 632998,
+        "genotype_environment_groups": 608805,
+        "groups_with_more_than_one_record": 24193,
+        "group_sizes": {
+          "2": 24193
+        },
+        "multi_groups_main_plus_pilot": 24193
+      }
+    },
+    "TmfKuzmin2020Dataset": {
+      "rows": 301798,
+      "rows_per_screen_id": {
+        "kuzmin2020_s1_diagnostic_array": 256861,
+        "kuzmin2020_s3_pilot_genome_wide_arrays": 44937
+      },
+      "array_strains": 4553,
+      "array_strains_with_more_than_one_name": 0,
+      "experiment_ids": {
+        "records": 301798,
+        "distinct_experiment_ids": 301798,
+        "distinct_experiment_ids_without_screen_id": 301798,
+        "genotype_environment_groups": 290355,
+        "groups_with_more_than_one_record": 11443,
+        "group_sizes": {
+          "2": 11443
+        },
+        "multi_groups_main_plus_pilot": 11443
+      }
+    },
+    "DmiKuzmin2020Dataset": {
+      "rows": 632797,
+      "rows_per_screen_id": {
+        "kuzmin2020_s1_diagnostic_array": 537911,
+        "kuzmin2020_s3_pilot_genome_wide_arrays": 94886
+      },
+      "array_strains": 4553,
+      "array_strains_with_more_than_one_name": 0,
+      "experiment_ids": {
+        "records": 632797,
+        "distinct_experiment_ids": 632797,
+        "distinct_experiment_ids_without_screen_id": 632797,
+        "genotype_environment_groups": 608604,
+        "groups_with_more_than_one_record": 24193,
+        "group_sizes": {
+          "2": 24193
+        },
+        "multi_groups_main_plus_pilot": 24193
+      }
+    },
+    "TmiKuzmin2020Dataset": {
+      "rows": 301798,
+      "rows_per_screen_id": {
+        "kuzmin2020_s1_diagnostic_array": 256861,
+        "kuzmin2020_s3_pilot_genome_wide_arrays": 44937
+      },
+      "array_strains": 4553,
+      "array_strains_with_more_than_one_name": 0,
+      "experiment_ids": {
+        "records": 301798,
+        "distinct_experiment_ids": 301798,
+        "distinct_experiment_ids_without_screen_id": 301798,
+        "genotype_environment_groups": 290355,
+        "groups_with_more_than_one_record": 11443,
+        "group_sizes": {
+          "2": 11443
+        },
+        "multi_groups_main_plus_pilot": 11443
+      }
+    }
+  }
+}

@@ -79,9 +79,9 @@ N_SAMPLES_QUERY_STRAIN_FITNESS = 12
 #  - double_mutant_query_strain: the double-mutant QUERY strain of a trigenic screen,
 #    measured on its own (Table S5 "Double mutant" rows; S1/S3 repeat the value in
 #    "Query single/double mutant fitness" on every trigenic row of that strain).
-# create_experiment branches on this column, NOT on "Combined mutant type": the
-# digenic records must stay byte-identical to what is already served, since their
-# content-addressed ids are what an incremental import matches on.
+# create_experiment branches on this column, NOT on "Combined mutant type". (The
+# digenic records were kept byte-identical when the query-strain kind was added; the
+# screen_id of issue #602 changes every record, which is a full-rebuild change.)
 RECORD_KIND_DIGENIC_ARRAY_CROSS = "digenic_array_cross"
 RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN = "double_mutant_query_strain"
 
@@ -89,6 +89,76 @@ RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN = "double_mutant_query_strain"
 # S5's full-precision "Fitness" is only ever exact to ~1e-4; a larger gap is a real
 # disagreement between the two released tables and is worth a warning.
 _QUERY_STRAIN_FITNESS_TOL = 1e-3
+
+# Screen identity (issue #602). Tables S1 and S3 are two different screens, and 24,193
+# digenic and 11,443 trigenic (query strain, array strain) keys are released in BOTH
+# with different values (24,179 and 11,436 of them differ in fitness), so each record
+# carries the screen it came from in the phenotype's ``screen_id``; both measurements
+# are kept as distinguishable replicates from different screens. Sources, verbatim from
+# $DATA_ROOT/torchcell-library/kuzminExploringWholegenomeDuplicate2020/si/si1.md
+# (sha256 69179c57ada82e99faa40a800fa311e0ad300ac3bde8ea1f310e6c7caf9567fe):
+#   line 21: "240 double mutants and 480 corresponding single mutant control ‘query’
+#   strains were screened for genetic interactions against a diagnostic set of
+#   ${ \sim } 1 { , } 2 0 0$ mutant ‘array’ strains. [...] The raw genetic interaction
+#   data is available in Table S1."
+#   line 57: "Pilot screens (Fig. S4, Table S3) were conducted in a similar manner
+#   except all strains were screened against the genome-wide array of non-essential
+#   (NES) gene deletion mutants (32) and the array of temperature sensitive alleles of
+#   essential (ES) genes (72)."
+#   line 69: "Pilot screens in which 11 double mutant query strains and their
+#   corresponding single mutant control strains were crossed to the genome-wide array
+#   of non-essential (NES) gene deletion mutants (71) and the array of temperature
+#   sensitive alleles of essential (ES) genes (72) were scored with a random set of
+#   1,211 and 2,494 additional queries, respectively, to achieve numerical stability.
+#   The interactions from pilot screens are available in Table S3."
+#   line 200 / 257 (table captions): "Table S1. Raw genetic interaction dataset." /
+#   "Table S3. Raw genetic interaction dataset from pilot screens."
+# The released tables hold 1,172 array strains in S1 and 4,540 in S3, 1,159 shared
+# (experiments/036-dataset-fixes-before-kg-build/scripts/kuzmin2020_screen_source.py).
+SCREEN_ID_MAIN = "kuzmin2020_s1_diagnostic_array"
+SCREEN_ID_PILOT = "kuzmin2020_s3_pilot_genome_wide_arrays"
+# The query-strain fitness standard (Table S5) is its own screen, line 39-41: "A
+# high-density array was assembled to estimate query strain fitness. [...] scored for
+# colony size in order to estimate fitness (Fig. S1, Table S5)." Smf records and the
+# Dmf double-mutant query-strain records read their value from it.
+SCREEN_ID_QUERY_FITNESS = "kuzmin2020_s5_query_fitness_array"
+
+
+def _combine_screens(df_s1: pd.DataFrame, df_s3: pd.DataFrame) -> pd.DataFrame:
+    """Tables S1 then S3 in one frame, each row tagged with its ``screen_id``.
+
+    One array strain, one name: the two tables spell the allele of 70 of the 1,159
+    shared array strains differently (19 by case only, ``tfc3-G349E`` / ``tfc3-g349e``;
+    50 ``-ph`` / ``-PH`` placeholders against a numbered allele, ``PRE7-ph`` /
+    ``pre7-5001``; one renamed ORF, ``ymr166cΔ`` / ``mme1Δ``). The strain id is the
+    same in both tables, so it is one physical strain and not two alleles; the
+    ``Array allele name`` of Table S1, the main screen, is used for every row of a
+    strain that S1 lists, and S3's name is kept only for strains S1 does not list. A
+    strain carrying two names within ONE table has no such rule and is refused.
+    """
+    for label, table in (("S1", df_s1), ("S3", df_s3)):
+        names = table.groupby("Array strain ID")["Array allele name"].nunique()
+        if (names > 1).any():
+            raise ValueError(
+                f"Table {label} gives {int((names > 1).sum())} array strain(s) more "
+                f"than one 'Array allele name': {sorted(names[names > 1].index)}"
+            )
+    s1_name = df_s1.drop_duplicates("Array strain ID").set_index("Array strain ID")[
+        "Array allele name"
+    ]
+    df_s3 = df_s3.copy()
+    s1_spelling = df_s3["Array strain ID"].map(s1_name)
+    renamed = s1_spelling.notna() & (s1_spelling != df_s3["Array allele name"])
+    if renamed.any():
+        log.info(
+            f"Table S3 names {df_s3.loc[renamed, 'Array strain ID'].nunique()} array "
+            f"strain(s) differently from Table S1 ({int(renamed.sum())} rows); the "
+            "Table S1 name is used"
+        )
+    df_s3.loc[renamed, "Array allele name"] = s1_spelling[renamed]
+    df_s1 = df_s1.assign(screen_id=SCREEN_ID_MAIN)
+    df_s3 = df_s3.assign(screen_id=SCREEN_ID_PILOT)
+    return pd.concat([df_s1, df_s3])
 
 
 def _array_perturbation_type(array_strain_id: str) -> str:
@@ -244,6 +314,12 @@ def _double_mutant_query_strain_rows(
     rows["fitness"] = rows["Fitness"].fillna(rows["Query single/double mutant fitness"])
     # An SD belongs to the S5 value only; the fallback column ships none.
     rows["fitness_std"] = rows["St.dev."].where(rows["Fitness"].notna())
+    # A value read from S5 comes from the query-fitness screen; a fallback value keeps
+    # the S1/S3 screen of the row it was read from (0 fallbacks among the released
+    # strains: all 201 stored strains carry an S5 fitness).
+    rows["screen_id"] = rows["screen_id"].where(
+        rows["Fitness"].isna(), SCREEN_ID_QUERY_FITNESS
+    )
     rows = rows.dropna(subset=["fitness"])
 
     mismatch = (
@@ -339,6 +415,7 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
         df = df.dropna(subset=["Fitness"])
+        df["screen_id"] = SCREEN_ID_QUERY_FITNESS
         df = df.reset_index(drop=True)
         return df
 
@@ -376,6 +453,7 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         phenotype = FitnessPhenotype(
             fitness=row["Fitness"],
             fitness_std=_reported_sd(row["St.dev."]),
+            screen_id=row["screen_id"],
             **_combined_mutant_uncertainty(row["St.dev."]),
         )
 
@@ -504,7 +582,7 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         """
         # Combine S1 and S3, splitting the digenic crosses from the trigenic rows
         # (whose QUERY strains are themselves double mutants).
-        df_combined = pd.concat([df_s1, df_s3])
+        df_combined = _combine_screens(df_s1, df_s3)
         df_trigenic = df_combined[
             df_combined["Combined mutant type"] == "trigenic"
         ].copy()
@@ -653,6 +731,7 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         phenotype = FitnessPhenotype(
             fitness=row["fitness"],
             fitness_std=_reported_sd(row["fitness_std"]),
+            screen_id=row["screen_id"],
             **uncertainty,
         )
 
@@ -767,7 +846,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
     ) -> pd.DataFrame:
         """Merge the supplementary tables and assemble triple-mutant fitness rows."""
         # Combine S1 and S3, filtering for trigenic interactions
-        df = pd.concat([df_s1, df_s3])
+        df = _combine_screens(df_s1, df_s3)
         df = df[df["Combined mutant type"] == "trigenic"].copy()
 
         # Use the provided fitness and standard deviation
@@ -886,7 +965,9 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         environment_reference = environment.model_copy()
 
         phenotype = FitnessPhenotype(
-            fitness=row["fitness"], fitness_std=_reported_sd(row["fitness_std"])
+            fitness=row["fitness"],
+            fitness_std=_reported_sd(row["fitness_std"]),
+            screen_id=row["screen_id"],
         )
 
         phenotype_reference = FitnessPhenotype(
@@ -1001,7 +1082,7 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         self, df_s1: pd.DataFrame, df_s3: pd.DataFrame
     ) -> pd.DataFrame:
         """Merge the supplementary tables and assemble interaction rows."""
-        df = pd.concat([df_s1, df_s3])
+        df = _combine_screens(df_s1, df_s3)
         df = df[df["Combined mutant type"] == "digenic"].copy()
 
         df[["Query strain ID_1", "Query strain ID_2"]] = df[
@@ -1105,6 +1186,7 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
             gene_interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
             gene_interaction_p_value=row["P-value"],
             graph_level="edge",
+            screen_id=row["screen_id"],
         )
 
         phenotype_reference = GeneInteractionPhenotype(
@@ -1219,7 +1301,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         self, df_s1: pd.DataFrame, df_s3: pd.DataFrame
     ) -> pd.DataFrame:
         """Merge the supplementary tables and assemble interaction rows."""
-        df = pd.concat([df_s1, df_s3])
+        df = _combine_screens(df_s1, df_s3)
         df = df[df["Combined mutant type"] == "trigenic"].copy()
 
         df[["Query strain ID_1", "Query strain ID_2"]] = df[
@@ -1330,6 +1412,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         phenotype = GeneInteractionPhenotype(
             gene_interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
             gene_interaction_p_value=row["P-value"],
+            screen_id=row["screen_id"],
         )
 
         phenotype_reference = GeneInteractionPhenotype(

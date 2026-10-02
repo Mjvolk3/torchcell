@@ -30,7 +30,9 @@ single mutant with no fitness (CDC10 sn125, dropped), and the double mutant ``tm
 so its query-strain record falls back to the S1/S3 column (0.77, no SD).
 ``YCR002C_tsa1`` is a ts array (an array strain that is neither ``dma`` nor ``tsa`` is
 refused, pinned in ``test_kuzmin2020.py``; it used to be stored as an
-``SgaAllelePerturbation``). Perturbed gene names are the allele name
+``SgaAllelePerturbation``). Every record names its screen (issue #602): S1 rows the main
+diagnostic-array screen, S3 rows the pilot screen, Table S5 values the query-fitness
+array; the tm99 fallback keeps the S3 screen it was read from. Perturbed gene names are the allele name
 before the first ``_`` (``ntg1`` from ``ntg1_delta``), except Smf, which stores
 ``Gene1`` verbatim. PubMed 32586993 / DOI 10.1126/science.aaz5667 on every record.
 """
@@ -67,6 +69,9 @@ from torchcell.datasets.scerevisiae.kuzmin2020 import (
     N_SAMPLES_QUERY_STRAIN_FITNESS,
     RECORD_KIND_DIGENIC_ARRAY_CROSS,
     RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN,
+    SCREEN_ID_MAIN,
+    SCREEN_ID_PILOT,
+    SCREEN_ID_QUERY_FITNESS,
     DmfKuzmin2020Dataset,
     DmiKuzmin2020Dataset,
     SmfKuzmin2020Dataset,
@@ -300,7 +305,10 @@ def test_smf_records(tmp_path: Path) -> None:
             ),
             environment=ENVIRONMENT,
             phenotype=FitnessPhenotype(
-                fitness=0.98, fitness_std=0.01, **sample_sd(0.01)
+                fitness=0.98,
+                fitness_std=0.01,
+                screen_id=SCREEN_ID_QUERY_FITNESS,
+                **sample_sd(0.01),
             ),
         ),
         FitnessExperiment(
@@ -316,7 +324,10 @@ def test_smf_records(tmp_path: Path) -> None:
             ),
             environment=ENVIRONMENT,
             phenotype=FitnessPhenotype(
-                fitness=0.8, fitness_std=0.02, **sample_sd(0.02)
+                fitness=0.8,
+                fitness_std=0.02,
+                screen_id=SCREEN_ID_QUERY_FITNESS,
+                **sample_sd(0.02),
             ),
         ),
     ]
@@ -350,7 +361,10 @@ def test_dmf_records(tmp_path: Path) -> None:
             genotype=Genotype(perturbations=[NTG1_DIGENIC, SLA1]),
             environment=ENVIRONMENT,
             phenotype=FitnessPhenotype(
-                fitness=0.9695, fitness_std=0.0465, **sample_sd(0.0465)
+                fitness=0.9695,
+                fitness_std=0.0465,
+                screen_id=SCREEN_ID_MAIN,
+                **sample_sd(0.0465),
             ),
         ),
         FitnessExperiment(
@@ -358,7 +372,10 @@ def test_dmf_records(tmp_path: Path) -> None:
             genotype=Genotype(perturbations=[NTG1_DIGENIC, NTH2_TS]),
             environment=ENVIRONMENT,
             phenotype=FitnessPhenotype(
-                fitness=0.7, fitness_std=0.03, **sample_sd(0.03)
+                fitness=0.7,
+                fitness_std=0.03,
+                screen_id=SCREEN_ID_PILOT,
+                **sample_sd(0.03),
             ),
         ),
         FitnessExperiment(
@@ -366,14 +383,19 @@ def test_dmf_records(tmp_path: Path) -> None:
             genotype=Genotype(perturbations=[NTG1_TM72, NTG2_TM72]),
             environment=ENVIRONMENT,
             phenotype=FitnessPhenotype(
-                fitness=1.0133, fitness_std=0.008, **bootstrap_se(0.008)
+                fitness=1.0133,
+                fitness_std=0.008,
+                screen_id=SCREEN_ID_QUERY_FITNESS,
+                **bootstrap_se(0.008),
             ),
         ),
         FitnessExperiment(
             dataset_name="DmfKuzmin2020Dataset",
             genotype=Genotype(perturbations=[NTG1_TM99, NTH2_TM99]),
             environment=ENVIRONMENT,
-            phenotype=FitnessPhenotype(fitness=0.77, fitness_std=None),
+            phenotype=FitnessPhenotype(
+                fitness=0.77, fitness_std=None, screen_id=SCREEN_ID_PILOT
+            ),
         ),
     ]
     assert stored == dumps(expected)
@@ -435,13 +457,17 @@ def test_tmf_records(tmp_path: Path) -> None:
             dataset_name="TmfKuzmin2020Dataset",
             genotype=TM72_TRIGENIC,
             environment=ENVIRONMENT,
-            phenotype=FitnessPhenotype(fitness=0.85, fitness_std=0.05),
+            phenotype=FitnessPhenotype(
+                fitness=0.85, fitness_std=0.05, screen_id=SCREEN_ID_MAIN
+            ),
         ),
         FitnessExperiment(
             dataset_name="TmfKuzmin2020Dataset",
             genotype=TM99_TRIGENIC,
             environment=ENVIRONMENT,
-            phenotype=FitnessPhenotype(fitness=0.6, fitness_std=0.01),
+            phenotype=FitnessPhenotype(
+                fitness=0.6, fitness_std=0.01, screen_id=SCREEN_ID_PILOT
+            ),
         ),
     ]
     assert dumps(experiments(ds)) == dumps(expected)
@@ -474,7 +500,10 @@ def test_dmi_records(tmp_path: Path) -> None:
             genotype=Genotype(perturbations=[NTG1_DIGENIC, SLA1]),
             environment=ENVIRONMENT,
             phenotype=GeneInteractionPhenotype(
-                gene_interaction=0.01, gene_interaction_p_value=0.6, graph_level="edge"
+                gene_interaction=0.01,
+                gene_interaction_p_value=0.6,
+                graph_level="edge",
+                screen_id=SCREEN_ID_MAIN,
             ),
         ),
         GeneInteractionExperiment(
@@ -482,7 +511,10 @@ def test_dmi_records(tmp_path: Path) -> None:
             genotype=Genotype(perturbations=[NTG1_DIGENIC, NTH2_TS]),
             environment=ENVIRONMENT,
             phenotype=GeneInteractionPhenotype(
-                gene_interaction=-0.02, gene_interaction_p_value=0.5, graph_level="edge"
+                gene_interaction=-0.02,
+                gene_interaction_p_value=0.5,
+                graph_level="edge",
+                screen_id=SCREEN_ID_PILOT,
             ),
         ),
     ]
@@ -507,7 +539,9 @@ def test_tmi_records(tmp_path: Path) -> None:
             genotype=TM72_TRIGENIC,
             environment=ENVIRONMENT,
             phenotype=GeneInteractionPhenotype(
-                gene_interaction=-0.08, gene_interaction_p_value=0.02
+                gene_interaction=-0.08,
+                gene_interaction_p_value=0.02,
+                screen_id=SCREEN_ID_MAIN,
             ),
         ),
         GeneInteractionExperiment(
@@ -515,7 +549,9 @@ def test_tmi_records(tmp_path: Path) -> None:
             genotype=TM99_TRIGENIC,
             environment=ENVIRONMENT,
             phenotype=GeneInteractionPhenotype(
-                gene_interaction=-0.15, gene_interaction_p_value=0.001
+                gene_interaction=-0.15,
+                gene_interaction_p_value=0.001,
+                screen_id=SCREEN_ID_PILOT,
             ),
         ),
     ]

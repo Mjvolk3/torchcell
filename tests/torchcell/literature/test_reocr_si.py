@@ -6,7 +6,7 @@ retirement.
 
 ``ocr_pdf`` is replaced by a fake that does what the runner does for an SI PDF (writes
 ``<stem>.md`` referencing ``images/<stem>/<stem>.jpg`` and that figure). The Zotero
-side (``ZoteroLibrary.from_env``, ``build_citation_index``, ``backfill_key``) is
+side (``ZoteroLibrary.from_env``, ``citation_index_with_duplicates``, ``backfill_key``) is
 replaced by recorders; the fake ``backfill_key`` WRITES ``manifest.json`` unless
 ``dry_run``, as the real one does, so a refusal after it is tested against the bytes on
 disk. ``unresolved_si_figure_refs`` and ``retire_flat_figures`` are wrapped to record
@@ -22,6 +22,10 @@ starts, in the exact order Zotero, dry-run, OCR, check, retire, check, backfill;
 failure in any phase stops before the next; a final backfill that is not ``enriched``
 restores the previous manifest bytes; ``deprecate.sh``'s refusal of a graveyard inside
 ``DATA_ROOT`` applies; a staging directory left by a killed retirement is retired.
+
+2026.10.02 (issue #607): a citation key shared by several top-level Zotero items
+refuses the run only when the run processes that key; a duplicate of any other key is
+logged once at WARNING with the full list and the run proceeds.
 """
 
 from __future__ import annotations
@@ -33,7 +37,7 @@ from typing import Any
 import pytest
 
 from torchcell.literature import reocr_si as reocr
-from torchcell.literature.backfill import KeyBackfillResult
+from torchcell.literature.backfill import DuplicateCitationKeyError, KeyBackfillResult
 from torchcell.literature.zotero import ZoteroLibrary
 
 _PREVIOUS = b'{"previous": "manifest"}'
@@ -68,6 +72,7 @@ class _Recorder:
         dry_mode: str = "enriched",
         mode: str = "enriched",
         flat_ref: bool = False,
+        duplicates: dict[str, list[str]] | None = None,
     ) -> None:
         self.events: list[str] = []
         self.fail_on = fail_on
@@ -76,6 +81,7 @@ class _Recorder:
         self.dry_mode = dry_mode
         self.mode = mode
         self.flat_ref = flat_ref
+        self.duplicates = duplicates or {}
 
     def ocr_pdf(self, pdf: Path, *, device_mode: str) -> Path:
         self.events.append(f"ocr {pdf.parent.parent.name}/{pdf.name} {device_mode}")
@@ -90,9 +96,17 @@ class _Recorder:
         md.write_text(f"![]({ref})\n")
         return md
 
-    def build_citation_index(self, lib: str) -> dict[str, dict[str, Any]]:
+    def citation_index_with_duplicates(
+        self, lib: str
+    ) -> tuple[dict[str, dict[str, Any]], dict[str, list[str]]]:
+        """As the real one: a duplicated key is absent from the index."""
         self.events.append(f"zotero {lib}")
-        return {key: {"key": f"ITEM-{key}"} for key in self.indexed}
+        index = {
+            key: {"key": f"ITEM-{key}"}
+            for key in self.indexed
+            if key not in self.duplicates
+        }
+        return index, self.duplicates
 
     def backfill_key(self, key_dir: Path, **kwargs: Any) -> KeyBackfillResult:
         dry = kwargs.get("dry_run", False)
@@ -110,7 +124,9 @@ class _Recorder:
 def _install(monkeypatch: pytest.MonkeyPatch, rec: _Recorder) -> None:
     monkeypatch.setattr(reocr, "ocr_pdf", rec.ocr_pdf)
     monkeypatch.setattr(reocr, "backfill_key", rec.backfill_key)
-    monkeypatch.setattr(reocr, "build_citation_index", rec.build_citation_index)
+    monkeypatch.setattr(
+        reocr, "citation_index_with_duplicates", rec.citation_index_with_duplicates
+    )
     monkeypatch.setattr(ZoteroLibrary, "from_env", classmethod(lambda cls: "LIB"))
     check: Callable[[Path], list[str]] = reocr.unresolved_si_figure_refs
     retire: Callable[[Path, str], Path | None] = reocr.retire_flat_figures
@@ -286,6 +302,62 @@ def test_a_key_missing_from_zotero_refuses_before_any_ocr(
         )
     assert str(refused.value) == "not in the Zotero citation index, nothing OCR'd: ohya"
     assert rec.events == ["zotero LIB"]
+
+
+def test_a_duplicate_of_a_key_not_processed_warns_once_and_the_run_proceeds(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Issue #607: a key shared by two Zotero items that this run does not process
+    (here ``chao`` and ``zed``) is logged once at WARNING with the full list, and
+    every phase then runs as in the duplicate-free run.
+    """
+    root = tmp_path / "torchcell-library"
+    _two_keys(root)
+    rec = _Recorder(duplicates={"zed": ["Z1", "Z2"], "chao": ["8WK5B5MP", "Y6J4Q887"]})
+    _install(monkeypatch, rec)
+    caplog.set_level("WARNING", logger=reocr.__name__)
+
+    reocr.reocr_keys(
+        root, ["lee", "ohya"], graveyard=str(tmp_path / "g"), device_mode="cuda"
+    )
+
+    assert [(r.levelname, r.getMessage()) for r in caplog.records] == [
+        (
+            "WARNING",
+            "Zotero items share a citation key this run does not process; "
+            "proceeding (chao: 8WK5B5MP, Y6J4Q887; zed: Z1, Z2)",
+        )
+    ]
+    assert rec.events[: len(_DRY) + len(_OCR)] == [*_DRY, *_OCR]
+    assert rec.events[-2:] == [
+        "backfill lee force=True lib=LIB item=ITEM-lee",
+        "backfill ohya force=True lib=LIB item=ITEM-ohya",
+    ]
+
+
+def test_a_duplicate_of_a_processed_key_refuses_by_name_before_any_ocr(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A duplicate involving a key the run processes refuses before the dry-run
+    backfill, naming only the requested duplicated keys (``zed`` is not requested);
+    nothing is OCR'd and no warning is logged.
+    """
+    root = tmp_path / "torchcell-library"
+    lee, ohya = _two_keys(root)
+    rec = _Recorder(duplicates={"ohya": ["O1", "O2"], "zed": ["Z1", "Z2"]})
+    _install(monkeypatch, rec)
+    caplog.set_level("WARNING", logger=reocr.__name__)
+    with pytest.raises(DuplicateCitationKeyError) as refused:
+        reocr.reocr_keys(
+            root, ["lee", "ohya"], graveyard=str(tmp_path / "g"), device_mode="cuda"
+        )
+    assert str(refused.value) == (
+        "Zotero items share a requested citation key, nothing OCR'd (ohya: O1, O2)"
+    )
+    assert rec.events == ["zotero LIB"]
+    assert caplog.records == []
+    for key in (lee, ohya):
+        assert (key / "manifest.json").read_bytes() == _PREVIOUS
 
 
 def test_a_dry_run_backfill_that_is_not_enriched_refuses_before_any_ocr(

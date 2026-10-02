@@ -10,10 +10,12 @@ Before PR #585 every ``si/si*.pdf`` of a key wrote its figures into one shared
 SI PDFs has SI markdown pointing at figures that are gone. :func:`reocr_keys` repairs
 such keys in phases, each over every key before the next phase starts:
 
-0. Precheck, before anything is OCR'd or retired: every key is in the Zotero
-   citation index (:class:`KeyNotInZoteroError`); a dry-run ``backfill_key`` for
-   every key is ``enriched`` (:class:`NotEnrichedError`); no ``si/*.md`` that this
-   run will not re-OCR references a flat ``si/images/<file>``
+0. Precheck, before anything is OCR'd or retired: no key is shared by two or more
+   top-level Zotero items (:class:`DuplicateCitationKeyError`; a duplicate of a key
+   this run does not process is logged once at WARNING and does not block); every
+   key is in the Zotero citation index (:class:`KeyNotInZoteroError`); a dry-run
+   ``backfill_key`` for every key is ``enriched`` (:class:`NotEnrichedError`); no
+   ``si/*.md`` that this run will not re-OCR references a flat ``si/images/<file>``
    (:class:`UnrewrittenFlatReferenceError`). Zotero is only read.
 1. OCR every ``si/si*.pdf`` in natural order with
    :func:`torchcell.literature.ocr.ocr_pdf`. ``paper.pdf`` is NOT re-OCR'd.
@@ -47,8 +49,10 @@ from typing import Any
 
 from torchcell.literature._run_mineru import IMAGE_REF
 from torchcell.literature.backfill import (
+    DuplicateCitationKeyError,
     backfill_key,
-    build_citation_index,
+    citation_index_with_duplicates,
+    describe_duplicates,
     library_root,
 )
 from torchcell.literature.manifest import MANIFEST_FILENAME
@@ -221,7 +225,19 @@ def reocr_keys(
     """Phases 0 to 5 of the module docstring for ``keys`` under the mirror ``root``."""
     key_dirs = [root / key for key in keys]
     lib = ZoteroLibrary.from_env()
-    index: dict[str, dict[str, Any]] = build_citation_index(lib)
+    index, duplicates = citation_index_with_duplicates(lib)
+    requested = {key: duplicates[key] for key in keys if key in duplicates}
+    if requested:
+        raise DuplicateCitationKeyError(
+            "Zotero items share a requested citation key, nothing OCR'd "
+            f"({describe_duplicates(requested)})"
+        )
+    if duplicates:
+        log.warning(
+            "Zotero items share a citation key this run does not process; "
+            "proceeding (%s)",
+            describe_duplicates(duplicates),
+        )
     absent = [key for key in keys if key not in index]
     if absent:
         raise KeyNotInZoteroError(

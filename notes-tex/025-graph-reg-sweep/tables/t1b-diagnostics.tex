@@ -1,0 +1,19 @@
+%% SOURCE: experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py (W&B zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer, pulled 2026-10-01 21:40 UTC) -- GENERATED, do not edit
+
+\begin{tabular}{lrrrrr}
+\toprule
+arm & point loss, ep 29 & min point loss (epoch) & train Pearson, ep 29 & divergence & edge recall \\
+\midrule
+no penalty ($\lambda = 0$) & 0.867 $\pm$ 0.012 & 0.801 $\pm$ 0.003 (12.0) & 0.624 $\pm$ 0.006 & -- & 0.006 $\pm$ 0.000 \\
+KL $\lambda = 10^{-5}$ & 0.880 $\pm$ 0.030 & 0.803 $\pm$ 0.003 (11.0) & 0.657 $\pm$ 0.000 & 1540 & 0.782 $\pm$ 0.001 \\
+KL $\lambda = 10^{-4}$ & 0.878 $\pm$ 0.031 & 0.805 $\pm$ 0.001 (7.7) & 0.663 $\pm$ 0.007 & 571 & 0.866 $\pm$ 0.001 \\
+KL $\lambda = 10^{-3}$ (control) & 0.859 $\pm$ 0.007 & 0.798 $\pm$ 0.004 (12.0) & 0.636 $\pm$ 0.004 & 337 & 0.906 $\pm$ 0.000 \\
+KL $\lambda = 10^{-2}$ & 0.839 $\pm$ 0.007 & 0.798 $\pm$ 0.004 (15.3) & 0.613 $\pm$ 0.006 & 300 & 0.914 $\pm$ 0.000 \\
+KL $\lambda = 10^{-1}$ & 0.826 $\pm$ 0.010 & 0.796 $\pm$ 0.003 (17.3) & 0.625 $\pm$ 0.006 & 297 & 0.915 $\pm$ 0.000 \\
+KL $\lambda = 1$ & 0.825 $\pm$ 0.009 & 0.803 $\pm$ 0.004 (18.7) & 0.624 $\pm$ 0.008 & 298 & 0.915 $\pm$ 0.000 \\
+hard mask, layer 1 & 0.869 $\pm$ 0.015 & 0.799 $\pm$ 0.002 (14.0) & 0.612 $\pm$ 0.001 & -- & -- \\
+KL $\lambda = 10^{-3}$, random graphs & 0.869 $\pm$ 0.020 & 0.802 $\pm$ 0.004 (12.3) & 0.621 $\pm$ 0.004 & 980 & 0.814 $\pm$ 0.000 \\
+KL $\lambda = 10^{-1}$, random graphs & 0.844 $\pm$ 0.013 & 0.813 $\pm$ 0.003 (15.4) & 0.610 $\pm$ 0.007 & 902 & 0.822 $\pm$ 0.000 \\
+KL $\lambda = 1$, random graphs & 0.846 $\pm$ 0.013 & 0.816 $\pm$ 0.004 (15.0) & 0.600 $\pm$ 0.006 & 904 & 0.822 $\pm$ 0.000 \\
+\bottomrule
+\end{tabular}

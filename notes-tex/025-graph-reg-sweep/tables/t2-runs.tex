@@ -1,0 +1,44 @@
+%% SOURCE: experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py (W&B zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer, pulled 2026-10-01 21:40 UTC) -- GENERATED, do not edit
+
+\begin{tabular}{llrrrrl}
+\toprule
+arm & seed & epochs & Pearson, ep 29 & max (epoch) & gradient ratio, ep 0 & W\&B run \\
+\midrule
+no penalty ($\lambda = 0$) & 1 & 30 & 0.4243 & 0.4476 (16) & 0.00 & \texttt{zvtj3waw} \\
+no penalty ($\lambda = 0$) & 2 & 30 & 0.4248 & 0.4460 (15) & 0.00 & \texttt{4vgeyw2i} \\
+no penalty ($\lambda = 0$) & 3 & 30 & 0.4253 & 0.4493 (16) & 0.00 & \texttt{mmiydyws} \\
+KL $\lambda = 10^{-5}$ & 1 & 30 & 0.4213 & 0.4456 (13) & 0.00 & \texttt{rldsrcnr} \\
+KL $\lambda = 10^{-5}$ & 3 & 30 & 0.4180 & 0.4425 (14) & 0.00 & \texttt{7fx9njte} \\
+KL $\lambda = 10^{-4}$ & 1 & 30 & 0.4189 & 0.4473 (16) & 0.01 & \texttt{r2i3i9xq} \\
+KL $\lambda = 10^{-4}$ & 2 & 30 & 0.4297 & 0.4486 (15) & 0.00 & \texttt{h8zhfq2d} \\
+KL $\lambda = 10^{-4}$ & 3 & 30 & 0.4096 & 0.4431 (6) & 0.04 & \texttt{oxh1ug5l} \\
+KL $\lambda = 10^{-3}$ (control) & 1 & 30 & 0.4292 & 0.4498 (16) & 0.14 & \texttt{6dvbzy8w} \\
+KL $\lambda = 10^{-3}$ (control) & 2 & 30 & 0.4378 & 0.4471 (12) & 0.04 & \texttt{ppm9kl4w} \\
+KL $\lambda = 10^{-3}$ (control) & 3 & 30 & 0.4304 & 0.4548 (14) & 0.40 & \texttt{22u65gax} \\
+KL $\lambda = 10^{-2}$ & 1 & 30 & 0.4358 & 0.4524 (27) & 1.45 & \texttt{u1hdm0y0} \\
+KL $\lambda = 10^{-2}$ & 2 & 30 & 0.4386 & 0.4510 (19) & 0.37 & \texttt{eufg8mlm} \\
+KL $\lambda = 10^{-2}$ & 3 & 30 & 0.4386 & 0.4541 (14) & 4.01 & \texttt{0vgat9et} \\
+KL $\lambda = 10^{-1}$ & 1 & 30 & 0.4528 & 0.4590 (23) & 14.47 & \texttt{lz1rd90p} \\
+KL $\lambda = 10^{-1}$ & 2 & 30 & 0.4473 & 0.4542 (23) & 3.69 & \texttt{df8jt886} \\
+KL $\lambda = 10^{-1}$ & 3 & 30 & 0.4349 & 0.4478 (13) & 40.20 & \texttt{5pz6vc5y} \\
+KL $\lambda = 1$ & 1 & 30 & 0.4456 & 0.4545 (26) & 146.51 & \texttt{367oc8pv} \\
+KL $\lambda = 1$ & 2 & 30 & 0.4480 & 0.4487 (23) & 37.17 & \texttt{ds928dmp} \\
+KL $\lambda = 1$ & 3 & 30 & 0.4461 & 0.4521 (24) & 399.95 & \texttt{zxme1g1p} \\
+hard mask, layer 1 & 1 & 30 & 0.4232 & 0.4430 (18) & 0.00 & \texttt{g35yf77n} \\
+hard mask, layer 1 & 2 & 30 & 0.4181 & 0.4491 (15) & 0.00 & \texttt{1pv2lpf9} \\
+hard mask, layer 1 & 3 & 30 & 0.4222 & 0.4458 (17) & 0.00 & \texttt{tpixauk7} \\
+KL $\lambda = 10^{-3}$, random graphs & 1 & 30 & 0.4169 & 0.4459 (13) & 0.15 & \texttt{usgha5w6} \\
+KL $\lambda = 10^{-3}$, random graphs & 2 & 30 & 0.4329 & 0.4500 (19) & 0.04 & \texttt{9tqgl66k} \\
+KL $\lambda = 10^{-3}$, random graphs & 3 & 30 & 0.4104 & 0.4456 (14) & 0.41 & \texttt{zuw5z7k4} \\
+KL $\lambda = 10^{-1}$, random graphs & 1 & 30 & 0.4343 & 0.4343 (29) & 14.78 & \texttt{u6he7prk} \\
+KL $\lambda = 10^{-1}$, random graphs & 2 & 30 & 0.4300 & 0.4376 (12) & 3.71 & \texttt{h7wumv3p} \\
+KL $\lambda = 10^{-1}$, random graphs & 3 & 30 & 0.4203 & 0.4341 (19) & 40.87 & \texttt{w7wt6bmo} \\
+KL $\lambda = 10^{-1}$, random graphs & 4 & 30 & 0.4294 & 0.4412 (21) & 2.14 & \texttt{7e9caxfo} \\
+KL $\lambda = 10^{-1}$, random graphs & 5 & 30 & 0.4372 & 0.4374 (24) & 22.20 & \texttt{jpmuaaah} \\
+KL $\lambda = 1$, random graphs & 1 & 30 & 0.4321 & 0.4366 (28) & 149.41 & \texttt{l6hv7cub} \\
+KL $\lambda = 1$, random graphs & 2 & 30 & 0.4298 & 0.4342 (14) & 37.41 & \texttt{awnp9vvt} \\
+KL $\lambda = 1$, random graphs & 3 & 30 & 0.4260 & 0.4404 (22) & 405.90 & \texttt{gtmbi3fw} \\
+KL $\lambda = 1$, random graphs & 4 & 30 & 0.4256 & 0.4348 (28) & 20.97 & \texttt{urwi2lxu} \\
+KL $\lambda = 1$, random graphs & 5 & 30 & 0.4212 & 0.4287 (19) & 223.91 & \texttt{n0vst095} \\
+\bottomrule
+\end{tabular}

@@ -1,0 +1,81 @@
+%% notes-tex/025-graph-reg-sweep/025-graph-reg-sweep.tex
+%% [[experiments.025-solid-growth.graph-reg-sweep]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/025-graph-reg-sweep/025-graph-reg-sweep.tex
+%%
+%% Typeset counterpart of notes/experiments.025-solid-growth.graph-reg-sweep.md.
+%%
+%% Build:  make refresh  -> pull W&B, refill tables/, redraw the figures, convert, build
+%%         make plots    -> figures/graph_reg_sweep.pdf from the true-size SVG
+%%         make          -> 025-graph-reg-sweep.pdf   (draft: status chips)
+%%         make check    -> formatting / provenance / style gate
+%%
+%% Every number is read from W&B by experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py
+%% (results/graph_reg_sweep_runs.csv, graph_reg_sweep_history.csv, graph_reg_sweep_summary.json);
+%% the tables under tables/ are written by the same script and never edited by hand; the
+%% figures by graph_reg_sweep_plots.py from the same CSVs.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}Soft Prior or Hard Mask\\
+  {\large How the nine gene-gene graphs enter the cell graph transformer:
+   the graph-regularization sweep on the 025 triples, read at three seeds per arm}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Nine gene-gene graphs enter layer 1 of the cell graph transformer by one of two
+mechanisms: a soft prior, a divergence penalty of weight $\lambda$ that pulls each
+head's attention toward its graph's normalized adjacency, or a hard mask that restricts
+each head's attention to its graph's edges. The sweep runs one protocol (the 376{,}732
+triples of experiment 010 on their pinned random split, a learnable gene table, AdamW at
+a constant $2.5 \times 10^{-4}$, 30 epochs, four A40s per run) at $\lambda \in \{0,
+10^{-5}, 10^{-4}, 10^{-3}, 10^{-2}, 10^{-1}, 1\}$, under the mask, and under the prior at
+$\lambda = 10^{-3}$ toward degree-matched random rewirings of the same graphs, three
+seeds per arm. Read at epoch 29, the mask sits with no penalty, $0.421 \pm 0.003$ against
+$0.425 \pm 0.000$ held-out Pearson, and the prior rises with $\lambda$ without a peak
+inside the ladder, to $0.447 \pm 0.001$ at $\lambda = 1$, above no penalty on every seed
+by 0.021 to 0.023. Read at each run's best epoch, all nine arms lie within 0.010 of one
+another (0.444 to 0.454): the prior moves the peak by at most 0.006 and moves when it
+occurs, from epoch 15 or 16 without a penalty to epochs 23 to 26 at $\lambda = 1$, so most
+of what it buys at the fixed reading is resistance to the decline the unpenalized model
+shows after epoch 16. The attention contracts onto the graph at every $\lambda$ tested,
+with edge recall at degree 0.78 at $10^{-5}$ and 0.915 from $10^{-2}$ up against 0.006
+with no penalty, and saturates two decades below the $\lambda$ at which accuracy is
+highest, so the contraction itself is not what carries the accuracy. The random-graph
+control, a prior of the same weight toward degree-matched rewirings of the nine graphs,
+sits at the no-penalty level at epoch 29 at every $\lambda$ tested ($0.420 \pm 0.012$ at
+$10^{-3}$, three seeds; $0.430 \pm 0.006$ at $10^{-1}$ and $0.427 \pm 0.004$ at 1, five
+seeds each, against 0.425), where the biological graphs give 0.432, 0.445 and 0.447;
+paired by seed the biological graphs are above the random ones on every seed at
+$10^{-1}$ and 1, by 0.017 at epoch 29 ($p = 0.005$ and $0.013$) and 0.015 to 0.018 at
+the best epoch ($p = 0.03$ and $0.014$), and at the best epoch the random arms fall below
+no penalty ($-0.011$ to $-0.012$, $p = 0.026$ and $0.007$). The hypothesis under test,
+that the graphs help only when the model is optimized through the divergence and not when
+they are imposed as a constraint, holds on the fixed-epoch reading, and the alternative
+that any graph of the same degree sequence would do the same is rejected at the two
+$\lambda$ where the gain is largest.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-question}
+\input{sections/2-ladder}
+\input{sections/3-training}
+\input{sections/4-control}
+\input{sections/5-reading}
+\input{sections/6-round2}
+
+\end{document}

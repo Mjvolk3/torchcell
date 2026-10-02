@@ -1,0 +1,182 @@
+%% notes-tex/025-graph-reg-sweep/sections/6-round2.tex
+
+\section{The next rounds: what finishes the figure, what decides the mechanism\secstatus{todo}}
+\label{sec:round2}
+
+Nothing in this section is measured. It is the design of the next Delta rounds, written
+before submission so the figures they feed are fixed in advance, as the first round's
+mock-up was (Figure~\ref{fig:mockup}). Every arm is the same protocol as round 1,
+the control config with the named keys changed, three seeds, on Delta
+\texttt{gpuA40x4}, so every new column is read against the columns already in hand.
+Table~\ref{tab:round2} is generated from
+\file{experiments/025-solid-growth/scripts/graph_reg_round2_plan.py}, which is also
+where the launcher will read the arm list from once a round is approved. The rounds are
+ordered by the two questions the study asks. Round 1b completes
+Figure~\ref{fig:sweep} and answers them where the effect is: is the prior better than
+the mask (the top of the ladder), and do the graphs help (the random control at the
+$\lambda$ that separates). Round 2 asks the question that follows at once from ``do the
+graphs help'': how far along the graph should a head reach, two hops and three, for both
+mechanisms on identical targets, with direction beside it. Round 3 holds what is
+optional or orthogonal: where the graph block sits, the training budget, the
+representation, the width. The random-graph arm of
+round 1 ran the full 30-epoch protocol on all three seeds (30 logged epochs each), so
+its comparison in Figure~\ref{fig:sweep}f is at matched budget.
+
+\notesec{What round 1 left open, and the arm that closes each}
+\begin{enumerate}
+\item \emph{Biology or conditioning.} The random-graph control ran at $\lambda =
+  10^{-3}$, where the biological prior adds 0.005 to 0.013 and three seeds do not
+  resolve it (random against no penalty $-0.005 \pm 0.012$, $p = 0.56$). At $\lambda =
+  1$ the biological prior adds 0.021 to 0.023 on every seed. Three
+  seeds of the rewired graphs at $\lambda = 1$ decide whether that is the graphs or the
+  penalty; three more at $10^{-1}$ cover the loss-selected optimum.
+\item \emph{The top of the ladder.} Accuracy at epoch 29 rises to $\lambda = 1$ with no
+  turnover inside the ladder, while contraction and divergence are flat from $10^{-2}$.
+  $\lambda = 10$ and $100$ find the turnover, or show there is none in reach.
+\item \emph{Direction.} The prior's target is directed, $A[\text{source}, \text{target}]$
+  row-normalized; the mask builder symmetrizes it. So the
+  mask-versus-prior gap confounds soft-versus-hard with directed-versus-undirected on
+  the regulatory and TFLink heads. Two arms separate them: the prior at $\lambda = 1$
+  toward symmetrized targets, and a directed mask (the transpose write removed, which
+  leaves the seven symmetric graphs unchanged). If direction matters, the symmetric prior
+  falls toward the mask and the directed mask rises toward the prior. A two-head variant,
+  one head on $A$ and one on $A^{\mathsf{T}}$ for each directed graph, is the follow-up
+  if the directed mask helps, not part of this round.
+\item \emph{Reach.} A head under either mechanism sees one hop. The $k$-hop support is
+  the indicator of $A \cup A^{2} \cup \cdots \cup A^{k}$; the mask restricts attention
+  to it (self-loops kept) and the prior's target is its row normalization with the
+  diagonal of the one-hop target (the cell graph gives every gene a self-loop, so every
+  round-1 target already held a self entry in every row), so the two mechanisms are
+  compared on identical two- and three-hop targets and differ from round 1 in reach
+  alone. Table~\ref{tab:khop} is the density of that support, measured on
+  the graphs the trainer builds. It settles one design choice: with edges made
+  undirected, two hops of the physical, co-expression or experimental graph already
+  reach 60 to 70 percent of all ordered gene pairs and three hops 75 to 94 percent, so a
+  symmetric two-hop mask is close to no mask on those heads. The reach arms therefore
+  use the \emph{directed} $k$-hop support for both mechanisms, which is what the prior
+  has always used, and the directed one-hop mask is their one-hop anchor. Under the
+  stored direction the regulatory and TFLink graphs stay sparse at three hops (1 and 3
+  percent of pairs); the seven undirected graphs are symmetric by construction, so on
+  those heads the two- and three-hop arms measure how a nearly uniform target behaves,
+  which is a finding about the graph rather than a reason to skip the arm.
+\item \emph{Placement (optional).} The encoder has eight layers and the graphs enter
+  layer 1 only, an $[S, M, S, S, S, S, S, S]$ pattern. Round 3 widens the block and
+  shifts it:
+  layers 1 to 2 $[S, M, M, S, \ldots]$, layers 3 to 4 $[S, S, S, M, M, S, S, S]$, and
+  layers 1 to 4 $[S, M, M, M, M, S, S, S]$, each for the mask and for the prior at
+  $\lambda = 1$. The shifted block asks whether the graphs belong where genes are first
+  mixed or after two free layers have formed a representation. The mask costs nothing in
+  memory; each regularized layer of the prior materializes its attention, about 6 GB per
+  layer, which is why the prior stops at four layers.
+\item \emph{Budget.} No penalty peaks at epoch 16 and declines; $\lambda = 1$ peaks at
+  23 to 26 and was still at its high at epoch 29. Sixty epochs of no penalty, the mask
+  and $\lambda = 1$ show whether the strong prior keeps rising or only declines later,
+  and whether the fixed-budget gap grows or closes. These need the 48 h clock.
+\item \emph{Completion.} Seed 2 of $\lambda = 10^{-5}$ never reached W\&B (Delta job
+  22055161); one run fills it. The third random-graph seed at $10^{-3}$ finishes on its
+  own.
+\item \emph{Representation.} Every arm here uses the learnable gene table, the
+  representation that memorizes fastest, and the prior's gain is mostly resistance to
+  the late decline. The composite sequence embedding (\texttt{embfit\_035} without its
+  fitness head) resisted that decline on its own: on this split with the fitness head it
+  reads $+0.016$ over the table at epoch 29 and nothing at the peak. Composite with and
+  without the prior at $\lambda = 1$, three seeds each, says whether the graph result
+  survives the representation the model will actually use.
+\item \emph{Width.} The hidden width of 180 is inherited from 010 and was never swept
+  on this task. Doubling it to 360 (heads of 40) takes the transformer from 3.1 M to
+  about 12.5 M parameters and the model from 4.8 M to about 16.6 M; memory is set by the
+  $9 \times 6{,}608^{2}$ attention of the regularized layer and does not move, the epoch
+  should take 1.5 to 2.5 times as long, which is the 48 h clock. Table and composite,
+  each with and without the prior, so width is read against the two representations and
+  the prior at once; the composite preprocessor is re-matched to the table's parameter
+  count at the new width.
+\end{enumerate}
+
+%% SOURCE: experiments/025-solid-growth/scripts/graph_reg_khop_density.py (results/graph_reg_khop_density.json) -- GENERATED, do not edit
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Reach of the nine gene-gene graphs, on the 6{,}607 genes the trainer uses:
+the mean number of genes reachable from a gene within one, two and three steps, and the
+fraction of all ordered pairs that is, along the stored direction and with every edge
+made undirected (the two coincide for the seven undirected graphs). Generated by
+\texttt{graph\_reg\_khop\_density.py}.}
+\label{tab:khop}
+\setlength{\tabcolsep}{4pt}
+\input{tables/t5-khop-density}
+\end{table}
+
+%% SOURCE: experiments/025-solid-growth/scripts/graph_reg_round2_plan.py -- GENERATED, do not edit
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The next rounds, in submission order. Every arm is
+\texttt{cgt\_s0\_r\_kl\_ctrl\_013} with the change named, three seeds unless stated,
+30 epochs on the 24 h clock or 60 on the 48 h clock. GPU-hours are four A40s times the
+measured 27 min per epoch times seeds. ``code'' names the model change an arm needs
+before it can be launched; the others are Hydra overrides of keys that exist. Round 1b
+finishes Figure~\ref{fig:sweep}; round 2 fills the mechanism figure; round 3 the budget
+and representation figure. Generated by \texttt{graph\_reg\_round2\_plan.py}.}
+\label{tab:round2}
+\setlength{\tabcolsep}{3pt}
+\input{tables/t4-round2}
+\end{table}
+
+\notesec{Four code changes, shipped with the plan}
+The $k$-hop support is one function shared by both mechanisms, \texttt{khop\_reach}: the boolean reachability
+within $k$ steps, a dense $6{,}608^{2}$ matrix per graph computed once at construction
+by repeated boolean products; the mask uses it as its support with every self-loop
+kept, and the prior row-normalizes it as its target with the one-hop diagonal in place
+of the reach's own (an even walk on an undirected graph returns home, which says
+nothing about the graph). The first version cleared the diagonal instead; the
+real-size smoke caught it, since that emptied 6,147 of the 6,607 regulatory rows that
+the one-hop target constrains to self, and it was fixed before any $k$-hop job ran. The symmetric prior is one flag in the
+adjacency normalizer: write $A[j, i]$ beside $A[i, j]$ before row normalization, so the
+directed graphs get the treatment the mask gives them today. The directed mask is the
+removal of one line, the transpose write in the mask builder, behind a flag that defaults
+to today's behavior so no existing config changes meaning. The width arms need the
+composite preprocessor re-matched to the table's parameter count at 360. Multi-layer
+placement needs no code: the mask takes a list of layers and the prior's
+\texttt{graph\_reg\_layer} already accepts a list. The flags default to the behavior
+every earlier run had, and \file{tests/torchcell/models/test_cgt_graph_entry.py} pins
+both the defaults and the new targets on a hand-built directed four-gene graph: a
+directed one-hop prior, a symmetrized one-hop mask with self-loops, the two- and
+three-hop reach, the stored self-loops surviving into the $k$-hop and symmetric
+targets, and the identity of the mask's support and the prior's support off the
+diagonal. Every arm's config and overrides in Table~\ref{tab:round2}
+compose under Hydra to the intended keys (checked for all 26 distinct combinations),
+and the plan script writes the Delta submitter,
+\file{experiments/025-solid-growth/scripts/delta_submit_round2.sh}, one \texttt{sbatch}
+per run in six chains with round 1b first in every chain. A chain is a stagger, not a
+queue: Slurm's \texttt{after:<id>+30} releases a job 30 minutes after the previous one
+starts, so that six 554 GB stage-ins never begin on one Lustre path at once, and a
+later round waits on the scheduler like any other job once its predecessor is running.
+
+\notesec{The figures the rounds fill}
+Figure~\ref{fig:round2} is the wireframe. The first row revises Figure~\ref{fig:sweep}:
+the ladder runs to $\lambda = 100$, the random-graph column moves to $\lambda = 1$, and
+the checkpoints fill the crosses in the divergence panel. The second row is new and
+answers reach and direction: one column per mechanism and hop count, from no penalty
+through the prior at one, two and three hops and its symmetric variant to the mask at
+one, two and three hops and its directed variant, with the three readings and the stars
+as in Figure~\ref{fig:sweep}a, and the training curves move here from the first figure.
+The third row holds placement, the budget, and the representation-by-width panel. The
+two checkpoint panels the first design promised, discovery of edges outside a head's
+prior and overruling of cataloged edges by the digenic interaction, need no new runs and
+are scored on the best-Pearson checkpoints already on Delta once they are pulled.
+
+\tcfig{figures/graph_reg_round2_mockup.pdf}{Wireframe of the three planned figures, no
+data. Row 1 (F1) is Figure~\ref{fig:sweep} extended to $\lambda = 100$ with the random
+control at $\lambda = 1$, filled by round 1b; row 2 (F2) is the mechanism comparison,
+one column per way the graphs enter, with the training curves, filled by round 2; row 3
+(F3) is placement, the 60-epoch budget, and representation by width, filled by round 3. Generated by
+\file{experiments/025-solid-growth/scripts/graph_reg_round2_plan.py}.}{fig:round2}
+
+\notesec{What is not in the rounds, and why}
+The mask on all eight layers is left out: the placement question is where a graph
+block belongs, not whether the model can survive having no free layer. The 010 checkpoints and the cosine-schedule runs stay out; their schedule and
+normalizer differ, and the constant-rate protocol now has its own anchors. Seeds beyond
+three are not added: at three seeds the epoch-29 reading already separates the arms that
+differ by 0.01 or more, and the readings that do not separate (max over epochs, the
+loss-selected epoch) are limited by epoch-to-epoch noise of 0.005 to 0.010 within a run,
+which more seeds do not remove.

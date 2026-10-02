@@ -1,0 +1,17 @@
+# Round 8 (see r8_small_a.yaml), intermediate depth. Measured so far, fold seed 0, 200
+# epochs: without the graph prior, 1 and 2 layers plateau at held-out 0.25 to 0.26 by
+# epoch 20 to 40, and 8 layers never fit even the training compounds (train loss 0.62 at
+# epoch 200, held-out 0.00); with the prior at weight 1, 8 layers reach 0.245 by epoch 160.
+# Where between 2 and 8 layers does the no-prior encoder stop training, and does a
+# mid-depth encoder with the prior converge sooner than 8 layers?
+# No prior: 4 layers on five folds, 3 and 6 layers on folds 0 and 1. 8 GB each, PARALLEL=2
+# (even positions worker 0, odd positions worker 1).
+- {name: L4_lam0_f0, folds: [0], cgt_layers: 4, cgt_lambda: 0.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, epochs: 200}
+- {name: L3_lam0_f0, folds: [0], cgt_layers: 3, cgt_lambda: 0.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, epochs: 200}
+- {name: L4_lam0_f1, folds: [1], cgt_layers: 4, cgt_lambda: 0.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, epochs: 200}
+- {name: L3_lam0_f1, folds: [1], cgt_layers: 3, cgt_lambda: 0.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, epochs: 200}
+- {name: L4_lam0_f2, folds: [2], cgt_layers: 4, cgt_lambda: 0.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, epochs: 200}
+- {name: L6_lam0_f0, folds: [0], cgt_layers: 6, cgt_lambda: 0.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, epochs: 200}
+- {name: L4_lam0_f3, folds: [3], cgt_layers: 4, cgt_lambda: 0.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, epochs: 200}
+- {name: L6_lam0_f1, folds: [1], cgt_layers: 6, cgt_lambda: 0.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, epochs: 200}
+- {name: L4_lam0_f4, folds: [4], cgt_layers: 4, cgt_lambda: 0.0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, epochs: 200}

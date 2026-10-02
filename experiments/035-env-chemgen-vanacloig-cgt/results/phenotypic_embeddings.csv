@@ -1,0 +1,4 @@
+source,compounds_fit,genes,pca_dim,penalty,oof_pearson_first_direction,oof_pearson_median_direction
+wildenhain,5160,242,64,0.001,0.38836426345747443,0.10722182452453868
+hillenmeyer_het,288,5813,64,0.01,0.24053410768426314,0.08402705080419866
+hoepfner_hip,146,5808,64,0.01,0.5535770140241943,0.11052041955805605

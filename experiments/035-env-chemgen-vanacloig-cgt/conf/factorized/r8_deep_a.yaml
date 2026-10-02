@@ -1,0 +1,10 @@
+# Round 8 (see r8_small_a.yaml), the 8-layer chain, one process per card. Trimmed from
+# five folds to two per prior weight after the first live curves (jobs 3074, 3075, 3072):
+# the 1-layer arms reach held-out 0.26 to 0.29 by epoch 9 to 73 while the 8-layer arm at
+# weight 0 sat at 0.012 at epoch 9, so depth slows learning on its own and the full
+# 8-layer grid is not where the budget belongs. Two folds decide whether depth catches
+# up by epoch 200.
+# Card A: weight 0, and fold 0 of round 2's weight 1 as the budget continuation.
+- {name: L8_lam0_f0, folds: [0], cgt_layers: 8, cgt_lambda: 0.0, epochs: 200, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9}
+- {name: L8_lam0_f1, folds: [1], cgt_layers: 8, cgt_lambda: 0.0, epochs: 200, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9}
+- {name: L8_lam1_f0, folds: [0], cgt_layers: 8, cgt_lambda: 1.0, epochs: 200, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9}

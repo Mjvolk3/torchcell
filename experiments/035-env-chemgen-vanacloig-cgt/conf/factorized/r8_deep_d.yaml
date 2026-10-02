@@ -1,0 +1,3 @@
+# Round 8 (see r8_deep_c.yaml). Folds 3 and 4.
+- {name: L8_lam1_f3, folds: [3], gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, cgt_layers: 8, cgt_lambda: 1.0, epochs: 200}
+- {name: L8_lam1_f4, folds: [4], gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0], cgt_heads: 9, cgt_layers: 8, cgt_lambda: 1.0, epochs: 200}

@@ -1,0 +1,14 @@
+# Round 2: learned gene table times a compound encoder, compound-cold, fold seed 0.
+# Each config trains 5 folds x 3 seeds and also scores the seed ensemble.
+- {name: tb_fcfp_bil_d64}
+- {name: tb_fcfp_bil_d16, dim: 16}
+- {name: tb_fcfp_mlp_d64, head: mlp}
+- {name: tb_fcfp_bil_noise, input_noise: 0.3}
+- {name: tb_fcfp_bil_drop5, dropout: 0.5}
+- {name: tb_fcfp_bil_wd1e2, weight_decay: 1.0e-2}
+- {name: tb_fcfp_bil_se, se_weight: 0.1}
+- {name: tb_fcfp_bil_huber, huber: 1.0}
+- {name: tb_fcfp_bil_raw, pca_dim: null}
+- {name: tb_multi_bil, embeddings: [fcfp4_count, maccs, rdkit_2d, molformer_xl, chemberta2_mtr], pca_dim: 32}
+- {name: tb_molformer_bil, embeddings: [molformer_xl]}
+- {name: tb_maccs_bil, embeddings: [maccs]}

@@ -1,0 +1,11 @@
+# Round 6: where the molecule enters. Four mixings, with and without message passing
+# over the nine networks, at dim 64. Vanacloig only, fold seed 0, 5 folds x 3 seeds.
+- {name: mix_readout_L0, mix: readout, gcn_layers: 0}
+- {name: mix_readout_L2, mix: readout, gcn_layers: 2}
+- {name: mix_hit_L0, mix: hit, gcn_layers: 0}
+- {name: mix_hit_L2, mix: hit, gcn_layers: 2}
+- {name: mix_hitprop_L0, mix: hit_prop, gcn_layers: 0}
+- {name: mix_hitprop_L2, mix: hit_prop, gcn_layers: 2}
+- {name: mix_hitprop_L2rel, mix: hit_prop, gcn_layers: 2, gcn_kind: relational}
+- {name: mix_geneattend_L0, mix: gene_attend, gcn_layers: 0}
+- {name: mix_geneattend_L2, mix: gene_attend, gcn_layers: 2}

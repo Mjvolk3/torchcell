@@ -1,0 +1,24 @@
+# Round 13, GPU: per-compound target scaling. The final losses added to the W&B view
+# (wandb_view.py) showed the MSE the models are trained on is dominated by one compound:
+# crystal violet has 14 times the median compound's variance across strains and carries
+# 24.7% of the total, so whenever it is in the fit it takes a quarter of the loss, while
+# the score, a per-compound rank correlation, weights every compound equally. Here each
+# fitted compound's profile is z-scored across strains before the fit (target_scale:
+# per_compound). Otherwise identical to the round-9 bilinear control (one-layer encoder,
+# prior weight 0, fit on the non-test pool, fixed 50 epochs, three seeds averaged, five
+# folds on fold seeds 0, 1, 2), which is the paired comparison. PARALLEL=2.
+- {name: bilz_L1_lam0_fs0_f0, folds: [0], fold_seed: 0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, target_scale: per_compound}
+- {name: bilz_L1_lam0_fs0_f1, folds: [1], fold_seed: 0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, target_scale: per_compound}
+- {name: bilz_L1_lam0_fs0_f2, folds: [2], fold_seed: 0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, target_scale: per_compound}
+- {name: bilz_L1_lam0_fs0_f3, folds: [3], fold_seed: 0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, target_scale: per_compound}
+- {name: bilz_L1_lam0_fs0_f4, folds: [4], fold_seed: 0, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, target_scale: per_compound}
+- {name: bilz_L1_lam0_fs1_f0, folds: [0], fold_seed: 1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, target_scale: per_compound}
+- {name: bilz_L1_lam0_fs1_f1, folds: [1], fold_seed: 1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, target_scale: per_compound}
+- {name: bilz_L1_lam0_fs1_f2, folds: [2], fold_seed: 1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, target_scale: per_compound}
+- {name: bilz_L1_lam0_fs1_f3, folds: [3], fold_seed: 1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, target_scale: per_compound}
+- {name: bilz_L1_lam0_fs1_f4, folds: [4], fold_seed: 1, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, target_scale: per_compound}
+- {name: bilz_L1_lam0_fs2_f0, folds: [0], fold_seed: 2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, target_scale: per_compound}
+- {name: bilz_L1_lam0_fs2_f1, folds: [1], fold_seed: 2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, target_scale: per_compound}
+- {name: bilz_L1_lam0_fs2_f2, folds: [2], fold_seed: 2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, target_scale: per_compound}
+- {name: bilz_L1_lam0_fs2_f3, folds: [3], fold_seed: 2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, target_scale: per_compound}
+- {name: bilz_L1_lam0_fs2_f4, folds: [4], fold_seed: 2, gene_encoder: cgt, pca_dim: null, gene_batch: 128, seeds: [0, 1, 2], cgt_heads: 9, cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, target_scale: per_compound}

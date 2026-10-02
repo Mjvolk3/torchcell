@@ -1,0 +1,27 @@
+compound,target,n_genes,spearman,pearson,ceiling,split,arm,fold,seed,epoch,selected_on,n_train_compounds
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3485,0.3700703807973761,0.6366190618444811,0.9128873232893497,val,embedding_env,0,0,11,val/centered_spearman_mean,28
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3485,0.14133371482082802,0.36636510742563677,0.8744224663193487,val,embedding_env,0,0,11,val/centered_spearman_mean,28
+4'-hydroxyacetophenone,raw,3507,0.5062471012992459,0.5851443806948963,0.8379928898821091,val,embedding_env,0,0,11,val/centered_spearman_mean,28
+4'-hydroxyacetophenone,centered,3507,0.26732653136158585,0.3265247709584392,0.77299360461435,val,embedding_env,0,0,11,val/centered_spearman_mean,28
+myclobutanil,raw,3496,-0.03706832554208754,-0.018018824986993358,0.746076298727284,val,embedding_env,0,0,11,val/centered_spearman_mean,28
+myclobutanil,centered,3496,0.23476935926152787,0.32931532582830914,0.8247419993372226,val,embedding_env,0,0,11,val/centered_spearman_mean,28
+p-coumaric acid,raw,3510,0.36773568309039834,0.5032563033587166,0.27549278107492503,val,embedding_env,0,0,11,val/centered_spearman_mean,28
+p-coumaric acid,centered,3510,0.14279791581456122,0.1872158980572605,0.0,val,embedding_env,0,0,11,val/centered_spearman_mean,28
+"2,2'-bipyridine",raw,3490,-0.057292250079393356,-0.12965594383263288,0.9331732906177713,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+"2,2'-bipyridine",centered,3489,0.41043188049604706,0.6838991637276881,0.9537246922379153,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+"2,4-dimethylimidazole",raw,3492,0.05062688942984029,0.1968514729985787,0.7305743732158305,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+"2,4-dimethylimidazole",centered,3491,0.5714645857116953,0.7545331153316587,0.8603509796715365,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+"2,6-dimethylpyrazine",raw,3505,0.18700402890208317,0.2641304147337057,0.8729821697732166,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+"2,6-dimethylpyrazine",centered,3504,0.20375309651783824,0.22915378835078146,0.8735257049197076,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+ethanol,raw,3487,0.12379265175556119,0.1885480795518206,0.9100766609130951,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+ethanol,centered,3486,0.1473970583240906,0.1417762063276164,0.9101573275833478,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+furfural,raw,3494,0.07806529465694619,0.11874491386858993,0.877833605571729,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+furfural,centered,3493,0.3837665733967153,0.36073373435663847,0.8908737416214741,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+isobutanol,raw,3481,0.16028940433007946,0.22977995544283847,0.886756227316329,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+isobutanol,centered,3480,0.16859560488697242,0.22100265040608597,0.8826004191432393,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+levulinic acid,raw,3491,0.11148891637216361,0.1741376388607633,0.38592988486577784,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+levulinic acid,centered,3487,0.3181164704431824,0.49883423657582937,0.6202482982762972,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+sodium acetate,raw,3510,0.03163398790170256,0.13922410861365445,0.6082211129787902,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+sodium acetate,centered,3510,0.0680340258088294,0.19863392107491318,0.6039626287030394,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+sodium butyrate,raw,3490,0.007208759120165083,0.04570812003353128,0.0,test,embedding_env,0,0,11,val/centered_spearman_mean,28
+sodium butyrate,centered,3490,0.3932024456133879,0.6219782648764741,0.41651928502798535,test,embedding_env,0,0,11,val/centered_spearman_mean,28

@@ -830,3 +830,20 @@ CI (pydantic 2.13.5, pydantic-core 2.46.5) reported a record's two validation er
 - A hot journal no longer hides a newer or unreadable record. On `SQLITE_READONLY_ROLLBACK` the record is read from a private copy of the file's own pages and checked, on both paths, naming `data.db`.
 - Companions: one another migrator moved first is skipped. When a different file replaces the kept copy, the earlier kept copy's companions are removed first, so a kept file and its journal always belong together. When another migrator has just kept the same bytes, the kept file and its journal are left as they are. A directory named `data.db` is refused as such.
 - Tests kill the reviewer's surviving mutants: `SQLITE_LOCKED`, `SQLITE_PERM`, primary-code masking with extended codes, `-wal`/`-shm`, companions before the rename, the rows-equal path's companion handling, the OS error in the install message, the count and digest catches widened to `Exception`. The mode-000/200 test no longer depends on the uid.
+
+## 2026.10.02 - Seventh review: one root lock, crash windows, URIs, non-regular files
+
+- **Root lock.** The keep and install steps of a migration, and the install of an explicit rebuild, run under an exclusive `fcntl.flock` on the genome-root directory (`_root_lock`). Under it, a migration first re-checks that `data.db` is still untrusted (another migrator may have finished) and that it is the same file it inspected (inode, size, mtime; otherwise refused by name). Concurrent migrators could otherwise delete the journal another had just kept (the reviewer saw 9 of 25 trials). A filesystem that cannot take the lock is refused by name and nothing proceeds unlocked. The real root is on local ext4 (`/scratch`). On NFS, Linux implements `flock` with POSIX byte-range locks, which exclude other clients when the server supports locking (NLM or NFSv4). Mounted with `nolock` or `local_lock=flock` it excludes only processes on the same client. An unsupported lock (`ENOLCK`) is refused.
+- **Removed as unnecessary under the lock:** the pre-lock early returns (data.db trusted again before the digest; copy and data.db both trusted before the keep). The in-lock re-check subsumes both; the cost in a race is one wasted digest and copy.
+- **Kept, because they still have work under the lock:**
+  - The equal-bytes branch of `_keep_copy`: a migration killed after keeping the file and moving its journal leaves exactly that pair, and replacing it would drop the journal.
+  - The vanished-companion skip: absent companions are the common case, and pre-2026.10.01 processes (gffutils deleting its journal at commit) do not take the lock.
+- **Kept copy:** a non-regular `data.db.untrusted` (directory, symlink) is refused by name. One this process cannot read counts as different. The copy gets the original's mode instead of mkstemp's 0600.
+- **Crash windows.** Kill points of a pair migration:
+  - K1 (copy kept, journal still beside `data.db`): the file stays untrusted through its hot journal.
+  - K2 (journal moved, build not renamed): `_journal_moved_to_kept` marks the torn file untrusted (byte-identical to the kept copy, kept journal present, none of its own).
+  - The explicit rebuild over a hot journal now keeps the pair the same way instead of removing the journal, so it has the same kill points.
+- **URIs.** Read-only opens use `_ro_uri` (an encoded `file:` URI), so `?`, `#` and `%` in a directory name stay part of the path.
+- **Non-regular `data.db`.** A FIFO (which blocked every open), a dangling symlink or a symlink loop is refused by name on both paths.
+- **Committed-record peek.** On a hot journal the record is read from a private copy of the file AND its journal, rolled back, so the refusal sees the committed record; a defective record table names `data.db`. The peek copies are named for the dead-pid sweep.
+- **In-place rebuild under a reader.** gffutils' bare `TypeError` on an empty `meta` table (old code rebuilding in place) is now `GenomeDatabaseUnavailableError` at the first read.

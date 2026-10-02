@@ -164,18 +164,28 @@ SeqBasis = Literal[
 
 Basis = Literal["reported", "product", "estimate"]
 
-# Where a row sits on the isoprenol axis, which is what the pin reads.
-#   direct      the study measures isoprenol or isopentenol itself. The two names are
-#               the same molecule, 3-methyl-3-buten-1-ol; "isopentenol" is the older
-#               usage in the JBEI papers and "isoprenol" the current one, so a row is
-#               direct under either word.
-#   precursor   the study measures a different isoprenoid or terpenoid, so it carries
-#               the mevalonate or MEP pathway that feeds isoprenol without carrying
-#               the product. Lycopene, pinene, mevalonate and geranic acid are here.
-#   tolerance   the study measures tolerance to isoprenol, or to a short-chain alcohol
-#               or biomass inhibitor that stands in for it, without measuring titer.
+# Where a row sits on the isoprenol axis, which is what the pin reads. The division is
+# by the ROLE the molecule plays in the experiment, because that is what decides whether
+# a row teaches production or teaches survival, and the two are different labels.
+#   direct      isoprenol or isopentenol is the measured PRODUCT, meaning a titer. The
+#               two names are the same molecule, 3-methyl-3-buten-1-ol; "isopentenol"
+#               is the older usage in the JBEI papers and "isoprenol" the current one,
+#               so a row is direct under either word. Lifted into tranche 1.
+#   tolerance   isoprenol is the STRESSOR and the readout is growth, with no titer. A
+#               row here still measures the molecule of interest, so it is lifted into
+#               tranche 1 alongside the production rows. A row reporting both a titer
+#               and a tolerance assay is "direct", because the titer is the stronger
+#               label and a row carries one value.
+#   precursor   the measured product is a different isoprenoid or terpenoid, so the row
+#               carries the mevalonate or MEP pathway that feeds isoprenol without
+#               carrying the product. Lycopene, pinene, mevalonate and geranic acid are
+#               here. Lifted above the cut, not into tranche 1.
+#   analog      the stressor is a short-chain alcohol or a biomass inhibitor standing in
+#               for isoprenol rather than isoprenol itself. Reported on the axis and NOT
+#               lifted: the substitution is an assumption about cross-tolerance, and a
+#               row should not be promoted on an assumption.
 #   none        no isoprenol relevance; the row is in the table on scale alone.
-Isoprenol = Literal["direct", "precursor", "tolerance", "none"]
+Isoprenol = Literal["direct", "tolerance", "precursor", "analog", "none"]
 
 # Ingestion state. Every row here starts as a candidate because no bacterial dataset
 # is built, but two other states matter: a corpus that re-serves other papers is an
@@ -4183,7 +4193,7 @@ CANDIDATES: list[Candidate] = [
         dim_basis="reported",
         seq_basis="K-12-KO",
         modality="gene deletion",
-        isoprenol="direct",
+        isoprenol="tolerance",
         product="isoprenol",
         why="The only isoprenol tolerance screen in either host over a cataloged "
         "deletion collection, which is what earns tier 2 on one cleared bar. "
@@ -4419,11 +4429,11 @@ def is_pinned(c: Candidate) -> bool:
     """Whether the isoprenol pin protects this row from being displaced.
 
     Read by every lift, including the per-host floor, so that no mechanism can undo
-    another's promotion. Tolerance rows are deliberately NOT pinned: they are on the
-    isoprenol axis for reporting, but they are inhibitor screens and the ordering
-    rule already places them on their own scale.
+    another's promotion. ``analog`` rows are deliberately NOT protected: standing in a
+    different alcohol for isoprenol is an assumption about cross-tolerance, and the
+    table does not promote a row on an assumption.
     """
-    return c.isoprenol in ("direct", "precursor")
+    return c.isoprenol in ("direct", "tolerance", "precursor")
 
 
 def _lift(
@@ -4476,7 +4486,13 @@ def ranked() -> tuple[list[Candidate], list[tuple[str, str, int, int]]]:
     # Measurements rank a fifty-strain titer campaign below every barcoded screen,
     # which on the unaided order left two of the four P. putida isoprenol campaigns
     # in the reserve. Direct rows reach tranche 1; precursor rows reach the cut.
-    _lift(rows, PIN_DIRECT, lambda c: c.isoprenol == "direct", "isoprenol", moves)
+    _lift(
+        rows,
+        PIN_DIRECT,
+        lambda c: c.isoprenol in ("direct", "tolerance"),
+        "isoprenol",
+        moves,
+    )
     _lift(
         rows, PIN_PRECURSOR, lambda c: c.isoprenol == "precursor", "precursor", moves
     )
@@ -4977,13 +4993,15 @@ def render_pins(
         r"\begingroup",
         r"\footnotesize",
         r"\begin{longtable}{@{}L{40mm} L{13mm} L{17mm} L{32mm} r r L{20mm}@{}}",
-        r"\caption[]{The isoprenol axis. \emph{Rule} is the rank the measurement "
-        r"ordering gives on its own and \emph{Final} the rank this document prints, so "
-        r"the pin can be undone row by row. \emph{Direct} measures isoprenol or "
-        r"isopentenol itself, the same molecule under two names, and is lifted into "
-        r"tranche 1. \emph{Precursor} measures another isoprenoid and is lifted above "
-        r"the cut. \emph{Tolerance} rows are reported on the axis but not pinned, "
-        r"because an inhibitor screen is already ranked on its own scale.}",
+        r"\caption[]{The isoprenol axis, divided by the role the molecule plays. "
+        r"\emph{Rule} is the rank the measurement ordering gives on its own and "
+        r"\emph{Final} the rank this document prints, so the pin can be undone row by "
+        r"row. \emph{Direct} measures isoprenol or isopentenol as a product, the same "
+        r"molecule under two names; \emph{tolerance} measures growth against it as a "
+        r"stressor; both are lifted into tranche 1. \emph{Precursor} measures another "
+        r"isoprenoid and is lifted above the cut. \emph{Analog} substitutes a different "
+        r"alcohol or inhibitor and is reported but not lifted, because the substitution "
+        r"assumes cross-tolerance.}",
         r"\label{tab:bpins}\\",
         r"\toprule",
         r"\textbf{Dataset} & \textbf{Host} & \textbf{Axis} & \textbf{Product} & "
@@ -4999,7 +5017,7 @@ def render_pins(
         r"\bottomrule",
         r"\endfoot",
     ]
-    order = {"direct": 0, "precursor": 1, "tolerance": 2, "none": 3}
+    order = {"direct": 0, "tolerance": 1, "precursor": 2, "analog": 3, "none": 4}
     for c in sorted(axis, key=lambda c: (order[c.isoprenol], final_rank[c.name])):
         body.append(
             f"{tex_escape(c.name)} & \\emph{{{tex_escape(c.organism)}}} & {c.isoprenol} & "
@@ -5063,7 +5081,10 @@ def main() -> None:
         f"of the fifty: {n_analog} mirror a built yeast dataset, "
         f"{n_sourced} carry figures sourced this pass"
     )
-    axis = {k: [c for c in rows if c.isoprenol == k] for k in ("direct", "precursor", "tolerance")}
+    axis = {
+        k: [c for c in rows if c.isoprenol == k]
+        for k in ("direct", "tolerance", "precursor", "analog")
+    }
     inside = {k: sum(rows.index(c) < TRANCHE_2 for c in v) for k, v in axis.items()}
     print(
         "isoprenol axis: "

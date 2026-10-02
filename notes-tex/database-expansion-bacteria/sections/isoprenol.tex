@@ -31,17 +31,24 @@ recover what scale alone said, and the weight would be chosen by whoever wanted 
 particular answer. A pin applied after ranking does the same reordering and stays
 reversible, so that is what the generating script does.
 
+The axis divides by the role the molecule plays in the experiment, because that is what
+decides whether a row teaches production or teaches survival.
+
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
-  \item A row on the \term{direct} axis measures isoprenol or isopentenol itself. It is
-    lifted into the first tranche.
-  \item A row on the \term{precursor} axis measures a different isoprenoid or terpenoid,
-    so it carries the mevalonate or MEP pathway that feeds isoprenol without carrying the
-    product. Lycopene, pinene, mevalonate and geranic acid are here. It is lifted above
-    the cut at fifty.
-  \item A row on the \term{tolerance} axis measures tolerance to isoprenol, or to a
-    short-chain alcohol standing in for it, without measuring a titer. It is reported on
-    the axis and \emph{not} lifted, because an inhibitor screen is already ranked on the
-    scale of a screen rather than the scale of a titer campaign.
+  \item \term{direct} -- isoprenol or isopentenol is the measured product, meaning a
+    titer. Lifted into the first tranche.
+  \item \term{tolerance} -- isoprenol is the stressor and the readout is growth, with no
+    titer. Lifted into the first tranche as well, since the molecule of interest is still
+    the one being measured against. A row reporting both a titer and a tolerance assay is
+    direct, because a row carries one value and the titer is the stronger label.
+  \item \term{precursor} -- the measured product is a different isoprenoid or terpenoid,
+    so the row carries the mevalonate or MEP pathway that feeds isoprenol without
+    carrying the product. Lycopene, pinene, mevalonate and geranic acid are here. Lifted
+    above the cut at fifty, not into the first tranche.
+  \item \term{analog} -- the stressor is a short-chain alcohol or a biomass inhibitor
+    standing in for isoprenol rather than isoprenol itself. Reported on the axis and
+    \emph{not} lifted. Substituting one alcohol for another assumes cross-tolerance, and
+    a row is not promoted on an assumption.
 \end{itemize}
 
 Each lift displaces the weakest row inside the boundary that no pin protects, and every

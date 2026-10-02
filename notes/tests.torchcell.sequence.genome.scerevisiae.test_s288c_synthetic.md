@@ -45,3 +45,16 @@ New tests: the record field sets pinned to `RECORD_VERSION`; current-version rec
 ## 2026.10.01 - Fourth review additions
 
 New tests: unreadable files (truncated, garbage, zero length, zeroed page) migrated on the default path with exactly one `data.db.untrusted` and rebuilt by `overwrite=True`; rows sqlite cannot read behind a readable record; the sqlite message in the reason; a non-JSON record; `overwrite=True` over a version-0 record; a two-error validation summary; sha256 unchanged for the non-integer and non-object refusals; field names and annotations pinned; the guard's tier-absent and root-absent returns; the autouse fixture's body; a copy keeping an assigned gene set; a dead-pid name without the `.building` suffix left alone.
+
+## 2026.10.02 - Seventh review additions
+
+New tests cover:
+
+- **Root lock.** A migration and an explicit rebuild both wait for a real second process holding the root lock. A root that cannot be locked is refused by name. Four real processes keep the original pair over an earlier, same-size pair. A write by another process during the migration is refused by name.
+- **Kept copy.** It takes the original's mode. An unreadable earlier copy counts as different. A directory or symlink kept path is refused. `_keep_copy` compares content, not stat.
+- **Crash windows.** Kill points K1 and K2 of a pair migration, with the full WARNING. A file with its own journal is not the K2 state.
+- **Explicit rebuild.** Over a hot journal it keeps the pair; a stray non-hot `-wal` is removed.
+- **Companions.** One that cannot be moved stops the install.
+- **Committed-record peek.** A `None` result re-raises the sqlite error. Peek copies go to the temp dir under sweepable names and are swept when their process is dead. Only the rollback code triggers a peek. A committed version-2 record under a raw version-1 page is refused on both paths. A two-row committed record names `data.db`.
+- **Paths and non-regular files.** Genome roots with `?`, `#` and `%41`. A FIFO, a dangling symlink and a symlink loop named `data.db`; the FIFO case runs in a daemon thread so a regression fails instead of hanging.
+- **In-place rebuild under a reader.** The empty-meta named error, and an unrelated `TypeError` left untouched.

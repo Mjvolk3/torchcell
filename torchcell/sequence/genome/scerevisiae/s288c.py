@@ -5,6 +5,7 @@
 
 """S. cerevisiae S288C genome access over SGD FASTA/GFF with GO and sequence windows."""
 
+import fcntl
 import filecmp
 import hashlib
 import json
@@ -19,8 +20,8 @@ import sqlite3
 import stat
 import tempfile
 import weakref
-from collections.abc import Mapping, Sequence
-from contextlib import closing
+from collections.abc import Iterator, Mapping, Sequence
+from contextlib import closing, contextmanager
 from enum import StrEnum
 from itertools import product
 from pathlib import Path
@@ -528,9 +529,11 @@ _BUILD_TEMP = re.compile(
 )
 #: Largest pid a sweep considers (a 32-bit pid_t); a name beyond it is not ours.
 _PID_LIMIT = 2**31 - 1
-#: Private database copies in the temp dir: ``torchcell-genome-<host>-<pid>-<random>.db``.
+#: Private database copies in the temp dir, ``torchcell-genome-<host>-<pid>-<random>.db``:
+#: an instance's write copy, or a short-lived peek copy (``...-peek<random>.db``, with
+#: its ``-journal`` while the copy is rolled back).
 _PRIVATE_COPY = re.compile(
-    r"^torchcell-genome-(?P<host>.+)-(?P<pid>\d+)-[a-z0-9_]+\.db$"
+    r"^torchcell-genome-(?P<host>.+)-(?P<pid>\d+)-[a-z0-9_]+\.db(?:-journal)?$"
 )
 
 
@@ -657,6 +660,36 @@ def require_damage(db_path: str, exc: sqlite3.DatabaseError) -> None:
     ) from exc
 
 
+def _ro_uri(path: str) -> str:
+    """A read-only sqlite URI for ``path``, percent-encoded, so a ``?``, ``#`` or ``%``
+    in a directory name stays part of the path instead of starting a query.
+    """
+    return Path(path).absolute().as_uri() + "?mode=ro"
+
+
+@contextmanager
+def _root_lock(db_dir: str) -> Iterator[None]:
+    """An exclusive ``flock`` on the genome-root directory for the duration of a
+    migration's or rebuild's critical section, so two migrators never interleave
+    their keep and install steps. The lock is released when the descriptor closes. A
+    filesystem that cannot take the lock is refused by name; nothing proceeds
+    unlocked.
+    """
+    fd = os.open(db_dir, os.O_RDONLY)
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+        except OSError as exc:
+            raise GenomeDatabaseUnavailableError(
+                f"{db_dir} cannot be locked ({exc}); a migration or rebuild needs an "
+                "exclusive lock on the genome root, so every file is left alone. Put "
+                "genome_root on a filesystem that supports flock."
+            ) from exc
+        yield
+    finally:
+        os.close(fd)
+
+
 def _remove_if_present(path: str) -> None:
     """Remove ``path``; a path that is already gone is fine."""
     try:
@@ -738,7 +771,7 @@ def _database_counts(conn: sqlite3.Connection) -> tuple[dict[str, int], int]:
 def database_content_digest(db_path: str) -> str:
     """sha256 over every ``features`` and ``relations`` row, in a fixed order."""
     h = hashlib.sha256()
-    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    conn = sqlite3.connect(_ro_uri(db_path), uri=True)
     for row in conn.execute("SELECT * FROM features ORDER BY id"):
         h.update(repr(row).encode())
     h.update(b"relations")
@@ -844,13 +877,13 @@ def write_genome_database(
     return tmp_path
 
 
-def _read_record_json(db_path: str) -> str | None:
+def _read_record_json(db_path: str, name: str | None = None) -> str | None:
     """The raw record JSON stored inside ``db_path``, or None when it carries none.
 
     A file sqlite cannot read raises ``sqlite3.DatabaseError``; the connection is
     closed on every path.
     """
-    with closing(sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)) as conn:
+    with closing(sqlite3.connect(_ro_uri(db_path), uri=True)) as conn:
         has_table = conn.execute(
             "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
             (SOURCE_TABLE,),
@@ -860,7 +893,8 @@ def _read_record_json(db_path: str) -> str | None:
         rows = conn.execute(f"SELECT record FROM {SOURCE_TABLE}").fetchall()
     if len(rows) != 1:
         raise GenomeDatabaseSourceError(
-            f"{db_path}: {SOURCE_TABLE} holds {len(rows)} rows, expected exactly 1"
+            f"{name or db_path}: {SOURCE_TABLE} holds {len(rows)} rows, expected "
+            "exactly 1"
         )
     return str(rows[0][0])
 
@@ -939,34 +973,45 @@ def refuse_newer_record(db_path: str) -> None:
         record_version(db_path, raw)
 
 
-def _record_json_without_journal(db_path: str) -> str | None:
-    """The record as stored in ``db_path``'s own pages, read from a private copy that
-    has no companion journal; None when that copy has no readable record.
+def _committed_record_json(db_path: str) -> str | None:
+    """The record as last committed: ``db_path`` and its hot journal are copied into
+    the temp dir (``torchcell-genome-<host>-<pid>-peek<random>.db``, so a killed
+    process's copy is swept), the copy is opened read-write so sqlite rolls the
+    journal back, and the record is read from it. None when the rolled-back copy has
+    no readable record. A defective record table names ``db_path``, not the copy.
     """
-    fd, copy_path = tempfile.mkstemp(prefix="torchcell-genome-peek-", suffix=".db")
+    fd, copy_path = tempfile.mkstemp(
+        prefix=f"torchcell-genome-{socket.gethostname()}-{os.getpid()}-peek",
+        suffix=".db",
+    )
     os.close(fd)
     try:
         shutil.copyfile(db_path, copy_path)
+        shutil.copyfile(db_path + "-journal", copy_path + "-journal")
         try:
-            return _read_record_json(copy_path)
+            with closing(sqlite3.connect(copy_path)) as conn:
+                conn.execute("SELECT 1 FROM sqlite_master").fetchone()
+            return _read_record_json(copy_path, name=db_path)
         except sqlite3.DatabaseError:
             return None
     finally:
-        os.remove(copy_path)
+        _remove_if_present(copy_path)
+        _remove_if_present(copy_path + "-journal")
 
 
 def _read_record_json_checked(db_path: str) -> str | None:
     """:func:`_read_record_json`, except that a hot rollback journal (which makes the
     read fail with ``SQLITE_READONLY_ROLLBACK``) does not hide a record this checkout
-    must refuse: the record in the file's own pages is checked first (a newer version
-    or an unreadable record raises by name, naming ``db_path``), then the error is
-    re-raised for the caller to treat as damage.
+    must refuse: the committed record is checked first (a newer version or an
+    unreadable record raises by name, naming ``db_path``), then the error is
+    re-raised for the caller to treat as damage. The record checked is the committed
+    one: the file plus its journal, rolled back in a private copy.
     """
     try:
         return _read_record_json(db_path)
     except sqlite3.DatabaseError as exc:
         if getattr(exc, "sqlite_errorcode", None) == sqlite3.SQLITE_READONLY_ROLLBACK:
-            peeked = _record_json_without_journal(db_path)
+            peeked = _committed_record_json(db_path)
             if peeked is not None:
                 check_record(db_path, peeked)
         raise
@@ -1023,7 +1068,7 @@ def untrusted_reason(
             f"no job reads it: {rebuild_call}"
         )
     try:
-        with closing(sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)) as conn:
+        with closing(sqlite3.connect(_ro_uri(db_path), uri=True)) as conn:
             featuretype_counts, relations_count = _database_counts(conn)
     except sqlite3.DatabaseError as exc:
         require_damage(db_path, exc)
@@ -1044,7 +1089,87 @@ def untrusted_reason(
             "it was written in place after its build (sqlite change counter "
             f"{counter}, {record.change_counter} recorded)"
         )
+    if _journal_moved_to_kept(db_path):
+        return (
+            "its hot journal was moved beside data.db.untrusted by a migration that "
+            "did not finish"
+        )
     return None
+
+
+def _journal_moved_to_kept(db_path: str) -> bool:
+    """``data.db`` is byte-identical to the kept copy, a kept journal sits beside the
+    copy, and ``data.db`` has no journal of its own: a migrator moved the hot journal
+    and was killed before renaming the fresh build in. The torn file's cheap checks
+    pass, so this is what marks it untrusted.
+    """
+    if osp.basename(db_path) != GENOME_DB_FILENAME:
+        return False
+    kept = osp.join(osp.dirname(db_path), UNTRUSTED_DB_FILENAME)
+    if not osp.isfile(kept + "-journal") or osp.lexists(db_path + "-journal"):
+        return False
+    if not osp.isfile(kept):
+        return False
+    try:
+        return filecmp.cmp(db_path, kept, shallow=False)
+    except PermissionError:  # another user's kept copy: not this file's journal pair
+        return False
+
+
+def _has_hot_journal(db_path: str) -> bool:
+    """Whether a journal beside ``db_path`` is hot: the read-only read fails with
+    ``SQLITE_READONLY_ROLLBACK`` (it must be rolled back before the file is read).
+    """
+    if not osp.isfile(db_path + "-journal"):
+        return False
+    try:
+        _read_record_json(db_path)
+    except sqlite3.DatabaseError as exc:
+        return (
+            getattr(exc, "sqlite_errorcode", None) == sqlite3.SQLITE_READONLY_ROLLBACK
+        )
+    return False
+
+
+def _keep_copy(copy_path: str, kept: str, db_path: str) -> None:
+    """Move ``copy_path`` (a copy of the untrusted ``db_path``) onto ``kept``, dropping
+    the earlier kept copy's companions first so a kept file and its journal always
+    belong together. Must run under :func:`_root_lock`.
+
+    When ``kept`` already holds the same bytes, it is left as is with its companions:
+    a migration killed after keeping the file (and possibly moving its journal) left
+    exactly this pair, and replacing it would drop that journal. A kept path that is
+    not a regular file is refused by name; one this process cannot read counts as a
+    different file.
+    """
+    if osp.lexists(kept) and (osp.islink(kept) or not osp.isfile(kept)):
+        raise GenomeDatabaseUnavailableError(
+            f"{kept} is not a regular file, so the untrusted {db_path} cannot be kept "
+            "there; every file is left alone. Remove or rename it, then retry."
+        )
+    try:
+        same = osp.isfile(kept) and filecmp.cmp(copy_path, kept, shallow=False)
+    except PermissionError:  # another user's kept copy: a different file
+        same = False
+    if same:
+        return
+    for suffix in _COMPANION_SUFFIXES:
+        _remove_if_present(kept + suffix)
+    os.replace(copy_path, kept)
+
+
+def _copy_preserving_mode(db_path: str, copy_path: str) -> None:
+    """Copy ``db_path`` onto ``copy_path`` (a mkstemp file, mode 0600) and give the copy
+    the mode of the file it preserves, so other users of a group-writable root can
+    read the kept copy as they could the original.
+    """
+    shutil.copyfile(db_path, copy_path)
+    os.chmod(copy_path, stat.S_IMODE(os.stat(db_path).st_mode))
+
+
+def _identity(path: str) -> tuple[int, int, int]:
+    st = os.stat(path)
+    return (st.st_ino, st.st_size, st.st_mtime_ns)
 
 
 def _content_digest_or_none(db_path: str) -> str | None:
@@ -1067,52 +1192,52 @@ def migrate_genome_database(
 ) -> None:
     """Replace the untrusted ``db_path`` with a fresh build, keeping at most one file.
 
-    A fresh build is written beside ``db_path``. If ``db_path`` is trusted again by
-    then (another process finished the same migration), the build is discarded.
-    Otherwise the two are compared by :func:`database_content_digest`: identical rows
-    (an old-code rebuild without a record) replace ``db_path`` and nothing is kept;
-    different rows (deleted or rewritten in place) are copied to
-    ``data.db.untrusted``, replacing any earlier kept file, before the fresh build is
-    renamed onto ``db_path`` (:func:`install_genome_database`, which moves any
-    companion journal beside the kept copy). When the copy turns out to be trusted
-    (another process installed its build between the check and the copy), nothing is
-    kept and no WARNING is logged: the other process kept the original. The path never
-    goes missing and readers holding the old inode keep it. One WARNING names the
-    case. Every temporary file is removed on every path.
+    A fresh build is written beside ``db_path`` and compared with it by
+    :func:`database_content_digest`; when the rows differ, ``db_path`` is copied (with
+    its mode). The keep and install steps then run under :func:`_root_lock`: if
+    ``db_path`` is trusted again (another migrator finished first) nothing is done;
+    if it was replaced or written since it was inspected, the migration is refused by
+    name; identical rows (an old-code rebuild without a record) replace ``db_path``
+    and nothing is kept; different rows (deleted or rewritten in place) are kept as
+    ``data.db.untrusted`` (:func:`_keep_copy`) before the fresh build is renamed onto
+    ``db_path`` (:func:`install_genome_database`, which moves any companion journal
+    beside the kept copy). The path never goes missing and readers holding the old
+    inode keep it. One WARNING names the case. Every temporary file is removed on
+    every path.
     """
     db_dir = osp.dirname(db_path)
     tmp_path = write_genome_database(gff_path, db_dir, expected)
     copy_path: str | None = None
     try:
-        if untrusted_reason(db_path, expected, rebuild_call) is None:
-            return
-        if _content_digest_or_none(db_path) == database_content_digest(tmp_path):
-            install_genome_database(tmp_path, db_path)
-            log.warning(
-                "genome database %s was not trusted (%s); its rows equal a fresh "
-                "build, so it was replaced by the recorded build and nothing was kept",
-                db_path,
-                reason,
-            )
-            return
-        kept = osp.join(db_dir, UNTRUSTED_DB_FILENAME)
-        copy_path = _temp_in(db_dir, UNTRUSTED_DB_FILENAME)
-        shutil.copyfile(db_path, copy_path)
-        copy_trusted = untrusted_reason(copy_path, expected, rebuild_call) is None
-        if copy_trusted and untrusted_reason(db_path, expected, rebuild_call) is None:
-            # Another process installed its fresh build between our check and our
-            # copy: the copy is that build, not the untrusted file, so keep nothing
-            # (the other process kept the original).
-            return
-        if not (osp.exists(kept) and filecmp.cmp(copy_path, kept, shallow=False)):
-            # A different file replaces the earlier kept copy: drop that copy's
-            # companions first, so a kept file and its journal always belong together.
-            # (Equal bytes: another migrator kept this same file a moment ago, with
-            # its companions; leave both.)
-            for suffix in _COMPANION_SUFFIXES:
-                _remove_if_present(kept + suffix)
-            os.replace(copy_path, kept)
-        install_genome_database(tmp_path, db_path, kept)
+        inspected = _identity(db_path)
+        rows_equal = _content_digest_or_none(db_path) == database_content_digest(
+            tmp_path
+        )
+        if not rows_equal:
+            copy_path = _temp_in(db_dir, UNTRUSTED_DB_FILENAME)
+            _copy_preserving_mode(db_path, copy_path)
+        with _root_lock(db_dir):
+            if untrusted_reason(db_path, expected, rebuild_call) is None:
+                return  # another migrator finished first; it kept the original
+            if _identity(db_path) != inspected:
+                raise GenomeDatabaseUnavailableError(
+                    f"{db_path} was replaced or written by another process while this "
+                    "one was migrating it; every file is left alone. Retry."
+                )
+            if copy_path is None:
+                install_genome_database(tmp_path, db_path)
+                log.warning(
+                    "genome database %s was not trusted (%s); its rows equal a fresh "
+                    "build, so it was replaced by the recorded build and nothing was "
+                    "kept",
+                    db_path,
+                    reason,
+                )
+                return
+            copy_trusted = untrusted_reason(copy_path, expected, rebuild_call) is None
+            kept = osp.join(db_dir, UNTRUSTED_DB_FILENAME)
+            _keep_copy(copy_path, kept, db_path)
+            install_genome_database(tmp_path, db_path, kept)
         if copy_trusted:
             # The file's own pages match its record; only a companion journal beside
             # it (moved to ``kept``-journal with it) made it untrusted.
@@ -1138,6 +1263,47 @@ def migrate_genome_database(
         for path in (tmp_path, copy_path):
             if path is not None and osp.exists(path):
                 os.remove(path)
+
+
+def rebuild_genome_database(
+    gff_path: str, db_path: str, expected: GenomeDatabaseSource
+) -> None:
+    """The explicit rebuild (``overwrite=True``): build, then under
+    :func:`_root_lock` rename the build onto ``db_path``. When a HOT journal sits
+    beside the old file, the old file and its journal are kept as a pair (as a
+    migration would) instead of removing the journal, so no crash point leaves a
+    torn file without its journal; one WARNING names the kept pair.
+    """
+    db_dir = osp.dirname(db_path)
+    tmp_path = write_genome_database(gff_path, db_dir, expected)
+    copy_path: str | None = None
+    try:
+        with _root_lock(db_dir):
+            if not _has_hot_journal(db_path):
+                install_genome_database(tmp_path, db_path)
+                return
+            copy_path = _temp_in(db_dir, UNTRUSTED_DB_FILENAME)
+            _copy_preserving_mode(db_path, copy_path)
+            kept = osp.join(db_dir, UNTRUSTED_DB_FILENAME)
+            _keep_copy(copy_path, kept, db_path)
+            install_genome_database(tmp_path, db_path, kept)
+        log.warning(
+            "genome database %s had a hot journal; the explicit rebuild kept the old "
+            "file with its journal as %s (replacing any earlier one) and installed the "
+            "recorded build",
+            db_path,
+            kept,
+        )
+    finally:
+        for path in (tmp_path, copy_path):
+            if path is not None and osp.exists(path):
+                os.remove(path)
+
+
+def _meta_rows(db_path: str) -> int:
+    """Rows in gffutils' ``meta`` table of ``db_path`` (read-only)."""
+    with closing(sqlite3.connect(_ro_uri(db_path), uri=True)) as conn:
+        return int(conn.execute("SELECT COUNT(*) FROM meta").fetchone()[0])
 
 
 def _remove_private_copy(path: str, owner_pid: int) -> None:
@@ -1315,6 +1481,12 @@ class SCerevisiaeGenome(Genome):
                 f"{db_path} is a directory, not a database file; every file is left "
                 "alone. Remove or rename it, then retry."
             )
+        if osp.lexists(db_path) and not osp.isfile(db_path):
+            raise GenomeDatabaseUnavailableError(
+                f"{db_path} is not a regular file (a FIFO, socket or device, or a "
+                "symlink that does not lead to a regular file); every file is left "
+                "alone. Remove or rename it, then retry."
+            )
         if not osp.isdir(self.genome_root):
             if not self.overwrite:
                 raise GenomeRootNotFoundError(
@@ -1330,8 +1502,7 @@ class SCerevisiaeGenome(Genome):
             why = "overwrite=True" if self.overwrite else "it does not exist"
             refuse_newer_record(db_path)
             self._require_writable(writable, db_path, why)
-            tmp_path = write_genome_database(self._gff_path, self.genome_root, source)
-            install_genome_database(tmp_path, db_path)
+            rebuild_genome_database(self._gff_path, db_path, source)
         else:
             reason = untrusted_reason(db_path, source, rebuild_call)
             if reason is not None:
@@ -1399,7 +1570,21 @@ class SCerevisiaeGenome(Genome):
             and not osp.exists(self._private_db_path)
         ):
             self._writable_db()
-        return super().db
+        try:
+            return super().db
+        except TypeError as exc:
+            # gffutils' FeatureDB raises a bare TypeError when the meta table is
+            # empty: a process running pre-2026.10.01 code is rebuilding the file in
+            # place under this one.
+            assert self._db_connection_manager is not None
+            path = self._db_connection_manager.db_path
+            if _meta_rows(path) != 0:
+                raise
+            raise GenomeDatabaseUnavailableError(
+                f"{path} has no gffutils metadata: another process (pre-2026.10.01 "
+                "code) is rebuilding it in place; nothing was changed. Retry when it "
+                "has finished; the next construction migrates its result."
+            ) from exc
 
     @property
     def go_dag(self) -> GODag:
@@ -1471,7 +1656,7 @@ class SCerevisiaeGenome(Genome):
                 dir=temp_dir,
             )
             os.close(fd)
-            src = sqlite3.connect(f"file:{source_path}?mode=ro", uri=True)
+            src = sqlite3.connect(_ro_uri(source_path), uri=True)
             dst = sqlite3.connect(path)
             src.backup(dst)
             dst.close()

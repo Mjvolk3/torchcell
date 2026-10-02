@@ -611,7 +611,7 @@ def test_cli_validate_writes_the_registry(
 
 
 def test_real_registry_holds_on_the_committed_snapshot() -> None:
-    release = "2026.09.21-ab6d8c5d"
+    release = "2026.10.02-833970cd"
     registry = QueryRegistry.load(registry_path(REPO))
     report = check_repo(REPO, registry, release)
     assert [(r.query_id, r.drifts) for r in report.results] == [

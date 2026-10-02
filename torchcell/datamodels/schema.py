@@ -2617,12 +2617,12 @@ class MetabolitePhenotype(Phenotype, ModelStrict):
     """Quantitative metabolite/product level(s), keyed by metabolite id.
 
     For assays that QUANTIFY one or more metabolite levels per strain -- e.g. Cachera
-    2023 CRI-SPA (corrected colony fluorescence intensity as a proxy for the metabolite
+    2023 CRI-SPA (corrected colony HSV yellowness score as a proxy for the metabolite
     betaxanthin), or (later) mass-spec metabolite abundances (Zelezniak). Levels are
     keyed by metabolite id: a Yeast9 ``s_NNNN`` id where the metabolite is native, or a
     plain product name for heterologous products (carotenoids, betalains) not in Yeast9.
 
-    ``measurement_type`` records WHAT the number is (e.g. a normalized fluorescence
+    ``measurement_type`` records WHAT the number is (e.g. a normalized colony-color
     score, which can be negative, vs an absolute abundance), so heterogeneous assays
     stay interpretable and are never silently compared. ``target_metabolite_ids`` maps
     the keys to Yeast9 ``s_NNNN`` ids for constraint-based-model linkage where known
@@ -2645,7 +2645,7 @@ class MetabolitePhenotype(Phenotype, ModelStrict):
     measurement_type: str = Field(
         description=(
             "what the level number is, e.g. "
-            "'cri_spa_corrected_fluorescence_intensity' or 'ms_abundance'"
+            "'cri_spa_corrected_hsv_yellowness_24h' or 'ms_abundance'"
         )
     )
     target_metabolite_ids: dict[str, str] | None = Field(

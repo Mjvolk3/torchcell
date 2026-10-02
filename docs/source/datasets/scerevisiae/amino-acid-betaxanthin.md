@@ -174,12 +174,12 @@ The Mulleder difference is the medium: the dev store carries the sourced `SM_AGA
 
 The cassette's *ARO4* and *ARO7* alleles are ectopic copies of native yeast genes, so a Cachera deletion of the native *ARO4* or *ARO7* has the cassette's own gene set as its aggregation key; those two strains share one processed record (the Btx-cassette line under the Cachera table, and the "2 Cachera" row of the query tables).
 
-**Cachera 2023: medium, temperature and readout.** The record stores `Media(name="SC", state="solid")` at 30 °C (`torchcell/datasets/scerevisiae/cachera2023.py`, `create_experiment`). The paper places the screen on YPD with G418, and its OCR states no temperature; its readout is colony yellowness from color, not fluorescence, although `measurement_type` says `cri_spa_corrected_fluorescence_intensity_24h`:
+**Cachera 2023: medium, temperature and readout.** The store shown on this page was built before issue #509 was fixed, so its records still carry `Media(name="SC", state="solid")` at 30 °C and `measurement_type` `cri_spa_corrected_fluorescence_intensity_24h`. The paper places the screen on YPD with G418, and its OCR states no temperature; its readout is colony yellowness from color, not fluorescence:
 
 ```{include} _generated/amino-acid-betaxanthin/cachera_sources.md
 ```
 
-Issue [#509](https://github.com/Mjvolk3/torchcell/issues/509) tracks the medium, temperature and measurement-type correction; it changes every served Cachera record, so it waits for the next full KG build.
+Issue [#509](https://github.com/Mjvolk3/torchcell/issues/509) is fixed in the loader (`torchcell/datasets/scerevisiae/cachera2023.py`): records now store `CACHERA_YPD_G418` (solid YPD, 2% agar, 200 µg/ml G418), no temperature with a typed `not_reported_by_primary` gap, and `measurement_type` `cri_spa_corrected_hsv_yellowness_24h`. Every served Cachera record changes, so the served graph and this page carry the new values after the next full KG build.
 
 ## Provenance
 

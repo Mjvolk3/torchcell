@@ -319,3 +319,27 @@ Issue #509 (labels `dataset`, `before-next-kg-build`) tracks the fix; all three 
 Issue #528; the whole sweep is in [[torchcell.data.experiment_dataset]] (2026.09.30). Before: download-only check: yes (#528); PyG skips `download()` when `raw/` is populated, so a file placed or edited in `raw/` built unchecked; copy before check: no (bytes hashed before write); refused deposit leaving a directory: n/a.
 
 Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `DATA_SHA256`, before any record is read, and raises `RawSha256MismatchError` ("sha256 mismatch for <file>: expected <pin>, observed <digest>") with no store written. `download()` stages files through the shared `copy_verified` / `write_verified` / `link_verified` helpers, which hash before writing, so a refusal leaves nothing in `raw/`. Records built from a verified raw file are unchanged. Test: `test_a_raw_file_off_the_pin_is_refused_at_build_time` (or the renamed former Finding test) in the paired test file.
+
+## 2026.10.02 - Screen medium, temperature gap and HSV readout name (issue #509)
+
+**What was wrong.** `create_experiment` stored `Media(name="SC", state="solid", is_synthetic=True)`, `Temperature(value=30)` and `measurement_type` `cri_spa_corrected_fluorescence_intensity_24h`. The mirror OCR (`paper.md`, sha256 `5fb7310dacb44bc04fc121a990e4ccc70020c9598877c4b074656e91fc4f32d5`) puts the screen colonies on "the final CRI-SPA screen plate (YPD-G418)" (line 117), states no temperature, and derives the score from "the geometric mean of Value and Saturation of image pixels in the HSV color space" (line 58), a colony-color score.
+
+**What the fix does** (`torchcell/datasets/scerevisiae/cachera2023.py`):
+
+- Medium: loader-local `CACHERA_YPD_G418` (solid, `is_synthetic=False`, `base_medium="YPD"`): the library `YPD` root's yeast extract 1%, peptone 2%, glucose 2%, plus agar 20 g/l and G418 200 mg/l, both quoted from line 31 ("For growth on solid medium, ... agar was added", "For selection on solid medium, plates were supplemented with ... geneticin (G418)"). The paper defers its YPD recipe to Sherman et al. (ref 28, line 31), which is not mirrored, so the YPD ingredient amounts are the library root's (Tong and Boone 2006 YEPD); the deferral is recorded in the medium's provenance. Loader-local like `COOPER_SC`, so `media.py` is untouched.
+- Temperature: `None` with `TEMPERATURE_GAP` (`not_reported_by_primary`, `looked_in` = the pinned `paper.md`), the Cooper 2010 pattern.
+- `measurement_type`: `cri_spa_corrected_hsv_yellowness_24h`, sourced to the line 58 quote in `SOURCED_VALUES["measurement_type"]`. `measurement_type` is a free `str` on `MetabolitePhenotype`, not an enum, so this is not a schema change; the `MetabolitePhenotype` docstring and field description examples were updated (descriptions are excluded from the schema fingerprint).
+- Every quote is pinned by `test_every_sourced_quote_is_on_its_line_of_the_pinned_paper_issue_509` (lines 31, 58, 117 of the pinned file).
+
+**Measured** by `experiments/036-dataset-fixes-before-kg-build/scripts/cachera2023_environment_readout.py` (scratch build vs dev store `$DATA_ROOT/data/torchcell/betaxanthin_cachera2023`), output `experiments/036-dataset-fixes-before-kg-build/results/cachera2023_environment_readout.json`:
+
+- Records: 4,719 before, 4,719 after.
+- Medium (experiment + reference environments, 9,438): before all `SC`, solid, synthetic, 0 components; after all `YPD + G418 (solid, 2% agar; Cachera 2023 final CRI-SPA screen plate)`, complex, 5 components.
+- Temperature: before 9,438 at 30.0 Celsius; after 9,438 `None`, each with one `temperature` / `not_reported_by_primary` gap.
+- `measurement_type` (experiment + reference phenotypes, 9,438): before all `cri_spa_corrected_fluorescence_intensity_24h`, after all `cri_spa_corrected_hsv_yellowness_24h`.
+- Genotype differs on 0 of 4,719 records; metabolite level or `n_replicates` differs on 0.
+- Temperature search: 0 matches in `paper.md`; in the SI archive (`gkad656_supplemental_files.zip`, sha256 `a8a52ccc...`) 3 matches, all SGD gene descriptions in the hit table ("required for growth at low temperature").
+
+**Also updated.** The showcase page `docs/source/datasets/scerevisiae/amino-acid-betaxanthin.md` now says its store predates the fix (the generated fragments under `_generated/` still show the old values until the dev store is rebuilt and the 034 script is rerun). `experiments/026-metabolism-flux/scripts/media_schema_audit.py` reads the new loader-local medium (its committed results JSON is from the old run). `torchcell/verification/runners.py` provenance method string now names the HSV yellowness score.
+
+**Open.** Every served Cachera record changes (4,719), so this lands in the next full KG build; the dev store needs a rebuild first (in-process is viable; the scratch build of all 4,719 records ran in-process).

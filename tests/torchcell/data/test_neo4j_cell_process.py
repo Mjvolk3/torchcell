@@ -133,7 +133,7 @@ def _metabolite(dataset_name: str, gene: str) -> dict[str, Any]:
     phenotype = MetabolitePhenotype(
         metabolite_level={"betaxanthin": 1.5},
         n_replicates={"betaxanthin": 2},
-        measurement_type="cri_spa_corrected_fluorescence_intensity",
+        measurement_type="cri_spa_corrected_hsv_yellowness",
     )
     return {
         "experiment": MetaboliteExperiment(

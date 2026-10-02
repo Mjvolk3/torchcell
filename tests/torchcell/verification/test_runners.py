@@ -247,7 +247,7 @@ def _metabolite_record(gene: str, level: float, ref_level: float) -> Record:
             metabolite_level={"betaxanthin": value},
             metabolite_level_se=None if ref else {"betaxanthin": 0.1},
             n_replicates={"betaxanthin": 1 if ref else 8},
-            measurement_type="cri_spa_corrected_fluorescence_intensity_24h",
+            measurement_type="cri_spa_corrected_hsv_yellowness_24h",
         )
 
     env = Environment(

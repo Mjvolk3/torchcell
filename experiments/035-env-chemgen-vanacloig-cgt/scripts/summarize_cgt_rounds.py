@@ -45,7 +45,7 @@ load_dotenv()
 RESULTS = osp.join(
     os.environ["EXPERIMENT_ROOT"], "035-env-chemgen-vanacloig-cgt", "results"
 )
-SWEEPS = "r8_*", "r9_*", "r10_*", "r11_*", "r12_*", "r13_*", "r14_*"
+SWEEPS = "r8_*", "r9_*", "r10_*", "r11_*", "r12_*", "r13_*", "r14_*", "r15_*"
 #: arm -> (sweep of fold k, config name of fold k, compounds the arm was fitted on)
 LOSS_ARMS = {
     "L1_lam0 (val-selected, 1 seed)": (

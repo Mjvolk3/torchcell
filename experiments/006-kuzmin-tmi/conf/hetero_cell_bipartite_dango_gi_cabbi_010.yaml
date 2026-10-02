@@ -119,6 +119,6 @@ regression_task:
     gamma: 0.5  
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0
-  grad_accumulation_schedule: {0:16}
+  grad_accumulation_schedule: {0: 16}
   plot_sample_ceiling: 10000
   plot_every_n_epochs: 2

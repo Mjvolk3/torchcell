@@ -1,12 +1,12 @@
 # tests/torchcell/trainers/test_int_hetero_cell.py
 # [[tests.torchcell.trainers.test_int_hetero_cell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/trainers/test_int_hetero_cell.py
-"""Batch sizing in the 006 hetero trainers (``RegressionTask``, ``DiffusionRegressionTask``).
+"""The 006 hetero trainers (``RegressionTask``, ``DiffusionRegressionTask``).
 
-Both tasks size a perturbation batch (no ``gene.x``) by the collated batch's
-``num_graphs``. Reading ``max(perturbation_indices_batch) + 1`` instead drops a trailing
-genotype with no perturbed gene (issue #567). The ladder below that is unchanged: no
-``perturbation_indices_batch`` counts perturbed genes, then phenotype values, then 1.
+Both tasks size every batch by the collated batch's ``num_graphs``, the genotype
+count: not ``max(perturbation_indices_batch) + 1``, which drops a trailing genotype
+with no perturbed gene (issue #567), and not the ``gene.x`` node rows (issue #596). A
+batch without ``num_graphs`` is refused.
 
 2026.10.01, Phase 19: exact behavior on scripted stand-ins. ``_Fixed`` returns the
 predictions p = [1, 3, -2] times one trainable ``scale`` (1.0) and the representations
@@ -20,8 +20,15 @@ validation and test) is (1 + 4 + 1) / 3 = 2.0, the mean log cosh is
 gradient clipping and schedulers are stand-ins that record their calls, except in the
 three ``fast_dev_run`` tests. The real 006 inverse is a ``COOInverseCompose`` over a
 standard ``COOLabelNormalizationTransform`` fitted on [0, 4] (mean 2, sd 2), so it maps
-v to 2 v + 2. Derivations are in each test docstring; tests whose docstring starts
-``Finding:`` pin current behavior that contradicts the code's names or callers.
+v to 2 v + 2. Derivations are in each test docstring; a test whose docstring starts
+``Finding:`` pins current behavior that contradicts the code's names or callers.
+
+2026.10.02, issue #614: ``DiffusionRegressionTask`` is ``RegressionTask`` with its own
+stage loss, and both share one ``_shared_step``. The plateau scheduler is stepped on
+the val MSE, scheduler types and accumulation schedules are validated at
+construction, unit mismatches and metric errors are refused, and the effective batch
+size counts ``trainer.world_size``. The tests that pinned the old behavior now assert
+these contracts; only the COO-layout finding stays pinned.
 """
 
 import math
@@ -42,8 +49,7 @@ from omegaconf import OmegaConf
 from torch import nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
-from torch_geometric.data import HeteroData
-from torchmetrics import MeanSquaredError
+from torch_geometric.data import Batch, HeteroData
 
 from torchcell.losses.isomorphic_cell_loss import ICLoss
 from torchcell.losses.logcosh import LogCoshLoss
@@ -51,7 +57,11 @@ from torchcell.losses.mle_dist_supcr import MleDistSupCR
 from torchcell.losses.mle_wasserstein import MleWassSupCR
 from torchcell.losses.point_dist_graph_reg import PointDistGraphReg
 from torchcell.scheduler.cosine_annealing_warmup import CosineAnnealingWarmupRestarts
-from torchcell.trainers.int_hetero_cell import DiffusionRegressionTask, RegressionTask
+from torchcell.trainers.int_hetero_cell import (
+    PLATEAU_MONITOR,
+    DiffusionRegressionTask,
+    RegressionTask,
+)
 from torchcell.transforms.coo_regression_to_classification import (
     COOInverseCompose,
     COOLabelNormalizationTransform,
@@ -67,7 +77,7 @@ def _task(cls: Any, **overrides: Any) -> Any:
         model=nn.Linear(1, 1),
         cell_graph=graph,
         optimizer_config={"type": "AdamW", "learning_rate": 1e-2},
-        lr_scheduler_config={},
+        lr_scheduler_config=None,
         device="cpu",
     )
     kwargs.update(overrides)
@@ -111,20 +121,36 @@ def test_profiling_step_logs_the_genotype_count(
     }
 
 
+NO_NUM_GRAPHS = (
+    "cannot size a HeteroData batch: its genotype count is the collated batch's "
+    "num_graphs, which this batch does not carry"
+)
+
+
 @pytest.mark.parametrize("cls", TASKS)
-def test_batch_size_ladder_below_num_graphs(cls: Any) -> None:
-    """``x`` rows, then perturbed-gene count, then value count, then 1."""
+def test_batch_size_is_num_graphs_and_a_batch_without_it_is_refused(cls: Any) -> None:
+    """Every batch is sized by its genotype count, ``num_graphs`` (issues #567, #596).
+
+    A real PyG ``Batch`` of three graphs with four ``gene.x`` rows each (12 node rows)
+    is 3, not 12; the perturbation batch above (``perturbation_indices_batch``
+    [0, 0, 1]) is 3; the COO batch of three genotypes is 3. A ``HeteroData`` without
+    ``num_graphs`` is refused by name whatever else it carries (five ``gene.x`` rows,
+    perturbed genes [4, 5, 6], two phenotype values): none of those is a genotype
+    count.
+    """
     task = _task(cls)
-    dense = HeteroData()
-    dense["gene"].x = torch.zeros(5, 2)
-    perts = HeteroData()
-    perts["gene"].perturbation_indices = torch.tensor([4, 5, 6])
-    values = HeteroData()
-    values["gene"].phenotype_values = torch.tensor([2.0, 5.0])
-    empty = HeteroData()
-    empty["gene"].num_nodes = 0
-    sizes = [task._get_batch_size(b) for b in (dense, perts, values, empty)]
-    assert sizes == [5, 3, 2, 1]
+    graph = HeteroData()
+    graph["gene"].x = torch.zeros(4, 2)
+    dense = Batch.from_data_list([graph, graph, graph])
+    assert dense["gene"].x.size(0) == 12
+    batches = (dense, _wild_type_last(), _coo())
+    assert [task._get_batch_size(b) for b in batches] == [3, 3, 3]
+    loose = HeteroData()
+    loose["gene"].x = torch.zeros(5, 2)
+    loose["gene"].perturbation_indices = torch.tensor([4, 5, 6])
+    loose["gene"].phenotype_values = torch.tensor([2.0, 5.0])
+    with pytest.raises(ValueError, match="^" + re.escape(NO_NUM_GRAPHS) + "$"):
+        task._get_batch_size(loose)
 
 
 # --------------------------------------------- 2026.10.01, Phase 19: scripted stand-ins
@@ -489,24 +515,23 @@ def test_logcosh_branch_returns_mean_log_cosh_and_logs_loss_and_z_p_norm(
     assert log.sync == {True}
 
 
-def test_generic_loss_receives_z_p_positionally_and_no_epoch(
+def test_unnamed_losses_receive_only_predictions_and_targets(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Any
 ) -> None:
-    """A loss outside the named classes is called ``(pred, target, z_p)`` with no
-    keyword, even at epoch 4; without ``z_p`` it is called ``(pred, target)``. A bare
-    tensor and a one-tuple are both the loss (MSE 2.0) and log no component.
+    """A loss outside the named classes (``ICLoss``, ``DiffusionLoss``, the two MLE
+    losses, ``PointDistGraphReg``) is called ``(pred, target)``: no ``z_p`` although
+    the model returns one, and no epoch at epoch 4. A bare tensor and a one-tuple are
+    both the loss (MSE 2.0) and log no component.
     """
     loss_func = _SquaredError()
-    model = _Fixed()
-    task = _make(RegressionTask, model, loss_func=loss_func)
+    task = _make(RegressionTask, loss_func=loss_func)
     _attach(task, tmp_path, epoch=4)
     log = _record(monkeypatch, task)
     loss, _, _ = task._shared_step(_coo(), 0, "val")
     assert loss.item() == 2.0
     args, kwargs = loss_func.calls[0]
     assert kwargs == {}
-    assert [a.tolist() for a in args] == [_column(P), _column(Y), Z_P]
-    assert args[2] is model.outputs[0][1]["z_p"]
+    assert [a.tolist() for a in args] == [_column(P), _column(Y)]
     assert log.names == ["val/loss", "val/z_p_norm"]
 
     single = _SquaredError(mode="single")
@@ -643,22 +668,16 @@ def test_real_mle_dist_supcr_components_are_all_logged_at_the_trainer_epoch(
     assert set(log.batch_sizes.values()) == {3}
 
 
-def test_point_dist_graph_reg_gets_representations_and_drops_vector_components(
+def test_point_dist_graph_reg_gets_representations_and_logs_every_component(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Any
 ) -> None:
-    """Finding (latent): the ``PointDistGraphReg`` branch logs only one-element
-    tensors and numbers.
-
-    It is called ``(pred, target, representations, epoch=3)`` with the model's own
-    representations dict. Its total 0.5 is the loss: the model's ``graph_reg_loss``
-    0.25 is not added again, and the task's own ``train/graph_reg_loss`` log is
-    skipped (the real loss logs that key itself, see the next test). Its component
-    logger (lines 302-317) skips a multi-element tensor, while the generic branch of
-    the same function logs it as ``vec_0``, ``vec_1`` (lines 343-370). Latent: the
-    real ``PointDistGraphReg`` returns only Python floats, so no shipped config loses
-    a component; a stand-in returning a vector shows the drift. The CGT trainer
-    fixed the same drift under issue #534. Pinned until the two component loggers
-    are one function.
+    """``PointDistGraphReg`` is called ``(pred, target, representations, epoch=3)``
+    with the model's own representations dict. Its total 0.5 is the loss: the
+    model's ``graph_reg_loss`` 0.25 is not added again, and the task's own
+    ``train/graph_reg_loss`` log is skipped (the real loss logs that key itself, see
+    the next test). Its components go through the one component logger every loss
+    uses, so a two-element tensor logs as ``vec_0``, ``vec_1`` (this branch dropped
+    it before issue #614).
     """
     loss_func = _ScriptedPointDist(
         {"one": torch.tensor(0.1), "vec": torch.tensor([1.0, 2.0]), "count": 3}
@@ -672,9 +691,23 @@ def test_point_dist_graph_reg_gets_representations_and_drops_vector_components(
     args, kwargs = loss_func.calls[0]
     assert kwargs == {"epoch": 3}
     assert args[2] is model.outputs[0][1]
-    assert log.names == ["train/one", "train/count", "train/loss", "train/z_p_norm"]
+    assert log.names == [
+        "train/one",
+        "train/vec_0",
+        "train/vec_1",
+        "train/count",
+        "train/loss",
+        "train/z_p_norm",
+    ]
     assert log.values == pytest.approx(
-        {"train/one": 0.1, "train/count": 3.0, "train/loss": 0.5, "train/z_p_norm": 5.0}
+        {
+            "train/one": 0.1,
+            "train/vec_0": 1.0,
+            "train/vec_1": 2.0,
+            "train/count": 3.0,
+            "train/loss": 0.5,
+            "train/z_p_norm": 5.0,
+        }
     )
 
 
@@ -756,28 +789,40 @@ def test_real_icloss_passes_z_p_and_logs_every_component(
     assert log.values == pytest.approx(expected, rel=1e-6)
 
 
-def test_plain_mse_loss_cannot_take_the_z_p_argument(
+def test_plain_mse_loss_gets_two_arguments_with_or_without_z_p(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Finding: a stock ``nn.MSELoss`` works only when the model emits no ``z_p``.
-
-    The generic branch passes ``z_p`` as a third positional argument to any loss it
-    does not name, so ``nn.MSELoss`` fails with ``TypeError`` (exact message below)
-    on a model with ``z_p``, and returns the MSE 2.0 on one without. Pinned until the
-    third argument is passed only to losses that declare it.
+    """A stock ``nn.MSELoss`` is called ``(pred, target)``, so it gives the MSE 2.0 on a
+    model that returns ``z_p`` exactly as on one that does not. Before issue #614 the
+    task passed ``z_p`` as a third argument and the first case raised ``TypeError``.
     """
-    task = _make(RegressionTask, loss_func=nn.MSELoss())
-    _record(monkeypatch, task)
-    with pytest.raises(
-        TypeError,
-        match=re.escape(
-            "MSELoss.forward() takes 3 positional arguments but 4 were given"
-        ),
-    ):
+    for model in (_Fixed(), _Fixed(z_p=None)):
+        task = _make(RegressionTask, model, loss_func=nn.MSELoss())
+        _record(monkeypatch, task)
+        assert task._shared_step(_coo(), 0, "train")[0].item() == 2.0
+
+
+@pytest.mark.parametrize(
+    ("loss_func", "name"),
+    [
+        (ICLoss(lambda_dist=0.1, lambda_supcr=0.001, weights=torch.ones(1)), "ICLoss"),
+        (MleDistSupCR(embedding_dim=2), "MleDistSupCR"),
+        (_ScriptedMleWass({}), "_ScriptedMleWass"),
+    ],
+)
+def test_a_z_p_loss_on_a_model_without_z_p_is_refused_by_name(
+    loss_func: nn.Module, name: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A loss that takes ``z_p`` (``ICLoss``, the MLE losses; ``DiffusionLoss`` in the
+    diffusion tests) refuses a model that returns none, naming the loss class, instead
+    of receiving ``None`` or a short argument list.
+    """
+    task = _make(RegressionTask, _Fixed(z_p=None), loss_func=loss_func)
+    log = _record(monkeypatch, task)
+    message = f"{name} needs representations['z_p'], which the model did not return"
+    with pytest.raises(ValueError, match="^" + re.escape(message) + "$"):
         task._shared_step(_coo(), 0, "train")
-    bare = _make(RegressionTask, _Fixed(z_p=None), loss_func=nn.MSELoss())
-    _record(monkeypatch, bare)
-    assert bare._shared_step(_coo(), 0, "train")[0].item() == 2.0
+    assert log.calls == []
 
 
 def test_graph_reg_loss_is_added_and_logged_for_other_losses(
@@ -853,7 +898,7 @@ def test_transformed_metrics_see_model_units_and_metrics_see_inverted_units(
     assert original == [([4.0, 8.0, -2.0], Y)]
     assert predictions.tolist() == _column(P)
     assert targets.tolist() == _column(Y)
-    computed = task._compute_metrics_safely(task.val_metrics)
+    computed = task.val_metrics.compute()
     assert {k: v.item() for k, v in computed.items()} == pytest.approx(
         {
             "val/gene_interaction/MSE": 14 / 3,
@@ -862,7 +907,7 @@ def test_transformed_metrics_see_model_units_and_metrics_see_inverted_units(
         },
         rel=1e-6,
     )
-    computed = task._compute_metrics_safely(task.val_transformed_metrics)
+    computed = task.val_transformed_metrics.compute()
     assert computed["val/transformed/gene_interaction/MSE"].item() == pytest.approx(
         7 / 6
     )
@@ -913,7 +958,7 @@ def test_inverse_gets_a_one_type_coo_object_and_every_output_rank_is_used(
             "phenotype_types": ["gene_interaction"],
         }
     ]
-    mse = column._compute_metrics_safely(column.val_metrics)["val/gene_interaction/MSE"]
+    mse = column.val_metrics.compute()["val/gene_interaction/MSE"]
     assert mse.item() == pytest.approx(200.0)
 
     single = _make(cls, _Fixed([1.0], z_p=None), inverse_transform=_normalizer())
@@ -923,35 +968,44 @@ def test_inverse_gets_a_one_type_coo_object_and_every_output_rank_is_used(
     assert seen == [([4.0], [2.0])]
 
 
+INVERSE_NOT_A_TENSOR = (
+    "inverse_transform _InverseSpy returned phenotype_values of type list; "
+    "expected torch.Tensor"
+)
+ORIGINAL_WITHOUT_INVERSE = (
+    "batch carries gene.phenotype_values_original but the task has no "
+    "inverse_transform; model-unit predictions would be scored against original-unit "
+    "targets"
+)
+
+
 @pytest.mark.parametrize("cls", TASKS)
-def test_unit_mismatches_reach_the_original_unit_metrics_silently(
+def test_unit_mismatches_are_refused_by_name(
     cls: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: model-unit predictions are scored against original-unit targets twice over.
+    """Model-unit predictions are never scored against original-unit targets.
 
-    (a) An inverse whose ``phenotype_values`` is not a tensor is ignored (lines
-    456 and 1264 test ``isinstance`` and fall through), so the metrics get the transformed
-    predictions [1, 3, -2] against originals [20, 50, -10]: MSE (361 + 2209 + 64) / 3
-    = 878. (b) A batch that carries ``phenotype_values_original`` (the forward
-    normalization stores it) on a task built without ``inverse_transform`` scores
-    the same transformed predictions against those originals. Neither raises or
-    logs. The CGT trainer raises ``TypeError`` for (a) since issue #534. Pinned until
-    a non-tensor inverse output and an original-unit batch without an inverse both
-    raise.
+    (a) An inverse whose ``phenotype_values`` is not a tensor raises ``TypeError``
+    with the message the CGT trainer uses (#534); before issue #614 it was ignored
+    and the metrics scored [1, 3, -2] against [20, 50, -10]. The original-unit
+    collection is never updated. (b) A batch carrying ``phenotype_values_original``
+    (the forward normalization stores it) on a task built without
+    ``inverse_transform`` raises ``ValueError`` before the model runs.
     """
     listed = _make(cls, inverse_transform=_InverseSpy(lambda v: (v * 10).tolist()))
     _record(monkeypatch, listed)
-    seen = _spy(monkeypatch, listed.val_metrics)
-    listed._shared_step(_coo(original=[20.0, 50.0, -10.0]), 0, "val")
-    assert seen == [(P, [20.0, 50.0, -10.0])]
-    mse = listed._compute_metrics_safely(listed.val_metrics)["val/gene_interaction/MSE"]
-    assert mse.item() == pytest.approx(878.0)
+    with pytest.raises(TypeError, match="^" + re.escape(INVERSE_NOT_A_TENSOR) + "$"):
+        listed._shared_step(_coo(original=[20.0, 50.0, -10.0]), 0, "val")
+    assert listed.val_metrics["MSE"].update_count == 0
 
-    bare = _make(cls)
+    model = _Fixed()
+    bare = _make(cls, model)
     _record(monkeypatch, bare)
-    bare_seen = _spy(monkeypatch, bare.val_metrics)
-    bare._shared_step(_coo([0.0, 1.5, -1.5], original=Y), 0, "val")
-    assert bare_seen == [(P, Y)]
+    with pytest.raises(
+        ValueError, match="^" + re.escape(ORIGINAL_WITHOUT_INVERSE) + "$"
+    ):
+        bare._shared_step(_coo([0.0, 1.5, -1.5], original=Y), 0, "val")
+    assert model.calls == []
 
 
 @pytest.mark.parametrize("cls", TASKS)
@@ -1020,47 +1074,65 @@ def test_dense_column_and_scalar_targets_are_read_like_coo_values(
 def test_coo_layout_is_read_positionally_not_by_sample_or_type(
     cls: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: ``phenotype_types`` and ``phenotype_sample_indices`` are never read.
+    """Finding (left open by the issue #614 fix): ``phenotype_types`` is never read.
 
     A batch whose only phenotype is ``fitness`` is trained and scored as gene
     interaction: its values reach ``val/gene_interaction/*`` (MSE 2.0) with no error.
-    The values are aligned to the prediction rows by position only, so a COO batch in
-    which genotype 1 has no label (values for samples [0, 2]) fails with a broadcast
-    error in the loss rather than skipping that genotype. Pinned until the task
-    selects the ``gene_interaction`` entries by type index and scatters them by
-    sample index.
+    Left open because a real PyG collation carries ``phenotype_types`` as one list per
+    genotype and does not offset ``phenotype_sample_indices`` (both pinned below on
+    two one-label samples), so a type or sample check has to be written against that
+    layout, which no 006 batch fixture pins yet. What is enforced: a genotype count
+    that disagrees with the prediction rows is refused by name, so a COO batch with
+    two labels (``num_graphs`` 2) against the model's three predictions no longer
+    reaches the loss as a broadcast.
     """
     task = _make(cls)
     _record(monkeypatch, task)
     task._shared_step(_coo(types=["fitness"]), 0, "val")
-    computed = task._compute_metrics_safely(task.val_metrics)
+    computed = task.val_metrics.compute()
     assert computed["val/gene_interaction/MSE"].item() == 2.0
+
+    sample = HeteroData()
+    sample["gene"].phenotype_values = torch.tensor([1.0])
+    sample["gene"].phenotype_types = ["gene_interaction"]
+    sample["gene"].phenotype_sample_indices = torch.tensor([0])
+    collated = Batch.from_data_list([sample, sample])
+    assert collated["gene"].phenotype_types == [
+        ["gene_interaction"],
+        ["gene_interaction"],
+    ]
+    assert collated["gene"].phenotype_sample_indices.tolist() == [0, 0]
 
     missing = _coo([2.0, -1.0])
     missing["gene"].phenotype_sample_indices = torch.tensor([0, 2])
     gapped = _make(cls)
-    _record(monkeypatch, gapped)
+    log = _record(monkeypatch, gapped)
     with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            "The size of tensor a (3) must match the size of tensor b (2) at "
-            "non-singleton dimension 0"
-        ),
+        ValueError,
+        match=r"^the model returned 3 prediction rows for a batch of 2 genotypes$",
     ):
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)  # F.mse_loss's broadcast note
-            gapped._shared_step(missing, 0, "val")
+        gapped._shared_step(missing, 0, "val")
+    assert log.calls == []
 
 
 # --------------------------------------------------------------- sample buffers
 
 
-@pytest.mark.parametrize("cls", TASKS)
-@pytest.mark.parametrize("stage", ["train", "val"])
+@pytest.mark.parametrize(
+    ("cls", "stage"),
+    [
+        (RegressionTask, "train"),
+        (RegressionTask, "val"),
+        (DiffusionRegressionTask, "val"),
+    ],
+)
 def test_train_and_val_buffers_fill_on_plot_epochs_up_to_the_ceiling(
     cls: Any, stage: str, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
 ) -> None:
     """``plot_every_n_epochs=2``, ``plot_sample_ceiling=5``, three genotypes per batch.
+
+    (The diffusion task keeps no train samples: its train-stage predictions are
+    placeholders, see the diffusion tests.)
 
     Epoch 0: (0 + 1) % 2 = 1, nothing is kept. Epoch 1: the first batch is kept whole
     (3 < 5); the second has room for 5 - 3 = 2 and keeps ``randperm(3)[:2]`` (seed 7)
@@ -1204,50 +1276,46 @@ def test_gradient_accumulation_divides_the_loss_and_steps_every_k_batches(
 
 
 @pytest.mark.parametrize("cls", TASKS)
-def test_logged_batch_size_is_the_node_count_for_a_batch_with_gene_x(
+def test_every_log_of_a_gene_x_batch_carries_the_genotype_count(
     cls: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
 ) -> None:
-    """Finding (issue #596, open): a batch with ``gene.x`` is sized by its node rows.
-
-    Three genotypes of four nodes each (``gene.x`` has 12 rows): ``_shared_step`` logs
-    the loss with ``batch_size=3`` (prediction rows), but ``training_step`` logs
-    ``learning_rate`` with ``batch_size=12`` and an effective batch size of
-    12 * 2 = 24 instead of 6 (``_get_batch_size``, lines 148-149 and 1021-1022).
-    Pinned until the x branch counts graphs.
+    """Three genotypes whose ``gene.x`` has 12 node rows: every log of
+    ``training_step`` (``train/loss``, ``train/z_p_norm``, ``learning_rate``,
+    ``effective_batch_size``) carries ``batch_size=3``, and the effective batch size
+    is 3 * 2 = 6. Before issue #596 was closed here the node rows sized
+    ``learning_rate`` (12) and gave an effective batch size of 12 * 2 = 24.
     """
     task = _make(cls, grad_accumulation_schedule={0: 2})
     _attach(task, tmp_path)
     _, log = _manual(monkeypatch, task)
     task.training_step(_coo(x_nodes=12), 1)
-    assert log.batch_sizes["train/loss"] == 3
-    assert log.batch_sizes["learning_rate"] == 12
-    assert log.values["effective_batch_size"] == 24.0
+    assert log.batch_sizes == {
+        "train/loss": 3,
+        "train/z_p_norm": 3,
+        "learning_rate": 3,
+        "effective_batch_size": 3,
+    }
+    assert log.values["effective_batch_size"] == 6.0
 
 
 @pytest.mark.parametrize("cls", TASKS)
-def test_effective_batch_size_never_counts_ddp_ranks(
+def test_effective_batch_size_counts_the_trainer_world_size(
     cls: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Any
 ) -> None:
-    """Finding: the DDP world-size factor is unreachable on Lightning 2.5.
-
-    ``training_step`` multiplies by the world size only when
-    ``trainer.strategy._strategy_name == "ddp"``; no Lightning strategy has that
-    attribute (``DDPStrategy`` included), so with a DDP trainer and an initialized
-    process group of 4 ranks the logged effective batch size is still 3 * 2 * 1 = 6,
-    not 24. In the 006 runs this is swamped by the node-row sizing above: their
-    batches carry ``gene.x``, so the logged value is node rows times the
-    accumulation factor, with no rank factor. Pinned until the world size is read
-    from ``trainer.world_size``.
+    """``effective_batch_size`` is the genotypes behind one optimizer step across all
+    ranks: this rank's 3 genotypes, times 2 accumulation steps, times
+    ``trainer.world_size``. A DDP trainer over two devices has world size 2, so 12.
+    The rank factor used to read ``trainer.strategy._strategy_name``, which no
+    Lightning strategy has (``DDPStrategy`` included), and was always 1.
     """
     task = _make(cls, grad_accumulation_schedule={0: 2})
     _attach(task, tmp_path, devices=2, strategy="ddp")
     assert isinstance(task.trainer.strategy, DDPStrategy)
     assert not hasattr(task.trainer.strategy, "_strategy_name")
-    monkeypatch.setattr("torch.distributed.is_initialized", lambda: True)
-    monkeypatch.setattr("torch.distributed.get_world_size", lambda: 4)
+    assert task.trainer.world_size == 2
     _, log = _manual(monkeypatch, task)
     task.training_step(_coo(), 1)
-    assert log.values["effective_batch_size"] == 6.0
+    assert log.values["effective_batch_size"] == 12.0
 
 
 @pytest.mark.parametrize("cls", TASKS)
@@ -1300,68 +1368,61 @@ class _Raises:
 
 
 @pytest.mark.parametrize("cls", TASKS)
-def test_compute_metrics_safely_on_data_and_on_an_empty_epoch(
+def test_log_metrics_logs_and_resets_and_an_empty_epoch_logs_nan(
     cls: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """After one batch: MSE 2, RMSE sqrt 2, Pearson 15 / sqrt 228 (numpy), keyed by the
-    collection prefix.
-
-    Finding: on an epoch with no update, MSE, RMSE and Pearson in torchmetrics 1.8.2
-    return NaN (with a UserWarning) instead of raising. Both swallowed messages do
-    exist in torchmetrics 1.8.2 ("Needs at least two samples" in
-    ``functional/regression/r2.py``, "No samples to concatenate" in
-    ``utilities/data.py``), but these three metrics never reach them, so the skip
-    never fires here and the epoch-end hooks log three NaNs. Pinned until empty
-    metrics are skipped by ``update_count``.
+    """After one val batch: MSE 2, RMSE sqrt 2, Pearson 15 / sqrt 228 (numpy), keyed by
+    the collection prefix, each logged once with only ``sync_dist=True``, and the
+    collection is reset. An epoch with no update logs what torchmetrics 1.8.2 computes
+    for it, NaN for all three (with its ``UserWarning``): nothing is dropped.
     """
     task = _make(cls)
-    _record(monkeypatch, task)
-    task._shared_step(_coo(), 0, "train")
-    computed = task._compute_metrics_safely(task.train_metrics)
+    log = _record(monkeypatch, task)
+    task._shared_step(_coo(), 0, "val")
+    log.calls.clear()
+    computed = task._log_metrics(task.val_metrics)
+    expected = {
+        "val/gene_interaction/MSE": 2.0,
+        "val/gene_interaction/RMSE": math.sqrt(2.0),
+        "val/gene_interaction/Pearson": PEARSON,
+    }
     assert {k: v.item() for k, v in computed.items()} == pytest.approx(
-        {
-            "train/gene_interaction/MSE": 2.0,
-            "train/gene_interaction/RMSE": math.sqrt(2.0),
-            "train/gene_interaction/Pearson": PEARSON,
-        },
-        rel=1e-6,
+        expected, rel=1e-6
     )
+    assert log.values == pytest.approx(expected, rel=1e-6)
+    assert [kw for _, _, kw in log.calls] == [{"sync_dist": True}] * 3
+    assert task.val_metrics["MSE"].update_count == 0
+
+    log.calls.clear()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", UserWarning)
-        empty = task._compute_metrics_safely(task.val_metrics)
-    assert sorted(empty) == [
-        "val/gene_interaction/MSE",
-        "val/gene_interaction/Pearson",
-        "val/gene_interaction/RMSE",
+        task._log_metrics(task.test_metrics)
+    assert sorted(log.names) == [
+        "test/gene_interaction/MSE",
+        "test/gene_interaction/Pearson",
+        "test/gene_interaction/RMSE",
     ]
-    assert all(math.isnan(v.item()) for v in empty.values())
+    assert all(math.isnan(v) for v in log.values.values())
 
 
 @pytest.mark.parametrize("cls", TASKS)
-def test_compute_metrics_safely_skips_two_messages_and_reraises_the_rest(
-    cls: Any,
+def test_a_metric_error_propagates_from_the_epoch_end(
+    cls: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: a ``ValueError`` containing "Needs at least two samples" or "No samples
-    to concatenate" drops that metric from the result with no log or warning (lines
-    626-637 and 1433-1444); any other ``ValueError`` and any other exception type propagate
-    unchanged. Pinned until the skip is removed or logged (no-fallback rule).
+    """The guard that dropped a metric whose ``compute`` raised "Needs at least two
+    samples" or "No samples to concatenate" is deleted (no-fallback rule, issue
+    #614): both errors propagate unchanged, and nothing is logged.
     """
     task = _make(cls)
-    good = MeanSquaredError()
-    good.update(torch.tensor([1.0]), torch.tensor([3.0]))
-    metrics = {
-        "a": _Raises(ValueError("Needs at least two samples to calculate r")),
-        "b": good,
-        "c": _Raises(ValueError("prefix: No samples to concatenate")),
-    }
-    result = task._compute_metrics_safely(metrics)
-    assert list(result) == ["b"] and result["b"].item() == 4.0
-    with pytest.raises(ValueError, match=r"^bad input$"):
-        task._compute_metrics_safely({"x": _Raises(ValueError("bad input"))})
-    with pytest.raises(RuntimeError, match=r"^Needs at least two samples$"):
-        task._compute_metrics_safely(
-            {"x": _Raises(RuntimeError("Needs at least two samples"))}
-        )
+    log = _record(monkeypatch, task)
+    for message in (
+        "Needs at least two samples to calculate r",
+        "prefix: No samples to concatenate",
+    ):
+        with pytest.raises(ValueError, match="^" + re.escape(message) + "$"):
+            task._log_metrics(_Raises(ValueError(message)))
+    assert log.calls == []
+    assert not hasattr(task, "_compute_metrics_safely")
 
 
 # -------------------------------------------------------------------- epoch hooks
@@ -1379,20 +1440,20 @@ def _metric_logs(log: _Log) -> dict[str, float]:
     return {k: v for k, v in log.values.items() if "gene_interaction" in k}
 
 
-@pytest.mark.parametrize("cls", TASKS)
 def test_train_epoch_end_logs_resets_plots_and_steps_the_scheduler(
-    cls: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Any, no_cuda: None
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any, no_cuda: None
 ) -> None:
-    """Epoch 1 with ``plot_every_n_epochs=2`` after one train batch.
+    """Epoch 1 with ``plot_every_n_epochs=2`` after one train batch (``RegressionTask``;
+    the diffusion task's train epoch end is in the diffusion tests).
 
     Six metric logs, no ``batch_size`` (Lightning's default) and ``sync_dist=True``:
     MSE 2, RMSE sqrt 2, Pearson 15 / sqrt 228 in both collections (no inverse, so the
     two units agree). Both collections are reset, ``_plot_samples`` gets the train
     buffer once under "train_sample" and the buffer is replaced by an empty one, and
-    the scheduler is stepped once with no argument (a list from ``lr_schedulers`` is
-    stepped through its first element).
+    the scheduler (not a plateau scheduler) is stepped once with no argument (a list
+    from ``lr_schedulers`` is stepped through its first element).
     """
-    task = _make(cls, plot_every_n_epochs=2)
+    task = _make(RegressionTask, plot_every_n_epochs=2)
     _attach(task, tmp_path, epoch=1)
     log = _record(monkeypatch, task)
     task._shared_step(_coo(), 0, "train")
@@ -1423,31 +1484,68 @@ def test_train_epoch_end_logs_resets_plots_and_steps_the_scheduler(
 
 
 @pytest.mark.parametrize("cls", TASKS)
-@pytest.mark.parametrize(
-    "config", [{"factor": 0.5}, {"type": "ReduceLROnPlateau", "factor": 0.5}]
-)
-def test_default_plateau_scheduler_crashes_the_first_training_epoch_end(
-    cls: Any,
-    config: dict[str, Any],
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Any,
-    no_cuda: None,
+def test_plateau_scheduler_steps_on_val_mse_at_validation_end_only(
+    cls: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Any, no_cuda: None
 ) -> None:
-    """Finding: the default scheduler cannot be stepped by the manual-optimization path.
+    """A ``ReduceLROnPlateau`` is stepped once per validation epoch on the val MSE just
+    computed, (1 + 4 + 1) / 3 = 2.0; never during the sanity check, and never at the
+    train epoch end, which used to call ``step()`` with no metric and raised
+    ``TypeError`` at the first epoch end (issue #614). One step sets ``best`` to 2.0
+    and leaves the rate at 1.0.
+    """
+    task = _make(cls)
+    _attach(task, tmp_path)
+    _record(monkeypatch, task)
+    plateau = ReduceLROnPlateau(
+        torch.optim.SGD(task.parameters(), lr=1.0), factor=0.5, patience=0
+    )
+    seen: list[float] = []
+    real_step = plateau.step
 
-    ``configure_optimizers`` builds ``ReduceLROnPlateau`` for a config without
-    ``type``, with an unknown ``type``, or with ``type: "ReduceLROnPlateau"`` (the
-    case the 006 ``hetero_cell_bipartite_dango_gi_mmli.yaml`` and ``_test.yaml`` and
-    the 004/005 ``hetero_cell_bipartite_dango_gi.yaml`` configs hit; both spellings
-    are run here), and declares the monitor
-    "val/gene_interaction/MSE"; ``on_train_epoch_end`` (lines 743 and 1595)
-    calls ``step()`` with no metric, so a real ``fast_dev_run`` epoch fails with
-    ``TypeError``. Lightning never steps a scheduler under manual optimization, so the
-    monitor is never read either. The CGT trainer steps the plateau scheduler on its
-    monitor at validation end (issue #534). Pinned until this task does the same.
+    def step(metrics: Any, epoch: Any = None) -> None:
+        seen.append(float(metrics))
+        real_step(metrics)
+
+    monkeypatch.setattr(plateau, "step", step)
+    monkeypatch.setattr(task, "lr_schedulers", lambda: [plateau])
+    task._shared_step(_coo(), 0, "val")
+    task.trainer.state.stage = RunningStage.SANITY_CHECKING
+    task.on_validation_epoch_end()
+    assert seen == []
+    task.trainer.state.stage = RunningStage.VALIDATING
+    task._shared_step(_coo(), 0, "val")
+    task.on_validation_epoch_end()
+    assert seen == [2.0]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)  # the empty train collections
+        task.on_train_epoch_end()
+    assert seen == [2.0]
+    assert plateau.best == 2.0
+    assert plateau.optimizer.param_groups[0]["lr"] == 1.0
+
+
+@pytest.mark.parametrize("cls", TASKS)
+def test_fast_dev_run_with_a_plateau_scheduler_steps_it_on_the_logged_val_mse(
+    cls: Any, monkeypatch: pytest.MonkeyPatch, tmp_path: Any, no_cuda: None
+) -> None:
+    """The plateau scheduler of the 004 and 005 ``hetero_cell_bipartite_dango_gi.yaml``
+    and the 006 ``hetero_cell_bipartite_dango_gi_mmli.yaml`` and ``_test.yaml`` (mode
+    "min", factor 0.2, patience 3) through one real epoch. It used to fail the first
+    epoch end with ``ReduceLROnPlateau.step() missing 1 required positional argument:
+    'metrics'``; now the epoch completes, the scheduler has been stepped exactly once
+    (``last_epoch`` 1), on the val MSE Lightning logged (its ``best``), and the rate is
+    still 1e-2.
     """
     monkeypatch.setattr("wandb.log", lambda *a, **k: None)
-    task = _make(cls, lr_scheduler_config=config)
+    task = _make(
+        cls,
+        lr_scheduler_config={
+            "type": "ReduceLROnPlateau",
+            "mode": "min",
+            "factor": 0.2,
+            "patience": 3,
+        },
+    )
     batches: Any = [_coo()]
     loader: DataLoader[HeteroData] = DataLoader(batches, batch_size=None)
     trainer = L.Trainer(
@@ -1460,14 +1558,15 @@ def test_default_plateau_scheduler_crashes_the_first_training_epoch_end(
         enable_model_summary=False,
         default_root_dir=str(tmp_path),
     )
-    with pytest.raises(
-        TypeError,
-        match=re.escape(
-            "ReduceLROnPlateau.step() missing 1 required positional argument: 'metrics'"
-        ),
-    ):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)  # monitor key, manual opt
         trainer.fit(task, train_dataloaders=loader, val_dataloaders=loader)
-    assert trainer.global_step == 1
+    scheduler = trainer.lr_scheduler_configs[0].scheduler
+    assert isinstance(scheduler, ReduceLROnPlateau)
+    assert scheduler.last_epoch == 1
+    val_mse = trainer.callback_metrics["val/gene_interaction/MSE"].item()
+    assert scheduler.best == pytest.approx(val_mse, rel=1e-7)
+    assert trainer.optimizers[0].param_groups[0]["lr"] == 1e-2
 
 
 @pytest.mark.parametrize("cls", TASKS)
@@ -1614,65 +1713,100 @@ def test_accumulation_schedule_takes_the_last_threshold_reached(
 
 
 @pytest.mark.parametrize("cls", TASKS)
-def test_string_keyed_accumulation_schedule_is_ordered_lexicographically(
+def test_digit_string_keys_are_integer_epochs_in_numeric_order(
     cls: Any, tmp_path: Any
 ) -> None:
-    """Finding: string thresholds are sorted as strings, then compared as integers.
-
-    ``on_train_epoch_start`` converts each key with ``int`` for the comparison but
-    iterates ``sorted(keys)``, which orders "0", "10", "2". At epoch 12 every
-    threshold is reached and the LAST one visited wins, so the "2" entry sets the
-    steps to 2 instead of the "10" entry's 4. ``__init__`` also looks up the int 0, so
-    {"0": 3, "2": 2, "10": 4} starts at the default 1 rather than its "0" entry 3
-    until the first epoch start. Pinned until the keys are converted before sorting.
+    """``wandb.config`` returns every schedule key as a string (wandb 0.30.0 turns
+    ``{0: 16}`` into ``{"0": 16}``), so a digit string is an epoch:
+    {"0": 3, "2": 2, "10": 4} normalizes to {0: 3, 2: 2, 10: 4}, starts at 3, and gives
+    3, 2, 2, 4, 4 at epochs 1, 2, 5, 10, 12. Sorted as text ("0", "10", "2") epoch 12
+    gave 2, and the start was 1 (issue #614).
     """
     task = _make(cls, grad_accumulation_schedule={"0": 3, "2": 2, "10": 4})
-    assert task.current_accumulation_steps == 1
-    _attach(task, tmp_path, epoch=12)
-    task.on_train_epoch_start()
-    assert task.current_accumulation_steps == 2
+    assert task.grad_accumulation_schedule == {0: 3, 2: 2, 10: 4}
+    assert list(task.grad_accumulation_schedule) == [0, 2, 10]
+    assert task.current_accumulation_steps == 3
+    chosen = []
+    for epoch in (1, 2, 5, 10, 12):
+        _attach(task, tmp_path, epoch=epoch)
+        task.on_train_epoch_start()
+        chosen.append(task.current_accumulation_steps)
+    assert chosen == [3, 2, 2, 4, 4]
 
 
-UNSPACED_SCHEDULE_CONFIGS = {
-    "hetero_cell_bipartite_dango_gi_cabbi_009.yaml": {"0:16": None},
-    "hetero_cell_bipartite_dango_gi_cabbi_010.yaml": {"0:16": None},
-    "hetero_cell_bipartite_dango_gi_cabbi_012.yaml": {"0:16": None},
-    "hetero_cell_bipartite_dango_gi_mmli_011.yaml": {"0:8": None},
-    "hetero_cell_bipartite_dango_gi_mmli_013.yaml": {"0:8": None},
+CORRECTED_SCHEDULE_CONFIGS = {
+    "hetero_cell_bipartite_dango_gi_cabbi_009.yaml": {0: 16},
+    "hetero_cell_bipartite_dango_gi_cabbi_010.yaml": {0: 16},
+    "hetero_cell_bipartite_dango_gi_cabbi_012.yaml": {0: 16},
+    "hetero_cell_bipartite_dango_gi_mmli_011.yaml": {0: 8},
+    "hetero_cell_bipartite_dango_gi_mmli_013.yaml": {0: 8},
 }
 
 
-@pytest.mark.parametrize("cls", TASKS)
-@pytest.mark.parametrize("name", sorted(UNSPACED_SCHEDULE_CONFIGS))
-def test_unspaced_flow_mapping_schedule_crashes_the_first_epoch_start(
-    cls: Any, name: str, tmp_path: Any, capsys: pytest.CaptureFixture[str]
+@pytest.mark.parametrize("name", sorted(CORRECTED_SCHEDULE_CONFIGS))
+def test_the_five_corrected_006_configs_load_an_integer_schedule(
+    name: str, tmp_path: Any, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Finding: ``grad_accumulation_schedule: {0:16}`` (no space) is not ``{0: 16}``.
-
-    YAML reads ``0:16`` inside a flow mapping as one plain scalar key with a null
-    value, so OmegaConf loads ``{"0:16": None}`` (``{"0:8": None}`` for the mmli
-    pair). Five committed 006 configs carry it: ``hetero_cell_bipartite_dango_gi_``
-    ``cabbi_009``, ``cabbi_010``, ``cabbi_012`` (``{0:16}``) and ``mmli_011``,
-    ``mmli_013`` (``{0:8}``). The task then starts with 1 accumulation step (the
-    ``get(0, 1)`` default) and ``on_train_epoch_start`` raises ``ValueError`` on
-    ``int("0:16")``. Hypothesis, not checked against W&B: a run launched from these
-    files as committed stopped at its first epoch start. Pinned until the task
-    validates the schedule's keys and values at construction.
+    """Five committed 006 configs wrote ``grad_accumulation_schedule: {0:16}``
+    (``cabbi_009``, ``cabbi_010``, ``cabbi_012``) or ``{0:8}`` (``mmli_011``,
+    ``mmli_013``) without a space, which YAML reads as ``{"0:16": None}``; a run from
+    them raised ``ValueError`` from ``int("0:16")`` at its first epoch start.
+    Corrected to ``{0: 16}`` and ``{0: 8}`` (issue #614), each loads as an integer
+    schedule, and the task accumulates 16 (or 8) steps from epoch 0 both from the
+    loaded mapping and from the string-keyed copy ``wandb.config`` hands the scripts.
     """
     config = OmegaConf.load(
         Path(__file__).parents[3] / "experiments/006-kuzmin-tmi/conf" / name
     )
     schedule = OmegaConf.to_container(config.regression_task.grad_accumulation_schedule)
-    assert schedule == UNSPACED_SCHEDULE_CONFIGS[name]
-    task = _make(cls, grad_accumulation_schedule=schedule)
-    assert task.current_accumulation_steps == 1
-    _attach(task, tmp_path)
-    key = next(iter(UNSPACED_SCHEDULE_CONFIGS[name]))
-    with pytest.raises(
-        ValueError, match=re.escape(f"invalid literal for int() with base 10: '{key}'")
-    ):
+    assert schedule == CORRECTED_SCHEDULE_CONFIGS[name]
+    assert isinstance(schedule, dict)
+    steps = CORRECTED_SCHEDULE_CONFIGS[name][0]
+    for given in (schedule, {str(k): v for k, v in schedule.items()}):
+        task = _make(RegressionTask, grad_accumulation_schedule=given)
+        assert task.current_accumulation_steps == steps
+        _attach(task, tmp_path)
         task.on_train_epoch_start()
-    assert capsys.readouterr().out == ""
+        assert task.current_accumulation_steps == steps
+    expected = f"Epoch 0: Using gradient accumulation steps = {steps}\n"
+    assert capsys.readouterr().out == expected * 2
+
+
+NOT_AN_EPOCH = (
+    "is not an integer epoch; a YAML flow mapping needs a space after the colon: "
+    "write {0: 16}, not {0:16}"
+)
+NOT_A_STEP_COUNT = "is not a positive integer number of accumulation steps"
+
+
+@pytest.mark.parametrize("cls", TASKS)
+@pytest.mark.parametrize(
+    ("schedule", "message"),
+    [
+        ({"0:16": None}, f"grad_accumulation_schedule key '0:16' {NOT_AN_EPOCH}"),
+        ({"0:8": None}, f"grad_accumulation_schedule key '0:8' {NOT_AN_EPOCH}"),
+        ({"1.5": 2}, f"grad_accumulation_schedule key '1.5' {NOT_AN_EPOCH}"),
+        ({-1: 2}, f"grad_accumulation_schedule key -1 {NOT_AN_EPOCH}"),
+        ({True: 2}, f"grad_accumulation_schedule key True {NOT_AN_EPOCH}"),
+        ({0: 0}, f"grad_accumulation_schedule[0] = 0 {NOT_A_STEP_COUNT}"),
+        ({"0": None}, f"grad_accumulation_schedule['0'] = None {NOT_A_STEP_COUNT}"),
+        ({0: 2.0}, f"grad_accumulation_schedule[0] = 2.0 {NOT_A_STEP_COUNT}"),
+        ({0: True}, f"grad_accumulation_schedule[0] = True {NOT_A_STEP_COUNT}"),
+        (
+            {0: 2, "0": 4},
+            "grad_accumulation_schedule names epoch 0 twice: {0: 2, '0': 4}",
+        ),
+    ],
+)
+def test_a_schedule_that_is_not_epochs_to_step_counts_is_refused_at_construction(
+    cls: Any, schedule: dict[Any, Any], message: str
+) -> None:
+    """A key must be an integer epoch >= 0 (an ``int`` or a digit string) and a value a
+    positive ``int``; anything else is refused by name when the task is built, before
+    any data is loaded, instead of training at one step and failing at an epoch start.
+    """
+    with pytest.raises(ValueError, match="^" + re.escape(message) + "$"):
+        _make(cls, grad_accumulation_schedule=schedule)
 
 
 # ----------------------------------------------------------- configure_optimizers
@@ -1759,54 +1893,59 @@ def test_cosine_annealing_scheduler_branch(cls: Any) -> None:
 
 
 @pytest.mark.parametrize("cls", TASKS)
-@pytest.mark.parametrize(
-    "config",
-    [
-        {"factor": 0.5, "patience": 3},
-        {"type": "ReduceLROnPlateau", "factor": 0.5, "patience": 3},
-    ],
-)
-def test_plateau_is_the_default_branch_and_monitors_val_mse(
-    cls: Any, config: dict[str, Any]
-) -> None:
-    """No ``type`` and ``type: ReduceLROnPlateau`` build the same scheduler (factor 0.5,
-    patience 3, mode "min") monitoring "val/gene_interaction/MSE" per epoch.
+def test_plateau_branch_monitors_val_mse(cls: Any) -> None:
+    """``type: ReduceLROnPlateau`` builds the scheduler (factor 0.5, patience 3, mode
+    "min") and declares the monitor "val/gene_interaction/MSE" per epoch; the task
+    itself steps it on that metric (``PLATEAU_MONITOR``).
     """
+    config = {"type": "ReduceLROnPlateau", "factor": 0.5, "patience": 3}
     out = _make(cls, lr_scheduler_config=config).configure_optimizers()
     scheduler = out["lr_scheduler"]["scheduler"]
     assert type(scheduler) is ReduceLROnPlateau
     assert (scheduler.factor, scheduler.patience, scheduler.mode) == (0.5, 3, "min")
+    assert PLATEAU_MONITOR == "val/gene_interaction/MSE"
     assert out["lr_scheduler"] == {
         "scheduler": scheduler,
-        "monitor": "val/gene_interaction/MSE",
+        "monitor": PLATEAU_MONITOR,
         "interval": "epoch",
         "frequency": 1,
     }
 
 
-@pytest.mark.parametrize("cls", TASKS)
-def test_unknown_scheduler_type_silently_becomes_plateau(cls: Any) -> None:
-    """Finding: any unrecognized ``type`` falls into the ``ReduceLROnPlateau`` branch.
+NO_TYPE = (
+    "lr_scheduler_config has no 'type'; expected one of "
+    "['CosineAnnealingWarmupRestarts', 'CosineAnnealingLR', 'ReduceLROnPlateau'] "
+    "(pass lr_scheduler_config=None for no scheduler)"
+)
 
-    A misspelled "CosineAnnealingWarmupRestart" with no other keys builds a plateau
-    scheduler (the ``else`` at lines 888-899) instead of raising; with its usual keys
-    it fails only as an unexpected keyword of ``ReduceLROnPlateau``. Pinned until an
-    unknown type raises with the valid names.
+
+@pytest.mark.parametrize("cls", TASKS)
+@pytest.mark.parametrize(
+    ("config", "message"),
+    [
+        ({}, NO_TYPE),
+        ({"factor": 0.5, "patience": 3}, NO_TYPE),
+        (
+            {"type": "CosineAnnealingWarmupRestart"},
+            "lr_scheduler_config type 'CosineAnnealingWarmupRestart' is not one of "
+            "['CosineAnnealingWarmupRestarts', 'CosineAnnealingLR', 'ReduceLROnPlateau']",
+        ),
+        (
+            {"type": "StepLR", "step_size": 5},
+            "lr_scheduler_config type 'StepLR' is not one of "
+            "['CosineAnnealingWarmupRestarts', 'CosineAnnealingLR', 'ReduceLROnPlateau']",
+        ),
+    ],
+)
+def test_a_missing_or_unknown_scheduler_type_is_refused_at_construction(
+    cls: Any, config: dict[str, Any], message: str
+) -> None:
+    """A config without ``type`` or with an unknown one is refused by name when the
+    task is built. Both used to build a ``ReduceLROnPlateau`` silently (the misspelled
+    "CosineAnnealingWarmupRestart" included), which then crashed the first epoch end.
     """
-    out = _make(
-        cls, lr_scheduler_config={"type": "CosineAnnealingWarmupRestart"}
-    ).configure_optimizers()
-    assert type(out["lr_scheduler"]["scheduler"]) is ReduceLROnPlateau
-    with pytest.raises(
-        TypeError, match="unexpected keyword argument 'first_cycle_steps'"
-    ):
-        _make(
-            cls,
-            lr_scheduler_config={
-                "type": "CosineAnnealingWarmupRestart",
-                "first_cycle_steps": 10,
-            },
-        ).configure_optimizers()
+    with pytest.raises(ValueError, match="^" + re.escape(message) + "$"):
+        _make(cls, lr_scheduler_config=config)
 
 
 # ------------------------------------------------------------------ _plot_samples
@@ -1927,16 +2066,28 @@ def test_plot_samples_subsamples_over_the_ceiling_and_skips_empty_or_all_nan(
 
 
 @pytest.mark.parametrize("cls", TASKS)
-def test_batch_size_and_device_hparams_are_stored_and_never_read(
+def test_batch_size_and_device_are_accepted_but_neither_saved_nor_read(
     cls: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: ``batch_size`` ("Batch size used for logging") and ``device`` are saved
-    as hyperparameters and read nowhere: with ``batch_size=7`` and ``device="cuda"``
-    every step still logs ``batch_size=3`` on a CPU batch and the cell graph stays on
-    the CPU. Pinned until the two arguments are used or removed.
+    """``batch_size`` and ``device`` are still accepted (every experiment script and
+    older checkpoints pass them) but are no longer saved as hyperparameters, since
+    nothing reads them: with ``batch_size=7`` and ``device="cuda"`` every log carries
+    the genotype count 3 and the cell graph stays on the batch's CPU.
     """
     task = _make(cls, batch_size=7, device="cuda")
-    assert (task.hparams["batch_size"], task.hparams["device"]) == (7, "cuda")
+    assert sorted(task.hparams) == [
+        "cell_graph",
+        "clip_grad_norm",
+        "clip_grad_norm_max_norm",
+        "execution_mode",
+        "grad_accumulation_schedule",
+        "inverse_transform",
+        "loss_func",
+        "lr_scheduler_config",
+        "optimizer_config",
+        "plot_every_n_epochs",
+        "plot_sample_ceiling",
+    ]
     log = _record(monkeypatch, task)
     task._shared_step(_coo(), 0, "val")
     assert set(log.batch_sizes.values()) == {3}

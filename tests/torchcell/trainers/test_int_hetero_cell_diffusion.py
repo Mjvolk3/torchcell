@@ -9,18 +9,19 @@ predictions p = [1, 3, -2] times one trainable ``scale`` (1.0) with
 ``z_p = [[3, 4], [0, 0], [6, 8]]`` (row norms 5, 0, 10, mean 5); ``_coo`` is three
 genotypes with targets y = [2, 5, -1], so the squared error is (1 + 4 + 1) / 3 = 2.0.
 
-What differs: the train stage calls ``loss_func(pred, target, z_p)`` (the real
-``DiffusionLoss`` asks the model for ``compute_diffusion_loss(targets, z_p,
-t_mode="full")`` and ignores the predictions); validation and test score
-``F.mse_loss(pred, target)`` and never call the loss; the component logger averages
-vectors and drops numbers; ``graph_reg_loss`` is ignored; two extra buffers feed
-``train/avg_diffusion_loss`` and ``val/avg_inference_mse``. The trainer itself chooses
-no sampling steps: validation predictions are whatever the model returns in eval mode
-(``GeneInteractionDiff`` samples its decoder with its own ``sampling_steps``), and in
-training mode the real model returns zeros, which the train metrics then score.
+Since issue #614 ``DiffusionRegressionTask`` subclasses ``RegressionTask`` and both
+run one ``_shared_step``. What differs is the stage loss and the train-stage scoring:
+the train stage calls ``loss_func`` as ``RegressionTask`` does (the real
+``DiffusionLoss`` gets ``(pred, target, z_p)`` and asks the model for
+``compute_diffusion_loss(targets, z_p, t_mode="full")``, ignoring the predictions);
+validation and test score ``F.mse_loss`` of the sampled predictions and never call
+the loss; in training mode the real ``GeneInteractionDiff`` returns all-zero
+placeholders, so the train stage updates no metric and keeps no plot sample; two
+extra buffers feed ``train/avg_diffusion_loss`` and ``val/avg_inference_mse``.
 """
 
-import math
+import logging
+import re
 import warnings
 from types import SimpleNamespace
 from typing import Any
@@ -139,45 +140,102 @@ def test_diffusion_eval_stages_score_mse_and_never_call_the_loss(
     assert task.train_diffusion_loss == []
 
 
-def test_diffusion_train_components_mean_vectors_and_drop_numbers(
+def test_diffusion_train_components_log_like_every_other_loss(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """The diffusion component logger (lines 1166-1173): a one-element tensor logs its
-    value, a [1, 2] tensor logs its MEAN 1.5 under one key, an empty tensor logs NaN,
-    and a plain number (``count`` 3) is not logged. ``z_p`` absent: the loss still
-    receives a third positional argument, ``None``.
+    """The diffusion task logs loss components through the shared logger: a
+    one-element tensor as its value, a [1, 2] tensor element by element (``vec_0``,
+    ``vec_1``), a plain number (``count`` 3) as is, an empty tensor not at all. It
+    used to log the vector's mean 1.5 under one key and drop the number. An unnamed
+    loss on a model without ``z_p`` is called ``(pred, target)``, not with a third
+    ``None``.
     """
     components = {
         "one": torch.tensor(0.1),
-        "vec": torch.tensor([1.0, 2.0]),
+        "vec": torch.tensor([[1.0, 2.0]]),
         "empty": torch.tensor([]),
         "count": 3,
     }
     loss_func = _SquaredError("pair", components)
     task = _make(DiffusionRegressionTask, _Fixed(z_p=None), loss_func=loss_func)
     log = _record(monkeypatch, task)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", RuntimeWarning)  # mean of an empty tensor
-        task._shared_step(_coo(), 0, "train")
+    task._shared_step(_coo(), 0, "train")
     args, kwargs = loss_func.calls[0]
-    assert (len(args), args[2], kwargs) == (3, None, {})
-    assert log.names == ["train/one", "train/vec", "train/empty", "train/loss"]
-    assert log.values["train/one"] == pytest.approx(0.1)
-    assert log.values["train/vec"] == 1.5
-    assert math.isnan(log.values["train/empty"])
+    assert (len(args), kwargs) == (2, {})
+    assert log.names == [
+        "train/one",
+        "train/vec_0",
+        "train/vec_1",
+        "train/count",
+        "train/loss",
+    ]
+    assert log.values == pytest.approx(
+        {
+            "train/one": 0.1,
+            "train/vec_0": 1.0,
+            "train/vec_1": 2.0,
+            "train/count": 3.0,
+            "train/loss": 2.0,
+        }
+    )
 
 
 def test_diffusion_train_requires_a_loss_only_on_the_train_stage() -> None:
-    """With ``loss_func=None`` the train stage fails a bare ``assert`` (an
-    ``AssertionError`` with no message, and none at all under ``python -O``); the
-    validation stage never needs the loss and returns the MSE 2.0.
+    """With ``loss_func=None`` the train stage raises ``ValueError("No loss function
+    provided")`` as ``RegressionTask`` does (it was a bare ``assert``, an empty
+    ``AssertionError`` and nothing under ``python -O``); the validation stage never
+    needs the loss and returns the MSE 2.0.
     """
     task = _make(DiffusionRegressionTask, loss_func=None)
     task.log = _Log()
-    with pytest.raises(AssertionError, match=r"^$"):
+    with pytest.raises(ValueError, match=r"^No loss function provided$"):
         task._shared_step(_coo(), 0, "train")
     loss, _, _ = task._shared_step(_coo(), 0, "val")
     assert loss.item() == 2.0
+
+
+def test_diffusion_loss_on_a_model_without_z_p_is_refused_by_name(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``DiffusionLoss`` conditions on ``z_p``; a model that returns none is refused by
+    the task, naming the loss, before the model's diffusion loss is computed.
+    """
+    model = _Diffusing(z_p=None)
+    task = _make(DiffusionRegressionTask, model, loss_func=DiffusionLoss(model))
+    _record(monkeypatch, task)
+    message = (
+        "DiffusionLoss needs representations['z_p'], which the model did not return"
+    )
+    with pytest.raises(ValueError, match="^" + re.escape(message) + "$"):
+        task._shared_step(_coo(), 0, "train")
+    assert model.diffusion_calls == []
+
+
+def test_diffusion_train_epoch_end_logs_no_train_metric_and_steps_the_scheduler(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any, no_cuda: None
+) -> None:
+    """Epoch 1 with ``plot_every_n_epochs=2`` after one train batch: the train
+    collections were never updated and are neither computed nor logged (no NaN rows),
+    nothing is plotted, ``train/avg_diffusion_loss`` logs the batch loss 2.0, and an
+    epoch scheduler is stepped once with no argument.
+    """
+    task = _make(DiffusionRegressionTask, plot_every_n_epochs=2)
+    _attach(task, tmp_path, epoch=1)
+    log = _record(monkeypatch, task)
+    task._shared_step(_coo(), 0, "train")
+    plotted: list[str] = []
+    monkeypatch.setattr(task, "_plot_samples", lambda s, stage: plotted.append(stage))
+    steps: list[tuple[Any, ...]] = []
+    scheduler = SimpleNamespace(step=lambda *a: steps.append(a))
+    monkeypatch.setattr(task, "lr_schedulers", lambda: scheduler)
+    log.calls.clear()
+    task.on_train_epoch_end()
+    assert [(n, float(v), kw) for n, v, kw in log.calls] == [
+        ("train/avg_diffusion_loss", 2.0, {"sync_dist": True})
+    ]
+    assert task.train_metrics["MSE"].update_count == 0
+    assert plotted == []
+    assert steps == [()]
 
 
 @pytest.mark.parametrize(
@@ -255,18 +313,18 @@ def _graph_sample(pert: list[int] | None = None) -> HeteroData:
     return data
 
 
-def test_real_diffusion_model_trains_metrics_on_zero_placeholders(
-    monkeypatch: pytest.MonkeyPatch,
+def test_real_diffusion_model_train_placeholders_are_not_scored(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """Finding: the train-stage metrics of the diffusion task score a constant zero.
-
-    ``GeneInteractionDiff`` (diffusion decoder) returns ``zeros_like(targets)`` in
-    training mode (hetero_cell_bipartite_dango_diff_gi.py lines 242-254), and the
-    task feeds those to ``train/gene_interaction/*`` like real predictions: with
-    targets [0.5, -0.25, 1.0] the train MSE is (0.25 + 0.0625 + 1) / 3 = 0.4375 and
-    the Pearson is NaN (zero variance), whatever the model has learned. The loss is
-    the model's own diffusion loss and is unaffected. Pinned until the train stage
-    skips (or samples for) the original-unit metrics.
+    """``GeneInteractionDiff`` (diffusion decoder) returns ``zeros_like(targets)`` in
+    training mode (hetero_cell_bipartite_dango_diff_gi.py, the ``self.training``
+    branch of ``forward``): placeholders, not predictions. On a plot epoch, two train
+    batches update neither train collection and keep no plot sample, and the skip is
+    announced once (one INFO record). Before issue #614 the zeros were scored: MSE
+    (0.25 + 0.0625 + 1) / 3 = 0.4375 and Pearson NaN for targets [0.5, -0.25, 1.0],
+    whatever the model had learned. The loss is the model's own diffusion loss. In
+    eval mode the model samples its decoder, and those predictions are scored: the
+    val collection receives exactly the returned predictions, not all zero.
     """
     with torch.random.fork_rng():
         torch.manual_seed(0)
@@ -281,7 +339,12 @@ def test_real_diffusion_model_trains_metrics_on_zero_placeholders(
                 "graph_aggregation_method": "sum",
             },
             local_predictor_config={"num_heads": 2, "num_attention_layers": 1},
-            diffusion_config={"num_layers": 1, "num_heads": 2, "num_timesteps": 10},
+            diffusion_config={
+                "num_layers": 1,
+                "num_heads": 2,
+                "num_timesteps": 10,
+                "sampling_steps": 5,
+            },
         )
         batch = Batch.from_data_list(
             [_graph_sample(p) for p in ([0], [1, 2], [3])],
@@ -293,42 +356,58 @@ def test_real_diffusion_model_trains_metrics_on_zero_placeholders(
             model,
             optimizer_config={"type": "AdamW", "learning_rate": 1e-3},
             loss_func=DiffusionLoss(model),
+            plot_every_n_epochs=1,
         )
+        _attach(task, tmp_path)
         task.cell_graph = _graph_sample()
         log = _record(monkeypatch, task)
-        seen = _spy(monkeypatch, task.train_metrics)
+        train_seen = _spy(monkeypatch, task.train_metrics)
+        transformed_seen = _spy(monkeypatch, task.train_transformed_metrics)
         model.train()
-        loss, predictions, _ = task._shared_step(batch, 0, "train")
-    assert predictions is not None
+        with caplog.at_level(logging.INFO, logger="torchcell.trainers.int_hetero_cell"):
+            loss, predictions, _ = task._shared_step(batch, 0, "train")
+            task._shared_step(batch, 1, "train")
+        model.eval()
+        val_seen = _spy(monkeypatch, task.val_metrics)
+        with torch.no_grad():
+            _, sampled, _ = task._shared_step(batch, 0, "val")
+    assert predictions is not None and sampled is not None
     assert predictions.tolist() == [[0.0], [0.0], [0.0]]
-    assert seen == [([0.0, 0.0, 0.0], [0.5, -0.25, 1.0])]
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        computed = task._compute_metrics_safely(task.train_metrics)
-    assert computed["train/gene_interaction/MSE"].item() == pytest.approx(0.4375)
-    assert math.isnan(computed["train/gene_interaction/Pearson"].item())
-    assert loss.item() == pytest.approx(log.values["train/diffusion_loss"])
+    assert (train_seen, transformed_seen) == ([], [])
+    assert task.train_samples == {"true_values": [], "predictions": [], "latents": {}}
+    trainer_records = [
+        r.getMessage()
+        for r in caplog.records
+        if r.name == "torchcell.trainers.int_hetero_cell"
+    ]
+    assert trainer_records == [
+        "DiffusionRegressionTask does not score train-stage predictions: "
+        "train/gene_interaction/* and train/transformed/gene_interaction/* are not "
+        "logged and no train samples are plotted"
+    ]
+    diffusion_logs = [float(v) for n, v, _ in log.calls if n == "train/diffusion_loss"]
+    assert len(diffusion_logs) == 2
+    assert loss.item() == pytest.approx(diffusion_logs[0])
     assert loss.item() > 0.0
+    assert val_seen == [(sampled.view(-1).tolist(), [0.5, -0.25, 1.0])]
+    assert any(v != 0.0 for v in sampled.view(-1).tolist())
 
 
 @pytest.mark.parametrize("stage", ["train", "val"])
-def test_two_shared_steps_drifted_apart(
+def test_both_tasks_share_one_step_except_the_stage_loss(
     stage: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: the two ``_shared_step`` bodies are copies that disagree on one batch.
+    """One ``_shared_step`` serves both tasks; only the stage loss differs.
 
     Same model (``graph_reg_loss`` 0.25), same loss (``(loss, {"vec": [1, 2], "n": 3})``
     over the squared error 2.0), same batch:
 
-    * train: ``RegressionTask`` logs ``vec_0``, ``vec_1``, ``n`` and adds the graph term
-      (loss 2.25); ``DiffusionRegressionTask`` logs ``vec`` as its mean 1.5, drops
-      ``n``, ignores ``graph_reg_loss`` (loss 2.0) and logs no ``graph_reg_loss``;
-    * val: ``RegressionTask`` still uses ``loss_func`` (2.25 with the graph term);
-      ``DiffusionRegressionTask`` uses ``F.mse_loss`` (2.0) and logs
-      ``val/inference_mse``.
-
-    Everything after the loss (z_p norm, metrics, inverse, buffers) is identical (the
-    parametrized tests above). Pinned until the shared part is one function.
+    * train: both tasks log ``vec_0``, ``vec_1``, ``n``, add and log the graph term,
+      and return 2.25 (the diffusion copy used to log the mean 1.5, drop ``n`` and
+      ignore the graph term);
+    * val: ``RegressionTask`` uses ``loss_func`` (2.25 with the graph term);
+      ``DiffusionRegressionTask`` scores ``F.mse_loss`` of the sampled predictions
+      (2.0, logged as ``val/inference_mse``) and adds the same graph term (2.25).
     """
     outputs = {}
     for cls in TASKS:
@@ -345,35 +424,18 @@ def test_two_shared_steps_drifted_apart(
         outputs["RegressionTask"],
         outputs["DiffusionRegressionTask"],
     )
+    shared_tail = {
+        f"{stage}/graph_reg_loss": 0.25,
+        f"{stage}/loss": 2.25,
+        f"{stage}/z_p_norm": 5.0,
+    }
+    components_logged = {
+        f"{stage}/vec_0": 1.0,
+        f"{stage}/vec_1": 2.0,
+        f"{stage}/n": 3.0,
+    }
+    assert regression == (2.25, components_logged | shared_tail)
     if stage == "train":
-        assert regression == (
-            2.25,
-            {
-                "train/vec_0": 1.0,
-                "train/vec_1": 2.0,
-                "train/n": 3.0,
-                "train/graph_reg_loss": 0.25,
-                "train/loss": 2.25,
-                "train/z_p_norm": 5.0,
-            },
-        )
-        assert diffusion == (
-            2.0,
-            {"train/vec": 1.5, "train/loss": 2.0, "train/z_p_norm": 5.0},
-        )
+        assert diffusion == regression
     else:
-        assert regression == (
-            2.25,
-            {
-                "val/vec_0": 1.0,
-                "val/vec_1": 2.0,
-                "val/n": 3.0,
-                "val/graph_reg_loss": 0.25,
-                "val/loss": 2.25,
-                "val/z_p_norm": 5.0,
-            },
-        )
-        assert diffusion == (
-            2.0,
-            {"val/inference_mse": 2.0, "val/loss": 2.0, "val/z_p_norm": 5.0},
-        )
+        assert diffusion == (2.25, {"val/inference_mse": 2.0} | shared_tail)

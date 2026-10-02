@@ -1,0 +1,85 @@
+{
+  "inputs": {
+    "raw": "/scratch/projects/torchcell-scratch/data/torchcell/metabolite_zelezniak2018/raw/metabolites_dataset.data_prep.tsv",
+    "raw_sha256": "c4429fd8cef675d96ffacba1ed51e52ea483fd72d6978a22c04fa405f4e1b07d",
+    "old_store": "/scratch/projects/torchcell-scratch/data/torchcell/metabolite_zelezniak2018",
+    "new_store": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-zelezniak-protocols/metabolite_zelezniak2018"
+  },
+  "raw": {
+    "n_rows": 3522,
+    "n_genotypes": 96,
+    "n_metabolites": 50,
+    "n_cells": 2053,
+    "n_cells_pooling_protocols": 189,
+    "n_rows_in_pooled_cells": 704,
+    "pooled_metabolites": [
+      "3pg;2pg",
+      "6pgc",
+      "dhap",
+      "f6p",
+      "fdp",
+      "g3p",
+      "pep",
+      "pyr",
+      "r5p",
+      "s7p"
+    ],
+    "n_pooled_genotypes": 19,
+    "ratio_of_protocol_means_min": 5.015188763307292,
+    "ratio_of_protocol_means_median": 139.55913084147628,
+    "ratio_of_protocol_means_max": 2193.9931354012974,
+    "n_cells_ratio_over_100": 115,
+    "n_cells_ratio_over_1000": 10,
+    "duplicate_key_rows_with_dataset": 0,
+    "rows_per_protocol": {
+      "1": 1471,
+      "2": 1083,
+      "3": 968
+    }
+  },
+  "old": {
+    "n_records": 95,
+    "measurement_types": [
+      "srm_ms_signal_batch_corrected"
+    ],
+    "n_records_with_pooled_experiment_cells": 18,
+    "n_pooled_experiment_cells": 179,
+    "n_records_with_pooled_reference_cells": 95,
+    "n_pooled_reference_cells": 950
+  },
+  "new": {
+    "n_records": 129,
+    "records_per_protocol": {
+      "1": 95,
+      "2": 18,
+      "3": 16
+    },
+    "n_duplicate_genotype_protocol_keys": 0,
+    "n_experiment_cells_checked": 2187,
+    "n_experiment_cells_not_matching_one_protocol": 0,
+    "n_reference_cells_checked": 1946,
+    "n_reference_cells_not_matching_one_protocol": 0,
+    "n_cells_pooling_protocols": 0,
+    "n_records_reference_protocol_differs": 0
+  },
+  "protocols": {
+    "1": {
+      "measurement_type": "lc_srm_signal_batch_corrected_uncalibrated_dataset1",
+      "calibrated": false,
+      "unit": "arbitrary units (batch-corrected SRM peak signal, NOT a concentration)",
+      "unit_gap": null
+    },
+    "2": {
+      "measurement_type": "lc_srm_ion_pair_external_calibration_batch_corrected_unit_unstated_dataset2",
+      "calibrated": true,
+      "unit": null,
+      "unit_gap": "deferred_pending_source_review"
+    },
+    "3": {
+      "measurement_type": "lc_srm_hilic_external_calibration_batch_corrected_unit_unstated_dataset3",
+      "calibrated": true,
+      "unit": null,
+      "unit_gap": "deferred_pending_source_review"
+    }
+  }
+}

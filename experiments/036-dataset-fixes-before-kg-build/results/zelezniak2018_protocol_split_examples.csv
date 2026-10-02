@@ -1,0 +1,5 @@
+genotype,metabolite_id,dataset,raw_values,old_stored,new_stored_mean,new_stored_se,new_stored_n,new_measurement_type,n_distinct_new_values
+WT,3pg;2pg,1,850.270080,"{""level"": 425.32881246745325, ""se"": 424.941267918354, ""n"": 2, ""measurement_type"": ""srm_ms_signal_batch_corrected""}",850.2700803858073,,1,lc_srm_signal_batch_corrected_uncalibrated_dataset1,1
+WT,3pg;2pg,2,0.387545,"{""level"": 425.32881246745325, ""se"": 424.941267918354, ""n"": 2, ""measurement_type"": ""srm_ms_signal_batch_corrected""}",0.387544549099187,,1,lc_srm_ion_pair_external_calibration_batch_corrected_unit_unstated_dataset2,1
+YIL042C,r5p,1,1130.574217,"{""level"": 283.204976424938, ""se"": 282.4564200149488, ""n"": 4, ""measurement_type"": ""srm_ms_signal_batch_corrected""}",1130.5742167158426,,1,lc_srm_signal_batch_corrected_uncalibrated_dataset1,1
+YIL042C,r5p,2,0.814712;0.853462;0.577515,"{""level"": 283.204976424938, ""se"": 282.4564200149488, ""n"": 4, ""measurement_type"": ""srm_ms_signal_batch_corrected""}",0.7485629946365465,0.08625255651104867,3,lc_srm_ion_pair_external_calibration_batch_corrected_unit_unstated_dataset2,1

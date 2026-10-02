@@ -22,23 +22,28 @@ both from the same Zenodo record 1320289 (concept DOI 10.5281/zenodo.1320288):
   occurs in the pinned release), since each would make ``n``, the mean or the SE wrong.
 
 - ``MetaboliteZelezniak2018Dataset`` -- the targeted central-carbon/amino-acid
-  METABOLOME of the same 95 kinase-KO strains (plus a measured WT) by SRM-MS/MS. The file
-  ``metabolites_dataset.data_prep.tsv`` is a long-format table of batch-corrected SRM
-  signal per (metabolite, strain, replicate). We aggregate to a per-metabolite mean +
-  standard error, mapping to ``MetabolitePhenotype`` (WS9): ``metabolite_level =
-  {metabolite_id -> mean signal}`` with ``measurement_type =
-  "srm_ms_signal_batch_corrected"`` (the value is an ARBITRARY batch-corrected SRM
-  signal, NOT a concentration; range ~0.004-58995). This is the first dataset to
-  populate ``target_metabolite_ids`` (metabolite -> Yeast9 ``s_NNNN``), sourced from
-  ``YeastGEM`` (never invented), enabling constraint-based-model linkage.
+  METABOLOME of the same 95 kinase-KO strains (plus a measured WT) by LC-SRM. The file
+  ``metabolites_dataset.data_prep.tsv`` is a long-format table of batch-corrected values
+  per (protocol, metabolite, strain, replicate). The ``dataset`` column names one of
+  three LC-SRM protocols (``ZELEZNIAK_METABOLITE_PROTOCOLS``) that do not share a unit:
+  Dataset 1 is an UNCALIBRATED batch-corrected SRM signal measured on the proteomics
+  cultures, Datasets 2 and 3 are externally calibrated values measured on separately
+  re-grown cultures with different chromatography. One record is written per (strain,
+  protocol): a per-metabolite mean + standard error over that protocol's replicates,
+  mapping to ``MetabolitePhenotype`` (WS9) with the protocol's own ``measurement_type``,
+  and the reference is the WT measured under the SAME protocol, so no record or
+  reference ever averages or compares values from two protocols (issue #595). This is
+  the first dataset to populate ``target_metabolite_ids`` (metabolite -> Yeast9
+  ``s_NNNN``), sourced from ``YeastGEM`` (never invented), enabling constraint-based-model
+  linkage.
     - Columns (differ from the Zenodo README): ``metabolite_id, kegg_id, official_name,
       dataset, genotype, replicate, value``. ``genotype`` is the strain (systematic
       kinase ORF, or literal ``WT``); NOT a KO_ORF column. ``metabolite_id`` is a
       BiGG-style id (50 total); ~5 are co-elution merges joined with ``;`` (e.g.
       ``3pg;2pg``, ``ala-L;ala-B``, ``g6p;f6p;g6p-B``) which we KEEP verbatim as dict
       keys (honest to source; resolved via the FIRST sub-id). ``dataset`` is the protocol
-      used for generation (1/2/3); we POOL rows across it per (metabolite, strain) so
-      ``n_replicates`` is the pooled row count.
+      used for generation (1/2/3) and is part of the aggregation key, so
+      ``n_replicates`` counts one protocol's rows only.
 
 For both, the background is BY4741 made prototrophic by the pHLUM minichromosome. The
 proteome ``?download=1`` URL works, but it 403s for the metabolome file, which is fetched
@@ -57,6 +62,7 @@ from typing import Any
 import lmdb
 import numpy as np
 import pandas as pd
+from pydantic import BaseModel, ConfigDict, model_validator
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -84,6 +90,12 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.metabolism.yeast_GEM import YeastGEM
+from torchcell.verification.report import Provenance
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -99,8 +111,174 @@ DATA_URL = (
 DATA_FILENAME = "proteins_dataset.data_prep.tsv"
 DATA_SHA256 = "9ff81ecb1e2dd44d2f6e072ce5b628f0be1abdf57cdbd90d645db4d1fb64bfeb"
 
-# The metabolome value is an ARBITRARY batch-corrected SRM signal, NOT a concentration.
-METABOLITE_MEASUREMENT_TYPE = "srm_ms_signal_batch_corrected"
+# --------------------------------------------------------------------------- #
+# Metabolome protocols (issue #595). The ``dataset`` column of the metabolome file names
+# the LC-SRM protocol; each protocol is its own unit system, sourced below.
+# --------------------------------------------------------------------------- #
+CITATION_KEY = "zelezniakMachineLearningPredicts2018"
+PAPER_MD = "paper.md"
+PAPER_MD_SHA256 = "072bfb2d5b601d578dd5370ed25bfe2709bba0273843c87b5580e248573ce196"
+ZENODO_CONCEPT_DOI_URL = "https://doi.org/10.5281/zenodo.1320288"
+
+
+def _paper_sv(value: Any, quote: str, note: str | None = None) -> SourcedValue:
+    """A ``SourcedValue`` anchored to the mirrored ``paper.md`` by sha256."""
+    return SourcedValue(
+        value=value,
+        provenance=Provenance(
+            source_uri=PAPER_MD,
+            citation_key=CITATION_KEY,
+            sha256=PAPER_MD_SHA256,
+            method="MinerU OCR of the publisher PDF (mirrored artifact)",
+            page="STAR Methods, Metabolomics",
+        ),
+        quote=quote,
+        note=note,
+    )
+
+
+METABOLITE_SOURCED_VALUES: dict[str, SourcedValue] = {
+    "dataset1_method": _paper_sv(
+        "Dataset 1: Keller 2014 LC-SRM method for glycolytic and PPP intermediates",
+        "The method used to obtain Dataset 1 (Figure S13) is described in Keller et al. "
+        "(2014) for the quantification of glycolytic and pentose phosphate pathway "
+        "metabolites and was expanded with additional transitions for ATP, ADP and AMP.",
+    ),
+    "dataset23_method": _paper_sv(
+        "Datasets 2 and 3: Buescher 2010 chromatography with an optimized SRM set",
+        "For Dataset 2 and 3 we adapted chromatographic parameters from Buescher et al. "
+        "(2010) and added a SRM set",
+    ),
+    "dataset2_chromatography": _paper_sv(
+        "Dataset 2: tributylamine ion-pair reversed-phase gradient",
+        "In Dataset 2 analytes were separated by gradient elution using 10 mM TBA",
+    ),
+    "dataset3_chromatography": _paper_sv(
+        "Dataset 3: HILIC separation of free amino acids",
+        "In Dataset 3 (Figure S13), free amino acids were separated by hydrophilic "
+        "interaction liquid chromatography (HILIC)",
+    ),
+    "calibration": _paper_sv(
+        "Datasets 2 and 3 externally calibrated; Dataset 1 not calibrated",
+        "were quantified by external calibration (except Dataset 1) with standards "
+        "prepared at serial dilution from",
+    ),
+    "cultures": _paper_sv(
+        "Dataset 1 from the proteomics cultures; Datasets 2 and 3 from re-grown cultures",
+        "Dataset 1 was created from the same cells as grown for the proteomic "
+        "experiments. Metabolomics datasets 2 and 3 were obtained by re-growing 3 "
+        "independent cultures from strains with highly variable metabolite "
+        "concentrations based on dataset 1",
+    ),
+    "batch_correction": _paper_sv(
+        "all protocols ComBat batch-corrected after calibration where applicable",
+        "All preprocessed metabolomics data (integrated SRM transition peaks after "
+        "external calibration (where applicable)) were corrected for batch effects "
+        "using ComBat approach as implemented in sva (Leek et al., 2012) R package.",
+    ),
+}
+
+CALIBRATED_UNIT_GAP = ProvenanceGap(
+    field="unit",
+    reason=ProvenanceGapReason.deferred_pending_source_review,
+    looked_in=Provenance(
+        source_uri=PAPER_MD,
+        citation_key=CITATION_KEY,
+        sha256=PAPER_MD_SHA256,
+        method="full Methods read; processed-file header carries no unit column",
+        page="STAR Methods, Metabolomics and Enzyme Saturation",
+    ),
+    resolve_with=Provenance(
+        source_uri=ZENODO_CONCEPT_DOI_URL,
+        citation_key=CITATION_KEY,
+        method="Zenodo record 1320289 README (not mirrored) or the authors' "
+        "kinase_metabolism code (https://github.com/zelezniak-lab/kinase_metabolism)",
+    ),
+    note=(
+        "the calibration standards are stated (500 uM to 100 nM serial dilution) and a "
+        "dilution + cell-volume conversion is described for Figures 4F-4H, but neither "
+        "the paper nor metabolites_dataset.data_prep.tsv states the unit of the "
+        "deposited calibrated value, nor whether that conversion was applied to it"
+    ),
+)
+
+
+class ZelezniakMetaboliteProtocol(BaseModel):
+    """One LC-SRM protocol of the Zelezniak metabolome (one value of the ``dataset`` column).
+
+    ``measurement_type`` is stored on every phenotype of the protocol, so a consumer can
+    never treat values from two protocols as one scale. ``unit`` is the sourced unit, or
+    ``None`` with a typed ``unit_gap`` when no mirrored source states it.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    dataset: int
+    measurement_type: str
+    calibrated: bool
+    unit: str | None
+    unit_gap: ProvenanceGap | None
+    sources: tuple[SourcedValue, ...]
+
+    @model_validator(mode="after")
+    def _unit_or_gap(self) -> "ZelezniakMetaboliteProtocol":
+        """Exactly one of ``unit`` and ``unit_gap`` is set."""
+        if (self.unit is None) == (self.unit_gap is None):
+            raise ValueError(
+                f"protocol {self.dataset}: exactly one of unit and unit_gap must be set"
+            )
+        return self
+
+
+_SV = METABOLITE_SOURCED_VALUES
+ZELEZNIAK_METABOLITE_PROTOCOLS: dict[int, ZelezniakMetaboliteProtocol] = {
+    1: ZelezniakMetaboliteProtocol(
+        dataset=1,
+        # Uncalibrated: an ARBITRARY batch-corrected SRM signal, NOT a concentration.
+        measurement_type="lc_srm_signal_batch_corrected_uncalibrated_dataset1",
+        calibrated=False,
+        unit="arbitrary units (batch-corrected SRM peak signal, NOT a concentration)",
+        unit_gap=None,
+        sources=(
+            _SV["dataset1_method"],
+            _SV["calibration"],
+            _SV["cultures"],
+            _SV["batch_correction"],
+        ),
+    ),
+    2: ZelezniakMetaboliteProtocol(
+        dataset=2,
+        measurement_type=(
+            "lc_srm_ion_pair_external_calibration_batch_corrected_unit_unstated_dataset2"
+        ),
+        calibrated=True,
+        unit=None,
+        unit_gap=CALIBRATED_UNIT_GAP,
+        sources=(
+            _SV["dataset23_method"],
+            _SV["dataset2_chromatography"],
+            _SV["calibration"],
+            _SV["cultures"],
+            _SV["batch_correction"],
+        ),
+    ),
+    3: ZelezniakMetaboliteProtocol(
+        dataset=3,
+        measurement_type=(
+            "lc_srm_hilic_external_calibration_batch_corrected_unit_unstated_dataset3"
+        ),
+        calibrated=True,
+        unit=None,
+        unit_gap=CALIBRATED_UNIT_GAP,
+        sources=(
+            _SV["dataset23_method"],
+            _SV["dataset3_chromatography"],
+            _SV["calibration"],
+            _SV["cultures"],
+            _SV["batch_correction"],
+        ),
+    ),
+}
 
 # Zenodo record 1320289 -> metabolites_dataset.data_prep.tsv. The ?download=1 URL 403s
 # for this file, so we hit the Zenodo API content endpoint.
@@ -373,7 +551,9 @@ def build_metabolite_s_id_map(kegg_by_metabolite: dict[str, str]) -> dict[str, s
 
 @register_dataset
 class MetaboliteZelezniak2018Dataset(ExperimentDataset):
-    """SRM-MS/MS targeted metabolome of the yeast kinase-knockout collection (95 strains)."""
+    """LC-SRM targeted metabolome of the kinase-knockout collection, one record per
+    (strain, protocol); each record and its WT reference share one protocol.
+    """
 
     def __init__(
         self,
@@ -417,14 +597,26 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
         log.info("Wrote %s (%d bytes, sha256 verified)", dest, len(data))
 
     @staticmethod
-    def _aggregate(sub: pd.DataFrame) -> dict[str, Any]:
-        """Aggregate one strain's rows to per-metabolite mean/se/n dicts.
+    def _aggregate(sub: pd.DataFrame, strain: str, dataset: int) -> dict[str, Any]:
+        """Aggregate one (strain, protocol) block of rows to per-metabolite mean/se/n dicts.
 
-        Rows are POOLED across the ``dataset`` protocol column (1/2/3) and the
-        ``replicate`` column per metabolite: mean = pooled mean, SE = sample_SD * n**-0.5
-        when n>1 else NaN, n = pooled row count. (README: ``dataset`` = "Protocol used for
-        generation"; pooling protocols is an explicit decision -- see module docstring.)
+        ``sub`` holds the rows of ONE protocol (one ``dataset`` value) for one strain, so
+        mean = mean over that protocol's replicates, SE = sample_SD * n**-0.5 when n>1
+        else NaN, n = row count. Protocols are never pooled (issue #595): Dataset 1 is an
+        uncalibrated signal and Datasets 2/3 are calibrated values. ``n`` is the row
+        count, so a repeated (metabolite, replicate) id inside the block refuses, naming
+        the strain and protocol. Measured on the pinned release (sha256 ``c4429fd8...``):
+        0 repeated (dataset, metabolite, genotype, replicate) rows of 3,522.
         """
+        repeated = sub[sub.duplicated(["metabolite_id", "replicate"], keep=False)]
+        if len(repeated):
+            raise RuntimeError(
+                f"Zelezniak metabolome strain {strain} protocol {dataset}: "
+                f"{len(repeated)} rows share a (metabolite, replicate) id, first "
+                f"{repeated['metabolite_id'].iloc[0]} replicate "
+                f"{repeated['replicate'].iloc[0]}; a repeated replicate would count as "
+                "an extra replicate"
+            )
         grp = sub.groupby("metabolite_id")["value"].agg(["mean", "std", "count"])
         level: dict[str, float] = {}
         se: dict[str, float] = {}
@@ -440,7 +632,7 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Aggregate the metabolome matrix into per-strain experiments and write LMDB."""
+        """Aggregate the metabolome into per-(strain, protocol) experiments and write LMDB."""
         verify_raw_files(
             self.raw_dir, {METABOLITE_DATA_FILENAME: METABOLITE_DATA_SHA256}
         )
@@ -459,24 +651,63 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
         }
         self._s_id_map = build_metabolite_s_id_map(kegg_by_metabolite)
 
+        unknown = sorted(
+            set(df["dataset"].tolist()) - set(ZELEZNIAK_METABOLITE_PROTOCOLS)
+        )
+        if unknown:
+            raise RuntimeError(
+                f"Zelezniak metabolome protocol(s) {unknown} have no sourced "
+                "ZelezniakMetaboliteProtocol; their unit and calibration are unknown"
+            )
+
         wt_rows = df[df["genotype"] == _WT]
         if wt_rows.empty:
             raise RuntimeError("Zelezniak metabolome missing the WT reference strain")
-        self._reference = self._aggregate(wt_rows)
+        # One WT reference PER PROTOCOL: a record is only ever compared with the WT
+        # measured by the same protocol (issue #595).
+        self._references: dict[int, dict[str, Any]] = {}
+        for protocol in sorted(int(d) for d in wt_rows["dataset"].unique()):
+            self._references[protocol] = self._aggregate(
+                wt_rows[wt_rows["dataset"] == protocol], _WT, protocol
+            )
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         rows: list[dict[str, Any]] = []
-        for genotype, sub in df[df["genotype"] != _WT].groupby("genotype"):
-            rows.append({"orf": str(genotype), "agg": self._aggregate(sub)})
+        strains = df[df["genotype"] != _WT]
+        for protocol in sorted(int(d) for d in strains["dataset"].unique()):
+            if protocol not in self._references:
+                raise RuntimeError(
+                    f"Zelezniak metabolome protocol {protocol} has strain rows but no "
+                    "WT rows; its records would have no same-protocol reference"
+                )
+        for (_, genotype), sub in strains.groupby(["dataset", "genotype"]):
+            protocol = int(sub["dataset"].iloc[0])
+            agg = self._aggregate(sub, str(genotype), protocol)
+            shared = set(agg["level"]) & set(self._references[protocol]["level"])
+            if not shared:
+                raise RuntimeError(
+                    f"Zelezniak metabolome strain {genotype} protocol {protocol} shares "
+                    "no metabolite with that protocol's WT; its reference would be empty"
+                )
+            rows.append({"orf": str(genotype), "dataset": protocol, "agg": agg})
         log.info(
-            "Zelezniak metabolome: %d knockout strains, WT reference with %d "
-            "metabolites, %d metabolite ids mapped to Yeast9 s_NNNN",
+            "Zelezniak metabolome: %d (strain, protocol) records over protocols %s, WT "
+            "reference metabolites per protocol %s, %d metabolite ids mapped to Yeast9 "
+            "s_NNNN",
             len(rows),
-            len(self._reference["level"]),
+            sorted(self._references),
+            {d: len(r["level"]) for d, r in sorted(self._references.items())},
             len(self._s_id_map),
         )
         pd.DataFrame(
-            [{"orf": r["orf"], "n_metabolites": len(r["agg"]["level"])} for r in rows]
+            [
+                {
+                    "orf": r["orf"],
+                    "dataset": r["dataset"],
+                    "n_metabolites": len(r["agg"]["level"]),
+                }
+                for r in rows
+            ]
         ).to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
@@ -504,8 +735,8 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
         """Preprocessing is handled inside process() for this dataset."""
         return df
 
-    def _phenotype(self, agg: dict[str, Any]) -> MetabolitePhenotype:
-        """Build a MetabolitePhenotype from an aggregated per-metabolite dict."""
+    def _phenotype(self, agg: dict[str, Any], dataset: int) -> MetabolitePhenotype:
+        """Build a MetabolitePhenotype for one protocol's aggregated per-metabolite dict."""
         level = dict(agg["level"])
         se = dict(agg["se"])
         # SE keys must be a subset of level keys; the all-NaN case collapses to None.
@@ -517,14 +748,14 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
             metabolite_level=level,
             metabolite_level_se=level_se,
             n_replicates=dict(agg["n"]),
-            measurement_type=METABOLITE_MEASUREMENT_TYPE,
+            measurement_type=ZELEZNIAK_METABOLITE_PROTOCOLS[dataset].measurement_type,
             target_metabolite_ids=targets,
         )
 
     def create_experiment(  # type: ignore[override]
         self, row: dict[str, Any]
     ) -> tuple[MetaboliteExperiment, MetaboliteExperimentReference, Publication]:
-        """Build the Metabolite experiment/reference/publication for one strain."""
+        """Build the Metabolite experiment/reference/publication for one (strain, protocol)."""
         # Background = BY4741 kinase-deletion collection made prototrophic by the pHLUM
         # minichromosome (restores HIS3/LEU2/URA3/MET17); pHLUM not yet modeled here.
         genome_reference = ReferenceGenome(
@@ -542,21 +773,23 @@ class MetaboliteZelezniak2018Dataset(ExperimentDataset):
         # SRM-MS/MS on cells in synthetic minimal (SM) liquid medium, 30 C (as proteome);
         # same unstated recipe, deferred to Mulleder 2012 on ``SM_DEFERRED``.
         environment = Environment(media=SM_DEFERRED, temperature=Temperature(value=30))
-        phenotype = self._phenotype(row["agg"])
-        # Reference = the measured WT baseline RESTRICTED to the metabolites this strain
-        # measured. Targeted-metabolomics coverage is sparse and per-strain (WT itself
-        # measured only 45 of the 50 ids -- never adp/amp/atp/e4p/fum), so a strain can
-        # measure metabolites the WT lacks; those simply have no WT baseline. Restricting
-        # keeps reference keys a subset of the experiment's and every reference value a
-        # real WT measurement (never invented). Every strain shares >=1 metabolite with WT.
+        dataset = int(row["dataset"])
+        phenotype = self._phenotype(row["agg"], dataset)
+        # Reference = the WT measured by the SAME protocol, RESTRICTED to the metabolites
+        # this strain measured under it. Targeted-metabolomics coverage is sparse (the
+        # protocol-1 WT measured 13 of that protocol's 17 ids, never adp/amp/atp/e4p), so
+        # a strain can measure metabolites the WT lacks; those simply have no WT
+        # baseline. Restricting keeps reference keys a subset of the experiment's and
+        # every reference value a real same-protocol WT measurement (never invented);
+        # process() refuses a (strain, protocol) that shares no metabolite with its WT.
         exp_keys = set(row["agg"]["level"])
-        ref = self._reference
+        ref = self._references[dataset]
         ref_agg = {
             "level": {k: v for k, v in ref["level"].items() if k in exp_keys},
             "se": {k: v for k, v in ref["se"].items() if k in exp_keys},
             "n": {k: v for k, v in ref["n"].items() if k in exp_keys},
         }
-        phenotype_reference = self._phenotype(ref_agg)
+        phenotype_reference = self._phenotype(ref_agg, dataset)
         experiment = MetaboliteExperiment(
             dataset_name=self.name,
             genotype=genotype,

@@ -169,3 +169,32 @@ Tests: `test_proteome_repeated_replicate_id_refuses_naming_the_strain`, `test_pr
 Not changed, observed while measuring: the metabolome file pools rows across the `dataset` protocol column, and 378 rows share a (metabolite, genotype, replicate) id across protocols (0 when `dataset` is included in the key). For `3pg;2pg` the two protocols differ by about three orders of magnitude (WT replicate 1: 850.27 under protocol 1, 0.388 under protocol 2), so pooling them into one mean and SD is worth a separate review. Out of scope for issue #520.
 
 Review follow-up (same day): `inf` passed the blank check, so a non-finite value now refuses the same way, naming the strain and the first cell. Recounted on the pinned file: 0 non-finite values of 264,264 (float64 column). Test: `test_proteome_non_finite_value_refuses`.
+
+## 2026.10.02 - Metabolome protocols kept separate (issue 595)
+
+Issue #595. `MetaboliteZelezniak2018Dataset._aggregate` grouped one strain's rows by `metabolite_id` only, so rows from the three LC-SRM protocols in the `dataset` column were averaged into one mean and SE. The paper (mirrored `paper.md`, sha256 `072bfb2d...`, STAR Methods, Metabolomics) states that Dataset 1 is not calibrated ("quantified by external calibration (except Dataset 1)"), was measured on the proteomics cultures, and that Datasets 2 and 3 come from re-grown cultures on different chromatography (ion-pair for 2, HILIC amino acids for 3). The pooled mean mixed two unit systems, the stored SE was the between-protocol scale gap, and every record's WT reference was pooled the same way. The old label "ARBITRARY batch-corrected SRM signal, NOT a concentration" also covered protocols 2 and 3, which are calibrated.
+
+Fix:
+
+- One record per (strain, protocol). The aggregation key includes `dataset`, so `n_replicates` counts one protocol's rows.
+- The WT reference is aggregated per protocol, and each record is referenced only against the WT of its own protocol (restricted to the metabolites the strain measured, as before).
+- The protocol is carried on the existing `MetabolitePhenotype.measurement_type` field (no schema change), on both the experiment and the reference. `ZELEZNIAK_METABOLITE_PROTOCOLS` (pydantic `ZelezniakMetaboliteProtocol`) holds per protocol: `measurement_type`, `calibrated`, `unit` or a typed `unit_gap`, and `SourcedValue` quotes (sha256-pinned, audited by `test_protocol_quotes_are_verbatim_in_the_mirrored_paper`).
+  - 1: `lc_srm_signal_batch_corrected_uncalibrated_dataset1`, uncalibrated, unit "arbitrary units (batch-corrected SRM peak signal, NOT a concentration)".
+  - 2: `lc_srm_ion_pair_external_calibration_batch_corrected_unit_unstated_dataset2`, calibrated, unit gap.
+  - 3: `lc_srm_hilic_external_calibration_batch_corrected_unit_unstated_dataset3`, calibrated, unit gap.
+- `CALIBRATED_UNIT_GAP` (`deferred_pending_source_review`): the Methods state the calibration standards (500 uM to 100 nM) and a dilution plus cell-volume conversion for Figures 4F-4H, but neither the paper nor the processed file states the unit of the deposited calibrated value or whether that conversion was applied. Resolve with the Zenodo record 1320289 README (not mirrored) or the authors' `kinase_metabolism` code.
+- New refusals, each with an exact-message test: a `dataset` value with no sourced protocol, strain rows on a protocol with no WT rows, a (strain, protocol) sharing no metabolite with its WT, a repeated (metabolite, replicate) id inside one protocol. None fires on the pinned release.
+- Verifier: `verify_metabolite_dataset(..., protocol_measurement_types=...)` keys L1 uniqueness on (strain, protocol) and requires each record's type to be declared and its reference to share it. The registry entry declares the three types and `expected_count` 129.
+
+Measured by `experiments/036-dataset-fixes-before-kg-build/scripts/zelezniak2018_protocol_split.py` (raw `metabolites_dataset.data_prep.tsv` sha256 `c4429fd8...`, old dev-tree LMDB, new scratch build of this loader), results in `experiments/036-dataset-fixes-before-kg-build/results/zelezniak2018_protocol_split.json` and `zelezniak2018_protocol_split_examples.csv`:
+
+- Raw: 3,522 rows, 2,053 (genotype, metabolite) cells, 189 cells pool protocols 1 and 2 (704 rows; 10 metabolites, 19 genotypes); ratio of per-protocol means in a pooled cell min 5.0x, median 139.6x, max 2,194x; 115 cells over 100x, 10 over 1,000x. 0 repeated (dataset, metabolite, genotype, replicate) rows.
+- Old store: 95 records, one measurement_type; 18 records carry 179 pooled experiment cells; all 95 carry pooled reference cells (950).
+- New store: 129 records (protocol 1: 95, protocol 2: 18, protocol 3: 16); 0 duplicate (strain, protocol) keys; 2,187 experiment cells and 1,946 reference cells each equal the mean, n and SE of exactly one protocol's raw rows (0 mismatches, so 0 cells pool protocols); 0 records whose reference is on another protocol. `verify_metabolite_dataset` with the registry spec passes on the scratch build.
+- Examples: WT `3pg;2pg` was mean 425.329, SE 424.941, n 2; now 850.270 (protocol 1, n 1) and 0.388 (protocol 2, n 1), each in its own protocol's references. YIL042C `r5p` was mean 283.205, SE 282.456, n 4; now 1130.574 (protocol 1, n 1) and 0.749, SE 0.086, n 3 (protocol 2).
+
+Open:
+
+- The calibrated unit is a typed gap until the Zenodo README or the authors' code is mirrored (needs a retrieval go-ahead).
+- Downstream readers of the pooled values (experiment 019 metabolome heads and fig6 queries, amino-acid and metabolite comparisons) now see up to three records per strain on different scales. `MeanExperimentDeduplicator` groups by `experiment_type` plus genes, so applied to this dataset it would merge a strain's protocol records again (read from `torchcell/data/mean_experiment_deduplicate.py`; not run).
+- `DATASET_FULL_RECORDS` in `torchcell/knowledge_graphs/build_time_projection.py` still says 95; it is a gathered snapshot of the dev tree and is regenerated after the dev rebuild.

@@ -12,7 +12,10 @@ non-negative SE, so L0 subsumes those. This verifier adds:
 2. L2 `level_finiteness` -- measured levels are finite (guards inf/NaN).
 3. L3 `reference_zero` -- the control level is 0 (population-centered baseline).
 4. L3 `measurement_type_consistent` -- every record shares one measurement_type (levels
-   from different assays must not be silently mixed).
+   from different assays must not be silently mixed). A dataset that releases several
+   protocols on different scales (Zelezniak 2018, issue #595) declares them as
+   ``protocol_measurement_types``: each record then carries one declared protocol, its
+   reference carries the SAME one, and L1 uniqueness keys on (strain, protocol).
 5. L4 `gene_containment` (caller) -- the screened deletions overlap the yeast deletion
    collection used by the other datasets.
 """
@@ -73,21 +76,34 @@ def _genotype_signature(
     )
 
 
-def _l1_orf_uniqueness(records: Sequence[Record]) -> LevelResult:
-    """L1: exactly one record per STRAIN (genotype signature of deleted ORFs)."""
-    seen: dict[tuple[tuple[str | None, ...], ...], int] = {}
+def _l1_orf_uniqueness(
+    records: Sequence[Record], *, per_protocol: bool = False
+) -> LevelResult:
+    """L1: exactly one record per STRAIN (genotype signature of deleted ORFs).
+
+    With ``per_protocol`` the key is (strain, measurement_type): one record per strain
+    per declared protocol.
+    """
+    seen: dict[tuple[Any, ...], int] = {}
     for rec in records:
-        sig = _genotype_signature(rec["experiment"])
+        sig: tuple[Any, ...] = _genotype_signature(rec["experiment"])
+        if per_protocol:
+            sig = (sig, rec["experiment"]["phenotype"]["measurement_type"])
         seen[sig] = seen.get(sig, 0) + 1
     dups = {s: n for s, n in seen.items() if n > 1}
+    unique_unit, dup_unit = (
+        ("(strain, protocol) pairs", "(strain, protocol) pairs")
+        if per_protocol
+        else ("strains (deletion sets)", "deletion sets")
+    )
     return LevelResult(
         level=Level.L1,
         name="genotype_uniqueness",
         passed=not dups,
         message=(
-            f"{len(seen)} unique strains (deletion sets), one record each"
+            f"{len(seen)} unique {unique_unit}, one record each"
             if not dups
-            else f"{len(dups)} deletion sets appear in multiple records"
+            else f"{len(dups)} {dup_unit} appear in multiple records"
         ),
         details={"n_strains": len(seen), "n_duplicated": len(dups)},
     )
@@ -169,6 +185,42 @@ def _l3_measurement_type_consistent(records: Sequence[Record]) -> LevelResult:
     )
 
 
+def _l3_protocols_declared(
+    records: Sequence[Record], protocols: frozenset[str]
+) -> LevelResult:
+    """L3: every record carries one DECLARED protocol and its reference the same one.
+
+    For datasets that release several protocols on different scales: mixing is allowed
+    across records (each record is one protocol) but never within a record, so the
+    experiment and the reference must name the same declared measurement_type.
+    """
+    types = {rec["experiment"]["phenotype"]["measurement_type"] for rec in records}
+    undeclared = sorted(types - protocols)
+    crossed = sum(
+        rec["reference"]["phenotype_reference"]["measurement_type"]
+        != rec["experiment"]["phenotype"]["measurement_type"]
+        for rec in records
+    )
+    holds = not undeclared and crossed == 0
+    return LevelResult(
+        level=Level.L3,
+        name="measurement_type_consistent",
+        passed=holds,
+        message=(
+            f"{len(types)} declared protocol measurement_types, each record's "
+            "reference on its own protocol"
+            if holds
+            else f"{len(undeclared)} undeclared measurement_types, {crossed} records "
+            "whose reference is on another protocol"
+        ),
+        details={
+            "measurement_types": sorted(types),
+            "undeclared": undeclared,
+            "n_reference_protocol_differs": crossed,
+        },
+    )
+
+
 def verify_metabolite_dataset(
     records: Sequence[Record],
     *,
@@ -176,6 +228,7 @@ def verify_metabolite_dataset(
     provenance: Provenance,
     expected_count: int,
     reference_centered: bool = True,
+    protocol_measurement_types: frozenset[str] | None = None,
 ) -> VerificationReport:
     """Run the L0-L3 record-level gate for a metabolite dataset.
 
@@ -183,6 +236,11 @@ def verify_metabolite_dataset(
     for population-CENTERED scores (Cachera CRI-SPA). Set False for ABSOLUTE-quantity
     datasets (Mulleder amino-acid concentrations), where the reference is a WT-equivalent
     baseline and is instead checked for finiteness + key-consistency.
+
+    ``protocol_measurement_types`` (default None): the declared measurement_types of a
+    dataset released under several protocols on different scales (one record per
+    strain per protocol). When set, L1 uniqueness keys on (strain, protocol) and L3
+    requires each record's type to be declared and its reference to share it.
 
     L4 (cross-source gene overlap with the deletion collection) is asserted by the
     caller across datasets.
@@ -196,7 +254,9 @@ def verify_metabolite_dataset(
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     report.add(l0_structural((rec["experiment"] for rec in records), validate))
     report.add(l1_count(len(records), expected_count))
-    report.add(_l1_orf_uniqueness(records))
+    report.add(
+        _l1_orf_uniqueness(records, per_protocol=protocol_measurement_types is not None)
+    )
 
     levels = [
         float(v)
@@ -229,7 +289,10 @@ def verify_metabolite_dataset(
         report.add(_l3_reference_zero(records))
     else:
         report.add(_l3_reference_finite(records))
-    report.add(_l3_measurement_type_consistent(records))
+    if protocol_measurement_types is None:
+        report.add(_l3_measurement_type_consistent(records))
+    else:
+        report.add(_l3_protocols_declared(records, protocol_measurement_types))
     return report
 
 

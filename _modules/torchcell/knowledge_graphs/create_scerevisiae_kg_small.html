@@ -146,6 +146,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.fast_csv</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastCsvSink</span><span class="p">,</span> <span class="n">build_row_specs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGraph</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataset_adapter_map</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.head_ontology</span><span class="w"> </span><span class="kn">import</span> <span class="n">verify_head_ontology</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.incremental_import</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">INCREMENTAL_CALL_FILENAME</span><span class="p">,</span>
     <span class="n">prepare_incremental_import</span><span class="p">,</span>
@@ -262,6 +263,9 @@
     <span class="n">output_directory</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">DATA_ROOT</span><span class="p">,</span> <span class="n">BIOCYPHER_OUT_PATH</span><span class="p">,</span> <span class="n">time_str</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">output_directory</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">"========="</span><span class="p">)</span>
+    <span class="c1"># The head ontology must be the sha256-pinned local Biolink mirror, never</span>
+    <span class="c1"># BioCypher's default GitHub URL (live rebuild job 3182 died on a 504 there).</span>
+    <span class="n">verify_head_ontology</span><span class="p">(</span><span class="n">BIOCYPHER_CONFIG_PATH</span><span class="p">)</span>
     <span class="n">bc</span> <span class="o">=</span> <span class="n">BioCypher</span><span class="p">(</span>
         <span class="n">output_directory</span><span class="o">=</span><span class="n">output_directory</span><span class="p">,</span>
         <span class="n">biocypher_config_path</span><span class="o">=</span><span class="n">BIOCYPHER_CONFIG_PATH</span><span class="p">,</span>

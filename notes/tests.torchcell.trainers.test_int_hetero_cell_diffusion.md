@@ -35,3 +35,8 @@ Findings (source `torchcell/trainers/int_hetero_cell.py`):
 - `test_diffusion_train_components_log_like_every_other_loss`: a [1, 2] tensor logs `vec_0`, `vec_1`, a number logs as is, an unnamed loss gets two arguments.
 - `test_diffusion_train_requires_a_loss_only_on_the_train_stage`: `ValueError("No loss function provided")`, no bare `assert`.
 - New: `test_diffusion_loss_on_a_model_without_z_p_is_refused_by_name`, `test_diffusion_train_epoch_end_logs_no_train_metric_and_steps_the_scheduler` (only `train/avg_diffusion_loss` 2.0 is logged; the scheduler is stepped once).
+
+## 2026.10.02 - Review fixes on PR #637
+
+- New `test_a_non_diffusion_loss_is_refused_at_construction` (`LogCoshLoss`, `nn.MSELoss`, full message).
+- The component test now uses the `DiffusionLoss`-typed stand-in, called `(pred, target, z_p)`.

@@ -25,3 +25,11 @@ Owner decision 2026-10-02: "614 sounds like it needs fix." Previous behavior and
 - **Unused hyperparameters.** `batch_size` and `device` are still accepted (every script and older checkpoints pass them) but excluded from `save_hyperparameters`; nothing read them.
 
 Left open: the COO layout is still read positionally (issue item 7). A real PyG collation carries `phenotype_types` as one list per genotype and leaves `phenotype_sample_indices` un-offset (all 0 for one label per sample), so a type or sample check needs that collated layout pinned on a real 006 batch first.
+
+## 2026.10.02 - Review fixes on PR #637
+
+- `DiffusionRegressionTask` refuses at construction any `loss_func` that is not a `DiffusionLoss` (None stays allowed for evaluation only). The 006 diffusion script also offers `loss: logcosh` and `icloss`; with the train stage no longer scoring placeholders, those would have trained on the all-zero placeholders without an error (on main `LogCoshLoss` raised `TypeError` at the first step).
+- A plateau step on a validation epoch whose collection received no rows (all targets NaN) is refused by name instead of stepping on NaN.
+- The schedule-key refusal shows the YAML space hint only for a key containing a colon.
+- The new `cast` calls are replaced by annotated locals.
+- Tests: the plateau test now runs with the real inverse, so the original-unit val MSE 14 / 3 (not the transformed 7 / 6) is pinned as the stepped value; refusal tests for `LogCoshLoss` and `nn.MSELoss` on the diffusion task and for the empty validation epoch. The shared tests give the diffusion task a `DiffusionLoss`-typed squared-error stand-in.

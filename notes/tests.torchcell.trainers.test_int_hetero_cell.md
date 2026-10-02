@@ -81,3 +81,9 @@ Retired `Finding:` pins, now asserting the corrected contract (exact values and 
 - Hyperparameters: `test_batch_size_and_device_are_accepted_but_neither_saved_nor_read` (the eleven saved names listed).
 
 Still pinned: `test_coo_layout_is_read_positionally_not_by_sample_or_type` (a fitness-only batch is scored as gene interaction). It now also pins the real collated layout (`phenotype_types` one list per genotype, `phenotype_sample_indices` [0, 0]) and the new refusal of a batch whose genotype count differs from the prediction rows. The buffer test runs the diffusion task on validation only; its train epoch end moved to the diffusion tests.
+
+## 2026.10.02 - Review fixes on PR #637
+
+- `test_plateau_scheduler_steps_on_val_mse_at_validation_end_only` runs with the real inverse: the step receives the original-unit MSE 14 / 3, not the transformed 7 / 6, so a scheduler stepped on the transformed collection fails.
+- New `test_plateau_on_a_validation_epoch_with_no_rows_is_refused`.
+- `_make` gives `DiffusionRegressionTask` the `_DiffusionSquaredError` stand-in (a `DiffusionLoss` by type), since the task now refuses any other loss.

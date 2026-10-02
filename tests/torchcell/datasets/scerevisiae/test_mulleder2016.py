@@ -18,14 +18,18 @@ order):
     " YCR001W " 1.0 x 19             stripped
 
 ``robust_summary_statistics`` sheet (amino acid, mean (mM), sd (mM)): mean 0.25 * (i + 1)
-per amino acid; every record's reference is that table, n = 1 per amino acid, SE None.
+per amino acid; every record's reference is that table, SE None, and (since 2026.10.02,
+issue #489) n = the number of released records on every key (3 here).
+
+``data_raw`` sheet (identifier, ORF, batch, 19 uM columns; written by default since
+2026.10.02): one row each for YAL001C, YBR001C, YCR001W plus one ``QC_001`` row with no
+ORF, so every default record has n = 1 per amino acid (issue #488 counts these rows).
 
 2026.09.30 (Phase 14). Added, each on its own synthetic workbook under ``tmp_path``:
 
-- the replicate counts as Findings: a ``data_raw`` sheet giving YAL001C three raw rows
-  leaves its ``n_replicates`` at 1 on all 19 keys (issue #488: 191 released strains have
-  two to four raw rows), and the reference, the MCD robust mean over the whole
-  collection, also says n = 1 on all 19 keys (issue #489);
+- the replicate counts, Findings until 2026.10.02 and contracts since: three
+  ``data_raw`` rows for YAL001C give n = 3 (issue #488), and the reference n is the
+  number of strains the MCD robust mean summarizes (issue #489);
 - the medium as a Finding: the record and its reference carry ``SM_AGAR`` (solid), not
   the liquid ``SM`` subculture the amino acids are extracted from (issue #143);
 - the build ledger: four YBR001C rows, one blank ORF and one ``WT`` row log exactly
@@ -50,6 +54,7 @@ import hashlib
 import io
 import json
 import logging
+import os
 import re
 import urllib.request
 from pathlib import Path
@@ -84,6 +89,12 @@ _CONC_ROWS: list[list[Any]] = [
     [" YCR001W ", *([1.0] * 19)],
 ]
 _SUMMARY_MEANS = {aa: 0.25 * (i + 1) for i, aa in enumerate(_AA)}
+_RAW_ROWS: list[list[Any]] = [
+    ["S000", "YAL001C", "01", *([10.0] * 19)],
+    ["S001", "YBR001C", "01", *([20.0] * 19)],
+    ["S002", "YCR001W", "02", *([30.0] * 19)],
+    ["QC_001", None, "01", *([5.0] * 19)],
+]
 
 
 def _write_workbook(
@@ -91,7 +102,7 @@ def _write_workbook(
     conc_columns: list[str] = _AA,
     summary_means: dict[str, float] = _SUMMARY_MEANS,
     conc_rows: list[list[Any]] = _CONC_ROWS,
-    raw_rows: list[list[Any]] | None = None,
+    raw_rows: list[list[Any]] = _RAW_ROWS,
 ) -> None:
     workbook = openpyxl.Workbook()
     conc = workbook.active
@@ -103,12 +114,11 @@ def _write_workbook(
     summary.append(["amino acid", "mean (mM)", "sd (mM)"])
     for aa, mean in summary_means.items():
         summary.append([aa, mean, 0.1])
-    if raw_rows is not None:
-        # the released workbook's per-injection sheet (identifier, ORF, batch, uM)
-        data_raw = workbook.create_sheet("data_raw")
-        data_raw.append(["identifier", "ORF", "batch", *_AA])
-        for raw_row in raw_rows:
-            data_raw.append(raw_row)
+    # the released workbook's per-injection sheet (identifier, ORF, batch, uM)
+    data_raw = workbook.create_sheet(m._RAW_SHEET)
+    data_raw.append(["identifier", "ORF", "batch", *_AA])
+    for raw_row in raw_rows:
+        data_raw.append(raw_row)
     workbook.save(raw / m.DATA_FILENAME)
 
 
@@ -133,7 +143,9 @@ _PUBLICATION = Publication(
 ).model_dump()
 
 
-def _experiment(orf: str, levels: list[float]) -> dict[str, Any]:
+def _experiment(
+    orf: str, levels: list[float], n: dict[str, int] | None = None
+) -> dict[str, Any]:
     return MetaboliteExperiment(
         dataset_name="AminoAcidMulleder2016Dataset",
         genotype=Genotype(
@@ -147,14 +159,14 @@ def _experiment(orf: str, levels: list[float]) -> dict[str, Any]:
         phenotype=MetabolitePhenotype(
             metabolite_level=dict(zip(_AA, levels, strict=True)),
             metabolite_level_se=None,
-            n_replicates=dict.fromkeys(_AA, 1),
+            n_replicates=n if n is not None else dict.fromkeys(_AA, 1),
             measurement_type="intracellular_concentration_mM",
             target_metabolite_ids=None,
         ),
     ).model_dump()
 
 
-def _reference(means: dict[str, float]) -> dict[str, Any]:
+def _reference(means: dict[str, float], n_strains: int = 3) -> dict[str, Any]:
     return MetaboliteExperimentReference(
         dataset_name="AminoAcidMulleder2016Dataset",
         genome_reference=ReferenceGenome(
@@ -164,7 +176,7 @@ def _reference(means: dict[str, float]) -> dict[str, Any]:
         phenotype_reference=MetabolitePhenotype(
             metabolite_level=means,
             metabolite_level_se=None,
-            n_replicates=dict.fromkeys(means, 1),
+            n_replicates=dict.fromkeys(means, n_strains),
             measurement_type="intracellular_concentration_mM",
         ),
     ).model_dump()
@@ -175,7 +187,8 @@ def test_three_records_n_one_with_the_robust_mean_reference(
 ) -> None:
     """Six rows give three records (YAL001C, the first YBR001C, the stripped YCR001W);
     the WT and malformed names are skipped and the second YBR001C is a collision. Each
-    amino acid is n = 1 with no SE on solid SM at 30 C; the reference is the summary mean.
+    amino acid is n = 1 (one ``data_raw`` row each) with no SE on solid SM at 30 C; the
+    reference is the summary mean with n = 3, the strains it summarizes.
     """
     assert len(dataset) == 3
     assert dataset[0]["experiment"] == _experiment("YAL001C", _LEVELS_YAL001C)
@@ -187,19 +200,20 @@ def test_three_records_n_one_with_the_robust_mean_reference(
 
 
 def test_side_files(dataset: m.AminoAcidMulleder2016Dataset) -> None:
-    """``data.csv`` is one row per kept ORF with the 19 concentrations; one reference
-    covers all three records; the gene set is the three ORFs.
+    """``data.csv`` is one row per kept ORF with the 19 concentrations and its
+    ``data_raw`` row count; one reference covers all three records; the gene set is the
+    three ORFs.
     """
     assert dataset.experiment_class is MetaboliteExperiment
     assert dataset.reference_class is MetaboliteExperimentReference
     preprocess = Path(dataset.root) / "preprocess"
     expected_rows = [
-        ["YAL001C", *_LEVELS_YAL001C],
-        ["YBR001C", *([2.0] * 19)],
-        ["YCR001W", *([1.0] * 19)],
+        ["YAL001C", *_LEVELS_YAL001C, 1],
+        ["YBR001C", *([2.0] * 19), 1],
+        ["YCR001W", *([1.0] * 19), 1],
     ]
     assert (preprocess / "data.csv").read_text() == (
-        ",".join(["orf", *_AA])
+        ",".join(["orf", *_AA, "n_raw_rows"])
         + "\n"
         + "".join(",".join(str(v) for v in row) + "\n" for row in expected_rows)
     )
@@ -221,8 +235,8 @@ def test_reference_takes_every_summary_row_not_only_the_19_amino_acids(
 ) -> None:
     """Finding: ``_reference_levels`` is built from every row of the summary sheet, so an
     extra ``cysteine`` row (the amino acid the paper excludes) lands in the reference
-    phenotype with n = 1 while no experiment measures it; the reference then has 20 keys
-    against the experiment's 19.
+    phenotype (with the strain count, n = 3) while no experiment measures it; the
+    reference then has 20 keys against the experiment's 19.
     """
     means = {**_SUMMARY_MEANS, "cysteine": 0.125}
     root = _root(tmp_path, summary_means=means)
@@ -285,51 +299,122 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
 
 
-def test_n_replicates_is_one_even_for_a_strain_with_three_raw_rows(
+def test_n_replicates_counts_the_data_raw_rows_per_amino_acid_issue_488(
     tmp_path: Path,
 ) -> None:
-    """Finding (issue #488): ``n_replicates`` is the constant 1 on every amino acid
-    (source line 249). The released workbook's ``data_raw`` sheet holds 2 to 4 raw rows
-    for 191 of the 4,678 released strains, and the issue's diagnostic suggests their
-    released value is the mean of those rows; the loader never opens ``data_raw``. Here
-    YAL001C has three raw rows (batches 01, 02, 12) and its record still says n = 1 on all
-    19 keys with no SE. Pinned until #488 sets ``n_replicates`` per record from the
-    ``data_raw`` row count.
+    """Contract (issue #488): ``n_replicates`` is, per amino acid, the number of
+    ``data_raw`` rows of the strain's ORF with a value in that column (it was the
+    constant 1). YAL001C has three raw rows (batches 01, 02, 12, the last the paper's
+    repeat screen), one of them blank for tyrosine, so n = 3 on 18 keys and 2 on
+    tyrosine; YBR001C and YCR001W have one row each; the ``QC_001`` row (no ORF) counts
+    for nobody. ``data.csv`` keeps the row count (3). The reference n stays the strain
+    count, 3. SE stays None and the stored value is the released mM, not a raw uM.
     """
     raw_rows = [
-        [f"S{i:03d}", "YAL001C", batch, *([10.0 * (i + 1)] * 19)]
-        for i, batch in enumerate(["01", "02", "12"])
-    ] + [["S003", "YBR001C", "01", *([20.0] * 19)]]
+        [f"S{i:03d}", "YAL001C", batch, *([10.0 * (i + 1)] * 18), tyrosine]
+        for i, (batch, tyrosine) in enumerate([("01", 1.0), ("02", None), ("12", 3.0)])
+    ] + [
+        ["S003", "YBR001C", "01", *([20.0] * 19)],
+        ["S004", "YCR001W", "01", *([20.0] * 19)],
+        ["QC_001", None, "01", *([5.0] * 19)],
+    ]
     root = _root(tmp_path, raw_rows=raw_rows)
     dataset = m.AminoAcidMulleder2016Dataset(root=str(root))
-    phenotype = dataset[0]["experiment"]["phenotype"]
-    assert dataset[0]["experiment"]["genotype"]["perturbations"][0][
-        "systematic_gene_name"
-    ] == ("YAL001C")
-    assert phenotype["n_replicates"] == dict.fromkeys(_AA, 1)
-    assert phenotype["metabolite_level_se"] is None
-    assert phenotype["metabolite_level"] == dict(zip(_AA, _LEVELS_YAL001C, strict=True))
+    expected_n = {**dict.fromkeys(_AA, 3), "tyrosine": 2}
+    assert dataset[0]["experiment"] == _experiment(
+        "YAL001C", _LEVELS_YAL001C, n=expected_n
+    )
+    assert dataset[1]["experiment"] == _experiment("YBR001C", [2.0] * 19)
+    assert dataset[2]["experiment"] == _experiment("YCR001W", [1.0] * 19)
+    assert dataset[0]["reference"] == _reference(_SUMMARY_MEANS, n_strains=3)
+    rows = (root / "preprocess" / "data.csv").read_text().splitlines()
+    assert [row.split(",")[-1] for row in rows] == ["n_raw_rows", "3", "1", "1"]
 
 
-def test_reference_is_the_population_robust_mean_but_says_n_one(
-    dataset: m.AminoAcidMulleder2016Dataset,
-) -> None:
-    """Finding (issue #489): the reference phenotype is the ``robust_summary_statistics``
-    ``mean (mM)`` column, the Minimum Covariance Determinant mean over the whole
-    collection (0.25 * (i + 1) mM for amino acid i here: alanine 0.25, tyrosine 4.75),
-    and it is stored with ``n_replicates = 1`` on all 19 keys and no SE, which describes
-    one measurement, not a population estimate over 4,678 strains. The same reference is
-    attached to all three records. Pinned until #489 decides how a population-statistic
-    reference is represented.
+def test_a_released_orf_without_a_data_raw_row_is_refused(tmp_path: Path) -> None:
+    """Contract (issue #488): a released ORF with no ``data_raw`` row has no count, so
+    the build raises ``MissingRawMeasurementError`` naming it and writes no LMDB (the
+    pinned workbook has 0 such ORFs).
     """
-    for index in range(3):
+    raw_rows = [r for r in _RAW_ROWS if r[1] != "YCR001W"]
+    root = _root(tmp_path, raw_rows=raw_rows)
+    with pytest.raises(m.MissingRawMeasurementError) as excinfo:
+        m.AminoAcidMulleder2016Dataset(root=str(root))
+    assert str(excinfo.value) == (
+        "Mulleder Table S3: released ORF YCR001W has no data_raw row"
+    )
+    assert not (root / "processed" / "lmdb").exists()
+
+
+def test_an_amino_acid_blank_in_every_raw_row_is_refused(tmp_path: Path) -> None:
+    """Contract (issue #488): a released ORF whose only ``data_raw`` row is blank for
+    alanine has n = 0 there, which the schema cannot hold; the build raises
+    ``MissingRawMeasurementError`` naming the ORF and the amino acid (0 such cells on the
+    pinned workbook).
+    """
+    raw_rows = [
+        ["S000", "YAL001C", "01", None, *([10.0] * 18)],
+        *[r for r in _RAW_ROWS if r[1] != "YAL001C"],
+    ]
+    root = _root(tmp_path, raw_rows=raw_rows)
+    with pytest.raises(m.MissingRawMeasurementError) as excinfo:
+        m.AminoAcidMulleder2016Dataset(root=str(root))
+    assert str(excinfo.value) == (
+        "Mulleder Table S3: released ORF YAL001C has no data_raw value for ['alanine']"
+    )
+
+
+def test_reference_n_is_the_number_of_strains_the_robust_mean_summarizes_issue_489(
+    tmp_path: Path,
+) -> None:
+    """Contract (issue #489): the reference phenotype is the ``robust_summary_statistics``
+    ``mean (mM)`` column, the Minimum Covariance Determinant mean over the profiled
+    strains (0.25 * (i + 1) mM for amino acid i here: alanine 0.25, tyrosine 4.75), and
+    its ``n_replicates`` is the number of released strains counted from the concentration
+    sheet on every key (it was 1). Four distinct ORFs here, so n = 4 on all 19 keys and
+    the same reference on every record; SE stays None.
+    """
+    rows: list[list[Any]] = [
+        [orf, *([1.0] * 19)] for orf in ["YAL001C", "YBR001C", "YCR001W", "YDR001C"]
+    ]
+    raw_rows: list[list[Any]] = [
+        [f"S{i:03d}", row[0], "01", *([1.0] * 19)] for i, row in enumerate(rows)
+    ]
+    root = _root(tmp_path, conc_rows=rows, raw_rows=raw_rows)
+    dataset = m.AminoAcidMulleder2016Dataset(root=str(root))
+    for index in range(4):
         reference = dataset[index]["reference"]["phenotype_reference"]
         assert reference["metabolite_level"] == _SUMMARY_MEANS
         assert reference["metabolite_level"]["alanine"] == 0.25
         assert reference["metabolite_level"]["tyrosine"] == 4.75
-        assert reference["n_replicates"] == dict.fromkeys(_AA, 1)
+        assert reference["n_replicates"] == dict.fromkeys(_AA, 4)
         assert reference["metabolite_level_se"] is None
         assert reference["measurement_type"] == "intracellular_concentration_mM"
+
+
+def test_every_sourced_value_quote_is_verbatim_in_the_mirrored_paper() -> None:
+    """The MCD estimator (line 387), the 4,678 profiled strains (line 395) and the 479
+    strain repeat screen (line 341) are verbatim in the sha256-pinned ``paper.md``;
+    skipped where the literature mirror is not mounted.
+    """
+    data_root = os.environ.get("DATA_ROOT")
+    if data_root is None:
+        pytest.skip("DATA_ROOT is not set")
+    paper = Path(data_root) / "torchcell-library" / m.CITATION_KEY / m.PAPER_MD
+    if not paper.exists():
+        pytest.skip("the literature mirror is not mounted on this machine")
+    assert hashlib.sha256(paper.read_bytes()).hexdigest() == m.PAPER_MD_SHA256
+    text = paper.read_text()
+    assert sorted(m.SOURCED_VALUES) == [
+        "n_profiled_strains",
+        "reference_estimator",
+        "repeat_screen",
+    ]
+    for key, sourced in m.SOURCED_VALUES.items():
+        assert sourced.quote in text, key
+        assert sourced.provenance.sha256 == m.PAPER_MD_SHA256
+    assert m.SOURCED_VALUES["n_profiled_strains"].value == 4678
+    assert m.SOURCED_VALUES["repeat_screen"].value == 479
 
 
 def test_medium_is_sm_agar_not_the_liquid_subculture(
@@ -384,6 +469,8 @@ def test_ledger_counts_dropped_rows_and_their_orfs(
     assert messages == [
         "Mulleder: 2 usable ORFs, 2 non-systematic ORF names skipped, "
         "3 repeated-ORF rows dropped (1 ORFs kept at their first row)",
+        "Mulleder: data_raw rows per released ORF {1: 2}; reference n_replicates 2 "
+        "(strains the robust mean summarizes)",
         "Wrote 2 Mulleder amino-acid experiments to LMDB",
     ]
 

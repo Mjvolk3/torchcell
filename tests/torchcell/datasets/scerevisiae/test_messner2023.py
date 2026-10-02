@@ -17,7 +17,10 @@ Fixture (``yeast5k_noimpute_wide.csv``, blank cell = not measured):
     P00002         4           (blank)                          5.0                        1     1
     P00410         2     2     3                                                           1     1
 
-GFF: P00001 -> YBR001C, P00002 -> YCR002W, P00410 -> Q0250 (mitochondrial COX2).
+GFF: P00001 -> YBR001C, P00002 -> YCR002W, P00410 -> Q0250 (mitochondrial COX2);
+gene names: YAL059W ``gene=ECM1`` (plus its ``YAL059W_mRNA`` child line), YBL007C
+``gene=SLA1``, YDR003W with no ``gene=``; YML009C is no feature ID (so its name is the
+ORF, logged).
 Metadata: ``wt_a``/``wt_b`` are ``HIS3`` (WT); the two ``ko`` samples delete YAL059W
 and ``YML009c`` (lowercase in metadata, uppercased by the loader); ``qc_1`` is ``qc``
 (ignored); ``bad_ko`` is a ``ko`` sample whose ORF ``YOR202W-not`` fails the nuclear
@@ -32,7 +35,8 @@ whose filenames are the real shapes ``10_9_hpr1_ko_YBL007C_SLA1_0.47`` and
 ``10_9_hpr57_ko_YBL007C_2824_0.49`` (the second is quoted in
 [[datasets.showcase-verification.2026.09.29]], C19), with KO values 393221 and 0.0313
 (the released matrix's max and min). Expected: two records (one per strain, not per
-ORF), gene names ``SLA1`` and ``2824``; the values stored verbatim (linear, no log2);
+ORF), gene names ``SLA1`` and ``2824`` before issue #485 and both ``SLA1`` since; the
+values stored verbatim (linear, no log2);
 the one shared reference is the arithmetic WT mean (1 + 1001) / 2 = 501.0 (a
 geometric or log2 mean would give 31.64 or 4.98), SE = sqrt(((1 - 501)^2 + (1001 -
 501)^2) / 1) / sqrt(2) = 500.0, n 2; the index is [[0, 1]]. Also pinned: the
@@ -45,14 +49,19 @@ and the partial-raw case, and ``main``. The sha256 contract (issue #528, fixed):
 files against their pins before reading a row, so a stale file left in ``raw/`` is
 refused at build time.
 
-Findings pinned: a numeric filename token is stored as ``perturbed_gene_name`` (issue
-#485, 156 served records); ``duration_hours`` is None although the 8 h culture is
+Findings pinned: ``duration_hours`` is None although the 8 h culture is
 sourceable (issue #486).
 
 2026.10.01 (issue #528): a protein a KO measured but no WT sample did raises
 ``MissingWildTypeReferenceError`` naming the sample, its ORF and the protein (it used
 to raise a bare ``KeyError`` from ``create_experiment``). The pinned matrix has no
 such protein (0 of 1,850), so no stored record changes.
+
+2026.10.02 (issue #485): ``perturbed_gene_name`` comes from the SGD GFF by systematic
+name (``gene=`` standard name, else the uppercase ORF), never from the Filename token
+after the ORF; ``_gene_from_filename`` is gone. Pinned on the real numeric filename
+``10_9_hpr57_ko_YBL007C_2824_0.49`` (now SLA1) and the real lowercase one
+``10_9_hpr10_ko_YBR174C_YBR174c_0.23`` (now YBR174C, no standard name in R64-4-1).
 """
 
 import hashlib
@@ -86,7 +95,7 @@ from torchcell.datasets.scerevisiae.messner2023 import (
     METADATA_FILENAME,
     MissingWildTypeReferenceError,
     ProteomeMessner2023Dataset,
-    _gene_from_filename,
+    build_orf_to_gene_name_map,
     build_uniprot_to_orf_map,
 )
 
@@ -116,6 +125,9 @@ GFF_TEXT = (
     "chrIII\tSGD\tgene\t1\t100\t.\t+\t.\tID=YCR002W_mRNA;Parent=YCR002W;protein_id=UniProtKB:P00002\n"
     "chrmt\tSGD\tgene\t1\t100\t.\t+\t.\tID=Q0250;Name=COX2;protein_id=UniProtKB:P00410\n"
     "chrIV\tSGD\tgene\t1\t100\t.\t+\t.\tID=YDR003W;Name=YDR003W\n"
+    "chrI\tSGD\tgene\t1\t100\t.\t+\t.\tID=YAL059W;Name=YAL059W;gene=ECM1;Alias=ECM1\n"
+    "chrI\tSGD\tmRNA\t1\t100\t.\t+\t.\tID=YAL059W_mRNA;Name=YAL059W_mRNA;Parent=YAL059W\n"
+    "chrII\tSGD\tgene\t1\t100\t.\t-\t.\tID=YBL007C;Name=YBL007C;gene=SLA1\n"
     "short\tline\tUniProtKB:P99999\n"
 )
 
@@ -209,27 +221,35 @@ def test_build_uniprot_to_orf_map_reads_data_root_env(
     assert build_uniprot_to_orf_map()["P00410"] == "Q0250"
 
 
-@pytest.mark.parametrize(
-    ("filename", "orf", "expected"),
-    [
-        ("10_9_hpr1_ko_YAL059W_ECM1_0.47", "YAL059W", "ECM1"),
-        ("3_4_ko_YML009c_yml009c_0.9", "YML009C", "yml009c"),
-        ("3_4_ko_YAL059W", "YAL059W", "YAL059W"),
-        ("3_4_ko_YAL059W_", "YAL059W", "YAL059W"),
-        ("3_4_ko_something_else", "YAL059W", "YAL059W"),
-        ("3_4_ko_YAL059W_0.47", "YAL059W", "0.47"),
-    ],
-)
-def test_gene_from_filename(filename: str, orf: str, expected: str) -> None:
-    """The token after the (case-insensitive) ORF token is the gene; else the ORF.
-
-    Rows 1 and 2 are the two documented shapes (standard name; lowercased ORF when no
-    standard name exists). Rows 3 to 5 pin the fallback: ORF last, ORF followed by an
-    empty token, and no ORF token at all each return the ORF. Finding (row 6): when the
-    ORF is followed directly by the numeric suffix, that suffix (``"0.47"``) is returned
-    as the gene name; the parser does not validate the token it returns.
+def test_build_orf_to_gene_name_map_reads_gene_attribute_by_feature_id(
+    tmp_path: Path,
+) -> None:
+    """Every feature whose ``ID`` is a nuclear ORF maps to its ``gene=`` (percent-decoded),
+    else to the ORF; child lines (``YAL059W_mRNA``), mitochondrial ``Q0250`` (not a
+    nuclear ORF), comments and short lines add nothing; the first feature per ORF wins.
     """
-    assert _gene_from_filename(filename, orf) == expected
+    text = (
+        "##gff-version 3\n"
+        "chrI\tSGD\tgene\t1\t9\t.\t+\t.\tID=YAL059W;Name=YAL059W;gene=ECM1\n"
+        "chrI\tSGD\tmRNA\t1\t9\t.\t+\t.\tID=YAL059W_mRNA;Parent=YAL059W;gene=XXX1\n"
+        "chrI\tSGD\tCDS\t1\t9\t.\t+\t.\tID=YAL059W;gene=LATER1\n"
+        "chrII\tSGD\tgene\t1\t9\t.\t-\t.\tID=YBR174C;Name=YBR174C\n"
+        "chrXVI\tSGD\tgene\t1\t9\t.\t-\t.\tID=YPL187W;gene=MF%28ALPHA%291\n"
+        "chrmt\tSGD\tgene\t1\t9\t.\t+\t.\tID=Q0250;gene=COX2\n"
+        "short\tline\tID=YCR001W;gene=NOPE1\n"
+    )
+    _write_gff(tmp_path, text)
+    assert build_orf_to_gene_name_map(str(tmp_path)) == {
+        "YAL059W": "ECM1",
+        "YBR174C": "YBR174C",
+        "YPL187W": "MF(ALPHA)1",
+    }
+
+
+def test_build_orf_to_gene_name_map_missing_gff_raises(tmp_path: Path) -> None:
+    """No GFF under the glob -> FileNotFoundError naming the pattern searched."""
+    with pytest.raises(FileNotFoundError, match="saccharomyces_cerevisiae_\\*.gff"):
+        build_orf_to_gene_name_map(str(tmp_path))
 
 
 # --------------------------------------------------------------------------- #
@@ -242,8 +262,9 @@ def test_len_data_csv_and_side_files(
 ) -> None:
     """Two KO records: ``bad_ko`` (non-systematic ORF) and ``absent_ko`` (no column) drop.
 
-    ``preprocess/data.csv`` lists filename, ORF (uppercased), gene, and the count of
-    measured proteins (2 for KO_A, 1 for KO_B). The gene set is the two deletion ORFs;
+    ``preprocess/data.csv`` lists filename, ORF (uppercased), gene (SGD ``ECM1``; the
+    uppercase ORF for YML009C, which is no feature ID in the fixture GFF), and the count
+    of measured proteins (2 for KO_A, 1 for KO_B). The gene set is the two deletion ORFs;
     the manifest records this loader's module and class.
     """
     ds, root = dataset
@@ -251,7 +272,7 @@ def test_len_data_csv_and_side_files(
     assert (root / "preprocess" / "data.csv").read_text() == (
         "filename,orf,gene,n_proteins\n"
         f"{KO_A},YAL059W,ECM1,2\n"
-        f"{KO_B},YML009C,yml009c,1\n"
+        f"{KO_B},YML009C,YML009C,1\n"
     )
     pre = root / "preprocess"
     assert json.loads((pre / "gene_set.json").read_text()) == ["YAL059W", "YML009C"]
@@ -322,7 +343,8 @@ def test_record_0_single_replicate_ko_with_restricted_wt_reference(
 def test_record_1_lowercase_orf_uppercased_and_single_wt_measurement_nan_se(
     dataset: tuple[ProteomeMessner2023Dataset, Path],
 ) -> None:
-    """Record 1 = KO_B: metadata ``YML009c`` becomes ``YML009C``; gene ``yml009c``.
+    """Record 1 = KO_B: metadata ``YML009c`` becomes ``YML009C``; gene ``YML009C``
+    (not the filename's ``yml009c``: the ORF is no feature ID in the fixture GFF).
 
     Only P00002 -> YCR002W is measured (5.0). WT measured YCR002W once (4.0), so the
     restricted reference carries n = 1 and a NaN SE for that protein.
@@ -331,7 +353,7 @@ def test_record_1_lowercase_orf_uppercased_and_single_wt_measurement_nan_se(
     record = ds[1]
     perturbation = record["experiment"]["genotype"]["perturbations"][0]
     assert perturbation["systematic_gene_name"] == "YML009C"
-    assert perturbation["perturbed_gene_name"] == "yml009c"
+    assert perturbation["perturbed_gene_name"] == "YML009C"
     phenotype = record["experiment"]["phenotype"]
     assert phenotype["protein_abundance"] == {"YCR002W": 5.0}
     assert phenotype["protein_abundance_se"] is None
@@ -460,20 +482,20 @@ def _shared_reference() -> dict[str, object]:
     ).model_dump()
 
 
-def test_numeric_filename_token_is_stored_as_the_gene_name_issue_485(
+def test_numeric_filename_token_is_not_the_gene_name_issue_485(
     numeric: ProteomeMessner2023Dataset,
 ) -> None:
-    """Finding (issue #485): ``10_9_hpr57_ko_YBL007C_2824_0.49`` stores SLA1's deletion
-    with ``perturbed_gene_name`` "2824", beside a second strain of the same ORF named
-    "SLA1"; one ORF gets two spellings. The whole record is pinned, value 0.0313 stored
-    verbatim. Pinned until the gene name comes from the SGD GFF, not the filename.
+    """Contract (issue #485): ``10_9_hpr57_ko_YBL007C_2824_0.49`` stores SLA1's deletion
+    with ``perturbed_gene_name`` "SLA1" from the SGD GFF (it was "2824", the filename
+    token), the same spelling as the second strain of the ORF. The whole record is
+    pinned, value 0.0313 stored verbatim.
     """
     expected = ProteinAbundanceExperiment(
         dataset_name="ProteomeMessner2023Dataset",
         genotype=Genotype(
             perturbations=[
                 KanMxDeletionPerturbation(
-                    systematic_gene_name="YBL007C", perturbed_gene_name="2824"
+                    systematic_gene_name="YBL007C", perturbed_gene_name="SLA1"
                 )
             ]
         ),
@@ -492,6 +514,43 @@ def test_numeric_filename_token_is_stored_as_the_gene_name_issue_485(
         "YBL007C",
         "SLA1",
     )
+
+
+KO_LOWER = "10_9_hpr10_ko_YBR174C_YBR174c_0.23"
+
+
+def test_lowercase_orf_filename_token_is_not_the_gene_name_issue_485(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (issue #485): the real filename ``10_9_hpr10_ko_YBR174C_YBR174c_0.23``
+    used to store ``perturbed_gene_name`` "YBR174c"; YBR174C has no ``gene=`` in the SGD
+    GFF (as in R64-4-1, a dubious ORF), so the name is the uppercase ORF "YBR174C".
+    """
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    _write_gff(
+        tmp_path,
+        GFF_TEXT + "chrII\tSGD\tgene\t1\t100\t.\t-\t.\tID=YBR174C;Name=YBR174C\n",
+    )
+    root = tmp_path / "proteome_messner2023"
+    (root / "raw").mkdir(parents=True)
+    _write_csv(
+        root / "raw" / MATRIX_FILENAME,
+        [["Protein.Group", "wt_a", KO_LOWER], ["P00001", "1", "2"]],
+    )
+    _write_csv(
+        root / "raw" / METADATA_FILENAME,
+        [
+            ["Filename", "sampletype", "ORF", "plate"],
+            ["wt_a", "HIS3", "YOR202W", "1"],
+            [KO_LOWER, "ko", "YBR174C", "10"],
+        ],
+    )
+    ds = ProteomeMessner2023Dataset(root=str(root))
+    perturbation = ds[0]["experiment"]["genotype"]["perturbations"][0]
+    assert (
+        perturbation["systematic_gene_name"],
+        perturbation["perturbed_gene_name"],
+    ) == ("YBR174C", "YBR174C")
 
 
 def test_values_are_linear_and_the_reference_is_the_arithmetic_wt_mean(
@@ -514,7 +573,7 @@ def test_values_are_linear_and_the_reference_is_the_arithmetic_wt_mean(
     assert (pre / "data.csv").read_text() == (
         "filename,orf,gene,n_proteins\n"
         f"{KO_SLA1},YBL007C,SLA1,1\n"
-        f"{KO_NUM},YBL007C,2824,1\n"
+        f"{KO_NUM},YBL007C,SLA1,1\n"
     )
 
 
@@ -566,6 +625,8 @@ def test_the_build_summary_is_logged_exactly(
     assert messages == [
         "Messner: 2 KO strains, WT reference with 3 proteins, 1 non-systematic "
         "KO ORF skipped",
+        "Messner: 1 KO strains (1 ORFs) whose ORF is no SGD GFF feature ID; "
+        "perturbed_gene_name = the ORF for them",
         "Wrote 2 Messner proteome experiments to LMDB",
     ]
 

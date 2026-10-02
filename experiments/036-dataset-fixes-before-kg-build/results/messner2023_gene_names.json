@@ -1,0 +1,32 @@
+{
+  "script": "experiments/036-dataset-fixes-before-kg-build/scripts/messner2023_gene_names.py",
+  "dev_root": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_messner2023",
+  "scratch_root": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-messner-mulleder-names-replicates/proteome_messner2023",
+  "n_records_dev": 4699,
+  "n_records_scratch": 4699,
+  "perturbed_gene_name_change_kinds": {
+    "lowercase_orf": 1182,
+    "numeric_token": 156,
+    "other": 186,
+    "unchanged": 3175
+  },
+  "n_records_perturbed_gene_name_changed": 1524,
+  "n_distinct_orfs_numeric_token": 154,
+  "lowercase_orf_now_a_standard_name": 346,
+  "other_breakdown": {
+    "old_unknown": 29,
+    "case_only": 109,
+    "orf_not_sgd_gff_feature_id": 22
+  },
+  "n_records_with_any_other_field_different": 0,
+  "n_ko_orfs": 4549,
+  "n_ko_orfs_not_sgd_gff_feature_id": 62,
+  "n_records_orf_not_sgd_gff_feature_id": 64,
+  "examples": {
+    "10_9_hpr57_ko_YBL007C_2824_0.49": "SLA1",
+    "10_9_hpr10_ko_YBR174C_YBR174c_0.23": "YBR174C"
+  },
+  "new_name_equals_orf": 919,
+  "new_name_has_lowercase": 0,
+  "new_name_all_digits": 0
+}

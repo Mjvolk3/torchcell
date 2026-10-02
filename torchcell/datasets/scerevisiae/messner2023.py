@@ -44,6 +44,12 @@ Structure sourced from the paper (STAR Methods, OCR'd mirror):
   cross-refs) so this proteome is joinable with the ORF-keyed Zelezniak2018 proteome.
   All 1,850 map (incl. the mito-encoded ``P00410`` -> ``Q0250``/COX2); an unmapped id
   raises rather than being silently dropped.
+- **Gene names from SGD, not the filename (issue #485).** ``systematic_gene_name`` is
+  the metadata ``ORF`` (uppercased) and stays the join key. ``perturbed_gene_name`` is
+  that ORF's ``gene=`` standard name in the same SGD GFF, else the uppercase ORF (no
+  standard name, or the ORF is no GFF feature ID in that release). The token after
+  the ORF in the sample Filename is never read: on real filenames it is sometimes a
+  number (``10_9_hpr57_ko_YBL007C_2824_0.49`` is SLA1) or a lowercase ORF.
 
 The value is a LINEAR (not log2) batch-corrected MaxLFQ quantity
 (``measurement_type = "swath_ms_maxlfq_batch_corrected_quantity"``); log2 is applied
@@ -60,6 +66,7 @@ import os
 import os.path as osp
 import pickle
 import re
+import urllib.parse
 from typing import Any
 
 import lmdb
@@ -123,13 +130,11 @@ class MissingWildTypeReferenceError(ValueError):
     """
 
 
-def build_uniprot_to_orf_map(data_root: str | None = None) -> dict[str, str]:
-    """Map UniProt accession -> systematic ORF from the SGD S288C GFF.
+def _sgd_gff_path(data_root: str | None = None) -> str:
+    """Path of the SGD S288C reference GFF under ``$DATA_ROOT`` (or ``data_root``).
 
-    Authoritative source: the ``protein_id=UniProtKB:<acc>`` cross-references in the
-    SGD reference GFF (``$DATA_ROOT/data/sgd/genome/*/saccharomyces_cerevisiae_*.gff``,
-    the same file :class:`SCerevisiaeGenome` uses). The first ORF token on a line
-    carrying a UniProt id is taken as that accession's ORF. Never invents ids.
+    ``$DATA_ROOT/data/sgd/genome/*/saccharomyces_cerevisiae_*.gff``, the same file
+    :class:`SCerevisiaeGenome` uses; the first glob match is read.
     """
     root = data_root if data_root is not None else os.environ["DATA_ROOT"]
     pattern = osp.join(
@@ -138,8 +143,18 @@ def build_uniprot_to_orf_map(data_root: str | None = None) -> dict[str, str]:
     gffs = glob.glob(pattern)
     if not gffs:
         raise FileNotFoundError(f"SGD GFF not found under {pattern}")
+    return gffs[0]
+
+
+def build_uniprot_to_orf_map(data_root: str | None = None) -> dict[str, str]:
+    """Map UniProt accession -> systematic ORF from the SGD S288C GFF.
+
+    Authoritative source: the ``protein_id=UniProtKB:<acc>`` cross-references in the
+    SGD reference GFF (see :func:`_sgd_gff_path`). The first ORF token on a line
+    carrying a UniProt id is taken as that accession's ORF. Never invents ids.
+    """
     up2orf: dict[str, str] = {}
-    with open(gffs[0]) as handle:
+    with open(_sgd_gff_path(data_root)) as handle:
         for line in handle:
             if "UniProtKB:" not in line:
                 continue
@@ -152,6 +167,36 @@ def build_uniprot_to_orf_map(data_root: str | None = None) -> dict[str, str]:
             for acc in _UNIPROT_RE.findall(cols[8]):
                 up2orf.setdefault(acc, orf_match.group(0))
     return up2orf
+
+
+def build_orf_to_gene_name_map(data_root: str | None = None) -> dict[str, str]:
+    """Map nuclear systematic ORF -> SGD standard gene name, from the SGD S288C GFF.
+
+    Every GFF feature whose ``ID`` attribute IS a nuclear systematic ORF (``gene``,
+    ``pseudogene``, ``transposable_element_gene``, ``blocked_reading_frame`` in
+    R64-4-1) contributes one entry: its ``gene=`` attribute, percent-decoded (GFF3
+    escapes ``(`` and ``)``, so ``MF%28ALPHA%291`` is ``MF(ALPHA)1``), or the ORF itself
+    when the feature has no ``gene=`` (no standard name). The first feature per ORF
+    wins. An ORF that is no feature's ``ID`` (retired or renamed in this GFF release)
+    is absent from the map; the caller decides what to store for it.
+    """
+    orf2name: dict[str, str] = {}
+    with open(_sgd_gff_path(data_root)) as handle:
+        for line in handle:
+            if line.startswith("#"):
+                continue
+            cols = line.rstrip("\n").split("\t")
+            if len(cols) < 9:
+                continue
+            attrs = dict(kv.split("=", 1) for kv in cols[8].split(";") if "=" in kv)
+            feature_id = attrs.get("ID", "")
+            if not _NUCLEAR_ORF_RE.match(feature_id):
+                continue
+            name = attrs.get("gene")
+            orf2name.setdefault(
+                feature_id, urllib.parse.unquote(name) if name else feature_id
+            )
+    return orf2name
 
 
 @register_dataset
@@ -235,6 +280,11 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
                 f"(e.g. {unmapped[:5]}); refusing to silently drop."
             )
         matrix.index = matrix.index.astype(str).map(up2orf)
+        # Gene names come from SGD by systematic name (issue #485), never from the
+        # sample Filename: 156 real filenames carry a plate-position number where the
+        # name would be (``10_9_hpr57_ko_YBL007C_2824_0.49`` is SLA1) and 1,182 a
+        # lowercase ORF. Rule: the GFF ``gene=`` standard name, else the uppercase ORF.
+        orf2name = build_orf_to_gene_name_map()
 
         meta = pd.read_csv(osp.join(self.raw_dir, METADATA_FILENAME))
         by_filename = meta.set_index("Filename")
@@ -267,6 +317,8 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
         os.makedirs(self.preprocess_dir, exist_ok=True)
         rows: list[dict[str, Any]] = []
         n_bad_orf = 0
+        not_in_gff: set[str] = set()
+        n_not_in_gff_rows = 0
         for filename in ko_cols:
             # Metadata ORF casing is inconsistent (e.g. "YML009c", "YAL043C-a");
             # systematic names are uppercase -- normalize, never drop on case alone.
@@ -283,11 +335,16 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
                     f"{len(no_wt)} protein(s) no WT sample measured (e.g. {no_wt[:5]}); "
                     "the reference has no value for them"
                 )
+            if deletion_orf not in orf2name:
+                # Rule "ORF not an SGD GFF feature ID": no standard name to read, so
+                # the name is the uppercase ORF (counted in the build log below).
+                not_in_gff.add(deletion_orf)
+                n_not_in_gff_rows += 1
             rows.append(
                 {
                     "filename": filename,
                     "orf": deletion_orf,
-                    "gene": _gene_from_filename(filename, deletion_orf),
+                    "gene": orf2name.get(deletion_orf, deletion_orf),
                     "abundance": abundance,
                 }
             )
@@ -297,6 +354,12 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
             len(rows),
             len(self._reference["abundance"]),
             n_bad_orf,
+        )
+        log.info(
+            "Messner: %d KO strains (%d ORFs) whose ORF is no SGD GFF feature ID; "
+            "perturbed_gene_name = the ORF for them",
+            n_not_in_gff_rows,
+            len(not_in_gff),
         )
         pd.DataFrame(
             [
@@ -396,23 +459,6 @@ class ProteomeMessner2023Dataset(ExperimentDataset):
             doi_url="https://doi.org/10.1016/j.cell.2023.03.026",
         )
         return experiment, reference, publication
-
-
-def _gene_from_filename(filename: str, orf: str) -> str:
-    """Standard gene name from the sample Filename, falling back to the ORF.
-
-    Filenames look like ``10_9_hpr1_ko_YAL059W_ECM1_0.47`` -- the token immediately
-    after the deletion ORF is the standard gene name (or a lowercased ORF when no
-    standard name exists). The ORF token is matched case-insensitively (metadata
-    casing is inconsistent). Falls back to the systematic ORF if not parseable.
-    """
-    parts = filename.split("_")
-    upper = [p.upper() for p in parts]
-    if orf.upper() in upper:
-        i = upper.index(orf.upper())
-        if i + 1 < len(parts) and parts[i + 1]:
-            return parts[i + 1]
-    return orf
 
 
 def main() -> None:

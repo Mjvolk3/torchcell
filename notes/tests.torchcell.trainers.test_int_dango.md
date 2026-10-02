@@ -19,7 +19,7 @@ Paired with [[torchcell.trainers.int_dango]] (`torchcell/trainers/int_dango.py`)
 ### Expected values
 
 - Reconstruction loss: neighborhood (1 + 0.1 * 1.25) / 9 = 0.125, fusion 1 / 9, mean 0.1180556 (adjacency row = source; the transposed reading would give 0.1791667). Interaction loss (log cosh 1 + log cosh 2) / 2 = 0.8793917.
-- Step loss alpha *0.1180556 + (1 - alpha)* 0.8793917 with alpha 1.0, 0.8, 0.5, 0.5 at epochs 0, 4, 10, 12. Logged in order: the five loss components, `<stage>/loss`, `<stage>/integrated_embeddings_norm` (16 / 3); batch_size is `predictions.size(0)`, the number of genotypes (2).
+- Step loss `alpha * 0.1180556 + (1 - alpha) * 0.8793917` with alpha 1.0, 0.8, 0.5, 0.5 at epochs 0, 4, 10, 12. Logged in order: the five loss components, `<stage>/loss`, `<stage>/integrated_embeddings_norm` (16 / 3); batch_size is `predictions.size(0)`, the number of genotypes (2).
 - Metrics: both spaces see [1, 3] vs [2, 5] without a transform (MSE 2.5, Pearson 1). With an inverse transform 2x + 1 on `gene_interaction`, the original-unit metrics see [3, 7] vs `phenotype_values_original` [4, 10] (MSE 5) and the transformed ones see the raw pairs (MSE 2.5).
 - `_ensure_no_unused_params_loss` is a 0.0 tensor that reaches every gradless parameter, and the int 0 when all have gradients. `training_step` logs `learning_rate` with batch_size = len(phenotype_values).
 - `configure_optimizers` on the 006 config: AdamW(lr 1e-5, weight_decay 1e-6), ReduceLROnPlateau(min, 0.2, 3, 1e-4, rel, 2, 1e-9, 1e-10), monitor `val/gene_interaction/MSE`, interval epoch, frequency 1.
@@ -53,3 +53,12 @@ The defensive "latents key missing" re-creations (int_dango.py:405-408, 418-421,
 - Prediction/target count mismatch (2 predictions, 3 targets, the trailing empty genotype case): with `DangoLoss` the step raises `RuntimeError: The size of tensor a (2) must match the size of tensor b (3) at non-singleton dimension 0` before any metric update; with a shape-blind loss it reaches int_dango.py:355 and raises `IndexError: The shape of the mask [3, 1] at index 0 does not match the shape of the indexed tensor [2, 1] at index 0`.
 - `learning_rate` batch size: it is len(phenotype_values) while the step logs use predictions.size(0). They differ only with a count mismatch; with all-NaN targets (both metric updates skipped) and a shape-blind loss the step completes and logs batch_size 2 for `train/loss` and 3 for `learning_rate`.
 - Every `torch.manual_seed` runs inside `torch.random.fork_rng()` through an autouse fixture.
+
+## 2026.10.02 - Issue #616 findings retired
+
+- Double forward: `test_shared_step_with_dango_loss_runs_the_model_once` (scripted model: one call; real `Dango` forward hook: fires once) and `test_one_forward_step_equals_the_two_forward_protocol_bit_for_bit` (the old two-call protocol replayed on an identically seeded model; loss, every log and the metrics equal with `==`; pre-fix captured values pinned in `BEFORE_LUU_E4` and `BEFORE_METRICS`; gradients within 1e-8). `forward` now returns the model's outputs dict (`test_forward_calls_model_once_and_returns_its_outputs_dict_unchanged`).
+- NaN targets: `test_shared_step_masks_nan_targets_before_the_loss_under_both_schedules` (LinearUntilUniform epochs 0 and 12, PreThenPost epochs 0 and 10: interaction loss 0.8793917, step loss `alpha * 0.1180556 + (1 - alpha) * 0.8793917`), `test_shared_step_generic_loss_also_receives_only_finite_pairs`, `test_shared_step_refuses_a_batch_whose_targets_are_all_nan`.
+- Count mismatch: `test_shared_step_refuses_fewer_predictions_than_targets` (DangoLoss and shape-blind loss, full message, nothing logged); `test_learning_rate_and_step_logs_share_the_genotype_count`.
+- Epoch metrics: `test_log_epoch_metrics_propagates_every_metric_error`, `test_log_epoch_metrics_refuses_an_empty_epoch_and_logs_nan_pearson_for_one_sample`, `test_epoch_ends_log_no_metrics_under_dataloader_profiling`.
+- Oversmoothing: one table, 6.5320 instead of 9.2376 after two batches; the last step's table is kept (2 * EMB when `w` is 2 on batch 3); the table is never subsampled by the genotype permutation (sqrt(50 / 3)).
+- Construction: `test_init_refuses_an_accumulation_schedule_and_a_scheduler_it_does_not_build`; `test_training_step_steps_the_optimizer_on_every_batch`.

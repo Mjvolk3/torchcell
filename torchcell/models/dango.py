@@ -19,6 +19,21 @@ from torch_geometric.data import HeteroData
 from torch_geometric.nn import SAGEConv
 from torch_scatter import scatter_mean
 
+# Zhang et al. (2020): lambda 0.1 where zero entries fell by more than 1% from STRING
+# v9.1 to v11.0 (neighborhood, coexpression, experimental), else 1.0.
+PAPER_LAMBDA_VALUES: dict[str, float] = {
+    f"{version}_{network}": value
+    for version in ("string9_1", "string11_0")
+    for network, value in (
+        ("neighborhood", 0.1),
+        ("fusion", 1.0),
+        ("cooccurence", 1.0),
+        ("coexpression", 0.1),
+        ("experimental", 0.1),
+        ("database", 1.0),
+    )
+}
+
 
 class DangoPreTrain(nn.Module):
     """
@@ -57,9 +72,6 @@ class DangoPreTrain(nn.Module):
         # Reconstruction layers for each network
         self.recon_layers = nn.ModuleDict()
 
-        # Lambda values for weighted MSE
-        self.lambda_values = {}
-
         # Initialize GNN layers and reconstruction layers for each edge type
         for edge_type in self.edge_types:
             # First layer GNN
@@ -75,28 +87,33 @@ class DangoPreTrain(nn.Module):
             # Reconstruction layer to predict adjacency matrix row
             self.recon_layers[edge_type] = nn.Linear(hidden_channels, gene_num)
 
-            # Set lambda value for weighted MSE based on network type
-            # For STRING v9.1 networks (as in the paper)
-            if (
-                edge_type == "string9_1_neighborhood"
-                or edge_type == "string11_0_neighborhood"
-            ):
-                self.lambda_values[edge_type] = 0.1  # > 1% zeros decreased
-            elif (
-                edge_type == "string9_1_coexpression"
-                or edge_type == "string11_0_coexpression"
-            ):
-                self.lambda_values[edge_type] = 0.1  # > 1% zeros decreased
-            elif (
-                edge_type == "string9_1_experimental"
-                or edge_type == "string11_0_experimental"
-            ):
-                self.lambda_values[edge_type] = 0.1  # > 1% zeros decreased
-            else:  # fusion, cooccurence, database (≤ 1% zeros decreased)
-                self.lambda_values[edge_type] = 1.0
-
         # Initialize weights
         self.reset_parameters()
+
+    @property
+    def lambda_values(self) -> dict[str, float]:
+        """Paper lambda (weight of the zero entries in the weighted MSE) per network.
+
+        Zhang et al. (2020) set lambda = 0.1 for the networks whose zero entries fell
+        by more than 1% from STRING v9.1 to v11.0 (neighborhood, coexpression,
+        experimental) and 1.0 for the rest (fusion, cooccurence, database). The table
+        is defined only for those six STRING v9.1 and v11.0 network names; any other
+        name (for example a string12_0 network) is refused rather than given 1.0.
+        The 005/006 training scripts do not read this table: they pass
+        ``determine_lambda_values()`` to ``DangoLoss``.
+
+        Raises:
+            ValueError: if an edge type is not a STRING v9.1 or v11.0 network name.
+        """
+        unknown = [e for e in self.edge_types if e not in PAPER_LAMBDA_VALUES]
+        if unknown:
+            raise ValueError(
+                f"DangoPreTrain.lambda_values is defined only for the STRING v9.1 and "
+                f"v11.0 networks {sorted(PAPER_LAMBDA_VALUES)}; no paper lambda for "
+                f"{unknown}. Pass lambda values to DangoLoss explicitly (the 005/006 "
+                f"scripts use determine_lambda_values())."
+            )
+        return {e: PAPER_LAMBDA_VALUES[e] for e in self.edge_types}
 
     def reset_parameters(self) -> None:
         """Initialize model parameters"""
@@ -288,24 +305,43 @@ class HyperSAGNN(nn.Module):
         self.prediction_layer = nn.Linear(hidden_channels, 1)
 
     def forward(
-        self, embeddings: torch.Tensor, batch_indices: torch.Tensor
+        self, embeddings: torch.Tensor, batch_indices: torch.Tensor, num_sets: int
     ) -> torch.Tensor:
         """
         Forward pass processing all nodes at once with masked attention.
 
         Args:
             embeddings: Tensor of shape [total_nodes, hidden_channels]
-            batch_indices: Tensor of shape [total_nodes] indicating set membership
+            batch_indices: Tensor of shape [total_nodes] indicating set membership,
+                with ids in [0, num_sets)
+            num_sets: Number of sets (genotypes) in the batch; the output has one
+                score per set, ordered by set id.
 
         Returns:
-            Predicted interaction scores with shape [num_batches]
+            Predicted interaction scores with shape [num_sets]
+
+        Raises:
+            ValueError: if a set id is outside [0, num_sets), or a set has no node.
+                A set with no perturbed gene has nothing to attend over and no
+                interaction score, so it is refused rather than scored 0.
         """
         device = embeddings.device
         total_nodes = embeddings.size(0)
 
-        # Get unique batches for score aggregation
-        unique_batches = torch.unique(batch_indices)
-        num_batches = len(unique_batches)
+        out_of_range = batch_indices[(batch_indices < 0) | (batch_indices >= num_sets)]
+        if out_of_range.numel() > 0:
+            raise ValueError(
+                f"HyperSAGNN got set ids {torch.unique(out_of_range).tolist()} for "
+                f"num_sets={num_sets}; set ids must lie in [0, {num_sets})"
+            )
+        set_sizes = torch.bincount(batch_indices, minlength=num_sets)
+        empty_sets = (set_sizes == 0).nonzero().view(-1).tolist()
+        if empty_sets:
+            raise ValueError(
+                f"HyperSAGNN needs at least one gene per set: sets {empty_sets} of "
+                f"{num_sets} have no perturbation indices, and a genotype with no "
+                f"perturbed gene has no interaction score to predict"
+            )
 
         # Compute static embeddings for all nodes
         static_embeddings = self.static_embedding(embeddings)
@@ -348,7 +384,7 @@ class HyperSAGNN(nn.Module):
 
         # Aggregate scores for each set using scatter_mean
         interaction_scores = scatter_mean(
-            node_scores, batch_indices, dim=0, dim_size=num_batches
+            node_scores, batch_indices, dim=0, dim_size=num_sets
         )
 
         return cast(torch.Tensor, interaction_scores)
@@ -495,9 +531,29 @@ class Dango(nn.Module):
 
         Returns:
             Tuple containing:
-                - predictions: Predicted interaction scores
+                - predictions: Predicted interaction scores, one per genotype
+                  (``batch.num_graphs``)
                 - outputs: Dictionary containing node embeddings and intermediate values
+
+        Raises:
+            ValueError: if a genotype lists the same gene twice (the HyperSAGNN self
+                mask is positional, so a duplicate would attend to its own copy), or
+                if a genotype has no perturbed gene (see ``HyperSAGNN.forward``).
         """
+        perturbation_indices = batch["gene"].perturbation_indices
+        set_ids = batch["gene"].perturbation_indices_batch
+        gene_num = self.pretrain_model.gene_num
+        keys, counts = torch.unique(
+            set_ids * gene_num + perturbation_indices, return_counts=True
+        )
+        repeated = keys[counts > 1]
+        if repeated.numel() > 0:
+            pairs = [(k // gene_num, k % gene_num) for k in repeated.tolist()]
+            raise ValueError(
+                f"Dango needs distinct genes within a genotype; (genotype, gene index) "
+                f"pairs {pairs} appear more than once"
+            )
+
         # Get embeddings from pre-training component
         pretrain_outputs = self.pretrain_model(cell_graph)
 
@@ -516,11 +572,11 @@ class Dango(nn.Module):
         }
 
         # Directly index into integrated_embeddings to get perturbed gene embeddings
-        perturbed_embeddings = integrated_embeddings[batch["gene"].perturbation_indices]
+        perturbed_embeddings = integrated_embeddings[perturbation_indices]
 
-        # Pass the perturbed embeddings and batch indices to HyperSAGNN
+        # One score per genotype in the batch, ordered by genotype
         interaction_scores = self.hyper_sagnn(
-            perturbed_embeddings, batch["gene"].perturbation_indices_batch
+            perturbed_embeddings, set_ids, num_sets=batch.num_graphs
         )
 
         # Store results in the outputs dictionary

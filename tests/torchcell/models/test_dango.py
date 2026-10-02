@@ -213,33 +213,70 @@ def test_pretrain_missing_edge_type_yields_zero_embeddings_and_reconstructions()
     assert emb[NEIGH].shape == (4, 64) and bool(emb[NEIGH].abs().sum() > 0)
 
 
-def test_pretrain_lambda_table_only_knows_string9_and_string11_names() -> None:
-    """Finding: ``DangoPreTrain.lambda_values`` (dango.py:80-96) gives 0.1 only to the
-    string9_1 / string11_0 neighborhood, coexpression and experimental names; every
-    string12_0 network (the 006 production configs) falls to the else branch, 1.0.
-    No training script reads this table (005/006 pass ``determine_lambda_values()`` to
-    ``DangoLoss``); only the module's own ``main`` demo copies it.
-    Pinned until the table is removed or extended to string12_0.
+STRING9_1 = [
+    "string9_1_neighborhood",
+    "string9_1_fusion",
+    "string9_1_cooccurence",
+    "string9_1_coexpression",
+    "string9_1_experimental",
+    "string9_1_database",
+]
+
+
+def test_pretrain_lambda_table_is_the_paper_table_and_refuses_other_networks() -> None:
+    """Issue #616 item 6. The paper lambda (Zhang et al. 2020) is 0.1 for the networks
+    whose zero entries fell by more than 1% from STRING v9.1 to v11.0 (neighborhood,
+    coexpression, experimental) and 1.0 for fusion, cooccurence and database, for the
+    v9.1 and v11.0 names only. The six string9_1 names are exactly the list the
+    module's ``main`` builds ``Dango`` with, and ``main`` copies this table into
+    ``DangoLoss``. A string12_0 network (the 006 configs) used to fall silently to
+    1.0; it is now refused on access with the full message, while construction (what
+    the 006 script does, passing ``determine_lambda_values()`` to the loss instead)
+    still succeeds.
     """
-    names = [
-        "string9_1_neighborhood",
-        "string11_0_coexpression",
-        "string9_1_experimental",
-        "string9_1_fusion",
-        "string12_0_neighborhood",
-        "string12_0_coexpression",
-        "string12_0_experimental",
-    ]
-    model = DangoPreTrain(gene_num=3, edge_types=names, hidden_channels=4)
-    assert model.lambda_values == {
+    paper = DangoPreTrain(gene_num=3, edge_types=STRING9_1, hidden_channels=4)
+    assert paper.lambda_values == {
         "string9_1_neighborhood": 0.1,
-        "string11_0_coexpression": 0.1,
-        "string9_1_experimental": 0.1,
         "string9_1_fusion": 1.0,
-        "string12_0_neighborhood": 1.0,
-        "string12_0_coexpression": 1.0,
-        "string12_0_experimental": 1.0,
+        "string9_1_cooccurence": 1.0,
+        "string9_1_coexpression": 0.1,
+        "string9_1_experimental": 0.1,
+        "string9_1_database": 1.0,
     }
+    v11 = DangoPreTrain(
+        gene_num=3,
+        edge_types=["string11_0_coexpression", "string11_0_database"],
+        hidden_channels=4,
+    )
+    assert v11.lambda_values == {
+        "string11_0_coexpression": 0.1,
+        "string11_0_database": 1.0,
+    }
+    mixed = DangoPreTrain(
+        gene_num=3,
+        edge_types=["string9_1_fusion", "string12_0_neighborhood", "string12_0_fusion"],
+        hidden_channels=4,
+    )
+    known = sorted(
+        f"{v}_{n}"
+        for v in ("string9_1", "string11_0")
+        for n in (
+            "neighborhood",
+            "fusion",
+            "cooccurence",
+            "coexpression",
+            "experimental",
+            "database",
+        )
+    )
+    with pytest.raises(ValueError) as excinfo:
+        _ = mixed.lambda_values
+    assert str(excinfo.value) == (
+        f"DangoPreTrain.lambda_values is defined only for the STRING v9.1 and v11.0 "
+        f"networks {known}; no paper lambda for ['string12_0_neighborhood', "
+        f"'string12_0_fusion']. Pass lambda values to DangoLoss explicitly (the "
+        f"005/006 scripts use determine_lambda_values())."
+    )
 
 
 def test_pretrain_reset_parameters_zeroes_reconstruction_biases() -> None:
@@ -392,7 +429,7 @@ def test_hyper_sagnn_closed_form_triple_and_pair_in_one_batch() -> None:
     """
     model = _closed_form_hyper()
     x = torch.tensor([[1.0, 0.0], [0.0, 2.0], [-1.0, 1.0], [2.0, 0.0], [0.0, 0.0]])
-    out = model(x, torch.tensor([0, 0, 0, 1, 1]))
+    out = model(x, torch.tensor([0, 0, 0, 1, 1]), num_sets=2)
     torch.testing.assert_close(out, torch.tensor([28.75 / 3, 10.0]))
 
 
@@ -408,7 +445,7 @@ def test_hyper_sagnn_matches_two_layer_numpy_oracle_with_static_branch() -> None
         model.beta2.fill_(0.25)
     x = torch.randn(5, 4)
     batch = np.array([0, 0, 0, 1, 1])
-    out = model(x, torch.tensor(batch))
+    out = model(x, torch.tensor(batch), num_sets=2)
 
     xd = x.double().numpy()
     d1 = _np_masked_mha(
@@ -446,10 +483,10 @@ def test_hyper_sagnn_mask_blocks_cross_set_and_self_messages() -> None:
         model.beta2.fill_(0.5)
     x = torch.randn(5, 4)
     batch = torch.tensor([0, 0, 0, 1, 1])
-    base = model(x, batch)
+    base = model(x, batch, num_sets=2)
     moved = x.clone()
     moved[0] += 3.0
-    after = model(moved, batch)
+    after = model(moved, batch, num_sets=2)
     assert after[1].item() == base[1].item()
     assert abs(after[0].item() - base[0].item()) > 1e-4
 
@@ -461,20 +498,51 @@ def test_hyper_sagnn_mask_blocks_cross_set_and_self_messages() -> None:
         torch.testing.assert_close(out[0] - xs[0], torch.tensor([-0.5, 1.5]))
 
 
-def test_hyper_sagnn_noncontiguous_set_ids_raise_or_drop_sets() -> None:
-    """Finding: ``HyperSAGNN.forward`` sizes the output as the NUMBER of distinct set ids
-    (dango.py:307-308, 350-352), not max id + 1. Set ids [0, 0, 0, 2, 2, 2] (a genotype
-    with no perturbation_indices between two triples) make ``scatter_mean`` index out of
-    range. Not shown reachable in the 006 data (every Kuzmin genotype carries genes).
-    Pinned until the output is sized by the batch's graph count.
+EMPTY_SET = (
+    "HyperSAGNN needs at least one gene per set: sets {sets} of {n} have no "
+    "perturbation indices, and a genotype with no perturbed gene has no interaction "
+    "score to predict"
+)
+
+
+@pytest.mark.parametrize(
+    ("set_ids", "empty"),
+    [([0, 0, 0, 2, 2, 2], [1]), ([0, 0, 0, 1, 1, 1], [2]), ([1, 1, 1, 2, 2, 2], [0])],
+)
+def test_hyper_sagnn_sizes_output_by_num_sets_and_refuses_an_empty_set(
+    set_ids: list[int], empty: list[int]
+) -> None:
+    """Issue #616 item 2. The output is sized by ``num_sets`` (the batch's genotype
+    count), not by the number of distinct set ids, so it can never hold fewer scores
+    than genotypes. A set with no node (a genotype with no perturbed gene, in the
+    middle, at the end or at the start of a batch) has nothing to attend over and no
+    interaction score, so it is refused by name instead of scored 0 (``scatter_mean``
+    of nothing) or, as before, raising an index error mid-batch and silently dropping
+    a trailing genotype.
     """
     model = _closed_form_hyper()
     x = torch.tensor([[1.0, 0.0], [0.0, 2.0], [-1.0, 1.0]] * 2)
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape("index 2 is out of bounds for dimension 0 with size 2"),
-    ):
-        model(x, torch.tensor([0, 0, 0, 2, 2, 2]))
+    with pytest.raises(ValueError) as excinfo:
+        model(x, torch.tensor(set_ids), num_sets=3)
+    assert str(excinfo.value) == EMPTY_SET.format(sets=empty, n=3)
+
+
+@pytest.mark.parametrize(
+    ("set_ids", "bad"), [([0, 0, 0, 2, 2, 2], [2]), ([-1, 0, 0, 1, 1, 1], [-1])]
+)
+def test_hyper_sagnn_refuses_a_set_id_outside_num_sets(
+    set_ids: list[int], bad: list[int]
+) -> None:
+    """A set id at or above num_sets (2) or below 0 is refused with the offending ids,
+    not truncated (above) or left to ``bincount``'s bare RuntimeError (below).
+    """
+    model = _closed_form_hyper()
+    x = torch.tensor([[1.0, 0.0], [0.0, 2.0], [-1.0, 1.0]] * 2)
+    with pytest.raises(ValueError) as excinfo:
+        model(x, torch.tensor(set_ids), num_sets=2)
+    assert str(excinfo.value) == (
+        f"HyperSAGNN got set ids {bad} for num_sets=2; set ids must lie in [0, 2)"
+    )
 
 
 def test_hyper_sagnn_init_shapes_and_zero_betas() -> None:
@@ -533,6 +601,7 @@ def test_dango_forward_stage_shapes_and_output_keys() -> None:
         model.hyper_sagnn(
             outputs["integrated_embeddings"][batch["gene"].perturbation_indices],
             batch["gene"].perturbation_indices_batch,
+            num_sets=2,
         ),
     )
     assert scores.shape == (2,)
@@ -598,23 +667,50 @@ def test_dango_without_follow_batch_raises_attribute_error() -> None:
         model(_cell_graph(), batch)
 
 
-def test_dango_trailing_empty_genotype_drops_a_prediction() -> None:
-    """Finding: a genotype with no ``perturbation_indices`` at the END of a batch gives
-    two predictions for three targets (dango.py:307-308 sizes the output by distinct
-    set ids): the loss and metrics then receive [2] predictions against [3] targets
-    (in the middle of a batch the same genotype raises, see the HyperSAGNN test). Not
-    shown reachable in the 006 data.
-    Pinned until HyperSAGNN sizes its output by the number of graphs in the batch.
+@pytest.mark.parametrize(
+    ("genotypes", "empty"),
+    [(([0, 1, 2], [1, 2, 3], []), [2]), (([0, 1, 2], [], [1, 2, 3]), [1])],
+)
+def test_dango_refuses_a_genotype_with_no_perturbed_gene(
+    genotypes: tuple[list[int], ...], empty: list[int]
+) -> None:
+    """Issue #616 item 2, through the real collation: a genotype with no
+    ``perturbation_indices`` at the END of a batch used to give two predictions for
+    three targets, and one in the MIDDLE raised an index error. ``Dango`` now sizes its
+    output by ``batch.num_graphs`` and refuses the empty genotype by position, with
+    the full message, in both places. Not shown reachable in the 006 data (every
+    Kuzmin genotype carries two or three genes).
     """
     model = _dango()
-    batch = _batch([0, 1, 2], [1, 2, 3], [])
-    scores, _ = model(_cell_graph(), batch)
-    assert batch["gene"].phenotype_values.shape == (3,)
-    assert scores.shape == (2,)
-    alone = torch.cat(
-        [model(_cell_graph(), _batch(g))[0] for g in ([0, 1, 2], [1, 2, 3])]
+    batch = _batch(*genotypes)
+    assert batch.num_graphs == 3
+    with pytest.raises(ValueError) as excinfo:
+        model(_cell_graph(), batch)
+    assert str(excinfo.value) == EMPTY_SET.format(sets=empty, n=3)
+
+
+def test_dango_refuses_a_gene_listed_twice_in_one_genotype() -> None:
+    """Issue #616 item 6. The HyperSAGNN self mask is positional, so a gene listed twice
+    would attend to its own copy (see
+    ``test_hyper_sagnn_duplicate_gene_attends_to_its_own_copy``). ``Dango.forward``
+    refuses such a genotype, naming the (genotype, gene index) pair; the same gene in
+    two different genotypes is fine: the batch [0, 1, 2], [0, 1, 3] scores
+    0.014928971417248249 and 0.013594761490821838 (seed 0), each within 2e-9 of the
+    genotype run alone.
+    """
+    model = _dango()
+    with pytest.raises(ValueError) as excinfo:
+        model(_cell_graph(), _batch([1, 2, 3], [0, 1, 1]))
+    assert str(excinfo.value) == (
+        "Dango needs distinct genes within a genotype; (genotype, gene index) pairs "
+        "[(1, 1)] appear more than once"
     )
-    torch.testing.assert_close(scores, alone, atol=1e-6, rtol=0.0)
+    scores, _ = model(_cell_graph(), _batch([0, 1, 2], [0, 1, 3]))
+    assert scores.tolist() == [0.014928971417248249, 0.013594761490821838]
+    alone = torch.cat(
+        [model(_cell_graph(), _batch(g))[0] for g in ([0, 1, 2], [0, 1, 3])]
+    )
+    torch.testing.assert_close(scores, alone, atol=1e-8, rtol=0.0)
 
 
 def test_dango_score_is_invariant_to_gene_order_within_a_triple() -> None:
@@ -662,9 +758,9 @@ def test_hyper_sagnn_output_is_ordered_by_set_id_not_first_appearance() -> None:
         model.beta1.fill_(0.5)
         model.beta2.fill_(0.5)
     x = torch.randn(4, 4)
-    out = model(x, torch.tensor([1, 1, 0, 0]))
-    first = model(x[:2], torch.tensor([0, 0]))
-    second = model(x[2:], torch.tensor([0, 0]))
+    out = model(x, torch.tensor([1, 1, 0, 0]), num_sets=2)
+    first = model(x[:2], torch.tensor([0, 0]), num_sets=1)
+    second = model(x[2:], torch.tensor([0, 0]), num_sets=1)
     torch.testing.assert_close(out, torch.cat([second, first]), atol=1e-6, rtol=0.0)
     assert not torch.allclose(first, second)
 
@@ -673,8 +769,10 @@ def test_hyper_sagnn_duplicate_gene_attends_to_its_own_copy() -> None:
     """The self mask is positional, so a gene listed twice attends to its copy. With the
     closed-form weights, x = [a, a, b], a = (1, 0), b = (0, 2): layer 1 gives
     a + (a + b) / 2 = (1.5, 1) for each copy, whereas the deduplicated pair [a, b] gives
-    a + b = (1, 2). Not reachable through the ``Perturbation`` processor, which builds
-    ``perturbation_indices`` from a set of names (one index per gene).
+    a + b = (1, 2). This is a property of the layer, kept as a documented limit:
+    ``Dango.forward`` refuses a genotype that lists a gene twice (see
+    ``test_dango_refuses_a_gene_listed_twice_in_one_genotype``), and the
+    ``Perturbation`` processor builds ``perturbation_indices`` from a set of names.
     """
     model = _closed_form_hyper()
     a, b = [1.0, 0.0], [0.0, 2.0]

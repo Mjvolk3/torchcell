@@ -524,3 +524,14 @@ DANGO is a powerful framework for predicting higher-order genetic interactions, 
 `LinearUntilFlipped_transition_epoch=40`
 
 ![](./assets/images/LinearUntilFlipped_transition_epoch=40_dango_training_plots_20250508_192709/final_results.png)
+
+## 2026.10.02 - Output sized by genotype, empty and duplicate genotypes refused, lambda table refuses unknown networks (issue #616)
+
+* `HyperSAGNN.forward(embeddings, batch_indices, num_sets)` sizes its output by `num_sets` (`Dango` passes `batch.num_graphs`), not by the number of distinct set ids. Before, a genotype with no perturbation indices mid-batch raised `RuntimeError: index 2 is out of bounds for dimension 0 with size 2`, and at the end of a batch it silently returned 2 predictions for 3 targets. A set with no gene has nothing to attend over and no interaction score, so it is refused by name ("sets [k] of N have no perturbation indices"), as is a set id outside `[0, num_sets)`. Not shown reachable in the 006 data.
+* `Dango.forward` refuses a genotype that lists the same gene twice: the self mask is positional, so the copy would attend to itself. The positional mask itself stays (a documented property of `_global_attention_layer`).
+* `DangoPreTrain.lambda_values` is now a property over `PAPER_LAMBDA_VALUES` (the six STRING v9.1 and v11.0 names); any other name, for example a string12_0 network, is refused on access instead of getting 1.0. Construction with string12_0 names (the 006 configs) is unaffected, and the module's `main` (string9_1 names) reads the same table as before. The 005/006 scripts never read it (they pass `determine_lambda_values()` to `DangoLoss`).
+* Seeded forward outputs are unchanged for every valid batch.
+
+Tests: [[tests.torchcell.models.test_dango]].
+
+* Review follow-up: a negative set id is refused by the same named `ValueError` as one at or above `num_sets` (before, `bincount` raised a bare `RuntimeError`).

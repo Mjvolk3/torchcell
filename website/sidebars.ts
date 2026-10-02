@@ -1,7 +1,8 @@
 import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
-// One sidebar per navbar tab. Categories are collapsible (sidebarCollapsible in
-// docusaurus.config.ts); a category with `collapsed: false` starts open.
+// One sidebar per navbar tab. Categories are collapsible and start closed
+// (sidebarCollapsible and sidebarCollapsed in docusaurus.config.ts); only the category
+// that holds the page being read is opened, by the theme.
 
 const SPHINX_URL = 'https://mjvolk3.github.io/torchcell/';
 const GITHUB_URL = 'https://github.com/Mjvolk3/torchcell';
@@ -12,7 +13,6 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Concepts',
-      collapsed: false,
       items: ['overview/data-model', 'overview/site-map'],
     },
     {
@@ -31,7 +31,6 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Access',
-      collapsed: false,
       items: ['database/browser', 'database/bolt'],
     },
     {
@@ -46,7 +45,6 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Schema explorer',
-      collapsed: false,
       items: ['ontology/explorer'],
     },
     {
@@ -61,7 +59,6 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Sphinx documentation',
-      collapsed: false,
       items: [
         {type: 'link', label: 'Guide', href: `${SPHINX_URL}guide/index.html`},
         {type: 'link', label: 'Datasets', href: `${SPHINX_URL}datasets/index.html`},
@@ -91,7 +88,6 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Boards',
-      collapsed: false,
       items: ['benchmark/leaderboard', 'benchmark/submit', 'benchmark/account'],
     },
     {
@@ -126,7 +122,6 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'On GitHub',
-      collapsed: false,
       items: [
         {type: 'link', label: 'Milestones', href: `${GITHUB_URL}/milestones`},
         {type: 'link', label: 'Issues', href: `${GITHUB_URL}/issues`},
@@ -139,7 +134,6 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Working with datasets',
-      collapsed: false,
       items: [
         'tutorials/download-and-benchmark',
         'tutorials/subsetting-with-indices',
@@ -173,7 +167,6 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Dataset cards',
-      collapsed: false,
       items: [
         'education/cards/smf-costanzo2016',
         'education/cards/amino-acid-mulleder2016',
@@ -187,7 +180,6 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Query modes (planned)',
-      collapsed: false,
       items: ['query/chemical-similarity', 'query/gene-similarity', 'query/homologs'],
     },
   ],

@@ -137,3 +137,119 @@ below was checked against a fetched page.
   332 samples and fully dense, is a superset of the other transposon rows, and the E.
   coli compendium is a superset of the method paper's experiments. Build order should
   de-duplicate rather than follow rank order here.
+
+## 2026.10.02 - Isoprenol is the priority, and the ordering rule was ranking it last
+
+A 300-publication sweep for the two hosts arrived as a spreadsheet, 200 *E. coli* and
+100 *P. putida*, with isoprenol named as the highest priority. Working it in surfaced a
+real defect in the ordering rule rather than just new rows.
+
+### The defect
+
+Rows sort by measurements, instances times phenotype dimensionality. Isoprenol campaigns
+cannot win that comparison and never will. A titer campaign measures tens to a few
+thousand numbers, because a strain yields one titer per condition per replicate and
+strains are built by hand. A barcoded fitness screen measures 10^6 to 10^8. The gap is
+structural, not incidental.
+
+Measured effect on the list as it stood: of the eight rows that measure isoprenol, four
+sorted to ranks 57, 64, 69 and 70 of 75, so they fell outside the fifty recommended
+builds entirely. Only Carruthers 2025 reached the first tranche, and only because it
+carries a 1,500-protein proteome panel that multiplies its 1,416 instances to 2.1 million
+measurements. The product the bacterial work targets was in the reserve.
+
+### The fix, and why a pin rather than a weight
+
+Two repairs were available. A production-relevance weight folded into the score would
+reorder the rows and destroy the audit: a reader could no longer recover what scale alone
+said, and the weight would be set by whoever wanted a particular answer. A pin applied
+after ranking does the same reordering and stays reversible.
+
+The axis divides by the ROLE the molecule plays, which is the distinction that decides
+whether a row teaches production or teaches survival:
+
+| axis | meaning | effect |
+|---|---|---|
+| `direct` | isoprenol is the measured product, a titer | lifted into tranche 1 |
+| `tolerance` | isoprenol is the stressor, growth readout, no titer | lifted into tranche 1 |
+| `precursor` | another isoprenoid is the product | lifted above the cut at 50 |
+| `analog` | a stand-in alcohol or inhibitor, not isoprenol | reported, NOT lifted |
+
+A row reporting both a titer and a tolerance assay is `direct`, because a row carries one
+value and the titer is the stronger label. `analog` stays unlifted on purpose: swapping
+one alcohol for another assumes cross-tolerance, and a row should not be promoted on an
+assumption. `is_pinned` is read by the per-host floor as well, so no mechanism can undo
+another's promotion. Every lift prints its rank before and after, and `tables/pins.tex`
+prints the measurement rank beside the final rank.
+
+Result: all eight isoprenol rows now sit in tranche 1, at ranks 6 and 14 through 20.
+
+### The two E. coli rows, and the asymmetry they close
+
+Before this pass every isoprenol row was *P. putida*, so the product existed in one host
+only and no cross-host question could be posed. Both new rows are *E. coli*.
+
+**Tian 2019** (`10.1021/acssynbio.8b00429`) is the only isoprenol campaign in either host
+with a nested combinatorial axis, and it is worth the row despite releasing nothing.
+Three genes, `asnA`, `gldA` and `prpE`, appear as 3 singles, all 3 pairs and the full
+triple, each across induction levels of 0, 5 and 10 nM anhydrotetracycline, so the design
+scores an interaction and a dose rather than a ranking. A second 3-gene array over `poxB`,
+`ackA` and `pta` is matched against a triple knockout of the same genes, which is a
+knockdown-versus-deletion comparison on one gene set. This is the same shape as the Lian
+2019 furfural crossed validator, for isoprenol.
+
+What blocks it: no numeric value is released anywhere. Titers appear only in Figures 6B
+and 7, as percentage improvements over a base strain whose own titer is never stated in
+absolute units. No replicate count is given, so no uncertainty field could be populated.
+The version of record is paywalled and the accepted manuscript on OSTI references no
+supplementary information. It lands `status="blocked"`, the same treatment as the Avalos
+isobutanol strains. The host is DH1 carrying the KG1R10 mevalonate pathway as two
+plasmids, not BW25113 or MG1655, which is why a new sequence basis
+`engineered-chassis+guide` was added.
+
+Internal inconsistencies to carry rather than resolve: the target count is 21 genes in
+the introduction, 18 guides in the results and 15 in the abstract; sampling is 72 h in
+the results and 76 h in the methods; one printed symbol, `arcC`, is not a K-12 gene name;
+and the `C5-poxB-ackA-pta` strain is described in the results but missing from Table 1.
+
+**Wang 2015** (`10.1038/srep16505`) is ingestible and is the tolerance arm. Supplementary
+Table S3 releases OD600 with standard deviation for the wild type and 46 Keio single
+deletions at 0 and 0.5 percent isoprenol by volume, in 2YT at 30 degrees, n = 2
+biological replicates. Keio JW numbers are per strain, so the deletion alleles resolve to
+Baba 2006. Table S4 adds a 9-gene transporter transcript panel.
+
+The painful part: the paper's two multi-gene strains are its own epistasis test, `acrA`
+with `acrB` and that double with `tolC`, both reported as non-additive against their
+singles with a plasmid complementation control, and **neither appears in any released
+table**. They exist only in Figure 4, which is also the only place the 0.75 percent dose
+appears. So the combinatorial arm, the part most worth having, is a provenance gap. The
+paper's own mutant count is self-inconsistent too, 44 in the results and 45 in the
+abstract against 46 rows in Tables S2 and S3; the table count is what gets ingested.
+
+### The sweep is a source of leads, not a measure of what exists
+
+Held as a separate artifact with its own script and its own typed model, because none of
+its record counts are verified: every cell of its `Instances` column reads "Verify from
+supplement", and its own overview says "this is a 300-candidate discovery queue, not 300
+download-verified datasets." Mixing it into the curated table would make an unverified
+lead indistinguishable from a sourced row.
+
+Measured accuracy on its own target axis. It flagged six papers as measuring isoprenol
+directly. All four *P. putida* ones were already curated here, which is a useful
+independent check on coverage, and both *E. coli* ones were genuinely missing. But it
+missed two isoprenol papers the table already held, Yunus 2026 and Kang 2026, both titled
+for "aviation fuel precursor" rather than for the product. Two misses out of eight is a
+25 percent false-negative rate, measured against a list assembled by hand. Title and
+abstract matching finds a paper named for its product and not one named for its method.
+
+The spreadsheet is pinned by sha256 under a new tracked `experiments/database/inputs/`.
+It had to leave `results/`, which is untracked on the rule that everything in it is
+regenerable; a file that arrived as a file has no retrieval command, so the stored copy
+is its only canonical form.
+
+### Correction to a figure reported earlier
+
+The generator docstring said the first tranche carries "a per-organism quota of 10 and
+10". The code sets `QUOTA_1 = {"E. coli": 6, "P. putida": 6}`, a floor rather than a
+split, and always did. The docstring was stale and the figure I reported from it was
+wrong. Fixed in the same pass.

@@ -1,0 +1,239 @@
+# experiments/030-solid-growth-multi/conf/cgt_030_s3_r_tok_fit_000.yaml
+#
+# THE 030 CLOSURE ARM, PER ENTRY, LEARNABLE TABLE. cgt_s3_r_kl_fit_031 of 025 (S3 =
+# every single + the pair-in-triple doubles + every triple; joint fitness + interaction;
+# 010's random split pinned over the triples, everything else in train; per-order
+# metrics; AdamW 2.5e-4 constant; 50 epochs) moved to the 030 no-merge build with the
+# per-entry path: every stored entry is a training row, its source dataset enters the
+# readout as a one-hot over the build's 15 source datasets projected to 8 learnable
+# dimensions (model.dataset_token). Validation and test report one value per pinned
+# triple under its own screen's token, so val/gene_interaction/Pearson reads against the
+# 025 S3 table arm (0.479 +- 0.001 over epochs 10-29, cgt_s3_r_kl_fit_031 seeds 0-2).
+#
+# What is 030-specific, and why each key is required:
+#   subset.exclude     the essentiality holdout leaves the pool and is served as the second
+#                      validation loader (val_ess/*): 198 released Merzbacher test genes plus
+#                      250 + 250 matched singles, all order 1, none in the pinned val/test
+#   subset.vocabulary  the token vocabulary, read from the artifact; vocab_size is derived
+#   transforms.fit_stats  constants fitted on the arm's training ENTRY rows and committed,
+#                      because label_df holds one arbitrary entry per record on this build
+#   regression_task.essentiality  the two tokens the holdout singles are read under
+#
+#   PROJECT_ROOT=<worktree> sbatch -J 030-r1w1-tab-s0 \
+#       experiments/030-solid-growth-multi/scripts/igb_mmli_cgt_030.slurm cgt_030_s3_r_tok_fit_000 +seed=0
+defaults:
+  - default
+  - _self_
+
+wandb:
+  project: torchcell_030-solid-growth-multi_equivariant_cell_graph_transformer
+  tags: [s3, split_R, graph_reg_kl, fitness_joint, closure_doubles, unpinned_to_train, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, epochs_50, per_entry, dataset_token, essentiality_holdout]
+
+dataset:
+  root_rel: data/torchcell/experiments/030-solid-growth-multi/001-multi-build
+
+# === Arm: which records train, how they split, what is held out, the token vocabulary ===
+# Artifacts are committed under experiments/030-solid-growth-multi/results/ and read by
+# scripts/arm_030.py, which also derives the exact training set the constants were fitted on.
+subset:
+  indices: subset_S3_indices.json.gz
+  split_file: pinned_splits_from_010_seed_42.json.gz
+  split_key: pinned
+  unpinned_to_train: true
+  exclude: essentiality_holdout_030.json.gz
+  vocabulary: subset_definitions_030_summary.json
+
+cell_dataset:
+  graphs: [
+      physical,
+      regulatory,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
+    ]
+  node_embeddings: []
+  phenotype_labels: [fitness, gene_interaction]
+
+transforms:
+  use_transforms: true
+  fit_stats: normalization_stats_030_s3_r_ess.json
+  forward_transform:
+    normalization:
+      gene_interaction:
+        strategy: "standard"
+      fitness:
+        strategy: "standard"
+
+# The smoke test's synthetic second token; off in every campaign arm.
+smoke:
+  enabled: false
+  delta: 0.3
+  # one synthetic twin per source, Synthetic<source>, so the twin's optimal bias is the
+  # source's plus delta at any training stage (a single token over every source is not)
+  sources: [TmiKuzmin2018Dataset, TmiKuzmin2020Dataset, TmfKuzmin2018Dataset, TmfKuzmin2020Dataset]
+  labels: [gene_interaction, fitness]
+  control: false
+  n_val_batches: 40
+  n_trajectory_batches: 10
+
+profiler:
+  enabled: false
+  is_pytorch: true
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 10000
+  batch_size: 256
+  val_batch_size: 32
+  num_workers: 16
+  pin_memory: true
+  prefetch: false
+  prefetch_factor: 4
+  persistent_workers: true
+
+trainer:
+  max_epochs: 50
+  strategy: ddp
+  num_nodes: 1
+  accelerator: gpu
+  devices: 4
+  overfit_batches: 0
+  precision: "bf16-mixed"
+  limit_train_batches: 1.0
+  limit_val_batches: 1.0
+
+compile_mode: null
+
+model:
+  checkpoint_path: null
+  gene_num: 6607
+  hidden_channels: 180
+  num_transformer_layers: 8
+  num_attention_heads: 9
+  dropout: 0.1
+
+  learnable_embedding:
+    enabled: true
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      dropout: 0.1
+
+  attention_mask:
+    enabled: false
+
+  # Per-entry source-dataset token at the readout of both heads: one-hot over the
+  # vocabulary (vocab_size set by the script from subset.vocabulary) through a bias-free
+  # linear to `dim`, concatenated to the head input. `input` mode is the deferred ablation.
+  dataset_token:
+    enabled: true
+    dim: 8
+    mode: readout
+
+  graph_regularization:
+    graph_reg_lambda: 0.001
+    graph_reg_layer: 1
+    row_sampling_rate: 1.0
+    regularized_heads:
+      physical:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 0
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      regulatory:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 1
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      tflink:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 2
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_neighborhood:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 3
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_fusion:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 4
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_cooccurence:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 5
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_coexpression:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 6
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_experimental:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 7
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+      string12_0_database:
+        layer: ${model.graph_regularization.graph_reg_layer}
+        head: 8
+        lambda: ${model.graph_regularization.graph_reg_lambda}
+
+  perturbation_head:
+    num_heads: 9
+    dropout: 0.1
+
+  heads:
+    global:
+      decoder: s1_pool
+      output_dim: 1
+      use_gene_pool: false
+      linear: true
+
+  perturb_cls: true
+  perturbation_head_cls: wildtype
+
+regression_task:
+  loss:
+    type: "point_dist_graph_reg"
+    point_estimator:
+      type: "mse"
+      lambda: 1.0
+    distribution_loss:
+      type: "wasserstein"
+      lambda: 0.1
+      wasserstein_blur: 0.05
+      wasserstein_p: 2
+      wasserstein_scaling: 0.9
+      min_samples_for_wasserstein: 512
+    graph_regularization:
+      lambda: 1.0
+    supervised_contrastive:
+      lambda: 0.0
+    buffer:
+      use_buffer: false
+    ddp:
+      use_ddp_gather: false
+
+  execution_mode: "training"
+
+  optimizer:
+    type: "AdamW"
+    lr: 2.5e-4
+    weight_decay: 1e-8
+  lr_scheduler: null
+
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: null
+  plot_sample_ceiling: 10000
+  plot_every_n_epochs: 1
+  plot_transformer_diagnostics_every_n_epochs: 10
+  plot_edge_recovery_every_n_epochs: 10
+  gradient_probe_epochs: [0, 1, 2, 5, 10, 20]
+
+  fitness_lambda: 1.0
+  per_order_metrics: true
+
+  # The holdout singles are read under the Costanzo single token (the reported AUROC)
+  # and the SGD token (a diagnostic: the token the converted zeros trained under).
+  essentiality:
+    token_smf: SmfCostanzo2016Dataset
+    token_sgd: GeneEssentialitySgdDataset

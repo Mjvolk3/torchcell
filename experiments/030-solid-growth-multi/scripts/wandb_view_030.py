@@ -1,26 +1,20 @@
-# experiments/025-solid-growth/scripts/random_split_wandb_view.py
-# [[experiments.025-solid-growth.scripts.s3_closure_readout]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/025-solid-growth/scripts/random_split_wandb_view
-"""Label the random-split (R) runs by arm and seed and curate a grouped W&B Charts view.
+# experiments/030-solid-growth-multi/scripts/wandb_view_030.py
+# [[experiments.030-solid-growth-multi.scripts.wandb_view_030]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/030-solid-growth-multi/scripts/wandb_view_030
+"""Label the 030 per-entry runs by arm and seed and curate a grouped W&B Charts view.
 
-The R-split counterpart of ``disjoint_embedding_wandb_view.py``: the S0 arms (joint
-fitness, control, graph-regularization ladder, hard mask) and the S3 closure cell all
-train on the 010 random split and validate on the pinned triples, so they belong in one
-view grouped by arm with Pearson compared across the groups. This script
+The 025 script (experiments/025-solid-growth/scripts/random_split_wandb_view.py) pointed
+at the 030 project. Runs reach W&B by `wandb sync` from the IGB login node, which resets
+API-written names and tags, so this runs AFTER every sync:
 
-1. names every kept run ``<arm>_seed<k>`` (``_rank<r>`` for the non-rank-0 ranks of a
-   4-GPU job), sets ``run.group = arm`` so each arm has a group page, and writes the
-   config keys ``arm``, ``seed_``, ``split = "R"`` and ``rank0`` the runset groups on;
-   failed and crashed runs and the abandoned partial of S3 seed 1 are left unlabeled
-   and so fall outside the view's ``split == R`` filter;
-2. overwrites a SAVED workspace view (the API cannot write the personal
-   ``?nw=nwuser...`` view) with sections in rank order, x = epoch, and for every
-   headline metric three panels: validation, training, and training and validation on
-   ONE plot (the curation rule of the ``wandb-curate`` skill).
+1. ``label_runs``: every run whose tags name a campaign config is renamed
+   ``<arm>_seed<k>[_rank<r>]`` (rank 0 is the run carrying ``val/`` metrics), grouped
+   under its arm, and given the config keys ``arm``, ``seed_``, ``split`` and ``rank0``
+   the view groups on. Smoke runs carry no campaign config tag and are left alone.
+2. ``populate_view``: the saved view ``VIEW_ID`` is overwritten with the sections below,
+   grouped by arm, x axis epoch, no smoothing.
 
-Rerun after every sync:
-
-    python experiments/025-solid-growth/scripts/random_split_wandb_view.py
+    python experiments/030-solid-growth-multi/scripts/wandb_view_030.py
 """
 
 from __future__ import annotations
@@ -30,54 +24,34 @@ import wandb_workspaces.reports.v2 as wr
 import wandb_workspaces.workspaces as ws
 
 ENTITY = "zhao-group"
-PROJECT = "torchcell_025-solid-growth_equivariant_cell_graph_transformer"
-VIEW_NAME = "025 random split: arms grouped, S3 closure vs S0"
+PROJECT = "torchcell_030-solid-growth-multi_equivariant_cell_graph_transformer"
+VIEW_NAME = "030 per-entry dataset token: arms grouped, against the 025 S3 closure"
 # Pinned after the first `save_as_new_view()`; None creates the view and prints its id.
-VIEW_ID: str | None = "vo1fa9efqdf"
-# The S3 closure comparison alone: learnable table (fit_031, seed 1 at the 130-epoch
-# budget, seeds 2 and 3 at 50) against the parameter-matched composite (embfit_034).
-# Same labels, same sections 1 to 3; the runset keeps only these three arms so the S0
-# lines do not crowd the two representations being compared.
-S3_VIEW_NAME = "025 S3 closure: learnable table vs composite embedding"
-S3_VIEW_ID: str | None = "erilfg5h206"
-S3_ARMS = [
-    "s3_closure_fitness1.0_130ep",
-    "s3_closure_fitness1.0_50ep",
-    "s3_closure_composite_fitness1.0_50ep",
-]
+VIEW_ID: str | None = "yja1oz2m2ml"
 X = "epoch"
 
-# The abandoned partial of S3 seed 1 (job 2408888, restarted for per-order logging), and
-# the composite seed 2 cancelled at epoch 10 (job 2409709, 2026-09-28, to free mmli for
-# 030; rerun at 100 epochs as job 2413835).
-EXCLUDED_RUN_IDS = {
-    "kj03xx8y",
-    "0kaadgdu",
-    "bekoxpor",
-    "ztfcxu37",
-    "zmq123p8",
-    "uhrd45is",
-    "i50s2453",
-    "c994bnfz",
-}
+# Runs of jobs that never trained: 2413834 died in the sanity check, 2413837 trained one
+# batch per epoch; neither was synced, listed here in case they ever are.
+EXCLUDED_RUN_IDS: set[str] = set()
 KEEP_STATES = {"finished", "running"}
 
-# config tag -> arm label; ctrl_013 is split further by graph_reg_lambda (the
-# regularization ladder ran under that one config with the weight swept). The
-# epoch budget is appended from each run's own config (``trainer.max_epochs``),
-# since one config runs under several budgets: fit_031 seed 1 at 130 epochs, seeds
-# 2 and 3 at the 50-epoch cap set after seed 1 peaked at epoch 32.
+# config tag -> arm label. The epoch budget is appended from each run's own config.
 ARMS = {
-    "cgt_s3_r_kl_fit_031": "s3_closure_fitness1.0",
-    "cgt_s3_r_kl_embfit_034": "s3_closure_composite_fitness1.0",
-    "cgt_s4_r_kl_fit_039": "s4_random_doubles_fitness1.0",
-    "cgt_s0_r_kl_embfit_035": "s0_composite_fitness1.0",
-    "cgt_s0_r_kl_fit_014": "s0_fitness1.0",
-    "cgt_s0_r_kl_fit_015": "s0_fitness0.1",
-    "cgt_s0_r_kl_ctrl_013": "s0_control",
-    "cgt_s0_r_mask_028": "s0_hardmask",
+    "cgt_030_s3_r_tok_fit_000": "s3_holdout_table_token",
+    "cgt_030_s3_r_tok_embfit_001": "s3_holdout_composite_token",
+    "cgt_030_s3_r_tok_fit_002": "s3_table_token",
+    "cgt_030_s3_r_tok_embfit_003": "s3_composite_token",
 }
-LAMBDA_ARMS = {0.0: "s0_lambda0", 0.01: "s0_lambda1e-2"}
+
+# The Kuzmin screens are the validation and test sources (the pinned triples); the
+# Costanzo tokens carry most of the training rows.
+TOKENS = [
+    "TmiKuzmin2018Dataset",
+    "TmiKuzmin2020Dataset",
+    "DmiKuzmin2018Dataset",
+    "DmiKuzmin2020Dataset",
+    "DmiCostanzo2016Dataset",
+]
 
 
 def _line(y: list[str], title: str, w: int = 6, h: int = 6) -> wr.LinePlot:
@@ -113,7 +87,67 @@ SECTIONS: list[tuple[str, list[tuple[list[str], str]]]] = [
         ],
     ),
     (
-        "3 per perturbation order (train; val and test are triples only)",
+        "3 per label type: smf, dmf, tmf fitness and dmi, tmi interaction (val is triples only)",
+        [
+            (
+                [
+                    "train/fitness/smf/Pearson",
+                    "train/fitness/dmf/Pearson",
+                    "train/fitness/tmf/Pearson",
+                    "val/fitness/tmf/Pearson",
+                ],
+                "fitness Pearson by type (train smf, dmf, tmf; val tmf)",
+            ),
+            (
+                [
+                    "train/gene_interaction/dmi/Pearson",
+                    "train/gene_interaction/tmi/Pearson",
+                    "val/gene_interaction/tmi/Pearson",
+                ],
+                "interaction Pearson by type (train dmi, tmi; val tmi)",
+            ),
+            (
+                [
+                    "train/fitness/smf/MSE",
+                    "train/fitness/dmf/MSE",
+                    "train/fitness/tmf/MSE",
+                    "val/fitness/tmf/MSE",
+                ],
+                "fitness MSE by type",
+            ),
+            (
+                [
+                    "train/gene_interaction/dmi/MSE",
+                    "train/gene_interaction/tmi/MSE",
+                    "val/gene_interaction/tmi/MSE",
+                ],
+                "interaction MSE by type",
+            ),
+        ],
+    ),
+    (
+        "4 per source token (interaction Pearson of the entry rows under each token)",
+        [
+            (
+                [f"val/token/{t}/gene_interaction/Pearson" for t in TOKENS],
+                "val interaction Pearson by token",
+            ),
+            (
+                [f"train/token/{t}/gene_interaction/Pearson" for t in TOKENS],
+                "train interaction Pearson by token",
+            ),
+            (
+                [f"train/token/{t}/fitness/Pearson" for t in TOKENS],
+                "train fitness Pearson by token",
+            ),
+            (
+                [f"train/token/{t}/gene_interaction/n_entries" for t in TOKENS],
+                "train interaction entry rows by token",
+            ),
+        ],
+    ),
+    (
+        "4 per perturbation order (train; val and test are triples only)",
         [
             (
                 [
@@ -149,7 +183,7 @@ SECTIONS: list[tuple[str, list[tuple[list[str], str]]]] = [
         ],
     ),
     (
-        "4 losses",
+        "5 losses",
         [
             (["train/loss"], "train loss"),
             (["train/point_loss", "val/point_loss"], "train and val point loss"),
@@ -161,7 +195,7 @@ SECTIONS: list[tuple[str, list[tuple[list[str], str]]]] = [
         ],
     ),
     (
-        "5 operator and gradient probe",
+        "6 operator and gradient probe",
         [
             (
                 ["train/cls_pert_strain_sd", "val/cls_pert_strain_sd"],
@@ -183,14 +217,14 @@ SECTIONS: list[tuple[str, list[tuple[list[str], str]]]] = [
         ],
     ),
     (
-        "6 bookkeeping",
+        "7 bookkeeping",
         [
             (
                 ["train/cuda_peak_allocated_gb", "val/cuda_peak_allocated_gb"],
                 "peak GPU memory (GB)",
             ),
             (["learning_rate"], "learning rate"),
-            (["arm/n_subset"], "records in the pool"),
+            (["arm/n_subset", "arm/n_holdout"], "records in the pool and held out"),
             (["arm/n_train_pinned"], "pinned train triples"),
         ],
     ),
@@ -201,18 +235,13 @@ def _arm_of(run: wandb.apis.public.Run) -> str | None:
     cfg = [t for t in run.tags if t in ARMS]
     if not cfg:
         return None
-    arm = ARMS[cfg[0]]
-    if cfg[0] == "cgt_s0_r_kl_ctrl_013":
-        model = run.config.get("model") or {}
-        lam = (model.get("graph_regularization") or {}).get("graph_reg_lambda")
-        arm = LAMBDA_ARMS.get(float(lam) if lam is not None else -1.0, arm)
     max_epochs = (run.config.get("trainer") or {})["max_epochs"]
-    return f"{arm}_{max_epochs}ep"
+    return f"{ARMS[cfg[0]]}_{max_epochs}ep"
 
 
 def label_runs(api: wandb.Api) -> int:
-    """Name and group every kept R-split run; write the keys the view groups on."""
-    runs = list(api.runs(f"{ENTITY}/{PROJECT}", filters={"tags": {"$in": ["split_R"]}}))
+    """Name and group every kept campaign run; write the keys the view groups on."""
+    runs = list(api.runs(f"{ENTITY}/{PROJECT}"))
     by_arm_seed: dict[tuple[str, int], list] = {}
     for run in runs:
         if run.id in EXCLUDED_RUN_IDS or run.state not in KEEP_STATES:
@@ -284,52 +313,10 @@ def populate_view() -> str:
     return view.url
 
 
-def populate_s3_view() -> str:
-    """Overwrite (or create) the saved view that compares the S3 closure representations."""
-    sections = [
-        ws.Section(
-            name=name,
-            is_open=True,
-            layout_settings=ws.SectionLayoutSettings(columns=4, rows=1),
-            panel_settings=ws.SectionPanelSettings(x_axis=X, smoothing_type="none"),
-            panels=[_line(y, title) for y, title in panels],
-        )
-        for name, panels in SECTIONS[:3]
-    ]
-    settings = ws.WorkspaceSettings(
-        x_axis=X, smoothing_type="none", max_runs=60, sort_panels_alphabetically=False
-    )
-    runset_settings = ws.RunsetSettings(
-        filters=[ws.Config("split") == "R", ws.Config("arm").isin(S3_ARMS)],
-        groupby=[ws.Config("arm")],
-        order=[ws.Ordering(ws.Metric("Name"), ascending=True)],
-    )
-    if S3_VIEW_ID is None:
-        view = ws.Workspace(
-            entity=ENTITY,
-            project=PROJECT,
-            name=S3_VIEW_NAME,
-            sections=sections,
-            settings=settings,
-            runset_settings=runset_settings,
-        )
-        view.save_as_new_view()
-        print(f"NEW saved S3 view: {view.url}\n  pin its nw= id into S3_VIEW_ID")
-        return view.url
-    view = ws.Workspace.from_url(f"https://wandb.ai/{ENTITY}/{PROJECT}?nw={S3_VIEW_ID}")
-    view.name = S3_VIEW_NAME
-    view.sections = sections
-    view.settings = settings
-    view.runset_settings = runset_settings
-    view.save()
-    return view.url
-
-
 def main() -> None:
     api = wandb.Api()
     print(f"labeled {label_runs(api)} runs")
     print(populate_view())
-    print(populate_s3_view())
 
 
 if __name__ == "__main__":

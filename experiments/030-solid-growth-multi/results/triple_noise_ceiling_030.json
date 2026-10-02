@@ -1,0 +1,114 @@
+{
+  "entries_parquet": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/030-solid-growth-multi/closure/entries.parquet",
+  "n_triples": 376732,
+  "n_triples_multi_measured": 12914,
+  "pair_classes": {
+    "all_pairs": {
+      "n_triples": 12914,
+      "pearson": 0.48914160380833527,
+      "spearman": 0.2713390841812174,
+      "spearman_ci95": [
+        0.2545719262344131,
+        0.2879373161566632
+      ],
+      "mean_abs_diff": 0.06558604615146353,
+      "median_abs_diff": 0.049829
+    },
+    "same_dataset": {
+      "n_triples": 12431,
+      "pearson": 0.4334067794757619,
+      "spearman": 0.2390157670276645,
+      "spearman_ci95": [
+        0.22124139856560499,
+        0.25724168044037315
+      ],
+      "mean_abs_diff": 0.06657572287024373,
+      "median_abs_diff": 0.050952
+    },
+    "cross_dataset_2018_vs_2020": {
+      "n_triples": 483,
+      "pearson": 0.8923539602533763,
+      "spearman": 0.7689577942035074,
+      "spearman_ci95": [
+        0.7189915748112045,
+        0.8101548395931181
+      ],
+      "mean_abs_diff": 0.04011467701863354,
+      "median_abs_diff": 0.029038000000000008
+    },
+    "same_dataset_same_strains": {
+      "n_triples": 11013,
+      "pearson": 0.4395502352867701,
+      "spearman": 0.2342085960908988,
+      "spearman_ci95": [
+        0.21678513272925423,
+        0.25131689739743
+      ],
+      "mean_abs_diff": 0.06613577027149731,
+      "median_abs_diff": 0.051428
+    },
+    "same_dataset_same_query_different_array_allele": {
+      "n_triples": 288,
+      "pearson": 0.6355131260610918,
+      "spearman": 0.46906170227891475,
+      "spearman_ci95": [
+        0.3580698096547394,
+        0.5685154436937397
+      ],
+      "mean_abs_diff": 0.03673169444444444,
+      "median_abs_diff": 0.026534000000000002
+    },
+    "kuzmin2020_only": {
+      "n_triples": 12370,
+      "pearson": 0.4316684089023992,
+      "spearman": 0.23547583760962817,
+      "spearman_ci95": [
+        0.21673978789897455,
+        0.25323511560670076
+      ],
+      "mean_abs_diff": 0.06673965044462409,
+      "median_abs_diff": 0.051117499999999996
+    },
+    "kuzmin2018_only": {
+      "n_triples": 61,
+      "pearson": 0.6389005263479817,
+      "spearman": 0.5388154415653092,
+      "spearman_ci95": [
+        0.30896158160781123,
+        0.7173009581284895
+      ],
+      "mean_abs_diff": 0.0333333606557377,
+      "median_abs_diff": 0.022164999999999997
+    }
+  },
+  "noise_model": {
+    "TmiKuzmin2018Dataset": {
+      "n_rows": 91111,
+      "n_rows_se_from_p": 62871,
+      "median_se": 0.05037484205115481,
+      "sd_of_scores": 0.05351434019442842,
+      "reliability": 0.1138912102649727,
+      "replicate_replicate_pearson": 0.22892115285329767,
+      "replicate_replicate_spearman": 0.24388326661627965,
+      "noisy_vs_released_pearson": 0.4778558033950756,
+      "noisy_vs_released_spearman": 0.46487077680213285
+    },
+    "TmiKuzmin2020Dataset": {
+      "n_rows": 300187,
+      "n_rows_se_from_p": 194524,
+      "median_se": 0.05190698944255672,
+      "sd_of_scores": 0.06334298593728574,
+      "reliability": 0.32848670075871284,
+      "replicate_replicate_pearson": 0.299798372728605,
+      "replicate_replicate_spearman": 0.35104994916954446,
+      "noisy_vs_released_pearson": 0.5458399024784487,
+      "noisy_vs_released_spearman": 0.5677132718720116
+    }
+  },
+  "published": {
+    "dango_2018_all_triples_pearson": "0.59 (zhangDANGOPredictingHigherorder2020, two replicate screens, all 91,050 triples of the Kuzmin 2018 diagnostic array)",
+    "kuzmin2018_si_adjusted_tau_significant_only": "0.74 to 0.81 (si/si1.md line 171, p < 0.05 scores only)",
+    "kuzmin2018_si_raw_triple_score_significant_only": "0.90 to 0.91 (same)",
+    "kuzmin2020": "no all-triples replicate correlation published; Fig. S2 shows significant scores only"
+  }
+}

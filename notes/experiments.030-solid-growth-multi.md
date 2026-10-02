@@ -383,3 +383,51 @@ Essentiality was never subsetted out. The SGD records (1,140) and SynthLethDB re
 (691) are in the query, survive conversion as fitness 0 entries, and sit in the S3 pool as
 singles. The holdout arm removed 698 specific single RECORDS from training for an AUROC
 readout; it did not remove the essentiality label from the data.
+
+## 2026.10.01 - How well a trigenic score reproduces itself on this build
+
+Script: [[experiments.030-solid-growth-multi.scripts.triple_noise_ceiling_030]]. Results:
+`results/triple_noise_ceiling_030.json`. The question was the empirical reproducibility of
+the trigenic interaction score, in Spearman as well as Pearson, on the triples we train on,
+since the only published all-triples figure is Dango's 0.59 Pearson between the two
+replicate screens of Kuzmin 2018 and Kuzmin 2020 published none.
+
+**A. Re-measured triples in the build.** The no-merge build keeps every entry, and 12,914 of
+the 376,732 S3 triples carry two or more interaction entries. One random pair per triple,
+exact duplicate rows dropped, bootstrap over triples for the interval.
+
+| pair class | n triples | Pearson | Spearman | Spearman 95% CI | median abs diff |
+|---|---|---|---|---|---|
+| all pairs | 12,914 | 0.489 | 0.271 | 0.255 to 0.288 | 0.050 |
+| same screen, same strains (Kuzmin 2020) | 11,013 | 0.440 | 0.234 | 0.217 to 0.251 | 0.051 |
+| same screen, same query, different array allele | 288 | 0.636 | 0.469 | 0.358 to 0.569 | 0.027 |
+| Kuzmin 2018 within screen | 61 | 0.639 | 0.539 | 0.309 to 0.717 | 0.022 |
+| Kuzmin 2018 vs Kuzmin 2020, same triple | 483 | 0.892 | 0.769 | 0.719 to 0.810 | 0.029 |
+
+The large class is 11,013 Kuzmin 2020 triples whose identical strain combination appears
+twice in the screen. Interpretation, carried over from the closure recompute (Section
+2026.09.25 above, the 2020 array SMF varies within a strain across Tables S1 and S3): these
+are the diagnostic-array screen and the pilot genome-wide screens scoring the same strains.
+Between those two screens the same strains agree at Pearson 0.44 and Spearman 0.23. The
+Pearson is carried by the tail of strong negative interactions; the bulk near zero does not
+rank reproducibly. The 483 triples measured in both 2018 and 2020 agree far better, at
+0.89 and 0.77; those are 2018 query strains re-screened in 2020 on the same diagnostic
+array, so the array format and protocol match in a way the S1 versus S3 pairs do not.
+Hypothesis (untested): the array format is the larger source of irreproducibility, not
+the year.
+
+**B. Noise propagated from the released p-values.** Treating the stored one-sided p as a
+normal test of the score against its propagated error gives a per-row SE of |tau| / z(p),
+median 0.050 on 2018 and 0.052 on 2020 against score sds of 0.054 and 0.063. Two synthetic
+replicates per row correlate at Pearson 0.23 / Spearman 0.24 (2018) and 0.30 / 0.35 (2020).
+This disagrees with Dango's measured 0.59 for 2018 by a factor of two in implied noise
+variance, and the 2026.09.20 recompute already found the trigenic p is not reproducible
+from the stored fitness SDs (rho 0.20 / 0.10), so the error model behind the trigenic p is
+not the one assumed here. Read B as unreliable and keep A.
+
+**What it means for the model.** The 030 composite run (job 2413840, xy3xnpau) reads
+Pearson 0.49 on Kuzmin 2018 validation rows and 0.39 on Kuzmin 2020 rows at epoch 78. On
+2020 that is within 0.05 of the between-screen agreement of the data with itself (0.44,
+n 11,013). The model logs no Spearman yet, so the rank comparison waits on the next run.
+Every number here is reproducibility between two measurements, not a bound on a predictor
+of the denoised score; that bound is the square root of the released score's reliability.

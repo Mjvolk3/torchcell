@@ -74,8 +74,10 @@
   --tc-baseline-row: #26262a;
 }
 
-/* Nine tabs: tighten the navbar between the mobile breakpoint and wide screens. */
-@media (min-width: 997px) and (max-width: 1280px) {
+/* Nine tabs plus Announcements: tighten the navbar between the mobile breakpoint and
+ * wide screens, in two steps, so the logo and the first tab never collide. In the
+ * narrower step the GitHub link leaves the bar; it stays in the footer. */
+@media (min-width: 997px) and (max-width: 1400px) {
   .navbar__item {
     padding-left: 0.45rem;
     padding-right: 0.45rem;
@@ -83,6 +85,22 @@
   }
   .navbar__logo {
     height: 1.6rem;
+  }
+}
+@media (min-width: 997px) and (max-width: 1240px) {
+  .navbar__item {
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+    font-size: 0.82rem;
+  }
+  .navbar__brand {
+    margin-right: 0.4rem;
+  }
+  .navbar__logo {
+    height: 1.4rem;
+  }
+  .tc-navbar-github {
+    display: none;
   }
 }
 

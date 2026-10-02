@@ -13,6 +13,7 @@ The final hosting location is undecided. The defaults below place the site under
 | :-- | :-- |
 | `docusaurus.config.ts` | Site config, navbar tabs, environment variables |
 | `sidebars.ts` | One collapsible sidebar per tab |
+| `announcements/` | Dated announcements, one Markdown file each (the blog plugin, served at `/announcements/`) |
 | `docs/<tab>/` | The pages of each tab (MDX). Docs are served from the site root, so `docs/benchmark/metrics.mdx` is `/benchmark/metrics/` |
 | `docs/benchmark/{leaderboard,submit,account,user}.mdx` | Thin pages that mount the interactive benchmark apps, so they keep the Benchmark sidebar |
 | `src/components/bench/` | The interactive benchmark apps (React, browser-only) |
@@ -20,6 +21,17 @@ The final hosting location is undecided. The defaults below place the site under
 | `src/components/DatasetCard.tsx` | The education card; template in `docs/education/cards/_template.mdx` |
 | `src/theme/` | `MDXComponents` (components usable in MDX without an import) and `Root` (mock-data bar) |
 | `static/mock/` | Fixtures for mock mode, written by `scripts/gen_mock_fixtures.mjs` |
+
+## Announcements
+
+An announcement is one Markdown file in `announcements/`, named
+`YYYY-MM-DD-short-slug.md`. The date in the name is the date shown, and the list at
+`/announcements/` is newest first. Front matter needs a `title`; `slug` and `tags` are
+optional. Text above a `<!-- truncate -->` line is what the list page shows. RSS and
+Atom feeds are written to `/announcements/rss.xml` and `/announcements/atom.xml`.
+
+State only what has happened and can be checked (a published version, a served
+release); plans belong on the Milestones tab.
 
 ## Build
 

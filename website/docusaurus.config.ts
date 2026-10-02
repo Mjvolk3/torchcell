@@ -80,7 +80,23 @@ const config: Config = {
           remarkPlugins: [remarkMath],
           rehypePlugins: [rehypeKatex],
         },
-        blog: false,
+        // Announcements are the blog plugin under another name: one dated Markdown
+        // file per announcement in website/announcements/, newest first, with feeds.
+        blog: {
+          path: 'announcements',
+          routeBasePath: 'announcements',
+          blogTitle: 'Announcements',
+          blogDescription: 'Releases and news from the TorchCell project.',
+          blogSidebarTitle: 'All announcements',
+          blogSidebarCount: 'ALL',
+          showReadingTime: false,
+          onUntruncatedBlogPosts: 'ignore',
+          feedOptions: {
+            type: ['rss', 'atom'],
+            title: 'TorchCell announcements',
+            description: 'Releases and news from the TorchCell project.',
+          },
+        },
         theme: {
           customCss: [
             require.resolve('katex/dist/katex.min.css'),
@@ -120,8 +136,14 @@ const config: Config = {
         {type: 'docSidebar', sidebarId: 'tutorials', label: 'Tutorials', position: 'left'},
         {type: 'docSidebar', sidebarId: 'education', label: 'Education', position: 'left'},
         {type: 'docSidebar', sidebarId: 'query', label: 'Query', position: 'left'},
+        {to: '/announcements', label: 'Announcements', position: 'right'},
         {type: 'custom-widthToggle', position: 'right'},
-        {href: GITHUB_URL, label: 'GitHub', position: 'right'},
+        {
+          href: GITHUB_URL,
+          label: 'GitHub',
+          position: 'right',
+          className: 'tc-navbar-github',
+        },
       ],
     },
     footer: {

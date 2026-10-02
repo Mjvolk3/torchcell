@@ -48,3 +48,7 @@ Coverage of `torchcell/trainers/int_dcell.py` from this file: 31% -> 89%. Left u
   - A multi-column original target is cut to column 0.
 - Rewrites: the train-ceiling test now uses ceiling 4 and two batches of 3 (4 rows; the second chunk is the `randperm(3)[:1]` row). The sanity-check hook asserts the six exact names and values. The `configure_optimizers` docstring says the monitor is ignored under manual optimization. Every global reseed now runs inside `torch.random.fork_rng()`.
 - Mutants killed: original mask taken from the transformed target, `remaining = ceiling`, column 1 instead of 0, non-tensor inverse used, `squeeze(1)` before the inverse.
+
+## 2026.10.02 - The checkpoint test loads the state dict directly
+
+`test_dcell_in_training_mode_always_gets_a_dummy_that_breaks_checkpoint_reload` failed on the CI runner for both models: its newer Lightning unpickles a checkpoint with `weights_only=True` and stops on the hyperparameters (`Unsupported global: torch_geometric.data.storage.BaseStorage`) before it reaches the state dict. The test now asserts `model.dummy` is in the saved state dict and that `load_state_dict` on a freshly built task raises `Unexpected key(s) in state_dict: "model.dummy"`, which is the strict load `load_from_checkpoint` ends with, on every Lightning version. The CI observation is a second obstacle to resuming a DCell run on a current Lightning and is recorded on issue 615.

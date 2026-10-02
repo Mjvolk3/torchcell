@@ -1177,8 +1177,8 @@ def test_dcell_in_training_mode_always_gets_a_dummy_that_breaks_checkpoint_reloa
     (the comment's premise that the model creates parameters in its first forward is
     false: ``DCell``, which every 005/006 config builds, and ``DCellOpt`` both build every
     module in ``__init__``). Reproduced for both: the state dict carries
-    ``model.dummy``, and ``load_from_checkpoint`` with a freshly built model fails strict
-    loading; the failed forward also increments ``num_batches_tracked`` of term 1's
+    ``model.dummy``, and the strict state-dict load that ``load_from_checkpoint`` performs
+    fails on a freshly built model; the failed forward also increments ``num_batches_tracked`` of term 1's
     BatchNorm (the first subsystem run, stratum 1) from 0 to 1. In eval mode the same
     call succeeds and adds nothing. Reach: real checkpoints carry the key
     (``experiments/006-kuzmin-tmi/scripts/dcell_training_gpu_profile.py:139-145``
@@ -1217,15 +1217,16 @@ def test_dcell_in_training_mode_always_gets_a_dummy_that_breaks_checkpoint_reloa
         },
         checkpoint,
     )
+    # The strict load is done directly: it is the step ``load_from_checkpoint`` ends
+    # with, and newer Lightning releases (the CI runner's) unpickle the checkpoint with
+    # ``weights_only=True`` first and stop earlier on the hyperparameters.
+    saved = torch.load(checkpoint, weights_only=False)["state_dict"]
+    assert "model.dummy" in saved
+    fresh = _task(model=build(), cell_graph=graph)
     with pytest.raises(
         RuntimeError, match=re.escape('Unexpected key(s) in state_dict: "model.dummy"')
     ):
-        RegressionTask.load_from_checkpoint(
-            str(checkpoint),
-            model=build(),
-            cell_graph=graph,
-            loss_func=DCellLoss(alpha=0.3, aux_reduction="sum"),
-        )
+        fresh.load_state_dict(saved)
     evaluated = build()
     evaluated.eval()
     eval_before = {k: v.clone() for k, v in evaluated.state_dict().items()}

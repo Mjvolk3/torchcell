@@ -193,3 +193,15 @@ claim about the record rather than about the medium. Decide it with the author.
 `dropouts`, so the media node id changes for all three served datasets. That is a changed
 record, which is the full-KG-rebuild case and not an incremental admission; the issue
 carries the `before-next-kg-build` label for exactly this reason.
+
+## 2026.10.02 - SM media served with composition (issue 143 closed)
+
+The full rebuild of 2026-10-02 (job 3198, release `2026.10.02-833970cd`) is the first served store built from the sourced SM objects above. A census of every served `Media` node under slurm (job 3239, script `experiments/036-dataset-fixes-before-kg-build/scripts/sm_media_served_check.py`, result `experiments/036-dataset-fixes-before-kg-build/results/sm_media_served_2026-10-02.csv`) finds 51 Media nodes and no bare `SM` stub:
+
+| served node | state | components | provenance |
+|---|---|---|---|
+| SM (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose), liquid | liquid | 3 | 4 |
+| SM agar (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose + 2% agar) | solid | 4 | 2 |
+| SM (synthetic minimal, composition deferred to Mulleder 2012), liquid | liquid | 1 | 1 |
+
+The deferred Zelezniak node carries its composition gap as designed. Four other nodes are still stubs with no components and no provenance (`SC` liquid, `SC-URA` solid, `YEPD` solid, `YPD` liquid), emitted by seven loaders that construct `Media(name=...)` inline instead of using the sourced objects in `media.py`; filed as issue #622 for the next full rebuild.

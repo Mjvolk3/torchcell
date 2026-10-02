@@ -1,0 +1,52 @@
+name,state,n_edges,base_medium,n_components,n_dropouts,n_provenance,is_synthetic
+SC,liquid,1,,0,0,0,True
+SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose),liquid,5176,SC,32,0,1,True
+SC - 4-aminobenzoic acid (Hillenmeyer 2008 'PABA drop-out'),liquid,1,SC,31,1,1,True
+SC - L-arginine (Hillenmeyer 2008 'arginine dropout'),liquid,1,SC,31,1,1,True
+SC - L-isoleucine (Hillenmeyer 2008 'isoleucine dropout'),liquid,1,SC,31,1,1,True
+SC - L-lysine (Hillenmeyer 2008 'lysine dropout'),liquid,2,SC,31,1,1,True
+SC - L-threonine (Hillenmeyer 2008 'threonine dropout'),liquid,1,SC,31,1,1,True
+SC - L-tryptophan (Hillenmeyer 2008 'tryptophan dropout'),liquid,2,SC,31,1,1,True
+SC - L-tyrosine (Hillenmeyer 2008 'tyrosine dropout'),liquid,1,SC,31,1,1,True
+SC - adenine (Hillenmeyer 2008 'adenine dropout'),liquid,1,SC,31,1,1,True
+SC - folic acid (Hillenmeyer 2008 'folic acid drop-out'),liquid,1,SC,31,1,1,True
+SC - myo-inositol (Hillenmeyer 2008 'inositol drop-out'),liquid,1,SC,31,1,1,True
+SC - niacin (Hillenmeyer 2008 'niacin drop-out'),liquid,1,SC,31,1,1,True
+SC - thiamine hydrochloride (Hillenmeyer 2008 'thiamine HCl drop-out'),liquid,1,SC,31,1,1,True
+SC minus Ala/Asn/Cys/Gln/Gly/Pro/Ura (Cooper 2010 synthetic complete recipe),liquid,1,SC,25,7,1,True
+"SC, partial biotin drop-out (Hillenmeyer 2008 'biotin partial drop-out')",liquid,1,SC,32,0,1,True
+"SC, partial calcium pantothenate drop-out (Hillenmeyer 2008 'calcium pantothenate partial drop-out')",liquid,1,SC,32,0,1,True
+"SC, partial pyridoxine hydrochloride drop-out (Hillenmeyer 2008 'pyridoxine HCl partial drop-out')",liquid,1,SC,32,0,1,True
+SC-URA,solid,1,,0,0,0,True
+SC-Ura (synthetic complete minus uracil; URA3 plasmid selection),liquid,12,SC,31,1,1,True
+SD minimal (YNB + ammonium sulfate + glucose),liquid,5,SD,3,0,0,True
+SED-URA + 200 ug/mL G418,liquid,3,SED_URA,5,1,1,True
+"SGA double-mutant selection (SD-MSG, -His/Arg/Lys, +canavanine/thialysine/G418/clonNAT)",solid,15,SD_MSG,9,3,1,True
+"SGA double-mutant selection, 2% galactose (SD-MSG, -His/Arg/Lys, +canavanine/thialysine/G418/clonNAT)",solid,1,SD_MSG,9,3,1,True
+"SGA triple-mutant selection (SD-MSG, -His/Arg/Lys/Ura, +canavanine/thialysine/G418/clonNAT)",solid,1,SD_MSG,9,4,1,True
+"SM (synthetic minimal, composition deferred to Mulleder 2012), liquid",liquid,1,SM_DEFERRED,1,0,1,True
+"SM (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose), liquid",liquid,1,SM,3,0,4,True
+SM agar (synthetic minimal: 6.7 g/L YNB without amino acids + 2% glucose + 2% agar),solid,1,SM,4,0,2,True
+"SynBase (SynH3- minus acetamide/sodium acetate/cellobiose, MSG for ammonium sulfate)",liquid,41,SYNH3_MINUS,2,3,1,True
+YEPD,solid,1,,0,0,0,False
+YNB + 2% glucose (solid; Bloom 2019 minimal-medium plates),solid,3,YNB,10,0,1,True
+YP + 2% ethanol (no glucose),solid,1,YP,3,0,1,False
+YP + 2% fructose,solid,1,YP,3,0,1,False
+YP + 2% galactose,solid,1,YP,3,0,1,False
+YP + 2% lactate,solid,1,YP,3,0,1,False
+YP + 2% maltose,solid,1,YP,3,0,1,False
+YP + 2% mannose,solid,1,YP,3,0,1,False
+YP + 2% raffinose,solid,1,YP,3,0,1,False
+YP + 2% sucrose,solid,1,YP,3,0,1,False
+YP + 2% trehalose,solid,1,YP,3,0,1,False
+YP + 2% xylose,solid,1,YP,3,0,1,False
+YP + 3% glycerol,solid,1,YP,3,0,1,False
+"YP + glycerol, liquid (Hillenmeyer 2008 'YP glycerol'; percentage not stated)",liquid,2,YP,3,0,1,False
+"YPBA (YNB-YE-B + 2% acetate, solid)",solid,1,YNB_YE_B,5,0,1,False
+"YPBM (YNB-YE-B + 0.5% Tween 40 + 0.125% myristic acid, solid)",solid,1,YNB_YE_B,6,0,1,False
+"YPBO (YPB + 0.2% Tween 40 + 0.1% oleic acid, solid)",solid,1,YPB,6,0,1,False
+YPD,liquid,3,,0,0,0,False
+"YPD (solid, 2% agar)",solid,9,YPD,4,0,2,False
+YPD (yeast extract / peptone / dextrose),solid,23,YPD,3,0,1,False
+"YPD (yeast extract / peptone / dextrose), liquid",liquid,1121,YPD,3,0,3,False
+YPD + 2% ethanol (2% glucose + 2% ethanol),solid,1,YPD,4,0,1,False

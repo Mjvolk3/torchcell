@@ -510,3 +510,111 @@ separates from another. The best number is a plain mean of ridge with the enviro
 encoder, +0.028 with an interval that reaches -0.001. Round 11 (nine seeds of the
 environment encoder and of the bilinear control, slurm 3166 and 3169) is the remaining
 measurement on whether that gap is real.
+
+## 2026.10.02 - Rounds 11, 14 and 15: nine seeds, a second environment layer, and the encoder's loss curves
+
+Scores are the centered Spearman per held-out compound across about 3,500 strains, 123
+compound-evaluations (41 compounds on each of fold seeds 0, 1, 2), paired against nested
+ridge on the same evaluations. All numbers are from `results/compare_models.csv` and
+`results/compare_pairs.csv` (`compare_models.py`).
+
+### Two intervals, and which one to quote
+
+`compare_models.py` now reports two 95% bootstrap intervals for a paired mean difference.
+The first resamples the 123 compound-evaluations, which treats the three fold-seed
+evaluations of one compound as independent; they are not, so it is too narrow on pooled
+rows. The second resamples the 41 compounds, each carrying its mean difference over fold
+seeds. The compound interval is the one to quote, and it applies to every pooled interval
+written in the sections above: none of them excluded zero, so no conclusion changes, but
+each is wider than written.
+
+### Round 11: nine seeds each (slurm 3166, 3169)
+
+Six more seeds of the environment encoder and of the bilinear control, so each arm has nine
+(three blocks of three). A stack member written as several blocks is averaged within itself
+first, then averaged with ridge (`stack_predictions.py`).
+
+| model (every fold seed pooled) | median centered Spearman (123 compound-evaluations) | mean centered Spearman (123) | mean paired difference vs nested ridge | 95% CI resampling evaluations | 95% CI resampling the 41 compounds | evaluations won vs ridge (of 123) | compounds improved vs ridge (of 41) |
+|---|---|---|---|---|---|---|---|
+| ridge + environment encoder, nine seeds | **0.334** | **0.323** | **+0.032** | (+0.003, +0.062) | (-0.007, +0.078) | **71** | 22 |
+| ridge + environment encoder + bilinear, nine seeds each | 0.326 | 0.321 | +0.030 | (+0.005, +0.056) | (-0.001, +0.066) | 70 | **25** |
+| environment encoder alone, nine seeds | 0.289 | 0.301 | +0.010 | (-0.027, +0.047) | (-0.042, +0.069) | 63 | 18 |
+| ridge + bilinear, nine seeds | 0.289 | 0.295 | +0.004 | (-0.014, +0.022) | (-0.020, +0.027) | 65 | 22 |
+| bilinear alone, nine seeds | 0.282 | 0.288 | -0.003 | (-0.024, +0.019) | (-0.031, +0.025) | 59 | 21 |
+| nested ridge | 0.303 | 0.293 | 0 | | | | |
+
+Seeds saturate at three: the environment encoder alone is +0.008 with three seeds, +0.009
+with six and +0.010 with nine; its stack with ridge is +0.028, +0.031 and +0.032. On the 32
+published compounds the best stack is +0.022 with a compound interval of (-0.023, +0.081).
+No model or stack has a compound interval that excludes zero.
+
+### Round 14: a second environment layer (slurm 3211, 3212)
+
+Two transformer layers over the compound token and the gene tokens instead of one,
+otherwise round 10 (`env_layers: 2`, three seeds, 50 epochs, pool fit). Null: median
+centered Spearman 0.318 against 0.281 for one layer, mean 0.292 against 0.300; mean paired
+difference two layers minus one -0.008, compound interval (-0.034, +0.015), 63 of 123
+evaluations won, 21 of 41 compounds improved. Against ridge the two-layer model is +0.000
+(-0.051, +0.058). A read at 33 evaluations had it at +0.020; that was the first four folds.
+
+### Round 15: the encoder's out-of-sample loss curves (slurm 3221)
+
+The environment encoder fitted on the training compounds only (one seed, fold seed 0, five
+folds), so its validation loss is out of sample; the counterpart of round 12 for the
+bilinear head. Mean over the five folds, from `results/cgt_rounds_loss_curves.csv`
+(`summarize_cgt_rounds.py`):
+
+| epoch | bilinear: train loss (standardized MSE) | bilinear: validation loss | bilinear: held-out centered Spearman | environment encoder: train loss (standardized MSE) | environment encoder: validation loss | environment encoder: held-out centered Spearman |
+|---|---|---|---|---|---|---|
+| 1 | 0.763 | 2.448 | 0.004 | 0.760 | 2.452 | 0.000 |
+| 5 | 0.740 | 2.601 | 0.120 | 0.745 | 2.703 | 0.001 |
+| 10 | 0.287 | 2.436 | 0.258 | 0.597 | 2.467 | 0.166 |
+| 20 | 0.127 | 2.426 | 0.257 | 0.386 | 2.350 | 0.189 |
+| 30 | 0.084 | 2.416 | 0.259 | 0.279 | 2.333 | 0.243 |
+| 40 | 0.061 | 2.410 | 0.264 | 0.237 | 2.301 | 0.245 |
+| 50 | 0.047 | 2.410 | 0.259 | 0.229 | **2.284** | 0.247 |
+
+The two heads differ in kind. The bilinear head fits the training compounds almost exactly
+(0.047) and its validation loss is flat from epoch 10. The environment encoder ends its 50
+epochs at a train loss of 0.229 with the validation loss still falling, under a one-cycle
+schedule that has taken the learning rate to zero by then. Fifty epochs is therefore not
+saturation for the environment encoder; round 16 trains it for 150.
+
+## 2026.10.02 - Rounds 16 and 17 setup: the encoder at 150 epochs, and the learning curve in fitted compounds
+
+Two questions follow from the rounds above, one per card (GilaHyper, RTX 6000 Ada,
+`PARALLEL=2`).
+
+**Round 16** (slurm 3231, `conf/factorized/r16_envenc_e150.yaml`): the environment encoder
+of round 10 for 150 epochs instead of 50, one seed, five folds on each of fold seeds 0, 1,
+2. The paired reference is the seed-0 member of round 10 on the same folds, which differs
+in the epoch budget only (the one-cycle warmup stretches with it, 7.5 epochs instead of
+2.5). It is the pair `r16_envenc_e150:enc_L1_lam0_e150:seed0` against
+`r10_envenc:enc_L1_lam0:seed0` in `results/compare_pairs.csv`.
+
+**Round 17** (slurm 3232, `conf/factorized/r17_curve.yaml`): the learning curve. Every
+model so far was fitted on the 32 or 33 non-test compounds of a fold. Each fold's pool is
+cut to nested subsets of 8, 16 and 24 compounds (`vanacloig_data.subsample_pool`, config
+field `n_fit_compounds`), the environment encoder is fitted on each (one seed, 50 epochs),
+and the fold's held-out compounds are scored with each side centered by its mean over the
+fitted compounds. Nested ridge on the same subsets is `learning_curve.py --ridge`
+(slurm 3233, complete); its whole-pool fit reproduces the saved ladder prediction, which
+the script asserts.
+
+Ridge alone (`results/learning_curve/ridge_curve.csv`), 123 compound-evaluations per row:
+
+| fitted compounds | ridge: median centered Spearman per held-out compound (123 compound-evaluations) | ridge: mean centered Spearman (123) | ridge: median raw Spearman (123) | ridge: mean raw Spearman (123) |
+|---|---|---|---|---|
+| 8 | 0.202 | 0.196 | 0.153 | 0.173 |
+| 16 | 0.257 | 0.240 | 0.226 | 0.217 |
+| 24 | 0.299 | 0.278 | 0.246 | 0.249 |
+| 32 or 33 (whole pool) | **0.303** | **0.291** | **0.273** | **0.295** |
+
+The mean centered score rises 0.044 from 8 to 16 compounds and 0.051 from 16 to the whole
+pool, about 0.05 per doubling with no sign of a plateau at 33 compounds. The centered
+target itself changes with the subset (the mean it subtracts is over fewer compounds), so
+the raw column, whose target is fixed, is the check; it rises the same way. Hypothesis
+(untested): the same slope continues past 41 compounds of this assay. Whether compounds
+from OTHER assays move this curve is a separate question; the gene-table multi-source arms
+of round 3 did not gain on ridge (-0.008 to -0.035, intervals through zero), under the
+pre-round-9 protocol.

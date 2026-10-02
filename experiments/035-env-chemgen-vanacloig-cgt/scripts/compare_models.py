@@ -27,7 +27,12 @@ SUBSETS: ``all`` is the 41 served compounds; ``published`` is the 32 the paper r
 since the nine unreported ones have replicate reliability near or below zero
 (``vanacloig_data.UNREPORTED_COMPOUNDS``, issue #501).
 
-Writes ``results/compare_models.csv``.
+ARM AGAINST ARM: ``PAIRS`` names the comparisons between two trained arms that the note
+quotes (two environment layers against one, 150 epochs against 50, ...). Each is the same
+paired difference, first arm minus second, on the compound-evaluations both scored, every
+fold seed pooled, with both intervals.
+
+Writes ``results/compare_models.csv`` and ``results/compare_pairs.csv``.
 """
 
 from __future__ import annotations
@@ -61,6 +66,16 @@ COLUMNS = [
     "vs_ridge_ci_low",
     "vs_ridge_ci_high",
     "vs_ridge_wins",
+]
+
+
+#: (first arm, second arm): the paired difference is first minus second
+PAIRS = [
+    ("r9_operator:op_L1_lam0:ensemble", "r9_control:bil_L1_lam0:ensemble"),
+    ("r10_envenc:enc_L1_lam0:ensemble", "r9_control:bil_L1_lam0:ensemble"),
+    ("r13_scale:bilz_L1_lam0:ensemble", "r9_control:bil_L1_lam0:ensemble"),
+    ("r14_envenc2:enc2_L1_lam0:ensemble", "r10_envenc:enc_L1_lam0:ensemble"),
+    ("r16_envenc_e150:enc_L1_lam0_e150:seed0", "r10_envenc:enc_L1_lam0:seed0"),
 ]
 
 
@@ -184,6 +199,20 @@ def main() -> None:
         ascending=[True, True, True, False],
     )
     out.to_csv(osp.join(RESULTS, "compare_models.csv"), index=False)
+    pair_rows = []
+    for first, second in PAIRS:
+        for view in ("all", "published"):
+            table = scores if view == "all" else scores[scores["subset"] == "published"]
+            table = table[table["target"] == "centered"]
+            a, b = table[table["name"] == first], table[table["name"] == second]
+            if len(a) == 0 or len(b) == 0:
+                continue
+            pair_rows.append(
+                {"first": first, "second": second, "subset": view}
+                | summarize(a, {"second": b}, rng)
+            )
+    pairs = pd.DataFrame(pair_rows)
+    pairs.to_csv(osp.join(RESULTS, "compare_pairs.csv"), index=False)
     pd.set_option("display.width", 260)
     pd.set_option("display.max_rows", 200)
     for view in ("all", "published"):
@@ -194,6 +223,8 @@ def main() -> None:
             & (out["fold_seed"] == -1)
         ]
         print(shown[COLUMNS].head(40).round(3).to_string(index=False))
+    print("== arm against arm, centered target, every fold seed pooled")
+    print(pairs.round(3).to_string(index=False))
 
 
 if __name__ == "__main__":

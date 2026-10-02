@@ -258,7 +258,18 @@
         "c130o17c",
         "r9alyl8z",
         "ckzdhedm",
-        "hv2n229e"
+        "hv2n229e",
+        "2n791ibu"
+      ]
+    },
+    "enc_L1_lam0_loss": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/enc_L1_lam0_loss",
+      "run_ids": [
+        "gtvwlcji",
+        "q7nsc198",
+        "w0ibufg0",
+        "g0lv6c5e",
+        "2juqhbrb"
       ]
     }
   }

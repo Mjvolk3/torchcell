@@ -42,3 +42,10 @@ The silent-zero mechanism reported in #596 belongs to `hetero_cell_bipartite_dan
 - `num_parameters` counts trainable parameters only: freezing HyperSAGNN gives 648 / 41 / 0 / 689.
 - Finding 1 (empty genotype) raises `RuntimeError` mid-batch (the test already said so). Seen from the trainer, the trailing case makes `DangoLoss` raise at the log-cosh broadcast (pinned in [[tests.torchcell.trainers.test_int_dango]]).
 - Every `torch.manual_seed` in the file now runs inside `torch.random.fork_rng()` through an autouse fixture; British spellings in docstrings were Americanized.
+
+## 2026.10.02 - Issue #616 findings retired
+
+- `test_hyper_sagnn_sizes_output_by_num_sets_and_refuses_an_empty_set` (empty set mid, end and start of a batch, full message) and `test_hyper_sagnn_refuses_a_set_id_outside_num_sets` replace the out-of-bounds pin; `test_dango_refuses_a_genotype_with_no_perturbed_gene` (trailing and mid-batch, through `Batch.from_data_list`) replaces the dropped-prediction pin.
+- `test_dango_refuses_a_gene_listed_twice_in_one_genotype` adds the duplicate refusal; `test_hyper_sagnn_duplicate_gene_attends_to_its_own_copy` stays as the documented layer property.
+- `test_pretrain_lambda_table_is_the_paper_table_and_refuses_other_networks`: the string9_1 table `main` uses, two string11_0 names, and the full refusal message for string12_0 names.
+- Every `HyperSAGNN` call passes `num_sets`.

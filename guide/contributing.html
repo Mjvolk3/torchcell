@@ -252,7 +252,7 @@ bypassing the hooks.</p>
 (<code class="docutils literal notranslate"><span class="pre">.github/workflows/semantic-release.yaml</span></code>) with the repo’s own parser,
 <code class="docutils literal notranslate"><span class="pre">scripts/release_parser.py</span></code>, which reads the <code class="docutils literal notranslate"><span class="pre">TAG(scope):</span> <span class="pre">subject</span></code> form most commits
 carry (<code class="docutils literal notranslate"><span class="pre">FIX(loaders):</span> <span class="pre">...</span></code>) as well as <code class="docutils literal notranslate"><span class="pre">TAG:</span> <span class="pre">subject</span></code>. A bump is a deliberate act, not a
-side effect of landing work: only three tags bump, and every other tag in
+side effect of landing work: only four tags bump, and every other tag in
 <code class="docutils literal notranslate"><span class="pre">allowed_tags</span></code> (<code class="docutils literal notranslate"><span class="pre">[tool.semantic_release.commit_parser_options]</span></code> in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>)
 parses with no bump, so <code class="docutils literal notranslate"><span class="pre">main</span></code> is “latest” between releases.</p>
 <table class="docutils align-default">
@@ -275,7 +275,11 @@ parses with no bump, so <code class="docutils literal notranslate"><span class="
 <td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">DB</span></code></p></td>
 <td class="text-left"><p>a database compatibility change: a new release snapshot under <code class="docutils literal notranslate"><span class="pre">database/releases/</span></code>, a supported-query registry change, a schema closure change</p></td>
 </tr>
-<tr class="row-odd"><td class="text-left"><p>none</p></td>
+<tr class="row-odd"><td class="text-left"><p>patch</p></td>
+<td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">PATCH</span></code></p></td>
+<td class="text-left"><p>a source patch release with no interface or database change: a packaging, README or documentation correction that has to reach PyPI</p></td>
+</tr>
+<tr class="row-even"><td class="text-left"><p>none</p></td>
 <td class="text-left"><p><code class="docutils literal notranslate"><span class="pre">FEAT</span></code>, <code class="docutils literal notranslate"><span class="pre">ENH</span></code>, <code class="docutils literal notranslate"><span class="pre">DEP</span></code>, <code class="docutils literal notranslate"><span class="pre">DEV</span></code>, <code class="docutils literal notranslate"><span class="pre">REV</span></code>, <code class="docutils literal notranslate"><span class="pre">FIX</span></code>, <code class="docutils literal notranslate"><span class="pre">BUG</span></code>, <code class="docutils literal notranslate"><span class="pre">BLD</span></code>, <code class="docutils literal notranslate"><span class="pre">MAINT</span></code>, <code class="docutils literal notranslate"><span class="pre">PERF</span></code>, <code class="docutils literal notranslate"><span class="pre">DOC</span></code>, <code class="docutils literal notranslate"><span class="pre">DOCS</span></code>, <code class="docutils literal notranslate"><span class="pre">NOTE</span></code>, <code class="docutils literal notranslate"><span class="pre">TST</span></code>, <code class="docutils literal notranslate"><span class="pre">TEST</span></code>, <code class="docutils literal notranslate"><span class="pre">STY</span></code>, <code class="docutils literal notranslate"><span class="pre">CI</span></code>, <code class="docutils literal notranslate"><span class="pre">BENCH</span></code></p></td>
 <td class="text-left"><p>everything else</p></td>
 </tr>

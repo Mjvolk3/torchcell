@@ -72,7 +72,7 @@ Versions are cut by python-semantic-release on every push to `main`
 (`.github/workflows/semantic-release.yaml`) with the repo's own parser,
 `scripts/release_parser.py`, which reads the `TAG(scope): subject` form most commits
 carry (`FIX(loaders): ...`) as well as `TAG: subject`. A bump is a deliberate act, not a
-side effect of landing work: only three tags bump, and every other tag in
+side effect of landing work: only four tags bump, and every other tag in
 `allowed_tags` (`[tool.semantic_release.commit_parser_options]` in `pyproject.toml`)
 parses with no bump, so `main` is "latest" between releases.
 
@@ -81,6 +81,7 @@ parses with no bump, so `main` is "latest" between releases.
 | major | `API` | a public interface changes; also any tag with `!` or a `BREAKING CHANGE:` paragraph |
 | minor | `REL` | a source release, cut before a knowledge-graph build so the release names a tagged version |
 | patch | `DB` | a database compatibility change: a new release snapshot under `database/releases/`, a supported-query registry change, a schema closure change |
+| patch | `PATCH` | a source patch release with no interface or database change: a packaging, README or documentation correction that has to reach PyPI |
 | none | `FEAT`, `ENH`, `DEP`, `DEV`, `REV`, `FIX`, `BUG`, `BLD`, `MAINT`, `PERF`, `DOC`, `DOCS`, `NOTE`, `TST`, `TEST`, `STY`, `CI`, `BENCH` | everything else |
 
 A message whose tag is not in `allowed_tags`, or whose tag is lowercase, does not parse

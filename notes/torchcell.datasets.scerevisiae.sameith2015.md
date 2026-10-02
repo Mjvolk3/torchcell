@@ -480,3 +480,34 @@ A read-only Fable 5.1 agent graded seven recorded claims against the mirror, the
 ## 2026.10.02 - main() builds the genome with overwrite=False
 
 `main()` constructed `SCerevisiaeGenome(..., overwrite=True)`, an explicit rebuild of the shared `data.db` on every run. It now passes `overwrite=False` (PR #605), which opens the verified shared database, or builds/migrates it once, under the root lock.
+
+## 2026.10.02 - PubMed ID and the single-mutant title rule (#478, #479)
+
+Branch `fix/sameith-kemmeren-replicates`, not yet served. Numbers below are from `experiments/036-dataset-fixes-before-kg-build/scripts/sameith2015_sm_replicates.py`, which builds both datasets into a session scratch root from the dev tree's `raw/` files and reads the dev-tree stores `data/torchcell/{sm,dm}_microarray_sameith2015` read-only; output `experiments/036-dataset-fixes-before-kg-build/results/sameith2015_sm_replicates.json` and `sameith2015_sm_replicates_records.csv`.
+
+### #478: PubMed ID
+
+- Wrong: both `Publication` objects stored PubMed 26687005, an unrelated eLife 2015 paper; the DOI fields were right.
+- Source for the fix: the GEO series file the loaders read, `GSE42536_family.soft.gz` (sha256 `f8842af9768043fde560fa7cab737cde2fca0463c4b655511d54678d7b85cc7d`, identical in the SM and DM dev `raw/`), decompressed line 12: `!Series_pubmed_id = 26700642`. No live fetch.
+- Fix: module constant `SAMEITH2015_PUBMED_ID = "26700642"` with that citation in its comment, used by both loaders for `pubmed_id` and `pubmed_url`.
+- Measured: dev stores carry `26687005` on all 82 SM and all 72 DM records; the scratch builds carry `26700642` on all of them.
+
+### #479: double-deletion arrays folded into single-mutant records
+
+- Wrong: the SM `_extract_gene_names_from_title` returned `gene_names[:1]`, so a title like `rpn4-del+ydr026c-del` yielded one gene and `is_single = len(gene_names) == 1` classed it as a single mutant. Measured on the dev SM store: all 287 arrays of GSE42536 entered the SM build (`preprocess/data.csv` 287 rows, 143 with `+`), and 45 of 82 records averaged 3 to 14 arrays (YDL020C 14, YER040W 12, YJR060W 10, YGL035C 8, YGR067C 7).
+- Fix: the SM parser now returns every gene a title names (systematic names, then resolved common names, no truncation), and `process()` keeps an array as a single mutant only when its title names exactly one gene and contains no `+`. Every other non-wildtype array is dropped under the named rule `double_deletion_title`, counted on `self.dropped_double_deletion_titles` and logged. The `+` test is there so a double title whose partner does not resolve is still not a single mutant. The DM loader is unchanged.
+- Measured after the fix (scratch build): 82 records, 143 arrays dropped under `double_deletion_title`, `preprocess/data.csv` 144 rows with 0 `+` titles; arrays per record 2 on 62 records and 1 on 20, none above 2; 45 records changed their array count, and the gene set is unchanged.
+
+| store | records | arrays per record | records > 2 arrays | own-gene log2 < 0 | own-gene median |
+|---|---:|---|---:|---:|---:|
+| SM dev (before) | 82 | 1: 11, 2: 26, 3: 9, 4: 20, 6: 11, 7 to 14: 5 | 45 | 0.975 (79 of 81) | -2.058 |
+| SM scratch (after) | 82 | 1: 20, 2: 62 | 0 | 0.975 (79 of 81) | -2.217 |
+| DM dev / scratch | 72 | unchanged | n/a | 0.979 (140 of 143) | -1.985 |
+
+- The own-gene sign check (the deleted gene's own stored `expression_log2_ratio`, 81 records whose gene has a probe) keeps the same fraction negative; the median moves from -2.058 to -2.217, so the folded double-deletion arrays had pulled the single-mutant self ratios toward zero.
+- Tests: [[tests.torchcell.datasets.scerevisiae.test_sameith2015_synthetic]] drops the YCR001W single record that came from the `ycr001w-del+ydr001c-del` fixture array, adds a `+` title with an unresolvable partner, pins the parser output and the drop count, and pins PubMed 26700642 on every SM and DM record.
+
+### Served-record impact and open items
+
+- Every served record of both datasets changes content (the PubMed ID), and 45 SM records change values, `n_replicates` and SE. Re-admission goes with the next full build (#459).
+- Open, not part of #479: the reference `n_replicates` of both Sameith loaders is a constant 1 per gene while the reference `expression` is the refpool mean over the record's 1 or 2 arrays; this is the same mismatch #484 fixes for Kemmeren and needs its own issue. The `"wt" in title` hazard has no instance in GSE42536 (0 wildtype arrays found by the build). #480, #481 and #482 are untouched.

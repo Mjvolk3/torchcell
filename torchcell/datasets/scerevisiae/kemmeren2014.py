@@ -85,15 +85,29 @@ N_EXPECTED_MAX_REPLICATES_DELETION = 4  # 2 biological × 2 dye-swap measurement
 # Source: Kemmeren et al. 2014, Cell, Expression Profiling section
 # Date extracted: 2026-01-27
 #
-# The reference pool is:
-# - Batch of WT RNA used as common reference across all experiments
-# - Applied in dye-swap to one channel of each microarray
-# - Additional WT cultures grown alongside mutants for batch effect monitoring
-# - Separate reference pools for BY4741 (MATa) and BY4742 (MATα) strains
-#
-# NOTE: Actual n_replicates for reference are COMPUTED from WT sample count in data
-N_EXPECTED_REFPOOL_REPLICATES_BY4741 = None  # Computed from MATa WT sample count
-N_EXPECTED_REFPOOL_REPLICATES_BY4742 = None  # Computed from MATα WT sample count
+# Reference n_replicates (#484, decided 2026-10-02). The stored reference
+# ``expression`` is the mean common-reference (refpool) signal over the mutant's own
+# arrays (``create_expression_experiment``), so its ``n_replicates`` is the number of
+# those arrays whose refpool value entered the mean: 1 or 2 per gene, the same arrays
+# as the mutant's own count. It is NOT a count of wildtype arrays. The paper's WT
+# pools are the comparison sets of its limma analysis, chosen per growth protocol,
+# and none of them is the stored value. Paper (torchcell-library
+# kemmerenLargeScaleGeneticPerturbations2014/paper.md, sha256
+# 299eac4b07fc977a89c24ce190d05cfd182342a9f0d56a05e7e477d72e4ad08d, line 388):
+#     "For the MATalpha mutants grown on the Tecan plate shaker, the WT pool consisted
+#     of 200 MATalpha WTs (BY4742, ArrayExpress accession E-TABM-984, GEO accession
+#     GSE42217). For the MATa mutants grown on the Tecan plate shaker, the WT pool
+#     consisted of 20 WT-MATa replicates (BY4741, ArrayExpress accession E-MTAB-1351,
+#     GEO accession GSE42241). For mutants grown in Erlenmeyers, the MATalpha WT pool
+#     consisted of 200 WT-MATalpha replicates (ArrayExpress accession E-TABM-773, GEO
+#     accession GSE42215). For MATa mutants grown in Erlenmeyers, the WT pool
+#     consisted of 8 WT MATa replicates (ArrayExpress accession E-MTAB-1352, GEO
+#     accession GSE42240)."
+# The loader used to store the number of WT arrays of the two series of the mutant's
+# mating type (400 for BY4742, 28 for BY4741), a count the paper never compares a
+# mutant against. Nothing stored is computed from the four WT series any more, so
+# process() no longer reads them; they stay in raw_file_names as the paper's named
+# comparison pools.
 
 
 @register_dataset
@@ -102,8 +116,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
     Microarray gene expression data for single-gene deletion mutants profiled
     against a common wildtype reference pool in a dye-swap design. Combines the
-    responsive and non-responsive mutant GEO series with the BY4741 (MATa) and
-    BY4742 (MATalpha) wildtype reference series.
+    responsive and non-responsive mutant GEO series. The four wildtype series
+    (BY4741 MATa, BY4742 MATalpha) are downloaded as the paper's named WT pools but
+    no stored value is computed from them (#484).
 
     Data source: GEO accessions GSE42527, GSE42526, and wildtype references.
     Paper: Kemmeren et al. (2014) Cell.
@@ -426,25 +441,6 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
             samples_data.append(sample_info)
 
-        # Process wildtype reference datasets to get strain-specific references
-        (
-            self.wt_expression_BY4741,
-            self.wt_std_BY4741,
-            self.wt_cv_BY4741,
-            self.wt_n_replicates_BY4741,
-            self.wt_expression_BY4742,
-            self.wt_std_BY4742,
-            self.wt_cv_BY4742,
-            self.wt_n_replicates_BY4742,
-        ) = self._process_wt_references(probe_to_gene_map)
-
-        log.info(
-            f"WT reference for BY4741 (MATa): {len(self.wt_expression_BY4741)} genes"
-        )
-        log.info(
-            f"WT reference for BY4742 (MATalpha): {len(self.wt_expression_BY4742)} genes"
-        )
-
         log.info(f"Found {len(deletion_samples_by_gene)} unique gene deletions")
         log.info(f"Found {len(wt_samples)} wildtype reference samples")
 
@@ -621,21 +617,8 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     "strain": strain,
                 }
 
-                # Select appropriate WT reference and n_replicates based on strain
-                if strain == "BY4741":
-                    refpool_n_replicates = self.wt_n_replicates_BY4741
-                elif strain == "BY4742":
-                    refpool_n_replicates = self.wt_n_replicates_BY4742
-                else:
-                    log.error(f"Unknown strain {strain} for {gene_name}")
-                    continue
-
-                # Create experiment with correct n_replicates for reference
                 experiment, reference, publication = self.create_expression_experiment(
-                    self.name,
-                    sample_info,
-                    replicate_pairs,
-                    refpool_n_replicates,  # Number of WT samples refpool was measured in
+                    self.name, sample_info, replicate_pairs
                 )
 
                 # Skip if experiment creation failed (returns None when log2 ratios can't be calculated)
@@ -693,10 +676,6 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     batch,
                     probe_to_gene_map,
                     systematic_to_strain,
-                    self.wt_cv_BY4741,
-                    self.wt_cv_BY4742,
-                    self.wt_n_replicates_BY4741,
-                    self.wt_n_replicates_BY4742,
                     self.name,
                 )
                 futures.append(future)
@@ -738,10 +717,6 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         batch_items: list[Any],
         probe_to_gene_map: dict[str, str],
         systematic_to_strain: dict[str, str],
-        wt_cv_BY4741: Any,
-        wt_cv_BY4742: Any,
-        wt_n_replicates_BY4741: Any,
-        wt_n_replicates_BY4742: Any,
         dataset_name: str,
     ) -> list[bytes]:
         """Process a batch of gene deletions. Static method for multiprocessing."""
@@ -771,21 +746,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                 "strain": strain,
             }
 
-            # Select appropriate WT reference and n_replicates based on strain
-            if strain == "BY4741":
-                refpool_n_replicates = wt_n_replicates_BY4741
-            elif strain == "BY4742":
-                refpool_n_replicates = wt_n_replicates_BY4742
-            else:
-                continue
-
-            # Create experiment with correct n_replicates for reference
             experiment, reference, publication = (
                 MicroarrayKemmeren2014Dataset.create_expression_experiment(
-                    dataset_name,
-                    sample_info,
-                    replicate_pairs,
-                    refpool_n_replicates,  # Number of WT samples refpool was measured in
+                    dataset_name, sample_info, replicate_pairs
                 )
             )
 
@@ -907,177 +870,6 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                 pairs[gene].append((deletion_value, refpool[gene]))
         return pairs
 
-    def _process_wt_references(
-        self, probe_to_gene_map: dict[str, str]
-    ) -> tuple[
-        SortedDict,
-        SortedDict,
-        SortedDict,
-        SortedDict,
-        SortedDict,
-        SortedDict,
-        SortedDict,
-        SortedDict,
-    ]:
-        """Process wildtype reference datasets to extract refpool references and CV.
-
-        The WT datasets contain hybridizations of wt vs. refpool and refpool vs. wt.
-        The refpool is pooled RNA from wildtype strains used as common reference.
-
-        Returns:
-            tuple: (refpool_expression_BY4741, refpool_std_BY4741, refpool_cv_BY4741, refpool_n_replicates_BY4741,
-                   refpool_expression_BY4742, refpool_std_BY4742, refpool_cv_BY4742, refpool_n_replicates_BY4742)
-        """
-        log.info(
-            "Processing wildtype reference datasets to extract refpool and calculate CV..."
-        )
-
-        # Process MATa (BY4741) wildtype samples
-        mata_samples = []
-        for geo_accession in [
-            self.geo_accession_wt_mata_tecan,
-            self.geo_accession_wt_mata_flask,
-        ]:
-            geo_pkl_path = osp.join(self.raw_dir, f"{geo_accession}.pkl")
-            if osp.exists(geo_pkl_path):
-                with open(geo_pkl_path, "rb") as f:
-                    gse = pickle.load(f)
-                    mata_samples.extend(list(gse.gsms.values()))
-
-        # Process MATalpha (BY4742) wildtype samples
-        matalpha_samples = []
-        for geo_accession in [
-            self.geo_accession_wt_matalpha_tecan,
-            self.geo_accession_wt_matalpha_flask,
-        ]:
-            geo_pkl_path = osp.join(self.raw_dir, f"{geo_accession}.pkl")
-            if osp.exists(geo_pkl_path):
-                with open(geo_pkl_path, "rb") as f:
-                    gse = pickle.load(f)
-                    matalpha_samples.extend(list(gse.gsms.values()))
-
-        log.info(f"Found {len(mata_samples)} MATa WT samples")
-        log.info(f"Found {len(matalpha_samples)} MATalpha WT samples")
-
-        # Extract refpool references and CV for each strain
-        (
-            refpool_expression_BY4741,
-            refpool_cv_BY4741,
-            refpool_std_BY4741,
-            refpool_n_replicates_BY4741,
-        ) = self._calculate_refpool_reference(mata_samples, probe_to_gene_map)
-        (
-            refpool_expression_BY4742,
-            refpool_cv_BY4742,
-            refpool_std_BY4742,
-            refpool_n_replicates_BY4742,
-        ) = self._calculate_refpool_reference(matalpha_samples, probe_to_gene_map)
-
-        # Store CV for later use
-        self.refpool_cv_BY4741 = refpool_cv_BY4741
-        self.refpool_cv_BY4742 = refpool_cv_BY4742
-
-        return (
-            refpool_expression_BY4741,
-            refpool_std_BY4741,
-            refpool_cv_BY4741,
-            refpool_n_replicates_BY4741,
-            refpool_expression_BY4742,
-            refpool_std_BY4742,
-            refpool_cv_BY4742,
-            refpool_n_replicates_BY4742,
-        )
-
-    def _calculate_refpool_reference(
-        self, wt_gsm_list: list[Any], probe_to_gene_map: dict[str, str]
-    ) -> tuple[SortedDict, SortedDict, SortedDict, SortedDict]:
-        """Extract refpool expression values from WT GSM objects and calculate CV.
-
-        The refpool is the same pooled RNA across samples but measured multiple times.
-        We extract it to calculate coefficient of variation (CV) for noise estimation.
-
-        Returns:
-            tuple: (mean_refpool_expression, cv_refpool, std_refpool_expression, n_replicates_refpool)
-                - mean_refpool_expression: average refpool value per gene
-                - cv_refpool: coefficient of variation (std/mean) per gene
-                - std_refpool_expression: standard deviation per gene
-                - n_replicates_refpool: number of measurements per gene
-        """
-        if len(wt_gsm_list) == 0:
-            log.warning("No wildtype samples found, returning empty reference")
-            return SortedDict(), SortedDict(), SortedDict(), SortedDict()
-
-        log.info(f"Extracting refpool from {len(wt_gsm_list)} wildtype samples")
-
-        # Collect all refpool values per gene
-        all_refpool_values: dict[str, list[float]] = {}
-        sample_count = 0
-
-        for gsm in wt_gsm_list:
-            refpool_data = self._extract_refpool_from_wt_gsm(gsm, probe_to_gene_map)
-            if refpool_data:
-                sample_count += 1
-                for gene, value in refpool_data.items():
-                    if gene not in all_refpool_values:
-                        all_refpool_values[gene] = []
-                    all_refpool_values[gene].append(value)
-
-        log.info(f"Successfully extracted refpool from {sample_count} samples")
-
-        # Calculate mean, std, and CV of refpool
-        refpool_mean_expression = SortedDict()
-        refpool_std_expression = SortedDict()
-        refpool_cv = SortedDict()
-        refpool_n_replicates = SortedDict()
-
-        for gene, values in all_refpool_values.items():
-            n_reps = len(values)
-            refpool_n_replicates[gene] = n_reps
-
-            if n_reps >= 2:  # Need at least 2 values for std
-                mean_val = np.mean(values)
-                std_val = np.std(values, ddof=1)
-
-                refpool_mean_expression[gene] = mean_val
-                refpool_std_expression[gene] = std_val
-
-                # Calculate CV (coefficient of variation)
-                # CV is scale-independent measure of relative variability
-                if mean_val > 1.0:  # Avoid division by very small numbers
-                    refpool_cv[gene] = std_val / mean_val
-                else:
-                    refpool_cv[gene] = 0.0  # Set CV to 0 for low-expressed genes
-            elif n_reps == 1:
-                # Single replicate: record mean but no std/CV
-                refpool_mean_expression[gene] = values[0]
-                refpool_std_expression[gene] = 0.0
-                refpool_cv[gene] = 0.0
-
-        # Log statistics
-        if refpool_cv:
-            cv_values = list(refpool_cv.values())
-            log.info(
-                f"Extracted refpool reference for {len(refpool_mean_expression)} genes"
-            )
-            log.info(f"Median CV: {np.median(cv_values):.3f}")
-            log.info(f"Mean CV: {np.mean(cv_values):.3f}")
-            log.info(f"CV range: [{np.min(cv_values):.3f}, {np.max(cv_values):.3f}]")
-
-            # Warn about high CV genes
-            high_cv_genes = [gene for gene, cv in refpool_cv.items() if cv > 0.5]
-            if high_cv_genes:
-                log.info(
-                    f"Found {len(high_cv_genes)} genes with CV > 0.5 ({100 * len(high_cv_genes) / len(refpool_cv):.1f}%)"
-                )
-                log.debug(f"Example high CV genes: {high_cv_genes[:5]}")
-
-        return (
-            refpool_mean_expression,
-            refpool_cv,
-            refpool_std_expression,
-            refpool_n_replicates,
-        )
-
     def _extract_probe_to_gene_mapping(self, gse: Any) -> dict[str, str]:
         """Extract probe ID to gene name mapping from GEO platform annotation."""
         probe_to_gene: dict[str, str] = {}
@@ -1154,19 +946,6 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     log.info(f"Available columns: {list(table.columns)}")
 
         return probe_to_gene
-
-    def _extract_refpool_from_wt_gsm(
-        self, gsm: Any, probe_to_gene_map: dict[str, str]
-    ) -> SortedDict:
-        """Reference-pool signals of one wildtype array, positive values only.
-
-        The wildtype series (GSE42215, GSE42217, GSE42240, GSE42241) hybridize a
-        wildtype culture against the same reference pool as the deletions, in both dye
-        orientations. The channel comes from GEO's metadata (``_channel_columns``);
-        the wildtype culture is the other channel and is not used.
-        """
-        _, refpool = self._extract_channels_from_gsm_static(gsm, probe_to_gene_map)
-        return SortedDict({gene: value for gene, value in refpool.items() if value > 0})
 
     def _load_mating_type_map(self) -> tuple[dict[str, str], dict[str, str]]:
         """Load mating type information from supplementary Table S1.
@@ -1617,10 +1396,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
     @staticmethod
     def create_expression_experiment(
-        dataset_name: str,
-        sample_info: dict[str, Any],
-        replicate_pairs: SortedDict,
-        refpool_n_replicates: SortedDict,
+        dataset_name: str, sample_info: dict[str, Any], replicate_pairs: SortedDict
     ) -> tuple[Any, Any, Any]:
         """Build an experiment, reference, and publication from per-array signal pairs.
 
@@ -1630,7 +1406,11 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         cancels the spot; the mean, sample SD, SE and variance are then taken over the
         arrays. An array on which either signal is not positive is dropped for that
         gene. The stored linear ``expression`` is the mean deletion signal and the
-        reference ``expression`` the mean refpool signal over the same arrays.
+        reference ``expression`` the mean refpool signal over the same arrays, so the
+        reference ``n_replicates`` of a gene is the number of arrays whose refpool value
+        entered that mean (1 or 2 on GEO), equal to the mutant's own count (#484; the
+        paper's WT pools of 200, 200, 20 and 8 arrays are not the stored value, see the
+        module comment at the reference pool constants).
         """
         # Genome reference - strain MUST be specified (BY4741 or BY4742)
         if "strain" not in sample_info:
@@ -1669,6 +1449,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         n_replicates_dict = SortedDict()
         mean_expression = SortedDict()  # Mean LINEAR deletion signal (for QC)
         refpool_expression = SortedDict()  # Mean LINEAR refpool signal (reference)
+        refpool_n_replicates = SortedDict()  # Arrays in each refpool mean
 
         for gene, pairs in replicate_pairs.items():
             kept = [(d, r) for d, r in pairs if d > 0 and r > 0]
@@ -1696,6 +1477,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             n_replicates_dict[gene] = n
             mean_expression[gene] = float(np.mean([d for d, _ in kept]))
             refpool_expression[gene] = float(np.mean([r for _, r in kept]))
+            refpool_n_replicates[gene] = n
 
         if not mean_log2_ratios:
             # No array with both signals positive - return None to signal skip
@@ -1719,7 +1501,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         phenotype_reference = MicroarrayExpressionPhenotype(
             expression=refpool_expression,
             expression_log2_ratio=reference_log2_ratios,
-            n_replicates=refpool_n_replicates,  # Number of WT samples refpool was measured in
+            n_replicates=refpool_n_replicates,  # Arrays in each refpool mean
         )
 
         # Create reference

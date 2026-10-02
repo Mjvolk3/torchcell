@@ -1,0 +1,82 @@
+{
+  "script": "experiments/036-dataset-fixes-before-kg-build/scripts/sameith2015_sm_replicates.py",
+  "dev": {
+    "sm_microarray_sameith2015": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/sm_microarray_sameith2015",
+      "n_records": 82,
+      "pubmed_ids": [
+        "26687005"
+      ],
+      "own_gene_sign": {
+        "n_gene_values": 81,
+        "fraction_negative": 0.9753086419753086,
+        "median": -2.05782158784751
+      },
+      "arrays_per_record": {
+        "1": 11,
+        "2": 26,
+        "3": 9,
+        "4": 20,
+        "6": 11,
+        "7": 1,
+        "8": 1,
+        "10": 1,
+        "12": 1,
+        "14": 1
+      },
+      "records_with_more_than_2_arrays": 45,
+      "total_arrays": 287,
+      "preprocess_rows": 287,
+      "preprocess_rows_with_plus": 143
+    },
+    "dm_microarray_sameith2015": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/dm_microarray_sameith2015",
+      "n_records": 72,
+      "pubmed_ids": [
+        "26687005"
+      ],
+      "own_gene_sign": {
+        "n_gene_values": 143,
+        "fraction_negative": 0.9790209790209791,
+        "median": -1.9849952342452297
+      }
+    }
+  },
+  "scratch": {
+    "sm_microarray_sameith2015": {
+      "root": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-sameith-kemmeren-replicates/sm_microarray_sameith2015",
+      "n_records": 82,
+      "pubmed_ids": [
+        "26700642"
+      ],
+      "own_gene_sign": {
+        "n_gene_values": 81,
+        "fraction_negative": 0.9753086419753086,
+        "median": -2.216736915001343
+      },
+      "arrays_per_record": {
+        "1": 20,
+        "2": 62
+      },
+      "records_with_more_than_2_arrays": 0,
+      "total_arrays": 144,
+      "preprocess_rows": 144,
+      "preprocess_rows_with_plus": 0
+    },
+    "dm_microarray_sameith2015": {
+      "root": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-sameith-kemmeren-replicates/dm_microarray_sameith2015",
+      "n_records": 72,
+      "pubmed_ids": [
+        "26700642"
+      ],
+      "own_gene_sign": {
+        "n_gene_values": 143,
+        "fraction_negative": 0.9790209790209791,
+        "median": -1.9849952342452297
+      }
+    }
+  },
+  "sm_records_changed_arrays": 45,
+  "sm_genes_only_in_dev": [],
+  "sm_genes_only_in_scratch": []
+}

@@ -1,0 +1,64 @@
+{
+  "script": "experiments/036-dataset-fixes-before-kg-build/scripts/kemmeren2014_reference_replicates.py",
+  "dev": {
+    "root": "/scratch/projects/torchcell-scratch/data/torchcell/microarray_kemmeren2014",
+    "n_records": 1484,
+    "strain_records": {
+      "BY4742": 1474,
+      "BY4741": 10
+    },
+    "reference_n_entries": {
+      "28": 61690,
+      "400": 9093106
+    },
+    "reference_n_entries_by_strain": {
+      "BY4741": {
+        "28": 61690
+      },
+      "BY4742": {
+        "400": 9093106
+      }
+    },
+    "reference_n_record_max": {
+      "28": 10,
+      "400": 1474
+    },
+    "records_reference_n_equal_experiment_n": 0,
+    "own_gene_sign": {
+      "n_records": 1479,
+      "fraction_negative": 0.991210277214334,
+      "median": -2.5169086799555345
+    }
+  },
+  "scratch": {
+    "root": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-sameith-kemmeren-replicates/microarray_kemmeren2014",
+    "n_records": 1484,
+    "strain_records": {
+      "BY4742": 1474,
+      "BY4741": 10
+    },
+    "reference_n_entries": {
+      "1": 2066615,
+      "2": 7088181
+    },
+    "reference_n_entries_by_strain": {
+      "BY4741": {
+        "2": 61690
+      },
+      "BY4742": {
+        "1": 2066615,
+        "2": 7026491
+      }
+    },
+    "reference_n_record_max": {
+      "1": 335,
+      "2": 1149
+    },
+    "records_reference_n_equal_experiment_n": 1484,
+    "own_gene_sign": {
+      "n_records": 1479,
+      "fraction_negative": 0.991210277214334,
+      "median": -2.5169086799555345
+    }
+  }
+}

@@ -97,14 +97,16 @@ jobs:
           # NOT `pip install -e .`, which pulls torch and costs the ~5 min that makes
           # `build` slow. The ontology generator's import closure is small: the datamodels
           # package __init__ reaches conversion.py (lmdb, tqdm, sortedcontainers,
-          # filelock), and the renderer reaches torchcell.utils (matplotlib). Verified in
-          # a clean venv to render byte-identical SVGs to the committed ones.
+          # filelock), and the renderer reaches torchcell.utils (matplotlib). The
+          # generator also imports torchcell.paper.ontology_usage for the explorer's
+          # dataset links, which reaches kg_manifest (PyYAML). Verified in a clean venv
+          # to render byte-identical SVGs to the committed ones.
           #
           # If this ever fails with ModuleNotFoundError, the datamodels import closure
           # grew: add the named package here. The failure names it exactly, and it can
           # only redden this check, never the deploy.
           python -m pip install --upgrade pip
-          pip install pydantic python-dotenv matplotlib lmdb tqdm sortedcontainers filelock
+          pip install pydantic python-dotenv matplotlib lmdb tqdm sortedcontainers filelock pyyaml
 
       - name: Check the committed ontology SVGs have not drifted
         run: |

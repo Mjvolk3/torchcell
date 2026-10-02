@@ -353,3 +353,41 @@ Verified after the change: the default run writes exactly three files, `--explor
 still produces the 277 kB page, the hook's no-op path stays quiet, and the paper tests
 pass. The `ontology-drift` CI job already compared only the three SVGs, so it needed no
 change.
+
+## 2026.10.02 - The explorer links each class to the datasets that use it
+
+Request (dictated): clicking a class should lead to the dataset that imports it, with a
+clickable link to that dataset's page in the docs, and the explorer should react more.
+
+The explorer now takes a second input beside the schema graph: an `OntologyUsage` from
+[[torchcell.paper.ontology_usage]], built from the newest committed release snapshot
+(`database/releases/`), so nothing is typed by hand and CI needs no database.
+
+- **Class drawer.** Leads with "used by N of 51 served datasets": the datasets whose
+  schema closure holds the class, the ones with a full dataset page first (marked with a
+  diamond), folded past 12.
+- **Dataset view.** Clicking a dataset there, or picking it in the new selector in the
+  bar, opens a panel with the experiment count, a link to its dataset page when a
+  supported query with a `docs_page` selects it, and a link to its loader's API
+  reference page. The classes it uses stay lit on the map and the rest dim.
+- **Links.** `#ClassName` already opened a class; `#dataset=<LoaderClass>` opens a
+  dataset view. The website's dataset cards use the second form.
+- **Reactivity.** A press that does not travel is a click, hit-tested at the pointer, so
+  a click registers even though the stage captures the pointer for panning. Hover and
+  selection are marked. Fit and jump-to-class glide. The map re-fits on resize until the
+  reader has moved it, and fits beside the open drawer, not under it. Two-finger pinch
+  zooms. Escape closes the drawer. The stage starts below the lane rail however the
+  rail wraps.
+
+The three committed SVGs are unchanged: regenerated with the new script and compared
+byte for byte against `notes/assets/images/schema-ontology/`, in the dev environment and
+in a clean environment holding only the `ontology-drift` job's packages. That job now
+also installs PyYAML, because the script imports the usage module, which reaches
+`kg_manifest`.
+
+Checked in headless Chromium (Playwright driving the generated HTML from a file, no
+server): 33 of 33 checks pass. They cover the click, the dataset chips and their order,
+both link targets, the lit and dimmed counts (41 and 68 for `SmfCostanzo2016Dataset`),
+folding, Escape, drag without click, Fit, resize, and the dataset deep link. All 51 API
+reference URLs and both dataset page URLs returned 200 from the live docs site on
+2026-10-02. The test scripts are scratch files and are not committed.

@@ -148,8 +148,18 @@ estimate, or a service-unit budget.
   echo END' Enter`, then `tmux capture-pane -p -t torchcell:8.3 -S -200 | sed -n
   '/START/,/END/p'`. Long commands fail ("not in a mode"): write the text to the scratchpad,
   `tmux load-buffer <file>`, `tmux paste-buffer -d -t torchcell:8.3`, `send-keys Enter`.
-- **Accounts:** run `accounts` and read the balance before every submission. `bbtp` is
-  gone; the default is `bfjt-delta-gpu`; `bbhh` is overdrawn; `bbub` is low. All four GPU
+- **Always, before anything else on Delta, run `accounts` and read recent `sacct`** (user
+  rule, 2026-10-02). The balance says what each account can still carry and the recent jobs
+  say which account has been burning its fairshare, how long our runs actually take, and
+  what failed, all of which the submission depends on:
+
+  ```bash
+  accounts
+  sacct -u $USER -S $(date -d '7 days ago' +%F) -X -o JobID,JobName%40,Account,Partition,State,Elapsed,Timelimit,Start -n | tail -60
+  ```
+
+  Quote the balance and the measured Elapsed in the plan, not a remembered number. `bbtp`
+  is gone; the default is `bfjt-delta-gpu`; `bbhh` is overdrawn; `bbub` is low. All four GPU
   accounts can submit to every GPU partition (A40x4, A100x4, A100x8, H200x8, MI100x8); the
   H200 rate is higher. There is no DeltaAI allocation on any of these projects (it would
   show as a separate `accounts` line). Charge is in service units per GPU-hour.
@@ -203,6 +213,8 @@ estimate, or a service-unit budget.
 
 - [ ] The launcher and submitter are committed in `experiments/<id>/scripts/`, and the job
       root is a pinned snapshot or detached worktree at a recorded commit.
+- [ ] On Delta, `accounts` and the 7-day `sacct` were run and read first: balance, which
+      account is burned down, measured Elapsed, recent failures.
 - [ ] Account chosen and its balance read (Delta); partition cap respected (IGB `gpu` %3,
       cabbi 5 days; GilaHyper allowed cards and the half-node cap).
 - [ ] `-J <exp>-<round>w<N>-<stage>`, `--time` from measured wall time, `--mem` and

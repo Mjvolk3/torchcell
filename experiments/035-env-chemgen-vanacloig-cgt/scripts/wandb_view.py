@@ -63,7 +63,7 @@ X = "epoch"
 # every panel draws up to this many runs or groups; the W&B default is 10
 MAX_SHOWN = 100
 SWEEP = re.compile(
-    r"^(r8_(small|deep|mid)_[a-z]|r9_\w+|r10_\w+|r11_\w+|r12_\w+|r13_\w+)$"
+    r"^(r8_(small|deep|mid)_[a-z]|r9_\w+|r10_\w+|r11_\w+|r12_\w+|r13_\w+|r14_\w+)$"
 )
 
 PROTOCOL = {
@@ -73,6 +73,7 @@ PROTOCOL = {
     "r11": "fit on the non-test pool, fixed 50 epochs keeping the last, 3 seeds averaged",
     "r12": "fit on training compounds, epoch picked on 4 validation compounds, 1 seed",
     "r13": "fit on the non-test pool, fixed 50 epochs keeping the last, 3 seeds averaged",
+    "r14": "fit on the non-test pool, fixed 50 epochs keeping the last, 3 seeds averaged",
 }
 
 LOSS_COLUMNS = {

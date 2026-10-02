@@ -357,3 +357,156 @@ materialized. Round 9 (`r9_operator.yaml`, `r9_control.yaml`, slurm 3080 and 308
 behind the deep chains): operator versus the bilinear head on the same one-layer, prior-0.001
 encoder, 100 epochs, five folds on each of fold seeds 0 to 2, for the 123-evaluation paired
 comparison against ridge.
+
+## 2026.10.02 - Rounds 8 to 13: trained to saturation, the cell graph transformer ties ridge
+
+Metric throughout: for each held-out compound, the Spearman correlation between predicted
+and measured response across the ~3,500 strains after subtracting each strain's mean over
+the fitted compounds from both sides (centered Spearman). "Compound-evaluations" counts
+held-out compounds over splits; all three fold seeds give 123. Paired differences are
+against nested ridge on the same compound-evaluations, with a bootstrap 95% interval
+(`compare_models.py`, `results/compare_models.csv`). Curves, losses and wall times are from
+`summarize_cgt_rounds.py` (`results/cgt_rounds_curves.csv`,
+`results/cgt_rounds_loss_curves.csv`, `results/cgt_rounds_loss_baselines.csv`).
+
+**Correction to the section above.** The prior at weight 1 was not what held round 2 back.
+With the prior off, eight layers do not train at all (train loss 0.62 at epoch 200, held-out
+0.004); with the prior at weight 1 and 200 epochs the same model reaches the level of the
+shallow encoders. Round 2's 0.061 was its 20-epoch budget. The prior is unnecessary only
+for encoders of six layers or fewer.
+
+### Depth and the graph prior (round 8)
+
+Fold seed 0, one seed, fit on the training compounds, epoch picked on the 4 validation
+compounds, 200 epochs, 9 heads, width 180. Slurm 3074, 3075, 3078, 3113, 3116, 3133, 3135
+on two RTX 6000 Ada cards (44 GiB), two processes per card for the no-prior arms and one
+for the 8-layer arms.
+
+| layers | prior weight | folds (compound-evaluations) | held-out centered Spearman at the last epoch, mean over folds | mean paired difference in centered Spearman vs ridge, validation-selected epoch (95% CI) | train loss of the last batch at epoch 200 (standardized MSE) | minutes per fold | peak GPU memory (GB) |
+|---|---|---|---|---|---|---|---|
+| 1 | 0 | 5 (41) | 0.259 | -0.048 (-0.104, +0.012) | 0.028 | 45 | 7.7 |
+| 2 | 0 | 5 (41) | 0.254 | -0.072 (-0.130, -0.015) | 0.032 | 44 | 7.7 |
+| 3 | 0 | 2 (17) | 0.256 | +0.011 (-0.038, +0.060) | 0.035 | 52 | 7.8 |
+| 4 | 0 | 5 (41) | 0.268 | -0.092 (-0.159, -0.023) | 0.037 | 50 | 7.9 |
+| 6 | 0 | 2 (17) | 0.262 | -0.011 (-0.077, +0.051) | 0.050 | 49 | 8.0 |
+| 8 | 0 | 2 (17) | 0.004 | -0.272 (-0.372, -0.172) | 0.622 | 38 | 8.1 |
+| 1 | 0.001 | 5 (41) | 0.270 | -0.053 (-0.112, +0.005) | 0.057 | 108 | 13.2 |
+| 2 | 0.001 | 5 (41) | 0.263 | -0.086 (-0.139, -0.028) | 0.042 | 122 | 15.8 |
+| 4 | 1 | 5 (41) | **0.271** | -0.048 (-0.099, +0.006) | 0.091 | 100 | 20.9 |
+| 8 | 1 | 5 (41) | 0.262 | -0.060 (-0.111, -0.008) | 0.088 | 124 | 31.5 |
+
+The last-epoch column is the one that isolates depth: 0.25 to 0.27 for every arm that
+trains. The validation-selected column ranges from +0.011 to -0.092 over the same arms
+because each fold picks its epoch on 4 compounds; four layers without the prior has one of
+the best last-epoch numbers and the worst selected one. Shallow encoders plateau by epoch
+20 to 40; the 8-layer encoder with the prior climbs to about epoch 160. Depth costs time
+and memory and buys nothing on this dataset, and the prior more than doubles the cost per
+fold.
+
+### Protocol: pool fit, fixed epochs, seeds (round 9 control)
+
+The selector, not the model, was costing the score. The round-9 control is the one-layer,
+no-prior encoder with the bilinear head, fit on the whole non-test pool (as ridge is), a
+fixed 50 epochs keeping the last, three seeds averaged, on all three fold seeds (slurm 3114).
+It moves the same encoder from -0.048 (41 compound-evaluations) to -0.007 (-0.028, +0.015)
+on 123.
+
+### How the compound enters (rounds 9 and 10)
+
+Three heads on that encoder under that protocol; diagrams of the first in
+[[experiments.035-env-chemgen-vanacloig-cgt.mermaid.cgt-compound]]. The bilinear head
+multiplies the strain vector with the compound vector at the readout. The operator
+(`EnvironmentOperator`) gates the compound's value onto every gene of the strain's
+post-deletion state, each gene independently. The environment encoder
+(`EnvironmentEncoder`) puts the compound token in front of the 6,607 wildtype gene tokens
+for one further transformer layer, so genes take from the compound and from each other
+after it, and reads the strain at its deleted genes' rows. Slurm 3080, 3114, 3134.
+
+| compound enters as | compound-evaluations | median centered Spearman per held-out compound | mean centered Spearman per held-out compound | mean paired difference in centered Spearman vs ridge (95% CI) | compound-evaluations won vs ridge | mean paired difference vs the bilinear head (95% CI) |
+|---|---|---|---|---|---|---|
+| bilinear factor at the head | 123 | **0.285** | 0.285 | -0.007 (-0.028, +0.015) | 55 | reference |
+| gate on each gene (operator) | 123 | 0.270 | 0.266 | -0.025 (-0.066, +0.015) | 53 | -0.019 (-0.053, +0.014) |
+| token the genes attend to (environment encoder) | 123 | 0.281 | **0.300** | **+0.008** (-0.026, +0.045) | **56** | **+0.015** (-0.014, +0.047) |
+
+Treating the molecule as a perturbation of the cell state does not separate from treating
+it as a factor at the head: the gate is slightly behind, the token slightly ahead, both
+intervals through zero. The token version is the only single neural model with a positive
+paired mean against ridge.
+
+### Stacks
+
+Plain mean of ridge and a model's saved prediction, no fitted weight (`stack_predictions.py`).
+
+| stack | compound-evaluations | median centered Spearman per held-out compound | mean paired difference in centered Spearman vs ridge (95% CI) | compound-evaluations won vs ridge |
+|---|---|---|---|---|
+| ridge + environment encoder | 123 | **0.334** | **+0.028** (-0.001, +0.059) | 66 |
+| ridge + operator | 123 | 0.321 | +0.013 (-0.014, +0.043) | 59 |
+| ridge + ten-seed gene table (round 5) | 123 | 0.313 | +0.013 (-0.003, +0.032) | **70** |
+| ridge + bilinear head | 123 | 0.300 | +0.002 (-0.017, +0.020) | 62 |
+
+The ridge and environment-encoder stack is the best result of the experiment and the
+closest any model has come to clearing ridge. The same stack with the bilinear head gains
+nothing, so the environment encoder's errors are less like ridge's.
+
+### Loss curves and what dominates the loss (rounds 12 and 13)
+
+Until round 11 the trainer logged rank scores and the loss of one batch. It now logs, every
+epoch, the standardized MSE over every strain on the fitted, validation and held-out
+compounds. Round 12 (slurm 3165) is the one-layer, no-prior arm fit on the training
+compounds only, five folds, so its validation loss is out of sample.
+
+| epoch | train loss, standardized MSE over the fitted compounds (mean over 5 folds) | validation loss, standardized MSE on 4 never-fitted compounds | held-out loss, standardized MSE | validation centered Spearman | held-out centered Spearman |
+|---|---|---|---|---|---|
+| 1 | 0.763 | 2.448 | 1.669 | -0.001 | 0.004 |
+| 10 | 0.287 | 2.436 | 1.515 | 0.224 | 0.258 |
+| 20 | 0.127 | 2.426 | **1.513** | 0.233 | 0.257 |
+| 40 | 0.061 | 2.410 | 1.523 | 0.241 | **0.264** |
+| 60 | 0.037 | **2.364** | 1.539 | 0.242 | 0.258 |
+| 100 | **0.022** | 2.401 | 1.537 | **0.243** | 0.256 |
+
+The model memorizes the fitted compounds (0.76 to 0.02) while the validation loss stays at
+2.4 and the held-out loss moves from 1.67 to 1.54. Rank order on new compounds is learned
+within ten epochs and then holds; magnitudes are not learned. Held-out loss by fold against
+constant predictors, from the saved predictions:
+
+| fold (fold seed 0) | held-out loss (standardized MSE), global mean | held-out loss, each gene's mean | held-out loss, nested ridge | held-out loss, 1 layer val-selected | held-out loss, 8 layers prior 1 val-selected | held-out loss, bilinear pool fit 3 seeds | held-out loss, environment encoder pool fit 3 seeds |
+|---|---|---|---|---|---|---|---|
+| 0 | 0.386 | 0.430 | 0.386 | **0.365** | 0.372 | 0.404 | 0.384 |
+| 1 | 5.837 | 5.760 | 5.400 | 5.330 | 5.473 | 5.343 | **4.979** |
+| 2 | 0.402 | 0.358 | **0.284** | 0.374 | 0.371 | 0.337 | 0.300 |
+| 3 | 0.543 | 0.500 | 0.476 | 0.962 | 1.118 | 0.484 | **0.456** |
+| 4 | 0.577 | 0.534 | **0.414** | 0.467 | 0.418 | 0.423 | 0.497 |
+| mean | 1.549 | 1.516 | 1.392 | 1.500 | 1.551 | 1.398 | **1.323** |
+
+The best model lowers held-out MSE by 13% against predicting each gene's mean. One compound
+sets the level: crystal violet has 14.1 times the median compound's response variance and
+24.7% of the total (`results/compound_variance_share.csv`); it is in the test set of fold 1
+and in the validation set of fold 3, which is where the two validation-selected arms lose
+(0.96 and 1.12 against ridge's 0.48). It is also the compound with the normalization offset
+in issue #501.
+
+Round 13 (slurm 3168) tested the consequence: z-score each fitted compound's profile across
+strains before the fit (`target_scale: per_compound`), otherwise the round-9 control. Null:
+median centered Spearman 0.294 against the control's 0.285, mean paired difference against
+the control -0.004 (-0.020, +0.010), 63 of 123 won; against ridge -0.011 (-0.036, +0.015).
+Crystal violet's own held-out centered Spearman is lower with scaling on every fold seed
+(control 0.546, 0.523, 0.556; scaled 0.471, 0.462, 0.428). The dominant compound in the loss was not costing rank accuracy on the others.
+
+### W&B
+
+Saved view, runs grouped by arm, 100 runs per panel, built by `wandb_view.py`:
+
+<https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt?nw=sy9905pud6q>
+
+The validation panels plot only arms whose validation compounds were never fitted; an arm
+fit on the pool scores about 0.7 on them because it trained on them. Group pages follow
+`/groups/<arm>` with the arm names of `results/wandb_views.json`.
+
+### Where this leaves the transformer question
+
+Trained to saturation, the cell graph transformer as the gene encoder ties nested ridge on
+Vanacloig alone at any depth from one to eight layers, and no way of injecting the compound
+separates from another. The best number is a plain mean of ridge with the environment
+encoder, +0.028 with an interval that reaches -0.001. Round 11 (nine seeds of the
+environment encoder and of the bilinear control, slurm 3166 and 3169) is the remaining
+measurement on whether that gap is real.

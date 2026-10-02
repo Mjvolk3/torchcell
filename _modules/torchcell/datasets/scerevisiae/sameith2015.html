@@ -204,6 +204,15 @@
 <span class="c1"># NOTE: Actual n_replicates for reference are COMPUTED from WT sample count in data</span>
 <span class="n">N_EXPECTED_REFPOOL_REPLICATES</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Computed from data (varies by batch/day)</span>
 
+<span class="c1"># PubMed ID of Sameith et al. 2015, BMC Biology (DOI 10.1186/s12915-015-0222-5).</span>
+<span class="c1"># Source: the GEO series record this loader reads, GSE42536_family.soft.gz (sha256</span>
+<span class="c1"># f8842af9768043fde560fa7cab737cde2fca0463c4b655511d54678d7b85cc7d, the file in the</span>
+<span class="c1"># dev tree data/torchcell/{sm,dm}_microarray_sameith2015/raw/), decompressed line 12:</span>
+<span class="c1">#     "!Series_pubmed_id = 26700642"</span>
+<span class="c1"># Checked 2026-10-02. The loaders stored 26687005 until then, the PubMed ID of an</span>
+<span class="c1"># unrelated eLife 2015 paper (#478).</span>
+<span class="n">SAMEITH2015_PUBMED_ID</span> <span class="o">=</span> <span class="s2">"26700642"</span>
+
 
 <div class="viewcode-block" id="SmMicroarraySameith2015Dataset">
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.sameith2015.SmMicroarraySameith2015Dataset.html#torchcell.datasets.scerevisiae.sameith2015.SmMicroarraySameith2015Dataset">[docs]</a>
@@ -347,6 +356,7 @@
         <span class="n">samples_data</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">single_mutant_samples</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Group by gene name</span>
         <span class="n">wt_samples</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">multi_gene_titles</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Drop rule "double_deletion_title" (#479)</span>
 
         <span class="k">for</span> <span class="n">gsm_name</span><span class="p">,</span> <span class="n">gsm</span> <span class="ow">in</span> <span class="n">gse</span><span class="o">.</span><span class="n">gsms</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">sample_info</span> <span class="o">=</span> <span class="p">{</span>
@@ -362,7 +372,16 @@
                 <span class="s2">"wt"</span> <span class="ow">in</span> <span class="n">sample_info</span><span class="p">[</span><span class="s2">"title"</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
                 <span class="ow">or</span> <span class="s2">"wildtype"</span> <span class="ow">in</span> <span class="n">sample_info</span><span class="p">[</span><span class="s2">"title"</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
             <span class="p">)</span>
-            <span class="n">is_single</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gene_names</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+            <span class="c1"># A single-deletion array names exactly one gene and joins none with "+".</span>
+            <span class="c1"># GSE42536 also holds the double-deletion arrays ("rpn4-del+ydr026c-del");</span>
+            <span class="c1"># they belong to DmMicroarraySameith2015Dataset and are dropped here under</span>
+            <span class="c1"># the rule "double_deletion_title" (#479).</span>
+            <span class="n">is_double_title</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">"+"</span> <span class="ow">in</span> <span class="n">sample_info</span><span class="p">[</span><span class="s2">"title"</span><span class="p">]</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">gene_names</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+            <span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_wildtype</span>
+            <span class="n">is_single</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">is_double_title</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">gene_names</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">is_double_title</span><span class="p">:</span>
+                <span class="n">multi_gene_titles</span> <span class="o">+=</span> <span class="mi">1</span>
 
             <span class="n">sample_info</span><span class="p">[</span><span class="s2">"is_wildtype"</span><span class="p">]</span> <span class="o">=</span> <span class="n">is_wildtype</span>
             <span class="n">sample_info</span><span class="p">[</span><span class="s2">"is_single_mutant"</span><span class="p">]</span> <span class="o">=</span> <span class="n">is_single</span>
@@ -381,6 +400,11 @@
 
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">single_mutant_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> unique single mutant genes"</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wt_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> wildtype samples"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dropped_double_deletion_titles</span> <span class="o">=</span> <span class="n">multi_gene_titles</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Dropped </span><span class="si">{</span><span class="n">multi_gene_titles</span><span class="si">}</span><span class="s2"> arrays under rule double_deletion_title "</span>
+            <span class="s2">"(title joins genes with '+' or names more than one gene)"</span>
+        <span class="p">)</span>
 
         <span class="c1"># Calculate wildtype reference expression</span>
         <span class="k">if</span> <span class="n">wt_samples</span><span class="p">:</span>
@@ -572,8 +596,16 @@
         <span class="k">return</span> <span class="n">mean_dict</span><span class="p">,</span> <span class="n">se_dict</span><span class="p">,</span> <span class="n">variance_dict</span><span class="p">,</span> <span class="n">n_replicates_dict</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_gene_names_from_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Extract systematic gene names from sample title."""</span>
-        <span class="n">gene_names</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="w">        </span><span class="sd">"""Every gene a sample title names: systematic names, then resolved common names.</span>
+
+<span class="sd">        The list is not truncated. GSE42536 holds single- and double-deletion arrays in</span>
+<span class="sd">        one series, and a double-deletion title joins two genes with ``+``</span>
+<span class="sd">        (``rpn4-del+ydr026c-del``); returning only the first gene made every such</span>
+<span class="sd">        array look like a single mutant and folded all 143 double-deletion arrays into</span>
+<span class="sd">        45 of the 82 single-mutant records (#479). ``process()`` keeps an array as a</span>
+<span class="sd">        single mutant only when its title names exactly one gene and has no ``+``.</span>
+<span class="sd">        """</span>
+        <span class="n">gene_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="c1"># Look for systematic names (e.g., YAL001C or YBR089C-A)</span>
         <span class="c1"># Match the full systematic name, including optional suffix like -A</span>
@@ -582,29 +614,25 @@
 
         <span class="c1"># Validate each match</span>
         <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_valid_systematic_name</span><span class="p">(</span><span class="n">match</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_valid_systematic_name</span><span class="p">(</span><span class="n">match</span><span class="p">)</span> <span class="ow">and</span> <span class="n">match</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gene_names</span><span class="p">:</span>
                 <span class="n">gene_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">match</span><span class="p">)</span>
 
-        <span class="c1"># Also try to extract common names if needed</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gene_names</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="c1"># Extract potential gene names (all caps words)</span>
-            <span class="n">common_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"\b([A-Z][A-Z0-9]{2,})\b"</span>
-            <span class="n">potential_genes</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">common_pattern</span><span class="p">,</span> <span class="n">title</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+        <span class="c1"># Common names too, also when a systematic name was found: a double-deletion</span>
+        <span class="c1"># title can mix the two ("rpn4-del+ydr026c-del").</span>
+        <span class="n">common_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"\b([A-Z][A-Z0-9]{2,})\b"</span>
+        <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">common_pattern</span><span class="p">,</span> <span class="n">title</span><span class="o">.</span><span class="n">upper</span><span class="p">()):</span>
+            <span class="c1"># Skip common non-gene words</span>
+            <span class="k">if</span> <span class="n">gene</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"DEL"</span><span class="p">,</span> <span class="s2">"WT"</span><span class="p">,</span> <span class="s2">"WILDTYPE"</span><span class="p">,</span> <span class="s2">"MUTANT"</span><span class="p">,</span> <span class="s2">"SINGLE"</span><span class="p">,</span> <span class="s2">"DOUBLE"</span><span class="p">]:</span>
+                <span class="k">continue</span>
+            <span class="n">systematic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_to_systematic</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">systematic</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_valid_systematic_name</span><span class="p">(</span><span class="n">systematic</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="n">systematic</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gene_names</span>
+            <span class="p">):</span>
+                <span class="n">gene_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">systematic</span><span class="p">)</span>
 
-            <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">potential_genes</span><span class="p">:</span>
-                <span class="c1"># Skip common non-gene words</span>
-                <span class="k">if</span> <span class="n">gene</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"DEL"</span><span class="p">,</span> <span class="s2">"WT"</span><span class="p">,</span> <span class="s2">"WILDTYPE"</span><span class="p">,</span> <span class="s2">"MUTANT"</span><span class="p">,</span> <span class="s2">"SINGLE"</span><span class="p">]:</span>
-                    <span class="k">continue</span>
-
-                <span class="c1"># Try to convert to systematic</span>
-                <span class="n">systematic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_to_systematic</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">systematic</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_valid_systematic_name</span><span class="p">(</span><span class="n">systematic</span><span class="p">):</span>
-                    <span class="c1"># Avoid duplicates</span>
-                    <span class="k">if</span> <span class="n">systematic</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gene_names</span><span class="p">:</span>
-                        <span class="n">gene_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">systematic</span><span class="p">)</span>
-                        <span class="k">break</span>  <span class="c1"># We only need 1 gene for single mutants</span>
-
-        <span class="k">return</span> <span class="n">gene_names</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Return at most 1 gene for single mutants</span>
+        <span class="k">return</span> <span class="n">gene_names</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_is_valid_systematic_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validate that a systematic name matches the expected format."""</span>
@@ -955,8 +983,8 @@
 
         <span class="c1"># Publication for Sameith et al. 2015</span>
         <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
-            <span class="n">pubmed_id</span><span class="o">=</span><span class="s2">"26687005"</span><span class="p">,</span>
-            <span class="n">pubmed_url</span><span class="o">=</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/26687005/"</span><span class="p">,</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="n">SAMEITH2015_PUBMED_ID</span><span class="p">,</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/</span><span class="si">{</span><span class="n">SAMEITH2015_PUBMED_ID</span><span class="si">}</span><span class="s2">/"</span><span class="p">,</span>
             <span class="n">doi</span><span class="o">=</span><span class="s2">"10.1186/s12915-015-0222-5"</span><span class="p">,</span>
             <span class="n">doi_url</span><span class="o">=</span><span class="s2">"https://doi.org/10.1186/s12915-015-0222-5"</span><span class="p">,</span>
         <span class="p">)</span>
@@ -2071,8 +2099,8 @@
 
         <span class="c1"># Publication for Sameith et al. 2015</span>
         <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span>
-            <span class="n">pubmed_id</span><span class="o">=</span><span class="s2">"26687005"</span><span class="p">,</span>
-            <span class="n">pubmed_url</span><span class="o">=</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/26687005/"</span><span class="p">,</span>
+            <span class="n">pubmed_id</span><span class="o">=</span><span class="n">SAMEITH2015_PUBMED_ID</span><span class="p">,</span>
+            <span class="n">pubmed_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://pubmed.ncbi.nlm.nih.gov/</span><span class="si">{</span><span class="n">SAMEITH2015_PUBMED_ID</span><span class="si">}</span><span class="s2">/"</span><span class="p">,</span>
             <span class="n">doi</span><span class="o">=</span><span class="s2">"10.1186/s12915-015-0222-5"</span><span class="p">,</span>
             <span class="n">doi_url</span><span class="o">=</span><span class="s2">"https://doi.org/10.1186/s12915-015-0222-5"</span><span class="p">,</span>
         <span class="p">)</span>

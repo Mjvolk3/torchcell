@@ -201,15 +201,29 @@
 <span class="c1"># Source: Kemmeren et al. 2014, Cell, Expression Profiling section</span>
 <span class="c1"># Date extracted: 2026-01-27</span>
 <span class="c1">#</span>
-<span class="c1"># The reference pool is:</span>
-<span class="c1"># - Batch of WT RNA used as common reference across all experiments</span>
-<span class="c1"># - Applied in dye-swap to one channel of each microarray</span>
-<span class="c1"># - Additional WT cultures grown alongside mutants for batch effect monitoring</span>
-<span class="c1"># - Separate reference pools for BY4741 (MATa) and BY4742 (MATα) strains</span>
-<span class="c1">#</span>
-<span class="c1"># NOTE: Actual n_replicates for reference are COMPUTED from WT sample count in data</span>
-<span class="n">N_EXPECTED_REFPOOL_REPLICATES_BY4741</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Computed from MATa WT sample count</span>
-<span class="n">N_EXPECTED_REFPOOL_REPLICATES_BY4742</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Computed from MATα WT sample count</span>
+<span class="c1"># Reference n_replicates (#484, decided 2026-10-02). The stored reference</span>
+<span class="c1"># ``expression`` is the mean common-reference (refpool) signal over the mutant's own</span>
+<span class="c1"># arrays (``create_expression_experiment``), so its ``n_replicates`` is the number of</span>
+<span class="c1"># those arrays whose refpool value entered the mean: 1 or 2 per gene, the same arrays</span>
+<span class="c1"># as the mutant's own count. It is NOT a count of wildtype arrays. The paper's WT</span>
+<span class="c1"># pools are the comparison sets of its limma analysis, chosen per growth protocol,</span>
+<span class="c1"># and none of them is the stored value. Paper (torchcell-library</span>
+<span class="c1"># kemmerenLargeScaleGeneticPerturbations2014/paper.md, sha256</span>
+<span class="c1"># 299eac4b07fc977a89c24ce190d05cfd182342a9f0d56a05e7e477d72e4ad08d, line 388):</span>
+<span class="c1">#     "For the MATalpha mutants grown on the Tecan plate shaker, the WT pool consisted</span>
+<span class="c1">#     of 200 MATalpha WTs (BY4742, ArrayExpress accession E-TABM-984, GEO accession</span>
+<span class="c1">#     GSE42217). For the MATa mutants grown on the Tecan plate shaker, the WT pool</span>
+<span class="c1">#     consisted of 20 WT-MATa replicates (BY4741, ArrayExpress accession E-MTAB-1351,</span>
+<span class="c1">#     GEO accession GSE42241). For mutants grown in Erlenmeyers, the MATalpha WT pool</span>
+<span class="c1">#     consisted of 200 WT-MATalpha replicates (ArrayExpress accession E-TABM-773, GEO</span>
+<span class="c1">#     accession GSE42215). For MATa mutants grown in Erlenmeyers, the WT pool</span>
+<span class="c1">#     consisted of 8 WT MATa replicates (ArrayExpress accession E-MTAB-1352, GEO</span>
+<span class="c1">#     accession GSE42240)."</span>
+<span class="c1"># The loader used to store the number of WT arrays of the two series of the mutant's</span>
+<span class="c1"># mating type (400 for BY4742, 28 for BY4741), a count the paper never compares a</span>
+<span class="c1"># mutant against. Nothing stored is computed from the four WT series any more, so</span>
+<span class="c1"># process() no longer reads them; they stay in raw_file_names as the paper's named</span>
+<span class="c1"># comparison pools.</span>
 
 
 <div class="viewcode-block" id="MicroarrayKemmeren2014Dataset">
@@ -220,8 +234,9 @@
 
 <span class="sd">    Microarray gene expression data for single-gene deletion mutants profiled</span>
 <span class="sd">    against a common wildtype reference pool in a dye-swap design. Combines the</span>
-<span class="sd">    responsive and non-responsive mutant GEO series with the BY4741 (MATa) and</span>
-<span class="sd">    BY4742 (MATalpha) wildtype reference series.</span>
+<span class="sd">    responsive and non-responsive mutant GEO series. The four wildtype series</span>
+<span class="sd">    (BY4741 MATa, BY4742 MATalpha) are downloaded as the paper's named WT pools but</span>
+<span class="sd">    no stored value is computed from them (#484).</span>
 
 <span class="sd">    Data source: GEO accessions GSE42527, GSE42526, and wildtype references.</span>
 <span class="sd">    Paper: Kemmeren et al. (2014) Cell.</span>
@@ -549,25 +564,6 @@
 
             <span class="n">samples_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample_info</span><span class="p">)</span>
 
-        <span class="c1"># Process wildtype reference datasets to get strain-specific references</span>
-        <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">wt_expression_BY4741</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">wt_std_BY4741</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">wt_cv_BY4741</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">wt_n_replicates_BY4741</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">wt_expression_BY4742</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">wt_std_BY4742</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">wt_cv_BY4742</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">wt_n_replicates_BY4742</span><span class="p">,</span>
-        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_wt_references</span><span class="p">(</span><span class="n">probe_to_gene_map</span><span class="p">)</span>
-
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"WT reference for BY4741 (MATa): </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wt_expression_BY4741</span><span class="p">)</span><span class="si">}</span><span class="s2"> genes"</span>
-        <span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"WT reference for BY4742 (MATalpha): </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wt_expression_BY4742</span><span class="p">)</span><span class="si">}</span><span class="s2"> genes"</span>
-        <span class="p">)</span>
-
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">deletion_samples_by_gene</span><span class="p">)</span><span class="si">}</span><span class="s2"> unique gene deletions"</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wt_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> wildtype reference samples"</span><span class="p">)</span>
 
@@ -745,21 +741,8 @@
                     <span class="s2">"strain"</span><span class="p">:</span> <span class="n">strain</span><span class="p">,</span>
                 <span class="p">}</span>
 
-                <span class="c1"># Select appropriate WT reference and n_replicates based on strain</span>
-                <span class="k">if</span> <span class="n">strain</span> <span class="o">==</span> <span class="s2">"BY4741"</span><span class="p">:</span>
-                    <span class="n">refpool_n_replicates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wt_n_replicates_BY4741</span>
-                <span class="k">elif</span> <span class="n">strain</span> <span class="o">==</span> <span class="s2">"BY4742"</span><span class="p">:</span>
-                    <span class="n">refpool_n_replicates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wt_n_replicates_BY4742</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown strain </span><span class="si">{</span><span class="n">strain</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">gene_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-                    <span class="k">continue</span>
-
-                <span class="c1"># Create experiment with correct n_replicates for reference</span>
                 <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_expression_experiment</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                    <span class="n">sample_info</span><span class="p">,</span>
-                    <span class="n">replicate_pairs</span><span class="p">,</span>
-                    <span class="n">refpool_n_replicates</span><span class="p">,</span>  <span class="c1"># Number of WT samples refpool was measured in</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">sample_info</span><span class="p">,</span> <span class="n">replicate_pairs</span>
                 <span class="p">)</span>
 
                 <span class="c1"># Skip if experiment creation failed (returns None when log2 ratios can't be calculated)</span>
@@ -817,10 +800,6 @@
                     <span class="n">batch</span><span class="p">,</span>
                     <span class="n">probe_to_gene_map</span><span class="p">,</span>
                     <span class="n">systematic_to_strain</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">wt_cv_BY4741</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">wt_cv_BY4742</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">wt_n_replicates_BY4741</span><span class="p">,</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">wt_n_replicates_BY4742</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
@@ -862,10 +841,6 @@
         <span class="n">batch_items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
         <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
         <span class="n">systematic_to_strain</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
-        <span class="n">wt_cv_BY4741</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-        <span class="n">wt_cv_BY4742</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-        <span class="n">wt_n_replicates_BY4741</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
-        <span class="n">wt_n_replicates_BY4742</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
         <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Process a batch of gene deletions. Static method for multiprocessing."""</span>
@@ -895,21 +870,9 @@
                 <span class="s2">"strain"</span><span class="p">:</span> <span class="n">strain</span><span class="p">,</span>
             <span class="p">}</span>
 
-            <span class="c1"># Select appropriate WT reference and n_replicates based on strain</span>
-            <span class="k">if</span> <span class="n">strain</span> <span class="o">==</span> <span class="s2">"BY4741"</span><span class="p">:</span>
-                <span class="n">refpool_n_replicates</span> <span class="o">=</span> <span class="n">wt_n_replicates_BY4741</span>
-            <span class="k">elif</span> <span class="n">strain</span> <span class="o">==</span> <span class="s2">"BY4742"</span><span class="p">:</span>
-                <span class="n">refpool_n_replicates</span> <span class="o">=</span> <span class="n">wt_n_replicates_BY4742</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">continue</span>
-
-            <span class="c1"># Create experiment with correct n_replicates for reference</span>
             <span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">MicroarrayKemmeren2014Dataset</span><span class="o">.</span><span class="n">create_expression_experiment</span><span class="p">(</span>
-                    <span class="n">dataset_name</span><span class="p">,</span>
-                    <span class="n">sample_info</span><span class="p">,</span>
-                    <span class="n">replicate_pairs</span><span class="p">,</span>
-                    <span class="n">refpool_n_replicates</span><span class="p">,</span>  <span class="c1"># Number of WT samples refpool was measured in</span>
+                    <span class="n">dataset_name</span><span class="p">,</span> <span class="n">sample_info</span><span class="p">,</span> <span class="n">replicate_pairs</span>
                 <span class="p">)</span>
             <span class="p">)</span>
 
@@ -1031,177 +994,6 @@
                 <span class="n">pairs</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">deletion_value</span><span class="p">,</span> <span class="n">refpool</span><span class="p">[</span><span class="n">gene</span><span class="p">]))</span>
         <span class="k">return</span> <span class="n">pairs</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_process_wt_references</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span>
-        <span class="n">SortedDict</span><span class="p">,</span>
-        <span class="n">SortedDict</span><span class="p">,</span>
-        <span class="n">SortedDict</span><span class="p">,</span>
-        <span class="n">SortedDict</span><span class="p">,</span>
-        <span class="n">SortedDict</span><span class="p">,</span>
-        <span class="n">SortedDict</span><span class="p">,</span>
-        <span class="n">SortedDict</span><span class="p">,</span>
-        <span class="n">SortedDict</span><span class="p">,</span>
-    <span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Process wildtype reference datasets to extract refpool references and CV.</span>
-
-<span class="sd">        The WT datasets contain hybridizations of wt vs. refpool and refpool vs. wt.</span>
-<span class="sd">        The refpool is pooled RNA from wildtype strains used as common reference.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            tuple: (refpool_expression_BY4741, refpool_std_BY4741, refpool_cv_BY4741, refpool_n_replicates_BY4741,</span>
-<span class="sd">                   refpool_expression_BY4742, refpool_std_BY4742, refpool_cv_BY4742, refpool_n_replicates_BY4742)</span>
-<span class="sd">        """</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Processing wildtype reference datasets to extract refpool and calculate CV..."</span>
-        <span class="p">)</span>
-
-        <span class="c1"># Process MATa (BY4741) wildtype samples</span>
-        <span class="n">mata_samples</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">geo_accession</span> <span class="ow">in</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">geo_accession_wt_mata_tecan</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">geo_accession_wt_mata_flask</span><span class="p">,</span>
-        <span class="p">]:</span>
-            <span class="n">geo_pkl_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">geo_accession</span><span class="si">}</span><span class="s2">.pkl"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">geo_pkl_path</span><span class="p">):</span>
-                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">geo_pkl_path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                    <span class="n">gse</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-                    <span class="n">mata_samples</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">gse</span><span class="o">.</span><span class="n">gsms</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-
-        <span class="c1"># Process MATalpha (BY4742) wildtype samples</span>
-        <span class="n">matalpha_samples</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">geo_accession</span> <span class="ow">in</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">geo_accession_wt_matalpha_tecan</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">geo_accession_wt_matalpha_flask</span><span class="p">,</span>
-        <span class="p">]:</span>
-            <span class="n">geo_pkl_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">geo_accession</span><span class="si">}</span><span class="s2">.pkl"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">geo_pkl_path</span><span class="p">):</span>
-                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">geo_pkl_path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                    <span class="n">gse</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-                    <span class="n">matalpha_samples</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">gse</span><span class="o">.</span><span class="n">gsms</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
-
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">mata_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> MATa WT samples"</span><span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">matalpha_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> MATalpha WT samples"</span><span class="p">)</span>
-
-        <span class="c1"># Extract refpool references and CV for each strain</span>
-        <span class="p">(</span>
-            <span class="n">refpool_expression_BY4741</span><span class="p">,</span>
-            <span class="n">refpool_cv_BY4741</span><span class="p">,</span>
-            <span class="n">refpool_std_BY4741</span><span class="p">,</span>
-            <span class="n">refpool_n_replicates_BY4741</span><span class="p">,</span>
-        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_refpool_reference</span><span class="p">(</span><span class="n">mata_samples</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">)</span>
-        <span class="p">(</span>
-            <span class="n">refpool_expression_BY4742</span><span class="p">,</span>
-            <span class="n">refpool_cv_BY4742</span><span class="p">,</span>
-            <span class="n">refpool_std_BY4742</span><span class="p">,</span>
-            <span class="n">refpool_n_replicates_BY4742</span><span class="p">,</span>
-        <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_refpool_reference</span><span class="p">(</span><span class="n">matalpha_samples</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">)</span>
-
-        <span class="c1"># Store CV for later use</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">refpool_cv_BY4741</span> <span class="o">=</span> <span class="n">refpool_cv_BY4741</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">refpool_cv_BY4742</span> <span class="o">=</span> <span class="n">refpool_cv_BY4742</span>
-
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="n">refpool_expression_BY4741</span><span class="p">,</span>
-            <span class="n">refpool_std_BY4741</span><span class="p">,</span>
-            <span class="n">refpool_cv_BY4741</span><span class="p">,</span>
-            <span class="n">refpool_n_replicates_BY4741</span><span class="p">,</span>
-            <span class="n">refpool_expression_BY4742</span><span class="p">,</span>
-            <span class="n">refpool_std_BY4742</span><span class="p">,</span>
-            <span class="n">refpool_cv_BY4742</span><span class="p">,</span>
-            <span class="n">refpool_n_replicates_BY4742</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_refpool_reference</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">wt_gsm_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SortedDict</span><span class="p">,</span> <span class="n">SortedDict</span><span class="p">,</span> <span class="n">SortedDict</span><span class="p">,</span> <span class="n">SortedDict</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Extract refpool expression values from WT GSM objects and calculate CV.</span>
-
-<span class="sd">        The refpool is the same pooled RNA across samples but measured multiple times.</span>
-<span class="sd">        We extract it to calculate coefficient of variation (CV) for noise estimation.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            tuple: (mean_refpool_expression, cv_refpool, std_refpool_expression, n_replicates_refpool)</span>
-<span class="sd">                - mean_refpool_expression: average refpool value per gene</span>
-<span class="sd">                - cv_refpool: coefficient of variation (std/mean) per gene</span>
-<span class="sd">                - std_refpool_expression: standard deviation per gene</span>
-<span class="sd">                - n_replicates_refpool: number of measurements per gene</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wt_gsm_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"No wildtype samples found, returning empty reference"</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">SortedDict</span><span class="p">(),</span> <span class="n">SortedDict</span><span class="p">(),</span> <span class="n">SortedDict</span><span class="p">(),</span> <span class="n">SortedDict</span><span class="p">()</span>
-
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Extracting refpool from </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wt_gsm_list</span><span class="p">)</span><span class="si">}</span><span class="s2"> wildtype samples"</span><span class="p">)</span>
-
-        <span class="c1"># Collect all refpool values per gene</span>
-        <span class="n">all_refpool_values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">sample_count</span> <span class="o">=</span> <span class="mi">0</span>
-
-        <span class="k">for</span> <span class="n">gsm</span> <span class="ow">in</span> <span class="n">wt_gsm_list</span><span class="p">:</span>
-            <span class="n">refpool_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_refpool_from_wt_gsm</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">refpool_data</span><span class="p">:</span>
-                <span class="n">sample_count</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">refpool_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="k">if</span> <span class="n">gene</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">all_refpool_values</span><span class="p">:</span>
-                        <span class="n">all_refpool_values</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-                    <span class="n">all_refpool_values</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Successfully extracted refpool from </span><span class="si">{</span><span class="n">sample_count</span><span class="si">}</span><span class="s2"> samples"</span><span class="p">)</span>
-
-        <span class="c1"># Calculate mean, std, and CV of refpool</span>
-        <span class="n">refpool_mean_expression</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-        <span class="n">refpool_std_expression</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-        <span class="n">refpool_cv</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-        <span class="n">refpool_n_replicates</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-
-        <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">all_refpool_values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">n_reps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-            <span class="n">refpool_n_replicates</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_reps</span>
-
-            <span class="k">if</span> <span class="n">n_reps</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># Need at least 2 values for std</span>
-                <span class="n">mean_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
-                <span class="n">std_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-                <span class="n">refpool_mean_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">mean_val</span>
-                <span class="n">refpool_std_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">std_val</span>
-
-                <span class="c1"># Calculate CV (coefficient of variation)</span>
-                <span class="c1"># CV is scale-independent measure of relative variability</span>
-                <span class="k">if</span> <span class="n">mean_val</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>  <span class="c1"># Avoid division by very small numbers</span>
-                    <span class="n">refpool_cv</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">std_val</span> <span class="o">/</span> <span class="n">mean_val</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">refpool_cv</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># Set CV to 0 for low-expressed genes</span>
-            <span class="k">elif</span> <span class="n">n_reps</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="c1"># Single replicate: record mean but no std/CV</span>
-                <span class="n">refpool_mean_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="n">refpool_std_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-                <span class="n">refpool_cv</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-
-        <span class="c1"># Log statistics</span>
-        <span class="k">if</span> <span class="n">refpool_cv</span><span class="p">:</span>
-            <span class="n">cv_values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">refpool_cv</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Extracted refpool reference for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">refpool_mean_expression</span><span class="p">)</span><span class="si">}</span><span class="s2"> genes"</span>
-            <span class="p">)</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Median CV: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">cv_values</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Mean CV: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cv_values</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"CV range: [</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">cv_values</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">cv_values</span><span class="p">)</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">]"</span><span class="p">)</span>
-
-            <span class="c1"># Warn about high CV genes</span>
-            <span class="n">high_cv_genes</span> <span class="o">=</span> <span class="p">[</span><span class="n">gene</span> <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">cv</span> <span class="ow">in</span> <span class="n">refpool_cv</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">cv</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">high_cv_genes</span><span class="p">:</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">high_cv_genes</span><span class="p">)</span><span class="si">}</span><span class="s2"> genes with CV &gt; 0.5 (</span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">high_cv_genes</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">refpool_cv</span><span class="p">)</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)"</span>
-                <span class="p">)</span>
-                <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Example high CV genes: </span><span class="si">{</span><span class="n">high_cv_genes</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="n">refpool_mean_expression</span><span class="p">,</span>
-            <span class="n">refpool_cv</span><span class="p">,</span>
-            <span class="n">refpool_std_expression</span><span class="p">,</span>
-            <span class="n">refpool_n_replicates</span><span class="p">,</span>
-        <span class="p">)</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_probe_to_gene_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gse</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Extract probe ID to gene name mapping from GEO platform annotation."""</span>
         <span class="n">probe_to_gene</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1278,19 +1070,6 @@
                     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Available columns: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">table</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">probe_to_gene</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_refpool_from_wt_gsm</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">gsm</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SortedDict</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Reference-pool signals of one wildtype array, positive values only.</span>
-
-<span class="sd">        The wildtype series (GSE42215, GSE42217, GSE42240, GSE42241) hybridize a</span>
-<span class="sd">        wildtype culture against the same reference pool as the deletions, in both dye</span>
-<span class="sd">        orientations. The channel comes from GEO's metadata (``_channel_columns``);</span>
-<span class="sd">        the wildtype culture is the other channel and is not used.</span>
-<span class="sd">        """</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">refpool</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_channels_from_gsm_static</span><span class="p">(</span><span class="n">gsm</span><span class="p">,</span> <span class="n">probe_to_gene_map</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">SortedDict</span><span class="p">({</span><span class="n">gene</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">refpool</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">})</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_load_mating_type_map</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Load mating type information from supplementary Table S1.</span>
@@ -1755,10 +1534,7 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.kemmeren2014.MicroarrayKemmeren2014Dataset.html#torchcell.datasets.scerevisiae.kemmeren2014.MicroarrayKemmeren2014Dataset.create_expression_experiment">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_expression_experiment</span><span class="p">(</span>
-        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">sample_info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-        <span class="n">replicate_pairs</span><span class="p">:</span> <span class="n">SortedDict</span><span class="p">,</span>
-        <span class="n">refpool_n_replicates</span><span class="p">:</span> <span class="n">SortedDict</span><span class="p">,</span>
+        <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sample_info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">replicate_pairs</span><span class="p">:</span> <span class="n">SortedDict</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Build an experiment, reference, and publication from per-array signal pairs.</span>
 
@@ -1768,7 +1544,11 @@
 <span class="sd">        cancels the spot; the mean, sample SD, SE and variance are then taken over the</span>
 <span class="sd">        arrays. An array on which either signal is not positive is dropped for that</span>
 <span class="sd">        gene. The stored linear ``expression`` is the mean deletion signal and the</span>
-<span class="sd">        reference ``expression`` the mean refpool signal over the same arrays.</span>
+<span class="sd">        reference ``expression`` the mean refpool signal over the same arrays, so the</span>
+<span class="sd">        reference ``n_replicates`` of a gene is the number of arrays whose refpool value</span>
+<span class="sd">        entered that mean (1 or 2 on GEO), equal to the mutant's own count (#484; the</span>
+<span class="sd">        paper's WT pools of 200, 200, 20 and 8 arrays are not the stored value, see the</span>
+<span class="sd">        module comment at the reference pool constants).</span>
 <span class="sd">        """</span>
         <span class="c1"># Genome reference - strain MUST be specified (BY4741 or BY4742)</span>
         <span class="k">if</span> <span class="s2">"strain"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sample_info</span><span class="p">:</span>
@@ -1807,6 +1587,7 @@
         <span class="n">n_replicates_dict</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
         <span class="n">mean_expression</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>  <span class="c1"># Mean LINEAR deletion signal (for QC)</span>
         <span class="n">refpool_expression</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>  <span class="c1"># Mean LINEAR refpool signal (reference)</span>
+        <span class="n">refpool_n_replicates</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>  <span class="c1"># Arrays in each refpool mean</span>
 
         <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">pairs</span> <span class="ow">in</span> <span class="n">replicate_pairs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">kept</span> <span class="o">=</span> <span class="p">[(</span><span class="n">d</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">pairs</span> <span class="k">if</span> <span class="n">d</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">r</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
@@ -1834,6 +1615,7 @@
             <span class="n">n_replicates_dict</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span>
             <span class="n">mean_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">]))</span>
             <span class="n">refpool_expression</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">r</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">kept</span><span class="p">]))</span>
+            <span class="n">refpool_n_replicates</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">mean_log2_ratios</span><span class="p">:</span>
             <span class="c1"># No array with both signals positive - return None to signal skip</span>
@@ -1857,7 +1639,7 @@
         <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">MicroarrayExpressionPhenotype</span><span class="p">(</span>
             <span class="n">expression</span><span class="o">=</span><span class="n">refpool_expression</span><span class="p">,</span>
             <span class="n">expression_log2_ratio</span><span class="o">=</span><span class="n">reference_log2_ratios</span><span class="p">,</span>
-            <span class="n">n_replicates</span><span class="o">=</span><span class="n">refpool_n_replicates</span><span class="p">,</span>  <span class="c1"># Number of WT samples refpool was measured in</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="n">refpool_n_replicates</span><span class="p">,</span>  <span class="c1"># Arrays in each refpool mean</span>
         <span class="p">)</span>
 
         <span class="c1"># Create reference</span>

@@ -146,7 +146,15 @@
 
 <span class="sd">PHENOTYPE (``RNASeqExpressionPhenotype``): per-isolate ``expression_tpm`` +</span>
 <span class="sd">``expression_count`` for the genes that isolate carries (a gene absent from an isolate is</span>
-<span class="sd">KEY-ABSENT, never 0). ``measurement_type = "rnaseq_tpm"``. The shared</span>
+<span class="sd">KEY-ABSENT, never 0). ``measurement_type = "rnaseq_tpm"``. Phenotype keys are Datafile 1's</span>
+<span class="sd">``systematic_name``; a row with a BLANK ``systematic_name`` (459,790 rows in the built</span>
+<span class="sd">isolates) is classified by its ``pan_absence`` into a ``BlankRowClass`` and served or</span>
+<span class="sd">dropped by ``BLANK_ROW_RULES`` (issue #598): ``present`` rows are served (under the S288C</span>
+<span class="sd">name when the row is an accessory feature merged with its S288C homolog, else under the</span>
+<span class="sd">pangenome id ``X&lt;n&gt;-&lt;name&gt;``), ``absent`` rows are dropped as the paper does, and</span>
+<span class="sd">``bad annotation`` / ``unannotated`` rows are dropped under a typed ``ProvenanceGap``</span>
+<span class="sd">because no mirrored source defines those classes. Every row is counted in</span>
+<span class="sd">``preprocess/blank_systematic_name_ledger.json``. The shared</span>
 <span class="sd">``phenotype_reference`` is the POPULATION MEAN over the 943 built isolates (mean TPM /</span>
 <span class="sd">rounded mean count per gene) -- an absolute WT-equivalent baseline, NOT a centered 0</span>
 <span class="sd">(reference is not the record itself; ``reference_centered = False`` for verification).</span>
@@ -177,11 +185,13 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tarfile</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">model_validator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -212,6 +222,12 @@
     <span class="n">SGD_S288C_R64</span><span class="p">,</span>
     <span class="n">load_genome_manifest</span><span class="p">,</span>
     <span class="n">resolve</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProvenanceGap</span><span class="p">,</span>
+    <span class="n">ProvenanceGapReason</span><span class="p">,</span>
+    <span class="n">SourcedValue</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
@@ -257,6 +273,8 @@
 <span class="p">]</span>
 <span class="n">_S288C_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?|Q\d</span><span class="si">{4}</span><span class="s2">|YNC[A-Q]\d</span><span class="si">{4}</span><span class="s2">[WC])$"</span><span class="p">)</span>
 <span class="n">_EXCLUDED_STRAIN_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^XTRA_"</span><span class="p">)</span>
+<span class="c1"># A Datafile 1 ``ORF`` value naming a non-reference pangenome ORF (R ``make.names`` form).</span>
+<span class="n">_PANGENOME_ORF_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^X\d+\."</span><span class="p">)</span>
 <span class="n">_COMPLEMENT</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">maketrans</span><span class="p">(</span><span class="s2">"ACGTNacgtn"</span><span class="p">,</span> <span class="s2">"TGCANtgcan"</span><span class="p">)</span>
 
 
@@ -400,6 +418,377 @@
     <span class="n">suffix</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^\d+-"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">orf_id</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">)</span>
     <span class="n">suffix</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"_NumOfGenes_\d+$"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">suffix</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">suffix</span> <span class="k">if</span> <span class="n">_S288C_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">suffix</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Rows with a blank ``systematic_name`` (issue #598)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Datafile 1 carries one row per (Strain, ORF): 6,517 ORF rows per strain, and in the</span>
+<span class="c1"># 943 built isolates 459,790 of them have a blank ``systematic_name``. Each such row has</span>
+<span class="c1"># a ``pan_absence`` class. Before #598 a pandas groupby dropped all of them silently;</span>
+<span class="c1"># now every one is classified, counted and either served or dropped by a named rule.</span>
+<span class="c1">#</span>
+<span class="c1"># Columns the loader consumes from Datafile 1.</span>
+<span class="n">CAUDAL_COLUMNS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"Strain"</span><span class="p">,</span>
+    <span class="s2">"systematic_name"</span><span class="p">,</span>
+    <span class="s2">"ORF"</span><span class="p">,</span>
+    <span class="s2">"Ortholog_in_SGD_2010"</span><span class="p">,</span>
+    <span class="s2">"pan_absence"</span><span class="p">,</span>
+    <span class="s2">"count"</span><span class="p">,</span>
+    <span class="s2">"tpm"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">CITATION_KEY</span> <span class="o">=</span> <span class="s2">"caudalPantranscriptomeRevealsLarge2024"</span>
+<span class="c1"># Online Methods, derived from the Europe PMC full-text XML of PMC11176082 (mirror</span>
+<span class="c1"># ``si/PMC11176082_fulltext.xml``, sha256 d8b8db20...) by</span>
+<span class="c1"># ``experiments/036-dataset-fixes-before-kg-build/scripts/caudal2024_retrieve_methods_si.py``.</span>
+<span class="n">METHODS_MD</span> <span class="o">=</span> <span class="s2">"methods.md"</span>
+<span class="n">METHODS_MD_SHA256</span> <span class="o">=</span> <span class="s2">"10ccc3d0267ca337e4c3941ef3893ce39dfe393ebadbab83b6e9ff07a7e4f1e0"</span>
+<span class="n">PAPER_MD_SHA256</span> <span class="o">=</span> <span class="s2">"652b3497bc7799fef9972db233a7046f2815742e17280270f5071c623f0ac8aa"</span>
+<span class="n">SI_PDF</span> <span class="o">=</span> <span class="s2">"si/41588_2024_1769_MOESM1_ESM.pdf"</span>
+<span class="n">SI_PDF_SHA256</span> <span class="o">=</span> <span class="s2">"826a0c7c34a3ab7b4a30eff1b89ef4fcf7d081a4e00885b97f552e49ee66f389"</span>
+<span class="c1"># Supplementary Tables 1-9; sheet "Table S2" ("Description of genes included in this</span>
+<span class="c1"># study") is the paper's 6,445-ORF gene table.</span>
+<span class="n">SI_TABLES_XLSX</span> <span class="o">=</span> <span class="s2">"si/41588_2024_1769_MOESM3_ESM.xlsx"</span>
+<span class="n">SI_TABLES_XLSX_SHA256</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"753e17d6ef9540206d3960c7f0c778fadfe43c9bee887ce4434885b81444bd7a"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_methods_sv</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A SourcedValue pinned to the mirrored online Methods (``methods.md``)."""</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="n">METHODS_MD</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">METHODS_MD_SHA256</span><span class="p">,</span>
+            <span class="n">page</span><span class="o">=</span><span class="sa">f</span><span class="s2">"methods.md line </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BlankRowClass</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The ledger class of a Datafile 1 row whose ``systematic_name`` is blank."""</span>
+
+    <span class="n">present_s288c_homolog</span> <span class="o">=</span> <span class="s2">"present_s288c_homolog"</span>
+    <span class="n">present_pangenome_orf</span> <span class="o">=</span> <span class="s2">"present_pangenome_orf"</span>
+    <span class="n">absent</span> <span class="o">=</span> <span class="s2">"absent"</span>
+    <span class="n">bad_annotation</span> <span class="o">=</span> <span class="s2">"bad_annotation"</span>
+    <span class="n">unannotated</span> <span class="o">=</span> <span class="s2">"unannotated"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BlankRowRule</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What the loader does with one blank-name class, and the source that says why.</span>
+
+<span class="sd">    Exactly one of ``definition`` (the sourced basis) and ``gap`` (a typed absence of</span>
+<span class="sd">    one, ``gap.field == "definition"``) is set.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">row_class</span><span class="p">:</span> <span class="n">BlankRowClass</span>
+    <span class="n">pan_absence</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">action</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"served"</span><span class="p">,</span> <span class="s2">"dropped"</span><span class="p">]</span>
+    <span class="n">id_rule</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">definition</span><span class="p">:</span> <span class="n">SourcedValue</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">gap</span><span class="p">:</span> <span class="n">ProvenanceGap</span> <span class="o">|</span> <span class="kc">None</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_one_basis</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlankRowRule</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">definition</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gap</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">row_class</span><span class="si">}</span><span class="s2">: exactly one of definition / gap must be set"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gap</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">gap</span><span class="o">.</span><span class="n">field</span> <span class="o">!=</span> <span class="s2">"definition"</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">row_class</span><span class="si">}</span><span class="s2">: gap must name the 'definition' field"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">action</span> <span class="o">==</span> <span class="s2">"served"</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id_rule</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">row_class</span><span class="si">}</span><span class="s2">: a served class needs an id_rule"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="n">_PRESENT_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Abundance corresponds to the mean expression levels of all isolates where the "</span>
+    <span class="s2">"gene is annotated as being present."</span>
+<span class="p">)</span>
+<span class="n">_MERGE_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"The read counts for 39 accessory features with a known homolog in S. cerevisiae "</span>
+    <span class="s2">"according to the pangenome annotations were merged with the corresponding homolog."</span>
+<span class="p">)</span>
+<span class="n">_UNDEFINED_CLASS_GAP_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"The pan_absence value </span><span class="si">{value!r}</span><span class="s2"> is not defined anywhere in the mirrored sources: "</span>
+    <span class="s2">"searched methods.md (online Methods + Data/Code availability), paper.md (main "</span>
+    <span class="s2">"text), the Supplementary Information PDF (</span><span class="si">{si_pdf}</span><span class="s2">, sha256 </span><span class="si">{si_pdf_sha}</span><span class="s2">) and every "</span>
+    <span class="s2">"sheet of Supplementary Tables 1-9 (</span><span class="si">{si_xlsx}</span><span class="s2">, sha256 </span><span class="si">{si_xlsx_sha}</span><span class="s2">) for "</span>
+    <span class="s2">"'bad annotation', 'unannotated' and 'pan_absence' with zero hits; the authors' "</span>
+    <span class="s2">"code (github.com/HaploTeam/1011yeastsRNAseq: tpm_calc.R and GWAS scripts) does not "</span>
+    <span class="s2">"assign the column either (read 2026-10-02, not mirrored). Rows stay dropped and "</span>
+    <span class="s2">"counted until a source defines the class."</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_undefined_class_gap</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProvenanceGap</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Typed gap for a ``pan_absence`` class no mirrored source defines."""</span>
+    <span class="k">return</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">"definition"</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+        <span class="n">looked_in</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="n">METHODS_MD</span><span class="p">,</span> <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span> <span class="n">sha256</span><span class="o">=</span><span class="n">METHODS_MD_SHA256</span>
+        <span class="p">),</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">_UNDEFINED_CLASS_GAP_NOTE</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">si_pdf</span><span class="o">=</span><span class="n">SI_PDF</span><span class="p">,</span>
+            <span class="n">si_pdf_sha</span><span class="o">=</span><span class="n">SI_PDF_SHA256</span><span class="p">,</span>
+            <span class="n">si_xlsx</span><span class="o">=</span><span class="n">SI_TABLES_XLSX</span><span class="p">,</span>
+            <span class="n">si_xlsx_sha</span><span class="o">=</span><span class="n">SI_TABLES_XLSX_SHA256</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="n">BLANK_ROW_RULES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">BlankRowClass</span><span class="p">,</span> <span class="n">BlankRowRule</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">BlankRowClass</span><span class="o">.</span><span class="n">present_s288c_homolog</span><span class="p">:</span> <span class="n">BlankRowRule</span><span class="p">(</span>
+        <span class="n">row_class</span><span class="o">=</span><span class="n">BlankRowClass</span><span class="o">.</span><span class="n">present_s288c_homolog</span><span class="p">,</span>
+        <span class="n">pan_absence</span><span class="o">=</span><span class="s2">"present"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"served"</span><span class="p">,</span>
+        <span class="n">id_rule</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"serve under the S288C systematic name in ORF when ORF matches the S288C "</span>
+            <span class="s2">"pattern, equals the row's Ortholog_in_SGD_2010, is a systematic_name "</span>
+            <span class="s2">"served by named rows, and the isolate has no named row of that name"</span>
+        <span class="p">),</span>
+        <span class="n">definition</span><span class="o">=</span><span class="n">_methods_sv</span><span class="p">(</span>
+            <span class="s2">"present_s288c_homolog"</span><span class="p">,</span>
+            <span class="n">_MERGE_QUOTE</span><span class="p">,</span>
+            <span class="mi">35</span><span class="p">,</span>
+            <span class="s2">"Datafile 1 relabels an accessory feature merged with its S. cerevisiae "</span>
+            <span class="s2">"homolog by putting the S288C name in ORF and Ortholog_in_SGD_2010 while "</span>
+            <span class="s2">"leaving systematic_name blank. Supplementary Table 2 (si/"</span>
+            <span class="s2">"41588_2024_1769_MOESM3_ESM.xlsx sheet 'Table S2', sha256 753e17d6..., "</span>
+            <span class="s2">"spreadsheet rows 7085-7100) assigns each of the 16 Annotation_Name values "</span>
+            <span class="s2">"these rows carry to that same S288C systematic_name (for example "</span>
+            <span class="s2">"1060-augustus_masked-ASN_8-20595 -&gt; YBR020W). In these isolates Peter's "</span>
+            <span class="s2">"presence matrix marks the reference ORF absent and the accessory ORF "</span>
+            <span class="s2">"present, so the record holds both a NaturalGeneAbsencePerturbation for "</span>
+            <span class="s2">"the S288C name and the expression keyed by it, as the paper's merge does."</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">gap</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">BlankRowClass</span><span class="o">.</span><span class="n">present_pangenome_orf</span><span class="p">:</span> <span class="n">BlankRowRule</span><span class="p">(</span>
+        <span class="n">row_class</span><span class="o">=</span><span class="n">BlankRowClass</span><span class="o">.</span><span class="n">present_pangenome_orf</span><span class="p">,</span>
+        <span class="n">pan_absence</span><span class="o">=</span><span class="s2">"present"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"served"</span><span class="p">,</span>
+        <span class="n">id_rule</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"serve under 'X' + _demangle_orf(ORF) (ORF 'X37.augustus_masked.2."</span>
+            <span class="s2">"CGIPLA_MA' -&gt; 'X37-augustus_masked.2.CGIPLA_MA'), the form Datafile 1 "</span>
+            <span class="s2">"gives every named accessory ORF as its systematic_name; refused unless "</span>
+            <span class="s2">"ORF is a pangenome id 'X&lt;number&gt;.&lt;name&gt;' and the id is no served "</span>
+            <span class="s2">"systematic_name"</span>
+        <span class="p">),</span>
+        <span class="n">definition</span><span class="o">=</span><span class="n">_methods_sv</span><span class="p">(</span>
+            <span class="s2">"present_pangenome_orf"</span><span class="p">,</span>
+            <span class="n">_PRESENT_QUOTE</span><span class="p">,</span>
+            <span class="mi">43</span><span class="p">,</span>
+            <span class="s2">"pan_absence is the per-isolate pangenome presence annotation ('All "</span>
+            <span class="s2">"annotations can be found in datafile 1.', same line), and the paper "</span>
+            <span class="s2">"computes abundance over the isolates annotated present. These ORFs (12 "</span>
+            <span class="s2">"plasmid ORFs in the released table) never carry a systematic_name and are "</span>
+            <span class="s2">"not in Supplementary Table 2, so they are outside the paper's 6,445-ORF "</span>
+            <span class="s2">"analysis set; they are quantified in Datafile 1 (per-strain TPM reaches "</span>
+            <span class="s2">"~1e6 only with the blank rows included) and Peter's presence matrix marks "</span>
+            <span class="s2">"each present in every isolate that carries such a row, so they are served "</span>
+            <span class="s2">"under the pangenome id. Measured by experiments/036-dataset-fixes-before-"</span>
+            <span class="s2">"kg-build/scripts/caudal2024_blank_systematic_name.py."</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">gap</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">BlankRowClass</span><span class="o">.</span><span class="n">absent</span><span class="p">:</span> <span class="n">BlankRowRule</span><span class="p">(</span>
+        <span class="n">row_class</span><span class="o">=</span><span class="n">BlankRowClass</span><span class="o">.</span><span class="n">absent</span><span class="p">,</span>
+        <span class="n">pan_absence</span><span class="o">=</span><span class="s2">"absent"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"dropped"</span><span class="p">,</span>
+        <span class="n">id_rule</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">definition</span><span class="o">=</span><span class="n">_methods_sv</span><span class="p">(</span>
+            <span class="s2">"absent"</span><span class="p">,</span>
+            <span class="n">_PRESENT_QUOTE</span><span class="p">,</span>
+            <span class="mi">43</span><span class="p">,</span>
+            <span class="s2">"The paper's abundance excludes isolates where the gene is not annotated "</span>
+            <span class="s2">"present; the Fig. 2 caption agrees (paper.md line 55, sha256 652b3497...: "</span>
+            <span class="s2">"'For accessory genes, isolates that did not carry the given gene were "</span>
+            <span class="s2">"excluded from the calculations.'). A gene absent from an isolate is "</span>
+            <span class="s2">"key-absent in its phenotype."</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">gap</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">BlankRowClass</span><span class="o">.</span><span class="n">bad_annotation</span><span class="p">:</span> <span class="n">BlankRowRule</span><span class="p">(</span>
+        <span class="n">row_class</span><span class="o">=</span><span class="n">BlankRowClass</span><span class="o">.</span><span class="n">bad_annotation</span><span class="p">,</span>
+        <span class="n">pan_absence</span><span class="o">=</span><span class="s2">"bad annotation"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"dropped"</span><span class="p">,</span>
+        <span class="n">id_rule</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">definition</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">gap</span><span class="o">=</span><span class="n">_undefined_class_gap</span><span class="p">(</span><span class="s2">"bad annotation"</span><span class="p">),</span>
+    <span class="p">),</span>
+    <span class="n">BlankRowClass</span><span class="o">.</span><span class="n">unannotated</span><span class="p">:</span> <span class="n">BlankRowRule</span><span class="p">(</span>
+        <span class="n">row_class</span><span class="o">=</span><span class="n">BlankRowClass</span><span class="o">.</span><span class="n">unannotated</span><span class="p">,</span>
+        <span class="n">pan_absence</span><span class="o">=</span><span class="s2">"unannotated"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"dropped"</span><span class="p">,</span>
+        <span class="n">id_rule</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">definition</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">gap</span><span class="o">=</span><span class="n">_undefined_class_gap</span><span class="p">(</span><span class="s2">"unannotated"</span><span class="p">),</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">UnclassifiedBlankRowError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A blank-``systematic_name`` row whose ``pan_absence`` no ledger class covers."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">GeneIdCollisionError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A served blank-name row would key a gene already served, or no rule fits its id."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BlankNameLedger</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Accounting for every Datafile 1 row of the built isolates (issue #598).</span>
+
+<span class="sd">    ``counts`` holds the rows of each blank-name class, ``served_ids`` the rows each</span>
+<span class="sd">    served blank-name id received. Every blank row is in exactly one class.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BlankRowRule</span><span class="p">]</span>
+    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_rows_named</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">n_rows_blank</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">BlankRowClass</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="n">tpm_by_class</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">BlankRowClass</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="n">served_ids</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+    <span class="n">named_pan_absence_counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_accounted</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlankNameLedger</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_rows_named</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_rows_blank</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_rows</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"named + blank rows must equal all rows"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_rows_blank</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"every blank row must be in exactly one class"</span><span class="p">)</span>
+        <span class="n">served</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">counts</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">BLANK_ROW_RULES</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">action</span> <span class="o">==</span> <span class="s2">"served"</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">served_ids</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">!=</span> <span class="n">served</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"served_ids must account for every served row"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">read_caudal_table</span><span class="p">(</span><span class="n">zip_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read ``CAUDAL_COLUMNS`` of Datafile 1 from its zip (comma-delimited, latin-1).</span>
+
+<span class="sd">    ``Strain`` is cast to ``str``; a missing column raises pandas' ``Usecols do not</span>
+<span class="sd">    match columns`` error.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
+
+    <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">zip_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">zf</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">_tab_member</span><span class="p">(</span><span class="n">zip_path</span><span class="p">,</span> <span class="n">zf</span><span class="o">.</span><span class="n">namelist</span><span class="p">())</span>
+        <span class="k">with</span> <span class="n">zf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+                <span class="n">handle</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"latin-1"</span><span class="p">,</span> <span class="n">low_memory</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="n">CAUDAL_COLUMNS</span>
+            <span class="p">)</span>
+    <span class="n">df</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">restrict_to_built_isolates</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">peter_isolates</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Keep the rows of built isolates: not ``XTRA_*``, not ``FY4-6``, in Peter's panel."""</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">_EXCLUDED_STRAIN_RE</span><span class="p">)]</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"FY4-6"</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">peter_isolates</span><span class="p">)]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_gene_ids</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">BlankNameLedger</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Give every kept Datafile 1 row a ``gene_id`` and account for every blank row.</span>
+
+<span class="sd">    ``df`` holds ``CAUDAL_COLUMNS`` for the built isolates only. A named row keeps its</span>
+<span class="sd">    ``systematic_name``. A blank-name row is classified by ``pan_absence`` into a</span>
+<span class="sd">    ``BlankRowClass``; the two ``present`` classes are served under the id their</span>
+<span class="sd">    ``BLANK_ROW_RULES`` entry names and the others are dropped. A blank row with any</span>
+<span class="sd">    other ``pan_absence`` raises ``UnclassifiedBlankRowError``; a served id that would</span>
+<span class="sd">    collide with a named gene of the same isolate raises ``GeneIdCollisionError``.</span>
+<span class="sd">    Returns the kept rows (with ``gene_id``) and the ledger.</span>
+<span class="sd">    """</span>
+    <span class="n">blank_mask</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"systematic_name"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span>
+    <span class="n">named</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="n">blank_mask</span><span class="p">]</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">gene_id</span><span class="o">=</span><span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="p">[</span><span class="s2">"systematic_name"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">))</span>
+    <span class="n">blank</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">blank_mask</span><span class="p">]</span>
+    <span class="n">served_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">named</span><span class="p">[</span><span class="s2">"gene_id"</span><span class="p">])</span>
+
+    <span class="n">by_value</span> <span class="o">=</span> <span class="p">{</span><span class="n">r</span><span class="o">.</span><span class="n">pan_absence</span><span class="p">:</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">BLANK_ROW_RULES</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="n">unknown</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">blank</span><span class="p">[</span><span class="s2">"pan_absence"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">))</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">by_value</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnclassifiedBlankRowError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">blank</span><span class="p">[</span><span class="s1">'pan_absence'</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">by_value</span><span class="p">)))</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> "</span>
+            <span class="sa">f</span><span class="s2">"blank-systematic_name rows carry a pan_absence no ledger class covers: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">unknown</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+    <span class="n">orf</span> <span class="o">=</span> <span class="n">blank</span><span class="p">[</span><span class="s2">"ORF"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">homolog</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">blank</span><span class="p">[</span><span class="s2">"pan_absence"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"present"</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="n">orf</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">_S288C_RE</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">orf</span> <span class="o">==</span> <span class="n">blank</span><span class="p">[</span><span class="s2">"Ortholog_in_SGD_2010"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">))</span>
+        <span class="o">&amp;</span> <span class="n">orf</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">served_names</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">pangenome</span> <span class="o">=</span> <span class="p">(</span><span class="n">blank</span><span class="p">[</span><span class="s2">"pan_absence"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"present"</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">homolog</span>
+    <span class="n">row_class</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+        <span class="n">blank</span><span class="p">[</span><span class="s2">"pan_absence"</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">by_value</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">blank</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span>
+    <span class="p">)</span>
+    <span class="n">row_class</span><span class="p">[</span><span class="n">homolog</span><span class="p">]</span> <span class="o">=</span> <span class="n">BlankRowClass</span><span class="o">.</span><span class="n">present_s288c_homolog</span>
+    <span class="n">row_class</span><span class="p">[</span><span class="n">pangenome</span><span class="p">]</span> <span class="o">=</span> <span class="n">BlankRowClass</span><span class="o">.</span><span class="n">present_pangenome_orf</span>
+
+    <span class="n">homolog_rows</span> <span class="o">=</span> <span class="n">blank</span><span class="p">[</span><span class="n">homolog</span><span class="p">]</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">gene_id</span><span class="o">=</span><span class="n">orf</span><span class="p">[</span><span class="n">homolog</span><span class="p">])</span>
+    <span class="n">not_pangenome</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">orf</span><span class="p">[</span><span class="n">pangenome</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">orf</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">_PANGENOME_ORF_RE</span><span class="p">)]))</span>
+    <span class="k">if</span> <span class="n">not_pangenome</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">GeneIdCollisionError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"pangenome-id rule refuses ORFs that are no pangenome id: </span><span class="si">{</span><span class="n">not_pangenome</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">pangenome_ids</span> <span class="o">=</span> <span class="s2">"X"</span> <span class="o">+</span> <span class="n">orf</span><span class="p">[</span><span class="n">pangenome</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">_demangle_orf</span><span class="p">)</span>
+    <span class="n">named_ids</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">pangenome_ids</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">served_names</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">named_ids</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">GeneIdCollisionError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"pangenome-id rule would serve ids named rows already serve: </span><span class="si">{</span><span class="n">named_ids</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">pangenome_rows</span> <span class="o">=</span> <span class="n">blank</span><span class="p">[</span><span class="n">pangenome</span><span class="p">]</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">gene_id</span><span class="o">=</span><span class="n">pangenome_ids</span><span class="p">)</span>
+    <span class="n">served</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">homolog_rows</span><span class="p">,</span> <span class="n">pangenome_rows</span><span class="p">])</span>
+    <span class="n">named_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">named</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">],</span> <span class="n">named</span><span class="p">[</span><span class="s2">"gene_id"</span><span class="p">]))</span>
+    <span class="n">clashes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="p">{</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">served</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">],</span> <span class="n">served</span><span class="p">[</span><span class="s2">"gene_id"</span><span class="p">])</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">named_keys</span><span class="p">}</span>
+    <span class="p">)</span>
+    <span class="n">duplicated</span> <span class="o">=</span> <span class="n">served</span><span class="o">.</span><span class="n">duplicated</span><span class="p">([</span><span class="s2">"Strain"</span><span class="p">,</span> <span class="s2">"gene_id"</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">clashes</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">(</span><span class="n">duplicated</span><span class="o">.</span><span class="n">any</span><span class="p">()):</span>
+        <span class="k">raise</span> <span class="n">GeneIdCollisionError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"served blank-name rows collide with named rows </span><span class="si">{</span><span class="n">clashes</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span><span class="si">}</span><span class="s2"> "</span>
+            <span class="sa">f</span><span class="s2">"(of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">clashes</span><span class="p">)</span><span class="si">}</span><span class="s2">) or repeat a (Strain, gene_id) "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">duplicated</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> times"</span>
+        <span class="p">)</span>
+
+    <span class="n">ledger</span> <span class="o">=</span> <span class="n">BlankNameLedger</span><span class="p">(</span>
+        <span class="n">rules</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">BLANK_ROW_RULES</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+        <span class="n">n_rows</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span>
+        <span class="n">n_rows_named</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">named</span><span class="p">),</span>
+        <span class="n">n_rows_blank</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">blank</span><span class="p">),</span>
+        <span class="n">counts</span><span class="o">=</span><span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="nb">int</span><span class="p">((</span><span class="n">row_class</span> <span class="o">==</span> <span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">BlankRowClass</span><span class="p">},</span>
+        <span class="n">tpm_by_class</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">c</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">blank</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">row_class</span> <span class="o">==</span> <span class="n">c</span><span class="p">,</span> <span class="s2">"tpm"</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">BlankRowClass</span>
+        <span class="p">},</span>
+        <span class="n">served_ids</span><span class="o">=</span><span class="p">{</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">g</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">served</span><span class="p">[</span><span class="s2">"gene_id"</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">},</span>
+        <span class="n">named_pan_absence_counts</span><span class="o">=</span><span class="p">{</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">named</span><span class="p">[</span><span class="s2">"pan_absence"</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">(</span><span class="n">dropna</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">named</span><span class="p">,</span> <span class="n">served</span><span class="p">]),</span> <span class="n">ledger</span>
 
 
 <div class="viewcode-block" id="CaudalPanTranscriptome2024Dataset">
@@ -610,41 +999,47 @@
         <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
         <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
     <span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Aggregate Caudal expression per (strain, gene); return matched strains + ref."""</span>
-        <span class="kn">import</span><span class="w"> </span><span class="nn">zipfile</span>
+<span class="w">        </span><span class="sd">"""Aggregate Caudal expression per (strain, gene); return matched strains + ref.</span>
 
-        <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">)</span>
-        <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">zf</span><span class="p">:</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">_tab_member</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">zf</span><span class="o">.</span><span class="n">namelist</span><span class="p">())</span>
-            <span class="k">with</span> <span class="n">zf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
-                <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
-                    <span class="n">handle</span><span class="p">,</span>
-                    <span class="n">encoding</span><span class="o">=</span><span class="s2">"latin-1"</span><span class="p">,</span>
-                    <span class="n">low_memory</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                    <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">,</span> <span class="s2">"systematic_name"</span><span class="p">,</span> <span class="s2">"count"</span><span class="p">,</span> <span class="s2">"tpm"</span><span class="p">],</span>
-                <span class="p">)</span>
-        <span class="n">df</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">_EXCLUDED_STRAIN_RE</span><span class="p">)]</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"FY4-6"</span><span class="p">]</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Strain"</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">peter_isolates</span><span class="p">)]</span>
+<span class="sd">        Every row of the built isolates is accounted for by ``resolve_gene_ids``: named</span>
+<span class="sd">        rows keep their ``systematic_name``, blank-name rows are served or dropped by</span>
+<span class="sd">        their ledger class, and the ledger is written to</span>
+<span class="sd">        ``preprocess/blank_systematic_name_ledger.json`` (issue #598).</span>
+<span class="sd">        """</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">read_caudal_table</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">))</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">restrict_to_built_isolates</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">peter_isolates</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">,</span> <span class="n">ledger</span> <span class="o">=</span> <span class="n">resolve_gene_ids</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="n">ledger_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"blank_systematic_name_ledger.json"</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">ledger_path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">ledger</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Caudal rows in built isolates: </span><span class="si">%d</span><span class="s2"> (</span><span class="si">%d</span><span class="s2"> named, </span><span class="si">%d</span><span class="s2"> blank systematic_name); "</span>
+            <span class="s2">"blank rows by class </span><span class="si">%s</span><span class="s2">; served </span><span class="si">%d</span><span class="s2"> blank rows under </span><span class="si">%d</span><span class="s2"> ids -&gt; </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">n_rows</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">n_rows_named</span><span class="p">,</span>
+            <span class="n">ledger</span><span class="o">.</span><span class="n">n_rows_blank</span><span class="p">,</span>
+            <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">):</span> <span class="n">n</span> <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">ledger</span><span class="o">.</span><span class="n">counts</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+            <span class="nb">sum</span><span class="p">(</span><span class="n">ledger</span><span class="o">.</span><span class="n">served_ids</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">ledger</span><span class="o">.</span><span class="n">served_ids</span><span class="p">),</span>
+            <span class="n">ledger_path</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="c1"># Aggregate multi-allele rows per (strain, gene): tpm sum, count sum (defensive;</span>
-        <span class="c1"># the merged file already carries one row per pair).</span>
+        <span class="c1"># the merged file already carries one row per pair). ``gene_id`` is never null.</span>
         <span class="n">agg</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">"Strain"</span><span class="p">,</span> <span class="s2">"systematic_name"</span><span class="p">],</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s2">"Strain"</span><span class="p">,</span> <span class="s2">"gene_id"</span><span class="p">],</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dropna</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
             <span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">tpm</span><span class="o">=</span><span class="p">(</span><span class="s2">"tpm"</span><span class="p">,</span> <span class="s2">"sum"</span><span class="p">),</span> <span class="n">count</span><span class="o">=</span><span class="p">(</span><span class="s2">"count"</span><span class="p">,</span> <span class="s2">"sum"</span><span class="p">))</span>
             <span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
         <span class="p">)</span>
-        <span class="n">agg</span><span class="p">[</span><span class="s2">"systematic_name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">agg</span><span class="p">[</span><span class="s2">"systematic_name"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
         <span class="n">per_strain</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">strain</span><span class="p">,</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">agg</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"Strain"</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-            <span class="n">genes</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="s2">"systematic_name"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">genes</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="s2">"gene_id"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
             <span class="n">tpm</span> <span class="o">=</span> <span class="p">{</span><span class="n">g</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">genes</span><span class="p">,</span> <span class="n">sub</span><span class="p">[</span><span class="s2">"tpm"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())}</span>
             <span class="n">count</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="n">g</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">genes</span><span class="p">,</span> <span class="n">sub</span><span class="p">[</span><span class="s2">"count"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
             <span class="p">}</span>
             <span class="n">per_strain</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">strain</span><span class="p">)]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"tpm"</span><span class="p">:</span> <span class="n">tpm</span><span class="p">,</span> <span class="s2">"count"</span><span class="p">:</span> <span class="n">count</span><span class="p">}</span>
         <span class="c1"># Population-mean reference over the matched isolates (mean per gene).</span>
-        <span class="n">ref</span> <span class="o">=</span> <span class="n">agg</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"systematic_name"</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">agg</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"gene_id"</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
             <span class="n">tpm</span><span class="o">=</span><span class="p">(</span><span class="s2">"tpm"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">),</span> <span class="n">count</span><span class="o">=</span><span class="p">(</span><span class="s2">"count"</span><span class="p">,</span> <span class="s2">"mean"</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="n">ref_tpm</span> <span class="o">=</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">g</span><span class="p">):</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">ref</span><span class="p">[</span><span class="s2">"tpm"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>

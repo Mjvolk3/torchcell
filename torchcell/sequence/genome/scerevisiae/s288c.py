@@ -594,6 +594,90 @@ class GenomeDatabaseRecordError(RuntimeError):
 _UPDATE_CHECKOUT = "Update this checkout, or resubmit the job from an updated checkout."
 
 
+class GenomeDatabaseUnavailableError(RuntimeError):
+    """``data.db`` cannot be read for a reason that says nothing about its rows (it is
+    locked by another process, cannot be opened, or an I/O error occurred); every
+    file is left alone.
+    """
+
+
+class GenomeDatabaseInstallError(OSError):
+    """A finished build could not be renamed onto ``data.db``; the build was removed."""
+
+
+#: sqlite primary result codes that say the file's CONTENT is damaged or is not this
+#: database (a missing table is SQLITE_ERROR).
+_DAMAGE_CODES = frozenset(
+    {sqlite3.SQLITE_ERROR, sqlite3.SQLITE_CORRUPT, sqlite3.SQLITE_NOTADB}
+)
+#: sqlite primary result codes that say another process holds the database.
+_LOCK_CODES = frozenset({sqlite3.SQLITE_BUSY, sqlite3.SQLITE_LOCKED})
+#: sqlite primary result codes that say this process may not open the file.
+_ACCESS_CODES = frozenset({sqlite3.SQLITE_CANTOPEN, sqlite3.SQLITE_PERM})
+#: Files sqlite keeps beside a database. One left beside an OLD file must never sit
+#: beside a new one: sqlite would apply the old file's pages to it at the next open.
+_COMPANION_SUFFIXES = ("-journal", "-wal", "-shm")
+
+
+def require_damage(db_path: str, exc: sqlite3.DatabaseError) -> None:
+    """Return when ``exc`` says ``db_path`` itself is damaged: corrupt, not a
+    database, a missing table, or a hot rollback journal a killed in-place writer left
+    (``SQLITE_READONLY_ROLLBACK``). Raise :class:`GenomeDatabaseUnavailableError`
+    for every other sqlite error (locked, cannot open, permission, I/O), which says
+    nothing about the rows, so the file must not be migrated or replaced.
+    """
+    code = exc.sqlite_errorcode
+    primary = code & 0xFF
+    if primary in _DAMAGE_CODES or code == sqlite3.SQLITE_READONLY_ROLLBACK:
+        return
+    if primary in _LOCK_CODES:
+        raise GenomeDatabaseUnavailableError(
+            f"{db_path} is locked by another process ({exc.sqlite_errorname}: {exc}); "
+            "every file is left alone. Retry when that process has finished."
+        ) from exc
+    if primary in _ACCESS_CODES:
+        mode = (
+            oct(os.stat(db_path).st_mode & 0o777) if osp.exists(db_path) else "absent"
+        )
+        raise GenomeDatabaseUnavailableError(
+            f"{db_path} cannot be opened by this process ({exc.sqlite_errorname}: "
+            f"{exc}; mode {mode}); every file is left alone. Fix its permissions or "
+            "ownership, then retry."
+        ) from exc
+    raise GenomeDatabaseUnavailableError(
+        f"{db_path} cannot be read right now ({exc.sqlite_errorname}: {exc}); every "
+        "file is left alone. Retry, and check the filesystem if it persists."
+    ) from exc
+
+
+def install_genome_database(
+    tmp_path: str, db_path: str, kept: str | None = None
+) -> None:
+    """Rename the finished build ``tmp_path`` onto ``db_path``.
+
+    A companion file left beside the OLD file (``-journal``, ``-wal``, ``-shm``) is
+    first moved beside the kept copy ``kept`` (``data.db.untrusted-journal``, ...),
+    or removed when nothing is kept, so it is never paired with the new build. If the
+    rename fails, the build is removed and :class:`GenomeDatabaseInstallError` names
+    both paths.
+    """
+    for suffix in _COMPANION_SUFFIXES:
+        companion = db_path + suffix
+        if osp.lexists(companion):
+            if kept is None:
+                os.remove(companion)
+            else:
+                os.replace(companion, kept + suffix)
+    try:
+        os.replace(tmp_path, db_path)
+    except OSError as exc:
+        os.remove(tmp_path)
+        raise GenomeDatabaseInstallError(
+            f"the build {tmp_path} could not be renamed onto {db_path} ({exc}); the "
+            "build was removed."
+        ) from exc
+
+
 class GenomeRootNotFoundError(FileNotFoundError):
     """``genome_root`` does not exist and the constructor was not asked to build."""
 
@@ -830,7 +914,8 @@ def refuse_newer_record(db_path: str) -> None:
         return
     try:
         raw = _read_record_json(db_path)
-    except sqlite3.DatabaseError:  # unreadable: it carries no newer record
+    except sqlite3.DatabaseError as exc:  # damaged: it carries no newer record
+        require_damage(db_path, exc)
         return
     if raw is not None:
         record_version(db_path, raw)
@@ -853,6 +938,7 @@ def untrusted_reason(
     try:
         raw = _read_record_json(db_path)
     except sqlite3.DatabaseError as exc:
+        require_damage(db_path, exc)
         return f"sqlite cannot read it ({exc})"
     if raw is None:
         return f"it carries no {SOURCE_TABLE} record"
@@ -878,6 +964,7 @@ def untrusted_reason(
         with closing(sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)) as conn:
             featuretype_counts, relations_count = _database_counts(conn)
     except sqlite3.DatabaseError as exc:
+        require_damage(db_path, exc)
         return f"sqlite cannot read it ({exc})"
     if (featuretype_counts, relations_count) != (
         record.featuretype_counts,
@@ -904,7 +991,8 @@ def _content_digest_or_none(db_path: str) -> str | None:
     """
     try:
         return database_content_digest(db_path)
-    except sqlite3.DatabaseError:
+    except sqlite3.DatabaseError as exc:
+        require_damage(db_path, exc)
         return None
 
 
@@ -923,9 +1011,12 @@ def migrate_genome_database(
     (an old-code rebuild without a record) replace ``db_path`` and nothing is kept;
     different rows (deleted or rewritten in place) are copied to
     ``data.db.untrusted``, replacing any earlier kept file, before the fresh build is
-    renamed onto ``db_path``. The path never goes missing and readers holding the old
-    inode keep it. One WARNING names the case. Every temporary file is removed on
-    every path.
+    renamed onto ``db_path`` (:func:`install_genome_database`, which moves any
+    companion journal beside the kept copy). When the copy turns out to be trusted
+    (another process installed its build between the check and the copy), nothing is
+    kept and no WARNING is logged: the other process kept the original. The path never
+    goes missing and readers holding the old inode keep it. One WARNING names the
+    case. Every temporary file is removed on every path.
     """
     db_dir = osp.dirname(db_path)
     tmp_path = write_genome_database(gff_path, db_dir, expected)
@@ -934,7 +1025,7 @@ def migrate_genome_database(
         if untrusted_reason(db_path, expected, rebuild_call) is None:
             return
         if _content_digest_or_none(db_path) == database_content_digest(tmp_path):
-            os.replace(tmp_path, db_path)
+            install_genome_database(tmp_path, db_path)
             log.warning(
                 "genome database %s was not trusted (%s); its rows equal a fresh "
                 "build, so it was replaced by the recorded build and nothing was kept",
@@ -945,8 +1036,13 @@ def migrate_genome_database(
         kept = osp.join(db_dir, UNTRUSTED_DB_FILENAME)
         copy_path = _temp_in(db_dir, UNTRUSTED_DB_FILENAME)
         shutil.copyfile(db_path, copy_path)
+        if untrusted_reason(copy_path, expected, rebuild_call) is None:
+            # Another process installed its fresh build between our check and our
+            # copy: the copy is that build, not the untrusted file, so keep nothing
+            # (the other process kept the original).
+            return
         os.replace(copy_path, kept)
-        os.replace(tmp_path, db_path)
+        install_genome_database(tmp_path, db_path, kept)
         log.warning(
             "genome database %s was not trusted (%s); its rows differ from a fresh "
             "build, so it was kept as %s (replacing any earlier one) and replaced by "
@@ -1035,6 +1131,20 @@ class SCerevisiaeGenome(Genome):
       carries a record of a newer version (:class:`GenomeDatabaseVersionError`) or
       one this checkout cannot read (:class:`GenomeDatabaseRecordError`). Pass it
       only deliberately.
+
+    A sqlite error that says nothing about the rows (the file is locked by another
+    process, cannot be opened, or an I/O error occurred) raises
+    :class:`GenomeDatabaseUnavailableError` on either path and leaves every file
+    alone. A companion journal (``-journal``, ``-wal``, ``-shm``) beside the old file
+    is never left beside a new build: it follows the kept copy or is removed.
+
+    The open-time check reads the record, the per-featuretype counts (served from
+    covering indexes) and the change counter, not every page. Damage made out of band
+    in pages it does not touch (for example a zeroed ``features`` table page) opens
+    as trusted, and the first read that reaches the damaged page raises
+    ``sqlite3.DatabaseError: database disk image is malformed``. Construct once with
+    ``overwrite=True`` to repair it. No old-code kill produced this state in testing,
+    and a full ``integrity_check`` at every open is not run because of its cost.
 
     Construction also removes this host's ``data.db.*.building`` files whose writer
     pid is dead (a build killed mid-way), when the root is writable.
@@ -1133,7 +1243,7 @@ class SCerevisiaeGenome(Genome):
             refuse_newer_record(db_path)
             self._require_writable(writable, db_path, why)
             tmp_path = write_genome_database(self._gff_path, self.genome_root, source)
-            os.replace(tmp_path, db_path)
+            install_genome_database(tmp_path, db_path)
         else:
             reason = untrusted_reason(db_path, source, rebuild_call)
             if reason is not None:

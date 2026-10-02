@@ -35,3 +35,7 @@ Added `test_role_for_per_pdf_si_figures_and_ocr_provenance` (the new `si/images/
 ## 2026.10.01 - Root PDF figures
 
 `images/SOM/a.jpg` is now asserted `ocr_image` (was `other` for `images/paper/a.jpg`); one level deeper stays `other`.
+
+## 2026.10.02 - Top-level citation index (issue #607)
+
+`FakeZot` gained `top()`, answering as `/items/top` does (every item with no `parentItem`), and `_item` now sets `itemType` (default `journalArticle`). The enriched end-to-end test now pins the read sequence starting with `("top",)`. Added: an index over two top-level items plus an attachment, note and annotation child holds exactly the two keys and reads only `top` and `everything`; a standalone attachment, note and annotation (two each, same title) are each skipped; `citation_index_with_duplicates` leaves shared keys out of the index and returns them in scan order, with the exact `describe_duplicates` string; `backfill_mirror` refuses a duplicate no directory is named after, with the exact message, writing no manifest.

@@ -2,8 +2,10 @@
 """A read-only pyzotero stand-in for the literature tests (not a test module).
 
 It implements only the READ calls the library code makes (``collections``,
-``everything``, ``follow``, ``items``, ``collection_items``, ``collection_items_top``,
-``children``, ``file``) and records each one.
+``everything``, ``follow``, ``items``, ``top``, ``collection_items``,
+``collection_items_top``, ``children``, ``file``) and records each one. ``top()``
+answers as the live ``/items/top`` endpoint does: every item whose ``data`` has no
+``parentItem`` (a standalone attachment or note is top-level; a child is not).
 
 Paging follows pyzotero 1.13: every list-returning read answers with at most
 ``page_size`` (default 100, pyzotero's ``limit``) rows and records a ``next`` link in
@@ -89,6 +91,10 @@ class FakeZot:
         if format == "bibtex":
             return self._bib(None)
         return self._page(self._items)
+
+    def top(self) -> list[dict[str, Any]]:
+        self.calls.append(("top",))
+        return self._page([i for i in self._items if "parentItem" not in i["data"]])
 
     def collection_items(self, key: str, format: str | None = None) -> Any:
         self.calls.append(("collection_items", key, format))

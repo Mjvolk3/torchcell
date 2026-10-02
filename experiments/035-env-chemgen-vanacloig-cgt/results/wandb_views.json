@@ -1,0 +1,160 @@
+{
+  "view": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt?nw=sy9905pud6q",
+  "groups": {
+    "L1_lam0": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/L1_lam0",
+      "run_ids": [
+        "k59n3p37",
+        "ojb6zc8s",
+        "4bztxq4w",
+        "od7p6mrr",
+        "05l7kd5g"
+      ]
+    },
+    "L1_lam1e-3": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/L1_lam1e-3",
+      "run_ids": [
+        "0vc8vy7c",
+        "lpfx44fq",
+        "ni6ob3ty",
+        "r4mstdf0",
+        "l8lwvhj4"
+      ]
+    },
+    "L2_lam0": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/L2_lam0",
+      "run_ids": [
+        "e2ug03fo",
+        "tkhqci0g",
+        "wyhi2fhf",
+        "cnltyflk",
+        "oqjwqwkh"
+      ]
+    },
+    "L2_lam1e-3": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/L2_lam1e-3",
+      "run_ids": [
+        "7axw6xz9",
+        "7qqpkxmf",
+        "w62paw22",
+        "ybe43qb0",
+        "t69n3tmk"
+      ]
+    },
+    "L8_lam0": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/L8_lam0",
+      "run_ids": [
+        "icemrp91",
+        "9i2ni33g"
+      ]
+    },
+    "L8_lam1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/L8_lam1",
+      "run_ids": [
+        "9qgkfdy7",
+        "hovi3u9f",
+        "nrtp70ds",
+        "xlmeikbz",
+        "5z4lx51i"
+      ]
+    },
+    "op_L1_lam0": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/op_L1_lam0",
+      "run_ids": [
+        "9l7p0q57",
+        "dt6fs31u",
+        "h2g14hlk",
+        "hz44ulod",
+        "9b9lb8mt",
+        "k2u2kpvp",
+        "pc3wamb9",
+        "psj125m3",
+        "62xmeaes",
+        "mjdn5g9t",
+        "l5e1j0vi",
+        "mj4pftzx",
+        "fcr7cfwr",
+        "9pwu0cib",
+        "w6hdfzm2"
+      ]
+    },
+    "bil_L1_lam0": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/bil_L1_lam0",
+      "run_ids": [
+        "sbh5vc86",
+        "yer7q1hu",
+        "m5ambtrt",
+        "6ycox31x",
+        "p0h7y1o3",
+        "0vxa0b63",
+        "am3t4j9h",
+        "dg6t4y12",
+        "guv66wc1",
+        "98ck3di0",
+        "raaco7na",
+        "y9ni7vy4",
+        "8wxkgtos",
+        "z4vfi0ta",
+        "uhsue10w",
+        "9nfuh11d",
+        "qpb7hmtb",
+        "yqnabbho",
+        "o2wgniiv"
+      ]
+    },
+    "L3_lam0": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/L3_lam0",
+      "run_ids": [
+        "08cqo4vj",
+        "qo3skc6q"
+      ]
+    },
+    "L4_lam0": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/L4_lam0",
+      "run_ids": [
+        "ljymfj0x",
+        "lokc2lhy",
+        "rd6aplkq",
+        "k8d9likn",
+        "hjoj9qei"
+      ]
+    },
+    "L4_lam1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/L4_lam1",
+      "run_ids": [
+        "po7m44os",
+        "1g3upjan",
+        "aijbpjrb",
+        "fonsmk9m",
+        "19wzf6lh"
+      ]
+    },
+    "L6_lam0": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/L6_lam0",
+      "run_ids": [
+        "yar8b9gw",
+        "32c0eg2z"
+      ]
+    },
+    "enc_L1_lam0": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/enc_L1_lam0",
+      "run_ids": [
+        "09k9znvn",
+        "14es6y78",
+        "ctm62ug6",
+        "qha55e0c",
+        "z2blgi20",
+        "ae2cm2kz",
+        "ax49yhho",
+        "quuy13d0",
+        "zwyomzf8",
+        "iwii3bko",
+        "4lsk0srf",
+        "i4juzv2f",
+        "4r7auwo5",
+        "7d8ypeeg",
+        "28fvn2ww"
+      ]
+    }
+  }
+}

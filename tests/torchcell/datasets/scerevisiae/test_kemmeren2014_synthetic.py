@@ -7,10 +7,11 @@
 opens them, their presence only stops PyG calling ``download()``), Table S1 as
 ``kemmeren2014_table_s1.xlsx`` (openpyxl), and pickled REAL ``GEOparse.GEOTypes.GSE``
 objects built in memory (``GSM``/``GPL`` with a ``description`` column frame) at the
-``<accession>.pkl`` paths ``process()`` checks first. GSE42215 (MATalpha flask) is left
-without a pickle; the WT loop skips a missing pickle, and the two deletion GSEs both
-have one, so ``GEOparse.get_GEO`` (the network branch) is never reached. The genome is a
-stub with the three attributes ``resolve_gene_name_comprehensive`` reads.
+``<accession>.pkl`` paths ``process()`` checks first. The two deletion GSEs both have
+one, so ``GEOparse.get_GEO`` (the network branch) is never reached. The four wildtype
+series have pickles too (GSE42215 excepted) but ``process()`` no longer opens them
+(#484); a test removes them and gets the same records. The genome is a stub with the
+three attributes ``resolve_gene_name_comprehensive`` reads.
 
 Channels follow GEO's own metadata, as on the real series: ``label_ch1`` is Cy5 and
 ``label_ch2`` Cy3 on every array, and ``source_name_ch1`` / ``source_name_ch2`` say
@@ -42,9 +43,10 @@ kept arrays, 5, 5, 4, and the reference ``expression`` the mean refpool signal o
 same arrays, 4, 4, 1. HSN1 -> YHR127W (BY4742): 3/3 -> 0, 6/3 -> +1, 1/2 -> -1, all n
 = 1, linear 3, 6, 1, refpool 3, 3, 2.
 
-WT refpool replicate counts (positive refpool channel per gene): MATa W1 (refpool Cy5
-1, 1, 1), W2 (refpool Cy3 2, 0, 2), W3 (refpool Cy5 3, 3, 0) -> YAL001C 3, YBR001C 2,
-Q0010 2; MATalpha W4 (reference named "ref1", Cy5 5, 5, 5) -> 1 each.
+The reference ``n_replicates`` of a gene is the number of arrays whose refpool value
+entered its reference ``expression`` mean, the same arrays as the mutant's count (#484):
+CUP9 YAL001C 2, YBR001C 2, Q0010 1; HSN1 1 each. The wildtype arrays (MATa W1, W2, W3;
+MATalpha W4) once gave counts of 3, 2, 2 and 1, 1, 1 here; they enter no record.
 """
 
 from __future__ import annotations
@@ -406,7 +408,7 @@ _HSN1 = _experiment(
 _REF_CUP9 = _reference(
     "BY4741",
     {"Q0010": 1.0, "YAL001C": 4.0, "YBR001C": 4.0},
-    {"Q0010": 2, "YAL001C": 3, "YBR001C": 2},
+    {"Q0010": 1, "YAL001C": 2, "YBR001C": 2},
 )
 _REF_HSN1 = _reference(
     "BY4742",
@@ -604,16 +606,34 @@ def test_channel_check_counts_arrays_with_the_deleted_gene_depleted() -> None:
     assert math.isnan(check({"YPL177C": [depleted], "YAL001C": [zero]}, _PROBES))
 
 
-def test_refpool_from_a_wildtype_array_keeps_positive_values_of_its_channel() -> None:
-    """W2 (refpool in Cy3: 2, 0, 2) yields YAL001C and Q0010 at 2.0; the 0 is dropped
-    and the wildtype channel is not read.
+def test_reference_n_replicates_count_the_arrays_in_the_refpool_mean(
+    tmp_path: Path,
+) -> None:
+    """#484: the reference ``n_replicates`` describes the stored reference value, the
+    refpool mean over the mutant's own arrays, so it equals the mutant's own count gene
+    by gene (CUP9: Q0010 1 after the 0-signal array is dropped, YAL001C 2, YBR001C 2),
+    never a wildtype-series count (the fixture's MATa series would give 3, 2, 2, and the
+    real series 28 and 400). With the wildtype pickles removed the build is identical,
+    because no stored value reads them.
     """
-    dataset = m.MicroarrayKemmeren2014Dataset.__new__(m.MicroarrayKemmeren2014Dataset)
-    gsm = _gsm("W2", "wt-matA-1-b", [7.0, 7.0, 7.0], [2.0, 0.0, 2.0], "Cy3", "wt-matA")
-    assert dict(dataset._extract_refpool_from_wt_gsm(gsm, _PROBES)) == {
-        "Q0010": 2.0,
-        "YAL001C": 2.0,
+    root = tmp_path / "kemmeren"
+    _write_raw(root / "raw")
+    for accession in ("GSE42241", "GSE42240", "GSE42217"):
+        (root / "raw" / f"{accession}.pkl").unlink()
+    dataset = m.MicroarrayKemmeren2014Dataset(root=str(root), genome=_genome())
+    assert len(dataset) == 2
+    for i in range(2):
+        experiment_n = dataset[i]["experiment"]["phenotype"]["n_replicates"]
+        reference = dataset[i]["reference"]["phenotype_reference"]
+        assert reference["n_replicates"] == experiment_n
+        assert set(reference["n_replicates"]) == set(reference["expression"])
+    assert dataset[0]["reference"]["phenotype_reference"]["n_replicates"] == {
+        "Q0010": 1,
+        "YAL001C": 2,
+        "YBR001C": 2,
     }
+    assert dataset[0]["reference"] == _REF_CUP9.model_dump()
+    assert dataset[1]["reference"] == _REF_HSN1.model_dump()
 
 
 def test_resolution_passes_in_priority_order(
@@ -648,23 +668,19 @@ def test_create_expression_experiment_from_pairs() -> None:
     """No strain raises; no pair, or only pairs with a non-positive signal, returns the
     ``(None, None, None)`` skip; pairs (2, 4) and (8, 4) give log2 -1 and +1, mean 0,
     SE 1, variance 2.0000000000000004, n 2, linear 5, refpool 4, and the reference
-    carries the WT replicate count it was given.
+    ``n_replicates`` is the 2 arrays of that refpool mean.
     """
     build = m.MicroarrayKemmeren2014Dataset.create_expression_experiment
     with pytest.raises(
         ValueError,
         match=re.escape("Strain (BY4741 or BY4742) must be specified in sample_info"),
     ):
-        build("d", {"systematic_gene_name": "YAL001C"}, {}, {})
+        build("d", {"systematic_gene_name": "YAL001C"}, {})
     info = {"systematic_gene_name": "YAL001C", "strain": "BY4741"}
-    assert build("d", info, {}, {}) == (None, None, None)
-    assert build("d", info, {"YAL001C": [(0.0, 1.0), (1.0, 0.0)]}, {}) == (
-        None,
-        None,
-        None,
-    )
+    assert build("d", info, {}) == (None, None, None)
+    assert build("d", info, {"YAL001C": [(0.0, 1.0), (1.0, 0.0)]}) == (None, None, None)
     experiment, reference, publication = build(
-        "d", info, {"YAL001C": [(2.0, 4.0), (8.0, 4.0)]}, {"YAL001C": 7}
+        "d", info, {"YAL001C": [(2.0, 4.0), (8.0, 4.0)]}
     )
     assert experiment.phenotype.model_dump() == {
         "graph_level": "node",
@@ -685,7 +701,7 @@ def test_create_expression_experiment_from_pairs() -> None:
         "expression_log2_ratio": {"YAL001C": 0.0},
         "expression_log2_ratio_se": None,
         "expression_log2_ratio_variance": None,
-        "n_replicates": {"YAL001C": 7},
+        "n_replicates": {"YAL001C": 2},
         "provenance_gaps": [],
     }
     assert reference.genome_reference.strain == "BY4741"

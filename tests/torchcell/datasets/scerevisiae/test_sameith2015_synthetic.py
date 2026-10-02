@@ -22,7 +22,8 @@ Single-mutant GSE (title: Cy5 / Cy3, source):
                                   4 1 1 / 2 2 1             -> log2 1 -1 0
     S4 "wt-a"                     wildtype
     S5 "swt1-del-a"               wildtype by substring (Finding)
-    S6 "ycr001w-del+ydr001c-del"  2 2 2 / 1 1 1             -> single YCR001W (Finding)
+    S6 "ycr001w-del+ydr001c-del"  double-deletion title: dropped (#479)
+    S7 "ycr001w-del+zzz9-del"     "+" with an unresolved partner: dropped (#479)
     S8 "yzz999w-del"              no gene name: ignored
     S9 "yer001w-del"              1 1 1 / 1 1 1             -> not in the SI list, kept
 
@@ -133,6 +134,7 @@ _SINGLE_GSMS = [
     _S4,
     _gsm("S5", "swt1-del-a", [9.0, 9.0, 9.0], [7.0, 7.0, 7.0]),
     _gsm("S6", "ycr001w-del+ydr001c-del", [2.0, 2.0, 2.0], _ONES),
+    _gsm("S7", "ycr001w-del+zzz9-del", [2.0, 2.0, 2.0], _ONES),
     _gsm("S8", "yzz999w-del", _ONES, _ONES),
     _gsm("S9", "yer001w-del", _ONES, _ONES),
 ]
@@ -212,9 +214,10 @@ _ENVIRONMENT = Environment(
     media=Media(name="SC", state="liquid", is_synthetic=True),
     temperature=Temperature(value=30),
 )
+# GSE42536's own "!Series_pubmed_id = 26700642" (#478; 26687005 is an eLife paper).
 _PUBLICATION = Publication(
-    pubmed_id="26687005",
-    pubmed_url="https://pubmed.ncbi.nlm.nih.gov/26687005/",
+    pubmed_id="26700642",
+    pubmed_url="https://pubmed.ncbi.nlm.nih.gov/26700642/",
     doi="10.1186/s12915-015-0222-5",
     doi_url="https://doi.org/10.1186/s12915-015-0222-5",
 )
@@ -306,17 +309,6 @@ _SINGLE_EXPECTED = [
     _record(
         _SM,
         "BY4742",
-        [_kan("YCR001W")],
-        _three(2.0, 2.0, 2.0),
-        _three(1.0, 1.0, 1.0),
-        _three(1.0, 1.0, 1.0),
-        _NANS,
-        _NANS,
-        _N1,
-    ),
-    _record(
-        _SM,
-        "BY4742",
         [_kan("YER001W")],
         _three(1.0, 1.0, 1.0),
         _three(1.0, 1.0, 1.0),
@@ -331,29 +323,62 @@ _SINGLE_EXPECTED = [
 def test_single_mutant_records_average_replicates_per_gene(
     single: m.SmMicroarraySameith2015Dataset,
 ) -> None:
-    """Four groups in first-appearance order: YAL001C (S1 + S2), YBR001C (S3, named
-    NTH2), YCR001W (S6) and YER001W (S9, outside the SI list but still processed).
+    """Three groups in first-appearance order: YAL001C (S1 + S2), YBR001C (S3, named
+    NTH2) and YER001W (S9, outside the SI list but still processed). The
+    double-deletion arrays S6 and S7 make no record.
     """
-    assert len(single) == 4
+    assert len(single) == 3
     for i, (experiment, reference) in enumerate(_SINGLE_EXPECTED):
         assert _nan_safe(single[i]["experiment"]) == experiment
         assert single[i]["reference"] == reference
     assert single[0]["publication"] == _PUBLICATION.model_dump()
 
 
-def test_a_double_mutant_array_becomes_a_single_mutant_of_its_first_gene(
+def test_double_deletion_arrays_are_not_single_mutant_records(
     single: m.SmMicroarraySameith2015Dataset,
 ) -> None:
-    """Finding: the single-mutant ``_extract_gene_names_from_title`` returns
-    ``gene_names[:1]`` (sameith2015.py line 483), so the double-mutant array
-    ``ycr001w-del+ydr001c-del`` has one gene name, ``is_single`` is true (line 242), and
-    it is stored as a single KanMX deletion of YCR001W with the YDR001C deletion dropped.
+    """#479: the parser returns every gene a title names, systematic names first
+    (``rpn4-del+ydr026c-del`` style: ``nth2-del+ycr001w-del`` -> YCR001W, YBR001C), and
+    ``process()`` keeps an array as a single mutant only when its title names exactly
+    one gene and has no ``+``. S6 (two genes) and S7 (``+`` with the unresolvable
+    ZZZ9) are dropped under ``double_deletion_title``, so no record carries YCR001W.
+    Before the fix S6 was stored as a YCR001W single deletion, and on GSE42536 all 143
+    double-deletion arrays were folded into 45 of the 82 single-mutant records.
     """
-    (perturbation,) = single[2]["experiment"]["genotype"]["perturbations"]
-    assert perturbation == _kan("YCR001W").model_dump()
-    assert single._extract_gene_names_from_title("ycr001w-del+ydr001c-del") == [
-        "YCR001W"
+    title_genes = single._extract_gene_names_from_title
+    assert title_genes("ycr001w-del+ydr001c-del") == ["YCR001W", "YDR001C"]
+    assert title_genes("nth2-del+ycr001w-del") == ["YCR001W", "YBR001C"]
+    assert title_genes("ycr001w-del+zzz9-del") == ["YCR001W"]
+    assert title_genes("nth2-del-1-a") == ["YBR001C"]
+    assert title_genes("yal001c-del-a") == ["YAL001C"]
+    assert single.dropped_double_deletion_titles == 2
+    stored = [
+        perturbation["systematic_gene_name"]
+        for i in range(len(single))
+        for perturbation in single[i]["experiment"]["genotype"]["perturbations"]
     ]
+    assert stored == ["YAL001C", "YBR001C", "YER001W"]
+    assert [
+        single[i]["experiment"]["phenotype"]["n_replicates"]["YAL001C"]
+        for i in range(len(single))
+    ] == [2, 1, 1]
+
+
+def test_both_loaders_store_the_geo_series_pubmed_id(
+    single: m.SmMicroarraySameith2015Dataset, double: m.DmMicroarraySameith2015Dataset
+) -> None:
+    """#478: every record cites PubMed 26700642, GSE42536's ``!Series_pubmed_id``,
+    and no longer 26687005, an unrelated eLife 2015 paper.
+    """
+    assert m.SAMEITH2015_PUBMED_ID == "26700642"
+    publications = [single[i]["publication"] for i in range(len(single))] + [
+        double[i]["publication"] for i in range(len(double))
+    ]
+    assert len(publications) == 5
+    assert all(p == _PUBLICATION.model_dump() for p in publications)
+    assert {p["pubmed_url"] for p in publications} == {
+        "https://pubmed.ncbi.nlm.nih.gov/26700642/"
+    }
 
 
 def test_a_gene_named_with_wt_is_classified_as_wildtype(
@@ -365,23 +390,21 @@ def test_a_gene_named_with_wt_is_classified_as_wildtype(
     """
     samples = pd.read_csv(Path(single.root) / "preprocess" / "data.csv")
     assert samples.to_dict(orient="list") == {
-        "geo_accession": ["S1", "S2", "S3", "S5", "S6", "S9"],
+        "geo_accession": ["S1", "S2", "S3", "S5", "S9"],
         "title": [
             "yal001c-del-a",
             "yal001c-del-b",
             "nth2-del",
             "swt1-del-a",
-            "ycr001w-del+ydr001c-del",
             "yer001w-del",
         ],
-        "is_wildtype": [False, False, False, True, False, False],
-        "is_single_mutant": [True] * 6,
+        "is_wildtype": [False, False, False, True, False],
+        "is_single_mutant": [True] * 5,
         "gene_names": [
             "['YAL001C']",
             "['YAL001C']",
             "['YBR001C']",
             "['YOR166C']",
-            "['YCR001W']",
             "['YER001W']",
         ],
     }
@@ -395,7 +418,7 @@ def test_a_gene_named_with_wt_is_classified_as_wildtype(
 def test_single_side_files_and_wildtype_reference(
     single: m.SmMicroarraySameith2015Dataset,
 ) -> None:
-    """The two all-ones refpools (YCR001W, YER001W) share one reference; the wildtype
+    """Each of the three records has its own refpool and reference; the wildtype
     reference averages the refpool channel of S4 (Cy3 5) and S5 (Cy3 7), mean 6 with
     sample SD sqrt(2). ``_calculate_wt_reference_with_std``'s output is used by no
     record: ``process()`` stores it on ``wt_reference_expression`` /
@@ -406,11 +429,10 @@ def test_single_side_files_and_wildtype_reference(
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",
         "YBR001C",
-        "YCR001W",
         "YER001W",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0], [1], [2, 3]]
+    assert [entry["member_indices"] for entry in index] == [[0], [1], [2]]
     assert single.experiment_class is MicroarrayExpressionExperiment
     assert single.reference_class is MicroarrayExpressionExperimentReference
     assert single.raw_file_names == ["GSE42536_family.soft.gz"]

@@ -88,6 +88,15 @@ N_EXPECTED_MAX_REPLICATES_DELETION = 4  # 2 biological × 2 dye-swap measurement
 # NOTE: Actual n_replicates for reference are COMPUTED from WT sample count in data
 N_EXPECTED_REFPOOL_REPLICATES = None  # Computed from data (varies by batch/day)
 
+# PubMed ID of Sameith et al. 2015, BMC Biology (DOI 10.1186/s12915-015-0222-5).
+# Source: the GEO series record this loader reads, GSE42536_family.soft.gz (sha256
+# f8842af9768043fde560fa7cab737cde2fca0463c4b655511d54678d7b85cc7d, the file in the
+# dev tree data/torchcell/{sm,dm}_microarray_sameith2015/raw/), decompressed line 12:
+#     "!Series_pubmed_id = 26700642"
+# Checked 2026-10-02. The loaders stored 26687005 until then, the PubMed ID of an
+# unrelated eLife 2015 paper (#478).
+SAMEITH2015_PUBMED_ID = "26700642"
+
 
 @register_dataset
 class SmMicroarraySameith2015Dataset(ExperimentDataset):
@@ -224,6 +233,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         samples_data = []
         single_mutant_samples: dict[str, list[Any]] = {}  # Group by gene name
         wt_samples = []
+        multi_gene_titles = 0  # Drop rule "double_deletion_title" (#479)
 
         for gsm_name, gsm in gse.gsms.items():
             sample_info = {
@@ -239,7 +249,16 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
                 "wt" in sample_info["title"].lower()
                 or "wildtype" in sample_info["title"].lower()
             )
-            is_single = len(gene_names) == 1
+            # A single-deletion array names exactly one gene and joins none with "+".
+            # GSE42536 also holds the double-deletion arrays ("rpn4-del+ydr026c-del");
+            # they belong to DmMicroarraySameith2015Dataset and are dropped here under
+            # the rule "double_deletion_title" (#479).
+            is_double_title = (
+                "+" in sample_info["title"] or len(gene_names) > 1
+            ) and not is_wildtype
+            is_single = not is_double_title and len(gene_names) == 1
+            if is_double_title:
+                multi_gene_titles += 1
 
             sample_info["is_wildtype"] = is_wildtype
             sample_info["is_single_mutant"] = is_single
@@ -258,6 +277,11 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
         log.info(f"Found {len(single_mutant_samples)} unique single mutant genes")
         log.info(f"Found {len(wt_samples)} wildtype samples")
+        self.dropped_double_deletion_titles = multi_gene_titles
+        log.info(
+            f"Dropped {multi_gene_titles} arrays under rule double_deletion_title "
+            "(title joins genes with '+' or names more than one gene)"
+        )
 
         # Calculate wildtype reference expression
         if wt_samples:
@@ -448,8 +472,16 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         return mean_dict, se_dict, variance_dict, n_replicates_dict
 
     def _extract_gene_names_from_title(self, title: str) -> list[str]:
-        """Extract systematic gene names from sample title."""
-        gene_names = []
+        """Every gene a sample title names: systematic names, then resolved common names.
+
+        The list is not truncated. GSE42536 holds single- and double-deletion arrays in
+        one series, and a double-deletion title joins two genes with ``+``
+        (``rpn4-del+ydr026c-del``); returning only the first gene made every such
+        array look like a single mutant and folded all 143 double-deletion arrays into
+        45 of the 82 single-mutant records (#479). ``process()`` keeps an array as a
+        single mutant only when its title names exactly one gene and has no ``+``.
+        """
+        gene_names: list[str] = []
 
         # Look for systematic names (e.g., YAL001C or YBR089C-A)
         # Match the full systematic name, including optional suffix like -A
@@ -458,29 +490,25 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
         # Validate each match
         for match in matches:
-            if self._is_valid_systematic_name(match):
+            if self._is_valid_systematic_name(match) and match not in gene_names:
                 gene_names.append(match)
 
-        # Also try to extract common names if needed
-        if len(gene_names) < 1:
-            # Extract potential gene names (all caps words)
-            common_pattern = r"\b([A-Z][A-Z0-9]{2,})\b"
-            potential_genes = re.findall(common_pattern, title.upper())
+        # Common names too, also when a systematic name was found: a double-deletion
+        # title can mix the two ("rpn4-del+ydr026c-del").
+        common_pattern = r"\b([A-Z][A-Z0-9]{2,})\b"
+        for gene in re.findall(common_pattern, title.upper()):
+            # Skip common non-gene words
+            if gene in ["DEL", "WT", "WILDTYPE", "MUTANT", "SINGLE", "DOUBLE"]:
+                continue
+            systematic = self._convert_to_systematic(gene)
+            if (
+                systematic
+                and self._is_valid_systematic_name(systematic)
+                and systematic not in gene_names
+            ):
+                gene_names.append(systematic)
 
-            for gene in potential_genes:
-                # Skip common non-gene words
-                if gene in ["DEL", "WT", "WILDTYPE", "MUTANT", "SINGLE"]:
-                    continue
-
-                # Try to convert to systematic
-                systematic = self._convert_to_systematic(gene)
-                if systematic and self._is_valid_systematic_name(systematic):
-                    # Avoid duplicates
-                    if systematic not in gene_names:
-                        gene_names.append(systematic)
-                        break  # We only need 1 gene for single mutants
-
-        return gene_names[:1]  # Return at most 1 gene for single mutants
+        return gene_names
 
     def _is_valid_systematic_name(self, name: str) -> bool:
         """Validate that a systematic name matches the expected format."""
@@ -823,8 +851,8 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
         # Publication for Sameith et al. 2015
         publication = Publication(
-            pubmed_id="26687005",
-            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/26687005/",
+            pubmed_id=SAMEITH2015_PUBMED_ID,
+            pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{SAMEITH2015_PUBMED_ID}/",
             doi="10.1186/s12915-015-0222-5",
             doi_url="https://doi.org/10.1186/s12915-015-0222-5",
         )
@@ -1921,8 +1949,8 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
         # Publication for Sameith et al. 2015
         publication = Publication(
-            pubmed_id="26687005",
-            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/26687005/",
+            pubmed_id=SAMEITH2015_PUBMED_ID,
+            pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{SAMEITH2015_PUBMED_ID}/",
             doi="10.1186/s12915-015-0222-5",
             doi_url="https://doi.org/10.1186/s12915-015-0222-5",
         )

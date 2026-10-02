@@ -122,10 +122,15 @@
 
 <span class="sd">Cachera et al. 2023 (Nucleic Acids Research, doi:10.1093/nar/gkad656) used CRI-SPA to</span>
 <span class="sd">transfer four betaxanthin-biosynthesis genes into each strain of the ~4800-strain yeast</span>
-<span class="sd">knockout (YKO) collection, then read out per-colony **betaxanthin** (a yellow, naturally</span>
-<span class="sd">fluorescent plant metabolite) by image analysis. The "CRI-SPA score" is a</span>
-<span class="sd">corrected/normalized colony fluorescence intensity -- a quantitative proxy for</span>
-<span class="sd">betaxanthin level (it can be negative because it is population-centered).</span>
+<span class="sd">knockout (YKO) collection, then read out per-colony **betaxanthin** (a yellow plant</span>
+<span class="sd">metabolite) by image analysis. The "CRI-SPA score" is a corrected/normalized colony</span>
+<span class="sd">YELLOWNESS score, the geometric mean of Value and Saturation of the colony's pixels in</span>
+<span class="sd">HSV color space (paper line 58), not a fluorescence measurement -- a quantitative proxy</span>
+<span class="sd">for betaxanthin level (it can be negative because it is population-centered).</span>
+
+<span class="sd">Environment (issue #509): the final screen plate is solid YPD with 200 mg/l G418</span>
+<span class="sd">(``CACHERA_YPD_G418``, every value quoted from the mirror OCR), and the paper states no</span>
+<span class="sd">growth temperature, so ``temperature=None`` with a typed ``ProvenanceGap``.</span>
 
 <span class="sd">Source: the paper's Data Availability points to the CRI-SPA GitHub repo</span>
 <span class="sd">(github.com/pc2912/CRI-SPA_repo). We ingest `GA1_2_4_6.csv` -- the gene-level</span>
@@ -133,7 +138,7 @@
 <span class="sd">`corrected_mean_intensity` (mean/std/count) as the betaxanthin level + SE + n.</span>
 
 <span class="sd">Maps to `MetabolitePhenotype` (WS4): `metabolite_level = {"betaxanthin": score}` with</span>
-<span class="sd">`measurement_type = "cri_spa_corrected_fluorescence_intensity_24h"`. Gene names in the</span>
+<span class="sd">`measurement_type = "cri_spa_corrected_hsv_yellowness_24h"`. Gene names in the</span>
 <span class="sd">source are COMMON names, so a genome is required to resolve them to systematic ORF ids</span>
 <span class="sd">(same pattern as Sameith); unresolved names + control/NaN rows are excluded and logged.</span>
 <span class="sd">The varying deletion stores the genome's own standard name as `perturbed_gene_name`</span>
@@ -160,7 +165,11 @@
     <span class="n">verify_raw_files</span><span class="p">,</span>
     <span class="n">write_verified</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolved_compound</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">YPD</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Concentration</span><span class="p">,</span>
+    <span class="n">ConcentrationUnit</span><span class="p">,</span>
     <span class="n">Environment</span><span class="p">,</span>
     <span class="n">Experiment</span><span class="p">,</span>
     <span class="n">ExperimentReference</span><span class="p">,</span>
@@ -168,22 +177,138 @@
     <span class="n">Genotype</span><span class="p">,</span>
     <span class="n">KanMxDeletionPerturbation</span><span class="p">,</span>
     <span class="n">Media</span><span class="p">,</span>
+    <span class="n">MediaComponent</span><span class="p">,</span>
+    <span class="n">MediaComponentRole</span><span class="p">,</span>
     <span class="n">MetaboliteExperiment</span><span class="p">,</span>
     <span class="n">MetaboliteExperimentReference</span><span class="p">,</span>
     <span class="n">MetabolitePhenotype</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
-    <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.smith2006</span><span class="w"> </span><span class="kn">import</span> <span class="n">canonical_common_names</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneNameStatus</span><span class="p">,</span> <span class="n">SCerevisiaeGenome</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProvenanceGap</span><span class="p">,</span>
+    <span class="n">ProvenanceGapReason</span><span class="p">,</span>
+    <span class="n">SourcedValue</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
-<span class="n">MEASUREMENT_TYPE</span> <span class="o">=</span> <span class="s2">"cri_spa_corrected_fluorescence_intensity_24h"</span>
 <span class="n">TARGET_METABOLITE</span> <span class="o">=</span> <span class="s2">"betaxanthin"</span>
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Paper anchors (issue #509). Every quote below is a verbatim substring of the mirror</span>
+<span class="c1"># OCR (MinerU output, so LaTeX markup is kept as written); the line is that file's.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">CITATION_KEY</span> <span class="o">=</span> <span class="s2">"cacheraCRISPAHighthroughputMethod2023"</span>
+<span class="n">PAPER_MD</span> <span class="o">=</span> <span class="s2">"paper.md"</span>
+<span class="n">PAPER_MD_SHA256</span> <span class="o">=</span> <span class="s2">"5fb7310dacb44bc04fc121a990e4ccc70020c9598877c4b074656e91fc4f32d5"</span>
+<span class="n">_PAPER</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="n">PAPER_MD</span><span class="p">,</span> <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span> <span class="n">sha256</span><span class="o">=</span><span class="n">PAPER_MD_SHA256</span>
+<span class="p">)</span>
+
+<span class="c1"># line 58: the readout is a color score from image pixels, not a fluorescence intensity.</span>
+<span class="n">READOUT_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"filter taking the geometric mean of Value and Saturation of image pixels in the "</span>
+    <span class="s2">"HSV color space"</span>
+<span class="p">)</span>
+<span class="c1"># line 58: the color score was calibrated on YPD.</span>
+<span class="n">READOUT_MEDIUM_QUOTE</span> <span class="o">=</span> <span class="s2">"which was our observation on YPD media"</span>
+<span class="c1"># line 117: the plate the screen colonies grew on.</span>
+<span class="n">SCREEN_PLATE_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"we picked cells from each of the four colonies obtained for each strain on the "</span>
+    <span class="s2">"final CRI-SPA screen plate (YPD-G418)"</span>
+<span class="p">)</span>
+<span class="c1"># line 31: YPD recipe deferral, agar and G418 doses on solid medium.</span>
+<span class="n">YPD_RECIPE_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"YPD and synthetic complete (SC) media, and SC drop out media were prepared as "</span>
+    <span class="s2">"described by Sherman et al. (28)"</span>
+<span class="p">)</span>
+<span class="n">AGAR_QUOTE</span> <span class="o">=</span> <span class="s2">"For growth on solid medium, $2 0 </span><span class="se">\\</span><span class="s2"> </span><span class="se">\\</span><span class="s2">mathrm { g / l }$ agar was added."</span>
+<span class="n">G418_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"For selection on solid medium, plates were supplemented with "</span>
+    <span class="s2">"$2 0 0 ~ </span><span class="se">\\</span><span class="s2">mathrm { { m g / l } }$ geneticin (G418)"</span>
+<span class="p">)</span>
+
+<span class="c1">#: What the stored level IS: the 24 h ``corrected_mean_intensity`` column of</span>
+<span class="c1">#: ``GA1_2_4_6.csv``, an HSV yellowness score (``READOUT_QUOTE``), corrected for plate</span>
+<span class="c1">#: position. The word "intensity" in the column name is the image Value/Saturation</span>
+<span class="c1">#: intensity, not fluorescence.</span>
+<span class="n">MEASUREMENT_TYPE</span> <span class="o">=</span> <span class="s2">"cri_spa_corrected_hsv_yellowness_24h"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_paper_sv</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A SourcedValue pinned to the Cachera mirror OCR (quote + sha256)."""</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="n">_PAPER</span><span class="p">,</span> <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">)</span>
+
+
+<span class="n">SOURCED_VALUES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span>
+        <span class="n">MEASUREMENT_TYPE</span><span class="p">,</span>
+        <span class="n">READOUT_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"line 58; a colony-color score, so the name says HSV yellowness"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"screen_medium"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span><span class="s2">"solid YPD + G418"</span><span class="p">,</span> <span class="n">SCREEN_PLATE_QUOTE</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="s2">"line 117"</span><span class="p">),</span>
+    <span class="s2">"readout_medium"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span><span class="s2">"YPD"</span><span class="p">,</span> <span class="n">READOUT_MEDIUM_QUOTE</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="s2">"line 58"</span><span class="p">),</span>
+    <span class="s2">"ypd_recipe"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span>
+        <span class="s2">"YPD per Sherman et al. (ref 28)"</span><span class="p">,</span>
+        <span class="n">YPD_RECIPE_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"line 31; Sherman et al. is not mirrored, so the YPD ingredient amounts "</span>
+        <span class="s2">"are the library YPD root's (Tong and Boone 2006 YEPD), which this sentence "</span>
+        <span class="s2">"does not restate"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"agar"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span><span class="s2">"20 g/l"</span><span class="p">,</span> <span class="n">AGAR_QUOTE</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="s2">"line 31"</span><span class="p">),</span>
+    <span class="s2">"g418"</span><span class="p">:</span> <span class="n">_paper_sv</span><span class="p">(</span><span class="s2">"200 mg/l"</span><span class="p">,</span> <span class="n">G418_QUOTE</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="s2">"line 31"</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">CACHERA_YPD_G418</span><span class="p">:</span> <span class="n">Media</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"YPD + G418 (solid, 2</span><span class="si">% a</span><span class="s2">gar; Cachera 2023 final CRI-SPA screen plate)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"solid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"YPD"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="o">*</span><span class="n">YPD</span><span class="o">.</span><span class="n">components</span><span class="p">,</span>
+        <span class="n">MediaComponent</span><span class="p">(</span>
+            <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="s2">"agar"</span><span class="p">),</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">gelling_agent</span><span class="p">,</span>
+            <span class="n">concentration</span><span class="o">=</span><span class="n">Concentration</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">percent_w_v</span><span class="p">),</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"agar"</span><span class="p">]],</span>
+        <span class="p">),</span>
+        <span class="n">MediaComponent</span><span class="p">(</span>
+            <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="s2">"G418 (geneticin)"</span><span class="p">),</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">selection_agent</span><span class="p">,</span>
+            <span class="n">concentration</span><span class="o">=</span><span class="n">Concentration</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mf">200.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">ug_per_ml</span><span class="p">),</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"g418"</span><span class="p">]],</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"selects the kanMX marker of the YKO deletion (CRI-SPA step 5)"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"screen_medium"</span><span class="p">],</span>
+        <span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"ypd_recipe"</span><span class="p">],</span>
+        <span class="n">SOURCED_VALUES</span><span class="p">[</span><span class="s2">"readout_medium"</span><span class="p">],</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""The final CRI-SPA screen plate: library ``YPD`` root components plus the paper's own</span>
+<span class="sd">agar and G418 doses. Loader-local on purpose (as ``COOPER_SC`` is): ``media.py`` is a</span>
+<span class="sd">value surface of the served graph, so editing it would touch every YPD dataset."""</span>
+
+<span class="c1">#: No growth temperature in the paper. Measured by</span>
+<span class="c1">#: ``experiments/036-dataset-fixes-before-kg-build/scripts/cachera2023_environment_readout.py``</span>
+<span class="c1">#: (2026.10.02, issue #509): the mirror ``paper.md`` has 0 matches for a degree sign,</span>
+<span class="c1">#: ``\circ``, "temperature" or a two-digit number followed by C, and the SI archive's</span>
+<span class="c1">#: four documents (Supplementary Material.docx, Supp Methods S1/S2, Figure S8) have 3,</span>
+<span class="c1">#: all SGD gene descriptions ("required for growth at low temperature") in a hit table.</span>
+<span class="n">TEMPERATURE_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+    <span class="n">field</span><span class="o">=</span><span class="s2">"temperature"</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+    <span class="n">looked_in</span><span class="o">=</span><span class="n">_PAPER</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"no growth or incubation temperature is stated in the paper or its SI "</span>
+    <span class="s2">"(gkad656_supplemental_files.zip); the loader formerly stored an unsourced 30 C"</span><span class="p">,</span>
+<span class="p">)</span>
 
 
 <span class="c1"># The constant engineered background transferred by CRI-SPA into every YKO strain: the</span>
@@ -457,9 +582,9 @@
                 <span class="o">*</span><span class="n">_betaxanthin_cassette</span><span class="p">(),</span>
             <span class="p">]</span>
         <span class="p">)</span>
+        <span class="c1"># Issue #509: YPD + G418 screen plate (line 117), no stated temperature.</span>
         <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
-            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"SC"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"solid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">CACHERA_YPD_G418</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">TEMPERATURE_GAP</span><span class="p">]</span>
         <span class="p">)</span>
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">MetabolitePhenotype</span><span class="p">(</span>
             <span class="n">metabolite_level</span><span class="o">=</span><span class="p">{</span><span class="n">TARGET_METABOLITE</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="s2">"level"</span><span class="p">]},</span>

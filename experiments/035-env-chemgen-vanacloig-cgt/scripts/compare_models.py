@@ -5,9 +5,17 @@
 
 Reads the ladder (``results/ladder/<tag>_scores.csv``) and every factorized sweep
 (``results/factorized/*/<name>_scores.csv``). A row of the output is one model on one
-fold seed (or every fold seed pooled, ``fold_seed == -1``), target and compound subset: its median and mean Spearman over the held-out
-compounds it scored, and its PAIRED difference from each reference on exactly those
-compounds, with a bootstrap 95% interval over compounds for the mean difference.
+fold seed (or every fold seed pooled, ``fold_seed == -1``), target and compound subset:
+its median and mean Spearman over the held-out compounds it scored, and its PAIRED
+difference from each reference on exactly those compounds, with two bootstrap 95%
+intervals for the mean difference.
+
+``ci_low`` / ``ci_high`` resample the compound-evaluations. With every fold seed pooled
+that treats the three evaluations of one compound as independent, which they are not, so
+the interval is too narrow there. ``cluster_ci_low`` / ``cluster_ci_high`` resample the
+COMPOUNDS, each carrying its mean difference over the fold seeds it was scored on, and
+``compounds_improved`` counts the compounds whose mean difference is positive. On a single
+fold seed the two intervals are the same thing. Quote the cluster interval for pooled rows.
 
 REFERENCES, both from the ladder and both nested (no test compound touches a choice):
 
@@ -59,6 +67,20 @@ COLUMNS = [
 def bootstrap_mean(diff: np.ndarray, rng: np.random.Generator) -> tuple[float, float]:
     draws = rng.choice(diff, size=(N_BOOT, len(diff)), replace=True).mean(axis=1)
     return float(np.quantile(draws, 0.025)), float(np.quantile(draws, 0.975))
+
+
+def bootstrap_compounds(
+    paired: pd.DataFrame, rng: np.random.Generator
+) -> tuple[float, float, int, int]:
+    """The interval resampling compounds, and how many compounds improve on average."""
+    per_compound = (
+        (paired["spearman"] - paired["spearman_ref"])
+        .groupby(paired["compound"])
+        .mean()
+        .to_numpy()
+    )
+    low, high = bootstrap_mean(per_compound, rng)
+    return low, high, int((per_compound > 0).sum()), len(per_compound)
 
 
 def load_scores(ladder_tag: str) -> pd.DataFrame:
@@ -115,12 +137,17 @@ def summarize(
         if len(diff) == 0:
             continue
         low, high = bootstrap_mean(diff, rng)
+        c_low, c_high, improved, distinct = bootstrap_compounds(paired, rng)
         row |= {
             f"vs_{ref_name}_mean_diff": float(diff.mean()),
             f"vs_{ref_name}_ci_low": low,
             f"vs_{ref_name}_ci_high": high,
             f"vs_{ref_name}_wins": int((diff > 0).sum()),
             f"vs_{ref_name}_paired": len(diff),
+            f"vs_{ref_name}_cluster_ci_low": c_low,
+            f"vs_{ref_name}_cluster_ci_high": c_high,
+            f"vs_{ref_name}_compounds_improved": improved,
+            f"vs_{ref_name}_distinct_compounds": distinct,
         }
     return row
 

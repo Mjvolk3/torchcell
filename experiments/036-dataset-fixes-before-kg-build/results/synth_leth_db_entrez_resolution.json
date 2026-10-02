@@ -1,0 +1,269 @@
+{
+  "ncbi_gff": {
+    "path": "/scratch/projects/torchcell-scratch/data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/ncbi_genomic.gff",
+    "sha256": "8200def54936659721e3f7b4484d725667ed4e23492edefbbca667b8430209c4",
+    "n_entrez": 6470
+  },
+  "genome_db_read": "/scratch/projects/torchcell-scratch/data/sgd/genome/data.db",
+  "genome_files": {
+    "data.db": {
+      "sha256": "feadb0f5d7662606c5a6e1cfba873cdcd852900da9ebcb920bd4b6ef38530ded",
+      "content_digest": "9fae73b71df938427cd82c2068978cb6948d885ecbbe2a8d0bc498cd31e8c1f4",
+      "n_features_chrmt": 28
+    },
+    "data.db.bak": {
+      "sha256": "c7edf60e566d0fd4a2071bf473005db71602cf8f6c1c1cdd4e66513e698ce13c",
+      "content_digest": "95ef0fa06cea18efe4909a80a2bfda02c4bdb0b4c71c794de129ea188fea2f7b",
+      "n_features_chrmt": 0
+    },
+    "data_alt.db": {
+      "sha256": "1f774a126075f1d6fc11a590cd0d2815d1b3a18b571ba023833982eef54eb0a2",
+      "content_digest": "db3b51b874b6218050a8053d03cc3a55ee15af8db74119114d235053e493f173",
+      "n_features_chrmt": 0
+    }
+  },
+  "SL": {
+    "source_rows": 14000,
+    "old_records": 14000,
+    "new_records": 13996,
+    "ledger": {
+      "entrez_id_not_in_ncbi_gff": {
+        "n_records": 1,
+        "source_rows": [
+          5232
+        ]
+      },
+      "gene_name_disagrees_with_entrez_id": {
+        "n_records": 0,
+        "source_rows": []
+      },
+      "same_gene_on_both_sides": {
+        "n_records": 3,
+        "source_rows": [
+          3152,
+          5719,
+          8663
+        ]
+      }
+    },
+    "old_rows_disagreeing_with_entrez": 872,
+    "kept_rows_changed_orf_pair": 870,
+    "changed_rows_all_old_disagreements": true,
+    "old_disagreements_not_changed_and_kept": [],
+    "old_disagreements_dropped": {
+      "5232": "entrez_id_not_in_ncbi_gff",
+      "5719": "same_gene_on_both_sides"
+    },
+    "duplicate_orf_pairs_old": 7,
+    "duplicate_orf_pairs_new": 0,
+    "issue_names": {
+      "STM1": {
+        "old": [
+          "YPR163C"
+        ],
+        "new": [
+          "YLR150W"
+        ]
+      },
+      "SDC1": {
+        "old": [
+          "YJR090C"
+        ],
+        "new": [
+          "YDR469W"
+        ]
+      },
+      "MFT1": {
+        "old": [
+          "YMR177W"
+        ],
+        "new": [
+          "YML062C"
+        ]
+      },
+      "NSP1": {
+        "old": [
+          "YLR178C"
+        ],
+        "new": [
+          "YJL041W"
+        ]
+      },
+      "RPL37A": {
+        "old": [
+          "YPL143W"
+        ],
+        "new": [
+          "YLR185W"
+        ]
+      },
+      "CCS1": {
+        "old": [
+          "YOL081W"
+        ],
+        "new": [
+          "YMR038C"
+        ]
+      },
+      "YPK1": {
+        "old": [
+          "YNL307C"
+        ],
+        "new": [
+          "YKL126W"
+        ]
+      },
+      "TAF1": {
+        "old": [
+          "YHL047C"
+        ],
+        "new": [
+          "YGR274C"
+        ]
+      },
+      "SSL2": {
+        "old": [
+          "YLR452C"
+        ],
+        "new": [
+          "YIL143C"
+        ]
+      },
+      "HAP1": {
+        "old": [
+          "YPL101W"
+        ],
+        "new": [
+          "YLR256W"
+        ]
+      },
+      "IMP2'": {
+        "old": [
+          "YMR035W"
+        ],
+        "new": [
+          "YIL154C"
+        ]
+      }
+    }
+  },
+  "SR": {
+    "source_rows": 6948,
+    "old_records": 6948,
+    "new_records": 6942,
+    "ledger": {
+      "entrez_id_not_in_ncbi_gff": {
+        "n_records": 0,
+        "source_rows": []
+      },
+      "gene_name_disagrees_with_entrez_id": {
+        "n_records": 0,
+        "source_rows": []
+      },
+      "same_gene_on_both_sides": {
+        "n_records": 6,
+        "source_rows": [
+          370,
+          1182,
+          3138,
+          3154,
+          6616,
+          6672
+        ]
+      }
+    },
+    "old_rows_disagreeing_with_entrez": 119,
+    "kept_rows_changed_orf_pair": 119,
+    "changed_rows_all_old_disagreements": true,
+    "old_disagreements_not_changed_and_kept": [],
+    "old_disagreements_dropped": {},
+    "duplicate_orf_pairs_old": 2,
+    "duplicate_orf_pairs_new": 0,
+    "issue_names": {
+      "STM1": {
+        "old": [
+          "YPR163C"
+        ],
+        "new": [
+          "YLR150W"
+        ]
+      },
+      "SDC1": {
+        "old": [
+          "YJR090C"
+        ],
+        "new": [
+          "YDR469W"
+        ]
+      },
+      "MFT1": {
+        "old": [
+          "YMR177W"
+        ],
+        "new": [
+          "YML062C"
+        ]
+      },
+      "NSP1": {
+        "old": [],
+        "new": []
+      },
+      "RPL37A": {
+        "old": [
+          "YPL143W"
+        ],
+        "new": [
+          "YLR185W"
+        ]
+      },
+      "CCS1": {
+        "old": [
+          "YOL081W"
+        ],
+        "new": [
+          "YMR038C"
+        ]
+      },
+      "YPK1": {
+        "old": [
+          "YNL307C"
+        ],
+        "new": [
+          "YKL126W"
+        ]
+      },
+      "TAF1": {
+        "old": [
+          "YHL047C"
+        ],
+        "new": [
+          "YGR274C"
+        ]
+      },
+      "SSL2": {
+        "old": [
+          "YLR452C"
+        ],
+        "new": [
+          "YIL143C"
+        ]
+      },
+      "HAP1": {
+        "old": [
+          "YPL101W"
+        ],
+        "new": [
+          "YLR256W"
+        ]
+      },
+      "IMP2'": {
+        "old": [
+          "YMR035W"
+        ],
+        "new": [
+          "YIL154C"
+        ]
+      }
+    }
+  }
+}

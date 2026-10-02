@@ -106,6 +106,10 @@ def _pins_from_constants(
             spec["filename"]: spec["sha256"] for spec in m._ACID_SPECS
         },
         "AminoAcidMulleder2016Dataset": lambda: {m.DATA_FILENAME: m.DATA_SHA256},
+        "SynthLethalityYeastSynthLethDbDataset": lambda: {
+            m.SL_CSV_NAME: m.SL_CSV_SHA256
+        },
+        "SynthRescueYeastSynthLethDbDataset": lambda: {m.SR_CSV_NAME: m.SR_CSV_SHA256},
         "NadalRibellesPerturbSeq2025Dataset": lambda: {
             name: m.SHA256_EXPECTED[name] for name in m.RAW_FILES
         },
@@ -267,7 +271,6 @@ UNPINNED_LOADERS = frozenset(
         "kuzmin2020",
         "sameith2015",
         "sgd",
-        "synth_leth_db",
     }
 )
 

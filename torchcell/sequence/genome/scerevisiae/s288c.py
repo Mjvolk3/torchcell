@@ -699,22 +699,34 @@ def _remove_if_present(path: str) -> None:
 
 
 def install_genome_database(
-    tmp_path: str, db_path: str, kept: str | None = None
-) -> None:
+    tmp_path: str, db_path: str, kept: str | None = None, kept_as_is: bool = False
+) -> list[str]:
     """Rename the finished build ``tmp_path`` onto ``db_path``.
 
     A companion file left beside the OLD file (``-journal``, ``-wal``, ``-shm``) is
     first moved beside the kept copy ``kept`` (``data.db.untrusted-journal``, ...),
-    or removed when nothing is kept, so it is never paired with the new build. A
-    companion another migrator moved first is skipped. If the rename fails, the build
-    is removed and :class:`GenomeDatabaseInstallError` names both paths and the OS
-    error.
+    or removed when nothing is kept, so it is never paired with the new build. When
+    ``kept_as_is`` (:func:`_keep_copy` left a byte-equal kept copy in place) and the
+    kept copy already has that companion, ``db_path``'s own companion is removed
+    instead of overwriting the kept one, which may be the only file that rolls the
+    pair back to the committed file; on bytes equal to the kept file, ``db_path``'s
+    companion undoes nothing the kept one does not. Returns the companions removed
+    that way, so the caller's one WARNING names them. A companion another migrator
+    moved first is skipped. If the rename fails, the build is removed and
+    :class:`GenomeDatabaseInstallError` names both paths and the OS error.
     """
+    removed_beside_kept: list[str] = []
     for suffix in _COMPANION_SUFFIXES:
         companion = db_path + suffix
         try:
             if kept is None:
                 os.remove(companion)
+            elif kept_as_is and osp.lexists(kept + suffix):
+                # The kept copy (byte-equal to data.db) already has its own
+                # companion: data.db's undoes nothing the kept one does not, and
+                # must not overwrite the kept pair's journal.
+                os.remove(companion)
+                removed_beside_kept.append(companion)
             else:
                 os.replace(companion, kept + suffix)
         except FileNotFoundError:  # absent, or another migrator moved it first
@@ -727,6 +739,7 @@ def install_genome_database(
             f"the build {tmp_path} could not be renamed onto {db_path} ({exc}); the "
             "build was removed."
         ) from exc
+    return removed_beside_kept
 
 
 class GenomeRootNotFoundError(FileNotFoundError):
@@ -1182,16 +1195,18 @@ def _has_hot_journal(db_path: str) -> bool:
     return False
 
 
-def _keep_copy(copy_path: str, kept: str, db_path: str) -> None:
+def _keep_copy(copy_path: str, kept: str, db_path: str) -> bool:
     """Move ``copy_path`` (a copy of the untrusted ``db_path``) onto ``kept``, dropping
     the earlier kept copy's companions first so a kept file and its journal always
     belong together. Must run under :func:`_root_lock`.
 
-    When ``kept`` already holds the same bytes, it is left as is with its companions:
-    a migration killed after keeping the file (and possibly moving its journal) left
-    exactly this pair, and replacing it would drop that journal. A kept path that is
-    not a regular file is refused by name; one this process cannot read counts as a
-    different file.
+    When ``kept`` already holds the same bytes, it is left as is with its companions
+    and True is returned: a migration killed after keeping the file (and possibly
+    moving its journal) left exactly this pair, and replacing it would drop that
+    journal. Otherwise ``copy_path`` replaces it and False is returned. A kept path
+    that is not a regular file is refused by name; one this process cannot read, or
+    one removed (by hand) after the check that it is a file, counts as a different
+    file.
     """
     if osp.lexists(kept) and (osp.islink(kept) or not osp.isfile(kept)):
         raise GenomeDatabaseUnavailableError(
@@ -1202,11 +1217,14 @@ def _keep_copy(copy_path: str, kept: str, db_path: str) -> None:
         same = osp.isfile(kept) and filecmp.cmp(copy_path, kept, shallow=False)
     except PermissionError:  # another user's kept copy: a different file
         same = False
+    except FileNotFoundError:  # removed since the isfile check: nothing to compare
+        same = False
     if same:
-        return
+        return True
     for suffix in _COMPANION_SUFFIXES:
         _remove_if_present(kept + suffix)
     os.replace(copy_path, kept)
+    return False
 
 
 def _copy_preserving_mode(db_path: str, copy_path: str) -> None:
@@ -1223,10 +1241,26 @@ def _copy_preserving_mode(db_path: str, copy_path: str) -> None:
 
 def _vanished(path: str, exc: FileNotFoundError) -> GenomeDatabaseUnavailableError:
     return GenomeDatabaseUnavailableError(
-        f"{path} vanished while this process was migrating or rebuilding it ({exc}); "
-        "another process (pre-2026.10.01 code) is rebuilding it. Every file is left "
-        "alone. Retry when it has finished."
+        f"{path} vanished while this process was reading, migrating or rebuilding "
+        f"it ({exc}); another process (pre-2026.10.01 code) is rebuilding it. Every "
+        "file is left alone. Retry when it has finished."
     )
+
+
+def _kept_wording(kept: str, as_is: bool, removed: Sequence[str]) -> str:
+    """How the one WARNING of a migration or rebuild names the kept pair: replaced,
+    or left as is (:func:`_keep_copy`) together with every companion of data.db that
+    :func:`install_genome_database` removed instead of moving it over the kept one.
+    """
+    if not as_is:
+        return f"{kept} (replacing any earlier one)"
+    wording = f"{kept} (which already held these bytes and was left in place"
+    if removed:
+        wording += (
+            f"; {', '.join(removed)} beside data.db was removed instead of "
+            "overwriting the kept companion"
+        )
+    return wording + ")"
 
 
 def _identity(path: str) -> tuple[int, int, int]:
@@ -1304,28 +1338,26 @@ def migrate_genome_database(
                 is None
             )
             kept = osp.join(db_dir, UNTRUSTED_DB_FILENAME)
-            _keep_copy(copy_path, kept, db_path)
-            install_genome_database(tmp_path, db_path, kept)
+            as_is = _keep_copy(copy_path, kept, db_path)
+            removed = install_genome_database(tmp_path, db_path, kept, as_is)
         if copy_trusted:
             # The file's own pages match its record; only a companion journal beside
             # it (moved to ``kept``-journal with it) made it untrusted.
             log.warning(
                 "genome database %s was not trusted (%s); its own pages match its "
                 "record and only a companion journal made it unreadable, so the pair "
-                "was kept as %s (replacing any earlier one) and replaced by the "
-                "recorded build",
+                "was kept as %s and replaced by the recorded build",
                 db_path,
                 reason,
-                kept,
+                _kept_wording(kept, as_is, removed),
             )
             return
         log.warning(
             "genome database %s was not trusted (%s); its rows differ from a fresh "
-            "build, so it was kept as %s (replacing any earlier one) and replaced by "
-            "the recorded build",
+            "build, so it was kept as %s and replaced by the recorded build",
             db_path,
             reason,
-            kept,
+            _kept_wording(kept, as_is, removed),
         )
     finally:
         for path in (tmp_path, copy_path):
@@ -1353,14 +1385,13 @@ def rebuild_genome_database(
             copy_path = _temp_in(db_dir, UNTRUSTED_DB_FILENAME)
             _copy_preserving_mode(db_path, copy_path)
             kept = osp.join(db_dir, UNTRUSTED_DB_FILENAME)
-            _keep_copy(copy_path, kept, db_path)
-            install_genome_database(tmp_path, db_path, kept)
+            as_is = _keep_copy(copy_path, kept, db_path)
+            removed = install_genome_database(tmp_path, db_path, kept, as_is)
         log.warning(
             "genome database %s had a hot journal; the explicit rebuild kept the old "
-            "file with its journal as %s (replacing any earlier one) and installed the "
-            "recorded build",
+            "file with its journal as %s and installed the recorded build",
             db_path,
-            kept,
+            _kept_wording(kept, as_is, removed),
         )
     finally:
         for path in (tmp_path, copy_path):
@@ -1372,6 +1403,14 @@ def _meta_rows(db_path: str) -> int:
     """Rows in gffutils' ``meta`` table of ``db_path`` (read-only)."""
     with closing(sqlite3.connect(_ro_uri(db_path), uri=True)) as conn:
         return int(conn.execute("SELECT COUNT(*) FROM meta").fetchone()[0])
+
+
+def _meta_rows_or_zero(db_path: str) -> int:
+    """:func:`_meta_rows`, or 0 when ``db_path`` has no readable ``meta`` table."""
+    try:
+        return _meta_rows(db_path)
+    except sqlite3.DatabaseError:
+        return 0
 
 
 def _remove_private_copy(path: str, owner_pid: int) -> None:
@@ -1500,6 +1539,10 @@ class SCerevisiaeGenome(Genome):
     * A kept journal this user cannot read beside a kept copy this user can read
       raises ``PermissionError``. sqlite gives a journal the database's mode, so this
       arises only when someone changes the journal's mode by hand.
+    * A ``data.db`` this process cannot open that is unlinked between
+      :func:`require_damage`'s existence check and its ``stat`` raises a bare
+      ``FileNotFoundError`` instead of the named error. It needs two unlinks around
+      one expression; no realistic path to it was found.
     """
 
     #: The assembly set in the genomes tier this class reads its release files from.
@@ -1738,17 +1781,21 @@ class SCerevisiaeGenome(Genome):
     def _writable_db(self) -> Any:
         """This instance's private copy of the database, made on its first write.
 
-        The copy is a sqlite backup of the file this instance currently reads, so
-        every later read and write of this instance sees exactly the database it had,
-        and the shared ``data.db`` is never written. A pickled or forked copy of the
-        instance (another pid, or an unpickled instance) makes a copy of its own; when the file
-        it reads is gone, it copies the shared file and replays :attr:`_db_writes`.
+        The copy is a sqlite backup of the connection this instance reads (the file
+        it opened, even when pre-2026.10.01 code has since unlinked or is rewriting
+        ``data.db``), so every later read and write of this instance sees exactly the
+        database it had, and the shared ``data.db`` is never written. A copy that
+        cannot be made raises the named error (or the error propagates) and is
+        removed; no failure leaves it in the temp dir. A pickled or forked copy of the
+        instance (another pid, or an unpickled instance) makes a copy of its own; when
+        the file it reads is gone, it copies the shared file and replays
+        :attr:`_db_writes`.
         """
         owner = (os.getpid(), self._instance_token)
         if self._private_db_owner != owner:
             assert self._db_connection_manager is not None
             source_path = self._db_connection_manager.db_path
-            replay = not osp.exists(source_path)
+            replay = self._private_db_path is not None and not osp.exists(source_path)
             if replay:
                 source_path = osp.join(self.genome_root, GENOME_DB_FILENAME)
             temp_dir = tempfile.gettempdir()
@@ -1759,11 +1806,41 @@ class SCerevisiaeGenome(Genome):
                 dir=temp_dir,
             )
             os.close(fd)
-            src = sqlite3.connect(_ro_uri(source_path), uri=True)
-            dst = sqlite3.connect(path)
-            src.backup(dst)
-            dst.close()
-            src.close()
+            try:
+                with closing(sqlite3.connect(path)) as dst:
+                    try:
+                        if replay:
+                            with closing(
+                                sqlite3.connect(_ro_uri(source_path), uri=True)
+                            ) as src:
+                                src.backup(dst)
+                        else:
+                            # Back up the connection this instance reads, not the
+                            # path: a pre-2026.10.01 rebuild that unlinked or is
+                            # rewriting the path does not change the file this
+                            # connection holds.
+                            source = super().db
+                            assert source is not None
+                            source.conn.backup(dst)
+                    except sqlite3.DatabaseError as exc:
+                        require_damage(source_path, exc)
+                        raise GenomeDatabaseUnavailableError(
+                            f"{source_path} cannot be copied for this instance's "
+                            f"writes ({exc}); every file is left alone. Retry when "
+                            "the process rebuilding it has finished."
+                        ) from exc
+                if _meta_rows_or_zero(path) == 0:
+                    raise GenomeDatabaseUnavailableError(
+                        f"{source_path} has no gffutils metadata: another process "
+                        "(pre-2026.10.01 code) is rebuilding it in place; nothing "
+                        "was changed. Retry when it has finished."
+                    )
+            except BaseException:
+                # The error is named above or propagates as is; the copy never
+                # outlives a failed first write.
+                os.remove(path)
+                _remove_if_present(path + "-journal")
+                raise
             self._db_connection_manager = GffutilsConnectionManager(path)
             self._private_db_path = path
             self._private_db_owner = owner

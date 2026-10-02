@@ -1468,6 +1468,16 @@ def _construct(release: dict[str, str], **kwargs: Any) -> SCerevisiaeGenome:
     )
 
 
+def _vanished_message(path: Path | str) -> str:
+    """The named error's full message for ``path`` vanishing under this process."""
+    return (
+        f"{path} vanished while this process was reading, migrating or rebuilding it "
+        f"([Errno 2] No such file or directory: '{path}'); another process "
+        "(pre-2026.10.01 code) is rebuilding it. Every file is left alone. Retry "
+        "when it has finished."
+    )
+
+
 def _dead_pid() -> int:
     proc = subprocess.Popen(["true"])
     proc.wait()
@@ -3950,8 +3960,8 @@ def test_every_kill_point_of_a_pair_migration_leaves_a_recoverable_root(
         f"genome database {db_path} was not trusted (its hot journal was moved beside "
         "data.db.untrusted by a migration that did not finish); its own pages match "
         "its record and only a companion journal made it unreadable, so the pair was "
-        f"kept as {root / 'data.db.untrusted'} (replacing any earlier one) and "
-        "replaced by the recorded build"
+        f"kept as {root / 'data.db.untrusted'} (which already held these bytes and "
+        "was left in place) and replaced by the recorded build"
     ]
     assert sorted(f.id for f in genome.db.features_of_type("gene")) == ALL_GENES
     # K3: trusted; the persistent kept pair does not make the new file untrusted.
@@ -4484,12 +4494,7 @@ def test_data_db_vanishing_mid_migration_is_named(
     monkeypatch.setattr(s288c, "write_genome_database", build_then_unlink)
     with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
         _construct(release)
-    assert str(exc.value) == (
-        f"{db_path} vanished while this process was migrating or rebuilding it "
-        f"([Errno 2] No such file or directory: '{db_path}'); another process "
-        "(pre-2026.10.01 code) is rebuilding it. Every file is left alone. Retry "
-        "when it has finished."
-    )
+    assert str(exc.value) == _vanished_message(db_path)
     assert os.listdir(db_path.parent) == []
 
 
@@ -4789,12 +4794,7 @@ def test_data_db_vanishing_before_the_keep_copy_is_named(
     monkeypatch.setattr(s288c, "_content_digest_or_none", digest_then_unlink)
     with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
         _construct(release)
-    assert str(exc.value) == (
-        f"{db_path} vanished while this process was migrating or rebuilding it "
-        f"([Errno 2] No such file or directory: '{db_path}'); another process "
-        "(pre-2026.10.01 code) is rebuilding it. Every file is left alone. Retry "
-        "when it has finished."
-    )
+    assert str(exc.value) == _vanished_message(db_path)
     assert os.listdir(db_path.parent) == []
 
 
@@ -4863,10 +4863,13 @@ def test_data_db_vanishing_before_the_change_counter_read_is_named(
     release: dict[str, str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A trusted reader whose data.db is unlinked by an old-code rebuild between the
-    count read and the change-counter read gets the named error.
+    count read and the change-counter read gets the named error, and so does the
+    read-only probe ``genome_database_untrusted_reason`` (a vanished file is never
+    read as change counter 0, which would report it as written in place).
     """
-    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
-    db_path = Path(release["__genome_root__"]) / "data.db"
+    root = Path(release["__genome_root__"])
+    build_db(release[GFF_NAME], root)
+    db_path = root / "data.db"
     real = s288c._change_counter
 
     def unlink_then_read(path: str) -> int:
@@ -4875,8 +4878,13 @@ def test_data_db_vanishing_before_the_change_counter_read_is_named(
         return real(path)
 
     monkeypatch.setattr(s288c, "_change_counter", unlink_then_read)
-    with pytest.raises(s288c.GenomeDatabaseUnavailableError, match="vanished"):
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError) as probe:
+        s288c.genome_database_untrusted_reason(str(root))
+    assert str(probe.value) == _vanished_message(db_path)
+    build_db(release[GFF_NAME], root)
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
         _construct(release)
+    assert str(exc.value) == _vanished_message(db_path)
 
 
 def test_kept_journal_vanishing_before_the_rollback_is_named(tmp_path: Path) -> None:
@@ -4884,15 +4892,17 @@ def test_kept_journal_vanishing_before_the_rollback_is_named(tmp_path: Path) -> 
     kept.write_bytes(b"x" * 4096)
     db = tmp_path / "data.db"
     db.write_bytes(b"x" * 4096)
-    with pytest.raises(s288c.GenomeDatabaseUnavailableError, match="vanished"):
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
         s288c._rollback_equals(str(kept), str(db))
+    assert str(exc.value) == _vanished_message(f"{kept}-journal")
 
 
 def test_journal_vanishing_before_the_committed_peek_is_named(tmp_path: Path) -> None:
     db = tmp_path / "data.db"
     db.write_bytes(b"x" * 4096)
-    with pytest.raises(s288c.GenomeDatabaseUnavailableError, match="vanished"):
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
         s288c._committed_record_json(str(db))
+    assert str(exc.value) == _vanished_message(f"{db}-journal")
 
 
 def test_kept_pair_rollback_check_runs_in_the_temp_dir_for_a_read_only_root(
@@ -4947,6 +4957,7 @@ def test_kept_pair_rollback_check_runs_in_the_temp_dir_for_a_read_only_root(
         "_committed_record_json",
         "_rollback_equals",
         "_rollback_equals_compare",
+        "_journal_moved_to_kept",
     ],
 )
 def test_permission_denied_is_not_relabeled_as_vanished(
@@ -4954,7 +4965,10 @@ def test_permission_denied_is_not_relabeled_as_vanished(
 ) -> None:
     """Only ``FileNotFoundError`` is named "vanished": a file this user may not read
     (EACCES) propagates as ``PermissionError`` from every site that names a vanished
-    file, never as :class:`GenomeDatabaseUnavailableError`.
+    file, never as :class:`GenomeDatabaseUnavailableError`. The one exception is
+    ``_journal_moved_to_kept``'s byte comparison, by design: a kept copy this user
+    cannot compare (another user's) is not this file's journal pair, so the check
+    returns False (not torn) instead of raising.
     """
     locked_dir = tmp_path / "locked"
     locked_dir.mkdir()
@@ -4980,6 +4994,19 @@ def test_permission_denied_is_not_relabeled_as_vanished(
         "_committed_record_json": lambda: s288c._committed_record_json(str(db)),
         "_rollback_equals": lambda: s288c._rollback_equals(str(kept), str(db)),
     }
+    if site == "_journal_moved_to_kept":
+        # Equal sizes, so the comparison opens both files.
+        moved = tmp_path / "moved"
+        moved.mkdir()
+        (moved / "data.db").write_bytes(b"x" * 4096)
+        (moved / "data.db.untrusted").write_bytes(b"x" * 4096)
+        (moved / "data.db.untrusted-journal").write_bytes(b"x" * 512)
+        (moved / "data.db").chmod(0)
+        try:
+            assert s288c._journal_moved_to_kept(str(moved / "data.db")) is False
+        finally:
+            (moved / "data.db").chmod(0o700)
+        return
     locked = (
         locked_dir
         if site == "_identity"
@@ -4996,6 +5023,27 @@ def test_permission_denied_is_not_relabeled_as_vanished(
     assert exc.value.errno == errno.EACCES
 
 
+def test_io_error_at_the_kept_byte_comparison_is_not_relabeled_as_vanished(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An I/O error (EIO) while ``_journal_moved_to_kept`` compares data.db with the
+    kept copy propagates as itself; only ``FileNotFoundError`` is named "vanished"
+    (reviewer, ninth round: D10).
+    """
+    (tmp_path / "data.db").write_bytes(b"x" * 4096)
+    (tmp_path / "data.db.untrusted").write_bytes(b"x" * 4096)
+    (tmp_path / "data.db.untrusted-journal").write_bytes(b"x" * 512)
+    failure = OSError(errno.EIO, "Input/output error")
+
+    def failing_cmp(a: str, b: str, shallow: bool = True) -> bool:
+        raise failure
+
+    monkeypatch.setattr(s288c, "filecmp", SimpleNamespace(cmp=failing_cmp))
+    with pytest.raises(OSError) as exc:
+        s288c._journal_moved_to_kept(str(tmp_path / "data.db"))
+    assert exc.value is failure
+
+
 def test_data_db_vanishing_before_the_kept_byte_comparison_is_named(
     tmp_path: Path,
 ) -> None:
@@ -5007,7 +5055,7 @@ def test_data_db_vanishing_before_the_kept_byte_comparison_is_named(
     db = tmp_path / "data.db"
     with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
         s288c._journal_moved_to_kept(str(db))
-    assert str(exc.value).startswith(f"{db} vanished while this process")
+    assert str(exc.value) == _vanished_message(db)
 
 
 def test_data_db_vanishing_before_the_rollback_comparison_is_named(
@@ -5025,5 +5073,314 @@ def test_data_db_vanishing_before_the_rollback_comparison_is_named(
     before = set(os.listdir(tempfile.gettempdir()))
     with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
         s288c._rollback_equals(str(kept), str(db))
-    assert str(exc.value).startswith(f"{db} vanished while this process")
+    assert str(exc.value) == _vanished_message(db)
     assert set(os.listdir(tempfile.gettempdir())) == before
+
+
+@pytest.mark.parametrize("stage", ["unlinked", "zero_bytes", "meta_empty"])
+def test_first_write_copies_the_file_this_instance_reads_during_an_old_code_rebuild(
+    release: dict[str, str], stage: str, private_tmp: Path
+) -> None:
+    """A pre-2026.10.01 rebuild that starts in place after this instance read the shared
+    file (unlinked it, created it empty, or filled its tables before ``meta``) does not
+    change what this instance's first write copies: the copy comes from the connection
+    this instance reads, so ``drop_chrmt`` leaves exactly the five non-chrmt genes.
+    """
+    build_db(release[GFF_NAME], _root(release))
+    genome = _construct(release)
+    assert "Q0010" in genome.gene_set
+    db_path = _root(release) / "data.db"
+    os.remove(db_path)
+    if stage == "zero_bytes":
+        db_path.write_bytes(b"")
+    elif stage == "meta_empty":
+        _old_code_rebuild(release)
+        conn = sqlite3.connect(db_path)
+        conn.execute("DELETE FROM meta")
+        conn.commit()
+        conn.close()
+    listing = sorted(os.listdir(db_path.parent))
+    genome.drop_chrmt()
+    expected = ["YAL001C", "YAL002W", "YBL001W", "YBL002W", "YCL001W"]
+    assert list(genome.gene_set) == expected
+    assert [f.id for f in genome.db.features_of_type("gene")] == expected
+    assert sorted(os.listdir(db_path.parent)) == listing
+    private = genome._private_db_path
+    assert private is not None
+    assert os.listdir(private_tmp) == [osp.basename(private)]
+
+
+def test_migrating_a_torn_file_under_an_old_code_transaction_keeps_the_moved_journal(
+    release: dict[str, str], caplog: pytest.LogCaptureFixture
+) -> None:
+    """K2 while a pre-2026.10.01 writer holds a transaction on the torn data.db: the
+    migration installs a recorded build and leaves the kept pair as it was. The
+    writer's own journal (which undoes nothing on those bytes) does not overwrite
+    ``data.db.untrusted-journal``, so the kept pair still rolls back to the committed
+    file. The writer's journal is removed, and the migration's one WARNING names it.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    root = Path(release["__genome_root__"])
+    db_path = root / "data.db"
+    committed = db_path.read_bytes()
+    subprocess.run([sys.executable, "-c", _SILENT_HOT_WRITER, str(db_path)])
+    torn = db_path.read_bytes()
+    assert torn != committed
+    shutil.copyfile(db_path, root / "data.db.untrusted")
+    os.replace(root / "data.db-journal", root / "data.db.untrusted-journal")
+    moved_journal = (root / "data.db.untrusted-journal").read_bytes()
+    writer = subprocess.Popen(
+        [sys.executable, "-c", _HELD_WRITER, str(db_path)],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    assert writer.stdout is not None
+    try:
+        assert writer.stdout.readline() == "held\n"
+        with caplog.at_level(logging.WARNING, logger=s288c.__name__):
+            _construct(release)
+        assert [r.getMessage() for r in caplog.records] == [
+            f"genome database {db_path} was not trusted (its hot journal was moved "
+            "beside data.db.untrusted by a migration that did not finish); its own "
+            "pages match its record and only a companion journal made it unreadable, "
+            f"so the pair was kept as {root / 'data.db.untrusted'} (which already held "
+            f"these bytes and was left in place; {db_path}-journal beside data.db was "
+            "removed instead of overwriting the kept companion) and replaced by the "
+            "recorded build"
+        ]
+        assert sorted(p.name for p in root.iterdir()) == [
+            "data.db",
+            "data.db.untrusted",
+            "data.db.untrusted-journal",
+        ]
+        assert (root / "data.db.untrusted").read_bytes() == torn
+        assert (root / "data.db.untrusted-journal").read_bytes() == moved_journal
+        committed_file = root.parent / "committed.db"
+        committed_file.write_bytes(committed)
+        assert s288c._rollback_equals(
+            str(root / "data.db.untrusted"), str(committed_file)
+        )
+        assert (
+            s288c.untrusted_reason(str(db_path), _expected_source(release), "c") is None
+        )
+    finally:
+        writer.communicate("go\n", timeout=30)
+
+
+def test_replay_with_the_private_copy_and_data_db_gone_is_named_and_leaves_no_copy(
+    release: dict[str, str], private_tmp: Path
+) -> None:
+    """An unpickled instance whose parent's private copy was collected copies data.db
+    at its first read; when old code has also unlinked data.db, the read raises the
+    named error and leaves nothing in the temp dir.
+    """
+    build_db(release[GFF_NAME], _root(release))
+    genome = _construct(release)
+    genome.drop_chrmt()
+    restored = pickle.loads(pickle.dumps(genome))
+    del genome
+    gc.collect()
+    assert os.listdir(private_tmp) == []
+    db_path = _root(release) / "data.db"
+    os.remove(db_path)
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
+        restored.db
+    assert str(exc.value) == (
+        f"{db_path} cannot be opened by this process (SQLITE_CANTOPEN: unable to open "
+        "database file; mode absent); every file is left alone. Fix its permissions "
+        "or ownership, then retry."
+    )
+    assert os.listdir(private_tmp) == []
+    assert os.listdir(db_path.parent) == []
+
+
+@pytest.mark.parametrize("stage", ["zero_bytes", "meta_empty"])
+def test_replay_from_a_data_db_without_metadata_is_named_and_leaves_no_copy(
+    release: dict[str, str], private_tmp: Path, stage: str
+) -> None:
+    """The replay copies a data.db that old code is rebuilding in place (created
+    empty, so the copy has no ``meta`` table, or its ``meta`` table still empty): the
+    copy is removed and the named error raised, and the shared file keeps its bytes.
+    """
+    build_db(release[GFF_NAME], _root(release))
+    genome = _construct(release)
+    genome.drop_chrmt()
+    restored = pickle.loads(pickle.dumps(genome))
+    del genome
+    gc.collect()
+    db_path = _root(release) / "data.db"
+    if stage == "zero_bytes":
+        os.remove(db_path)
+        db_path.write_bytes(b"")
+    else:
+        _old_code_rebuild(release)
+        with closing(sqlite3.connect(db_path)) as conn:
+            conn.execute("DELETE FROM meta")
+            conn.commit()
+    before = (_identity(db_path), _sha(db_path))
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
+        restored.db
+    assert str(exc.value) == (
+        f"{db_path} has no gffutils metadata: another process (pre-2026.10.01 code) "
+        "is rebuilding it in place; nothing was changed. Retry when it has finished."
+    )
+    assert os.listdir(private_tmp) == []
+    assert (_identity(db_path), _sha(db_path)) == before
+
+
+def test_a_failed_lazy_first_write_leaves_no_copy(
+    release: dict[str, str], private_tmp: Path
+) -> None:
+    """The first write is also this instance's first read (``remove_deprecated_go_terms``
+    on a never-read instance) and old code has unlinked data.db: the connection's
+    ``FileNotFoundError`` propagates (the lazy first read, which the named errors do
+    not cover) and the copy made for the write is removed.
+    """
+    build_db(release[GFF_NAME], _root(release))
+    genome = _construct(release)
+    db_path = _root(release) / "data.db"
+    os.remove(db_path)
+    with pytest.raises(FileNotFoundError) as exc:
+        genome.remove_deprecated_go_terms()
+    assert str(exc.value) == f"Database not found at {db_path}"
+    assert os.listdir(private_tmp) == []
+    assert genome._private_db_path is None
+    assert genome._db_writes == []
+
+
+def test_keep_copy_replaces_a_kept_file_removed_before_its_comparison(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The kept file is removed by hand between ``_keep_copy``'s file check and its
+    byte comparison: it counts as a different file, the stale kept journal is
+    dropped and the copy becomes the kept file (reviewer, ninth round: P8).
+    """
+    copy = tmp_path / "data.db.untrusted.h.1.abc.building"
+    copy.write_bytes(b"torn bytes")
+    kept = tmp_path / "data.db.untrusted"
+    kept.write_bytes(b"torn bytes")
+    (tmp_path / "data.db.untrusted-journal").write_bytes(b"stale journal")
+    real = filecmp.cmp
+
+    def remove_then_compare(a: str, b: str, shallow: bool = True) -> bool:
+        os.remove(kept)
+        return real(a, b, shallow=shallow)
+
+    monkeypatch.setattr(s288c, "filecmp", SimpleNamespace(cmp=remove_then_compare))
+    assert s288c._keep_copy(str(copy), str(kept), str(tmp_path / "data.db")) is False
+    assert sorted(os.listdir(tmp_path)) == ["data.db.untrusted"]
+    assert kept.read_bytes() == b"torn bytes"
+
+
+def test_keep_copy_reports_whether_it_left_the_kept_pair(tmp_path: Path) -> None:
+    """Equal bytes: the kept pair stays (True). Different bytes: the copy replaces the
+    kept file and its companions go (False).
+    """
+    kept = tmp_path / "data.db.untrusted"
+    kept.write_bytes(b"torn bytes")
+    (tmp_path / "data.db.untrusted-journal").write_bytes(b"kept journal")
+    same = tmp_path / "same.building"
+    same.write_bytes(b"torn bytes")
+    assert s288c._keep_copy(str(same), str(kept), str(tmp_path / "data.db")) is True
+    assert same.read_bytes() == b"torn bytes"
+    assert (tmp_path / "data.db.untrusted-journal").read_bytes() == b"kept journal"
+    other = tmp_path / "other.building"
+    other.write_bytes(b"other bytes")
+    assert s288c._keep_copy(str(other), str(kept), str(tmp_path / "data.db")) is False
+    assert sorted(os.listdir(tmp_path)) == ["data.db.untrusted", "same.building"]
+    assert kept.read_bytes() == b"other bytes"
+
+
+@pytest.mark.parametrize("kept_as_is", [False, True])
+@pytest.mark.parametrize("kept_companion", [False, True])
+def test_install_beside_a_kept_pair_never_overwrites_a_kept_companion_left_in_place(
+    tmp_path: Path, kept_as_is: bool, kept_companion: bool
+) -> None:
+    """data.db's journal is moved beside the kept copy, except when the kept copy was
+    left in place (``kept_as_is``) and already has a journal: then data.db's is
+    removed, returned for the WARNING, and the kept journal stays.
+    """
+    build = tmp_path / "build.db"
+    build.write_bytes(b"build")
+    db = tmp_path / "data.db"
+    db.write_bytes(b"torn")
+    (tmp_path / "data.db-journal").write_bytes(b"own journal")
+    keep = tmp_path / "data.db.untrusted"
+    keep.write_bytes(b"torn")
+    if kept_companion:
+        (tmp_path / "data.db.untrusted-journal").write_bytes(b"kept journal")
+    removed = s288c.install_genome_database(str(build), str(db), str(keep), kept_as_is)
+    assert db.read_bytes() == b"build"
+    assert sorted(os.listdir(tmp_path)) == [
+        "data.db",
+        "data.db.untrusted",
+        "data.db.untrusted-journal",
+    ]
+    stays = kept_as_is and kept_companion
+    assert removed == ([f"{db}-journal"] if stays else [])
+    assert (tmp_path / "data.db.untrusted-journal").read_bytes() == (
+        b"kept journal" if stays else b"own journal"
+    )
+
+
+def test_explicit_rebuild_beside_an_equal_kept_pair_names_the_removed_journal(
+    release: dict[str, str], caplog: pytest.LogCaptureFixture
+) -> None:
+    """``overwrite=True`` over a file with a hot journal whose bytes and journal a
+    kept pair already holds: the kept pair stays as it was, data.db's journal is
+    removed, and the one WARNING names both.
+    """
+    root = Path(release["__genome_root__"])
+    build_db(release[GFF_NAME], root)
+    db_path = root / "data.db"
+    subprocess.run([sys.executable, "-c", _SILENT_HOT_WRITER, str(db_path)])
+    shutil.copyfile(db_path, root / "data.db.untrusted")
+    shutil.copyfile(root / "data.db-journal", root / "data.db.untrusted-journal")
+    kept = (_sha(root / "data.db.untrusted"), _sha(root / "data.db.untrusted-journal"))
+    with caplog.at_level(logging.WARNING, logger=s288c.__name__):
+        _construct(release, overwrite=True)
+    assert [r.getMessage() for r in caplog.records] == [
+        f"genome database {db_path} had a hot journal; the explicit rebuild kept the "
+        f"old file with its journal as {root / 'data.db.untrusted'} (which already "
+        f"held these bytes and was left in place; {db_path}-journal beside data.db "
+        "was removed instead of overwriting the kept companion) and installed the "
+        "recorded build"
+    ]
+    assert sorted(os.listdir(root)) == [
+        "data.db",
+        "data.db.untrusted",
+        "data.db.untrusted-journal",
+    ]
+    assert (
+        _sha(root / "data.db.untrusted"),
+        _sha(root / "data.db.untrusted-journal"),
+    ) == kept
+    assert s288c.untrusted_reason(str(db_path), _expected_source(release), "c") is None
+
+
+def test_replay_from_a_damaged_data_db_is_named_and_leaves_no_copy(
+    release: dict[str, str], private_tmp: Path
+) -> None:
+    """The replay copies a data.db sqlite reports as not a database: the copy is
+    removed and the named error raised, and the shared file keeps its bytes.
+    """
+    build_db(release[GFF_NAME], _root(release))
+    genome = _construct(release)
+    genome.drop_chrmt()
+    restored = pickle.loads(pickle.dumps(genome))
+    del genome
+    gc.collect()
+    db_path = _root(release) / "data.db"
+    os.remove(db_path)
+    db_path.write_bytes(b"\x07 not a database \x00" * 4096)
+    before = (_identity(db_path), _sha(db_path))
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
+        restored.db
+    assert str(exc.value) == (
+        f"{db_path} cannot be copied for this instance's writes (file is not a "
+        "database); every file is left alone. Retry when the process rebuilding it "
+        "has finished."
+    )
+    assert os.listdir(private_tmp) == []
+    assert (_identity(db_path), _sha(db_path)) == before

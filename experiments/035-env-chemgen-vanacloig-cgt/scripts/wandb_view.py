@@ -59,7 +59,9 @@ VIEW_TAG = "035-r8-r11"
 # Pinned after the first `save_as_new_view()`; None creates the view and prints its id.
 VIEW_ID: str | None = "sy9905pud6q"
 X = "epoch"
-SWEEP = re.compile(r"^(r8_(small|deep|mid)_[a-z]|r9_\w+|r10_\w+|r11_\w+|r12_\w+)$")
+SWEEP = re.compile(
+    r"^(r8_(small|deep|mid)_[a-z]|r9_\w+|r10_\w+|r11_\w+|r12_\w+|r13_\w+)$"
+)
 
 PROTOCOL = {
     "r8": "fit on training compounds, epoch picked on 4 validation compounds, 1 seed",
@@ -67,6 +69,7 @@ PROTOCOL = {
     "r10": "fit on the non-test pool, fixed 50 epochs keeping the last, 3 seeds averaged",
     "r11": "fit on the non-test pool, fixed 50 epochs keeping the last, 3 seeds averaged",
     "r12": "fit on training compounds, epoch picked on 4 validation compounds, 1 seed",
+    "r13": "fit on the non-test pool, fixed 50 epochs keeping the last, 3 seeds averaged",
 }
 
 LOSS_COLUMNS = {

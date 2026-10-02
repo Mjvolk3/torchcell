@@ -123,6 +123,8 @@ class FactorizedConfig(BaseModel):
     # logged validation score is then in-sample.
     select: Literal["val", "last"] = "val"
     fit_on: Literal["train", "pool"] = "train"
+    # per_compound z-scores each fitted compound's profile across strains before the fit
+    target_scale: Literal["global", "per_compound"] = "global"
     gene_batch: int = 0  # 0 = every gene in one step
     se_weight: float | None = None  # weight 1 / (se^2 + s0^2) with s0 this value
     huber: float | None = None  # Huber delta on the standardized target
@@ -589,7 +591,24 @@ def train_seed(
 
     y_train = ctx.y[:, train]
     y_mean, y_sd = float(np.nanmean(y_train)), float(np.nanstd(y_train))
-    target = torch.tensor((y_train - y_mean) / y_sd, dtype=torch.float32)
+    n_compounds = ctx.y.shape[1]
+    if cfg.target_scale == "per_compound":
+        # each fitted compound's profile is z-scored across strains, so a compound with
+        # 14 times the median variance (crystal violet, a quarter of the total) no longer
+        # carries the loss. A compound that was not fitted gets the fitted compounds'
+        # mean offset and median scale when its prediction is put back in response units.
+        c_mean = np.nanmean(y_train, axis=0)
+        c_sd = np.nanstd(y_train, axis=0)
+        target_np = (y_train - c_mean) / c_sd
+        shift = np.full(n_compounds, float(c_mean.mean()))
+        scale = np.full(n_compounds, float(np.median(c_sd)))
+        shift[train] = c_mean
+        scale[train] = c_sd
+    else:
+        target_np = (y_train - y_mean) / y_sd
+        shift = np.full(n_compounds, y_mean)
+        scale = np.full(n_compounds, y_sd)
+    target = torch.tensor(target_np, dtype=torch.float32)
     mask = torch.isfinite(target)
     target = torch.nan_to_num(target).to(device)
     mask = mask.to(device)
@@ -676,7 +695,7 @@ def train_seed(
 
         if (step + 1) % eval_every == 0 or step + 1 == steps:
             full = predict_all(model, ctx, x, device, 256 if encoder else n_genes)
-            full = full * y_sd + y_mean
+            full = full * scale + shift
             val = centered_val_score(ctx.y, full, train, fold.val)
             # the held-out compounds at this step, logged for visibility only; the
             # selected step is still chosen on the validation compounds

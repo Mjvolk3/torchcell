@@ -31,6 +31,7 @@ rewritten on every call. Rerun after each job finishes.
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import os.path as osp
@@ -59,6 +60,8 @@ VIEW_TAG = "035-r8-r11"
 # Pinned after the first `save_as_new_view()`; None creates the view and prints its id.
 VIEW_ID: str | None = "sy9905pud6q"
 X = "epoch"
+# every panel draws up to this many runs or groups; the W&B default is 10
+MAX_SHOWN = 100
 SWEEP = re.compile(
     r"^(r8_(small|deep|mid)_[a-z]|r9_\w+|r10_\w+|r11_\w+|r12_\w+|r13_\w+)$"
 )
@@ -307,6 +310,7 @@ def populate_view() -> str:
                     y=keys,
                     title=title,
                     title_x="epoch",
+                    max_runs_to_show=MAX_SHOWN,
                     layout=wr.Layout(w=8, h=7),
                 )
                 for title, keys in panels
@@ -324,34 +328,47 @@ def populate_view() -> str:
                 wr.BarPlot(
                     title="mean paired difference in centered Spearman vs nested ridge",
                     metrics=["final/mean_paired_diff_centered_spearman_vs_ridge"],
+                    max_runs_to_show=MAX_SHOWN,
+                    max_bars_to_show=MAX_SHOWN,
                     layout=wr.Layout(w=12, h=8),
                 ),
                 wr.BarPlot(
                     title="median centered Spearman on the held-out compounds",
                     metrics=["final/median_centered_spearman_held_out"],
+                    max_runs_to_show=MAX_SHOWN,
+                    max_bars_to_show=MAX_SHOWN,
                     layout=wr.Layout(w=12, h=8),
                 ),
                 wr.BarPlot(
                     title="validation loss of the saved prediction (standardized MSE; "
                     "in-sample for pool-fit arms)",
                     metrics=["final/validation_loss_standardized_mse"],
+                    max_runs_to_show=MAX_SHOWN,
+                    max_bars_to_show=MAX_SHOWN,
                     layout=wr.Layout(w=12, h=8),
                 ),
                 wr.BarPlot(
                     title="held-out loss of the saved prediction (standardized MSE)",
                     metrics=["final/held_out_loss_standardized_mse"],
+                    max_runs_to_show=MAX_SHOWN,
+                    max_bars_to_show=MAX_SHOWN,
                     layout=wr.Layout(w=12, h=8),
                 ),
                 wr.BarPlot(
                     title="train loss of the saved prediction (standardized MSE)",
                     metrics=["final/train_loss_standardized_mse"],
+                    max_runs_to_show=MAX_SHOWN,
+                    max_bars_to_show=MAX_SHOWN,
                     layout=wr.Layout(w=12, h=8),
                 ),
             ],
         ),
     )
     settings = ws.WorkspaceSettings(
-        x_axis=X, smoothing_type="none", max_runs=200, sort_panels_alphabetically=False
+        x_axis=X,
+        smoothing_type="none",
+        max_runs=MAX_SHOWN,
+        sort_panels_alphabetically=False,
     )
     runset_settings = ws.RunsetSettings(
         filters=[ws.Config("view") == VIEW_TAG],
@@ -380,6 +397,16 @@ def populate_view() -> str:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--view-only",
+        action="store_true",
+        help="rewrite the saved view's panels without touching the runs",
+    )
+    args = parser.parse_args()
+    if args.view_only:
+        print(populate_view())
+        return
     api = wandb.Api()
     groups = label_and_relog(api)
     url = populate_view()

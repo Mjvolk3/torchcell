@@ -1,0 +1,83 @@
+{
+  "script": "experiments/036-dataset-fixes-before-kg-build/scripts/mulleder2016_replicates.py",
+  "dev_root": "/scratch/projects/torchcell-scratch/data/torchcell/amino_acid_mulleder2016",
+  "scratch_root": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-messner-mulleder-names-replicates/amino_acid_mulleder2016_final",
+  "n_records_dev": 4678,
+  "n_records_scratch": 4678,
+  "released_strains_by_data_raw_row_count": {
+    "1": 4487,
+    "2": 167,
+    "3": 20,
+    "4": 4
+  },
+  "orf_x_amino_acid_cells_by_n_replicates": {
+    "1": 85258,
+    "2": 3171,
+    "3": 377,
+    "4": 76
+  },
+  "n_records_experiment_n_replicates_changed": 191,
+  "orf_x_amino_acid_cells_below_row_count": [
+    {
+      "orf": "YBR196C-A",
+      "amino_acid": "tryptophan",
+      "n": 1,
+      "rows": 2
+    },
+    {
+      "orf": "YCR037C",
+      "amino_acid": "methionine",
+      "n": 1,
+      "rows": 2
+    },
+    {
+      "orf": "YGL252C",
+      "amino_acid": "glycine",
+      "n": 2,
+      "rows": 3
+    },
+    {
+      "orf": "YGL252C",
+      "amino_acid": "methionine",
+      "n": 1,
+      "rows": 3
+    },
+    {
+      "orf": "YGL252C",
+      "amino_acid": "asparagine",
+      "n": 2,
+      "rows": 3
+    },
+    {
+      "orf": "YJR060W",
+      "amino_acid": "tryptophan",
+      "n": 1,
+      "rows": 2
+    },
+    {
+      "orf": "YNL096C",
+      "amino_acid": "asparagine",
+      "n": 1,
+      "rows": 2
+    }
+  ],
+  "n_strains_with_a_cell_below_row_count": 5,
+  "dev_reference_n_replicates_values": [
+    1
+  ],
+  "scratch_reference_n_replicates_values": [
+    4678
+  ],
+  "n_records_reference_n_replicates_changed": 4678,
+  "n_records_with_any_other_field_different": 0,
+  "n_released_strains_in_concentration_sheet": 4678,
+  "data_raw_qc_rows_without_orf": 237,
+  "mcd_diagnostic": {
+    "estimator": "sklearn.covariance.MinCovDet(random_state=0) on the released mM matrix",
+    "n_strains": 4678,
+    "max_abs_rel_diff_location_vs_released_mean": 0.011843977029462716,
+    "median_abs_rel_diff_location_vs_released_mean": 0.0013054610970473224,
+    "max_abs_rel_diff_plain_mean_vs_released_mean": 0.07903328292638112,
+    "median_abs_rel_diff_plain_mean_vs_released_mean": 0.016016205608886058
+  }
+}

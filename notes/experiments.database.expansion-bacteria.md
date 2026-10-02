@@ -253,3 +253,148 @@ The generator docstring said the first tranche carries "a per-organism quota of 
 10". The code sets `QUOTA_1 = {"E. coli": 6, "P. putida": 6}`, a floor rather than a
 split, and always did. The docstring was stale and the figure I reported from it was
 wrong. Fixed in the same pass.
+
+## 2026.10.02 - Fourteen verified rows, and the pin's effect measured
+
+Follow-up to the section above, after fetching and reading all 20 shortlisted papers plus
+their supplements.
+
+### The pin's effect, now measured rather than estimated
+
+Of the ten rows that measure isoprenol, the measurement rule alone places **nine** outside
+the fifty recommended builds, at ranks 55 through 89 of 89. The single survivor sits at
+rank 6 for a reason unrelated to isoprenol: it carries a 1,500-protein proteome panel, and
+the panel depth multiplies its 1,416 instances into 2.1 million measurements. Strip the
+proteomics and it joins the other nine. So the unaided rule represents the priority product
+among the recommended builds in exactly one row, by accident.
+
+| axis | rows | outside the fifty on the rule alone | rule ranks |
+|---|---|---|---|
+| direct | 9 | 8 | 55, 60, 65, 71, 74, 81, 82, 89 |
+| tolerance | 1 | 1 | 76 |
+| precursor | 3 | 3 | 58, 62, 72 |
+| analog | 2 | 2 | 78, 87 (deliberately not lifted) |
+
+### The sweep ranked the best new isoprenol paper first and did not know what it measured
+
+Foo 2014 (`10.1128/mBio.01932-14`) is in the queue with the **highest priority score of any
+new row, 70.1**, Wave 1, portfolio class Joint, and its isoprenol relevance flag reads
+`none`. The title says "biogasoline". Its own first sentence says "Isopentenol
+(3-methyl-3-buten-1-ol) is an important target compound". The sweep found the paper,
+ranked it top, and misclassified its product.
+
+That makes three misses against ten isoprenol papers, a 30 percent false-negative rate on
+the single axis the sweep was built to find. All three share one mechanism: title and
+abstract matching finds a paper named for its product, not one named for its application
+(two are titled "aviation fuel precursor") or its fuel class. A molecule with two accepted
+names plus a nickname defeats the match three ways. **A queue's score is not evidence it
+understood the row it ranked.**
+
+### Four rows that answer questions the table could not
+
+**Rachwalski 2024** (`10.1016/j.crmeth.2023.100693`) is the most valuable single addition,
+and it was not on my radar before the sweep. Three essential-gene knockdown constructs
+(lolA, pssA, mreD) conjugated into the whole Keio collection gives 4,017 deletions crossed
+against each, plus the whole 356-guide collection crossed into a lpp deletion: roughly
+**12,400 distinct gene pairs**, with a normalized growth value released for every pair at
+every condition, so the negatives are there and not only the 68 suppressors and 9
+enhancers. The pairing is the point: an essential gene reachable only by knockdown crossed
+with a non-essential gene reachable only by deletion is a genotype no deletion collection
+can produce. Needed a new sequence basis, `K-12-KO+guide`.
+
+Loader traps in it: the methods list five inducer levels and omit 100 ng/mL, which the
+table headers do carry, so trusting the prose drops a sixth of the dose response; Table S4A
+holds 4,542 rows for 4,017 unique deletions with 485 labels repeated up to five times and
+**no plate or well key** to separate them; replicate type is called technical in the
+methods and biological in three figure captions.
+
+**Hawkins 2020** titrates knockdown by guide mismatch, 100 guides per essential gene (10
+matched plus 9 single-mismatch variants of each). The knockdown **level is a linear-model
+prediction at cross-validated R-squared 0.56, not a measurement**, and a preliminary
+version of that model designed the libraries, so the dose must be typed as an imputed
+covariate carrying its own error. Guides whose matched member proved non-functional had
+their whole series excluded before the released curves, so the per-guide table and the
+curve tables are different populations. Not open access, so the workbooks need manual
+retrieval.
+
+**Royet 2025** releases a **complete** 5,729-gene by 4-metal matrix, fold change plus q,
+with no missing values, so the 22,916 records include every null. Non-barcoded mariner
+Tn-seq, which fixes the addressable genotype at the **gene**: no per-mutant record can ever
+be built from it. Its laboratory isolate was resequenced for the work and deposited as
+CP036494 at 100 percent ANI to AE015451.2, and the 12 runs map one-to-one onto six pools
+by an SRA attribute whose read counts match Table S3 exactly. All supplementary numbers are
+stored as text strings under merged headers.
+
+**Choe 2019** gives matched transcriptome and translatome over the same 3,457 genes, the
+densest per-instance vector in the table. Genotype side is the weak half: all 31
+resequenced samples are **populations**, every variant table reports an allele frequency,
+and the flagship evolved strain has **no variant list of its own**, so a per-clone genotype
+would have to be manufactured by thresholding day-62 frequencies, a call the authors never
+made. The reduced parent MS56 has no sequence accession, only a lab URL behind a bot wall.
+The evolution environment is non-stationary by design (LB supplement 0.1 percent to zero
+over 62 days) and the released trajectory is cell **density**, not growth rate.
+
+### One addition the rule still buries, and it is the same defect on another axis
+
+**Silvis 2021** is the only route to a bacterial cell-shape phenotype under gene
+perturbation, and shape is the one modality the built yeast morphology data has no
+bacterial counterpart for. Four shape summaries for 585 strain-conditions, distilled from
+2,646,096 segmented cells. That is 2,340 measurements, so the rule puts it **64th, in the
+reserve**. Nothing pins it: the pin built here is for one product, not for modality
+coverage, and inventing a second pin unprompted would be exactly the hand-tuning the
+design argues against. Recorded, reported, outside the fifty.
+
+Worth stating plainly: this is the same structural defect isoprenol exposed, on a different
+axis. A row that is the unique carrier of a phenotype class gets ranked by its volume, and
+volume is not what makes it unique. If a modality-coverage pin is ever wanted, this is the
+row that motivates it.
+
+Also: **none of its images were deposited anywhere**, so the provenance chain for 2.6
+million measured cells terminates at a 65-kilobyte workbook. And 163 of 548 strains are
+flagged contaminated, a flag that must travel with every record.
+
+### Three premises I had wrong
+
+Corrected in the committed rows rather than carried forward.
+
+- **Silvis 2021 has no RNA-seq.** I had shortlisted it as a combined imaging and RNA-seq
+  resource. The "transcriptional" half of its title is a 4-gene qPCR panel plus promoter
+  reporters, both figure-only. There is no transcriptome and so no expression vector.
+- **Chen 2013 is not adaptive evolution.** "Chromosomal evolution" there is triclosan-driven
+  tandem amplification, and nothing was resequenced; copy number is "about 30" by qPCR of
+  one gene. Excluded on `no-sequence`.
+- **Mi 2014 measured no proteome.** I had flagged it for a proteome panel on the strength of
+  a co-author name; it is a different person, and the only analytical method in the paper is
+  HPLC with a diode-array detector.
+
+### Five gate failures, recorded so nobody re-verifies them
+
+| paper | rule | the blocking fact |
+|---|---|---|
+| Mi 2014 geranic acid | `no-sequence` | host is DSM 12264 with no genome accession anywhere |
+| Chen 2013 lycopene | `no-sequence` | ~30-copy array, amplicon never sequenced, no resequencing |
+| Huang 2022 pinene | `no-per-record-data` | "Data Availability Statement: Not applicable"; >10^5 library returned 4 colonies |
+| Mireles 2026 C16/C20 | `no-per-record-data` | sequencing "upon reasonable request"; also off-axis, toxicity explicitly absent |
+| Hernandez-Arranz 2019 | `no-per-record-data` | absolute units for 4 lowest producers only, rest are ratios; no accessions |
+
+**Assessed and deliberately not added, failing no rule:** Meiners 2026
+(`10.1186/s12934-026-03108-5`). Values are prose-released with SDs, which is better than
+most of this set, but it carries **no native gene perturbation at all** (pure heterologous
+overexpression on a reporter host), its replicate count varies by figure (n=3, n=2, and
+n=1-per-run), and its whole-plasmid sequencing was performed and not deposited. Its own
+supplement also keys its tables to figure numbers that disagree with the published figure
+numbers, so an automated join mis-keys. Low value rather than inadmissible.
+
+### Two isoprenol rows worth remembering for what they are missing
+
+**Tian 2019** has the only nested combinatorial isoprenol design in either host (asnA,
+gldA, prpE as 3 singles, all 3 pairs, the full triple, each at 3 induction levels, plus a
+second 3-gene array matched against a triple knockout) and releases **no numeric value at
+all**. Titers appear only as percentage improvements over a base strain whose own titer is
+never stated in absolute units. No replicate count anywhere. Status `blocked`.
+
+**Wang 2015** releases 46 Keio deletions at two isoprenol doses, and its **double and
+triple deletions are the one thing left out of every table**. acrA with acrB, and that
+double with tolC, both reported non-additive against their singles with a complementation
+control, exist only in Figure 4, which is also the only place the 0.75 percent dose
+appears. The combinatorial arm, the part most worth having, is a provenance gap.

@@ -7,7 +7,9 @@ Every trainer saves its seed-ensemble prediction for every gene and compound
 (``$DATA_ROOT/experiments/035-env-chemgen-vanacloig-cgt/predictions/<sweep>/
 <name>_fold<k>_seed<s>.npy``), and the ladder saves the nested ridge reference
 (``ridge_fold<k>_seed<s>.npy``). A stack is the plain mean of two or more of these, in
-response units, with no fitted weight, so nothing is chosen on the test compounds. It is
+response units, with no fitted weight, so nothing is chosen on the test compounds. A
+member written ``a,b,c`` is first averaged within itself, so seed blocks of one model
+(three 3-seed ensembles) enter the stack as one nine-seed member with one vote. It is
 scored exactly as its members were and written as a pseudo-sweep
 ``results/factorized/stack/<stack>_scores.csv`` that ``compare_models.py`` reads.
 
@@ -66,9 +68,10 @@ def main() -> None:
     cells = load_cells(CELL_TABLE, osp.join(EMBEDDING_DIR, "fcfp4_count.npz"))
 
     for stack in args.stack:
-        members = stack.split("+")
-        paths = [member_paths(m) for m in members]
-        keys = set.intersection(*[set(p) for p in paths])
+        groups = [
+            [member_paths(m) for m in member.split(",")] for member in stack.split("+")
+        ]
+        keys = set.intersection(*[set(p) for group in groups for p in group])
         frames = []
         for fold_seed, fold_index in sorted(keys):
             fold = make_folds(
@@ -76,7 +79,16 @@ def main() -> None:
             )[fold_index]
             pool = sorted(fold.train + fold.val)
             prediction = np.mean(
-                [np.load(p[(fold_seed, fold_index)]).astype(np.float64) for p in paths],
+                [
+                    np.mean(
+                        [
+                            np.load(p[(fold_seed, fold_index)]).astype(np.float64)
+                            for p in group
+                        ],
+                        axis=0,
+                    )
+                    for group in groups
+                ],
                 axis=0,
             )
             frames.append(

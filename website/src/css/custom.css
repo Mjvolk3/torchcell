@@ -90,6 +90,66 @@
   box-shadow: inset 0 -2px 0 var(--ifm-color-primary);
 }
 
+/* Page width. The default is the theme's reading width: a capped container, and on a
+ * doc page an article column beside the on-page table of contents. The navbar toggle
+ * (src/components/WidthToggle.tsx) sets data-layout="wide" on <html>, which removes
+ * the cap and gives the article the table of contents' column too, so on any desktop
+ * screen the content spans everything right of the sidebar. */
+html[data-layout='wide'] {
+  --ifm-container-width: 100%;
+  --ifm-container-width-xl: 100%;
+}
+html[data-layout='wide'] .main-wrapper .container {
+  max-width: 100%;
+}
+html[data-layout='wide'] .col.col--3:has(.theme-doc-toc-desktop) {
+  display: none;
+}
+html[data-layout='wide'] [class*='docItemCol'] {
+  max-width: 100% !important;
+}
+.tc-width-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  color: var(--ifm-navbar-link-color);
+  transition: background var(--ifm-transition-fast);
+}
+.tc-width-toggle:hover {
+  background: var(--ifm-color-emphasis-200);
+}
+.tc-width-toggle:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}
+.tc-width-toggle[aria-pressed='true'] {
+  color: var(--ifm-color-primary);
+}
+/* Below the desktop breakpoint the content already spans the screen. */
+@media (max-width: 996px) {
+  .tc-width-toggle {
+    display: none;
+  }
+}
+
+/* The embedded schema explorer fills the window below the navbar and the page title. */
+.tc-explorer__bar {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+.tc-explorer__frame {
+  display: block;
+  width: 100%;
+  height: calc(100vh - 15rem);
+  min-height: 520px;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--ifm-global-radius);
+  background: var(--tc-surface-raised);
+}
+
 /* The landing-page title carries the purple-to-red accent gradient, as the Sphinx
  * site's h1 does. */
 .tc-gradient-text {

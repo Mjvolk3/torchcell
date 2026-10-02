@@ -44,7 +44,7 @@ preview on your own machine.
 
 ## Environment variables
 
-All four are read at build time by `docusaurus.config.ts`. A change needs a rebuild.
+All five are read at build time by `docusaurus.config.ts`. A change needs a rebuild.
 
 | Variable | Default | Meaning |
 | :-- | :-- | :-- |
@@ -52,6 +52,7 @@ All four are read at build time by `docusaurus.config.ts`. A change needs a rebu
 | `BASE_URL` | `/torchcell/site/` | Path under that origin. Must start and end with `/` |
 | `BENCH_API_URL` | `http://127.0.0.1:8725/api/v1` | Base URL of the benchmark API, including `/api/v1` |
 | `BENCH_API_MOCK` | unset | `1` makes the benchmark pages read `static/mock/*.json` instead of the API |
+| `ONTOLOGY_EXPLORER_URL` | `https://mjvolk3.github.io/torchcell/ontology/` | The schema explorer the Ontology tab embeds and the dataset cards link to. An absolute URL, or a path starting with `/` for a copy this site serves (render one with `python paper/nature-biotech/scripts/generate_ontology_diagram.py --explorer-only website/static/ontology-explorer/index.html` from the repo root) |
 
 ```bash
 SITE_URL=https://example.org BASE_URL=/ BENCH_API_URL=https://example.org/api/v1 npm run build

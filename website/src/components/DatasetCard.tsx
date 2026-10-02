@@ -2,6 +2,7 @@ import React, {type ReactNode} from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import {datasetHash, useExplorerUrl} from '@site/src/lib/explorer';
 import styles from './DatasetCard.module.css';
 
 type CardProps = {
@@ -46,6 +47,7 @@ export default function DatasetCard({
   children,
 }: CardProps): ReactNode {
   const diagramUrl = useBaseUrl(diagramSrc ?? '/');
+  const schemaUrl = useExplorerUrl() + datasetHash(loaderClass);
   return (
     <article className={styles.card}>
       <header className={styles.header}>
@@ -72,6 +74,12 @@ export default function DatasetCard({
               <Link to={docsUrl}>Dataset page</Link>
             </li>
           ) : null}
+          <li>
+            {/* A plain anchor: the explorer is a standalone page, not a site route. */}
+            <a href={schemaUrl} target="_blank" rel="noopener">
+              Schema classes it uses
+            </a>
+          </li>
         </ul>
       </header>
       <div className={styles.body}>

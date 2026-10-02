@@ -11,12 +11,20 @@ import rehypeKatex from 'rehype-katex';
 //   BASE_URL        path prefix under that origin; must start and end with "/"
 //   BENCH_API_URL   base URL of the benchmark API, including /api/v1
 //   BENCH_API_MOCK  "1" loads static/mock/*.json instead of calling the API
+//   ONTOLOGY_EXPLORER_URL  the schema explorer the Ontology tab embeds: an absolute
+//                   URL, or a path starting with "/" for a copy served by this site
 const siteUrl = process.env.SITE_URL ?? 'https://mjvolk3.github.io';
 const baseUrl = process.env.BASE_URL ?? '/torchcell/site/';
 const benchApiUrl = (
   process.env.BENCH_API_URL ?? 'http://127.0.0.1:8725/api/v1'
 ).replace(/\/+$/, '');
 const benchApiMock = process.env.BENCH_API_MOCK === '1';
+const ontologyExplorerUrl =
+  process.env.ONTOLOGY_EXPLORER_URL ?? 'https://mjvolk3.github.io/torchcell/ontology/';
+
+// Applies the remembered page width (src/components/WidthToggle.tsx) before the first
+// paint, so a reload in wide mode does not flash the default width.
+const applyStoredLayout = `(function(){try{if(localStorage.getItem('tc-layout')==='wide'){document.documentElement.setAttribute('data-layout','wide');}}catch(e){}})();`;
 
 const GITHUB_URL = 'https://github.com/Mjvolk3/torchcell';
 const SPHINX_URL = 'https://mjvolk3.github.io/torchcell/';
@@ -25,7 +33,9 @@ const config: Config = {
   title: 'TorchCell',
   tagline:
     'A Python library and Neo4j knowledge graph for yeast genotype, environment, and phenotype data.',
-  favicon: 'img/torchcell-logo.png',
+  // The cell alone; the wordmark is unreadable at favicon size. Written by
+  // docs/make_logo.py.
+  favicon: 'img/favicon.png',
 
   url: siteUrl,
   baseUrl,
@@ -51,7 +61,10 @@ const config: Config = {
   customFields: {
     benchApiUrl,
     benchApiMock,
+    ontologyExplorerUrl,
   },
+
+  headTags: [{tagName: 'script', attributes: {}, innerHTML: applyStoredLayout}],
 
   presets: [
     [
@@ -107,6 +120,7 @@ const config: Config = {
         {type: 'docSidebar', sidebarId: 'tutorials', label: 'Tutorials', position: 'left'},
         {type: 'docSidebar', sidebarId: 'education', label: 'Education', position: 'left'},
         {type: 'docSidebar', sidebarId: 'query', label: 'Query', position: 'left'},
+        {type: 'custom-widthToggle', position: 'right'},
         {href: GITHUB_URL, label: 'GitHub', position: 'right'},
       ],
     },

@@ -77,8 +77,15 @@ PROTOCOL = {
 
 LOSS_COLUMNS = {
     "curve/train_loss_full_standardized_mse": "train_loss_full",
-    "curve/validation_loss_standardized_mse": "val_loss",
     "curve/held_out_loss_standardized_mse": "test_loss",
+}
+# The 4 validation compounds are out of sample only for an arm fit on the training
+# compounds. An arm fit on the pool has trained on them, and its "validation" score (about
+# 0.7 centered Spearman) is a training score, so these keys are written for train-fit
+# arms only and the pool-fit arms are simply absent from the validation panels.
+VALIDATION_COLUMNS = {
+    "curve/validation_out_of_sample_centered_spearman": "val_centered_mean",
+    "curve/validation_out_of_sample_loss_standardized_mse": "val_loss",
 }
 
 SECTIONS: list[tuple[str, list[tuple[str, list[str]]]]] = [
@@ -90,14 +97,15 @@ SECTIONS: list[tuple[str, list[tuple[str, list[str]]]]] = [
                 ["curve/held_out_centered_spearman"],
             ),
             (
-                "validation centered Spearman, by epoch (in-sample for pool-fit arms)",
-                ["curve/validation_centered_spearman"],
+                "validation centered Spearman, by epoch (4 compounds never fitted; "
+                "arms fit on training compounds only)",
+                ["curve/validation_out_of_sample_centered_spearman"],
             ),
             (
-                "held-out and validation centered Spearman",
+                "held-out and out-of-sample validation centered Spearman",
                 [
                     "curve/held_out_centered_spearman",
-                    "curve/validation_centered_spearman",
+                    "curve/validation_out_of_sample_centered_spearman",
                 ],
             ),
         ],
@@ -107,9 +115,9 @@ SECTIONS: list[tuple[str, list[tuple[str, list[str]]]]] = [
         "for runs from round 11 on)",
         [
             (
-                "validation loss, by epoch (4 validation compounds; in-sample for "
-                "pool-fit arms)",
-                ["curve/validation_loss_standardized_mse"],
+                "validation loss, by epoch (4 compounds never fitted; arms fit on "
+                "training compounds only)",
+                ["curve/validation_out_of_sample_loss_standardized_mse"],
             ),
             (
                 "train loss over all fitted compounds, by epoch",
@@ -123,7 +131,7 @@ SECTIONS: list[tuple[str, list[tuple[str, list[str]]]]] = [
                 "train, validation and held-out loss on one axis",
                 [
                     "curve/train_loss_full_standardized_mse",
-                    "curve/validation_loss_standardized_mse",
+                    "curve/validation_out_of_sample_loss_standardized_mse",
                     "curve/held_out_loss_standardized_mse",
                 ],
             ),
@@ -169,14 +177,13 @@ def ridge_reference() -> pd.Series:
     return ridge.set_index(["fold_seed", "compound"])["spearman"]
 
 
-def curves(history: pd.DataFrame) -> pd.DataFrame:
+def curves(history: pd.DataFrame, fit_on: str) -> pd.DataFrame:
     """Per-epoch means over the run's seeds, under the shared key names."""
     history = history.assign(epoch=history["epoch"].round().astype(int))
     mean = history.groupby("epoch").mean(numeric_only=True)
     curve = pd.DataFrame(
         {
             "curve/held_out_centered_spearman": mean["test_centered_mean"],
-            "curve/validation_centered_spearman": mean["val_centered_mean"],
             "curve/train_loss_standardized_mse": mean["train_loss"],
             "curve/graph_prior_penalty": mean["penalty"],
             "curve/grad_norm": mean["grad_norm"],
@@ -187,7 +194,8 @@ def curves(history: pd.DataFrame) -> pd.DataFrame:
     )
     # the losses over every strain are logged per epoch from round 11 on; a history
     # written before that has no such columns and the run gets final values only
-    for key, column in LOSS_COLUMNS.items():
+    columns = LOSS_COLUMNS | (VALIDATION_COLUMNS if fit_on == "train" else {})
+    for key, column in columns.items():
         if column in mean:
             curve[key] = mean[column]
     return curve
@@ -207,11 +215,13 @@ def final_losses(
     def mse(columns: list[int]) -> float:
         return float(np.nanmean(residual[:, columns] ** 2))
 
-    return {
+    final = {
         "final/train_loss_standardized_mse": mse(fitted),
-        "final/validation_loss_standardized_mse": mse(split.val),
         "final/held_out_loss_standardized_mse": mse(split.test),
     }
+    if fit_on == "train":
+        final["final/validation_out_of_sample_loss_standardized_mse"] = mse(split.val)
+    return final
 
 
 def label_and_relog(api: wandb.Api) -> dict[str, dict[str, object]]:
@@ -257,7 +267,13 @@ def label_and_relog(api: wandb.Api) -> dict[str, dict[str, object]]:
             fold_seed,
             run.config.get("fit_on", "train"),
         )
-        if not run.config.get("curves_relogged"):
+        fit_on = run.config.get("fit_on", "train")
+        first = not run.config.get("curves_relogged")
+        # a run re-logged before the validation keys were split by fit gets them once
+        split_validation = (
+            not first and fit_on == "train" and not run.config.get("validation_split")
+        )
+        if first or split_validation:
             live = wandb.init(
                 entity=ENTITY,
                 project=PROJECT,
@@ -270,10 +286,16 @@ def label_and_relog(api: wandb.Api) -> dict[str, dict[str, object]]:
             )
             live.define_metric(X)
             live.define_metric("curve/*", step_metric=X)
-            for epoch, row in curves(pd.read_csv(history_path)).iterrows():
+            curve = curves(pd.read_csv(history_path), fit_on)
+            if split_validation:
+                curve = curve[[k for k in VALIDATION_COLUMNS if k in curve]]
+            for epoch, row in curve.iterrows():
                 live.log({X: int(epoch)} | {k: float(v) for k, v in row.items()})
             live.summary.update(final)
-            live.config.update({"curves_relogged": True}, allow_val_change=True)
+            live.config.update(
+                {"curves_relogged": True, "validation_split": True},
+                allow_val_change=True,
+            )
             live.finish()
             run = api.run(f"{ENTITY}/{PROJECT}/{run.id}")
         for key, value in final.items():
@@ -341,8 +363,8 @@ def populate_view() -> str:
                 ),
                 wr.BarPlot(
                     title="validation loss of the saved prediction (standardized MSE; "
-                    "in-sample for pool-fit arms)",
-                    metrics=["final/validation_loss_standardized_mse"],
+                    "4 compounds never fitted, train-fit arms only)",
+                    metrics=["final/validation_out_of_sample_loss_standardized_mse"],
                     max_runs_to_show=MAX_SHOWN,
                     max_bars_to_show=MAX_SHOWN,
                     layout=wr.Layout(w=12, h=8),

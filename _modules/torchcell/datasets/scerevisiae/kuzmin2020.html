@@ -195,9 +195,9 @@
 <span class="c1">#  - double_mutant_query_strain: the double-mutant QUERY strain of a trigenic screen,</span>
 <span class="c1">#    measured on its own (Table S5 "Double mutant" rows; S1/S3 repeat the value in</span>
 <span class="c1">#    "Query single/double mutant fitness" on every trigenic row of that strain).</span>
-<span class="c1"># create_experiment branches on this column, NOT on "Combined mutant type": the</span>
-<span class="c1"># digenic records must stay byte-identical to what is already served, since their</span>
-<span class="c1"># content-addressed ids are what an incremental import matches on.</span>
+<span class="c1"># create_experiment branches on this column, NOT on "Combined mutant type". (The</span>
+<span class="c1"># digenic records were kept byte-identical when the query-strain kind was added; the</span>
+<span class="c1"># screen_id of issue #602 changes every record, which is a full-rebuild change.)</span>
 <span class="n">RECORD_KIND_DIGENIC_ARRAY_CROSS</span> <span class="o">=</span> <span class="s2">"digenic_array_cross"</span>
 <span class="n">RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN</span> <span class="o">=</span> <span class="s2">"double_mutant_query_strain"</span>
 
@@ -205,6 +205,76 @@
 <span class="c1"># S5's full-precision "Fitness" is only ever exact to ~1e-4; a larger gap is a real</span>
 <span class="c1"># disagreement between the two released tables and is worth a warning.</span>
 <span class="n">_QUERY_STRAIN_FITNESS_TOL</span> <span class="o">=</span> <span class="mf">1e-3</span>
+
+<span class="c1"># Screen identity (issue #602). Tables S1 and S3 are two different screens, and 24,193</span>
+<span class="c1"># digenic and 11,443 trigenic (query strain, array strain) keys are released in BOTH</span>
+<span class="c1"># with different values (24,179 and 11,436 of them differ in fitness), so each record</span>
+<span class="c1"># carries the screen it came from in the phenotype's ``screen_id``; both measurements</span>
+<span class="c1"># are kept as distinguishable replicates from different screens. Sources, verbatim from</span>
+<span class="c1"># $DATA_ROOT/torchcell-library/kuzminExploringWholegenomeDuplicate2020/si/si1.md</span>
+<span class="c1"># (sha256 69179c57ada82e99faa40a800fa311e0ad300ac3bde8ea1f310e6c7caf9567fe):</span>
+<span class="c1">#   line 21: "240 double mutants and 480 corresponding single mutant control ‘query’</span>
+<span class="c1">#   strains were screened for genetic interactions against a diagnostic set of</span>
+<span class="c1">#   ${ \sim } 1 { , } 2 0 0$ mutant ‘array’ strains. [...] The raw genetic interaction</span>
+<span class="c1">#   data is available in Table S1."</span>
+<span class="c1">#   line 57: "Pilot screens (Fig. S4, Table S3) were conducted in a similar manner</span>
+<span class="c1">#   except all strains were screened against the genome-wide array of non-essential</span>
+<span class="c1">#   (NES) gene deletion mutants (32) and the array of temperature sensitive alleles of</span>
+<span class="c1">#   essential (ES) genes (72)."</span>
+<span class="c1">#   line 69: "Pilot screens in which 11 double mutant query strains and their</span>
+<span class="c1">#   corresponding single mutant control strains were crossed to the genome-wide array</span>
+<span class="c1">#   of non-essential (NES) gene deletion mutants (71) and the array of temperature</span>
+<span class="c1">#   sensitive alleles of essential (ES) genes (72) were scored with a random set of</span>
+<span class="c1">#   1,211 and 2,494 additional queries, respectively, to achieve numerical stability.</span>
+<span class="c1">#   The interactions from pilot screens are available in Table S3."</span>
+<span class="c1">#   line 200 / 257 (table captions): "Table S1. Raw genetic interaction dataset." /</span>
+<span class="c1">#   "Table S3. Raw genetic interaction dataset from pilot screens."</span>
+<span class="c1"># The released tables hold 1,172 array strains in S1 and 4,540 in S3, 1,159 shared</span>
+<span class="c1"># (experiments/036-dataset-fixes-before-kg-build/scripts/kuzmin2020_screen_source.py).</span>
+<span class="n">SCREEN_ID_MAIN</span> <span class="o">=</span> <span class="s2">"kuzmin2020_s1_diagnostic_array"</span>
+<span class="n">SCREEN_ID_PILOT</span> <span class="o">=</span> <span class="s2">"kuzmin2020_s3_pilot_genome_wide_arrays"</span>
+<span class="c1"># The query-strain fitness standard (Table S5) is its own screen, line 39-41: "A</span>
+<span class="c1"># high-density array was assembled to estimate query strain fitness. [...] scored for</span>
+<span class="c1"># colony size in order to estimate fitness (Fig. S1, Table S5)." Smf records and the</span>
+<span class="c1"># Dmf double-mutant query-strain records read their value from it.</span>
+<span class="n">SCREEN_ID_QUERY_FITNESS</span> <span class="o">=</span> <span class="s2">"kuzmin2020_s5_query_fitness_array"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_combine_screens</span><span class="p">(</span><span class="n">df_s1</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">df_s3</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Tables S1 then S3 in one frame, each row tagged with its ``screen_id``.</span>
+
+<span class="sd">    One array strain, one name: the two tables spell the allele of 70 of the 1,159</span>
+<span class="sd">    shared array strains differently (19 by case only, ``tfc3-G349E`` / ``tfc3-g349e``;</span>
+<span class="sd">    50 ``-ph`` / ``-PH`` placeholders against a numbered allele, ``PRE7-ph`` /</span>
+<span class="sd">    ``pre7-5001``; one renamed ORF, ``ymr166cΔ`` / ``mme1Δ``). The strain id is the</span>
+<span class="sd">    same in both tables, so it is one physical strain and not two alleles; the</span>
+<span class="sd">    ``Array allele name`` of Table S1, the main screen, is used for every row of a</span>
+<span class="sd">    strain that S1 lists, and S3's name is kept only for strains S1 does not list. A</span>
+<span class="sd">    strain carrying two names within ONE table has no such rule and is refused.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">table</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">"S1"</span><span class="p">,</span> <span class="n">df_s1</span><span class="p">),</span> <span class="p">(</span><span class="s2">"S3"</span><span class="p">,</span> <span class="n">df_s3</span><span class="p">)):</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">"Array strain ID"</span><span class="p">)[</span><span class="s2">"Array allele name"</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">names</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Table </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> gives </span><span class="si">{</span><span class="nb">int</span><span class="p">((</span><span class="n">names</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> array strain(s) more "</span>
+                <span class="sa">f</span><span class="s2">"than one 'Array allele name': </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">names</span><span class="p">[</span><span class="n">names</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+    <span class="n">s1_name</span> <span class="o">=</span> <span class="n">df_s1</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="s2">"Array strain ID"</span><span class="p">)</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">"Array strain ID"</span><span class="p">)[</span>
+        <span class="s2">"Array allele name"</span>
+    <span class="p">]</span>
+    <span class="n">df_s3</span> <span class="o">=</span> <span class="n">df_s3</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">s1_spelling</span> <span class="o">=</span> <span class="n">df_s3</span><span class="p">[</span><span class="s2">"Array strain ID"</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">s1_name</span><span class="p">)</span>
+    <span class="n">renamed</span> <span class="o">=</span> <span class="n">s1_spelling</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">s1_spelling</span> <span class="o">!=</span> <span class="n">df_s3</span><span class="p">[</span><span class="s2">"Array allele name"</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">renamed</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Table S3 names </span><span class="si">{</span><span class="n">df_s3</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">renamed</span><span class="p">,</span><span class="w"> </span><span class="s1">'Array strain ID'</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span><span class="si">}</span><span class="s2"> array "</span>
+            <span class="sa">f</span><span class="s2">"strain(s) differently from Table S1 (</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">renamed</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span><span class="si">}</span><span class="s2"> rows); the "</span>
+            <span class="s2">"Table S1 name is used"</span>
+        <span class="p">)</span>
+    <span class="n">df_s3</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">renamed</span><span class="p">,</span> <span class="s2">"Array allele name"</span><span class="p">]</span> <span class="o">=</span> <span class="n">s1_spelling</span><span class="p">[</span><span class="n">renamed</span><span class="p">]</span>
+    <span class="n">df_s1</span> <span class="o">=</span> <span class="n">df_s1</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">screen_id</span><span class="o">=</span><span class="n">SCREEN_ID_MAIN</span><span class="p">)</span>
+    <span class="n">df_s3</span> <span class="o">=</span> <span class="n">df_s3</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">screen_id</span><span class="o">=</span><span class="n">SCREEN_ID_PILOT</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df_s1</span><span class="p">,</span> <span class="n">df_s3</span><span class="p">])</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_array_perturbation_type</span><span class="p">(</span><span class="n">array_strain_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -360,6 +430,12 @@
     <span class="n">rows</span><span class="p">[</span><span class="s2">"fitness"</span><span class="p">]</span> <span class="o">=</span> <span class="n">rows</span><span class="p">[</span><span class="s2">"Fitness"</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">rows</span><span class="p">[</span><span class="s2">"Query single/double mutant fitness"</span><span class="p">])</span>
     <span class="c1"># An SD belongs to the S5 value only; the fallback column ships none.</span>
     <span class="n">rows</span><span class="p">[</span><span class="s2">"fitness_std"</span><span class="p">]</span> <span class="o">=</span> <span class="n">rows</span><span class="p">[</span><span class="s2">"St.dev."</span><span class="p">]</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">rows</span><span class="p">[</span><span class="s2">"Fitness"</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">())</span>
+    <span class="c1"># A value read from S5 comes from the query-fitness screen; a fallback value keeps</span>
+    <span class="c1"># the S1/S3 screen of the row it was read from (0 fallbacks among the released</span>
+    <span class="c1"># strains: all 201 stored strains carry an S5 fitness).</span>
+    <span class="n">rows</span><span class="p">[</span><span class="s2">"screen_id"</span><span class="p">]</span> <span class="o">=</span> <span class="n">rows</span><span class="p">[</span><span class="s2">"screen_id"</span><span class="p">]</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">rows</span><span class="p">[</span><span class="s2">"Fitness"</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">(),</span> <span class="n">SCREEN_ID_QUERY_FITNESS</span>
+    <span class="p">)</span>
     <span class="n">rows</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">"fitness"</span><span class="p">])</span>
 
     <span class="n">mismatch</span> <span class="o">=</span> <span class="p">(</span>
@@ -465,6 +541,7 @@
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"'"</span><span class="p">,</span> <span class="s2">"_prime"</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"Δ"</span><span class="p">,</span> <span class="s2">"_delta"</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">"Fitness"</span><span class="p">])</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">"screen_id"</span><span class="p">]</span> <span class="o">=</span> <span class="n">SCREEN_ID_QUERY_FITNESS</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">df</span></div>
 
@@ -505,6 +582,7 @@
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span>
             <span class="n">fitness</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Fitness"</span><span class="p">],</span>
             <span class="n">fitness_std</span><span class="o">=</span><span class="n">_reported_sd</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"St.dev."</span><span class="p">]),</span>
+            <span class="n">screen_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"screen_id"</span><span class="p">],</span>
             <span class="o">**</span><span class="n">_combined_mutant_uncertainty</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"St.dev."</span><span class="p">]),</span>
         <span class="p">)</span>
 
@@ -645,7 +723,7 @@
 <span class="sd">        """</span>
         <span class="c1"># Combine S1 and S3, splitting the digenic crosses from the trigenic rows</span>
         <span class="c1"># (whose QUERY strains are themselves double mutants).</span>
-        <span class="n">df_combined</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df_s1</span><span class="p">,</span> <span class="n">df_s3</span><span class="p">])</span>
+        <span class="n">df_combined</span> <span class="o">=</span> <span class="n">_combine_screens</span><span class="p">(</span><span class="n">df_s1</span><span class="p">,</span> <span class="n">df_s3</span><span class="p">)</span>
         <span class="n">df_trigenic</span> <span class="o">=</span> <span class="n">df_combined</span><span class="p">[</span>
             <span class="n">df_combined</span><span class="p">[</span><span class="s2">"Combined mutant type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"trigenic"</span>
         <span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -797,6 +875,7 @@
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span>
             <span class="n">fitness</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"fitness"</span><span class="p">],</span>
             <span class="n">fitness_std</span><span class="o">=</span><span class="n">_reported_sd</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"fitness_std"</span><span class="p">]),</span>
+            <span class="n">screen_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"screen_id"</span><span class="p">],</span>
             <span class="o">**</span><span class="n">uncertainty</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -923,7 +1002,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Merge the supplementary tables and assemble triple-mutant fitness rows."""</span>
         <span class="c1"># Combine S1 and S3, filtering for trigenic interactions</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df_s1</span><span class="p">,</span> <span class="n">df_s3</span><span class="p">])</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">_combine_screens</span><span class="p">(</span><span class="n">df_s1</span><span class="p">,</span> <span class="n">df_s3</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Combined mutant type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"trigenic"</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
         <span class="c1"># Use the provided fitness and standard deviation</span>
@@ -1045,7 +1124,9 @@
         <span class="n">environment_reference</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">()</span>
 
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span>
-            <span class="n">fitness</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"fitness"</span><span class="p">],</span> <span class="n">fitness_std</span><span class="o">=</span><span class="n">_reported_sd</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"fitness_std"</span><span class="p">])</span>
+            <span class="n">fitness</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"fitness"</span><span class="p">],</span>
+            <span class="n">fitness_std</span><span class="o">=</span><span class="n">_reported_sd</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"fitness_std"</span><span class="p">]),</span>
+            <span class="n">screen_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"screen_id"</span><span class="p">],</span>
         <span class="p">)</span>
 
         <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">FitnessPhenotype</span><span class="p">(</span>
@@ -1172,7 +1253,7 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">df_s1</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">df_s3</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Merge the supplementary tables and assemble interaction rows."""</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df_s1</span><span class="p">,</span> <span class="n">df_s3</span><span class="p">])</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">_combine_screens</span><span class="p">(</span><span class="n">df_s1</span><span class="p">,</span> <span class="n">df_s3</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Combined mutant type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"digenic"</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
         <span class="n">df</span><span class="p">[[</span><span class="s2">"Query strain ID_1"</span><span class="p">,</span> <span class="s2">"Query strain ID_2"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span>
@@ -1279,6 +1360,7 @@
             <span class="n">gene_interaction</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Adjusted genetic interaction score (epsilon or tau)"</span><span class="p">],</span>
             <span class="n">gene_interaction_p_value</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"P-value"</span><span class="p">],</span>
             <span class="n">graph_level</span><span class="o">=</span><span class="s2">"edge"</span><span class="p">,</span>
+            <span class="n">screen_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"screen_id"</span><span class="p">],</span>
         <span class="p">)</span>
 
         <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">GeneInteractionPhenotype</span><span class="p">(</span>
@@ -1405,7 +1487,7 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">df_s1</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">df_s3</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Merge the supplementary tables and assemble interaction rows."""</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df_s1</span><span class="p">,</span> <span class="n">df_s3</span><span class="p">])</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">_combine_screens</span><span class="p">(</span><span class="n">df_s1</span><span class="p">,</span> <span class="n">df_s3</span><span class="p">)</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Combined mutant type"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"trigenic"</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
         <span class="n">df</span><span class="p">[[</span><span class="s2">"Query strain ID_1"</span><span class="p">,</span> <span class="s2">"Query strain ID_2"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span>
@@ -1519,6 +1601,7 @@
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">GeneInteractionPhenotype</span><span class="p">(</span>
             <span class="n">gene_interaction</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"Adjusted genetic interaction score (epsilon or tau)"</span><span class="p">],</span>
             <span class="n">gene_interaction_p_value</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"P-value"</span><span class="p">],</span>
+            <span class="n">screen_id</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"screen_id"</span><span class="p">],</span>
         <span class="p">)</span>
 
         <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">GeneInteractionPhenotype</span><span class="p">(</span>

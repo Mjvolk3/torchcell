@@ -2123,6 +2123,17 @@
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"What one sample in n_samples is (colony, screen, ...)."</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">screen_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the SCREEN this measurement came from, when one publication "</span>
+        <span class="s2">"releases the same (genotype, environment) from more than one screen with "</span>
+        <span class="s2">"different values (Kuzmin 2020: the main diagnostic-array screen of Table S1 "</span>
+        <span class="s2">"and the pilot genome-wide-array screens of Table S3 share 24,193 digenic "</span>
+        <span class="s2">"crosses). Same meaning as EnvironmentResponsePhenotype.screen_id: it keeps "</span>
+        <span class="s2">"two measurements of one strain from different screens distinguishable "</span>
+        <span class="s2">"instead of storing two values nothing tells apart. None when the source "</span>
+        <span class="s2">"releases one screen per measurement."</span><span class="p">,</span>
+    <span class="p">)</span>
 
 <div class="viewcode-block" id="FitnessPhenotype.validate_fitness">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.FitnessPhenotype.html#torchcell.datamodels.schema.FitnessPhenotype.validate_fitness">[docs]</a>
@@ -2256,6 +2267,14 @@
     <span class="p">)</span>
     <span class="n">gene_interaction_p_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"p-value of gene interaction"</span>
+    <span class="p">)</span>
+    <span class="n">screen_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the SCREEN this interaction score came from, when one "</span>
+        <span class="s2">"publication releases the same (genotype, environment) from more than one "</span>
+        <span class="s2">"screen with different scores (Kuzmin 2020 Tables S1 and S3). Same meaning as "</span>
+        <span class="s2">"FitnessPhenotype.screen_id; None when the source releases one screen per "</span>
+        <span class="s2">"measurement."</span><span class="p">,</span>
     <span class="p">)</span>
 
 <div class="viewcode-block" id="GeneInteractionPhenotype.validate_fitness">

@@ -1353,6 +1353,9 @@
             <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">label_statistic_name</span><span class="p">,</span>
             <span class="s2">"fitness"</span><span class="p">:</span> <span class="n">fitness</span><span class="p">,</span>
             <span class="s2">"fitness_std"</span><span class="p">:</span> <span class="n">fitness_std</span><span class="p">,</span>
+            <span class="c1"># The screen a measurement came from (Kuzmin 2020 main vs pilot screens,</span>
+            <span class="c1"># issue #602); None for a source with one screen per measurement.</span>
+            <span class="s2">"screen_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">screen_id</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1383,6 +1386,7 @@
             <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">label_statistic_name</span><span class="p">,</span>
             <span class="s2">"gene_interaction"</span><span class="p">:</span> <span class="n">gene_interaction</span><span class="p">,</span>
             <span class="s2">"gene_interaction_p_value"</span><span class="p">:</span> <span class="n">gene_interaction_p_value</span><span class="p">,</span>
+            <span class="s2">"screen_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">screen_id</span><span class="p">,</span>
         <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1565,6 +1569,7 @@
                 <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">label_statistic_name</span><span class="p">,</span>
                 <span class="s2">"fitness"</span><span class="p">:</span> <span class="n">fitness</span><span class="p">,</span>
                 <span class="s2">"fitness_std"</span><span class="p">:</span> <span class="n">fitness_std</span><span class="p">,</span>
+                <span class="s2">"screen_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">screen_id</span><span class="p">,</span>
             <span class="p">}</span>
 
             <span class="n">node</span> <span class="o">=</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1597,6 +1602,7 @@
                 <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">label_statistic_name</span><span class="p">,</span>
                 <span class="s2">"gene_interaction"</span><span class="p">:</span> <span class="n">gene_interaction</span><span class="p">,</span>
                 <span class="s2">"gene_interaction_p_value"</span><span class="p">:</span> <span class="n">gene_interaction_p_value</span><span class="p">,</span>
+                <span class="s2">"screen_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">screen_id</span><span class="p">,</span>
             <span class="p">}</span>
 
             <span class="n">node</span> <span class="o">=</span> <span class="n">BioCypherNode</span><span class="p">(</span>

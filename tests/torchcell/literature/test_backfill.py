@@ -56,6 +56,12 @@ an OCR figure. A non-paper PDF at the key root (Costanzo 2016's ``SOM.pdf``) wri
 is ``ocr_provenance`` and ``build_manifest`` attaches it, parsed as a
 ``ProcessingRecord``, to the markdown beside it; markdown with no such file keeps
 ``processing`` None.
+
+2026.10.02 (issue #607): the citation index is read from Zotero's top-level items
+(``top()``, which ``FakeZot`` answers with every item that has no ``parentItem``), and
+an item whose ``itemType`` is ``attachment``, ``note`` or ``annotation`` is skipped even
+when standalone. ``citation_index_with_duplicates`` returns the duplicates instead of
+raising; ``build_citation_index`` and ``backfill_mirror`` still refuse any duplicate.
 """
 
 import hashlib
@@ -190,9 +196,9 @@ def _manifest(
 
 
 def _item(
-    key: str, data: dict[str, Any]
+    key: str, data: dict[str, Any], item_type: str = "journalArticle"
 ) -> dict[str, Any]:  # a Zotero item as pyzotero returns it
-    return {"key": key, "data": data}
+    return {"key": key, "data": {"itemType": item_type, **data}}
 
 
 def _pdf_child(key: str, title: str, md5: str | None) -> dict[str, Any]:
@@ -550,11 +556,11 @@ def test_enriched_manifest_carries_zotero_metadata_and_attachment_sources(
         collections=["yeast", "C9"],
         provenance_complete=True,
     )
-    # the paginated index scan, then the attachments (line 103), then the
-    # collection names (line 111): three paged reads (each through ``everything``,
-    # issue #563), no write method exists to be called
+    # the paginated top-level index scan (issue #607), then the attachments, then
+    # the collection names: three paged reads (each through ``everything``, issue
+    # #563), no write method exists to be called
     assert zot.calls == [
-        ("items", None),
+        ("top",),
         ("everything",),
         ("children", "ITEM1"),
         ("everything",),
@@ -674,6 +680,103 @@ def test_citation_index_refuses_items_sharing_a_citation_key(
         match=r"^Zotero items share a citation key \(dupKey2020: A, B\)$",
     ):
         build_citation_index(library)
+
+
+def _child(key: str, item_type: str, parent: str, title: str) -> dict[str, Any]:
+    """A Zotero child item: no citation key, a ``parentItem`` unless standalone."""
+    data: dict[str, Any] = {"title": title}
+    if parent:
+        data["parentItem"] = parent
+    return _item(key, data, item_type)
+
+
+def test_citation_index_reads_top_level_items_only(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Issue #607: the index is built from ``top()`` (paginated by ``everything``),
+    so a paper's attachment, note and annotation children never reach it. Before the
+    fix every item was scanned and children collided under generated keys such as
+    ``unknownFullTextPDFXXXX``.
+    """
+    paper = _item("P1", {"citationKey": "paperKey2020", "title": "A paper"})
+    book = _item("P2", {"extra": "Citation Key: bookKey2021"}, "book")
+    zot = FakeZot(
+        items=[
+            paper,
+            _child("ATT1", "attachment", "P1", "Full Text PDF"),
+            _child("N1", "note", "P1", ""),
+            _child("AN1", "annotation", "ATT1", ""),
+            book,
+        ]
+    )
+    library = make_library(monkeypatch, zot)
+    index, duplicates = bf.citation_index_with_duplicates(library)
+    assert {key: item["key"] for key, item in index.items()} == {
+        "paperKey2020": "P1",
+        "bookKey2021": "P2",
+    }
+    assert duplicates == {}
+    assert zot.calls == [("top",), ("everything",)]
+
+
+@pytest.mark.parametrize("item_type", ["attachment", "note", "annotation"])
+def test_citation_index_skips_a_standalone_child_type(
+    monkeypatch: pytest.MonkeyPatch, item_type: str
+) -> None:
+    """A standalone attachment or note is top-level in Zotero, so ``top()`` returns
+    it; each of the three child types is skipped by ``itemType``. Two of them with
+    one title would otherwise share a generated key.
+    """
+    paper = _item("P1", {"citationKey": "paperKey2020"})
+    first = _child("S1", item_type, "", "Full Text PDF")
+    second = _child("S2", item_type, "", "Full Text PDF")
+    library = make_library(monkeypatch, FakeZot(items=[first, paper, second]))
+    index, duplicates = bf.citation_index_with_duplicates(library)
+    assert {key: item["key"] for key, item in index.items()} == {"paperKey2020": "P1"}
+    assert duplicates == {}
+
+
+def test_citation_index_with_duplicates_leaves_a_shared_key_out_of_the_index(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The companion of ``build_citation_index`` returns the duplicates instead of
+    raising: a shared key maps to its item keys in scan order and is absent from the
+    index, so no caller can pick one of the two papers.
+    """
+    items = [
+        _item("A", {"citationKey": "dupKey2020"}),
+        _item("C", {"citationKey": "soloKey2021"}),
+        _item("B", {"extra": "Citation Key: dupKey2020"}),
+        _item("E", {"citationKey": "aDup2019"}),
+        _item("D", {"citationKey": "aDup2019"}),
+    ]
+    library = make_library(monkeypatch, FakeZot(items=items))
+    index, duplicates = bf.citation_index_with_duplicates(library)
+    assert {key: item["key"] for key, item in index.items()} == {"soloKey2021": "C"}
+    assert duplicates == {"dupKey2020": ["A", "B"], "aDup2019": ["E", "D"]}
+    assert bf.describe_duplicates(duplicates) == "aDup2019: E, D; dupKey2020: A, B"
+
+
+def test_backfill_mirror_refuses_any_duplicate_before_writing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The backfill keeps refusing on every duplicate, even one no directory under
+    the root is named after: a mirror directory can be any citation key.
+    """
+    paper = _make_exact_key(tmp_path)
+    items = [
+        _item("ITEM1", {"citationKey": "fakePaperKey2020"}),
+        _item("X1", {"citationKey": "otherKey2022"}),
+        _item("X2", {"citationKey": "otherKey2022"}),
+    ]
+    library = make_library(monkeypatch, _zot(items))
+    monkeypatch.setattr(ZoteroLibrary, "from_env", classmethod(lambda cls: library))
+    with pytest.raises(bf.DuplicateCitationKeyError) as refused:
+        backfill_mirror(tmp_path)
+    assert str(refused.value) == (
+        "Zotero items share a citation key (otherKey2022: X1, X2)"
+    )
+    assert not (paper / MANIFEST_FILENAME).exists()
 
 
 def test_existing_corrupt_manifest_raises_with_its_path(tmp_path: Path) -> None:

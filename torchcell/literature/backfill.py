@@ -44,6 +44,9 @@ LIBRARY_SUBDIR = "torchcell-library"
 # Top-level Manifest metadata fields whose absence marks incomplete provenance.
 _METADATA_FIELDS = ("doi", "title", "zotero_item_key")
 
+# Zotero item types that are never a paper: skipped by the citation index.
+CHILD_ITEM_TYPES = frozenset({"attachment", "note", "annotation"})
+
 
 class CorruptManifestError(ValueError):
     """An existing ``manifest.json`` does not parse as a :class:`Manifest`."""
@@ -112,32 +115,67 @@ def library_root(data_root: str | Path) -> Path:
     return Path(data_root) / LIBRARY_SUBDIR
 
 
-def build_citation_index(lib: ZoteroLibrary) -> dict[str, dict[str, Any]]:
-    """Map every library item's citation key to the item (one paginated scan).
+def citation_index_with_duplicates(
+    lib: ZoteroLibrary,
+) -> tuple[dict[str, dict[str, Any]], dict[str, list[str]]]:
+    """Index the library's top-level regular items by citation key, one paginated scan.
 
-    Raises:
-        DuplicateCitationKeyError: Two or more items resolve to one citation key; the
-            message lists every such key with all of its item keys, since picking one
-            item would attach the wrong paper's metadata to a directory.
+    Only top-level items are read (pyzotero ``top()``, the ``/items/top`` endpoint,
+    paginated through ``everything``): an attachment, note or annotation that is a
+    child of a paper is reached from its parent (``ZoteroLibrary.pdf_attachments``),
+    never from this index. A standalone attachment or note is top-level in Zotero, so
+    every item whose ``itemType`` is in :data:`CHILD_ITEM_TYPES` is skipped as well.
+    Such items carry no citation key and would otherwise collide under generated keys
+    such as ``unknownFullTextPDFXXXX``.
+
+    Returns:
+        ``(index, duplicates)``: ``index`` maps each citation key held by exactly one
+        item to that item; ``duplicates`` maps each key held by two or more items to
+        their item keys in scan order. A duplicated key is absent from ``index``, since
+        picking one item would attach the wrong paper's metadata to a directory; the
+        caller decides whether a duplicate blocks it.
     """
     items: list[dict[str, Any]] = with_zotero_retry(
-        lambda: lib.zot.everything(lib.zot.items())
+        lambda: lib.zot.everything(lib.zot.top())
     )
     by_key: dict[str, list[dict[str, Any]]] = {}
     for item in items:
+        if item["data"]["itemType"] in CHILD_ITEM_TYPES:
+            continue
         by_key.setdefault(_resolve_citation_key(item), []).append(item)
     duplicates = {
         key: [item["key"] for item in group]
         for key, group in by_key.items()
         if len(group) > 1
     }
+    index = {key: group[0] for key, group in by_key.items() if len(group) == 1}
+    return index, duplicates
+
+
+def describe_duplicates(duplicates: dict[str, list[str]]) -> str:
+    """``key: ITEM1, ITEM2; key2: ...`` sorted by citation key, for messages."""
+    return "; ".join(
+        f"{key}: {', '.join(item_keys)}"
+        for key, item_keys in sorted(duplicates.items())
+    )
+
+
+def build_citation_index(lib: ZoteroLibrary) -> dict[str, dict[str, Any]]:
+    """Map each top-level regular item's citation key to the item.
+
+    What is indexed is documented on :func:`citation_index_with_duplicates`.
+
+    Raises:
+        DuplicateCitationKeyError: Two or more items resolve to one citation key; the
+            message lists every such key with all of its item keys, since picking one
+            item would attach the wrong paper's metadata to a directory.
+    """
+    index, duplicates = citation_index_with_duplicates(lib)
     if duplicates:
-        listed = "; ".join(
-            f"{key}: {', '.join(item_keys)}"
-            for key, item_keys in sorted(duplicates.items())
+        raise DuplicateCitationKeyError(
+            f"Zotero items share a citation key ({describe_duplicates(duplicates)})"
         )
-        raise DuplicateCitationKeyError(f"Zotero items share a citation key ({listed})")
-    return {key: group[0] for key, group in by_key.items()}
+    return index
 
 
 def _enriched_manifest(
@@ -267,7 +305,7 @@ def backfill_mirror(
         lib = ZoteroLibrary.from_env()
         log.info("Backfill: scanning Zotero library %s ...", lib.config.library_id)
         citation_index = build_citation_index(lib)
-        log.info("Backfill: indexed %d Zotero items", len(citation_index))
+        log.info("Backfill: indexed %d top-level Zotero items", len(citation_index))
 
     results: list[KeyBackfillResult] = []
     for artifact_dir in sorted(p for p in root.iterdir() if is_citation_key_dir(p)):

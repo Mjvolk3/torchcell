@@ -1,0 +1,465 @@
+{
+  "inputs": {
+    "caudal_zip": "torchcell-library/caudalPantranscriptomeRevealsLarge2024/data/final_data_annotated_merged_04052022.tab.zip",
+    "caudal_zip_sha256": "8b55ccd76e1d19476d8f5f718e9e061cb9e4693e343965114dd4cd65d5f8d26b",
+    "peter_presence": "genesMatrix_PresenceAbsence.tab.gz",
+    "table_s2": "si/41588_2024_1769_MOESM3_ESM.xlsx",
+    "table_s2_sha256": "753e17d6ef9540206d3960c7f0c778fadfe43c9bee887ce4434885b81444bd7a",
+    "dev_lmdb": "/scratch/projects/torchcell-scratch/data/torchcell/caudal_pantranscriptome2024/processed/lmdb"
+  },
+  "raw_rows": 6314973,
+  "raw_strains": 969,
+  "raw_blank_rows": 470944,
+  "excluded_strains": 26,
+  "excluded_blank_by_class": {
+    "unannotated": 10725,
+    "absent": 412,
+    "bad annotation": 17
+  },
+  "built_isolates": 943,
+  "built_rows": 6145531,
+  "built_blank_rows": 459790,
+  "blank_tpm_fraction": 0.013348097800456898,
+  "per_strain_tpm_sum_median_all_rows": 999998.9650210724,
+  "per_strain_tpm_sum_median_named_rows": 987442.3511422052,
+  "ledger_counts": {
+    "present_s288c_homolog": 98,
+    "present_pangenome_orf": 461,
+    "absent": 443200,
+    "bad_annotation": 16031,
+    "unannotated": 0
+  },
+  "blank_class_profile": {
+    "absent": {
+      "rows": 443200,
+      "distinct_orfs": 1005,
+      "rows_tpm_gt_0": 107330,
+      "rows_tpm_gt_100": 17215,
+      "isolates": 943
+    },
+    "bad annotation": {
+      "rows": 16031,
+      "distinct_orfs": 17,
+      "rows_tpm_gt_0": 5236,
+      "rows_tpm_gt_100": 335,
+      "isolates": 943
+    },
+    "present": {
+      "rows": 559,
+      "distinct_orfs": 28,
+      "rows_tpm_gt_0": 556,
+      "rows_tpm_gt_100": 506,
+      "isolates": 229
+    }
+  },
+  "served_blank_rows": 559,
+  "served_blank_ids": 28,
+  "served_profile": {
+    "X32-augustus_masked.1.AMHPLA_TAIW": {
+      "isolates": 3,
+      "median_tpm": 112.92768025184,
+      "rows_tpm_gt_0": 3,
+      "peter_column": "X32.augustus_masked.1.AMHPLA_TAIW",
+      "peter_present_in_served_isolates": 3
+    },
+    "X33-augustus_masked.1.AMHPLA_TAIW": {
+      "isolates": 3,
+      "median_tpm": 122.565240569673,
+      "rows_tpm_gt_0": 3,
+      "peter_column": "X33.augustus_masked.1.AMHPLA_TAIW",
+      "peter_present_in_served_isolates": 3
+    },
+    "X34-augustus_masked.1.AMHPLA_TAIW": {
+      "isolates": 3,
+      "median_tpm": 259.198662495784,
+      "rows_tpm_gt_0": 3,
+      "peter_column": "X34.augustus_masked.1.AMHPLA_TAIW",
+      "peter_present_in_served_isolates": 3
+    },
+    "X35-augustus_masked.1.AMHPLA_TAIW": {
+      "isolates": 3,
+      "median_tpm": 492.707486404131,
+      "rows_tpm_gt_0": 3,
+      "peter_column": "X35.augustus_masked.1.AMHPLA_TAIW",
+      "peter_present_in_served_isolates": 3
+    },
+    "X36-augustus_masked.2.CGIPLA_MA": {
+      "isolates": 26,
+      "median_tpm": 277.40635633924853,
+      "rows_tpm_gt_0": 26,
+      "peter_column": "X36.augustus_masked.2.CGIPLA_MA",
+      "peter_present_in_served_isolates": 26
+    },
+    "X37-augustus_masked.2.CGIPLA_MA": {
+      "isolates": 190,
+      "median_tpm": 256.190262237294,
+      "rows_tpm_gt_0": 189,
+      "peter_column": "X37.augustus_masked.2.CGIPLA_MA",
+      "peter_present_in_served_isolates": 190
+    },
+    "X38-augustus_masked.2.CGIPLA_MA": {
+      "isolates": 26,
+      "median_tpm": 505.358361283948,
+      "rows_tpm_gt_0": 26,
+      "peter_column": "X38.augustus_masked.2.CGIPLA_MA",
+      "peter_present_in_served_isolates": 26
+    },
+    "X39-augustus_masked.2.CGIPLA_MA": {
+      "isolates": 190,
+      "median_tpm": 385.08606307151103,
+      "rows_tpm_gt_0": 190,
+      "peter_column": "X39.augustus_masked.2.CGIPLA_MA",
+      "peter_present_in_served_isolates": 190
+    },
+    "X40-augustus_masked.3.ALIPLA_SA": {
+      "isolates": 4,
+      "median_tpm": 208.98507036342198,
+      "rows_tpm_gt_0": 4,
+      "peter_column": "X40.augustus_masked.3.ALIPLA_SA",
+      "peter_present_in_served_isolates": 4
+    },
+    "X41-augustus_masked.3.ALIPLA_SA": {
+      "isolates": 3,
+      "median_tpm": 192.938585132032,
+      "rows_tpm_gt_0": 3,
+      "peter_column": "X41.augustus_masked.3.ALIPLA_SA",
+      "peter_present_in_served_isolates": 3
+    },
+    "X42-augustus_masked.3.ALIPLA_SA": {
+      "isolates": 5,
+      "median_tpm": 243.61308230041,
+      "rows_tpm_gt_0": 5,
+      "peter_column": "X42.augustus_masked.3.ALIPLA_SA",
+      "peter_present_in_served_isolates": 5
+    },
+    "X43-snap_masked.3.ALIPLA_SA": {
+      "isolates": 5,
+      "median_tpm": 152.771938710288,
+      "rows_tpm_gt_0": 5,
+      "peter_column": "X43.snap_masked.3.ALIPLA_SA",
+      "peter_present_in_served_isolates": 5
+    },
+    "YBR020W": {
+      "isolates": 31,
+      "median_tpm": 275.99125877087,
+      "rows_tpm_gt_0": 31
+    },
+    "YKR064W": {
+      "isolates": 3,
+      "median_tpm": 8.53702686574217,
+      "rows_tpm_gt_0": 3
+    },
+    "YKR065C": {
+      "isolates": 3,
+      "median_tpm": 65.7891541813319,
+      "rows_tpm_gt_0": 3
+    },
+    "YKR066C": {
+      "isolates": 3,
+      "median_tpm": 205.062988103556,
+      "rows_tpm_gt_0": 3
+    },
+    "YKR067W": {
+      "isolates": 3,
+      "median_tpm": 5.84527772387894,
+      "rows_tpm_gt_0": 3
+    },
+    "YKR068C": {
+      "isolates": 3,
+      "median_tpm": 58.6244889102662,
+      "rows_tpm_gt_0": 3
+    },
+    "YKR069W": {
+      "isolates": 3,
+      "median_tpm": 24.6031330173968,
+      "rows_tpm_gt_0": 3
+    },
+    "YKR070W": {
+      "isolates": 3,
+      "median_tpm": 11.2906754566514,
+      "rows_tpm_gt_0": 2
+    },
+    "YKR071C": {
+      "isolates": 3,
+      "median_tpm": 30.9144904080997,
+      "rows_tpm_gt_0": 3
+    },
+    "YKR072C": {
+      "isolates": 3,
+      "median_tpm": 18.4045441203885,
+      "rows_tpm_gt_0": 3
+    },
+    "YKR074W": {
+      "isolates": 3,
+      "median_tpm": 14.7514370222402,
+      "rows_tpm_gt_0": 3
+    },
+    "YKR075C": {
+      "isolates": 3,
+      "median_tpm": 0.583708225356364,
+      "rows_tpm_gt_0": 3
+    },
+    "YKR076W": {
+      "isolates": 3,
+      "median_tpm": 41.2038777530534,
+      "rows_tpm_gt_0": 2
+    },
+    "YKR077W": {
+      "isolates": 3,
+      "median_tpm": 6.9653944163194,
+      "rows_tpm_gt_0": 3
+    },
+    "YKR078W": {
+      "isolates": 3,
+      "median_tpm": 12.1001414165332,
+      "rows_tpm_gt_0": 3
+    },
+    "YLR081W": {
+      "isolates": 25,
+      "median_tpm": 519.904546549042,
+      "rows_tpm_gt_0": 25
+    }
+  },
+  "homolog_rule_check": {
+    "YBR020W": {
+      "annotation_name": "1060-augustus_masked-ASN_8-20595",
+      "table_s2_systematic_name": "YBR020W",
+      "agrees": true,
+      "isolates": 31,
+      "peter_reference_columns": [
+        "X2001.YBR020W"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X1060.augustus_masked.ASN_8.20595"
+      ],
+      "peter_accessory_present": 31
+    },
+    "YLR081W": {
+      "annotation_name": "360-augustus_masked-858-BGT_2",
+      "table_s2_systematic_name": "YLR081W",
+      "agrees": true,
+      "isolates": 25,
+      "peter_reference_columns": [
+        "X5540.YLR081W"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X360.augustus_masked.858.BGT_2"
+      ],
+      "peter_accessory_present": 23
+    },
+    "YKR064W": {
+      "annotation_name": "1752-snap_masked-CEG_4-7331",
+      "table_s2_systematic_name": "YKR064W",
+      "agrees": true,
+      "isolates": 3,
+      "peter_reference_columns": [
+        "X5356.YKR064W"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X1752.snap_masked.CEG_4.7331"
+      ],
+      "peter_accessory_present": 3
+    },
+    "YKR065C": {
+      "annotation_name": "376-augustus_masked-9019-CEI_2",
+      "table_s2_systematic_name": "YKR065C",
+      "agrees": true,
+      "isolates": 3,
+      "peter_reference_columns": [
+        "X5357.YKR065C"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X376.augustus_masked.9019.CEI_2"
+      ],
+      "peter_accessory_present": 3
+    },
+    "YKR066C": {
+      "annotation_name": "1389-augustus_masked-CEG_4-7331",
+      "table_s2_systematic_name": "YKR066C",
+      "agrees": true,
+      "isolates": 3,
+      "peter_reference_columns": [
+        "X5358.YKR066C"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X1389.augustus_masked.CEG_4.7331"
+      ],
+      "peter_accessory_present": 3
+    },
+    "YKR067W": {
+      "annotation_name": "378-augustus_masked-9019-CEI_2",
+      "table_s2_systematic_name": "YKR067W",
+      "agrees": true,
+      "isolates": 3,
+      "peter_reference_columns": [
+        "X5359.YKR067W"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X378.augustus_masked.9019.CEI_2"
+      ],
+      "peter_accessory_present": 3
+    },
+    "YKR068C": {
+      "annotation_name": "1388-augustus_masked-CEG_4-7331",
+      "table_s2_systematic_name": "YKR068C",
+      "agrees": true,
+      "isolates": 3,
+      "peter_reference_columns": [
+        "X5360.YKR068C"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X1388.augustus_masked.CEG_4.7331"
+      ],
+      "peter_accessory_present": 3
+    },
+    "YKR069W": {
+      "annotation_name": "377-augustus_masked-9019-CEI_2",
+      "table_s2_systematic_name": "YKR069W",
+      "agrees": true,
+      "isolates": 3,
+      "peter_reference_columns": [
+        "X5361.YKR069W"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X377.augustus_masked.9019.CEI_2"
+      ],
+      "peter_accessory_present": 3
+    },
+    "YKR070W": {
+      "annotation_name": "1391-augustus_masked-CEG_4-7331",
+      "table_s2_systematic_name": "YKR070W",
+      "agrees": true,
+      "isolates": 3,
+      "peter_reference_columns": [
+        "X5362.YKR070W"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X1391.augustus_masked.CEG_4.7331"
+      ],
+      "peter_accessory_present": 3
+    },
+    "YKR071C": {
+      "annotation_name": "375-augustus_masked-9019-CEI_2",
+      "table_s2_systematic_name": "YKR071C",
+      "agrees": true,
+      "isolates": 3,
+      "peter_reference_columns": [
+        "X5363.YKR071C"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X375.augustus_masked.9019.CEI_2"
+      ],
+      "peter_accessory_present": 3
+    },
+    "YKR072C": {
+      "annotation_name": "374-augustus_masked-9019-CEI_2",
+      "table_s2_systematic_name": "YKR072C",
+      "agrees": true,
+      "isolates": 3,
+      "peter_reference_columns": [
+        "X5364.YKR072C"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X374.augustus_masked.9019.CEI_2"
+      ],
+      "peter_accessory_present": 3
+    },
+    "YKR074W": {
+      "annotation_name": "687-snap_masked-9062-CEI_2",
+      "table_s2_systematic_name": "YKR074W",
+      "agrees": true,
+      "isolates": 3,
+      "peter_reference_columns": [
+        "X5366.YKR074W"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X687.snap_masked.9062.CEI_2"
+      ],
+      "peter_accessory_present": 3
+    },
+    "YKR075C": {
+      "annotation_name": "1146-augustus_masked-AMH_5-6645",
+      "table_s2_systematic_name": "YKR075C",
+      "agrees": true,
+      "isolates": 3,
+      "peter_reference_columns": [
+        "X5367.YKR075C_NumOfGenes_2"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X1146.augustus_masked.AMH_5.6645"
+      ],
+      "peter_accessory_present": 3
+    },
+    "YKR076W": {
+      "annotation_name": "1149-augustus_masked-AMH_5-6645",
+      "table_s2_systematic_name": "YKR076W",
+      "agrees": true,
+      "isolates": 3,
+      "peter_reference_columns": [
+        "X5368.YKR076W"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X1149.augustus_masked.AMH_5.6645"
+      ],
+      "peter_accessory_present": 3
+    },
+    "YKR077W": {
+      "annotation_name": "1148-augustus_masked-AMH_5-6645",
+      "table_s2_systematic_name": "YKR077W",
+      "agrees": true,
+      "isolates": 3,
+      "peter_reference_columns": [
+        "X5369.YKR077W"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X1148.augustus_masked.AMH_5.6645"
+      ],
+      "peter_accessory_present": 3
+    },
+    "YKR078W": {
+      "annotation_name": "1147-augustus_masked-AMH_5-6645",
+      "table_s2_systematic_name": "YKR078W",
+      "agrees": true,
+      "isolates": 3,
+      "peter_reference_columns": [
+        "X5370.YKR078W"
+      ],
+      "peter_reference_present": 0,
+      "peter_accessory_columns": [
+        "X1147.augustus_masked.AMH_5.6645"
+      ],
+      "peter_accessory_present": 3
+    }
+  },
+  "pangenome_ids_in_table_s2": [],
+  "isolates_gaining_keys": 229,
+  "keys_gained_max": 18,
+  "new_keys_per_isolate_median": 6033.0,
+  "named_keys_per_isolate_median": 6032.0,
+  "dev_store_records": 943,
+  "dev_store_keys_equal_named_keys": true,
+  "named_accessory_keys": 366,
+  "named_accessory_keys_equal_X_plus_demangled_orf": true,
+  "named_pan_absence_counts": {
+    "present": 5450422,
+    "duplicated": 213118,
+    "absent": 8999,
+    "undefined": 8487,
+    "bad annotation": 4715
+  }
+}

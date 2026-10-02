@@ -19,7 +19,7 @@ fixture table in that header order:
     AAA       YAL001C  ORF 1-YAL001C    10    1.5
     AAA       YAL001C  ORF 1-YAL001C_b   5    0.5   (second allele row: summed, 15 / 2.0)
     AAA       YBR001W                   20    4.0
-    AAA       (blank)                    7    0.7   (blank gene: dropped by groupby)
+    AAA       (blank)                    7    0.7   (blank ``absent`` row: dropped, counted)
     SACE_YAU  YAL001C                   30    3.0
     SACE_YAU  YBR001W                   12.5  1.0   (count round(12.5) = 12, banker's)
 
@@ -41,12 +41,15 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
 import os
+import os.path as osp
 import tarfile
 import zipfile
 from pathlib import Path
 from typing import IO, Any
 
+import pandas as pd
 import pytest
 
 from tests.torchcell.datasets.scerevisiae.test_caudal2024_synthetic import (
@@ -63,18 +66,19 @@ from torchcell.data import RawSha256MismatchError
 from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.schema import ReferenceGenome
 from torchcell.datasets.scerevisiae import caudal2024 as m
+from torchcell.verification.sourced import audit_sourced_value
 
 _RELEASED_HEADER = (
     "systematic_name,ORF,Strain,count,tpm,Pangenome(Core/Accessory),Group,"
-    "Precence_in_S288c\n"
+    "Precence_in_S288c,Ortholog_in_SGD_2010,pan_absence\n"
 )
 _RELEASED_ROWS = (
-    "YAL001C,1-YAL001C,AAA,10,1.5,Core,G1,Yes\n"
-    "YAL001C,1-YAL001C_b,AAA,5,0.5,Core,G1,Yes\n"
-    "YBR001W,4-YBR001W,AAA,20,4.0,Core,G1,Yes\n"
-    ",ORFX,AAA,7,0.7,Accessory,G1,No\n"
-    "YAL001C,1-YAL001C,SACE_YAU,30,3.0,Core,G2,Yes\n"
-    "YBR001W,4-YBR001W,SACE_YAU,12.5,1.0,Core,G2,Yes\n"
+    "YAL001C,1-YAL001C,AAA,10,1.5,Core,G1,Yes,,present\n"
+    "YAL001C,1-YAL001C_b,AAA,5,0.5,Core,G1,Yes,,present\n"
+    "YBR001W,4-YBR001W,AAA,20,4.0,Core,G1,Yes,,present\n"
+    ",ORFX,AAA,7,0.7,Accessory,G1,No,,absent\n"
+    "YAL001C,1-YAL001C,SACE_YAU,30,3.0,Core,G2,Yes,,present\n"
+    "YBR001W,4-YBR001W,SACE_YAU,12.5,1.0,Core,G2,Yes,,present\n"
 )
 
 
@@ -136,32 +140,203 @@ def test_only_strain_gene_count_and_tpm_are_read_and_allele_rows_are_summed(
     ]
 
 
-def test_a_row_with_a_blank_gene_is_dropped_without_a_trace(
+# Issue #598: a blank-systematic_name row of each ledger class, in built isolates AAA and
+# SACE_YAU (and one in the excluded XTRA_ABC, which never reaches the ledger).
+_LEDGER_HEADER = (
+    "Strain,systematic_name,ORF,Ortholog_in_SGD_2010,pan_absence,count,tpm\n"
+)
+_LEDGER_ROWS = (
+    "AAA,YAL001C,1-YAL001C,,present,10,1.5\n"
+    "AAA,YBR001W,4-YBR001W,,present,20,4.0\n"
+    "SACE_YAU,YAL001C,1-YAL001C,,present,30,3.0\n"
+    "SACE_YAU,,YBR001W,YBR001W,present,8,2.0\n"
+    "SACE_YAU,,X5.contig_7,,present,4,1.0\n"
+    "AAA,,ORFX,,absent,7,0.7\n"
+    "SACE_YAU,,ORFY,,bad annotation,3,0.3\n"
+    "XTRA_ABC,,ORFZ,,unannotated,9,0.9\n"
+)
+
+
+def _frame(rows: str) -> pd.DataFrame:
+    frame = pd.read_csv(io.StringIO(_LEDGER_HEADER + rows))
+    frame["Strain"] = frame["Strain"].astype(str)
+    return frame
+
+
+def test_blank_name_rows_are_served_or_dropped_by_class_and_counted(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Finding: ``_load_caudal`` groups by (Strain, systematic_name) with pandas' default
-    ``dropna=True`` (caudal2024.py line 509), so a row whose ``systematic_name`` is blank
-    (AAA, 7 counts) vanishes from the record, the reference and the logs, and is not
-    stored as a ``"nan"`` gene either. Pinned until a blank gene is refused or counted.
-
-    Left open in issue #541 as RECORD-CHANGING: the released table has 470,944 such rows
-    (459,790 of them in the 943 built isolates, every isolate affected), carrying an
-    ``ORF`` value and a ``pan_absence`` class (443,612 ``absent``), so counting or keeping
-    them changes stored records.
+    """Issue #598: SACE_YAU's blank ``present`` row whose ORF and ortholog are the
+    served name YBR001W is served as YBR001W (8 / 2.0); its blank ``present`` pangenome
+    row ``X5.contig_7`` is served as ``X5-contig_7``, the form Datafile 1 gives named
+    accessory ORFs; the ``absent`` and ``bad annotation`` rows are
+    dropped; the ``XTRA_ABC`` row never reaches the ledger. The reference is the mean
+    over the isolates holding each key: YAL001C (1.5 + 3.0) / 2, YBR001W (4.0 + 2.0) / 2,
+    X5-contig_7 1.0 from SACE_YAU alone.
     """
-    table = _zip({"final.tab": _RELEASED_HEADER + _RELEASED_ROWS})
-    dataset = m.CaudalPanTranscriptome2024Dataset(
-        root=str(_root(tmp_path, monkeypatch, table))
+    table = _zip({"final.tab": _LEDGER_HEADER + _LEDGER_ROWS})
+    root = _root(tmp_path, monkeypatch, table)
+    dataset = m.CaudalPanTranscriptome2024Dataset(root=str(root))
+    phenotypes = [dataset[i]["experiment"]["phenotype"] for i in range(2)]
+    assert [(p["expression_tpm"], p["expression_count"]) for p in phenotypes] == [
+        ({"YAL001C": 1.5, "YBR001W": 4.0}, {"YAL001C": 10, "YBR001W": 20}),
+        (
+            {"YAL001C": 3.0, "YBR001W": 2.0, "X5-contig_7": 1.0},
+            {"YAL001C": 30, "YBR001W": 8, "X5-contig_7": 4},
+        ),
+    ]
+    reference = dataset[0]["reference"]["phenotype_reference"]
+    assert reference["expression_tpm"] == {
+        "YAL001C": 2.25,
+        "YBR001W": 3.0,
+        "X5-contig_7": 1.0,
+    }
+    ledger = json.loads(
+        (root / "preprocess" / "blank_systematic_name_ledger.json").read_text()
     )
-    counts = dataset[0]["experiment"]["phenotype"]["expression_count"]
-    assert sorted(counts) == ["YAL001C", "YBR001W"]
-    assert sum(counts.values()) == 35
+    assert (ledger["n_rows"], ledger["n_rows_named"], ledger["n_rows_blank"]) == (
+        7,
+        3,
+        4,
+    )
+    assert ledger["counts"] == {
+        "present_s288c_homolog": 1,
+        "present_pangenome_orf": 1,
+        "absent": 1,
+        "bad_annotation": 1,
+        "unannotated": 0,
+    }
+    assert ledger["served_ids"] == {"YBR001W": 1, "X5-contig_7": 1}
+    assert ledger["tpm_by_class"]["absent"] == 0.7
+    assert ledger["named_pan_absence_counts"] == {"present": 3}
+    assert [r["row_class"] for r in ledger["rules"]] == [
+        c.value for c in m.BlankRowClass
+    ]
+
+
+@pytest.mark.parametrize("value", ["duplicated", None])
+def test_a_blank_name_row_of_an_unledgered_class_is_refused(value: str | None) -> None:
+    """A blank row whose ``pan_absence`` is no ledger class (here a class only named
+    rows carry, or no class at all) raises instead of taking any silent path.
+    """
+    cell = "" if value is None else value
+    frame = _frame(f"AAA,,ORFQ,,{cell},1,0.1\n")
+    with pytest.raises(m.UnclassifiedBlankRowError, match=r"1 blank-systematic_name"):
+        m.resolve_gene_ids(frame)
+
+
+def test_a_served_blank_row_that_repeats_a_named_gene_is_refused() -> None:
+    """AAA already has a named YBR001W row; a blank ``present`` YBR001W homolog row in
+    the same isolate would give the record two values for one key.
+    """
+    frame = _frame(
+        "AAA,YBR001W,4-YBR001W,,present,20,4.0\nAAA,,YBR001W,YBR001W,present,8,2.0\n"
+    )
+    with pytest.raises(m.GeneIdCollisionError, match=r"\('AAA', 'YBR001W'\)"):
+        m.resolve_gene_ids(frame)
+
+
+def test_the_pangenome_rule_refuses_an_orf_that_is_no_pangenome_id() -> None:
+    """A blank ``present`` row whose ORF looks like an S288C name but is no served
+    systematic_name (nor its own ortholog) falls to the pangenome-id rule, which refuses
+    it rather than serving a key no rule vouches for.
+    """
+    frame = _frame(
+        "AAA,YAL001C,1-YAL001C,,present,1,1.0\nAAA,,YCR001W,,present,1,1.0\n"
+    )
+    with pytest.raises(m.GeneIdCollisionError, match=r"no pangenome id: \['YCR001W'\]"):
+        m.resolve_gene_ids(frame)
+
+
+def test_the_pangenome_rule_refuses_an_id_a_named_row_serves() -> None:
+    """A blank ``present`` pangenome row whose served id equals a named row's
+    systematic_name (in any isolate) would merge two ORFs under one key.
+    """
+    frame = _frame(
+        "AAA,X5-contig_7,X5.contig_7,,present,1,1.0\n"
+        "SACE_YAU,,X5.contig_7,,present,1,1.0\n"
+    )
+    with pytest.raises(m.GeneIdCollisionError, match=r"\['X5-contig_7'\]"):
+        m.resolve_gene_ids(frame)
+
+
+def test_a_blank_row_rule_needs_exactly_one_basis() -> None:
+    """``BlankRowRule`` refuses a class with both a sourced definition and a gap."""
+    rule = m.BLANK_ROW_RULES[m.BlankRowClass.absent]
+    with pytest.raises(ValueError, match=r"exactly one of definition / gap"):
+        m.BlankRowRule(
+            **{
+                **rule.model_dump(),
+                "gap": m.BLANK_ROW_RULES[m.BlankRowClass.bad_annotation].gap,
+            }
+        )
+
+
+_LIBRARY = osp.join(os.environ.get("DATA_ROOT", ""), "torchcell-library")
+_MIRROR_ZIP = osp.join(os.environ.get("DATA_ROOT", ""), m.CAUDAL_ZIP_REL)
+_needs_mirror = pytest.mark.skipif(
+    not (osp.exists(_MIRROR_ZIP) and osp.isdir(_LIBRARY)),
+    reason="requires the Caudal mirror + Peter genomes tier at $DATA_ROOT",
+)
+
+
+@pytest.mark.data
+@_needs_mirror
+def test_the_blank_row_definitions_audit_against_the_mirrored_methods() -> None:
+    """Every sourced class definition's quote is in ``methods.md`` at its pinned sha256."""
+    for rule in m.BLANK_ROW_RULES.values():
+        if rule.definition is not None:
+            assert audit_sourced_value(rule.definition, _LIBRARY).passed, rule.row_class
+
+
+@pytest.mark.data
+@pytest.mark.slow
+@_needs_mirror
+def test_the_released_table_ledger_matches_issue_598() -> None:
+    """The 943 built isolates of Datafile 1: 459,790 blank rows, 443,200 absent, 16,031
+    bad annotation, 0 unannotated and 559 present; the 559 are served, 98 under 16
+    S288C names (GAL1 YBR020W in 31 isolates, GAL2 YLR081W in 25) and 461 under 12
+    pangenome ids; GAL1 is then a key in all 943 records (912 named + 31 served).
+    """
+    from torchcell.sequence.genome.registry import PETER2018_1011, resolve
+
+    presence = pd.read_csv(
+        resolve(PETER2018_1011, m.PRESENCE_NAME), sep="\t", index_col=0, usecols=[0]
+    )
+    built = m.restrict_to_built_isolates(
+        m.read_caudal_table(_MIRROR_ZIP), set(presence.index.astype(str))
+    )
+    kept, ledger = m.resolve_gene_ids(built)
+    assert (ledger.n_rows, ledger.n_rows_blank) == (6_145_531, 459_790)
+    assert ledger.counts == {
+        m.BlankRowClass.present_s288c_homolog: 98,
+        m.BlankRowClass.present_pangenome_orf: 461,
+        m.BlankRowClass.absent: 443_200,
+        m.BlankRowClass.bad_annotation: 16_031,
+        m.BlankRowClass.unannotated: 0,
+    }
+    served = {g: n for g, n in ledger.served_ids.items() if m._S288C_RE.match(g)}
+    assert (len(served), sum(served.values())) == (16, 98)
+    assert (served["YBR020W"], served["YLR081W"]) == (31, 25)
+    pangenome = {g: n for g, n in ledger.served_ids.items() if g not in served}
+    assert (len(pangenome), sum(pangenome.values())) == (12, 461)
+    assert pangenome["X39-augustus_masked.2.CGIPLA_MA"] == 190
+    gal1 = kept[kept["gene_id"] == "YBR020W"]
+    assert (gal1["Strain"].nunique(), int(gal1["systematic_name"].isna().sum())) == (
+        943,
+        31,
+    )
 
 
 def test_a_table_without_tpm_is_refused_by_the_column_read(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    table = _zip({"final.tab": "Strain,systematic_name,count\nAAA,YAL001C,10\n"})
+    table = _zip(
+        {
+            "final.tab": "Strain,systematic_name,ORF,Ortholog_in_SGD_2010,pan_absence,"
+            "count\nAAA,YAL001C,YAL001C,,present,10\n"
+        }
+    )
     with pytest.raises(
         ValueError,
         match=r"Usecols do not match columns, columns expected but not found: "

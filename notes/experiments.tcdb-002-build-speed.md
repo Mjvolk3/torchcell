@@ -1095,3 +1095,22 @@ Two slurm jobs on the served graph, 10 CPUs / 32 GB each, the Hoepfner 2014 bloc
 The build is 16 min for half the 033 records. Job 2929 built the 033 store in 7 h 48 min, 4.39 ms per record, of which the raw stage was 1.40 ms and the rest 3.0 ms; here the raw stage is 0.157 ms and the rest 0.15 ms. Against the slice in the page cache (`cell_single_pass_slice_check.csv`) the two disk-bound passes cost 3.6x (join) and 2.2x (copy) more per record, so a 32 GB job reading a 40 GB store is the honest setting. Projection (hypothesis until the 033 re-query runs; Wildenhain's records are 38 KB, not 13): the 6.39M-record build at 0.307 ms per record is about 33 min against 7 h 48 min, 14x.
 
 To use it in the 033 re-query: `{partition}` after each block's dataset filter in `001_env_chemgen_pooled.cql` (each block already ends in `ORDER BY e.id`), and `Neo4jCellDataset(..., fetch_workers=8, partition_prefix_length=2)` in `query.py`; the 033 experiment lives on its own branch (`exp/033-env-chemgen-pooled`, PR #455), so that edit is made there. `measurements_per_entry` in that script is one more pass over the processed store that the grouping already knows (group sizes are the `key_groups` lengths); it was left as is.
+
+## 2026.10.02 - The full rebuild measured: 2 h 42 min at 64 CPUs, store 135 GB
+
+The live rebuild (`database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm`, submitted with `--cpus-per-task=64 --mem=256G --time=12:00:00`, `kg_uncapped`, build commit 833970cd on main, which carries every tcdb-002 round and the Kemmeren/Sameith loader fix of PR #460) ran as job 3198 and is served as release 2026.10.02-833970cd, manifest version 2.0. The first attempt, job 3182, died four minutes in on an HTTP 504 from GitHub while BioCypher fetched its default Biolink head ontology; the config never pinned it (issue #619). Figures from `scripts/live_rebuild_report.py --job 3198` (`results/live_rebuild_3198.csv`, `results/live_rebuild_3198_summary.csv`; the log timestamps and the W&B run, since the CSV directory and its telemetry file belong to the import user):
+
+| | job 2032 (release 1.0 era) | job 2959 (r9) | job 3198 (all rounds) |
+|--|--:|--:|--:|
+| CPUs / memory | 24 / 256 GB | 64 / 256 GB | 64 / 256 GB |
+| generation wall | 28 h 40 min | 4 h 29 min | 2 h 42 min |
+| Costanzo dmi / dmf | | 90 / 75 min | 30.9 / 26.1 min |
+| import | 17 min | | 6 min 36 s |
+| store on /db | 682 GB | | 135 GB |
+| nodes / edges | 99.7M / 361.9M | | 99,731,331 / 361,898,220 |
+
+Projections against measurements: generation was projected at about 2 h 15 min and measured 2 h 42 min; the store was projected at roughly 150 GB and measured 135 GB. Validation passed live == CSV for all 51 datasets before the swap; the old store is kept at `/db/database/data.superseded.2026-10-02_05-54-16` (705 GB) and /db stands at 51% with it still present.
+
+Telemetry (W&B run below, 5 s samples): mean 33.8 cores of 64 over the whole run, anonymous memory peak 129.6 GB, but cgroup memory with the page cache sat at the 256 GB limit for most of the run (mean 153 GB, peak 255.8). `pool_memory_fraction` reads `memory.current`, which includes that cache, so the pools may have been recycling on cache pressure rather than heap for the adapters after Costanzo. Hypothesis, not measured: that is why Hoepfner took 16.0 min against 8.7 on job 2959 and Hillenmeyer HET 13.5 against 7.8, while the Costanzo passes, which run first into an empty cache, got their full 2.9x. The telemetry CSV with the adapter stamps would settle it; it is under the uid-7474 output directory. Next lever, untested: read the anonymous figure from `memory.stat` for the fraction, or run the generation container with a higher limit than the pools need.
+
+<https://wandb.ai/zhao-group/tcdb/runs/92mi8mfw>

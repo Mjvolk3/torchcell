@@ -1,0 +1,2 @@
+job,adapters,generation_wall_s,cgroup_peak_gb,import_s,nodes,edges,release,torchcell,wandb_run,anon_peak_gb,mem_peak_gb,mem_mean_gb,cores_mean,cores_max,cpu_core_s
+3198,51,9734,255.8,396,99731330,361898220,2026.10.02-833970cd,1.6.1,https://wandb.ai/zhao-group/tcdb/runs/92mi8mfw,129.6,255.8,153.5,33.8,64.2,280867.9

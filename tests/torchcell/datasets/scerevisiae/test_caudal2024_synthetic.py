@@ -28,7 +28,8 @@ ZZZ = 1 0 1 0 0 1, and XTRA_ABC = FY4-6 = 1 0 0 0 0 0, so X1 is the only core OR
 (present in all five rows). The copy-number file lists the same columns in reverse order (the loader reindexes);
 AAA's accessory X2 has copy number 2.5, SACE_YAU's accessory X5 is ``NA`` (so 1.0).
 
-Caudal expression rows (Strain, systematic_name, count, tpm): AAA YAL001C 10/1.5 and
+Caudal expression rows (Strain, systematic_name, count, tpm; every row named and
+``pan_absence`` ``present``, so the blank-name ledger of issue #598 is empty): AAA YAL001C 10/1.5 and
 5/0.5 (summed to 15/2.0), AAA YBR001W 20/4.0, SACE_YAU YAL001C 30/3.0, plus XTRA_ABC,
 FY4-6 and QQQ, which are all excluded. XTRA_ABC and FY4-6 ARE in the Peter matrix, so
 what removes them is the loader's explicit exclusions (caudal2024.py lines 457-458: the
@@ -135,14 +136,14 @@ _COPYNUMBER = {
 }
 
 _CAUDAL_CSV = (
-    "Strain,systematic_name,gene,count,tpm\n"
-    "AAA,YAL001C,TFC3,10,1.5\n"
-    "AAA,YAL001C,TFC3,5,0.5\n"
-    "AAA,YBR001W,,20,4.0\n"
-    "SACE_YAU,YAL001C,TFC3,30,3.0\n"
-    "XTRA_ABC,YAL001C,TFC3,99,9.0\n"
-    "FY4-6,YAL001C,TFC3,99,9.0\n"
-    "QQQ,YAL001C,TFC3,99,9.0\n"
+    "Strain,systematic_name,ORF,Ortholog_in_SGD_2010,pan_absence,gene,count,tpm\n"
+    "AAA,YAL001C,YAL001C,,present,TFC3,10,1.5\n"
+    "AAA,YAL001C,YAL001C,,present,TFC3,5,0.5\n"
+    "AAA,YBR001W,YBR001W,,present,,20,4.0\n"
+    "SACE_YAU,YAL001C,YAL001C,,present,TFC3,30,3.0\n"
+    "XTRA_ABC,YAL001C,YAL001C,,present,TFC3,99,9.0\n"
+    "FY4-6,YAL001C,YAL001C,,present,TFC3,99,9.0\n"
+    "QQQ,YAL001C,YAL001C,,present,TFC3,99,9.0\n"
 )
 
 

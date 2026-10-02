@@ -30,7 +30,15 @@ presence/absence matrix over the 1011 isolates: an ORF present in >= 99% of isol
 
 PHENOTYPE (``RNASeqExpressionPhenotype``): per-isolate ``expression_tpm`` +
 ``expression_count`` for the genes that isolate carries (a gene absent from an isolate is
-KEY-ABSENT, never 0). ``measurement_type = "rnaseq_tpm"``. The shared
+KEY-ABSENT, never 0). ``measurement_type = "rnaseq_tpm"``. Phenotype keys are Datafile 1's
+``systematic_name``; a row with a BLANK ``systematic_name`` (459,790 rows in the built
+isolates) is classified by its ``pan_absence`` into a ``BlankRowClass`` and served or
+dropped by ``BLANK_ROW_RULES`` (issue #598): ``present`` rows are served (under the S288C
+name when the row is an accessory feature merged with its S288C homolog, else under the
+pangenome id ``X<n>-<name>``), ``absent`` rows are dropped as the paper does, and
+``bad annotation`` / ``unannotated`` rows are dropped under a typed ``ProvenanceGap``
+because no mirrored source defines those classes. Every row is counted in
+``preprocess/blank_systematic_name_ledger.json``. The shared
 ``phenotype_reference`` is the POPULATION MEAN over the 943 built isolates (mean TPM /
 rounded mean count per gene) -- an absolute WT-equivalent baseline, NOT a centered 0
 (reference is not the record itself; ``reference_centered = False`` for verification).
@@ -61,11 +69,13 @@ import os.path as osp
 import pickle
 import re
 import tarfile
-from typing import Any
+from enum import StrEnum
+from typing import Any, Literal
 
 import lmdb
 import numpy as np
 import pandas as pd
+from pydantic import BaseModel, ConfigDict, model_validator
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -96,6 +106,12 @@ from torchcell.sequence.genome.registry import (
     SGD_S288C_R64,
     load_genome_manifest,
     resolve,
+)
+from torchcell.verification.report import Provenance
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -141,6 +157,8 @@ _ROMAN = [
 ]
 _S288C_RE = re.compile(r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$")
 _EXCLUDED_STRAIN_RE = re.compile(r"^XTRA_")
+# A Datafile 1 ``ORF`` value naming a non-reference pangenome ORF (R ``make.names`` form).
+_PANGENOME_ORF_RE = re.compile(r"^X\d+\.")
 _COMPLEMENT = str.maketrans("ACGTNacgtn", "TGCANtgcan")
 
 
@@ -284,6 +302,377 @@ def _orf_to_s288c(orf_id: str) -> str | None:
     suffix = re.sub(r"^\d+-", "", orf_id).replace(".", "-")
     suffix = re.sub(r"_NumOfGenes_\d+$", "", suffix)
     return suffix if _S288C_RE.match(suffix) else None
+
+
+# --------------------------------------------------------------------------- #
+# Rows with a blank ``systematic_name`` (issue #598)
+# --------------------------------------------------------------------------- #
+# Datafile 1 carries one row per (Strain, ORF): 6,517 ORF rows per strain, and in the
+# 943 built isolates 459,790 of them have a blank ``systematic_name``. Each such row has
+# a ``pan_absence`` class. Before #598 a pandas groupby dropped all of them silently;
+# now every one is classified, counted and either served or dropped by a named rule.
+#
+# Columns the loader consumes from Datafile 1.
+CAUDAL_COLUMNS = [
+    "Strain",
+    "systematic_name",
+    "ORF",
+    "Ortholog_in_SGD_2010",
+    "pan_absence",
+    "count",
+    "tpm",
+]
+
+CITATION_KEY = "caudalPantranscriptomeRevealsLarge2024"
+# Online Methods, derived from the Europe PMC full-text XML of PMC11176082 (mirror
+# ``si/PMC11176082_fulltext.xml``, sha256 d8b8db20...) by
+# ``experiments/036-dataset-fixes-before-kg-build/scripts/caudal2024_retrieve_methods_si.py``.
+METHODS_MD = "methods.md"
+METHODS_MD_SHA256 = "10ccc3d0267ca337e4c3941ef3893ce39dfe393ebadbab83b6e9ff07a7e4f1e0"
+PAPER_MD_SHA256 = "652b3497bc7799fef9972db233a7046f2815742e17280270f5071c623f0ac8aa"
+SI_PDF = "si/41588_2024_1769_MOESM1_ESM.pdf"
+SI_PDF_SHA256 = "826a0c7c34a3ab7b4a30eff1b89ef4fcf7d081a4e00885b97f552e49ee66f389"
+# Supplementary Tables 1-9; sheet "Table S2" ("Description of genes included in this
+# study") is the paper's 6,445-ORF gene table.
+SI_TABLES_XLSX = "si/41588_2024_1769_MOESM3_ESM.xlsx"
+SI_TABLES_XLSX_SHA256 = (
+    "753e17d6ef9540206d3960c7f0c778fadfe43c9bee887ce4434885b81444bd7a"
+)
+
+
+def _methods_sv(value: object, quote: str, line: int, note: str) -> SourcedValue:
+    """A SourcedValue pinned to the mirrored online Methods (``methods.md``)."""
+    return SourcedValue(
+        value=value,
+        provenance=Provenance(
+            source_uri=METHODS_MD,
+            citation_key=CITATION_KEY,
+            sha256=METHODS_MD_SHA256,
+            page=f"methods.md line {line}",
+        ),
+        quote=quote,
+        note=note,
+    )
+
+
+class BlankRowClass(StrEnum):
+    """The ledger class of a Datafile 1 row whose ``systematic_name`` is blank."""
+
+    present_s288c_homolog = "present_s288c_homolog"
+    present_pangenome_orf = "present_pangenome_orf"
+    absent = "absent"
+    bad_annotation = "bad_annotation"
+    unannotated = "unannotated"
+
+
+class BlankRowRule(BaseModel):
+    """What the loader does with one blank-name class, and the source that says why.
+
+    Exactly one of ``definition`` (the sourced basis) and ``gap`` (a typed absence of
+    one, ``gap.field == "definition"``) is set.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    row_class: BlankRowClass
+    pan_absence: str
+    action: Literal["served", "dropped"]
+    id_rule: str | None
+    definition: SourcedValue | None
+    gap: ProvenanceGap | None
+
+    @model_validator(mode="after")
+    def _one_basis(self) -> BlankRowRule:
+        if (self.definition is None) == (self.gap is None):
+            raise ValueError(
+                f"{self.row_class}: exactly one of definition / gap must be set"
+            )
+        if self.gap is not None and self.gap.field != "definition":
+            raise ValueError(f"{self.row_class}: gap must name the 'definition' field")
+        if (self.action == "served") != (self.id_rule is not None):
+            raise ValueError(f"{self.row_class}: a served class needs an id_rule")
+        return self
+
+
+_PRESENT_QUOTE = (
+    "Abundance corresponds to the mean expression levels of all isolates where the "
+    "gene is annotated as being present."
+)
+_MERGE_QUOTE = (
+    "The read counts for 39 accessory features with a known homolog in S. cerevisiae "
+    "according to the pangenome annotations were merged with the corresponding homolog."
+)
+_UNDEFINED_CLASS_GAP_NOTE = (
+    "The pan_absence value {value!r} is not defined anywhere in the mirrored sources: "
+    "searched methods.md (online Methods + Data/Code availability), paper.md (main "
+    "text), the Supplementary Information PDF ({si_pdf}, sha256 {si_pdf_sha}) and every "
+    "sheet of Supplementary Tables 1-9 ({si_xlsx}, sha256 {si_xlsx_sha}) for "
+    "'bad annotation', 'unannotated' and 'pan_absence' with zero hits; the authors' "
+    "code (github.com/HaploTeam/1011yeastsRNAseq: tpm_calc.R and GWAS scripts) does not "
+    "assign the column either (read 2026-10-02, not mirrored). Rows stay dropped and "
+    "counted until a source defines the class."
+)
+
+
+def _undefined_class_gap(value: str) -> ProvenanceGap:
+    """Typed gap for a ``pan_absence`` class no mirrored source defines."""
+    return ProvenanceGap(
+        field="definition",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        looked_in=Provenance(
+            source_uri=METHODS_MD, citation_key=CITATION_KEY, sha256=METHODS_MD_SHA256
+        ),
+        note=_UNDEFINED_CLASS_GAP_NOTE.format(
+            value=value,
+            si_pdf=SI_PDF,
+            si_pdf_sha=SI_PDF_SHA256,
+            si_xlsx=SI_TABLES_XLSX,
+            si_xlsx_sha=SI_TABLES_XLSX_SHA256,
+        ),
+    )
+
+
+BLANK_ROW_RULES: dict[BlankRowClass, BlankRowRule] = {
+    BlankRowClass.present_s288c_homolog: BlankRowRule(
+        row_class=BlankRowClass.present_s288c_homolog,
+        pan_absence="present",
+        action="served",
+        id_rule=(
+            "serve under the S288C systematic name in ORF when ORF matches the S288C "
+            "pattern, equals the row's Ortholog_in_SGD_2010, is a systematic_name "
+            "served by named rows, and the isolate has no named row of that name"
+        ),
+        definition=_methods_sv(
+            "present_s288c_homolog",
+            _MERGE_QUOTE,
+            35,
+            "Datafile 1 relabels an accessory feature merged with its S. cerevisiae "
+            "homolog by putting the S288C name in ORF and Ortholog_in_SGD_2010 while "
+            "leaving systematic_name blank. Supplementary Table 2 (si/"
+            "41588_2024_1769_MOESM3_ESM.xlsx sheet 'Table S2', sha256 753e17d6..., "
+            "spreadsheet rows 7085-7100) assigns each of the 16 Annotation_Name values "
+            "these rows carry to that same S288C systematic_name (for example "
+            "1060-augustus_masked-ASN_8-20595 -> YBR020W). In these isolates Peter's "
+            "presence matrix marks the reference ORF absent and the accessory ORF "
+            "present, so the record holds both a NaturalGeneAbsencePerturbation for "
+            "the S288C name and the expression keyed by it, as the paper's merge does.",
+        ),
+        gap=None,
+    ),
+    BlankRowClass.present_pangenome_orf: BlankRowRule(
+        row_class=BlankRowClass.present_pangenome_orf,
+        pan_absence="present",
+        action="served",
+        id_rule=(
+            "serve under 'X' + _demangle_orf(ORF) (ORF 'X37.augustus_masked.2."
+            "CGIPLA_MA' -> 'X37-augustus_masked.2.CGIPLA_MA'), the form Datafile 1 "
+            "gives every named accessory ORF as its systematic_name; refused unless "
+            "ORF is a pangenome id 'X<number>.<name>' and the id is no served "
+            "systematic_name"
+        ),
+        definition=_methods_sv(
+            "present_pangenome_orf",
+            _PRESENT_QUOTE,
+            43,
+            "pan_absence is the per-isolate pangenome presence annotation ('All "
+            "annotations can be found in datafile 1.', same line), and the paper "
+            "computes abundance over the isolates annotated present. These ORFs (12 "
+            "plasmid ORFs in the released table) never carry a systematic_name and are "
+            "not in Supplementary Table 2, so they are outside the paper's 6,445-ORF "
+            "analysis set; they are quantified in Datafile 1 (per-strain TPM reaches "
+            "~1e6 only with the blank rows included) and Peter's presence matrix marks "
+            "each present in every isolate that carries such a row, so they are served "
+            "under the pangenome id. Measured by experiments/036-dataset-fixes-before-"
+            "kg-build/scripts/caudal2024_blank_systematic_name.py.",
+        ),
+        gap=None,
+    ),
+    BlankRowClass.absent: BlankRowRule(
+        row_class=BlankRowClass.absent,
+        pan_absence="absent",
+        action="dropped",
+        id_rule=None,
+        definition=_methods_sv(
+            "absent",
+            _PRESENT_QUOTE,
+            43,
+            "The paper's abundance excludes isolates where the gene is not annotated "
+            "present; the Fig. 2 caption agrees (paper.md line 55, sha256 652b3497...: "
+            "'For accessory genes, isolates that did not carry the given gene were "
+            "excluded from the calculations.'). A gene absent from an isolate is "
+            "key-absent in its phenotype.",
+        ),
+        gap=None,
+    ),
+    BlankRowClass.bad_annotation: BlankRowRule(
+        row_class=BlankRowClass.bad_annotation,
+        pan_absence="bad annotation",
+        action="dropped",
+        id_rule=None,
+        definition=None,
+        gap=_undefined_class_gap("bad annotation"),
+    ),
+    BlankRowClass.unannotated: BlankRowRule(
+        row_class=BlankRowClass.unannotated,
+        pan_absence="unannotated",
+        action="dropped",
+        id_rule=None,
+        definition=None,
+        gap=_undefined_class_gap("unannotated"),
+    ),
+}
+
+
+class UnclassifiedBlankRowError(ValueError):
+    """A blank-``systematic_name`` row whose ``pan_absence`` no ledger class covers."""
+
+
+class GeneIdCollisionError(ValueError):
+    """A served blank-name row would key a gene already served, or no rule fits its id."""
+
+
+class BlankNameLedger(BaseModel):
+    """Accounting for every Datafile 1 row of the built isolates (issue #598).
+
+    ``counts`` holds the rows of each blank-name class, ``served_ids`` the rows each
+    served blank-name id received. Every blank row is in exactly one class.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    rules: list[BlankRowRule]
+    n_rows: int
+    n_rows_named: int
+    n_rows_blank: int
+    counts: dict[BlankRowClass, int]
+    tpm_by_class: dict[BlankRowClass, float]
+    served_ids: dict[str, int]
+    named_pan_absence_counts: dict[str, int]
+
+    @model_validator(mode="after")
+    def _accounted(self) -> BlankNameLedger:
+        if self.n_rows_named + self.n_rows_blank != self.n_rows:
+            raise ValueError("named + blank rows must equal all rows")
+        if sum(self.counts.values()) != self.n_rows_blank:
+            raise ValueError("every blank row must be in exactly one class")
+        served = sum(
+            self.counts[c] for c, r in BLANK_ROW_RULES.items() if r.action == "served"
+        )
+        if sum(self.served_ids.values()) != served:
+            raise ValueError("served_ids must account for every served row")
+        return self
+
+
+def read_caudal_table(zip_path: str) -> pd.DataFrame:
+    """Read ``CAUDAL_COLUMNS`` of Datafile 1 from its zip (comma-delimited, latin-1).
+
+    ``Strain`` is cast to ``str``; a missing column raises pandas' ``Usecols do not
+    match columns`` error.
+    """
+    import zipfile
+
+    with zipfile.ZipFile(zip_path) as zf:
+        name = _tab_member(zip_path, zf.namelist())
+        with zf.open(name) as handle:
+            df = pd.read_csv(
+                handle, encoding="latin-1", low_memory=False, usecols=CAUDAL_COLUMNS
+            )
+    df["Strain"] = df["Strain"].astype(str)
+    return df
+
+
+def restrict_to_built_isolates(
+    df: pd.DataFrame, peter_isolates: set[str]
+) -> pd.DataFrame:
+    """Keep the rows of built isolates: not ``XTRA_*``, not ``FY4-6``, in Peter's panel."""
+    df = df[~df["Strain"].str.match(_EXCLUDED_STRAIN_RE)]
+    df = df[df["Strain"] != "FY4-6"]
+    return df[df["Strain"].isin(peter_isolates)]
+
+
+def resolve_gene_ids(df: pd.DataFrame) -> tuple[pd.DataFrame, BlankNameLedger]:
+    """Give every kept Datafile 1 row a ``gene_id`` and account for every blank row.
+
+    ``df`` holds ``CAUDAL_COLUMNS`` for the built isolates only. A named row keeps its
+    ``systematic_name``. A blank-name row is classified by ``pan_absence`` into a
+    ``BlankRowClass``; the two ``present`` classes are served under the id their
+    ``BLANK_ROW_RULES`` entry names and the others are dropped. A blank row with any
+    other ``pan_absence`` raises ``UnclassifiedBlankRowError``; a served id that would
+    collide with a named gene of the same isolate raises ``GeneIdCollisionError``.
+    Returns the kept rows (with ``gene_id``) and the ledger.
+    """
+    blank_mask = df["systematic_name"].isna()
+    named = df[~blank_mask].assign(gene_id=lambda f: f["systematic_name"].astype(str))
+    blank = df[blank_mask]
+    served_names = set(named["gene_id"])
+
+    by_value = {r.pan_absence: c for c, r in BLANK_ROW_RULES.items()}
+    unknown = sorted(set(blank["pan_absence"].astype(str)) - set(by_value), key=str)
+    if unknown:
+        raise UnclassifiedBlankRowError(
+            f"{int((~blank['pan_absence'].astype(str).isin(set(by_value))).sum())} "
+            f"blank-systematic_name rows carry a pan_absence no ledger class covers: "
+            f"{unknown}"
+        )
+
+    orf = blank["ORF"].astype(str)
+    homolog = (
+        (blank["pan_absence"] == "present")
+        & orf.str.match(_S288C_RE)
+        & (orf == blank["Ortholog_in_SGD_2010"].astype(str))
+        & orf.isin(served_names)
+    )
+    pangenome = (blank["pan_absence"] == "present") & ~homolog
+    row_class = pd.Series(
+        blank["pan_absence"].map(by_value), index=blank.index, dtype=object
+    )
+    row_class[homolog] = BlankRowClass.present_s288c_homolog
+    row_class[pangenome] = BlankRowClass.present_pangenome_orf
+
+    homolog_rows = blank[homolog].assign(gene_id=orf[homolog])
+    not_pangenome = sorted(set(orf[pangenome & ~orf.str.match(_PANGENOME_ORF_RE)]))
+    if not_pangenome:
+        raise GeneIdCollisionError(
+            f"pangenome-id rule refuses ORFs that are no pangenome id: {not_pangenome}"
+        )
+    pangenome_ids = "X" + orf[pangenome].map(_demangle_orf)
+    named_ids = sorted(set(pangenome_ids) & served_names)
+    if named_ids:
+        raise GeneIdCollisionError(
+            f"pangenome-id rule would serve ids named rows already serve: {named_ids}"
+        )
+    pangenome_rows = blank[pangenome].assign(gene_id=pangenome_ids)
+    served = pd.concat([homolog_rows, pangenome_rows])
+    named_keys = set(zip(named["Strain"], named["gene_id"]))
+    clashes = sorted(
+        {k for k in zip(served["Strain"], served["gene_id"]) if k in named_keys}
+    )
+    duplicated = served.duplicated(["Strain", "gene_id"])
+    if clashes or bool(duplicated.any()):
+        raise GeneIdCollisionError(
+            f"served blank-name rows collide with named rows {clashes[:10]} "
+            f"(of {len(clashes)}) or repeat a (Strain, gene_id) "
+            f"{int(duplicated.sum())} times"
+        )
+
+    ledger = BlankNameLedger(
+        rules=list(BLANK_ROW_RULES.values()),
+        n_rows=len(df),
+        n_rows_named=len(named),
+        n_rows_blank=len(blank),
+        counts={c: int((row_class == c).sum()) for c in BlankRowClass},
+        tpm_by_class={
+            c: float(blank.loc[row_class == c, "tpm"].sum()) for c in BlankRowClass
+        },
+        served_ids={
+            str(g): int(n) for g, n in served["gene_id"].value_counts().items()
+        },
+        named_pan_absence_counts={
+            str(k): int(v)
+            for k, v in named["pan_absence"].value_counts(dropna=False).items()
+        },
+    )
+    return pd.concat([named, served]), ledger
 
 
 @register_dataset
@@ -486,41 +875,47 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         dict[str, float],
         dict[str, int],
     ]:
-        """Aggregate Caudal expression per (strain, gene); return matched strains + ref."""
-        import zipfile
+        """Aggregate Caudal expression per (strain, gene); return matched strains + ref.
 
-        path = osp.join(self.raw_dir, CAUDAL_ZIP_BASENAME)
-        with zipfile.ZipFile(path) as zf:
-            name = _tab_member(path, zf.namelist())
-            with zf.open(name) as handle:
-                df = pd.read_csv(
-                    handle,
-                    encoding="latin-1",
-                    low_memory=False,
-                    usecols=["Strain", "systematic_name", "count", "tpm"],
-                )
-        df["Strain"] = df["Strain"].astype(str)
-        df = df[~df["Strain"].str.match(_EXCLUDED_STRAIN_RE)]
-        df = df[df["Strain"] != "FY4-6"]
-        df = df[df["Strain"].isin(peter_isolates)]
+        Every row of the built isolates is accounted for by ``resolve_gene_ids``: named
+        rows keep their ``systematic_name``, blank-name rows are served or dropped by
+        their ledger class, and the ledger is written to
+        ``preprocess/blank_systematic_name_ledger.json`` (issue #598).
+        """
+        df = read_caudal_table(osp.join(self.raw_dir, CAUDAL_ZIP_BASENAME))
+        df = restrict_to_built_isolates(df, peter_isolates)
+        df, ledger = resolve_gene_ids(df)
+        ledger_path = osp.join(self.preprocess_dir, "blank_systematic_name_ledger.json")
+        with open(ledger_path, "w") as handle:
+            handle.write(ledger.model_dump_json(indent=2))
+        log.info(
+            "Caudal rows in built isolates: %d (%d named, %d blank systematic_name); "
+            "blank rows by class %s; served %d blank rows under %d ids -> %s",
+            ledger.n_rows,
+            ledger.n_rows_named,
+            ledger.n_rows_blank,
+            {str(c): n for c, n in ledger.counts.items()},
+            sum(ledger.served_ids.values()),
+            len(ledger.served_ids),
+            ledger_path,
+        )
         # Aggregate multi-allele rows per (strain, gene): tpm sum, count sum (defensive;
-        # the merged file already carries one row per pair).
+        # the merged file already carries one row per pair). ``gene_id`` is never null.
         agg = (
-            df.groupby(["Strain", "systematic_name"], sort=False)
+            df.groupby(["Strain", "gene_id"], sort=False, dropna=False)
             .agg(tpm=("tpm", "sum"), count=("count", "sum"))
             .reset_index()
         )
-        agg["systematic_name"] = agg["systematic_name"].astype(str)
         per_strain: dict[str, dict[str, dict[str, Any]]] = {}
         for strain, sub in agg.groupby("Strain", sort=False):
-            genes = sub["systematic_name"].tolist()
+            genes = sub["gene_id"].tolist()
             tpm = {g: float(t) for g, t in zip(genes, sub["tpm"].tolist())}
             count = {
                 g: int(round(float(c))) for g, c in zip(genes, sub["count"].tolist())
             }
             per_strain[str(strain)] = {"tpm": tpm, "count": count}
         # Population-mean reference over the matched isolates (mean per gene).
-        ref = agg.groupby("systematic_name", sort=False).agg(
+        ref = agg.groupby("gene_id", sort=False).agg(
             tpm=("tpm", "mean"), count=("count", "mean")
         )
         ref_tpm = {str(g): float(t) for g, t in ref["tpm"].items()}

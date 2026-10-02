@@ -1,0 +1,160 @@
+{
+  "rules": [
+    {
+      "row_class": "present_s288c_homolog",
+      "pan_absence": "present",
+      "action": "served",
+      "id_rule": "serve under the S288C systematic name in ORF when ORF matches the S288C pattern, equals the row's Ortholog_in_SGD_2010, is a systematic_name served by named rows, and the isolate has no named row of that name",
+      "definition": {
+        "value": "present_s288c_homolog",
+        "provenance": {
+          "source_uri": "methods.md",
+          "citation_key": "caudalPantranscriptomeRevealsLarge2024",
+          "sha256": "10ccc3d0267ca337e4c3941ef3893ce39dfe393ebadbab83b6e9ff07a7e4f1e0",
+          "method": null,
+          "page": "methods.md line 35",
+          "retrieved": null
+        },
+        "quote": "The read counts for 39 accessory features with a known homolog in S. cerevisiae according to the pangenome annotations were merged with the corresponding homolog.",
+        "note": "Datafile 1 relabels an accessory feature merged with its S. cerevisiae homolog by putting the S288C name in ORF and Ortholog_in_SGD_2010 while leaving systematic_name blank. Supplementary Table 2 (si/41588_2024_1769_MOESM3_ESM.xlsx sheet 'Table S2', sha256 753e17d6..., spreadsheet rows 7085-7100) assigns each of the 16 Annotation_Name values these rows carry to that same S288C systematic_name (for example 1060-augustus_masked-ASN_8-20595 -> YBR020W). In these isolates Peter's presence matrix marks the reference ORF absent and the accessory ORF present, so the record holds both a NaturalGeneAbsencePerturbation for the S288C name and the expression keyed by it, as the paper's merge does."
+      },
+      "gap": null
+    },
+    {
+      "row_class": "present_pangenome_orf",
+      "pan_absence": "present",
+      "action": "served",
+      "id_rule": "serve under 'X' + _demangle_orf(ORF) (ORF 'X37.augustus_masked.2.CGIPLA_MA' -> 'X37-augustus_masked.2.CGIPLA_MA'), the form Datafile 1 gives every named accessory ORF as its systematic_name; refused unless ORF is a pangenome id 'X<number>.<name>' and the id is no served systematic_name",
+      "definition": {
+        "value": "present_pangenome_orf",
+        "provenance": {
+          "source_uri": "methods.md",
+          "citation_key": "caudalPantranscriptomeRevealsLarge2024",
+          "sha256": "10ccc3d0267ca337e4c3941ef3893ce39dfe393ebadbab83b6e9ff07a7e4f1e0",
+          "method": null,
+          "page": "methods.md line 43",
+          "retrieved": null
+        },
+        "quote": "Abundance corresponds to the mean expression levels of all isolates where the gene is annotated as being present.",
+        "note": "pan_absence is the per-isolate pangenome presence annotation ('All annotations can be found in datafile 1.', same line), and the paper computes abundance over the isolates annotated present. These ORFs (12 plasmid ORFs in the released table) never carry a systematic_name and are not in Supplementary Table 2, so they are outside the paper's 6,445-ORF analysis set; they are quantified in Datafile 1 (per-strain TPM reaches ~1e6 only with the blank rows included) and Peter's presence matrix marks each present in every isolate that carries such a row, so they are served under the pangenome id. Measured by experiments/036-dataset-fixes-before-kg-build/scripts/caudal2024_blank_systematic_name.py."
+      },
+      "gap": null
+    },
+    {
+      "row_class": "absent",
+      "pan_absence": "absent",
+      "action": "dropped",
+      "id_rule": null,
+      "definition": {
+        "value": "absent",
+        "provenance": {
+          "source_uri": "methods.md",
+          "citation_key": "caudalPantranscriptomeRevealsLarge2024",
+          "sha256": "10ccc3d0267ca337e4c3941ef3893ce39dfe393ebadbab83b6e9ff07a7e4f1e0",
+          "method": null,
+          "page": "methods.md line 43",
+          "retrieved": null
+        },
+        "quote": "Abundance corresponds to the mean expression levels of all isolates where the gene is annotated as being present.",
+        "note": "The paper's abundance excludes isolates where the gene is not annotated present; the Fig. 2 caption agrees (paper.md line 55, sha256 652b3497...: 'For accessory genes, isolates that did not carry the given gene were excluded from the calculations.'). A gene absent from an isolate is key-absent in its phenotype."
+      },
+      "gap": null
+    },
+    {
+      "row_class": "bad_annotation",
+      "pan_absence": "bad annotation",
+      "action": "dropped",
+      "id_rule": null,
+      "definition": null,
+      "gap": {
+        "field": "definition",
+        "reason": "not_reported_by_primary",
+        "looked_in": {
+          "source_uri": "methods.md",
+          "citation_key": "caudalPantranscriptomeRevealsLarge2024",
+          "sha256": "10ccc3d0267ca337e4c3941ef3893ce39dfe393ebadbab83b6e9ff07a7e4f1e0",
+          "method": null,
+          "page": null,
+          "retrieved": null
+        },
+        "resolve_with": null,
+        "note": "The pan_absence value 'bad annotation' is not defined anywhere in the mirrored sources: searched methods.md (online Methods + Data/Code availability), paper.md (main text), the Supplementary Information PDF (si/41588_2024_1769_MOESM1_ESM.pdf, sha256 826a0c7c34a3ab7b4a30eff1b89ef4fcf7d081a4e00885b97f552e49ee66f389) and every sheet of Supplementary Tables 1-9 (si/41588_2024_1769_MOESM3_ESM.xlsx, sha256 753e17d6ef9540206d3960c7f0c778fadfe43c9bee887ce4434885b81444bd7a) for 'bad annotation', 'unannotated' and 'pan_absence' with zero hits; the authors' code (github.com/HaploTeam/1011yeastsRNAseq: tpm_calc.R and GWAS scripts) does not assign the column either (read 2026-10-02, not mirrored). Rows stay dropped and counted until a source defines the class."
+      }
+    },
+    {
+      "row_class": "unannotated",
+      "pan_absence": "unannotated",
+      "action": "dropped",
+      "id_rule": null,
+      "definition": null,
+      "gap": {
+        "field": "definition",
+        "reason": "not_reported_by_primary",
+        "looked_in": {
+          "source_uri": "methods.md",
+          "citation_key": "caudalPantranscriptomeRevealsLarge2024",
+          "sha256": "10ccc3d0267ca337e4c3941ef3893ce39dfe393ebadbab83b6e9ff07a7e4f1e0",
+          "method": null,
+          "page": null,
+          "retrieved": null
+        },
+        "resolve_with": null,
+        "note": "The pan_absence value 'unannotated' is not defined anywhere in the mirrored sources: searched methods.md (online Methods + Data/Code availability), paper.md (main text), the Supplementary Information PDF (si/41588_2024_1769_MOESM1_ESM.pdf, sha256 826a0c7c34a3ab7b4a30eff1b89ef4fcf7d081a4e00885b97f552e49ee66f389) and every sheet of Supplementary Tables 1-9 (si/41588_2024_1769_MOESM3_ESM.xlsx, sha256 753e17d6ef9540206d3960c7f0c778fadfe43c9bee887ce4434885b81444bd7a) for 'bad annotation', 'unannotated' and 'pan_absence' with zero hits; the authors' code (github.com/HaploTeam/1011yeastsRNAseq: tpm_calc.R and GWAS scripts) does not assign the column either (read 2026-10-02, not mirrored). Rows stay dropped and counted until a source defines the class."
+      }
+    }
+  ],
+  "n_rows": 6145531,
+  "n_rows_named": 5685741,
+  "n_rows_blank": 459790,
+  "counts": {
+    "present_s288c_homolog": 98,
+    "present_pangenome_orf": 461,
+    "absent": 443200,
+    "bad_annotation": 16031,
+    "unannotated": 0
+  },
+  "tpm_by_class": {
+    "present_s288c_homolog": 32615.861177733696,
+    "present_pangenome_orf": 170131.31521045815,
+    "absent": 12233319.146356588,
+    "bad_annotation": 149024.05523826816,
+    "unannotated": 0.0
+  },
+  "served_ids": {
+    "X37-augustus_masked.2.CGIPLA_MA": 190,
+    "X39-augustus_masked.2.CGIPLA_MA": 190,
+    "YBR020W": 31,
+    "X36-augustus_masked.2.CGIPLA_MA": 26,
+    "X38-augustus_masked.2.CGIPLA_MA": 26,
+    "YLR081W": 25,
+    "X43-snap_masked.3.ALIPLA_SA": 5,
+    "X42-augustus_masked.3.ALIPLA_SA": 5,
+    "X40-augustus_masked.3.ALIPLA_SA": 4,
+    "YKR066C": 3,
+    "YKR064W": 3,
+    "YKR065C": 3,
+    "YKR074W": 3,
+    "YKR072C": 3,
+    "YKR071C": 3,
+    "YKR070W": 3,
+    "YKR069W": 3,
+    "YKR068C": 3,
+    "YKR067W": 3,
+    "YKR075C": 3,
+    "X41-augustus_masked.3.ALIPLA_SA": 3,
+    "YKR076W": 3,
+    "YKR077W": 3,
+    "YKR078W": 3,
+    "X32-augustus_masked.1.AMHPLA_TAIW": 3,
+    "X33-augustus_masked.1.AMHPLA_TAIW": 3,
+    "X34-augustus_masked.1.AMHPLA_TAIW": 3,
+    "X35-augustus_masked.1.AMHPLA_TAIW": 3
+  },
+  "named_pan_absence_counts": {
+    "present": 5450422,
+    "duplicated": 213118,
+    "absent": 8999,
+    "undefined": 8487,
+    "bad annotation": 4715
+  }
+}

@@ -361,3 +361,49 @@ Left open, RECORD-CHANGING: `groupby` drops rows with a blank `systematic_name`.
 ## 2026.10.01 - Correction: blank-name class counts over the built isolates
 
 The `pan_absence` counts in the section above are over all 969 strains in the table, not the 943 built isolates. Over the built isolates (read-only re-measurement, `classify_caudal_built.py`): 459,790 blank-`systematic_name` rows, of which absent 443,200, bad annotation 16,031, unannotated 0 (all 10,725 unannotated blank rows belong to the 26 excluded strains), present 559 (28 ORFs in 229 isolates). The blank rows carry 12,585,090 of 942,837,741 TPM (1.33%) in the built isolates. The item stays pinned as record-changing and is being filed as its own dataset issue.
+
+## 2026.10.02 - Blank-systematic_name rows go through a counted ledger (issue #598)
+
+**What was wrong.** `_load_caudal` grouped by `(Strain, systematic_name)` with pandas' default `dropna=True`, so every Datafile 1 row with a blank `systematic_name` vanished: 459,790 rows in the 943 built isolates, 1.33% of their TPM, including 559 rows annotated `present`. The `pan_absence` classes were unsourced because only the 9-page main text was mirrored.
+
+**Retrieval (into the mirror, recorded in `manifest.json`).** `experiments/036-dataset-fixes-before-kg-build/scripts/caudal2024_retrieve_methods_si.py`. The NCBI OA web service returned HTTP 404 for PMC11176082 on 2026-10-02, so the Europe PMC REST full text (open access) was used through the `direct_url` retriever; two fetches gave the same sha256.
+
+- `si/PMC11176082_fulltext.xml` (Europe PMC JATS, sha256 `d8b8db20...`): full online Methods + Data/Code availability.
+- `methods.md` (sha256 `10ccc3d0...`): derived from the XML by `jats_methods_to_markdown`, one paragraph per line, with a `ProcessingRecord`.
+- `si/41588_2024_1769_MOESM1_ESM.pdf` (Springer ESM, sha256 `826a0c7c...`): Supplementary Information.
+- `si/41588_2024_1769_MOESM3_ESM.xlsx` (Springer ESM, sha256 `753e17d6...`): Supplementary Tables 1-9; sheet `Table S2` is the paper's 6,445-ORF gene table.
+
+**What the sources say.**
+
+- `methods.md` line 43: "Abundance corresponds to the mean expression levels of all isolates where the gene is annotated as being present." and "All annotations can be found in datafile 1." So `pan_absence` is the per-isolate pangenome presence annotation, and the paper's statistics exclude non-carriers.
+- `methods.md` line 35: "The read counts for 39 accessory features with a known homolog in S. cerevisiae according to the pangenome annotations were merged with the corresponding homolog."
+- No mirrored source defines `bad annotation` or `unannotated`: zero hits in `methods.md`, `paper.md`, the SI PDF (`pdftotext`) and every sheet of Supplementary Tables 1-9; the authors' code repository (`HaploTeam/1011yeastsRNAseq`, read 2026-10-02, not mirrored) holds only `tpm_calc.R` and GWAS scripts.
+
+**The fix.** `resolve_gene_ids` gives every built-isolate row a `gene_id` and writes `preprocess/blank_systematic_name_ledger.json` (`BlankNameLedger`: per-class counts and TPM, the rows each served id received, and each class's rule with its `SourcedValue` definition or typed `ProvenanceGap`). A blank row with any other `pan_absence` raises `UnclassifiedBlankRowError`; a served id that collides with a named key raises `GeneIdCollisionError`. No silent path remains.
+
+| Ledger class | `pan_absence` | Rows (built isolates) | Action | Basis |
+|---|---|---|---|---|
+| `present_s288c_homolog` | present | 98 (16 ORFs) | served under the S288C name | `methods.md` line 35; Table S2 rows map each row's `Annotation_Name` to that name (16 of 16 agree) |
+| `present_pangenome_orf` | present | 461 (12 plasmid ORFs) | served under `X<n>-<name>` | `methods.md` line 43 |
+| `absent` | absent | 443,200 (1,005 ORFs) | dropped | `methods.md` line 43; `paper.md` line 55 |
+| `bad_annotation` | bad annotation | 16,031 (17 ORFs) | dropped | `ProvenanceGap` (`not_reported_by_primary`) |
+| `unannotated` | unannotated | 0 (all 10,725 are in the 26 excluded strains) | dropped | `ProvenanceGap` (`not_reported_by_primary`) |
+
+**Measured** (`experiments/036-dataset-fixes-before-kg-build/scripts/caudal2024_blank_systematic_name.py` on the mirror zip `8b55ccd7...`, Peter's presence matrix and the pre-fix dev LMDB; outputs `results/caudal2024_blank_systematic_name_summary.json` and `_ledger.json`):
+
+- Ledger counts match the issue table exactly (above). Blank rows: 470,944 in the raw table, 459,790 in the built isolates.
+- Served: 559 rows under 28 ids in 229 isolates; GAL1 (YBR020W) in 31 isolates, so YBR020W is now a key in all 943 records (912 named + 31 served); GAL2 (YLR081W) in 25; YKR064W to YKR078W (14 ORFs) in 3; `X37-` and `X39-augustus_masked.2.CGIPLA_MA` in 190 each.
+- For every served S288C name, Peter's presence matrix marks the reference column absent in all served isolates (0 of 98 rows) and the accessory column the row is annotated as present (96 of 98; YLR081W 23 of 25). For every served pangenome id, Peter marks the column present in every served isolate (461 of 461).
+- The 12 pangenome ids are not in Supplementary Table 2, so they are outside the paper's 6,445-ORF analysis set. Median per-strain TPM is 999,998.97 with the blank rows and 987,442.35 without.
+- Pre-fix dev store: 943 records, every record's phenotype key count equals its named-row count (the drop is confirmed). After the fix 229 isolates gain keys (max 18; median keys per isolate 6,032 -> 6,033).
+- Sliced build (4 isolates AAA, AAG, ABL, AMH; scratch only, Datafile 1 cut to those strains and the sha256 pin re-pointed to the cut file, not committed) built and wrote the ledger; ABL holds YBR020W from its served row beside a `NaturalGeneAbsencePerturbation` for YBR020W.
+
+**Tests.** `tests/torchcell/datasets/scerevisiae/test_caudal2024.py`: the end-to-end ledger build on a synthetic table, refusals for an unledgered class, a collision with a named gene, an ORF that is no pangenome id and a pangenome id a named row already serves, the one-basis rule on `BlankRowRule`, the `SourcedValue` audit against the mirrored `methods.md` (`--data`) and the full released table (`--data --slow`: the counts above, GAL1 in 31 + 912 = 943 isolates).
+
+**Open.**
+
+- `bad annotation` and `unannotated` stay dropped under a typed gap until a source defines them. Hypothesis (untested): `bad annotation` marks pangenome ORFs whose annotation the authors distrusted; 5,236 of the 16,031 rows have TPM > 0.
+- Decision the user may reverse: the 98 homolog rows are keyed by the S288C name, following the paper's merge and Table S2, so the record holds both a `NaturalGeneAbsencePerturbation` for that name and its expression. The alternative is to key them by the accessory id the row is annotated as.
+- Pre-existing, not changed here: every accessory phenotype key is Datafile 1's `X<n>-<name>` (366 of 366 named accessory keys), while `NaturalGenePresencePerturbation` ids are `<n>-<name>`, so phenotype and genotype ids for the same accessory ORF differ by the leading `X`. The served pangenome ids follow the phenotype convention.
+- Pre-existing, not changed here: named rows are kept whatever their class (8,999 `absent`, 4,715 `bad annotation`, 213,118 `duplicated`, 8,487 `undefined` in the built isolates), so a named `absent` row is still a phenotype key.
+- Record-changing: the dev store `$DATA_ROOT/data/torchcell/caudal_pantranscriptome2024` must be rebuilt under slurm.

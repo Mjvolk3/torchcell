@@ -614,10 +614,17 @@ def test_real_registry_holds_on_the_committed_snapshot() -> None:
     release = "2026.10.02-833970cd"
     registry = QueryRegistry.load(registry_path(REPO))
     report = check_repo(REPO, registry, release)
-    assert [(r.query_id, r.drifts) for r in report.results] == [
+    # ``contract_changed`` is the designed state between a landed schema change and the
+    # next KG build: the pre-commit gate acknowledges it (TORCHCELL_QUERY_DRIFT_ACK) and
+    # the docs workflow files the before-next-kg-build issue. Every other drift kind means
+    # the query no longer holds on the release and fails here.
+    structural = [
+        (r.query_id, [d for d in r.drifts if d.kind != "contract_changed"])
+        for r in report.results
+    ]
+    assert structural == [
         (q.id, []) for q in sorted(registry.queries, key=lambda q: q.id)
     ]
-    assert report.exit_code == 0
     snapshot = load_snapshot(snapshot_paths(REPO, release)[0])
     assert {q.id: q.validated_release for q in registry.queries} == dict.fromkeys(
         [

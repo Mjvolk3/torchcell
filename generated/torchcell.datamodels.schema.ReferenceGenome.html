@@ -144,6 +144,9 @@ gene alike); a per-locus <code class="docutils literal notranslate"><span class=
 the deviation from this baseline (e.g. a HIP heterozygous deletion drops one
 autosomal gene from 2 -&gt; 1 copies in a diploid). Defaults to <code class="docutils literal notranslate"><span class="pre">&quot;haploid&quot;</span></code> so all
 existing haploid datasets stay valid.</p>
+<p>A typed strain background is carried by the subclass <code class="docutils literal notranslate"><span class="pre">StrainReferenceGenome</span></code>
+(#507), not by a field here: this class is in the schema closure of every served
+dataset, and any field added to it would mark every built store stale.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="torchcell.datamodels.schema.ReferenceGenome.model_config">
 <span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'extra':</span> <span class="pre">'forbid',</span> <span class="pre">'frozen':</span> <span class="pre">True}</span></em><a class="headerlink" href="#torchcell.datamodels.schema.ReferenceGenome.model_config" title="Link to this definition"></a></dt>

@@ -138,7 +138,9 @@
 <dd><p>Project an environment onto medium, temperature, edits, oxygen and duration.</p>
 <p><code class="docutils literal notranslate"><span class="pre">provenance_gaps</span></code> is dropped, but what a gap MEANS is kept: the gapped field is
 <code class="docutils literal notranslate"><span class="pre">None</span></code>, and a <code class="docutils literal notranslate"><span class="pre">None</span></code> temperature projects as <code class="docutils literal notranslate"><span class="pre">None</span></code>, so a record that never
-carried a temperature does not merge with one measured at 30 C.</p>
+carried a temperature does not merge with one measured at 30 C. A
+<code class="docutils literal notranslate"><span class="pre">CultureEnvironment</span></code>’s protocol fields (<code class="docutils literal notranslate"><span class="pre">ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS</span></code>)
+are added only when set.</p>
 </dd></dl>
 
 </section>

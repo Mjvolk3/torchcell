@@ -138,7 +138,11 @@
 <dd><p>Bases: <a class="reference internal" href="torchcell.datamodels.pydant.ModelStrict.html#torchcell.datamodels.pydant.ModelStrict" title="torchcell.datamodels.pydant.ModelStrict"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelStrict</span></code></a></p>
 <p>The vehicle a compound was dissolved in and its final fraction in the medium.</p>
 <p><code class="docutils literal notranslate"><span class="pre">compound</span></code> optionally carries the vehicle’s typed chemical identity (a reused
-<code class="docutils literal notranslate"><span class="pre">Compound</span></code>); <code class="docutils literal notranslate"><span class="pre">name</span></code> remains the plain label for the common case.</p>
+<code class="docutils literal notranslate"><span class="pre">Compound</span></code>); <code class="docutils literal notranslate"><span class="pre">name</span></code> remains the plain label for the common case. A vehicle the
+source does not state (Hoepfner’s concentrated stocks above the 200 uM solubility
+ceiling of its 2% DMSO normalization) is <code class="docutils literal notranslate"><span class="pre">SmallMoleculePerturbation.solvent=None</span></code>
+with a <code class="docutils literal notranslate"><span class="pre">ProvenanceGap</span></code> on <code class="docutils literal notranslate"><span class="pre">solvent</span></code>; this class is not itself a gap carrier
+because it sits in the schema closure of every small-molecule dataset (#507).</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="torchcell.datamodels.schema.Solvent.model_config">
 <span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'extra':</span> <span class="pre">'forbid',</span> <span class="pre">'frozen':</span> <span class="pre">True}</span></em><a class="headerlink" href="#torchcell.datamodels.schema.Solvent.model_config" title="Link to this definition"></a></dt>

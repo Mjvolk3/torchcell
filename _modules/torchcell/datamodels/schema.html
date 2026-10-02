@@ -137,7 +137,386 @@
 <span class="c1"># from torchcell.datasets.dataset_registry import dataset_registry</span>
 
 
+<div class="viewcode-block" id="ProvenanceGapMixin">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.ProvenanceGapMixin.html#torchcell.datamodels.schema.ProvenanceGapMixin">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProvenanceGapMixin</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Mixin giving a model a ``provenance_gaps`` list of typed field-absences.</span>
+
+<span class="sd">    Shared by ``Phenotype``, ``Environment``, and ``Compound`` so a field the source does</span>
+<span class="sd">    not carry -- a phenotype ``n_samples`` a secondary curation layer dropped, an</span>
+<span class="sd">    environment ``temperature`` YeastPhenome never recorded, a compound ``inchikey`` no</span>
+<span class="sd">    resolver could map -- is a documented, typed ABSENCE (with a reason + ``looked_in``)</span>
+<span class="sd">    rather than a guess or a silent None. Two invariants keep it honest and</span>
+<span class="sd">    machine-checkable: (1) each ``gap.field`` names a real field on the concrete model</span>
+<span class="sd">    (checked against ``model_fields``, so inherited fields resolve too); (2) a gapped</span>
+<span class="sd">    field must be ``None`` -- you cannot both store a value and declare it missing.</span>
+<span class="sd">    ``provenance_gaps`` itself cannot be gapped.</span>
+<span class="sd">    """</span>
+
+    <span class="n">provenance_gaps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProvenanceGap</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"documented, typed ABSENCES of a sourced value for a field on this "</span>
+        <span class="s2">"model (e.g. a phenotype n_samples, or an environment temperature the curation "</span>
+        <span class="s2">"layer did not carry). An honest typed gap -- never a guess. The gapped field "</span>
+        <span class="s2">"must be None (enforced below)."</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="ProvenanceGapMixin.validate_provenance_gaps">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.ProvenanceGapMixin.html#torchcell.datamodels.schema.ProvenanceGapMixin.validate_provenance_gaps">[docs]</a>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_provenance_gaps</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ProvenanceGapMixin"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Each ProvenanceGap must name a real field on this model, and that field must</span>
+<span class="sd">        be None (you cannot both store a value and declare it missing).</span>
+<span class="sd">        """</span>
+        <span class="n">model_fields</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">model_fields</span>
+        <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance_gaps</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">gap</span><span class="o">.</span><span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">model_fields</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"provenance_gap field '</span><span class="si">{</span><span class="n">gap</span><span class="o">.</span><span class="n">field</span><span class="si">}</span><span class="s2">' is not a field of "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">gap</span><span class="o">.</span><span class="n">field</span> <span class="o">==</span> <span class="s2">"provenance_gaps"</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"provenance_gaps cannot itself be gapped"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gap</span><span class="o">.</span><span class="n">field</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"field '</span><span class="si">{</span><span class="n">gap</span><span class="o">.</span><span class="n">field</span><span class="si">}</span><span class="s2">' has a ProvenanceGap but is not None "</span>
+                    <span class="s2">"(cannot both store a value and declare it missing)"</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="ProvenanceGapMixin.gapped_fields">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.ProvenanceGapMixin.html#torchcell.datamodels.schema.ProvenanceGapMixin.gapped_fields">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">gapped_fields</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Names of the fields this record declares as typed absences."""</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">gap</span><span class="o">.</span><span class="n">field</span> <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance_gaps</span><span class="p">}</span></div>
+</div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">HashableProvenanceGapMixin</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""``ProvenanceGapMixin`` for a model that must stay hashable.</span>
+
+<span class="sd">    A frozen pydantic model hashes the tuple of its field values, so a ``list`` field</span>
+<span class="sd">    (``provenance_gaps``) makes it unhashable. ``Genotype.__eq__`` compares</span>
+<span class="sd">    perturbations as a ``set``, so a gene-perturbation leaf that carries typed gaps</span>
+<span class="sd">    must hash; it hashes its canonical JSON instead, which agrees with pydantic's</span>
+<span class="sd">    field-wise ``__eq__`` (equal models dump to equal JSON). List this mixin FIRST in</span>
+<span class="sd">    a leaf's bases: pydantic keeps the first ``__hash__`` it finds in the bases, and</span>
+<span class="sd">    a frozen parent leaf carries a generated one.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Hash the canonical JSON dump (the list fields are not hashable)."""</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">())</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_require_value_or_gap</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ProvenanceGapMixin</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise unless every named field is set or carries a typed ``ProvenanceGap``.</span>
+
+<span class="sd">    The strain-background contract (#500, #507): every element is either sourced or</span>
+<span class="sd">    a declared absence, never a silent ``None``. An empty list counts as unset.</span>
+<span class="sd">    """</span>
+    <span class="n">gapped</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">gapped_fields</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">==</span> <span class="p">[])</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gapped</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is unset and carries no ProvenanceGap "</span>
+                <span class="s2">"(an unsourced element must be a typed gap, never a silent None)"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="o">==</span> <span class="p">[]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is an empty list; use None with a "</span>
+                <span class="s2">"ProvenanceGap for an absent source"</span>
+            <span class="p">)</span>
+
+
 <span class="c1"># Genotype</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Strain background (issue #507, decided once for #500 #504 #505 #506).</span>
+<span class="c1">#</span>
+<span class="c1"># Every allele here is an edit against the S288C R64 reference assembly: the</span>
+<span class="c1"># sequence torchcell's genome reads is S288C, so a BY4741 record differs from it at</span>
+<span class="c1"># MAT (R64 is MATalpha), at four auxotrophic loci, and at the screened locus. The</span>
+<span class="c1"># background is everything the strain carries that is CONSTANT across the</span>
+<span class="c1"># collection and shared with the record's reference strain; the experiment's</span>
+<span class="c1"># ``Genotype`` keeps only what the screen varies. It hangs off the reference genome</span>
+<span class="c1"># (``StrainReferenceGenome``, not ``Genotype``) so pooled one-perturbation semantics,</span>
+<span class="c1"># perturbation counts and every gene-keyed consumer are untouched, and so it is</span>
+<span class="c1"># stored once per reference (the LMDB interns the whole reference; the graph writes</span>
+<span class="c1"># it on the ``genome`` and ``experiment reference`` nodes), never once per record.</span>
+<span class="c1"># Only the new classes below carry it, so no served dataset's closure moves until</span>
+<span class="c1"># its loader opts in (``StrainEnvironmentResponseExperiment``).</span>
+<span class="c1"># Design + worked examples: ``[[torchcell.datamodels.strain-background]]``.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">SYSTEMATIC_GENE_PATTERN</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"^(Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?|Q\d</span><span class="si">{4}</span><span class="s2">|YNC[A-Q]\d</span><span class="si">{4}</span><span class="s2">[WC])$"</span>
+<span class="sd">"""A nuclear ORF / ncRNA / mitochondrial systematic name (the ``GenePerturbation``</span>
+<span class="sd">pattern, restated so the background classes do not reach into that validator)."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MatingType</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Mating-type locus state. The R64 reference (S288C) is MATalpha, so a MATa</span>
+<span class="sd">    strain differs from the reference IN SEQUENCE at MAT (chrIII), not only in label.</span>
+<span class="sd">    """</span>
+
+    <span class="n">a</span> <span class="o">=</span> <span class="s2">"a"</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="s2">"alpha"</span>
+    <span class="n">a_alpha</span> <span class="o">=</span> <span class="s2">"a/alpha"</span>
+
+
+<span class="n">REFERENCE_MATING_TYPE</span><span class="p">:</span> <span class="n">MatingType</span> <span class="o">=</span> <span class="n">MatingType</span><span class="o">.</span><span class="n">alpha</span>
+<span class="sd">"""S288C R64 carries MATALPHA1 (YCR040W) and MATALPHA2 (YCR039C) at MAT."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Zygosity</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How many of a background's chromosome copies carry an allele.</span>
+
+<span class="sd">    - ``haploid``: the only copy of a haploid genome.</span>
+<span class="sd">    - ``homozygous``: both copies of a diploid.</span>
+<span class="sd">    - ``heterozygous``: one copy of a diploid; the other copy is the R64 allele.</span>
+<span class="sd">    """</span>
+
+    <span class="n">haploid</span> <span class="o">=</span> <span class="s2">"haploid"</span>
+    <span class="n">homozygous</span> <span class="o">=</span> <span class="s2">"homozygous"</span>
+    <span class="n">heterozygous</span> <span class="o">=</span> <span class="s2">"heterozygous"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">AlleleEdit</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How a background allele's sequence differs from the R64 locus.</span>
+
+<span class="sd">    - ``full_deletion``: the ORF removed with no marker left (the BY ``delta0``</span>
+<span class="sd">      designer deletions: leu2-delta0, ura3-delta0, met15-delta0, lys2-delta0).</span>
+<span class="sd">    - ``partial_deletion``: an internal deletion that leaves ORF flanks</span>
+<span class="sd">      (his3-delta1).</span>
+<span class="sd">    - ``cassette_replacement``: the ORF replaced by a cassette named in ``cassette``</span>
+<span class="sd">      (can1-delta::STE2pr-Sp_his5, pdr1-delta::natMX).</span>
+<span class="sd">    - ``sequence_variant``: an in-place change (a point or nonsense mutation).</span>
+<span class="sd">    """</span>
+
+    <span class="n">full_deletion</span> <span class="o">=</span> <span class="s2">"full_deletion"</span>
+    <span class="n">partial_deletion</span> <span class="o">=</span> <span class="s2">"partial_deletion"</span>
+    <span class="n">cassette_replacement</span> <span class="o">=</span> <span class="s2">"cassette_replacement"</span>
+    <span class="n">sequence_variant</span> <span class="o">=</span> <span class="s2">"sequence_variant"</span>
+
+
+<span class="n">ALLELE_EDIT_SO</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">AlleleEdit</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">AlleleEdit</span><span class="o">.</span><span class="n">full_deletion</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0000159"</span><span class="p">,</span> <span class="s2">"deletion"</span><span class="p">),</span>
+    <span class="n">AlleleEdit</span><span class="o">.</span><span class="n">partial_deletion</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0000159"</span><span class="p">,</span> <span class="s2">"deletion"</span><span class="p">),</span>
+    <span class="n">AlleleEdit</span><span class="o">.</span><span class="n">cassette_replacement</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0000159"</span><span class="p">,</span> <span class="s2">"deletion"</span><span class="p">),</span>
+    <span class="n">AlleleEdit</span><span class="o">.</span><span class="n">sequence_variant</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0001060"</span><span class="p">,</span> <span class="s2">"sequence_variant"</span><span class="p">),</span>
+<span class="p">}</span>
+<span class="sd">"""Sequence Ontology mechanism of each edit kind (the same pinned pairs the</span>
+<span class="sd">gene-perturbation leaves use)."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">GenomicSpan</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A 1-based, end-inclusive interval on one chromosome of the R64 assembly.</span>
+
+<span class="sd">    ``assembly`` names the R64 release the coordinates were read from (coordinates</span>
+<span class="sd">    shift between releases), e.g. ``"R64-4-1"``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">chromosome</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">start</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">end</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">assembly</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_span</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"GenomicSpan"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Positions are 1-based and ordered; chromosome and assembly are named."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">end</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"GenomicSpan needs 1 &lt;= start &lt;= end, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="si">}</span><span class="s2">..</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">chromosome</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">assembly</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"GenomicSpan needs a chromosome and an assembly name"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BackgroundAllele</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One allele a strain background carries, as an edit against R64.</span>
+
+<span class="sd">    ``allele_name`` is the designation verbatim as the source writes it</span>
+<span class="sd">    (``his3Δ1``, ``can1Δ::STE2pr-Sp_his5``); ``gene_name`` is the CURRENT R64</span>
+<span class="sd">    standard name (``MET17`` for the ``met15Δ0`` allele); ``systematic_gene_name``</span>
+<span class="sd">    is the R64 ORF the edit sits in. ``functional`` says whether the allele keeps the</span>
+<span class="sd">    gene's function (False for every BY marker allele), which is what per-locus</span>
+<span class="sd">    dosage reads. ``cassette`` is required for a ``cassette_replacement`` and</span>
+<span class="sd">    forbidden otherwise.</span>
+
+<span class="sd">    Sourcing contract: ``provenance`` (quote + sha256) or a typed ``ProvenanceGap`` on</span>
+<span class="sd">    ``provenance``, never neither. A literature-standard allele whose source is not</span>
+<span class="sd">    mirrored (the BY alleles before Brachmann 1998 is mirrored) is ASSERTED with a</span>
+<span class="sd">    ``deferred_pending_source_review`` gap naming the paper that would close it, so the</span>
+<span class="sd">    record carries the allele and says plainly that it is unverified. ``zygosity``</span>
+<span class="sd">    likewise is set or gapped (Hoepfner's whi2 nonsense allele has no stated</span>
+<span class="sd">    zygosity). ``deleted_span`` is optional (coordinates are rarely published).</span>
+<span class="sd">    """</span>
+
+    <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">gene_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">allele_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">edit</span><span class="p">:</span> <span class="n">AlleleEdit</span>
+    <span class="n">functional</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"True if the allele keeps the gene's function; False for a null"</span>
+    <span class="p">)</span>
+    <span class="n">zygosity</span><span class="p">:</span> <span class="n">Zygosity</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"copies of the background carrying it; None only with a gap"</span>
+    <span class="p">)</span>
+    <span class="n">cassette</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"cassette that replaced the ORF, verbatim (e.g. 'STE2pr-Sp_his5', "</span>
+        <span class="s2">"'natMX', 'KlURA3'); set iff edit == cassette_replacement"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">deleted_span</span><span class="p">:</span> <span class="n">GenomicSpan</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"removed R64 interval, when the source gives it"</span>
+    <span class="p">)</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SourcedValue</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"quotes that state this allele; None only with a gap on "</span>
+        <span class="s2">"'provenance' (an asserted-but-unsourced allele)"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_systematic</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The allele sits in a real R64 feature (systematic-name pattern)."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">SYSTEMATIC_GENE_PATTERN</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid systematic gene name </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_allele</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BackgroundAllele"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Cassette iff cassette_replacement; provenance and zygosity set or gapped."""</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">edit</span> <span class="ow">is</span> <span class="n">AlleleEdit</span><span class="o">.</span><span class="n">cassette_replacement</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cassette</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"cassette is required for a cassette_replacement and forbidden for "</span>
+                <span class="sa">f</span><span class="s2">"edit=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">edit</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"provenance"</span><span class="p">,</span> <span class="s2">"zygosity"</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mechanism_so</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""(SO id, SO name) of this allele's edit."""</span>
+        <span class="k">return</span> <span class="n">ALLELE_EDIT_SO</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">edit</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_sourced</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True when neither the allele nor its zygosity is a declared gap."""</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance_gaps</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">StrainBackground</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The genome content a strain carries beyond R64, constant across a collection.</span>
+
+<span class="sd">    ``name`` is the strain or lineage label the records join on (``BY4741``,</span>
+<span class="sd">    ``BY4743``, or a descriptive name for an SGA progeny pool); it must equal</span>
+<span class="sd">    ``StrainReferenceGenome.strain``. ``parents`` are the strains it was made from, verbatim</span>
+<span class="sd">    (``["BY4741", "BY4742"]`` for BY4743; the SGA query and array for a progeny</span>
+<span class="sd">    pool). ``construction`` is a one-line method statement (how the background was</span>
+<span class="sd">    made, e.g. an SGA cross and its selections). ``reference_strain`` is the sequenced</span>
+<span class="sd">    strain every allele is an edit against; it is pinned to S288C because the edit</span>
+<span class="sd">    list of a non-S288C background against R64 would be thousands of variants, which</span>
+<span class="sd">    this object is not for.</span>
+
+<span class="sd">    ``mating_type`` and ``provenance`` are set or gapped (a typed absence, never a</span>
+<span class="sd">    silent None). A haploid background is MATa or MATalpha; every allele's zygosity</span>
+<span class="sd">    must fit the ploidy (``haploid`` in a haploid, ``homozygous``/``heterozygous`` in a</span>
+<span class="sd">    diploid). A gene carries one allele entry, or two heterozygous entries for a</span>
+<span class="sd">    compound heterozygote.</span>
+<span class="sd">    """</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">reference_strain</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"S288C"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"S288C"</span>
+    <span class="n">parents</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"strains this background was made from, verbatim"</span>
+    <span class="p">)</span>
+    <span class="n">construction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"how the background was made, one line"</span>
+    <span class="p">)</span>
+    <span class="n">mating_type</span><span class="p">:</span> <span class="n">MatingType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"MAT locus state; None only with a gap on 'mating_type'"</span>
+    <span class="p">)</span>
+    <span class="n">ploidy</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"haploid"</span><span class="p">,</span> <span class="s2">"diploid"</span><span class="p">]</span>
+    <span class="n">alleles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BackgroundAllele</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"every non-R64 allele of the background, each sourced or gapped"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SourcedValue</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"quotes stating the strain name / mating type / ploidy; None only "</span>
+        <span class="s2">"with a gap on 'provenance'"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_background</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"StrainBackground"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Sourced-or-gapped, MAT vs ploidy, zygosity vs ploidy, one entry per locus."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"StrainBackground.name cannot be empty"</span><span class="p">)</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"mating_type"</span><span class="p">,</span> <span class="s2">"provenance"</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ploidy</span> <span class="o">==</span> <span class="s2">"haploid"</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">mating_type</span> <span class="ow">is</span> <span class="n">MatingType</span><span class="o">.</span><span class="n">a_alpha</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a haploid background cannot be MATa/MATalpha"</span><span class="p">)</span>
+        <span class="n">allowed</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">{</span><span class="n">Zygosity</span><span class="o">.</span><span class="n">haploid</span><span class="p">}</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ploidy</span> <span class="o">==</span> <span class="s2">"haploid"</span>
+            <span class="k">else</span> <span class="p">{</span><span class="n">Zygosity</span><span class="o">.</span><span class="n">homozygous</span><span class="p">,</span> <span class="n">Zygosity</span><span class="o">.</span><span class="n">heterozygous</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">by_gene</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">BackgroundAllele</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">allele</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alleles</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">allele</span><span class="o">.</span><span class="n">zygosity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">allele</span><span class="o">.</span><span class="n">zygosity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">allele</span><span class="o">.</span><span class="n">allele_name</span><span class="si">}</span><span class="s2">: zygosity </span><span class="si">{</span><span class="n">allele</span><span class="o">.</span><span class="n">zygosity</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> does not "</span>
+                    <span class="sa">f</span><span class="s2">"fit a </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ploidy</span><span class="si">}</span><span class="s2"> background"</span>
+                <span class="p">)</span>
+            <span class="n">by_gene</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">allele</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">allele</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">gene</span><span class="p">,</span> <span class="n">entries</span> <span class="ow">in</span> <span class="n">by_gene</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="n">e</span><span class="o">.</span><span class="n">zygosity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Zygosity</span><span class="o">.</span><span class="n">heterozygous</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">entries</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">gene</span><span class="si">}</span><span class="s2">: more than one allele entry is allowed only as two "</span>
+                    <span class="s2">"heterozygous alleles of a diploid (a compound heterozygote)"</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">alleles_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BackgroundAllele</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The background's allele entries at one locus (empty = the R64 allele)."""</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alleles</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">systematic_gene_name</span> <span class="o">==</span> <span class="n">systematic_gene_name</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">functional_copies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Functional copies of a gene in the UNPERTURBED background.</span>
+
+<span class="sd">        Ploidy copies minus the copies carrying a non-functional background allele:</span>
+<span class="sd">        BY4743 ``his3Δ1/his3Δ1`` -&gt; 0, ``LYS2/lys2Δ0`` -&gt; 1, an untouched gene -&gt; 2.</span>
+<span class="sd">        Raises when an allele at the locus has a gapped zygosity, since the count is</span>
+<span class="sd">        then not determined by the record.</span>
+<span class="sd">        """</span>
+        <span class="n">copies</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ploidy</span> <span class="o">==</span> <span class="s2">"haploid"</span> <span class="k">else</span> <span class="mi">2</span>
+        <span class="k">for</span> <span class="n">allele</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alleles_at</span><span class="p">(</span><span class="n">systematic_gene_name</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">allele</span><span class="o">.</span><span class="n">functional</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">allele</span><span class="o">.</span><span class="n">zygosity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">allele</span><span class="o">.</span><span class="n">allele_name</span><span class="si">}</span><span class="s2">: zygosity is a ProvenanceGap, so the "</span>
+                    <span class="s2">"functional copy number at this locus is undetermined"</span>
+                <span class="p">)</span>
+            <span class="n">copies</span> <span class="o">-=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">allele</span><span class="o">.</span><span class="n">zygosity</span> <span class="ow">is</span> <span class="n">Zygosity</span><span class="o">.</span><span class="n">homozygous</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">copies</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_fully_sourced</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True when the background and every allele carry no declared gap."""</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance_gaps</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">is_sourced</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alleles</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="ReferenceGenome">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.ReferenceGenome.html#torchcell.datamodels.schema.ReferenceGenome">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ReferenceGenome</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
@@ -150,12 +529,44 @@
 <span class="sd">    the deviation from this baseline (e.g. a HIP heterozygous deletion drops one</span>
 <span class="sd">    autosomal gene from 2 -&gt; 1 copies in a diploid). Defaults to ``"haploid"`` so all</span>
 <span class="sd">    existing haploid datasets stay valid.</span>
+
+<span class="sd">    A typed strain background is carried by the subclass ``StrainReferenceGenome``</span>
+<span class="sd">    (#507), not by a field here: this class is in the schema closure of every served</span>
+<span class="sd">    dataset, and any field added to it would mark every built store stale.</span>
 <span class="sd">    """</span>
 
     <span class="n">species</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">ploidy</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"haploid"</span><span class="p">,</span> <span class="s2">"diploid"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"haploid"</span></div>
 
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">StrainReferenceGenome</span><span class="p">(</span><span class="n">ReferenceGenome</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A ``ReferenceGenome`` that states its typed ``StrainBackground`` (#507).</span>
+
+<span class="sd">    ``background`` holds the mating type and every allele the strain carries beyond</span>
+<span class="sd">    R64, each sourced or a typed gap. Its ``name`` equals ``strain`` and its ``ploidy``</span>
+<span class="sd">    equals ``ploidy``, so the free ``strain`` string and the typed object cannot</span>
+<span class="sd">    disagree. Used by ``StrainEnvironmentResponseExperimentReference``; the record</span>
+<span class="sd">    stores it once per reference (the LMDB interns the whole reference; the graph</span>
+<span class="sd">    writes it on the ``genome`` and ``experiment reference`` nodes).</span>
+<span class="sd">    """</span>
+
+    <span class="n">background</span><span class="p">:</span> <span class="n">StrainBackground</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_background_agrees</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"StrainReferenceGenome"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The background names the same strain and ploidy as the reference."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">strain</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"background name </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> != strain </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">strain</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">ploidy</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ploidy</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"background ploidy </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">ploidy</span><span class="si">!r}</span><span class="s2"> != ploidy "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ploidy</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -409,6 +820,93 @@
 
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">StrainConstruction</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Where one physical deletion strain came from in its collection.</span>
+
+<span class="sd">    Two strains that delete the same ORF can differ in background mutations, tags and</span>
+<span class="sd">    behavior (Hillenmeyer: "some gene deletions were constructed more than once, in</span>
+<span class="sd">    different batches"; Hoepfner Table S5 traces secondary mutations by construction</span>
+<span class="sd">    Lab and Batch), so the construction record is a strain discriminator: two records</span>
+<span class="sd">    of one ORF whose construction differs are two strains, not two replicates. All</span>
+<span class="sd">    fields are verbatim source tokens; ``None`` = the source does not give it.</span>
+<span class="sd">    """</span>
+
+    <span class="n">strain_accession</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"collection accession of the strain (e.g. a Euroscarf 'Y0xxxx' id)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">lab</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"constructing lab, verbatim (Hoepfner Table S5 'Lab')"</span>
+    <span class="p">)</span>
+    <span class="n">batch</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"construction batch, verbatim (Hillenmeyer 'chr4_3', Table S5 'Batch')"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">plate</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"collection plate, verbatim"</span><span class="p">)</span>
+    <span class="n">well</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"collection well / row_column, verbatim"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_any</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"StrainConstruction"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""An empty construction record says nothing; leave the field None instead."""</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span>
+            <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">strain_accession</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lab</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">batch</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">plate</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">well</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"StrainConstruction needs at least one field"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrfHistoryRelation</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How the ORF a strain was built against relates to the current R64 gene.</span>
+
+<span class="sd">    - ``merged``: the source ORF was merged into the current gene (the strain deleted</span>
+<span class="sd">      only the old ORF's interval, part of the current gene).</span>
+<span class="sd">    - ``reannotated``: the same locus with shifted boundaries.</span>
+<span class="sd">    - ``alias``: a pure renaming, same interval.</span>
+<span class="sd">    """</span>
+
+    <span class="n">merged</span> <span class="o">=</span> <span class="s2">"merged"</span>
+    <span class="n">reannotated</span> <span class="o">=</span> <span class="s2">"reannotated"</span>
+    <span class="n">alias</span> <span class="o">=</span> <span class="s2">"alias"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ConstructedOrf</span><span class="p">(</span><span class="n">HashableProvenanceGapMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The ORF annotation a deletion strain was BUILT against, when not the current gene.</span>
+
+<span class="sd">    The YKO strains deleted ORFs as annotated around 2000. When that ORF has since</span>
+<span class="sd">    been merged or reannotated, the perturbation's ``systematic_gene_name`` stays the</span>
+<span class="sd">    CURRENT gene (so gene-keyed joins work) and this record states what was physically</span>
+<span class="sd">    deleted: the source ORF name verbatim, its relation to the current gene, and the</span>
+<span class="sd">    deleted interval. Two strains whose ``constructed_orf`` differ are different</span>
+<span class="sd">    perturbations and must never be averaged into one record (#505 G3, #506 finding</span>
+<span class="sd">    4). ``relation`` and ``deleted_span`` are set or gapped.</span>
+<span class="sd">    """</span>
+
+    <span class="n">source_systematic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"ORF name the strain was built against, verbatim (e.g. 'YAR044W')"</span>
+    <span class="p">)</span>
+    <span class="n">relation</span><span class="p">:</span> <span class="n">OrfHistoryRelation</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"relation to the current gene; None only with a gap"</span>
+    <span class="p">)</span>
+    <span class="n">deleted_span</span><span class="p">:</span> <span class="n">GenomicSpan</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"R64 interval the cassette replaced; None only with a gap"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_constructed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ConstructedOrf"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Relation and deleted span are set or carry a typed gap."""</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"relation"</span><span class="p">,</span> <span class="s2">"deleted_span"</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># AXIS 1 -- presence/absence leaves.</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -439,7 +937,9 @@
 
 <div class="viewcode-block" id="BarcodedKanMxDeletionPerturbation">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.BarcodedKanMxDeletionPerturbation.html#torchcell.datamodels.schema.BarcodedKanMxDeletionPerturbation">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">BarcodedKanMxDeletionPerturbation</span><span class="p">(</span><span class="n">KanMxDeletionPerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BarcodedKanMxDeletionPerturbation</span><span class="p">(</span>
+    <span class="n">HashableProvenanceGapMixin</span><span class="p">,</span> <span class="n">KanMxDeletionPerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A KanMX deletion strain that carries the molecular barcode it was screened by.</span>
 
 <span class="sd">    A pooled competitive-growth screen (Bar-seq, HIP/HOP) does not read colonies, it reads</span>
@@ -449,10 +949,18 @@
 <span class="sd">    the Yeast Knockout Collection HOM/HET pool, ...), because two collections can hold the</span>
 <span class="sd">    same ORF deletion with different background mutations and different barcodes.</span>
 
-<span class="sd">    Both fields are nullable: a study that reports only the ORF resolves to the plain</span>
-<span class="sd">    ``KanMxDeletionPerturbation`` semantics with no barcode asserted, so scaffolding a</span>
-<span class="sd">    loader before the barcode table is mirrored is a typed absence rather than a guess.</span>
-<span class="sd">    A separate leaf (not fields added to ``KanMxDeletionPerturbation``) is deliberate --</span>
+<span class="sd">    This is the leaf for every whole-locus kanMX deletion a chemogenomic loader serves:</span>
+<span class="sd">    a haploid deletion in a haploid background (Wildenhain, Vanacloig) and a homozygous</span>
+<span class="sd">    deletion in a diploid background (HOP: Hillenmeyer hom, Hoepfner HOP); zygosity is</span>
+<span class="sd">    read from the reference's ploidy. ``cassette`` names the exact cassette</span>
+<span class="sd">    (``kanMX4`` for the YKO, sourced to Giaever 2014); ``barcode`` is the UPTAG (or the</span>
+<span class="sd">    only tag a source names) and ``downtag_barcode`` the DNTAG; ``construction`` records</span>
+<span class="sd">    the strain's accession / lab / batch / plate; ``constructed_orf`` states the</span>
+<span class="sd">    physically deleted ORF when it is not the current gene.</span>
+
+<span class="sd">    Every new field is nullable and gappable: ``None`` with a ``ProvenanceGap`` (e.g. a</span>
+<span class="sd">    barcode table not yet mirrored) is a typed absence rather than a guess. A separate</span>
+<span class="sd">    leaf (not fields added to ``KanMxDeletionPerturbation``) is deliberate --</span>
 <span class="sd">    ``KanMxDeletionPerturbation`` is inside 33 served dataset closures and any field added</span>
 <span class="sd">    to it would force a full rebuild of every one of them.</span>
 <span class="sd">    """</span>
@@ -460,15 +968,89 @@
     <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"barcoded_kanmx_deletion"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"barcoded_kanmx_deletion"</span>  <span class="c1"># type: ignore[assignment]</span>
     <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"the molecular barcode (UPTAG/DNTAG 20-mer) the strain is counted by "</span>
-        <span class="s2">"in a pooled assay; None when the source released no barcode"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the molecular barcode (UPTAG, or the only tag the source names) the "</span>
+        <span class="s2">"strain is counted by in a pooled assay; None when the source released no barcode"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">downtag_barcode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the DNTAG 20-mer when the source releases both tags; None otherwise"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">collection</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"the physical deletion collection the strain came from, verbatim from "</span>
         <span class="s2">"the source (e.g. 'Euroscarf MATa deletion set'); None when unsourced"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">cassette</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the exact replacement cassette, e.g. 'kanMX4' (pFA6-kanMX4, Giaever "</span>
+        <span class="s2">"2014); None when unsourced"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">construction</span><span class="p">:</span> <span class="n">StrainConstruction</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"accession / lab / batch / plate of this strain"</span>
+    <span class="p">)</span>
+    <span class="n">constructed_orf</span><span class="p">:</span> <span class="n">ConstructedOrf</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the ORF the strain was built against when it is not the current "</span>
+        <span class="s2">"gene (merged / reannotated); None when they coincide"</span><span class="p">,</span>
     <span class="p">)</span></div>
 
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">HeterozygousDeletionPerturbation</span><span class="p">(</span>
+    <span class="n">HashableProvenanceGapMixin</span><span class="p">,</span> <span class="n">PresenceAbsencePerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One allele of a diploid replaced by a deletion cassette (HIP / het collection).</span>
+
+<span class="sd">    Replaces the ``EngineeredCopyNumberPerturbation(copy_number=1,</span>
+<span class="sd">    reference_copy_number=2)`` encoding for HIP-style data (#506 point 3). A</span>
+<span class="sd">    heterozygous deletion is an ALLELE edit, not a dosage statement: the copy-number</span>
+<span class="sd">    form asserted "1 of 2 working copies" even at loci where the background was</span>
+<span class="sd">    already null (BY4743 ``his3Δ1/his3Δ1``: 0 working copies before and after). The</span>
+<span class="sd">    functional dose is now DERIVED from this leaf plus the reference's</span>
+<span class="sd">    ``StrainBackground`` (``heterozygous_deletion_functional_copies``).</span>
+
+<span class="sd">    The gene stays PRESENT on the other allele, so ``state="present"``; the SO mechanism</span>
+<span class="sd">    is the ``deletion`` of one allele. It is deliberately NOT a ``DeletionPerturbation``</span>
+<span class="sd">    subclass, so an "every knockout" filter (``issubclass(_, DeletionPerturbation)``)</span>
+<span class="sd">    does not count a heterozygote as an absent gene. ``replaced_allele`` names which</span>
+<span class="sd">    allele the cassette replaced when the background is itself heterozygous at the</span>
+<span class="sd">    locus (BY4743 ``LYS2/lys2Δ0``, ``MET15/met15Δ0``); set or gap it there.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Heterozygous deletion: one allele of a diploid replaced by a cassette"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"heterozygous_deletion"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"heterozygous_deletion"</span>
+    <span class="n">state</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"present"</span>
+    <span class="n">mechanism_so_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"SO:0000159"</span>
+    <span class="n">mechanism_so_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"deletion"</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"engineered"</span>
+    <span class="n">cassette</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the replacement cassette, e.g. 'kanMX4'; None only when unsourced"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"UPTAG (or the only tag named); None if unreleased"</span>
+    <span class="p">)</span>
+    <span class="n">downtag_barcode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"DNTAG 20-mer; None if unreleased"</span>
+    <span class="p">)</span>
+    <span class="n">collection</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the collection, verbatim (e.g. 'YSC1055 OpenBiosystems')"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">construction</span><span class="p">:</span> <span class="n">StrainConstruction</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"accession / lab / batch / plate of this strain"</span>
+    <span class="p">)</span>
+    <span class="n">constructed_orf</span><span class="p">:</span> <span class="n">ConstructedOrf</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the ORF the strain was built against when it is not the current gene"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">replaced_allele</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"allele the cassette replaced, verbatim (e.g. 'LYS2' or 'lys2Δ0'), "</span>
+        <span class="s2">"when the background is heterozygous at this locus; None otherwise"</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="NatMxDeletionPerturbation">
@@ -623,6 +1205,68 @@
     <span class="n">strain_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"'Strain ID' in raw data."</span><span class="p">)</span>
     <span class="n">allele_perturbation_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"SGA"</span></div>
 
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ConditionalAlleleClass</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How a conditional allele of an essential gene reduces its function.</span>
+
+<span class="sd">    - ``temperature_sensitive``: an amino-acid-substitution allele, null at the</span>
+<span class="sd">      restrictive temperature (``cdc28-4``).</span>
+<span class="sd">    - ``damp``: Decreased Abundance by mRNA Perturbation, a marker inserted in the 3'</span>
+<span class="sd">      UTR.</span>
+<span class="sd">    - ``promoter_replacement``: the native promoter replaced by a regulatable one</span>
+<span class="sd">      (e.g. a tetO promoter shut off by doxycycline).</span>
+
+<span class="sd">    An allele of UNKNOWN class is not a member: it is ``allele_class=None`` with a</span>
+<span class="sd">    ``ProvenanceGap`` (one encoding of "unknown", never a fourth enum value).</span>
+<span class="sd">    """</span>
+
+    <span class="n">temperature_sensitive</span> <span class="o">=</span> <span class="s2">"temperature_sensitive"</span>
+    <span class="n">damp</span> <span class="o">=</span> <span class="s2">"damp"</span>
+    <span class="n">promoter_replacement</span> <span class="o">=</span> <span class="s2">"promoter_replacement"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ConditionalAllelePerturbation</span><span class="p">(</span>
+    <span class="n">HashableProvenanceGapMixin</span><span class="p">,</span> <span class="n">SequencePerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A conditional (hypomorphic) allele of an essential gene, class possibly unknown.</span>
+
+<span class="sd">    A haploid null of an essential gene is not viable, so a screen that reports an</span>
+<span class="sd">    essential gene as a "deletion strain" (Wildenhain: 33 such strains, #504) screened</span>
+<span class="sd">    a conditional allele whose identity the release does not carry. This leaf records</span>
+<span class="sd">    the gene with a typed allele class, the allele designation, the marker and the</span>
+<span class="sd">    collection, each set or gapped: until the strain table is mirrored,</span>
+<span class="sd">    ``allele_class=None`` with a ``deferred_pending_source_review`` gap naming the table</span>
+<span class="sd">    that resolves it. ``allele_class`` is REQUIRED to be set or gapped. The SO mechanism</span>
+<span class="sd">    is the generic ``sequence_variant`` (the specific edit is not yet known).</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Conditional allele of an essential gene (ts, DAmP, promoter replacement)"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"conditional_allele"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"conditional_allele"</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"engineered"</span>
+    <span class="n">allele_class</span><span class="p">:</span> <span class="n">ConditionalAlleleClass</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"how the allele reduces function; None only with a gap"</span>
+    <span class="p">)</span>
+    <span class="n">allele_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"allele designation verbatim, e.g. 'cdc28-4'"</span>
+    <span class="p">)</span>
+    <span class="n">marker</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"selection marker carried with the allele, verbatim"</span>
+    <span class="p">)</span>
+    <span class="n">collection</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"the collection the strain came from, verbatim"</span>
+    <span class="p">)</span>
+    <span class="n">construction</span><span class="p">:</span> <span class="n">StrainConstruction</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"accession / lab / batch / plate of this strain"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_allele_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ConditionalAllelePerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""An unknown allele class is a typed gap, never a silent None."""</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"allele_class"</span><span class="p">,))</span>
+        <span class="k">return</span> <span class="bp">self</span>
 
 
 <span class="c1"># Change to AggregateDeletionPerturbation, or AggDeletionPerturbation</span>
@@ -1211,6 +1855,8 @@
     <span class="o">|</span> <span class="n">MarkerDeletionPerturbation</span>
     <span class="o">|</span> <span class="n">KanMxDeletionPerturbation</span>
     <span class="o">|</span> <span class="n">BarcodedKanMxDeletionPerturbation</span>
+    <span class="o">|</span> <span class="n">HeterozygousDeletionPerturbation</span>
+    <span class="o">|</span> <span class="n">ConditionalAllelePerturbation</span>
     <span class="o">|</span> <span class="n">NatMxDeletionPerturbation</span>
     <span class="o">|</span> <span class="n">CrisprDeletionPerturbation</span>
     <span class="o">|</span> <span class="n">GeneAdditionPerturbation</span>
@@ -1285,6 +1931,39 @@
 
         <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">perturbations</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">perturbations</span><span class="p">)</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">heterozygous_deletion_functional_copies</span><span class="p">(</span>
+    <span class="n">background</span><span class="p">:</span> <span class="n">StrainBackground</span><span class="p">,</span> <span class="n">perturbation</span><span class="p">:</span> <span class="n">HeterozygousDeletionPerturbation</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Functional copies left at the deleted locus, respecting the background.</span>
+
+<span class="sd">    In a diploid background with no allele at the locus the answer is 1 (the usual</span>
+<span class="sd">    HIP haploinsufficiency case). Where the background is already null on both copies</span>
+<span class="sd">    (BY4743 ``his3Δ1/his3Δ1``) it is 0, before and after. Where the background is</span>
+<span class="sd">    heterozygous (``LYS2/lys2Δ0``) it depends on which allele the cassette replaced:</span>
+<span class="sd">    1 if ``replaced_allele`` names the null background allele, 0 if it names anything</span>
+<span class="sd">    else (the functional copy). ``None`` means the record does not determine it: the</span>
+<span class="sd">    background is heterozygous at the locus and ``replaced_allele`` is unset.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">background</span><span class="o">.</span><span class="n">ploidy</span> <span class="o">!=</span> <span class="s2">"diploid"</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a heterozygous deletion needs a diploid background"</span><span class="p">)</span>
+    <span class="n">gene</span> <span class="o">=</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">systematic_gene_name</span>
+    <span class="n">before</span> <span class="o">=</span> <span class="n">background</span><span class="o">.</span><span class="n">functional_copies</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span>
+    <span class="n">null_het</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">a</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">background</span><span class="o">.</span><span class="n">alleles_at</span><span class="p">(</span><span class="n">gene</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">functional</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">zygosity</span> <span class="ow">is</span> <span class="n">Zygosity</span><span class="o">.</span><span class="n">heterozygous</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">before</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">null_het</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">before</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">replaced_allele</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">replaced_allele</span> <span class="ow">in</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">allele_name</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">null_het</span><span class="p">}:</span>
+        <span class="k">return</span> <span class="n">before</span>
+    <span class="k">return</span> <span class="n">before</span> <span class="o">-</span> <span class="mi">1</span>
 
 
 <span class="c1"># Environment</span>
@@ -1409,56 +2088,6 @@
 
 
 
-<div class="viewcode-block" id="ProvenanceGapMixin">
-<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.ProvenanceGapMixin.html#torchcell.datamodels.schema.ProvenanceGapMixin">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ProvenanceGapMixin</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Mixin giving a model a ``provenance_gaps`` list of typed field-absences.</span>
-
-<span class="sd">    Shared by ``Phenotype``, ``Environment``, and ``Compound`` so a field the source does</span>
-<span class="sd">    not carry -- a phenotype ``n_samples`` a secondary curation layer dropped, an</span>
-<span class="sd">    environment ``temperature`` YeastPhenome never recorded, a compound ``inchikey`` no</span>
-<span class="sd">    resolver could map -- is a documented, typed ABSENCE (with a reason + ``looked_in``)</span>
-<span class="sd">    rather than a guess or a silent None. Two invariants keep it honest and</span>
-<span class="sd">    machine-checkable: (1) each ``gap.field`` names a real field on the concrete model</span>
-<span class="sd">    (checked against ``model_fields``, so inherited fields resolve too); (2) a gapped</span>
-<span class="sd">    field must be ``None`` -- you cannot both store a value and declare it missing.</span>
-<span class="sd">    ``provenance_gaps`` itself cannot be gapped.</span>
-<span class="sd">    """</span>
-
-    <span class="n">provenance_gaps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProvenanceGap</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"documented, typed ABSENCES of a sourced value for a field on this "</span>
-        <span class="s2">"model (e.g. a phenotype n_samples, or an environment temperature the curation "</span>
-        <span class="s2">"layer did not carry). An honest typed gap -- never a guess. The gapped field "</span>
-        <span class="s2">"must be None (enforced below)."</span><span class="p">,</span>
-    <span class="p">)</span>
-
-<div class="viewcode-block" id="ProvenanceGapMixin.validate_provenance_gaps">
-<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.ProvenanceGapMixin.html#torchcell.datamodels.schema.ProvenanceGapMixin.validate_provenance_gaps">[docs]</a>
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">validate_provenance_gaps</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ProvenanceGapMixin"</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Each ProvenanceGap must name a real field on this model, and that field must</span>
-<span class="sd">        be None (you cannot both store a value and declare it missing).</span>
-<span class="sd">        """</span>
-        <span class="n">model_fields</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">model_fields</span>
-        <span class="k">for</span> <span class="n">gap</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance_gaps</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">gap</span><span class="o">.</span><span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">model_fields</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"provenance_gap field '</span><span class="si">{</span><span class="n">gap</span><span class="o">.</span><span class="n">field</span><span class="si">}</span><span class="s2">' is not a field of "</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">gap</span><span class="o">.</span><span class="n">field</span> <span class="o">==</span> <span class="s2">"provenance_gaps"</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"provenance_gaps cannot itself be gapped"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gap</span><span class="o">.</span><span class="n">field</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"field '</span><span class="si">{</span><span class="n">gap</span><span class="o">.</span><span class="n">field</span><span class="si">}</span><span class="s2">' has a ProvenanceGap but is not None "</span>
-                    <span class="s2">"(cannot both store a value and declare it missing)"</span>
-                <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span></div>
-</div>
-
-
-
 <div class="viewcode-block" id="Compound">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.Compound.html#torchcell.datamodels.schema.Compound">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Compound</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
@@ -1570,7 +2199,11 @@
 <span class="w">    </span><span class="sd">"""The vehicle a compound was dissolved in and its final fraction in the medium.</span>
 
 <span class="sd">    ``compound`` optionally carries the vehicle's typed chemical identity (a reused</span>
-<span class="sd">    ``Compound``); ``name`` remains the plain label for the common case.</span>
+<span class="sd">    ``Compound``); ``name`` remains the plain label for the common case. A vehicle the</span>
+<span class="sd">    source does not state (Hoepfner's concentrated stocks above the 200 uM solubility</span>
+<span class="sd">    ceiling of its 2% DMSO normalization) is ``SmallMoleculePerturbation.solvent=None``</span>
+<span class="sd">    with a ``ProvenanceGap`` on ``solvent``; this class is not itself a gap carrier</span>
+<span class="sd">    because it sits in the schema closure of every small-molecule dataset (#507).</span>
 <span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"solvent name, e.g. 'DMSO' | 'water' | 'ethanol'"</span><span class="p">)</span>
@@ -1882,6 +2515,117 @@
 <span class="p">)</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">EndpointRule</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""When a culture was read out (the endpoint is part of what was measured).</span>
+
+<span class="sd">    - ``fixed_duration``: after a stated time (``Environment.duration_hours``).</span>
+<span class="sd">    - ``fixed_generations``: after a stated number of doublings</span>
+<span class="sd">      (``Environment.duration_generations``), e.g. serial pooled passages.</span>
+<span class="sd">    - ``until_control_saturation``: when the vehicle-only control saturated, a</span>
+<span class="sd">      variable time (Wildenhain: "approximately 18 h or until solvent-treated control</span>
+<span class="sd">      cultures were saturated").</span>
+<span class="sd">    """</span>
+
+    <span class="n">fixed_duration</span> <span class="o">=</span> <span class="s2">"fixed_duration"</span>
+    <span class="n">fixed_generations</span> <span class="o">=</span> <span class="s2">"fixed_generations"</span>
+    <span class="n">until_control_saturation</span> <span class="o">=</span> <span class="s2">"until_control_saturation"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CultureFormat</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The physical culture a measurement was grown in.</span>
+
+<span class="sd">    Vessel, working volume, agitation, inoculum and endpoint rule are part of the</span>
+<span class="sd">    environment: a static 100 uL microwell culture and a shaken 1.6 mL deep-well</span>
+<span class="sd">    culture differ in aeration and in how many generations fit before saturation.</span>
+<span class="sd">    Every field is optional; a field the source does not state can be a typed gap.</span>
+<span class="sd">    ``vessel`` is verbatim (``"96-well plate"``, ``"24-well plate (Greiner 662102)"``).</span>
+<span class="sd">    ``shaking_rpm`` 0.0 means static. ``inoculum_cells`` counts cells per culture;</span>
+<span class="sd">    ``inoculum_cells_per_strain`` is the pooled-screen form (cells of each strain).</span>
+<span class="sd">    """</span>
+
+    <span class="n">vessel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">working_volume_ul</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">shaking_rpm</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">inoculum_cells</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">inoculum_cells_per_strain</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">inoculum_od600</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">endpoint</span><span class="p">:</span> <span class="n">EndpointRule</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"sourced (quote + sha256) justifications for the stated fields"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_culture</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"CultureFormat"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Volumes, agitation and inocula are non-negative."""</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="s2">"working_volume_ul"</span><span class="p">,</span>
+            <span class="s2">"shaking_rpm"</span><span class="p">,</span>
+            <span class="s2">"inoculum_cells"</span><span class="p">,</span>
+            <span class="s2">"inoculum_cells_per_strain"</span><span class="p">,</span>
+            <span class="s2">"inoculum_od600"</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"CultureFormat.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be non-negative"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PreCultureSource</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What the screened culture was inoculated FROM.</span>
+
+<span class="sd">    - ``frozen_stock``: straight from a frozen pool, no pre-culture (Hillenmeyer's</span>
+<span class="sd">      negative generation counts: "taken directly from the freezer").</span>
+<span class="sd">    - ``overnight_culture``: an overnight culture of unstated phase.</span>
+<span class="sd">    - ``log_phase_culture``: grown to log phase before treatment (Hillenmeyer's</span>
+<span class="sd">      positive counts: "grown overnight until log phase (OD600= 2.0)").</span>
+<span class="sd">    - ``thaw_recovery``: thawed and recovered briefly in medium (Hoepfner HOP:</span>
+<span class="sd">      "thawed and recovered for 3 h in YPD").</span>
+<span class="sd">    """</span>
+
+    <span class="n">frozen_stock</span> <span class="o">=</span> <span class="s2">"frozen_stock"</span>
+    <span class="n">overnight_culture</span> <span class="o">=</span> <span class="s2">"overnight_culture"</span>
+    <span class="n">log_phase_culture</span> <span class="o">=</span> <span class="s2">"log_phase_culture"</span>
+    <span class="n">thaw_recovery</span> <span class="o">=</span> <span class="s2">"thaw_recovery"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PreCulture</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The culture step BEFORE treatment, which sets the cells' state at time zero.</span>
+
+<span class="sd">    A signed generation count in a source (Hillenmeyer ``-5gen`` vs ``5gen``) encodes</span>
+<span class="sd">    two facts: the magnitude is the treatment exposure</span>
+<span class="sd">    (``Environment.duration_generations``), and the SIGN says whether a pre-culture</span>
+<span class="sd">    happened (negative = ``frozen_stock``; positive = a YPD log-phase pre-culture of</span>
+<span class="sd">    about 10 generations). ``source_label`` keeps the source token verbatim so the</span>
+<span class="sd">    split is auditable. ``medium`` is ``None`` for a ``frozen_stock`` start.</span>
+<span class="sd">    """</span>
+
+    <span class="n">source</span><span class="p">:</span> <span class="n">PreCultureSource</span>
+    <span class="n">medium</span><span class="p">:</span> <span class="n">Media</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">generations</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">duration_hours</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">od600_at_transfer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">source_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the source's own token for this step, verbatim (e.g. '-5gen')"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"sourced (quote + sha256) justifications for the stated fields"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_preculture</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"PreCulture"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A frozen-stock start has no pre-culture medium; quantities are non-negative."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="ow">is</span> <span class="n">PreCultureSource</span><span class="o">.</span><span class="n">frozen_stock</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">medium</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a frozen_stock start has no pre-culture medium"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"generations"</span><span class="p">,</span> <span class="s2">"duration_hours"</span><span class="p">,</span> <span class="s2">"od600_at_transfer"</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"PreCulture.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be non-negative"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
 <div class="viewcode-block" id="Environment">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.Environment.html#torchcell.datamodels.schema.Environment">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Environment</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
@@ -1895,6 +2639,9 @@
 <span class="sd">    ``duration_hours`` is the optional treatment time. ``temperature`` is optional: a</span>
 <span class="sd">    secondary curation layer (YeastPhenome) may not carry it, in which case it is a</span>
 <span class="sd">    ``ProvenanceGap`` (``field='temperature'``), NOT a guessed value.</span>
+
+<span class="sd">    The culture protocol (#507) lives on the subclass ``CultureEnvironment``, not</span>
+<span class="sd">    here: this class is in the schema closure of every served dataset.</span>
 <span class="sd">    """</span>
 
     <span class="n">media</span><span class="p">:</span> <span class="n">Media</span>
@@ -1931,6 +2678,43 @@
         <span class="k">return</span> <span class="n">v</span></div>
 </div>
 
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CultureEnvironment</span><span class="p">(</span><span class="n">Environment</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""An ``Environment`` that also states its culture protocol (#507 point 8).</span>
+
+<span class="sd">    Same medium, temperature, perturbations, oxygen regime and duration as the base</span>
+<span class="sd">    class (so the medium-level cross-dataset aggregate is unchanged: ``media`` is the</span>
+<span class="sd">    same field holding the same ``Media``), plus three optional, gappable slots:</span>
+
+<span class="sd">    - ``culture_format``: vessel, working volume, shaking, inoculum, endpoint rule.</span>
+<span class="sd">    - ``pre_culture``: the step before treatment, including what a SIGNED generation</span>
+<span class="sd">      count means (Hillenmeyer ``-5gen``: from the freezer; ``5gen``: after a YPD</span>
+<span class="sd">      log-phase pre-culture). ``duration_generations`` always holds the magnitude.</span>
+<span class="sd">    - ``auxotroph_supplements``: nutrients added to the base medium to complement the</span>
+<span class="sd">      strain background's auxotrophies (His/Leu/Ura/Met for a BY strain on a minimal</span>
+<span class="sd">      medium). They sit beside ``media`` rather than inside it, so the base medium</span>
+<span class="sd">      stays the shared, joinable entity and the strain-specific addition is explicit.</span>
+
+<span class="sd">    ``None`` means not stated; a ``ProvenanceGap`` on the field says why. A separate</span>
+<span class="sd">    class (not fields on ``Environment``) because ``Environment`` is in the schema</span>
+<span class="sd">    closure of every served dataset and a new field there would mark every built store</span>
+<span class="sd">    stale; the chemogenomic experiment classes declare this type explicitly, so</span>
+<span class="sd">    pydantic serializes these fields.</span>
+<span class="sd">    """</span>
+
+    <span class="n">culture_format</span><span class="p">:</span> <span class="n">CultureFormat</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"vessel / volume / shaking / inoculum / endpoint; None if unstated"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">pre_culture</span><span class="p">:</span> <span class="n">PreCulture</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"the culture step before treatment; None if unstated"</span>
+    <span class="p">)</span>
+    <span class="n">auxotroph_supplements</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MediaComponent</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"nutrients added to complement the background's auxotrophies; None "</span>
+        <span class="s2">"if unstated (a typed gap when the source implies but does not name them)"</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="c1"># Phenotype</span>
@@ -3641,6 +4425,48 @@
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Strain-resolved environment response (#507): the chemogenomic family whose</span>
+<span class="c1"># reference states a typed StrainBackground and whose environment states its</span>
+<span class="c1"># culture protocol. Its own experiment_type, so the reconstruction maps resolve it</span>
+<span class="c1"># to the classes that declare StrainReferenceGenome / CultureEnvironment</span>
+<span class="c1"># explicitly (pydantic v2 serializes a field by its DECLARED type, so a subclass</span>
+<span class="c1"># instance in a base-typed slot would lose its fields). The base family and every</span>
+<span class="c1"># class it is built from are untouched, so no other served dataset's schema</span>
+<span class="c1"># closure moves. The phenotype is the same EnvironmentResponsePhenotype.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">StrainEnvironmentResponseExperimentReference</span><span class="p">(</span>
+    <span class="n">EnvironmentResponseExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reference for a strain-resolved environment response (typed background).</span>
+
+<span class="sd">    ``genome_reference`` is a ``StrainReferenceGenome`` (mating type + every background</span>
+<span class="sd">    allele, sourced or gapped); ``environment_reference`` is a ``CultureEnvironment``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"strain_environment_response"</span>
+    <span class="c1"># Narrowed to subclasses: this family states its background and culture protocol.</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">StrainReferenceGenome</span>
+    <span class="n">environment_reference</span><span class="p">:</span> <span class="n">CultureEnvironment</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">EnvironmentResponsePhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">StrainEnvironmentResponseExperiment</span><span class="p">(</span><span class="n">EnvironmentResponseExperiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A strain's response to an environmental perturbation, with a typed background.</span>
+
+<span class="sd">    The chemogenomic loaders (Vanacloig, Wildenhain, Hillenmeyer, Hoepfner) emit this</span>
+<span class="sd">    family: the screened edit stays in ``genotype`` (a typed deletion leaf, so pooled</span>
+<span class="sd">    one-perturbation semantics hold), the strain background rides on the reference's</span>
+<span class="sd">    ``StrainReferenceGenome``, and the culture protocol on a ``CultureEnvironment``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"strain_environment_response"</span>
+    <span class="n">environment</span><span class="p">:</span> <span class="n">CultureEnvironment</span>  <span class="c1"># narrowed: this family states its culture protocol</span>
+    <span class="c1"># Redeclared (same type): torchcell.data reads ``__annotations__["phenotype"]``,</span>
+    <span class="c1"># which holds only a class's OWN annotations.</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">EnvironmentResponsePhenotype</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Segregant (meiotic recombinant) genotypes -- a haplotype MOSAIC, not a gene edit.</span>
 <span class="c1">#</span>
 <span class="c1"># A segregant of a biparental cross carries no engineered perturbation and is not</span>
@@ -3815,6 +4641,7 @@
     <span class="o">|</span> <span class="n">MetaboliteExperiment</span>
     <span class="o">|</span> <span class="n">ProteinAbundanceExperiment</span>
     <span class="o">|</span> <span class="n">EnvironmentResponseExperiment</span>
+    <span class="o">|</span> <span class="n">StrainEnvironmentResponseExperiment</span>
     <span class="o">|</span> <span class="n">SegregantGrowthExperiment</span>
 <span class="p">)</span>
 
@@ -3833,6 +4660,7 @@
     <span class="o">|</span> <span class="n">MetaboliteExperimentReference</span>
     <span class="o">|</span> <span class="n">ProteinAbundanceExperimentReference</span>
     <span class="o">|</span> <span class="n">EnvironmentResponseExperimentReference</span>
+    <span class="o">|</span> <span class="n">StrainEnvironmentResponseExperimentReference</span>
     <span class="o">|</span> <span class="n">SegregantGrowthExperimentReference</span>
 <span class="p">)</span>
 
@@ -3851,6 +4679,7 @@
     <span class="s2">"metabolite"</span><span class="p">:</span> <span class="n">MetaboliteExperiment</span><span class="p">,</span>
     <span class="s2">"protein_abundance"</span><span class="p">:</span> <span class="n">ProteinAbundanceExperiment</span><span class="p">,</span>
     <span class="s2">"environment_response"</span><span class="p">:</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">,</span>
+    <span class="s2">"strain_environment_response"</span><span class="p">:</span> <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">,</span>
     <span class="s2">"segregant_growth"</span><span class="p">:</span> <span class="n">SegregantGrowthExperiment</span><span class="p">,</span>
 <span class="p">}</span>
 
@@ -3868,6 +4697,7 @@
     <span class="s2">"metabolite"</span><span class="p">:</span> <span class="n">MetaboliteExperimentReference</span><span class="p">,</span>
     <span class="s2">"protein_abundance"</span><span class="p">:</span> <span class="n">ProteinAbundanceExperimentReference</span><span class="p">,</span>
     <span class="s2">"environment_response"</span><span class="p">:</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">,</span>
+    <span class="s2">"strain_environment_response"</span><span class="p">:</span> <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">,</span>
     <span class="s2">"segregant_growth"</span><span class="p">:</span> <span class="n">SegregantGrowthExperimentReference</span><span class="p">,</span>
 <span class="p">}</span>
 

@@ -5,6 +5,7 @@
 
 """S. cerevisiae S288C genome access over SGD FASTA/GFF with GO and sequence windows."""
 
+import filecmp
 import hashlib
 import json
 import logging
@@ -625,8 +626,14 @@ def require_damage(db_path: str, exc: sqlite3.DatabaseError) -> None:
     (``SQLITE_READONLY_ROLLBACK``). Raise :class:`GenomeDatabaseUnavailableError`
     for every other sqlite error (locked, cannot open, permission, I/O), which says
     nothing about the rows, so the file must not be migrated or replaced.
+
+    An error with no sqlite code was raised by Python's sqlite3 layer, not by sqlite:
+    at these reads that is a TEXT cell that does not decode as UTF-8, which is damaged
+    content.
     """
-    code = exc.sqlite_errorcode
+    code = getattr(exc, "sqlite_errorcode", None)
+    if code is None:
+        return
     primary = code & 0xFF
     if primary in _DAMAGE_CODES or code == sqlite3.SQLITE_READONLY_ROLLBACK:
         return
@@ -650,6 +657,14 @@ def require_damage(db_path: str, exc: sqlite3.DatabaseError) -> None:
     ) from exc
 
 
+def _remove_if_present(path: str) -> None:
+    """Remove ``path``; a path that is already gone is fine."""
+    try:
+        os.remove(path)
+    except FileNotFoundError:
+        return
+
+
 def install_genome_database(
     tmp_path: str, db_path: str, kept: str | None = None
 ) -> None:
@@ -657,17 +672,20 @@ def install_genome_database(
 
     A companion file left beside the OLD file (``-journal``, ``-wal``, ``-shm``) is
     first moved beside the kept copy ``kept`` (``data.db.untrusted-journal``, ...),
-    or removed when nothing is kept, so it is never paired with the new build. If the
-    rename fails, the build is removed and :class:`GenomeDatabaseInstallError` names
-    both paths.
+    or removed when nothing is kept, so it is never paired with the new build. A
+    companion another migrator moved first is skipped. If the rename fails, the build
+    is removed and :class:`GenomeDatabaseInstallError` names both paths and the OS
+    error.
     """
     for suffix in _COMPANION_SUFFIXES:
         companion = db_path + suffix
-        if osp.lexists(companion):
+        try:
             if kept is None:
                 os.remove(companion)
             else:
                 os.replace(companion, kept + suffix)
+        except FileNotFoundError:  # absent, or another migrator moved it first
+            continue
     try:
         os.replace(tmp_path, db_path)
     except OSError as exc:
@@ -913,12 +931,65 @@ def refuse_newer_record(db_path: str) -> None:
     if not osp.exists(db_path):
         return
     try:
-        raw = _read_record_json(db_path)
+        raw = _read_record_json_checked(db_path)
     except sqlite3.DatabaseError as exc:  # damaged: it carries no newer record
         require_damage(db_path, exc)
         return
     if raw is not None:
         record_version(db_path, raw)
+
+
+def _record_json_without_journal(db_path: str) -> str | None:
+    """The record as stored in ``db_path``'s own pages, read from a private copy that
+    has no companion journal; None when that copy has no readable record.
+    """
+    fd, copy_path = tempfile.mkstemp(prefix="torchcell-genome-peek-", suffix=".db")
+    os.close(fd)
+    try:
+        shutil.copyfile(db_path, copy_path)
+        try:
+            return _read_record_json(copy_path)
+        except sqlite3.DatabaseError:
+            return None
+    finally:
+        os.remove(copy_path)
+
+
+def _read_record_json_checked(db_path: str) -> str | None:
+    """:func:`_read_record_json`, except that a hot rollback journal (which makes the
+    read fail with ``SQLITE_READONLY_ROLLBACK``) does not hide a record this checkout
+    must refuse: the record in the file's own pages is checked first (a newer version
+    or an unreadable record raises by name, naming ``db_path``), then the error is
+    re-raised for the caller to treat as damage.
+    """
+    try:
+        return _read_record_json(db_path)
+    except sqlite3.DatabaseError as exc:
+        if getattr(exc, "sqlite_errorcode", None) == sqlite3.SQLITE_READONLY_ROLLBACK:
+            peeked = _record_json_without_journal(db_path)
+            if peeked is not None:
+                check_record(db_path, peeked)
+        raise
+
+
+def check_record(db_path: str, raw: str) -> GenomeDatabaseRecord | str:
+    """The validated record in ``raw`` (read from ``db_path``), or the untrusted
+    reason when it is an older version. A newer version raises
+    :class:`GenomeDatabaseVersionError`; a record this checkout cannot read at its own
+    version raises :class:`GenomeDatabaseRecordError`.
+    """
+    version = record_version(db_path, raw)
+    if version < RECORD_VERSION:
+        return f"its record is version {version}, older than {RECORD_VERSION}"
+    try:
+        return GenomeDatabaseRecord.model_validate_json(raw)
+    except ValidationError as exc:
+        summary = validation_summary(exc.errors())
+        raise GenomeDatabaseRecordError(
+            f"{db_path} carries a version {version} record that this checkout cannot "
+            f"read ({exc.error_count()} errors: {summary}); it was written by code "
+            f"with a different record schema at the same version. {_UPDATE_CHECKOUT}"
+        ) from exc
 
 
 def untrusted_reason(
@@ -936,24 +1007,15 @@ def untrusted_reason(
     source change, not a migration.
     """
     try:
-        raw = _read_record_json(db_path)
+        raw = _read_record_json_checked(db_path)
     except sqlite3.DatabaseError as exc:
         require_damage(db_path, exc)
         return f"sqlite cannot read it ({exc})"
     if raw is None:
         return f"it carries no {SOURCE_TABLE} record"
-    version = record_version(db_path, raw)
-    if version < RECORD_VERSION:
-        return f"its record is version {version}, older than {RECORD_VERSION}"
-    try:
-        record = GenomeDatabaseRecord.model_validate_json(raw)
-    except ValidationError as exc:
-        summary = validation_summary(exc.errors())
-        raise GenomeDatabaseRecordError(
-            f"{db_path} carries a version {version} record that this checkout cannot "
-            f"read ({exc.error_count()} errors: {summary}); it was written by code "
-            f"with a different record schema at the same version. {_UPDATE_CHECKOUT}"
-        ) from exc
+    record = check_record(db_path, raw)
+    if isinstance(record, str):
+        return record
     if record.source != expected:
         raise GenomeDatabaseSourceError(
             f"{db_path} was built from {record.source.model_dump()} but this genome's "
@@ -1036,13 +1098,34 @@ def migrate_genome_database(
         kept = osp.join(db_dir, UNTRUSTED_DB_FILENAME)
         copy_path = _temp_in(db_dir, UNTRUSTED_DB_FILENAME)
         shutil.copyfile(db_path, copy_path)
-        if untrusted_reason(copy_path, expected, rebuild_call) is None:
+        copy_trusted = untrusted_reason(copy_path, expected, rebuild_call) is None
+        if copy_trusted and untrusted_reason(db_path, expected, rebuild_call) is None:
             # Another process installed its fresh build between our check and our
             # copy: the copy is that build, not the untrusted file, so keep nothing
             # (the other process kept the original).
             return
-        os.replace(copy_path, kept)
+        if not (osp.exists(kept) and filecmp.cmp(copy_path, kept, shallow=False)):
+            # A different file replaces the earlier kept copy: drop that copy's
+            # companions first, so a kept file and its journal always belong together.
+            # (Equal bytes: another migrator kept this same file a moment ago, with
+            # its companions; leave both.)
+            for suffix in _COMPANION_SUFFIXES:
+                _remove_if_present(kept + suffix)
+            os.replace(copy_path, kept)
         install_genome_database(tmp_path, db_path, kept)
+        if copy_trusted:
+            # The file's own pages match its record; only a companion journal beside
+            # it (moved to ``kept``-journal with it) made it untrusted.
+            log.warning(
+                "genome database %s was not trusted (%s); its own pages match its "
+                "record and only a companion journal made it unreadable, so the pair "
+                "was kept as %s (replacing any earlier one) and replaced by the "
+                "recorded build",
+                db_path,
+                reason,
+                kept,
+            )
+            return
         log.warning(
             "genome database %s was not trusted (%s); its rows differ from a fresh "
             "build, so it was kept as %s (replacing any earlier one) and replaced by "
@@ -1227,6 +1310,11 @@ class SCerevisiaeGenome(Genome):
             f"SCerevisiaeGenome(genome_root={self.genome_root!r}, "
             f"go_root={self.go_root!r}, overwrite=True)"
         )
+        if osp.isdir(db_path):
+            raise GenomeDatabaseUnavailableError(
+                f"{db_path} is a directory, not a database file; every file is left "
+                "alone. Remove or rename it, then retry."
+            )
         if not osp.isdir(self.genome_root):
             if not self.overwrite:
                 raise GenomeRootNotFoundError(

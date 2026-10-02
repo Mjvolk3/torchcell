@@ -2905,14 +2905,12 @@ def test_hot_journal_follows_the_kept_copy_on_the_default_path(
     ]
     assert _integrity(db_path) == [("ok",)]
     _assert_recorded(release, db_path)
-    assert (
-        caplog.records[0]
-        .getMessage()
-        .startswith(
-            f"genome database {db_path} was not trusted (sqlite cannot read it (attempt "
-            "to write a readonly database)); its rows differ from a fresh build"
-        )
-    )
+    assert [r.getMessage() for r in caplog.records] == [
+        f"genome database {db_path} was not trusted (sqlite cannot read it (attempt "
+        "to write a readonly database)); its rows differ from a fresh build, so it was "
+        f"kept as {root / 'data.db.untrusted'} (replacing any earlier one) and "
+        "replaced by the recorded build"
+    ]
     assert list(genome.gene_set) == ALL_GENES
     assert sorted(f.id for f in genome.db.features_of_type("gene")) == ALL_GENES
 
@@ -2996,20 +2994,36 @@ def test_locked_newer_record_is_not_downgraded_by_overwrite_true(
     exclusive_lock(db_path)
     with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
         _construct(release, overwrite=True)
-    assert str(exc.value).startswith(f"{db_path} is locked by another process")
+    assert str(exc.value) == (
+        f"{db_path} is locked by another process (SQLITE_BUSY: database is locked); "
+        "every file is left alone. Retry when that process has finished."
+    )
     assert os.listdir(release["__genome_root__"]) == ["data.db"]
     assert _sha(db_path) == before
 
 
 @pytest.mark.parametrize("mode", [0o000, 0o200])
 def test_unopenable_database_is_refused_by_name(
-    release: dict[str, str], mode: int
+    release: dict[str, str], mode: int, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A data.db this process may not read (mode 000 or write-only) in a writable
     root: a named refusal naming the mode; no build, nothing kept, file untouched.
     """
     build_db(release[GFF_NAME], Path(release["__genome_root__"]))
     db_path = Path(release["__genome_root__"]) / "data.db"
+    real_connect = sqlite3.connect
+    tmp_root = Path(release["__genome_root__"]).parent
+
+    def refusing_connect(database: Any, *args: Any, **kwargs: Any) -> Any:
+        # The permission check sqlite does would pass for root; reproduce its real
+        # SQLITE_CANTOPEN error (an unopenable path) for every uid instead.
+        if str(database).startswith(f"file:{db_path}?"):
+            return real_connect(
+                f"file:{tmp_root / 'absent' / 'x.db'}?mode=ro", *args, **kwargs
+            )
+        return real_connect(database, *args, **kwargs)
+
+    monkeypatch.setattr(sqlite3, "connect", refusing_connect)
     db_path.chmod(mode)
     try:
         with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
@@ -3066,10 +3080,10 @@ def test_failed_install_removes_the_build_and_names_both_paths(tmp_path: Path) -
     build.write_bytes(b"build")
     with pytest.raises(s288c.GenomeDatabaseInstallError) as exc:
         s288c.install_genome_database(str(build), str(db_path))
-    assert str(exc.value).startswith(
-        f"the build {build} could not be renamed onto {db_path} ("
+    assert str(exc.value) == (
+        f"the build {build} could not be renamed onto {db_path} ([Errno 21] "
+        f"Is a directory: '{build}' -> '{db_path}'); the build was removed."
     )
-    assert str(exc.value).endswith("); the build was removed.")
     assert sorted(os.listdir(tmp_path)) == ["data.db"]
 
 
@@ -3113,6 +3127,7 @@ def test_concurrent_migration_keeps_the_original_untrusted_file(
     source = _expected_source(release)
     real_copyfile = shutil.copyfile
     ran: list[str] = []
+    installed: list[int] = []
 
     def interleaving_copyfile(src: str, dst: str) -> Any:
         def migrate_b() -> None:
@@ -3123,6 +3138,7 @@ def test_concurrent_migration_keeps_the_original_untrusted_file(
             s288c.migrate_genome_database(
                 release[GFF_NAME], str(db_path), source, "call", reason
             )
+            installed.append(db_path.stat().st_ino)
 
         if not ran and when == "before_copy":
             migrate_b()
@@ -3143,6 +3159,8 @@ def test_concurrent_migration_keeps_the_original_untrusted_file(
     assert list(genome.gene_set) == ALL_GENES
     kept_warnings = [r for r in caplog.records if "it was kept as" in r.getMessage()]
     assert len(kept_warnings) == (1 if when == "before_copy" else 2)
+    if when == "before_copy":  # A found B's build installed and left it in place
+        assert db_path.stat().st_ino == installed[0]
 
 
 def test_legacy_file_whose_table_pages_are_corrupt_is_kept(
@@ -3169,3 +3187,460 @@ def test_legacy_file_whose_table_pages_are_corrupt_is_kept(
     assert sorted(os.listdir(root)) == ["data.db", "data.db.untrusted"]
     assert _sha(root / "data.db.untrusted") == damaged
     assert list(genome.gene_set) == ALL_GENES
+
+
+def _set_byte(db_path: Path, needle: bytes, value: int) -> None:
+    """Overwrite the first byte of ``needle`` in the file, out of band."""
+    data = bytearray(db_path.read_bytes())
+    at = data.index(needle)
+    data[at] = value
+    db_path.write_bytes(bytes(data))
+
+
+def test_record_cell_that_is_not_utf8_is_damage_on_both_paths(
+    release: dict[str, str], caplog: pytest.LogCaptureFixture
+) -> None:
+    """A 0xFF byte in the record cell makes Python's sqlite3 layer raise a
+    DatabaseError with no sqlite error code: damaged content, so the default path
+    migrates it (its feature and relation rows equal a fresh build, so nothing is
+    kept) and ``overwrite=True`` rebuilds over it.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    _set_byte(db_path, b'"assembly_set"', 0xFF)
+    reason = s288c.untrusted_reason(str(db_path), _expected_source(release), "call")
+    assert reason is not None
+    assert reason.startswith("sqlite cannot read it (Could not decode to UTF-8 column")
+    with caplog.at_level(logging.WARNING, logger=s288c.__name__):
+        genome = _construct(release)
+    assert os.listdir(release["__genome_root__"]) == ["data.db"]
+    assert len(caplog.records) == 1
+    _assert_recorded(release, db_path)
+    assert list(genome.gene_set) == ALL_GENES
+    _set_byte(db_path, b'"assembly_set"', 0xFF)
+    rebuilt = _construct(release, overwrite=True)
+    _assert_recorded(release, db_path)
+    assert list(rebuilt.gene_set) == ALL_GENES
+
+
+_SILENT_HOT_WRITER = """
+import os, sqlite3, sys
+conn = sqlite3.connect(sys.argv[1])
+conn.isolation_level = None
+conn.execute("PRAGMA journal_mode=DELETE")
+conn.execute("PRAGMA cache_size=1")
+conn.execute("BEGIN")
+conn.execute("UPDATE features SET attributes = attributes || ' '")
+for (_,) in conn.execute("SELECT id FROM features ORDER BY featuretype"):
+    pass
+os.kill(os.getpid(), 9)
+"""
+
+
+def test_hot_journal_whose_file_pages_still_match_is_kept_as_a_pair(
+    release: dict[str, str], caplog: pytest.LogCaptureFixture
+) -> None:
+    """A killed in-place update spilled table pages but never page 1: the file's own
+    pages still match its record and only the hot journal makes it unreadable. The
+    pair is kept, the journal never stays beside the new build, the shared file is
+    not rolled back in place, and exactly one WARNING names the case.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    subprocess.run([sys.executable, "-c", _SILENT_HOT_WRITER, str(db_path)])
+    with pytest.raises(sqlite3.DatabaseError) as hot:
+        s288c._read_record_json(str(db_path))
+    assert hot.value.sqlite_errorname == "SQLITE_READONLY_ROLLBACK"
+    assert s288c._record_json_without_journal(str(db_path)) is not None
+    with caplog.at_level(logging.WARNING, logger=s288c.__name__):
+        genome = _construct(release)
+    root = Path(release["__genome_root__"])
+    assert sorted(os.listdir(root)) == [
+        "data.db",
+        "data.db.untrusted",
+        "data.db.untrusted-journal",
+    ]
+    assert _integrity(db_path) == [("ok",)]
+    _assert_recorded(release, db_path)
+    assert [r.getMessage() for r in caplog.records] == [
+        f"genome database {db_path} was not trusted (sqlite cannot read it (attempt "
+        "to write a readonly database)); its own pages match its record and only a "
+        "companion journal made it unreadable, so the pair was kept as "
+        f"{root / 'data.db.untrusted'} (replacing any earlier one) and replaced by the "
+        "recorded build"
+    ]
+    assert sorted(f.id for f in genome.db.features_of_type("gene")) == ALL_GENES
+
+
+@pytest.mark.parametrize("overwrite", [False, True])
+def test_newer_record_beside_a_hot_journal_is_refused(
+    release: dict[str, str], overwrite: bool
+) -> None:
+    """A version-2 record whose file also carries a hot journal is still refused (the
+    record is read from the file's own pages), naming data.db, on both paths; nothing
+    is touched.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    _rewrite_record(db_path, lambda r: r.update(version=2))
+    subprocess.run([sys.executable, "-c", _SILENT_HOT_WRITER, str(db_path)])
+    before = sorted(
+        (n, _sha(Path(release["__genome_root__"]) / n))
+        for n in os.listdir(release["__genome_root__"])
+    )
+    with pytest.raises(s288c.GenomeDatabaseVersionError) as exc:
+        _construct(release, overwrite=overwrite)
+    assert str(exc.value) == (
+        f"{db_path} carries a record of version 2, written by newer code than this "
+        "checkout (which reads version 1); refusing to replace it. Update this "
+        "checkout, or resubmit the job from an updated checkout."
+    )
+    after = sorted(
+        (n, _sha(Path(release["__genome_root__"]) / n))
+        for n in os.listdir(release["__genome_root__"])
+    )
+    assert after == before
+    assert [n for n, _ in after] == ["data.db", "data.db-journal"]
+
+
+def test_directory_named_data_db_is_refused_by_name(release: dict[str, str]) -> None:
+    """A directory where data.db belongs is named as such on both paths."""
+    root = _root(release)
+    (root / "data.db").mkdir()
+    for overwrite in (False, True):
+        with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
+            _construct(release, overwrite=overwrite)
+        assert str(exc.value) == (
+            f"{root / 'data.db'} is a directory, not a database file; every file is "
+            "left alone. Remove or rename it, then retry."
+        )
+    assert os.listdir(root) == ["data.db"]
+
+
+def _sqlite_error(code: int, name: str, msg: str) -> sqlite3.DatabaseError:
+    exc = sqlite3.OperationalError(msg)
+    exc.sqlite_errorcode = code
+    exc.sqlite_errorname = name
+    return exc
+
+
+@pytest.mark.parametrize(
+    ("code", "name", "kind"),
+    [
+        (sqlite3.SQLITE_BUSY, "SQLITE_BUSY", "locked"),
+        (sqlite3.SQLITE_LOCKED, "SQLITE_LOCKED", "locked"),
+        (sqlite3.SQLITE_BUSY_SNAPSHOT, "SQLITE_BUSY_SNAPSHOT", "locked"),
+        (sqlite3.SQLITE_CANTOPEN, "SQLITE_CANTOPEN", "access"),
+        (sqlite3.SQLITE_PERM, "SQLITE_PERM", "access"),
+        (sqlite3.SQLITE_IOERR_READ, "SQLITE_IOERR_READ", "other"),
+        (sqlite3.SQLITE_CORRUPT_INDEX, "SQLITE_CORRUPT_INDEX", "damage"),
+    ],
+)
+def test_sqlite_errors_are_classified_by_primary_code(
+    tmp_path: Path, code: int, name: str, kind: str
+) -> None:
+    """Extended codes classify by their primary code (code & 0xFF)."""
+    db = tmp_path / "data.db"
+    db.write_bytes(b"x")
+    db.chmod(0o640)
+    exc = _sqlite_error(code, name, "msg")
+    if kind == "damage":
+        s288c.require_damage(str(db), exc)
+        return
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError) as raised:
+        s288c.require_damage(str(db), exc)
+    expected = {
+        "locked": f"{db} is locked by another process ({name}: msg); every file is "
+        "left alone. Retry when that process has finished.",
+        "access": f"{db} cannot be opened by this process ({name}: msg; mode 0o640); "
+        "every file is left alone. Fix its permissions or ownership, then retry.",
+        "other": f"{db} cannot be read right now ({name}: msg); every file is left "
+        "alone. Retry, and check the filesystem if it persists.",
+    }[kind]
+    assert str(raised.value) == expected
+
+
+def test_peek_of_an_unreadable_file_finds_no_record(tmp_path: Path) -> None:
+    """The journal-free peek returns None when the file's own pages are not a
+    database (nothing to refuse); the private copy is removed.
+    """
+    db = tmp_path / "data.db"
+    db.write_bytes(b"\x07 not a database \x00" * 4096)
+    before = set(os.listdir(tempfile.gettempdir()))
+    assert s288c._record_json_without_journal(str(db)) is None
+    assert set(os.listdir(tempfile.gettempdir())) == before
+
+
+@pytest.mark.parametrize("kept", [False, True])
+def test_every_companion_kind_follows_the_kept_copy_or_is_removed(
+    tmp_path: Path, kept: bool
+) -> None:
+    """``-journal``, ``-wal`` and ``-shm`` beside the old file are all moved beside
+    the kept copy (or removed when nothing is kept) before the build is renamed in.
+    """
+    db = tmp_path / "data.db"
+    db.write_bytes(b"old")
+    for suffix in ("-journal", "-wal", "-shm"):
+        (tmp_path / f"data.db{suffix}").write_bytes(suffix.encode())
+    build = tmp_path / "data.db.h.1.abc.building"
+    build.write_bytes(b"new")
+    keep = tmp_path / "data.db.untrusted"
+    if kept:
+        keep.write_bytes(b"old")
+    s288c.install_genome_database(str(build), str(db), str(keep) if kept else None)
+    names = sorted(os.listdir(tmp_path))
+    if kept:
+        assert names == [
+            "data.db",
+            "data.db.untrusted",
+            "data.db.untrusted-journal",
+            "data.db.untrusted-shm",
+            "data.db.untrusted-wal",
+        ]
+        assert (tmp_path / "data.db.untrusted-wal").read_bytes() == b"-wal"
+    else:
+        assert names == ["data.db"]
+    assert db.read_bytes() == b"new"
+
+
+def test_companions_are_handled_before_the_rename(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """At the moment the build is renamed onto data.db, no companion of the old file
+    is still beside it.
+    """
+    db = tmp_path / "data.db"
+    db.write_bytes(b"old")
+    (tmp_path / "data.db-journal").write_bytes(b"j")
+    build = tmp_path / "data.db.h.1.abc.building"
+    build.write_bytes(b"new")
+    seen: list[list[str]] = []
+    real_replace = os.replace
+
+    def watching_replace(src: Any, dst: Any) -> None:
+        if str(src) == str(build):
+            seen.append(sorted(os.listdir(tmp_path)))
+        real_replace(src, dst)
+
+    monkeypatch.setattr(os, "replace", watching_replace)
+    s288c.install_genome_database(str(build), str(db))
+    assert seen == [["data.db", "data.db.h.1.abc.building"]]
+    assert db.read_bytes() == b"new"
+    assert os.listdir(tmp_path) == ["data.db"]
+
+
+def test_companion_moved_away_by_another_migrator_is_skipped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The companion vanishes just before this process moves it (another migrator
+    took it): no error, and the install completes.
+    """
+    db = tmp_path / "data.db"
+    db.write_bytes(b"old")
+    journal = tmp_path / "data.db-journal"
+    journal.write_bytes(b"j")
+    build = tmp_path / "data.db.h.1.abc.building"
+    build.write_bytes(b"new")
+    keep = tmp_path / "data.db.untrusted"
+    keep.write_bytes(b"old")
+    real_replace = os.replace
+
+    def racing_replace(src: Any, dst: Any) -> None:
+        if str(src) == str(journal):
+            real_replace(src, tmp_path / "taken-by-other")
+        real_replace(src, dst)
+
+    monkeypatch.setattr(os, "replace", racing_replace)
+    s288c.install_genome_database(str(build), str(db), str(keep))
+    assert sorted(os.listdir(tmp_path)) == [
+        "data.db",
+        "data.db.untrusted",
+        "taken-by-other",
+    ]
+    assert db.read_bytes() == b"new"
+
+
+def test_stale_companion_of_an_earlier_kept_copy_is_removed(
+    release: dict[str, str],
+) -> None:
+    """A first migration keeps a hot-journal pair; a later one keeps a different
+    file with no journal: the earlier pair's journal does not stay beside it.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    _leave_hot_journal(db_path)
+    _construct(release)
+    root = Path(release["__genome_root__"])
+    assert (root / "data.db.untrusted-journal").exists()
+    _old_code_delete(db_path, "Q0010")
+    damaged = _sha(db_path)
+    _construct(release)
+    assert sorted(os.listdir(root)) == ["data.db", "data.db.untrusted"]
+    assert _sha(root / "data.db.untrusted") == damaged
+
+
+def test_concurrent_migrators_keep_the_journal_with_the_kept_copy(
+    release: dict[str, str],
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Two migrators both copy the same hot-journal file: B keeps the pair first;
+    A, finding the same bytes already kept, leaves the kept file and its journal
+    together.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    _leave_hot_journal(db_path)
+    original = _sha(db_path)
+    journal = _sha(db_path.parent / "data.db-journal")
+    source = _expected_source(release)
+    real_copyfile = shutil.copyfile
+    ran: list[str] = []
+
+    def interleaving_copyfile(src: str, dst: str) -> Any:
+        result = real_copyfile(src, dst)
+        if not ran and osp.basename(dst).startswith("data.db.untrusted."):
+            ran.append("B")
+            reason = s288c.untrusted_reason(str(db_path), source, "call")
+            assert reason is not None
+            monkeypatch.setattr(shutil, "copyfile", real_copyfile)
+            s288c.migrate_genome_database(
+                release[GFF_NAME], str(db_path), source, "call", reason
+            )
+        return result
+
+    monkeypatch.setattr(shutil, "copyfile", interleaving_copyfile)
+    with caplog.at_level(logging.WARNING, logger=s288c.__name__):
+        _construct(release)
+    assert len([r for r in caplog.records if "was kept as" in r.getMessage()]) == 2
+    root = Path(release["__genome_root__"])
+    assert ran == ["B"]
+    assert sorted(os.listdir(root)) == [
+        "data.db",
+        "data.db.untrusted",
+        "data.db.untrusted-journal",
+    ]
+    assert _sha(root / "data.db.untrusted") == original
+    assert _sha(root / "data.db.untrusted-journal") == journal
+    assert _integrity(db_path) == [("ok",)]
+
+
+def test_rows_equal_migration_removes_an_old_companion(release: dict[str, str]) -> None:
+    """A record-less file whose rows equal a fresh build, with a stray -wal beside it:
+    replaced, nothing kept, and the -wal does not stay beside the new build.
+    """
+    db_path = _old_code_rebuild(release)
+    (db_path.parent / "data.db-wal").write_bytes(b"")
+    _construct(release)
+    assert os.listdir(release["__genome_root__"]) == ["data.db"]
+    _assert_recorded(release, db_path)
+
+
+def test_locked_at_the_record_read_builds_nothing(
+    release: dict[str, str], exclusive_lock: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A lock seen at the first read is refused before any build."""
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+    builds: list[str] = []
+    real_write = s288c.write_genome_database
+
+    def recording_write(*args: Any) -> str:
+        builds.append(args[1])
+        return real_write(*args)
+
+    monkeypatch.setattr(s288c, "write_genome_database", recording_write)
+    exclusive_lock(db_path)
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError):
+        _construct(release)
+    assert builds == []
+
+
+def test_lock_at_the_count_read_is_refused_by_name(
+    release: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A lock first seen by the count read (the record read succeeded) is refused by
+    name before any build.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+    db_path = Path(release["__genome_root__"]) / "data.db"
+
+    def locked_counts(conn: Any) -> Any:
+        raise _sqlite_error(sqlite3.SQLITE_BUSY, "SQLITE_BUSY", "database is locked")
+
+    monkeypatch.setattr(s288c, "_database_counts", locked_counts)
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError) as exc:
+        _construct(release)
+    assert str(exc.value).startswith(f"{db_path} is locked by another process")
+    assert os.listdir(release["__genome_root__"]) == ["data.db"]
+
+
+def test_lock_at_the_digest_read_keeps_nothing(
+    release: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A lock first seen while digesting the untrusted file is refused by name: no
+    kept file, no installed build, no temporary left.
+    """
+    db_path = _old_code_rebuild(release)
+    before = _sha(db_path)
+    real_digest = s288c.database_content_digest
+
+    def digest(path: str) -> str:
+        if path == str(db_path):
+            raise _sqlite_error(
+                sqlite3.SQLITE_BUSY, "SQLITE_BUSY", "database is locked"
+            )
+        return real_digest(path)
+
+    monkeypatch.setattr(s288c, "database_content_digest", digest)
+    with pytest.raises(s288c.GenomeDatabaseUnavailableError):
+        _construct(release)
+    assert os.listdir(release["__genome_root__"]) == ["data.db"]
+    assert _sha(db_path) == before
+
+
+def test_non_sqlite_error_at_the_count_read_propagates(
+    release: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The count read catches only sqlite errors: an OSError there is not mistaken
+    for damage, and nothing is built or migrated.
+    """
+    build_db(release[GFF_NAME], Path(release["__genome_root__"]))
+
+    def failing_counts(conn: Any) -> Any:
+        raise OSError("count read failed")
+
+    builds: list[str] = []
+    monkeypatch.setattr(s288c, "_database_counts", failing_counts)
+
+    def recording_write(gff: str, db_dir: str, source: Any) -> str:
+        builds.append(db_dir)
+        return ""
+
+    monkeypatch.setattr(s288c, "write_genome_database", recording_write)
+    with pytest.raises(OSError, match="^count read failed$"):
+        _construct(release)
+    assert builds == []
+    assert os.listdir(release["__genome_root__"]) == ["data.db"]
+
+
+def test_non_sqlite_error_at_the_digest_read_propagates(
+    release: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The untrusted digest catches only sqlite errors: an OSError there is not
+    mistaken for damage, nothing is kept, and the file is left as it was.
+    """
+    db_path = _old_code_rebuild(release)
+    before = _sha(db_path)
+    real_digest = s288c.database_content_digest
+
+    def digest(path: str) -> str:
+        if path == str(db_path):
+            raise OSError("digest read failed")
+        return real_digest(path)
+
+    monkeypatch.setattr(s288c, "database_content_digest", digest)
+    with pytest.raises(OSError, match="^digest read failed$"):
+        _construct(release)
+    assert os.listdir(release["__genome_root__"]) == ["data.db"]
+    assert _sha(db_path) == before

@@ -11,12 +11,12 @@ a Biolink class by name), one unmapped node, and the summary arithmetic
 because importing biocypher writes a log directory into the working directory.
 
 2026.09.30 (Phase 15): the committed ``biocypher/config/torchcell_schema_config.yaml``
-is read as the real table: 26 nodes, of which 22 sit under five Biolink parents
-(environmental exposure 4, genotype 2, information content entity 2, nucleic acid
+is read as the real table: 27 nodes, of which 23 sit under five Biolink parents
+(environmental exposure 4, genotype 2, information content entity 3, nucleic acid
 entity 1, phenotypic feature 13) and 4 are auto-mapped by name (dataset, genome,
 genotype, publication); 13 edges under five relations (coexists with 1, genetically
 associated with 1, mentions 1, part of 6, participates in 4); 10 concepts in all. The
-compact headers count the schema (26 and 13 here, 3 and 2 for the small schema), and a
+compact headers count the schema (27 and 13 here, 3 and 2 for the small schema), and a
 list-valued edge endpoint prints its types joined by `` | `` (issue #532). A fully mapped
 three-node schema exercises the no-warning branches of both formats; ``BioCypher`` is
 replaced by a recorder for the two delegating printers, so nothing is fetched.
@@ -143,8 +143,11 @@ def _lines(out: str) -> list[str]:
 def test_real_schema_compact_table(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """The committed ``torchcell_schema_config.yaml``: 26 nodes (22 under five Biolink
+    """The committed ``torchcell_schema_config.yaml``: 27 nodes (23 under five Biolink
     parents, 4 auto-mapped by name), 13 edges under five relations, 10 concepts in all.
+    The 27th node is ``interned constant`` (tcdb-002), a third ``information
+    content entity`` beside experiment and experiment reference, so the concept count
+    is unchanged.
     Changing the schema changes this table, which is the point: the ``tc-onto`` view is
     what the knowledge graph's classes map to.
     """
@@ -158,7 +161,8 @@ def test_real_schema_compact_table(
         f"{'environmental exposure':25} → environment, environment perturbation, "
         "media, temperature",
         f"{'genotype':25} → perturbation, segregant genotype",
-        "information content entity → experiment, experiment reference",
+        "information content entity → experiment, experiment reference, interned "
+        "constant",
         f"{'nucleic acid entity':25} → crispr construct",
         f"{'phenotypic feature':25} → calmorph phenotype, environment response "
         "phenotype, fitness phenotype, gene essentiality phenotype, gene interaction "
@@ -176,7 +180,7 @@ def test_real_schema_compact_table(
         f"{'participates in':25} → environment member of, genome member of, "
         "genotype member of, phenotype member of",
     ]
-    assert "Nodes:    22/26 explicit + 4 auto-mapped = 26/26 total" in lines
+    assert "Nodes:    23/27 explicit + 4 auto-mapped = 27/27 total" in lines
     assert "Edges:    13/13 mapped to 5 Biolink concepts" in lines
     assert "Total:    10 unique Biolink concepts used" in lines
     assert "✓ 4 nodes auto-mapped by name matching" in lines
@@ -187,7 +191,8 @@ def test_compact_headers_count_the_schema(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The compact headers print ``len(nodes)`` and ``len(edges)`` (issue #532; they were
-    the literals 16 and 11): the committed schema has 26 nodes and 13 edges, the small
+    the literals 16 and 11): the committed schema has 27 nodes (``interned constant``
+    joined in tcdb-002) and 13 edges, the small
     test schema 3 nodes and 2 edges (its stray string entry is neither).
     """
     monkeypatch.chdir(tmp_path)
@@ -195,7 +200,7 @@ def test_compact_headers_count_the_schema(
 
     small = tmp_path / "schema.yaml"
     small.write_text(yaml.safe_dump(SCHEMA))
-    for path, n_nodes, n_edges in ((REAL_SCHEMA, 26, 13), (small, 3, 2)):
+    for path, n_nodes, n_edges in ((REAL_SCHEMA, 27, 13), (small, 3, 2)):
         print_schema_mappings(str(path), compact=True)
         lines = _lines(capsys.readouterr().out)
         assert f"📦 NODES ({n_nodes} total)" in lines

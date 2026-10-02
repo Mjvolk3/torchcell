@@ -238,6 +238,15 @@ node.Genotype {
   caption: "{perturbed_gene_name}";
 }
 
+node.InternedConstant {
+  color: #FFF2CC;
+  border-color: #D6B656;
+  border-width: 2px;
+  text-color-internal: #000000;
+  diameter: 50px;
+  caption: "{id}";
+}
+
 node.Media {
   color: #F8CECC;
   border-color: #B85450;

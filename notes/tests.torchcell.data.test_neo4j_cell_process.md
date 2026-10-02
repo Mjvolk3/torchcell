@@ -15,3 +15,7 @@ Findings pinned (Phase 10 of [[test-campaign.2026.09.25]]): `overwrite_intermedi
 ## 2026.09.30 - Phase 12: label_df on aggregated records
 
 One test added (14 to 15): `label_df` keeps the last present value of a key that holds several experiments (fitness 0.8 then 0.5 gives 0.5), a later `environment_response` of None does not erase an earlier -1.25, and a categorical-only record stays NaN. Finding: `phenotype_label_index` lists that NaN record under `environment_response` because it reads only the stored `label_name` (`neo4j_cell.py` line 755), so a split drawn from the index can hold a record with no scalar target. The module stays at 60.1 percent: lines 1082 to 2021 are the `main*` demos (Neo4j, the genome, `experiments/003-fit-int/queries/*.cql`), line 64 is dead, `498 -> 501` cannot happen because the pipeline never schedules RAW as a next step.
+
+## 2026.10.01 - Fake raw view logs its close
+
+The `load_raw` fake is now `_FakeRawDb`, which records `close_lmdb` in the raw-call log. The tests assert the raw handle is closed exactly once, while it was open, before the build finishes (`["load_raw", "raw_db", "raw_db.close_lmdb"]`), pinning the fix that lets lmdb 2.x open `raw/lmdb` as the next stage's input.

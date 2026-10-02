@@ -611,6 +611,11 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
             fetch_workers=self.fetch_workers,
             partition_prefix_length=self.partition_prefix_length,
         )
+        # The raw view opens raw/lmdb on construction, and the next stage opens the
+        # same path as its input. lmdb >= 2.0 refuses a second environment on a path
+        # already open in the process, so the view's handle is closed here; its
+        # readers reopen it through _init_lmdb when called.
+        raw_db.close_lmdb()
         self.converter = (
             cast("type[Converter]", self.converter)(root=self.root, query=raw_db)
             if self.converter
@@ -678,8 +683,6 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
             self.compute_phenotype_info()
             # Compute and cache label DataFrame explicitly
             self._label_df = self.label_df
-        # clean up raw db
-        raw_db.env = None
 
     def _write_folded_indices(
         self, grouping: RawStageGrouping, key_groups: dict[str, list[bytes]]

@@ -19,3 +19,7 @@ Findings: the compact headers are hardcoded "NODES (16 total)" and "EDGES (11 to
 ## 2026.09.30 - Findings Retired (Issue #532)
 
 Both findings are retired. The compact headers read `NODES (26 total)` / `EDGES (13 total)` for the committed schema and `3` / `2` for the small test schema; list endpoints print joined by ` | `, for example `genotype member of: genotype | segregant genotype → experiment`, and no line carries a list repr.
+
+## 2026.10.01 - Real schema has 27 nodes
+
+The compact table lists `information content entity → experiment, experiment reference, interned constant`, the totals line reads `23/27 explicit + 4 auto-mapped = 27/27 total`, and the compact header reads `NODES (27 total)`. The concept count stays 10 because `information content entity` was already used.

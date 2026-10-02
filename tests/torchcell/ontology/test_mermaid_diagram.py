@@ -29,7 +29,7 @@ inside a fixture that first ``chdir``s into ``tmp_path``, because importing
 the working directory.
 
 The real-schema test reads ``biocypher/config/torchcell_schema_config.yaml`` read-only
-and pins its 121-line RL diagram (26 nodes, 13 edges, 40 data lines); a schema-config
+and pins its 123-line RL diagram (27 nodes, 13 edges, 40 data lines); a schema-config
 edit changes these constants on purpose.
 """
 
@@ -449,9 +449,11 @@ def test_main_writes_both_orientations_then_reports_no_changes(
 
 
 def test_real_schema_diagram(md: ModuleType) -> None:
-    """The real config (read-only): 26 nodes (4 auto-mapped: dataset, genome, genotype,
-    publication; 22 inherited), 5 Biolink classes, 13 edges expanding to 40 data lines.
-    Line count 121 = 1 header + (2 + 5) + (2 + 4) + (2 + 22) + (2 + 22 is_a lines)
+    """The real config (read-only): 27 nodes (4 auto-mapped: dataset, genome, genotype,
+    publication; 23 inherited), 5 Biolink classes, 13 edges expanding to 40 data lines.
+    The 23rd inherited node is ``interned constant`` (tcdb-002), a third ``information
+    content entity`` beside experiment and experiment reference.
+    Line count 123 = 1 header + (2 + 5) + (2 + 4) + (2 + 23) + (2 + 23 is_a lines)
     + (2 + 40) + 9 legend + 5 styling + 3 class lines. ``Genotype`` is declared on
     lines 5 and 13 (Biolink class and auto-mapped node, the duplicate Finding), and
     the list-valued ``source`` of ``genotype member of`` expands to two lines.
@@ -468,8 +470,8 @@ def test_real_schema_diagram(md: ModuleType) -> None:
             n_data_lines += (1 if isinstance(src, str) else len(src)) * (
                 1 if isinstance(tgt, str) else len(tgt)
             )
-    assert (len(gen.nodes), n_edges, n_data_lines) == (26, 13, 40)
-    assert len(lines) == 121
+    assert (len(gen.nodes), n_edges, n_data_lines) == (27, 13, 40)
+    assert len(lines) == 123
     assert lines[2:8] == [
         "    %% Biolink Classes (Parent Entity Types)",
         '    EnvironmentalExposure["environmental exposure"]',
@@ -486,6 +488,10 @@ def test_real_schema_diagram(md: ModuleType) -> None:
         '    Publication["publication"]',
     ]
     assert lines.count('    Genotype["genotype"]') == 2
+    assert [line for line in lines if "InternedConstant" in line][:2] == [
+        '    InternedConstant["interned constant"]',
+        "    InformationContentEntity -->|is_a| InternedConstant",
+    ]
     assert "    Genotype -->|is_a| SegregantGenotype" in lines
     assert (
         '    Perturbation -.->|"perturbation member of<br/>(is_a: genetically associated with)"| Genotype'

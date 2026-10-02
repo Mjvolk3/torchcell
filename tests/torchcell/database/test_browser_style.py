@@ -61,6 +61,7 @@ def test_class_colors_are_the_ontology_lane_colors() -> None:
     by_label = {rule.label: rule for rule in node_rules()}
     for label, lane in [
         ("Experiment", "experiment"),
+        ("InternedConstant", "experiment"),
         ("Genotype", "genotype"),
         ("Media", "environment"),
         ("FitnessPhenotype", "phenotype"),

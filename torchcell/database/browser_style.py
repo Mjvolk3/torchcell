@@ -111,6 +111,9 @@ LANE_OF_LABEL: dict[str, str] = {
     "EnvironmentPerturbation": "environment",
     "Experiment": "experiment",
     "ExperimentReference": "experiment",
+    # A content-addressed sub-object of an experiment record (interned_constant.py),
+    # is_a information content entity like its two siblings above.
+    "InternedConstant": "experiment",
     "Dataset": "provenance",
     "Publication": "provenance",
     "Genome": "provenance",

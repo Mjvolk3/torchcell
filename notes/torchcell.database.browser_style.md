@@ -110,3 +110,7 @@ session lands on torchcell without `:use torchcell`. The setting lives in the sy
 database inside `/db/database/data`, so it moves with the store through a swap, and the
 live rebuild now sets it in the build container after `CREATE DATABASE` and asserts it
 on the served store.
+
+## 2026.10.01 - InternedConstant joins the experiment lane
+
+tcdb-002 added the `interned constant` node class (`is_a: information content entity`) to the BioCypher schema config without a lane, so `lane_of` raised `KeyError` and every stylesheet render failed (9 tests in `tests/torchcell/database/test_browser_style.py`, CI run 36941506091). `InternedConstant` now maps to the `experiment` lane, the lane of its two `information content entity` siblings (`Experiment`, `ExperimentReference`); it is a content-addressed sub-object of an experiment record. `database/conf/torchcell.grass` and `database/browser/torchcell-seed.js` were regenerated with `python -m torchcell.database.browser_style` (39 node rules).

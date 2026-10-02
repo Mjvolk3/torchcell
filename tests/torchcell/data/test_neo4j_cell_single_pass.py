@@ -323,3 +323,56 @@ def test_label_values_read_off_the_dict_equal_the_validated_attribute() -> None:
         for name in nc.LABEL_NAME_CANDIDATES:
             if name in stored["phenotype"]:
                 assert stored["phenotype"][name] == getattr(revalidated.phenotype, name)
+
+
+def test_build_releases_the_raw_handle_and_the_store_reopens_in_process(
+    tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The raw view's handle on ``raw/lmdb`` is closed before the aggregation opens
+    the same path as its input, and after the build the raw store is constructed again
+    in this process and every record reads back as the experiment that was queried.
+
+    lmdb >= 2.0 refuses a second environment on a path already open in the process
+    ("is already open in this process"); 1.x allowed it, which hid the leaked handle
+    until CI resolved lmdb 2.3.0. The entry check below fails on either version when
+    the handle leaks.
+    """
+    records, store = _records("inline")
+    monkeypatch.setattr(_MemoryQueryRaw, "RECORDS", records)
+    monkeypatch.setattr(_MemoryQueryRaw, "STORE", store)
+
+    views: list[Neo4jQueryRaw] = []
+    post_init = _MemoryQueryRaw.__attrs_post_init__
+
+    def recording_post_init(self: Neo4jQueryRaw) -> None:
+        post_init(self)
+        views.append(self)
+
+    monkeypatch.setattr(_MemoryQueryRaw, "__attrs_post_init__", recording_post_init)
+    env_at_aggregation: list[Any] = []
+    aggregate = GenotypeAggregator.process
+
+    def checking_process(self: Any, *args: Any) -> None:
+        env_at_aggregation.extend(view.env for view in views)
+        aggregate(self, *args)
+
+    monkeypatch.setattr(GenotypeAggregator, "process", checking_process)
+
+    root = str(tmp_path / "ds")
+    _build(root, monkeypatch, False, None, GenotypeAggregator)
+    assert len(views) == 1
+    assert env_at_aggregation == [None]
+    assert views[0].env is None
+
+    again = _MemoryQueryRaw(
+        uri="bolt://none", username="", password="", root_dir=root, query="unused"
+    )
+    assert again.raw_stage_ran is False
+    assert len(again) == N_RECORDS
+    for i in range(N_RECORDS):
+        experiment, reference = _record(i)
+        record = again[i]
+        assert record["experiment"].model_dump() == experiment.model_dump(), i
+        assert record["experiment_reference"].model_dump() == reference.model_dump(), i
+    again.close_lmdb()
+    assert len(_lmdb_items(osp.join(root, "aggregation", "lmdb"))) == 7

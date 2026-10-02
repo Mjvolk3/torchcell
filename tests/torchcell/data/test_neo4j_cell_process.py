@@ -47,7 +47,6 @@ import os
 import pickle
 import re
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any, cast
 
 import lmdb
@@ -224,6 +223,19 @@ def _stage_classes(calls: list[tuple[Any, ...]]) -> tuple[Any, Any, Any]:
     return FakeConverter, FakeDeduplicator, FakeAggregator
 
 
+class _FakeRawDb:
+    """Stand-in for ``Neo4jQueryRaw``: holds an open handle and logs its close."""
+
+    def __init__(self, calls: list[tuple[Any, ...]]) -> None:
+        self.env: str | None = "open raw env"
+        self.raw_stage_ran = False
+        self._calls = calls
+
+    def close_lmdb(self) -> None:
+        self._calls.append(("raw_db.close_lmdb", self.env))
+        self.env = None
+
+
 @pytest.fixture
 def raw_calls(monkeypatch: pytest.MonkeyPatch) -> list[tuple[Any, ...]]:
     """Patch `load_raw` to write the raw LMDB and log its arguments; return the log."""
@@ -239,7 +251,7 @@ def raw_calls(monkeypatch: pytest.MonkeyPatch) -> list[tuple[Any, ...]]:
         record_observers: list[Any],
         fetch_workers: int,
         partition_prefix_length: int,
-    ) -> SimpleNamespace:
+    ) -> _FakeRawDb:
         calls.append(
             ("load_raw", uri, username, password, root_dir, query, list(gene_set))
         )
@@ -247,7 +259,7 @@ def raw_calls(monkeypatch: pytest.MonkeyPatch) -> list[tuple[Any, ...]]:
         # The observers never see a record (nothing streamed through them), so the
         # raw stage reports that it did not run and every grouping stage does its own
         # pass 1, which is the pre-existing pipeline these tests pin.
-        raw_db = SimpleNamespace(env="open raw env", raw_stage_ran=False)
+        raw_db = _FakeRawDb(calls)
         calls.append(("raw_db", raw_db))
         return raw_db
 
@@ -293,6 +305,7 @@ def test_process_without_stages_copies_raw_to_processed(
         ["YAL001C", "YAL002W", "YAL003W", "YAL004W"],
     )
     assert raw_db.env is None
+    assert raw_calls[2:] == [("raw_db.close_lmdb", "open raw env")]
     assert [s.name for s in ds.processing_steps] == ["RAW", "PROCESSED"]
     assert (ds.converter, ds.deduplicator, ds.aggregator) == (None, None, None)
     assert _markers(tmp_path) == ["processed/STAGE_COMPLETE"]
@@ -392,7 +405,10 @@ def test_process_skips_a_stage_whose_marker_exists(
     assert ds.dataset_name_index == {
         "toy+precomputed+deduplication+aggregation": [0, 1]
     }
-    assert [c[0] for c in raw_calls] == ["load_raw", "raw_db"]
+    # The raw handle is closed exactly once, while it was still open, and nothing
+    # reopens it through the view during the stages.
+    assert [c[0] for c in raw_calls] == ["load_raw", "raw_db", "raw_db.close_lmdb"]
+    assert raw_calls[2] == ("raw_db.close_lmdb", "open raw env")
 
 
 def test_overwrite_intermediates_fails_on_an_lmdb_directory(

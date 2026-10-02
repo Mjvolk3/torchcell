@@ -157,6 +157,18 @@ def main(cfg: DictConfig) -> None:
         if smoke_on
         else []
     )
+    # A continuation can APPEND to the original run instead of opening a new one:
+    # `+resume.wandb_run_id=<rank-0 id>` resumes that id on rank 0 (the rank that logs
+    # val/), so the curve in W&B is one run from epoch 0 to the end. The other ranks
+    # open new runs as before. Offline mode cannot check the id against the server, so
+    # resume is "allow"; `wandb sync` then uploads the new offline directory under the
+    # same id and the history continues (Lightning restores global_step from the
+    # checkpoint, so steps stay monotonic). Config keys that changed for the
+    # continuation (devices, batch_size, max_epochs) are allowed to change.
+    resume_cfg = wandb_cfg.get("resume") or {}
+    wandb_run_id = resume_cfg.get("wandb_run_id")
+    if wandb_run_id is not None and int(os.environ.get("RANK", "0")) != 0:
+        wandb_run_id = None
     run = wandb.init(
         mode=WANDB_MODE,
         project=wandb_cfg["wandb"]["project"],
@@ -164,8 +176,13 @@ def main(cfg: DictConfig) -> None:
         group=group,
         tags=list(wandb_cfg["wandb"]["tags"]) + sweep_tags,
         dir=experiment_dir,
-        name=f"run_{group}",
+        name=None if wandb_run_id else f"run_{group}",
+        id=wandb_run_id,
+        resume="allow" if wandb_run_id else None,
+        allow_val_change=True,
     )
+    if wandb_run_id:
+        print(f"wandb: resuming run {wandb_run_id} (rank 0 appends to the original run)")
     wandb_logger = WandbLogger(
         project=wandb_cfg["wandb"]["project"],
         log_model=True,
@@ -446,7 +463,6 @@ def main(cfg: DictConfig) -> None:
     # state (weights, optimizer, epoch counter), so a run cut by the 4-day mmli limit
     # continues under its config's max_epochs as a NEW W&B run whose config records the
     # checkpoint it resumed from; the readout stitches the two by `resumed_from`.
-    resume_cfg = wandb_cfg.get("resume") or {}
     ckpt_path = resume_cfg.get("ckpt_path")
     if ckpt_path is not None:
         if not osp.exists(ckpt_path):

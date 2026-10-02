@@ -69,6 +69,7 @@ from vanacloig_data import (  # noqa: E402
     load_cells,
     make_folds,
     score_compounds,
+    subsample_pool,
 )
 
 load_dotenv()
@@ -123,6 +124,9 @@ class FactorizedConfig(BaseModel):
     # logged validation score is then in-sample.
     select: Literal["val", "last"] = "val"
     fit_on: Literal["train", "pool"] = "train"
+    # with fit_on "pool", fit on this many of the pool's compounds (nested subsets, see
+    # vanacloig_data.subsample_pool); the scores are then centered by those compounds
+    n_fit_compounds: int | None = None
     # per_compound z-scores each fitted compound's profile across strains before the fit
     target_scale: Literal["global", "per_compound"] = "global"
     gene_batch: int = 0  # 0 = every gene in one step
@@ -140,6 +144,23 @@ class FactorizedConfig(BaseModel):
     cgt_dim: int = 180  # hidden_channels, must be divisible by cgt_heads
     cgt_lr: float = 5e-4
     identity_skip: bool = False
+
+
+def fitted_compounds(cfg: FactorizedConfig, fold: Fold) -> list[int]:
+    """The compounds the model is fitted on."""
+    if cfg.fit_on == "train":
+        assert cfg.n_fit_compounds is None, "n_fit_compounds subsamples the pool"
+        return fold.train
+    return subsample_pool(fold, cfg.fold_seed, cfg.n_fit_compounds)
+
+
+def centering_compounds(cfg: FactorizedConfig, fold: Fold) -> list[int]:
+    """The compounds whose mean centers the held-out scores: the fitted compounds of a
+    pool fit, the whole non-test pool of a train fit.
+    """
+    if cfg.fit_on == "pool":
+        return fitted_compounds(cfg, fold)
+    return sorted(fold.train + fold.val)
 
 
 # ---- data ------------------------------------------------------------------ #
@@ -582,7 +603,7 @@ def train_seed(
     """The selected full-matrix prediction (response units) and the step history."""
     torch.manual_seed(seed)
     np.random.seed(seed)
-    train = fold.train if cfg.fit_on == "train" else sorted(fold.train + fold.val)
+    train = fitted_compounds(cfg, fold)
     x_fit = ctx.x_raw[train]
     mu, sd = x_fit.mean(0), x_fit.std(0)
     keep = sd > 1e-8
@@ -652,7 +673,7 @@ def train_seed(
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer, max_lr=[g["lr"] for g in groups], total_steps=steps, pct_start=0.05
     )
-    pool = sorted(train + fold.val)
+    pool = centering_compounds(cfg, fold)
     tag = f"fold{fold.fold}_seed{seed}"
     if device.type == "cuda":
         torch.cuda.reset_peak_memory_stats(device)
@@ -811,7 +832,7 @@ def run(cfg: FactorizedConfig, sweep: str, device: torch.device) -> pd.DataFrame
     for fold in folds:
         if cfg.folds is not None and fold.fold not in cfg.folds:
             continue
-        pool = sorted(fold.train + fold.val)
+        pool = centering_compounds(cfg, fold)
         preds = []
         for seed in cfg.seeds:
             pred, hist = train_seed(cfg, ctx, fold, seed, device)

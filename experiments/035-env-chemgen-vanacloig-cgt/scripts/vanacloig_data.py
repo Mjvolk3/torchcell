@@ -161,6 +161,20 @@ def make_folds(n_compounds: int, n_folds: int, n_val: int, seed: int) -> list[Fo
     return folds
 
 
+def subsample_pool(fold: Fold, fold_seed: int, n: int | None) -> list[int]:
+    """The first ``n`` of a fixed shuffle of the fold's non-test compounds.
+
+    The shuffle depends on the fold only, so the subsets are nested in ``n`` and every
+    model fitted at one size sees the same compounds. ``None`` is the whole pool.
+    """
+    pool = sorted(fold.train + fold.val)
+    if n is None:
+        return pool
+    assert 2 <= n <= len(pool), f"{n} compounds asked of a pool of {len(pool)}"
+    order = np.random.default_rng([fold_seed, fold.fold, 17]).permutation(pool)
+    return sorted(int(i) for i in order[:n])
+
+
 def ceiling(response: NDArray[np.float64], se: NDArray[np.float64]) -> float:
     """Square root of 1 - mean(SE^2) / Var(response); zero where that is negative."""
     ok = np.isfinite(response) & np.isfinite(se)

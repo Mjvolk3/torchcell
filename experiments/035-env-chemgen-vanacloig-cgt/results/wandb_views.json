@@ -99,7 +99,33 @@
         "9nfuh11d",
         "qpb7hmtb",
         "yqnabbho",
-        "o2wgniiv"
+        "o2wgniiv",
+        "0est71j6",
+        "afgbyc5e",
+        "ue55yc6j",
+        "sk6c3ogr",
+        "egcrxvm8",
+        "h0e3wz0c",
+        "oli7g4mi",
+        "dx6bs8ha",
+        "bjcttd4k",
+        "ymx9579s",
+        "5jdv6sea",
+        "15ihlmpr",
+        "jzb1fw2k",
+        "ni22y2fe",
+        "xkg8id3c",
+        "s18x3mxj",
+        "eoovnc20",
+        "4fk7koao",
+        "tvaxdlon",
+        "utuym0bo",
+        "x76pswz0",
+        "68w1pedf",
+        "hgpqphsh",
+        "ronkla08",
+        "sfbcnwdq",
+        "63v6icsk"
       ]
     },
     "L3_lam0": {
@@ -155,7 +181,35 @@
         "7d8ypeeg",
         "28fvn2ww",
         "kdzwxi2u",
-        "qmhzo56k"
+        "qmhzo56k",
+        "hb33jrdd",
+        "vthahciu",
+        "mqimvgz5",
+        "l1iejtd5",
+        "u3zc36n5",
+        "hxvcfcqt",
+        "nzyeh5i2",
+        "dt9tt86s",
+        "91obixxm",
+        "og3z1yrx",
+        "5pdq5u8i",
+        "rqhglxgi",
+        "64gz11u7",
+        "75jz018s",
+        "m4ztg7ew",
+        "54vc6l57",
+        "tte5epum",
+        "gtegcfwn",
+        "gpu3tyq2",
+        "ostyg6gh",
+        "xokive7m",
+        "99k6nfbq",
+        "g2by2oxw",
+        "juhh0jkq",
+        "anp6ljxx",
+        "cfuz1jzw",
+        "ibuzuxzu",
+        "b7d3es32"
       ]
     },
     "L1_lam0_loss": {
@@ -166,6 +220,45 @@
         "8xktila8",
         "whu4tltx",
         "nynh1s85"
+      ]
+    },
+    "bilz_L1_lam0": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/bilz_L1_lam0",
+      "run_ids": [
+        "8pe2m4gl",
+        "msjish6m",
+        "voinnoob",
+        "i8yo3zwi",
+        "j4y27wac",
+        "eda49xw6",
+        "e7vfsop1",
+        "5kplbbix",
+        "5uclw6mu",
+        "nzm7dsgg",
+        "n6qegcu7",
+        "2dwyilsk",
+        "1ss19vh0",
+        "dqylw2cd",
+        "kvloxfdy"
+      ]
+    },
+    "enc2_L1_lam0": {
+      "url": "https://wandb.ai/zhao-group/torchcell_035-env-chemgen-vanacloig-cgt/groups/enc2_L1_lam0",
+      "run_ids": [
+        "6x860ctr",
+        "obnkponq",
+        "2lsl7js8",
+        "xz9x3yi0",
+        "bjlzlmrz",
+        "p0k5co92",
+        "sghlddc0",
+        "35ek3xpm",
+        "qj509yip",
+        "siao547j",
+        "c130o17c",
+        "r9alyl8z",
+        "ckzdhedm",
+        "hv2n229e"
       ]
     }
   }

@@ -25,3 +25,23 @@ Retired findings, now asserted as contracts: the Wasserstein loss trains and its
 ## 2026.10.01 - aggregation_norm finding retired
 
 Retired the last #540 pin ("`aggregation_norm` is read by nothing, 1424 parameters with or without it"). Now asserted: null and absent build main's module exactly, 1120 parameters and 56 state_dict keys for "sum", 1765 parameters and those 56 keys plus 16 listed aggregator keys for "pairwise_interaction", with bitwise-equal weights under one seed; "layer", "batch", the string "none" and the falsy non-null values "", False and 0 are refused with the exact `AggregationNormNotImplementedError` message for sum, cross_attention and pairwise_interaction, from the model and from `HeteroConvAggregator`, without mutating the caller's dict; `main` passes the key through (a "layer" config is refused before the plot directory exists, a null config builds the 1765-parameter model and trains). The shipped-flags test now uses `aggregation_norm: None`. 87 cases (65 before). Mutating the check to truthiness (`if aggregation_norm:`) fails the 9 falsy cases.
+
+## 2026.10.01 - Phase 19: _init_weights by replay, stage guards, the aggregator fallback
+
+94 cases (87 before).
+
+- `_init_weights` is replayed: seed 7, then Kaiming normal (fan_out, relu) and zero bias for every `nn.Linear`, ones/zeros for `nn.LayerNorm`/`nn.BatchNorm1d`, in `nn.Module.apply` order, with `torch.nn.init` as the oracle, reproduces every parameter bitwise for GIN, GATv2, and GATv2 plus a probe carrying the GATConv attribute names (the only way the GATv2 branch runs).
+- Built with and without the init at one seed, the parameters that agree are exactly the embedding, the ReZero beta, GIN eps, the PyG LayerNorms, the preprocessor `nn.LayerNorm`, and for GATv2 every GATv2Conv parameter (`lin_l`/`lin_r` are PyG `Linear`); everything else is an `nn.Linear` parameter.
+- Stage guards: +inf injected at the batch encoder names "perturbed embeddings (z_i)", at the batch pooling "global perturbed embeddings (z_i_global)", and FINITE pooled values +3e38 / -3e38 overflow z_p to +inf, named "perturbation difference (z_p_global)". The guards at :1049, :1111, :1130, :1143, :1150, :1166 and :1175 only see checked rows, softmax weights of finite logits or convex combinations of finite values, so they cannot fire and stay uncovered.
+- `HeteroConvAggregator`'s "fallback to sum" (lines 336-339) is reachable only by rewriting the method after construction (then 2x + 3x = 5x, no weights); the empty-output skip (line 318) cannot run.
+
+Coverage of `torchcell/models/hetero_cell_bipartite_dango_gi.py` from this file: 86.9% -> 88% (`main` out of scope).
+
+## 2026.10.02 - Audit round 2 corrections
+
+94 cases.
+
+- The GATv2 probe rewrite: a plain `GATv2Conv(8, 8)` gets `torch_geometric.nn.Linear(8, 4)` `lin_src`/`lin_dst` with biases filled to 7.0, plus 7-filled `att_src`/`att_dst`. `_init_weights` sets both biases to exactly 0, and only the GATv2 branch can do that, because PyG `Linear` is not `nn.Linear`. Mutants deleting either bias zeroing die. The subclass and its `misc` ignore are gone.
+- The guard test's last assertion now checks what the module's pooling handed on: the wildtype [1, 8] all 3e38 and the batch [2, 8] all -3e38, both finite. The inf therefore arises in the module's own subtraction. The two `assignment` ignores are replaced by `monkeypatch.setattr`.
+- My new tests run inside `torch.random.fork_rng()` (fixture `restore_rng`), because `_tiny` reseeds globally.
+- Reach: `lin_l`, `lin_r` and `att` keep PyG's own init on real GATv2Conv layers (the existing finding); the aggregator fallback-sum branch is unreachable from a constructed layer.

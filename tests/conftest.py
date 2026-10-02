@@ -21,6 +21,14 @@ Four things live here, in this order because the order is the point:
    patched: torch.distributed and wandb offline mode need it.
 4. A session-end check that the sentinel data root is still empty, so a test that wrote
    into it is caught instead of leaving a growing directory under ``/tmp``.
+5. No CUDA device unless ``--gpu`` is on the command line: ``CUDA_VISIBLE_DEVICES`` is
+   set to the empty string with the other environment defaults, so
+   ``torch.cuda.is_available()`` is False in the session and in every subprocess a test
+   starts. CI has no GPU, and a workstation whose cards are full made unmarked tests
+   fail with a CUDA out-of-memory error (2026-10-02: ``torchcell/data/embedding.py``
+   picks ``cuda`` when it can). The flag is read from ``sys.argv`` because the variable
+   must be set before ``tests/torchcell/conftest.py`` imports torch, which happens
+   before ``pytest_configure`` runs; a hook is too late (torch has cached the count).
 
 Design record: Decisions 6 and 15 of [[plan.test-suite-buildout.2026.09.25]]. The
 sentinel is a fixed path, never a per-session ``basetemp``: ``scripts/deprecate.sh``
@@ -29,11 +37,14 @@ resolves its live queue database under ``$DATA_ROOT`` at import.
 """
 
 import os
+import sys
 
 SENTINEL_DATA_ROOT = "/tmp/torchcell-test-data-root"
 os.environ.setdefault("DATA_ROOT", SENTINEL_DATA_ROOT)
 os.environ.setdefault("WANDB_MODE", "disabled")
 os.environ.setdefault("MPLBACKEND", "Agg")
+if "--gpu" not in sys.argv:
+    os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 import socket  # noqa: E402
 import subprocess  # noqa: E402

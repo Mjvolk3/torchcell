@@ -42,11 +42,13 @@ from __future__ import annotations
 import gc
 import hashlib
 import json
+import logging
 import math
 import re
 from collections.abc import Iterator
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -65,6 +67,7 @@ from torchcell.datamodels.identity import (
     media_identity,
     temperature_identity,
 )
+from torchcell.fast_csv import RenderedChunk
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
 
 GENOME = s.ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
@@ -1517,3 +1520,682 @@ def test_get_nodes_routes_a_chunked_method_through_the_pool(
     assert recorder.logged == [
         {"event": 1, "method": "experiment (chunked)", "type": "node"}
     ]
+
+
+# ------------------------------------------------- 2026.10.01 (phase 19): chunking
+#
+# The pool-side tests below replace ``ProcessPoolExecutor`` at its import site with
+# ``_SyncPool``, which runs each submitted chunk at once in this process and hands back
+# a finished ``Future``; nothing forks. The chunk function is ``_echo``: it returns one
+# tuple per chunk, (method name, first record's ``i``, chunk length), so the yielded
+# sequence IS the chunk boundary list. Records of ``_SizedDataset`` are ``{"i": i,
+# "x": "a" * k}``; ``json.dumps`` of one is ``{"i": <i>, "x": "<k a's>"}``, i.e.
+# 16 + len(str(i)) + k characters (``{"i": `` 6, ``, "x": "`` 8, ``"}`` 2); each test
+# also checks its sizes with ``len(json.dumps(...))`` as an independent oracle.
+
+
+class _SizedDataset:
+    """Records ``{"i": i, "x": "a" * sizes[i]}``; slices and LMDB closes are recorded."""
+
+    def __init__(self, sizes: list[int], start: int = 0) -> None:
+        self.name = "Sized"
+        self.sizes = sizes
+        self.start = start
+        self.slices: list[tuple[int, int]] = []
+        self.close_calls = 0
+        self.gets: list[int] = []
+
+    def __len__(self) -> int:
+        return len(self.sizes)
+
+    def __getitem__(self, idx: int | slice) -> Any:
+        if isinstance(idx, slice):
+            self.slices.append((idx.start, idx.stop))
+            return _SizedDataset(self.sizes[idx], start=self.start + idx.start)
+        self.gets.append(idx)
+        return {"i": self.start + idx, "x": "a" * self.sizes[idx]}
+
+    def close_lmdb(self) -> None:
+        self.close_calls += 1
+
+
+def _echo(chunk: _SizedDataset, method_name: str) -> list[tuple[str, int, int]]:
+    return [(method_name, chunk.start, len(chunk))]
+
+
+class _SyncPool:
+    """``ProcessPoolExecutor`` stand-in: runs each task on submit; records pools."""
+
+    pools: list[dict[str, Any]] = []
+
+    def __init__(self, max_workers: int | None = None) -> None:
+        self.record: dict[str, Any] = {"max_workers": max_workers, "submitted": []}
+        _SyncPool.pools.append(self.record)
+
+    def __enter__(self) -> _SyncPool:
+        return self
+
+    def __exit__(self, *exc: Any) -> None:
+        return None
+
+    def submit(self, fn: Any, chunk: Any, method_name: str) -> Any:
+        from concurrent.futures import Future
+
+        self.record["submitted"].append(chunk.start)
+        future: Future[Any] = Future()
+        future.set_result(fn(chunk, method_name))
+        return future
+
+
+@pytest.fixture
+def sync_pool(monkeypatch: pytest.MonkeyPatch) -> list[dict[str, Any]]:
+    """Install ``_SyncPool`` at the module's ``ProcessPoolExecutor`` name; returns the
+    per-pool records (max_workers and the first record of each submitted chunk).
+    """
+    _SyncPool.pools = []
+    monkeypatch.setattr(cell_adapter_module, "ProcessPoolExecutor", _SyncPool)
+    return _SyncPool.pools
+
+
+def _sized_adapter(
+    sizes: list[int], node_methods: list[dict[str, Any]] | None = None, **kwargs: Any
+) -> tuple[CellAdapter, _SizedDataset]:
+    dataset = _SizedDataset(sizes)
+    as_dataset: Any = dataset
+    adapter = CellAdapter(
+        _conf(node_methods or [], []),
+        as_dataset,
+        process_workers=kwargs.pop("process_workers", 1),
+        io_workers=1,
+        chunk_size=kwargs.pop("chunk_size", 2),
+        loader_batch_size=1,
+        **kwargs,
+    )
+    return adapter, dataset
+
+
+def test_estimate_record_bytes_is_the_median_of_evenly_spaced_samples(
+    recorder: _WandbRecorder,
+) -> None:
+    """Sizes k = [10, 0, 30, 0, 20]: record i dumps to 17 + k characters
+    (``{"i": 0, "x": ""}`` is 17). With ``samples=2`` the step is 5 // 2 = 2, so records
+    0, 2, 4 give [27, 47, 37], median (index 3 // 2 = 1 of the sorted list) 37. The LMDB
+    is closed once and the value is cached: a later call with other samples or other
+    data returns 37 without reading.
+    """
+    adapter, dataset = _sized_adapter([10, 0, 30, 0, 20])
+    assert [len(json.dumps(dataset[i])) for i in range(5)] == [27, 17, 47, 17, 37]
+    dataset.gets.clear()
+    assert adapter._estimate_record_bytes(samples=2) == 37
+    assert dataset.gets == [0, 2, 4]
+    assert dataset.close_calls == 1
+    dataset.sizes[2] = 1000
+    assert adapter._estimate_record_bytes() == 37
+    assert dataset.gets == [0, 2, 4]
+
+
+def test_estimate_record_bytes_default_samples_reads_every_small_record(
+    recorder: _WandbRecorder,
+) -> None:
+    """With the default 64 samples and 5 records the step is max(1, 0) = 1: all five
+    sizes [27, 17, 47, 17, 37], sorted [17, 17, 27, 37, 47], median 27.
+    """
+    adapter, dataset = _sized_adapter([10, 0, 30, 0, 20])
+    assert adapter._estimate_record_bytes() == 27
+    assert dataset.gets == [0, 1, 2, 3, 4]
+
+
+def test_single_pass_factor_is_the_smallest_factor_over_the_method_count(
+    recorder: _WandbRecorder,
+) -> None:
+    """Folded methods experiment (0.5), genotype (no factor, 1.0) and perturbation
+    (0.8): min 0.5 / 3 methods = 0.1666667, for nodes; for edges the edge list is read,
+    where none is configured, so min(1, 1, 1) / 3.
+    """
+    adapter, _ = _sized_adapter(
+        [0],
+        node_methods=[
+            {"method_name": "experiment (chunked)", "memory_reduction_factor": 0.5},
+            {"method_name": "genotype (chunked)"},
+            {"method_name": "perturbation (chunked)", "memory_reduction_factor": 0.8},
+        ],
+    )
+    adapter._single_pass_methods = [
+        ("experiment (chunked)", adapter._experiment_node),
+        ("genotype (chunked)", adapter._genotype_node),
+        ("perturbation (chunked)", adapter._perturbation_node),
+    ]
+    factor = adapter.get_memory_reduction_factor(cell_adapter_module.SINGLE_PASS_NODES)
+    assert factor == pytest.approx(0.5 / 3)
+    edge_factor = adapter.get_memory_reduction_factor(
+        cell_adapter_module.SINGLE_PASS_EDGES, is_edge=True
+    )
+    assert edge_factor == pytest.approx(1 / 3)
+
+
+def test_single_pass_chunk_shrinks_to_the_byte_budget(
+    recorder: _WandbRecorder,
+    sync_pool: list[dict[str, Any]],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """601 records with k = 11: 16 + digits(i) + 11 bytes, 28 for one-digit i and 30
+    for three digits; the 601 // 64 = 9-step sample (i = 0, 9, ..., 594) has 2 + 10 +
+    55 members (i = 0, 9 one-digit; 18..99 two-digit; 108..594 three-digit), so its
+    median (index 33) is 30 (the oracle computes it). chunk_size 1000 with one
+    folded method of factor 1 gives 1000 / 1 = 1000; budget 300 * R // R = 300 < 1000,
+    so chunks are [0, 300), [300, 600), [600, 601) and the shrink is logged.
+    """
+    adapter, dataset = _sized_adapter([11] * 601, chunk_size=1000)
+    sample = sorted(
+        len(json.dumps({"i": i, "x": "a" * 11})) for i in range(0, 601, 601 // 64)
+    )
+    record_bytes = sample[len(sample) // 2]
+    assert record_bytes == 30
+    adapter.single_pass_chunk_budget_bytes = 300 * record_bytes
+    adapter._single_pass_methods = [("genotype (chunked)", adapter._genotype_node)]
+    with caplog.at_level(logging.INFO, logger="torchcell.adapters.cell_adapter"):
+        out = list(
+            adapter.get_data_by_type(_echo, cell_adapter_module.SINGLE_PASS_NODES)
+        )
+    name = cell_adapter_module.SINGLE_PASS_NODES
+    assert out == [(name, 0, 300), (name, 300, 300), (name, 600, 1)]
+    assert dataset.slices == [(0, 300), (300, 600), (600, 900)]
+    assert [r.getMessage() for r in caplog.records] == [
+        "single-pass chunk 1000 -> 300 records (30 resolved bytes per record)"
+    ]
+    # one pool (group = 1 worker x 2 chunks per worker = 2), so two pools for 3 chunks
+    assert [p["submitted"] for p in sync_pool] == [[0, 300], [600]]
+
+
+def test_single_pass_chunk_never_drops_below_the_floor_of_256(
+    recorder: _WandbRecorder, sync_pool: list[dict[str, Any]]
+) -> None:
+    """A budget of 10 records gives max(256, 10) = 256 < 1000: chunks of 256."""
+    adapter, _ = _sized_adapter([11] * 600, chunk_size=1000)
+    adapter.single_pass_chunk_budget_bytes = 10 * 30
+    adapter._single_pass_methods = [("genotype (chunked)", adapter._genotype_node)]
+    out = list(adapter.get_data_by_type(_echo, cell_adapter_module.SINGLE_PASS_NODES))
+    assert [(start, n) for _, start, n in out] == [(0, 256), (256, 256), (512, 88)]
+
+
+@pytest.mark.parametrize("budget_records", [800, 500])
+def test_single_pass_budget_not_below_the_chunk_leaves_it_unchanged(
+    recorder: _WandbRecorder,
+    sync_pool: list[dict[str, Any]],
+    caplog: pytest.LogCaptureFixture,
+    budget_records: int,
+) -> None:
+    """Two folded methods of factor 1: chunk 1000 * 1 / 2 = 500. A budget of 800
+    records, or of exactly 500 (the shrink rule is strict ``<``), is not smaller, so
+    the chunk stays 500 and nothing is logged (a ``<=`` would log "500 -> 500").
+    """
+    adapter, _ = _sized_adapter([11] * 600, chunk_size=1000)
+    adapter.single_pass_chunk_budget_bytes = budget_records * 30
+    adapter._single_pass_methods = [
+        ("genotype (chunked)", adapter._genotype_node),
+        ("experiment (chunked)", adapter._experiment_node),
+    ]
+    with caplog.at_level(logging.INFO, logger="torchcell.adapters.cell_adapter"):
+        out = list(
+            adapter.get_data_by_type(_echo, cell_adapter_module.SINGLE_PASS_NODES)
+        )
+    assert [(start, n) for _, start, n in out] == [(0, 500), (500, 100)]
+    assert caplog.records == []
+
+
+def _inprocess_echo(calls: list[Any]) -> Any:
+    def fn(chunk: Any, method_name: str, inprocess: bool = False) -> list[Any]:
+        calls.append((chunk.start, len(chunk), method_name, inprocess))
+        return ["a", "b"]
+
+    return fn
+
+
+@pytest.mark.parametrize(
+    ("max_records", "max_bytes", "inprocess"),
+    [
+        (3, 0, True),  # 0 < 3 <= 3, no byte rule
+        (2, 0, False),  # 3 > 2
+        (3, 3 * 27, True),  # 3 records * 27 bytes = 81 <= 81
+        (3, 3 * 27 - 1, False),  # 81 > 80
+    ],
+)
+def test_small_datasets_run_in_process_by_records_and_optionally_bytes(
+    recorder: _WandbRecorder,
+    sync_pool: list[dict[str, Any]],
+    max_records: int,
+    max_bytes: int,
+    inprocess: bool,
+) -> None:
+    """Three 27-byte records (k = 10). In process: the whole dataset [0, 3) goes to the
+    chunk function once with ``inprocess=True``, the LMDB is closed, no pool is built.
+    Otherwise chunk_size 2 gives pool chunks [0, 2) and [2, 3).
+    """
+    adapter, dataset = _sized_adapter([10, 10, 10], inprocess_max_records=max_records)
+    adapter.inprocess_max_bytes = max_bytes
+    calls: list[Any] = []
+    out = list(adapter.get_data_by_type(_inprocess_echo(calls), "genotype (chunked)"))
+    if inprocess:
+        assert calls == [(0, 3, "genotype (chunked)", True)]
+        assert out == ["a", "b"]
+        assert dataset.slices == [(0, 3)]
+        assert sync_pool == []
+    else:
+        assert calls == [
+            (0, 2, "genotype (chunked)", False),
+            (2, 1, "genotype (chunked)", False),
+        ]
+        assert out == ["a", "b", "a", "b"]
+        assert dataset.slices == [(0, 2), (2, 4)]
+        assert [p["submitted"] for p in sync_pool] == [[0, 2]]
+    # one close after slicing (plus one by the byte estimate when it ran)
+    assert dataset.close_calls == 1 + (max_bytes > 0)
+
+
+def test_an_empty_dataset_yields_nothing_and_builds_no_pool(
+    recorder: _WandbRecorder, sync_pool: list[dict[str, Any]]
+) -> None:
+    """0 records: not in process (the rule needs 0 < len), no chunk, no pool."""
+    adapter, dataset = _sized_adapter([], inprocess_max_records=5)
+    assert list(adapter.get_data_by_type(_echo, "genotype (chunked)")) == []
+    assert sync_pool == []
+    assert dataset.close_calls == 1
+
+
+def test_pools_recycle_on_cgroup_memory_after_every_worker_had_a_chunk(
+    recorder: _WandbRecorder,
+    sync_pool: list[dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """10 one-record chunks, 2 workers, 3 chunks per worker (group 6), threshold 0.5.
+
+    The fraction is checked when the group asks for chunk n + 1 with n >= 2 workers.
+    Scripted readings 0.3, 0.6 (then 0.6 again for the log line): pool 1 stops after 3
+    chunks. Pool 2 reads 0.2 at n = 2..5 and stops at the group size, 6 chunks. Pool 3
+    takes the last chunk (n = 1, below the worker count, so no reading). Seven readings,
+    three pools, three ``gc.freeze`` calls, records in order.
+    """
+    readings = iter([0.3, 0.6, 0.6, 0.2, 0.2, 0.2, 0.2])
+    taken: list[float] = []
+
+    def fraction() -> float:
+        value = next(readings)
+        taken.append(value)
+        return value
+
+    freezes: list[int] = []
+    monkeypatch.setattr(cell_adapter_module, "cgroup_memory_fraction", fraction)
+    monkeypatch.setattr(gc, "freeze", lambda: freezes.append(1))
+    adapter, _ = _sized_adapter([0] * 10, chunk_size=1, process_workers=2)
+    adapter.chunks_per_worker = 3
+    adapter.pool_memory_fraction = 0.5
+    with caplog.at_level(logging.INFO, logger="torchcell.adapters.cell_adapter"):
+        out = list(adapter.get_data_by_type(_echo, "genotype (chunked)"))
+    assert [start for _, start, _ in out] == list(range(10))
+    assert [p["submitted"] for p in sync_pool] == [[0, 1, 2], [3, 4, 5, 6, 7, 8], [9]]
+    assert [p["max_workers"] for p in sync_pool] == [2, 2, 2]
+    assert taken == [0.3, 0.6, 0.6, 0.2, 0.2, 0.2, 0.2]
+    assert len(freezes) == 3
+    assert [r.getMessage() for r in caplog.records] == [
+        "pool recycled at 3 chunks: cgroup memory at 0.60 of its limit"
+    ]
+
+
+def test_in_order_window_submits_workers_plus_two_then_one_per_consumed_chunk(
+    recorder: _WandbRecorder, sync_pool: list[dict[str, Any]]
+) -> None:
+    """One worker, group 10, 5 one-record chunks: before the first result is handed out
+    3 chunks (1 + 2) are submitted; consuming chunk 0 submits chunk 3, and so on, and
+    results come back in submission order.
+    """
+    adapter, _ = _sized_adapter([0] * 5, chunk_size=1)
+    adapter.chunks_per_worker = 10
+    gen = adapter.get_data_by_type(_echo, "genotype (chunked)")
+    seen = []
+    submitted = []
+    for _ in range(5):
+        seen.append(next(gen)[1])
+        submitted.append(len(sync_pool[0]["submitted"]))
+    assert seen == [0, 1, 2, 3, 4]
+    assert submitted == [3, 4, 5, 5, 5]
+    assert next(gen, None) is None
+
+
+def test_completion_order_yields_each_chunk_once_with_the_same_window(
+    recorder: _WandbRecorder, sync_pool: list[dict[str, Any]]
+) -> None:
+    """``completion_order``: every submitted future here is already finished, so the
+    first ``wait`` returns chunks {0, 1, 2} in set order; each one consumed submits the
+    next chunk into the pending set. The first three results are a permutation of
+    {0, 1, 2}, the last two of {3, 4}; the submission counts match the in-order path.
+    """
+    adapter, _ = _sized_adapter([0] * 5, chunk_size=1)
+    adapter.chunks_per_worker = 10
+    adapter.completion_order = True
+    gen = adapter.get_data_by_type(_echo, "genotype (chunked)")
+    seen = []
+    submitted = []
+    for _ in range(5):
+        seen.append(next(gen)[1])
+        submitted.append(len(sync_pool[0]["submitted"]))
+    assert sorted(seen[:3]) == [0, 1, 2]
+    assert sorted(seen[3:]) == [3, 4]
+    assert submitted == [3, 4, 5, 5, 5]
+    assert next(gen, None) is None
+
+
+def test_data_chunker_in_process_transforms_every_record_and_closes_the_chunk(
+    recorder: _WandbRecorder,
+) -> None:
+    """``inprocess=True``: no loader; each record goes through ``transform_item`` and
+    the handler; a list result is flattened, a single node appended; the chunk's LMDB is
+    closed once. Two records: the experiment handler gives [experiment, interned
+    environment] per record, the publication handler one node per record.
+    """
+    dataset = _dataset(2)
+    adapter = _adapter(dataset)
+    nodes = adapter._experiment_node(dataset, "experiment (chunked)", inprocess=True)
+    env_id = _environment_constant_id(_experiment(0.5))
+    assert [(n.get_label(), n.get_id()) for n in nodes] == [
+        ("experiment", _sha(_experiment(0.5))),
+        ("interned constant", env_id),
+        ("experiment", _sha(_experiment(0.25))),
+        ("interned constant", env_id),
+    ]
+    assert dataset.close_calls == 1
+    publications = adapter._publication_node(
+        dataset, "publication (chunked)", inprocess=True
+    )
+    assert [(n.get_label(), n.get_id()) for n in publications] == [
+        ("publication", _sha(PUBLICATION)),
+        ("publication", _sha(PUBLICATION)),
+    ]
+    assert dataset.close_calls == 2
+
+
+def test_all_chunked_applies_every_folded_method_per_record_in_table_order(
+    recorder: _WandbRecorder,
+) -> None:
+    """The single-pass body calls each folded handler's ``__wrapped__`` on the same
+    transformed record: per record, experiment's two nodes then publication's one.
+    """
+    dataset = _dataset(2)
+    adapter = _adapter(dataset)
+    adapter._single_pass_methods = [
+        ("experiment (chunked)", adapter._experiment_node),
+        ("publication (chunked)", adapter._publication_node),
+    ]
+    nodes = adapter._all_chunked(
+        dataset, cell_adapter_module.SINGLE_PASS_NODES, inprocess=True
+    )
+    env_id = _environment_constant_id(_experiment(0.5))
+    expected = []
+    for fitness in (0.5, 0.25):
+        expected += [
+            ("experiment", _sha(_experiment(fitness))),
+            ("interned constant", env_id),
+            ("publication", _sha(PUBLICATION)),
+        ]
+    assert [(n.get_label(), n.get_id()) for n in nodes] == expected
+
+
+def test_pack_chunk_renders_one_chunk_when_row_specs_are_set(
+    recorder: _WandbRecorder, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Without ``row_specs`` the list comes back as is (the same object); with them the
+    output is ``[RenderedChunk.from_rows(datas, row_specs)]``.
+    """
+    adapter = _adapter(_dataset(1))
+    datas = ["n1", "n2"]
+    assert adapter._pack_chunk(datas) is datas
+    rendered: list[Any] = []
+
+    def from_rows(rows: Any, specs: Any) -> str:
+        rendered.append((rows, specs))
+        return "rendered"
+
+    monkeypatch.setattr(RenderedChunk, "from_rows", from_rows)
+    specs: Any = object()
+    adapter.row_specs = specs
+    assert adapter._pack_chunk(datas) == ["rendered"]
+    assert rendered == [(datas, specs)]
+
+
+class _PhaseRecorder:
+    calls: list[tuple[str, str, str]] = []
+
+    @classmethod
+    def set(cls, adapter: str, method: str, kind: str) -> None:
+        cls.calls.append((adapter, method, kind))
+
+
+@pytest.mark.parametrize("kind", ["node", "edge"])
+def test_single_pass_runs_reference_methods_then_one_folded_traversal(
+    recorder: _WandbRecorder, monkeypatch: pytest.MonkeyPatch, kind: str
+) -> None:
+    """``single_pass``: the enabled ``_get_*`` collector runs in the table loop; the
+    enabled chunked methods are skipped there and folded, in table order, into ONE
+    ``get_data_by_type(self._all_chunked, <pass name>, is_edge=...)`` call. Events 1
+    (the collector) and 2 (the pass) are logged; ``BuildPhase`` sees both. Disabled
+    methods (here ``publication`` / ``publication to experiment``) are not folded.
+    """
+    _PhaseRecorder.calls = []
+    monkeypatch.setattr(cell_adapter_module, "BuildPhase", _PhaseRecorder)
+    if kind == "node":
+        config = [
+            {"method_name": "genotype (chunked)"},
+            {"method_name": "dataset"},
+            {"method_name": "experiment (chunked)"},
+        ]
+        adapter = _adapter(_dataset(1), node_methods=config)
+        folded = [
+            ("experiment (chunked)", adapter._experiment_node),
+            ("genotype (chunked)", adapter._genotype_node),
+        ]
+        reference = "dataset"
+        pass_name = cell_adapter_module.SINGLE_PASS_NODES
+    else:
+        config = [
+            {"method_name": "experiment to dataset (chunked)"},
+            {"method_name": "genome to experiment reference"},
+            {"method_name": "genotype to experiment (chunked)"},
+        ]
+        adapter = _adapter(_dataset(1), edge_methods=config)
+        folded = [
+            ("experiment to dataset (chunked)", adapter._experiment_to_dataset_edge),
+            ("genotype to experiment (chunked)", adapter._genotype_to_experiment_edge),
+        ]
+        reference = "genome to experiment reference"
+        pass_name = cell_adapter_module.SINGLE_PASS_EDGES
+    adapter.single_pass = True
+    calls: list[Any] = []
+
+    def get_data_by_type(method: Any, name: str, is_edge: bool = False) -> Any:
+        calls.append((method, name, is_edge))
+        yield "folded"
+
+    monkeypatch.setattr(adapter, "get_data_by_type", get_data_by_type)
+    recorder.logged.clear()
+    out = list(adapter.get_nodes() if kind == "node" else adapter.get_edges())
+    assert len(out) == 2
+    assert out[1] == "folded"
+    if kind == "node":
+        assert (out[0].get_label(), out[0].get_id()) == ("dataset", "ToyDataset")
+    else:
+        assert out[0] == BioCypherEdge(
+            source_id=_sha(GENOME),
+            target_id=_sha(_reference()),
+            relationship_label="genome member of",
+        )
+    assert calls == [(adapter._all_chunked, pass_name, kind == "edge")]
+    assert adapter._single_pass_methods == folded
+    assert recorder.logged == [
+        {"event": 1, "method": reference, "type": kind},
+        {"event": 2, "method": pass_name, "type": kind},
+    ]
+    assert _PhaseRecorder.calls == [
+        ("CellAdapter", reference, kind),
+        ("CellAdapter", pass_name, kind),
+    ]
+
+
+def test_single_pass_with_no_chunked_method_enabled_runs_no_traversal(
+    recorder: _WandbRecorder, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Only a collector enabled: one event, no ``get_data_by_type`` call."""
+    adapter = _adapter(_dataset(1), node_methods=[{"method_name": "dataset"}])
+    adapter.single_pass = True
+    calls: list[Any] = []
+
+    def no_traversal(*args: Any, **kwargs: Any) -> Iterator[Any]:
+        calls.append(args)
+        return iter(())
+
+    monkeypatch.setattr(adapter, "get_data_by_type", no_traversal)
+    recorder.logged.clear()
+    assert [n.get_label() for n in adapter.get_nodes()] == ["dataset"]
+    assert calls == []
+    assert recorder.logged == [{"event": 1, "method": "dataset", "type": "node"}]
+
+
+def _cgroup_files(
+    monkeypatch: pytest.MonkeyPatch, root: Any, files: dict[str, str]
+) -> None:
+    """Write ``files`` under ``root`` and point the two module paths at the v2 names."""
+    for name, text in files.items():
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+    monkeypatch.setattr(
+        cell_adapter_module, "CGROUP_MEMORY_CURRENT", str(root / "memory.current")
+    )
+    monkeypatch.setattr(
+        cell_adapter_module, "CGROUP_MEMORY_MAX", str(root / "memory.max")
+    )
+
+
+def test_cgroup_v2_fraction_is_current_over_max(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    """memory.current 2147483648 (2 GiB) over memory.max 8589934592 (8 GiB) = 0.25;
+    trailing newlines are stripped.
+    """
+    _cgroup_files(
+        monkeypatch,
+        tmp_path,
+        {"memory.max": "8589934592\n", "memory.current": "2147483648\n"},
+    )
+    assert cell_adapter_module.cgroup_memory_fraction() == 0.25
+
+
+def test_cgroup_without_a_limit_is_refused(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    """memory.max ``max`` (no limit) raises before memory.current is read (it is
+    absent here, which would otherwise raise FileNotFoundError).
+    """
+    _cgroup_files(monkeypatch, tmp_path, {"memory.max": "max\n"})
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape(
+            "pool_memory_fraction needs a cgroup memory limit; memory.max is 'max'"
+        ),
+    ):
+        cell_adapter_module.cgroup_memory_fraction()
+
+
+def test_cgroup_v1_layout_is_not_read_and_raises_file_not_found(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    """Only the v2 files are read. A v1 tree (``memory/memory.limit_in_bytes``,
+    ``memory/memory.usage_in_bytes``) has no ``memory.max``, so the call raises
+    ``FileNotFoundError`` naming that path; with ``memory.max`` present but
+    ``memory.current`` missing it names ``memory.current``.
+    """
+    _cgroup_files(
+        monkeypatch,
+        tmp_path,
+        {
+            "memory/memory.limit_in_bytes": "8589934592\n",
+            "memory/memory.usage_in_bytes": "2147483648\n",
+        },
+    )
+    with pytest.raises(FileNotFoundError) as missing_max:
+        cell_adapter_module.cgroup_memory_fraction()
+    assert missing_max.value.filename == str(tmp_path / "memory.max")
+    (tmp_path / "memory.max").write_text("100\n")
+    with pytest.raises(FileNotFoundError) as missing_current:
+        cell_adapter_module.cgroup_memory_fraction()
+    assert missing_current.value.filename == str(tmp_path / "memory.current")
+
+
+def test_single_pass_over_an_empty_dataset_fails_in_the_byte_estimate(
+    recorder: _WandbRecorder, sync_pool: list[dict[str, Any]]
+) -> None:
+    """Finding: ``_estimate_record_bytes`` takes ``sizes[len(sizes) // 2]`` of an empty
+    sample list when the dataset has no records (cell_adapter.py:617-626), and the
+    single-pass branch of ``get_data_by_type`` calls it before anything checks the
+    length (:411), so a folded pass over an empty dataset raises ``IndexError`` where the
+    per-method path yields nothing (``test_an_empty_dataset_yields_nothing...``). Not
+    measured: whether any served dataset can be empty at build time. Pinned until the
+    estimate (or the single-pass branch) handles zero records.
+    """
+    adapter, _ = _sized_adapter([])
+    adapter._single_pass_methods = [("genotype (chunked)", adapter._genotype_node)]
+    with pytest.raises(IndexError, match=re.escape("list index out of range")):
+        list(adapter.get_data_by_type(_echo, cell_adapter_module.SINGLE_PASS_NODES))
+    assert sync_pool == []
+
+
+def test_estimate_record_bytes_takes_the_upper_median_of_an_even_sample(
+    recorder: _WandbRecorder,
+) -> None:
+    """Four records k = [30, 0, 20, 10] dump to [47, 17, 37, 27]; sorted
+    [17, 27, 37, 47], index 4 // 2 = 2, so 37 (the upper of the two middle values,
+    not 27 and not their mean 32).
+    """
+    adapter, dataset = _sized_adapter([30, 0, 20, 10])
+    assert [len(json.dumps(dataset[i])) for i in range(4)] == [47, 17, 37, 27]
+    assert adapter._estimate_record_bytes() == 37
+
+
+def test_shipped_costanzo_edge_factors_never_reach_the_loader_batch(
+    recorder: _WandbRecorder, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Finding (reach of ``test_data_chunker_sizes_an_edge_batch_from_the_node_list``):
+    ``data_chunker`` asks ``get_memory_reduction_factor(method_name)`` without
+    ``is_edge`` (cell_adapter.py:584), so it searches the NODE list, finds no edge
+    name there and returns 1.0. With the shipped
+    ``torchcell/adapters/conf/dmf_costanzo2016_adapter.yaml`` (loaded by
+    ``costanzo2016_adapter.py``), whose chunked edge methods carry 0.5, the edge
+    lookup with ``is_edge=True`` is 0.5 while the decorator's lookup is 1.0, and the
+    "experiment to dataset" loader is built with the full batch 2 instead of 1. Not
+    measured: the memory this costs on a real build. Pinned until the decorator passes
+    ``is_edge``.
+    """
+    _RecordingLoader.built = []
+    monkeypatch.setattr(
+        cell_adapter_module, "CpuExperimentLoaderMultiprocessing", _RecordingLoader
+    )
+    root = Path(cell_adapter_module.__file__).parent
+    conf = OmegaConf.load(root / "conf" / "dmf_costanzo2016_adapter.yaml")
+    assert isinstance(conf, DictConfig)
+    dataset = _dataset(2)
+    adapter = CellAdapter(
+        conf,
+        dataset,
+        process_workers=1,
+        io_workers=1,
+        chunk_size=2,
+        loader_batch_size=2,
+    )
+    name = "experiment to dataset (chunked)"
+    assert adapter.get_memory_reduction_factor(name, is_edge=True) == 0.5
+    assert adapter.get_memory_reduction_factor(name) == 1.0
+    edges = adapter._experiment_to_dataset_edge(dataset, name)
+    assert [edge.get_source_id() for edge in edges] == [
+        _sha(_experiment(0.5)),
+        _sha(_experiment(0.25)),
+    ]
+    assert _RecordingLoader.built == [(2, 1)]

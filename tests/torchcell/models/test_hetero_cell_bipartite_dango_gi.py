@@ -57,11 +57,13 @@ same state_dict keys), and any other value raises
 from ``main``'s config reader.
 """
 
+import copy
 import os
 import os.path as osp
 import re
 import sys
 import types
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -75,6 +77,7 @@ from sortedcontainers import SortedDict
 from torch_geometric.data import Batch, HeteroData
 from torch_geometric.nn import GATv2Conv, GCNConv, GINConv
 from torch_geometric.nn import LayerNorm as PygLayerNorm
+from torch_geometric.nn import Linear as PygLinear
 
 import torchcell.models.hetero_cell_bipartite_dango_gi as dango_module
 from torchcell.graph.graph import GeneGraph, GeneMultiGraph
@@ -1669,3 +1672,281 @@ def test_main_with_a_null_aggregation_norm_builds_the_main_pairwise_model(
     dango_module.main(_pairwise_main_cfg(None))
     assert "Parameter count: 1765" in capsys.readouterr().out.splitlines()
     assert fake_main["saved"] == ["training_epoch_0001.png", "final_results_TS.png"]
+
+
+# ---------------------------------------------------------------- 2026.10.01, Phase 19
+#
+# ``_init_weights`` is pinned by replay: the same seed, then the documented scheme
+# (Kaiming normal, fan_out, relu, zero bias for every ``nn.Linear``; ones/zeros for
+# ``nn.LayerNorm`` and ``nn.BatchNorm1d``; the GATConv-named attributes of a
+# ``GATv2Conv``) applied in ``nn.Module.apply`` order (children before parent, a module
+# re-registered under two parents visited under each) with ``torch.nn.init`` as the
+# oracle, must reproduce every parameter bit for bit.
+
+
+@pytest.fixture
+def restore_rng() -> Iterator[None]:
+    """Run the test inside ``torch.random.fork_rng`` (``_tiny`` reseeds globally)."""
+    with torch.random.fork_rng():
+        yield
+
+
+def _post_order(module: nn.Module) -> list[nn.Module]:
+    """The order ``module.apply(fn)`` calls ``fn``: each child's subtree, then self."""
+    order: list[nn.Module] = []
+    for child in module.children():
+        order.extend(_post_order(child))
+    order.append(module)
+    return order
+
+
+def _replay_init(model: nn.Module) -> None:
+    """The documented scheme, written against ``torch.nn.init`` directly."""
+    for module in _post_order(model):
+        if isinstance(module, nn.Linear):
+            nn.init.kaiming_normal_(module.weight, mode="fan_out", nonlinearity="relu")
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
+        elif isinstance(module, (nn.LayerNorm, nn.BatchNorm1d)):
+            nn.init.ones_(module.weight)
+            nn.init.zeros_(module.bias)
+        elif isinstance(module, GATv2Conv):
+            for name in ("lin_src", "lin_dst"):
+                if hasattr(module, name):
+                    linear = getattr(module, name)
+                    nn.init.kaiming_normal_(
+                        linear.weight, mode="fan_out", nonlinearity="relu"
+                    )
+                    if linear.bias is not None:
+                        nn.init.zeros_(linear.bias)
+            for name in ("att_src", "att_dst"):
+                if hasattr(module, name):
+                    nn.init.xavier_normal_(getattr(module, name))
+
+
+def _gat_named_probe() -> GATv2Conv:
+    """A plain ``GATv2Conv`` given the GATConv attribute names the init tests: PyG
+    ``Linear`` (not ``nn.Linear``, so only the GATv2 branch touches them) ``lin_src``
+    and ``lin_dst`` with every bias entry 7.0, and 7-filled ``att_src``/``att_dst``.
+    """
+    probe = GATv2Conv(HIDDEN, HIDDEN)
+    for name in ("lin_src", "lin_dst"):
+        linear = PygLinear(HIDDEN, 4)
+        assert linear.bias is not None
+        with torch.no_grad():
+            linear.bias.fill_(7.0)
+        setattr(probe, name, linear)
+    probe.att_src = nn.Parameter(torch.full((1, 2, 4), 7.0))
+    probe.att_dst = nn.Parameter(torch.full((1, 2, 4), 7.0))
+    return probe
+
+
+@pytest.mark.parametrize("variant", ["gin", "gatv2", "gatv2+probe"])
+def test_init_weights_is_kaiming_fan_out_on_every_linear_in_apply_order(
+    variant: str,
+) -> None:
+    """Seed 7, then ``_init_weights`` vs seed 7, then the replay: every parameter equal
+    (``torch.equal``). The encoder config omits the aggregation, so the default
+    cross-attention aggregator (its ``nn.Linear`` and ``nn.LayerNorm`` too) is built.
+    In "gatv2+probe" a plain GATv2Conv carrying PyG-``Linear`` ``lin_src``/``lin_dst``
+    and ``att_src``/``att_dst`` (``_gat_named_probe``) is attached, so the GATv2 branch
+    (dead for real GATv2Conv layers, see
+    ``test_init_zeroes_every_linear_bias_and_misses_the_gatv2_attributes``) runs: the
+    7-filled biases become exactly 0 (only that branch can zero them, since PyG
+    ``Linear`` is not ``nn.Linear``) and both 7-filled attention tensors are redrawn.
+    """
+    encoder = "gin" if variant == "gin" else "gatv2"
+    with torch.random.fork_rng():
+        model = _tiny(gene_encoder_config={"encoder_type": encoder})
+        if variant == "gatv2+probe":
+            model.probe = _gat_named_probe()
+        replica = copy.deepcopy(model)
+        torch.manual_seed(7)
+        model._init_weights()
+        torch.manual_seed(7)
+        _replay_init(replica)
+    expected = dict(replica.named_parameters())
+    for name, param in model.named_parameters():
+        assert torch.equal(param, expected[name]), name
+    if variant == "gatv2+probe":
+        probe = model.probe
+        for name in ("lin_src", "lin_dst"):
+            bias = getattr(probe, name).bias
+            assert isinstance(bias, torch.Tensor)
+            assert torch.equal(bias, torch.zeros(4)), name
+        for name in ("att_src", "att_dst"):
+            att = getattr(probe, name)
+            assert isinstance(att, torch.Tensor)
+            assert not torch.equal(att, torch.full((1, 2, 4), 7.0)), name
+
+
+GIN_UNTOUCHED = [
+    "convs.0.convs.('gene', 'physical', 'gene').conv.eps",
+    "convs.0.convs.('gene', 'physical', 'gene').norm.bias",
+    "convs.0.convs.('gene', 'physical', 'gene').norm.weight",
+    "convs.0.convs.('gene', 'regulatory', 'gene').conv.eps",
+    "convs.0.convs.('gene', 'regulatory', 'gene').norm.bias",
+    "convs.0.convs.('gene', 'regulatory', 'gene').norm.weight",
+    "gene_embedding.weight",
+    "gene_interaction_predictor.hyper_sagnn.beta_params.0",
+    "preprocessor.mlp.1.bias",
+    "preprocessor.mlp.1.weight",
+]
+GATV2_UNTOUCHED = sorted(
+    [
+        *[n for n in GIN_UNTOUCHED if "conv.eps" not in n],
+        *[
+            f"convs.0.convs.('gene', '{g}', 'gene').conv.{p}"
+            for g in ("physical", "regulatory")
+            for p in (
+                "att",
+                "bias",
+                "lin_l.bias",
+                "lin_l.weight",
+                "lin_r.bias",
+                "lin_r.weight",
+            )
+        ],
+    ]
+)
+
+
+@pytest.mark.parametrize(
+    ("encoder", "untouched"), [("gin", GIN_UNTOUCHED), ("gatv2", GATV2_UNTOUCHED)]
+)
+def test_init_weights_leaves_exactly_the_non_linear_parameters_at_construction(
+    monkeypatch: pytest.MonkeyPatch,
+    encoder: str,
+    untouched: list[str],
+    restore_rng: None,
+) -> None:
+    """Built at seed 0 with and without ``_init_weights`` (the init runs last in
+    ``__init__``, so both builds see the same RNG stream up to it): the parameters that
+    agree are exactly the embedding (its own N(0, 0.02) init), the HyperSAGNN ReZero
+    beta, GIN's eps, the PyG LayerNorms (``torch_geometric.nn.LayerNorm`` is not
+    ``nn.LayerNorm``), the preprocessor's ``nn.LayerNorm`` (already ones/zeros) and,
+    for GATv2, every GATv2Conv parameter (``lin_l``/``lin_r`` are PyG ``Linear``, not
+    ``nn.Linear``, and the GATConv names the branch tests are absent). Every other
+    parameter, all ``nn.Linear``, differs.
+    """
+    config: dict[str, Any] = {
+        "gene_encoder_config": {
+            "encoder_type": encoder,
+            "graph_aggregation_method": "sum",
+        }
+    }
+    initialized = _tiny(**config)
+    monkeypatch.setattr(GeneInteractionDango, "_init_weights", lambda self: None)
+    raw = _tiny(**config)
+    a, b = dict(initialized.named_parameters()), dict(raw.named_parameters())
+    same = sorted(n for n in a if torch.equal(a[n], b[n]))
+    assert same == untouched
+    linear_params = sorted(
+        f"{name}.{p}"
+        for name, module in initialized.named_modules()
+        if isinstance(module, nn.Linear)
+        for p, _ in module.named_parameters()
+    )
+    assert sorted(set(a) - set(same)) == sorted(set(linear_params))
+
+
+class _Inject(nn.Module):
+    """Wraps a stage; its ``k``-th call (1-based) returns ``value`` everywhere."""
+
+    def __init__(self, inner: Any, k: int, value: float) -> None:
+        super().__init__()
+        self.inner = inner
+        self.k = k
+        self.value = value
+        self.calls = 0
+        self.outputs: list[torch.Tensor] = []
+
+    def forward(self, *args: Any, **kwargs: Any) -> torch.Tensor:
+        self.calls += 1
+        out = self.inner(*args, **kwargs)
+        result = torch.full_like(out, self.value) if self.calls == self.k else out
+        self.outputs.append(result.detach().clone())
+        return result
+
+
+def test_perturbed_stage_guards_name_their_stage_including_finite_overflow(
+    monkeypatch: pytest.MonkeyPatch, restore_rng: None
+) -> None:
+    """The stage after the wildtype checks, each reached alone:
+
+    * ``forward_single``'s 2nd call (the batch) returns +inf: "perturbed embeddings
+      (z_i)" (hetero_cell_bipartite_dango_gi.py:1032-1033);
+    * the global aggregator's 2nd call (the batch) returns +inf: "global perturbed
+      embeddings (z_i_global)" (:1039-1042);
+    * both aggregator calls FINITE, +3e38 for the wildtype and -3e38 for the batch:
+      z_p = 3e38 - (-3e38) = 6e38 overflows float32 (max 3.4028e38) to +inf, caught as
+      "perturbation difference (z_p_global)" (:1060-1063).
+
+    The remaining guards after these (pert_gene_embs :1049, the dimension adjustment
+    :1111, the prediction stack :1130, the softmax :1143, the weighted predictions
+    :1150, concat :1166 and the final output :1175) only see rows of an already-checked
+    tensor, softmax weights of finite logits, or convex combinations of finite values,
+    so they cannot fire; they are left uncovered.
+    """
+    cell_graph, batch = _cell_graph(), _batch([[0, 1], [2, 3]])
+    model = _tiny().eval()
+    single = model.forward_single
+
+    calls: list[int] = []
+
+    def forward_single(data: Any) -> torch.Tensor:
+        calls.append(1)
+        out = single(data)
+        return torch.full_like(out, float("inf")) if len(calls) == 2 else out
+
+    object.__setattr__(model, "forward_single", forward_single)
+    with pytest.raises(
+        RuntimeError, match=r"^NaN or inf detected in perturbed embeddings \(z_i\)$"
+    ):
+        model(cell_graph, batch)
+
+    model = _tiny().eval()
+    monkeypatch.setattr(
+        model, "global_aggregator", _Inject(model.global_aggregator, 2, float("inf"))
+    )
+    with pytest.raises(
+        RuntimeError,
+        match=r"^NaN or inf detected in global perturbed embeddings \(z_i_global\)$",
+    ):
+        model(cell_graph, batch)
+
+    model = _tiny().eval()
+    first = _Inject(model.global_aggregator, 1, 3e38)
+    outer = _Inject(first, 2, -3e38)
+    monkeypatch.setattr(model, "global_aggregator", outer)
+    with pytest.raises(
+        RuntimeError,
+        match=r"^NaN or inf detected in perturbation difference \(z_p_global\)$",
+    ):
+        model(cell_graph, batch)
+    # what the module's pooling handed on: the wildtype [1, 8] all 3e38 and the batch
+    # [2, 8] all -3e38, both finite (and so past the two pooled-embedding guards); the
+    # inf therefore arose in the module's own subtraction z_w - z_i
+    wildtype, perturbed = outer.outputs
+    assert torch.equal(wildtype, torch.full((1, HIDDEN), 3e38))
+    assert torch.equal(perturbed, torch.full((2, HIDDEN), -3e38))
+    assert torch.isfinite(wildtype).all() and torch.isfinite(perturbed).all()
+
+
+def test_hetero_conv_fallback_sum_is_reachable_only_by_mutating_the_method() -> None:
+    """The constructor builds an aggregator for the two learned methods, None for
+    "sum"/"mean", and refuses anything else, so the final ``else`` of the aggregation
+    (lines 336-339, "Fallback to sum") is unreachable from a constructed layer; with the
+    method rewritten after construction to an unbuilt name it returns 2x + 3x = 5x and
+    no weights. The ``if not graph_outputs`` skip (line 318) cannot run at all: a
+    destination enters the dict only with one output in it.
+    """
+    convs: dict[Any, nn.Module] = {PHYS: _Scale(2.0), REG: _Scale(3.0)}
+    layer = HeteroConvAggregator(convs, 2, "sum")
+    layer.aggregation_method = "cross_attention"
+    assert layer.aggregator is None
+    x = {"gene": torch.arange(6.0).reshape(3, 2)}
+    edges = {PHYS: _edge_index([(0, 1)]), REG: _edge_index([(1, 2)])}
+    out, attn = layer(x, edges)
+    assert torch.equal(out["gene"], 5 * x["gene"])
+    assert attn is None

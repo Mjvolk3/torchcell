@@ -1,0 +1,28 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_bacteria_candidate_datasets_table.py
+\begingroup
+\footnotesize
+\begin{longtable}{@{}L{40mm} L{13mm} L{17mm} L{32mm} r r L{20mm}@{}}
+\caption[]{The isoprenol axis. \emph{Rule} is the rank the measurement ordering gives on its own and \emph{Final} the rank this document prints, so the pin can be undone row by row. \emph{Direct} measures isoprenol or isopentenol itself, the same molecule under two names, and is lifted into tranche 1. \emph{Precursor} measures another isoprenoid and is lifted above the cut. \emph{Tolerance} rows are reported on the axis but not pinned, because an inhibitor screen is already ranked on its own scale.}
+\label{tab:bpins}\\
+\toprule
+\textbf{Dataset} & \textbf{Host} & \textbf{Axis} & \textbf{Product} & \textbf{Rule} & \textbf{Final} & \textbf{Lifted by} \\
+\midrule
+\endfirsthead
+\multicolumn{7}{@{}l}{\footnotesize\emph{Table~\ref{tab:bpins}, continued}}\\
+\toprule
+\textbf{Dataset} & \textbf{Host} & \textbf{Axis} & \textbf{Product} & \textbf{Rule} & \textbf{Final} & \textbf{Lifted by} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Carruthers 2025 & \emph{P. putida} & direct & isoprenol & 6 & 6 & -- \\
+Yunus 2026 & \emph{P. putida} & direct & isoprenol & 72 & 14 & isoprenol \\
+de Siqueira 2025 & \emph{P. putida} & direct & isoprenol & 71 & 15 & isoprenol \\
+Wang 2015 isoprenol tolerance & \emph{E. coli} & direct & isoprenol & 67 & 16 & isoprenol \\
+Lim 2025 isoprenol TALE & \emph{P. putida} & direct & isoprenol & 65 & 17 & isoprenol \\
+Tian 2019 isopentenol CRISPRi & \emph{E. coli} & direct & isopentenol & 63 & 18 & isoprenol \\
+Kang 2026 isoprenyl acetate & \emph{P. putida} & direct & isoprenyl acetate, isoprenol & 57 & 19 & isoprenol \\
+Menasalvas 2025 & \emph{P. putida} & direct & isoprenol & 50 & 20 & isoprenol \\
+\end{longtable}
+\endgroup

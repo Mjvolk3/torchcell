@@ -1,0 +1,88 @@
+%% notes-tex/database-expansion-bacteria/sections/isoprenol.tex
+%% [[experiments.database.expansion-bacteria]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database-expansion-bacteria/sections/isoprenol.tex
+%% SOURCE: hand-authored prose; every number quoted here comes from
+%% experiments/database/scripts/build_bacteria_candidate_datasets_table.py and
+%% experiments/database/scripts/build_bacteria_discovery_queue.py
+
+\section{Isoprenol, and the pin that the ordering rule needs\secstatus{todo}}\label{sec:iso}
+
+\subsection{The product named as the priority is the one the rule ranks last\secstatus{todo}}
+
+\term{Isoprenol} is 3-methyl-3-buten-1-ol, an aviation fuel precursor, and it is the
+product the bacterial strain-design work targets. It appears in the literature under two
+names: the earlier papers write \term{isopentenol} and the current ones write isoprenol,
+and they are the same molecule, so a row counts as measuring it under either word.
+
+Section~\ref{sec:cost} stated the cost of ordering rows by measurements in general terms.
+Isoprenol is the case where that cost becomes a concrete defect. A titer campaign measures
+tens to a few thousand numbers, because a strain yields one titer per condition per
+replicate and strains are built by hand. A barcoded fitness screen measures $10^{6}$ to
+$10^{8}$. No isoprenol campaign can outrank any screen, whatever its relevance, so
+measurement order alone placed four of the eight isoprenol rows outside the fifty
+recommended builds, at ranks 57, 64, 69 and 70 of 75. The highest-priority product in the
+portfolio sorted into the reserve.
+
+\subsection{A pin, reported as moves, rather than a tuned weight\secstatus{todo}}
+
+Two repairs were available. A weight on production relevance folded into the score would
+reorder the table, and would also make the ordering unauditable: a reader could no longer
+recover what scale alone said, and the weight would be chosen by whoever wanted a
+particular answer. A pin applied after ranking does the same reordering and stays
+reversible, so that is what the generating script does.
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item A row on the \term{direct} axis measures isoprenol or isopentenol itself. It is
+    lifted into the first tranche.
+  \item A row on the \term{precursor} axis measures a different isoprenoid or terpenoid,
+    so it carries the mevalonate or MEP pathway that feeds isoprenol without carrying the
+    product. Lycopene, pinene, mevalonate and geranic acid are here. It is lifted above
+    the cut at fifty.
+  \item A row on the \term{tolerance} axis measures tolerance to isoprenol, or to a
+    short-chain alcohol standing in for it, without measuring a titer. It is reported on
+    the axis and \emph{not} lifted, because an inhibitor screen is already ranked on the
+    scale of a screen rather than the scale of a titer campaign.
+\end{itemize}
+
+Each lift displaces the weakest row inside the boundary that no pin protects, and every
+lift is recorded with its rank before and after. Table~\ref{tab:bpins} prints the rank the
+measurement rule gives on its own beside the rank this document prints, so the pin can be
+undone row by row. The per-host floor of Sec.~\ref{sec:stage} reads the same protection,
+which is what keeps one mechanism from canceling another.
+
+\subsection{What the sweep found, and what it missed\secstatus{todo}}\label{sec:sweep}
+
+A metadata sweep over Europe PMC returned 300 publications for the two hosts, 200
+\org{E. coli} and 100 \org{P. putida}, and it is held as a separate artifact with a
+separate generating script because none of its record counts have been verified. Every
+cell of its instance column reads ``Verify from supplement'', and its own overview states
+the limit: ``this is a 300-candidate discovery queue, not 300 download-verified
+datasets.'' Table~\ref{tab:bqueue} gives its composition and Table~\ref{tab:bqueueiso}
+every isoprenol-relevant row it returned. A queue row is a lead, and promoting one means
+fetching the paper, counting its axes and writing a curated row; nothing in the queue may
+be cited as though its scale were known.
+
+The sweep flagged six publications as measuring isoprenol directly, four for
+\org{P. putida} and two for \org{E. coli}. All four \org{P. putida} papers were already
+curated here, which is a useful independent check on coverage. Both \org{E. coli} papers
+were absent and are now added, and they matter out of proportion to their size: before
+them the table held no isoprenol row for \org{E. coli} at all, so the product existed in
+one host only and no cross-host transfer could be posed.
+
+The sweep also missed two isoprenol papers this table already held, a CRISPRi
+downregulation campaign and a lignocellulosic-sugar conversion campaign that reports
+isoprenol alongside isoprenyl acetate. Both measure isoprenol titer and neither carries the
+word in its title, which is the mechanism of the miss: title and abstract matching finds a
+paper named for its product and not one named for its method. Two misses out of eight is a
+25 percent false-negative rate on the one axis the sweep was built to find, measured
+against a list assembled by hand, so the queue is a source of leads and not a measure of
+what exists.
+
+\clearpage
+\input{tables/pins}
+
+\clearpage
+\input{tables/queue}
+
+\clearpage
+\input{tables/queue-iso}

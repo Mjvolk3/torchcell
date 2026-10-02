@@ -18,11 +18,23 @@ n times the panel depth. Instances break a measurement tie and tier breaks that,
 so the rule is total and reproducible.
 
 STAGING. The build is planned in two tranches, 20 rows then 30:
-  tranche 1  the first 20, with a per-organism quota of 10 and 10, so neither host
-             waits behind the other's larger screens
+  tranche 1  the first 20, with a per-host FLOOR of six rows (``QUOTA_1``), so
+             neither host waits behind the other's larger screens
   tranche 2  the next 30 by the same global rule
-The quota is applied AFTER ranking and is reported row by row, so the effect of the
-quota on the order is auditable rather than folded into a score.
+The floor is applied AFTER ranking and is reported row by row, so its effect on the
+order is auditable rather than folded into a score.
+
+THE ISOPRENOL PIN, and it overrides the ordering rule on purpose. Isoprenol
+(3-methyl-3-buten-1-ol) is the product the strain-design work targets, and the
+measurement rule above buries it: a titer campaign of fifty strains yields tens to
+thousands of numbers while a barcoded fitness screen yields 10^6 to 10^8, so every
+isoprenol paper sorts below every screen no matter how central it is. Ranking alone
+put two of the four known *P. putida* isoprenol campaigns in the reserve, outside the
+fifty recommended builds. ``PIN_DIRECT`` therefore lifts rows that measure isoprenol
+itself into tranche 1 and rows that measure another isoprenoid above the cut, and
+every lift is reported as a move with its before and after rank. A pin is the honest
+mechanism because the alternative is a hand-tuned weight that would hide the same
+decision inside a score.
 
 Emits, off the same records:
   - notes-tex/database-expansion-bacteria/tables/final.tex       (the ranked list)
@@ -32,7 +44,12 @@ Emits, off the same records:
   - notes-tex/database-expansion-bacteria/tables/analogs.tex     (yeast analog per row)
   - notes-tex/database-expansion-bacteria/tables/schema.tex      (what the schema needs)
   - notes-tex/database-expansion-bacteria/tables/excluded.tex    (considered and dropped)
+  - notes-tex/database-expansion-bacteria/tables/pins.tex        (isoprenol rows lifted)
   - <results>/candidates/bacteria_candidate_datasets.json        (machine-readable dump)
+
+The 300-publication sweep behind this list is a separate artifact with a separate
+script, ``build_bacteria_discovery_queue.py``: its rows carry no verified counts and
+must not be confused with these.
 
 Run from the repo root:
   python experiments/database/scripts/build_bacteria_candidate_datasets_table.py
@@ -42,6 +59,7 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal
 
@@ -80,6 +98,12 @@ TRANCHE_2 = 50
 # ten-and-ten split WOULD have bound, promoting four rows of a few hundred
 # measurements over rows of a few hundred thousand, which is what the floor avoids.
 QUOTA_1 = {"E. coli": 6, "P. putida": 6}
+
+# The isoprenol pin. A row that measures isoprenol itself is lifted into tranche 1; a
+# row that measures another isoprenoid, so carries the precursor pathway without the
+# product, is lifted above the cut at TRANCHE_2. Both are reported as moves.
+PIN_DIRECT = TRANCHE_1
+PIN_PRECURSOR = TRANCHE_2
 
 # ---------------------------------------------------------------------------
 # Vocabulary. Defined here so it is defined before use in the document, and so a
@@ -129,11 +153,29 @@ SeqBasis = Literal[
     "engineered-chassis",  # named production strain plus heterologous cassettes
     "engineered-chassis+RBS",  # the chassis plus a designed ribosome binding site
     "engineered-chassis+promoter",
+    # The chassis plus a guide array, which is the basis a CRISPRi production campaign
+    # sits on: the pathway cassettes are heterologous and integrated or plasmid-borne,
+    # and the perturbation on top of them leaves the genome unedited. Distinct from
+    # "K-12+guide", where the host is the bare reference.
+    "engineered-chassis+guide",
     "evolved-WGS",  # a resequenced evolved clone; unsequenced populations are excluded
     "reference-only",  # wild type; the environment carries the perturbation
 ]
 
 Basis = Literal["reported", "product", "estimate"]
+
+# Where a row sits on the isoprenol axis, which is what the pin reads.
+#   direct      the study measures isoprenol or isopentenol itself. The two names are
+#               the same molecule, 3-methyl-3-buten-1-ol; "isopentenol" is the older
+#               usage in the JBEI papers and "isoprenol" the current one, so a row is
+#               direct under either word.
+#   precursor   the study measures a different isoprenoid or terpenoid, so it carries
+#               the mevalonate or MEP pathway that feeds isoprenol without carrying
+#               the product. Lycopene, pinene, mevalonate and geranic acid are here.
+#   tolerance   the study measures tolerance to isoprenol, or to a short-chain alcohol
+#               or biomass inhibitor that stands in for it, without measuring titer.
+#   none        no isoprenol relevance; the row is in the table on scale alone.
+Isoprenol = Literal["direct", "precursor", "tolerance", "none"]
 
 # Ingestion state. Every row here starts as a candidate because no bacterial dataset
 # is built, but two other states matter: a corpus that re-serves other papers is an
@@ -201,6 +243,12 @@ class Candidate(BaseModel):
     accession_confirmed: bool = False
     status: Status = "candidate"
     confidence: Confidence = "sourced"
+    # The isoprenol axis, which the pin in ``ranked`` reads. Default "none" so a row
+    # is only on the axis when the judgment was made deliberately.
+    isoprenol: Isoprenol = "none"
+    # What the row measures, when it is on the isoprenol axis: the product name as the
+    # paper words it, so "isopentenol" stays "isopentenol". Empty off the axis.
+    product: str = ""
     analog: Analog | None = None
     synergy: list[Synergy] = Field(default_factory=list)
     time_axis: str = ""
@@ -2044,6 +2092,8 @@ CANDIDATES: list[Candidate] = [
         accession="https://doi.org/10.5061/dryad.gtht76hzh",
         accession_confirmed=True,
         status="candidate",
+        isoprenol="direct",
+        product="isoprenol",
         confidence="sourced",
         analog=Analog(
             dataset="Lian 2019 CRISPR-AID",
@@ -2151,6 +2201,8 @@ CANDIDATES: list[Candidate] = [
         accession="https://doi.org/10.5061/dryad.sbcc2frjq",
         accession_confirmed=True,
         status="candidate",
+        isoprenol="direct",
+        product="isoprenol",
         confidence="sourced",
         analog=Analog(
             dataset="Lopez 2024 isobutanol",
@@ -2205,6 +2257,8 @@ CANDIDATES: list[Candidate] = [
         accession="https://www.ebi.ac.uk/pride/archive/projects/PXD054609",
         accession_confirmed=True,
         status="candidate",
+        isoprenol="direct",
+        product="isoprenol",
         confidence="sourced",
         analog=Analog(
             dataset="Mormino 2022 CRISPRi acetic acid",
@@ -2257,6 +2311,8 @@ CANDIDATES: list[Candidate] = [
         accession="https://www.ebi.ac.uk/pride/archive/projects/PXD055153",
         accession_confirmed=True,
         status="candidate",
+        isoprenol="direct",
+        product="isoprenol",
         confidence="sourced",
         analog=Analog(
             dataset="Mormino 2022 CRISPRi acetic acid",
@@ -2588,6 +2644,8 @@ CANDIDATES: list[Candidate] = [
         accession="",
         accession_confirmed=False,
         status="candidate",
+        isoprenol="direct",
+        product="isoprenol",
         confidence="sourced",
         analog=Analog(
             dataset="Lian 2019 CRISPR-AID",
@@ -3230,6 +3288,8 @@ CANDIDATES: list[Candidate] = [
         accession="https://www.ebi.ac.uk/pride/archive/projects/PXD067010",
         accession_confirmed=True,
         status="candidate",
+        isoprenol="direct",
+        product="isoprenyl acetate, isoprenol",
         confidence="sourced",
         analog=Analog(
             dataset="Lopez 2024 isobutanol",
@@ -4032,6 +4092,136 @@ CANDIDATES: list[Candidate] = [
             )
         ],
     ),
+    # ---------------------------------------------------------------------
+    # The two E. coli isoprenol rows. Added after a 300-publication sweep
+    # (Sec. sec:sweep) found them absent, and they close a gap that mattered: every
+    # other isoprenol row here is P. putida, so before these the product existed in
+    # one host only and no cross-host question could be posed.
+    # ---------------------------------------------------------------------
+    Candidate(
+        name="Tian 2019 isopentenol CRISPRi",
+        organism="E. coli",
+        citation="Tian T, Kang JW, Kang A, Lee TS. Redirecting metabolic flux "
+        "via combinatorial multiplex CRISPRi-mediated repression for "
+        "isopentenol production in Escherichia coli. ACS Synthetic "
+        "Biology 2019;8:391-402",
+        url="https://doi.org/10.1021/acssynbio.8b00429",
+        klass="Combinatorial design",
+        tier=4,
+        genotypes_n=24,
+        genotypes="24: 1 base, 18 single-guide, 3 two-guide, 2 three-guide",
+        env_n=3,
+        env="3 induction levels",
+        instances_n=84,
+        instances_basis="product",
+        phenotype="isopentenol titer by GC plus OD600, replicate count not stated",
+        dim=2,
+        dim_basis="reported",
+        seq_basis="engineered-chassis+guide",
+        modality="multiplex CRISPRi knockdown",
+        isoprenol="direct",
+        product="isopentenol",
+        why="The only isoprenol production campaign in either host with a nested "
+        "combinatorial perturbation axis, and the reason this row is here "
+        "despite releasing nothing. Three genes, asnA, gldA and prpE, are "
+        "realized as 3 singles, all 3 pairs and the full triple, each assayed "
+        "across repression levels of 0, 5 and 10 nM anhydrotetracycline, so the "
+        "design scores an interaction and a dose rather than a ranking. A second "
+        "3-gene array over poxB, ackA and pta is matched against a triple "
+        "knockout of the same genes, which is a knockdown-versus-deletion "
+        "comparison on one gene set. The host is DH1, not BW25113 or MG1655, "
+        "carrying the KG1R10 mevalonate pathway as two plasmids: atoB, HMGS, "
+        "HMGR, MK and PMK under Ptrc, then nudB and PMD under PlacUV5. Every "
+        "construct has a JBEI registry number. The paper's own target count is "
+        "self-inconsistent, 21 genes in the introduction against 18 guides in "
+        "the results and 15 in the abstract, and one printed symbol, arcC, is "
+        "not a K-12 gene name.",
+        accession="JBEI public registry (https://public-registry.jbei.org), JPUB numbers per plasmid in Table 1; no sequence-data or value accession",
+        accession_confirmed=False,
+        status="blocked",
+        confidence="sourced",
+        time_axis="sampled at 24 and 48 h, with the methods also stating 76 h against 72 h in the results",
+        schema_need="a guide-array perturbation carrying more than one target at a "
+        "graded induction level, and a titer measured on a chassis whose pathway is "
+        "plasmid-borne rather than integrated",
+        analog=Analog(
+            dataset="Lian 2019 CRISPR-AID",
+            why="multiplexed guide arrays over one gene set",
+        ),
+        synergy=[
+            Synergy(
+                partner="Lian 2019 CRISPR-AID",
+                partner_status="supported",
+                join="multiplex guide array",
+                yields="multiplexed guide arrays over one gene set",
+            ),
+            Synergy(
+                partner="Wang 2015 isoprenol tolerance",
+                partner_status="candidate",
+                join="isoprenol",
+                yields="production and tolerance for one product in one host",
+            ),
+        ],
+    ),
+    Candidate(
+        name="Wang 2015 isoprenol tolerance",
+        organism="E. coli",
+        citation="Wang C, Yang L, Shah AA, Choi ES, Kim SW. Dynamic interplay of "
+        "multidrug transporters with TolC for isoprenol tolerance in "
+        "Escherichia coli. Scientific Reports 2015;5:16505",
+        url="https://doi.org/10.1038/srep16505",
+        klass="Tolerance / robustness",
+        tier=2,
+        genotypes_n=47,
+        genotypes="47 released: wild type plus 46 deletions",
+        env_n=2,
+        env="2 isoprenol doses",
+        instances_n=94,
+        instances_basis="product",
+        phenotype="OD600 at 12 h with and without isoprenol, sample SD over 2 biological replicates",
+        dim=1,
+        dim_basis="reported",
+        seq_basis="K-12-KO",
+        modality="gene deletion",
+        isoprenol="direct",
+        product="isoprenol",
+        why="The only isoprenol tolerance screen in either host over a cataloged "
+        "deletion collection, which is what earns tier 2 on one cleared bar. "
+        "Supplementary Table S3 releases OD600 with standard deviation for the "
+        "wild type and 46 Keio single deletions at 0 and 0.5 percent isoprenol by "
+        "volume, in 2YT at 30 degrees, and Table S4 adds a 9-gene transporter "
+        "transcript panel. Keio JW numbers are given per strain, so the deletion "
+        "alleles resolve to Baba 2006. Two multi-gene strains exist and are the "
+        "paper's own epistasis test, acrA with acrB and that double with tolC, "
+        "both reported as non-additive against their singles with a plasmid "
+        "complementation control; neither appears in any released table, so the "
+        "combinatorial arm is a provenance gap rather than a record. The 0.75 "
+        "percent dose is figure-only for the same reason. The paper's mutant "
+        "count is self-inconsistent, 44 in the results and 45 in the abstract "
+        "against 46 rows in Tables S2 and S3; the table count is what is ingested.",
+        accession="Springer ESM 41598_2015_BFsrep16505_MOESM1_ESM.pdf (Tables S2, S3, S4); strains are Keio JW numbers, NBRP National Institute of Genetics",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
+        analog=Analog(
+            dataset="Lopez 2024 isobutanol",
+            why="deletion collection scored for an alcohol phenotype",
+        ),
+        synergy=[
+            Synergy(
+                partner="Lopez 2024 isobutanol",
+                partner_status="supported",
+                join="deletion collection",
+                yields="deletion collection scored for an alcohol phenotype",
+            ),
+            Synergy(
+                partner="Nichols 2011",
+                partner_status="candidate",
+                join="Keio collection",
+                yields="one more chemical on a shared deletion axis",
+            ),
+        ],
+    ),
 ]
 
 EXCLUDED: list[Excluded] = [
@@ -4225,21 +4415,75 @@ def write(path: Path, body: str) -> None:
     print(f"Wrote {path.relative_to(REPO)}")
 
 
-def ranked() -> tuple[list[Candidate], list[tuple[str, int, int]]]:
-    """Rank by measurements, then apply the tranche-1 per-organism quota.
+def is_pinned(c: Candidate) -> bool:
+    """Whether the isoprenol pin protects this row from being displaced.
 
-    Returns the ordered rows and the quota moves as (name, from_rank, to_rank), so
-    the document can report every row the quota promoted rather than hiding the
-    reordering inside a score.
+    Read by every lift, including the per-host floor, so that no mechanism can undo
+    another's promotion. Tolerance rows are deliberately NOT pinned: they are on the
+    isoprenol axis for reporting, but they are inhibitor screens and the ordering
+    rule already places them on their own scale.
+    """
+    return c.isoprenol in ("direct", "precursor")
+
+
+def _lift(
+    rows: list[Candidate],
+    boundary: int,
+    wanted: Callable[[Candidate], bool],
+    reason: str,
+    moves: list[tuple[str, str, int, int]],
+) -> None:
+    """Move every row satisfying ``wanted`` inside the first ``boundary`` rows.
+
+    One lift per iteration, strongest row below the boundary first, displacing the
+    weakest row inside it that no pin protects. Every move is appended with its
+    before and after rank, so the printed order can be reconciled against the pure
+    measurement order row by row.
+    """
+    while True:
+        below = [c for c in rows[boundary:] if wanted(c)]
+        if not below:
+            return
+        promote = below[0]
+        inside = [c for c in rows[:boundary] if not is_pinned(c)]
+        if not inside:
+            return  # the boundary is entirely pinned; nothing left to displace
+        demote = max(inside, key=lambda c: c.sort_key)
+        old = rows.index(promote) + 1
+        rows.remove(promote)
+        rows.insert(rows.index(demote), promote)
+        rows.remove(demote)
+        rows.insert(boundary, demote)
+        moves.append((promote.name, reason, old, rows.index(promote) + 1))
+
+
+def ranked() -> tuple[list[Candidate], list[tuple[str, str, int, int]]]:
+    """Rank by measurements, then apply the isoprenol pin and the per-host floor.
+
+    Returns the ordered rows and the moves as (name, reason, from_rank, to_rank), so
+    the document can report every row that was lifted rather than hiding the
+    reordering inside a score. Three mechanisms run in priority order: isoprenol
+    first because it is the product the work targets, then its precursor pathway,
+    then the per-host floor, which on the current rows no longer binds.
     """
     rows = sorted(CANDIDATES, key=lambda c: c.sort_key)
     if not rows:
         return rows, []
 
-    # Tranche 1 by the global rule alone, then corrected to the quota. A host whose
+    moves: list[tuple[str, str, int, int]] = []
+
+    # The isoprenol pin, and it is the whole reason this function is not just a sort.
+    # Measurements rank a fifty-strain titer campaign below every barcoded screen,
+    # which on the unaided order left two of the four P. putida isoprenol campaigns
+    # in the reserve. Direct rows reach tranche 1; precursor rows reach the cut.
+    _lift(rows, PIN_DIRECT, lambda c: c.isoprenol == "direct", "isoprenol", moves)
+    _lift(
+        rows, PIN_PRECURSOR, lambda c: c.isoprenol == "precursor", "precursor", moves
+    )
+
+    # Tranche 1 by the global rule alone, then corrected to the floor. A host whose
     # screens are all smaller would otherwise not appear in the first tranche at
     # all, and the request was to start both hosts together.
-    moves: list[tuple[str, int, int]] = []
     for organism, quota in QUOTA_1.items():
         while True:
             have = [c for c in rows[:TRANCHE_1] if c.organism == organism]
@@ -4249,12 +4493,14 @@ def ranked() -> tuple[list[Candidate], list[tuple[str, int, int]]]:
             if not below:
                 break
             promote = below[0]
-            # Displace the weakest row of the OTHER host that is over its own quota,
-            # so a promotion never costs a row the quota is protecting.
+            # Displace the weakest row of the OTHER host that is over its own quota
+            # and that no pin protects, so a promotion never costs a row another
+            # mechanism is holding in place.
             others = [
                 c
                 for c in rows[:TRANCHE_1]
                 if c.organism != organism
+                and not is_pinned(c)
                 and len([d for d in rows[:TRANCHE_1] if d.organism == c.organism])
                 > QUOTA_1.get(c.organism, 0)
             ]
@@ -4266,7 +4512,7 @@ def ranked() -> tuple[list[Candidate], list[tuple[str, int, int]]]:
             rows.insert(rows.index(demote), promote)
             rows.remove(demote)
             rows.insert(TRANCHE_1, demote)
-            moves.append((promote.name, old, rows.index(promote) + 1))
+            moves.append((promote.name, "host floor", old, rows.index(promote) + 1))
     return rows, moves
 
 
@@ -4712,6 +4958,59 @@ The fifty name """
     return head + "\n".join(lines) + "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n"
 
 
+def render_pins(
+    rows: list[Candidate], moves: list[tuple[str, str, int, int]]
+) -> str:
+    """Every row on the isoprenol axis, and every lift the pin performed.
+
+    Printed in full rather than counted, because the pin overrides the ordering rule
+    and a reader has to be able to undo it: the measurement rank is what the rule
+    alone gives, the final rank is what the table prints.
+    """
+    axis = [c for c in rows if c.isoprenol != "none"]
+    pure = sorted(CANDIDATES, key=lambda c: c.sort_key)
+    pure_rank = {c.name: i for i, c in enumerate(pure, start=1)}
+    final_rank = {c.name: i for i, c in enumerate(rows, start=1)}
+    reason = {name: why for name, why, _, _ in moves}
+
+    body = [
+        r"\begingroup",
+        r"\footnotesize",
+        r"\begin{longtable}{@{}L{40mm} L{13mm} L{17mm} L{32mm} r r L{20mm}@{}}",
+        r"\caption[]{The isoprenol axis. \emph{Rule} is the rank the measurement "
+        r"ordering gives on its own and \emph{Final} the rank this document prints, so "
+        r"the pin can be undone row by row. \emph{Direct} measures isoprenol or "
+        r"isopentenol itself, the same molecule under two names, and is lifted into "
+        r"tranche 1. \emph{Precursor} measures another isoprenoid and is lifted above "
+        r"the cut. \emph{Tolerance} rows are reported on the axis but not pinned, "
+        r"because an inhibitor screen is already ranked on its own scale.}",
+        r"\label{tab:bpins}\\",
+        r"\toprule",
+        r"\textbf{Dataset} & \textbf{Host} & \textbf{Axis} & \textbf{Product} & "
+        r"\textbf{Rule} & \textbf{Final} & \textbf{Lifted by} \\",
+        r"\midrule",
+        r"\endfirsthead",
+        r"\multicolumn{7}{@{}l}{\footnotesize\emph{Table~\ref{tab:bpins}, continued}}\\",
+        r"\toprule",
+        r"\textbf{Dataset} & \textbf{Host} & \textbf{Axis} & \textbf{Product} & "
+        r"\textbf{Rule} & \textbf{Final} & \textbf{Lifted by} \\",
+        r"\midrule",
+        r"\endhead",
+        r"\bottomrule",
+        r"\endfoot",
+    ]
+    order = {"direct": 0, "precursor": 1, "tolerance": 2, "none": 3}
+    for c in sorted(axis, key=lambda c: (order[c.isoprenol], final_rank[c.name])):
+        body.append(
+            f"{tex_escape(c.name)} & \\emph{{{tex_escape(c.organism)}}} & {c.isoprenol} & "
+            f"{tex_escape(c.product) if c.product else '--'} & "
+            f"{pure_rank[c.name]} & {final_rank[c.name]} & "
+            f"{tex_escape(reason.get(c.name, '--'))} \\\\"
+        )
+    body += [r"\end{longtable}", r"\endgroup"]
+    return "\n".join(body) + "\n"
+
+
 def main() -> None:
     rows, quota_moves = ranked()
     if len(rows) < TARGET_COUNT:
@@ -4726,6 +5025,7 @@ def main() -> None:
     write(TEX_DIR / "counts.tex", render_counts(rows))
     write(TEX_DIR / "summary.tex", render_summary(rows))
     write(TEX_DIR / "excluded.tex", render_excluded())
+    write(TEX_DIR / "pins.tex", render_pins(rows, quota_moves))
 
     JSON_OUT.parent.mkdir(parents=True, exist_ok=True)
     JSON_OUT.write_text(
@@ -4749,8 +5049,8 @@ def main() -> None:
     )
     print(f"Wrote {JSON_OUT.relative_to(REPO)}")
 
-    for name, old, new in quota_moves:
-        print(f"quota promoted {name!r} from rank {old} to {new}")
+    for name, why, old, new in quota_moves:
+        print(f"{why} lifted {name!r} from rank {old} to {new}")
     n_ec = sum(c.organism == "E. coli" for c in rows[:TRANCHE_1])
     n_pp = sum(c.organism == "P. putida" for c in rows[:TRANCHE_1])
     print(
@@ -4762,6 +5062,14 @@ def main() -> None:
     print(
         f"of the fifty: {n_analog} mirror a built yeast dataset, "
         f"{n_sourced} carry figures sourced this pass"
+    )
+    axis = {k: [c for c in rows if c.isoprenol == k] for k in ("direct", "precursor", "tolerance")}
+    inside = {k: sum(rows.index(c) < TRANCHE_2 for c in v) for k, v in axis.items()}
+    print(
+        "isoprenol axis: "
+        + ", ".join(
+            f"{len(v)} {k} ({inside[k]} inside the fifty)" for k, v in axis.items()
+        )
     )
 
 

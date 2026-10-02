@@ -53,12 +53,14 @@ encodes is that a dataset's worth is its volume, and for a substrate meant to su
 inverse strain design that is a defensible default and an incomplete one: the rows that
 teach a model what an intervention does to a product are the rows this ordering ranks last.
 
-Two things follow, and only the first is done here. The ranking is reported as asked, so
-the table below is ordered by volume and density alone. And the alternative is one field
-away rather than a rewrite: the generating script already records a class per row, so a
-portfolio rule that reserves a share of the tranche for engineering breadth, the way the
-yeast list bands its rows before ranking them, would reorder the same records without
-recollecting anything.
+Two things follow, and both are now done. The ranking is reported as asked, so the
+measurement order is recoverable for every row and is printed beside the final order in
+Table~\ref{tab:bpins}. And the correction turned out to be one field rather than a
+rewrite: a per-row product axis, pinned after ranking, reorders the same records without
+recollecting anything. Section~\ref{sec:iso} applies it to the one product the work
+targets, where the three-order-of-magnitude penalty had put four of eight rows in the
+reserve. The same mechanism extends to any other product that becomes a priority, which
+is the argument for a pin over a reweighted score.
 
 \subsection{Sequence reconstruction is the gate, not a preference\secstatus{todo}}
 
@@ -127,12 +129,12 @@ The bars apply to what a row contains rather than to its reputation. A curated c
 with thousands of literature records fails tier 1 whatever its size, because its records
 re-serve primary papers and the net-new fraction is unknown until it is split by source.
 
-\subsection{Staging, and why the first tranche carries a quota\secstatus{todo}}\label{sec:stage}
+\subsection{Staging, and why the first tranche carries a floor\secstatus{todo}}\label{sec:stage}
 
 The fifty are built in two tranches, twenty then thirty. The second tranche is the next
-thirty by the ordering rule and needs no further explanation. The first twenty carry one
-correction to the rule, and it is applied after ranking and reported rather than folded
-into a score.
+thirty by the ordering rule and needs no further explanation. The first twenty carry two
+corrections to the rule, the isoprenol pin of Sec.~\ref{sec:iso} and the per-host floor
+below. Both are applied after ranking and reported rather than folded into a score.
 
 The correction is a floor of six rows per host, not an even split, and the difference
 matters. The two schema changes in Sec.~\ref{sec:schema} are per host, and so is
@@ -141,10 +143,10 @@ actually built; a floor guarantees both hosts start. An even ten-and-ten split w
 much further than that and fight the ordering rule, promoting four rows of a few hundred
 measurements over rows of a few hundred thousand.
 
-On these rows the floor does not bind at all. Ranking by measurements alone already puts
+On these rows the floor does not bind. Ranking by measurements alone already puts
 fourteen \org{E. coli} rows and six \org{P. putida} rows in the first tranche, which meets
-the floor without promoting anything, so the printed order is the measurement order from
-first row to last. The floor is a guard that turned out not to be needed, and the
-generating script prints any promotion it makes, so a future pass in which it does bind
-will say so rather than quietly reordering. An even ten-and-ten split would have bound
-here, which is the comparison that justifies the floor over a split.
+the floor without promoting anything, and the isoprenol pin then raises the
+\org{P. putida} count further because that host carries most of the isoprenol work. Every
+promotion the floor makes is printed, so a future pass in which it does bind will say so
+rather than quietly reordering. An even ten-and-ten split would have bound here, which is
+the comparison that justifies the floor over a split.

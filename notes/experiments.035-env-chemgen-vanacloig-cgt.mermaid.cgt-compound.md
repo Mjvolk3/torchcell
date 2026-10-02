@@ -170,3 +170,109 @@ a low-rank factorization $z_s^{\top} u_c$ whose gene factor happens to be comput
 transformer. Diagram 2 is where the molecule is allowed to hit genes (`hit`), spread over
 the network (`hit_prop`), or be attended to by the deleted gene (`gene_attend`); with two
 message-passing layers all three reach ridge and none beats it.
+
+## 2026.10.02 - Diagram 3: the best model as it ran, and where the knockout enters
+
+The best number of the experiment (median centered Spearman 0.334, +0.032 against nested
+ridge, compound-level CI through zero) is a plain mean of nested ridge and the environment
+encoder (`head: env_encoder`, `cgt_layers: 1`, `cgt_lambda: 0`, nine seeds). Drawn from
+`EnvironmentEncoder` in `train_factorized.py`. Gray boxes are computed and then NOT used
+by the prediction, or carry no strain information: the graph prior is off, so no graph
+edge enters; the post-deletion states of the 6,603 remaining genes are discarded; the
+pooled field and the compound token are the same for every strain under a compound. The
+only strain-specific quantities are the four deleted genes' own rows, read twice.
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'background':'#F5EEDD','clusterBkg':'#F5EEDD','clusterBorder':'#E0D6BE','lineColor':'#B7AC93'}}}%%
+graph TD
+  subgraph Inputs["$$\text{Inputs}$$"]
+    direction TB
+    Strain["$$\begin{gathered}\text{Strain } s\ (3{,}598\ \text{knockouts})\\\ S_s = \{g_s\} \cup \{\mathrm{PDR1}, \mathrm{PDR3}, \mathrm{SNQ2}\}\\\ \text{one screened deletion + three host deletions}\end{gathered}$$"]
+    Compound["$$\begin{gathered}\text{Compound } c\ (41)\\\ x_c \in \mathbb{N}^{2048}\ \text{FCFP4 counts}\end{gathered}$$"]
+    CellGraph["$$\begin{gathered}\text{Wildtype cell graph}\\\ N = 6{,}607\ \text{genes},\ 9\ \text{graphs}\\\ \text{used only to name the } N \text{ tokens}\end{gathered}$$"]
+  end
+
+  subgraph Ridge["$$\text{Nested ridge (no model of the knockout)}$$"]
+    direction TB
+    Kernel["$$\begin{gathered}\text{linear kernel on standardized } \log(1+x)\\\ K_{cc'} \text{ over the fitted compounds}\end{gathered}$$"]
+    RidgePred["$$\begin{gathered}\hat y^{\mathrm{ridge}}_{sc} = \bar y_s + \sum_{c' \in \mathrm{fit}} \alpha_{cc'}\,(y_{sc'} - \bar y_s)\\\ \text{the gene is a row index; its profile over}\\\ \text{fitted compounds is interpolated}\end{gathered}$$"]
+  end
+
+  subgraph GeneEncoder["$$\text{Gene encoder: one transformer layer over a learned table}$$"]
+    direction TB
+    Table["$$\begin{gathered}\text{Learnable gene table}\\\ E \in \mathbb{R}^{N \times 180}\end{gathered}$$"]
+    Transformer["$$\begin{gathered}1\ \text{self-attention layer},\ 9\ \text{heads},\ d = 180\\\ H = T(E) \in \mathbb{R}^{N \times 180}\ \text{(wildtype field)}\end{gathered}$$"]
+    GraphReg["$$\begin{gathered}\text{Graph prior } \mathrm{KL}(A_g \,\|\, \alpha)\\\ \lambda = 0:\ \text{OFF in the best arm}\\\ \text{(1e-3 and 1 scored the same, round 8)}\end{gathered}$$"]
+    DeleteOp["$$\begin{gathered}\text{Deletion operator (Type I)}\\\ H_{\mathrm{pert}}[s] \in \mathbb{R}^{N \times 180}:\ \text{every gene}\\\ \text{updated after } S_s \text{ is removed}\end{gathered}$$"]
+    Hdel["$$\begin{gathered}\text{Read the deleted rows only}\\\ h^{\mathrm{del}}_s = \sum_{g \in S_s} H_{\mathrm{pert}}[s, g]\ \in \mathbb{R}^{180}\end{gathered}$$"]
+    Discard["$$\begin{gathered}\text{Post-deletion state of the other}\\\ N - 4 = 6{,}603\ \text{genes: discarded}\end{gathered}$$"]
+  end
+
+  subgraph Env["$$\text{Environment encoder: the compound as a token the genes attend to}$$"]
+    direction TB
+    MLP["$$\begin{gathered}\mathrm{Dropout} \to \mathrm{Linear}(2048 \to 256) \to \mathrm{GELU}\\\ \to \mathrm{Dropout} \to \mathrm{Linear}(256 \to 180)\\\ e_c \in \mathbb{R}^{180}\end{gathered}$$"]
+    Seq["$$\begin{gathered}\text{Sequence } [\,e_c\,;\, H\,] \in \mathbb{R}^{(N+1) \times 180}\\\ \text{built on the WILDTYPE field, same for every strain}\end{gathered}$$"]
+    TokenLayer["$$\begin{gathered}1\ \text{pre-norm attention layer (flash)}\\\ H^{c} = \text{the cell in medium } c\ \in \mathbb{R}^{N \times 180}\\\ \text{(2 layers scored the same, round 14)}\end{gathered}$$"]
+    Henv["$$\begin{gathered}\text{Read the deleted rows only}\\\ h^{\mathrm{env}}_{sc} = \sum_{g \in S_s} H^{c}[g]\ \in \mathbb{R}^{180}\\\ \text{the ONLY place the strain meets the compound}\end{gathered}$$"]
+    Pooled["$$\begin{gathered}\bar h^{c} = \tfrac{1}{N}\sum_g H^{c}[g],\quad t^{c} = \text{compound token after the layer}\\\ \text{identical for every strain under } c\end{gathered}$$"]
+  end
+
+  subgraph Head["$$\text{Readout}$$"]
+    direction TB
+    Concat["$$\begin{gathered}\mathrm{LayerNorm}\big([\,h^{\mathrm{env}}_{sc}\,;\,h^{\mathrm{del}}_s\,;\,\bar h^{c}\,;\,t^{c}\,]\big) \in \mathbb{R}^{720}\\\ \to \mathrm{Linear}(720 \to 256) \to \mathrm{GELU} \to \mathrm{Dropout} \to \mathrm{Linear}(256 \to 1)\end{gathered}$$"]
+    Pred["$$\begin{gathered}\hat y^{\mathrm{enc}}_{sc} = b_{g_s} + w^{\top} e_c + \mathrm{MLP}(\cdot)\\\ \text{gene bias + compound offset + interaction}\end{gathered}$$"]
+  end
+
+  subgraph Loss["$$\text{Training and the stack}$$"]
+    direction TB
+    MSE["$$\begin{gathered}\text{masked MSE on the standardized response over a}\\\ B = 128\ \text{strains} \times C_{\mathrm{fit}}\ \text{block; fit on all 32\text{-}33 non-test}\\\ \text{compounds, 50 epochs, last step kept, 9 seeds averaged}\end{gathered}$$"]
+    Stack["$$\begin{gathered}\hat y_{sc} = \tfrac{1}{2}\big(\hat y^{\mathrm{ridge}}_{sc} + \hat y^{\mathrm{enc}}_{sc}\big)\\\ \text{scored per held-out compound: Spearman across strains}\\\ \text{after each side subtracts its fitted-compound mean}\end{gathered}$$"]
+  end
+
+  CellGraph --> Table
+  CellGraph -.->|"$$\lambda = 0$$"| GraphReg
+  GraphReg -.-> Transformer
+  Table --> Transformer
+  Transformer --> DeleteOp
+  Strain --> DeleteOp
+  DeleteOp --> Hdel
+  DeleteOp -.-> Discard
+  Transformer --> Seq
+  Compound --> MLP
+  MLP --> Seq
+  Seq --> TokenLayer
+  TokenLayer --> Henv
+  Strain --> Henv
+  TokenLayer --> Pooled
+  Henv --> Concat
+  Hdel --> Concat
+  Pooled --> Concat
+  Concat --> Pred
+  MLP -->|"$$w^{\top} e_c$$"| Pred
+  Pred --> MSE
+  Compound --> Kernel
+  Kernel --> RidgePred
+  Strain -->|"$$\text{row } s$$"| RidgePred
+  Pred --> Stack
+  RidgePred --> Stack
+
+  classDef input fill:#E1D5E7,stroke:#846592,color:#1a1a1a
+  classDef embed fill:#FFE6CC,stroke:#BD8800,color:#1a1a1a
+  classDef trans fill:#F8CECC,stroke:#A24A46,color:#1a1a1a
+  classDef reg fill:#FFF2CC,stroke:#BCA04C,color:#1a1a1a
+  classDef off fill:#E6E6E6,stroke:#666666,color:#1a1a1a
+  class Strain,Compound,CellGraph input
+  class Table,MLP,Seq,Hdel,Henv,Kernel embed
+  class Transformer,DeleteOp,TokenLayer,Concat,Pred,RidgePred trans
+  class MSE,Stack reg
+  class GraphReg,Discard,Pooled off
+```
+
+What the diagram makes plain: the knockout enters the prediction through two 180-vectors,
+both read at the deleted genes' own rows ($h^{\mathrm{del}}_s$ from the post-deletion
+field, $h^{\mathrm{env}}_{sc}$ from the wildtype field after the compound token). Nothing
+downstream of the deletion in the rest of the cell reaches the readout, and with the prior
+off nothing about the wiring does either. The ridge half has no gene model at all. A model
+that read fitness from the whole post-deletion, post-compound field (run the compound layer
+over $H_{\mathrm{pert}}[s]$ per strain and pool, prior on) has not been run; that it would
+help is a hypothesis.

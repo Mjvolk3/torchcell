@@ -911,3 +911,30 @@ Tests (`tests/torchcell/sequence/genome/scerevisiae/test_s288c_synthetic.py`):
 - Every vanished-file test asserts the full message with the vanished file's name (`_vanished_message`); `test_data_db_vanishing_before_the_change_counter_read_is_named` also asserts `genome_database_untrusted_reason` raises (D3). The K2 kill-point test pins the new "left in place" wording.
 - Mutation check on this tree (paired file only, `mutate_r10.py`): the reviewer's D3, D6, D10, D24 and 20 mutants of this round's lines in `_writable_db`, `_keep_copy`, `install_genome_database` and the WARNING wording are all killed, 24 of 24 (W7, an unreadable copy `meta` counted as present, first survived and is killed by the zero-byte replay case).
 - The paired file passed 10 of 10 consecutive runs (259 tests each).
+
+## 2026.10.02 - Tenth review round
+
+The tenth independent review (at e65ca38b0) found no code defect. Its blockers were three test gaps (mutants that survived the paired file); its other findings were documentation. No program logic changed in this round: `s288c.py` changed in docstrings only (an `ast.dump` comparison with docstrings stripped is identical to e65ca38b0).
+
+Tests (`tests/torchcell/sequence/genome/scerevisiae/test_s288c_synthetic.py`), written and verified by the reviewer:
+
+- `test_unpickled_first_write_copies_the_writers_copy_not_the_rewritten_shared_file` kills W3 (`replay` losing its `not osp.exists(source_path)` clause): an unpickled instance reading its writer's private copy keeps that copy's rows when pre-2026.10.01 code rewrites `data.db` in place after the unpickle. The mutant replays from the rewritten shared file and silently returns different rows.
+- `test_rows_differ_migration_beside_an_equal_kept_copy_says_it_was_left_in_place` kills KW5: after a kill between keeping and installing a rows-differ file, the next migration's WARNING says the kept file "already held these bytes and was left in place", not "(replacing any earlier one)". Full message asserted.
+- `test_an_interrupted_first_write_leaves_no_copy` kills W12 (`except BaseException` narrowed to `except Exception`): a `KeyboardInterrupt` during the first write's copy propagates and leaves nothing in the temp dir. This makes "no failure leaves it in the temp dir" a tested claim.
+- Each mutant applied to a shadow copy fails exactly its test (1 failed, 261 passed); the unmutated file passes 262 of 262.
+
+Scope of two earlier claims (reviewer's finding (d), from its runs `k_dhot.py` and `k_c_live.py`):
+
+- The one read-write open of the shared path is gffutils' `FeatureDB` connection (`GffutilsConnectionManager(db_path)`), which origin/main has too and this change does not add to.
+- When old code unlinks `data.db` and writes a new file with a hot or live journal at the same path, a plain READ on an instance holding the old inode makes sqlite recovery roll back and delete that journal, on this branch and on main alike.
+- So "the shared `data.db` is never written after it is built" (the design summary above) and "never rolls a journal back into the shared file" hold for new code's own operations and for single-version use, and do not hold in that mixed-version state. The next new-code construction finds the result untrusted, migrates and keeps it, and never trusts it.
+
+Known limits added to the class docstring (main behaves the same where stated):
+
+- The mixed-version read-write open above.
+- A fresh instance whose first operation is `remove_deprecated_go_terms` on a file with an empty or partial `meta` raises the same unnamed `TypeError` as main (no production caller).
+- A drop waits for as long as another process holds an EXCLUSIVE sqlite lock taken between the drop's read and its copy (the backup API retries on BUSY; measured 30.0 s by the reviewer).
+- The named error for a vanished file on the private-copy path advises fixing permissions, which is the wrong advice for a file that is gone.
+- The rebuild WARNING in the kept-as-is case says the old file was kept with its journal and then that the journal was removed.
+
+The paired file passed 6 of 6 consecutive runs at this tree (262 tests each; one inside the whole `tests/torchcell/sequence/genome` run, five of the file alone).

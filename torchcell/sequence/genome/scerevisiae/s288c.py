@@ -1453,9 +1453,10 @@ class SCerevisiaeGenome(Genome):
     """S288C genome wrapper exposing genes, GO annotations, and sequence queries.
 
     ``<genome_root>/data.db`` is the gffutils database built from the pinned GFF. It
-    is shared by every process on the same ``genome_root`` and is never written after
-    it is built: every build goes to a unique temporary file in ``genome_root`` that is
-    renamed into place (:func:`write_genome_database`). :meth:`drop_chrmt`,
+    is shared by every process on the same ``genome_root``, and this code never writes
+    it after it is built (in single-version use; the mixed-version exception is under
+    Known limits): every build goes to a unique temporary file in ``genome_root`` that
+    is renamed into place (:func:`write_genome_database`). :meth:`drop_chrmt`,
     :meth:`drop_empty_go` and :meth:`remove_deprecated_go_terms` write to a private
     copy owned by this instance, ``torchcell-genome-<host>-<pid>-<random>.db`` in
     ``tempfile.gettempdir()`` (so ``TMPDIR`` controls where it goes), made on its
@@ -1543,6 +1544,27 @@ class SCerevisiaeGenome(Genome):
       :func:`require_damage`'s existence check and its ``stat`` raises a bare
       ``FileNotFoundError`` instead of the named error. It needs two unlinks around
       one expression; no realistic path to it was found.
+    * Mixed-version use (found by the tenth review's runs at e65ca38b0). The one
+      read-write open of the shared path is gffutils' ``FeatureDB`` connection
+      (``GffutilsConnectionManager(db_path)``), which origin/main has too; this code
+      adds no other. When pre-2026.10.01 code unlinks ``data.db`` and writes a new
+      file with a hot or live journal at the same path, a plain read on an instance
+      holding the old inode makes sqlite recovery roll back and delete that journal,
+      on this code and on main alike. So "the shared ``data.db`` is never written
+      after it is built" and "never rolls a journal back into the shared file" hold
+      for this code's own operations and for single-version use, and do not hold in
+      that mixed-version state. The next construction by this code finds the result
+      untrusted, migrates it and keeps it; it never trusts it.
+    * A fresh instance whose first operation is :meth:`remove_deprecated_go_terms`
+      on a file with an empty or partial ``meta`` table raises the same unnamed
+      ``TypeError`` as main. No production caller does this.
+    * A ``drop_*`` write waits for as long as another process holds an EXCLUSIVE
+      sqlite lock taken between the drop's read and its private copy (the sqlite
+      backup API retries on BUSY; the tenth review measured 30.0 s).
+    * The named error for a file that vanished on the private-copy path advises
+      fixing its permissions, which is the wrong advice for a file that is gone.
+    * The rebuild WARNING in the kept-as-is case says the old file was kept with its
+      journal and then that the journal was removed.
     """
 
     #: The assembly set in the genomes tier this class reads its release files from.
@@ -1784,8 +1806,8 @@ class SCerevisiaeGenome(Genome):
         The copy is a sqlite backup of the connection this instance reads (the file
         it opened, even when pre-2026.10.01 code has since unlinked or is rewriting
         ``data.db``), so every later read and write of this instance sees exactly the
-        database it had, and the shared ``data.db`` is never written. A copy that
-        cannot be made raises the named error (or the error propagates) and is
+        database it had, and this method never writes the shared ``data.db``. A copy
+        that cannot be made raises the named error (or the error propagates) and is
         removed; no failure leaves it in the temp dir. A pickled or forked copy of the
         instance (another pid, or an unpickled instance) makes a copy of its own; when
         the file it reads is gone, it copies the shared file and replays

@@ -57,3 +57,7 @@ python-dotenv and runs `check --json` against the newest committed snapshot.
 
 The label `before-next-kg-build` is the same queue the dataset re-verification issues use,
 so one filter shows everything that must land before the next build.
+
+## 2026.10.02 - Pull requests fail only on the drift they introduce
+
+The `query-drift` job in `.github/workflows/docs.yaml` failed every pull request opened after main began to drift against the `2026.10.02-833970cd` snapshot (#638, #639): a pull request's merge ref carries main's drift, and the gate read any non-zero exit as the pull request's fault (PR #637 was the first hit; its branch alone passes the check with exit 0). The job now runs the same check on the base branch (a shallow fetch of `github.base_ref` into a second worktree) and fails a pull request only for a drift `(query_id, kind, detail)` present in the pull request's report and absent from the base's. Inherited drift is printed as a notice naming the queries. The push run on main is unchanged: it still files or updates the before-next-kg-build issues. Checked locally with the two reports: the branch-vs-main pair gives an empty new set, and the reversed pair gives three.

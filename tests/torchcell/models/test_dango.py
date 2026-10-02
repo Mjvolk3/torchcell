@@ -527,14 +527,21 @@ def test_hyper_sagnn_sizes_output_by_num_sets_and_refuses_an_empty_set(
     assert str(excinfo.value) == EMPTY_SET.format(sets=empty, n=3)
 
 
-def test_hyper_sagnn_refuses_a_set_id_outside_num_sets() -> None:
-    """Set id 2 with num_sets 2 is refused with the offending id, not truncated."""
+@pytest.mark.parametrize(
+    ("set_ids", "bad"), [([0, 0, 0, 2, 2, 2], [2]), ([-1, 0, 0, 1, 1, 1], [-1])]
+)
+def test_hyper_sagnn_refuses_a_set_id_outside_num_sets(
+    set_ids: list[int], bad: list[int]
+) -> None:
+    """A set id at or above num_sets (2) or below 0 is refused with the offending ids,
+    not truncated (above) or left to ``bincount``'s bare RuntimeError (below).
+    """
     model = _closed_form_hyper()
     x = torch.tensor([[1.0, 0.0], [0.0, 2.0], [-1.0, 1.0]] * 2)
     with pytest.raises(ValueError) as excinfo:
-        model(x, torch.tensor([0, 0, 0, 2, 2, 2]), num_sets=2)
+        model(x, torch.tensor(set_ids), num_sets=2)
     assert str(excinfo.value) == (
-        "HyperSAGNN got set id 2 for num_sets=2; set ids must lie in [0, 2)"
+        f"HyperSAGNN got set ids {bad} for num_sets=2; set ids must lie in [0, 2)"
     )
 
 
@@ -687,7 +694,9 @@ def test_dango_refuses_a_gene_listed_twice_in_one_genotype() -> None:
     would attend to its own copy (see
     ``test_hyper_sagnn_duplicate_gene_attends_to_its_own_copy``). ``Dango.forward``
     refuses such a genotype, naming the (genotype, gene index) pair; the same gene in
-    two different genotypes is fine.
+    two different genotypes is fine: the batch [0, 1, 2], [0, 1, 3] scores
+    0.014928971417248249 and 0.013594761490821838 (seed 0), each within 2e-9 of the
+    genotype run alone.
     """
     model = _dango()
     with pytest.raises(ValueError) as excinfo:
@@ -697,7 +706,11 @@ def test_dango_refuses_a_gene_listed_twice_in_one_genotype() -> None:
         "[(1, 1)] appear more than once"
     )
     scores, _ = model(_cell_graph(), _batch([0, 1, 2], [0, 1, 3]))
-    assert scores.shape == (2,)
+    assert scores.tolist() == [0.014928971417248249, 0.013594761490821838]
+    alone = torch.cat(
+        [model(_cell_graph(), _batch(g))[0] for g in ([0, 1, 2], [0, 1, 3])]
+    )
+    torch.testing.assert_close(scores, alone, atol=1e-8, rtol=0.0)
 
 
 def test_dango_score_is_invariant_to_gene_order_within_a_triple() -> None:

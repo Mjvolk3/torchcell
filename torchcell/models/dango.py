@@ -328,12 +328,13 @@ class HyperSAGNN(nn.Module):
         device = embeddings.device
         total_nodes = embeddings.size(0)
 
-        set_sizes = torch.bincount(batch_indices, minlength=num_sets)
-        if set_sizes.numel() != num_sets:
+        out_of_range = batch_indices[(batch_indices < 0) | (batch_indices >= num_sets)]
+        if out_of_range.numel() > 0:
             raise ValueError(
-                f"HyperSAGNN got set id {set_sizes.numel() - 1} for num_sets="
-                f"{num_sets}; set ids must lie in [0, {num_sets})"
+                f"HyperSAGNN got set ids {torch.unique(out_of_range).tolist()} for "
+                f"num_sets={num_sets}; set ids must lie in [0, {num_sets})"
             )
+        set_sizes = torch.bincount(batch_indices, minlength=num_sets)
         empty_sets = (set_sizes == 0).nonzero().view(-1).tolist()
         if empty_sets:
             raise ValueError(

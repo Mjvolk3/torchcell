@@ -434,6 +434,12 @@ def main(cfg: DictConfig) -> None:
 
     trainer.fit(model=task, datamodule=data_module)
 
+    if execution_mode == "dataloader_profiling":
+        # The model never ran, so the task logged no validation metrics (issue #616):
+        # finish the profiling run cleanly instead of reading absent keys.
+        wandb.finish()
+        return None
+
     # Store metrics in variables first
     mse = trainer.callback_metrics["val/gene_interaction/MSE"].item()
     pearson = trainer.callback_metrics["val/gene_interaction/Pearson"].item()

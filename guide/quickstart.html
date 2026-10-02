@@ -141,8 +141,10 @@ Neo4j connection.</p>
 from the genomes tier at <code class="docutils literal notranslate"><span class="pre">$DATA_ROOT/torchcell-genomes/</span></code>, verifying each file’s sha256
 against the tier’s <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code> on every load. There is no fallback location: a
 machine without the tier raises <code class="docutils literal notranslate"><span class="pre">FileNotFoundError</span></code> with the command that seeds it.
-<code class="docutils literal notranslate"><span class="pre">genome_root</span></code> is only a cache directory for the gffutils database (<code class="docutils literal notranslate"><span class="pre">data.db</span></code>), which
-<code class="docutils literal notranslate"><span class="pre">overwrite=True</span></code> (the default) rebuilds and <code class="docutils literal notranslate"><span class="pre">overwrite=False</span></code> reuses. <code class="docutils literal notranslate"><span class="pre">go_root</span></code> holds
+<code class="docutils literal notranslate"><span class="pre">genome_root</span></code> is only a cache directory for the gffutils database (<code class="docutils literal notranslate"><span class="pre">data.db</span></code>) and must
+already exist. With <code class="docutils literal notranslate"><span class="pre">overwrite=False</span></code> (the default) the database is built only when it
+is absent and is otherwise opened after its record is verified; <code class="docutils literal notranslate"><span class="pre">overwrite=True</span></code>
+rebuilds it. <code class="docutils literal notranslate"><span class="pre">go_root</span></code> holds
 <code class="docutils literal notranslate"><span class="pre">go.obo</span></code>, which is downloaded from geneontology.org only when it is missing.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>

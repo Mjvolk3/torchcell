@@ -1,0 +1,337 @@
+{
+  "biocypher_version": "0.15.2",
+  "schema_config": "biocypher/config/torchcell_schema_config.yaml",
+  "local_path": "biocypher/ontology/biolink-model-v3.2.1.owl.ttl",
+  "local_sha256": "a3e47f5a42e4e0e6b4c715f8f4dbbeef5e77683621fa9ad57d15b7d048707d1a",
+  "remote_url": "https://github.com/biolink/biolink-model/raw/v3.2.1/biolink-model.owl.ttl",
+  "remote_sha256": "a3e47f5a42e4e0e6b4c715f8f4dbbeef5e77683621fa9ad57d15b7d048707d1a",
+  "n_schema_classes_local": 55,
+  "n_schema_classes_remote": 55,
+  "n_classes_with_differing_ancestors": 0,
+  "differing_classes": [],
+  "ancestors_local": {
+    "calmorph phenotype": [
+      "calmorph phenotype",
+      "phenotypic feature",
+      "disease or phenotypic feature",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "calmorph phenotype.phenotype member of": [
+      "calmorph phenotype.phenotype member of",
+      "phenotype member of",
+      "participates in"
+    ],
+    "crispr construct": [
+      "crispr construct",
+      "nucleic acid entity",
+      "molecular entity",
+      "chemical entity",
+      "named thing",
+      "entity"
+    ],
+    "crispr construct member of": [
+      "crispr construct member of",
+      "part of"
+    ],
+    "dataset": [
+      "dataset",
+      "information content entity",
+      "named thing",
+      "entity"
+    ],
+    "environment": [
+      "environment",
+      "environmental exposure",
+      "attribute",
+      "named thing",
+      "entity"
+    ],
+    "environment member of": [
+      "environment member of",
+      "participates in"
+    ],
+    "environment perturbation": [
+      "environment perturbation",
+      "environmental exposure",
+      "attribute",
+      "named thing",
+      "entity"
+    ],
+    "environment perturbation member of": [
+      "environment perturbation member of",
+      "part of"
+    ],
+    "environment response phenotype": [
+      "environment response phenotype",
+      "phenotypic feature",
+      "disease or phenotypic feature",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "environment response phenotype.phenotype member of": [
+      "environment response phenotype.phenotype member of",
+      "phenotype member of",
+      "participates in"
+    ],
+    "experiment": [
+      "experiment",
+      "information content entity",
+      "named thing",
+      "entity"
+    ],
+    "experiment member of": [
+      "experiment member of",
+      "part of"
+    ],
+    "experiment reference": [
+      "experiment reference",
+      "information content entity",
+      "named thing",
+      "entity"
+    ],
+    "experiment reference member of": [
+      "experiment reference member of",
+      "part of"
+    ],
+    "experiment reference of": [
+      "experiment reference of",
+      "coexists with"
+    ],
+    "fitness phenotype": [
+      "fitness phenotype",
+      "phenotypic feature",
+      "disease or phenotypic feature",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "fitness phenotype.phenotype member of": [
+      "fitness phenotype.phenotype member of",
+      "phenotype member of",
+      "participates in"
+    ],
+    "gene essentiality phenotype": [
+      "gene essentiality phenotype",
+      "phenotypic feature",
+      "disease or phenotypic feature",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "gene essentiality phenotype.phenotype member of": [
+      "gene essentiality phenotype.phenotype member of",
+      "phenotype member of",
+      "participates in"
+    ],
+    "gene interaction phenotype": [
+      "gene interaction phenotype",
+      "phenotypic feature",
+      "disease or phenotypic feature",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "gene interaction phenotype.phenotype member of": [
+      "gene interaction phenotype.phenotype member of",
+      "phenotype member of",
+      "participates in"
+    ],
+    "genome": [
+      "genome",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "genome member of": [
+      "genome member of",
+      "participates in"
+    ],
+    "genotype": [
+      "genotype",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "genotype member of": [
+      "genotype member of",
+      "participates in"
+    ],
+    "genotype.genotype member of": [
+      "genotype.genotype member of",
+      "genotype member of",
+      "participates in"
+    ],
+    "interned constant": [
+      "interned constant",
+      "information content entity",
+      "named thing",
+      "entity"
+    ],
+    "media": [
+      "media",
+      "environmental exposure",
+      "attribute",
+      "named thing",
+      "entity"
+    ],
+    "media member of": [
+      "media member of",
+      "part of"
+    ],
+    "metabolite phenotype": [
+      "metabolite phenotype",
+      "phenotypic feature",
+      "disease or phenotypic feature",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "metabolite phenotype.phenotype member of": [
+      "metabolite phenotype.phenotype member of",
+      "phenotype member of",
+      "participates in"
+    ],
+    "microarray expression phenotype": [
+      "microarray expression phenotype",
+      "phenotypic feature",
+      "disease or phenotypic feature",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "microarray expression phenotype.phenotype member of": [
+      "microarray expression phenotype.phenotype member of",
+      "phenotype member of",
+      "participates in"
+    ],
+    "perturbation": [
+      "perturbation",
+      "genotype",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "perturbation member of": [
+      "perturbation member of",
+      "genetically associated with"
+    ],
+    "phenotype member of": [
+      "phenotype member of",
+      "participates in"
+    ],
+    "protein abundance phenotype": [
+      "protein abundance phenotype",
+      "phenotypic feature",
+      "disease or phenotypic feature",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "protein abundance phenotype.phenotype member of": [
+      "protein abundance phenotype.phenotype member of",
+      "phenotype member of",
+      "participates in"
+    ],
+    "pseudobulk expression phenotype": [
+      "pseudobulk expression phenotype",
+      "phenotypic feature",
+      "disease or phenotypic feature",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "pseudobulk expression phenotype.phenotype member of": [
+      "pseudobulk expression phenotype.phenotype member of",
+      "phenotype member of",
+      "participates in"
+    ],
+    "publication": [
+      "publication",
+      "information content entity",
+      "named thing",
+      "entity"
+    ],
+    "publication mentions experiment": [
+      "publication mentions experiment",
+      "mentions"
+    ],
+    "rnaseq expression phenotype": [
+      "rnaseq expression phenotype",
+      "phenotypic feature",
+      "disease or phenotypic feature",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "rnaseq expression phenotype.phenotype member of": [
+      "rnaseq expression phenotype.phenotype member of",
+      "phenotype member of",
+      "participates in"
+    ],
+    "segregant genotype": [
+      "segregant genotype",
+      "genotype",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "segregant genotype.genotype member of": [
+      "segregant genotype.genotype member of",
+      "genotype member of",
+      "participates in"
+    ],
+    "synthetic lethality phenotype": [
+      "synthetic lethality phenotype",
+      "phenotypic feature",
+      "disease or phenotypic feature",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "synthetic lethality phenotype.phenotype member of": [
+      "synthetic lethality phenotype.phenotype member of",
+      "phenotype member of",
+      "participates in"
+    ],
+    "synthetic rescue phenotype": [
+      "synthetic rescue phenotype",
+      "phenotypic feature",
+      "disease or phenotypic feature",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "synthetic rescue phenotype.phenotype member of": [
+      "synthetic rescue phenotype.phenotype member of",
+      "phenotype member of",
+      "participates in"
+    ],
+    "temperature": [
+      "temperature",
+      "environmental exposure",
+      "attribute",
+      "named thing",
+      "entity"
+    ],
+    "temperature member of": [
+      "temperature member of",
+      "part of"
+    ],
+    "visual score phenotype": [
+      "visual score phenotype",
+      "phenotypic feature",
+      "disease or phenotypic feature",
+      "biological entity",
+      "named thing",
+      "entity"
+    ],
+    "visual score phenotype.phenotype member of": [
+      "visual score phenotype.phenotype member of",
+      "phenotype member of",
+      "participates in"
+    ]
+  }
+}

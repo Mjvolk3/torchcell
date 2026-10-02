@@ -48,10 +48,19 @@ from tests.torchcell.knowledge_graphs._kg_build_fakes import (
     module_dir,
     reset_instances,
 )
+from torchcell.knowledge_graphs.head_ontology import (
+    BIOLINK_SOURCE_URL,
+    REPO_ONTOLOGY_PATH,
+    HeadOntologyError,
+)
 from torchcell.knowledge_graphs.incremental_import import INCREMENTAL_CALL_FILENAME
 from torchcell.knowledge_graphs.subset import RecordFilter
 
 ks = import_build_module("create_scerevisiae_kg_small")
+
+# The repo's sha256-pinned Biolink mirror (issue #619): the build verifies the config's
+# head ontology against its provenance record before constructing BioCypher.
+MIRRORED_ONTOLOGY = Path(__file__).resolve().parents[3] / REPO_ONTOLOGY_PATH
 
 
 class FakeAlpha(FakeDataset):
@@ -231,7 +240,11 @@ def build(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> SimpleNamespace:
             parents=True
         )
     bc_config = tmp_path / "biocypher_config.yaml"
-    bc_config.write_text("neo4j:\n  database_name: torchcell-test\n")
+    bc_config.write_text(
+        "biocypher:\n  head_ontology:\n"
+        f"    url: {MIRRORED_ONTOLOGY}\n    root_node: entity\n"
+        "neo4j:\n  database_name: torchcell-test\n"
+    )
     wandb = FakeWandb()
     state = SimpleNamespace(
         root=root,
@@ -578,3 +591,18 @@ def test_membership_and_mode_are_validated_before_any_dataset_is_built(
     assert FakeAlpha.instances == []
     assert FakeBioCypher.instances[0].calls == []
     assert build.wandb.finish_calls == 0
+
+
+def test_a_config_without_a_local_head_ontology_stops_before_biocypher(
+    build: SimpleNamespace,
+) -> None:
+    """Issue #619: a BioCypher config with no ``head_ontology`` would make BioCypher
+    fetch Biolink from GitHub; the build raises naming the URL it refused, and no
+    BioCypher instance is constructed.
+    """
+    Path(build.tmp_path / "biocypher_config.yaml").write_text(
+        "neo4j:\n  database_name: torchcell-test\n"
+    )
+    with pytest.raises(HeadOntologyError, match=re.escape(BIOLINK_SOURCE_URL)):
+        ks.main(_cfg(FULL_CFG))
+    assert FakeBioCypher.instances == []

@@ -135,8 +135,9 @@
   background: none;
 }
 
+/* Pages sit slightly inside their group heading. */
 .theme-doc-sidebar-item-category-level-1 > .menu__list {
-  padding-left: 0;
+  padding-left: 0.6rem;
 }
 
 /* Page width. The default is the theme's reading width: a capped container, and on a

@@ -47,7 +47,9 @@ exclude_patterns: list[str] = ["datasets/_generated", "datasets/scerevisiae/_gen
 
 html_theme = "torchcell_sphinx_theme"
 html_logo = "_static/torchcell-logo.png"
-html_favicon = "_static/torchcell-logo.png"
+# The cell alone: the wordmark is unreadable at favicon size. Written by
+# docs/make_logo.py, like the logo.
+html_favicon = "_static/torchcell-mark.png"
 html_static_path = ["_static"]
 # Loaded after the theme stylesheet: the purple-to-red h1 gradient in the logo colors.
 html_css_files = ["custom.css"]

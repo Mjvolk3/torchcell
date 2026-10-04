@@ -40,12 +40,13 @@ Ranking on measurements has one large consequence and it runs against the reason
 bacterial host is interesting at all. The functional-genomics screens win, and the
 metabolic-engineering campaigns lose, by roughly three orders of magnitude.
 
-The twenty-four rows that connect an explicit engineering intervention to a production
+The thirty-two rows that connect an explicit engineering intervention to a production
 phenotype, meaning the production campaigns, the combinatorial designs and the tolerance
-series, have a median of 145 measurements and a median rank of 62. Three of them reach the
-fifty; twenty-one sit in the reserve. The sixteen transposon-fitness and chemical-genomics
-rows have a median of 282,906 measurements, a factor of about 1,944 more, and every one of
-them reaches the fifty. Twenty-one of the twenty-five reserve rows are engineering rows.
+series, have a median of 137 measurements and a median rank of 72.5 on the measurement
+order. Two of them reach the fifty on that order; thirty sit in the reserve, where they
+are thirty of its 39 rows. The seventeen transposon-fitness and chemical-genomics rows
+have a median of 226,575 measurements, a factor of about 1,654 more, and every one of
+them reaches the fifty.
 
 Neither figure is wrong and the rule is not misapplied. A titer measured on six strains
 really is six numbers, and a barcoded library really does yield millions. What the ordering
@@ -58,9 +59,11 @@ measurement order is recoverable for every row and is printed beside the final o
 Table~\ref{tab:bpins}. And the correction turned out to be one field rather than a
 rewrite: a per-row product axis, pinned after ranking, reorders the same records without
 recollecting anything. Section~\ref{sec:iso} applies it to the one product the work
-targets, where the three-order-of-magnitude penalty had put four of eight rows in the
-reserve. The same mechanism extends to any other product that becomes a priority, which
-is the argument for a pin over a reweighted score.
+targets, where the three-order-of-magnitude penalty had put nine of ten rows in the
+reserve. With the pin applied, thirteen engineering rows sit in the fifty and nineteen in
+the reserve, and three of the seventeen screens are displaced below the cut. The same
+mechanism extends to any other product that becomes a priority, which is the argument for
+a pin over a reweighted score.
 
 \subsection{Sequence reconstruction is the gate, not a preference\secstatus{todo}}
 
@@ -146,7 +149,8 @@ measurements over rows of a few hundred thousand.
 On these rows the floor does not bind. Ranking by measurements alone already puts
 fourteen \org{E. coli} rows and six \org{P. putida} rows in the first tranche, which meets
 the floor without promoting anything, and the isoprenol pin then raises the
-\org{P. putida} count further because that host carries most of the isoprenol work. Every
+\org{P. putida} count to nine against eleven because that host carries most of the
+isoprenol work. Every
 promotion the floor makes is printed, so a future pass in which it does bind will say so
 rather than quietly reordering. An even ten-and-ten split would have bound here, which is
 the comparison that justifies the floor over a split.

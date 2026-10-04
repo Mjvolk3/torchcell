@@ -21,20 +21,23 @@ Ranked by Scale and Density}
 
 \noindent
 The database holds 51 schematized and L0--L4-verified \org{Saccharomyces cerevisiae}
-datasets and no bacterial dataset at all. Table~\ref{tab:bfinal} ranks 75 candidates for
+datasets and no bacterial dataset at all. Table~\ref{tab:bfinal} ranks 89 candidates for
 the two bacterial hosts, \org{Escherichia coli} and \org{Pseudomonas putida}, by
-measurements, meaning instances times phenotype dimensionality (Sec.~\ref{sec:rule}); the
-first fifty are the recommended builds and the remaining 25 are a ranked reserve. The
+measurements, meaning instances times phenotype dimensionality (Sec.~\ref{sec:rule}), and
+then lifts the rows that measure isoprenol, the product the bacterial work targets
+(Sec.~\ref{sec:iso}). The first fifty are the recommended builds and the remaining 39 are
+a ranked reserve. The
 build is staged in two tranches, twenty rows then thirty, with a floor of six rows per
 host in the first tranche so that neither host's setup cost waits on the other
-(Sec.~\ref{sec:stage}). Of the fifty, 39 are \org{E. coli} and 11 are \org{P. putida}.
+(Sec.~\ref{sec:stage}). Of the fifty, 35 are \org{E. coli} and 15 are \org{P. putida}.
 
 One consequence of that ordering is large enough to state before the table rather than
 after it (Sec.~\ref{sec:cost}). The rows that connect an engineering intervention to a
-production phenotype carry a median of 145 measurements against 282,906 for the
-functional-genomics screens, so twenty-one of the twenty-four engineering rows fall into
-the reserve. The ranking is reported as specified, and the records carry the class field a
-portfolio rule would need to reorder them.
+production phenotype carry a median of 137 measurements against 226,575 for the
+functional-genomics screens, so the measurement order alone leaves thirty of the
+thirty-two engineering rows in the reserve. The isoprenol pin returns eleven of them to
+the fifty, and Table~\ref{tab:bpins} prints the measurement rank beside the final rank so
+the pin can be undone row by row.
 
 Two changes to the schema gate every row, and both were established by running the
 validators rather than by reading them (Sec.~\ref{sec:schema}): the gene-identifier

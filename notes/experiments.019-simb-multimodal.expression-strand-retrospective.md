@@ -663,3 +663,26 @@ process per run, 0 failures). `2392379_0` and `_1` (cabbi, seed 0) still RUNNING
 [[experiments.019-simb-multimodal.scripts.head_round_readout]]: H_concat +0.012 over
 H_ref in every seed (0.188 vs 0.176), H_basis64 +0.010 (one seed), the rest at or below
 H_ref; two runs (H_gears s1, H_pergene_basis64 s3) never left the constant plateau.
+
+## 2026.10.04 - v20 conditioned cross-modal round submitted on IGB cabbi
+
+Config `experiments/019-simb-multimodal/conf/cgt_expr_v20_conditioned.yaml`, launcher stage
+`conditioned` in `igb_expr_wave5.slurm`. One modality is revealed in full as model input on
+every step and the other is predicted; no reveal schedule and no masked loss. Arms `C_expr`,
+`C_exprperm`, `C_prot`, `C_protperm` on split seeds 0 to 11, one initialization seed, 1,200
+epochs. The unconditioned controls are v19's `K_expr` and `K_prot`.
+
+- Job `2423190`, array `0-11%2`, partition cabbi, 16 CPUs, 160 GB, limit 1-18:00:00, four
+  runs per card. No dependency and no `--begin`; the `%2` cap is the two free cards.
+- Source: commit `f09091e2f` in the detached IGB worktree
+  `/home/a-m/mjvolk3/projects/torchcell.worktrees/019-v20-conditioned`. The worktree carried
+  one run-time modification at submission
+  (`results/calmorph_train_target_norm_per_gene.json`, written by the canary).
+- Canaries: `2423054` failed (no `.env` in the fresh worktree), `2423179` passed fit and
+  failed in the test pass (`fast_dev_run` writes no checkpoint), `2423182` completed two real
+  epochs and the test pass on all four arms, host memory peak 39.5 GB for the pack.
+- Wall time is an estimate, not a measurement: the canary ran the eval-mode train pass every
+  epoch at 215 s per epoch for four runs on a card, against 137 s for the same kind of epoch
+  in a v19 three-run pack (`ipwprg20`), a ratio of 1.57. Applied to v19's 51 s ordinary
+  epoch that gives about 31 h for 1,200 epochs.
+- W&B project `torchcell_019_prot_v20`; canary runs in `torchcell_019_prot_v20_canary`.

@@ -58,5 +58,50 @@
     "id": "b65nolbjhid",
     "name": "Y_ref: one line per split",
     "url": "https://wandb.ai/zhao-group/torchcell_019_expr_v18?nw=b65nolbjhid"
+  },
+  "v19": {
+    "id": "ixlg1k00kxs",
+    "name": "v19 joint clean round by arm",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v19?nw=ixlg1k00kxs"
+  },
+  "v19/K_expr": {
+    "id": "uphs90ka04k",
+    "name": "K_expr: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v19?nw=uphs90ka04k"
+  },
+  "v19/K_joint": {
+    "id": "jgv6yxvq8gd",
+    "name": "K_joint: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v19?nw=jgv6yxvq8gd"
+  },
+  "v19/K_prot": {
+    "id": "g5mkogi5m0j",
+    "name": "K_prot: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v19?nw=g5mkogi5m0j"
+  },
+  "v20": {
+    "id": "sgddhszb1rg",
+    "name": "v20 conditioned round by arm",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v20?nw=sgddhszb1rg"
+  },
+  "v20/C_expr": {
+    "id": "t3fhmku1rlw",
+    "name": "C_expr: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v20?nw=t3fhmku1rlw"
+  },
+  "v20/C_exprperm": {
+    "id": "wmbhw7bj7kv",
+    "name": "C_exprperm: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v20?nw=wmbhw7bj7kv"
+  },
+  "v20/C_prot": {
+    "id": "xsdxnny3b1u",
+    "name": "C_prot: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v20?nw=xsdxnny3b1u"
+  },
+  "v20/C_protperm": {
+    "id": "s9ydl4r238i",
+    "name": "C_protperm: one line per split",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v20?nw=s9ydl4r238i"
   }
 }

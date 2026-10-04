@@ -1,0 +1,117 @@
+%% notes-tex/019-simb-multimodal-expression/sections/6-checkpoint.tex
+%% SOURCE: experiments/019-simb-multimodal/results/joint_checkpoint_readout.json and the
+%% four tables it writes (joint_checkpoint_readout.py, run 2026-10-04 against W&B projects
+%% torchcell_019_prot_v19 and torchcell_019_prot_v20); results/
+%% expression_morphology_covariation.json and proteome_morphology_covariation.json;
+%% conf/cgt_expr_v19_joint_clean.yaml and conf/cgt_expr_v20_conditioned.yaml; the
+%% experiment note experiments.019-simb-multimodal.expression-strand-retrospective
+%% (entry of 2026-10-04) for job ids and canaries.
+
+\section{Checkpoint, 2026-10-04: the joint round read out, the conditioned round in flight, and the single-deletion triangle\secstatus{todo}}
+\label{sec:checkpoint}
+
+\pfstep{The joint round does not support the claim} v19 of \cref{sec:joint-plan} ran as
+registered: the both-label store, every head unmasked, three arms from one configuration,
+1,200 epochs, one initialization seed per split seed. Eleven of twelve partitions have all
+three arms finished (IGB jobs 2413418 on \file{cabbi} and 2413419 on \file{gpu}); partition
+11 was still training when this was written. Neither registered test rejects
+(\cref{tab:v19-registered}). On the expression head the joint arm is level with the
+single-head arm, and the paired difference swings between $-0.045$ and $+0.044$ across
+partitions (\cref{tab:v19-partitions}). On the proteome head the joint arm is lower in ten of
+eleven partitions on the registered window, past the non-inferiority margin at the point
+estimate. One more partition cannot change either reading.
+\src{experiments/019-simb-multimodal/results/joint_checkpoint_readout.json}
+
+\input{tables/v19_registered_tests}
+
+\input{tables/v19_partitions}
+
+\pfstep{The proteome deficit is at least partly a delay} By the rolling maximum over the full
+budget the two arms are level on the proteome head, and the joint arm's head reaches its
+maximum late: past epoch 800 in eight of eleven partitions, against four of eleven for the
+single-head arm (\cref{tab:v19-partitions}). The window of epochs 200 to 400 was calibrated
+on single-head runs in v14 and v16, so it scores an arm that peaks later as an arm that is
+worse. The rolling maximum is an upward-biased order statistic, so this reads as no visible
+gap at the peak, not as a score. Hypothesis (untested): the expression loss dominates early
+optimization of the shared trunk and delays the proteome head.
+
+\pfstep{The loss and the metric disagree in this round as in the long-budget rounds} Every
+joint run's smoothed validation loss is lowest between epochs 30 and 109, and the registered
+scores are read at epochs 200 to 400 and 1,000 to 1,200 (\cref{tab:v19-partitions}). Read at
+each run's own loss minimum, both heads score below their window value in both arms and
+the joint arm is lower on both (\cref{tab:v19-registered}, last two rows). This is the
+pinball-against-Pearson disagreement of \cref{sec:findings-lossmin} at a shorter budget.
+Which stopping rule defines the model is the open decision of \cref{sec:next}, and the
+conditioned round is read under both.
+
+\pfstep{The conditioned round, submitted without the masked objective} v20 of
+\cref{sec:joint-plan} was changed in one respect before launch: no reveal schedule and no
+masked loss. The trainer option \file{multitask.condition_head} reveals one head's measured
+labels in full as model input on every step of every stage and drops that head from the loss
+and the metrics; \file{condition_permute} reveals another strain's labels, a cyclic shift
+inside the batch. Four arms on v19's store, partitions and budget
+(\file{conf/cgt_expr_v20_conditioned.yaml}): \texttt{C\_expr} predicts expression with the
+proteome revealed, \texttt{C\_prot} predicts the proteome with expression revealed, and
+\texttt{C\_exprperm} and \texttt{C\_protperm} are the permuted controls. The unconditioned
+controls are v19's \texttt{K\_expr} and \texttt{K\_prot}, already run. IGB job 2423190,
+\file{cabbi}, twelve tasks of four runs capped at two concurrent tasks, source commit
+\texttt{f09091e2f}. \Cref{tab:v20-partial} is the state at generation and is not a result.
+
+\input{tables/v20_partial}
+
+The conditioned model answers a different question from the joint model. It needs the
+conditioning measurement for any strain it is applied to, so it is an imputation claim about
+a multimodal model and has to be labeled as one. The reference it has to beat is the ridge of
+\cref{tab:triangle}, not the unconditioned arm.
+
+\pfstep{The single-deletion triangle} Each pair of the three single-deletion panels was read
+the same way: out-of-fold ridge from one measured modality to the other on the deletions
+both measured (\cref{tab:triangle}). The expression-against-morphology side was added on
+2026-10-04 with the estimator of the proteome-against-morphology side. Every side carries
+signal well above its permuted null, and each is asymmetric in the same direction: the
+gene-level panels predict the 278 CalMorph features better than the features predict the
+genes. On the morphology sides about half the signal is one shared component: projecting
+the first principal component out of both sides takes the moving-feature median from $0.324$
+to $0.166$ for expression and from $0.280$ to $0.145$ for the proteome.
+\src{experiments/019-simb-multimodal/results/expression_morphology_covariation.json}
+\src{experiments/019-simb-multimodal/results/proteome_morphology_covariation.json}
+
+\input{tables/triangle}
+
+Against these, the genotype alone reaches $0.101$ on expression and $0.056$ on the proteome
+by ridge on the deleted gene's ProtT5 embedding, and adding the genotype to the observed
+proteome buys $+0.009$ on expression
+(\file{review/2026-09-27-joint-review/01_data_ceilings.md}). The shared structure between
+the panels is real and it is in the measurements, not in what a genotype-only trunk sees.
+
+\pfstep{Two structural facts about the model these rounds use} Both bear on morphology more
+than on the gene-level heads.
+\begin{itemize}
+\item \textbf{The CLS token is the wild-type token on this branch.} The encoder runs once on
+  the unperturbed graph and the CLS is sliced off before the perturbation operator, so it is
+  identical for every strain. Sending the CLS through the operator as one more query
+  (\file{perturb_cls}) exists on the gene-interaction line of development (commit
+  \texttt{9e2f59551}, 2026-09-09, experiments 025 and 030), where the across-strain standard
+  deviation of the perturbed CLS runs $0.31$ to $0.43$. That commit is not an ancestor of
+  this branch, and no expression, proteome or morphology run has used it. It makes a global
+  readout strain-specific; it does not change the gene tokens, which come out bit-identical.
+\item \textbf{The single-key degeneracy is addressed by the null sink, which was tested only
+  inside the early dip.} With one deleted gene the cross-attention has one key and its
+  weights are identically 1. The null sink adds a zero-valued key with a learned logit, so
+  the weight depends on the querying gene and the query and key parameters receive gradient
+  (\file{verify_null_sink_and_pooling.py}, contract C4). Its one trained comparison is v8
+  wave 3: four seed pairs stopped at 186 to 189 epochs, $+0.0024 \pm 0.0090$, which
+  \cref{sec:strand-heads} classifies with every other arm stopped before the validation
+  curve leaves its dip. It has not been run at a resolving budget.
+\end{itemize}
+
+\pfstep{What is open} Whether Figure 3 may rest on a conditioning result, or must be
+genotype-only, is the author's decision and sets where the next compute goes. For the
+conditioning reading the strongest sides are expression to morphology and proteome to
+morphology on the moving features; a store joining the proteome and morphology does not
+exist yet, and the observed-label channel places values on gene tokens, so morphology can be
+a target and not yet an input. For the genotype-only reading the untried arm is morphology
+on its own 4,718 strains read from a perturbed CLS, which changes the training set fourfold
+and the readout at once, so the two would have to be separated by arms. Hypothesis
+(untested): expression compendia that are not deletion-keyed strengthen the gene-gene
+structure the conditioned reads use and leave the genotype-only score where it is.

@@ -212,6 +212,28 @@ ROUNDS: dict[str, Round] = {
         label_key="protein_abundance",
         extra_phenotypes=("expression",),
     ),
+    "v20": Round(
+        project="torchcell_019_prot_v20",
+        report_title="v20 conditioned cross-modal round: one modality revealed as input, the other predicted",
+        view_name="v20 conditioned round by arm",
+        view_id=None,
+        arm_re=r"C_(expr|exprperm|prot|protperm)_(s\d+)",
+        phenotype="expression",
+        splits=[f"s{i}" for i in range(12)],
+        split_label={f"s{i}": f"split {i}" for i in range(12)},
+        intro=(
+            "48 runs, four per card on IGB cabbi, 1,200 epochs (config "
+            "cgt_expr_v20_conditioned): C_expr predicts expression with the strain's measured "
+            "proteome revealed as input, C_prot predicts the proteome with expression "
+            "revealed, and the perm arms reveal another strain's measurement. No reveal "
+            "schedule and no masked loss. The unconditioned controls are v19's K_expr and "
+            "K_prot in project torchcell_019_prot_v19, on the same store, split seeds and "
+            "budget. Per-head windows as in v19: expression epochs 1,000 to 1,200, proteome "
+            "200 to 400. Nothing here is a result until the runs finish."
+        ),
+        max_runs=48,
+        extra_phenotypes=("proteome",),
+    ),
     "v18": Round(
         project="torchcell_019_expr_v18",
         report_title="v18 hygiene round: the masked objective off and a per-gene context row",

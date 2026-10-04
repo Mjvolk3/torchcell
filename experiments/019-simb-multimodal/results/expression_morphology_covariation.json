@@ -1,0 +1,206 @@
+{
+  "generated_by": "experiments/019-simb-multimodal/scripts/expression_morphology_covariation.py",
+  "inputs": {
+    "expression_lmdb": "/Users/michaelvolk/Documents/projects/torchcell/data/torchcell/microarray_kemmeren2014/processed/lmdb",
+    "morph_dir": "/Users/michaelvolk/Documents/projects/torchcell/data/torchcell/scmd_ohya2005/raw",
+    "mt4718data_sha256": "c4ba1e84b4ea6273f0162ef9230e15634933c8c0c4910dd7546a21c6293e0fc0"
+  },
+  "n_shared_strains": 1438,
+  "n_expression_genes": 6169,
+  "n_morph_features": 278,
+  "n_moving_features": 116,
+  "reliability_threshold": 0.5,
+  "ridge_lambda_median": {
+    "expression_to_morph": 10000.0,
+    "morph_to_expression": 10000.0
+  },
+  "expression_to_morphology": {
+    "all_features": {
+      "n": 278,
+      "median": 0.2151166151428317,
+      "mean": 0.21790248510601276,
+      "q25": 0.12255442155564046,
+      "q75": 0.31534572330745014,
+      "max": 0.49520503434535446,
+      "frac_above_0.3": 0.2841726618705036
+    },
+    "moving_features": {
+      "n": 116,
+      "median": 0.32360076452499553,
+      "mean": 0.3042043283896146,
+      "q25": 0.25454068473902414,
+      "q75": 0.3858976307565911,
+      "max": 0.49520503434535446,
+      "frac_above_0.3": 0.6206896551724138
+    },
+    "quiet_features": {
+      "n": 162,
+      "median": 0.15537440694010066,
+      "mean": 0.15610610349553244,
+      "q25": 0.08023981992854295,
+      "q75": 0.21812109841551128,
+      "max": 0.38926756821226743,
+      "frac_above_0.3": 0.043209876543209874
+    },
+    "null_all": {
+      "n": 278,
+      "median": 0.008026840114421778,
+      "mean": 0.008244345982222819,
+      "q25": -0.011288796801643537,
+      "q75": 0.029225845431367983,
+      "max": 0.08127810868313431,
+      "frac_above_0.3": 0.0
+    },
+    "first_component_removed_all": {
+      "n": 278,
+      "median": 0.127259777132305,
+      "mean": 0.13647745623226107,
+      "q25": 0.06678910803522584,
+      "q75": 0.18096008832636437,
+      "max": 0.424992902745669,
+      "frac_above_0.3": 0.0683453237410072
+    },
+    "first_component_removed_moving": {
+      "n": 116,
+      "median": 0.1663056215777028,
+      "mean": 0.17780759405122534,
+      "q25": 0.09651853552746026,
+      "q75": 0.25917220212509295,
+      "max": 0.424992902745669,
+      "frac_above_0.3": 0.12931034482758622
+    },
+    "top_features": [
+      {
+        "feature": "C125_A1B",
+        "description": "Ratio of large bud on stage A1B",
+        "r": 0.49520503434535446,
+        "reliability": 0.6139749081048513,
+        "r_first_component_removed": 0.37204944230749937
+      },
+      {
+        "feature": "C108_A1B",
+        "description": "Short axis length in bud on stage A1B",
+        "r": 0.47375916695853826,
+        "reliability": 0.7359087567100027,
+        "r_first_component_removed": 0.424992902745669
+      },
+      {
+        "feature": "C11-2_A1B",
+        "description": "Area of daughter cell on stage A1B",
+        "r": 0.46213013232323275,
+        "reliability": 0.775061662790708,
+        "r_first_component_removed": 0.32150912424680334
+      },
+      {
+        "feature": "C111_A1B",
+        "description": "Length from bud tip to mother cell's short axis on stage A1B",
+        "r": 0.44758328894139116,
+        "reliability": 0.7782624897187915,
+        "r_first_component_removed": 0.03997208377337249
+      },
+      {
+        "feature": "C12-2_A1B",
+        "description": "Contour length of daughter cell on stage A1B",
+        "r": 0.44123462797602137,
+        "reliability": 0.7153717451163867,
+        "r_first_component_removed": 0.2574762650982708
+      },
+      {
+        "feature": "C107_A1B",
+        "description": "Long axis length in bud on stage A1B",
+        "r": 0.428358101525483,
+        "reliability": 0.7270856787999896,
+        "r_first_component_removed": 0.23168423230487611
+      },
+      {
+        "feature": "A7-2_A1B",
+        "description": "Actin region size in bud on stage A1B",
+        "r": 0.42739577378338034,
+        "reliability": 0.7671515532264996,
+        "r_first_component_removed": 0.2780362584199733
+      },
+      {
+        "feature": "C115_A",
+        "description": "Roundness of mother cell on stage A",
+        "r": 0.42088997608208145,
+        "reliability": 0.9444391022001702,
+        "r_first_component_removed": 0.4151922558419659
+      },
+      {
+        "feature": "C114_C",
+        "description": "Roundness of bud on stage C",
+        "r": 0.418067191518029,
+        "reliability": 0.876449103708407,
+        "r_first_component_removed": 0.4153094571490474
+      },
+      {
+        "feature": "C118_A1B",
+        "description": "Ratio of the cell sizes on stage A1B",
+        "r": 0.4149720013063663,
+        "reliability": 0.5380645853185344,
+        "r_first_component_removed": 0.3338645100889471
+      },
+      {
+        "feature": "C114_A1B",
+        "description": "Roundness of bud on stage A1B",
+        "r": 0.41426435810890955,
+        "reliability": 0.7271326306911239,
+        "r_first_component_removed": 0.3939767001889897
+      },
+      {
+        "feature": "C102_A1B",
+        "description": "Contour length of cell on stage A1B",
+        "r": 0.4105641394140751,
+        "reliability": 0.8402597998986665,
+        "r_first_component_removed": 0.09543899160467466
+      },
+      {
+        "feature": "C112_C",
+        "description": "Distance from neck to mother cell's center on stage C",
+        "r": 0.4066084083841365,
+        "reliability": 0.8523623043079263,
+        "r_first_component_removed": 0.1740112750758684
+      },
+      {
+        "feature": "D185_C",
+        "description": "Total length of two straight segments D11-1C4-1 and D11-2C4-1 on stage C",
+        "r": 0.4065376880002662,
+        "reliability": 0.8882756713223683,
+        "r_first_component_removed": 0.06555867200174219
+      },
+      {
+        "feature": "C113_A1B",
+        "description": "Distance from bud tip to mother cell's long axis along bud direction on stage A1B",
+        "r": 0.4057716222464579,
+        "reliability": 0.7219602805375807,
+        "r_first_component_removed": 0.10622311625273931
+      }
+    ]
+  },
+  "morphology_to_expression": {
+    "all_genes": {
+      "n": 6169,
+      "median": 0.08704455402945464,
+      "mean": 0.09463895422589104,
+      "q25": 0.03577652095325245,
+      "q75": 0.1467138919519129,
+      "max": 0.37669754269658196,
+      "frac_above_0.3": 0.01037445290970984
+    },
+    "null": {
+      "n": 6169,
+      "median": 0.006863764832346205,
+      "mean": 0.007519060720685784,
+      "q25": -0.018055799038317246,
+      "q75": 0.03238143080424937,
+      "max": 0.13890503625888365,
+      "frac_above_0.3": 0.0
+    }
+  },
+  "response_magnitude": {
+    "spearman": 0.245805032382628,
+    "p": 3.1226620724555214e-21,
+    "n": 1438
+  },
+  "pc1_agreement_abs_r": 0.21205211605753885
+}

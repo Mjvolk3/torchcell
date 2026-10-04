@@ -14,7 +14,7 @@ manuscript gets the same versioned, comment-anchored review copy the typeset
 notes have had.
 
 ```bash
-make -C paper/nature-biotech publish          # editing.pdf -> torchcell/paper/nature-biotech
+make -C paper/nature-biotech publish          # nature-biotech-editing.pdf -> torchcell/paper/nature-biotech
 make -C paper/nature-biotech publish-dry      # preview
 make -C paper/nature-biotech publish-list     # versions so far
 make -C paper/nature-biotech publish-submission
@@ -22,7 +22,7 @@ make -C paper/nature-biotech publish-submission
 
 ### The collection path stays derived, which is the whole point
 
-`paper/nature-biotech/editing.pdf` -> `torchcell / paper / nature-biotech`. The
+`paper/nature-biotech/nature-biotech-editing.pdf` -> `torchcell / paper / nature-biotech`. The
 script walks the repo path components and creates what is missing, so there is
 still no configured mapping that can drift from where the files actually live.
 The `paper` parent already existed and was empty, so only the leaf was created.

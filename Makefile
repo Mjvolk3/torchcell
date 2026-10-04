@@ -92,7 +92,7 @@ paper:
 paper-submission:
 	@$(MAKE) -C paper/nature-biotech submission
 paper-editing:
-	@$(MAKE) -C paper/nature-biotech editing
+	@$(MAKE) -C paper/nature-biotech nature-biotech-editing
 paper-twocolumn:
 	@$(MAKE) -C paper/nature-biotech twocolumn
 paper-figproto:

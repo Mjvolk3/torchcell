@@ -13,7 +13,7 @@ Two maintained versions share ONE body so edits never drift:
 - `preamble.tex` -- shared `\usepackage` block (edit packages once).
 - `submission.tex` -- **single-column, official Nature Portfolio format. Upload
   this.** Wrapper: `\documentclass[pdflatex,sn-nature,Numbered]{sn-jnl}` + `\input`s.
-- `editing.tex` -- **single-column with print-approximate margins** (~170 mm text
+- `nature-biotech-editing.tex` -- **single-column with print-approximate margins** (~170 mm text
   block), readable for drafting while sizing figures realistically. NOT the
   submission format. In this layout `\textwidth` ~ full-page print figure and
   ~`0.49\textwidth` ~ one print column; add `,iicol` to its documentclass to see
@@ -28,11 +28,11 @@ Two maintained versions share ONE body so edits never drift:
 - `references.bib` -- seeded bibliography (keep <= 50 refs).
 - `figures/` -- drop exported vector figures here (create as needed).
 
-Build: `tectonic -X compile submission.tex` and/or `tectonic -X compile editing.tex`.
+Build: `tectonic -X compile submission.tex` and/or `tectonic -X compile nature-biotech-editing.tex`.
 `pdflatex` option = compiles under pdflatex/xelatex/Tectonic; `sn-nature` = Nature
 reference style; `Numbered` = superscript numbered citations. Big main figures use
 `figure*` (full width / spans both columns) so they don't overflow a column in
-`editing.tex`.
+`nature-biotech-editing.tex`.
 
 ## Get this into Overleaf (three options)
 

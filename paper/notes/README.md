@@ -44,7 +44,7 @@ Nothing about the style is re-declared here — it is symlinked or `\input` from
 | `sn-nature.bst` | symlink | `../nature-biotech/sn-nature.bst` |
 | `references.bib` | symlink | `../nature-biotech/references.bib` |
 | `assets` | symlink | `../../notes/assets/images` |
-| page geometry, block paragraphs | copied from | `../nature-biotech/editing.tex` |
+| page geometry, block paragraphs | copied from | `../nature-biotech/nature-biotech-editing.tex` |
 | packages, `\tcfig`, proof style | `\input` | `../nature-biotech/preamble.tex` |
 
 `notes-preamble.tex` adds only what a note needs and a journal submission does not: a table of

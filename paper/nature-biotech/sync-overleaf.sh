@@ -8,7 +8,7 @@
 #   Shared   (Overleaf)      = $OVERLEAF_DIR                         <- colleagues see this
 #
 # submission.tex is published AS main.tex (Overleaf's default main document);
-# editing.tex and twocolumn.tex are shared as alternate views (switch Menu ->
+# nature-biotech-editing.tex and twocolumn.tex are shared as alternate views (switch Menu ->
 # Main document in Overleaf). sections/ and figures/ are copied whole. Workshop-
 # only files (figure-proto.tex, *.pdf views, READMEs, this script, sn-article.tex,
 # flatten_tex.py, Makefile) are intentionally NOT shared.
@@ -37,7 +37,7 @@ SHARE_FILES=(
   sn-jnl.cls
   sn-nature.bst
   references.bib
-  editing.tex
+  nature-biotech-editing.tex
   twocolumn.tex
 )
 # submission.tex -> main.tex (handled below); sections/ and figures/ copied whole.

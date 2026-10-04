@@ -508,12 +508,14 @@ case "$STAGE" in
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=4; STAGE_CONFIG=cgt_expr_v20_conditioned
           EXTRA_OV="" ;;
-  # Canary for the conditioned round: the four arms of partition 0 for one batch each, which
-  # proves the conditioning step builds, steps and logs before the round is queued.
+  # Canary for the conditioned round: the four arms of partition 0 for two real epochs, which
+  # takes the conditioning step through train, validation, the eval-mode train pass, the
+  # checkpoint and the held-out test pass. fast_dev_run cannot do this: it writes no
+  # checkpoint, so `run_test` fails on ckpt_path="best" after a fit that passed (2423179).
   canary_conditioned) JOBS=("C_expr_s0:0" "C_exprperm_s0:0" "C_prot_s0:0" "C_protperm_s0:0")
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=4; STAGE_CONFIG=cgt_expr_v20_conditioned
-          EXTRA_OV="trainer.fast_dev_run=true" ;;
+          EXTRA_OV="trainer.max_epochs=2 trainer.train_eval_every=1 wandb.project=torchcell_019_prot_v20_canary" ;;
   # ------------------------------------------------------- PERTURBATION-LOCALITY ROUND (2026.09.18)
   # The v13 reference against the hop-0 self-indicator and 2-hop graph propagation of the
   # deletion, split seeds 0 to 3, init seeds 0 to 2, 1,200 epochs (conf/cgt_expr_v17_locality.yaml).

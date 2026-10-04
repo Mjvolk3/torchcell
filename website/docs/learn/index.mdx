@@ -1,8 +1,11 @@
 ---
-title: Education
-sidebar_label: Education
-description: One standard card per dataset, written in a shared notation.
+title: Learn
+sidebar_label: Learn
+description: Deep dives into the data, starting with one standard card per dataset in a shared notation.
 ---
+
+Learn is where the data is explained, as opposed to [Tutorials](/tutorials/), which
+show how to use the library. It starts with the dataset cards below.
 
 A **dataset card** is a one-screen description of what one dataset's experiment did.
 Every card has the same parts in the same order, so a reader who has seen one card
@@ -35,15 +38,15 @@ states an experimental detail that has not been sourced.
 
 ## Adding a card
 
-1. Copy `docs/education/cards/_template.mdx` to `docs/education/cards/<slug>.mdx`,
+1. Copy `docs/learn/cards/_template.mdx` to `docs/learn/cards/<slug>.mdx`,
    where `<slug>` is the dataset slug.
 2. Fill the `DatasetCard` properties, the blurb, and the notation. Use only symbols
    defined on the [notation page](./notation.mdx); add a symbol there first if one is
    missing.
-3. Export the draw.io diagram as SVG to `static/img/education/<slug>.svg` and set
+3. Export the draw.io diagram as SVG to `static/img/learn/<slug>.svg` and set
    `diagramSrc` and `diagramAlt`.
 4. Replace each <Todo /> with the sourced value.
-5. Add the card to the `education` sidebar in `sidebars.ts`.
+5. Add the card to the `learn` sidebar in `sidebars.ts`.
 
 ## Relation to the ontology
 

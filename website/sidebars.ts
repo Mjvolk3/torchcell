@@ -51,7 +51,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Related',
-      items: ['ontology/education'],
+      items: ['ontology/learn'],
     },
   ],
 
@@ -162,16 +162,16 @@ const sidebars: SidebarsConfig = {
     },
   ],
 
-  education: [
-    'education/index',
-    'education/notation',
+  learn: [
+    'learn/index',
+    'learn/notation',
     {
       type: 'category',
       label: 'Dataset cards',
       items: [
-        'education/cards/smf-costanzo2016',
-        'education/cards/amino-acid-mulleder2016',
-        'education/cards/betaxanthin-cachera2023',
+        'learn/cards/smf-costanzo2016',
+        'learn/cards/amino-acid-mulleder2016',
+        'learn/cards/betaxanthin-cachera2023',
       ],
     },
   ],

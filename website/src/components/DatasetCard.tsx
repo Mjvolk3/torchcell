@@ -20,7 +20,7 @@ type CardProps = {
   docsUrl?: string;
   /**
    * Site-relative path of the exported draw.io diagram (SVG preferred), e.g.
-   * `/img/education/smf-costanzo2016.svg`. Leave unset until the diagram exists; the
+   * `/img/learn/smf-costanzo2016.svg`. Leave unset until the diagram exists; the
    * card then shows an empty, labeled slot.
    */
   diagramSrc?: string;
@@ -31,7 +31,7 @@ type CardProps = {
 };
 
 /**
- * The standard education card for one dataset: header facts, a diagram slot, a short
+ * The standard dataset card for one dataset: header facts, a diagram slot, a short
  * blurb, and an explainer in the unified notation. Every card has the same parts in
  * the same order, so a reader who has seen one card can read any other.
  */

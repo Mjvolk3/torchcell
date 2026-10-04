@@ -18,7 +18,7 @@ The final hosting location is undecided. The defaults below place the site under
 | `docs/benchmark/{leaderboard,submit,account,user}.mdx` | Thin pages that mount the interactive benchmark apps, so they keep the Benchmark sidebar |
 | `src/components/bench/` | The interactive benchmark apps (React, browser-only) |
 | `src/lib/benchApi.ts` | Typed client for the benchmark API |
-| `src/components/DatasetCard.tsx` | The education card; template in `docs/education/cards/_template.mdx` |
+| `src/components/DatasetCard.tsx` | The dataset card; template in `docs/learn/cards/_template.mdx` |
 | `src/theme/` | `MDXComponents` (components usable in MDX without an import) and `Root` (mock-data bar) |
 | `static/mock/` | Fixtures for mock mode, written by `scripts/gen_mock_fixtures.mjs` |
 

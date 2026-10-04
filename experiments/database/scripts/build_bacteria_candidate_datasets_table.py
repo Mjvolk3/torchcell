@@ -59,6 +59,7 @@ from __future__ import annotations
 
 import json
 import math
+import statistics
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Literal
@@ -104,6 +105,12 @@ QUOTA_1 = {"E. coli": 6, "P. putida": 6}
 # product, is lifted above the cut at TRANCHE_2. Both are reported as moves.
 PIN_DIRECT = TRANCHE_1
 PIN_PRECURSOR = TRANCHE_2
+
+# The two row groups Sec. 1.2 of the document compares: rows that connect an
+# engineering intervention to a production phenotype, and the functional-genomics
+# screens that outrank them on measurements.
+ENGINEERING_CLASSES = ("Production campaign", "Combinatorial design", "Tolerance / robustness")
+SCREEN_CLASSES = ("Transposon fitness", "Fitness / chemical genomics")
 
 # ---------------------------------------------------------------------------
 # Vocabulary. Defined here so it is defined before use in the document, and so a
@@ -5444,7 +5451,8 @@ def render_final(rows: list[Candidate]) -> str:
         + cols
         + r"""}
 \caption[]{The bacterial candidates, ranked by \emph{Meas.} descending, which is
-instances times phenotype dimensionality (Sec.~\ref{sec:rule}). \emph{Genotypes} and
+instances times phenotype dimensionality (Sec.~\ref{sec:rule}), with the isoprenol rows
+then lifted out of that order (Table~\ref{tab:bpins}). \emph{Genotypes} and
 \emph{Env} are the perturbation and condition axes. \emph{Inst.} is
 genotype$\times$environment records, $\dagger$ where it is the product of the two axes
 rather than a reported count and $\ddagger$ where it is an order-of-magnitude estimate.
@@ -5983,6 +5991,32 @@ def main() -> None:
             f"{len(v)} {k} ({inside[k]} inside the fifty)" for k, v in axis.items()
         )
     )
+
+    # The figures sections/rule.tex and the abstract quote. Printed here so the
+    # prose traces to this script: rule rank is the pure measurement order, final
+    # rank is the printed order after the pins.
+    rule = sorted(rows, key=lambda c: c.sort_key)
+    for label, classes in (("engineering", ENGINEERING_CLASSES), ("screens", SCREEN_CLASSES)):
+        group = [c for c in rows if c.klass in classes]
+        print(
+            f"{label}: {len(group)} rows, "
+            f"median measurements {statistics.median(c.measurements or 0 for c in group):,.0f}, "
+            f"median rule rank {statistics.median(rule.index(c) + 1 for c in group)}, "
+            f"inside the fifty {sum(rule.index(c) < TRANCHE_2 for c in group)} on the rule alone "
+            f"and {sum(rows.index(c) < TRANCHE_2 for c in group)} after the pins, "
+            f"{sum(rows.index(c) >= TRANCHE_2 for c in group)} of the "
+            f"{len(rows) - TRANCHE_2} reserve rows"
+        )
+    for label, cut in (("fifty", TRANCHE_2), ("tranche 1", TRANCHE_1)):
+        for order_name, order in (("rule alone", rule), ("after the pins", rows)):
+            n_ec = sum(c.organism == "E. coli" for c in order[:cut])
+            print(f"{label}, {order_name}: {n_ec} E. coli, {cut - n_ec} P. putida")
+    for c in rows:
+        if c.name.startswith(("Rachwalski 2024", "Silvis 2021")):
+            print(
+                f"{c.name}: rule rank {rule.index(c) + 1}, "
+                f"final rank {rows.index(c) + 1}, measurements {c.measurements:,}"
+            )
 
 
 if __name__ == "__main__":

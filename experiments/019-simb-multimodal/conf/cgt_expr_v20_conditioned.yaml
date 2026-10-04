@@ -1,0 +1,63 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_v20_conditioned.yaml
+# [[experiments.019-simb-multimodal.conf.cgt_expr_v20_conditioned]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/019-simb-multimodal/conf/cgt_expr_v20_conditioned
+#
+# THE CONDITIONED CROSS-MODAL ROUND (2026-10-03), project v20. Design:
+# notes-tex/019-simb-multimodal-expression/sections/5-joint-plan.tex, "v20", changed in one
+# respect: the masked objective is not used. One modality is revealed in full as model input
+# on every step and the other is predicted, so no reveal schedule and no masked loss.
+#
+# WHAT IT ASKS. v19 asked whether training one trunk on both labels improves either head
+# from the genotype alone; at ten of twelve partitions neither registered test rejects
+# (expression -0.006, proteome -0.018 on its window). This round asks a different question:
+# given a strain's measured proteome, how much better is its expression predicted, and the
+# mirror. That is a conditioning claim about a multimodal model, not a shared-trunk synergy
+# claim, and a new strain needs the conditioning measurement before the model applies.
+#
+# THE STORE, THE HEADS, THE BUDGET are v19's, inherited: `fig3_proteome` on the 1,349
+# both-label genotypes, `per_gene` the proteome head and `per_gene_aux` the expression head,
+# split seeds 0 to 11 with one initialization seed, 1,200 epochs.
+#
+# THE ARMS, from this one config (gh_expr_008_arm.sh, C_* arms):
+#   C_expr      proteome revealed, expression predicted (the config's default)
+#   C_exprperm  the same with each strain handed another strain's proteome
+#   C_prot      expression revealed, proteome predicted
+#   C_protperm  the same with each strain handed another strain's expression
+# THE CONTROLS ARE ALREADY RUN: v19's K_expr and K_prot on the same store, partitions,
+# initialization seed and budget, with nothing revealed (project torchcell_019_prot_v19).
+#
+# SCORING, v19's per-head windows unchanged: expression = mean of
+# val/expression/pearson_per_feature over epochs 1,000 to 1,200; proteome = mean of
+# val/proteome/pearson_per_feature over epochs 200 to 400. v19 measured the joint arm's
+# proteome head peaking near epoch 1,000 against 380 for the single head, so the proteome
+# window is reported beside the full-run rolling maximum, labeled as the biased order
+# statistic it is.
+#
+# TESTS, one-sided alpha 0.05 each, paired over the partitions, no correction:
+#   H1  C_expr - K_expr > 0 on the expression window;
+#   H2  C_prot - K_prot > 0 on the proteome window;
+#   and the permutation contrasts C_expr - C_exprperm > 0 and C_prot - C_protperm > 0, which
+#   say whether the gain uses the strain's own measurement.
+# REFERENCE TO BEAT: a ridge from the observed proteome to held-out expression reads 0.226
+# against 0.101 from the genotype embedding, and 0.218 against 0.056 in the mirror direction
+# (review/2026-09-27-joint-review/01_data_ceilings.md). A conditioned arm below the ridge
+# says nothing for the architecture.
+defaults:
+  - cgt_expr_v19_joint_clean
+  - _self_
+
+wandb:
+  project: torchcell_019_prot_v20
+  tags: [conditioned-round, v20]
+
+multitask:
+  # The observed-label channel carries the conditioning modality instead of a schedule.
+  mask_schedule: null
+  condition_head: per_gene
+  condition_permute: false
+
+trainer:
+  checkpoint:
+    # The conditioning head logs no metric; the predicted head selects both checkpoints.
+    monitor: val/expression/pearson_per_feature
+    metric_monitor: val/mean/pearson_per_feature

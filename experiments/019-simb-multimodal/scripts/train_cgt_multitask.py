@@ -934,6 +934,14 @@ class MultitaskCGTTask(L.LightningModule):
         # Any other per-gene head (the joint round's `per_gene_aux`) is supervised on all
         # its genes at every step, so it never sees its own label as input.
         self.mask_head: str = "per_gene"
+        # CONDITIONING HEAD (`multitask.condition_head`, the v20 round); None = off. This
+        # head's measured labels are revealed in full as model INPUT on every step of every
+        # stage and the head is dropped from the loss and the metrics, so the other active
+        # heads are predicted from the genotype plus this modality. `condition_permute`
+        # hands each strain another strain's labels instead (the control for whether the
+        # gain uses the strain's own measurement or only the modality's marginal structure).
+        self.condition_head: str | None = None
+        self.condition_permute: bool = False
         # Wall clock for perf/epoch_seconds; None until the first epoch starts.
         self._epoch_t0: float | None = None
         self.save_hyperparameters(
@@ -1392,7 +1400,65 @@ class MultitaskCGTTask(L.LightningModule):
         cache["pred"].append(p.cpu())
         cache["target"].append(t.cpu())
 
+    def _conditioned_step(self, batch: HeteroData, stage: str) -> torch.Tensor:
+        """One step with `condition_head` revealed in full and scored nowhere.
+
+        No reveal schedule and no masked loss: the conditioning head's finite labels enter
+        through the observed-label encoder at every step, in the normalized space the head
+        predicts in, and the remaining heads take the ordinary loss on all their features.
+        The metrics land in the standard namespace, so `val/<head>/pearson_per_feature`
+        of a conditioned arm reads against the same key of an unconditioned arm.
+        """
+        head = cast(str, self.condition_head)
+        col = self.head_align[head]["col_idx"]
+        bsz = self._batch_size(batch)
+
+        # The labels to reveal are decoded from an unconditioned pass, as in _masked_step.
+        with torch.no_grad():
+            _, reps0 = self(batch)
+        probe = self._gather_predictions(dict(reps0["head_outputs"]))
+        targets0, masks0 = self._extract_targets_and_masks(batch, probe, bsz)
+        target = targets0[head]
+        row_mask = masks0[head]
+        if self.condition_permute:
+            # Another strain's labels: a cyclic shift inside the batch, so every row is
+            # paired with a different row and the marginal distribution is unchanged.
+            target = target.roll(1, dims=0)
+            row_mask = row_mask.roll(1, dims=0)
+        obs_feat = torch.isfinite(target) & row_mask.unsqueeze(1)
+        obs_vals, obs_msk = self._to_token_space(obs_feat, target, col)
+
+        predictions, reps = self(batch, observed_values=obs_vals, observed_mask=obs_msk)
+        head_outputs = dict(reps["head_outputs"])
+        if "gene_interaction" in self.active_heads:
+            head_outputs["gene_interaction"] = predictions.squeeze(-1)
+        head_outputs = self._gather_predictions(head_outputs)
+        targets, masks = self._extract_targets_and_masks(batch, head_outputs, bsz)
+        # The conditioning head is input, so it is neither trained on nor scored.
+        del head_outputs[head], targets[head], masks[head]
+
+        total, per_head = self.loss(
+            head_outputs, targets, masks, graph_reg_loss=reps["graph_reg_loss"]
+        )
+        self.log(f"{stage}/loss", total, batch_size=bsz, sync_dist=True)
+        for name, val in per_head.items():
+            self.log(
+                f"{stage}/{phenotype_name(name)}/loss",
+                val,
+                batch_size=bsz,
+                sync_dist=True,
+            )
+        self.log(
+            f"{stage}/condition/n_revealed",
+            obs_feat.sum(dim=1).float().mean(),
+            batch_size=bsz,
+        )
+        self._cache_epoch_metric(stage, head_outputs, targets, masks)
+        return cast(torch.Tensor, total)
+
     def _step(self, batch: HeteroData, stage: str) -> torch.Tensor:
+        if self.condition_head is not None:
+            return self._conditioned_step(batch, stage)
         if self.mask_schedule is not None:
             return self._masked_step(batch, stage)
         predictions, reps = self(batch)
@@ -3159,6 +3225,35 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
                 "largest partial reveal instead, e.g. [0, 10, 100, 1000]."
             )
         print(f"[masked-obj] reveal schedule (genes per step): {task.mask_schedule}")
+    _cond = cfg.multitask.get("condition_head", None)
+    if _cond is not None:
+        if _sched is not None:
+            raise ValueError(
+                "multitask.condition_head and multitask.mask_schedule are two uses of the "
+                "one observed-label channel; set mask_schedule to null for a conditioned arm"
+            )
+        task.condition_head = str(_cond)
+        task.condition_permute = bool(cfg.multitask.get("condition_permute", False))
+        if task.condition_head not in active_heads:
+            raise ValueError(
+                f"multitask.condition_head={task.condition_head!r} is not an active head "
+                f"{active_heads}"
+            )
+        if len(active_heads) < 2:
+            raise ValueError(
+                "a conditioned arm needs a second active head to predict; "
+                f"active_heads={active_heads}"
+            )
+        if not bool(
+            _as_dict(cfg.model.get("observed_labels", None)).get("enabled", False)
+        ):
+            raise ValueError(
+                "multitask.condition_head needs model.observed_labels.enabled=true"
+            )
+        print(
+            f"[conditioned] {task.condition_head} revealed in full on every step, "
+            f"permuted across strains: {task.condition_permute}"
+        )
     if task.train_eval_every > 0:
         print(
             f"[traineval] eval-mode train pass every {task.train_eval_every} epoch(s)"

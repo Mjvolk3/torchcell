@@ -614,6 +614,26 @@ case "$ARM" in
   K_joint_s[0-9]|K_joint_s1[01])
                      OVERRIDES=(data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(heads-proteome-expression aux-w1 mask-off "split${ARM##*_s}" proteome stage-joint_clean round-joint-clean) ;;
+  # ==================== CONDITIONED CROSS-MODAL ROUND (2026.10.03, v20) =====================
+  # conf/cgt_expr_v20_conditioned.yaml explains the round. One modality is revealed in full
+  # as input and the other predicted; the *perm arms reveal another strain's measurement.
+  # The unconditioned controls are v19's K_expr and K_prot.
+  C_expr_s[0-9]|C_expr_s1[01])
+                     OVERRIDES=(data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(reveal-proteome predict-expression "split${ARM##*_s}" expression stage-conditioned round-conditioned) ;;
+  C_exprperm_s[0-9]|C_exprperm_s1[01])
+                     OVERRIDES=(multitask.condition_permute=true data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(reveal-proteome-permuted predict-expression "split${ARM##*_s}" expression stage-conditioned round-conditioned) ;;
+  C_prot_s[0-9]|C_prot_s1[01])
+                     OVERRIDES=(multitask.condition_head=per_gene_aux
+                                trainer.checkpoint.monitor=val/proteome/pearson_per_feature
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(reveal-expression predict-proteome "split${ARM##*_s}" proteome stage-conditioned round-conditioned) ;;
+  C_protperm_s[0-9]|C_protperm_s1[01])
+                     OVERRIDES=(multitask.condition_head=per_gene_aux multitask.condition_permute=true
+                                trainer.checkpoint.monitor=val/proteome/pearson_per_feature
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(reveal-expression-permuted predict-proteome "split${ARM##*_s}" proteome stage-conditioned round-conditioned) ;;
   # ============================ WEIGHT-DECAY ROUND (2026.09.15, v15) =======================
   # Strong AdamW weight decay on the v13 reference at the full budget, split seeds 1 and 2
   # (conf/cgt_expr_v15_wd.yaml explains the round). The reference keeps the incumbent's 1e-8.

@@ -490,6 +490,30 @@ case "$STAGE" in
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=3; STAGE_CONFIG=cgt_expr_v19_joint_clean
           EXTRA_OV="" ;;
+  # ------------------------------------------- CONDITIONED CROSS-MODAL ROUND (2026.10.03, v20)
+  # One modality revealed in full as input, the other predicted, and the same with another
+  # strain's measurement revealed (conf/cgt_expr_v20_conditioned.yaml). 48 runs as twelve
+  # tasks of four, the four arms of one partition per card; the unconditioned controls are
+  # v19's K_expr and K_prot. Every task is eligible at submission: no dependency, no stagger.
+  #
+  #   H=$(git rev-parse HEAD); D=$(git diff HEAD | sha256sum | cut -d" " -f1)
+  #   sbatch -J 019-v20w1-conditioned -p cabbi --gres=gpu:1 --cpus-per-task=16 --mem=160g \
+  #       --time=<1.3x the canary-scaled wall time> --array=0-11 \
+  #       --export=ALL,W5_STAGE=conditioned,TORCHCELL_SOURCE_GIT_HASH=$H,\
+  #   TORCHCELL_SOURCE_DIFF_SHA256=$D experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm
+  conditioned) JOBS=()
+          for s in 0 1 2 3 4 5 6 7 8 9 10 11; do
+            JOBS+=("C_expr_s${s}:0" "C_exprperm_s${s}:0" "C_prot_s${s}:0" "C_protperm_s${s}:0")
+          done
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=4; STAGE_CONFIG=cgt_expr_v20_conditioned
+          EXTRA_OV="" ;;
+  # Canary for the conditioned round: the four arms of partition 0 for one batch each, which
+  # proves the conditioning step builds, steps and logs before the round is queued.
+  canary_conditioned) JOBS=("C_expr_s0:0" "C_exprperm_s0:0" "C_prot_s0:0" "C_protperm_s0:0")
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=4; STAGE_CONFIG=cgt_expr_v20_conditioned
+          EXTRA_OV="trainer.fast_dev_run=true" ;;
   # ------------------------------------------------------- PERTURBATION-LOCALITY ROUND (2026.09.18)
   # The v13 reference against the hop-0 self-indicator and 2-hop graph propagation of the
   # deletion, split seeds 0 to 3, init seeds 0 to 2, 1,200 epochs (conf/cgt_expr_v17_locality.yaml).

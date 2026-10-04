@@ -322,3 +322,43 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* A secret shown once: wraps instead of scrolling so the whole value is visible. */
+.secret {
+  margin: 0.5rem 0 0;
+  padding: 0.6rem 0.75rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.inlineForm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.inlineForm > .field {
+  flex: 1 1 16rem;
+  max-width: 24rem;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The API name of a form field, beside its label. */
+.fieldName {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--ifm-color-emphasis-700);
+  margin-left: 0.4rem;
+}

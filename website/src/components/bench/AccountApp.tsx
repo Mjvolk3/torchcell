@@ -4,6 +4,8 @@ import Link from '@docusaurus/Link';
 import {
   LOGIN_ERRORS,
   isLoginErrorCode,
+  type ApiToken,
+  type ApiTokenCreated,
   type BenchApi,
   type SubmissionResult,
   type TokenResponse,
@@ -206,6 +208,149 @@ function ProfileForm({
   );
 }
 
+/**
+ * Personal API tokens: what a script sends instead of a browser session. A token is
+ * shown once, in the answer to its creation, and only its first characters afterwards.
+ */
+function ApiTokens({api, accessToken}: {api: BenchApi; accessToken: string}): ReactNode {
+  const [tokensState, reloadTokens] = useLoad(() => api.tokens(accessToken), [api, accessToken]);
+  const [name, setName] = useState('');
+  const [created, setCreated] = useState<LoadState<ApiTokenCreated>>({status: 'idle'});
+  const [revoked, setRevoked] = useState<LoadState<string>>({status: 'idle'});
+
+  const onCreate = (event: FormEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+    setCreated({status: 'loading'});
+    api.createToken(accessToken, name.trim()).then(
+      (data) => {
+        setCreated({status: 'ok', data});
+        setName('');
+        reloadTokens();
+      },
+      (error: unknown) => setCreated(failureState<ApiTokenCreated>(error)),
+    );
+  };
+
+  const onRevoke = (token: ApiToken): void => {
+    setRevoked({status: 'loading'});
+    api.revokeToken(accessToken, token.token_id).then(
+      () => {
+        setRevoked({status: 'ok', data: token.name});
+        // The token shown once must not stay on screen after it stops working.
+        setCreated((state) =>
+          state.status === 'ok' && state.data.token_id === token.token_id
+            ? {status: 'idle'}
+            : state,
+        );
+        reloadTokens();
+      },
+      (error: unknown) => setRevoked(failureState<string>(error)),
+    );
+  };
+
+  return (
+    <>
+      <h2 id="api-tokens">API tokens</h2>
+      <p>
+        A token lets a script submit for this account without a browser, through the same
+        endpoint the submit form uses. Set it as <code>TC_BENCH_TOKEN</code>; the{' '}
+        <Link to="/benchmark/submit">submit page</Link> has the setup. A token can read
+        this account and submit; it cannot edit the profile or create other tokens. The
+        submission quota is the account's, however many tokens it holds.
+      </p>
+      {created.status === 'ok' ? (
+        <div className={clsx(styles.notice, styles.noticeOk)} role="status">
+          <p>
+            Token <strong>{created.data.name}</strong> created. Copy it now: it is not stored
+            and cannot be shown again.
+          </p>
+          <pre className={styles.secret}>
+            <code>{created.data.token}</code>
+          </pre>
+        </div>
+      ) : null}
+      {created.status === 'error' ? (
+        <ErrorNotice message={created.message} reasons={created.reasons} />
+      ) : null}
+      {created.status === 'unreachable' ? <ApiUnreachable url={created.url} /> : null}
+      {revoked.status === 'ok' ? (
+        <div className={clsx(styles.notice, styles.noticeOk)} role="status">
+          Token {revoked.data} revoked. It no longer works.
+        </div>
+      ) : null}
+      {revoked.status === 'error' ? (
+        <ErrorNotice message={revoked.message} reasons={revoked.reasons} />
+      ) : null}
+      {revoked.status === 'unreachable' ? <ApiUnreachable url={revoked.url} /> : null}
+      <LoadGate state={tokensState} onRetry={reloadTokens}>
+        {(tokens) =>
+          tokens.length === 0 ? (
+            <p className={styles.muted}>This account has no API tokens.</p>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Token</th>
+                    <th scope="col">Created</th>
+                    <th scope="col">Last used</th>
+                    <th scope="col">
+                      <span className={styles.srOnly}>Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tokens.map((token) => (
+                    <tr key={token.token_id}>
+                      <td>{token.name}</td>
+                      <td>
+                        <code>{token.hint}…</code>
+                      </td>
+                      <td title={token.created_at}>{fmtDate(token.created_at)}</td>
+                      <td title={token.last_used_at ?? undefined}>
+                        {token.last_used_at ? fmtDate(token.last_used_at) : 'never'}
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="button button--secondary button--sm"
+                          disabled={revoked.status === 'loading'}
+                          onClick={() => onRevoke(token)}>
+                          Revoke
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        }
+      </LoadGate>
+      <form className={styles.inlineForm} onSubmit={onCreate}>
+        <label className={styles.field}>
+          <span className={styles.fieldLabel}>Name of a new token</span>
+          <input
+            className={styles.input}
+            maxLength={60}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="for example: laptop, cluster"
+            required
+          />
+        </label>
+        <button
+          type="submit"
+          className="button button--primary"
+          disabled={created.status === 'loading'}>
+          Create token
+        </button>
+      </form>
+    </>
+  );
+}
+
 export function MySubmissions({rows}: {rows: SubmissionResult[]}): ReactNode {
   if (rows.length === 0) {
     return <p className={styles.muted}>This account has no submissions.</p>;
@@ -350,6 +495,7 @@ function SignedIn({
           );
         }}
       </LoadGate>
+      <ApiTokens api={api} accessToken={accessToken} />
       <h2>My submissions</h2>
       <p>
         Every attempt from this account, newest first, including rejected attempts and the

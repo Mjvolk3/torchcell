@@ -5,7 +5,7 @@
 
 """The SQL schema of the benchmark service (SQLAlchemy 2, PostgreSQL in production).
 
-Three tables:
+Four tables:
 
 - ``users``: one row per account. The account key is the identity CILogon asserts,
   ``(oidc_issuer, oidc_subject)``, which is unique. ``email_canonical`` is unique too
@@ -13,6 +13,9 @@ Three tables:
   :func:`torchcell.benchmark.security.canonical_email`). No password is stored.
 - ``login_codes``: one-time sign-in codes, stored as sha256, with an expiry. The
   callback issues one and the account page trades it for a session token.
+- ``api_tokens``: personal API tokens, stored as sha256, for submitting from a script.
+  A token is shown once when it is created; ``token_hint`` keeps its first characters
+  so the owner can tell their tokens apart. A revoked token keeps its row.
 - ``submissions``: one row per ATTEMPT, rejected ones included, because the quota counts
   attempts. A scored row holds its validation and test scores as JSON in the shape of
   :class:`torchcell.benchmark.grading.SplitScores`, its integrity flags, and the path
@@ -162,6 +165,23 @@ class LoginCode(Base):
     expires_at: Mapped[datetime] = mapped_column(UtcDateTime())
     used_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
     created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow)
+
+
+class ApiToken(Base):
+    """A personal API token (the sha256, never the token)."""
+
+    __tablename__ = "api_tokens"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    name: Mapped[str] = mapped_column(String(60))
+    token_sha256: Mapped[str] = mapped_column(String(64), unique=True)
+    token_hint: Mapped[str] = mapped_column(String(16))
+    created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow)
+    last_used_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
+    revoked_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
 
 
 class Submission(Base):

@@ -1,8 +1,9 @@
 import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
-// One sidebar per navbar tab. Categories are collapsible and start closed
-// (sidebarCollapsible and sidebarCollapsed in docusaurus.config.ts); only the category
-// that holds the page being read is opened, by the theme.
+// One sidebar per navbar tab, all with the same shape: the tab's landing page first,
+// then named groups of pages. Groups are headings, not dropdowns (sidebarCollapsible is
+// false in docusaurus.config.ts), so every page of a tab is visible at once and every
+// entry in the sidebar is a link that opens a page.
 
 const SPHINX_URL = 'https://mjvolk3.github.io/torchcell/';
 const GITHUB_URL = 'https://github.com/Mjvolk3/torchcell';

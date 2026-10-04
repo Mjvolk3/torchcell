@@ -62,6 +62,7 @@ def test_schema_tables_and_indexes() -> None:
     init_schema(engine)  # creating twice is a no-op
     inspector = inspect(engine)
     assert sorted(inspector.get_table_names()) == [
+        "api_tokens",
         "login_codes",
         "submissions",
         "users",
@@ -81,7 +82,9 @@ def test_schema_renders_for_postgresql() -> None:
         table.name: str(CreateTable(table).compile(dialect=postgresql.dialect()))
         for table in Base.metadata.sorted_tables
     }
-    assert list(ddl) == ["users", "login_codes", "submissions"]
+    assert set(ddl) == {"users", "api_tokens", "login_codes", "submissions"}
+    assert "UNIQUE (token_sha256)" in ddl["api_tokens"]
+    assert "ON DELETE CASCADE" in ddl["api_tokens"]
     assert "val_scores JSONB" in ddl["submissions"]
     assert "flags JSONB NOT NULL" in ddl["submissions"]
     assert "created_at TIMESTAMP WITH TIME ZONE NOT NULL" in ddl["submissions"]

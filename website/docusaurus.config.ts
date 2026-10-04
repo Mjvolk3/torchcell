@@ -75,8 +75,7 @@ const config: Config = {
           // top-level path: /overview/, /database/, /benchmark/, ...
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
-          sidebarCollapsible: true,
-          sidebarCollapsed: true,
+          sidebarCollapsible: false,
           remarkPlugins: [remarkMath],
           rehypePlugins: [rehypeKatex],
         },

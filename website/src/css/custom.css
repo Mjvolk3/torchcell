@@ -108,10 +108,35 @@
   box-shadow: inset 0 -2px 0 var(--ifm-color-primary);
 }
 
-/* Sidebar hierarchy: only the tab's landing page, the first entry of every sidebar, is
- * bold. Group headings and the pages inside them keep the regular weight. */
+/* Sidebar hierarchy, the same on every tab: the landing page first and bold, then
+ * groups. A group is a heading over its pages, always open, not a dropdown, so every
+ * clickable entry in the sidebar opens a page. */
 .theme-doc-sidebar-menu > .theme-doc-sidebar-item-link-level-1:first-child > .menu__link {
   font-weight: 650;
+}
+
+.theme-doc-sidebar-item-category-level-1 {
+  margin-top: 0.9rem;
+}
+
+.theme-doc-sidebar-item-category-level-1 > .menu__list-item-collapsible {
+  pointer-events: none;
+  background: none;
+}
+
+.theme-doc-sidebar-item-category-level-1 > .menu__list-item-collapsible > .menu__link {
+  padding-top: 0.15rem;
+  padding-bottom: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ifm-color-emphasis-700);
+  background: none;
+}
+
+.theme-doc-sidebar-item-category-level-1 > .menu__list {
+  padding-left: 0;
 }
 
 /* Page width. The default is the theme's reading width: a capped container, and on a

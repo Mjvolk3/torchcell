@@ -11,6 +11,7 @@ import {
 import {useBenchApi} from '@site/src/lib/useBenchApi';
 import {useBenchSession} from '@site/src/lib/benchAuth';
 import {failureState, useLoad, type LoadState} from '@site/src/lib/useLoad';
+import CodeBlock from '@theme/CodeBlock';
 import StatusBadge from '@site/src/components/StatusBadge';
 import {
   ApiUnreachable,
@@ -52,6 +53,49 @@ function parseHyperparameters(text: string): ParsedHyperparameters {
     }
   }
   return {ok: true, value: parsed as Hyperparameters};
+}
+
+/** The name a form field has in the request, shown beside its label. */
+function FieldName({children}: {children: string}): ReactNode {
+  return <code className={styles.fieldName}>{children}</code>;
+}
+
+/**
+ * The request the form is about to send, written as a curl command. The form and a
+ * script call the same endpoint; this shows the form's current values in that shape.
+ */
+function EquivalentRequest({
+  baseUrl,
+  slug,
+  metadata,
+  fileName,
+}: {
+  baseUrl: string;
+  slug: string;
+  metadata: SubmissionMetadata;
+  fileName: string;
+}): ReactNode {
+  const curl = [
+    `curl -X POST ${baseUrl}/submissions \\`,
+    '  -H "Authorization: Bearer $TC_BENCH_TOKEN" \\',
+    `  -F dataset=${slug} \\`,
+    '  -F "metadata=<metadata.json" \\',
+    `  -F "predictions=@${fileName};type=text/csv"`,
+  ].join('\n');
+  return (
+    <details className={styles.formWide}>
+      <summary>This form as an API request</summary>
+      <p>
+        The form sends <code>POST /submissions</code> with three multipart fields. A script
+        that sends the same fields with an <Link to="/benchmark/account#api-tokens">API token</Link>{' '}
+        makes the same submission.
+      </p>
+      <CodeBlock language="json" title="metadata.json">
+        {JSON.stringify(metadata, null, 2)}
+      </CodeBlock>
+      <CodeBlock language="bash">{curl}</CodeBlock>
+    </details>
+  );
 }
 
 export function QuotaPanel({quota}: {quota: Quota}): ReactNode {
@@ -244,28 +288,31 @@ function SubmitForm({accessToken}: {accessToken: string}): ReactNode {
     );
   }
 
+  /** The metadata record as the form's fields stand now. */
+  const metadataFor = (hyper: Hyperparameters): SubmissionMetadata => ({
+    method_name: methodName.trim(),
+    description: description.trim(),
+    model_family: modelFamily.trim(),
+    encoding: encoding.trim(),
+    code_url: codeUrl.trim() === '' ? null : codeUrl.trim(),
+    uses_external_data: usesExternalData,
+    external_data_description: usesExternalData ? externalDataDescription.trim() : null,
+    hyperparameters: hyper,
+  });
+  const parsedHyperparameters = parseHyperparameters(hyperparameters);
+
   const onSubmit = (event: FormEvent<HTMLFormElement>, defaultSlug: string): void => {
     event.preventDefault();
     setFormError(null);
-    const parsed = parseHyperparameters(hyperparameters);
-    if (!parsed.ok) {
-      setFormError(parsed.error);
+    if (!parsedHyperparameters.ok) {
+      setFormError(parsedHyperparameters.error);
       return;
     }
     if (file === null) {
       setFormError('Choose the predictions CSV file.');
       return;
     }
-    const metadata: SubmissionMetadata = {
-      method_name: methodName.trim(),
-      description: description.trim(),
-      model_family: modelFamily.trim(),
-      encoding: encoding.trim(),
-      code_url: codeUrl.trim() === '' ? null : codeUrl.trim(),
-      uses_external_data: usesExternalData,
-      external_data_description: usesExternalData ? externalDataDescription.trim() : null,
-      hyperparameters: parsed.value,
-    };
+    const metadata = metadataFor(parsedHyperparameters.value);
     setSubmission({status: 'loading'});
     api.submit(accessToken, slug || defaultSlug, metadata, file).then(
       (result) => {
@@ -304,7 +351,10 @@ function SubmitForm({accessToken}: {accessToken: string}): ReactNode {
           return (
             <form className={styles.form} onSubmit={(e) => onSubmit(e, datasets[0].slug)}>
               <label className={styles.field}>
-                <span className={styles.fieldLabel}>Dataset</span>
+                <span className={styles.fieldLabel}>
+                  Dataset
+                  <FieldName>dataset</FieldName>
+                </span>
                 <select
                   className={styles.select}
                   value={slug || datasets[0].slug}
@@ -317,7 +367,10 @@ function SubmitForm({accessToken}: {accessToken: string}): ReactNode {
                 </select>
               </label>
               <label className={styles.field}>
-                <span className={styles.fieldLabel}>Method name</span>
+                <span className={styles.fieldLabel}>
+                  Method name
+                  <FieldName>metadata.method_name</FieldName>
+                </span>
                 <input
                   className={styles.input}
                   value={methodName}
@@ -326,7 +379,10 @@ function SubmitForm({accessToken}: {accessToken: string}): ReactNode {
                 />
               </label>
               <label className={styles.field}>
-                <span className={styles.fieldLabel}>Model family</span>
+                <span className={styles.fieldLabel}>
+                  Model family
+                  <FieldName>metadata.model_family</FieldName>
+                </span>
                 <input
                   className={styles.input}
                   value={modelFamily}
@@ -336,7 +392,10 @@ function SubmitForm({accessToken}: {accessToken: string}): ReactNode {
                 />
               </label>
               <label className={styles.field}>
-                <span className={styles.fieldLabel}>Encoding</span>
+                <span className={styles.fieldLabel}>
+                  Encoding
+                  <FieldName>metadata.encoding</FieldName>
+                </span>
                 <input
                   className={styles.input}
                   value={encoding}
@@ -346,7 +405,10 @@ function SubmitForm({accessToken}: {accessToken: string}): ReactNode {
                 />
               </label>
               <label className={clsx(styles.field, styles.formWide)}>
-                <span className={styles.fieldLabel}>Description</span>
+                <span className={styles.fieldLabel}>
+                  Description
+                  <FieldName>metadata.description</FieldName>
+                </span>
                 <textarea
                   className={styles.textarea}
                   value={description}
@@ -355,7 +417,10 @@ function SubmitForm({accessToken}: {accessToken: string}): ReactNode {
                 />
               </label>
               <label className={clsx(styles.field, styles.formWide)}>
-                <span className={styles.fieldLabel}>Code URL (optional)</span>
+                <span className={styles.fieldLabel}>
+                  Code URL (optional)
+                  <FieldName>metadata.code_url</FieldName>
+                </span>
                 <input
                   className={styles.input}
                   type="url"
@@ -374,10 +439,14 @@ function SubmitForm({accessToken}: {accessToken: string}): ReactNode {
                   onChange={(e) => setUsesExternalData(e.target.checked)}
                 />
                 The method uses data beyond the benchmark training split
+                <FieldName>metadata.uses_external_data</FieldName>
               </label>
               {usesExternalData ? (
                 <label className={clsx(styles.field, styles.formWide)}>
-                  <span className={styles.fieldLabel}>External data description</span>
+                  <span className={styles.fieldLabel}>
+                  External data description
+                  <FieldName>metadata.external_data_description</FieldName>
+                </span>
                   <textarea
                     className={styles.textarea}
                     value={externalDataDescription}
@@ -387,7 +456,10 @@ function SubmitForm({accessToken}: {accessToken: string}): ReactNode {
                 </label>
               ) : null}
               <label className={clsx(styles.field, styles.formWide)}>
-                <span className={styles.fieldLabel}>Hyperparameters (JSON object, optional)</span>
+                <span className={styles.fieldLabel}>
+                  Hyperparameters (JSON object, optional)
+                  <FieldName>metadata.hyperparameters</FieldName>
+                </span>
                 <textarea
                   className={clsx(styles.textarea, styles.mono)}
                   value={hyperparameters}
@@ -400,7 +472,10 @@ function SubmitForm({accessToken}: {accessToken: string}): ReactNode {
                 </span>
               </label>
               <label className={clsx(styles.field, styles.formWide)}>
-                <span className={styles.fieldLabel}>Predictions CSV</span>
+                <span className={styles.fieldLabel}>
+                  Predictions CSV
+                  <FieldName>predictions</FieldName>
+                </span>
                 <input
                   className={styles.input}
                   type="file"
@@ -431,6 +506,14 @@ function SubmitForm({accessToken}: {accessToken: string}): ReactNode {
                   <ErrorNotice message={formError} />
                 </div>
               ) : null}
+              <EquivalentRequest
+                baseUrl={api.baseUrl}
+                slug={slug || datasets[0].slug}
+                metadata={metadataFor(
+                  parsedHyperparameters.ok ? parsedHyperparameters.value : {},
+                )}
+                fileName={file ? file.name : 'predictions.csv'}
+              />
             </form>
           );
         }}
@@ -449,8 +532,12 @@ function Submit(): ReactNode {
   if (session.accessToken === null) {
     return (
       <div className={styles.empty}>
-        <p className={styles.emptyTitle}>Sign in to submit</p>
-        <p>Submitting requires an account. Sign in through CILogon on the account page.</p>
+        <p className={styles.emptyTitle}>Sign in to use the form</p>
+        <p>
+          The form submits for the account signed in to this browser. Sign in through
+          CILogon on the account page; a script uses an API token instead, as described
+          above.
+        </p>
         <Link className="button button--primary" to="/benchmark/account">
           Go to the account page
         </Link>

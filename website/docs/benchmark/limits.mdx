@@ -12,7 +12,8 @@ description: Account requirement and rate limits for benchmark submissions.
 | Rejected attempts | Count toward both limits |
 | Predictions file | At most 16 MiB |
 
-The limits apply per account, over all datasets together. A request refused with
+The limits apply per account, over all datasets together, whether an attempt comes from
+the form or from a script with an API token. An account holds at most 5 API tokens. A request refused with
 `429` is not an attempt and does not count. The [submit page](./submit.mdx)
 shows the current quota: how many submissions were used in the window, how many
 remain, and the earliest time the next one is allowed. A submission sent before that

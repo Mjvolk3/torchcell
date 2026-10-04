@@ -5,8 +5,8 @@
 
 """``tc-bench``: the HTTP service behind the public benchmark leaderboard.
 
-Reading the board needs no account. Submitting needs an account, a bearer token, and
-quota (see :mod:`torchcell.benchmark.ratelimit`). There are no passwords: a person
+Reading the board needs no account. Submitting needs an account, a bearer credential,
+and quota (see :mod:`torchcell.benchmark.ratelimit`). There are no passwords: a person
 signs in at CILogon with their institution, and the service keeps the identity CILogon
 asserts (see :mod:`torchcell.benchmark.oidc`). Sign-in is three steps:
 
@@ -19,6 +19,16 @@ asserts (see :mod:`torchcell.benchmark.oidc`). Sign-in is three steps:
 3. The account page posts the code to ``POST /auth/exchange`` and receives the bearer
    token. The code works once and expires within minutes, so the address bar and the
    browser history only ever hold a spent code, and the token never appears in a URL.
+
+The bearer credential is one of two things. A browser holds the session token of step
+3. A script holds a personal API token (``tcb_...``), which the account's owner creates
+on the account page (``POST /auth/tokens``, shown once, stored as its sha256) and can
+revoke there. Both are sent as ``Authorization: Bearer``. An API token reads the
+account, reads the quota, submits and lists the account's attempts; changing the
+profile and managing tokens need the session token, so a leaked API token cannot mint
+others. The quota is per account, whichever credential an attempt arrives with. The
+website's form and :mod:`torchcell.benchmark.client` call the same
+``POST /submissions``.
 
 A submission is a multipart upload of a predictions CSV and a metadata JSON; the
 server validates both with the pydantic models of
@@ -117,6 +127,7 @@ from torchcell.benchmark.bundle import (
 )
 from torchcell.benchmark.db import (
     BOARD_STATUSES,
+    ApiToken,
     LoginCode,
     Submission,
     SubmissionStatus,
@@ -144,6 +155,7 @@ from torchcell.benchmark.oidc import (
     identity_from_claims,
 )
 from torchcell.benchmark.ratelimit import QuotaStatus, SubmissionLimits, evaluate_quota
+from torchcell.benchmark.results import Quota, SubmissionResult
 from torchcell.benchmark.security import (
     JWT_SECRET_MIN_BYTES,
     AccountPolicy,
@@ -152,7 +164,9 @@ from torchcell.benchmark.security import (
     derive_key,
     hash_client_address,
     hash_token,
+    is_api_token,
     issue_access_token,
+    new_api_token,
     new_one_time_token,
 )
 from torchcell.benchmark.storage import archive_submission
@@ -205,6 +219,7 @@ class BenchServerConfig(BaseModel):
     access_token_ttl: timedelta = timedelta(hours=12)
     login_code_ttl: timedelta = timedelta(minutes=2)
     max_signups_per_address: int = 5
+    max_api_tokens: int = 5
 
     @model_validator(mode="after")
     def _check(self) -> Self:
@@ -323,6 +338,16 @@ class ProfileRequest(BaseModel):
     affiliation: Affiliation | None = None
 
 
+class ApiTokenRequest(BaseModel):
+    """Body of ``POST /auth/tokens``."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)
+    ] = Field(description="A label for the token, for example the machine it is on.")
+
+
 class ReviewRequest(BaseModel):
     """Body of the admin verify and withdraw routes."""
 
@@ -369,30 +394,20 @@ class MeResponse(UserPublic):
     approved: bool
 
 
-class Quota(BaseModel):
-    """The signed-in account's submission quota."""
+class ApiTokenInfo(BaseModel):
+    """A personal API token as its owner sees it after creation (never the token)."""
 
-    max_per_window: int
-    window_hours: float
-    min_gap_minutes: float
-    used_in_window: int
-    remaining: int
-    next_allowed_at: datetime | None
+    token_id: str
+    name: str
+    hint: str = Field(description="The first characters of the token.")
+    created_at: datetime
+    last_used_at: datetime | None
 
 
-class SubmissionResult(BaseModel):
-    """One attempt as its owner sees it: scores, or the reasons it was rejected."""
+class ApiTokenCreated(ApiTokenInfo):
+    """A new personal API token; ``token`` is returned this once and not stored."""
 
-    submission_id: str
-    dataset_slug: str
-    status: SubmissionStatus
-    submitted_at: datetime
-    method_name: str
-    rejection_reasons: list[str]
-    val: SplitScores | None
-    test: SplitScores | None
-    flags: list[str]
-    archive_sha256: str | None
+    token: str
 
 
 class LeaderboardRow(BaseModel):
@@ -545,9 +560,9 @@ def create_app(
         summary="Accounts, submissions and leaderboards of the TorchCell benchmark.",
         description=(
             "Reading datasets and leaderboards needs no account. Submitting needs an "
-            "account (sign in through CILogon) and a bearer token. Submit predictions, "
-            "not scores: the "
-            "server validates the upload against the dataset's template, grades it on "
+            "account (sign in through CILogon) and a bearer credential: the session "
+            "token of a browser, or a personal API token created on the account page. "
+            "Submit predictions, not scores: the server validates the upload against the dataset's template, grades it on "
             "the validation and test splits, and returns the result."
         ),
         version=APP_VERSION,
@@ -595,22 +610,51 @@ def create_app(
         with sessions() as session:
             yield session
 
-    def current_user(
+    def unauthorized(detail: str) -> HTTPException:
+        return HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=detail,
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    def active(user: User | None, detail: str) -> User:
+        if user is None or user.disabled:
+            raise unauthorized(detail)
+        return user
+
+    def session_user(
         credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
         session: Session = Depends(get_session),
     ) -> User:
+        """The account behind a session token; a personal API token is not accepted."""
         user_id = (
             decode_access_token(credentials.credentials, secret)
             if credentials
             else None
         )
-        user = session.get(User, user_id) if user_id else None
-        if user is None or user.disabled:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="sign in to use this route",
-                headers={"WWW-Authenticate": "Bearer"},
+        return active(
+            session.get(User, user_id) if user_id else None,
+            "sign in on the account page to use this route",
+        )
+
+    def current_user(
+        credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+        session: Session = Depends(get_session),
+    ) -> User:
+        """The account behind a session token or a personal API token."""
+        if credentials is None or not is_api_token(credentials.credentials):
+            return session_user(credentials, session)
+        row = session.scalar(
+            select(ApiToken).where(
+                ApiToken.token_sha256 == hash_token(credentials.credentials),
+                ApiToken.revoked_at.is_(None),
             )
+        )
+        if row is None:
+            raise unauthorized("invalid or revoked API token")
+        user = active(session.get(User, row.user_id), "invalid or revoked API token")
+        row.last_used_at = clock()
+        session.commit()
         return user
 
     def require_admin(api_key: str | None = Depends(admin_scheme)) -> str:
@@ -936,7 +980,7 @@ def create_app(
 
     @router.get("/auth/me", response_model=MeResponse, tags=["auth"])
     def me(user: User = Depends(current_user)) -> MeResponse:
-        """The signed-in account."""
+        """The account the credential belongs to."""
         return MeResponse(
             **_user_public(user).model_dump(), email=user.email, approved=user.approved
         )
@@ -944,7 +988,7 @@ def create_app(
     @router.post("/auth/profile", response_model=MeResponse, tags=["auth"])
     def update_profile(
         body: ProfileRequest,
-        user: User = Depends(current_user),
+        user: User = Depends(session_user),
         session: Session = Depends(get_session),
     ) -> MeResponse:
         """Set the display name and affiliation the board shows for the account."""
@@ -954,6 +998,83 @@ def create_app(
         return MeResponse(
             **_user_public(user).model_dump(), email=user.email, approved=user.approved
         )
+
+    def token_info(row: ApiToken) -> ApiTokenInfo:
+        return ApiTokenInfo(
+            token_id=row.id,
+            name=row.name,
+            hint=row.token_hint,
+            created_at=row.created_at,
+            last_used_at=row.last_used_at,
+        )
+
+    def active_tokens(session: Session, user_id: str) -> list[ApiToken]:
+        return list(
+            session.scalars(
+                select(ApiToken)
+                .where(ApiToken.user_id == user_id, ApiToken.revoked_at.is_(None))
+                .order_by(ApiToken.created_at.desc())
+            )
+        )
+
+    @router.get("/auth/tokens", response_model=list[ApiTokenInfo], tags=["auth"])
+    def list_tokens(
+        user: User = Depends(session_user), session: Session = Depends(get_session)
+    ) -> list[ApiTokenInfo]:
+        """The account's personal API tokens that are not revoked, newest first."""
+        return [token_info(row) for row in active_tokens(session, user.id)]
+
+    @router.post(
+        "/auth/tokens", response_model=ApiTokenCreated, status_code=201, tags=["auth"]
+    )
+    def create_token(
+        body: ApiTokenRequest,
+        user: User = Depends(session_user),
+        session: Session = Depends(get_session),
+    ) -> ApiTokenCreated:
+        """Create a personal API token for submitting from a script.
+
+        The token is in this response and nowhere else: only its sha256 is stored.
+        Send it as ``Authorization: Bearer <token>``. Needs the session token of a
+        signed-in browser; an API token cannot create another.
+        """
+        session.execute(select(User.id).where(User.id == user.id).with_for_update())
+        if len(active_tokens(session, user.id)) >= config.max_api_tokens:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"an account holds at most {config.max_api_tokens} API tokens; "
+                    "revoke one first"
+                ),
+            )
+        token, token_hash, hint = new_api_token()
+        row = ApiToken(
+            id=new_id(),
+            user_id=user.id,
+            name=body.name,
+            token_sha256=token_hash,
+            token_hint=hint,
+            created_at=clock(),
+        )
+        session.add(row)
+        session.commit()
+        return ApiTokenCreated(**token_info(row).model_dump(), token=token)
+
+    @router.post(
+        "/auth/tokens/{token_id}/revoke", response_model=Message, tags=["auth"]
+    )
+    def revoke_token(
+        token_id: str,
+        user: User = Depends(session_user),
+        session: Session = Depends(get_session),
+    ) -> Message:
+        """Revoke one of the account's personal API tokens; it stops working at once."""
+        row = session.get(ApiToken, token_id)
+        if row is None or row.user_id != user.id or row.revoked_at is not None:
+            raise HTTPException(status_code=404, detail="unknown API token")
+        row.revoked_at = clock()
+        session.commit()
+        return Message(message=f"API token {row.name} revoked")
 
     # --------------------------------------------------------------------- datasets
 
@@ -999,7 +1120,7 @@ def create_app(
     def quota(
         user: User = Depends(current_user), session: Session = Depends(get_session)
     ) -> Quota:
-        """How many attempts the signed-in account has left, and when the next is allowed."""
+        """How many attempts the account has left, and when the next is allowed."""
         return to_quota(quota_state(session, user.id, clock()))
 
     @router.post(
@@ -1050,7 +1171,7 @@ def create_app(
     def my_submissions(
         user: User = Depends(current_user), session: Session = Depends(get_session)
     ) -> list[SubmissionResult]:
-        """Every attempt of the signed-in account, newest first, rejected ones included."""
+        """Every attempt of the account, newest first, rejected ones included."""
         rows = session.scalars(
             select(Submission)
             .where(Submission.user_id == user.id)

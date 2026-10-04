@@ -45,6 +45,9 @@ before an attempt is spent:
 python -m torchcell.benchmark.validation predictions.csv --template template.csv
 ```
 
+Downloading the template and validating need no account. `tc-bench submit` runs the
+same check before it uploads.
+
 It prints the same report the server would return and exits with status 1 when the
 file would be rejected.
 
@@ -82,7 +85,7 @@ Rejected attempts count toward the [submission limits](./limits.mdx).
 
 ```text
 POST /submissions
-Authorization: Bearer <access token>
+Authorization: Bearer <API token>
 Content-Type: multipart/form-data
 
 dataset      the dataset slug
@@ -91,4 +94,6 @@ predictions  the CSV file
 ```
 
 The response is `201` with the scores when the submission was graded, `422` with the
-rejection reasons when it was rejected, and `429` when a limit applies.
+rejection reasons when it was rejected, and `429` when a limit applies. The
+[submit page](./submit.mdx) covers the token, the `tc-bench` command and the Python
+client.

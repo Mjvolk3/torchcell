@@ -13,6 +13,10 @@
   share a key.
 - A sign-in code is 32 random bytes, handed to the browser once and stored as its
   sha256. The account page trades it for a session token.
+- A personal API token is ``tcb_`` followed by 32 random bytes, created on the account
+  page for submitting from a script. It is shown once and stored as its sha256, like a
+  sign-in code, and it is sent the way a session token is (``Authorization: Bearer``);
+  the prefix tells the two apart.
 - One person, one account: an address is reduced to a canonical form before the unique
   check (lowercase, ``+tag`` removed, and dots removed for Gmail, which ignores them),
   so ``a.b+x@gmail.com`` and ``ab@gmail.com`` are the same account, whichever identity
@@ -36,6 +40,8 @@ from pydantic import BaseModel, ConfigDict
 JWT_ALGORITHM = "HS256"
 JWT_ISSUER = "tc-bench"
 JWT_SECRET_MIN_BYTES = 32
+API_TOKEN_PREFIX = "tcb_"
+API_TOKEN_HINT_LENGTH = 12
 DOT_INSENSITIVE_DOMAINS = frozenset({"gmail.com", "googlemail.com"})
 
 
@@ -121,6 +127,17 @@ def new_one_time_token() -> tuple[str, str]:
     """A fresh one-time token and the hash that stores it."""
     token = secrets.token_urlsafe(32)
     return token, hash_token(token)
+
+
+def new_api_token() -> tuple[str, str, str]:
+    """A fresh personal API token, the hash that stores it, and its display hint."""
+    token = f"{API_TOKEN_PREFIX}{secrets.token_urlsafe(32)}"
+    return token, hash_token(token), token[:API_TOKEN_HINT_LENGTH]
+
+
+def is_api_token(credential: str) -> bool:
+    """True when a bearer credential is a personal API token, not a session token."""
+    return credential.startswith(API_TOKEN_PREFIX)
 
 
 def derive_key(secret: str, purpose: str) -> str:

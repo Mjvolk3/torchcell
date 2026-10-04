@@ -11,7 +11,9 @@ Scores are asserted against the hand-worked values: the labels themselves score 
 1, 2, 3, 4 score Pearson 0.8.
 
 Covered: the sign-in sequence (redirect with state, nonce and PKCE; callback; one-time
-code; bearer token) and each way it is refused (a forged or replayed state, an ID token
+code; bearer token); personal API tokens (shown once, stored hashed, able to read and
+submit but not to manage the account, revocable, capped per account); each way a
+sign-in is refused (a forged or replayed state, an ID token
 with the wrong nonce, audience, issuer, expiry or signature, a provider that is down, a
 cancelled sign-in, a missing email, a provider or domain the policy excludes, a second
 identity on one address, too many new accounts from one address, a disabled account);
@@ -22,6 +24,7 @@ guard; the integrity flag; admin verify, withdraw, approve, disable and baseline
 ``BenchServerConfig.from_env``.
 """
 
+import hashlib
 import io
 import json
 import sys
@@ -50,7 +53,13 @@ from tests.torchcell.benchmark._fake_idp import (
 from torchcell.api_keys import ApiKeys
 from torchcell.benchmark import app as app_module
 from torchcell.benchmark.app import API_PREFIX, BenchServerConfig, create_app
-from torchcell.benchmark.db import LoginCode, User, init_schema, make_session_factory
+from torchcell.benchmark.db import (
+    ApiToken,
+    LoginCode,
+    User,
+    init_schema,
+    make_session_factory,
+)
 from torchcell.benchmark.oidc import CILOGON_METADATA_URL, OidcConfig
 from torchcell.benchmark.security import AccountPolicy
 
@@ -482,12 +491,146 @@ def test_routes_that_need_a_session(bench: Bench) -> None:
     ]:
         response = bench.client.request(method, bench.url(path))
         assert response.status_code == 401
-        assert response.json() == {"detail": "sign in to use this route"}
+        assert response.json() == {
+            "detail": "sign in on the account page to use this route"
+        }
         assert response.headers["www-authenticate"] == "Bearer"
     forged = bench.client.get(
         bench.url("/auth/me"), headers={"Authorization": "Bearer x.y.z"}
     )
     assert forged.status_code == 401
+
+
+# --------------------------------------------------------------------- API tokens
+
+
+def _new_token(bench: Bench, headers: dict[str, str], name: str = "laptop") -> Any:
+    return bench.client.post(
+        bench.url("/auth/tokens"), headers=headers, json={"name": name}
+    )
+
+
+def test_api_token_is_shown_once_and_stored_as_a_hash(bench: Bench) -> None:
+    headers = bench.register()
+    response = _new_token(bench, headers, "  laptop  ")
+    assert response.status_code == 201
+    created = response.json()
+    assert set(created) == {
+        "token_id",
+        "name",
+        "hint",
+        "created_at",
+        "last_used_at",
+        "token",
+    }
+    token = created["token"]
+    assert token.startswith("tcb_")
+    assert (created["name"], created["hint"]) == ("laptop", token[:12])
+    assert created["created_at"] == "2026-10-01T12:00:00Z"
+    assert created["last_used_at"] is None
+
+    with bench.sessions() as session:
+        row = session.scalars(select(ApiToken)).one()
+        assert row.token_sha256 == hashlib.sha256(token.encode()).hexdigest()
+        assert token not in (row.name, row.token_hint, row.token_sha256)
+
+    listed = bench.client.get(bench.url("/auth/tokens"), headers=headers).json()
+    assert listed == [{k: v for k, v in created.items() if k != "token"}]
+
+
+def test_api_token_submits_and_reads_but_does_not_manage_the_account(
+    bench: Bench, labels: Labels, to_csv: Csv
+) -> None:
+    session_headers = bench.register()
+    token = _new_token(bench, session_headers).json()["token"]
+    api = {"Authorization": f"Bearer {token}"}
+
+    me = bench.client.get(bench.url("/auth/me"), headers=api)
+    assert me.status_code == 200
+    assert me.json()["email"] == "alice@example.org"
+    assert bench.client.get(bench.url("/quota"), headers=api).json()["remaining"] == 3
+
+    bench.clock.now = T0 + timedelta(minutes=5)
+    scored = bench.submit(api, to_csv(labels))
+    assert scored.status_code == 201
+    assert scored.json()["status"] == "provisional"
+    mine = bench.client.get(bench.url("/submissions/mine"), headers=api).json()
+    assert [m["submission_id"] for m in mine] == [scored.json()["submission_id"]]
+    # The quota is the account's: the attempt made with the token is counted for the
+    # session too.
+    quota = bench.client.get(bench.url("/quota"), headers=session_headers).json()
+    assert quota["used_in_window"] == 1
+
+    listed = bench.client.get(bench.url("/auth/tokens"), headers=session_headers).json()
+    assert listed[0]["last_used_at"] == "2026-10-01T12:05:00Z"
+
+    for method, path, body in [
+        ("GET", "/auth/tokens", None),
+        ("POST", "/auth/tokens", {"name": "second"}),
+        ("POST", f"/auth/tokens/{listed[0]['token_id']}/revoke", None),
+        ("POST", "/auth/profile", {"display_name": "Mallory"}),
+    ]:
+        refused = bench.client.request(method, bench.url(path), headers=api, json=body)
+        assert refused.status_code == 401
+        assert refused.json() == {
+            "detail": "sign in on the account page to use this route"
+        }
+
+
+def test_revoked_or_unknown_api_token_is_refused(bench: Bench) -> None:
+    headers = bench.register()
+    created = _new_token(bench, headers).json()
+    api = {"Authorization": f"Bearer {created['token']}"}
+    revoke = bench.url(f"/auth/tokens/{created['token_id']}/revoke")
+
+    other = bench.register("bob@example.org", "Bob")
+    assert bench.client.post(revoke, headers=other).status_code == 404
+    assert bench.client.get(bench.url("/quota"), headers=api).status_code == 200
+
+    revoked = bench.client.post(revoke, headers=headers)
+    assert revoked.json() == {"message": "API token laptop revoked"}
+    assert bench.client.post(revoke, headers=headers).status_code == 404
+    assert bench.client.get(bench.url("/auth/tokens"), headers=headers).json() == []
+    for credential in (created["token"], "tcb_" + "x" * 43):
+        response = bench.client.get(
+            bench.url("/quota"), headers={"Authorization": f"Bearer {credential}"}
+        )
+        assert response.status_code == 401
+        assert response.json() == {"detail": "invalid or revoked API token"}
+
+
+def test_api_tokens_per_account_are_capped_and_named(
+    tmp_path: Path, datasets_root: Path
+) -> None:
+    bench = Bench(tmp_path, datasets_root, max_api_tokens=2)
+    headers = bench.register()
+    first = _new_token(bench, headers, "one").json()
+    assert _new_token(bench, headers, "two").status_code == 201
+    full = _new_token(bench, headers, "three")
+    assert full.status_code == 409
+    assert full.json() == {
+        "detail": "an account holds at most 2 API tokens; revoke one first"
+    }
+    bench.client.post(
+        bench.url(f"/auth/tokens/{first['token_id']}/revoke"), headers=headers
+    )
+    assert _new_token(bench, headers, "three").status_code == 201
+    for bad in ({"name": ""}, {"name": "n" * 61}, {}, {"name": "ok", "extra": 1}):
+        response = bench.client.post(
+            bench.url("/auth/tokens"), headers=headers, json=bad
+        )
+        assert response.status_code == 422
+
+
+def test_disabled_account_loses_its_api_tokens(bench: Bench) -> None:
+    headers = bench.register()
+    token = _new_token(bench, headers).json()["token"]
+    user_id = bench.client.get(bench.url("/auth/me"), headers=headers).json()["user_id"]
+    bench.client.post(bench.url(f"/admin/users/{user_id}/disable"), headers=ADMIN)
+    response = bench.client.get(
+        bench.url("/quota"), headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 401
 
 
 # ----------------------------------------------------------------------- datasets
@@ -551,8 +694,6 @@ def test_scored_submission(bench: Bench, labels: Labels, to_csv: Csv) -> None:
         bench.submissions_root / SLUG / "2026" / "10" / f"{result['submission_id']}.zip"
     )
     assert archive.is_file()
-    import hashlib
-
     assert hashlib.sha256(archive.read_bytes()).hexdigest() == result["archive_sha256"]
     with zipfile.ZipFile(io.BytesIO(archive.read_bytes())) as zipped:
         assert zipped.namelist() == ["metadata.json", "predictions.csv", "result.json"]
@@ -1002,6 +1143,7 @@ def test_main_runs_uvicorn_on_loopback_by_default(  # test-quality: allow main()
     from sqlalchemy import inspect
 
     assert sorted(inspect(engine).get_table_names()) == [
+        "api_tokens",
         "login_codes",
         "submissions",
         "users",

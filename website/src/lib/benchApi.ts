@@ -103,6 +103,19 @@ export type UserPublic = {
 
 export type UserPrivate = UserPublic & {email: string; approved: boolean};
 
+/** A personal API token as its owner sees it after creation; never the token itself. */
+export type ApiToken = {
+  token_id: string;
+  name: string;
+  /** The first characters of the token, enough to tell tokens apart. */
+  hint: string;
+  created_at: string;
+  last_used_at: string | null;
+};
+
+/** A new personal API token. `token` is returned this once and is not stored. */
+export type ApiTokenCreated = ApiToken & {token: string};
+
 /** What an account may edit about itself; both fields are public. */
 export type ProfileUpdate = {display_name: string; affiliation: string | null};
 
@@ -289,6 +302,11 @@ export interface BenchApi {
   exchange(code: string): Promise<TokenResponse>;
   me(accessToken: string): Promise<UserPrivate>;
   updateProfile(accessToken: string, profile: ProfileUpdate): Promise<UserPrivate>;
+  /** The account's personal API tokens that are not revoked, newest first. */
+  tokens(accessToken: string): Promise<ApiToken[]>;
+  /** Creates a personal API token for scripts. The token is in the answer only. */
+  createToken(accessToken: string, name: string): Promise<ApiTokenCreated>;
+  revokeToken(accessToken: string, tokenId: string): Promise<MessageResponse>;
 
   datasets(): Promise<BenchmarkDatasetPublic[]>;
   dataset(slug: string): Promise<BenchmarkDatasetPublic>;
@@ -374,6 +392,20 @@ function createHttpApi(baseUrl: string): BenchApi {
         body: JSON.stringify(profile),
       }),
 
+    tokens: (accessToken) =>
+      request<ApiToken[]>('/auth/tokens', {headers: bearer(accessToken)}),
+    createToken: (accessToken, name) =>
+      request<ApiTokenCreated>('/auth/tokens', {
+        method: 'POST',
+        headers: {...bearer(accessToken), 'Content-Type': 'application/json'},
+        body: JSON.stringify({name}),
+      }),
+    revokeToken: (accessToken, tokenId) =>
+      request<MessageResponse>(`/auth/tokens/${encodeURIComponent(tokenId)}/revoke`, {
+        method: 'POST',
+        headers: bearer(accessToken),
+      }),
+
     datasets: () => request<BenchmarkDatasetPublic[]>('/datasets'),
     dataset: (slug) =>
       request<BenchmarkDatasetPublic>(`/datasets/${encodeURIComponent(slug)}`),
@@ -449,6 +481,19 @@ function createMockApi(baseUrl: string, mockBaseUrl: string): BenchApi {
       // Nothing is sent or stored: the fixture is returned with the edit applied.
       return {...(await fixture<UserPrivate>('me')), ...profile};
     },
+
+    tokens: () => fixture<ApiToken[]>('tokens'),
+    // Nothing is sent or stored: the token below is a fixed, visibly fake value.
+    createToken: (_accessToken, name) =>
+      Promise.resolve({
+        token_id: 'mock-token-new',
+        name,
+        hint: 'tcb_MOCKMOCK',
+        created_at: new Date().toISOString(),
+        last_used_at: null,
+        token: 'tcb_MOCKMOCK-not-a-real-token-nothing-was-created',
+      }),
+    revokeToken: () => Promise.resolve({message: 'mock: nothing was revoked'}),
 
     datasets: () => fixture<BenchmarkDatasetPublic[]>('datasets'),
     async dataset(slug) {

@@ -292,3 +292,45 @@ and the open question on password reset, which no longer applies.
    `cilogon_client_secret` file, then follow the runbook above.
 4. Decide whether `TC_BENCH_ALLOWED_IDPS_FILE` restricts providers and whether
    `TC_BENCH_REQUIRE_APPROVAL` is on.
+
+## 2026.10.04 - Personal API tokens, tc-bench client, one sidebar shape
+
+### Submitting from a script
+
+- A signed-in account creates personal API tokens on the account page
+  (`POST /auth/tokens`, at most 5, each shown once and stored as its sha256, revocable).
+  A token is `tcb_` plus 32 random bytes and is sent as `Authorization: Bearer`, the
+  same header as the browser's session token; the prefix tells them apart.
+- A token reads the account, reads the quota, submits and lists attempts. Editing the
+  profile and managing tokens need the session token, so a leaked token cannot mint
+  others. The quota stays per account.
+- `torchcell/benchmark/client.py` holds `BenchClient` and the `tc-bench` command
+  (`datasets`, `template`, `quota`, `submit`, `mine`). `submit` validates against the
+  template before uploading, so a malformed file does not spend an attempt.
+  Environment: `TC_BENCH_URL`, `TC_BENCH_TOKEN`.
+- Reading needs no account: datasets, splits, templates, boards and public histories
+  are open, and the client works without a token for those calls.
+- `Quota` and `SubmissionResult` moved to `torchcell/benchmark/results.py` so the
+  server and the client share them.
+- The submit page leads with the API setup; the form is the same `POST /submissions`,
+  labels show the request field names, and "This form as an API request" prints the
+  form's values as `metadata.json` plus a `curl` command.
+
+### Sidebar
+
+- Every tab has the same shape: landing page first, then groups that are always-open
+  headings (`sidebarCollapsible: false`). No dropdowns, so every clickable sidebar
+  entry opens a page.
+
+### Verified, and not
+
+- 194 tests pass in `tests/torchcell/benchmark` (in-process app, SQLite, fake identity
+  provider); ruff, strict mypy, paired-tests and test-quality gates pass on the changed
+  files.
+- Mock-mode preview checked in headless Chromium: sidebar on five tabs, submit page
+  sections and code samples, token creation panel, form request preview; no console
+  errors. `tsc --noEmit` is clean.
+- Not run: the token routes against PostgreSQL, the `tc-bench` command against a
+  deployed API (none exists yet), a real CILogon sign-in.
+- A deployed database created before this change needs the `api_tokens` table
+  (`--init-db` creates missing tables; there is still no migration tool).

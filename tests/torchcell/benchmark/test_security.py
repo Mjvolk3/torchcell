@@ -29,7 +29,9 @@ from torchcell.benchmark.security import (
     email_domain,
     hash_client_address,
     hash_token,
+    is_api_token,
     issue_access_token,
+    new_api_token,
     new_one_time_token,
 )
 
@@ -153,3 +155,14 @@ def test_client_address_hash_is_keyed() -> None:
     assert hashed == hmac.new(SECRET.encode(), b"203.0.113.7", "sha256").hexdigest()
     assert hashed != hash_client_address("203.0.113.7", "t" * 40)
     assert hashed != hash_client_address("203.0.113.8", SECRET)
+
+
+def test_api_token_is_prefixed_hashed_and_distinct_from_a_session_token() -> None:
+    token, token_hash, hint = new_api_token()
+    assert token.startswith("tcb_") and len(token) == 4 + 43  # 32 bytes, base64url
+    assert token_hash == hashlib.sha256(token.encode()).hexdigest()
+    assert hint == token[:12]
+    assert new_api_token()[0] != token
+    assert is_api_token(token)
+    session_token, _ = issue_access_token("u1", SECRET, timedelta(hours=1), NOW)
+    assert not is_api_token(session_token)

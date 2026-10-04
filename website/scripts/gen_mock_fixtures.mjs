@@ -198,6 +198,23 @@ write('me', {
   approved: true,
 });
 
+write('tokens', [
+  {
+    token_id: 'mock-token-001',
+    name: 'mock laptop',
+    hint: 'tcb_MOCKaaaa',
+    created_at: isoDay(3),
+    last_used_at: isoDay(18),
+  },
+  {
+    token_id: 'mock-token-002',
+    name: 'mock cluster',
+    hint: 'tcb_MOCKbbbb',
+    created_at: isoDay(1),
+    last_used_at: null,
+  },
+]);
+
 write('quota', {
   max_per_window: 3,
   window_hours: 24,

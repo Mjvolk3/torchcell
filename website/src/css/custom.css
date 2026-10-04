@@ -135,9 +135,15 @@
   background: none;
 }
 
-/* Pages sit slightly inside their group heading. */
+/* Two steps of indent, 0.8rem each: everything below the landing page sits inside it,
+ * and pages sit inside their group heading. */
+.theme-doc-sidebar-menu > .theme-doc-sidebar-item-category-level-1,
+.theme-doc-sidebar-menu > .theme-doc-sidebar-item-link-level-1:not(:first-child) {
+  padding-left: 0.8rem;
+}
+
 .theme-doc-sidebar-item-category-level-1 > .menu__list {
-  padding-left: 0.6rem;
+  padding-left: 0.8rem;
 }
 
 /* Page width. The default is the theme's reading width: a capped container, and on a

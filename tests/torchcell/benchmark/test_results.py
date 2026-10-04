@@ -52,8 +52,8 @@ def test_scored_result_round_trips() -> None:
     }
     result = SubmissionResult.model_validate(scored)
     assert result.val is not None and result.test is not None
-    assert result.val.macro.pearson == 0.8
-    assert result.test.per_target["fitness"].r2 == 0.6
+    assert result.val.macro.model_dump()["pearson"] == 0.8
+    assert result.test.per_target["fitness"].model_dump()["r2"] == 0.6
     assert result.model_dump(mode="json") == scored
 
 

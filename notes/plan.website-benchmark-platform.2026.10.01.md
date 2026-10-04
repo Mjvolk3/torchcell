@@ -334,3 +334,50 @@ and the open question on password reset, which no longer applies.
   deployed API (none exists yet), a real CILogon sign-in.
 - A deployed database created before this change needs the `api_tokens` table
   (`--init-db` creates missing tables; there is still no migration tool).
+
+## 2026.10.04 - Gene essentiality board, binary task, token expiry, development stack
+
+### Binary task
+
+- `BenchmarkDataset.task` is `regression` or `binary`. A binary dataset has 0/1 labels
+  and is scored with AUROC (Mann-Whitney on average ranks, ties count half) and AUPRC
+  (average precision over distinct score thresholds). Both depend only on the order of
+  the scores. The primary metric must belong to the task.
+- The site picks the metric list from the dataset's task and defaults to its primary
+  metric.
+
+### `gene-essentiality-sgd` (provisional label rule)
+
+- Built by `experiments/035-benchmark-bundles/scripts/gene_essentiality_bundle.py` from
+  the tc-data archives `gene_essentiality_sgd-1.5.0-b31114d6` and
+  `smf_costanzo2016-1.5.0-d8a0f06c`, each verified against `index.json`.
+- Label 1: gene in the SGD inviable gene set (1,140). Label 0: not in that set and with
+  a KanMX or NatMX deletion strain in the Costanzo 2016 SMF table (4,557). 24 genes are
+  in both and are labeled 1. Other genes are excluded.
+- Stratified 80/10/10 with `random.Random(0)`: 4,557 train, 570 validation, 570 test,
+  each split 20% essential. Counts and hashes in
+  `experiments/035-benchmark-bundles/results/gene_essentiality_bundle.json`.
+- Open for the project owner: the label-0 rule, AUROC against AUPRC as primary, and
+  random against structured splits. The labels are public (SGD), so this board rests on
+  the training protocol and verification, not on hidden labels.
+
+### API token policy
+
+- Every token expires: lifetime chosen at creation (site offers 30, 90, 180, 365 days),
+  90 by default, at most `api_token_max_days` (365). No renewal in place.
+- Revoking deletes the row; expired rows are deleted when the account next lists or
+  creates tokens. At most 5 unexpired tokens per account, so the table is bounded by
+  5 rows per account.
+
+### Development stack (scratch, not committed)
+
+- `tmp/scratch/bench-work/dev/run.sh` serves the API and a non-mock site build on
+  `127.0.0.1:8725` (SQLite, the essentiality bundle). Sign-in is CILogon when
+  `secrets/cilogon_client_id` and `secrets/cilogon_client_secret` exist, otherwise a
+  labeled stand-in provider that signs in one test person.
+- Run on 2026-10-04 with the stand-in provider: browser sign-in, token creation,
+  `tc-bench template`, a truncated file stopped by local validation (not uploaded),
+  uniform random scores scored at validation AUROC 0.4732 and test AUROC 0.4905
+  (AUPRC 0.2039 and 0.1959; 20% of records are essential, n = 570 per split), an
+  immediate second upload refused with 429. One run, seed 0.
+- Not run: a sign-in against CILogon. It needs a registered client.

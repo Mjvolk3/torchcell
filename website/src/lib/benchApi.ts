@@ -12,15 +12,15 @@
 // Contract types
 // ---------------------------------------------------------------------------
 
-export type MetricSet = {
-  pearson: number;
-  spearman: number;
-  mse: number;
-  mae: number;
-  r2: number;
-};
+/** What a dataset asks for: real values, or a score for a 0/1 label. */
+export type Task = 'regression' | 'binary';
 
-export type MetricName = keyof MetricSet;
+export type RegressionMetricName = 'pearson' | 'spearman' | 'mse' | 'mae' | 'r2';
+export type BinaryMetricName = 'auroc' | 'auprc';
+export type MetricName = RegressionMetricName | BinaryMetricName;
+
+/** The metrics of one task: the five regression metrics, or AUROC and AUPRC. */
+export type MetricSet = Partial<Record<MetricName, number>>;
 
 export type SplitScores = {
   n_records: number;
@@ -35,7 +35,7 @@ export type BenchmarkDatasetPublic = {
   loader_class: string;
   citation_key: string;
   version: string;
-  task: 'regression';
+  task: Task;
   targets: string[];
   n_train: number;
   n_val: number;
@@ -110,8 +110,13 @@ export type ApiToken = {
   /** The first characters of the token, enough to tell tokens apart. */
   hint: string;
   created_at: string;
+  /** When the token stops working; chosen at creation, at most a year ahead. */
+  expires_at: string;
   last_used_at: string | null;
 };
+
+/** Lifetimes offered when a token is created, in days; the API default is 90. */
+export const TOKEN_LIFETIME_DAYS = [30, 90, 180, 365] as const;
 
 /** A new personal API token. `token` is returned this once and is not stored. */
 export type ApiTokenCreated = ApiToken & {token: string};
@@ -169,16 +174,33 @@ export type MessageResponse = {message: string};
 // Metrics
 // ---------------------------------------------------------------------------
 
-export type MetricInfo = {key: MetricName; label: string; higherIsBetter: boolean};
+export type MetricInfo = {
+  key: MetricName;
+  label: string;
+  higherIsBetter: boolean;
+  task: Task;
+};
 
-/** The five metrics, in display order. Pearson is the default selection. */
+/** Every metric, in display order within its task. */
 export const METRICS: readonly MetricInfo[] = [
-  {key: 'pearson', label: 'Pearson', higherIsBetter: true},
-  {key: 'spearman', label: 'Spearman', higherIsBetter: true},
-  {key: 'mse', label: 'MSE', higherIsBetter: false},
-  {key: 'mae', label: 'MAE', higherIsBetter: false},
-  {key: 'r2', label: 'R2', higherIsBetter: true},
+  {key: 'pearson', label: 'Pearson', higherIsBetter: true, task: 'regression'},
+  {key: 'spearman', label: 'Spearman', higherIsBetter: true, task: 'regression'},
+  {key: 'mse', label: 'MSE', higherIsBetter: false, task: 'regression'},
+  {key: 'mae', label: 'MAE', higherIsBetter: false, task: 'regression'},
+  {key: 'r2', label: 'R2', higherIsBetter: true, task: 'regression'},
+  {key: 'auroc', label: 'AUROC', higherIsBetter: true, task: 'binary'},
+  {key: 'auprc', label: 'AUPRC', higherIsBetter: true, task: 'binary'},
 ];
+
+/** The metrics a dataset of `task` is scored with, in display order. */
+export function metricsFor(task: Task): readonly MetricInfo[] {
+  return METRICS.filter((m) => m.task === task);
+}
+
+/** The metrics present in a scored split, in display order. */
+export function metricsIn(scores: SplitScores): readonly MetricInfo[] {
+  return METRICS.filter((m) => scores.macro[m.key] !== undefined);
+}
 
 export function metricInfo(key: MetricName): MetricInfo {
   const info = METRICS.find((m) => m.key === key);
@@ -200,11 +222,8 @@ export function metricValue(
   metric: MetricName,
   target: string = MACRO_TARGET,
 ): number | null {
-  if (target === MACRO_TARGET) {
-    return scores.macro[metric];
-  }
-  const perTarget = scores.per_target[target];
-  return perTarget ? perTarget[metric] : null;
+  const set = target === MACRO_TARGET ? scores.macro : scores.per_target[target];
+  return set?.[metric] ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -305,7 +324,11 @@ export interface BenchApi {
   /** The account's personal API tokens that are not revoked, newest first. */
   tokens(accessToken: string): Promise<ApiToken[]>;
   /** Creates a personal API token for scripts. The token is in the answer only. */
-  createToken(accessToken: string, name: string): Promise<ApiTokenCreated>;
+  createToken(
+    accessToken: string,
+    name: string,
+    expiresInDays: number,
+  ): Promise<ApiTokenCreated>;
   revokeToken(accessToken: string, tokenId: string): Promise<MessageResponse>;
 
   datasets(): Promise<BenchmarkDatasetPublic[]>;
@@ -394,11 +417,11 @@ function createHttpApi(baseUrl: string): BenchApi {
 
     tokens: (accessToken) =>
       request<ApiToken[]>('/auth/tokens', {headers: bearer(accessToken)}),
-    createToken: (accessToken, name) =>
+    createToken: (accessToken, name, expiresInDays) =>
       request<ApiTokenCreated>('/auth/tokens', {
         method: 'POST',
         headers: {...bearer(accessToken), 'Content-Type': 'application/json'},
-        body: JSON.stringify({name}),
+        body: JSON.stringify({name, expires_in_days: expiresInDays}),
       }),
     revokeToken: (accessToken, tokenId) =>
       request<MessageResponse>(`/auth/tokens/${encodeURIComponent(tokenId)}/revoke`, {
@@ -484,12 +507,13 @@ function createMockApi(baseUrl: string, mockBaseUrl: string): BenchApi {
 
     tokens: () => fixture<ApiToken[]>('tokens'),
     // Nothing is sent or stored: the token below is a fixed, visibly fake value.
-    createToken: (_accessToken, name) =>
+    createToken: (_accessToken, name, expiresInDays) =>
       Promise.resolve({
         token_id: 'mock-token-new',
         name,
         hint: 'tcb_MOCKMOCK',
         created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + expiresInDays * 86_400_000).toISOString(),
         last_used_at: null,
         token: 'tcb_MOCKMOCK-not-a-real-token-nothing-was-created',
       }),

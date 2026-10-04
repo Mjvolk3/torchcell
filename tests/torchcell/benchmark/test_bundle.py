@@ -255,3 +255,64 @@ def test_cli_builds_a_loadable_bundle(
         ("s1", "y"): 1.0,
         ("s2", "y"): 3.0,
     }
+
+
+# ------------------------------------------------------------------- binary task
+
+BINARY_SPLITS = {Split.TRAIN: ["t1"], Split.VAL: ["v1", "v2"], Split.TEST: ["s1", "s2"]}
+BINARY_VALUES = {("v1", "e"): 1.0, ("v2", "e"): 0.0, ("s1", "e"): 0.0, ("s2", "e"): 1.0}
+
+
+def _write_binary(
+    root: Path, values: dict[tuple[str, str], float], primary_metric: str = "auroc"
+) -> BenchmarkBundle:
+    write_bundle(
+        root,
+        slug="toy-essential",
+        title="t",
+        description="d",
+        loader_class="L",
+        citation_key="k",
+        version="1",
+        task="binary",
+        primary_metric=primary_metric,  # type: ignore[arg-type]
+        splits=BINARY_SPLITS,
+        values=values,
+    )
+    return BenchmarkBundle.load(root / "toy-essential")
+
+
+def test_binary_bundle_records_its_task(tmp_path: Path) -> None:
+    bundle = _write_binary(tmp_path, BINARY_VALUES)
+    assert (bundle.dataset.task, bundle.dataset.primary_metric) == ("binary", "auroc")
+    assert bundle.dataset.public().task == "binary"
+    assert bundle.labels == BINARY_VALUES
+    assert (tmp_path / "toy-essential" / "labels.csv").read_text() == (
+        "record_id,split,target,value\n"
+        "s1,test,e,0.0\ns2,test,e,1.0\nv1,val,e,1.0\nv2,val,e,0.0\n"
+    )
+
+
+def test_binary_bundle_refuses_other_labels_and_metrics(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match=r"label for \('v1', 'e'\) is not 0 or 1"):
+        _write_binary(tmp_path, {**BINARY_VALUES, ("v1", "e"): 0.5})
+    with pytest.raises(ValueError, match="'pearson' is not a binary metric"):
+        _write_binary(tmp_path, BINARY_VALUES, primary_metric="pearson")
+    assert not (tmp_path / "toy-essential").exists()
+
+
+def test_regression_bundle_refuses_a_binary_metric(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="'auroc' is not a regression metric"):
+        write_bundle(
+            tmp_path,
+            slug="bad",
+            title="t",
+            description="d",
+            loader_class="L",
+            citation_key="k",
+            version="1",
+            primary_metric="auroc",
+            splits=GOOD_SPLITS,
+            values=GOOD_VALUES,
+        )
+    assert not (tmp_path / "bad").exists()

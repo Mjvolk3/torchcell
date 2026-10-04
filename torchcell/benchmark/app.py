@@ -23,7 +23,11 @@ asserts (see :mod:`torchcell.benchmark.oidc`). Sign-in is three steps:
 The bearer credential is one of two things. A browser holds the session token of step
 3. A script holds a personal API token (``tcb_...``), which the account's owner creates
 on the account page (``POST /auth/tokens``, shown once, stored as its sha256) and can
-revoke there. Both are sent as ``Authorization: Bearer``. An API token reads the
+revoke there. A token expires after the lifetime chosen when it is created
+(``api_token_default_days`` unless the request names one, never more than
+``api_token_max_days``); a revoked or expired token's row is deleted, so the table
+holds at most ``max_api_tokens`` rows per account. A new token replaces an old one;
+nothing is renewed in place. Both are sent as ``Authorization: Bearer``. An API token reads the
 account, reads the quota, submits and lists the account's attempts; changing the
 profile and managing tokens need the session token, so a leaked API token cannot mint
 others. The quota is per account, whichever credential an attempt arrives with. The
@@ -220,6 +224,8 @@ class BenchServerConfig(BaseModel):
     login_code_ttl: timedelta = timedelta(minutes=2)
     max_signups_per_address: int = 5
     max_api_tokens: int = 5
+    api_token_default_days: int = 90
+    api_token_max_days: int = 365
 
     @model_validator(mode="after")
     def _check(self) -> Self:
@@ -346,6 +352,11 @@ class ApiTokenRequest(BaseModel):
     name: Annotated[
         str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)
     ] = Field(description="A label for the token, for example the machine it is on.")
+    expires_in_days: int | None = Field(
+        default=None,
+        ge=1,
+        description="Days until the token expires; the server's default when omitted.",
+    )
 
 
 class ReviewRequest(BaseModel):
@@ -401,6 +412,7 @@ class ApiTokenInfo(BaseModel):
     name: str
     hint: str = Field(description="The first characters of the token.")
     created_at: datetime
+    expires_at: datetime
     last_used_at: datetime | None
 
 
@@ -646,14 +658,15 @@ def create_app(
             return session_user(credentials, session)
         row = session.scalar(
             select(ApiToken).where(
-                ApiToken.token_sha256 == hash_token(credentials.credentials),
-                ApiToken.revoked_at.is_(None),
+                ApiToken.token_sha256 == hash_token(credentials.credentials)
             )
         )
-        if row is None:
-            raise unauthorized("invalid or revoked API token")
-        user = active(session.get(User, row.user_id), "invalid or revoked API token")
-        row.last_used_at = clock()
+        now = clock()
+        refusal = "invalid, revoked or expired API token"
+        if row is None or row.expires_at <= now:
+            raise unauthorized(refusal)
+        user = active(session.get(User, row.user_id), refusal)
+        row.last_used_at = now
         session.commit()
         return user
 
@@ -756,7 +769,9 @@ def create_app(
             submission.rejection_reasons = reasons
             return submission
 
-        scores = score(predictions, bundle.labels, bundle.spec.expected)
+        scores = score(
+            predictions, bundle.labels, bundle.spec.expected, bundle.dataset.task
+        )
         val, test = scores[Split.VAL], scores[Split.TEST]
         primary = bundle.dataset.primary_metric
         earlier = session.scalars(
@@ -1005,14 +1020,21 @@ def create_app(
             name=row.name,
             hint=row.token_hint,
             created_at=row.created_at,
+            expires_at=row.expires_at,
             last_used_at=row.last_used_at,
         )
 
-    def active_tokens(session: Session, user_id: str) -> list[ApiToken]:
+    def live_tokens(session: Session, user_id: str, now: datetime) -> list[ApiToken]:
+        """The account's unexpired tokens, newest first; its expired ones are deleted."""
+        session.execute(
+            delete(ApiToken).where(
+                ApiToken.user_id == user_id, ApiToken.expires_at <= now
+            )
+        )
         return list(
             session.scalars(
                 select(ApiToken)
-                .where(ApiToken.user_id == user_id, ApiToken.revoked_at.is_(None))
+                .where(ApiToken.user_id == user_id)
                 .order_by(ApiToken.created_at.desc())
             )
         )
@@ -1021,8 +1043,10 @@ def create_app(
     def list_tokens(
         user: User = Depends(session_user), session: Session = Depends(get_session)
     ) -> list[ApiTokenInfo]:
-        """The account's personal API tokens that are not revoked, newest first."""
-        return [token_info(row) for row in active_tokens(session, user.id)]
+        """The account's personal API tokens that have not expired, newest first."""
+        rows = live_tokens(session, user.id, clock())
+        session.commit()
+        return [token_info(row) for row in rows]
 
     @router.post(
         "/auth/tokens", response_model=ApiTokenCreated, status_code=201, tags=["auth"]
@@ -1035,11 +1059,19 @@ def create_app(
         """Create a personal API token for submitting from a script.
 
         The token is in this response and nowhere else: only its sha256 is stored.
-        Send it as ``Authorization: Bearer <token>``. Needs the session token of a
-        signed-in browser; an API token cannot create another.
+        Send it as ``Authorization: Bearer <token>``. It expires after
+        ``expires_in_days``. Needs the session token of a signed-in browser; an API
+        token cannot create another.
         """
+        days = body.expires_in_days or config.api_token_default_days
+        if days > config.api_token_max_days:
+            raise HTTPException(
+                status_code=422,
+                detail=f"a token lasts at most {config.api_token_max_days} days",
+            )
+        now = clock()
         session.execute(select(User.id).where(User.id == user.id).with_for_update())
-        if len(active_tokens(session, user.id)) >= config.max_api_tokens:
+        if len(live_tokens(session, user.id, now)) >= config.max_api_tokens:
             raise HTTPException(
                 status_code=409,
                 detail=(
@@ -1054,7 +1086,8 @@ def create_app(
             name=body.name,
             token_sha256=token_hash,
             token_hint=hint,
-            created_at=clock(),
+            created_at=now,
+            expires_at=now + timedelta(days=days),
         )
         session.add(row)
         session.commit()
@@ -1068,13 +1101,17 @@ def create_app(
         user: User = Depends(session_user),
         session: Session = Depends(get_session),
     ) -> Message:
-        """Revoke one of the account's personal API tokens; it stops working at once."""
+        """Revoke one of the account's personal API tokens; it stops working at once.
+
+        The row is deleted, not marked: nothing about a revoked token is kept.
+        """
         row = session.get(ApiToken, token_id)
-        if row is None or row.user_id != user.id or row.revoked_at is not None:
+        if row is None or row.user_id != user.id:
             raise HTTPException(status_code=404, detail="unknown API token")
-        row.revoked_at = clock()
+        name = row.name
+        session.delete(row)
         session.commit()
-        return Message(message=f"API token {row.name} revoked")
+        return Message(message=f"API token {name} revoked")
 
     # --------------------------------------------------------------------- datasets
 

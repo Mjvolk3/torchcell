@@ -163,8 +163,14 @@ function HistoryTable({rows, metric}: {rows: UserHistoryRow[]; metric: MetricNam
 
 export function History({history}: {history: UserHistory}): ReactNode {
   const theme = usePlotTheme();
-  const [metric, setMetric] = useState<MetricName>('pearson');
   const {user, submissions} = history;
+  // Only metrics some submission was scored with are offered; a row scored with other
+  // metrics shows n/a.
+  const metrics = METRICS.filter((m) =>
+    submissions.some((row) => row.test.macro[m.key] !== undefined),
+  );
+  const [chosenMetric, setMetric] = useState<MetricName | null>(null);
+  const metric = chosenMetric ?? metrics[0]?.key ?? 'pearson';
   const groups = byDataset(submissions);
 
   return (
@@ -204,7 +210,7 @@ export function History({history}: {history: UserHistory}): ReactNode {
                 className={styles.select}
                 value={metric}
                 onChange={(e) => setMetric(e.target.value as MetricName)}>
-                {METRICS.map((m) => (
+                {metrics.map((m) => (
                   <option key={m.key} value={m.key}>
                     {m.label}
                   </option>

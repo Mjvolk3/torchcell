@@ -204,6 +204,7 @@ write('tokens', [
     name: 'mock laptop',
     hint: 'tcb_MOCKaaaa',
     created_at: isoDay(3),
+    expires_at: isoDay(93),
     last_used_at: isoDay(18),
   },
   {
@@ -211,6 +212,7 @@ write('tokens', [
     name: 'mock cluster',
     hint: 'tcb_MOCKbbbb',
     created_at: isoDay(1),
+    expires_at: isoDay(366),
     last_used_at: null,
   },
 ]);

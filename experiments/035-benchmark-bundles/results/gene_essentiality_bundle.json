@@ -1,0 +1,70 @@
+{
+  "script": "experiments/035-benchmark-bundles/scripts/gene_essentiality_bundle.py",
+  "built_at": "2026-10-04T18:44:07.514983Z",
+  "label_rule": "1 if the gene is in the GeneEssentialitySgdDataset gene set; 0 if it is not and has a KanMX or NatMX deletion strain in SmfCostanzo2016Dataset; otherwise excluded",
+  "seed": 0,
+  "fractions": {
+    "train": 0.8,
+    "val": 0.1,
+    "test": 0.1
+  },
+  "archives": [
+    {
+      "slug": "gene_essentiality_sgd",
+      "dataset_class": "GeneEssentialitySgdDataset",
+      "torchcell_version": "1.5.0",
+      "archive": "gene_essentiality_sgd-1.5.0-b31114d6.tar.xz",
+      "archive_sha256": "b31114d648903a2a3687392b94650136aab8acc5ba068ce77864f9c30b6c85ad",
+      "member": "preprocess/gene_set.json",
+      "member_sha256": "f3c2ec54b69f61909eaee4a380ab6d10e84265a9ee31b053b27345e7de6c5dd8"
+    },
+    {
+      "slug": "smf_costanzo2016",
+      "dataset_class": "SmfCostanzo2016Dataset",
+      "torchcell_version": "1.5.0",
+      "archive": "smf_costanzo2016-1.5.0-d8a0f06c.tar.xz",
+      "archive_sha256": "d8a0f06cb534f868799437bf873bd77c3e331f4dbcdf1460e5ed257b3b072043",
+      "member": "preprocess/data.csv",
+      "member_sha256": "e91160edd1cab23452b80353ff6a4c8495d253ce58d04ad8d6c3d0b8984d43cf"
+    }
+  ],
+  "n_essential": 1140,
+  "n_nonessential": 4557,
+  "n_essential_with_a_deletion_strain": 24,
+  "n_per_split": {
+    "train": {
+      "essential": 912,
+      "nonessential": 3645
+    },
+    "val": {
+      "essential": 114,
+      "nonessential": 456
+    },
+    "test": {
+      "essential": 114,
+      "nonessential": 456
+    }
+  },
+  "dataset": {
+    "slug": "gene-essentiality-sgd",
+    "title": "Gene essentiality (SGD)",
+    "description": "Predict whether the null mutant of a gene is inviable. Essential genes are those SGD annotates as inviable; non-essential genes are those with a deletion strain measured in the Costanzo 2016 single-mutant fitness screens. A prediction is a score, larger meaning more likely essential.",
+    "loader_class": "GeneEssentialitySgdDataset",
+    "citation_key": "cherrySGDSaccharomycesGenome1998",
+    "version": "1",
+    "task": "binary",
+    "targets": [
+      "is_essential"
+    ],
+    "n_train": 4557,
+    "n_val": 570,
+    "n_test": 570,
+    "primary_metric": "auroc",
+    "docs_url": "https://mjvolk3.github.io/torchcell/datasets/scerevisiae/essentiality-smf.html",
+    "tc_data_slug": "gene_essentiality_sgd",
+    "splits_sha256": "fa4b367c42ad0e2edc6fe9da860acaaf57f221c72b292d0c39880ecd4a6bd0e5",
+    "template_sha256": "529c4f0b05cfb5f768101313f0a9fd79d89fcbc52efd254f3d1d9593c9c8c4ef",
+    "labels_sha256": "bfa211ab01fcdfd21ebbeab8bae16629cd89b38b4fc11fc53c758d2ce10af93a",
+    "built_at": "2026-10-04T18:44:07.514983Z"
+  }
+}

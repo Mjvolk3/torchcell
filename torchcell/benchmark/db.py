@@ -15,7 +15,9 @@ Four tables:
   callback issues one and the account page trades it for a session token.
 - ``api_tokens``: personal API tokens, stored as sha256, for submitting from a script.
   A token is shown once when it is created; ``token_hint`` keeps its first characters
-  so the owner can tell their tokens apart. A revoked token keeps its row.
+  so the owner can tell their tokens apart. Every token has an expiry. A revoked token
+  is deleted, and expired ones are deleted when their account next lists or creates
+  tokens, so the table holds at most the per-account cap of live rows per account.
 - ``submissions``: one row per ATTEMPT, rejected ones included, because the quota counts
   attempts. A scored row holds its validation and test scores as JSON in the shape of
   :class:`torchcell.benchmark.grading.SplitScores`, its integrity flags, and the path
@@ -180,8 +182,8 @@ class ApiToken(Base):
     token_sha256: Mapped[str] = mapped_column(String(64), unique=True)
     token_hint: Mapped[str] = mapped_column(String(16))
     created_at: Mapped[datetime] = mapped_column(UtcDateTime(), default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(UtcDateTime())
     last_used_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
-    revoked_at: Mapped[datetime | None] = mapped_column(UtcDateTime())
 
 
 class Submission(Base):

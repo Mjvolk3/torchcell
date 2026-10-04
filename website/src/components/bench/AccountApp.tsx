@@ -3,7 +3,9 @@ import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import {
   LOGIN_ERRORS,
+  TOKEN_LIFETIME_DAYS,
   isLoginErrorCode,
+  metricsIn,
   type ApiToken,
   type ApiTokenCreated,
   type BenchApi,
@@ -215,13 +217,14 @@ function ProfileForm({
 function ApiTokens({api, accessToken}: {api: BenchApi; accessToken: string}): ReactNode {
   const [tokensState, reloadTokens] = useLoad(() => api.tokens(accessToken), [api, accessToken]);
   const [name, setName] = useState('');
+  const [lifetime, setLifetime] = useState<number>(90);
   const [created, setCreated] = useState<LoadState<ApiTokenCreated>>({status: 'idle'});
   const [revoked, setRevoked] = useState<LoadState<string>>({status: 'idle'});
 
   const onCreate = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
     setCreated({status: 'loading'});
-    api.createToken(accessToken, name.trim()).then(
+    api.createToken(accessToken, name.trim(), lifetime).then(
       (data) => {
         setCreated({status: 'ok', data});
         setName('');
@@ -255,8 +258,10 @@ function ApiTokens({api, accessToken}: {api: BenchApi; accessToken: string}): Re
         A token lets a script submit for this account without a browser, through the same
         endpoint the submit form uses. Set it as <code>TC_BENCH_TOKEN</code>; the{' '}
         <Link to="/benchmark/submit">submit page</Link> has the setup. A token can read
-        this account and submit; it cannot edit the profile or create other tokens. The
-        submission quota is the account's, however many tokens it holds.
+        this account and submit; it cannot edit the profile or create other tokens. Every
+        token expires, at most a year after it is created; replace one by creating a new
+        token and revoking the old. The submission quota is the account's, however many
+        tokens it holds.
       </p>
       {created.status === 'ok' ? (
         <div className={clsx(styles.notice, styles.noticeOk)} role="status">
@@ -294,6 +299,7 @@ function ApiTokens({api, accessToken}: {api: BenchApi; accessToken: string}): Re
                     <th scope="col">Name</th>
                     <th scope="col">Token</th>
                     <th scope="col">Created</th>
+                    <th scope="col">Expires</th>
                     <th scope="col">Last used</th>
                     <th scope="col">
                       <span className={styles.srOnly}>Actions</span>
@@ -308,6 +314,7 @@ function ApiTokens({api, accessToken}: {api: BenchApi; accessToken: string}): Re
                         <code>{token.hint}…</code>
                       </td>
                       <td title={token.created_at}>{fmtDate(token.created_at)}</td>
+                      <td title={token.expires_at}>{fmtDate(token.expires_at)}</td>
                       <td title={token.last_used_at ?? undefined}>
                         {token.last_used_at ? fmtDate(token.last_used_at) : 'never'}
                       </td>
@@ -340,6 +347,19 @@ function ApiTokens({api, accessToken}: {api: BenchApi; accessToken: string}): Re
             required
           />
         </label>
+        <label className={styles.field}>
+          <span className={styles.fieldLabel}>Expires after</span>
+          <select
+            className={styles.select}
+            value={lifetime}
+            onChange={(e) => setLifetime(Number(e.target.value))}>
+            {TOKEN_LIFETIME_DAYS.map((days) => (
+              <option key={days} value={days}>
+                {days} days
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           type="submit"
           className="button button--primary"
@@ -365,18 +385,22 @@ export function MySubmissions({rows}: {rows: SubmissionResult[]}): ReactNode {
             <th scope="col">Dataset</th>
             <th scope="col">Method</th>
             <th scope="col">Status</th>
+            <th scope="col">Metric</th>
             <th scope="col" className={styles.num}>
-              Val Pearson
+              Validation
             </th>
             <th scope="col" className={styles.num}>
-              Test Pearson
+              Test
             </th>
             <th scope="col">Flags</th>
             <th scope="col">Rejection reasons</th>
           </tr>
         </thead>
         <tbody>
-          {sorted.map((row) => (
+          {sorted.map((row) => {
+            // The first metric of the row's task: Pearson, or AUROC for a binary one.
+            const headline = row.val ? metricsIn(row.val)[0] : undefined;
+            return (
             <tr key={row.submission_id}>
               <td title={row.submitted_at}>{fmtDate(row.submitted_at)}</td>
               <td>
@@ -386,8 +410,13 @@ export function MySubmissions({rows}: {rows: SubmissionResult[]}): ReactNode {
               <td>
                 <StatusBadge status={row.status} />
               </td>
-              <td className={styles.num}>{fmtMetric(row.val?.macro.pearson)}</td>
-              <td className={styles.num}>{fmtMetric(row.test?.macro.pearson)}</td>
+              <td>{headline ? headline.label : <span className={styles.muted}>none</span>}</td>
+              <td className={styles.num}>
+                {fmtMetric(headline ? row.val?.macro[headline.key] : null)}
+              </td>
+              <td className={styles.num}>
+                {fmtMetric(headline ? row.test?.macro[headline.key] : null)}
+              </td>
               <td>
                 <FlagChips flags={row.flags} />
               </td>
@@ -403,7 +432,8 @@ export function MySubmissions({rows}: {rows: SubmissionResult[]}): ReactNode {
                 )}
               </td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>

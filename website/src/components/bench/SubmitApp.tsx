@@ -2,7 +2,7 @@ import React, {useState, type FormEvent, type ReactNode} from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import {
-  METRICS,
+  metricsIn,
   type Quota,
   type SplitScores,
   type SubmissionMetadata,
@@ -127,6 +127,7 @@ export function QuotaPanel({quota}: {quota: Quota}): ReactNode {
 
 function ScoresTable({val, test}: {val: SplitScores; test: SplitScores}): ReactNode {
   const targets = Object.keys(val.per_target);
+  const metrics = metricsIn(val);
   return (
     <>
       <div className={styles.tableWrap}>
@@ -137,7 +138,7 @@ function ScoresTable({val, test}: {val: SplitScores; test: SplitScores}): ReactN
               <th scope="col" className={styles.num}>
                 Records
               </th>
-              {METRICS.map((m) => (
+              {metrics.map((m) => (
                 <th key={m.key} scope="col" className={styles.num}>
                   {m.label}
                 </th>
@@ -154,7 +155,7 @@ function ScoresTable({val, test}: {val: SplitScores; test: SplitScores}): ReactN
               <tr key={label}>
                 <td>{label}</td>
                 <td className={styles.num}>{scores.n_records.toLocaleString('en-US')}</td>
-                {METRICS.map((m) => (
+                {metrics.map((m) => (
                   <td key={m.key} className={styles.num}>
                     {fmtMetric(scores.macro[m.key])}
                   </td>
@@ -173,7 +174,7 @@ function ScoresTable({val, test}: {val: SplitScores; test: SplitScores}): ReactN
                 <tr>
                   <th scope="col">Target</th>
                   <th scope="col">Split</th>
-                  {METRICS.map((m) => (
+                  {metrics.map((m) => (
                     <th key={m.key} scope="col" className={styles.num}>
                       {m.label}
                     </th>
@@ -191,7 +192,7 @@ function ScoresTable({val, test}: {val: SplitScores; test: SplitScores}): ReactN
                     <tr key={`${target}-${label}`}>
                       <td>{target}</td>
                       <td>{label}</td>
-                      {METRICS.map((m) => (
+                      {metrics.map((m) => (
                         <td key={m.key} className={styles.num}>
                           {fmtMetric(scores.per_target[target]?.[m.key])}
                         </td>

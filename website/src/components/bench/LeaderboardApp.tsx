@@ -5,8 +5,8 @@ import {useLocation} from '@docusaurus/router';
 import type {Data, Layout} from 'plotly.js';
 import {
   MACRO_TARGET,
-  METRICS,
   metricInfo,
+  metricsFor,
   metricValue,
   type BenchApi,
   type BenchmarkDatasetPublic,
@@ -428,6 +428,12 @@ export function DatasetPanel({dataset, api}: {dataset: BenchmarkDatasetPublic; a
           {dataset.targets.length}
         </li>
         <li>
+          <span className={styles.factLabel}>Task</span>
+          {dataset.task === 'binary'
+            ? 'binary: predict a score, larger meaning more likely 1'
+            : 'regression: predict the value'}
+        </li>
+        <li>
           <span className={styles.factLabel}>Primary metric</span>
           {metricInfo(dataset.primary_metric).label}
         </li>
@@ -534,7 +540,8 @@ function Leaderboard(): ReactNode {
 
   const [datasetsState, reloadDatasets] = useLoad(() => api.datasets(), [api]);
   const [slug, setSlug] = useState<string | null>(requestedSlug);
-  const [metric, setMetric] = useState<MetricName>('pearson');
+  // Null means the dataset's primary metric; a choice lasts until the dataset changes.
+  const [chosenMetric, setMetric] = useState<MetricName | null>(null);
   const [target, setTarget] = useState<string>(MACRO_TARGET);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
 
@@ -551,6 +558,11 @@ function Leaderboard(): ReactNode {
         }
         const dataset = datasets.find((d) => d.slug === slug) ?? datasets[0];
         const activeTarget = dataset.targets.includes(target) ? target : MACRO_TARGET;
+        const metrics = metricsFor(dataset.task);
+        const metric =
+          chosenMetric !== null && metrics.some((m) => m.key === chosenMetric)
+            ? chosenMetric
+            : dataset.primary_metric;
         return (
           <>
             <div className={styles.controls}>
@@ -562,6 +574,7 @@ function Leaderboard(): ReactNode {
                   onChange={(e) => {
                     setSlug(e.target.value);
                     setTarget(MACRO_TARGET);
+                    setMetric(null);
                   }}>
                   {datasets.map((d) => (
                     <option key={d.slug} value={d.slug}>
@@ -576,7 +589,7 @@ function Leaderboard(): ReactNode {
                   className={styles.select}
                   value={metric}
                   onChange={(e) => setMetric(e.target.value as MetricName)}>
-                  {METRICS.map((m) => (
+                  {metrics.map((m) => (
                     <option key={m.key} value={m.key}>
                       {m.label}
                     </option>

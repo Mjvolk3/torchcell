@@ -16,10 +16,14 @@ import numpy as np
 import pytest
 
 from torchcell.benchmark.grading import (
+    BINARY_METRIC_NAMES,
     HIGHER_IS_BETTER,
     METRIC_NAMES,
+    TASK_METRICS,
+    BinaryMetricSet,
     MetricSet,
     average_ranks,
+    binary_metric_set,
     macro_average,
     metric_set,
     score,
@@ -37,6 +41,8 @@ def test_metric_names_and_directions() -> None:
         "mse": False,
         "mae": False,
         "r2": True,
+        "auroc": True,
+        "auprc": True,
     }
 
 
@@ -134,11 +140,13 @@ def test_score_splits_targets_and_counts_records() -> None:
     # v3 has no label for y, so x is scored on three records and y on two.
     assert val.n_records == 3
     assert list(val.per_target) == ["x", "y"]
-    assert val.per_target["x"].pearson == pytest.approx(1.0)
-    assert val.per_target["y"].pearson == pytest.approx(-1.0)
-    assert val.macro.pearson == pytest.approx(0.0)
-    assert val.per_target["y"].mse == 1.0
-    assert val.macro.mse == 0.5
+    per_target = {t: m.model_dump() for t, m in val.per_target.items()}
+    macro = val.macro.model_dump()
+    assert per_target["x"]["pearson"] == pytest.approx(1.0)
+    assert per_target["y"]["pearson"] == pytest.approx(-1.0)
+    assert macro["pearson"] == pytest.approx(0.0)
+    assert per_target["y"]["mse"] == 1.0
+    assert macro["mse"] == 0.5
     assert test.n_records == 2
     assert test.macro == MetricSet(pearson=1.0, spearman=1.0, mse=0.0, mae=0.0, r2=1.0)
 
@@ -150,3 +158,92 @@ def test_score_requires_exact_coverage() -> None:
         score({("v1", "x"): 1.0}, labels, expected)
     with pytest.raises(ValueError, match="exactly the expected pairs"):
         score({**labels, ("v9", "x"): 1.0}, labels, expected)
+
+
+# ------------------------------------------------------------------- binary task
+
+BINARY_TRUTH = np.array([1.0, 0.0, 1.0, 0.0])
+
+
+def test_binary_metric_names() -> None:
+    assert BINARY_METRIC_NAMES == ("auroc", "auprc")
+    assert TASK_METRICS == {
+        "regression": ("pearson", "spearman", "mse", "mae", "r2"),
+        "binary": ("auroc", "auprc"),
+    }
+    assert HIGHER_IS_BETTER["auroc"] and HIGHER_IS_BETTER["auprc"]
+
+
+def test_binary_hand_worked_metrics() -> None:
+    # Ranked 1, 0, 1, 0. Three of the four positive-negative pairs are in order, so
+    # AUROC is 3/4. Precision is 1 at the first positive and 2/3 at the second, each
+    # gaining half the recall, so AUPRC is 1/2 + 1/3.
+    metrics = binary_metric_set(np.array([0.9, 0.8, 0.7, 0.1]), BINARY_TRUTH)
+    assert metrics.auroc == pytest.approx(0.75)
+    assert metrics.auprc == pytest.approx(5 / 6)
+
+
+def test_binary_perfect_and_inverted_rankings() -> None:
+    perfect = binary_metric_set(np.array([0.9, 0.2, 0.8, 0.1]), BINARY_TRUTH)
+    assert perfect == BinaryMetricSet(auroc=1.0, auprc=1.0)
+    inverted = binary_metric_set(np.array([0.1, 0.8, 0.2, 0.9]), BINARY_TRUTH)
+    assert inverted.auroc == 0.0
+    # Positives arrive third and fourth: precision 1/3 then 2/4.
+    assert inverted.auprc == pytest.approx(0.5 * (1 / 3) + 0.5 * (2 / 4))
+
+
+def test_binary_ties_count_half_and_enter_together() -> None:
+    # Three records share the top score: two positives and one negative. Each positive
+    # ties one negative (half) and beats the other, so AUROC is 3/4. The tied block is
+    # one threshold with precision 2/3 and all the recall.
+    metrics = binary_metric_set(np.array([0.5, 0.5, 0.5, 0.1]), BINARY_TRUTH)
+    assert metrics.auroc == pytest.approx(0.75)
+    assert metrics.auprc == pytest.approx(2 / 3)
+
+
+def test_binary_metrics_depend_only_on_the_order() -> None:
+    scores = np.array([0.9, 0.8, 0.7, 0.1])
+    assert binary_metric_set(scores, BINARY_TRUTH) == binary_metric_set(
+        1000 * scores - 3, BINARY_TRUTH
+    )
+
+
+@pytest.mark.parametrize(
+    ("prediction", "truth", "message"),
+    [
+        ([0.1, 0.2], [0.0, 2.0], "0 or 1"),
+        ([0.1, 0.2], [1.0, 1.0], "both classes"),
+        ([0.1, 0.2], [0.0, 0.0], "both classes"),
+        ([0.5, 0.5], [0.0, 1.0], "constant score"),
+        ([0.1, 0.2, 0.3], [0.0, 1.0], "equal length"),
+    ],
+)
+def test_binary_metric_set_refuses_undefined_inputs(
+    prediction: list[float], truth: list[float], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        binary_metric_set(np.array(prediction), np.array(truth))
+
+
+def test_score_binary_task() -> None:
+    expected = {
+        ("v1", "e"): Split.VAL,
+        ("v2", "e"): Split.VAL,
+        ("v3", "e"): Split.VAL,
+        ("v4", "e"): Split.VAL,
+        ("s1", "e"): Split.TEST,
+        ("s2", "e"): Split.TEST,
+    }
+    labels = dict(zip(expected, [1.0, 0.0, 1.0, 0.0, 1.0, 0.0]))
+    predictions = dict(zip(expected, [0.9, 0.8, 0.7, 0.1, 2.0, -1.0]))
+    scores = score(predictions, labels, expected, "binary")
+    val, test = scores[Split.VAL], scores[Split.TEST]
+    assert val.n_records == 4 and test.n_records == 2
+    assert val.macro == val.per_target["e"]
+    assert isinstance(val.macro, BinaryMetricSet)
+    assert val.macro.auroc == pytest.approx(0.75)
+    assert val.macro.auprc == pytest.approx(5 / 6)
+    assert test.macro == BinaryMetricSet(auroc=1.0, auprc=1.0)
+    assert set(val.model_dump(mode="json")["macro"]) == {"auroc", "auprc"}
+    # The same scores read as a regression give the five regression metrics.
+    assert isinstance(score(predictions, labels, expected)[Split.VAL].macro, MetricSet)

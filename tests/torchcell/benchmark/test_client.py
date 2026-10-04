@@ -99,8 +99,8 @@ def test_submit_scores_and_reaches_the_board(
     assert result.status is SubmissionStatus.PROVISIONAL
     assert result.rejection_reasons == []
     assert result.val is not None and result.test is not None
-    assert result.val.macro.pearson == pytest.approx(1.0)
-    assert result.test.macro.mse == 0.0
+    assert result.val.macro.model_dump()["pearson"] == pytest.approx(1.0)
+    assert result.test.macro.model_dump()["mse"] == 0.0
     board = bench.client.get(bench.url(f"/leaderboard/{SLUG}")).json()
     assert [row["submission_id"] for row in board] == [result.submission_id]
     assert [r.submission_id for r in api.mine()] == [result.submission_id]

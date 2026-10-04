@@ -4,12 +4,39 @@ sidebar_label: Datasets
 description: The seed benchmark datasets and their split files.
 ---
 
-Every dataset in TorchCell is planned to get a board. The benchmark starts with three
-seed datasets.
+Every dataset in TorchCell is planned to get a board. The first board is gene
+essentiality; three regression datasets are planned to follow.
+
+## Gene essentiality
+
+| Slug | Task | Records | Label 1 | Label 0 |
+| :-- | :-- | --: | --: | --: |
+| `gene-essentiality-sgd` | binary, target `is_essential` | 5,697 genes | 1,140 | 4,557 |
+
+- **Essential (1):** the gene has a null-mutant record that SGD annotates as inviable
+  (`GeneEssentialitySgdDataset`).
+- **Non-essential (0):** the gene is not in that set and has a KanMX or NatMX deletion
+  strain with a measured fitness in the Costanzo 2016 screens
+  (`SmfCostanzo2016Dataset`), so its deletion mutant grew.
+- **Excluded:** genes in neither group. 24 genes are in both and are labeled essential.
+- **Split:** within each class, 80% train, 10% validation, 10% test, drawn with a fixed
+  seed: 4,557 train, 570 validation, 570 test records, each 20% essential.
+- **Record id:** the systematic gene name, for example `YAL001C`.
+
+:::caution[Provisional rule, public labels]
+
+The rule for label 0 is provisional. The labels of this dataset are also public
+knowledge: SGD publishes which genes are inviable. The test split measures a method
+only when it was not trained on the test genes' labels, which the
+[training protocol](./training-protocol.mdx) requires and verification checks.
+
+:::
+
+## Planned regression datasets
 
 :::caution[Provisional choice]
 
-The three seed datasets below are a provisional choice. The project owner has not
+The three datasets below are a provisional choice. The project owner has not
 confirmed them, and the list may change before the benchmark opens.
 
 :::

@@ -34,11 +34,11 @@ import math
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Literal, Self
+from typing import Annotated, Self
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
-from torchcell.benchmark.grading import MetricName, PairKey
+from torchcell.benchmark.grading import TASK_METRICS, MetricName, PairKey, Task
 from torchcell.benchmark.submission import PREDICTION_COLUMNS, SCORED_SPLITS, Split
 
 BENCHMARK_FILENAME = "benchmark.json"
@@ -73,7 +73,13 @@ class BenchmarkDatasetPublic(BaseModel):
     version: str = Field(
         description="Version of this bundle; a new split is a new one."
     )
-    task: Literal["regression"] = "regression"
+    task: Task = Field(
+        default="regression",
+        description=(
+            "regression: labels are real values. binary: labels are 0 or 1 and a "
+            "prediction is a score, larger meaning more likely 1."
+        ),
+    )
     targets: list[str]
     n_train: int
     n_val: int
@@ -85,6 +91,14 @@ class BenchmarkDatasetPublic(BaseModel):
     )
     splits_sha256: str
     template_sha256: str
+
+    @model_validator(mode="after")
+    def _primary_metric_belongs_to_the_task(self) -> Self:
+        if self.primary_metric not in TASK_METRICS[self.task]:
+            raise ValueError(
+                f"primary metric {self.primary_metric!r} is not a {self.task} metric"
+            )
+        return self
 
 
 class BenchmarkDataset(BenchmarkDatasetPublic):
@@ -189,6 +203,7 @@ def write_bundle(
     primary_metric: MetricName,
     splits: Mapping[Split, Sequence[str]],
     values: Mapping[PairKey, float],
+    task: Task = "regression",
     docs_url: str | None = None,
     tc_data_slug: str | None = None,
     built_at: datetime | None = None,
@@ -199,8 +214,9 @@ def write_bundle(
     ``(record_id, target)`` to the label for validation and test records (a pair that
     was not measured is simply absent). Raises ``ValueError`` when the splits overlap, a
     scored record has no label, a label names a record outside the scored splits, a label
-    is not finite, or a target has fewer than two records or constant labels in a
-    scored split (its correlation would be undefined).
+    is not finite, a label of a ``binary`` task is not 0 or 1, or a target has fewer
+    than two records or constant labels in a scored split (its correlation, or its
+    ranking metrics, would be undefined).
     """
     membership: dict[str, Split] = {}
     for split in Split:
@@ -215,6 +231,8 @@ def write_bundle(
             )
         if not math.isfinite(value):
             raise ValueError(f"label for ({record_id!r}, {target!r}) is not finite")
+        if task == "binary" and value not in (0.0, 1.0):
+            raise ValueError(f"label for ({record_id!r}, {target!r}) is not 0 or 1")
     labeled_records = {record_id for record_id, _ in values}
     for split in SCORED_SPLITS:
         unlabeled = [r for r in splits[split] if r not in labeled_records]
@@ -255,6 +273,7 @@ def write_bundle(
         loader_class=loader_class,
         citation_key=citation_key,
         version=version,
+        task=task,
         targets=targets,
         n_train=len(splits[Split.TRAIN]),
         n_val=len(splits[Split.VAL]),
@@ -283,7 +302,7 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     ``--meta`` holds the keyword fields of :func:`write_bundle` (slug, title,
     description, loader_class, citation_key, version, primary_metric, and optionally
-    docs_url and tc_data_slug). ``--splits`` is ``{"train": [...], "val": [...],
+    task, docs_url and tc_data_slug). ``--splits`` is ``{"train": [...], "val": [...],
     "test": [...]}``. ``--values`` is a CSV with the header ``record_id,target,value``.
     """
     parser = argparse.ArgumentParser(description=main.__doc__)

@@ -520,6 +520,7 @@ def test_api_token_is_shown_once_and_stored_as_a_hash(bench: Bench) -> None:
         "name",
         "hint",
         "created_at",
+        "expires_at",
         "last_used_at",
         "token",
     }
@@ -527,6 +528,7 @@ def test_api_token_is_shown_once_and_stored_as_a_hash(bench: Bench) -> None:
     assert token.startswith("tcb_")
     assert (created["name"], created["hint"]) == ("laptop", token[:12])
     assert created["created_at"] == "2026-10-01T12:00:00Z"
+    assert created["expires_at"] == "2026-12-30T12:00:00Z"  # the 90-day default
     assert created["last_used_at"] is None
 
     with bench.sessions() as session:
@@ -596,7 +598,73 @@ def test_revoked_or_unknown_api_token_is_refused(bench: Bench) -> None:
             bench.url("/quota"), headers={"Authorization": f"Bearer {credential}"}
         )
         assert response.status_code == 401
-        assert response.json() == {"detail": "invalid or revoked API token"}
+        assert response.json() == {"detail": "invalid, revoked or expired API token"}
+    with bench.sessions() as session:  # a revoked token leaves no row behind
+        assert session.scalars(select(ApiToken)).all() == []
+
+
+def test_api_token_expires_and_its_row_is_removed(bench: Bench) -> None:
+    headers = bench.register()
+    short = bench.client.post(
+        bench.url("/auth/tokens"),
+        headers=headers,
+        json={"name": "short", "expires_in_days": 1},
+    ).json()
+    assert short["expires_at"] == "2026-10-02T12:00:00Z"
+    long = bench.client.post(
+        bench.url("/auth/tokens"),
+        headers=headers,
+        json={"name": "long", "expires_in_days": 365},
+    ).json()
+    assert long["expires_at"] == "2027-10-01T12:00:00Z"
+    too_long = bench.client.post(
+        bench.url("/auth/tokens"),
+        headers=headers,
+        json={"name": "forever", "expires_in_days": 366},
+    )
+    assert too_long.status_code == 422
+    assert too_long.json() == {"detail": "a token lasts at most 365 days"}
+    assert (
+        bench.client.post(
+            bench.url("/auth/tokens"),
+            headers=headers,
+            json={"name": "zero", "expires_in_days": 0},
+        ).status_code
+        == 422
+    )
+
+    api = {"Authorization": f"Bearer {short['token']}"}
+    bench.clock.now = T0 + timedelta(hours=23, minutes=59)
+    assert bench.client.get(bench.url("/quota"), headers=api).status_code == 200
+    bench.clock.now = T0 + timedelta(days=1)
+    expired = bench.client.get(bench.url("/quota"), headers=api)
+    assert expired.status_code == 401
+    assert expired.json() == {"detail": "invalid, revoked or expired API token"}
+
+    # Listing drops the expired row and keeps the live one.
+    listed = bench.client.get(bench.url("/auth/tokens"), headers=headers).json()
+    assert [t["name"] for t in listed] == ["long"]
+    with bench.sessions() as session:
+        assert [row.name for row in session.scalars(select(ApiToken))] == ["long"]
+
+
+def test_expired_tokens_do_not_count_toward_the_cap(
+    tmp_path: Path, datasets_root: Path
+) -> None:
+    bench = Bench(tmp_path, datasets_root, max_api_tokens=1)
+    headers = bench.register()
+    body = {"name": "one", "expires_in_days": 1}
+    created = bench.client.post(bench.url("/auth/tokens"), headers=headers, json=body)
+    assert created.status_code == 201
+    again = bench.client.post(bench.url("/auth/tokens"), headers=headers, json=body)
+    assert again.status_code == 409
+    bench.clock.now = T0 + timedelta(days=2)
+    assert (
+        bench.client.post(
+            bench.url("/auth/tokens"), headers=headers, json=body
+        ).status_code
+        == 201
+    )
 
 
 def test_api_tokens_per_account_are_capped_and_named(
@@ -1155,3 +1223,67 @@ def test_main_runs_uvicorn_on_loopback_by_default(  # test-quality: allow main()
     monkeypatch.setattr(sys, "argv", ["tc-bench-server", "--port", "9000"])
     app_module.main()
     assert started == {"host": "127.0.0.1", "port": 9000}
+
+
+# -------------------------------------------------------------------- binary task
+
+
+def test_binary_dataset_is_scored_with_ranking_metrics(tmp_path: Path) -> None:
+    from torchcell.benchmark.bundle import write_bundle
+    from torchcell.benchmark.submission import Split
+
+    datasets_root = tmp_path / "datasets"
+    datasets_root.mkdir()
+    genes = {
+        Split.TRAIN: ["g0"],
+        Split.VAL: ["g1", "g2", "g3", "g4"],
+        Split.TEST: ["g5", "g6", "g7", "g8"],
+    }
+    essential = {"g1", "g3", "g5", "g6"}
+    write_bundle(
+        datasets_root,
+        slug="toy-essential",
+        title="Toy essentiality",
+        description="Eight genes with a 0/1 label.",
+        loader_class="ToyEssentialityDataset",
+        citation_key="toy2026",
+        version="1",
+        task="binary",
+        primary_metric="auroc",
+        splits=genes,
+        values={
+            (gene, "is_essential"): float(gene in essential)
+            for split in (Split.VAL, Split.TEST)
+            for gene in genes[split]
+        },
+    )
+    bench = Bench(tmp_path, datasets_root)
+    headers = bench.register()
+    assert bench.client.get(bench.url("/datasets")).json()[0]["task"] == "binary"
+
+    # Validation ranks 1, 0, 1, 0 (AUROC 3/4, AUPRC 5/6); test ranks both essential
+    # genes first.
+    scores = {"g1": 0.9, "g2": 0.8, "g3": 0.7, "g4": 0.1}
+    scores |= {"g5": 5.0, "g6": 4.0, "g7": -1.0, "g8": -2.0}
+    lines = ["record_id,split,target,prediction"]
+    for gene, value in scores.items():
+        split = "val" if gene in genes[Split.VAL] else "test"
+        lines.append(f"{gene},{split},is_essential,{value}")
+    response = bench.client.post(
+        bench.url("/submissions"),
+        headers=headers,
+        data={"dataset": "toy-essential", "metadata": json.dumps(METADATA)},
+        files={"predictions": ("p.csv", "\n".join(lines).encode(), "text/csv")},
+    )
+    assert response.status_code == 201
+    result = response.json()
+    assert result["val"]["macro"] == {
+        "auroc": pytest.approx(0.75),
+        "auprc": pytest.approx(5 / 6),
+    }
+    assert result["test"]["macro"] == {"auroc": 1.0, "auprc": 1.0}
+    assert result["flags"] == ["test_exceeds_val"]  # 1.0 against 0.75 on the primary
+    board = bench.client.get(bench.url("/leaderboard/toy-essential")).json()
+    assert board[0]["test"]["per_target"] == {
+        "is_essential": {"auroc": 1.0, "auprc": 1.0}
+    }

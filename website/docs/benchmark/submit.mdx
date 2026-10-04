@@ -37,8 +37,9 @@ export TC_BENCH_TOKEN=tcb_...   # the token from the account page
 `}</BenchCode>
 
 A token is sent as `Authorization: Bearer <token>`. It reads the account and submits
-for it; it cannot edit the profile or create other tokens, and it stops working when
-it is revoked on the account page. Keep it out of repositories and notebooks.
+for it; it cannot edit the profile or create other tokens. It stops working when it
+expires (90 days after creation unless another lifetime was chosen, at most a year) or
+when it is revoked on the account page. Keep it out of repositories and notebooks.
 
 ## Submit with the `tc-bench` command
 
@@ -90,7 +91,7 @@ metadata = SubmissionMetadata(
 )
 result = client.submit("<dataset>", metadata, Path("predictions.csv"))
 print(result.status, result.rejection_reasons)
-print(result.val.macro.pearson, result.test.macro.pearson)
+print(result.val.macro, result.test.macro)  # the dataset's metrics, per split
 ```
 
 `submit` raises `InvalidPredictions` when the file fails local validation and

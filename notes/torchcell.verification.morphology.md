@@ -9,7 +9,7 @@ created: 1783204750410
 ## 2026.07.04 - WS6 L0-L4 verification (Ohya2005 CalMorph)
 
 WS6 of [[plan.schematization-ingestion-roadmap.2026.06.23]]. The abstract's morphology
-phenotype (r=0.619, single-KO). Unlike the expression datasets, Ohya did **not** need a
+phenotype (r=0.619 **[INCORRECT, withdrawn 2026.10.05]**, single-KO). Unlike the expression datasets, Ohya did **not** need a
 rebuild — its 4718 records already **L0-validate against the current schema**. This note
 records the design of the morphology verifier + what the L0-L4 run found. Companion to
 [[torchcell.verification.expression]].
@@ -78,7 +78,7 @@ docstrings are updated to 4695. The dated sections above (4718) reflect the pre-
 build. Full detail: [[torchcell.datasets.scerevisiae.ohya2005]] (2026.07.15 section).
 
 **Re-run needed after the graph rebuild:** the L0-L4 morphology verification (and the
-abstract's r=0.619 single-KO result) were computed on the 4718-record build; re-run both
+abstract's r=0.619 **[INCORRECT, withdrawn 2026.10.05]** single-KO result) were computed on the 4718-record build; re-run both
 against the rebuilt 4695-record LMDB.
 
 ## 2026.07.15 - Ohya count oracle back to 4718 (resolver retention supersedes 4695)
@@ -86,6 +86,10 @@ against the rebuilt 4695-record LMDB.
 Superseding the 2026.07.15 "4718 -> 4695" section: the Ohya loader now reconciles ORF names
 via the shared genome resolver and RETAINS all strains (0 dropped for naming; ~17 remapped to
 current R64 ids). `OHYA_EXPECTED_COUNT` is back to **4718**, so the count oracle and the
-abstract's r=0.619 dataset agree again. Full detail:
+abstract's r=0.619 **[INCORRECT, withdrawn 2026.10.05]** dataset agree again. Full detail:
 [[torchcell.datasets.scerevisiae.ohya2005]] (2026.07.15 supersede section) and
 [[torchcell.sequence.genome.scerevisiae.s288c]].
+
+## 2026.10.05 - The abstract's expression and morphology correlations are incorrect
+
+The values r = 0.543 (knockout expression) and r = 0.619 (single-knockout morphology) quoted in this note are **incorrect and withdrawn**. Author's account, 2026.10.05: they came from earlier runs with the wrong splits and the wrong data processing. No committed script regenerates either number, the morphology value was computed on a superseded build of the Ohya store, and the best held-out values measured since are 0.238 (expression) and 0.082 (morphology) per feature, both rolling maxima. Every occurrence above is marked in place. Do not quote either number as prior performance. Record: `notes-tex/figure-3-gate/sections/4-review.tex`.

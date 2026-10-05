@@ -185,7 +185,7 @@ mirror: 4695 records, media YPD/liquid, temp 25, 281+220 vocabulary, Ohya-2005 c
   corrected loader re-runs.
 - **Supported-datasets table** (`notes/paper.supported-datasets-and-databases.md`, row
   "Ohya 2005"): 4718 -> 4695 on regeneration (regenerate via its script, do not hand-edit).
-- **Abstract/paper morphology result** (r=0.619, single-KO) was computed on the 4718-record
+- **Abstract/paper morphology result** (r=0.619 **[INCORRECT, withdrawn 2026.10.05]**, single-KO) was computed on the 4718-record
   build; it should be re-run on the 4695-record dataset for consistency.
 - **Verifier** (`torchcell/verification/morphology.py`): count oracle 4718 -> 4695.
 
@@ -207,7 +207,7 @@ Build outcome (4718, 0 dropped): resolver statuses `{current: 4678, renamed: 20,
 non_gene_feature: 16, retired: 4}`; **17 remapped** to current ids; **12** kept as legacy
 names on 6 merge-collisions (YDL038C/YDL039C, YDL134C-A/YDL133C-A, YER108C/YER109C,
 YIL167W/YIL168W, YIR043C/YIR044C, YML033W/YML034W); **4** retired legacy names (YAR037W,
-YAR040C, YAR043C, YGL154W). `OHYA_EXPECTED_COUNT` back to 4718; the paper's r=0.619 dataset
+YAR040C, YAR043C, YGL154W). `OHYA_EXPECTED_COUNT` back to 4718; the paper's r=0.619 **[INCORRECT, withdrawn 2026.10.05]** dataset
 (4718) is reproduced.
 
 ## 2026.07.22 - CalMorph normalization sourced from the SI (WS10b)
@@ -229,3 +229,7 @@ target in experiment 019. Full analysis + variance study + implemented transform
 - **torchcell decision:** KEEP all 281 with a per-feature z-score (train-split only,
   epsilon-floored) + FLAG the degenerate set for user review; do NOT import the paper's
   247-drop (a normality verdict over base+CV, not a variance floor on our 281 base target).
+
+## 2026.10.05 - The abstract's expression and morphology correlations are incorrect
+
+The values r = 0.543 (knockout expression) and r = 0.619 (single-knockout morphology) quoted in this note are **incorrect and withdrawn**. Author's account, 2026.10.05: they came from earlier runs with the wrong splits and the wrong data processing. No committed script regenerates either number, the morphology value was computed on a superseded build of the Ohya store, and the best held-out values measured since are 0.238 (expression) and 0.082 (morphology) per feature, both rolling maxima. Every occurrence above is marked in place. Do not quote either number as prior performance. Record: `notes-tex/figure-3-gate/sections/4-review.tex`.

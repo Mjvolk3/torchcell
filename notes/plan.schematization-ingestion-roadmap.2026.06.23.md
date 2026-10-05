@@ -45,8 +45,8 @@ CI-finish WS series).
 
 Rebuild the Neo4j knowledge graph (KG) from schematized, L0-L4-verified datasets and
 deploy it to UIUC NCSA so it substantiates the Volk & Zhao abstract (Cell Graph
-Transformer predicts trigenic interaction r=0.454, expression r=0.543, morphology
-r=0.619, and recommends gene deletions for beta-carotene/betaxanthin production).
+Transformer predicts trigenic interaction r=0.454, expression r=0.543 **[INCORRECT, withdrawn 2026.10.05]**, morphology
+r=0.619 **[INCORRECT, withdrawn 2026.10.05]**, and recommends gene deletions for beta-carotene/betaxanthin production).
 Those claims only stand if the data is in the KG and ingested correctly; several of
 these datasets are not in the deployed DB today. Because this backs a conference
 abstract, correctness and provenance outrank breadth.
@@ -680,3 +680,7 @@ Cachera PDF table). Remaining:
    so the phenotype mapping is fixed -- VisualScorePhenotype vs a continuous value.
 3. **VisualScorePhenotype range/semantics (WS4).** Confirm the integer scale once
    extracted (e.g. ordinal -5..+5 color intensity) so the encoding is faithful.
+
+## 2026.10.05 - The abstract's expression and morphology correlations are incorrect
+
+The values r = 0.543 (knockout expression) and r = 0.619 (single-knockout morphology) quoted in this note are **incorrect and withdrawn**. Author's account, 2026.10.05: they came from earlier runs with the wrong splits and the wrong data processing. No committed script regenerates either number, the morphology value was computed on a superseded build of the Ohya store, and the best held-out values measured since are 0.238 (expression) and 0.082 (morphology) per feature, both rolling maxima. Every occurrence above is marked in place. Do not quote either number as prior performance. Record: `notes-tex/figure-3-gate/sections/4-review.tex`.

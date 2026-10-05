@@ -19,7 +19,7 @@ uncertainty depends on.
 |---------|-------|---------|----------|-------|
 | `dm_microarray_sameith2015` | `DmMicroarraySameith2015Dataset` | 72 | 82 | GSTF double mutants; SE/var/n_replicates populated |
 | `sm_microarray_sameith2015` | `SmMicroarraySameith2015Dataset` | 82 | 82 | **was never built before**; n_replicates=4 (2 bio × 2 dye-swap) |
-| `microarray_kemmeren2014`   | `MicroarrayKemmeren2014Dataset`  | 1450 | 1450 | abstract r=0.543 dataset; gene_set.json re-persisted |
+| `microarray_kemmeren2014`   | `MicroarrayKemmeren2014Dataset`  | 1450 | 1450 | abstract r=0.543 **[INCORRECT, withdrawn 2026.10.05]** dataset; gene_set.json re-persisted |
 
 ### CRITICAL rebuild gotcha — genome injection is mandatory for Sameith
 
@@ -83,3 +83,7 @@ and `frac_neg` to ~0.15–0.30 — caught by the L3 check and by a dedicated uni
   the report artifacts, exits non-zero on any FAIL.
 - `tests/torchcell/verification/test_expression_verification.py` — synthetic pass +
   each failure mode (sign inversion, non-zero reference, wrong count, dropped gene).
+
+## 2026.10.05 - The abstract's expression and morphology correlations are incorrect
+
+The values r = 0.543 (knockout expression) and r = 0.619 (single-knockout morphology) quoted in this note are **incorrect and withdrawn**. Author's account, 2026.10.05: they came from earlier runs with the wrong splits and the wrong data processing. No committed script regenerates either number, the morphology value was computed on a superseded build of the Ohya store, and the best held-out values measured since are 0.238 (expression) and 0.082 (morphology) per feature, both rolling maxima. Every occurrence above is marked in place. Do not quote either number as prior performance. Record: `notes-tex/figure-3-gate/sections/4-review.tex`.

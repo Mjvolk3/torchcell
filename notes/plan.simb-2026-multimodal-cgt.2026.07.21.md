@@ -131,7 +131,7 @@ Fig 6=`fig:metabolism`; **Supp Fig 7 = `fig:conversion-dedup-agg`**, the
 conversion/dedup/agg schematic), and `paper.results-and-discussion.6.experimental-
 plan.md` (the only one with real content — holds "Arm B: does the metabolome
 improve isobutanol/betaxanthin prediction"). Fig-3 numbers exist in the abstract
-(expr r=0.543±0.023, morph r=0.619±0.037) but **morphology is not yet reproducible
+(expr r=0.543±0.023 **[INCORRECT, withdrawn 2026.10.05]**, morph r=0.619±0.037 **[INCORRECT, withdrawn 2026.10.05]**) but **morphology is not yet reproducible
 in-repo** and the trigenic ±0.006 error bar is an unresolved SE-vs-SD blocker
 (WS14). Fig 4 and Fig 6 prose are entirely `[FILLER]`.
 
@@ -384,8 +384,8 @@ a spot isolate's ESM2 tensor shape matches the reference pipeline.
 floor for the joint runs. Expected minutes-scale given dataset sizes.
 
 **Scope.** Verify small runs on the workstation, then scale on IGB. Targets:
-expression (Kemmeren+Sameith, reproduce r≈0.543), morphology (Ohya, reproduce
-r≈0.619 — **currently not reproducible in-repo, highest-priority baseline**),
+expression (Kemmeren+Sameith, reproduce r≈0.543 **[INCORRECT, withdrawn 2026.10.05]**), morphology (Ohya, reproduce
+r≈0.619 **[INCORRECT, withdrawn 2026.10.05]** — **currently not reproducible in-repo, highest-priority baseline**),
 metabolite (Mülleder/Zelezniak), pigment (Ozaydin/Cachera). One head active each.
 
 **Checks.** Each baseline logs a test Pearson r; morphology r reproduced or the gap
@@ -530,7 +530,7 @@ Parallel uber-implement fan-out (isolated worktrees, serial enqueue-merge). Land
 **Corrections to the plan above:**
 
 - **Expression is *also* not yet reproducible in-repo** (not just morphology, as WS10
-  implied). Both r=0.543 (expr) and r=0.619 (morph) need in-repo regeneration → WS10.
+  implied). Both r=0.543 **[INCORRECT, withdrawn 2026.10.05]** (expr) and r=0.619 **[INCORRECT, withdrawn 2026.10.05]** (morph) need in-repo regeneration → WS10.
 - **Metabolite→Yeast9 map is a hard gap:** live DB shows Mülleder
   `target_metabolite_ids = null`, so WS8's per-metabolite head needs an explicit
   amino-acid-name → `s_NNNN` map (this is where the enzyme-constrained-regularizer
@@ -919,3 +919,7 @@ that arm stays flat.
 2. Best beta-carotene model → zero-shot inference on the 11 CIT2 doubles (`|p| = 2` is the same
    forward pass; this is the thing FCL structurally cannot attempt).
 3. WS8 revisits when kinetic coverage improves, or on the CIT2 set where coverage is 55 %.
+
+## 2026.10.05 - The abstract's expression and morphology correlations are incorrect
+
+The values r = 0.543 (knockout expression) and r = 0.619 (single-knockout morphology) quoted in this note are **incorrect and withdrawn**. Author's account, 2026.10.05: they came from earlier runs with the wrong splits and the wrong data processing. No committed script regenerates either number, the morphology value was computed on a superseded build of the Ohya store, and the best held-out values measured since are 0.238 (expression) and 0.082 (morphology) per feature, both rolling maxima. Every occurrence above is marked in place. Do not quote either number as prior performance. Record: `notes-tex/figure-3-gate/sections/4-review.tex`.

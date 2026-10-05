@@ -62,7 +62,7 @@ Each abstract claim -> where it lands in the paper. Source sentences from
 | 4 | Dataloaders build DL-ready datasets; strain = perturbation operator over shared wildtype reference (genome seq + gene networks + metabolism + environment); millions of strains at scale   | Results R1                     | Fig 1b-c |
 | 5 | CGT = virtual-cell architecture; interaction graphs constrain multi-head attention via loss aligning attention to network priors; equivariant perturbation operator; multitask heads       | Results R2                     | Fig 2    |
 | 6 | Trigenic GGI: CGT r=0.454+/-0.004, rho=0.421+/-0.003 (SEM); beats DANGO 0.367, DCell 0.157, Yeast9 FBA 0.0006                                                                                    | Results R3 (headline)          | Fig 3    |
-| 7 | Same architecture predicts expression under single+double KO (r=0.543+/-0.023) and morphology under single KO (r=0.619+/-0.037); one latent embedding generalizes across phenotype classes | Results R4                     | Fig 4    |
+| 7 | Same architecture predicts expression under single+double KO (r=0.543+/-0.023 **[INCORRECT, withdrawn 2026.10.05]**) and morphology under single KO (r=0.619+/-0.037 **[INCORRECT, withdrawn 2026.10.05]**); one latent embedding generalizes across phenotype classes | Results R4                     | Fig 4    |
 | 8 | Applied CGT to recommend gene deletions for beta-carotene and betaxanthin in S. cerevisiae                                                                                                 | Results R5                     | Fig 5    |
 | 9 | Unlike DBTL tools that don't represent the strain, TorchCell pairs with autonomous platforms (UIUC iBioFoundry) for iterative AI-guided strain engineering (chemicals, fuels, pigments)    | Results R5 + Discussion        | Fig 5    |
 
@@ -132,8 +132,8 @@ baselines fail on this task (Suppl. Fig. S1), then show CGT closes the gap. Note
 increased noise at the extremes of the interaction range (expected). -> Fig 3.
 
 **R4. One embedding, many phenotypes: expression and morphology.** Same
-architecture predicts KO expression (r=0.543) and single-KO morphology
-(r=0.619), showing the latent cell embedding generalizes across qualitatively
+architecture predicts KO expression (r=0.543 **[INCORRECT, withdrawn 2026.10.05]**) and single-KO morphology
+(r=0.619 **[INCORRECT, withdrawn 2026.10.05]**), showing the latent cell embedding generalizes across qualitatively
 different phenotype classes relevant to strain design. -> Fig 4.
 
 **R5. CGT-guided strain design with an autonomous foundry.** Recommend gene
@@ -287,12 +287,12 @@ exists / `[GEN]` generate / `[PARTIAL]` partly in iBioFoundry-AI repo / `[DECIDE
 
 **Figure 4 - One latent cell embedding generalizes across phenotype classes.** 4 panels. The multimodal-generalization claim.
 
-- 4a `[GEN]` Expression (single+double KO), r=0.543. Bet: predicted-vs-actual
+- 4a `[GEN]` Expression (single+double KO), r=0.543 **[INCORRECT, withdrawn 2026.10.05]**. Bet: predicted-vs-actual
   scatter. Options: single- vs double-KO split as two sub-panels; or per-gene r
   distribution. NOTE: today only expression *distribution*/cross-study plots exist
   (`notes/assets/images/012-sameith-kemmeren-expression/*`); the performance plot
   must be generated.
-- 4b `[GEN, MAJOR]` Morphology (single KO), r=0.619. Bet: predicted-vs-actual.
+- 4b `[GEN, MAJOR]` Morphology (single KO), r=0.619 **[INCORRECT, withdrawn 2026.10.05]**. Bet: predicted-vs-actual.
   Options: per-trait r bar (CalMorph traits); or example morphology-trait panel.
   Dataset in development (`.claude/commands/morphology_dataset.md`, Ohya2005) --
   highest-risk panel; mark preliminary if not landed.
@@ -384,11 +384,11 @@ Ordered by risk. This is the actionable backlog this outline exists to drive.
    so all error bars are the same statistic. See the 2026.06.04 caveat in
    [[conference.simb-2026.abstract]] and
    [[experiments.010-kuzmin-tmi.scripts.trigenic_tau_model_comparison]].
-2. `[HIGH]` **Morphology result** (Fig 4b). Dataset in development; the r=0.619
+2. `[HIGH]` **Morphology result** (Fig 4b). Dataset in development; the r=0.619 **[INCORRECT, withdrawn 2026.10.05]**
    panel is not yet reproducible in-repo. Either land the morphology training run
    or stage the panel as clearly preliminary.
 3. `[HIGH]` **Expression performance plot** (Fig 4a). Generate predicted-vs-actual
-   for the r=0.543 model (only distribution plots exist now).
+   for the r=0.543 **[INCORRECT, withdrawn 2026.10.05]** model (only distribution plots exist now).
 4. `[MED]` **GGI scatter + magnitude-stratified performance** (Fig 3b-c) -- new plots.
 5. `[MED]` **CGT + attention-prior schematics** (Fig 2) -- publication-grade redraws
    from the mermaid sources.
@@ -446,3 +446,7 @@ Code "Overleaf Workshop" extension still edits/compiles against the Overleaf
 project; Tectonic is the offline/CI alternative. Known gotchas to watch on first
 build: a class option that hard-requires pdfTeX-only primitives, or BibTeX vs
 biber mismatch -- neither is expected with sn-nature, but confirm on the real run.
+
+## 2026.10.05 - The abstract's expression and morphology correlations are incorrect
+
+The values r = 0.543 (knockout expression) and r = 0.619 (single-knockout morphology) quoted in this note are **incorrect and withdrawn**. Author's account, 2026.10.05: they came from earlier runs with the wrong splits and the wrong data processing. No committed script regenerates either number, the morphology value was computed on a superseded build of the Ohya store, and the best held-out values measured since are 0.238 (expression) and 0.082 (morphology) per feature, both rolling maxima. Every occurrence above is marked in place. Do not quote either number as prior performance. Record: `notes-tex/figure-3-gate/sections/4-review.tex`.

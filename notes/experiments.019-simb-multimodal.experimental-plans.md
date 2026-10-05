@@ -183,7 +183,7 @@ across seeds (0.44–0.48).
   (5M params on ~1.3k samples). Capacity reduction (5M→116K) is the whole story.
 - **Target standardization was NOT the lever** (top runs use raw log2-ratio). Retract that bet.
 - **Attention reg negligible** here (0.44466 with/without) at this small size.
-- Per-strain 0.62 > the 0.543 placeholder; per-gene 0.48 is a strong honest number. Full
+- Per-strain 0.62 > the 0.543 **[INCORRECT, withdrawn 2026.10.05]** placeholder; per-gene 0.48 is a strong honest number. Full
   manifest-joined leaderboard (params × dataset × standardization × reg) once the grid fills.
 
 ### IGB is OFFLINE → Optuna path (not the wandb launcher)
@@ -273,3 +273,7 @@ committing to the main-CGT-file version.
 
 Ultimate goal is to **represent states** (a virtual-cell latent); the expression + morphology
 correlation targets are the PRACTICAL proxy we optimize toward now.
+
+## 2026.10.05 - The abstract's expression and morphology correlations are incorrect
+
+The values r = 0.543 (knockout expression) and r = 0.619 (single-knockout morphology) quoted in this note are **incorrect and withdrawn**. Author's account, 2026.10.05: they came from earlier runs with the wrong splits and the wrong data processing. No committed script regenerates either number, the morphology value was computed on a superseded build of the Ohya store, and the best held-out values measured since are 0.238 (expression) and 0.082 (morphology) per feature, both rolling maxima. Every occurrence above is marked in place. Do not quote either number as prior performance. Record: `notes-tex/figure-3-gate/sections/4-review.tex`.

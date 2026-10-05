@@ -47,13 +47,12 @@ else
   exit 1
 fi
 
-source "$HOME/miniconda3/etc/profile.d/conda.sh"
-conda activate torchcell
-export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK:-8}"
-export OPENBLAS_NUM_THREADS="$OMP_NUM_THREADS"
-export MKL_NUM_THREADS="$OMP_NUM_THREADS"
-export PYTHONPATH="$PROJECT_ROOT"
-export PYTHONUNBUFFERED=1
+# The conda environment's compiled extensions need a newer glibc than the bare IGB nodes
+# carry (first submission, jobs 2423253 to 2423256: every task died at import with
+# "GLIBC_2.32 not found" from torch_scatter). The training launcher runs inside the
+# Rocky 9 container for the same reason; so does this one.
+SIF="${BASELINES_SIF:-/home/a-m/mjvolk3/projects/torchcell/rockylinux_9.sif}"
+THREADS="${SLURM_CPUS_PER_TASK:-8}"
 
 TASK="${SLURM_ARRAY_TASK_ID:?submit with --array}"
 ARGS=(--split-seed "$TASK"
@@ -73,5 +72,11 @@ echo "root    : $PROJECT_ROOT"
 echo "source  : $(git -C "$PROJECT_ROOT" rev-parse --short HEAD) + working tree"
 echo "args    : ${ARGS[*]}"
 echo "=========================================================="
-cd "$PROJECT_ROOT"
-exec python experiments/019-simb-multimodal/scripts/expression_baselines_split.py "${ARGS[@]}"
+module load singularity
+singularity exec "$SIF" bash -c "
+  source \$HOME/miniconda3/bin/activate && conda activate torchcell
+  export OMP_NUM_THREADS=$THREADS OPENBLAS_NUM_THREADS=$THREADS MKL_NUM_THREADS=$THREADS
+  export PYTHONPATH='$PROJECT_ROOT' PYTHONUNBUFFERED=1
+  cd '$PROJECT_ROOT'
+  python experiments/019-simb-multimodal/scripts/expression_baselines_split.py ${ARGS[*]}
+"

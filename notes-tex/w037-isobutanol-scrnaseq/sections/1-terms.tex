@@ -16,17 +16,36 @@
   level. The distinction matters wherever an add-back is read as a stand-in for
   the wild type, and Section~\ref{sec:before} returns to it.
 
-\item[biosensor configuration] Which of two reporter constructs a strain carries.
-  Both put yEGFP under P\psub{LEU1}, which responds to
-  $\alpha$-isopropylmalate. The \emph{isobutanol} configuration adds a
-  PEST degradation tag to yEGFP and a leucine-insensitive LEU4\gsup{1-410},
-  because in a \gene{LEU2}-deleted background
-  $\alpha$-isopropylmalate accumulates as a by-product and raises the
-  background signal. The \emph{isopentanol} configuration omits the PEST tag,
-  because \gene{LEU2} is active there and the intermediate is consumed rather
-  than accumulated. Every strain selected for the first run carries the
-  isobutanol configuration, so all six express yEGFP and the reporter is
-  available as a flow-cytometry check before cells are committed to sequencing.
+\item[biosensor] A two-part construct carried by all twelve strains, not only the
+  isobutanol ones. The first part is the reporter, yEGFP under P\psub{LEU1},
+  which Leu3p activates when bound to $\alpha$-isopropylmalate; what is sensed is
+  therefore that intermediate rather than the alcohol itself. The second part is
+  a leucine-insensitive $\alpha$-isopropylmalate synthase, either
+  LEU4\gsup{1-410} or LEU4$\Delta$S547, which keeps producing the intermediate
+  under leucine feedback. The synthase is part of the sensor rather than part of
+  a production pathway.
+
+\item[biosensor configuration] Which of three constructs a strain carries. The
+  \emph{isobutanol} configuration adds a PEST degradation tag to yEGFP and pairs
+  it with LEU4\gsup{1-410}, because in a \gene{LEU2}-deleted background
+  $\alpha$-isopropylmalate accumulates as a by-product and raises the background
+  signal. The \emph{isopentanol} configuration omits the PEST tag and pairs the
+  reporter with LEU4$\Delta$S547, because \gene{LEU2} is active there and the
+  intermediate is consumed rather than accumulated. A third construct is the
+  reporter alone, carried by the strains that were hosts for the \gene{LEU4}
+  mutant library: their synthase half arrives on the plasmid instead, so the
+  working sensor is split between chromosome and plasmid. Every strain selected
+  for the first run carries the isobutanol configuration, so all six express
+  yEGFP and the reporter is available as a flow-cytometry check before cells are
+  committed to sequencing.
+
+\item[biosensor locus] Where the construct sits. For eleven of the twelve it is
+  \gene{HIS3}, which the cassette both interrupts and restores, so a
+  \gene{his3-1} parent becomes histidine prototrophic on integration.
+  \strain{JC0053} is the exception and carries its biosensor at \gene{GAL80},
+  marked with \texttt{natMX6}, because its \gene{HIS3} locus already holds the
+  optogenetic circuit. That strain is \gene{gal80}$\Delta$ in any case, so the
+  second locus costs it nothing.
 
 \item[CEN plasmid] A centromeric plasmid, present at roughly one to two copies
   per cell, as against a 2$\mu$ plasmid at high copy. Every plasmid in this set

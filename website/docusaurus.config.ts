@@ -11,6 +11,9 @@ import rehypeKatex from 'rehype-katex';
 //   BASE_URL        path prefix under that origin; must start and end with "/"
 //   BENCH_API_URL   base URL of the benchmark API, including /api/v1
 //   BENCH_API_MOCK  "1" loads static/mock/*.json instead of calling the API
+//   SITE_ENV        "production" (the default) or "staging". A staging build carries a
+//                   bar on every page and a noindex tag; it points at the staging API
+//                   through BENCH_API_URL like any other build.
 //   ONTOLOGY_EXPLORER_URL  the schema explorer the Ontology tab embeds: an absolute
 //                   URL, or a path starting with "/" for a copy served by this site
 const siteUrl = process.env.SITE_URL ?? 'https://mjvolk3.github.io';
@@ -19,6 +22,10 @@ const benchApiUrl = (
   process.env.BENCH_API_URL ?? 'http://127.0.0.1:8725/api/v1'
 ).replace(/\/+$/, '');
 const benchApiMock = process.env.BENCH_API_MOCK === '1';
+const siteEnv = process.env.SITE_ENV ?? 'production';
+if (siteEnv !== 'production' && siteEnv !== 'staging') {
+  throw new Error(`SITE_ENV must be "production" or "staging", got "${siteEnv}"`);
+}
 const ontologyExplorerUrl =
   process.env.ONTOLOGY_EXPLORER_URL ?? 'https://mjvolk3.github.io/torchcell/ontology/';
 
@@ -61,8 +68,12 @@ const config: Config = {
   customFields: {
     benchApiUrl,
     benchApiMock,
+    siteEnv,
     ontologyExplorerUrl,
   },
+
+  // Only the production site is for search engines.
+  noIndex: siteEnv !== 'production',
 
   headTags: [{tagName: 'script', attributes: {}, innerHTML: applyStoredLayout}],
 

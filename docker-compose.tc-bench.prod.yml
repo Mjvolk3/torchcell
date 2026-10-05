@@ -1,0 +1,9 @@
+# docker-compose.tc-bench.prod.yml
+#
+# Production-tier overrides for `docker compose -p tc-bench-production` (base:
+# docker-compose.tc-bench.yml, settings: .env.tc-bench.prod). Production never builds:
+# scripts/tc_bench_deploy.sh starts it on a tag that already ran on staging.
+services:
+  tc-bench-api:
+    environment:
+      TC_BENCH_TIER: production

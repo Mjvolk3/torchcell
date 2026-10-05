@@ -71,7 +71,14 @@ environment-driven (``TC_BENCH_*``), with every secret read from a file:
   provider entity id per line; unset accepts every provider CILogon offers),
   ``TC_BENCH_BLOCKED_DOMAINS_FILE`` (one email domain per line),
   ``TC_BENCH_ALLOWED_DOMAIN_SUFFIXES`` (comma-separated),
-  ``TC_BENCH_OIDC_METADATA_URL`` (CILogon's discovery document by default).
+  ``TC_BENCH_OIDC_METADATA_URL`` (CILogon's discovery document by default),
+  ``TC_BENCH_TIER`` (``production`` by default; ``staging`` or ``development``
+  otherwise) and ``TC_BENCH_BUILD_COMMIT`` (the commit the image was built from, set
+  by the image). ``/health`` reports both, which is how a deploy is checked.
+
+Staging and production are two deployments of this one service from one branch: each
+has its own database, archive directory, secrets, port and site, and nothing is shared
+between them. See ``docker-compose.tc-bench.yml`` and ``scripts/tc_bench_deploy.sh``.
 """
 
 from __future__ import annotations
@@ -223,6 +230,8 @@ class BenchServerConfig(BaseModel):
     access_token_ttl: timedelta = timedelta(hours=12)
     login_code_ttl: timedelta = timedelta(minutes=2)
     max_signups_per_address: int = 5
+    tier: Tier = "production"
+    build: str | None = None
     max_api_tokens: int = 5
     api_token_default_days: int = 90
     api_token_max_days: int = 365
@@ -303,6 +312,8 @@ class BenchServerConfig(BaseModel):
                 "port": int(env.get("TC_BENCH_PORT", str(DEFAULT_PORT))),
                 "trust_proxy": env.get("TC_BENCH_TRUST_PROXY", "0") == "1",
                 "require_approval": env.get("TC_BENCH_REQUIRE_APPROVAL", "0") == "1",
+                "tier": env.get("TC_BENCH_TIER", "production"),
+                "build": env.get("TC_BENCH_BUILD_COMMIT") or None,
                 "account_policy": AccountPolicy(
                     blocked_domains=blocked,
                     allowed_domain_suffixes=suffixes,
@@ -371,11 +382,18 @@ class Message(BaseModel):
     message: str
 
 
+Tier = Literal["development", "staging", "production"]
+
+
 class Health(BaseModel):
     """Liveness summary (no auth)."""
 
     status: str
     n_datasets: int
+    tier: Tier = Field(description="Which deployment answered.")
+    build: str | None = Field(
+        description="The git commit the running image was built from, when recorded."
+    )
 
 
 class TokenResponse(BaseModel):
@@ -832,7 +850,9 @@ def create_app(
     @router.get("/health", response_model=Health, tags=["service"])
     def health() -> Health:
         """Liveness and the number of benchmark datasets loaded. No account needed."""
-        return Health(status="ok", n_datasets=len(bundles))
+        return Health(
+            status="ok", n_datasets=len(bundles), tier=config.tier, build=config.build
+        )
 
     @router.get("/submission-schema", tags=["service"])
     def submission_schema() -> dict[str, Any]:

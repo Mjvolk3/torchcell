@@ -1,0 +1,17 @@
+# docker-compose.tc-bench.staging.yml
+#
+# Staging-tier overrides for `docker compose -p tc-bench-staging` (base:
+# docker-compose.tc-bench.yml, settings: .env.tc-bench.staging). Staging is where a
+# change is exercised with real sign-in and throwaway submissions before production
+# gets the same image. Its database, archives and secrets are its own.
+services:
+  tc-bench-db:
+    # Smaller than production: staging holds test accounts and test submissions.
+    cpus: 0.5
+    mem_limit: 256m
+
+  tc-bench-api:
+    environment:
+      TC_BENCH_TIER: staging
+    cpus: 1.0
+    mem_limit: 512m

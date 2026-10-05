@@ -289,8 +289,16 @@ experiments/025-solid-growth/results/graph_regularization_how_not_what/
 # mypy daemon state (machine-local)
 .dmypy.json
 
-# Benchmark service deployment settings (copied from docker/tc-bench/tc-bench.env.example)
+# Benchmark service deployment settings, one file per tier (copied from
+# docker/tc-bench/tc-bench.<tier>.env.example), and the site build settings per tier
 .env.tc-bench
+.env.tc-bench.staging
+.env.tc-bench.prod
+website/site.staging.env
+website/site.prod.env
+website/build/
+website/build-*/
+website/.docusaurus/
 
 # Website (Docusaurus) build output; node_modules and build/ are ignored above
 .docusaurus/

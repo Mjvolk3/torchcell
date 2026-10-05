@@ -205,6 +205,8 @@ def test_health_and_schema(bench: Bench) -> None:
     assert bench.client.get(bench.url("/health")).json() == {
         "status": "ok",
         "n_datasets": 1,
+        "tier": "production",
+        "build": None,
     }
     schema = bench.client.get(bench.url("/submission-schema")).json()
     assert schema["columns"] == ["record_id", "split", "target", "prediction"]
@@ -1113,6 +1115,7 @@ def test_config_from_env(
     assert config.cors_origins == ("https://site.example", "https://mjvolk3.github.io")
     assert (config.host, config.port) == ("127.0.0.1", 8725)
     assert (config.trust_proxy, config.require_approval) == (True, False)
+    assert (config.tier, config.build) == ("production", None)
     assert config.account_policy.blocked_domains == {"mailinator.com", "trashmail.com"}
     assert config.account_policy.allowed_domain_suffixes == (".edu", ".ac.uk")
     assert config.account_policy.allowed_idps == {
@@ -1287,3 +1290,27 @@ def test_binary_dataset_is_scored_with_ranking_metrics(tmp_path: Path) -> None:
     assert board[0]["test"]["per_target"] == {
         "is_essential": {"auroc": 1.0, "auprc": 1.0}
     }
+
+
+def test_tier_and_build_come_from_the_environment_and_show_in_health(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, datasets_root: Path
+) -> None:
+    env = _env(tmp_path, datasets_root)
+    _set_env(
+        monkeypatch,
+        {**env, "TC_BENCH_TIER": "staging", "TC_BENCH_BUILD_COMMIT": "abc1234"},
+    )
+    config = BenchServerConfig.from_env()
+    assert (config.tier, config.build) == ("staging", "abc1234")
+
+    bench = Bench(tmp_path, datasets_root, tier="staging", build="abc1234")
+    assert bench.client.get(bench.url("/health")).json() == {
+        "status": "ok",
+        "n_datasets": 1,
+        "tier": "staging",
+        "build": "abc1234",
+    }
+
+    _set_env(monkeypatch, {**env, "TC_BENCH_TIER": "preview"})
+    with pytest.raises(ValidationError, match="tier"):
+        BenchServerConfig.from_env()

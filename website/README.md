@@ -56,13 +56,14 @@ preview on your own machine.
 
 ## Environment variables
 
-All five are read at build time by `docusaurus.config.ts`. A change needs a rebuild.
+All six are read at build time by `docusaurus.config.ts`. A change needs a rebuild.
 
 | Variable | Default | Meaning |
 | :-- | :-- | :-- |
 | `SITE_URL` | `https://mjvolk3.github.io` | Origin the site is served from, without a path |
 | `BASE_URL` | `/torchcell/site/` | Path under that origin. Must start and end with `/` |
 | `BENCH_API_URL` | `http://127.0.0.1:8725/api/v1` | Base URL of the benchmark API, including `/api/v1` |
+| `SITE_ENV` | `production` | `staging` adds a bar to every page and a `noindex` tag. See "Staging and production" |
 | `BENCH_API_MOCK` | unset | `1` makes the benchmark pages read `static/mock/*.json` instead of the API |
 | `ONTOLOGY_EXPLORER_URL` | `https://mjvolk3.github.io/torchcell/ontology/` | The schema explorer the Ontology tab embeds and the dataset cards link to. An absolute URL, or a path starting with `/` for a copy this site serves (render one with `python paper/nature-biotech/scripts/generate_ontology_diagram.py --explorer-only website/static/ontology-explorer/index.html` from the repo root) |
 
@@ -77,6 +78,36 @@ Notes on `BENCH_API_URL`:
   only works for a locally served site next to a locally running API.
 - When the API does not answer, the benchmark pages show "The benchmark API is not
   reachable at `<url>`" and no rows.
+
+## Staging and production
+
+There is one branch and there are two sites. Staging and production are separate
+builds of the same commit, served at separate URLs, each calling its own benchmark API
+with its own database (`docker-compose.tc-bench.yml`). Nothing done on staging reaches
+the public board.
+
+| Tier | Built with | Calls | Carries |
+| :-- | :-- | :-- | :-- |
+| Mock preview | `BENCH_API_MOCK=1`, any branch | nothing, fixtures | the mock bar on benchmark pages |
+| Staging | `make site-build TIER=staging` | the staging API | the staging bar on every page, `noindex` |
+| Production | `make site-build TIER=prod` | the production API | nothing extra |
+
+`make site-build TIER=<tier>` reads `website/site.<tier>.env` (copy
+`site.<tier>.env.example`; the copies are git-ignored) and writes
+`website/build-<tier>/`, which the reverse proxy serves
+(`docker/tc-bench/Caddyfile.example`). Design work that needs no backend uses the mock
+preview; staging is for sign-in and submissions with throwaway data.
+
+The API side has the matching verbs, from the repo root:
+
+```bash
+make bench-redeploy                 # rebuild staging from the current tree, verify it
+make bench-promote-prod             # print what would be promoted
+make bench-promote-prod CONFIRM=1   # start production on the image staging ran
+```
+
+Production is never built: it runs the image that ran on staging, and its site is
+built at that same commit.
 
 ## Mock mode
 

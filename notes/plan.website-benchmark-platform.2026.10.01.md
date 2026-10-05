@@ -381,3 +381,35 @@ and the open question on password reset, which no longer applies.
   (AUPRC 0.2039 and 0.1959; 20% of records are essential, n = 570 per split), an
   immediate second upload refused with 429. One run, seed 0.
 - Not run: a sign-in against CILogon. It needs a registered client.
+
+## 2026.10.05 - Staging and production: one branch, two deployments
+
+Decided by the project owner: follow the iBioFoundry-AI pattern, not a staging branch.
+
+- **API.** `docker-compose.tc-bench.yml` is the base of two compose projects,
+  `tc-bench-staging` and `tc-bench-production`, each with its override file
+  (`docker-compose.tc-bench.staging.yml`, `.prod.yml`) and env file
+  (`.env.tc-bench.staging`, `.env.tc-bench.prod`). The project name scopes containers,
+  networks and the database volume; each env file names its own secrets directory,
+  archive directory, port (8725 staging, 9725 production) and URLs.
+- **Promotion.** `make bench-redeploy` builds staging from the current tree, tags the
+  image with HEAD's short sha, and asserts `/health` reports `tier=staging` and that
+  build. `make bench-promote-prod CONFIRM=1` starts production on the tag staging is
+  running, never a rebuild, refuses a tag that is not on `origin/main`, and asserts
+  `tier=production` and the same build. The bare target prints the plan only.
+- **Service.** `TC_BENCH_TIER` and `TC_BENCH_BUILD_COMMIT` (baked into the image) are
+  reported by `/health`.
+- **Site.** `SITE_ENV=staging` adds a bar to every page and a `noindex` tag.
+  `make site-build TIER=staging|prod` builds from `website/site.<tier>.env` into
+  `website/build-<tier>/`. `docker/tc-bench/Caddyfile.example` serves two hosts.
+- **Three tiers in use:** mock preview (design, any branch, no backend), staging (real
+  sign-in, throwaway data), production (the public board).
+
+Verified: 212 tests; `docker compose config` resolves each tier to its own project,
+volume, port, secrets and archive paths; the three scripts in `DRY_RUN=1` (staging
+redeploy, plan-only promotion, refusal of an unlanded tag, confirmed promotion); the
+staging bar and `noindex` on a staging build in headless Chromium.
+
+Not run: no image was built and no container was started, so the real build, start and
+health assertion paths of the scripts are untested. Host names in the examples are
+placeholders until hosting is decided.

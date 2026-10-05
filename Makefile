@@ -112,6 +112,23 @@ paper-sync:
 paper-pull:
 	@bash paper/nature-biotech/paper-pull.sh
 
+# --- Benchmark service (tc-bench): staging and production from one branch ---
+# Two compose projects with separate databases, archives, secrets and ports. Staging is
+# rebuilt from the current tree; production runs the exact image staging ran, never a
+# rebuild. See docker-compose.tc-bench.yml and scripts/tc_bench_deploy.sh. DRY_RUN=1
+# prints the commands only.
+.PHONY: bench-redeploy bench-promote-prod site-build
+bench-redeploy:
+	@FORCE="$(FORCE)" DRY_RUN="$(DRY_RUN)" bash scripts/tc_bench_redeploy.sh
+bench-promote-prod:
+	@FORCE="$(FORCE)" CONFIRM="$(CONFIRM)" DRY_RUN="$(DRY_RUN)" STAGING_TAG="$(STAGING_TAG)" \
+	  bash scripts/tc_bench_promote_prod.sh
+# Build one tier's site into website/build-<tier>/ from website/site.<tier>.env.
+site-build:
+	@case "$(TIER)" in staging|prod) ;; *) echo "usage: make site-build TIER=staging|prod"; exit 2;; esac
+	@test -f website/site.$(TIER).env || { echo "missing website/site.$(TIER).env (copy site.$(TIER).env.example)"; exit 2; }
+	@cd website && set -a && . ./site.$(TIER).env && set +a && npx docusaurus build --out-dir build-$(TIER)
+
 .PHONY: help
 help:
 	@echo "Available commands:"
@@ -129,6 +146,9 @@ help:
 	@echo "  make ops             - Served KG releases on every host + service health"
 	@echo "  make ops-health      - Health probes only; make ops-releases - the table only"
 	@echo "  make ops-fast        - GilaHyper only, 2 s probes: the panel in a few seconds, no radiant rows"
+	@echo "  make bench-redeploy  - Rebuild the benchmark STAGING tier from this tree and verify it"
+	@echo "  make bench-promote-prod CONFIRM=1 - Start PRODUCTION on the image staging ran (bare: plan only)"
+	@echo "  make site-build TIER=staging|prod - Build that tier's website into website/build-<tier>/"
 	@echo "  make paper           - Build submission + editing + twocolumn PDFs"
 	@echo "  make paper-submission/-editing/-twocolumn/-figproto - one PDF"
 	@echo "  make paper-fig       - Force re-render all figures from draw.io + size/scale check"

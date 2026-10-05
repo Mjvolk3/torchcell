@@ -3,6 +3,22 @@
 # the API. Kept separate from docker-compose.yml (Neo4j), docker-compose.tc-lit.yml and
 # docker-compose.tc-data.yml so each starts and stops on its own.
 #
+# Two tiers, one branch. This file is the base of two compose PROJECTS that share
+# nothing at run time:
+#
+#   staging     -p tc-bench-staging     --env-file .env.tc-bench.staging
+#               -f docker-compose.tc-bench.yml -f docker-compose.tc-bench.staging.yml
+#   production  -p tc-bench-production  --env-file .env.tc-bench.prod
+#               -f docker-compose.tc-bench.yml -f docker-compose.tc-bench.prod.yml
+#
+# The project name prefixes every container, network and volume, so each tier has its
+# own database volume; each env file names its own secrets directory, bundle and archive
+# directories, host port and public URLs. Staging is rebuilt from the current tree and
+# production runs the exact image that ran on staging: `make bench-redeploy`, then
+# `make bench-promote-prod CONFIRM=1` (scripts/tc_bench_deploy.sh is the primitive both
+# wrap). Do not start a tier with a bare `docker compose up`: it skips the tier's
+# override file and the checks.
+#
 # What is exposed, and to whom:
 #   - PostgreSQL publishes NO port. It sits on an internal network that only the API
 #     container joins, so nothing on the host or the internet can connect to it.
@@ -18,7 +34,8 @@
 # run on the Taiga NFS mount, for the same reason Neo4j must not). It is small: three
 # narrow tables. The submission archives are plain zip files and go on Taiga.
 #
-# Requires (from docker/tc-bench/tc-bench.env copied to .env.tc-bench, or the shell):
+# Requires (from docker/tc-bench/tc-bench.<tier>.env.example copied to
+# .env.tc-bench.<tier>, or the shell):
 #   TC_BENCH_SECRETS_DIR      host dir holding db_password, jwt_secret,
 #                             cilogon_client_secret and admin_keys.json, readable by
 #                             TC_BENCH_UID (mode 640 or 600)
@@ -31,20 +48,17 @@
 #                             /api/v1/auth/callback
 #   TC_BENCH_CILOGON_CLIENT_ID  the client registered at https://cilogon.org/oauth2/register
 #   TC_BENCH_CORS_ORIGINS     comma-separated origins of the website
+#   TC_BENCH_PORT             host loopback port of this tier's API
+#   TC_BENCH_IMAGE_TAG        set by scripts/tc_bench_deploy.sh, not by hand
 #
-# First run:
-#   docker compose --env-file .env.tc-bench -f docker-compose.tc-bench.yml build
-#   docker compose --env-file .env.tc-bench -f docker-compose.tc-bench.yml run --rm \
-#     tc-bench-api python -m torchcell.benchmark.app --gen-admin-key <name>
-#   docker compose --env-file .env.tc-bench -f docker-compose.tc-bench.yml up -d tc-bench-db
-#   docker compose --env-file .env.tc-bench -f docker-compose.tc-bench.yml run --rm \
-#     tc-bench-api python -m torchcell.benchmark.app --init-db
-#   docker compose --env-file .env.tc-bench -f docker-compose.tc-bench.yml up -d
+# First run of a tier (COMPOSE = the tier's full command above):
+#   scripts/tc_bench_deploy.sh staging            # builds the image, starts both services
+#   $COMPOSE run --rm tc-bench-api python -m torchcell.benchmark.app --gen-admin-key <name>
+#   $COMPOSE run --rm tc-bench-api python -m torchcell.benchmark.app --init-db
 
 services:
   tc-bench-db:
     image: postgres:17-alpine
-    container_name: tc-bench-db
     environment:
       POSTGRES_DB: tcbench
       POSTGRES_USER: tcbench
@@ -70,8 +84,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.tc-bench
-    image: tc-bench-api:latest
-    container_name: tc-bench-api
+      args:
+        TC_BENCH_BUILD_COMMIT: "${TC_BENCH_IMAGE_TAG:-}"
+    # One image name for both tiers: production runs the tag staging ran.
+    image: "tc-bench-api:${TC_BENCH_IMAGE_TAG:-latest}"
     user: "${TC_BENCH_UID}"
     depends_on:
       tc-bench-db:

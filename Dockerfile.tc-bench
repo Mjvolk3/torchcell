@@ -4,8 +4,8 @@
 # torchcell ML env: the service imports only torchcell.api_keys and torchcell.benchmark,
 # neither of which needs torch, PyG or a dataset loader, so only those files are copied.
 #
-# Build (context = repo root):  docker build -f Dockerfile.tc-bench -t tc-bench-api:latest .
-# Run is via docker-compose.tc-bench.yml (PostgreSQL beside it, secrets as files).
+# Build and run go through scripts/tc_bench_deploy.sh (docker-compose.tc-bench.yml,
+# PostgreSQL beside it, secrets as files), which tags the image with the commit.
 
 FROM python:3.13-slim
 
@@ -39,6 +39,12 @@ EXPOSE 8725
 # /api/v1/health needs no auth; curl is absent from slim, so probe via stdlib urllib.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
     CMD python -c "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8725/api/v1/health').status==200 else 1)"
+
+# The commit this image was built from; /api/v1/health reports it, which is how a deploy
+# checks that the running image is the intended one. Last, so it never busts the cache
+# of the layers above.
+ARG TC_BENCH_BUILD_COMMIT=""
+ENV TC_BENCH_BUILD_COMMIT=${TC_BENCH_BUILD_COMMIT}
 
 # Config is 100% env-driven (TC_BENCH_*, see torchcell/benchmark/app.py); every secret
 # is a mounted file.

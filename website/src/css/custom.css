@@ -286,6 +286,13 @@ html[data-layout='wide'] [class*='docItemCol'] {
   letter-spacing: 0.02em;
 }
 
+/* The same bar on every page of a SITE_ENV=staging build, in the palette's orange so it
+ * is not mistaken for the mock bar. */
+.tc-staging-bar {
+  background: #d79b00;
+  color: #1c1e21;
+}
+
 /* Outbound link cards used on the link pages. */
 .tc-linkgrid {
   display: grid;

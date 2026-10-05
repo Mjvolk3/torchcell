@@ -75,7 +75,10 @@ PACK="${V21_PACK:-4}"
 # fits the 8 CPUs an A40's share of a gpuA40x4 node carries (4 mains + 4 workers). The
 # canary's epoch 1 time is the startup cost on Lustre; if it runs to hours, resubmit the
 # round with V21_WORKERS=0 (1,200 epochs then take 27 to 45 h, still inside two days at
-# the low end).
+# the low end). Measured on GilaHyper at exactly this shape (four runs, one worker each,
+# eight CPUs, job 3273): 58 to 64 s per epoch, about 20 h per 1,200-epoch pack; with three
+# workers each on sixteen CPUs 35 to 38 s. If gpuA40x4 grants --cpus-per-task=16 for one
+# card, submit with that and V21_WORKERS=3.
 WORKERS="${V21_WORKERS:-1}"
 # Flipped to 0 in the commit that fixed the trunk shape from the benchmark (2026-10-05).
 BENCH_PENDING="${V21_BENCH_PENDING:-0}"

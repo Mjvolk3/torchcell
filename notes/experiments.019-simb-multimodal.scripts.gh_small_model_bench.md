@@ -47,3 +47,16 @@ and 1 at the same time. The first epoch fell from 146 to 182 s to 94 to 109 s. S
 workers halve the epoch, and the zero-worker Delta rule, measured in July with non-persistent
 workers that re-spawn every epoch, is the setting to retest there. Cell 6 (job 3273) is
 Delta's shape, four runs with one worker each on eight CPUs.
+
+Cell 6 (job 3273, four runs with ONE persistent worker each on eight CPUs, Delta's share of a
+gpuA40x4 node): 58 to 64 s per epoch at steady state, first epoch 122 to 135 s, 38 GB on the
+card, no failures. On this card a 1,200-epoch pack of four therefore takes about 20 h; the
+A40 figure is a hypothesis until the Delta canary logs it (expected slower, 1.5 to 1.8 times,
+still inside two days).
+
+| cell | runs per card | workers per run | CPUs | steady s/epoch per run | 1,200 epochs, pack |
+|---|---|---|---|---|---|
+| 0, 1 | 4 | 0 | 16 | 68 to 75 | 23 to 25 h |
+| 6 | 4 | 1 persistent | 8 | 58 to 64 | about 20 h |
+| 5 | 4 alive of 5 | 2 persistent | 16 | 38 to 40 | about 13 h |
+| 4 | 4 | 3 persistent | 16 | 35 to 38 | about 12 h |

@@ -1,0 +1,177 @@
+%% notes-tex/figure-3-gate/sections/4-review.tex
+%% SOURCE: the ten reviewer reports under review/2026-10-04/ (01 expression before SIMB,
+%% 02 expression after SIMB, 03 proteome and joint rounds, 04 baselines and ceilings,
+%% 05 architecture and operator, 06 training dynamics, 07 data, splits and metrics,
+%% 08 cross-modal evidence and new data, 09 prior reviews and literature, 10 compute and
+%% plan). Each report names the results file, config line or W&B run behind every number
+%% quoted here. Job ids are from the IGB scheduler on 2026-10-04.
+
+\section{What the audit of 2026-10-04 established\secstatus{todo}}
+\label{sec:review}
+
+Ten independent read-only reviews of the expression, proteome and morphology work were run
+on 2026-10-04, one scope each, and are filed under \file{review/2026-10-04/}. Where two
+reviews reached the same point from different files it is stated once. Every number is
+measured unless it is marked as a hypothesis.
+
+\pfstep{No trained model on file beats the best baseline on matched strains} On the test
+strains of the model's own partitions, read at the best-validation checkpoint, the graph
+transformer scores $0.110$ and $0.153$ on expression (split seeds 0 and 2) against $0.165$
+and $0.174$ for a nearest-neighbor average keyed on the interaction graphs, and $0.067$ and
+$0.082$ on the proteome against $0.117$ and $0.111$. The model minus the best
+validation-selected key is negative in six of six comparisons, by $0.02$ to $0.06$. This
+rests on two split seeds per modality, because test predictions were saved for six of forty
+checkpoints; validation orders the same way on all four split seeds. Morphology has no
+matched comparison at all. A second review reads a different set of checkpoints (v17
+reference arm, three seeds per split) at a model edge of about $+0.017$ over the matched
+sequence baselines, most of it from split seed 0, so the sign against sequence baselines is
+unsettled and the sign against the graph key is not.
+\src{review/2026-10-04/04_baselines_and_ceilings.md, 07_data_splits_metrics.md}
+
+\pfstep{Headline numbers that do not hold} The incumbent's $0.196 \pm 0.022$ is the mean
+of eight different arms of one round, all at seed 0 on split seed 0, scored by a rolling
+maximum; same-seed reruns agree within $0.001$, and no configuration has been replicated at
+a long budget. Split seed 0 is a favorable draw: its validation score sits $1.72$ standard
+deviations above the mean of twelve baseline draws, and every long run used it. The claim
+that the model clears the bilinear baseline by $0.093$ compared a rolling maximum against a
+baseline scored on a different permutation of the strains. The rank-64 pair term's
+advantage per unit of compute compared one run in each of two projects and fails at
+matched budgets. The statistic ``145 runs, correlation of log parameters with score
+$-0.129$'' has no generating script and is not reproduced by \file{round_leaderboards.csv},
+which gives $-0.001$ over 1{,}182 runs confounded with budget. The manuscript's Results
+still carry placeholder correlations of $0.543$ and $0.619$ for expression and morphology.
+\src{review/2026-10-04/01_expression_pre_simb.md, 02_expression_post_simb.md,
+06_training_dynamics.md, 09_prior_reviews_and_literature.md}
+
+\pfstep{What has a measured effect} Budget, within a single run: $0.147$ at epoch 500,
+$0.202$ at 2{,}000, $0.230$ at 4{,}000. The partition: between-partition standard deviation
+$0.020$ to $0.030$ against $0.010$ to $0.020$ within, larger than any arm effect. The
+masked objective: removing it costs $0.012$ over twelve pairs with a confidence interval
+that excludes zero, negative on all four partitions; rounds v19 and v20 run without it.
+Embedding content against width-matched random vectors: $+0.068$. Interaction graphs as a
+neighbor key against their rewired controls: $+0.150$ on expression and $+0.115$ on the
+proteome, four of four split seeds. Among sequence representations ProtT5 alone is at or
+above every composite, and the four-part stack the model consumes adds $-0.03$ to $+0.003$
+over it. No architecture change has met the campaign's own bar of $+0.02$ on three of four
+partitions with the test sign agreeing.
+\src{review/2026-10-04/01_expression_pre_simb.md, 02_expression_post_simb.md,
+04_baselines_and_ceilings.md}
+
+\pfstep{What the code does at one deletion} The v19 model has 6{,}681{,}548 parameters, of
+which 5.69 million, 85 percent, are the first linear layer that projects the 3{,}328
+dimensional concatenated embedding; the encoder is 0.59 million and the perturbation
+operator 0.10 million. The encoder runs once on the wild-type graph, so its output is the
+same for every strain. The operator is a softmax over the perturbed genes; with one deleted
+gene its weight is identically 1 and every gene receives the same vector, so its query and
+key parameters (16{,}380) receive zero gradient. The Methods describe this softmax; Fig.~1f
+draws a weight that differs between genes, which this operator cannot produce at one
+deletion. The operator's attention dropout acts on that single weight and drops whole heads
+of the deletion signal at random. Nothing marks which gene was deleted: the model predicts
+$+0.036$ for the deleted gene's own transcript against a measured $-2.42$, and a predictor
+that writes only that one entry scores $0.0175$ per-feature Pearson, the size of the edge in
+dispute. The null sink, the sigmoid form that makes the weight depend on the querying gene,
+was trained once, for 186 to 189 epochs, with its gate bias near $-4$.
+\src{review/2026-10-04/05_architecture_and_operator.md, 07_data_splits_metrics.md,
+01_expression_pre_simb.md}
+
+\pfstep{What the training curves show} The runs are neither converged nor memorizing.
+Train-side Pearson is still rising at epoch 1{,}200 and flattens below $0.78$ after 10{,}000
+epochs. The validation-loss minimum near epoch 70 to 90 sits at the end of a plateau where
+predictions are still near-constant, so it marks the launch of the head, not the onset of
+overfitting, and the loss-minimum checkpoint is close to a mean predictor. Predictions are
+over-dispersed for their correlation (spread ratio about twice the Pearson), which is why
+the normalized error exceeds 1; a term that pushes the prediction spread toward the target's
+would raise that error further. Wall time does not depend on model size: an epoch costs the
+same at 0.68 and 1.45 million parameters, a fifth of it is the eval-mode train pass, and
+the encoder is recomputed every step although its output never changes. With the encoder
+output cached a CPU step falls from 42~s to 2.6~s, and to 0.23~s on 512 reporter genes.
+\src{review/2026-10-04/06_training_dynamics.md, 05_architecture_and_operator.md}
+
+\pfstep{Defects found} Three bear on numbers already reported. The prediction-dump routine
+calls the model without the observed-label input, so every dumped validation and test
+prediction from the masked-objective lineage comes from a different function than the logged
+metric. The v16 expression baselines were taken from the wrong store's partitions. The
+per-feature Pearson drops near-constant columns per model, so two arms can be scored on
+different feature sets. One bore on running jobs: the conditioned arms were launched without
+persistent data-loader workers, the setting whose absence killed four v15 runs; the pending
+v20 tasks were resubmitted with it (job 2423297) and tasks 0 and 1 of job 2423190 run as
+launched.
+\src{review/2026-10-04/05_architecture_and_operator.md, 07_data_splits_metrics.md,
+03_proteome_and_joint.md}
+
+\pfstep{What new data can and cannot do inside the window} The local SPELL archive holds
+200 studies with genetic perturbations covering 1{,}175 genes, of which 478 are not among
+the 1{,}484 Kemmeren deletions: 216 are promoter knockdowns of essential genes, 146 come
+from Hughes 2000, and 14 from Hu 2007. On the ridge learning curve 245 to 460 more strains
+project to about $+0.004$ to $+0.008$ (hypothesis, one split), below the between-partition
+spread. The natural isolates need a reference record, per-allele sequence embeddings that no
+builder supports, and a loader fix, five to eight days before a first number. The two
+amino-acid screens do not agree with each other because the Cooper screen does not
+reproduce its own duplicate strains. No relationship between fitness and the expression or
+proteome profile has been measured.
+\src{review/2026-10-04/08_cross_modal_and_new_data.md}
+
+\pfstep{The conditioned round} The conditioning step is wired as intended: validation and
+test are conditioned, standardization is fit on train, the revealed head leaves the loss
+and the metrics. Its comparison against the v19 single-head arms is not like for like (head
+slot, loader setting, and an encoder input of values against zeros), so the primary
+contrast is each conditioned arm against its permuted control, and the bar is the ridge
+from genotype plus the measured modality refit per partition ($0.236$ on expression and
+$0.214$ on the proteome on one split), not the unconditioned arm.
+\src{review/2026-10-04/03_proteome_and_joint.md}
+
+\section{The plan to the deadline\secstatus{todo}}
+\label{sec:plan}
+
+Fewer than twenty days remain. The plan is ordered so that the first week produces a
+figure that exists whatever the later experiments show, and so that each later line of work
+has a date on which it is dropped.
+
+\pfstep{Days 0 to 4, almost no GPU: the benchmark that cannot fail to exist} Four pieces.
+First, the linear and nearest-neighbor baselines for every gene representation on exactly
+the strains rounds v19 and v20 use, twelve split seeds, both labels (IGB jobs 2423298 to
+2423302, running). Second, one scoring harness applied to everything already trained:
+predictions dumped through the same function the metric uses, the deleted gene's own entry
+blanked, a feature set fixed in advance by replicate reliability, window means in place of
+rolling maxima, test strains, a strain bootstrap. Third, a harness that tells the candidate
+limits apart: a ridge and a bilinear model on 137 to 1{,}100 training strains over five
+splits, and the same on planted labels at the measured noise level. Fourth, two gates that
+earlier reviews asked for and no one ran: perturbation-derived embeddings of the deleted
+gene (its genetic-interaction, chemogenomic, morphology or proteome profile) through the
+existing baselines, and measured fitness as an input to the genotype ridge with a shuffled
+control. \textbf{Gate, day 4:} the matched table is drawn with ceilings. If the model is
+below the graph key on at least three of four split seeds per modality, Figure~3 reports a
+benchmark, and the remaining work is to raise the model to the graph key.
+
+\pfstep{Days 2 to 8: many small models} The encoder output is cached, so only the operator
+and the heads train, on the both-label store already on IGB. Arms, each against a paired
+reference in the same pack: the sigmoid-gated operator with an explicit term in the
+reporter and the perturbation and an indicator of the deleted gene; the deleted gene's graph
+neighborhood as input; a projection cut from 5.69 million parameters to a frozen
+low-dimensional one; ProtT5 alone against the stack; the masked objective on; the perturbed
+CLS as the morphology readout once the 30-line port from the interaction branch is in.
+Screen at 300 epochs on three split seeds, scored by the mean over epochs 200 to 300.
+Hypothesis (untested): the cached model runs at least ten times faster per epoch on a GPU.
+\textbf{Gate, day 8:} the operator line is dropped unless an arm beats its paired reference
+on at least nine of twelve split seeds at confirmation and reaches the graph key.
+
+\pfstep{Days 8 to 15: confirmation} At most two winners and the reference at full size on
+twelve split seeds with a sealed test set, about 2.5 days on three A40s.
+
+\pfstep{The conditioned round, in parallel} It runs to completion on the two \file{cabbi}
+cards. \textbf{Gate, about day 10:} with at least six split seeds, a conditioned arm must
+exceed its permuted control by $0.02$ and reach the per-partition ridge; otherwise it is
+reported as a model that uses a second modality less well than a linear map.
+
+\pfstep{What is not in the window} New deletion loaders from SPELL, unless the day-one
+learning curve projects a gain above $0.01$. Natural isolates, unless the dataset-build
+machine is back by day 5. The distribution-matching loss term, the dataset token, and any
+pooled single-cell screen.
+
+\pfstep{Days 16 to 19} Freeze, read the sealed test set once, draw the figure, write.
+
+\pfstep{Decisions that are the author's} Whether Figure~3 may be a benchmark in which a
+graph neighbor average ties or beats the transformer. Whether Fig.~1f or the Methods
+changes, since they name different operators. Whether the manuscript's placeholder
+correlations and its statement that the model predicts expression and morphology jointly
+are removed now. Whether the pending v20 tasks keep both directions.

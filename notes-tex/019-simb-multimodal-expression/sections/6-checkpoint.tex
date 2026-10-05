@@ -97,10 +97,11 @@ than on the gene-level heads.
   readout strain-specific; it does not change the gene tokens, which come out bit-identical.
 \item \textbf{The single-key degeneracy is addressed by the null sink, which was tested only
   inside the early dip.} With one deleted gene the cross-attention has one key and its
-  weights are identically 1. The null sink adds a zero-valued key with a learned logit, so
+  weights are identically 1. The null sink adds a second key with a learned logit, so
   the weight depends on the querying gene and the query and key parameters receive gradient
   (\file{verify_null_sink_and_pooling.py}, contract C4). Its one trained comparison is v8
-  wave 3: four seed pairs stopped at 186 to 189 epochs, $+0.0024 \pm 0.0090$, which
+  wave 3: four seed pairs stopped at 186 to 189 epochs with the gate bias still near its
+  initial $-4$, $+0.0024 \pm 0.0090$, which
   \cref{sec:strand-heads} classifies with every other arm stopped before the validation
   curve leaves its dip. It has not been run at a resolving budget.
 \end{itemize}

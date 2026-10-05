@@ -8,8 +8,8 @@
 # on every step and the other is predicted, so no reveal schedule and no masked loss.
 #
 # WHAT IT ASKS. v19 asked whether training one trunk on both labels improves either head
-# from the genotype alone; at ten of twelve partitions neither registered test rejects
-# (expression -0.006, proteome -0.018 on its window). This round asks a different question:
+# from the genotype alone; at eleven of twelve partitions neither registered test rejects
+# (expression -0.001, proteome -0.017 on its window; results/joint_checkpoint_readout.json). This round asks a different question:
 # given a strain's measured proteome, how much better is its expression predicted, and the
 # mirror. That is a conditioning claim about a multimodal model, not a shared-trunk synergy
 # claim, and a new strain needs the conditioning measurement before the model applies.
@@ -29,7 +29,8 @@
 # SCORING, v19's per-head windows unchanged: expression = mean of
 # val/expression/pearson_per_feature over epochs 1,000 to 1,200; proteome = mean of
 # val/proteome/pearson_per_feature over epochs 200 to 400. v19 measured the joint arm's
-# proteome head peaking near epoch 1,000 against 380 for the single head, so the proteome
+# proteome head peaking near epoch 1,000 against a median of 417 for the single head on the
+# eleven complete partitions (four of them past epoch 900), so the proteome
 # window is reported beside the full-run rolling maximum, labeled as the biased order
 # statistic it is.
 #

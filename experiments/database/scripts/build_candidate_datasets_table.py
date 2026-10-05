@@ -194,6 +194,10 @@ class Candidate(BaseModel):
     confidence: Confidence = "sourced"
     band: Band = "scale"
     band_why: str = ""  # why this row is out of the scale band; required when it is
+    # Position in the Figure 3 priority set (FIGURE3), 1 first; None for every other
+    # row. These rows are ranked ahead of every band and carry the F3 mark.
+    figure3: int | None = None
+    figure3_why: str = ""
     synergy: list[Synergy] = Field(default_factory=list)
     added: bool = False  # first appears in this pass, so it has no previous rank
     # The row's time dimension, when it has one: a sampled series, an age axis or a
@@ -218,9 +222,10 @@ class Candidate(BaseModel):
         return (self.tier, -math.log10(max(self.measurements or 1, 1)))
 
     @property
-    def sort_key(self) -> tuple[int, int, float]:
-        """Band first, then the scale key inside it."""
-        return (BAND_ORDER[self.band],) + self.scale_key
+    def sort_key(self) -> tuple[int, int, int, int, float]:
+        """The Figure 3 set first in its own order, then band, then the scale key."""
+        lead = (1, 0) if self.figure3 is None else (0, self.figure3)
+        return lead + (BAND_ORDER[self.band],) + self.scale_key
 
 
 class Excluded(BaseModel):
@@ -3697,6 +3702,64 @@ EXCLUDED: list[Excluded] = [
 # a typo is a startup failure rather than a silently dropped pairing.
 # ---------------------------------------------------------------------------
 
+# The Figure 3 priority set (2026-10-04). Figure 3 is single-deletion transcriptome,
+# proteome and morphology, and the 019 rounds measured its limit as too few perturbed
+# strains carrying a reliable gene-level readout. These are the candidates that add
+# such strains, in the order they are wanted, ranked ahead of every band and marked F3
+# in the tables. Caudal 2024, the isolate transcriptome several of them pair with, is
+# already built and so is not a row here. The order is a judgment from measurement
+# type, strain count and pairing; none of these has been run through the model.
+FIGURE3: dict[str, tuple[int, str]] = {
+    "Teyssonniere 2024 (species-wide proteome against transcriptome)": (
+        1,
+        "Figure 3 set, 1 of 9: protein paired with transcript on the isolate panel "
+        "Caudal 2024 already supplies, the both-label store of the joint and "
+        "conditioned rounds on multi-gene genotypes.",
+    ),
+    "Muenzner 2024 (natural-isolate proteome)": (
+        2,
+        "Figure 3 set, 2 of 9: isolate proteomes by the method of the Messner 2023 "
+        "deletion proteome, the closest match to the proteome label already trained on.",
+    ),
+    "Albert 2018 (eQTL in 1,012 segregants)": (
+        3,
+        "Figure 3 set, 3 of 9: bulk transcriptomes of 1,012 segregants with an "
+        "S288C-background parent, so each strain carries a defined set of variant "
+        "genes and the cross supplies its own reference.",
+    ),
+    "Jakobson 2025 (genome-to-proteome map)": (
+        4,
+        "Figure 3 set, 4 of 9: the proteome counterpart of the segregant "
+        "transcriptomes.",
+    ),
+    "Hu 2007 (TF deletion expression compendium)": (
+        5,
+        "Figure 3 set, 5 of 9: deletion against wild type, the measurement type of "
+        "Kemmeren 2014; the overlap with Kemmeren's 1,484 deletions is not yet counted.",
+    ),
+    "Hughes 2000 (compendium of expression profiles)": (
+        6,
+        "Figure 3 set, 6 of 9: two-color deletion and treatment profiles, the "
+        "measurement type of Kemmeren 2014; the overlap is not yet counted.",
+    ),
+    "Hackett 2020 (IDEA inducible-TF transcriptome time series)": (
+        7,
+        "Figure 3 set, 7 of 9: induced overexpression with a transcriptome readout, "
+        "the opposite sign of perturbation from a deletion.",
+    ),
+    "N'Guessan 2025 (segregant scRNA-seq eQTL)": (
+        8,
+        "Figure 3 set, 8 of 9: the largest segregant count, held low because "
+        "single-cell pseudobulk is the measurement type in which Nadal-Ribelles 2025 "
+        "did not reproduce its own genotype signal; replication is the first check.",
+    ),
+    "Boocock 2025 (single-cell eQTL mapping)": (
+        9,
+        "Figure 3 set, 9 of 9: single-cell pseudobulk on 393 segregants, about 70 "
+        "cells per strain; the same replication check applies.",
+    ),
+}
+
 BANDS: dict[str, tuple[Band, str]] = {
     # -- perturb-seq: rows a yeast Perturb-seq campaign is designed against ----
     "Boocock 2025 (single-cell eQTL mapping)": (
@@ -4980,6 +5043,7 @@ def _apply_curation() -> None:
         (BANDS, "BANDS"),
         (SYNERGIES, "SYNERGIES"),
         (TIME_AXES, "TIME_AXES"),
+        (FIGURE3, "FIGURE3"),
     ):
         missing = sorted(set(table) - set(by_name))
         if missing:
@@ -4999,6 +5063,9 @@ def _apply_curation() -> None:
         by_name[name].synergy = syns
     for name, axis in TIME_AXES.items():
         by_name[name].time_axis = axis
+    for name, (order, why) in FIGURE3.items():
+        by_name[name].figure3 = order
+        by_name[name].figure3_why = why
     for c in CANDIDATES:
         if c.band != "scale" and not c.band_why:
             raise SystemExit(f"{c.name}: banded out of scale with no reason")
@@ -5279,7 +5346,8 @@ which is what a vector-valued panel actually contributes and what rows are ranke
 reconstructed; a row with no such route is excluded rather than ranked
 (Table~\ref{tab:excluded}). Tier is defined in Sec.~\ref{sec:rule}.
 \emph{Link} resolves to the source and is clickable; the full citation and the data
-location are in Table~\ref{tab:sources}. A $\bullet$ marks a row bearing on the
+location are in Table~\ref{tab:sources}. \textbf{F3}$\star$ marks the nine rows of the
+Figure 3 priority set, ranked first in their own order ahead of every band. A $\bullet$ marks a row bearing on the
 Perturb-seq proposal (Table~\ref{tab:perturbseq}). A superscript \textbf{B} marks a row already
 attempted and blocked on data access, and \textbf{L} one that already has a loader in
 flight; neither is an untouched candidate. Rows
@@ -5333,6 +5401,7 @@ flight; neither is an untouched candidate. Rows
             c.instances_basis
         ]
         star = "" if c.perturbseq == "none" else r"\,$\bullet$"
+        star += "" if c.figure3 is None else r"\,\textbf{F3}$\star$"
         lines.append(
             " & ".join(
                 [
@@ -5701,7 +5770,9 @@ no count contribute nothing, so both totals are lower bounds.}
 
 
 def priority_tex(c: Candidate) -> str:
-    """Why the row sits where it does: the band reason, or the scale rule."""
+    """Why the row sits where it does: the Figure 3 set, the band, or the scale rule."""
+    if c.figure3 is not None:
+        return tex_escape(c.figure3_why)
     if c.band != "scale":
         return tex_escape(c.band_why)
     return tex_escape(
@@ -5748,7 +5819,8 @@ rather than a reported count and $\ddagger$ where it is an order-of-magnitude es
 \emph{Meas.} is instances times phenotype dimensionality, the quantity rows are ranked on.
 \emph{Sequence basis} is the route to each strain's total genomic content; a row with no
 route is excluded (Table~\ref{tab:excluded}). \emph{Time} names the row's time dimension
-where it has one; a dash means steady state or endpoint. A $\bullet$ marks a row high on a
+where it has one; a dash means steady state or endpoint. \textbf{F3}$\star$ marks the nine
+rows of the Figure 3 priority set, ranked first. A $\bullet$ marks a row high on a
 Perturb-seq axis; superscript \textbf{B} marks a row blocked on data access, \textbf{L} one
 with a loader in flight. Citations, links and data locations are in
 Table~\ref{tab:sources}; joins in Table~\ref{tab:synergies}.}
@@ -5787,6 +5859,7 @@ Table~\ref{tab:sources}; joins in Table~\ref{tab:synergies}.}
             c.instances_basis
         ]
         star = "" if c.perturbseq == "none" else r"\,$\bullet$"
+        star += "" if c.figure3 is None else r"\,\textbf{F3}$\star$"
         dataset = (
             r"\textbf{"
             + tex_escape(c.name)

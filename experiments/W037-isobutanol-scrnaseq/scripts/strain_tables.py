@@ -703,6 +703,31 @@ SRC_LINE = (
 HEADER = "%% GENERATED FILE -- do not hand-edit.\n" + SRC_LINE + "\n"
 
 
+def titer_legend(body: str, ncols: int) -> str:
+    """A legend row for the titer symbols a table actually uses.
+
+    The symbols sit in the body, so their key belongs in the same box rather than
+    in a caption the reader has to find, or worse in another table's caption. The
+    row is emitted only for the symbols present, so a table with no derived value
+    carries no dagger key.
+    """
+    parts = []
+    if r"\textbf{" in body:
+        parts.append(r"\textbf{bold} stated in the paper as a number")
+    if r"\dagger" in body:
+        parts.append(
+            r"$\dagger$ derived by dividing a stated fold change, so approximate "
+            r"and without uncertainty"
+        )
+    if not parts:
+        return ""
+    note = r";\quad ".join(parts)
+    return (
+        f"\\multicolumn{{{ncols}}}{{@{{}}l@{{}}}}"
+        f"{{\\scriptsize {note}}} \\\\\n"
+    )
+
+
 def by_id() -> dict[str, Strain]:
     return {s.jc_id: s for s in STRAINS}
 
@@ -743,9 +768,8 @@ def table_inventory() -> str:
 \\footnotesize
 \\caption[Strains on hand]{{The twelve strains on hand, all of them
 \\org{{Saccharomyces cerevisiae}} {HOST} derivatives. \\emph{{Titer}} is the
-48\\,h high-cell-density value for the product named beside it; a bold value is
-printed in the paper as a number, and a value marked $\\dagger$ was obtained by
-dividing a stated fold change, so it is approximate and carries no uncertainty.
+48\\,h high-cell-density value for the product named beside it, and the key
+below the table says how each value is known.
 Carbon source differs across the set and is not comparable between rows: the
 three figures these numbers come from use 15\\% glucose, 15\\% galactose, and
 2\\% glucose respectively. The last column marks the six selected for the first
@@ -756,7 +780,7 @@ id & strain & product & titer (mg/L) & carbon & first run \\\\
 \\midrule
 {body}
 \\bottomrule
-\\end{{tabular}}
+{titer_legend(body, 6)}\\end{{tabular}}
 \\end{{table}}
 """
 
@@ -776,7 +800,7 @@ def table_selected() -> str:
                         s.jc_id,
                         s.paper_name,
                         _dels(s),
-                        s.compartment.value if s.compartment.value != "none" else "--",
+                        s.compartment.value if s.compartment.value != "none" else "native",
                         s.plasmid.render(),
                         s.titer.render(),
                     ]
@@ -794,15 +818,18 @@ each. Within an axis the two strains share a background and differ by the
 plasmid they carry, so a difference measured between them is attributable to
 that plasmid. \\emph{{pathway}} names the compartment the heterologous
 isobutanol route was built in. Every strain here ferments 15\\% glucose, so all
-six run under one protocol. Titer conventions follow
-Table~\\ref{{tab:inventory}}.}}\\label{{tab:selected}}
+six run under one protocol. \\emph{{pathway}} reads \\emph{{native}} where a
+strain carries no engineered route and makes isobutanol through endogenous
+valine and Ehrlich metabolism alone, which is the case for both strains of
+Axis~1. The key below the table says how each titer is
+known.}}\\label{{tab:selected}}
 \\begin{{tabular}}{{lllllll}}
 \\toprule
 axis & id & strain & deletions & pathway & plasmid & titer (mg/L) \\\\
 \\midrule
 {body}
 \\bottomrule
-\\end{{tabular}}
+{titer_legend(body, 7)}\\end{{tabular}}
 \\end{{table}}
 """
 
@@ -861,14 +888,14 @@ def table_deferred() -> str:
 each case. Four are held back because they make isopentanol rather than
 isobutanol. The other two make isobutanol but cannot share a run with the
 selected six: one produces only on galactose, and one needs a light schedule.
-Titer conventions follow Table~\\ref{{tab:inventory}}.}}\\label{{tab:deferred}}
+The key below the table says how each titer is known.}}\\label{{tab:deferred}}
 \\begin{{tabular}}{{llllp{{0.42\\textwidth}}}}
 \\toprule
 id & strain & product & titer (mg/L) & reason \\\\
 \\midrule
 {body}
 \\bottomrule
-\\end{{tabular}}
+{titer_legend(body, 5)}\\end{{tabular}}
 \\end{{table}}
 """
 

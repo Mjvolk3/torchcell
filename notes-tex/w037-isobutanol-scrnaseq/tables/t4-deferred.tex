@@ -1,0 +1,27 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/W037-isobutanol-scrnaseq/scripts/strain_tables.py
+\begin{table}[H]\centering
+\footnotesize
+\caption[Held back]{The six held back from the first run, with the reason in
+each case. Four are held back because they make isopentanol rather than
+isobutanol. The other two make isobutanol but cannot share a run with the
+selected six: one produces only on galactose, and one needs a light schedule.
+Titer conventions follow Table~\ref{tab:inventory}.}\label{tab:deferred}
+\begin{tabular}{llllp{0.42\textwidth}}
+\toprule
+id & strain & product & titer (mg/L) & reason \\
+\midrule
+JC0049 & YZy452 & isobutanol & \textbf{310 $\pm$ 15} & {\scriptsize galactose only: its chromosomal \textit{Ll\_ilvD} sits behind P\psub{GAL10}, so carbon source would confound every comparison in a shared run} \\
+\addlinespace
+JC0053 & YZy502 & isobutanol & not reported & {\scriptsize triple \textit{pdc}$\Delta$ with \gene{PDC1} restored only under a blue-light promoter, so growth and production are separate light phases and a light-shift response would sit on top of the production response} \\
+\addlinespace
+JC0046 & YZy148 & isopentanol & not reported & {\scriptsize makes isopentanol, not isobutanol} \\
+\addlinespace
+JC0047 & YZy148 + LEU4 WT & isopentanol & $\sim$201\,$^{\dagger}$ & {\scriptsize makes isopentanol, not isobutanol} \\
+\addlinespace
+JC0048 & YZy148 + LEU4dS547 & isopentanol & \textbf{842 $\pm$ 23} & {\scriptsize makes isopentanol, not isobutanol} \\
+\addlinespace
+JC0054 & SHy134 & isopentanol & not reported & {\scriptsize makes isopentanol, not isobutanol} \\
+\bottomrule
+\end{tabular}
+\end{table}

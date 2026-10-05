@@ -1,0 +1,26 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/W037-isobutanol-scrnaseq/scripts/strain_tables.py
+\begin{table}[H]\centering
+\footnotesize
+\caption[The six selected]{The six selected, as three axes of one variable
+each. Within an axis the two strains share a background and differ by the
+plasmid they carry, so a difference measured between them is attributable to
+that plasmid. \emph{pathway} names the compartment the heterologous
+isobutanol route was built in. Every strain here ferments 15\% glucose, so all
+six run under one protocol. Titer conventions follow
+Table~\ref{tab:inventory}.}\label{tab:selected}
+\begin{tabular}{lllllll}
+\toprule
+axis & id & strain & deletions & pathway & plasmid & titer (mg/L) \\
+\midrule
+\multirow{2}{*}{1} & JC0052 & YZy91 & \textit{bat1}$\Delta$, \textit{bat2}$\Delta$, \textit{ilv6}$\Delta$ & -- & none & not reported \\
+ & JC0043 & YZy311 & \textit{bat1}$\Delta$, \textit{bat2}$\Delta$, \textit{ilv6}$\Delta$ & -- & ILV6 WT & $\sim$118\,$^{\dagger}$ \\
+\addlinespace
+\multirow{2}{*}{2} & JC0044 & YZy313 & \textit{bat1}$\Delta$ & mitochondrial & ILV6 WT & not reported \\
+ & JC0045 & YZy314 & \textit{bat1}$\Delta$ & mitochondrial & ILV6 V110E & 1.6$\times$ JC0044 \\
+\addlinespace
+\multirow{2}{*}{3} & JC0050 & YZy454 & \textit{ilv3}$\Delta$, \textit{tma29}$\Delta$ & cytosolic & Ll\_ilvD WT & $\sim$73\,$^{\dagger}$ \\
+ & JC0051 & YZy469 & \textit{ilv3}$\Delta$, \textit{tma29}$\Delta$ & cytosolic & Ll\_ilvD I433V & \textbf{227 $\pm$ 13} \\
+\bottomrule
+\end{tabular}
+\end{table}

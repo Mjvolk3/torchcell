@@ -18,7 +18,7 @@ Layout, which is DERIVED from the repo path rather than invented::
 
     notes-tex/024-perturb-seq-costing/024-perturb-seq-costing.pdf
       -> torchcell / notes-tex / 024-perturb-seq-costing
-    paper/nature-biotech/editing.pdf
+    paper/nature-biotech/nature-biotech-editing.pdf
       -> torchcell / paper / nature-biotech
 
 so there is never a question of which Zotero collection a document belongs in.
@@ -78,7 +78,7 @@ Usage::
     # the manuscript: a repo-relative directory, a named PDF, and the tex that
     # actually declares the title
     python notes-tex/common/zotero_publish.py paper/nature-biotech \\
-        --pdf editing --tex sections/frontmatter.tex
+        --pdf nature-biotech-editing --tex sections/frontmatter.tex
 
 ``--tex`` is explicit rather than discovered. Searching the directory for the one
 file containing ``\\title`` finds two in paper/nature-biotech, because the stock
@@ -125,7 +125,7 @@ class BuiltDoc(BaseModel):
     """A built PDF and everything needed to identify it later."""
 
     doc_dir: str  # repo-relative, e.g. "notes-tex/024-..." or "paper/nature-biotech"
-    pdf_stem: str  # "<doc>", "<doc>-clean", "editing", "submission", ...
+    pdf_stem: str  # "<doc>", "<doc>-clean", "<doc>-editing", "submission", ...
     pdf_path: str
     title: str
     subtitle: str | None
@@ -175,9 +175,11 @@ class BuiltDoc(BaseModel):
                 break
         # A stem that is neither the default build nor prefixed by it survives
         # whole and still needs its own separator. The manuscript is the case
-        # that exercises this: its stems are `editing` and `submission`, which
-        # match neither `nature-biotech` nor `main`, and without this the name
-        # ran together as `nature-biotechediting_...`.
+        # that exercises this: its `submission` stem matches neither
+        # `nature-biotech` nor `main`, and without this the name ran together
+        # as `nature-biotechsubmission_...`. Its drafting view is
+        # `nature-biotech-editing`, which the prefix branch above reduces to
+        # `-editing`, so the published name is `nature-biotech-editing_...`.
         if stem and not stem.startswith("-"):
             stem = f"-{stem}"
         return f"{self.doc}{stem}_{self.built_at}_{self.sha256[:8]}.pdf"
@@ -283,7 +285,8 @@ def load_built_doc(repo: str, rel_dir: str, pdf_stem: str, tex_rel: str) -> Buil
 
     ``<doc>.pdf`` carries the status chips and provenance flags and is the right
     thing to review in-group; ``<doc>-clean.pdf`` is what leaves the group. For the
-    manuscript the same distinction is ``editing`` against ``submission``.
+    manuscript the same distinction is ``nature-biotech-editing`` against
+    ``submission``.
     """
     doc_dir = osp.join(repo, rel_dir)
     if not osp.isdir(doc_dir):
@@ -420,7 +423,8 @@ def main() -> None:
                                 "notes-tex/<name>")
     ap.add_argument("--pdf", default=None, metavar="STEM",
                     help="PDF stem to publish (default: the document directory's "
-                         "own name, which is what its Makefile builds). e.g. editing")
+                         "own name, which is what its Makefile builds). e.g. "
+                         "nature-biotech-editing")
     ap.add_argument("--tex", default=None, metavar="PATH",
                     help="document-relative tex declaring \\title (default: "
                          "<STEM>.tex). e.g. sections/frontmatter.tex")

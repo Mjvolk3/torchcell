@@ -4,7 +4,7 @@
 %%
 %% Shared machinery for typeset long-form documents in notes-tex/.
 %%
-%% This is the reusable extraction of what paper/nature-biotech/editing.tex does
+%% This is the reusable extraction of what paper/nature-biotech/nature-biotech-editing.tex does
 %% inline: the status stoplight, the true-size figure macro, print-approximate
 %% geometry, and the provenance markers. It lives here rather than in the paper
 %% so a second document costs nothing and the two cannot drift.
@@ -12,7 +12,7 @@
 %% Deliberately NOT sn-jnl.cls. That class carries Nature front-matter semantics
 %% and fights numbered sections + \tableofcontents, which is exactly what a
 %% planning document and a thesis chapter need. The *look* people actually want
-%% from editing.pdf -- print-approximate margins, real tables, true-size figure
+%% from nature-biotech-editing.pdf -- print-approximate margins, real tables, true-size figure
 %% captions, status chips -- is all reproduced here on top of `article`.
 %%
 %% Package options:
@@ -37,7 +37,7 @@
 \RequirePackage[T1]{fontenc}
 \RequirePackage{textcomp}
 \RequirePackage{amsmath,amssymb}
-% Latin Modern -- the same family editing.pdf embeds (verified with pdffonts).
+% Latin Modern -- the same family nature-biotech-editing.pdf embeds (verified with pdffonts).
 % sn-jnl.cls loads no font package, so it inherits the LaTeX default; matching it
 % here is what actually makes the two documents look the same size, since a Times
 % clone at 10 pt has a far larger x-height than Latin Modern at 10 pt.
@@ -64,7 +64,7 @@
 \RequirePackage[section]{placeins}
 
 %% ---------------------------------------------------------------------------
-%% Geometry. Matches editing.tex's print-approximate text block (A4 minus 14 mm
+%% Geometry. Matches nature-biotech-editing.tex's print-approximate text block (A4 minus 14 mm
 %% side margins = 182 mm), so a draw.io figure drawn at Nature's 180 mm full
 %% width sits flush at 1:1 and 6 pt type in the SVG prints as 6 pt here.
 %% twoside=false so margins do not alternate -- this is read on screen, not bound.
@@ -74,7 +74,7 @@
                 marginparwidth=0pt,marginparsep=0pt]{geometry}
 
 %% Block paragraphs -- no first-line indent, vertical gap between. Same drafting
-%% choice as editing.tex; it makes a dense technical document scannable.
+%% choice as nature-biotech-editing.tex; it makes a dense technical document scannable.
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.5\baselineskip plus 0.1\baselineskip}
 

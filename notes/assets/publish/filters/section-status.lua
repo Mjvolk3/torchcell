@@ -2,7 +2,7 @@
   section-status.lua -- provenance chips on note headings.
 
   Marks every section of a note PDF with whether a human has read it, using the same
-  three-symbol visual language as paper/nature-biotech/editing.pdf so a note and the
+  three-symbol visual language as paper/nature-biotech/nature-biotech-editing.pdf so a note and the
   manuscript read as one document family. The MEANING differs, because the question a
   note has to answer is not "is this publication ready" but "did a person check this":
 

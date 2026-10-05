@@ -252,14 +252,14 @@ quote + `sha256` + section/line, and never guessed.
 Read it before writing or revising prose. Record every new preference there, under its
 topical heading, rather than in a conversation.
 
-**Canonical LOOK for a note PDF: `paper/nature-biotech/editing.pdf`.** When a note is
+**Canonical LOOK for a note PDF: `paper/nature-biotech/nature-biotech-editing.pdf`.** When a note is
 rendered to PDF it must match the paper's drafting view, so a note and the manuscript read
 as one document family. A4, 14 mm side margins giving a 182 mm text block, 10 pt on 12 pt,
 numbered sections with a contents page, block paragraphs, black contents and internal
 links, and `\footnotesize` tables. Every figure and table carries a NUMBERED caption with
 real detail; figures captioned below, tables above. The settings live in
 `notes/assets/publish/scripts/bib_tex_pdf.sh` and
-`notes/assets/publish/tex-templates/header-includes.tex` and are copied FROM `editing.tex`,
+`notes/assets/publish/tex-templates/header-includes.tex` and are copied FROM `nature-biotech-editing.tex`,
 never invented -- if the paper's editing view changes, change these to match it. Full table
 of settings and the reasons in [[writing-style-guide]].
 
@@ -305,12 +305,12 @@ body (`content.tex`) compiled by thin wrappers, and builds via Tectonic.
   standard or preference there, under its topical section.
 
 - **Two tiers (workshop vs shared).** `paper/nature-biotech/` is the **workshop**:
-  private, full, versioned in torchcell (`editing.tex`, `figure-proto.tex`,
+  private, full, versioned in torchcell (`nature-biotech-editing.tex`, `figure-proto.tex`,
   char-budget tags, draft scaffolding). `~/Documents/projects/torchcell-overleaf` is
   the **shared** copy: an Overleaf-backed git repo holding a curated subset that
   collaborators see. Edit in the workshop only.
 - **Publish a review copy to Zotero:** `make -C paper/nature-biotech publish` uploads
-  `editing.pdf` as a new version under **`torchcell / paper / nature-biotech`** in the
+  `nature-biotech-editing.pdf` as a new version under **`torchcell / paper / nature-biotech`** in the
   personal library, so comments attach to the exact build they were made on. Same script
   and same hash-based versioning the `notes-tex/` documents use
   (`notes-tex/common/zotero_publish.py`), and **the collection path is derived from the
@@ -326,7 +326,7 @@ body (`content.tex`) compiled by thin wrappers, and builds via Tectonic.
   then pushes to Overleaf. Edit `SHARE_FILES` to control what crosses over.
 - **Build PDFs:** `make -C paper/nature-biotech paper` builds three views with
   Tectonic -- `submission.pdf` (journal submission; official single column),
-  `editing.pdf` (our drafting/typeset look; print-approx margins + char budgets),
+  `nature-biotech-editing.pdf` (our drafting/typeset look; print-approx margins + char budgets),
   `twocolumn.pdf` (published-like double column). `make figproto` builds the
   true-scale figure-sizing canvas. Install Tectonic via `conda install -c
   conda-forge tectonic`.
@@ -355,7 +355,7 @@ body (`content.tex`) compiled by thin wrappers, and builds via Tectonic.
   Keep main Figs 1--6 before Methods with `\FloatBarrier` (placeins) after each Results figure
   and before `\section{Methods}`.
 - **Section status stoplight + agent-editing policy.** Every heading carries an editing-only
-  status chip `\secstatus{todo|tent|final}` (defined in `editing.tex`; no-op in
+  status chip `\secstatus{todo|tent|final}` (defined in `nature-biotech-editing.tex`; no-op in
   `submission.tex`/`twocolumn.tex`), and the manuscript opens with an editing-only outline/
   status board (`sections/outline.tex`, inserted by `\paperoutline`). Notation:
   **`todo` = red ✗** (not done), **`tent` = amber ■** (author-reviewed, keep stable),

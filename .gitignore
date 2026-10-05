@@ -177,7 +177,7 @@ torchcell-scratch
 
 # LaTeX build intermediates (paper/nature-biotech) -- regenerated on every build
 # (tectonic/latexmk), machine-specific, never committed. The output PDFs
-# (submission/editing/twocolumn.pdf) and figures/*.pdf stay tracked; only the
+# (submission/nature-biotech-editing/twocolumn.pdf) and figures/*.pdf stay tracked; only the
 # intermediates below are ignored.
 paper/nature-biotech/*.aux
 paper/nature-biotech/*.bbl

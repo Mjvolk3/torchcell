@@ -692,7 +692,9 @@ case "$ARM" in
   # J_* added 2026.09.23 for the v16 continuation (epochs 500 to 1,200, three per card);
   # the first segment ran 500 epochs with the respawn and lost nothing, and the setting
   # touches the loader only, not the model or the batches it sees.
-  L_*|Y_*|J_*|K_*) OVERRIDES+=(data_module.persistent_workers=true) ;;
+  # C_* added 2026.10.04 for v20: its first two tasks (job 2423190, tasks 0 and 1) were
+  # submitted without it and respawn workers each epoch; the remaining tasks carry it.
+  L_*|Y_*|J_*|K_*|C_*) OVERRIDES+=(data_module.persistent_workers=true) ;;
 esac
 
 # PYTHONPATH pins the WORKTREE's torchcell: without it a script run from a worktree

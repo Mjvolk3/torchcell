@@ -1,0 +1,75 @@
+# experiments/019-simb-multimodal/conf/cgt_expr_v21_small.yaml
+# [[experiments.019-simb-multimodal.conf.cgt_expr_v21_small]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/019-simb-multimodal/conf/cgt_expr_v21_small
+#
+# THE SMALL-TRUNK SINGLE-CHANGE ROUND (2026-10-05), project torchcell_019_expr_v21. Track B,
+# wave 1 of the Figure 3 plan (notes-tex/figure-3-gate/sections/4-review.tex), sized so that
+# twelve split seeds of one arm share ONE Delta A40 and finish inside two days.
+#
+# WHY A SMALLER TRUNK IS FREE HERE. The 2026-10-04 audit measured: ProtT5 alone is at or
+# above every composite embedding and the four-part 3,328-d stack adds -0.03 to +0.003 over
+# it; 85 percent of the v19 model's 6.68 million parameters are the first linear layer over
+# that stack; wall time per epoch is the same at 0.68 and 1.45 million parameters. So the
+# input is ProtT5 alone (1,024-d) and the stack's 5.69 million projection parameters go.
+# Depth and width are the two levers the audit did not time; the GilaHyper benchmark of
+# 2026-10-05 (gh_small_model_bench.slurm, job 3267, project torchcell_019_small_bench) sets
+# them below from measured seconds per epoch and card memory at 4 to 8 runs per card. The
+# shape chosen is recorded beside the numbers in the weekly note. Hypothesis (untested until
+# the round reads out): the smaller trunk reaches the v19 single-head level on these rows.
+#
+# THE STORE AND THE ROWS are v19's: fig3_proteome restricted to the 1,349 genotypes carrying
+# both labels, split seeds 0 to 11, one initialization seed, so the Track A matched baselines
+# (linear and nearest-neighbor on exactly these strains) apply to every arm.
+#
+# THE DEFAULT ARM is the single-head EXPRESSION model (v19's K_expr) on this trunk; the arms
+# in gh_expr_008_arm.sh (S_* patterns) each change one thing against it:
+#   S_ref     this config as is
+#   S_mask    the masked objective restored (schedule 0, 10, 100, 1000 revealed genes)
+#   S_sink    the sigmoid-gated operator (null sink, gate open at initialization)
+#   S_prop2   the deletion propagated two hops along the graphs as operator input
+#   S_nodrop  operator attention dropout off
+#   S_stack   the four-part embedding stack instead of ProtT5 alone (the size control)
+#   S_prot    the single-head PROTEOME model on this trunk (the proteome reference)
+# Masked objective OFF in the default (mask_schedule [0]), inherited from v19, because the
+# round contrasts arms against the unmasked reference the matched baselines were drawn for;
+# S_mask is the arm that restores it.
+#
+# SCORING, pre-registered: mean of val/expression/pearson_per_feature over epochs 1,000 to
+# 1,200 (the proteome arm over 200 to 400 and reported with the rolling maximum beside it);
+# an arm is carried to wave 2 if it beats S_ref on at least nine of twelve split seeds (the
+# day-8 rule of the plan). Launch gate: val/<head>/pred_sd_ratio below 0.05 at epoch 200
+# marks a never-launched run, relaunched with a new initialization seed.
+defaults:
+  - cgt_expr_v19_joint_clean
+  - _self_
+
+wandb:
+  project: torchcell_019_expr_v21
+  tags: [small-trunk, single-change, v21]
+
+cell_dataset:
+  node_embeddings: [prot_T5_all]
+
+model:
+  # SHAPE, from the GilaHyper benchmark of 2026-10-05 (job 3267, cells 0 to 3): at zero
+  # data-loader workers an epoch cost 78 to 81 s per run with four runs on an RTX 6000 Ada
+  # whether the trunk had six layers at width 90 or two at width 54, and card memory was 8 to
+  # 10 GB per run at every shape (eight per card ran out of memory, six sat at the limit).
+  # Depth and width therefore buy no throughput and no packing, so they stay at v19's values
+  # and the only change is the input: ProtT5 alone, 1.45 million parameters against 6.68.
+  hidden_channels: 90
+  num_transformer_layers: 6
+
+multitask:
+  active_heads: [per_gene]
+  head_phenotypes:
+    per_gene: [expression_log2_ratio]
+  head_phenotype_names:
+    per_gene: expression
+  standardize_per_feature_target: [per_gene]
+
+trainer:
+  max_epochs: 1200
+  checkpoint:
+    monitor: val/expression/pearson_per_feature
+    metric_monitor: val/mean/pearson_per_feature

@@ -674,6 +674,41 @@ case "$ARM" in
                      ARM_TAGS=(mask-off readout-shared-mlp "split${ARM##*_s}" stage-hygiene round-hygiene) ;;
   Y_ctx_s[0-9])      OVERRIDES=(multitask.context_readout=true data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(mask-sched readout-context-row "split${ARM##*_s}" stage-hygiene round-hygiene) ;;
+  # ==================== SMALL-TRUNK SINGLE-CHANGE ROUND (2026.10.05, v21) ===================
+  # conf/cgt_expr_v21_small.yaml explains the round: Track B wave 1 of the Figure 3 plan on a
+  # ProtT5-only trunk sized for one Delta A40 per twelve split seeds. S_ref is the config
+  # default (single-head expression, mask off); every other arm changes ONE thing. Split
+  # seeds 0 to 11. The proteome reference S_prot re-points the head as K_prot does.
+  S_ref_s[0-9]|S_ref_s1[01])
+                     OVERRIDES=(data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(small-ref mask-off "split${ARM##*_s}" expression stage-small round-small) ;;
+  S_mask_s[0-9]|S_mask_s1[01])
+                     OVERRIDES=("multitask.mask_schedule=[0,10,100,1000]" data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(small-mask mask-sched "split${ARM##*_s}" expression stage-small round-small) ;;
+  S_sink_s[0-9]|S_sink_s1[01])
+                     OVERRIDES=(model.perturbation_head.null_sink=true
+                                model.perturbation_head.null_sink_bias_init=0.0
+                                model.perturbation_head.null_sink_trainable=true
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(small-sink mask-off "split${ARM##*_s}" expression stage-small round-small) ;;
+  S_prop2_s[0-9]|S_prop2_s1[01])
+                     OVERRIDES=("$PROP=true" model.perturbation_propagation.hops=2
+                                model.perturbation_propagation.gate_mode=on
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(small-prop2 mask-off "split${ARM##*_s}" expression stage-small round-small) ;;
+  S_nodrop_s[0-9]|S_nodrop_s1[01])
+                     OVERRIDES=(model.perturbation_head.dropout=0.0 data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(small-nodrop mask-off "split${ARM##*_s}" expression stage-small round-small) ;;
+  S_stack_s[0-9]|S_stack_s1[01])
+                     OVERRIDES=("cell_dataset.node_embeddings=[fudt_upstream,calm,prot_T5_all,fudt_downstream]"
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(small-stack mask-off "split${ARM##*_s}" expression stage-small round-small) ;;
+  S_prot_s[0-9]|S_prot_s1[01])
+                     OVERRIDES=("multitask.head_phenotypes.per_gene=[protein_abundance]"
+                                multitask.head_phenotype_names.per_gene=proteome
+                                trainer.checkpoint.monitor=val/proteome/pearson_per_feature
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(small-prot mask-off "split${ARM##*_s}" proteome stage-small round-small) ;;
   *) echo "unknown arm '$ARM'" >&2; exit 1 ;;
 esac
 

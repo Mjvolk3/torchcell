@@ -84,7 +84,11 @@ of the deletion signal at random. Nothing marks which gene was deleted: the mode
 $+0.036$ for the deleted gene's own transcript against a measured $-2.42$, and a predictor
 that writes only that one entry scores $0.0175$ per-feature Pearson, the size of the edge in
 dispute. The null sink, the sigmoid form that makes the weight depend on the querying gene,
-was trained once, for 186 to 189 epochs, with its gate bias near $-4$.
+has four attempts on file: two with the gate nearly closed at initialization, stopped at 78
+to 189 epochs; four seed pairs with the gate open at 300 epochs, $+0.0024$ (sd $0.0090$);
+and one run with the gate open at 4{,}184 epochs (W\&B \texttt{fqk5mbr3}), $0.200$ against
+$0.210$ for its paired reference by rolling maximum, one seed on split seed 0. It delivers
+at most nine gene-dependent scalars, one per head, and has not been replicated at budget.
 \src{review/2026-10-04/05_architecture_and_operator.md, 07_data_splits_metrics.md,
 01_expression_pre_simb.md}
 

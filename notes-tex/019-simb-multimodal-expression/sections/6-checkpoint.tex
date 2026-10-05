@@ -95,15 +95,17 @@ than on the gene-level heads.
   deviation of the perturbed CLS runs $0.31$ to $0.43$. That commit is not an ancestor of
   this branch, and no expression, proteome or morphology run has used it. It makes a global
   readout strain-specific; it does not change the gene tokens, which come out bit-identical.
-\item \textbf{The single-key degeneracy is addressed by the null sink, which was tested only
-  inside the early dip.} With one deleted gene the cross-attention has one key and its
+\item \textbf{The single-key degeneracy is addressed by the null sink, which has one unreplicated run at budget.} With one deleted gene the cross-attention has one key and its
   weights are identically 1. The null sink adds a second key with a learned logit, so
   the weight depends on the querying gene and the query and key parameters receive gradient
   (\file{verify_null_sink_and_pooling.py}, contract C4). Its one trained comparison is v8
   wave 3: four seed pairs stopped at 186 to 189 epochs with the gate bias still near its
   initial $-4$, $+0.0024 \pm 0.0090$, which
   \cref{sec:strand-heads} classifies with every other arm stopped before the validation
-  curve leaves its dip. It has not been run at a resolving budget.
+  curve leaves its dip. Correction, 2026-10-05: it was also run with the gate open at
+  initialization, for 300 epochs on four seed pairs ($+0.0024$, sd $0.0090$) and once for
+  4{,}184 epochs (W\&B \texttt{fqk5mbr3}), $0.200$ against $0.210$ for the paired reference
+  by rolling maximum. One seed does not resolve a difference of $0.010$.
 \end{itemize}
 
 \pfstep{What is open} Whether Figure 3 may rest on a conditioning result, or must be

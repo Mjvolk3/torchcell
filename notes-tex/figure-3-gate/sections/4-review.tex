@@ -38,10 +38,24 @@ baseline scored on a different permutation of the strains. The rank-64 pair term
 advantage per unit of compute compared one run in each of two projects and fails at
 matched budgets. The statistic ``145 runs, correlation of log parameters with score
 $-0.129$'' has no generating script and is not reproduced by \file{round_leaderboards.csv},
-which gives $-0.001$ over 1{,}182 runs confounded with budget. The manuscript's Results
-still carry placeholder correlations of $0.543$ and $0.619$ for expression and morphology.
+which gives $-0.001$ over 1{,}182 runs confounded with budget.
 \src{review/2026-10-04/01_expression_pre_simb.md, 02_expression_post_simb.md,
 06_training_dynamics.md, 09_prior_reviews_and_literature.md}
+
+\pfstep{The abstract's two correlations are retracted} The manuscript and the SIMB 2026
+abstract give $r = 0.543$ for knockout expression and $r = 0.619$ for single-knockout
+morphology. Both are wrong and neither is a result. The author's account (2026-10-05) is
+that they came from earlier runs with the wrong splits and the wrong data processing. The
+record agrees on every point it can check: no committed script regenerates either number
+(\file{plan.simb-2026-multimodal-cgt.2026.07.21}, correction to WS10); the morphology value
+was computed on a superseded build of the Ohya store
+(\file{torchcell.datasets.scerevisiae.ohya2005}); the expression store behind the value
+held 1{,}450 records where the current one holds 1{,}484 deletions; and the best values
+measured since on held-out strains are $0.238$ and $0.082$ per feature, both rolling maxima.
+The two numbers were removed from the abstract, the Results filler and the outline board on
+2026-10-05 and are not to be quoted as prior performance.
+\src{review/2026-10-04/09_prior_reviews_and_literature.md,
+notes-tex/019-simb-multimodal/sections/8-directions.tex}
 
 \pfstep{What has a measured effect} Budget, within a single run: $0.147$ at epoch 500,
 $0.202$ at 2{,}000, $0.230$ at 4{,}000. The partition: between-partition standard deviation
@@ -123,55 +137,114 @@ $0.214$ on the proteome on one split), not the unconditioned arm.
 \section{The plan to the deadline\secstatus{todo}}
 \label{sec:plan}
 
-Fewer than twenty days remain. The plan is ordered so that the first week produces a
-figure that exists whatever the later experiments show, and so that each later line of work
-has a date on which it is dropped.
+Fewer than twenty days remain and compute is not the constraint. The pooled Delta
+allocations hold about 28{,}800 unused GPU hours (\file{bfjt} 11{,}162, \file{bflt}
+9{,}904, \file{bgcg} 4{,}622, \file{bbub} 3{,}145), and IGB adds two \file{cabbi} cards and
+up to four A40s on \file{gpu}. A full-size run of 1{,}200 epochs costs about 8.5 GPU hours
+when four share an A40 (about 34 hours for a pack of four, v19 timing), so twelve split
+seeds of one arm cost about 100 GPU hours. Everything below fits in under a quarter of the
+allocation (\cref{tab:plan-budget}). The plan therefore runs five tracks at once. Nothing
+waits on another track's result unless it needs that result as input, and the dates are
+the days on which the content of the figure is decided, not days on which work stops.
+Nothing is submitted to Delta until the author says so; every job is an individual
+submission with no dependency chain.
 
-\pfstep{Days 0 to 4, almost no GPU: the benchmark that cannot fail to exist} Four pieces.
-First, the linear and nearest-neighbor baselines for every gene representation on exactly
-the strains rounds v19 and v20 use, twelve split seeds, both labels (IGB jobs 2423298 to
-2423302, running). Second, one scoring harness applied to everything already trained:
-predictions dumped through the same function the metric uses, the deleted gene's own entry
-blanked, a feature set fixed in advance by replicate reliability, window means in place of
-rolling maxima, test strains, a strain bootstrap. Third, a harness that tells the candidate
-limits apart: a ridge and a bilinear model on 137 to 1{,}100 training strains over five
-splits, and the same on planted labels at the measured noise level. Fourth, two gates that
-earlier reviews asked for and no one ran: perturbation-derived embeddings of the deleted
-gene (its genetic-interaction, chemogenomic, morphology or proteome profile) through the
-existing baselines, and measured fitness as an input to the genotype ridge with a shuffled
-control. \textbf{Gate, day 4:} the matched table is drawn with ceilings. If the model is
-below the graph key on at least three of four split seeds per modality, Figure~3 reports a
-benchmark, and the remaining work is to raise the model to the graph key.
+\begin{table}[h]
+\footnotesize
+\caption[Compute budget of the plan]{\textbf{The plan uses under a quarter of the unused
+Delta allocation.} Run counts are arms $\times$ twelve split seeds. Cost per run is the
+v19 timing on an IGB A40 with four runs per card, scaled linearly with epochs; the cost on
+a Delta card is a hypothesis until the first canary reports. \src{this section; Delta
+balances read 2026-10-04}}
+\label{tab:plan-budget}
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+track & what & runs & epochs & GPU hours \\
+\midrule
+B, wave 1 & seven single-change arms and the reference & 96 & 1{,}200 & 820 \\
+B, long budget & reference and two arms & 36 & 4{,}000 & 1{,}020 \\
+B, wave 2 & combinations and screen winners, up to eight arms & 96 & 1{,}200 & 820 \\
+B, wave 2 long & up to three arms & 36 & 4{,}000 & 1{,}020 \\
+C & retrain reference and best arm on each enlarged store, three stores & 72 & 1{,}200 & 610 \\
+D & morphology on its own 4{,}718 strains, four arms & 48 & 1{,}200 & 1{,}600 \\
+E & conditioned round, morphology sides added & 48 & 1{,}200 & 410 \\
+\midrule
+total & & 432 & & about 6{,}300 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\pfstep{Days 2 to 8: many small models} The encoder output is cached, so only the operator
-and the heads train, on the both-label store already on IGB. Arms, each against a paired
-reference in the same pack: the sigmoid-gated operator with an explicit term in the
-reporter and the perturbation and an indicator of the deleted gene; the deleted gene's graph
-neighborhood as input; a projection cut from 5.69 million parameters to a frozen
-low-dimensional one; ProtT5 alone against the stack; the masked objective on; the perturbed
-CLS as the morphology readout once the 30-line port from the interaction branch is in.
-Screen at 300 epochs on three split seeds, scored by the mean over epochs 200 to 300.
-Hypothesis (untested): the cached model runs at least ten times faster per epoch on a GPU.
-\textbf{Gate, day 8:} the operator line is dropped unless an arm beats its paired reference
-on at least nine of twelve split seeds at confirmation and reaches the graph key.
+The morphology row assumes four times the per-run cost of the 1{,}349-strain store because
+the training set is about four times larger (hypothesis, untimed).
 
-\pfstep{Days 8 to 15: confirmation} At most two winners and the reference at full size on
-twelve split seeds with a sealed test set, about 2.5 days on three A40s.
+\pfstep{Track A, days 0 to 4, CPU only: the matched benchmark and the rescoring} Four
+pieces. First, the linear and nearest-neighbor baselines for every gene representation on
+exactly the strains rounds v19 and v20 use, twelve split seeds, both labels (IGB jobs
+2423298 to 2423302, running). Second, the \emph{rescoring harness}: one script that
+re-scores every model already trained under a single rule, so that any two numbers in the
+figure are comparable. It dumps predictions through the function the logged metric uses,
+blanks the deleted gene's own entry, scores a feature set fixed in advance by replicate
+reliability, reads window means in place of rolling maxima, uses test strains, and
+bootstraps over strains. Third, a learning-curve harness that tells the candidate limits
+apart: a ridge and a bilinear model on 137 to 1{,}100 training strains over five splits,
+and the same on planted labels at the measured noise level. Fourth, two gates that earlier
+reviews asked for and no one ran: perturbation-derived embeddings of the deleted gene (its
+genetic-interaction, chemogenomic, morphology or proteome profile) through the existing
+baselines, and measured fitness as an input to the genotype ridge with a shuffled control.
+\textbf{Decision, day 4:} the matched table is drawn with ceilings, and it is the first
+row of Figure~3 whatever the other tracks return.
 
-\pfstep{The conditioned round, in parallel} It runs to completion on the two \file{cabbi}
-cards. \textbf{Gate, about day 10:} with at least six split seeds, a conditioned arm must
-exceed its permuted control by $0.02$ and reach the per-partition ridge; otherwise it is
-reported as a model that uses a second modality less well than a linear map.
+\pfstep{Track B, from day 1: the model, at full size and in a fast screen at once} The
+single-change arms the audit agrees on are launched at full size on twelve split seeds as
+soon as each passes a canary, without waiting for a screen: the masked objective restored;
+the sigmoid-gated operator with a term in the reporter and the perturbation and an
+indicator of the deleted gene; the deleted gene's graph neighborhood as input; the
+projection cut from 5.69 million parameters to a frozen low-dimensional one; ProtT5 alone
+against the stack; operator attention dropout off; the perturbed CLS as a global readout,
+ported from the interaction branch. The reference and two arms also run at 4{,}000 epochs,
+since budget is the one lever with a measured effect inside a run. In parallel the
+\emph{small-model harness} screens the combinations: the encoder runs once on the
+wild-type graph, its output is cached to disk, and only the operator and the heads train
+on top of it, so one card screens dozens of variants a day at 300 epochs on three split
+seeds, scored by the mean over epochs 200 to 300. Hypothesis (untested): the cached model
+runs at least ten times faster per epoch on a GPU; the measured figure is 16 times on a
+CPU. \textbf{Decision, day 8:} wave 2 takes the combinations the screen ranks highest and
+every wave-1 arm that beats its paired reference on at least nine of twelve split seeds.
 
-\pfstep{What is not in the window} New deletion loaders from SPELL, unless the day-one
-learning curve projects a gain above $0.01$. Natural isolates, unless the dataset-build
-machine is back by day 5. The distribution-matching loss term, the dataset token, and any
-pooled single-cell screen.
+\pfstep{Track C, from day 1: more deletion-keyed expression} The loaders are written now,
+in parallel with the model work, since they cost no GPU: the SPELL deletion and knockdown
+sets in order of new genes (the 216 promoter knockdowns of essential genes, Hughes 2000
+with 146, then the remainder of the 478), each through the modular dataset path with its
+provenance record, and the natural isolates against their own reference strain. The ridge
+learning curve projects $+0.004$ to $+0.008$ from the SPELL strains on one split
+(hypothesis); the transformer's response to more strains has not been measured, and
+retraining the reference and the best arm on each enlarged store measures it. The isolates
+need a reference record and per-allele sequence embeddings, five to eight days of work
+before a first number, and their store build depends on the dataset-build machine.
+\textbf{Decision, day 12:} a store enters the figure if its retrained arms are finished on
+twelve split seeds.
 
-\pfstep{Days 16 to 19} Freeze, read the sealed test set once, draw the figure, write.
+\pfstep{Track D, from day 3: morphology on its own strains} Morphology has no matched
+comparison and has only been trained on the 1{,}349-strain overlap. Its own 4{,}718
+strains are trained with the perturbed CLS readout against the gene-token readout, with the
+same matched baselines as Track A.
+
+\pfstep{Track E: the conditioned round} v20 runs to completion on the two \file{cabbi}
+cards. The store joining the proteome with morphology is built so that the two strongest
+sides of the triangle, expression to morphology and proteome to morphology, can be run as
+conditioned arms. \textbf{Decision, about day 10:} with at least six split seeds, a
+conditioned arm enters the figure if it exceeds its permuted control by $0.02$ and reaches
+the per-partition ridge; otherwise it is reported as a model that uses a second modality
+less well than a linear map.
+
+\pfstep{Days 12 to 19} Day 12, the content of the figure is fixed from what has finished
+on twelve split seeds. Days 12 to 16, at most three configurations rerun with a sealed
+test set. Days 16 to 19, freeze, read the sealed test set once, draw the figure, write.
+
+\pfstep{Out of the window} A pooled single-cell screen, and the distribution-matching loss
+term, which the audit predicts would raise the error.
 
 \pfstep{Decisions that are the author's} Whether Figure~3 may be a benchmark in which a
-graph neighbor average ties or beats the transformer. Whether Fig.~1f or the Methods
-changes, since they name different operators. Whether the manuscript's placeholder
-correlations and its statement that the model predicts expression and morphology jointly
-are removed now. Whether the pending v20 tasks keep both directions.
+graph neighbor average ties or beats the transformer, if that is what day 12 shows. Whether
+Fig.~1f or the Methods changes, since they name different operators. When Delta
+submissions start, and on which account.

@@ -1,0 +1,71 @@
+%% notes-tex/perturbation-operator/sections/3-measured.tex
+%% SOURCE: experiments/019-simb-multimodal/results/round_leaderboards.csv (rows tagged
+%% stage-wave6: epochs, primary_roll_max, total_param_count);
+%% results/decoder_arms_torchcell_019_expr_v8.csv (A4_nullsink, N_sink0, N_sink_mm rows);
+%% results/wave_convergence_stage-wave4b.csv; notes/experiments.019-simb-multimodal.
+%% multiplicative-perturbation-conditioning.md section 1.2 for the paired difference.
+%% W&B project zhao-group/torchcell_019_expr_v8.
+
+\section{What has been measured\secstatus{todo}}
+\label{sec:measured}
+
+The null sink has four attempts on file (\cref{tab:sink}). The audit of 2026-10-04 reported
+one, stopped before epoch 190; that was incomplete.
+
+\begin{table}[h]
+\footnotesize
+\caption[Null sink attempts]{\textbf{The sigmoid gate has one run at a resolving budget,
+on one seed.} All four attempts use the 1{,}084{,}619-parameter expression model on split
+seed 0. Scores are validation per-feature Pearson by rolling maximum, an upward-biased
+order statistic. Across-initialization standard deviation on a fixed split is about
+$0.006$, so the last row's difference of $-0.010$ on one seed is not resolved.
+\src{experiments/019-simb-multimodal/results/round_leaderboards.csv;
+results/decoder_arms_torchcell_019_expr_v8.csv; results/wave_convergence_stage-wave4b.csv}}
+\label{tab:sink}
+\begin{tabular}{@{}llllllp{0.25\linewidth}@{}}
+\toprule
+arm & $b_\varnothing$ at init & matched & epochs & seeds & W\&B run (seed 0) & result \\
+\midrule
+\file{A4_nullsink} & $-4$ & no & 186 to 189, crashed & 4 & \texttt{vrhntd2e} & no co-launched reference \\
+\file{N_sink0} & $-4$ & no & 78 to 80, crashed & 4 & \texttt{3eugl3dq} & none; the bias barely moved \\
+\file{N_sink_mm} & $0$ & yes & 300 & 4 pairs & \texttt{v1grwe46} & $+0.0024$, sd $0.0090$, against \file{R_ref} \\
+\file{V_sink} & $0$ & yes & 4{,}184 (48 h) & 1 pair & \texttt{fqk5mbr3} & $0.200$ against $0.210$ for \file{V_ref} (\texttt{sm6efleg}) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The same round ran the higher-rank forms once each at the same budget (\cref{tab:rank}).
+
+\begin{table}[h]
+\footnotesize
+\caption[Pair-rank arms at budget]{\textbf{One run of each pair mechanism at about 4{,}100
+epochs.} Pair rank is the rank of the gene-dependent signal the mechanism can deliver at
+one deletion. One seed each on split seed 0, so no row is a replicated result and the
+ordering is not established. Scores as in \cref{tab:sink}.
+\src{experiments/019-simb-multimodal/results/round_leaderboards.csv, rows tagged
+stage-wave6}}
+\label{tab:rank}
+\begin{tabular}{@{}lp{0.36\linewidth}rrll@{}}
+\toprule
+arm & mechanism & pair rank & epochs & score & W\&B run \\
+\midrule
+\file{V_ref} & operator A & 0 & 4{,}184 & 0.210 & \texttt{sm6efleg} \\
+\file{V_sink} & null sink, open, magnitude matched & 9 & 4{,}184 & 0.200 & \texttt{fqk5mbr3} \\
+\file{V_basis16} & rank-16 response basis at the readout & 16 & 4{,}184 & 0.204 & \texttt{hoheq7rz} \\
+\file{V_basis32} & rank-32 response basis & 32 & 4{,}109 & 0.193 & \texttt{gykwmhro} \\
+\file{V_basis64} & rank-64 response basis & 64 & 4{,}105 & 0.228 & \texttt{b50f93ju} \\
+\file{V_film} & elementwise product at the readout & 90 & 4{,}105 & 0.205 & \texttt{1j0tn0p7} \\
+\file{V_hadamard} & elementwise product at the operator, \cref{eq:diag} & 90 & 4{,}091 & 0.214 & \texttt{y69altye} \\
+\file{V_hadamard_add} & product added to the additive context, as \cref{eq:both} with operator A's first term & 90 & 4{,}091 & 0.215 & \texttt{9ahs039r} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At a real budget the sigmoid gate alone showed no gain in its one run. That is weak
+evidence, and it agrees with \cref{sec:capacity}: nine dials are a small change. Not yet
+run: the gate together with a rank-$d$ product (\cref{eq:both} in full), either with the
+flag, and any of these on more than one seed or split.
+
+Run pages, \url{https://wandb.ai/zhao-group/torchcell_019_expr_v8/runs/fqk5mbr3} for the
+long null sink run and \url{https://wandb.ai/zhao-group/torchcell_019_expr_v8/runs/sm6efleg}
+for its reference.

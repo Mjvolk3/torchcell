@@ -1,0 +1,114 @@
+%% notes-tex/perturbation-operator/sections/4-context.tex
+%% SOURCE: notes-tex/019-simb-multimodal/sections/10-launch.tex (sec:related,
+%% tab:related-operators) for the descriptions of GEARS, State and CPA, read there from the
+%% mirrored papers; notes/experiments.008-xue-ffa.results.002-interaction-models-report.md
+%% for the epistasis definitions. The literature mirror was unreachable on 2026-10-05, so
+%% nothing in the comparison table was re-read from a paper for this document.
+
+\section{Other models and other regimes\secstatus{todo}}
+\label{sec:context}
+
+\subsection{Published perturbation models\secstatus{todo}}
+
+\Cref{tab:methods} places the three operators beside published designs. The published
+rows repeat the reading recorded in \file{notes-tex/019-simb-multimodal}, section
+``What the perturbation-response literature says''; they are descriptions of other
+groups' models, and none was measured here. In that table $h_u$ is the other model's gene
+state and $h^{\mathcal P}$ its perturbation embedding. The published models are
+GEARS\external{Roohani 2023, doi:10.1038/s41587-023-01905-6},
+State\external{Adduri 2025, doi:10.1101/2025.06.26.661135},
+CPA\external{Lotfollahi 2023}, and the token-edit family, Geneformer and
+scGPT\external{Theodoris 2023; Cui 2024}.
+
+\begin{table}[h]
+\footnotesize
+\caption[Where the perturbation enters, by model]{\textbf{Published models are additive
+where the perturbation enters and gene-specific at the readout.} The State row has no
+entry for combining several perturbations because the earlier reading did not record it and
+the paper could not be re-read on 2026-10-05.
+\src{notes-tex/019-simb-multimodal/sections/10-launch.tex, tab:related-operators}}
+\label{tab:methods}
+\begin{tabular}{@{}p{0.15\linewidth}p{0.06\linewidth}p{0.27\linewidth}p{0.14\linewidth}p{0.27\linewidth}@{}}
+\toprule
+model & tokens & where the perturbation enters & several perturbations & source of gene-specific response \\
+\midrule
+CGT, operator A & genes & after the encoder, $\operatorname{LN}(h_i+\sum_t\beta_{i,t}v_t)$, softmax & weighted average & shared FFN and one shared readout MLP \\
+CGT, Fig.~1f & genes & after the encoder, sigmoid gate & gated sum & nine dials per gene, then the same shared layers \\
+CGT, 025 and 030 & genes & operator A, with the CLS token as one more query & weighted average & scalar readout from the perturbed CLS; $M\ge 2$, so the softmax selects \\
+GEARS & genes & $\operatorname{MLP}(h_u+h^{\mathcal P})$, with $h^{\mathcal P}$ propagated over a gene graph & sum of embeddings & per-gene output layer $w_u\in\mathbb{R}^d$, $b_u$ \\
+State & cells & $\mathbf H_{\mathrm{cell}}+\mathbf H_{\mathrm{pert}}+\mathbf H_{\mathrm{batch}}$ into a transformer over cells & not recorded & readout $\mathbf W_{\mathrm{recon}}\in\mathbb{R}^{d_h\times G}$, one column per gene \\
+CPA & cells & additive in latent space & sum & decoder \\
+token edit & genes & before the encoder: the gene's token is removed or flagged & several tokens edited & the encoder's self-attention carries the edit to every gene \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\pfstep{The difference from GEARS and State is the readout} Both are additive at the
+point of entry, as operator A is. Each gives every gene its own output parameters. CGT
+reads every gene through one shared MLP, so gene identity enters only through $h_i$. A
+per-gene output weight in the style of GEARS costs $6{,}127\times 91=557{,}557$ parameters
+on the expression model.
+
+\pfstep{Token editing avoids the one-key problem and forfeits the single encode} Each gene
+attends to the edited gene among 6{,}607 tokens, so no key set of size one arises. The
+cost is one encoder pass per strain.
+
+\pfstep{The trigenic result and the single-deletion result are different regimes}
+Hypothesis (untested): operator A serves experiments 025 and 030 because a trigenic
+interaction is one scalar per strain at $M=3$, where the softmax chooses among keys and the
+CLS summarizes; expression asks for about 6{,}000 gene-specific values at $M=1$, where the
+same operator delivers one vector to all genes. The trigenic state of the art supports
+the operator in its regime and is silent on the single-deletion, per-gene regime.
+
+\subsection{Epistasis forms at two or more perturbations\secstatus{todo}}
+
+\Cref{tab:epistasis} gives the null models used for the free fatty acid study, with $f$ a
+phenotype normalized to the reference strain, $f_i$ a single mutant and $f_{ij}$ a double.
+
+\begin{table}[h]
+\footnotesize
+\caption[Null models of genetic interaction]{\textbf{Each null model defines interaction
+as the departure from a different expectation.} $x_i\in\{0,1\}$ marks the presence of
+mutation $i$, and $\beta_0,\beta_i,\beta_{ij}$ in the last row are regression coefficients,
+unrelated to the attention weights $\beta_{i,t}$.
+\src{notes/experiments.008-xue-ffa.results.002-interaction-models-report.md}}
+\label{tab:epistasis}
+\begin{tabular}{@{}lll@{}}
+\toprule
+null model & expectation without interaction & interaction term \\
+\midrule
+additive & $f_{ij}=f_i+f_j-1$ & $\varepsilon^{\mathrm{add}}_{ij}=f_{ij}-f_i-f_j+1$ \\
+multiplicative & $f_{ij}=f_if_j$ & $\varepsilon^{\mathrm{mult}}_{ij}=f_{ij}-f_if_j$ \\
+log-additive & $\log f_{ij}=\log f_i+\log f_j$ & $\varepsilon^{\log}_{ij}=\log f_{ij}-\log f_i-\log f_j$ \\
+GLM, log link & $\log\mathbb{E}[f]=\beta_0+\sum_i\beta_ix_i$ & coefficients $\beta_{ij}$ of the products $x_ix_j$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The following is reasoning from the equations; none of it is measured.
+
+\pfstep{Operator A averages} $\Delta h_i=\sum_t\beta_{i,t}v_t$ with weights summing to 1,
+so a double mutant's shift is a convex combination of the two single shifts and never
+their sum. Neither the additive nor the multiplicative null is the operator's default, and
+the layers after it have to learn even the case of no interaction.
+
+\pfstep{Operator B sums} $\Delta h_i=\sum_t\sigma(s_{i,t})v_t$, so the latent shift of a
+double is the sum of the single shifts. With a linear readout that is the additive null;
+with a readout that predicts $\log f$ it is the log-additive null. Interaction is then
+what the model adds beyond the sum.
+
+\pfstep{An explicit second-order term names the interaction} With $t<u$ ranging over pairs
+of perturbations in the strain and $\phi$ a small learned map,
+\begin{equation}
+\Delta h_i=\underbrace{\sum_{t}\beta_{i,t}\,v_t}_{\text{single effects}}
++\underbrace{\sum_{t<u}\beta_{i,t}\,\beta_{i,u}\;\phi\big(v_t\odot v_u\big)}_{\text{pairwise interaction as seen by gene } i}.
+\label{eq:second}
+\end{equation}
+The second sum is empty at $M=1$, so it costs nothing on single-deletion data and cannot
+be learned from it.
+
+Single deletions can teach the first-order map: how deleting gene $g(t)$ moves every other
+gene $i$, the array of $\beta_{i,t}v_t$ over all pairs $(i,t)$. Sections
+\ref{sec:operators} and \ref{sec:capacity} concern that object. The pairwise term needs
+double and triple mutants: the Sameith doubles for expression, and the stores of
+experiments 025 and 030 for fitness.

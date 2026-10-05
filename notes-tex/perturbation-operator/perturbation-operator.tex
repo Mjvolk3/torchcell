@@ -1,0 +1,35 @@
+%% notes-tex/perturbation-operator/perturbation-operator.tex
+%% [[experiments.019-simb-multimodal.multiplicative-perturbation-conditioning]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/perturbation-operator/perturbation-operator.tex
+%%
+%% The perturbation operator of the Cell Graph Transformer written out in the manuscript's
+%% notation: the softmax of the Methods and the code, the per-pair sigmoid of Fig. 1f, and
+%% the null sink, with what each can deliver at one deletion and what has been measured.
+%%
+%% Build:  make        -> perturbation-operator.pdf
+%%         make check  -> formatting / provenance gate
+%%
+%% Every measured number is quoted from a committed results file under
+%% experiments/019-simb-multimodal/results/ and carries its source. Equations are
+%% derivations from torchcell/models/equivariant_cell_graph_transformer.py.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+
+\title{\vspace{-1.5em}The Perturbation Operator\\
+  {\large Softmax, the Sigmoid of Fig.~1f, and the Null Sink at One Deletion}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\tccontents
+
+\input{sections/1-operators}
+\input{sections/2-capacity}
+\input{sections/3-measured}
+\input{sections/4-context}
+
+\end{document}

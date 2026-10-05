@@ -1,0 +1,76 @@
+%% notes-tex/perturbation-operator/sections/2-capacity.tex
+%% SOURCE: notes/experiments.019-simb-multimodal.multiplicative-perturbation-conditioning.md
+%% (section 1.3, init-time probe: rank and energy share); notes-tex/figure-3-gate/review/
+%% 2026-10-04/05_architecture_and_operator.md (strain-effect probe) and
+%% 07_data_splits_metrics.md (self-knockout entry).
+
+\section{What a gene can choose\secstatus{todo}}
+\label{sec:capacity}
+
+\subsection{How much against what\secstatus{todo}}
+
+With $h$ heads, the vector delivered at $M=1$ under operator B or C is
+\begin{equation}
+\Delta h_i=\Big[\beta^{(1)}_{i}v^{(1)}\,\Vert\cdots\Vert\,\beta^{(h)}_{i}v^{(h)}\Big]W_O
+=\sum_{a=1}^{h}\beta^{(a)}_{i}\,u^{(a)},\qquad
+u^{(a)}=\big[\,0\,\Vert\cdots\Vert\,v^{(a)}\,\Vert\cdots\Vert\,0\,\big]W_O ,
+\label{eq:dials}
+\end{equation}
+where $v^{(a)}\in\mathbb{R}^{d_k}$ is head $a$'s slice of the value and
+$u^{(a)}\in\mathbb{R}^{d}$ is that slice after output mixing. The $h$ vectors $u^{(a)}$
+depend on the deleted gene alone. Gene $i$ contributes the $h$ scalars
+$\beta^{(a)}_i\in(0,1)$ and nothing else.
+
+\pfstep{How much} Gene $i$ sets nine dials, each between 0 and 1, each on a fixed vector.
+
+\pfstep{What} The content of each $u^{(a)}$, which gene $i$ cannot change.
+
+Over all genes $\Delta h_i$ therefore lies in the span of nine vectors with bounded
+non-negative coefficients, and the gene-dependent part of the delivered signal has rank at
+most $h=9$ of $d=90$. Measured at initialization with the sink open, in six draws: rank
+exactly 9, carrying $4.75$ to $5.90$ percent of the context energy; with the sink off,
+rank 0 to floating-point precision.
+\src{notes/experiments.019-simb-multimodal.multiplicative-perturbation-conditioning.md,
+section 1.3}
+
+For a gene to choose what it receives, the delivered vector has to be a function of both
+gene and perturbation with rank up to $d$. Three forms, by increasing capacity:
+\begin{align}
+\text{diagonal multiplicative:}\quad & \Delta h_i=h_i\odot\gamma(\mathbf{p}_t)
+  && \text{rank } d, \label{eq:diag}\\
+\text{low-rank bilinear:}\quad & \Delta h_i=\sum_{r=1}^{R}\big(a_r^{\top}h_i\big)\big(c_r^{\top}\mathbf{p}_t\big)\,o_r
+  && \text{rank } R, \label{eq:bilinear}\\
+\text{gate plus product:}\quad & \Delta h_i=\sigma(s_{i,t})\,v_t+h_i\odot\gamma(\mathbf{p}_t). \label{eq:both}
+\end{align}
+Here $\odot$ is the elementwise product, $\gamma:\mathbb{R}^d\to\mathbb{R}^d$ is a small
+learned map from the perturbation token to one multiplier per channel, and
+$a_r,c_r,o_r\in\mathbb{R}^d$ are the learned vectors of the $r$-th bilinear component. In
+\cref{eq:diag} each of gene $i$'s 90 channels is scaled by a deletion-specific factor, so
+two genes with different states receive different vectors, not different amounts of one
+vector.
+
+Operator A is not without gene-specific response. The layers after it apply a nonlinear
+function to the sum $h_i+v$, and the difference between two strains' predicted profiles
+has standard deviation $0.061$ across reporters against $0.163$ for a profile itself. The
+interaction exists as the curvature of one shared function of $h_i+v$.
+\src{notes-tex/figure-3-gate/review/2026-10-04/05_architecture_and_operator.md}
+
+\subsection{The deleted-gene flag\secstatus{todo}}
+
+The flag $\delta_{i,t}$ enters as one more input to the readout, or as a learned vector
+$\mathbf{e}_{\mathrm{self}}$ added to that one token,
+$\hat h_i\leftarrow\hat h_i+\delta_{i,t}\,\mathbf{e}_{\mathrm{self}}$.
+
+\pfstep{Why it is needed} Under operator A every gene receives the same $v_t$, the deleted
+gene included. The model can recognize the deleted gene only through the coincidence that
+its own state equals the source of the key. The model predicts $+0.036$ for the deleted
+gene's own transcript against a measured mean of $-2.42$.
+\src{notes-tex/figure-3-gate/review/2026-10-04/07_data_splits_metrics.md}
+
+\pfstep{What it buys} One entry per strain, the largest and most predictable. A predictor
+that writes only that entry scores $0.0175$ per-feature Pearson, which bounds the flag's
+value on its own. It carries no information about the other 6{,}606 genes. Hypothesis
+(untested): under a sigmoid gate the model can learn a large self-score
+$s_{g(t),t}$ without the flag, since query and key then come from the same gene. When
+models are compared the deleted gene's own entry should be blanked in scoring whether or
+not a flag is used.

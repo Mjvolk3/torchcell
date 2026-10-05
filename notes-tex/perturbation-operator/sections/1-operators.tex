@@ -1,0 +1,154 @@
+%% notes-tex/perturbation-operator/sections/1-operators.tex
+%% SOURCE: paper/nature-biotech/sections/methods.tex (Eq. ptoken, pert, pertblock);
+%% torchcell/models/equivariant_cell_graph_transformer.py on branch
+%% multimodal-phenotype-retrospective (class EquivariantPerturbationTransform, the null-sink
+%% block and its design comment); notes-tex/figure-3-gate/review/2026-10-04/
+%% 05_architecture_and_operator.md for the eval-mode probe.
+
+\section{Three operators that differ in one step\secstatus{todo}}
+\label{sec:operators}
+
+\subsection{Symbols\secstatus{todo}}
+
+\Cref{tab:symbols} defines every symbol used in this document. Notation follows the
+manuscript's Methods.
+
+\begin{table}[h]
+\footnotesize
+\caption[Symbols]{\textbf{Symbols, in alphabetical order.} Widths are those of the
+1{,}084{,}619-parameter expression model (\file{conf/cgt_expr_012.yaml}); the 6.68 million
+parameter model of rounds v13 to v20 has the same operator at the same width.
+\src{paper/nature-biotech/sections/methods.tex;
+torchcell/models/equivariant_cell_graph_transformer.py}}
+\label{tab:symbols}
+\begin{tabular}{@{}lp{0.80\linewidth}@{}}
+\toprule
+symbol & meaning \\
+\midrule
+$a\in[h]$ & index of an attention head; the operator has $h=9$ \\
+$b_K,\,b_V$ & bias vectors of the key and value projections \\
+$b_\varnothing$ & the null sink's one learned scalar (\file{null_bias}), shared by all heads \\
+$\beta_{i,t}$ & weight gene $i$ puts on perturbation $t$, one scalar per head \\
+$d$ & width of a gene state, 90 \\
+$d_k=d/h$ & width of one head, 10 \\
+$\delta_{i,t}$ & deleted-gene flag: 1 if gene $i$ is the gene that perturbation $t$ deletes, else 0 \\
+$\Delta h_i$ & vector the operator adds to gene $i$'s state \\
+$g(t)$ & index of the gene that perturbation $t$ deletes \\
+$h_i\in\mathbb{R}^d$ & wild-type state of gene $i$, output of the encoder $F_\theta$; the same for every strain \\
+$h_i^{\mathrm{pert}}$ & state of gene $i$ in the perturbed strain, output of the operator \\
+$k_t=\mathbf{p}_tW_K$ & key of perturbation $t$ \\
+$M$ & number of perturbations in a strain; 1 for every expression, proteome and morphology strain used here \\
+$N$ & number of genes, 6{,}607 \\
+$\mathbf{p}_t\in\mathbb{R}^d$ & token of perturbation $t$. Methods: $\mathbf{p}_t=r(e_t)+\mathbf{t}_{\tau_t}+m_t\mathbf{w}$. Code: $\mathbf{p}_t=h_{g(t)}$; the type embedding $\mathbf{t}_\tau$ and the magnitude term $m_t\mathbf{w}$ are not implemented \\
+$q_i=h_iW_Q$ & query of gene $i$ \\
+$s_{i,t}=q_i\cdot k_t/\sqrt{d_k}$ & score: relevance of perturbation $t$ to gene $i$ \\
+$\sigma(x)=1/(1+e^{-x})$ & logistic sigmoid \\
+$v_t=\mathbf{p}_tW_V$ & value of perturbation $t$, the content that can be delivered \\
+$W_O$ & output matrix mixing the concatenated heads \\
+$W_Q,\,W_K,\,W_V$ & query, key and value projection matrices \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+All three operators share the score, the value, and the residual block that follows,
+\begin{equation}
+\Delta h_i=\sum_{t=1}^{M}\beta_{i,t}\,v_t,\qquad
+\hat h_i=\operatorname{LN}(h_i+\Delta h_i),\qquad
+h_i^{\mathrm{pert}}=\operatorname{LN}\!\big(\hat h_i+\operatorname{FFN}(\hat h_i)\big),
+\label{eq:block}
+\end{equation}
+where $\operatorname{LN}$ is layer normalization and $\operatorname{FFN}$ a position-wise
+feed-forward network. They differ only in how the score becomes the weight $\beta_{i,t}$.
+
+\subsection{Operator A: softmax over perturbations\secstatus{todo}}
+
+The Methods and the code's default.
+\begin{equation}
+\beta^{A}_{i,t}=\frac{e^{s_{i,t}}}{\sum_{u=1}^{M}e^{s_{i,u}}},\qquad
+\sum_{t=1}^{M}\beta^{A}_{i,t}=1 .
+\label{eq:softmax}
+\end{equation}
+At $M=1$ the single weight is $e^{s_{i,1}}/e^{s_{i,1}}=1$ for every gene, whatever the
+score, so $\Delta h_i=v_1$: one vector shared by all 6{,}607 genes. The score cancels, and
+the 16{,}200 weights of $W_Q$ and $W_K$ receive zero gradient on single-deletion data.
+Measured in evaluation mode, the largest difference between any gene's $\Delta h_i$ and
+gene 0's is $0.0$.
+\src{notes-tex/figure-3-gate/review/2026-10-04/05_architecture_and_operator.md}
+
+Every expression, proteome and morphology run used operator A except the arms of
+\cref{sec:measured}. The gene-interaction models of experiments 025 and 030 use it too,
+at $M=2$ or $3$, where the softmax is not degenerate.
+
+\subsection{Operator B: the per-pair sigmoid of Fig.~1f\secstatus{todo}}
+
+\begin{equation}
+\beta^{B}_{i,t}=\sigma(s_{i,t})
+=\sigma\!\Big(\frac{(h_iW_Q)\cdot(\mathbf{p}_tW_K)}{\sqrt{d_k}}\Big).
+\label{eq:sigmoid}
+\end{equation}
+No sum over $t$ appears. Each weight is set by its own score and lies in $(0,1)$. At $M=1$
+the weight differs from gene to gene and $W_Q$, $W_K$ receive gradient. At $M=3$ the three
+weights can all be near 1, so effects add, or all near 0, so the gene ignores all three.
+Operator B exactly as drawn has not been implemented; the null sink is its closest
+implemented relative.
+
+\subsection{Operator C: the null sink\secstatus{todo}}
+
+The null sink (\file{null_sink=true}) prepends one extra key and value to the perturbation
+set: an all-zero token, index $\varnothing$, with a learned scalar $b_\varnothing$ added to
+its logit. The softmax then runs over $M+1$ entries. The zero token passes through
+projections that carry biases, so its key is $b_K$ and its value is $b_V$; the deleted
+gene's key is $\mathbf{p}_tW_K+b_K$, and $b_K$ cancels between the two logits. At $M=1$,
+\begin{equation}
+\beta^{C}_{i,1}=\frac{e^{s_{i,1}}}{e^{s_{i,1}}+e^{b_\varnothing}}
+=\sigma\big(s_{i,1}-b_\varnothing\big),\qquad
+\Delta h_i=\beta^{C}_{i,1}\,v_1+\big(1-\beta^{C}_{i,1}\big)\,b_V .
+\label{eq:sink}
+\end{equation}
+A two-way softmax is the sigmoid of the difference of its two logits, which is why the null
+sink has the form of \cref{eq:sigmoid} at one deletion. \Cref{tab:b-vs-c} lists where the
+two part.
+
+\begin{table}[h]
+\footnotesize
+\caption[Fig.~1f against the null sink]{\textbf{The null sink equals the operator of
+Fig.~1f only at one deletion.} For multi-gene strains and for natural isolates it keeps the
+softmax's shared budget among the real perturbations.
+\src{torchcell/models/equivariant_cell_graph_transformer.py, null-sink design comment}}
+\label{tab:b-vs-c}
+\begin{tabular}{@{}p{0.20\linewidth}p{0.30\linewidth}p{0.42\linewidth}@{}}
+\toprule
+ & B (Fig.~1f) & C (null sink) \\
+\midrule
+threshold & none; $\beta=0.5$ at score 0 & $b_\varnothing$, learned, one scalar for all nine heads \\
+what the unused share delivers & nothing & $b_V$, a learned constant vector \\
+at $M\ge 2$ & weights independent; their sum lies between 0 and $M$ & a softmax over $M+1$ entries; the weights on real perturbations sum to at most 1, so effects are averaged and never added \\
+magnitude & as is & optional rescale by $1/\sigma(-b_\varnothing^{\mathrm{init}})$ (\file{null_sink_magnitude_match}), which restores the reference's norm at initialization \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Initialization decides whether the sink takes part. With $b_\varnothing=-4$ the gate is
+$\sigma(s+4)\approx 0.98$: the sink holds about 2 percent of the mass and the operator is
+nearly operator A. In the first attempt the bias moved from $-4.0$ to between $-3.92$ and
+$-3.95$ by epoch 187. With $b_\varnothing=0$ the gate starts at $0.5$, and the model has to
+close the sink actively for it to be useless.
+\src{notes/experiments.019-simb-multimodal.scripts.gh_expr_008_arm.md}
+
+\subsection{Which normalization makes the weights uniform\secstatus{todo}}
+
+Two normalizations are in play and they behave differently.
+
+\pfstep{Normalizing the weights over perturbations restores the degeneracy} If the sigmoid
+weights are divided by their sum over $t$,
+$\tilde\beta_{i,t}=\beta^{B}_{i,t}/\sum_u\beta^{B}_{i,u}$, then at $M=1$
+$\tilde\beta_{i,1}=1$ again. Any normalization across the perturbation axis reproduces
+operator A at one deletion. Fig.~1f as drawn has none.
+
+\pfstep{The layer normalization that follows does not} $\operatorname{LN}$ acts on each
+gene's vector separately, across its $d$ coordinates, and does not compare genes. Two genes
+with $\beta_i=0.1$ and $\beta_j=0.9$ receive different mixtures of their own state and
+$v$, with different directions, and $\operatorname{LN}$ preserves direction. It removes
+overall magnitude: if $\beta_iv$ is far larger than $h_i$ for every gene, every $\hat h_i$
+approaches the direction of $v$ and the genes become alike. That is a matter of scale,
+$\lVert v\rVert$ against $\lVert h_i\rVert$, and not a degeneracy.

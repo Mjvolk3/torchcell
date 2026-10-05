@@ -1,0 +1,33 @@
+%% notes-tex/figure-3-gate/figure-3-gate.tex
+%% [[experiments.019-simb-multimodal.scripts.fig3_mockup_panels]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/figure-3-gate/figure-3-gate.tex
+%%
+%% Mockups of manuscript Figure 3, held for a decision before any of them enters the paper.
+%%
+%% Build:  make          -> figure-3-gate.pdf
+%%         make figures  -> re-export the three draw.io mockups into figures/
+%%         make check    -> formatting / provenance gate
+%%
+%% EVERY plotted number comes from a results file under experiments/019-simb-multimodal/results/
+%% through experiments/019-simb-multimodal/scripts/fig3_mockup_panels.py and
+%% fig3_mockup_drawio.py. Nothing in a figure is typed by hand.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+
+\title{\vspace{-1.5em}Figure 3 Gate\\
+  {\large Two Framings of the Single-Deletion Multimodal Figure, as Mockups}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\tccontents
+
+\input{sections/1-decision}
+\input{sections/2-mockups}
+\input{sections/3-remaining}
+
+\end{document}

@@ -1,0 +1,75 @@
+%% notes-tex/figure-3-gate/sections/3-remaining.tex
+%% SOURCE: hand-authored status table. Each status matches the mark drawn on the panel by
+%% experiments/019-simb-multimodal/scripts/fig3_mockup_drawio.py; each "remains" entry is a
+%% gap in the result files named under the figures of sections/2-mockups.tex or a run
+%% recorded as not done in notes-tex/019-simb-multimodal-expression/sections/6-checkpoint.tex.
+
+\clearpage
+\section{What each panel still needs\secstatus{todo}}
+\label{sec:remaining}
+
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \caption[]{What each panel still needs before it is real. \status{final} ready: every
+  drawn value is in a committed results file and the panel can be drawn now. \status{tent}
+  partial: a run is unfinished, scoring rules or splits are mixed, or an author decision is
+  pending. \status{todo} not done: nothing behind it has been run.}
+  \label{tab:remaining}
+  \begin{tabular}{@{}p{24mm}p{8mm}p{138mm}@{}}
+    \toprule
+    panel & & what remains \\
+    \midrule
+    A and B, a & \status{final} &
+      The expression and morphology overlap reads 1,438 in
+      \file{expression_morphology_covariation.json} and 1,440 in
+      \file{fig3_overlap_census.json}; reconcile. \\
+    A and B, b & \status{tent} &
+      No linear baseline for morphology is on file. The bars mix scoring rules and splits.
+      Rescore model and baselines under one rule on one set of split seeds, and choose one
+      proteome ceiling estimator. \\
+    A, c; SI-2, b & \status{tent} &
+      The proteome and expression side is a mean per feature from a review file, with no
+      permuted null and no moving subset on file; recompute it with the estimator of the
+      other two sides, on a common strain set. \\
+    A, d & \status{tent} &
+      2 of 12 split seeds at epochs 157 to 163 of 1,200. Needs the full budget, all split
+      seeds, the registered window, and the ridge of panel c as the reference to beat. \\
+    A, e & \status{todo} &
+      No store joins the proteome and morphology, and the observed-label channel takes
+      gene-level values, so morphology can be a target and not yet an input. \\
+    A, f; B, d & \status{tent} &
+      Baselines and model share a seed number and not a store, and the baselines are single
+      selected validation scores while the model is a window mean. Rerun the baselines on
+      the both-label store. The proteome baselines cover split seeds 0 to 3 only. \\
+    A, g; B, e & \status{tent} &
+      The pair-form probe has no proteome strand; add it to \file{graph_prior_probe.py}. \\
+    A, h & \status{final} &
+      Sameith is in \file{gene_covariation_all.json} and not drawn. \\
+    B, c; SI-1, e & \status{final} &
+      Split seed 11 was unfinished at readout; redraw when it is read. The result is a
+      null. \\
+    B, f; SI-2, a & \status{final} &
+      Four split seeds; the baselines ran on the full expression and proteome stores. \\
+    SI-1, a & \status{tent} &
+      Both-label counts are on file for split seeds 0 to 3 of 12. That every arm sees the
+      same batches is stated by the v19 configuration and was not re-verified here. \\
+    SI-1, b, c & \status{final} &
+      One split seed by rule; the other ten are in \file{joint_checkpoint_curves.csv}. \\
+    SI-1, d & \status{final} &
+      The score peak is a rolling maximum, an upward-biased order statistic. \\
+    SI-2, c & \status{final} &
+      Four split seeds per strand. \\
+    SI-2, d & \status{tent} &
+      The expression document's ``145 runs, $-0.129$'' is produced by no committed script
+      and no subset of \file{round_leaderboards.csv} tried here reproduces it; the panel
+      draws all 1,182 scored expression runs, $r = -0.001$. Scores are rolling maxima over
+      unequal budgets. A v19 point needs a v19 score under the same rule. \\
+    SI-2, e & \status{tent} &
+      Author decision: Fig.~1f draws gene-dependent weights with one perturbed gene, and
+      the Methods and the code compute a softmax, which gives weight 1. Either the figure or
+      the operator changes. The null sink, which restores a sigmoid weight, has one trained
+      comparison stopped at 186 to 189 epochs. \\
+    \bottomrule
+  \end{tabular}
+\end{table}

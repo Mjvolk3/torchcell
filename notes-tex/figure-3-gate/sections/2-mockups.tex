@@ -1,0 +1,175 @@
+%% notes-tex/figure-3-gate/sections/2-mockups.tex
+%% SOURCE: figures are exported from notes/assets/drawio/fig3-mockup-*.drawio.svg, written by
+%% experiments/019-simb-multimodal/scripts/fig3_mockup_drawio.py, which embeds the panels of
+%% experiments/019-simb-multimodal/scripts/fig3_mockup_panels.py. Caption numbers are read
+%% off the same result files; none is typed into a figure. The source tables under the
+%% figures are hand-authored lists of the files and keys each panel function reads.
+
+\section{The mockups\secstatus{todo}}
+\label{sec:mockups}
+
+Result files are under \file{experiments/019-simb-multimodal/results/} unless a path is
+given. Each caption gives, per panel, what is plotted, the statistic and its scoring rule,
+the sample size and the status; the table under each figure gives the files and keys.
+
+\clearpage
+\tcfig{figures/fig3-mockup-A-conditioning.pdf}{\textbf{Ridge from one measured modality
+reaches a held-out Pearson of 0.17 to 0.23 on all features of another, and the conditioned
+model (d) has trained 160 of 1,200 epochs.}
+\textbf{a}, The three single-deletion panels and their pairwise overlaps. Counts of distinct
+deletion strains; no statistic. Ready.
+\textbf{b}, Replicate ceiling (pale; dotted, the HIS3-replicate proteome estimator), best
+genotype-only model (solid; percent of ceiling), best linear baseline (diagonal hatch) and
+best nearest-neighbor baseline (cross hatch), as Pearson per feature across held-out
+strains. Model: expression and morphology are the rolling maximum of one best run over 1,353
+and 183 runs, the proteome is the mean over 4 split seeds. Baselines: mean validation score
+over 4 split seeds of the best key (morphology, 1 split seed); no linear baseline exists for
+morphology. Every non-ceiling bar is a maximum over runs or keys selected on the score it
+reports, so it is biased upward, and the bars sit on different splits. Partial.
+\textbf{c}, Out-of-fold ridge between measured modalities on the deletions both panels
+measured (1,349, 4,314 and 1,438 strains; 5 folds): median held-out Pearson per feature;
+\emph{moving} is the 116 morphology features with replicate reliability of at least 0.5. The
+proteome and expression side is a mean per feature from a review file. Partial.
+\textbf{d}, Round v20, conditioned arm minus unconditioned control: difference of the mean
+validation Pearson over the latest 20 epochs of each conditioned run and the same epochs of
+its control; 2 of 12 split seeds, 8 runs, epochs 157 to 163 of 1,200. Not a result. Partial.
+\textbf{e}, Conditioned morphology. Not run. Not done.
+\textbf{f}, Linear and nearest-neighbor baselines and the v19 single-head model per split
+seed (expression 11, proteome 4). Baselines: one validation Pearson per split seed, best
+embedding selected on that score (biased upward). Model: mean validation Pearson over the
+registered epoch window (unselected). A split seed is one train, validation and test
+partition with one initialization seed; baselines and model share the seed number and not
+the store, so their validation strains differ. Partial.
+\textbf{g}, Per graph, the AUC that two deletions adjacent on the graph give more similar
+phenotypes than a background pair (filled), against a degree-preserving rewired graph
+(open); 60,000 pairs per point, 1,482 expression and 4,718 morphology strains; no proteome
+strand is on file. Partial.
+\textbf{h}, Spearman between two panels' gene-by-gene correlation matrices, with the number
+of shared genes; Messner is the proteome, the others mRNA. One value per pair, no
+selection. Ready.}{fig:mockup-a}
+
+\clearpage
+{\footnotesize\noindent
+\begin{tabular}{@{}p{8mm}p{170mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:mockup-a}}} \\
+\midrule
+a & \file{fig3_overlap_census.json} (\texttt{kemmeren\_unique}, \texttt{ohya\_unique}); \file{fig3_proteome_build_census.json}; \texttt{n\_shared\_strains} of the two covariation files \\
+b & \file{expression_ceiling_replicate.json}, \file{proteome_ceiling_replicate.json}, \file{morphology_noise_ceiling.json}, \file{round_leaderboards.csv}; \file{baselines_embedding_study.json} (ridge $0.113$, $0.066$); \file{graph_retrieval_baseline.json} (nearest neighbor $0.220$, $0.112$, STRING experimental graph key); \file{knn_embedding_probe.json} ($0.100$) \\
+c & \file{proteome_morphology_covariation.json} (and its \texttt{context} block), \file{expression_morphology_covariation.json} \\
+d & \file{joint_checkpoint_readout.json}, \texttt{v20\_partial.runs} \\
+f & \file{expression_baselines_split/}, \file{baselines_split_fig3_proteome/}; \file{joint_checkpoint_readout.json}, \texttt{v19.runs} \\
+g & \file{graph_prior_probe.json}, \texttt{pair\_form}, one step \\
+h & \file{experiments/028-knockout-expression/results/proteome_expression_covariation.json}, \texttt{gene\_covariation} \\
+\bottomrule
+\end{tabular}}
+
+\clearpage
+\tcfig{figures/fig3-mockup-B-genotype-only.pdf}{\textbf{From the deletion alone the model
+reaches 13 to 29\,\% of the replicate ceiling, and the best nearest-neighbor baseline is
+within 0.01 of it on expression and above it on the proteome and morphology.}
+\textbf{a}, \textbf{b}, As \cref{fig:mockup-a}a and b. Ready; partial.
+\textbf{c}, Round v19, joint arm minus single-head arm per split seed: difference of the
+mean validation Pearson per feature over the registered window (expression epochs 1,000 to
+1,200, proteome 200 to 400), an unselected statistic. 11 of 12 split seeds, each a different
+train, validation and test partition with one initialization seed; 1,099 to 1,108 training
+and 119 to 126 validation strains on the four seeds on file. Expression: mean $-0.001$, 5 of
+11 above zero, one-sided $t$ $p = 0.55$. Proteome: mean $-0.017$, 1 of 11, $p = 0.64$
+against the margin $-0.015$ (dashed). Neither registered test rejects. Ready; split seed 11
+was unfinished.
+\textbf{d}, As \cref{fig:mockup-a}f at half width, same caveat. Partial.
+\textbf{e}, As \cref{fig:mockup-a}g at wide width. Partial.
+\textbf{f}, How much the gene representation matters to the two baselines: validation
+Pearson per feature, mean and s.d. over 4 split seeds, of the ridge baseline (squares) and
+the nearest-neighbor baseline (triangles), with rank and neighbor count selected on
+validation inside each seed. Five of 28 representations by rule, each the top of its class
+on the mean of the four validation means: best single language model (ProtT5), the model's
+input composite (bold), best other composite, codon frequency, best random control. The
+bold row is the study's \texttt{model\_stack}, the concatenation
+\texttt{fudt\_upstream}, \texttt{calm}, \texttt{prot\_T5\_all}, \texttt{fudt\_downstream}
+that the v19 configuration inherits as \texttt{node\_embeddings}. Ready.}{fig:mockup-b}
+
+\clearpage
+{\footnotesize\noindent
+\begin{tabular}{@{}p{8mm}p{170mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:mockup-b}}} \\
+\midrule
+c & \file{joint_checkpoint_readout.json}, \texttt{v19.tests} (\texttt{H1a\_expression\_superiority}, \texttt{H1b\_proteome\_noninferiority}); strain counts from \file{split_gene_overlap_audit.json} \\
+f & \file{baselines_embedding_study.json}; the composite is defined in \file{experiments/019-simb-multimodal/scripts/expression_baselines_split.py} and matched to \file{conf/cgt_expr_v13_split.yaml} \\
+\bottomrule
+\end{tabular}}
+
+\clearpage
+\tcfig{figures/fig3-mockup-SI-1.pdf}{\textbf{In round v19 the validation loss reaches its
+minimum before epoch 200 on every run, and the proteome score peaks later on every run.}
+\textbf{a}, How a split seed becomes the strains of a run, drawn from the code. The store's
+4,681 records (one record is one deleted gene set) are shuffled within each phenotype label
+and each perturbation count and cut 80, 10, 10 under the split seed; each side then keeps
+the records carrying both labels, 1,349 in all, so the both-label fractions are near and not
+exactly 80, 10, 10. Counts for split seeds 0 to 3. No statistic. Partial: seeds 4 to 11 are
+not on file.
+\textbf{b}, Proteome head, split seed 5, one run per arm: the 5-epoch centered mean of the
+validation loss (top) and the validation Pearson per feature (bottom; pale raw, dark its
+5-epoch mean) against epoch. Triangles, loss minimum; circles, maximum of the 5-epoch mean,
+an upward-biased order statistic; shaded, the registered window. The joint loss sums two
+heads, so the two loss levels are not comparable. Split seed 5 is chosen by rule: its
+joint-minus-single proteome difference ($-0.012$) is the median over the 11 complete split
+seeds. About 1,100 training and 125 validation strains. Ready.
+\textbf{c}, The same for the expression head of that split seed, window epochs 1,000 to
+1,200. Ready.
+\textbf{d}, Proteome head, all 11 complete split seeds, 22 runs: epoch of the loss minimum
+(triangles) and of the score peak (circles). Ready.
+\textbf{e}, The window scores behind \cref{fig:mockup-b}c: mean validation Pearson over the
+registered window, single-head and joint arm, 11 split seeds, 33 runs. Unselected.
+Ready.}{fig:mockup-si-1}
+
+\clearpage
+{\footnotesize\noindent
+\begin{tabular}{@{}p{8mm}p{170mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:mockup-si-1}}} \\
+\midrule
+a & \file{torchcell/datamodules/cell.py} (\texttt{\_compute\_and\_save\_index}); \file{experiments/019-simb-multimodal/scripts/train_cgt_multitask.py} (\texttt{require\_modalities}); counts from \file{split_gene_overlap_audit.json} \\
+b, c & \file{joint_checkpoint_curves.csv} (41,129 rows: run, arm, split, epoch, loss, its 5-epoch mean, each head's Pearson), written by \file{experiments/019-simb-multimodal/scripts/joint_checkpoint_readout.py}; marker epochs from \file{joint_checkpoint_readout.json} \\
+d, e & \file{joint_checkpoint_readout.json}, \texttt{v19.runs} \\
+\bottomrule
+\end{tabular}}
+
+\clearpage
+\tcfig{figures/fig3-mockup-SI-2.pdf}{\textbf{The model's input composite scores below
+ProtT5 alone in both baselines on both modalities, and the best score of a run does not
+track its parameter count.}
+\textbf{a}, All 28 gene representations of the baseline study, by family: validation
+Pearson per feature, mean and s.d. over 4 split seeds, ridge (squares) and nearest neighbor
+(triangles), expression (1,244 to 1,253 training strains) and proteome (3,581); rank and neighbor
+count selected on validation inside each seed. Bold, the model's input composite. Ready.
+\textbf{b}, The six directed pairs of \cref{fig:mockup-a}c as bars with the strain-permuted
+null (black line, on file for four pairs) and the shared-strain count. Partial.
+\textbf{c}, The graph as a retrieval key: validation Pearson of a neighbor average keyed on
+each graph's adjacency row minus the same with the rewired graph, mean and s.d. over 4 split
+seeds, expression and proteome. Neighbor count selected on validation. Ready.
+\textbf{d}, Parameter count against the rolling maximum of the validation Pearson, one point
+per expression-strand run (1,182 runs with both values; open, collapsed runs). The rolling
+maximum is biased upward and the runs differ in epochs run. The Pearson between
+$\log_{10}$ parameters and score is $-0.001$. Dashed, the v19 model at 6.67 million
+parameters for about 1,100 training strains, near 6,000 parameters per strain; its score is
+a window mean and is not placed on this axis. Partial.
+\textbf{e}, The perturbation operator in the notation of manuscript Fig.~1f; no data. Left,
+as drawn there. Right, as the code computes it and as the Methods write it: a softmax over
+the perturbed genes, which with one perturbed gene gives weight 1 to every gene. Partial,
+an author decision.}{fig:mockup-si-2}
+
+\clearpage
+{\footnotesize\noindent
+\begin{tabular}{@{}p{8mm}p{170mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:mockup-si-2}}} \\
+\midrule
+a & \file{baselines_embedding_study.json} \\
+b & as \cref{fig:mockup-a}c, plus \texttt{triangle} of \file{joint_checkpoint_readout.json} for one strain count \\
+c & \file{graph_retrieval_baseline.json}, rounds \texttt{v13} and \texttt{v14}, \texttt{summary.paired} \\
+d & \file{round_leaderboards.csv} (\texttt{total\_param\_count}, \texttt{primary\_roll\_max}); \texttt{total\_param\_count} of \texttt{v19.runs} in \file{joint_checkpoint_readout.json}; \file{split_gene_overlap_audit.json} \\
+e & \file{torchcell/models/equivariant_cell_graph_transformer.py} (\texttt{EquivariantPerturbationTransform}); \file{paper/nature-biotech/sections/methods.tex} \\
+\bottomrule
+\end{tabular}}

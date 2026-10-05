@@ -20,7 +20,12 @@ control of the same partition over the same epochs.
 The triangle is read from the three covariation result files, not recomputed.
 
 Writes results/joint_checkpoint_readout.json and four tables under
-notes-tex/019-simb-multimodal-expression/tables/.
+notes-tex/019-simb-multimodal-expression/tables/, and results/joint_checkpoint_curves.csv:
+the per-epoch validation curves of every v19 run (run id, arm, split, epoch, val/loss, its
+centered 5-epoch rolling mean, the one whose minimum is loss_min_epoch, and the
+per-feature Pearson of each head the arm trains), so a figure script can draw training
+curves without querying W&B. Each v19 run also records total_param_count from its W&B
+summary.
 
     python experiments/019-simb-multimodal/scripts/joint_checkpoint_readout.py
 """
@@ -65,27 +70,32 @@ def _key(head: str) -> str:
     return f"val/{head}/pearson_per_feature"
 
 
-def _v19_runs(api: wandb.Api) -> pd.DataFrame:
+def _v19_runs(api: wandb.Api) -> tuple[pd.DataFrame, pd.DataFrame]:
     heads = {
         "K_prot": ["proteome"],
         "K_expr": ["expression"],
         "K_joint": ["proteome", "expression"],
     }
     rows: list[dict[str, Any]] = []
+    curves: list[pd.DataFrame] = []
     for run in api.runs(f"{ENTITY}/{V19}"):
         tag = [t for t in run.tags if re.fullmatch(r"K_(prot|expr|joint)_s\d+", t)]
         if len(tag) != 1:
             raise ValueError(f"{run.id}: expected one K_* arm tag, got {tag}")
         arm, split = re.fullmatch(r"(K_\w+)_s(\d+)", tag[0]).groups()  # type: ignore[union-attr]
-        loss = _curve(run, "val/loss").rolling(ROLL, center=True).mean()
+        raw_loss = _curve(run, "val/loss")
+        loss = raw_loss.rolling(ROLL, center=True).mean()
         rec: dict[str, Any] = {
             "id": run.id,
             "arm": arm,
             "split": int(split),
+            "total_param_count": int(run.summary["total_param_count"]),
             "loss_min_epoch": int(loss.idxmin()),
         }
+        curve = pd.DataFrame({"val/loss": raw_loss, f"val/loss_roll{ROLL}": loss})
         for head in heads[arm]:
             c = _curve(run, _key(head))
+            curve[_key(head)] = c
             lo, hi = WINDOWS[head]
             smooth = c.rolling(ROLL, center=True).mean()
             rec["last_epoch"] = int(c.index.max())
@@ -94,7 +104,15 @@ def _v19_runs(api: wandb.Api) -> pd.DataFrame:
             rec[f"{head}_roll_max_epoch"] = int(smooth.idxmax())
             rec[f"{head}_at_loss_min"] = float(smooth.loc[rec["loss_min_epoch"]])
         rows.append(rec)
-    return pd.DataFrame(rows).sort_values(["split", "arm"]).reset_index(drop=True)
+        curve = curve.rename_axis("epoch").reset_index()
+        curve.insert(0, "split", int(split))
+        curve.insert(0, "arm", arm)
+        curve.insert(0, "id", run.id)
+        curves.append(curve)
+    runs = pd.DataFrame(rows).sort_values(["split", "arm"]).reset_index(drop=True)
+    all_curves = pd.concat(curves, ignore_index=True)
+    all_curves = all_curves.sort_values(["split", "arm", "epoch"]).reset_index(drop=True)
+    return runs, all_curves
 
 
 def _paired(
@@ -258,7 +276,7 @@ def _f(x: float | None, nd: int = 3, sign: bool = False) -> str:
 
 def main() -> None:
     api = wandb.Api(timeout=180)
-    v19 = _v19_runs(api)
+    v19, curves = _v19_runs(api)
     done = v19.groupby("split").last_epoch.min() >= FINAL_EPOCH
     n_arms = v19.groupby("split").arm.nunique()
     complete = sorted(int(s) for s in done.index if done[s] and n_arms[s] == 3)
@@ -307,6 +325,7 @@ def main() -> None:
     }
     with open(osp.join(RESULTS, "joint_checkpoint_readout.json"), "w") as fh:
         json.dump(out, fh, indent=2)
+    curves.to_csv(osp.join(RESULTS, "joint_checkpoint_curves.csv"), index=False)
 
     n = len(complete)
     rows = []

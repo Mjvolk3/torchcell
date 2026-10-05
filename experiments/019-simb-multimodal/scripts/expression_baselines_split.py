@@ -189,10 +189,23 @@ def parse_args() -> argparse.Namespace:
         help="gate: the four-entry baseline gate; full: every representation the builder "
         "serves plus composites (results go to a _full directory)",
     )
+    # The joint and conditioned rounds (v19, v20) train with `require_modalities` naming
+    # both labels, which the data module applies AFTER the partition is drawn. Naming the
+    # same labels here keeps only the records of each split that carry every one of them,
+    # so the baseline sees exactly those rounds' train, val and test strains. Results land
+    # in baselines_split_<tag>_both_<label>/ so they never overwrite the unrestricted run.
+    p.add_argument(
+        "--require-labels",
+        nargs="+",
+        default=None,
+        help="keep only records carrying every one of these phenotype labels",
+    )
     return p.parse_args()
 
 
-def _load_split(cache_dir: str, seed: int, label: str) -> dict[str, list[int]]:
+def _load_split(
+    cache_dir: str, seed: int, label: str, require: list[str] | None = None
+) -> dict[str, list[int]]:
     path = osp.join(cache_dir, f"index_details_seed_{seed}.json")
     if not osp.exists(path):
         raise FileNotFoundError(
@@ -201,10 +214,15 @@ def _load_split(cache_dir: str, seed: int, label: str) -> dict[str, list[int]]:
         )
     with open(path) as f:
         details = json.load(f)
-    return {
-        split: list(details[split]["phenotype_label_index"][label]["indices"])
-        for split in ("train", "val", "test")
-    }
+    out: dict[str, list[int]] = {}
+    for split in ("train", "val", "test"):
+        by_label = details[split]["phenotype_label_index"]
+        indices = list(by_label[label]["indices"])
+        for other in require or []:
+            keep = set(by_label[other]["indices"])
+            indices = [i for i in indices if i in keep]
+        out[split] = indices
+    return out
 
 
 def _load_records(
@@ -275,7 +293,10 @@ def main() -> None:
         data_root, "data/torchcell/experiments/019-simb-multimodal", args.dataset_tag
     )
     split = _load_split(
-        osp.join(base, "data_module_cache"), args.split_seed, args.label
+        osp.join(base, "data_module_cache"),
+        args.split_seed,
+        args.label,
+        args.require_labels,
     )
     if args.fold_test_into_train:
         split = {
@@ -317,6 +338,7 @@ def main() -> None:
     out: dict[str, object] = {
         "generated_by": "experiments/019-simb-multimodal/scripts/expression_baselines_split.py",
         "dataset_tag": args.dataset_tag,
+        "require_labels": args.require_labels,
         "label": args.label,
         "split": {
             "kind": "CellDataModule index_details_seed",
@@ -459,7 +481,9 @@ def main() -> None:
     dst_dir = osp.join(
         experiment_results_dir("019-simb-multimodal", __file__),
         (
-            "expression_baselines_split"
+            f"baselines_split_{args.dataset_tag}_both_{args.label}"
+            if args.require_labels
+            else "expression_baselines_split"
             if args.dataset_tag == DATASET_TAG
             else f"baselines_split_{args.dataset_tag}"
         )

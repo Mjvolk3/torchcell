@@ -121,6 +121,8 @@ from torchcell.models.equivariant_cell_graph_transformer import (
     MaskedMultitaskLoss,
 )
 from torchcell.timestamp import timestamp
+from torchcell.trainers.coo_targets import decode_head_targets
+from torchcell.trainers.rank_metrics import average_rank
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -335,15 +337,13 @@ def _rank(x: torch.Tensor) -> torch.Tensor:
 
     Tie averaging is not optional here: the beta-carotene colony score is an ordinal with
     ~11 distinct values over thousands of strains, so an arbitrary tie-break would invent
-    an ordering the data does not contain. ``scipy.stats.rankdata`` does this vectorized
-    over the strain axis; the metric already runs at epoch end on CPU-cached tensors.
+    an ordering the data does not contain. `torchcell.trainers.rank_metrics.average_rank`
+    is ``scipy.stats.rankdata(axis=0, nan_policy="omit")`` in torch (held equal by its
+    tests), so it runs on the tensor's own device: a NaN (unmeasured) entry stays NaN and
+    the finite entries of its column are ranked among themselves, so the sparse Pearson
+    branch scores the ranks. The scipy call on the CPU was 17 percent of a batch-128 run.
     """
-    from scipy.stats import rankdata
-
-    # nan_policy="omit": a NaN (unmeasured) entry stays NaN and the finite entries of its
-    # column are ranked among themselves, so the sparse Pearson branch scores the ranks.
-    arr = rankdata(x.detach().cpu().numpy(), axis=0, nan_policy="omit")
-    return torch.as_tensor(arr, dtype=torch.float32)
+    return average_rank(x.detach())
 
 
 def per_feature_spearman(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
@@ -1120,7 +1120,6 @@ class MultitaskCGTTask(L.LightningModule):
           separable by group size -- which ``build_head_alignments`` has already
           guaranteed to be unique per label_name.
         """
-        device = head_outputs[next(iter(head_outputs))].device
         gene = batch["gene"]
         values = getattr(gene, "phenotype_values", None)
         type_idx = getattr(gene, "phenotype_type_indices", None)
@@ -1157,7 +1156,6 @@ class MultitaskCGTTask(L.LightningModule):
                 # Head is unsupervised in this build (no such phenotype present).
                 continue
             raw_dim = int(raw_dim)
-            row_mask = torch.zeros(bsz, dtype=torch.bool, device=device)
             # Targets are always POINT-shaped [B, feat]: a distributional head emits
             # [B, feat, param_dim] params, but the observation it is scored against is one
             # value per feature. Size the target buffer from `.point()`, NOT from the raw
@@ -1166,54 +1164,24 @@ class MultitaskCGTTask(L.LightningModule):
             target = torch.zeros_like(
                 dist_head.point(pred) if dist_head is not None else pred
             )
-            expected = int(target.shape[1]) if target.ndim > 1 else 1
-            for b in range(bsz):
-                sel_b = val_batch == b
-                if not bool(sel_b.any()):
-                    continue
-                gtypes = per_graph_types[b]
-                tb = type_idx[sel_b].tolist()
-                vb = values[sel_b]
-                sb = samp_idx[sel_b]
-                name_sel = torch.tensor(
-                    [gtypes[t] in names for t in tb], dtype=torch.bool
-                )
-                if not bool(name_sel.any()):
-                    continue
-                cand_vals = vb[name_sel]
-                cand_samp = sb[name_sel]
-                # Keep only the per-experiment value groups of the head's own width.
-                groups = [
-                    cand_vals[cand_samp == s]
-                    for s in cand_samp.unique(sorted=True).tolist()
-                ]
-                groups = [g for g in groups if int(g.numel()) == raw_dim]
-                if not groups:
-                    continue
-                if is_scalar:
-                    # Several replicate records of a scalar phenotype (e.g. two fitness
-                    # measurements of one genotype) average, as before.
-                    head_vals = torch.stack([g.reshape(()) for g in groups]).mean()
-                    target[b] = head_vals.float().to(device)
-                else:
-                    if len(groups) > 1:
-                        raise ValueError(
-                            f"head '{head}' matched {len(groups)} value groups of width "
-                            f"{raw_dim} in batch row {b}; a vector head must resolve to "
-                            "exactly one measurement per genotype."
-                        )
-                    head_vals = groups[0]
-                    if keep is not None:
-                        head_vals = head_vals[keep]
-                    if int(head_vals.numel()) != expected:
-                        raise ValueError(
-                            f"head '{head}' decoded {int(head_vals.numel())} target "
-                            f"values but the head emits {expected}. Assigning these "
-                            "would BROADCAST rather than align; fix the head's "
-                            "output_dim / drop_features / head_phenotype_keys."
-                        )
-                    target[b] = head_vals.to(device)
-                row_mask[b] = True
+            # The decode itself (select by phenotype name, split by experiment, keep the
+            # group of the head's width, size-check, assign) lives in
+            # `torchcell.trainers.coo_targets`, in a per-graph loop form and the
+            # vectorized form used here; the two are held equal by its tests. The loop
+            # was 59 to 65 percent of a training process's wall time (2026-10-06).
+            target, row_mask = decode_head_targets(
+                values,
+                type_idx,
+                val_batch,
+                samp_idx,
+                per_graph_types,
+                names,
+                raw_dim,
+                is_scalar,
+                keep,
+                target,
+                head=head,
+            )
             # WS10b + Part A: per-feature normalization (TRAIN-split stats) so a multi-scale
             # vector target (CalMorph 278-D) yields an O(1) loss -- Yeo-Johnson+z-score
             # (default) or plain z-score. Masked rows are zeros -> transform to some finite
@@ -1654,8 +1622,11 @@ class MultitaskCGTTask(L.LightningModule):
         for name, cache in stage_cache.items():
             if not cache["pred"]:
                 continue
-            pred = torch.cat(cache["pred"], dim=0)
-            target = torch.cat(cache["target"], dim=0)
+            # The rows are cached on the CPU step by step and reduced ON THE DEVICE: the
+            # correlations, the ranks and the error terms below are all tensor ops, and on
+            # the CPU they were a quarter of a batch-128 run's wall time (2026-10-06).
+            pred = torch.cat(cache["pred"], dim=0).to(self.device)
+            target = torch.cat(cache["target"], dim=0).to(self.device)
             if pred.shape[0] < 2:
                 continue
             pheno = phenotype_name(name)
@@ -1721,8 +1692,8 @@ class MultitaskCGTTask(L.LightningModule):
             if feat_dim > 1:
                 # Per-instance runs on the NORMALIZED features (comparable scales); falls back
                 # to the raw cache for heads that are not normalized (the two coincide there).
-                pred_n = torch.cat(cache["pred_norm"], dim=0)
-                target_n = torch.cat(cache["target_norm"], dim=0)
+                pred_n = torch.cat(cache["pred_norm"], dim=0).to(self.device)
+                target_n = torch.cat(cache["target_norm"], dim=0).to(self.device)
                 pear_inst = per_strain_pearson(pred_n, target_n).to(self.device)
                 self.log(
                     f"{stage}/{pheno}/pearson_per_instance", pear_inst, sync_dist=True

@@ -41,3 +41,22 @@ What the tables say:
 - Precision is already `bf16-mixed` in this config lineage.
 
 Changes made on the strength of this, all in commit of 2026-10-06: the batched operator and `pooled_perturbed` in `torchcell/models/equivariant_cell_graph_transformer.py` (the loop is kept as `_forward_loop`, selected by `TORCHCELL_PERT_OPERATOR=loop`; `test_batched_perturbation_operator_matches_loop` holds the two within 1e-5 on eight cases), `MaterializedSplit` and the `trainer.profiler` pass-through in `train_cgt_multitask.py`.
+
+## 2026.10.06 - The step's real cost was target decoding on the CPU, found by stack sampling
+
+The simple profiler lumps everything inside `training_step`, so the tables above could not see inside the step. Stack samples of two live v22 runs (`py-spy record`, 90 s at 20 Hz, main thread, job 3319: one batch-32 run sharing a card with two others, one batch-128 run likewise):
+
+| share of main-thread samples | batch 32 | batch 128 |
+|---|---|---|
+| `_extract_targets_and_masks` | 59.0 % | 64.9 % |
+| model forward (all of `CellGraphTransformer.forward`) | 20.0 % | 7.8 % |
+| `validation_step` | 8.6 % | 7.7 % |
+| batch transfer to the device | 6.9 % | 2.9 % |
+| `_reduce_epoch_pearson` (CPU metrics, incl. scipy rank for Spearman) | 3.0 % | 7.5 % |
+| checkpoint saving | 0.7 % | 1.3 % |
+
+`_extract_targets_and_masks` decoded each graph's target row from the COO phenotype list in a Python loop over the batch, with about ten small operations per graph on DEVICE tensors, each one a point where the CPU waits for the GPU (`.tolist()` of 6,000 type indices, `bool(x.any())`, `unique`), plus a list comprehension over every value. When several processes share a card every one of those waits queues behind the other processes' kernels, which is why packing hurt so much more than the GPU work alone predicted, and why batch 128 (four times the graphs per step) was no faster per epoch than batch 32 in a shared card (19 to 20 s against 29 to 32 s at three per card, job 3319, epochs 15 to 50).
+
+Fix: `torchcell/trainers/coo_targets.py`, `decode_head_targets`, the same decode in a fixed number of tensor operations (name table gather, one group id per graph and experiment, `bincount` for group sizes, one stable sort); the loop is kept as `decode_head_targets_loop` and `tests/torchcell/trainers/test_coo_targets.py` holds the two equal on ten cases (vector and scalar heads, a keep mask, an absent label, a wrong-width group beside a correct one, both error paths). The trainer calls the vectorized form. Timing with the fix is the v22 relaunch (job 3323).
+
+Correction to the section above: its statement that four runs on a card are GPU-bound was an inference from the step time under packing; the step time included these waits, so the GPU-bound floor is not yet measured.

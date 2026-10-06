@@ -70,9 +70,11 @@ ARM_OVERRIDES[F_l4w180]="model.num_transformer_layers=4 model.hidden_channels=18
 # card of batch-128 runs alone is the configuration whose speed the profile measured.
 # Batch-32 arms run two or three to a card for the same reason. F_ref's split seeds 0 to 11
 # also exist as v21's S_ref on Delta (same config and seeds, loop operator).
+# A batch-128 run holds 12.2 GB of the card, so three fit and a fourth runs out of memory
+# (job 3319, split seed 3 of both batch-128 arms).
 case "$WAVE:$TASK" in
-  1:0) ARM=F_b128;    SPLITS=(0 1 2 3) ;;
-  1:1) ARM=F_b128lr4; SPLITS=(0 1 2 3) ;;
+  1:0) ARM=F_b128;    SPLITS=(0 1 2) ;;
+  1:1) ARM=F_b128lr4; SPLITS=(0 1 2) ;;
   1:2) ARM=F_ref;     SPLITS=(0 1 2) ;;
   1:3) ARM=F_l4w180;  SPLITS=(0 1) ;;
   *) echo "unknown wave:task $WAVE:$TASK" >&2; exit 1 ;;

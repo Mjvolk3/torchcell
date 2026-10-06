@@ -65,3 +65,21 @@ Scores are the mean validation Pearson per feature over epochs 1,000 to 1,200, p
 - **Wave 5 (job 3335, 09:51):** F_b256lr1, batch 256 at lr 3e-4, one run on split seed 0 for 1,000 epochs, alone on the card (3.0 s per epoch in the timing cell).
 - Curves: every surviving run rises early, dips through epochs 400 to 800 while train Pearson passes 0.4, and is still gaining about 0.02 per 200 epochs at epoch 1,199.
 - Collapse signature: gradient norm 0.01 to 0.05 throughout, clipping never engaged, spread to zero within about 30 epochs, validation loss back to 0.2506 (the per-gene-mean predictor), below the 0.254 to 0.257 of the runs that keep training.
+
+## 2026.10.06 - Final read at 10:36
+
+`results/v22_readout.json`, tables and number macros in `notes-tex/figure-3-gate/tables/` (`v22_tables.py`), document section `notes-tex/figure-3-gate/sections/6-overnight.tex`, published to Zotero as `figure-3-gate-figure-3-gate_2026-10-06-10-37-00_fbb25898.pdf` (fifth version).
+
+| arm | split seeds run | collapsed or never launched | mean val Pearson per feature over epochs 1,000 to 1,200, split seeds 0 / 1 / 2 | mean paired difference vs F_ref (split seeds above) | s per epoch |
+|---|---|---|---|---|---|
+| F_ref (batch 32, lr 3e-4) | 3 | 0 | 0.055 / 0.072 / 0.059 (mean 0.062) | reference | 24.0 |
+| F_b128lr1 (batch 128, lr 3e-4) | 3 | 0 | 0.069 / 0.075 / 0.081 (mean **0.075**) | +0.013 (3 of 3) | 11.4 |
+| F_b128wu (batch 128, lr 6e-4, warmup) | 3 | 0 | 0.081 / 0.071 / 0.049 (mean 0.067) | +0.005 (1 of 3) | 11.4 |
+| F_b128 (batch 128, lr 6e-4) | 3 | 2 | none / none / 0.059 | +0.000 (1 of 1) | 10.2 |
+| F_b128lr4 (batch 128, lr 1.2e-3) | 3 | 3 | none | | 12.0 |
+| F_l4w180 (batch 32, L4, width 180) | 2 | 2 | none | | 17.6 |
+| F_b128wu_hadam | 3 | 0 | 0.048 / 0.013 / 0.048 (mean 0.036) | -0.025 (0 of 3); -0.031 vs F_b128wu (0 of 3) | 11.3 |
+
+- **Batch 128 at the unscaled rate is above the batch-32 reference on 3 of 3 split seeds (+0.014, +0.003, +0.022) at half the seconds per epoch.** Three split seeds, one init each: a sign that agrees three times, not a decided effect.
+- Matched-epoch reads of the 800-epoch regularization arms against F_b128wu: weight decay 0.3 is +0.001 at epoch 400 and +0.010 at epoch 799 (3 of 3 above at both: +0.020, +0.006, +0.004 at 799); dropout 0.3 is +0.015 at epoch 400 (3 of 3) and -0.006 at epoch 799 (1 of 3: -0.026, -0.015, +0.024), with one of its three runs collapsed at epoch 213. Neither reached the registered window.
+- F_b256lr1 (one run, split seed 0, 3.1 s per epoch alone on a card): at epoch 799, -0.006 against F_b128lr1 and +0.001 against F_ref; alive, spread 0.29.

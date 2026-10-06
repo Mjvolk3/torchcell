@@ -1,6 +1,0 @@
-﻿torchcell.models.hetero\_cell\_pma.plot\_embeddings
-===================================================
-
-.. currentmodule:: torchcell.models.hetero_cell_pma
-
-.. autofunction:: plot_embeddings

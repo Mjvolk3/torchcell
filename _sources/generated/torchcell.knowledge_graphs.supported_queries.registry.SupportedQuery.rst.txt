@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.supported\_queries.registry.SupportedQuery
+======================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.supported_queries.registry
+
+.. autoclass:: SupportedQuery
+   :show-inheritance:
+   :members:

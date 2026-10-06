@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.supported\_queries.check.checkout\_commit
+=====================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.supported_queries.check
+
+.. autofunction:: checkout_commit

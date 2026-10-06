@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.release\_snapshot.SnapshotEvent
+===========================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.release_snapshot
+
+.. autoclass:: SnapshotEvent
+   :show-inheritance:
+   :members:

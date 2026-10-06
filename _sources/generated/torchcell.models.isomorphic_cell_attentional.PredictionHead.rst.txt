@@ -1,8 +1,0 @@
-﻿torchcell.models.isomorphic\_cell\_attentional.PredictionHead
-=============================================================
-
-.. currentmodule:: torchcell.models.isomorphic_cell_attentional
-
-.. autoclass:: PredictionHead
-   :show-inheritance:
-   :members:

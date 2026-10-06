@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.ConditionalAlleleClass
+==================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: ConditionalAlleleClass
+   :show-inheritance:
+   :members:

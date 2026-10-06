@@ -27,6 +27,8 @@ Classes
    GenotypeAggregator
    ExperimentDataset
    Neo4jCellDataset
+   RawSha256MismatchError
+   ManifestPinMismatchError
    SubgraphRepresentation
    LazySubgraphRepresentation
    IncidenceSubgraphRepresentation
@@ -45,3 +47,10 @@ Functions
    compute_experiment_reference_index_sequential
    compute_experiment_reference_index_parallel
    post_process
+   check_manifest_pin
+   file_sha256
+   verify_sha256
+   verify_raw_files
+   copy_verified
+   write_verified
+   link_verified

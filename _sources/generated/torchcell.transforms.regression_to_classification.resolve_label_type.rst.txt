@@ -1,0 +1,6 @@
+﻿torchcell.transforms.regression\_to\_classification.resolve\_label\_type
+========================================================================
+
+.. currentmodule:: torchcell.transforms.regression_to_classification
+
+.. autofunction:: resolve_label_type

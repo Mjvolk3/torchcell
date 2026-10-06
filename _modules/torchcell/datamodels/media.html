@@ -64,7 +64,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
@@ -72,7 +71,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
@@ -385,6 +383,8 @@
 
 
 
+<div class="viewcode-block" id="restated">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.media.restated.html#torchcell.datamodels.media.restated">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">restated</span><span class="p">(</span><span class="n">base</span><span class="p">:</span> <span class="n">Media</span><span class="p">,</span> <span class="o">*</span><span class="n">statements</span><span class="p">:</span> <span class="n">SourcedValue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Media</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""``base`` with a dataset paper's own medium statements appended to its provenance.</span>
 
@@ -396,7 +396,8 @@
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">statements</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"restated() needs at least one SourcedValue from the paper"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">base</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"provenance"</span><span class="p">:</span> <span class="p">[</span><span class="o">*</span><span class="n">base</span><span class="o">.</span><span class="n">provenance</span><span class="p">,</span> <span class="o">*</span><span class="n">statements</span><span class="p">]})</span>
+    <span class="k">return</span> <span class="n">base</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"provenance"</span><span class="p">:</span> <span class="p">[</span><span class="o">*</span><span class="n">base</span><span class="o">.</span><span class="n">provenance</span><span class="p">,</span> <span class="o">*</span><span class="n">statements</span><span class="p">]})</span></div>
+
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>

@@ -1,0 +1,6 @@
+﻿torchcell.data.file\_sha256
+===========================
+
+.. currentmodule:: torchcell.data
+
+.. autofunction:: file_sha256

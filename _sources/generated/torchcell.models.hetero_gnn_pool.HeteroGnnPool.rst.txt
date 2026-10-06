@@ -1,8 +1,0 @@
-﻿torchcell.models.hetero\_gnn\_pool.HeteroGnnPool
-================================================
-
-.. currentmodule:: torchcell.models.hetero_gnn_pool
-
-.. autoclass:: HeteroGnnPool
-   :show-inheritance:
-   :members:

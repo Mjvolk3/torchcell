@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.supported\_queries.cypher\_deps.split\_blocks
+=========================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.supported_queries.cypher_deps
+
+.. autofunction:: split_blocks

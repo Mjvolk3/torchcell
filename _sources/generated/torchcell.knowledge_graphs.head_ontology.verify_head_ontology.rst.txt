@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.head\_ontology.verify\_head\_ontology
+=================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.head_ontology
+
+.. autofunction:: verify_head_ontology

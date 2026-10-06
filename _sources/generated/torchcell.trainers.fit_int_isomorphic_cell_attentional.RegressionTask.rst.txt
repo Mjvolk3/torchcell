@@ -1,8 +1,0 @@
-﻿torchcell.trainers.fit\_int\_isomorphic\_cell\_attentional.RegressionTask
-=========================================================================
-
-.. currentmodule:: torchcell.trainers.fit_int_isomorphic_cell_attentional
-
-.. autoclass:: RegressionTask
-   :show-inheritance:
-   :members:

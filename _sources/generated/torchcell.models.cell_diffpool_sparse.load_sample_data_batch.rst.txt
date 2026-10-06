@@ -1,6 +1,0 @@
-﻿torchcell.models.cell\_diffpool\_sparse.load\_sample\_data\_batch
-=================================================================
-
-.. currentmodule:: torchcell.models.cell_diffpool_sparse
-
-.. autofunction:: load_sample_data_batch

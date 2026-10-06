@@ -1,8 +1,0 @@
-﻿torchcell.models.isomorphic\_cell\_attentional.MetabolismProcessor
-==================================================================
-
-.. currentmodule:: torchcell.models.isomorphic_cell_attentional
-
-.. autoclass:: MetabolismProcessor
-   :show-inheritance:
-   :members:

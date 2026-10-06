@@ -1,0 +1,6 @@
+﻿torchcell.data.verify\_raw\_files
+=================================
+
+.. currentmodule:: torchcell.data
+
+.. autofunction:: verify_raw_files

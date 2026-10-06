@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.supported\_queries.check.check\_repo
+================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.supported_queries.check
+
+.. autofunction:: check_repo

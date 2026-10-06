@@ -1,8 +1,0 @@
-﻿torchcell.models.hetero\_cell\_pma.SimplePMA
-============================================
-
-.. currentmodule:: torchcell.models.hetero_cell_pma
-
-.. autoclass:: SimplePMA
-   :show-inheritance:
-   :members:

@@ -50,7 +50,6 @@ and an interactive map of the schema is at `/ontology/ <ontology/index.html>`_.
    modules/database
    modules/datamodels
    modules/datamodules
-   modules/dataset_readers
    modules/datasets
    modules/graph
    modules/knowledge_graphs
@@ -58,7 +57,6 @@ and an interactive map of the schema is at `/ontology/ <ontology/index.html>`_.
    modules/loader
    modules/losses
    modules/metabolism
-   modules/metrics
    modules/models
    modules/nn
    modules/ontology
@@ -79,11 +77,6 @@ Not documented
 
 The API reference leaves out these parts of the ``torchcell`` package:
 
-- ``torchcell.cell``, ``torchcell.dataset_preprocess`` and ``torchcell.go``: the first
-  two contain only an ``__init__.py`` with a docstring, and the one module in
-  ``torchcell.go`` is a script that reads ``data/go/go.obo`` when imported.
-- ``torchcell.pypy_adapters`` and ``torchcell.profilers``: legacy code kept for
-  reference.
+- ``torchcell.cell``: an ``__init__.py`` with a docstring and nothing else.
 - ``torchcell.scratch`` and ``torchcell.experiments``: working scripts, not library
   code.
-- Top-level script modules such as ``torchcell/neo4j_fitness_lmdb.py``.

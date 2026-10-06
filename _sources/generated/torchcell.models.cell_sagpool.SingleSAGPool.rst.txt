@@ -1,8 +1,0 @@
-﻿torchcell.models.cell\_sagpool.SingleSAGPool
-============================================
-
-.. currentmodule:: torchcell.models.cell_sagpool
-
-.. autoclass:: SingleSAGPool
-   :show-inheritance:
-   :members:

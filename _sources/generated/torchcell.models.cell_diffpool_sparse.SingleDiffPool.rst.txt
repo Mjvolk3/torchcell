@@ -1,8 +1,0 @@
-﻿torchcell.models.cell\_diffpool\_sparse.SingleDiffPool
-======================================================
-
-.. currentmodule:: torchcell.models.cell_diffpool_sparse
-
-.. autoclass:: SingleDiffPool
-   :show-inheritance:
-   :members:

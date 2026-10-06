@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.StrainBackground
+============================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: StrainBackground
+   :show-inheritance:
+   :members:

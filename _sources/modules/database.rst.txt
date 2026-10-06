@@ -10,27 +10,6 @@ Commands that build and serve the torchcell Neo4j knowledge graph. The package e
 .. contents:: Contents
     :local:
 
-``biocypher_out_combine``
--------------------------
-
-Combine multiple BioCypher output directories into a single Neo4j import set.
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   biocypher_out_combine.merge_dicts
-   biocypher_out_combine.check_yaml_compatibility
-   biocypher_out_combine.remove_duplicates
-   biocypher_out_combine.create_schema_info_csv
-   biocypher_out_combine.combine_csv_files
-   biocypher_out_combine.load_neo4j_config
-   biocypher_out_combine.load_schema_info
-   biocypher_out_combine.generate_neo4j_import_script
-
 ``browser_style``
 -----------------
 

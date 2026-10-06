@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.StrainReferenceGenome
+=================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: StrainReferenceGenome
+   :show-inheritance:
+   :members:

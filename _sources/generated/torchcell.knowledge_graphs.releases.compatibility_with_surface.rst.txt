@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.releases.compatibility\_with\_surface
+=================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autofunction:: compatibility_with_surface

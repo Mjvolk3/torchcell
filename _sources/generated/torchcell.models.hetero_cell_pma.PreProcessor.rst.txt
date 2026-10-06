@@ -1,8 +1,0 @@
-﻿torchcell.models.hetero\_cell\_pma.PreProcessor
-===============================================
-
-.. currentmodule:: torchcell.models.hetero_cell_pma
-
-.. autoclass:: PreProcessor
-   :show-inheritance:
-   :members:

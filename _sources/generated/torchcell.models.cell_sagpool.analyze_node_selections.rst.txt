@@ -1,6 +1,0 @@
-﻿torchcell.models.cell\_sagpool.analyze\_node\_selections
-========================================================
-
-.. currentmodule:: torchcell.models.cell_sagpool
-
-.. autofunction:: analyze_node_selections

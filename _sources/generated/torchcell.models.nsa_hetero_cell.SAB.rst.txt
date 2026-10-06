@@ -1,8 +1,0 @@
-﻿torchcell.models.nsa\_hetero\_cell.SAB
-======================================
-
-.. currentmodule:: torchcell.models.nsa_hetero_cell
-
-.. autoclass:: SAB
-   :show-inheritance:
-   :members:

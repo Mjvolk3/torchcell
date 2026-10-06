@@ -1,0 +1,6 @@
+﻿torchcell.data.check\_manifest\_pin
+===================================
+
+.. currentmodule:: torchcell.data
+
+.. autofunction:: check_manifest_pin

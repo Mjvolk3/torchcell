@@ -1,8 +1,0 @@
-﻿torchcell.models.isomorphic\_cell\_attentional.ReactionMapper
-=============================================================
-
-.. currentmodule:: torchcell.models.isomorphic_cell_attentional
-
-.. autoclass:: ReactionMapper
-   :show-inheritance:
-   :members:

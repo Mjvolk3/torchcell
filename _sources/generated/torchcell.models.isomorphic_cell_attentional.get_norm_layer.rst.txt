@@ -1,6 +1,0 @@
-﻿torchcell.models.isomorphic\_cell\_attentional.get\_norm\_layer
-===============================================================
-
-.. currentmodule:: torchcell.models.isomorphic_cell_attentional
-
-.. autofunction:: get_norm_layer

@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.head\_ontology.load\_mirror\_record
+===============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.head_ontology
+
+.. autofunction:: load_mirror_record

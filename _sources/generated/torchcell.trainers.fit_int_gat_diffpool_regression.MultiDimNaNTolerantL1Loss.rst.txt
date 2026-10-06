@@ -1,8 +1,0 @@
-﻿torchcell.trainers.fit\_int\_gat\_diffpool\_regression.MultiDimNaNTolerantL1Loss
-================================================================================
-
-.. currentmodule:: torchcell.trainers.fit_int_gat_diffpool_regression
-
-.. autoclass:: MultiDimNaNTolerantL1Loss
-   :show-inheritance:
-   :members:

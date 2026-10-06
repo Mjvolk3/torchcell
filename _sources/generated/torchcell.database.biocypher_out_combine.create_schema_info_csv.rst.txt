@@ -1,6 +1,0 @@
-﻿torchcell.database.biocypher\_out\_combine.create\_schema\_info\_csv
-====================================================================
-
-.. currentmodule:: torchcell.database.biocypher_out_combine
-
-.. autofunction:: create_schema_info_csv

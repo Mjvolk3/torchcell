@@ -1,8 +1,0 @@
-﻿torchcell.models.hetero\_cell\_nsa.HeteroCellNSA
-================================================
-
-.. currentmodule:: torchcell.models.hetero_cell_nsa
-
-.. autoclass:: HeteroCellNSA
-   :show-inheritance:
-   :members:

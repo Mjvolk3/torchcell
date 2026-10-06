@@ -1,8 +1,0 @@
-﻿torchcell.models.hetero\_cell\_bipartite.PreProcessor
-=====================================================
-
-.. currentmodule:: torchcell.models.hetero_cell_bipartite
-
-.. autoclass:: PreProcessor
-   :show-inheritance:
-   :members:

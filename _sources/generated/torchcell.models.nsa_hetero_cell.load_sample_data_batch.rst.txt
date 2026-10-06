@@ -1,6 +1,0 @@
-﻿torchcell.models.nsa\_hetero\_cell.load\_sample\_data\_batch
-============================================================
-
-.. currentmodule:: torchcell.models.nsa_hetero_cell
-
-.. autofunction:: load_sample_data_batch

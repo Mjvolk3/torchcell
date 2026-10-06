@@ -5,7 +5,7 @@ torchcell.transforms
 
 .. currentmodule:: torchcell.transforms
 
-PyG transforms applied to cell graphs. ``regression_to_classification`` and its COO variants normalize regression labels, bin them into classification targets, and invert the binning; ``hetero_to_dense`` and ``hetero_to_dense_mask`` convert the sparse adjacencies of a ``HeteroData`` graph into dense matrices or boolean masks.
+PyG transforms applied to cell graphs. ``regression_to_classification`` and its COO variants normalize regression labels, bin them into classification targets, and invert the binning; ``hetero_to_dense_mask`` converts the sparse adjacencies of a ``HeteroData`` graph into boolean masks.
 
 .. contents:: Contents
     :local:
@@ -30,21 +30,6 @@ Classes
    coo_regression_to_classification.AutoBinStrategy
    coo_regression_to_classification.COOLabelBinningTransform
    coo_regression_to_classification.COOInverseCompose
-
-``hetero_to_dense``
--------------------
-
-PyG transform converting heterogeneous sparse adjacencies to dense matrices.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   hetero_to_dense.HeteroToDense
 
 ``hetero_to_dense_mask``
 ------------------------
@@ -82,3 +67,11 @@ Classes
    regression_to_classification.LabelBinningTransform
    regression_to_classification.InverseCompose
 
+Functions
+~~~~~~~~~
+
+.. autosummary::
+   :nosignatures:
+   :toctree: ../generated
+
+   regression_to_classification.resolve_label_type

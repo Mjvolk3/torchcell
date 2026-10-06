@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.release\_snapshot.write\_snapshot
+=============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.release_snapshot
+
+.. autofunction:: write_snapshot

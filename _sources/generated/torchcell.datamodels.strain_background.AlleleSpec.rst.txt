@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.strain\_background.AlleleSpec
+==================================================
+
+.. currentmodule:: torchcell.datamodels.strain_background
+
+.. autoclass:: AlleleSpec
+   :show-inheritance:
+   :members:

@@ -1,8 +1,0 @@
-﻿torchcell.models.dense\_gat\_conv.DenseGATConv
-==============================================
-
-.. currentmodule:: torchcell.models.dense_gat_conv
-
-.. autoclass:: DenseGATConv
-   :show-inheritance:
-   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.StrainConstruction
+==============================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: StrainConstruction
+   :show-inheritance:
+   :members:

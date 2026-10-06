@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.strain\_background.standard\_allele
+========================================================
+
+.. currentmodule:: torchcell.datamodels.strain_background
+
+.. autofunction:: standard_allele

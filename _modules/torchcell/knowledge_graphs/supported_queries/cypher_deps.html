@@ -1,0 +1,379 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.knowledge_graphs.supported_queries.cypher_deps &mdash; TorchCell 1.6.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=51c9007c" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-mark.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/knowledge_graphs/supported_queries/cypher_deps.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=d6a008b6"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Datasets</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datasets/index.html">Datasets</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.knowledge_graphs.supported_queries.cypher_deps</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.knowledge_graphs.supported_queries.cypher_deps</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/knowledge_graphs/supported_queries/cypher_deps.py</span>
+<span class="c1"># [[torchcell.knowledge_graphs.supported_queries.cypher_deps]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/supported_queries/cypher_deps.py</span>
+<span class="c1"># Test file: tests/torchcell/knowledge_graphs/supported_queries/test_cypher_deps.py</span>
+<span class="sd">"""What a Cypher query reads from the graph, extracted from its text.</span>
+
+<span class="sd">A supported query depends on node labels, relationship types, properties and literal</span>
+<span class="sd">values (``dataset.id``, ``graph_level``, media names) that an ontology revision can move.</span>
+<span class="sd">The dependencies are **extracted, never typed**: :func:`extract_dependencies` reads the</span>
+<span class="sd">``.cql`` text, so the registry cannot disagree with the query it describes.</span>
+
+<span class="sd">The extractor is a set of regular expressions over a normalized text, not a Cypher</span>
+<span class="sd">parser. Normalization removes ``//`` and ``/* */`` comments and, for every rule that must</span>
+<span class="sd">not see literal text, replaces the characters inside ``'...'`` and ``"..."`` literals with</span>
+<span class="sd">spaces (offsets are kept, so a block boundary found in one form is valid in the other).</span>
+<span class="sd">The query is split into blocks at ``UNION`` / ``UNION ALL``; variables are scoped to a</span>
+<span class="sd">block, which is how every query in this repo is written.</span>
+
+<span class="sd">Rules, per block:</span>
+
+<span class="sd">- **node labels**: every ``:Label`` inside a node pattern ``(:Label)``, ``(x:Label)`` or</span>
+<span class="sd">  ``(x:A:B)``; the variable, when present, is bound to those labels for the block.</span>
+<span class="sd">- **relationship types**: every type in ``[:Type]``, ``[r:Type]`` or ``[r:A|B]``.</span>
+<span class="sd">- **properties**: ``x.prop`` where ``x`` is bound in the block by a node pattern</span>
+<span class="sd">  ``(x...)``, a relationship pattern ``[x...]``, an iteration ``x IN``, or ``AS x``.</span>
+<span class="sd">  A read through a variable that carries a label is also recorded as ``Label.prop`` in</span>
+<span class="sd">  ``label_properties`` (one entry per label), which is what the drift check compares</span>
+<span class="sd">  with the graph schema. Function calls (``x.f(``) are not property reads.</span>
+<span class="sd">- **dataset ids**: ``x.id = '&lt;lit&gt;'`` and ``x.id IN ['&lt;lit&gt;', ...]`` where ``x`` carries the</span>
+<span class="sd">  ``Dataset`` label in the block.</span>
+<span class="sd">- **graph levels**: ``x.graph_level = '&lt;lit&gt;'`` and ``x.graph_level IN [...]``, any ``x``.</span>
+<span class="sd">- **media names**: ``x.name = '&lt;lit&gt;'`` and ``x.name IN [...]`` where ``x`` carries the</span>
+<span class="sd">  ``Media`` label in the block.</span>
+<span class="sd">- **parameters**: every ``$name`` outside a literal.</span>
+
+<span class="sd">Documented limits (a query that relies on one of these under-reports its dependencies):</span>
+
+<span class="sd">- Labels in a ``WHERE x:Label`` predicate, labels or types quoted with backticks, and</span>
+<span class="sd">  label expressions (``:A&amp;B``, ``:!A``) are not recognized.</span>
+<span class="sd">- A literal on the left (``'X' = dataset.id``) and a dataset id passed as a parameter are</span>
+<span class="sd">  not recognized as dataset ids; a parameter shows up in ``parameters`` only.</span>
+<span class="sd">- ``CALL { ... }`` subqueries share their enclosing block's variable scope here.</span>
+<span class="sd">- Property reads through a relationship variable are recorded in ``properties`` but not</span>
+<span class="sd">  in ``label_properties``: the graph schema lists no edge properties to check them against.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.supported_queries.registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">QueryDependencies</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"strip_comments"</span><span class="p">,</span> <span class="s2">"blank_literals"</span><span class="p">,</span> <span class="s2">"split_blocks"</span><span class="p">,</span> <span class="s2">"extract_dependencies"</span><span class="p">]</span>
+
+<span class="n">_IDENT</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"[A-Za-z_]\w*"</span>
+<span class="n">_NODE_LABELS</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">rf</span><span class="s2">"\(\s*(</span><span class="si">{</span><span class="n">_IDENT</span><span class="si">}</span><span class="s2">)?\s*((?::\s*</span><span class="si">{</span><span class="n">_IDENT</span><span class="si">}</span><span class="s2">\s*)+)(?=[)</span><span class="se">{{</span><span class="s2">])"</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span>
+<span class="p">)</span>
+<span class="n">_LABEL</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">":\s*(</span><span class="si">{</span><span class="n">_IDENT</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<span class="n">_REL_TYPES</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">rf</span><span class="s2">"\[\s*(</span><span class="si">{</span><span class="n">_IDENT</span><span class="si">}</span><span class="s2">)?\s*:\s*(</span><span class="si">{</span><span class="n">_IDENT</span><span class="si">}</span><span class="s2">(?:\s*\|\s*:?\s*</span><span class="si">{</span><span class="n">_IDENT</span><span class="si">}</span><span class="s2">)*)"</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span>
+<span class="p">)</span>
+<span class="n">_REL_TYPE_SPLIT</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\s*\|\s*:?\s*"</span><span class="p">)</span>
+<span class="n">_NODE_VAR</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"\(\s*(</span><span class="si">{</span><span class="n">_IDENT</span><span class="si">}</span><span class="s2">)\s*(?=[):</span><span class="se">{{</span><span class="s2">])"</span><span class="p">)</span>
+<span class="n">_REL_VAR</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"\[\s*(</span><span class="si">{</span><span class="n">_IDENT</span><span class="si">}</span><span class="s2">)\s*(?=[:\]*</span><span class="se">{{</span><span class="s2">])"</span><span class="p">)</span>
+<span class="n">_IN_VAR</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"(?&lt;![\w.$])(</span><span class="si">{</span><span class="n">_IDENT</span><span class="si">}</span><span class="s2">)\s+(?i:IN)\b"</span><span class="p">)</span>
+<span class="n">_AS_VAR</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"\b(?i:AS)\s+(</span><span class="si">{</span><span class="n">_IDENT</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<span class="n">_PROPERTY</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"(?&lt;![\w.$])(</span><span class="si">{</span><span class="n">_IDENT</span><span class="si">}</span><span class="s2">)\.(</span><span class="si">{</span><span class="n">_IDENT</span><span class="si">}</span><span class="s2">)\b(?!\s*\()"</span><span class="p">)</span>
+<span class="n">_PARAMETER</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"\$(</span><span class="si">{</span><span class="n">_IDENT</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+<span class="n">_UNION</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\bUNION(?:\s+ALL)?\b"</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">)</span>
+<span class="n">_STRING</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"(?:'([^'</span><span class="se">\\</span><span class="s2">]*)'|</span><span class="se">\"</span><span class="s2">([^</span><span class="se">\"\\</span><span class="s2">]*)</span><span class="se">\"</span><span class="s2">)"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_literal_rule</span><span class="p">(</span><span class="n">prop</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""``(x.prop = '&lt;lit&gt;', x.prop IN [...])`` patterns; group 1 is the variable."""</span>
+    <span class="n">equals</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"(?&lt;![\w.$])(</span><span class="si">{</span><span class="n">_IDENT</span><span class="si">}</span><span class="s2">)\.</span><span class="si">{</span><span class="n">prop</span><span class="si">}</span><span class="s2">\s*=\s*</span><span class="si">{</span><span class="n">_STRING</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">within</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"(?&lt;![\w.$])(</span><span class="si">{</span><span class="n">_IDENT</span><span class="si">}</span><span class="s2">)\.</span><span class="si">{</span><span class="n">prop</span><span class="si">}</span><span class="s2">\s+(?i:IN)\s*\[([^\]]*)\]"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">equals</span><span class="p">,</span> <span class="n">within</span>
+
+
+<span class="n">_DATASET_ID</span> <span class="o">=</span> <span class="n">_literal_rule</span><span class="p">(</span><span class="s2">"id"</span><span class="p">)</span>
+<span class="n">_GRAPH_LEVEL</span> <span class="o">=</span> <span class="n">_literal_rule</span><span class="p">(</span><span class="s2">"graph_level"</span><span class="p">)</span>
+<span class="n">_MEDIA_NAME</span> <span class="o">=</span> <span class="n">_literal_rule</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
+<span class="n">_LIST_ITEM</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">_STRING</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scan</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">keep_literals</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Drop comments; with ``keep_literals=False`` also blank string-literal contents.</span>
+
+<span class="sd">    Blanking replaces each character inside the quotes with a space (a newline stays a</span>
+<span class="sd">    newline), so offsets are identical between the two forms. Backtick-quoted names are</span>
+<span class="sd">    passed through untouched: they are identifiers, never comments.</span>
+<span class="sd">    """</span>
+    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+        <span class="n">ch</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">ch</span> <span class="ow">in</span> <span class="s2">"'</span><span class="se">\"</span><span class="s2">`"</span><span class="p">:</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="k">while</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span> <span class="ow">and</span> <span class="n">text</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">!=</span> <span class="n">ch</span><span class="p">:</span>
+                <span class="n">j</span> <span class="o">+=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">text</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"</span><span class="se">\\</span><span class="s2">"</span> <span class="k">else</span> <span class="mi">1</span>
+            <span class="c1"># An unterminated literal runs to the end of the text.</span>
+            <span class="n">close</span><span class="p">,</span> <span class="n">stop</span> <span class="o">=</span> <span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">n</span> <span class="k">else</span> <span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+            <span class="n">body</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">stop</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">close</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">keep_literals</span> <span class="ow">or</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">"`"</span><span class="p">:</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">text</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">stop</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">blank</span> <span class="o">=</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="k">else</span> <span class="s2">" "</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">body</span><span class="p">)</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ch</span> <span class="o">+</span> <span class="n">blank</span> <span class="o">+</span> <span class="n">close</span><span class="p">)</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">stop</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"//"</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">n</span> <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="n">j</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">" "</span> <span class="o">*</span> <span class="p">(</span><span class="n">j</span> <span class="o">-</span> <span class="n">i</span><span class="p">))</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">j</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"/*"</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">"*/"</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">n</span> <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">2</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="k">else</span> <span class="s2">" "</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">text</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">j</span><span class="p">]))</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">j</span>
+            <span class="k">continue</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="strip_comments">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.cypher_deps.strip_comments.html#torchcell.knowledge_graphs.supported_queries.cypher_deps.strip_comments">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">strip_comments</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The query with ``//`` and ``/* */`` comments replaced by spaces (offsets kept)."""</span>
+    <span class="k">return</span> <span class="n">_scan</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">keep_literals</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="blank_literals">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.cypher_deps.blank_literals.html#torchcell.knowledge_graphs.supported_queries.cypher_deps.blank_literals">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">blank_literals</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">""":func:`strip_comments`, plus every string literal's contents replaced by spaces."""</span>
+    <span class="k">return</span> <span class="n">_scan</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">keep_literals</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="split_blocks">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.cypher_deps.split_blocks.html#torchcell.knowledge_graphs.supported_queries.cypher_deps.split_blocks">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">split_blocks</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""``(start, end)`` offsets of the ``UNION``-separated blocks of blanked ``text``."""</span>
+    <span class="n">spans</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">_UNION</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+        <span class="n">spans</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">start</span><span class="p">,</span> <span class="n">match</span><span class="o">.</span><span class="n">start</span><span class="p">()))</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+    <span class="n">spans</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">start</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">spans</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_literal_values</span><span class="p">(</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">rule</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+    <span class="n">variables</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Literal values assigned to ``x.prop`` in ``source`` for ``x`` in ``variables``.</span>
+
+<span class="sd">    ``variables=None`` accepts any variable.</span>
+<span class="sd">    """</span>
+    <span class="n">allowed</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">variables</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">set</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
+    <span class="n">values</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">equals</span><span class="p">,</span> <span class="n">within</span> <span class="o">=</span> <span class="n">rule</span>
+    <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">equals</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">allowed</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
+            <span class="n">values</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">within</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">allowed</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">_LIST_ITEM</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)):</span>
+                <span class="n">values</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                    <span class="n">item</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">item</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+                <span class="p">)</span>
+    <span class="k">return</span> <span class="n">values</span>
+
+
+<div class="viewcode-block" id="extract_dependencies">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.cypher_deps.extract_dependencies.html#torchcell.knowledge_graphs.supported_queries.cypher_deps.extract_dependencies">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_dependencies</span><span class="p">(</span><span class="n">cypher</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QueryDependencies</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The labels, types, properties, literals and parameters ``cypher`` depends on."""</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">strip_comments</span><span class="p">(</span><span class="n">cypher</span><span class="p">)</span>
+    <span class="n">blanked</span> <span class="o">=</span> <span class="n">blank_literals</span><span class="p">(</span><span class="n">cypher</span><span class="p">)</span>
+    <span class="n">node_labels</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">relationship_types</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">properties</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">label_properties</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">dataset_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">graph_levels</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">media_names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">parameters</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="n">split_blocks</span><span class="p">(</span><span class="n">blanked</span><span class="p">):</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="n">blanked</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+        <span class="n">literal_block</span> <span class="o">=</span> <span class="n">source</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+        <span class="n">var_labels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">_NODE_LABELS</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">block</span><span class="p">):</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">_LABEL</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)))</span>
+            <span class="n">node_labels</span> <span class="o">|=</span> <span class="n">labels</span>
+            <span class="k">if</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">var_labels</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">_REL_TYPES</span><span class="o">.</span><span class="n">finditer</span><span class="p">(</span><span class="n">block</span><span class="p">):</span>
+            <span class="n">relationship_types</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_REL_TYPE_SPLIT</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()))</span>
+        <span class="n">bound</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">var_labels</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="p">(</span><span class="n">_NODE_VAR</span><span class="p">,</span> <span class="n">_REL_VAR</span><span class="p">,</span> <span class="n">_IN_VAR</span><span class="p">,</span> <span class="n">_AS_VAR</span><span class="p">):</span>
+            <span class="n">bound</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">pattern</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">block</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">var</span><span class="p">,</span> <span class="n">prop</span> <span class="ow">in</span> <span class="n">_PROPERTY</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">block</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">var</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bound</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">properties</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">prop</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">var_labels</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="p">()):</span>
+                <span class="n">label_properties</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">prop</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">parameters</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_PARAMETER</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">block</span><span class="p">))</span>
+        <span class="n">dataset_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">labels</span> <span class="ow">in</span> <span class="n">var_labels</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="s2">"Dataset"</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span>
+        <span class="n">media_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">labels</span> <span class="ow">in</span> <span class="n">var_labels</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="s2">"Media"</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span>
+        <span class="n">dataset_ids</span> <span class="o">|=</span> <span class="n">_literal_values</span><span class="p">(</span><span class="n">literal_block</span><span class="p">,</span> <span class="n">_DATASET_ID</span><span class="p">,</span> <span class="n">dataset_vars</span><span class="p">)</span>
+        <span class="n">graph_levels</span> <span class="o">|=</span> <span class="n">_literal_values</span><span class="p">(</span><span class="n">literal_block</span><span class="p">,</span> <span class="n">_GRAPH_LEVEL</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">media_names</span> <span class="o">|=</span> <span class="n">_literal_values</span><span class="p">(</span><span class="n">literal_block</span><span class="p">,</span> <span class="n">_MEDIA_NAME</span><span class="p">,</span> <span class="n">media_vars</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">QueryDependencies</span><span class="p">(</span>
+        <span class="n">node_labels</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">node_labels</span><span class="p">),</span>
+        <span class="n">relationship_types</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">relationship_types</span><span class="p">),</span>
+        <span class="n">properties</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">properties</span><span class="p">),</span>
+        <span class="n">label_properties</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">label_properties</span><span class="p">),</span>
+        <span class="n">dataset_ids</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">dataset_ids</span><span class="p">),</span>
+        <span class="n">graph_levels</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">graph_levels</span><span class="p">),</span>
+        <span class="n">media_names</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">media_names</span><span class="p">),</span>
+        <span class="n">parameters</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">parameters</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

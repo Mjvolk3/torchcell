@@ -1,8 +1,0 @@
-﻿torchcell.models.hetero\_cell\_isab\_split.HeteroCell
-=====================================================
-
-.. currentmodule:: torchcell.models.hetero_cell_isab_split
-
-.. autoclass:: HeteroCell
-   :show-inheritance:
-   :members:

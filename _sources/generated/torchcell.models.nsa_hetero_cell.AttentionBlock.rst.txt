@@ -1,8 +1,0 @@
-﻿torchcell.models.nsa\_hetero\_cell.AttentionBlock
-=================================================
-
-.. currentmodule:: torchcell.models.nsa_hetero_cell
-
-.. autoclass:: AttentionBlock
-   :show-inheritance:
-   :members:

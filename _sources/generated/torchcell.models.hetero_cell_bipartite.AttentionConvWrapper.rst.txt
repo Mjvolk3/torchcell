@@ -1,8 +1,0 @@
-﻿torchcell.models.hetero\_cell\_bipartite.AttentionConvWrapper
-=============================================================
-
-.. currentmodule:: torchcell.models.hetero_cell_bipartite
-
-.. autoclass:: AttentionConvWrapper
-   :show-inheritance:
-   :members:

@@ -1,0 +1,6 @@
+﻿torchcell.trainers.int\_hetero\_cell.normalize\_accumulation\_schedule
+======================================================================
+
+.. currentmodule:: torchcell.trainers.int_hetero_cell
+
+.. autofunction:: normalize_accumulation_schedule

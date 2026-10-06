@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.release\_snapshot.SnapshotDataset
+=============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.release_snapshot
+
+.. autoclass:: SnapshotDataset
+   :show-inheritance:
+   :members:

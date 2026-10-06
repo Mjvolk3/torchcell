@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.supported\_queries.cypher\_deps.blank\_literals
+===========================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.supported_queries.cypher_deps
+
+.. autofunction:: blank_literals

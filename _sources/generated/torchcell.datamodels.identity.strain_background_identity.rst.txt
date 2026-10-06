@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.identity.strain\_background\_identity
+==========================================================
+
+.. currentmodule:: torchcell.datamodels.identity
+
+.. autofunction:: strain_background_identity

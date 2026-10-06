@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.PreCultureSource
+============================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: PreCultureSource
+   :show-inheritance:
+   :members:

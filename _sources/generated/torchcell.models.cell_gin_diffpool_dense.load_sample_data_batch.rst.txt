@@ -1,6 +1,0 @@
-﻿torchcell.models.cell\_gin\_diffpool\_dense.load\_sample\_data\_batch
-=====================================================================
-
-.. currentmodule:: torchcell.models.cell_gin_diffpool_dense
-
-.. autofunction:: load_sample_data_batch

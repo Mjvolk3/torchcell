@@ -71,7 +71,6 @@
 <li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
 <li class="toctree-l1"><a class="reference internal" href="knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
@@ -79,7 +78,6 @@
 <li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
 <li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
-<li class="toctree-l1"><a class="reference internal" href="metrics.html">torchcell.metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
@@ -161,6 +159,12 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.Neo4jCellDataset.html#torchcell.data.Neo4jCellDataset" title="torchcell.data.Neo4jCellDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Neo4jCellDataset</span></code></a></p></td>
 <td><p>Dataset for loading cell data from Neo4j with file locking for DDP support.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.data.RawSha256MismatchError.html#torchcell.data.RawSha256MismatchError" title="torchcell.data.RawSha256MismatchError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RawSha256MismatchError</span></code></a></p></td>
+<td><p>A file's bytes do not match the sha256 pin its loader records.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.ManifestPinMismatchError.html#torchcell.data.ManifestPinMismatchError" title="torchcell.data.ManifestPinMismatchError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ManifestPinMismatchError</span></code></a></p></td>
+<td><p>A raw-mirror manifest records a sha256 other than its loader's module pin.</p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.data.SubgraphRepresentation.html#torchcell.data.SubgraphRepresentation" title="torchcell.data.SubgraphRepresentation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SubgraphRepresentation</span></code></a></p></td>
 <td><p>Processor that removes perturbed genes and returns the induced subgraph.</p></td>
 </tr>
@@ -197,6 +201,27 @@
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.data.post_process.html#torchcell.data.post_process" title="torchcell.data.post_process"><code class="xref py py-obj docutils literal notranslate"><span class="pre">post_process</span></code></a></p></td>
 <td><p>Decorate <code class="docutils literal notranslate"><span class="pre">process</span></code> to rebuild the gene set/reference index and validate.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.check_manifest_pin.html#torchcell.data.check_manifest_pin" title="torchcell.data.check_manifest_pin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_manifest_pin</span></code></a></p></td>
+<td><p>Raise <code class="docutils literal notranslate"><span class="pre">ManifestPinMismatchError</span></code> unless the manifest's <code class="docutils literal notranslate"><span class="pre">recorded</span></code> is <code class="docutils literal notranslate"><span class="pre">pin</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.data.file_sha256.html#torchcell.data.file_sha256" title="torchcell.data.file_sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">file_sha256</span></code></a></p></td>
+<td><p>Hex sha256 of a file's bytes (symlinks are followed), read in chunks.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.verify_sha256.html#torchcell.data.verify_sha256" title="torchcell.data.verify_sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_sha256</span></code></a></p></td>
+<td><p>Raise <code class="docutils literal notranslate"><span class="pre">RawSha256MismatchError</span></code> unless <code class="docutils literal notranslate"><span class="pre">path</span></code> hashes to <code class="docutils literal notranslate"><span class="pre">expected</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.data.verify_raw_files.html#torchcell.data.verify_raw_files" title="torchcell.data.verify_raw_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_raw_files</span></code></a></p></td>
+<td><p>Verify every pinned file in <code class="docutils literal notranslate"><span class="pre">raw_dir</span></code> (<code class="docutils literal notranslate"><span class="pre">{file</span> <span class="pre">name:</span> <span class="pre">sha256}</span></code>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.copy_verified.html#torchcell.data.copy_verified" title="torchcell.data.copy_verified"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy_verified</span></code></a></p></td>
+<td><p>Copy <code class="docutils literal notranslate"><span class="pre">src</span></code> to <code class="docutils literal notranslate"><span class="pre">dest</span></code> after verifying <code class="docutils literal notranslate"><span class="pre">src</span></code> against <code class="docutils literal notranslate"><span class="pre">expected</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.data.write_verified.html#torchcell.data.write_verified" title="torchcell.data.write_verified"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_verified</span></code></a></p></td>
+<td><p>Write <code class="docutils literal notranslate"><span class="pre">data</span></code> to <code class="docutils literal notranslate"><span class="pre">dest</span></code> only if it hashes to <code class="docutils literal notranslate"><span class="pre">expected</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.data.link_verified.html#torchcell.data.link_verified" title="torchcell.data.link_verified"><code class="xref py py-obj docutils literal notranslate"><span class="pre">link_verified</span></code></a></p></td>
+<td><p>Symlink <code class="docutils literal notranslate"><span class="pre">dest</span></code> to <code class="docutils literal notranslate"><span class="pre">src</span></code> after verifying <code class="docutils literal notranslate"><span class="pre">src</span></code>; an existing link is kept.</p></td>
 </tr>
 </tbody>
 </table>

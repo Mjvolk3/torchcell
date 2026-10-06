@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.supported\_queries.registry.registry\_path
+======================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.supported_queries.registry
+
+.. autofunction:: registry_path

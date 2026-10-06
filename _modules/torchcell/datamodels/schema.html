@@ -64,7 +64,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
@@ -72,7 +71,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
@@ -194,6 +192,8 @@
 
 
 
+<div class="viewcode-block" id="HashableProvenanceGapMixin">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.HashableProvenanceGapMixin.html#torchcell.datamodels.schema.HashableProvenanceGapMixin">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">HashableProvenanceGapMixin</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""``ProvenanceGapMixin`` for a model that must stay hashable.</span>
 
@@ -208,7 +208,8 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Hash the canonical JSON dump (the list fields are not hashable)."""</span>
-        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">())</span></div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_require_value_or_gap</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ProvenanceGapMixin</span><span class="p">,</span> <span class="n">fields</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -255,6 +256,8 @@
 <span class="sd">pattern, restated so the background classes do not reach into that validator)."""</span>
 
 
+<div class="viewcode-block" id="MatingType">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.MatingType.html#torchcell.datamodels.schema.MatingType">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MatingType</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Mating-type locus state. The R64 reference (S288C) is MATalpha, so a MATa</span>
 <span class="sd">    strain differs from the reference IN SEQUENCE at MAT (chrIII), not only in label.</span>
@@ -262,13 +265,16 @@
 
     <span class="n">a</span> <span class="o">=</span> <span class="s2">"a"</span>
     <span class="n">alpha</span> <span class="o">=</span> <span class="s2">"alpha"</span>
-    <span class="n">a_alpha</span> <span class="o">=</span> <span class="s2">"a/alpha"</span>
+    <span class="n">a_alpha</span> <span class="o">=</span> <span class="s2">"a/alpha"</span></div>
+
 
 
 <span class="n">REFERENCE_MATING_TYPE</span><span class="p">:</span> <span class="n">MatingType</span> <span class="o">=</span> <span class="n">MatingType</span><span class="o">.</span><span class="n">alpha</span>
 <span class="sd">"""S288C R64 carries MATALPHA1 (YCR040W) and MATALPHA2 (YCR039C) at MAT."""</span>
 
 
+<div class="viewcode-block" id="Zygosity">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.Zygosity.html#torchcell.datamodels.schema.Zygosity">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Zygosity</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""How many of a background's chromosome copies carry an allele.</span>
 
@@ -279,9 +285,12 @@
 
     <span class="n">haploid</span> <span class="o">=</span> <span class="s2">"haploid"</span>
     <span class="n">homozygous</span> <span class="o">=</span> <span class="s2">"homozygous"</span>
-    <span class="n">heterozygous</span> <span class="o">=</span> <span class="s2">"heterozygous"</span>
+    <span class="n">heterozygous</span> <span class="o">=</span> <span class="s2">"heterozygous"</span></div>
 
 
+
+<div class="viewcode-block" id="AlleleEdit">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.AlleleEdit.html#torchcell.datamodels.schema.AlleleEdit">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AlleleEdit</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""How a background allele's sequence differs from the R64 locus.</span>
 
@@ -297,7 +306,8 @@
     <span class="n">full_deletion</span> <span class="o">=</span> <span class="s2">"full_deletion"</span>
     <span class="n">partial_deletion</span> <span class="o">=</span> <span class="s2">"partial_deletion"</span>
     <span class="n">cassette_replacement</span> <span class="o">=</span> <span class="s2">"cassette_replacement"</span>
-    <span class="n">sequence_variant</span> <span class="o">=</span> <span class="s2">"sequence_variant"</span>
+    <span class="n">sequence_variant</span> <span class="o">=</span> <span class="s2">"sequence_variant"</span></div>
+
 
 
 <span class="n">ALLELE_EDIT_SO</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">AlleleEdit</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
@@ -310,6 +320,8 @@
 <span class="sd">gene-perturbation leaves use)."""</span>
 
 
+<div class="viewcode-block" id="GenomicSpan">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.GenomicSpan.html#torchcell.datamodels.schema.GenomicSpan">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">GenomicSpan</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A 1-based, end-inclusive interval on one chromosome of the R64 assembly.</span>
 
@@ -331,9 +343,12 @@
             <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">chromosome</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">assembly</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"GenomicSpan needs a chromosome and an assembly name"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 
+
+<div class="viewcode-block" id="BackgroundAllele">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.BackgroundAllele.html#torchcell.datamodels.schema.BackgroundAllele">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BackgroundAllele</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""One allele a strain background carries, as an edit against R64.</span>
 
@@ -407,9 +422,12 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_sourced</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""True when neither the allele nor its zygosity is a declared gap."""</span>
-        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance_gaps</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance_gaps</span></div>
 
 
+
+<div class="viewcode-block" id="StrainBackground">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.StrainBackground.html#torchcell.datamodels.schema.StrainBackground">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StrainBackground</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""The genome content a strain carries beyond R64, constant across a collection.</span>
 
@@ -485,12 +503,17 @@
                 <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
+<div class="viewcode-block" id="StrainBackground.alleles_at">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.StrainBackground.html#torchcell.datamodels.schema.StrainBackground.alleles_at">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">alleles_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BackgroundAllele</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""The background's allele entries at one locus (empty = the R64 allele)."""</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alleles</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">systematic_gene_name</span> <span class="o">==</span> <span class="n">systematic_gene_name</span>
-        <span class="p">]</span>
+        <span class="p">]</span></div>
 
+
+<div class="viewcode-block" id="StrainBackground.functional_copies">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.StrainBackground.html#torchcell.datamodels.schema.StrainBackground.functional_copies">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">functional_copies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Functional copies of a gene in the UNPERTURBED background.</span>
 
@@ -509,12 +532,14 @@
                     <span class="s2">"functional copy number at this locus is undetermined"</span>
                 <span class="p">)</span>
             <span class="n">copies</span> <span class="o">-=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">allele</span><span class="o">.</span><span class="n">zygosity</span> <span class="ow">is</span> <span class="n">Zygosity</span><span class="o">.</span><span class="n">homozygous</span> <span class="k">else</span> <span class="mi">1</span>
-        <span class="k">return</span> <span class="n">copies</span>
+        <span class="k">return</span> <span class="n">copies</span></div>
+
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_fully_sourced</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""True when the background and every allele carry no declared gap."""</span>
-        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance_gaps</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">is_sourced</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alleles</span><span class="p">)</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance_gaps</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">is_sourced</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alleles</span><span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="ReferenceGenome">
@@ -541,6 +566,8 @@
 
 
 
+<div class="viewcode-block" id="StrainReferenceGenome">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.StrainReferenceGenome.html#torchcell.datamodels.schema.StrainReferenceGenome">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StrainReferenceGenome</span><span class="p">(</span><span class="n">ReferenceGenome</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A ``ReferenceGenome`` that states its typed ``StrainBackground`` (#507).</span>
 
@@ -566,7 +593,8 @@
                 <span class="sa">f</span><span class="s2">"background ploidy </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">ploidy</span><span class="si">!r}</span><span class="s2"> != ploidy "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ploidy</span><span class="si">!r}</span><span class="s2">"</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -820,6 +848,8 @@
 
 
 
+<div class="viewcode-block" id="StrainConstruction">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.StrainConstruction.html#torchcell.datamodels.schema.StrainConstruction">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StrainConstruction</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Where one physical deletion strain came from in its collection.</span>
 
@@ -861,9 +891,12 @@
             <span class="p">)</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"StrainConstruction needs at least one field"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 
+
+<div class="viewcode-block" id="OrfHistoryRelation">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.OrfHistoryRelation.html#torchcell.datamodels.schema.OrfHistoryRelation">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">OrfHistoryRelation</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""How the ORF a strain was built against relates to the current R64 gene.</span>
 
@@ -875,9 +908,12 @@
 
     <span class="n">merged</span> <span class="o">=</span> <span class="s2">"merged"</span>
     <span class="n">reannotated</span> <span class="o">=</span> <span class="s2">"reannotated"</span>
-    <span class="n">alias</span> <span class="o">=</span> <span class="s2">"alias"</span>
+    <span class="n">alias</span> <span class="o">=</span> <span class="s2">"alias"</span></div>
 
 
+
+<div class="viewcode-block" id="ConstructedOrf">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.ConstructedOrf.html#torchcell.datamodels.schema.ConstructedOrf">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConstructedOrf</span><span class="p">(</span><span class="n">HashableProvenanceGapMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""The ORF annotation a deletion strain was BUILT against, when not the current gene.</span>
 
@@ -904,7 +940,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_check_constructed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ConstructedOrf"</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Relation and deleted span are set or carry a typed gap."""</span>
         <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"relation"</span><span class="p">,</span> <span class="s2">"deleted_span"</span><span class="p">))</span>
-        <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -996,6 +1033,8 @@
 
 
 
+<div class="viewcode-block" id="HeterozygousDeletionPerturbation">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.HeterozygousDeletionPerturbation.html#torchcell.datamodels.schema.HeterozygousDeletionPerturbation">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">HeterozygousDeletionPerturbation</span><span class="p">(</span>
     <span class="n">HashableProvenanceGapMixin</span><span class="p">,</span> <span class="n">PresenceAbsencePerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span>
 <span class="p">):</span>
@@ -1050,7 +1089,8 @@
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"allele the cassette replaced, verbatim (e.g. 'LYS2' or 'lys2Δ0'), "</span>
         <span class="s2">"when the background is heterozygous at this locus; None otherwise"</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="NatMxDeletionPerturbation">
@@ -1207,6 +1247,8 @@
 
 
 
+<div class="viewcode-block" id="ConditionalAlleleClass">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.ConditionalAlleleClass.html#torchcell.datamodels.schema.ConditionalAlleleClass">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConditionalAlleleClass</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""How a conditional allele of an essential gene reduces its function.</span>
 
@@ -1223,9 +1265,12 @@
 
     <span class="n">temperature_sensitive</span> <span class="o">=</span> <span class="s2">"temperature_sensitive"</span>
     <span class="n">damp</span> <span class="o">=</span> <span class="s2">"damp"</span>
-    <span class="n">promoter_replacement</span> <span class="o">=</span> <span class="s2">"promoter_replacement"</span>
+    <span class="n">promoter_replacement</span> <span class="o">=</span> <span class="s2">"promoter_replacement"</span></div>
 
 
+
+<div class="viewcode-block" id="ConditionalAllelePerturbation">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.ConditionalAllelePerturbation.html#torchcell.datamodels.schema.ConditionalAllelePerturbation">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ConditionalAllelePerturbation</span><span class="p">(</span>
     <span class="n">HashableProvenanceGapMixin</span><span class="p">,</span> <span class="n">SequencePerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span>
 <span class="p">):</span>
@@ -1266,7 +1311,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_check_allele_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ConditionalAllelePerturbation"</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""An unknown allele class is a typed gap, never a silent None."""</span>
         <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"allele_class"</span><span class="p">,))</span>
-        <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
 
 
 <span class="c1"># Change to AggregateDeletionPerturbation, or AggDeletionPerturbation</span>
@@ -1933,6 +1979,8 @@
 
 
 
+<div class="viewcode-block" id="heterozygous_deletion_functional_copies">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.heterozygous_deletion_functional_copies.html#torchcell.datamodels.schema.heterozygous_deletion_functional_copies">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">heterozygous_deletion_functional_copies</span><span class="p">(</span>
     <span class="n">background</span><span class="p">:</span> <span class="n">StrainBackground</span><span class="p">,</span> <span class="n">perturbation</span><span class="p">:</span> <span class="n">HeterozygousDeletionPerturbation</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -1963,7 +2011,8 @@
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">replaced_allele</span> <span class="ow">in</span> <span class="p">{</span><span class="n">a</span><span class="o">.</span><span class="n">allele_name</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">null_het</span><span class="p">}:</span>
         <span class="k">return</span> <span class="n">before</span>
-    <span class="k">return</span> <span class="n">before</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">before</span> <span class="o">-</span> <span class="mi">1</span></div>
+
 
 
 <span class="c1"># Environment</span>
@@ -2515,6 +2564,8 @@
 <span class="p">)</span>
 
 
+<div class="viewcode-block" id="EndpointRule">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.EndpointRule.html#torchcell.datamodels.schema.EndpointRule">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">EndpointRule</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""When a culture was read out (the endpoint is part of what was measured).</span>
 
@@ -2528,9 +2579,12 @@
 
     <span class="n">fixed_duration</span> <span class="o">=</span> <span class="s2">"fixed_duration"</span>
     <span class="n">fixed_generations</span> <span class="o">=</span> <span class="s2">"fixed_generations"</span>
-    <span class="n">until_control_saturation</span> <span class="o">=</span> <span class="s2">"until_control_saturation"</span>
+    <span class="n">until_control_saturation</span> <span class="o">=</span> <span class="s2">"until_control_saturation"</span></div>
 
 
+
+<div class="viewcode-block" id="CultureFormat">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.CultureFormat.html#torchcell.datamodels.schema.CultureFormat">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CultureFormat</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""The physical culture a measurement was grown in.</span>
 
@@ -2568,9 +2622,12 @@
             <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"CultureFormat.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be non-negative"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
 
 
+
+<div class="viewcode-block" id="PreCultureSource">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.PreCultureSource.html#torchcell.datamodels.schema.PreCultureSource">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PreCultureSource</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""What the screened culture was inoculated FROM.</span>
 
@@ -2586,9 +2643,12 @@
     <span class="n">frozen_stock</span> <span class="o">=</span> <span class="s2">"frozen_stock"</span>
     <span class="n">overnight_culture</span> <span class="o">=</span> <span class="s2">"overnight_culture"</span>
     <span class="n">log_phase_culture</span> <span class="o">=</span> <span class="s2">"log_phase_culture"</span>
-    <span class="n">thaw_recovery</span> <span class="o">=</span> <span class="s2">"thaw_recovery"</span>
+    <span class="n">thaw_recovery</span> <span class="o">=</span> <span class="s2">"thaw_recovery"</span></div>
 
 
+
+<div class="viewcode-block" id="PreCulture">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.PreCulture.html#torchcell.datamodels.schema.PreCulture">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PreCulture</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""The culture step BEFORE treatment, which sets the cells' state at time zero.</span>
 
@@ -2623,7 +2683,8 @@
             <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"PreCulture.</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be non-negative"</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
 
 
 <div class="viewcode-block" id="Environment">
@@ -2680,6 +2741,8 @@
 
 
 
+<div class="viewcode-block" id="CultureEnvironment">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.CultureEnvironment.html#torchcell.datamodels.schema.CultureEnvironment">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CultureEnvironment</span><span class="p">(</span><span class="n">Environment</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""An ``Environment`` that also states its culture protocol (#507 point 8).</span>
 
@@ -2714,7 +2777,8 @@
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"nutrients added to complement the background's auxotrophies; None "</span>
         <span class="s2">"if unstated (a typed gap when the source implies but does not name them)"</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="p">)</span></div>
+
 
 
 <span class="c1"># Phenotype</span>
@@ -4434,6 +4498,8 @@
 <span class="c1"># class it is built from are untouched, so no other served dataset's schema</span>
 <span class="c1"># closure moves. The phenotype is the same EnvironmentResponsePhenotype.</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
+<div class="viewcode-block" id="StrainEnvironmentResponseExperimentReference">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.StrainEnvironmentResponseExperimentReference.html#torchcell.datamodels.schema.StrainEnvironmentResponseExperimentReference">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StrainEnvironmentResponseExperimentReference</span><span class="p">(</span>
     <span class="n">EnvironmentResponseExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span>
 <span class="p">):</span>
@@ -4447,9 +4513,12 @@
     <span class="c1"># Narrowed to subclasses: this family states its background and culture protocol.</span>
     <span class="n">genome_reference</span><span class="p">:</span> <span class="n">StrainReferenceGenome</span>
     <span class="n">environment_reference</span><span class="p">:</span> <span class="n">CultureEnvironment</span>
-    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">EnvironmentResponsePhenotype</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">EnvironmentResponsePhenotype</span></div>
 
 
+
+<div class="viewcode-block" id="StrainEnvironmentResponseExperiment">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.StrainEnvironmentResponseExperiment.html#torchcell.datamodels.schema.StrainEnvironmentResponseExperiment">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StrainEnvironmentResponseExperiment</span><span class="p">(</span><span class="n">EnvironmentResponseExperiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A strain's response to an environmental perturbation, with a typed background.</span>
 
@@ -4463,7 +4532,8 @@
     <span class="n">environment</span><span class="p">:</span> <span class="n">CultureEnvironment</span>  <span class="c1"># narrowed: this family states its culture protocol</span>
     <span class="c1"># Redeclared (same type): torchcell.data reads ``__annotations__["phenotype"]``,</span>
     <span class="c1"># which holds only a class's OWN annotations.</span>
-    <span class="n">phenotype</span><span class="p">:</span> <span class="n">EnvironmentResponsePhenotype</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">EnvironmentResponsePhenotype</span></div>
+
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>

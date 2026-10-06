@@ -1,8 +1,0 @@
-﻿torchcell.models.cell\_latent\_perturbation\_tform.ProjectedGATConv
-===================================================================
-
-.. currentmodule:: torchcell.models.cell_latent_perturbation_tform
-
-.. autoclass:: ProjectedGATConv
-   :show-inheritance:
-   :members:

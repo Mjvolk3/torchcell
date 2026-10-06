@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.interned\_constant.collect\_pointers
+=========================================================
+
+.. currentmodule:: torchcell.datamodels.interned_constant
+
+.. autofunction:: collect_pointers

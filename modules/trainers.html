@@ -24,7 +24,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="torchcell.trainers.cell.SimpleModel" href="../generated/torchcell.trainers.cell.SimpleModel.html" />
+    <link rel="next" title="torchcell.trainers.dcell_regression.DCellRegressionTask" href="../generated/torchcell.trainers.dcell_regression.DCellRegressionTask.html" />
     <link rel="prev" title="torchcell.sga.zfactor" href="../generated/torchcell.sga.zfactor.html" /> 
 </head>
 
@@ -67,7 +67,6 @@
 <li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
 <li class="toctree-l1"><a class="reference internal" href="knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
@@ -75,7 +74,6 @@
 <li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
 <li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
-<li class="toctree-l1"><a class="reference internal" href="metrics.html">torchcell.metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
@@ -86,28 +84,14 @@
 <li class="toctree-l1"><a class="reference internal" href="sequence.html">torchcell.sequence</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sga.html">torchcell.sga</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.trainers</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#cell"><code class="docutils literal notranslate"><span class="pre">cell</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#dcell-regression"><code class="docutils literal notranslate"><span class="pre">dcell_regression</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#dcell-regression-slim"><code class="docutils literal notranslate"><span class="pre">dcell_regression_slim</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#fit-int-cell-diffpool-dense-regression"><code class="docutils literal notranslate"><span class="pre">fit_int_cell_diffpool_dense_regression</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#fit-int-cell-gin-diffpool-dense-binary"><code class="docutils literal notranslate"><span class="pre">fit_int_cell_gin_diffpool_dense_binary</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#fit-int-cell-sagpool-regression"><code class="docutils literal notranslate"><span class="pre">fit_int_cell_sagpool_regression</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#fit-int-deep-set-regression"><code class="docutils literal notranslate"><span class="pre">fit_int_deep_set_regression</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#fit-int-gat-diffpool-regression"><code class="docutils literal notranslate"><span class="pre">fit_int_gat_diffpool_regression</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#fit-int-hetero-cell"><code class="docutils literal notranslate"><span class="pre">fit_int_hetero_cell</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#fit-int-hetero-cell-multiset-decomposition"><code class="docutils literal notranslate"><span class="pre">fit_int_hetero_cell_multiset_decomposition</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#fit-int-hetero-gnn-pool-binary-classification"><code class="docutils literal notranslate"><span class="pre">fit_int_hetero_gnn_pool_binary_classification</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#fit-int-hetero-gnn-pool-reg-categorical-entropy"><code class="docutils literal notranslate"><span class="pre">fit_int_hetero_gnn_pool_reg_categorical_entropy</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#fit-int-hetero-gnn-pool-regression"><code class="docutils literal notranslate"><span class="pre">fit_int_hetero_gnn_pool_regression</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#fit-int-isomorphic-cell-attentional"><code class="docutils literal notranslate"><span class="pre">fit_int_isomorphic_cell_attentional</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#int-dango"><code class="docutils literal notranslate"><span class="pre">int_dango</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#int-dcell"><code class="docutils literal notranslate"><span class="pre">int_dcell</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#int-hetero-cell"><code class="docutils literal notranslate"><span class="pre">int_hetero_cell</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#int-hetero-cell-nsa"><code class="docutils literal notranslate"><span class="pre">int_hetero_cell_nsa</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#int-transformer-cell"><code class="docutils literal notranslate"><span class="pre">int_transformer_cell</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#neo-regression"><code class="docutils literal notranslate"><span class="pre">neo_regression</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#simple-linear-regression"><code class="docutils literal notranslate"><span class="pre">simple_linear_regression</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#not-documented">Not documented</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="transforms.html">torchcell.transforms</a></li>
@@ -146,136 +130,54 @@
 <nav class="contents local" id="contents">
 <p class="topic-title">Contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#cell" id="id23"><code class="docutils literal notranslate"><span class="pre">cell</span></code></a></p>
+<li><p><a class="reference internal" href="#dcell-regression" id="id8"><code class="docutils literal notranslate"><span class="pre">dcell_regression</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#classes" id="id24">Classes</a></p></li>
+<li><p><a class="reference internal" href="#classes" id="id9">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#dcell-regression" id="id25"><code class="docutils literal notranslate"><span class="pre">dcell_regression</span></code></a></p>
+<li><p><a class="reference internal" href="#dcell-regression-slim" id="id10"><code class="docutils literal notranslate"><span class="pre">dcell_regression_slim</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id1" id="id26">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id1" id="id11">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#dcell-regression-slim" id="id27"><code class="docutils literal notranslate"><span class="pre">dcell_regression_slim</span></code></a></p>
+<li><p><a class="reference internal" href="#int-dango" id="id12"><code class="docutils literal notranslate"><span class="pre">int_dango</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id2" id="id28">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id2" id="id13">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#fit-int-cell-diffpool-dense-regression" id="id29"><code class="docutils literal notranslate"><span class="pre">fit_int_cell_diffpool_dense_regression</span></code></a></p>
+<li><p><a class="reference internal" href="#int-dcell" id="id14"><code class="docutils literal notranslate"><span class="pre">int_dcell</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id3" id="id30">Classes</a></p></li>
-<li><p><a class="reference internal" href="#functions" id="id31">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id3" id="id15">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#fit-int-cell-gin-diffpool-dense-binary" id="id32"><code class="docutils literal notranslate"><span class="pre">fit_int_cell_gin_diffpool_dense_binary</span></code></a></p>
+<li><p><a class="reference internal" href="#int-hetero-cell" id="id16"><code class="docutils literal notranslate"><span class="pre">int_hetero_cell</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id4" id="id33">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id5" id="id34">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id4" id="id17">Classes</a></p></li>
+<li><p><a class="reference internal" href="#functions" id="id18">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#fit-int-cell-sagpool-regression" id="id35"><code class="docutils literal notranslate"><span class="pre">fit_int_cell_sagpool_regression</span></code></a></p>
+<li><p><a class="reference internal" href="#int-transformer-cell" id="id19"><code class="docutils literal notranslate"><span class="pre">int_transformer_cell</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id6" id="id36">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id7" id="id37">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id5" id="id20">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#fit-int-deep-set-regression" id="id38"><code class="docutils literal notranslate"><span class="pre">fit_int_deep_set_regression</span></code></a></p>
+<li><p><a class="reference internal" href="#neo-regression" id="id21"><code class="docutils literal notranslate"><span class="pre">neo_regression</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id8" id="id39">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id6" id="id22">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#fit-int-gat-diffpool-regression" id="id40"><code class="docutils literal notranslate"><span class="pre">fit_int_gat_diffpool_regression</span></code></a></p>
+<li><p><a class="reference internal" href="#simple-linear-regression" id="id23"><code class="docutils literal notranslate"><span class="pre">simple_linear_regression</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id9" id="id41">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id7" id="id24">Classes</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#fit-int-hetero-cell" id="id42"><code class="docutils literal notranslate"><span class="pre">fit_int_hetero_cell</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id10" id="id43">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#fit-int-hetero-cell-multiset-decomposition" id="id44"><code class="docutils literal notranslate"><span class="pre">fit_int_hetero_cell_multiset_decomposition</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id11" id="id45">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#fit-int-hetero-gnn-pool-binary-classification" id="id46"><code class="docutils literal notranslate"><span class="pre">fit_int_hetero_gnn_pool_binary_classification</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id12" id="id47">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#fit-int-hetero-gnn-pool-reg-categorical-entropy" id="id48"><code class="docutils literal notranslate"><span class="pre">fit_int_hetero_gnn_pool_reg_categorical_entropy</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id13" id="id49">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#fit-int-hetero-gnn-pool-regression" id="id50"><code class="docutils literal notranslate"><span class="pre">fit_int_hetero_gnn_pool_regression</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id14" id="id51">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#fit-int-isomorphic-cell-attentional" id="id52"><code class="docutils literal notranslate"><span class="pre">fit_int_isomorphic_cell_attentional</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id15" id="id53">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#int-dango" id="id54"><code class="docutils literal notranslate"><span class="pre">int_dango</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id16" id="id55">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#int-dcell" id="id56"><code class="docutils literal notranslate"><span class="pre">int_dcell</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id17" id="id57">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#int-hetero-cell" id="id58"><code class="docutils literal notranslate"><span class="pre">int_hetero_cell</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id18" id="id59">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#int-hetero-cell-nsa" id="id60"><code class="docutils literal notranslate"><span class="pre">int_hetero_cell_nsa</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id19" id="id61">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#int-transformer-cell" id="id62"><code class="docutils literal notranslate"><span class="pre">int_transformer_cell</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id20" id="id63">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#neo-regression" id="id64"><code class="docutils literal notranslate"><span class="pre">neo_regression</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id21" id="id65">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#simple-linear-regression" id="id66"><code class="docutils literal notranslate"><span class="pre">simple_linear_regression</span></code></a></p>
-<ul>
-<li><p><a class="reference internal" href="#id22" id="id67">Classes</a></p></li>
-</ul>
-</li>
-<li><p><a class="reference internal" href="#not-documented" id="id68">Not documented</a></p></li>
 </ul>
 </nav>
-<section id="cell">
-<h2><a class="toc-backref" href="#id23" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">cell</span></code></a><a class="headerlink" href="#cell" title="Link to this heading"></a></h2>
-<p>Minimal LightningModule scaffold for cell-data regression training.</p>
-<section id="classes">
-<h3><a class="toc-backref" href="#id24" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.cell.SimpleModel.html#torchcell.trainers.cell.SimpleModel" title="torchcell.trainers.cell.SimpleModel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cell.SimpleModel</span></code></a></p></td>
-<td><p>Placeholder linear LightningModule scaffold for MSE regression.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
 <section id="dcell-regression">
-<h2><a class="toc-backref" href="#id25" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">dcell_regression</span></code></a><a class="headerlink" href="#dcell-regression" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id8" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">dcell_regression</span></code></a><a class="headerlink" href="#dcell-regression" title="Link to this heading"></a></h2>
 <p>Lightning training task for DCell graph-based fitness regression.</p>
-<section id="id1">
-<h3><a class="toc-backref" href="#id26" role="doc-backlink">Classes</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<section id="classes">
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.dcell_regression.DCellRegressionTask.html#torchcell.trainers.dcell_regression.DCellRegressionTask" title="torchcell.trainers.dcell_regression.DCellRegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dcell_regression.DCellRegressionTask</span></code></a></p></td>
@@ -286,10 +188,10 @@
 </section>
 </section>
 <section id="dcell-regression-slim">
-<h2><a class="toc-backref" href="#id27" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">dcell_regression_slim</span></code></a><a class="headerlink" href="#dcell-regression-slim" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id10" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">dcell_regression_slim</span></code></a><a class="headerlink" href="#dcell-regression-slim" title="Link to this heading"></a></h2>
 <p>Slim Lightning trainer for DCell regression with subsystem and root metrics.</p>
-<section id="id2">
-<h3><a class="toc-backref" href="#id28" role="doc-backlink">Classes</a><a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<section id="id1">
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">Classes</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.dcell_regression_slim.DCellRegressionSlimTask.html#torchcell.trainers.dcell_regression_slim.DCellRegressionSlimTask" title="torchcell.trainers.dcell_regression_slim.DCellRegressionSlimTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dcell_regression_slim.DCellRegressionSlimTask</span></code></a></p></td>
@@ -299,228 +201,11 @@
 </table>
 </section>
 </section>
-<section id="fit-int-cell-diffpool-dense-regression">
-<h2><a class="toc-backref" href="#id29" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fit_int_cell_diffpool_dense_regression</span></code></a><a class="headerlink" href="#fit-int-cell-diffpool-dense-regression" title="Link to this heading"></a></h2>
-<p>Lightning regression task for the DiffPool dense cell-integration model.</p>
-<section id="id3">
-<h3><a class="toc-backref" href="#id30" role="doc-backlink">Classes</a><a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_cell_diffpool_dense_regression.RegressionTask.html#torchcell.trainers.fit_int_cell_diffpool_dense_regression.RegressionTask" title="torchcell.trainers.fit_int_cell_diffpool_dense_regression.RegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_cell_diffpool_dense_regression.RegressionTask</span></code></a></p></td>
-<td><p>Lightning module training the model for fitness and gene-interaction regression.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="functions">
-<h3><a class="toc-backref" href="#id31" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_cell_diffpool_dense_regression.log_error_information.html#torchcell.trainers.fit_int_cell_diffpool_dense_regression.log_error_information" title="torchcell.trainers.fit_int_cell_diffpool_dense_regression.log_error_information"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_cell_diffpool_dense_regression.log_error_information</span></code></a></p></td>
-<td><p>Log and persist batch tensors and loss components when a NaN loss occurs.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="fit-int-cell-gin-diffpool-dense-binary">
-<h2><a class="toc-backref" href="#id32" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fit_int_cell_gin_diffpool_dense_binary</span></code></a><a class="headerlink" href="#fit-int-cell-gin-diffpool-dense-binary" title="Link to this heading"></a></h2>
-<p>Lightning trainer for the dense GIN+DiffPool binary fitness/interaction model.</p>
-<section id="id4">
-<h3><a class="toc-backref" href="#id33" role="doc-backlink">Classes</a><a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_cell_gin_diffpool_dense_binary.RegressionTask.html#torchcell.trainers.fit_int_cell_gin_diffpool_dense_binary.RegressionTask" title="torchcell.trainers.fit_int_cell_gin_diffpool_dense_binary.RegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_cell_gin_diffpool_dense_binary.RegressionTask</span></code></a></p></td>
-<td><p>Lightning task training the dense model on binary fitness/interaction.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="id5">
-<h3><a class="toc-backref" href="#id34" role="doc-backlink">Functions</a><a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_cell_gin_diffpool_dense_binary.log_error_information.html#torchcell.trainers.fit_int_cell_gin_diffpool_dense_binary.log_error_information" title="torchcell.trainers.fit_int_cell_gin_diffpool_dense_binary.log_error_information"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_cell_gin_diffpool_dense_binary.log_error_information</span></code></a></p></td>
-<td><p>Log batch tensors and loss components to aid debugging a NaN loss.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="fit-int-cell-sagpool-regression">
-<h2><a class="toc-backref" href="#id35" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fit_int_cell_sagpool_regression</span></code></a><a class="headerlink" href="#fit-int-cell-sagpool-regression" title="Link to this heading"></a></h2>
-<p>Lightning regression trainer for the SAGPool cell-graph interaction model.</p>
-<section id="id6">
-<h3><a class="toc-backref" href="#id36" role="doc-backlink">Classes</a><a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_cell_sagpool_regression.RegressionTask.html#torchcell.trainers.fit_int_cell_sagpool_regression.RegressionTask" title="torchcell.trainers.fit_int_cell_sagpool_regression.RegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_cell_sagpool_regression.RegressionTask</span></code></a></p></td>
-<td><p>Lightning task training a SAGPool model on fitness and interaction labels.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="id7">
-<h3><a class="toc-backref" href="#id37" role="doc-backlink">Functions</a><a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_cell_sagpool_regression.log_error_information.html#torchcell.trainers.fit_int_cell_sagpool_regression.log_error_information" title="torchcell.trainers.fit_int_cell_sagpool_regression.log_error_information"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_cell_sagpool_regression.log_error_information</span></code></a></p></td>
-<td><p>Log batch tensors and per-graph diagnostics when a NaN loss occurs.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="fit-int-deep-set-regression">
-<h2><a class="toc-backref" href="#id38" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fit_int_deep_set_regression</span></code></a><a class="headerlink" href="#fit-int-deep-set-regression" title="Link to this heading"></a></h2>
-<p>Lightning trainer and NaN-tolerant losses/metrics for deep-set GI regression.</p>
-<section id="id8">
-<h3><a class="toc-backref" href="#id39" role="doc-backlink">Classes</a><a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_deep_set_regression.NaNTolerantCorrelation.html#torchcell.trainers.fit_int_deep_set_regression.NaNTolerantCorrelation" title="torchcell.trainers.fit_int_deep_set_regression.NaNTolerantCorrelation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_deep_set_regression.NaNTolerantCorrelation</span></code></a></p></td>
-<td><p>Wrap a correlation metric so NaN entries in preds/target are masked out.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_deep_set_regression.NaNTolerantPearsonCorrCoef.html#torchcell.trainers.fit_int_deep_set_regression.NaNTolerantPearsonCorrCoef" title="torchcell.trainers.fit_int_deep_set_regression.NaNTolerantPearsonCorrCoef"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_deep_set_regression.NaNTolerantPearsonCorrCoef</span></code></a></p></td>
-<td><p>NaN-tolerant Pearson correlation coefficient.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_deep_set_regression.NaNTolerantSpearmanCorrCoef.html#torchcell.trainers.fit_int_deep_set_regression.NaNTolerantSpearmanCorrCoef" title="torchcell.trainers.fit_int_deep_set_regression.NaNTolerantSpearmanCorrCoef"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_deep_set_regression.NaNTolerantSpearmanCorrCoef</span></code></a></p></td>
-<td><p>NaN-tolerant Spearman correlation coefficient.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_deep_set_regression.MultiDimNaNTolerantMSELoss.html#torchcell.trainers.fit_int_deep_set_regression.MultiDimNaNTolerantMSELoss" title="torchcell.trainers.fit_int_deep_set_regression.MultiDimNaNTolerantMSELoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_deep_set_regression.MultiDimNaNTolerantMSELoss</span></code></a></p></td>
-<td><p>Per-dimension MSE that ignores NaN targets in each output dimension.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_deep_set_regression.CombinedMSELoss.html#torchcell.trainers.fit_int_deep_set_regression.CombinedMSELoss" title="torchcell.trainers.fit_int_deep_set_regression.CombinedMSELoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_deep_set_regression.CombinedMSELoss</span></code></a></p></td>
-<td><p>Weighted sum of per-dimension NaN-tolerant MSE losses.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_deep_set_regression.RegressionTask.html#torchcell.trainers.fit_int_deep_set_regression.RegressionTask" title="torchcell.trainers.fit_int_deep_set_regression.RegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_deep_set_regression.RegressionTask</span></code></a></p></td>
-<td><p>LightningModule for training models on graph-based regression datasets.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="fit-int-gat-diffpool-regression">
-<h2><a class="toc-backref" href="#id40" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fit_int_gat_diffpool_regression</span></code></a><a class="headerlink" href="#fit-int-gat-diffpool-regression" title="Link to this heading"></a></h2>
-<p>Lightning regression trainer and NaN-tolerant losses for GAT DiffPool models.</p>
-<section id="id9">
-<h3><a class="toc-backref" href="#id41" role="doc-backlink">Classes</a><a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_gat_diffpool_regression.NaNTolerantCorrelation.html#torchcell.trainers.fit_int_gat_diffpool_regression.NaNTolerantCorrelation" title="torchcell.trainers.fit_int_gat_diffpool_regression.NaNTolerantCorrelation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_gat_diffpool_regression.NaNTolerantCorrelation</span></code></a></p></td>
-<td><p>Wrap a correlation metric, ignoring NaN entries in preds and targets.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_gat_diffpool_regression.NaNTolerantPearsonCorrCoef.html#torchcell.trainers.fit_int_gat_diffpool_regression.NaNTolerantPearsonCorrCoef" title="torchcell.trainers.fit_int_gat_diffpool_regression.NaNTolerantPearsonCorrCoef"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_gat_diffpool_regression.NaNTolerantPearsonCorrCoef</span></code></a></p></td>
-<td><p>NaN-tolerant Pearson correlation coefficient.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_gat_diffpool_regression.NaNTolerantSpearmanCorrCoef.html#torchcell.trainers.fit_int_gat_diffpool_regression.NaNTolerantSpearmanCorrCoef" title="torchcell.trainers.fit_int_gat_diffpool_regression.NaNTolerantSpearmanCorrCoef"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_gat_diffpool_regression.NaNTolerantSpearmanCorrCoef</span></code></a></p></td>
-<td><p>NaN-tolerant Spearman correlation coefficient.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_gat_diffpool_regression.MultiDimNaNTolerantL1Loss.html#torchcell.trainers.fit_int_gat_diffpool_regression.MultiDimNaNTolerantL1Loss" title="torchcell.trainers.fit_int_gat_diffpool_regression.MultiDimNaNTolerantL1Loss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_gat_diffpool_regression.MultiDimNaNTolerantL1Loss</span></code></a></p></td>
-<td><p>Per-dimension L1 loss that masks out NaN targets.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_gat_diffpool_regression.MultiDimNaNTolerantMSELoss.html#torchcell.trainers.fit_int_gat_diffpool_regression.MultiDimNaNTolerantMSELoss" title="torchcell.trainers.fit_int_gat_diffpool_regression.MultiDimNaNTolerantMSELoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_gat_diffpool_regression.MultiDimNaNTolerantMSELoss</span></code></a></p></td>
-<td><p>Per-dimension MSE loss that masks out NaN targets.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_gat_diffpool_regression.CombinedRegressionLoss.html#torchcell.trainers.fit_int_gat_diffpool_regression.CombinedRegressionLoss" title="torchcell.trainers.fit_int_gat_diffpool_regression.CombinedRegressionLoss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_gat_diffpool_regression.CombinedRegressionLoss</span></code></a></p></td>
-<td><p>Weighted multi-dimensional regression loss (MSE or L1) over dimensions.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_gat_diffpool_regression.RegressionTask.html#torchcell.trainers.fit_int_gat_diffpool_regression.RegressionTask" title="torchcell.trainers.fit_int_gat_diffpool_regression.RegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_gat_diffpool_regression.RegressionTask</span></code></a></p></td>
-<td><p>Lightning task training a DiffPool model on multi-target regression.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="fit-int-hetero-cell">
-<h2><a class="toc-backref" href="#id42" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fit_int_hetero_cell</span></code></a><a class="headerlink" href="#fit-int-hetero-cell" title="Link to this heading"></a></h2>
-<p>Lightning regression trainer for heterogeneous cell-graph interaction models.</p>
-<section id="id10">
-<h3><a class="toc-backref" href="#id43" role="doc-backlink">Classes</a><a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_hetero_cell.RegressionTask.html#torchcell.trainers.fit_int_hetero_cell.RegressionTask" title="torchcell.trainers.fit_int_hetero_cell.RegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_hetero_cell.RegressionTask</span></code></a></p></td>
-<td><p>Lightning task training a cell-graph model on fitness and interaction targets.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="fit-int-hetero-cell-multiset-decomposition">
-<h2><a class="toc-backref" href="#id44" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fit_int_hetero_cell_multiset_decomposition</span></code></a><a class="headerlink" href="#fit-int-hetero-cell-multiset-decomposition" title="Link to this heading"></a></h2>
-<p>Lightning trainer for hetero-cell gene-interaction regression with multiset decomposition.</p>
-<section id="id11">
-<h3><a class="toc-backref" href="#id45" role="doc-backlink">Classes</a><a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask.html#torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask" title="torchcell.trainers.fit_int_hetero_cell_multiset_decomposition.RegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_hetero_cell_multiset_decomposition.RegressionTask</span></code></a></p></td>
-<td><p>Lightning task training a hetero-cell model with multiset interaction decomposition.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="fit-int-hetero-gnn-pool-binary-classification">
-<h2><a class="toc-backref" href="#id46" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fit_int_hetero_gnn_pool_binary_classification</span></code></a><a class="headerlink" href="#fit-int-hetero-gnn-pool-binary-classification" title="Link to this heading"></a></h2>
-<p>Lightning task training a hetero GNN pool model for binary fitness classification.</p>
-<section id="id12">
-<h3><a class="toc-backref" href="#id47" role="doc-backlink">Classes</a><a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_hetero_gnn_pool_binary_classification.ClassificationTask.html#torchcell.trainers.fit_int_hetero_gnn_pool_binary_classification.ClassificationTask" title="torchcell.trainers.fit_int_hetero_gnn_pool_binary_classification.ClassificationTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_hetero_gnn_pool_binary_classification.ClassificationTask</span></code></a></p></td>
-<td><p>Lightning module training a hetero GNN pool model for binned classification.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="fit-int-hetero-gnn-pool-reg-categorical-entropy">
-<h2><a class="toc-backref" href="#id48" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fit_int_hetero_gnn_pool_reg_categorical_entropy</span></code></a><a class="headerlink" href="#fit-int-hetero-gnn-pool-reg-categorical-entropy" title="Link to this heading"></a></h2>
-<p>Lightning trainer for binned categorical fitness/interaction regression.</p>
-<section id="id13">
-<h3><a class="toc-backref" href="#id49" role="doc-backlink">Classes</a><a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_hetero_gnn_pool_reg_categorical_entropy.RegCategoricalEntropyTask.html#torchcell.trainers.fit_int_hetero_gnn_pool_reg_categorical_entropy.RegCategoricalEntropyTask" title="torchcell.trainers.fit_int_hetero_gnn_pool_reg_categorical_entropy.RegCategoricalEntropyTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_hetero_gnn_pool_reg_categorical_entropy.RegCategoricalEntropyTask</span></code></a></p></td>
-<td><p>Lightning task for fitness/interaction regression via binned classification.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="fit-int-hetero-gnn-pool-regression">
-<h2><a class="toc-backref" href="#id50" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fit_int_hetero_gnn_pool_regression</span></code></a><a class="headerlink" href="#fit-int-hetero-gnn-pool-regression" title="Link to this heading"></a></h2>
-<p>Lightning task for fitness and gene-interaction regression on hetero GNN pools.</p>
-<section id="id14">
-<h3><a class="toc-backref" href="#id51" role="doc-backlink">Classes</a><a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_hetero_gnn_pool_regression.RegressionTask.html#torchcell.trainers.fit_int_hetero_gnn_pool_regression.RegressionTask" title="torchcell.trainers.fit_int_hetero_gnn_pool_regression.RegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_hetero_gnn_pool_regression.RegressionTask</span></code></a></p></td>
-<td><p>Lightning task training a GNN to predict fitness and gene interaction.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="fit-int-isomorphic-cell-attentional">
-<h2><a class="toc-backref" href="#id52" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">fit_int_isomorphic_cell_attentional</span></code></a><a class="headerlink" href="#fit-int-isomorphic-cell-attentional" title="Link to this heading"></a></h2>
-<p>Lightning regression trainer for the isomorphic attentional cell model.</p>
-<section id="id15">
-<h3><a class="toc-backref" href="#id53" role="doc-backlink">Classes</a><a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.fit_int_isomorphic_cell_attentional.RegressionTask.html#torchcell.trainers.fit_int_isomorphic_cell_attentional.RegressionTask" title="torchcell.trainers.fit_int_isomorphic_cell_attentional.RegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_int_isomorphic_cell_attentional.RegressionTask</span></code></a></p></td>
-<td><p>Lightning task for fitness and gene-interaction regression with metrics.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
 <section id="int-dango">
-<h2><a class="toc-backref" href="#id54" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">int_dango</span></code></a><a class="headerlink" href="#int-dango" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id12" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">int_dango</span></code></a><a class="headerlink" href="#int-dango" title="Link to this heading"></a></h2>
 <p>Lightning training task for the DANGO genetic-interaction regression model.</p>
-<section id="id16">
-<h3><a class="toc-backref" href="#id55" role="doc-backlink">Classes</a><a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
+<section id="id2">
+<h3><a class="toc-backref" href="#id13" role="doc-backlink">Classes</a><a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.int_dango.RegressionTask.html#torchcell.trainers.int_dango.RegressionTask" title="torchcell.trainers.int_dango.RegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_dango.RegressionTask</span></code></a></p></td>
@@ -531,10 +216,10 @@
 </section>
 </section>
 <section id="int-dcell">
-<h2><a class="toc-backref" href="#id56" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">int_dcell</span></code></a><a class="headerlink" href="#int-dcell" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id14" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">int_dcell</span></code></a><a class="headerlink" href="#int-dcell" title="Link to this heading"></a></h2>
 <p>Lightning training module for DCell gene-interaction regression.</p>
-<section id="id17">
-<h3><a class="toc-backref" href="#id57" role="doc-backlink">Classes</a><a class="headerlink" href="#id17" title="Link to this heading"></a></h3>
+<section id="id3">
+<h3><a class="toc-backref" href="#id15" role="doc-backlink">Classes</a><a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.int_dcell.RegressionTask.html#torchcell.trainers.int_dcell.RegressionTask" title="torchcell.trainers.int_dcell.RegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_dcell.RegressionTask</span></code></a></p></td>
@@ -545,10 +230,10 @@
 </section>
 </section>
 <section id="int-hetero-cell">
-<h2><a class="toc-backref" href="#id58" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">int_hetero_cell</span></code></a><a class="headerlink" href="#int-hetero-cell" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id16" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">int_hetero_cell</span></code></a><a class="headerlink" href="#int-hetero-cell" title="Link to this heading"></a></h2>
 <p>Lightning regression tasks for heterogeneous-cell gene interaction models.</p>
-<section id="id18">
-<h3><a class="toc-backref" href="#id59" role="doc-backlink">Classes</a><a class="headerlink" href="#id18" title="Link to this heading"></a></h3>
+<section id="id4">
+<h3><a class="toc-backref" href="#id17" role="doc-backlink">Classes</a><a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.int_hetero_cell.RegressionTask.html#torchcell.trainers.int_hetero_cell.RegressionTask" title="torchcell.trainers.int_hetero_cell.RegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_hetero_cell.RegressionTask</span></code></a></p></td>
@@ -560,29 +245,28 @@
 </tbody>
 </table>
 </section>
-</section>
-<section id="int-hetero-cell-nsa">
-<h2><a class="toc-backref" href="#id60" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">int_hetero_cell_nsa</span></code></a><a class="headerlink" href="#int-hetero-cell-nsa" title="Link to this heading"></a></h2>
-<p>Lightning training tasks for hetero cell gene-interaction regression models.</p>
-<section id="id19">
-<h3><a class="toc-backref" href="#id61" role="doc-backlink">Classes</a><a class="headerlink" href="#id19" title="Link to this heading"></a></h3>
+<section id="functions">
+<h3><a class="toc-backref" href="#id18" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.int_hetero_cell_nsa.RegressionTask.html#torchcell.trainers.int_hetero_cell_nsa.RegressionTask" title="torchcell.trainers.int_hetero_cell_nsa.RegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_hetero_cell_nsa.RegressionTask</span></code></a></p></td>
-<td><p>Lightning task training a model to regress gene-interaction scores.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.int_hetero_cell.scheduler_type.html#torchcell.trainers.int_hetero_cell.scheduler_type" title="torchcell.trainers.int_hetero_cell.scheduler_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_hetero_cell.scheduler_type</span></code></a></p></td>
+<td><p>Return the scheduler <code class="docutils literal notranslate"><span class="pre">type</span></code> of an lr scheduler config, refusing a missing or unknown one by name (a misspelled type used to become a plateau scheduler).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.trainers.int_hetero_cell_nsa.DiffusionRegressionTask.html#torchcell.trainers.int_hetero_cell_nsa.DiffusionRegressionTask" title="torchcell.trainers.int_hetero_cell_nsa.DiffusionRegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_hetero_cell_nsa.DiffusionRegressionTask</span></code></a></p></td>
-<td><p>Standalone regression task specifically for diffusion models.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.trainers.int_hetero_cell.normalize_accumulation_schedule.html#torchcell.trainers.int_hetero_cell.normalize_accumulation_schedule" title="torchcell.trainers.int_hetero_cell.normalize_accumulation_schedule"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_hetero_cell.normalize_accumulation_schedule</span></code></a></p></td>
+<td><p>Return the schedule with integer epoch keys in ascending order.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.int_hetero_cell.accumulation_steps.html#torchcell.trainers.int_hetero_cell.accumulation_steps" title="torchcell.trainers.int_hetero_cell.accumulation_steps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_hetero_cell.accumulation_steps</span></code></a></p></td>
+<td><p>Steps of the last threshold reached (<code class="docutils literal notranslate"><span class="pre">epoch</span> <span class="pre">&gt;=</span> <span class="pre">threshold</span></code>); 1 before any.</p></td>
 </tr>
 </tbody>
 </table>
 </section>
 </section>
 <section id="int-transformer-cell">
-<h2><a class="toc-backref" href="#id62" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">int_transformer_cell</span></code></a><a class="headerlink" href="#int-transformer-cell" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id19" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">int_transformer_cell</span></code></a><a class="headerlink" href="#int-transformer-cell" title="Link to this heading"></a></h2>
 <p>Lightning training module for the transformer cell gene-interaction model.</p>
-<section id="id20">
-<h3><a class="toc-backref" href="#id63" role="doc-backlink">Classes</a><a class="headerlink" href="#id20" title="Link to this heading"></a></h3>
+<section id="id5">
+<h3><a class="toc-backref" href="#id20" role="doc-backlink">Classes</a><a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.int_transformer_cell.RegressionTask.html#torchcell.trainers.int_transformer_cell.RegressionTask" title="torchcell.trainers.int_transformer_cell.RegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_transformer_cell.RegressionTask</span></code></a></p></td>
@@ -593,10 +277,10 @@
 </section>
 </section>
 <section id="neo-regression">
-<h2><a class="toc-backref" href="#id64" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">neo_regression</span></code></a><a class="headerlink" href="#neo-regression" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id21" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">neo_regression</span></code></a><a class="headerlink" href="#neo-regression" title="Link to this heading"></a></h2>
 <p>Lightning regression trainer with MSE/ListMLE losses and correlation metrics.</p>
-<section id="id21">
-<h3><a class="toc-backref" href="#id65" role="doc-backlink">Classes</a><a class="headerlink" href="#id21" title="Link to this heading"></a></h3>
+<section id="id6">
+<h3><a class="toc-backref" href="#id22" role="doc-backlink">Classes</a><a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.neo_regression.ListMLEMetric.html#torchcell.trainers.neo_regression.ListMLEMetric" title="torchcell.trainers.neo_regression.ListMLEMetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">neo_regression.ListMLEMetric</span></code></a></p></td>
@@ -613,10 +297,10 @@
 </section>
 </section>
 <section id="simple-linear-regression">
-<h2><a class="toc-backref" href="#id66" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">simple_linear_regression</span></code></a><a class="headerlink" href="#simple-linear-regression" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id23" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">simple_linear_regression</span></code></a><a class="headerlink" href="#simple-linear-regression" title="Link to this heading"></a></h2>
 <p>Lightning task for simple linear regression on graph perturbation data.</p>
-<section id="id22">
-<h3><a class="toc-backref" href="#id67" role="doc-backlink">Classes</a><a class="headerlink" href="#id22" title="Link to this heading"></a></h3>
+<section id="id7">
+<h3><a class="toc-backref" href="#id24" role="doc-backlink">Classes</a><a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.trainers.simple_linear_regression.SimpleLinearRegressionTask.html#torchcell.trainers.simple_linear_regression.SimpleLinearRegressionTask" title="torchcell.trainers.simple_linear_regression.SimpleLinearRegressionTask"><code class="xref py py-obj docutils literal notranslate"><span class="pre">simple_linear_regression.SimpleLinearRegressionTask</span></code></a></p></td>
@@ -626,17 +310,6 @@
 </table>
 </section>
 </section>
-<section id="not-documented">
-<h2><a class="toc-backref" href="#id68" role="doc-backlink">Not documented</a><a class="headerlink" href="#not-documented" title="Link to this heading"></a></h2>
-<p>Submodules left out of this page:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">fit_int_gat_diffpool_inception_regression</span></code> (import fails: ImportError)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">graph_convolution_regression</span></code> (import fails: ImportError)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">regression</span></code> (import fails: ImportError)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">regression_deep_set_transformer</span></code> (import fails: ImportError)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">utils</span></code> (import fails: PydanticImportError)</p></li>
-</ul>
-</section>
 </section>
 
 
@@ -644,7 +317,7 @@
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="../generated/torchcell.sga.zfactor.html" class="btn btn-neutral float-left" title="torchcell.sga.zfactor" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../generated/torchcell.trainers.cell.SimpleModel.html" class="btn btn-neutral float-right" title="torchcell.trainers.cell.SimpleModel" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../generated/torchcell.trainers.dcell_regression.DCellRegressionTask.html" class="btn btn-neutral float-right" title="torchcell.trainers.dcell_regression.DCellRegressionTask" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

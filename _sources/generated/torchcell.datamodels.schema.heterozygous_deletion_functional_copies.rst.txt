@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.schema.heterozygous\_deletion\_functional\_copies
+======================================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autofunction:: heterozygous_deletion_functional_copies

@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.supported\_queries.check.graph\_labels
+==================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.supported_queries.check
+
+.. autofunction:: graph_labels

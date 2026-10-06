@@ -1,8 +1,0 @@
-﻿torchcell.models.isomorphic\_cell\_attentional.ProjectedGATConv
-===============================================================
-
-.. currentmodule:: torchcell.models.isomorphic_cell_attentional
-
-.. autoclass:: ProjectedGATConv
-   :show-inheritance:
-   :members:

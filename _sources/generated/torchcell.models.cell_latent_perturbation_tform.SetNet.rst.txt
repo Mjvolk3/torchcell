@@ -1,8 +1,0 @@
-﻿torchcell.models.cell\_latent\_perturbation\_tform.SetNet
-=========================================================
-
-.. currentmodule:: torchcell.models.cell_latent_perturbation_tform
-
-.. autoclass:: SetNet
-   :show-inheritance:
-   :members:

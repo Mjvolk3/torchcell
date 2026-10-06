@@ -1,8 +1,0 @@
-﻿torchcell.models.isomorphic\_cell.HeteroGnn
-===========================================
-
-.. currentmodule:: torchcell.models.isomorphic_cell
-
-.. autoclass:: HeteroGnn
-   :show-inheritance:
-   :members:

@@ -1,0 +1,273 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datamodels.interned_constant &mdash; TorchCell 1.6.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=51c9007c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-mark.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/datamodels/interned_constant.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=d6a008b6"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Datasets</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datasets/index.html">Datasets</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.datamodels.interned_constant</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.datamodels.interned_constant</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/datamodels/interned_constant.py</span>
+<span class="c1"># [[torchcell.datamodels.interned_constant]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/interned_constant</span>
+<span class="sd">"""Content-addressed sub-objects of an Experiment record in the knowledge graph.</span>
+
+<span class="sd">An Experiment node's ``serialized_data`` used to inline the whole record: 94% of the</span>
+<span class="sd">release 1.2 store (645 of 689 GB) was that one property, and 85% of a Costanzo record</span>
+<span class="sd">was its constant 9.4 KB Environment, repeated 20.7 million times per dataset. The</span>
+<span class="sd">adapter now writes the large sub-objects of the record once each, as ``interned</span>
+<span class="sd">constant`` nodes whose id is the sha256 of the exact JSON they hold, and leaves a</span>
+<span class="sd">pointer ``{"$ref": &lt;id&gt;, "kind": &lt;field&gt;}`` in the Experiment blob where the</span>
+<span class="sd">sub-object was. The query loader (``torchcell.data.neo4j_query_raw``) fetches the</span>
+<span class="sd">constants by id, verifies each payload against its id, and splices them back, so a</span>
+<span class="sd">query returns the same record the inline layout did.</span>
+
+<span class="sd">The Experiment node id is unchanged: it is still the sha256 of the fully inlined</span>
+<span class="sd">record, so incremental admission matches served nodes by the same content id, and</span>
+<span class="sd">splicing the constants back into a blob must reproduce that id exactly (which the</span>
+<span class="sd">build's round-trip check and the tests assert).</span>
+
+<span class="sd">Which fields become pointers is fixed here, by field and by a size floor, so the</span>
+<span class="sd">layout is a property of the code and not of the data: ``environment`` (the dataset</span>
+<span class="sd">LMDB interns it under the same 512-byte floor) and ``genotype`` when it is large</span>
+<span class="sd">(segregant genotypes carry haplotype blocks, tens of KB, repeated across a cross's</span>
+<span class="sd">phenotypes). A gene-perturbation genotype (about 1 KB) and every phenotype stay</span>
+<span class="sd">inline: they vary per record, and a pointer would only move bytes and add a lookup.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="n">INTERNED_CONSTANT_LABEL</span> <span class="o">=</span> <span class="s2">"interned constant"</span>
+<span class="sd">"""The schema-config node label the adapter emits (PascalCase ``InternedConstant``)."""</span>
+
+<span class="n">INTERNED_CONSTANT_NEO4J_LABEL</span> <span class="o">=</span> <span class="s2">"InternedConstant"</span>
+<span class="sd">"""The label as Neo4j stores it, for the query loader's lookup."""</span>
+
+<span class="n">POINTER_KEY</span> <span class="o">=</span> <span class="s2">"$ref"</span>
+
+<span class="n">EXPERIMENT_POINTER_MIN_BYTES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"environment"</span><span class="p">:</span> <span class="mi">512</span><span class="p">,</span> <span class="s2">"genotype"</span><span class="p">:</span> <span class="mi">8192</span><span class="p">}</span>
+<span class="sd">"""Top-level fields of ``experiment.model_dump()`` written as pointers, with the</span>
+<span class="sd">minimum JSON size (bytes) at which a value leaves the blob."""</span>
+
+
+<div class="viewcode-block" id="constant_id">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.interned_constant.constant_id.html#torchcell.datamodels.interned_constant.constant_id">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">constant_id</span><span class="p">(</span><span class="n">payload</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The node id of an interned constant: sha256 of its exact JSON payload."""</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="split_experiment_dump">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.interned_constant.split_experiment_dump.html#torchcell.datamodels.interned_constant.split_experiment_dump">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">split_experiment_dump</span><span class="p">(</span>
+    <span class="n">dump</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">"""Return ``(pointered dump, constants)`` for one ``experiment.model_dump()``.</span>
+
+<span class="sd">    ``constants`` is a list of ``(id, kind, payload)`` for every field that became a</span>
+<span class="sd">    pointer; ``payload`` is ``json.dumps`` of the field's value, byte-identical to the</span>
+<span class="sd">    bytes that value contributes to ``json.dumps(dump)``, so splicing</span>
+<span class="sd">    ``json.loads(payload)`` back reproduces the inlined record. ``dump`` is not</span>
+<span class="sd">    mutated.</span>
+<span class="sd">    """</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">dump</span><span class="p">)</span>
+    <span class="n">constants</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">min_bytes</span> <span class="ow">in</span> <span class="n">EXPERIMENT_POINTER_MIN_BYTES</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">dump</span><span class="p">[</span><span class="n">field</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">min_bytes</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">constant_id</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+        <span class="n">constants</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ref</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">payload</span><span class="p">))</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">POINTER_KEY</span><span class="p">:</span> <span class="n">ref</span><span class="p">,</span> <span class="s2">"kind"</span><span class="p">:</span> <span class="n">field</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">constants</span></div>
+
+
+
+<div class="viewcode-block" id="collect_pointers">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.interned_constant.collect_pointers.html#torchcell.datamodels.interned_constant.collect_pointers">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">collect_pointers</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Add every ``$ref`` id reachable in ``obj`` to ``out``."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">POINTER_KEY</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">collect_pointers</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+            <span class="n">collect_pointers</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="resolve_pointers">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.interned_constant.resolve_pointers.html#torchcell.datamodels.interned_constant.resolve_pointers">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_pointers</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">constants</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Splice constants back: a dict carrying ``$ref`` becomes ``constants[ref]``.</span>
+
+<span class="sd">    A missing id raises ``KeyError``: a pointer the store cannot resolve is a broken</span>
+<span class="sd">    build, not a record to skip.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">POINTER_KEY</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">constants</span><span class="p">[</span><span class="n">ref</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">resolve_pointers</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">constants</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">resolve_pointers</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">constants</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">obj</span></div>
+
+
+
+<div class="viewcode-block" id="verified_constant">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.interned_constant.verified_constant.html#torchcell.datamodels.interned_constant.verified_constant">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">verified_constant</span><span class="p">(</span><span class="n">ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Parse a fetched payload after checking it hashes to the id it was fetched by."""</span>
+    <span class="n">actual</span> <span class="o">=</span> <span class="n">constant_id</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">actual</span> <span class="o">!=</span> <span class="n">ref</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"interned constant </span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="s2"> holds a payload hashing to </span><span class="si">{</span><span class="n">actual</span><span class="si">}</span><span class="s2">; the store "</span>
+            <span class="s2">"is corrupt or was written by a different serializer"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

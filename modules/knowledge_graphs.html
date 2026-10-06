@@ -67,7 +67,6 @@
 <li class="toctree-l1"><a class="reference internal" href="database.html">torchcell.database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datamodels.html">torchcell.datamodels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datamodules.html">torchcell.datamodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="dataset_readers.html">torchcell.dataset_readers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="datasets.html">torchcell.datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="graph.html">torchcell.graph</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">torchcell.knowledge_graphs</a><ul>
@@ -76,13 +75,15 @@
 <li class="toctree-l2"><a class="reference internal" href="#create-scerevisiae-kg"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#create-scerevisiae-kg-small"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg_small</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#gene-interactions-scerevisae-kg"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#gene-interactions-scerevisae-kg-small"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg_small</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#head-ontology"><code class="docutils literal notranslate"><span class="pre">head_ontology</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#incremental-import"><code class="docutils literal notranslate"><span class="pre">incremental_import</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#kg-manifest"><code class="docutils literal notranslate"><span class="pre">kg_manifest</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#release-snapshot"><code class="docutils literal notranslate"><span class="pre">release_snapshot</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#releases"><code class="docutils literal notranslate"><span class="pre">releases</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#smf-kg"><code class="docutils literal notranslate"><span class="pre">smf_kg</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="#smf-tmi-combine-kg"><code class="docutils literal notranslate"><span class="pre">smf_tmi_combine_kg</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#subset"><code class="docutils literal notranslate"><span class="pre">subset</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#supported-queries-check"><code class="docutils literal notranslate"><span class="pre">supported_queries.check</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#supported-queries-cypher-deps"><code class="docutils literal notranslate"><span class="pre">supported_queries.cypher_deps</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#supported-queries-registry"><code class="docutils literal notranslate"><span class="pre">supported_queries.registry</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="#not-documented">Not documented</a></li>
 </ul>
 </li>
@@ -90,7 +91,6 @@
 <li class="toctree-l1"><a class="reference internal" href="loader.html">torchcell.loader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="losses.html">torchcell.losses</a></li>
 <li class="toctree-l1"><a class="reference internal" href="metabolism.html">torchcell.metabolism</a></li>
-<li class="toctree-l1"><a class="reference internal" href="metrics.html">torchcell.metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="models.html">torchcell.models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nn.html">torchcell.nn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ontology.html">torchcell.ontology</a></li>
@@ -137,79 +137,93 @@
 <nav class="contents local" id="contents">
 <p class="topic-title">Contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#build-time-projection" id="id16"><code class="docutils literal notranslate"><span class="pre">build_time_projection</span></code></a></p>
+<li><p><a class="reference internal" href="#build-time-projection" id="id22"><code class="docutils literal notranslate"><span class="pre">build_time_projection</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#classes" id="id17">Classes</a></p></li>
-<li><p><a class="reference internal" href="#functions" id="id18">Functions</a></p></li>
+<li><p><a class="reference internal" href="#classes" id="id23">Classes</a></p></li>
+<li><p><a class="reference internal" href="#functions" id="id24">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#create-kg" id="id19"><code class="docutils literal notranslate"><span class="pre">create_kg</span></code></a></p>
+<li><p><a class="reference internal" href="#create-kg" id="id25"><code class="docutils literal notranslate"><span class="pre">create_kg</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id1" id="id20">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id1" id="id26">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#create-scerevisiae-kg" id="id21"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg</span></code></a></p>
+<li><p><a class="reference internal" href="#create-scerevisiae-kg" id="id27"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id2" id="id22">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id2" id="id28">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#create-scerevisiae-kg-small" id="id23"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg_small</span></code></a></p>
+<li><p><a class="reference internal" href="#create-scerevisiae-kg-small" id="id29"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg_small</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id3" id="id24">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id3" id="id30">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#gene-interactions-scerevisae-kg" id="id25"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg</span></code></a></p>
+<li><p><a class="reference internal" href="#gene-interactions-scerevisae-kg" id="id31"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id4" id="id26">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id4" id="id32">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#gene-interactions-scerevisae-kg-small" id="id27"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg_small</span></code></a></p>
+<li><p><a class="reference internal" href="#head-ontology" id="id33"><code class="docutils literal notranslate"><span class="pre">head_ontology</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id5" id="id28">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id5" id="id34">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id6" id="id35">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#incremental-import" id="id29"><code class="docutils literal notranslate"><span class="pre">incremental_import</span></code></a></p>
+<li><p><a class="reference internal" href="#incremental-import" id="id36"><code class="docutils literal notranslate"><span class="pre">incremental_import</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id6" id="id30">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id7" id="id31">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id7" id="id37">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id8" id="id38">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#kg-manifest" id="id32"><code class="docutils literal notranslate"><span class="pre">kg_manifest</span></code></a></p>
+<li><p><a class="reference internal" href="#kg-manifest" id="id39"><code class="docutils literal notranslate"><span class="pre">kg_manifest</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id8" id="id33">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id9" id="id34">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id9" id="id40">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id10" id="id41">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#releases" id="id35"><code class="docutils literal notranslate"><span class="pre">releases</span></code></a></p>
+<li><p><a class="reference internal" href="#release-snapshot" id="id42"><code class="docutils literal notranslate"><span class="pre">release_snapshot</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id10" id="id36">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id11" id="id37">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id11" id="id43">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id12" id="id44">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#smf-kg" id="id38"><code class="docutils literal notranslate"><span class="pre">smf_kg</span></code></a></p>
+<li><p><a class="reference internal" href="#releases" id="id45"><code class="docutils literal notranslate"><span class="pre">releases</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id12" id="id39">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id13" id="id46">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id14" id="id47">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#smf-tmi-combine-kg" id="id40"><code class="docutils literal notranslate"><span class="pre">smf_tmi_combine_kg</span></code></a></p>
+<li><p><a class="reference internal" href="#subset" id="id48"><code class="docutils literal notranslate"><span class="pre">subset</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id13" id="id41">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id15" id="id49">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id16" id="id50">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#subset" id="id42"><code class="docutils literal notranslate"><span class="pre">subset</span></code></a></p>
+<li><p><a class="reference internal" href="#supported-queries-check" id="id51"><code class="docutils literal notranslate"><span class="pre">supported_queries.check</span></code></a></p>
 <ul>
-<li><p><a class="reference internal" href="#id14" id="id43">Classes</a></p></li>
-<li><p><a class="reference internal" href="#id15" id="id44">Functions</a></p></li>
+<li><p><a class="reference internal" href="#id17" id="id52">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id18" id="id53">Functions</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#not-documented" id="id45">Not documented</a></p></li>
+<li><p><a class="reference internal" href="#supported-queries-cypher-deps" id="id54"><code class="docutils literal notranslate"><span class="pre">supported_queries.cypher_deps</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id19" id="id55">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#supported-queries-registry" id="id56"><code class="docutils literal notranslate"><span class="pre">supported_queries.registry</span></code></a></p>
+<ul>
+<li><p><a class="reference internal" href="#id20" id="id57">Classes</a></p></li>
+<li><p><a class="reference internal" href="#id21" id="id58">Functions</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#not-documented" id="id59">Not documented</a></p></li>
 </ul>
 </nav>
 <section id="build-time-projection">
-<h2><a class="toc-backref" href="#id16" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">build_time_projection</span></code></a><a class="headerlink" href="#build-time-projection" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id22" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">build_time_projection</span></code></a><a class="headerlink" href="#build-time-projection" title="Link to this heading"></a></h2>
 <p>Project the tcdb knowledge-graph BUILD (CSV-generation) time for any subset config.</p>
 <section id="classes">
-<h3><a class="toc-backref" href="#id17" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id23" role="doc-backlink">Classes</a><a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.AdapterTiming.html#torchcell.knowledge_graphs.build_time_projection.AdapterTiming" title="torchcell.knowledge_graphs.build_time_projection.AdapterTiming"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_time_projection.AdapterTiming</span></code></a></p></td>
@@ -237,7 +251,7 @@
 </table>
 </section>
 <section id="functions">
-<h3><a class="toc-backref" href="#id18" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id24" role="doc-backlink">Functions</a><a class="headerlink" href="#functions" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.build_time_projection.load_timings.html#torchcell.knowledge_graphs.build_time_projection.load_timings" title="torchcell.knowledge_graphs.build_time_projection.load_timings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_time_projection.load_timings</span></code></a></p></td>
@@ -260,10 +274,10 @@
 </section>
 </section>
 <section id="create-kg">
-<h2><a class="toc-backref" href="#id19" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">create_kg</span></code></a><a class="headerlink" href="#create-kg" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id25" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">create_kg</span></code></a><a class="headerlink" href="#create-kg" title="Link to this heading"></a></h2>
 <p>Build a S. cerevisiae BioCypher knowledge graph from configured datasets.</p>
 <section id="id1">
-<h3><a class="toc-backref" href="#id20" role="doc-backlink">Functions</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id26" role="doc-backlink">Functions</a><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.create_kg.get_num_workers.html#torchcell.knowledge_graphs.create_kg.get_num_workers" title="torchcell.knowledge_graphs.create_kg.get_num_workers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_kg.get_num_workers</span></code></a></p></td>
@@ -274,10 +288,10 @@
 </section>
 </section>
 <section id="create-scerevisiae-kg">
-<h2><a class="toc-backref" href="#id21" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg</span></code></a><a class="headerlink" href="#create-scerevisiae-kg" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id27" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg</span></code></a><a class="headerlink" href="#create-scerevisiae-kg" title="Link to this heading"></a></h2>
 <p>Build the S. cerevisiae BioCypher knowledge graph from torchcell datasets.</p>
 <section id="id2">
-<h3><a class="toc-backref" href="#id22" role="doc-backlink">Functions</a><a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id28" role="doc-backlink">Functions</a><a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.create_scerevisiae_kg.get_num_workers.html#torchcell.knowledge_graphs.create_scerevisiae_kg.get_num_workers" title="torchcell.knowledge_graphs.create_scerevisiae_kg.get_num_workers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_scerevisiae_kg.get_num_workers</span></code></a></p></td>
@@ -288,10 +302,10 @@
 </section>
 </section>
 <section id="create-scerevisiae-kg-small">
-<h2><a class="toc-backref" href="#id23" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg_small</span></code></a><a class="headerlink" href="#create-scerevisiae-kg-small" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id29" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg_small</span></code></a><a class="headerlink" href="#create-scerevisiae-kg-small" title="Link to this heading"></a></h2>
 <p>Build a small S. cerevisiae BioCypher knowledge graph from Costanzo/Kuzmin data.</p>
 <section id="id3">
-<h3><a class="toc-backref" href="#id24" role="doc-backlink">Functions</a><a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id30" role="doc-backlink">Functions</a><a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.create_scerevisiae_kg_small.get_num_workers.html#torchcell.knowledge_graphs.create_scerevisiae_kg_small.get_num_workers" title="torchcell.knowledge_graphs.create_scerevisiae_kg_small.get_num_workers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_scerevisiae_kg_small.get_num_workers</span></code></a></p></td>
@@ -302,10 +316,10 @@
 </section>
 </section>
 <section id="gene-interactions-scerevisae-kg">
-<h2><a class="toc-backref" href="#id25" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg</span></code></a><a class="headerlink" href="#gene-interactions-scerevisae-kg" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id31" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg</span></code></a><a class="headerlink" href="#gene-interactions-scerevisae-kg" title="Link to this heading"></a></h2>
 <p>Build the S. cerevisiae gene-interaction BioCypher knowledge graph.</p>
 <section id="id4">
-<h3><a class="toc-backref" href="#id26" role="doc-backlink">Functions</a><a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id32" role="doc-backlink">Functions</a><a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.gene_interactions_scerevisae_kg.get_num_workers.html#torchcell.knowledge_graphs.gene_interactions_scerevisae_kg.get_num_workers" title="torchcell.knowledge_graphs.gene_interactions_scerevisae_kg.get_num_workers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg.get_num_workers</span></code></a></p></td>
@@ -315,25 +329,50 @@
 </table>
 </section>
 </section>
-<section id="gene-interactions-scerevisae-kg-small">
-<h2><a class="toc-backref" href="#id27" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg_small</span></code></a><a class="headerlink" href="#gene-interactions-scerevisae-kg-small" title="Link to this heading"></a></h2>
-<p>Build a small S. cerevisiae gene-interaction BioCypher knowledge graph.</p>
+<section id="head-ontology">
+<h2><a class="toc-backref" href="#id33" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">head_ontology</span></code></a><a class="headerlink" href="#head-ontology" title="Link to this heading"></a></h2>
+<p>The sha256-pinned local mirror of BioCypher’s head ontology (Biolink 3.2.1).</p>
 <section id="id5">
-<h3><a class="toc-backref" href="#id28" role="doc-backlink">Functions</a><a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<h3><a class="toc-backref" href="#id34" role="doc-backlink">Classes</a><a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small.get_num_workers.html#torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small.get_num_workers" title="torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small.get_num_workers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg_small.get_num_workers</span></code></a></p></td>
-<td><p>Get the number of CPUs allocated by SLURM.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.head_ontology.HeadOntologyError.html#torchcell.knowledge_graphs.head_ontology.HeadOntologyError" title="torchcell.knowledge_graphs.head_ontology.HeadOntologyError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">head_ontology.HeadOntologyError</span></code></a></p></td>
+<td><p>The configured head ontology is remote, missing, or not the pinned bytes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.head_ontology.HeadOntologyMirror.html#torchcell.knowledge_graphs.head_ontology.HeadOntologyMirror" title="torchcell.knowledge_graphs.head_ontology.HeadOntologyMirror"><code class="xref py py-obj docutils literal notranslate"><span class="pre">head_ontology.HeadOntologyMirror</span></code></a></p></td>
+<td><p>Provenance of one mirrored head-ontology file, written beside it as JSON.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id6">
+<h3><a class="toc-backref" href="#id35" role="doc-backlink">Functions</a><a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.head_ontology.record_path.html#torchcell.knowledge_graphs.head_ontology.record_path" title="torchcell.knowledge_graphs.head_ontology.record_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">head_ontology.record_path</span></code></a></p></td>
+<td><p>The provenance JSON that sits beside an ontology file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.head_ontology.load_mirror_record.html#torchcell.knowledge_graphs.head_ontology.load_mirror_record" title="torchcell.knowledge_graphs.head_ontology.load_mirror_record"><code class="xref py py-obj docutils literal notranslate"><span class="pre">head_ontology.load_mirror_record</span></code></a></p></td>
+<td><p>Read the provenance record beside <code class="docutils literal notranslate"><span class="pre">ontology_path</span></code>; a missing record raises.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.head_ontology.configured_head_ontology.html#torchcell.knowledge_graphs.head_ontology.configured_head_ontology" title="torchcell.knowledge_graphs.head_ontology.configured_head_ontology"><code class="xref py py-obj docutils literal notranslate"><span class="pre">head_ontology.configured_head_ontology</span></code></a></p></td>
+<td><p>The <code class="docutils literal notranslate"><span class="pre">biocypher.head_ontology</span></code> mapping of a BioCypher config YAML.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.head_ontology.verify_head_ontology.html#torchcell.knowledge_graphs.head_ontology.verify_head_ontology" title="torchcell.knowledge_graphs.head_ontology.verify_head_ontology"><code class="xref py py-obj docutils literal notranslate"><span class="pre">head_ontology.verify_head_ontology</span></code></a></p></td>
+<td><p>Check the config's head ontology is a local file with its pinned sha256.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.head_ontology.build_mirror_record.html#torchcell.knowledge_graphs.head_ontology.build_mirror_record" title="torchcell.knowledge_graphs.head_ontology.build_mirror_record"><code class="xref py py-obj docutils literal notranslate"><span class="pre">head_ontology.build_mirror_record</span></code></a></p></td>
+<td><p>Record a freshly fetched Biolink file; <code class="docutils literal notranslate"><span class="pre">check</span></code> re-runs the retriever once.</p></td>
 </tr>
 </tbody>
 </table>
 </section>
 </section>
 <section id="incremental-import">
-<h2><a class="toc-backref" href="#id29" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">incremental_import</span></code></a><a class="headerlink" href="#incremental-import" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id36" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">incremental_import</span></code></a><a class="headerlink" href="#incremental-import" title="Link to this heading"></a></h2>
 <p>Turn one BioCypher output directory into a Neo4j <em>incremental</em> import.</p>
-<section id="id6">
-<h3><a class="toc-backref" href="#id30" role="doc-backlink">Classes</a><a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<section id="id7">
+<h3><a class="toc-backref" href="#id37" role="doc-backlink">Classes</a><a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.CsvGroup.html#torchcell.knowledge_graphs.incremental_import.CsvGroup" title="torchcell.knowledge_graphs.incremental_import.CsvGroup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">incremental_import.CsvGroup</span></code></a></p></td>
@@ -351,8 +390,8 @@
 </tbody>
 </table>
 </section>
-<section id="id7">
-<h3><a class="toc-backref" href="#id31" role="doc-backlink">Functions</a><a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<section id="id8">
+<h3><a class="toc-backref" href="#id38" role="doc-backlink">Functions</a><a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.incremental_import.discover_csv_groups.html#torchcell.knowledge_graphs.incremental_import.discover_csv_groups" title="torchcell.knowledge_graphs.incremental_import.discover_csv_groups"><code class="xref py py-obj docutils literal notranslate"><span class="pre">incremental_import.discover_csv_groups</span></code></a></p></td>
@@ -387,10 +426,10 @@
 </section>
 </section>
 <section id="kg-manifest">
-<h2><a class="toc-backref" href="#id32" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">kg_manifest</span></code></a><a class="headerlink" href="#kg-manifest" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id39" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">kg_manifest</span></code></a><a class="headerlink" href="#kg-manifest" title="Link to this heading"></a></h2>
 <p>The served knowledge graph’s build manifest, and the admission check for adding a dataset to it without rebuilding the others.</p>
-<section id="id8">
-<h3><a class="toc-backref" href="#id33" role="doc-backlink">Classes</a><a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<section id="id9">
+<h3><a class="toc-backref" href="#id40" role="doc-backlink">Classes</a><a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.GraphSchemaEntry.html#torchcell.knowledge_graphs.kg_manifest.GraphSchemaEntry" title="torchcell.knowledge_graphs.kg_manifest.GraphSchemaEntry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.GraphSchemaEntry</span></code></a></p></td>
@@ -426,8 +465,8 @@
 </tbody>
 </table>
 </section>
-<section id="id9">
-<h3><a class="toc-backref" href="#id34" role="doc-backlink">Functions</a><a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<section id="id10">
+<h3><a class="toc-backref" href="#id41" role="doc-backlink">Functions</a><a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.graph_schema_from_yaml.html#torchcell.knowledge_graphs.kg_manifest.graph_schema_from_yaml" title="torchcell.knowledge_graphs.kg_manifest.graph_schema_from_yaml"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.graph_schema_from_yaml</span></code></a></p></td>
@@ -471,6 +510,18 @@
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.closure_in_worktree.html#torchcell.knowledge_graphs.kg_manifest.closure_in_worktree" title="torchcell.knowledge_graphs.kg_manifest.closure_in_worktree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.closure_in_worktree</span></code></a></p></td>
 <td><p>Symbol -&gt; fingerprint for a loader's closure, from the working tree.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.package_version_from_source.html#torchcell.knowledge_graphs.kg_manifest.package_version_from_source" title="torchcell.knowledge_graphs.kg_manifest.package_version_from_source"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.package_version_from_source</span></code></a></p></td>
+<td><p>The <code class="docutils literal notranslate"><span class="pre">__version__</span></code> string assigned in <code class="docutils literal notranslate"><span class="pre">torchcell/__version__.py</span></code>'s text.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.package_version_at_ref.html#torchcell.knowledge_graphs.kg_manifest.package_version_at_ref" title="torchcell.knowledge_graphs.kg_manifest.package_version_at_ref"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.package_version_at_ref</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">torchcell.__version__</span></code> as the file read at <code class="docutils literal notranslate"><span class="pre">ref</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.package_tag_at_ref.html#torchcell.knowledge_graphs.kg_manifest.package_tag_at_ref" title="torchcell.knowledge_graphs.kg_manifest.package_tag_at_ref"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.package_tag_at_ref</span></code></a></p></td>
+<td><p>The tag pointing at <code class="docutils literal notranslate"><span class="pre">ref</span></code> (<code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">tag</span> <span class="pre">--points-at</span></code>), or None when untagged.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.checkout_package_version.html#torchcell.knowledge_graphs.kg_manifest.checkout_package_version" title="torchcell.knowledge_graphs.kg_manifest.checkout_package_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.checkout_package_version</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(torchcell.__version__,</span> <span class="pre">tag)</span></code> of the checkout at <code class="docutils literal notranslate"><span class="pre">repo_root</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.kg_manifest.load_manifest.html#torchcell.knowledge_graphs.kg_manifest.load_manifest" title="torchcell.knowledge_graphs.kg_manifest.load_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kg_manifest.load_manifest</span></code></a></p></td>
 <td><p>Read a manifest JSON file.</p></td>
@@ -536,11 +587,62 @@
 </table>
 </section>
 </section>
+<section id="release-snapshot">
+<h2><a class="toc-backref" href="#id42" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">release_snapshot</span></code></a><a class="headerlink" href="#release-snapshot" title="Link to this heading"></a></h2>
+<p>Committed snapshots of served knowledge-graph releases.</p>
+<section id="id11">
+<h3><a class="toc-backref" href="#id43" role="doc-backlink">Classes</a><a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.SnapshotDataset.html#torchcell.knowledge_graphs.release_snapshot.SnapshotDataset" title="torchcell.knowledge_graphs.release_snapshot.SnapshotDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.SnapshotDataset</span></code></a></p></td>
+<td><p>One served dataset as the release snapshot records it.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.SnapshotEvent.html#torchcell.knowledge_graphs.release_snapshot.SnapshotEvent" title="torchcell.knowledge_graphs.release_snapshot.SnapshotEvent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.SnapshotEvent</span></code></a></p></td>
+<td><p>One manifest event, reduced to what the compatibility page needs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.KgReleaseSnapshot.html#torchcell.knowledge_graphs.release_snapshot.KgReleaseSnapshot" title="torchcell.knowledge_graphs.release_snapshot.KgReleaseSnapshot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.KgReleaseSnapshot</span></code></a></p></td>
+<td><p>The committed description of one served release.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id12">
+<h3><a class="toc-backref" href="#id44" role="doc-backlink">Functions</a><a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.composite_sha256.html#torchcell.knowledge_graphs.release_snapshot.composite_sha256" title="torchcell.knowledge_graphs.release_snapshot.composite_sha256"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.composite_sha256</span></code></a></p></td>
+<td><p>sha256 over the sorted <code class="docutils literal notranslate"><span class="pre">content_sha256</span></code> values, newline-joined, trailing newline.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.snapshot_from_manifest.html#torchcell.knowledge_graphs.release_snapshot.snapshot_from_manifest" title="torchcell.knowledge_graphs.release_snapshot.snapshot_from_manifest"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.snapshot_from_manifest</span></code></a></p></td>
+<td><p>The snapshot of a stamped manifest.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.bootstrap_package_version.html#torchcell.knowledge_graphs.release_snapshot.bootstrap_package_version" title="torchcell.knowledge_graphs.release_snapshot.bootstrap_package_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.bootstrap_package_version</span></code></a></p></td>
+<td><p>Fill the package version of a snapshot whose manifest predates the spine.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.snapshot_paths.html#torchcell.knowledge_graphs.release_snapshot.snapshot_paths" title="torchcell.knowledge_graphs.release_snapshot.snapshot_paths"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.snapshot_paths</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(&lt;release&gt;.json,</span> <span class="pre">&lt;release&gt;.closures.json)</span></code> under <code class="docutils literal notranslate"><span class="pre">database/releases/</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.write_snapshot.html#torchcell.knowledge_graphs.release_snapshot.write_snapshot" title="torchcell.knowledge_graphs.release_snapshot.write_snapshot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.write_snapshot</span></code></a></p></td>
+<td><p>Write the snapshot and its closures companion; returns the two paths.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.load_snapshot.html#torchcell.knowledge_graphs.release_snapshot.load_snapshot" title="torchcell.knowledge_graphs.release_snapshot.load_snapshot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.load_snapshot</span></code></a></p></td>
+<td><p>Read one snapshot file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.load_snapshots.html#torchcell.knowledge_graphs.release_snapshot.load_snapshots" title="torchcell.knowledge_graphs.release_snapshot.load_snapshots"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.load_snapshots</span></code></a></p></td>
+<td><p>Every committed snapshot, oldest build first (ties broken by release id).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.load_closures.html#torchcell.knowledge_graphs.release_snapshot.load_closures" title="torchcell.knowledge_graphs.release_snapshot.load_closures"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.load_closures</span></code></a></p></td>
+<td><p>The per-dataset closure fingerprints committed beside <code class="docutils literal notranslate"><span class="pre">release</span></code>'s snapshot.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
 <section id="releases">
-<h2><a class="toc-backref" href="#id35" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">releases</span></code></a><a class="headerlink" href="#releases" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id45" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">releases</span></code></a><a class="headerlink" href="#releases" title="Link to this heading"></a></h2>
 <p>Knowledge-graph releases: what version a served store is, which datasets it holds, and whether a dataset’s bytes changed between two versions.</p>
-<section id="id10">
-<h3><a class="toc-backref" href="#id36" role="doc-backlink">Classes</a><a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<section id="id13">
+<h3><a class="toc-backref" href="#id46" role="doc-backlink">Classes</a><a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.ReleaseDataset.html#torchcell.knowledge_graphs.releases.ReleaseDataset" title="torchcell.knowledge_graphs.releases.ReleaseDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.ReleaseDataset</span></code></a></p></td>
@@ -564,8 +666,8 @@
 </tbody>
 </table>
 </section>
-<section id="id11">
-<h3><a class="toc-backref" href="#id37" role="doc-backlink">Functions</a><a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<section id="id14">
+<h3><a class="toc-backref" href="#id47" role="doc-backlink">Functions</a><a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.release_id.html#torchcell.knowledge_graphs.releases.release_id" title="torchcell.knowledge_graphs.releases.release_id"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.release_id</span></code></a></p></td>
@@ -613,14 +715,26 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.compatibility.html#torchcell.knowledge_graphs.releases.compatibility" title="torchcell.knowledge_graphs.releases.compatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.compatibility</span></code></a></p></td>
 <td><p>Which served datasets the checkout at <code class="docutils literal notranslate"><span class="pre">repo_root</span></code> would serialize differently.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.commit_index.html#torchcell.knowledge_graphs.releases.commit_index" title="torchcell.knowledge_graphs.releases.commit_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.commit_index</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.compatibility_with_surface.html#torchcell.knowledge_graphs.releases.compatibility_with_surface" title="torchcell.knowledge_graphs.releases.compatibility_with_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.compatibility_with_surface</span></code></a></p></td>
+<td><p><code class="xref py py-func docutils literal notranslate"><span class="pre">compatibility()</span></code> against an already-loaded schema surface.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.closure_compatibility.html#torchcell.knowledge_graphs.releases.closure_compatibility" title="torchcell.knowledge_graphs.releases.closure_compatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.closure_compatibility</span></code></a></p></td>
+<td><p>The compatibility verdict from a release's closures and any schema surface.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.package_checkout.html#torchcell.knowledge_graphs.releases.package_checkout" title="torchcell.knowledge_graphs.releases.package_checkout"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.package_checkout</span></code></a></p></td>
+<td><p>The checkout this <code class="docutils literal notranslate"><span class="pre">torchcell</span></code> was imported from (the parent of the package).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.commit_index.html#torchcell.knowledge_graphs.releases.commit_index" title="torchcell.knowledge_graphs.releases.commit_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.commit_index</span></code></a></p></td>
 <td><p>Position of <code class="docutils literal notranslate"><span class="pre">sha</span></code> on linear main, <code class="docutils literal notranslate"><span class="pre">(off-main)</span></code>, or <code class="docutils literal notranslate"><span class="pre">(unknown)</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.commit_date.html#torchcell.knowledge_graphs.releases.commit_date" title="torchcell.knowledge_graphs.releases.commit_date"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.commit_date</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.commit_date.html#torchcell.knowledge_graphs.releases.commit_date" title="torchcell.knowledge_graphs.releases.commit_date"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.commit_date</span></code></a></p></td>
 <td><p>Committer date of <code class="docutils literal notranslate"><span class="pre">sha</span></code> as <code class="docutils literal notranslate"><span class="pre">YYYY.MM.DD</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.behind_main.html#torchcell.knowledge_graphs.releases.behind_main" title="torchcell.knowledge_graphs.releases.behind_main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.behind_main</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.behind_main.html#torchcell.knowledge_graphs.releases.behind_main" title="torchcell.knowledge_graphs.releases.behind_main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.behind_main</span></code></a></p></td>
 <td><p>How far a served commit lags local main.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.package_label.html#torchcell.knowledge_graphs.releases.package_label" title="torchcell.knowledge_graphs.releases.package_label"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.package_label</span></code></a></p></td>
+<td><p>The PKG cell: the tag when the build ran from one, else the version marked untagged.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.status_rows.html#torchcell.knowledge_graphs.releases.status_rows" title="torchcell.knowledge_graphs.releases.status_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.status_rows</span></code></a></p></td>
 <td><p>Table rows for one host: HOST DATABASE VERSION RELEASE PKG COMMIT# DATE DATASETS NODES ALIASES STATUS.</p></td>
@@ -632,39 +746,11 @@
 </table>
 </section>
 </section>
-<section id="smf-kg">
-<h2><a class="toc-backref" href="#id38" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">smf_kg</span></code></a><a class="headerlink" href="#smf-kg" title="Link to this heading"></a></h2>
-<p>Build a BioCypher knowledge graph from S. cerevisiae single-mutant fitness data.</p>
-<section id="id12">
-<h3><a class="toc-backref" href="#id39" role="doc-backlink">Functions</a><a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.smf_kg.get_num_workers.html#torchcell.knowledge_graphs.smf_kg.get_num_workers" title="torchcell.knowledge_graphs.smf_kg.get_num_workers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smf_kg.get_num_workers</span></code></a></p></td>
-<td><p>Get the number of CPUs allocated by SLURM.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-<section id="smf-tmi-combine-kg">
-<h2><a class="toc-backref" href="#id40" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">smf_tmi_combine_kg</span></code></a><a class="headerlink" href="#smf-tmi-combine-kg" title="Link to this heading"></a></h2>
-<p>Build a combined BioCypher knowledge graph from SMF Costanzo and TMI Kuzmin data.</p>
-<section id="id13">
-<h3><a class="toc-backref" href="#id41" role="doc-backlink">Functions</a><a class="headerlink" href="#id13" title="Link to this heading"></a></h3>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.smf_tmi_combine_kg.get_num_workers.html#torchcell.knowledge_graphs.smf_tmi_combine_kg.get_num_workers" title="torchcell.knowledge_graphs.smf_tmi_combine_kg.get_num_workers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smf_tmi_combine_kg.get_num_workers</span></code></a></p></td>
-<td><p>Get the number of CPUs allocated by SLURM.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
 <section id="subset">
-<h2><a class="toc-backref" href="#id42" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">subset</span></code></a><a class="headerlink" href="#subset" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id48" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">subset</span></code></a><a class="headerlink" href="#subset" title="Link to this heading"></a></h2>
 <p>Prefilter and subsample datasets for KG builds.</p>
-<section id="id14">
-<h3><a class="toc-backref" href="#id43" role="doc-backlink">Classes</a><a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<section id="id15">
+<h3><a class="toc-backref" href="#id49" role="doc-backlink">Classes</a><a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.subset.RecordFilter.html#torchcell.knowledge_graphs.subset.RecordFilter" title="torchcell.knowledge_graphs.subset.RecordFilter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">subset.RecordFilter</span></code></a></p></td>
@@ -673,8 +759,8 @@
 </tbody>
 </table>
 </section>
-<section id="id15">
-<h3><a class="toc-backref" href="#id44" role="doc-backlink">Functions</a><a class="headerlink" href="#id15" title="Link to this heading"></a></h3>
+<section id="id16">
+<h3><a class="toc-backref" href="#id50" role="doc-backlink">Functions</a><a class="headerlink" href="#id16" title="Link to this heading"></a></h3>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.subset.load_gene_sets.html#torchcell.knowledge_graphs.subset.load_gene_sets" title="torchcell.knowledge_graphs.subset.load_gene_sets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">subset.load_gene_sets</span></code></a></p></td>
@@ -690,12 +776,124 @@
 </table>
 </section>
 </section>
+<section id="supported-queries-check">
+<h2><a class="toc-backref" href="#id51" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">supported_queries.check</span></code></a><a class="headerlink" href="#supported-queries-check" title="Link to this heading"></a></h2>
+<p>The supported-query drift check: does each registered query still hold on a release?</p>
+<section id="id17">
+<h3><a class="toc-backref" href="#id52" role="doc-backlink">Classes</a><a class="headerlink" href="#id17" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.QueryDrift.html#torchcell.knowledge_graphs.supported_queries.check.QueryDrift" title="torchcell.knowledge_graphs.supported_queries.check.QueryDrift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.check.QueryDrift</span></code></a></p></td>
+<td><p>One way a registered query no longer holds on a release.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.QueryResult.html#torchcell.knowledge_graphs.supported_queries.check.QueryResult" title="torchcell.knowledge_graphs.supported_queries.check.QueryResult"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.check.QueryResult</span></code></a></p></td>
+<td><p>One query's verdict, with the issue the CI job files when it fails.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.CheckReport.html#torchcell.knowledge_graphs.supported_queries.check.CheckReport" title="torchcell.knowledge_graphs.supported_queries.check.CheckReport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.check.CheckReport</span></code></a></p></td>
+<td><p>The check over a whole registry against one release.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.GraphLabels.html#torchcell.knowledge_graphs.supported_queries.check.GraphLabels" title="torchcell.knowledge_graphs.supported_queries.check.GraphLabels"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.check.GraphLabels</span></code></a></p></td>
+<td><p>Node labels and relationship types a release carries, with node properties.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id18">
+<h3><a class="toc-backref" href="#id53" role="doc-backlink">Functions</a><a class="headerlink" href="#id18" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.pascal_label.html#torchcell.knowledge_graphs.supported_queries.check.pascal_label" title="torchcell.knowledge_graphs.supported_queries.check.pascal_label"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.check.pascal_label</span></code></a></p></td>
+<td><p>BioCypher's label for a schema class: <code class="docutils literal notranslate"><span class="pre">fitness</span> <span class="pre">phenotype</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">FitnessPhenotype</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.schema_is_a.html#torchcell.knowledge_graphs.supported_queries.check.schema_is_a" title="torchcell.knowledge_graphs.supported_queries.check.schema_is_a"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.check.schema_is_a</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">class</span> <span class="pre">-&gt;</span> <span class="pre">[parent,</span> <span class="pre">...]</span></code> from the <code class="docutils literal notranslate"><span class="pre">is_a</span></code> entries of a BioCypher schema config.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.graph_labels.html#torchcell.knowledge_graphs.supported_queries.check.graph_labels" title="torchcell.knowledge_graphs.supported_queries.check.graph_labels"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.check.graph_labels</span></code></a></p></td>
+<td><p>The labels and types of a release's graph schema under the <code class="docutils literal notranslate"><span class="pre">is_a</span></code> hierarchy.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.selected_composite.html#torchcell.knowledge_graphs.supported_queries.check.selected_composite" title="torchcell.knowledge_graphs.supported_queries.check.selected_composite"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.check.selected_composite</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">composite_sha256</span></code> over the selected datasets the release serves.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.query_drifts.html#torchcell.knowledge_graphs.supported_queries.check.query_drifts" title="torchcell.knowledge_graphs.supported_queries.check.query_drifts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.check.query_drifts</span></code></a></p></td>
+<td><p>Every drift of <code class="docutils literal notranslate"><span class="pre">query</span></code> against <code class="docutils literal notranslate"><span class="pre">snapshot</span></code>; <code class="docutils literal notranslate"><span class="pre">deps</span></code> None means no file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.run_check.html#torchcell.knowledge_graphs.supported_queries.check.run_check" title="torchcell.knowledge_graphs.supported_queries.check.run_check"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.check.run_check</span></code></a></p></td>
+<td><p>Check every registered query; exit code 1 when a supported query drifts.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.checkout_commit.html#torchcell.knowledge_graphs.supported_queries.check.checkout_commit" title="torchcell.knowledge_graphs.supported_queries.check.checkout_commit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.check.checkout_commit</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">rev-parse</span> <span class="pre">HEAD</span></code> of the checkout at <code class="docutils literal notranslate"><span class="pre">repo_root</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.resolve_snapshot.html#torchcell.knowledge_graphs.supported_queries.check.resolve_snapshot" title="torchcell.knowledge_graphs.supported_queries.check.resolve_snapshot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.check.resolve_snapshot</span></code></a></p></td>
+<td><p>The named release's snapshot, or the newest committed one.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.check_repo.html#torchcell.knowledge_graphs.supported_queries.check.check_repo" title="torchcell.knowledge_graphs.supported_queries.check.check_repo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.check.check_repo</span></code></a></p></td>
+<td><p><code class="xref py py-func docutils literal notranslate"><span class="pre">run_check()</span></code> with every input read from the checkout at <code class="docutils literal notranslate"><span class="pre">repo_root</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.check.validate_query.html#torchcell.knowledge_graphs.supported_queries.check.validate_query" title="torchcell.knowledge_graphs.supported_queries.check.validate_query"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.check.validate_query</span></code></a></p></td>
+<td><p>Record <code class="docutils literal notranslate"><span class="pre">release</span></code> as the one <code class="docutils literal notranslate"><span class="pre">query_id</span></code> holds on.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="supported-queries-cypher-deps">
+<h2><a class="toc-backref" href="#id54" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">supported_queries.cypher_deps</span></code></a><a class="headerlink" href="#supported-queries-cypher-deps" title="Link to this heading"></a></h2>
+<p>What a Cypher query reads from the graph, extracted from its text.</p>
+<section id="id19">
+<h3><a class="toc-backref" href="#id55" role="doc-backlink">Functions</a><a class="headerlink" href="#id19" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.cypher_deps.strip_comments.html#torchcell.knowledge_graphs.supported_queries.cypher_deps.strip_comments" title="torchcell.knowledge_graphs.supported_queries.cypher_deps.strip_comments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.cypher_deps.strip_comments</span></code></a></p></td>
+<td><p>The query with <code class="docutils literal notranslate"><span class="pre">//</span></code> and <code class="docutils literal notranslate"><span class="pre">/*</span> <span class="pre">*/</span></code> comments replaced by spaces (offsets kept).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.cypher_deps.blank_literals.html#torchcell.knowledge_graphs.supported_queries.cypher_deps.blank_literals" title="torchcell.knowledge_graphs.supported_queries.cypher_deps.blank_literals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.cypher_deps.blank_literals</span></code></a></p></td>
+<td><p><code class="xref py py-func docutils literal notranslate"><span class="pre">strip_comments()</span></code>, plus every string literal's contents replaced by spaces.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.cypher_deps.split_blocks.html#torchcell.knowledge_graphs.supported_queries.cypher_deps.split_blocks" title="torchcell.knowledge_graphs.supported_queries.cypher_deps.split_blocks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.cypher_deps.split_blocks</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(start,</span> <span class="pre">end)</span></code> offsets of the <code class="docutils literal notranslate"><span class="pre">UNION</span></code>-separated blocks of blanked <code class="docutils literal notranslate"><span class="pre">text</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.cypher_deps.extract_dependencies.html#torchcell.knowledge_graphs.supported_queries.cypher_deps.extract_dependencies" title="torchcell.knowledge_graphs.supported_queries.cypher_deps.extract_dependencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.cypher_deps.extract_dependencies</span></code></a></p></td>
+<td><p>The labels, types, properties, literals and parameters <code class="docutils literal notranslate"><span class="pre">cypher</span></code> depends on.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="supported-queries-registry">
+<h2><a class="toc-backref" href="#id56" role="doc-backlink"><code class="docutils literal notranslate"><span class="pre">supported_queries.registry</span></code></a><a class="headerlink" href="#supported-queries-registry" title="Link to this heading"></a></h2>
+<p>The supported-query registry: which shipped <code class="docutils literal notranslate"><span class="pre">.cql</span></code> queries the project stands behind.</p>
+<section id="id20">
+<h3><a class="toc-backref" href="#id57" role="doc-backlink">Classes</a><a class="headerlink" href="#id20" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.registry.QueryDependencies.html#torchcell.knowledge_graphs.supported_queries.registry.QueryDependencies" title="torchcell.knowledge_graphs.supported_queries.registry.QueryDependencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.registry.QueryDependencies</span></code></a></p></td>
+<td><p>What a query reads from the graph, as extracted from its Cypher text.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.registry.SupportedQuery.html#torchcell.knowledge_graphs.supported_queries.registry.SupportedQuery" title="torchcell.knowledge_graphs.supported_queries.registry.SupportedQuery"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.registry.SupportedQuery</span></code></a></p></td>
+<td><p>One registered query and where it stands in the release lifecycle.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.registry.QueryRegistry.html#torchcell.knowledge_graphs.supported_queries.registry.QueryRegistry" title="torchcell.knowledge_graphs.supported_queries.registry.QueryRegistry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.registry.QueryRegistry</span></code></a></p></td>
+<td><p>Every registered query; <code class="docutils literal notranslate"><span class="pre">schema_version</span></code> versions this file's shape.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id21">
+<h3><a class="toc-backref" href="#id58" role="doc-backlink">Functions</a><a class="headerlink" href="#id21" title="Link to this heading"></a></h3>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.supported_queries.registry.registry_path.html#torchcell.knowledge_graphs.supported_queries.registry.registry_path" title="torchcell.knowledge_graphs.supported_queries.registry.registry_path"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_queries.registry.registry_path</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">registry.json</span></code> in the checkout at <code class="docutils literal notranslate"><span class="pre">repo_root</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
 <section id="not-documented">
-<h2><a class="toc-backref" href="#id45" role="doc-backlink">Not documented</a><a class="headerlink" href="#not-documented" title="Link to this heading"></a></h2>
+<h2><a class="toc-backref" href="#id59" role="doc-backlink">Not documented</a><a class="headerlink" href="#not-documented" title="Link to this heading"></a></h2>
 <p>Submodules left out of this page:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">conf</span></code> (configuration files only)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">create_pypy_scerevisiae_kg</span></code> (import fails: ImportError)</p></li>
 </ul>
 </section>
 </section>

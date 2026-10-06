@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.supported\_queries.check.resolve\_snapshot
+======================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.supported_queries.check
+
+.. autofunction:: resolve_snapshot

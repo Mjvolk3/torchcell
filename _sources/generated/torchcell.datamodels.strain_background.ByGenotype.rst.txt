@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.strain\_background.ByGenotype
+==================================================
+
+.. currentmodule:: torchcell.datamodels.strain_background
+
+.. autoclass:: ByGenotype
+   :show-inheritance:
+   :members:

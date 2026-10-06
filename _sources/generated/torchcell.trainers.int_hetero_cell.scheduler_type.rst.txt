@@ -1,0 +1,6 @@
+﻿torchcell.trainers.int\_hetero\_cell.scheduler\_type
+====================================================
+
+.. currentmodule:: torchcell.trainers.int_hetero_cell
+
+.. autofunction:: scheduler_type

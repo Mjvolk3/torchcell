@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.GenomicSpan
+=======================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: GenomicSpan
+   :show-inheritance:
+   :members:

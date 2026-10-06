@@ -234,11 +234,3 @@ Classes
    :template: autosummary/class.rst
 
    point_dist_graph_reg.PointDistGraphReg
-
-Not documented
---------------
-
-Submodules left out of this page:
-
-- ``SupCr`` (import fails: ModuleNotFoundError)
-- ``dcell_DEPRECATED`` (scratch, demo or deprecated)

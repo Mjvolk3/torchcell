@@ -1,6 +1,0 @@
-﻿torchcell.models.hetero\_cell\_pma.plot\_correlations
-=====================================================
-
-.. currentmodule:: torchcell.models.hetero_cell_pma
-
-.. autofunction:: plot_correlations

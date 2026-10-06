@@ -1,0 +1,8 @@
+﻿torchcell.data.ManifestPinMismatchError
+=======================================
+
+.. currentmodule:: torchcell.data
+
+.. autoclass:: ManifestPinMismatchError
+   :show-inheritance:
+   :members:

@@ -1,6 +1,0 @@
-﻿torchcell.models.cell\_latent\_perturbation.plot\_correlations
-==============================================================
-
-.. currentmodule:: torchcell.models.cell_latent_perturbation
-
-.. autofunction:: plot_correlations

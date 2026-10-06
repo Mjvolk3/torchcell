@@ -1,8 +1,0 @@
-﻿torchcell.trainers.fit\_int\_hetero\_gnn\_pool\_reg\_categorical\_entropy.RegCategoricalEntropyTask
-===================================================================================================
-
-.. currentmodule:: torchcell.trainers.fit_int_hetero_gnn_pool_reg_categorical_entropy
-
-.. autoclass:: RegCategoricalEntropyTask
-   :show-inheritance:
-   :members:

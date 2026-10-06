@@ -64,7 +64,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
@@ -72,7 +71,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
@@ -856,19 +854,27 @@
 <span class="n">_VERSION_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">'^__version__\s*=\s*"([^"]+)"'</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">MULTILINE</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="package_version_from_source">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.kg_manifest.package_version_from_source.html#torchcell.knowledge_graphs.kg_manifest.package_version_from_source">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">package_version_from_source</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The ``__version__`` string assigned in ``torchcell/__version__.py``'s text."""</span>
     <span class="n">match</span> <span class="o">=</span> <span class="n">_VERSION_RE</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no __version__ assignment in </span><span class="si">{</span><span class="n">VERSION_RELPATH</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="package_version_at_ref">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.kg_manifest.package_version_at_ref.html#torchcell.knowledge_graphs.kg_manifest.package_version_at_ref">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">package_version_at_ref</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""``torchcell.__version__`` as the file read at ``ref``."""</span>
-    <span class="k">return</span> <span class="n">package_version_from_source</span><span class="p">(</span><span class="n">_git_show</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">VERSION_RELPATH</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">package_version_from_source</span><span class="p">(</span><span class="n">_git_show</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">VERSION_RELPATH</span><span class="p">))</span></div>
 
 
+
+<div class="viewcode-block" id="package_tag_at_ref">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.kg_manifest.package_tag_at_ref.html#torchcell.knowledge_graphs.kg_manifest.package_tag_at_ref">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">package_tag_at_ref</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">ref</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The tag pointing at ``ref`` (``git tag --points-at``), or None when untagged.</span>
 
@@ -884,9 +890,12 @@
     <span class="n">tags</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ref</span><span class="si">}</span><span class="s2"> carries several tags: </span><span class="si">{</span><span class="n">tags</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">tags</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">tags</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">tags</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">tags</span> <span class="k">else</span> <span class="kc">None</span></div>
 
 
+
+<div class="viewcode-block" id="checkout_package_version">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.kg_manifest.checkout_package_version.html#torchcell.knowledge_graphs.kg_manifest.checkout_package_version">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">checkout_package_version</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""``(torchcell.__version__, tag)`` of the checkout at ``repo_root``.</span>
 
@@ -904,7 +913,8 @@
         <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">tag</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="k">return</span> <span class="n">version</span><span class="p">,</span> <span class="n">tag</span>
+    <span class="k">return</span> <span class="n">version</span><span class="p">,</span> <span class="n">tag</span></div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_dataset_class</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>

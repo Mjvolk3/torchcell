@@ -1,0 +1,8 @@
+﻿torchcell.metabolism.yeast\_GEM.MemberlessReactionError
+=======================================================
+
+.. currentmodule:: torchcell.metabolism.yeast_GEM
+
+.. autoclass:: MemberlessReactionError
+   :show-inheritance:
+   :members:

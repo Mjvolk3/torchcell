@@ -25,7 +25,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="torchcell.knowledge_graphs.releases.KgRelease" href="torchcell.knowledge_graphs.releases.KgRelease.html" />
-    <link rel="prev" title="torchcell.knowledge_graphs.kg_manifest.parse_n_experiments" href="torchcell.knowledge_graphs.kg_manifest.parse_n_experiments.html" /> 
+    <link rel="prev" title="torchcell.knowledge_graphs.release_snapshot.load_closures" href="torchcell.knowledge_graphs.release_snapshot.load_closures.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -67,7 +67,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../modules/database.html">torchcell.database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../modules/datamodels.html">torchcell.datamodels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../modules/datamodules.html">torchcell.datamodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../modules/datasets.html">torchcell.datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../modules/graph.html">torchcell.graph</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a><ul class="current">
@@ -76,13 +75,15 @@
 <li class="toctree-l2"><a class="reference internal" href="../modules/knowledge_graphs.html#create-scerevisiae-kg"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modules/knowledge_graphs.html#create-scerevisiae-kg-small"><code class="docutils literal notranslate"><span class="pre">create_scerevisiae_kg_small</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modules/knowledge_graphs.html#gene-interactions-scerevisae-kg"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/knowledge_graphs.html#gene-interactions-scerevisae-kg-small"><code class="docutils literal notranslate"><span class="pre">gene_interactions_scerevisae_kg_small</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/knowledge_graphs.html#head-ontology"><code class="docutils literal notranslate"><span class="pre">head_ontology</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modules/knowledge_graphs.html#incremental-import"><code class="docutils literal notranslate"><span class="pre">incremental_import</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modules/knowledge_graphs.html#kg-manifest"><code class="docutils literal notranslate"><span class="pre">kg_manifest</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/knowledge_graphs.html#release-snapshot"><code class="docutils literal notranslate"><span class="pre">release_snapshot</span></code></a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="../modules/knowledge_graphs.html#releases"><code class="docutils literal notranslate"><span class="pre">releases</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/knowledge_graphs.html#smf-kg"><code class="docutils literal notranslate"><span class="pre">smf_kg</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="../modules/knowledge_graphs.html#smf-tmi-combine-kg"><code class="docutils literal notranslate"><span class="pre">smf_tmi_combine_kg</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modules/knowledge_graphs.html#subset"><code class="docutils literal notranslate"><span class="pre">subset</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/knowledge_graphs.html#supported-queries-check"><code class="docutils literal notranslate"><span class="pre">supported_queries.check</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/knowledge_graphs.html#supported-queries-cypher-deps"><code class="docutils literal notranslate"><span class="pre">supported_queries.cypher_deps</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/knowledge_graphs.html#supported-queries-registry"><code class="docutils literal notranslate"><span class="pre">supported_queries.registry</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="../modules/knowledge_graphs.html#not-documented">Not documented</a></li>
 </ul>
 </li>
@@ -90,7 +91,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../modules/loader.html">torchcell.loader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../modules/losses.html">torchcell.losses</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../modules/metabolism.html">torchcell.metabolism</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../modules/metrics.html">torchcell.metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../modules/models.html">torchcell.models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../modules/nn.html">torchcell.nn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../modules/ontology.html">torchcell.ontology</a></li>
@@ -153,7 +153,7 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="torchcell.knowledge_graphs.kg_manifest.parse_n_experiments.html" class="btn btn-neutral float-left" title="torchcell.knowledge_graphs.kg_manifest.parse_n_experiments" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torchcell.knowledge_graphs.release_snapshot.load_closures.html" class="btn btn-neutral float-left" title="torchcell.knowledge_graphs.release_snapshot.load_closures" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="torchcell.knowledge_graphs.releases.KgRelease.html" class="btn btn-neutral float-right" title="torchcell.knowledge_graphs.releases.KgRelease" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 

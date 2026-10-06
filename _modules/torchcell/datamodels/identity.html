@@ -64,7 +64,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
@@ -72,7 +71,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
@@ -558,6 +556,8 @@
     <span class="p">}</span>
 
 
+<div class="viewcode-block" id="strain_background_identity">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.identity.strain_background_identity.html#torchcell.datamodels.identity.strain_background_identity">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">strain_background_identity</span><span class="p">(</span><span class="n">background</span><span class="p">:</span> <span class="n">StrainBackground</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Project a strain background onto its genome content, dropping who stated it.</span>
 
@@ -578,7 +578,8 @@
         <span class="s2">"alleles"</span><span class="p">:</span> <span class="n">_sorted_identities</span><span class="p">(</span>
             <span class="p">[</span><span class="n">_background_allele_identity</span><span class="p">(</span><span class="n">allele</span><span class="p">)</span> <span class="k">for</span> <span class="n">allele</span> <span class="ow">in</span> <span class="n">background</span><span class="o">.</span><span class="n">alleles</span><span class="p">]</span>
         <span class="p">),</span>
-    <span class="p">}</span>
+    <span class="p">}</span></div>
+
 
 
 <div class="viewcode-block" id="identity_sha256">

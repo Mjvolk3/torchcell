@@ -1,8 +1,0 @@
-﻿torchcell.models.nsa\_hetero\_cell.BlockContainer
-=================================================
-
-.. currentmodule:: torchcell.models.nsa_hetero_cell
-
-.. autoclass:: BlockContainer
-   :show-inheritance:
-   :members:

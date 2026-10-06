@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.supported\_queries.check.CheckReport
+================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.supported_queries.check
+
+.. autoclass:: CheckReport
+   :show-inheritance:
+   :members:

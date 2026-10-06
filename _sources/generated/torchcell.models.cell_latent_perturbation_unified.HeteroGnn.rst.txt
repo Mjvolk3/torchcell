@@ -1,8 +1,0 @@
-﻿torchcell.models.cell\_latent\_perturbation\_unified.HeteroGnn
-==============================================================
-
-.. currentmodule:: torchcell.models.cell_latent_perturbation_unified
-
-.. autoclass:: HeteroGnn
-   :show-inheritance:
-   :members:

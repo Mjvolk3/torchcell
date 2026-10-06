@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.releases.package\_label
+===================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autofunction:: package_label

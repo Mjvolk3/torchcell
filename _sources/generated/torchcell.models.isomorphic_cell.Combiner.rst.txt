@@ -1,8 +1,0 @@
-﻿torchcell.models.isomorphic\_cell.Combiner
-==========================================
-
-.. currentmodule:: torchcell.models.isomorphic_cell
-
-.. autoclass:: Combiner
-   :show-inheritance:
-   :members:

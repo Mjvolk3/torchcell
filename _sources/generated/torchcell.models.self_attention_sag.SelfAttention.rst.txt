@@ -1,8 +1,0 @@
-﻿torchcell.models.self\_attention\_sag.SelfAttention
-===================================================
-
-.. currentmodule:: torchcell.models.self_attention_sag
-
-.. autoclass:: SelfAttention
-   :show-inheritance:
-   :members:

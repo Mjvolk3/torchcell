@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.ConstructedOrf
+==========================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: ConstructedOrf
+   :show-inheritance:
+   :members:

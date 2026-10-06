@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.AlleleEdit
+======================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: AlleleEdit
+   :show-inheritance:
+   :members:

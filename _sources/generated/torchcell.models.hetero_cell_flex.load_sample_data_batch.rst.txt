@@ -1,6 +1,0 @@
-﻿torchcell.models.hetero\_cell\_flex.load\_sample\_data\_batch
-=============================================================
-
-.. currentmodule:: torchcell.models.hetero_cell_flex
-
-.. autofunction:: load_sample_data_batch

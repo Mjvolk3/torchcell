@@ -1,6 +1,0 @@
-﻿torchcell.models.isomorphic\_cell\_attentional.plot\_correlations
-=================================================================
-
-.. currentmodule:: torchcell.models.isomorphic_cell_attentional
-
-.. autofunction:: plot_correlations

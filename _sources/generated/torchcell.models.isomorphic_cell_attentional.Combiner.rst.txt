@@ -1,8 +1,0 @@
-﻿torchcell.models.isomorphic\_cell\_attentional.Combiner
-=======================================================
-
-.. currentmodule:: torchcell.models.isomorphic_cell_attentional
-
-.. autoclass:: Combiner
-   :show-inheritance:
-   :members:

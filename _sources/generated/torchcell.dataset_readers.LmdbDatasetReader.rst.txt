@@ -1,8 +1,0 @@
-﻿torchcell.dataset\_readers.LmdbDatasetReader
-============================================
-
-.. currentmodule:: torchcell.dataset_readers
-
-.. autoclass:: LmdbDatasetReader
-   :show-inheritance:
-   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.head\_ontology.HeadOntologyMirror
+=============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.head_ontology
+
+.. autoclass:: HeadOntologyMirror
+   :show-inheritance:
+   :members:

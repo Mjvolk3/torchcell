@@ -1,0 +1,194 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.datamodels.schema.HeterozygousDeletionPerturbation &mdash; TorchCell 1.6.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/mytheme.css?v=cf917480" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=51c9007c" />
+
+  
+    <link rel="shortcut icon" href="../_static/torchcell-mark.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/generated/torchcell.datamodels.schema.HeterozygousDeletionPerturbation.html" />
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=d6a008b6"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="torchcell.datamodels.schema.NatMxDeletionPerturbation" href="torchcell.datamodels.schema.NatMxDeletionPerturbation.html" />
+    <link rel="prev" title="torchcell.datamodels.schema.BarcodedKanMxDeletionPerturbation" href="torchcell.datamodels.schema.BarcodedKanMxDeletionPerturbation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html">
+            
+              <img src="../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Datasets</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../datasets/index.html">Datasets</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../modules/datamodels.html">torchcell.datamodels</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../modules/datamodels.html#compound-identity"><code class="docutils literal notranslate"><span class="pre">compound_identity</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/datamodels.html#compound-identity-curate"><code class="docutils literal notranslate"><span class="pre">compound_identity_curate</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/datamodels.html#conversion"><code class="docutils literal notranslate"><span class="pre">conversion</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/datamodels.html#fitness-composite-conversion"><code class="docutils literal notranslate"><span class="pre">fitness_composite_conversion</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/datamodels.html#gene-essentiality-to-fitness-conversion"><code class="docutils literal notranslate"><span class="pre">gene_essentiality_to_fitness_conversion</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/datamodels.html#identity"><code class="docutils literal notranslate"><span class="pre">identity</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/datamodels.html#interned-constant"><code class="docutils literal notranslate"><span class="pre">interned_constant</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/datamodels.html#media"><code class="docutils literal notranslate"><span class="pre">media</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/datamodels.html#ontology-checks"><code class="docutils literal notranslate"><span class="pre">ontology_checks</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/datamodels.html#pydant"><code class="docutils literal notranslate"><span class="pre">pydant</span></code></a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../modules/datamodels.html#schema"><code class="docutils literal notranslate"><span class="pre">schema</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/datamodels.html#strain-background"><code class="docutils literal notranslate"><span class="pre">strain_background</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../modules/datamodels.html#synthetic-lethality-to-fitness-conversion"><code class="docutils literal notranslate"><span class="pre">synthetic_lethality_to_fitness_conversion</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../modules/datamodels.html">torchcell.datamodels</a></li>
+      <li class="breadcrumb-item active">torchcell.datamodels.schema.HeterozygousDeletionPerturbation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/generated/torchcell.datamodels.schema.HeterozygousDeletionPerturbation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="torchcell-datamodels-schema-heterozygousdeletionperturbation">
+<h1>torchcell.datamodels.schema.HeterozygousDeletionPerturbation<a class="headerlink" href="#torchcell-datamodels-schema-heterozygousdeletionperturbation" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="torchcell.datamodels.schema.HeterozygousDeletionPerturbation">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">HeterozygousDeletionPerturbation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">systematic_gene_name:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perturbed_gene_name:</span> <span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provenance:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'engineered'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'present'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mechanism_so_id:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'SO:0000159'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mechanism_so_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'deletion'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provenance_gaps:</span> <span class="pre">list[~torchcell.verification.sourced.ProvenanceGap]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'Heterozygous</span> <span class="pre">deletion:</span> <span class="pre">one</span> <span class="pre">allele</span> <span class="pre">of</span> <span class="pre">a</span> <span class="pre">diploid</span> <span class="pre">replaced</span> <span class="pre">by</span> <span class="pre">a</span> <span class="pre">cassette'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perturbation_type:</span> <span class="pre">~typing.Literal['heterozygous_deletion']</span> <span class="pre">=</span> <span class="pre">'heterozygous_deletion'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cassette:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">barcode:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downtag_barcode:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collection:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">construction:</span> <span class="pre">~torchcell.datamodels.schema.StrainConstruction</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constructed_orf:</span> <span class="pre">~torchcell.datamodels.schema.ConstructedOrf</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replaced_allele:</span> <span class="pre">str</span> <span class="pre">|</span> <span class="pre">None</span> <span class="pre">=</span> <span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/torchcell/datamodels/schema.html#HeterozygousDeletionPerturbation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datamodels.schema.HeterozygousDeletionPerturbation" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="torchcell.datamodels.schema.HashableProvenanceGapMixin.html#torchcell.datamodels.schema.HashableProvenanceGapMixin" title="torchcell.datamodels.schema.HashableProvenanceGapMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">HashableProvenanceGapMixin</span></code></a>, <a class="reference internal" href="torchcell.datamodels.schema.PresenceAbsencePerturbation.html#torchcell.datamodels.schema.PresenceAbsencePerturbation" title="torchcell.datamodels.schema.PresenceAbsencePerturbation"><code class="xref py py-class docutils literal notranslate"><span class="pre">PresenceAbsencePerturbation</span></code></a>, <a class="reference internal" href="torchcell.datamodels.pydant.ModelStrict.html#torchcell.datamodels.pydant.ModelStrict" title="torchcell.datamodels.pydant.ModelStrict"><code class="xref py py-class docutils literal notranslate"><span class="pre">ModelStrict</span></code></a></p>
+<p>One allele of a diploid replaced by a deletion cassette (HIP / het collection).</p>
+<p>Replaces the <code class="docutils literal notranslate"><span class="pre">EngineeredCopyNumberPerturbation(copy_number=1,</span>
+<span class="pre">reference_copy_number=2)</span></code> encoding for HIP-style data (#506 point 3). A
+heterozygous deletion is an ALLELE edit, not a dosage statement: the copy-number
+form asserted “1 of 2 working copies” even at loci where the background was
+already null (BY4743 <code class="docutils literal notranslate"><span class="pre">his3Δ1/his3Δ1</span></code>: 0 working copies before and after). The
+functional dose is now DERIVED from this leaf plus the reference’s
+<code class="docutils literal notranslate"><span class="pre">StrainBackground</span></code> (<code class="docutils literal notranslate"><span class="pre">heterozygous_deletion_functional_copies</span></code>).</p>
+<p>The gene stays PRESENT on the other allele, so <code class="docutils literal notranslate"><span class="pre">state=&quot;present&quot;</span></code>; the SO mechanism
+is the <code class="docutils literal notranslate"><span class="pre">deletion</span></code> of one allele. It is deliberately NOT a <code class="docutils literal notranslate"><span class="pre">DeletionPerturbation</span></code>
+subclass, so an “every knockout” filter (<code class="docutils literal notranslate"><span class="pre">issubclass(_,</span> <span class="pre">DeletionPerturbation)</span></code>)
+does not count a heterozygote as an absent gene. <code class="docutils literal notranslate"><span class="pre">replaced_allele</span></code> names which
+allele the cassette replaced when the background is itself heterozygous at the
+locus (BY4743 <code class="docutils literal notranslate"><span class="pre">LYS2/lys2Δ0</span></code>, <code class="docutils literal notranslate"><span class="pre">MET15/met15Δ0</span></code>); set or gap it there.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchcell.datamodels.schema.HeterozygousDeletionPerturbation.model_config">
+<span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'extra':</span> <span class="pre">'forbid',</span> <span class="pre">'frozen':</span> <span class="pre">True}</span></em><a class="headerlink" href="#torchcell.datamodels.schema.HeterozygousDeletionPerturbation.model_config" title="Link to this definition"></a></dt>
+<dd><p>Configuration for the model, should be a dictionary conforming to [<cite>ConfigDict</cite>][pydantic.config.ConfigDict].</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="torchcell.datamodels.schema.BarcodedKanMxDeletionPerturbation.html" class="btn btn-neutral float-left" title="torchcell.datamodels.schema.BarcodedKanMxDeletionPerturbation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torchcell.datamodels.schema.NatMxDeletionPerturbation.html" class="btn btn-neutral float-right" title="torchcell.datamodels.schema.NatMxDeletionPerturbation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

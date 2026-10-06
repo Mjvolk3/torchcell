@@ -1,0 +1,715 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.knowledge_graphs.supported_queries.check &mdash; TorchCell 1.6.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/mytheme.css?v=cf917480" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=51c9007c" />
+
+  
+    <link rel="shortcut icon" href="../../../../_static/torchcell-mark.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/knowledge_graphs/supported_queries/check.html" />
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=d6a008b6"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html">
+            
+              <img src="../../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Datasets</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../datasets/index.html">Datasets</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.knowledge_graphs.supported_queries.check</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.knowledge_graphs.supported_queries.check</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/knowledge_graphs/supported_queries/check.py</span>
+<span class="c1"># [[torchcell.knowledge_graphs.supported_queries.check]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/supported_queries/check.py</span>
+<span class="c1"># Test file: tests/torchcell/knowledge_graphs/supported_queries/test_check.py</span>
+<span class="sd">"""The supported-query drift check: does each registered query still hold on a release?</span>
+
+<span class="sd">The check compares every registered query with a committed release snapshot</span>
+<span class="sd">(``database/releases/&lt;release&gt;.json`` and its ``.closures.json``, written by ``stamp``)</span>
+<span class="sd">and with the checkout's schema surface. It needs no store, no GilaHyper manifest and no</span>
+<span class="sd">torch: pydantic, PyYAML and python-dotenv are its whole import closure, which is what the</span>
+<span class="sd">``query-drift`` CI job installs.</span>
+
+<span class="sd">Drift kinds (:class:`QueryDrift`):</span>
+
+<span class="sd">- ``file_missing``: the ``.cql`` file is not in the checkout.</span>
+<span class="sd">- ``missing_node_label``: a label the query matches is not a node label of the release.</span>
+<span class="sd">  A class ``foo bar`` of the snapshot's ``graph_schema`` is the label ``FooBar`` (BioCypher's</span>
+<span class="sd">  sentence-to-Pascal rule); an ancestor declared by ``is_a`` in the checkout's</span>
+<span class="sd">  ``biocypher/config/torchcell_schema_config.yaml`` is a label too (``PhenotypicFeature``</span>
+<span class="sd">  on every ``... phenotype`` node). The snapshot does not record ``is_a``, so the checkout's</span>
+<span class="sd">  config supplies the hierarchy; Biolink ancestors above a declared ``is_a`` are not known.</span>
+<span class="sd">- ``missing_relationship_type``: a relationship type that is not an ``edge`` class.</span>
+<span class="sd">- ``missing_property``: a ``Label.prop`` read (see ``cypher_deps``) whose label is a node</span>
+<span class="sd">  label of the release but whose class does not carry ``prop``. ``id`` and</span>
+<span class="sd">  ``preferred_id``, which BioCypher writes on every node, always count. A label that is</span>
+<span class="sd">  only an ancestor must have ``prop`` on EVERY class under it: a class without it would</span>
+<span class="sd">  drop out of the query silently.</span>
+<span class="sd">- ``missing_dataset``: a ``dataset.id`` literal the release does not serve.</span>
+<span class="sd">- ``contract_changed``: a class of ``phenotype_classes``, or a surface class it references</span>
+<span class="sd">  transitively, whose contract fingerprint in the checkout differs from the closure the</span>
+<span class="sd">  release recorded for a selected dataset that serves it (the records would serialize</span>
+<span class="sd">  differently now); also a listed class that no selected dataset's closure contains.</span>
+<span class="sd">- ``composite_changed``: the recorded ``dataset_composite`` differs from the composite of</span>
+<span class="sd">  the selected datasets in the release, i.e. the records the query returns changed (or the</span>
+<span class="sd">  query was never validated).</span>
+<span class="sd">- ``converter_missing``: the converter's module is not in the checkout or does not define</span>
+<span class="sd">  the class at top level (read from source with ``ast``; nothing is imported).</span>
+
+<span class="sd">A ``supported`` query with any drift makes the check exit 1; a ``deprecated`` one is</span>
+<span class="sd">reported and never fails. ``validate`` records a release as the one a query holds on.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.kg_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphSchemaEntry</span><span class="p">,</span> <span class="n">surface_in_worktree</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.release_snapshot</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">KgReleaseSnapshot</span><span class="p">,</span>
+    <span class="n">composite_sha256</span><span class="p">,</span>
+    <span class="n">load_closures</span><span class="p">,</span>
+    <span class="n">load_snapshot</span><span class="p">,</span>
+    <span class="n">load_snapshots</span><span class="p">,</span>
+    <span class="n">snapshot_paths</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.supported_queries.cypher_deps</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">extract_dependencies</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.supported_queries.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">KG_PACKAGE_RELPATH</span><span class="p">,</span>
+    <span class="n">QueryDependencies</span><span class="p">,</span>
+    <span class="n">QueryRegistry</span><span class="p">,</span>
+    <span class="n">SupportedQuery</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.schema_deps</span><span class="w"> </span><span class="kn">import</span> <span class="n">SchemaSurface</span><span class="p">,</span> <span class="n">forward_closure</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"DriftKind"</span><span class="p">,</span>
+    <span class="s2">"SCHEMA_CONFIG_RELPATH"</span><span class="p">,</span>
+    <span class="s2">"IMPLICIT_NODE_PROPERTIES"</span><span class="p">,</span>
+    <span class="s2">"QueryDrift"</span><span class="p">,</span>
+    <span class="s2">"QueryResult"</span><span class="p">,</span>
+    <span class="s2">"CheckReport"</span><span class="p">,</span>
+    <span class="s2">"GraphLabels"</span><span class="p">,</span>
+    <span class="s2">"pascal_label"</span><span class="p">,</span>
+    <span class="s2">"schema_is_a"</span><span class="p">,</span>
+    <span class="s2">"graph_labels"</span><span class="p">,</span>
+    <span class="s2">"selected_composite"</span><span class="p">,</span>
+    <span class="s2">"query_drifts"</span><span class="p">,</span>
+    <span class="s2">"run_check"</span><span class="p">,</span>
+    <span class="s2">"checkout_commit"</span><span class="p">,</span>
+    <span class="s2">"resolve_snapshot"</span><span class="p">,</span>
+    <span class="s2">"check_repo"</span><span class="p">,</span>
+    <span class="s2">"validate_query"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">DriftKind</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span>
+    <span class="s2">"file_missing"</span><span class="p">,</span>
+    <span class="s2">"missing_node_label"</span><span class="p">,</span>
+    <span class="s2">"missing_relationship_type"</span><span class="p">,</span>
+    <span class="s2">"missing_property"</span><span class="p">,</span>
+    <span class="s2">"missing_dataset"</span><span class="p">,</span>
+    <span class="s2">"contract_changed"</span><span class="p">,</span>
+    <span class="s2">"composite_changed"</span><span class="p">,</span>
+    <span class="s2">"converter_missing"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">SCHEMA_CONFIG_RELPATH</span> <span class="o">=</span> <span class="s2">"biocypher/config/torchcell_schema_config.yaml"</span>
+<span class="c1"># BioCypher writes these on every node whatever the schema config lists.</span>
+<span class="n">IMPLICIT_NODE_PROPERTIES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"id"</span><span class="p">,</span> <span class="s2">"preferred_id"</span><span class="p">})</span>
+
+
+<div class="viewcode-block" id="QueryDrift">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.check.QueryDrift.html#torchcell.knowledge_graphs.supported_queries.check.QueryDrift">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QueryDrift</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One way a registered query no longer holds on a release."""</span>
+
+    <span class="n">query_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="n">DriftKind</span>
+    <span class="n">detail</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="QueryResult">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.check.QueryResult.html#torchcell.knowledge_graphs.supported_queries.check.QueryResult">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QueryResult</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One query's verdict, with the issue the CI job files when it fails."""</span>
+
+    <span class="n">query_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"supported"</span><span class="p">,</span> <span class="s2">"deprecated"</span><span class="p">]</span>
+    <span class="n">cql_path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">validated_release</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">drifts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">QueryDrift</span><span class="p">]</span>
+    <span class="n">issue_title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">issue_body</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">failing</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True for a supported query with at least one drift."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"supported"</span> <span class="ow">and</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drifts</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="CheckReport">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.check.CheckReport.html#torchcell.knowledge_graphs.supported_queries.check.CheckReport">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CheckReport</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The check over a whole registry against one release."""</span>
+
+    <span class="n">release</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">release_version</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">release_commit</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">checkout_commit</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">exit_code</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">QueryResult</span><span class="p">]</span>
+    <span class="n">report_markdown</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="GraphLabels">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.check.GraphLabels.html#torchcell.knowledge_graphs.supported_queries.check.GraphLabels">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GraphLabels</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Node labels and relationship types a release carries, with node properties.</span>
+
+<span class="sd">    ``node_properties[label]`` is the set of properties every node carrying ``label``</span>
+<span class="sd">    has: the class's own list (plus the implicit ones) for a concrete class, the</span>
+<span class="sd">    intersection over its classes for an ancestor-only label.</span>
+<span class="sd">    """</span>
+
+    <span class="n">node_properties</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+    <span class="n">relationship_types</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="pascal_label">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.check.pascal_label.html#torchcell.knowledge_graphs.supported_queries.check.pascal_label">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pascal_label</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""BioCypher's label for a schema class: ``fitness phenotype`` -&gt; ``FitnessPhenotype``."""</span>
+    <span class="k">return</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">word</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">word</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">())</span></div>
+
+
+
+<div class="viewcode-block" id="schema_is_a">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.check.schema_is_a.html#torchcell.knowledge_graphs.supported_queries.check.schema_is_a">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">schema_is_a</span><span class="p">(</span><span class="n">config_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""``class -&gt; [parent, ...]`` from the ``is_a`` entries of a BioCypher schema config."""</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">config_text</span><span class="p">)</span>
+    <span class="n">parents</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"is_a"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">entry</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="s2">"is_a"</span><span class="p">]</span>
+        <span class="n">parents</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">parents</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ancestors</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">is_a</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">stack</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">is_a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">[]))</span>
+    <span class="k">while</span> <span class="n">stack</span><span class="p">:</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">parent</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+            <span class="n">stack</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">is_a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="p">[]))</span>
+    <span class="k">return</span> <span class="n">seen</span>
+
+
+<div class="viewcode-block" id="graph_labels">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.check.graph_labels.html#torchcell.knowledge_graphs.supported_queries.check.graph_labels">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">graph_labels</span><span class="p">(</span>
+    <span class="n">graph_schema</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GraphSchemaEntry</span><span class="p">],</span> <span class="n">is_a</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GraphLabels</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The labels and types of a release's graph schema under the ``is_a`` hierarchy."""</span>
+    <span class="n">concrete</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">under_ancestor</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">relationship_types</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">graph_schema</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"edge"</span><span class="p">:</span>
+            <span class="n">relationship_types</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pascal_label</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+            <span class="k">continue</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span> <span class="o">|</span> <span class="n">IMPLICIT_NODE_PROPERTIES</span>
+        <span class="n">concrete</span><span class="p">[</span><span class="n">pascal_label</span><span class="p">(</span><span class="n">name</span><span class="p">)]</span> <span class="o">=</span> <span class="n">props</span>
+        <span class="k">for</span> <span class="n">ancestor</span> <span class="ow">in</span> <span class="n">_ancestors</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">is_a</span><span class="p">):</span>
+            <span class="n">under_ancestor</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">pascal_label</span><span class="p">(</span><span class="n">ancestor</span><span class="p">),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">props</span><span class="p">)</span>
+    <span class="n">node_properties</span> <span class="o">=</span> <span class="p">{</span><span class="n">label</span><span class="p">:</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">props</span><span class="p">)</span> <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">props</span> <span class="ow">in</span> <span class="n">concrete</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">prop_sets</span> <span class="ow">in</span> <span class="n">under_ancestor</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">concrete</span><span class="p">:</span>
+            <span class="n">node_properties</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="o">*</span><span class="n">prop_sets</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">GraphLabels</span><span class="p">(</span>
+        <span class="n">node_properties</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">node_properties</span><span class="o">.</span><span class="n">items</span><span class="p">())),</span>
+        <span class="n">relationship_types</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">relationship_types</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="selected_composite">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.check.selected_composite.html#torchcell.knowledge_graphs.supported_queries.check.selected_composite">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">selected_composite</span><span class="p">(</span><span class="n">snapshot</span><span class="p">:</span> <span class="n">KgReleaseSnapshot</span><span class="p">,</span> <span class="n">dataset_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``composite_sha256`` over the selected datasets the release serves."""</span>
+    <span class="k">return</span> <span class="n">composite_sha256</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">dataset_ids</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">datasets</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_converter_defined</span><span class="p">(</span><span class="n">converter</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""None when the converter class is defined in the checkout, else why not."""</span>
+    <span class="n">module</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">class_name</span> <span class="o">=</span> <span class="n">converter</span><span class="o">.</span><span class="n">rpartition</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">repo_root</span> <span class="o">/</span> <span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="s2">"/"</span><span class="p">)</span> <span class="o">+</span> <span class="s2">".py"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"converter module </span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2"> is not in the checkout (</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> absent)"</span>
+    <span class="n">tree</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">body</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">ast</span><span class="o">.</span><span class="n">ClassDef</span><span class="p">)}</span>
+    <span class="k">if</span> <span class="n">class_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s2"> defines no top-level class </span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_contract_drifts</span><span class="p">(</span>
+    <span class="n">query</span><span class="p">:</span> <span class="n">SupportedQuery</span><span class="p">,</span>
+    <span class="n">selected</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">closures</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">,</span>
+    <span class="n">release</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">QueryDrift</span><span class="p">]:</span>
+    <span class="n">drifts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">QueryDrift</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">phenotype</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">phenotype_classes</span><span class="p">:</span>
+        <span class="n">serving</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">selected</span> <span class="k">if</span> <span class="n">phenotype</span> <span class="ow">in</span> <span class="n">closures</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">{})]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">serving</span><span class="p">:</span>
+            <span class="n">drifts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">QueryDrift</span><span class="p">(</span>
+                    <span class="n">query_id</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                    <span class="n">kind</span><span class="o">=</span><span class="s2">"contract_changed"</span><span class="p">,</span>
+                    <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">phenotype</span><span class="si">}</span><span class="s2"> is in the recorded closure of none of the selected "</span>
+                        <span class="sa">f</span><span class="s2">"datasets in </span><span class="si">{</span><span class="n">release</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">symbols</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">forward_closure</span><span class="p">({</span><span class="n">phenotype</span><span class="p">},</span> <span class="n">surface</span><span class="o">.</span><span class="n">ref_graph</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">phenotype</span> <span class="ow">in</span> <span class="n">surface</span><span class="o">.</span><span class="n">names</span>
+            <span class="k">else</span> <span class="p">{</span><span class="n">phenotype</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="n">changed</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">datasets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">serving</span><span class="p">:</span>
+            <span class="n">recorded</span> <span class="o">=</span> <span class="n">closures</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">moved</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">symbol</span>
+                <span class="k">for</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">symbols</span> <span class="o">|</span> <span class="p">{</span><span class="n">phenotype</span><span class="p">}</span>
+                <span class="k">if</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">recorded</span>
+                <span class="ow">and</span> <span class="n">surface</span><span class="o">.</span><span class="n">fingerprints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span> <span class="o">!=</span> <span class="n">recorded</span><span class="p">[</span><span class="n">symbol</span><span class="p">]</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="n">moved</span><span class="p">:</span>
+                <span class="n">changed</span> <span class="o">|=</span> <span class="n">moved</span>
+                <span class="n">datasets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">changed</span><span class="p">:</span>
+            <span class="n">gone</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">changed</span> <span class="k">if</span> <span class="n">s</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">surface</span><span class="o">.</span><span class="n">fingerprints</span><span class="p">)</span>
+            <span class="n">detail</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">phenotype</span><span class="si">}</span><span class="s2">: contract of </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">changed</span><span class="p">))</span><span class="si">}</span><span class="s2"> differs from the "</span>
+                <span class="sa">f</span><span class="s2">"closure </span><span class="si">{</span><span class="n">release</span><span class="si">}</span><span class="s2"> recorded for </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">datasets</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">gone</span><span class="p">:</span>
+                <span class="n">detail</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gone</span><span class="p">)</span><span class="si">}</span><span class="s2"> absent from the checkout's schema)"</span>
+            <span class="n">drifts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">QueryDrift</span><span class="p">(</span><span class="n">query_id</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">"contract_changed"</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="n">detail</span><span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">drifts</span>
+
+
+<div class="viewcode-block" id="query_drifts">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.check.query_drifts.html#torchcell.knowledge_graphs.supported_queries.check.query_drifts">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">query_drifts</span><span class="p">(</span>
+    <span class="n">query</span><span class="p">:</span> <span class="n">SupportedQuery</span><span class="p">,</span>
+    <span class="n">deps</span><span class="p">:</span> <span class="n">QueryDependencies</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">snapshot</span><span class="p">:</span> <span class="n">KgReleaseSnapshot</span><span class="p">,</span>
+    <span class="n">closures</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">,</span>
+    <span class="n">labels</span><span class="p">:</span> <span class="n">GraphLabels</span><span class="p">,</span>
+    <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">QueryDrift</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Every drift of ``query`` against ``snapshot``; ``deps`` None means no file."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">drift</span><span class="p">(</span><span class="n">kind</span><span class="p">:</span> <span class="n">DriftKind</span><span class="p">,</span> <span class="n">detail</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QueryDrift</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">QueryDrift</span><span class="p">(</span><span class="n">query_id</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="n">detail</span><span class="p">)</span>
+
+    <span class="n">release</span> <span class="o">=</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">release</span>
+    <span class="k">if</span> <span class="n">deps</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">drift</span><span class="p">(</span>
+                <span class="s2">"file_missing"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">KG_PACKAGE_RELPATH</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">query</span><span class="o">.</span><span class="n">cql_path</span><span class="si">}</span><span class="s2"> is not in the checkout"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+    <span class="n">drifts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">QueryDrift</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">deps</span><span class="o">.</span><span class="n">node_labels</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">labels</span><span class="o">.</span><span class="n">node_properties</span><span class="p">:</span>
+            <span class="n">drifts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">drift</span><span class="p">(</span><span class="s2">"missing_node_label"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> is not a node label of </span><span class="si">{</span><span class="n">release</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">for</span> <span class="n">rel_type</span> <span class="ow">in</span> <span class="n">deps</span><span class="o">.</span><span class="n">relationship_types</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">rel_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">labels</span><span class="o">.</span><span class="n">relationship_types</span><span class="p">:</span>
+            <span class="n">drifts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">drift</span><span class="p">(</span>
+                    <span class="s2">"missing_relationship_type"</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">rel_type</span><span class="si">}</span><span class="s2"> is not a relationship type of </span><span class="si">{</span><span class="n">release</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">for</span> <span class="n">read</span> <span class="ow">in</span> <span class="n">deps</span><span class="o">.</span><span class="n">label_properties</span><span class="p">:</span>
+        <span class="n">label</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">prop</span> <span class="o">=</span> <span class="n">read</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
+        <span class="n">carried</span> <span class="o">=</span> <span class="n">labels</span><span class="o">.</span><span class="n">node_properties</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">carried</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">prop</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">carried</span><span class="p">:</span>
+            <span class="n">drifts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">drift</span><span class="p">(</span>
+                    <span class="s2">"missing_property"</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">prop</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> nodes of </span><span class="si">{</span><span class="n">release</span><span class="si">}</span><span class="s2"> do not all carry </span><span class="si">{</span><span class="n">prop</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">deps</span><span class="o">.</span><span class="n">dataset_ids</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">datasets</span><span class="p">:</span>
+            <span class="n">drifts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">drift</span><span class="p">(</span><span class="s2">"missing_dataset"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is not served by </span><span class="si">{</span><span class="n">release</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="p">)</span>
+    <span class="n">drifts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+        <span class="n">_contract_drifts</span><span class="p">(</span>
+            <span class="n">query</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">deps</span><span class="o">.</span><span class="n">dataset_ids</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">datasets</span><span class="p">],</span>
+            <span class="n">closures</span><span class="p">,</span>
+            <span class="n">surface</span><span class="p">,</span>
+            <span class="n">release</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">composite</span> <span class="o">=</span> <span class="n">selected_composite</span><span class="p">(</span><span class="n">snapshot</span><span class="p">,</span> <span class="n">deps</span><span class="o">.</span><span class="n">dataset_ids</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">dataset_composite</span> <span class="o">!=</span> <span class="n">composite</span><span class="p">:</span>
+        <span class="n">recorded</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"recorded </span><span class="si">{</span><span class="n">query</span><span class="o">.</span><span class="n">dataset_composite</span><span class="si">}</span><span class="s2"> (validated on </span><span class="si">{</span><span class="n">query</span><span class="o">.</span><span class="n">validated_release</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">dataset_composite</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="s2">"never validated"</span>
+        <span class="p">)</span>
+        <span class="n">drifts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">drift</span><span class="p">(</span>
+                <span class="s2">"composite_changed"</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">"selected datasets compose to </span><span class="si">{</span><span class="n">composite</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">release</span><span class="si">}</span><span class="s2">; </span><span class="si">{</span><span class="n">recorded</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">converter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">reason</span> <span class="o">=</span> <span class="n">_converter_defined</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">converter</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reason</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">drifts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">drift</span><span class="p">(</span><span class="s2">"converter_missing"</span><span class="p">,</span> <span class="n">reason</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">drifts</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_issue_body</span><span class="p">(</span>
+    <span class="n">query</span><span class="p">:</span> <span class="n">SupportedQuery</span><span class="p">,</span>
+    <span class="n">drifts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">QueryDrift</span><span class="p">],</span>
+    <span class="n">snapshot</span><span class="p">:</span> <span class="n">KgReleaseSnapshot</span><span class="p">,</span>
+    <span class="n">commit</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">"Supported query `</span><span class="si">{</span><span class="n">query</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">` (</span><span class="si">{</span><span class="n">query</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2">) drifts against KG release "</span>
+        <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2">` (version </span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">, built from "</span>
+        <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_commit</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2">`)."</span><span class="p">,</span>
+        <span class="s2">""</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"- Query: `</span><span class="si">{</span><span class="n">KG_PACKAGE_RELPATH</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">query</span><span class="o">.</span><span class="n">cql_path</span><span class="si">}</span><span class="s2">`, status `</span><span class="si">{</span><span class="n">query</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">`"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"- Last validated on: `</span><span class="si">{</span><span class="n">query</span><span class="o">.</span><span class="n">validated_release</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'never'</span><span class="si">}</span><span class="s2">`"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"- Checkout commit: `</span><span class="si">{</span><span class="n">commit</span><span class="si">}</span><span class="s2">`"</span><span class="p">,</span>
+        <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"Drift:"</span><span class="p">,</span>
+        <span class="s2">""</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"- `</span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2">`: </span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">detail</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">drifts</span><span class="p">]</span>
+    <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span>
+        <span class="s2">""</span><span class="p">,</span>
+        <span class="s2">"After the next KG build, re-validate with "</span>
+        <span class="sa">f</span><span class="s2">"`python -m torchcell.knowledge_graphs.supported_queries validate </span><span class="si">{</span><span class="n">query</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> "</span>
+        <span class="s2">"--release &lt;new release&gt;` (or deprecate the query) and close this issue by hand."</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_report_markdown</span><span class="p">(</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">QueryResult</span><span class="p">],</span> <span class="n">snapshot</span><span class="p">:</span> <span class="n">KgReleaseSnapshot</span><span class="p">,</span> <span class="n">commit</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">drifted</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">drifts</span><span class="p">]</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">"## Supported queries against `</span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2">` (KG </span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+        <span class="s2">""</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"Checkout `</span><span class="si">{</span><span class="n">commit</span><span class="si">}</span><span class="s2">`: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span><span class="si">}</span><span class="s2"> queries, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">drifted</span><span class="p">)</span><span class="si">}</span><span class="s2"> drifted, "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">failing</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">results</span><span class="p">)</span><span class="si">}</span><span class="s2"> failing."</span><span class="p">,</span>
+        <span class="s2">""</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="n">verdict</span> <span class="o">=</span> <span class="s2">"ok"</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">drifts</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">drifts</span><span class="p">)</span><span class="si">}</span><span class="s2"> drift(s)"</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"- `</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">query_id</span><span class="si">}</span><span class="s2">` (</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">verdict</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">drifted</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">""</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"### </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">issue_title</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">issue_body</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+
+
+<div class="viewcode-block" id="run_check">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.check.run_check.html#torchcell.knowledge_graphs.supported_queries.check.run_check">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_check</span><span class="p">(</span>
+    <span class="n">registry</span><span class="p">:</span> <span class="n">QueryRegistry</span><span class="p">,</span>
+    <span class="n">snapshot</span><span class="p">:</span> <span class="n">KgReleaseSnapshot</span><span class="p">,</span>
+    <span class="n">closures</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">,</span>
+    <span class="n">schema_config_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+    <span class="n">commit</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CheckReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Check every registered query; exit code 1 when a supported query drifts."""</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">graph_labels</span><span class="p">(</span><span class="n">snapshot</span><span class="o">.</span><span class="n">graph_schema</span><span class="p">,</span> <span class="n">schema_is_a</span><span class="p">(</span><span class="n">schema_config_text</span><span class="p">))</span>
+    <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">QueryResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">query</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">registry</span><span class="o">.</span><span class="n">queries</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">q</span><span class="p">:</span> <span class="n">q</span><span class="o">.</span><span class="n">id</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">cql_file</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)</span>
+        <span class="n">deps</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">extract_dependencies</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="n">drifts</span> <span class="o">=</span> <span class="n">query_drifts</span><span class="p">(</span>
+            <span class="n">query</span><span class="p">,</span> <span class="n">deps</span><span class="p">,</span> <span class="n">snapshot</span><span class="p">,</span> <span class="n">closures</span><span class="p">,</span> <span class="n">surface</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">repo_root</span>
+        <span class="p">)</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">QueryResult</span><span class="p">(</span>
+                <span class="n">query_id</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="n">title</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
+                <span class="n">cql_path</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">cql_path</span><span class="p">,</span>
+                <span class="n">validated_release</span><span class="o">=</span><span class="n">query</span><span class="o">.</span><span class="n">validated_release</span><span class="p">,</span>
+                <span class="n">drifts</span><span class="o">=</span><span class="n">drifts</span><span class="p">,</span>
+                <span class="n">issue_title</span><span class="o">=</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Before the next KG build: supported query </span><span class="si">{</span><span class="n">query</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> drifts "</span>
+                    <span class="sa">f</span><span class="s2">"against </span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">),</span>
+                <span class="n">issue_body</span><span class="o">=</span><span class="n">_issue_body</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">drifts</span><span class="p">,</span> <span class="n">snapshot</span><span class="p">,</span> <span class="n">commit</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">CheckReport</span><span class="p">(</span>
+        <span class="n">release</span><span class="o">=</span><span class="n">snapshot</span><span class="o">.</span><span class="n">release</span><span class="p">,</span>
+        <span class="n">release_version</span><span class="o">=</span><span class="n">snapshot</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+        <span class="n">release_commit</span><span class="o">=</span><span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_commit</span><span class="p">,</span>
+        <span class="n">checkout_commit</span><span class="o">=</span><span class="n">commit</span><span class="p">,</span>
+        <span class="n">exit_code</span><span class="o">=</span><span class="mi">1</span> <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">failing</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">results</span><span class="o">=</span><span class="n">results</span><span class="p">,</span>
+        <span class="n">report_markdown</span><span class="o">=</span><span class="n">_report_markdown</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">snapshot</span><span class="p">,</span> <span class="n">commit</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="checkout_commit">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.check.checkout_commit.html#torchcell.knowledge_graphs.supported_queries.check.checkout_commit">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">checkout_commit</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``git rev-parse HEAD`` of the checkout at ``repo_root``."""</span>
+    <span class="k">return</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="s2">"git"</span><span class="p">,</span> <span class="s2">"-C"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">repo_root</span><span class="p">),</span> <span class="s2">"rev-parse"</span><span class="p">,</span> <span class="s2">"HEAD"</span><span class="p">],</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="resolve_snapshot">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.check.resolve_snapshot.html#torchcell.knowledge_graphs.supported_queries.check.resolve_snapshot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_snapshot</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">release</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KgReleaseSnapshot</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The named release's snapshot, or the newest committed one."""</span>
+    <span class="k">if</span> <span class="n">release</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">load_snapshot</span><span class="p">(</span><span class="n">snapshot_paths</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">release</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">snapshots</span> <span class="o">=</span> <span class="n">load_snapshots</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">snapshots</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"no release snapshots under </span><span class="si">{</span><span class="n">repo_root</span><span class="si">}</span><span class="s2">/database/releases"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">snapshots</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="check_repo">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.check.check_repo.html#torchcell.knowledge_graphs.supported_queries.check.check_repo">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_repo</span><span class="p">(</span>
+    <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">registry</span><span class="p">:</span> <span class="n">QueryRegistry</span><span class="p">,</span> <span class="n">release</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CheckReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">""":func:`run_check` with every input read from the checkout at ``repo_root``."""</span>
+    <span class="n">snapshot</span> <span class="o">=</span> <span class="n">resolve_snapshot</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">release</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">run_check</span><span class="p">(</span>
+        <span class="n">registry</span><span class="p">,</span>
+        <span class="n">snapshot</span><span class="p">,</span>
+        <span class="n">load_closures</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">release</span><span class="p">),</span>
+        <span class="n">surface_in_worktree</span><span class="p">(</span><span class="n">repo_root</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">repo_root</span> <span class="o">/</span> <span class="n">SCHEMA_CONFIG_RELPATH</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">),</span>
+        <span class="n">repo_root</span><span class="p">,</span>
+        <span class="n">checkout_commit</span><span class="p">(</span><span class="n">repo_root</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="validate_query">
+<a class="viewcode-back" href="../../../../generated/torchcell.knowledge_graphs.supported_queries.check.validate_query.html#torchcell.knowledge_graphs.supported_queries.check.validate_query">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_query</span><span class="p">(</span>
+    <span class="n">registry</span><span class="p">:</span> <span class="n">QueryRegistry</span><span class="p">,</span> <span class="n">query_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">release</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">QueryRegistry</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">QueryDrift</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Record ``release`` as the one ``query_id`` holds on.</span>
+
+<span class="sd">    Returns the updated registry and no drifts, or the unchanged registry and the drifts</span>
+<span class="sd">    that refuse the validation. Only ``composite_changed`` is resolved by validating (it</span>
+<span class="sd">    is what a new release is expected to change); any other drift is a query or schema</span>
+<span class="sd">    problem that must be fixed first. Sets ``since_kg_version`` when it is unset.</span>
+<span class="sd">    """</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">query_id</span><span class="p">)</span>
+    <span class="n">report</span> <span class="o">=</span> <span class="n">check_repo</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">QueryRegistry</span><span class="p">(</span><span class="n">queries</span><span class="o">=</span><span class="p">[</span><span class="n">query</span><span class="p">]),</span> <span class="n">release</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">result</span><span class="p">,)</span> <span class="o">=</span> <span class="n">report</span><span class="o">.</span><span class="n">results</span>
+    <span class="n">blocking</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">drifts</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s2">"composite_changed"</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">blocking</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">registry</span><span class="p">,</span> <span class="n">blocking</span>
+    <span class="n">snapshot</span> <span class="o">=</span> <span class="n">resolve_snapshot</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">release</span><span class="p">)</span>
+    <span class="n">deps</span> <span class="o">=</span> <span class="n">extract_dependencies</span><span class="p">(</span><span class="n">query</span><span class="o">.</span><span class="n">cql_file</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
+    <span class="n">updated</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
+        <span class="n">update</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"validated_release"</span><span class="p">:</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">release</span><span class="p">,</span>
+            <span class="s2">"dataset_composite"</span><span class="p">:</span> <span class="n">selected_composite</span><span class="p">(</span><span class="n">snapshot</span><span class="p">,</span> <span class="n">deps</span><span class="o">.</span><span class="n">dataset_ids</span><span class="p">),</span>
+            <span class="s2">"since_kg_version"</span><span class="p">:</span> <span class="n">query</span><span class="o">.</span><span class="n">since_kg_version</span> <span class="ow">or</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">registry</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">SupportedQuery</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">updated</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())),</span> <span class="p">[]</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

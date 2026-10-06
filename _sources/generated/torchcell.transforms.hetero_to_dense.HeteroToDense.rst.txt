@@ -1,8 +1,0 @@
-﻿torchcell.transforms.hetero\_to\_dense.HeteroToDense
-====================================================
-
-.. currentmodule:: torchcell.transforms.hetero_to_dense
-
-.. autoclass:: HeteroToDense
-   :show-inheritance:
-   :members:

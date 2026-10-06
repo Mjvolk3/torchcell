@@ -64,7 +64,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
@@ -72,7 +71,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
@@ -156,6 +154,8 @@
 <span class="p">)</span>
 
 
+<div class="viewcode-block" id="MemberlessReactionError">
+<a class="viewcode-back" href="../../../generated/torchcell.metabolism.yeast_GEM.MemberlessReactionError.html#torchcell.metabolism.yeast_GEM.MemberlessReactionError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MemberlessReactionError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A reaction with no metabolites, which neither graph view can represent.</span>
 
@@ -163,7 +163,8 @@
 <span class="sd">    ``reaction_map`` while ``bipartite_graph`` kept it as an isolated node. Both views</span>
 <span class="sd">    refuse it instead, so they always agree on the reaction set. yeast-GEM 9.0.2 has</span>
 <span class="sd">    none of its 4,131 reactions in this state.</span>
-<span class="sd">    """</span>
+<span class="sd">    """</span></div>
+
 
 
 <div class="viewcode-block" id="YeastGEM">

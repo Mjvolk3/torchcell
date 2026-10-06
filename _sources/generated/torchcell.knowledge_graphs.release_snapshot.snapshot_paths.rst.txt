@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.release\_snapshot.snapshot\_paths
+=============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.release_snapshot
+
+.. autofunction:: snapshot_paths

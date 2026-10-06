@@ -1,8 +1,0 @@
-﻿torchcell.models.nsa\_hetero\_cell.CellGraphHeteroNSA
-=====================================================
-
-.. currentmodule:: torchcell.models.nsa_hetero_cell
-
-.. autoclass:: CellGraphHeteroNSA
-   :show-inheritance:
-   :members:

@@ -64,7 +64,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
@@ -72,7 +71,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
@@ -147,13 +145,16 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.models.act</span><span class="w"> </span><span class="kn">import</span> <span class="n">act_register</span>
 
 
+<div class="viewcode-block" id="get_activation">
+<a class="viewcode-back" href="../../../generated/torchcell.models.hetero_cell_bipartite_dango_gi.get_activation.html#torchcell.models.hetero_cell_bipartite_dango_gi.get_activation">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_activation</span><span class="p">(</span><span class="n">activation</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Return the ``act_register`` module named ``activation``, refusing unknown names."""</span>
     <span class="k">if</span> <span class="n">activation</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">act_register</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"Unknown activation: </span><span class="si">{</span><span class="n">activation</span><span class="si">}</span><span class="s2">; expected one of </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">act_register</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">act_register</span><span class="p">[</span><span class="n">activation</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">act_register</span><span class="p">[</span><span class="n">activation</span><span class="p">]</span></div>
+
 
 
 <div class="viewcode-block" id="SelfAttentionGraphAggregation">
@@ -320,6 +321,8 @@
 
 
 
+<div class="viewcode-block" id="AggregationNormNotImplementedError">
+<a class="viewcode-back" href="../../../generated/torchcell.models.hetero_cell_bipartite_dango_gi.AggregationNormNotImplementedError.html#torchcell.models.hetero_cell_bipartite_dango_gi.AggregationNormNotImplementedError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AggregationNormNotImplementedError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""An ``aggregation_norm`` other than None was requested from this module.</span>
 
@@ -336,13 +339,17 @@
             <span class="s2">"build no normalization layer. Set aggregation_norm to null, or use "</span>
             <span class="s2">"torchcell.models.hetero_cell_bipartite_dango_gi_lazy, whose "</span>
             <span class="s2">"pairwise_interaction aggregator builds it."</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="require_no_aggregation_norm">
+<a class="viewcode-back" href="../../../generated/torchcell.models.hetero_cell_bipartite_dango_gi.require_no_aggregation_norm.html#torchcell.models.hetero_cell_bipartite_dango_gi.require_no_aggregation_norm">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">require_no_aggregation_norm</span><span class="p">(</span><span class="n">aggregation_norm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Refuse any ``aggregation_norm`` other than None (the only built behavior)."""</span>
     <span class="k">if</span> <span class="n">aggregation_norm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">AggregationNormNotImplementedError</span><span class="p">(</span><span class="n">aggregation_norm</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">AggregationNormNotImplementedError</span><span class="p">(</span><span class="n">aggregation_norm</span><span class="p">)</span></div>
+
 
 
 <div class="viewcode-block" id="HeteroConvAggregator">

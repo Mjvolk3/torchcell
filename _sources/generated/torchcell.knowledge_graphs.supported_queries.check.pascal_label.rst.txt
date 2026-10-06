@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.supported\_queries.check.pascal\_label
+==================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.supported_queries.check
+
+.. autofunction:: pascal_label

@@ -1,6 +1,0 @@
-﻿torchcell.knowledge\_graphs.gene\_interactions\_scerevisae\_kg\_small.get\_num\_workers
-=======================================================================================
-
-.. currentmodule:: torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small
-
-.. autofunction:: get_num_workers

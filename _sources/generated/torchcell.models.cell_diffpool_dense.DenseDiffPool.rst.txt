@@ -1,8 +1,0 @@
-﻿torchcell.models.cell\_diffpool\_dense.DenseDiffPool
-====================================================
-
-.. currentmodule:: torchcell.models.cell_diffpool_dense
-
-.. autoclass:: DenseDiffPool
-   :show-inheritance:
-   :members:

@@ -1,6 +1,0 @@
-﻿torchcell.knowledge\_graphs.smf\_tmi\_combine\_kg.get\_num\_workers
-===================================================================
-
-.. currentmodule:: torchcell.knowledge_graphs.smf_tmi_combine_kg
-
-.. autofunction:: get_num_workers

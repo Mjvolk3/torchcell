@@ -1,0 +1,6 @@
+﻿torchcell.datamodels.interned\_constant.constant\_id
+====================================================
+
+.. currentmodule:: torchcell.datamodels.interned_constant
+
+.. autofunction:: constant_id

@@ -1,6 +1,0 @@
-﻿torchcell.models.hetero\_cell.get\_norm\_layer
-==============================================
-
-.. currentmodule:: torchcell.models.hetero_cell
-
-.. autofunction:: get_norm_layer

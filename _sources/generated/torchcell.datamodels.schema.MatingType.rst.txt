@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.MatingType
+======================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: MatingType
+   :show-inheritance:
+   :members:

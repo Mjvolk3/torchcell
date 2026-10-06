@@ -1,8 +1,0 @@
-﻿torchcell.nn.flex\_attention\_graph\_nsa.AttentionBlock
-=======================================================
-
-.. currentmodule:: torchcell.nn.flex_attention_graph_nsa
-
-.. autoclass:: AttentionBlock
-   :show-inheritance:
-   :members:

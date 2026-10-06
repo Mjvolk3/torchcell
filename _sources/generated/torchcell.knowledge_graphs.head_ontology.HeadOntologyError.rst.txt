@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.head\_ontology.HeadOntologyError
+============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.head_ontology
+
+.. autoclass:: HeadOntologyError
+   :show-inheritance:
+   :members:

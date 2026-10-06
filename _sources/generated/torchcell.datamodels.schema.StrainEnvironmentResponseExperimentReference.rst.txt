@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.StrainEnvironmentResponseExperimentReference
+========================================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: StrainEnvironmentResponseExperimentReference
+   :show-inheritance:
+   :members:

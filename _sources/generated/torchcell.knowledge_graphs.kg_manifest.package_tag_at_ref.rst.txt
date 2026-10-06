@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.package\_tag\_at\_ref
+==============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: package_tag_at_ref

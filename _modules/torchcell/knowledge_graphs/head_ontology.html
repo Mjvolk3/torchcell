@@ -1,0 +1,372 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.knowledge_graphs.head_ontology &mdash; TorchCell 1.6.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=51c9007c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-mark.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/knowledge_graphs/head_ontology.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=d6a008b6"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Datasets</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datasets/index.html">Datasets</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.knowledge_graphs.head_ontology</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.knowledge_graphs.head_ontology</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/knowledge_graphs/head_ontology.py</span>
+<span class="c1"># [[torchcell.knowledge_graphs.head_ontology]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/head_ontology.py</span>
+<span class="c1"># Test file: tests/torchcell/knowledge_graphs/test_head_ontology.py</span>
+<span class="sd">"""The sha256-pinned local mirror of BioCypher's head ontology (Biolink 3.2.1).</span>
+
+<span class="sd">BioCypher places every schema class under a head ontology. Its built-in default is</span>
+<span class="sd">``https://github.com/biolink/biolink-model/raw/v3.2.1/biolink-model.owl.ttl``, fetched</span>
+<span class="sd">by ``rdflib`` at every BioCypher construction, so a KG generation run depended on GitHub</span>
+<span class="sd">answering (live rebuild job 3182 died on an HTTP 504 there, issue #619). The ontology</span>
+<span class="sd">cannot be dropped (headless mode): the served nodes carry Biolink ancestor labels</span>
+<span class="sd">(``torchcell.database.browser_style.ANCESTOR_LABELS``) and the schema's ``is_a`` targets</span>
+<span class="sd">are Biolink classes. So the file is mirrored in the repo at</span>
+<span class="sd">``biocypher/ontology/biolink-model-v3.2.1.owl.ttl`` with a provenance record beside it,</span>
+<span class="sd">every BioCypher config points ``head_ontology.url`` at the local copy, and the build</span>
+<span class="sd">scripts call :func:`verify_head_ontology` before constructing BioCypher.</span>
+
+<span class="sd">``directory_setup`` copies the whole ``biocypher/`` directory into</span>
+<span class="sd">``$BUILD_ROOT/database/biocypher``, which the generation container mounts at</span>
+<span class="sd">``/var/lib/neo4j/biocypher``; the container configs therefore name</span>
+<span class="sd">``/var/lib/neo4j/biocypher/ontology/...``. Host-side configs name the repo-relative</span>
+<span class="sd">``biocypher/ontology/...``, which ``rdflib`` (and this check) resolve against the working</span>
+<span class="sd">directory, the repo root.</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ArtifactRecord</span><span class="p">,</span>
+    <span class="n">RetrievalMethod</span><span class="p">,</span>
+    <span class="n">RetrievalRecord</span><span class="p">,</span>
+    <span class="n">sha256_file</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.literature.provenance</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_source</span>
+
+<span class="n">BIOLINK_VERSION</span> <span class="o">=</span> <span class="s2">"3.2.1"</span>
+<span class="n">BIOLINK_SOURCE_URL</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"https://github.com/biolink/biolink-model/raw/v3.2.1/biolink-model.owl.ttl"</span>
+<span class="p">)</span>
+<span class="n">BIOLINK_ROOT_NODE</span> <span class="o">=</span> <span class="s2">"entity"</span>
+<span class="n">ONTOLOGY_FILENAME</span> <span class="o">=</span> <span class="s2">"biolink-model-v3.2.1.owl.ttl"</span>
+<span class="c1">#: Repo-relative location of the mirrored file (and of every host-side config's url).</span>
+<span class="n">REPO_ONTOLOGY_PATH</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"biocypher/ontology/</span><span class="si">{</span><span class="n">ONTOLOGY_FILENAME</span><span class="si">}</span><span class="s2">"</span>
+<span class="c1">#: Where the generation container sees the repo's ``biocypher/`` directory.</span>
+<span class="n">CONTAINER_BIOCYPHER_DIR</span> <span class="o">=</span> <span class="s2">"/var/lib/neo4j/biocypher"</span>
+<span class="n">CONTAINER_ONTOLOGY_PATH</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">CONTAINER_BIOCYPHER_DIR</span><span class="si">}</span><span class="s2">/ontology/</span><span class="si">{</span><span class="n">ONTOLOGY_FILENAME</span><span class="si">}</span><span class="s2">"</span>
+<span class="n">RECORD_SUFFIX</span> <span class="o">=</span> <span class="s2">".provenance.json"</span>
+<span class="n">ROLE_ONTOLOGY</span> <span class="o">=</span> <span class="s2">"ontology"</span>
+
+
+<div class="viewcode-block" id="HeadOntologyError">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.head_ontology.HeadOntologyError.html#torchcell.knowledge_graphs.head_ontology.HeadOntologyError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HeadOntologyError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The configured head ontology is remote, missing, or not the pinned bytes."""</span></div>
+
+
+
+<div class="viewcode-block" id="HeadOntologyMirror">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.head_ontology.HeadOntologyMirror.html#torchcell.knowledge_graphs.head_ontology.HeadOntologyMirror">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HeadOntologyMirror</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Provenance of one mirrored head-ontology file, written beside it as JSON.</span>
+
+<span class="sd">    ``file`` is the shared per-file ``ArtifactRecord`` (the record the literature and</span>
+<span class="sd">    raw-data mirrors use); its ``retrieval`` names the versioned retriever</span>
+<span class="sd">    (``torchcell.literature.retrieve.direct_url``) that ``check_source`` re-runs.</span>
+<span class="sd">    ``retrieval_command`` is the exact shell command that produced the stored bytes.</span>
+<span class="sd">    """</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">extra</span><span class="o">=</span><span class="s2">"forbid"</span><span class="p">)</span>
+
+    <span class="n">ontology</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s1">'Ontology name and release, e.g. "biolink 3.2.1".'</span>
+    <span class="p">)</span>
+    <span class="n">root_node</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"BioCypher head_ontology.root_node."</span><span class="p">)</span>
+    <span class="n">retrieval_command</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Exact command that fetched the bytes."</span><span class="p">)</span>
+    <span class="n">file</span><span class="p">:</span> <span class="n">ArtifactRecord</span></div>
+
+
+
+<div class="viewcode-block" id="record_path">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.head_ontology.record_path.html#torchcell.knowledge_graphs.head_ontology.record_path">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">record_path</span><span class="p">(</span><span class="n">ontology_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The provenance JSON that sits beside an ontology file."""</span>
+    <span class="k">return</span> <span class="n">ontology_path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span><span class="n">ontology_path</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="n">RECORD_SUFFIX</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_mirror_record">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.head_ontology.load_mirror_record.html#torchcell.knowledge_graphs.head_ontology.load_mirror_record">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_mirror_record</span><span class="p">(</span><span class="n">ontology_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HeadOntologyMirror</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read the provenance record beside ``ontology_path``; a missing record raises."""</span>
+    <span class="n">rec_path</span> <span class="o">=</span> <span class="n">record_path</span><span class="p">(</span><span class="n">ontology_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">rec_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="n">HeadOntologyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no provenance record at </span><span class="si">{</span><span class="n">rec_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">HeadOntologyMirror</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">rec_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span></div>
+
+
+
+<div class="viewcode-block" id="configured_head_ontology">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.head_ontology.configured_head_ontology.html#torchcell.knowledge_graphs.head_ontology.configured_head_ontology">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">configured_head_ontology</span><span class="p">(</span><span class="n">biocypher_config_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The ``biocypher.head_ontology`` mapping of a BioCypher config YAML.</span>
+
+<span class="sd">    An absent or null entry raises: BioCypher would then fall back to its packaged</span>
+<span class="sd">    default, the live GitHub URL.</span>
+<span class="sd">    """</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">biocypher_config_path</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"biocypher"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"head_ontology"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"url"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">head</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HeadOntologyError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">biocypher_config_path</span><span class="si">}</span><span class="s2">: biocypher.head_ontology.url is not set, so "</span>
+            <span class="sa">f</span><span class="s2">"BioCypher would fetch </span><span class="si">{</span><span class="n">BIOLINK_SOURCE_URL</span><span class="si">}</span><span class="s2"> at run time; point it at "</span>
+            <span class="sa">f</span><span class="s2">"the mirrored </span><span class="si">{</span><span class="n">REPO_ONTOLOGY_PATH</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">head</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
+
+
+
+<div class="viewcode-block" id="verify_head_ontology">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.head_ontology.verify_head_ontology.html#torchcell.knowledge_graphs.head_ontology.verify_head_ontology">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">verify_head_ontology</span><span class="p">(</span><span class="n">biocypher_config_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Check the config's head ontology is a local file with its pinned sha256.</span>
+
+<span class="sd">    The url must be a filesystem path (no ``scheme://``); a relative path resolves</span>
+<span class="sd">    against the working directory, as ``rdflib`` resolves it. The file's sha256 and</span>
+<span class="sd">    size must equal the provenance record beside it. Returns the resolved path.</span>
+<span class="sd">    """</span>
+    <span class="n">head</span> <span class="o">=</span> <span class="n">configured_head_ontology</span><span class="p">(</span><span class="n">biocypher_config_path</span><span class="p">)</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">head</span><span class="p">[</span><span class="s2">"url"</span><span class="p">]</span>
+    <span class="k">if</span> <span class="s2">"://"</span> <span class="ow">in</span> <span class="n">url</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HeadOntologyError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">biocypher_config_path</span><span class="si">}</span><span class="s2">: head_ontology.url </span><span class="si">{</span><span class="n">url</span><span class="si">!r}</span><span class="s2"> is a URL, not a "</span>
+            <span class="s2">"local path; the build must not fetch the ontology at run time"</span>
+        <span class="p">)</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="n">HeadOntologyError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">biocypher_config_path</span><span class="si">}</span><span class="s2">: head ontology </span><span class="si">{</span><span class="n">url</span><span class="si">!r}</span><span class="s2"> not found "</span>
+            <span class="sa">f</span><span class="s2">"(resolved to </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">load_mirror_record</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">head</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"root_node"</span><span class="p">)</span> <span class="o">!=</span> <span class="n">record</span><span class="o">.</span><span class="n">root_node</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HeadOntologyError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">biocypher_config_path</span><span class="si">}</span><span class="s2">: head_ontology.root_node "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">head</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'root_node'</span><span class="p">)</span><span class="si">!r}</span><span class="s2"> != recorded </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">root_node</span><span class="si">!r}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">got</span> <span class="o">=</span> <span class="n">sha256_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">got</span> <span class="o">!=</span> <span class="n">record</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">sha256</span> <span class="ow">or</span> <span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span> <span class="o">!=</span> <span class="n">record</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">bytes</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HeadOntologyError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: sha256 </span><span class="si">{</span><span class="n">got</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="si">}</span><span class="s2"> bytes) does not match the "</span>
+            <span class="sa">f</span><span class="s2">"pinned </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">sha256</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">bytes</span><span class="si">}</span><span class="s2"> bytes) in "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">record_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span></div>
+
+
+
+<div class="viewcode-block" id="build_mirror_record">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.head_ontology.build_mirror_record.html#torchcell.knowledge_graphs.head_ontology.build_mirror_record">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_mirror_record</span><span class="p">(</span>
+    <span class="n">ontology_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">retrieved_at</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">retrieval_command</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">check</span><span class="p">:</span> <span class="nb">bool</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HeadOntologyMirror</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Record a freshly fetched Biolink file; ``check`` re-runs the retriever once."""</span>
+    <span class="n">sha</span> <span class="o">=</span> <span class="n">sha256_file</span><span class="p">(</span><span class="n">ontology_path</span><span class="p">)</span>
+    <span class="n">retrieval</span> <span class="o">=</span> <span class="n">RetrievalRecord</span><span class="p">(</span>
+        <span class="n">method</span><span class="o">=</span><span class="n">RetrievalMethod</span><span class="o">.</span><span class="n">direct_url</span><span class="p">,</span>
+        <span class="n">source_url</span><span class="o">=</span><span class="n">BIOLINK_SOURCE_URL</span><span class="p">,</span>
+        <span class="n">retriever</span><span class="o">=</span><span class="s2">"torchcell.literature.retrieve.direct_url"</span><span class="p">,</span>
+        <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">"url"</span><span class="p">:</span> <span class="n">BIOLINK_SOURCE_URL</span><span class="p">},</span>
+        <span class="n">sha256</span><span class="o">=</span><span class="n">sha</span><span class="p">,</span>
+        <span class="n">retrieved_at</span><span class="o">=</span><span class="n">retrieved_at</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">check</span><span class="p">:</span>
+        <span class="n">retrieval</span><span class="o">.</span><span class="n">last_check</span> <span class="o">=</span> <span class="n">check_source</span><span class="p">(</span>
+            <span class="n">retrieval</span><span class="p">,</span> <span class="n">now</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%SZ"</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">HeadOntologyMirror</span><span class="p">(</span>
+        <span class="n">ontology</span><span class="o">=</span><span class="sa">f</span><span class="s2">"biolink </span><span class="si">{</span><span class="n">BIOLINK_VERSION</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">root_node</span><span class="o">=</span><span class="n">BIOLINK_ROOT_NODE</span><span class="p">,</span>
+        <span class="n">retrieval_command</span><span class="o">=</span><span class="n">retrieval_command</span><span class="p">,</span>
+        <span class="n">file</span><span class="o">=</span><span class="n">ArtifactRecord</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">=</span><span class="n">ontology_path</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">ROLE_ONTOLOGY</span><span class="p">,</span>
+            <span class="nb">bytes</span><span class="o">=</span><span class="n">ontology_path</span><span class="o">.</span><span class="n">stat</span><span class="p">()</span><span class="o">.</span><span class="n">st_size</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">sha</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">=</span><span class="n">BIOLINK_SOURCE_URL</span><span class="p">,</span>
+            <span class="n">retrieval</span><span class="o">=</span><span class="n">retrieval</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""CLI: ``record`` writes the provenance JSON, ``verify`` checks a config."""</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+        <span class="n">prog</span><span class="o">=</span><span class="s2">"python -m torchcell.knowledge_graphs.head_ontology"</span>
+    <span class="p">)</span>
+    <span class="n">sub</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="s2">"cmd"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">rec</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"record"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"write &lt;file&gt;.provenance.json beside the file"</span><span class="p">)</span>
+    <span class="n">rec</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--file"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">REPO_ONTOLOGY_PATH</span><span class="p">)</span>
+    <span class="n">rec</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--retrieved-at"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"ISO UTC time of the fetch"</span><span class="p">)</span>
+    <span class="n">rec</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--retrieval-command"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">rec</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--check"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"re-run the retriever and record it"</span>
+    <span class="p">)</span>
+    <span class="n">ver</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"verify"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"check a BioCypher config's head ontology"</span><span class="p">)</span>
+    <span class="n">ver</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"config"</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">cmd</span> <span class="o">==</span> <span class="s2">"record"</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">mirror</span> <span class="o">=</span> <span class="n">build_mirror_record</span><span class="p">(</span>
+            <span class="n">path</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">retrieved_at</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">retrieval_command</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">check</span>
+        <span class="p">)</span>
+        <span class="n">record_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">mirror</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"wrote </span><span class="si">{</span><span class="n">record_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2"> sha256=</span><span class="si">{</span><span class="n">mirror</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">sha256</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ok </span><span class="si">{</span><span class="n">verify_head_ontology</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">config</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

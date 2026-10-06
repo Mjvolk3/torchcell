@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.ConditionalAllelePerturbation
+=========================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: ConditionalAllelePerturbation
+   :show-inheritance:
+   :members:

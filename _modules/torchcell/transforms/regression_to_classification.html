@@ -64,7 +64,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
@@ -72,7 +71,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
@@ -138,6 +136,8 @@
 <span class="n">LABEL_TYPES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"categorical"</span><span class="p">,</span> <span class="s2">"ordinal"</span><span class="p">,</span> <span class="s2">"soft"</span><span class="p">)</span>
 
 
+<div class="viewcode-block" id="resolve_label_type">
+<a class="viewcode-back" href="../../../generated/torchcell.transforms.regression_to_classification.resolve_label_type.html#torchcell.transforms.regression_to_classification.resolve_label_type">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">resolve_label_type</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Return the lower-cased ``label_type`` of a binning config, refusing unknown ones.</span>
 
@@ -150,7 +150,8 @@
             <span class="sa">f</span><span class="s2">"Unknown label_type </span><span class="si">{</span><span class="n">label_type</span><span class="si">!r}</span><span class="s2"> for label </span><span class="si">{</span><span class="n">label</span><span class="si">!r}</span><span class="s2">; "</span>
             <span class="sa">f</span><span class="s2">"valid label types: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">LABEL_TYPES</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">label_type</span>
+    <span class="k">return</span> <span class="n">label_type</span></div>
+
 
 
 <span class="c1">### Normalize</span>

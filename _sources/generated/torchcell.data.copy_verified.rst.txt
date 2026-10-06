@@ -1,0 +1,6 @@
+﻿torchcell.data.copy\_verified
+=============================
+
+.. currentmodule:: torchcell.data
+
+.. autofunction:: copy_verified

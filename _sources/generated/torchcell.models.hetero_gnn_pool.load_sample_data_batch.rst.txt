@@ -1,6 +1,0 @@
-﻿torchcell.models.hetero\_gnn\_pool.load\_sample\_data\_batch
-============================================================
-
-.. currentmodule:: torchcell.models.hetero_gnn_pool
-
-.. autofunction:: load_sample_data_batch

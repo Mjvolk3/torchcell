@@ -149,7 +149,26 @@ Functions
    identity.temperature_identity
    identity.environment_perturbation_identity
    identity.environment_identity
+   identity.strain_background_identity
    identity.identity_sha256
+
+``interned_constant``
+---------------------
+
+Content-addressed sub-objects of an Experiment record in the knowledge graph.
+
+Functions
+~~~~~~~~~
+
+.. autosummary::
+   :nosignatures:
+   :toctree: ../generated
+
+   interned_constant.constant_id
+   interned_constant.split_experiment_dump
+   interned_constant.collect_pointers
+   interned_constant.resolve_pointers
+   interned_constant.verified_constant
 
 ``media``
 ---------
@@ -164,6 +183,7 @@ Functions
    :toctree: ../generated
 
    media.dropout
+   media.restated
 
 ``ontology_checks``
 -------------------
@@ -248,16 +268,29 @@ Classes
    :toctree: ../generated
    :template: autosummary/class.rst
 
+   schema.ProvenanceGapMixin
+   schema.HashableProvenanceGapMixin
+   schema.MatingType
+   schema.Zygosity
+   schema.AlleleEdit
+   schema.GenomicSpan
+   schema.BackgroundAllele
+   schema.StrainBackground
    schema.ReferenceGenome
+   schema.StrainReferenceGenome
    schema.SOTerm
    schema.GenePerturbation
    schema.PresenceAbsencePerturbation
    schema.SequencePerturbation
    schema.ExpressionRangeMultiplier
    schema.CrisprConstruct
+   schema.StrainConstruction
+   schema.OrfHistoryRelation
+   schema.ConstructedOrf
    schema.DeletionPerturbation
    schema.KanMxDeletionPerturbation
    schema.BarcodedKanMxDeletionPerturbation
+   schema.HeterozygousDeletionPerturbation
    schema.NatMxDeletionPerturbation
    schema.SgaKanMxDeletionPerturbation
    schema.SgaNatMxDeletionPerturbation
@@ -269,6 +302,8 @@ Classes
    schema.SgaSuppressorAllelePerturbation
    schema.SgaTsAllelePerturbation
    schema.SgaAllelePerturbation
+   schema.ConditionalAlleleClass
+   schema.ConditionalAllelePerturbation
    schema.MeanDeletionPerturbation
    schema.MarkerDeletionPerturbation
    schema.CrisprDeletionPerturbation
@@ -287,7 +322,6 @@ Classes
    schema.ConcentrationUnit
    schema.DoseBasis
    schema.PhysicalFactor
-   schema.ProvenanceGapMixin
    schema.Compound
    schema.Concentration
    schema.Solvent
@@ -300,7 +334,12 @@ Classes
    schema.EnvironmentPhysicalPerturbation
    schema.BiologicAgentClass
    schema.BiologicPerturbation
+   schema.EndpointRule
+   schema.CultureFormat
+   schema.PreCultureSource
+   schema.PreCulture
    schema.Environment
+   schema.CultureEnvironment
    schema.Phenotype
    schema.UncertaintyType
    schema.SampleUnit
@@ -349,6 +388,8 @@ Classes
    schema.EnvironmentResponsePhenotype
    schema.EnvironmentResponseExperimentReference
    schema.EnvironmentResponseExperiment
+   schema.StrainEnvironmentResponseExperimentReference
+   schema.StrainEnvironmentResponseExperiment
    schema.HaplotypeBlock
    schema.SegregantParent
    schema.SegregantGenotype
@@ -362,7 +403,35 @@ Functions
    :nosignatures:
    :toctree: ../generated
 
+   schema.heterozygous_deletion_functional_copies
    schema.derive_se
+
+``strain_background``
+---------------------
+
+Shared constructors for typed strain backgrounds (issue #507).
+
+Classes
+~~~~~~~
+
+.. autosummary::
+   :nosignatures:
+   :toctree: ../generated
+   :template: autosummary/class.rst
+
+   strain_background.AlleleSpec
+   strain_background.ByGenotype
+
+Functions
+~~~~~~~~~
+
+.. autosummary::
+   :nosignatures:
+   :toctree: ../generated
+
+   strain_background.pending_source_review
+   strain_background.standard_allele
+   strain_background.standard_background
 
 ``synthetic_lethality_to_fitness_conversion``
 ---------------------------------------------

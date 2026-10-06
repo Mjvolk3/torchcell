@@ -1,8 +1,0 @@
-﻿torchcell.metrics.nan\_tolerant\_classification\_metrics.NaNTolerantAccuracy
-============================================================================
-
-.. currentmodule:: torchcell.metrics.nan_tolerant_classification_metrics
-
-.. autoclass:: NaNTolerantAccuracy
-   :show-inheritance:
-   :members:

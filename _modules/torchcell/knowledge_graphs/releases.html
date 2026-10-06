@@ -64,7 +64,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
@@ -72,7 +71,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
@@ -738,6 +736,8 @@
 
 
 
+<div class="viewcode-block" id="compatibility_with_surface">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.compatibility_with_surface.html#torchcell.knowledge_graphs.releases.compatibility_with_surface">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">compatibility_with_surface</span><span class="p">(</span>
     <span class="n">release</span><span class="p">:</span> <span class="n">KgRelease</span><span class="p">,</span> <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReleaseCompatibility</span><span class="p">:</span>
@@ -748,9 +748,12 @@
         <span class="n">release</span><span class="o">.</span><span class="n">datasets</span><span class="p">,</span>
         <span class="n">release</span><span class="o">.</span><span class="n">closures</span><span class="p">,</span>
         <span class="n">surface</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="closure_compatibility">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.closure_compatibility.html#torchcell.knowledge_graphs.releases.closure_compatibility">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">closure_compatibility</span><span class="p">(</span>
     <span class="n">release</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">torchcell_commit</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -787,17 +790,21 @@
         <span class="n">compatible</span><span class="o">=</span><span class="n">compatible</span><span class="p">,</span>
         <span class="n">drifted</span><span class="o">=</span><span class="n">drifted</span><span class="p">,</span>
         <span class="n">unchecked</span><span class="o">=</span><span class="n">unchecked</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="p">)</span></div>
+
 
 
 <span class="c1"># --------------------------------------------------------------------------- reporting</span>
 
 
+<div class="viewcode-block" id="package_checkout">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.package_checkout.html#torchcell.knowledge_graphs.releases.package_checkout">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">package_checkout</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The checkout this ``torchcell`` was imported from (the parent of the package)."""</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">torchcell</span>
 
-    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">torchcell</span><span class="o">.</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">torchcell</span><span class="o">.</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span></div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_git</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -862,13 +869,16 @@
 
 
 
+<div class="viewcode-block" id="package_label">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.package_label.html#torchcell.knowledge_graphs.releases.package_label">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">package_label</span><span class="p">(</span><span class="n">release</span><span class="p">:</span> <span class="n">KgRelease</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The PKG cell: the tag when the build ran from one, else the version marked untagged."""</span>
     <span class="k">if</span> <span class="n">release</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">release</span><span class="o">.</span><span class="n">torchcell_version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">"-"</span>
     <span class="k">if</span> <span class="n">release</span><span class="o">.</span><span class="n">torchcell_tag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">release</span><span class="o">.</span><span class="n">torchcell_version</span><span class="si">}</span><span class="s2"> (untagged)"</span>
-    <span class="k">return</span> <span class="n">release</span><span class="o">.</span><span class="n">torchcell_tag</span>
+    <span class="k">return</span> <span class="n">release</span><span class="o">.</span><span class="n">torchcell_tag</span></div>
+
 
 
 <div class="viewcode-block" id="status_rows">

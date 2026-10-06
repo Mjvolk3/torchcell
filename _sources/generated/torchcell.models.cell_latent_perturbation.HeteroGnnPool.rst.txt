@@ -1,8 +1,0 @@
-﻿torchcell.models.cell\_latent\_perturbation.HeteroGnnPool
-=========================================================
-
-.. currentmodule:: torchcell.models.cell_latent_perturbation
-
-.. autoclass:: HeteroGnnPool
-   :show-inheritance:
-   :members:

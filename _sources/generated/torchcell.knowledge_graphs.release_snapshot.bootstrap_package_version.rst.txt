@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.release\_snapshot.bootstrap\_package\_version
+=========================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.release_snapshot
+
+.. autofunction:: bootstrap_package_version

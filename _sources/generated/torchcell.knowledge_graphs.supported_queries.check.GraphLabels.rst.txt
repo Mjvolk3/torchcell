@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.supported\_queries.check.GraphLabels
+================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.supported_queries.check
+
+.. autoclass:: GraphLabels
+   :show-inheritance:
+   :members:

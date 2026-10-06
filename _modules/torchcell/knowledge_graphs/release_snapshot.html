@@ -1,0 +1,434 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>torchcell.knowledge_graphs.release_snapshot &mdash; TorchCell 1.6.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/mytheme.css?v=cf917480" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=51c9007c" />
+
+  
+    <link rel="shortcut icon" href="../../../_static/torchcell-mark.png"/>
+    <link rel="canonical" href="https://mjvolk3.github.io/torchcell/_modules/torchcell/knowledge_graphs/release_snapshot.html" />
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=d6a008b6"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/js/on_pyg_load.js?v=755286f6"></script>
+      <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html">
+            
+              <img src="../../../_static/torchcell-logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../guide/index.html">User Guide</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Database</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../database/index.html">Database releases</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Datasets</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../datasets/index.html">Datasets</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/adapters.html">torchcell.adapters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/data.html">torchcell.data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/literature.html">torchcell.literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/paper.html">torchcell.paper</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/profiling.html">torchcell.profiling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/provenance.html">torchcell.provenance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/scheduler.html">torchcell.scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sequence.html">torchcell.sequence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/sga.html">torchcell.sga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/trainers.html">torchcell.trainers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/transforms.html">torchcell.transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils.html">torchcell.utils</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/verification.html">torchcell.verification</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/viz.html">torchcell.viz</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TorchCell</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">torchcell.knowledge_graphs.release_snapshot</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for torchcell.knowledge_graphs.release_snapshot</h1><div class="highlight"><pre>
+<span></span><span class="c1"># torchcell/knowledge_graphs/release_snapshot.py</span>
+<span class="c1"># [[torchcell.knowledge_graphs.release_snapshot]]</span>
+<span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/release_snapshot</span>
+<span class="c1"># Test file: tests/torchcell/knowledge_graphs/test_release_snapshot.py</span>
+<span class="sd">"""Committed snapshots of served knowledge-graph releases.</span>
+
+<span class="sd">The build manifest (``kg_manifest.json``) lives beside the store on GilaHyper and</span>
+<span class="sd">describes one physical database; nothing in git says which package version can read</span>
+<span class="sd">which release. A **release snapshot** is the compact, committed answer: every ``stamp``</span>
+<span class="sd">writes ``database/releases/&lt;release&gt;.json`` (identity, package version and tag, per</span>
+<span class="sd">dataset the record count and ``content_sha256``, the graph-schema classes, the event</span>
+<span class="sd">log, and one composite hash) plus ``&lt;release&gt;.closures.json`` (the per-dataset schema</span>
+<span class="sd">closure fingerprints the compatibility check compares), so CI and a fresh clone can run</span>
+<span class="sd">``scripts/kg_compat_page.py`` without the machine-local manifest</span>
+<span class="sd">([[plan.data-release-program.2026.09.29]], Decisions 1 and 2).</span>
+
+<span class="sd">``composite_sha256`` is the sha256 over the sorted per-dataset ``content_sha256``</span>
+<span class="sd">values, newline-joined with a trailing newline (the same rule ``releases.content_sha256``</span>
+<span class="sd">applies to experiment ids): two releases with equal composites serve byte-identical</span>
+<span class="sd">experiment records for the same dataset set. Output is byte-stable: keys sorted,</span>
+<span class="sd">``indent=2``, one trailing newline, so a second write of the same input is identical.</span>
+
+<span class="sd">    python -m torchcell.knowledge_graphs.releases snapshot --manifest kg_manifest.json</span>
+<span class="sd">        --n-nodes 99724909 --built-at 2026-09-21T20:25:23+00:00 --repo-root .</span>
+<span class="sd">"""</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.kg_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphSchemaEntry</span><span class="p">,</span> <span class="n">KgBuildManifest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.releases</span><span class="w"> </span><span class="kn">import</span> <span class="n">content_sha256</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"RELEASES_RELPATH"</span><span class="p">,</span>
+    <span class="s2">"SnapshotDataset"</span><span class="p">,</span>
+    <span class="s2">"SnapshotEvent"</span><span class="p">,</span>
+    <span class="s2">"KgReleaseSnapshot"</span><span class="p">,</span>
+    <span class="s2">"composite_sha256"</span><span class="p">,</span>
+    <span class="s2">"snapshot_from_manifest"</span><span class="p">,</span>
+    <span class="s2">"bootstrap_package_version"</span><span class="p">,</span>
+    <span class="s2">"snapshot_paths"</span><span class="p">,</span>
+    <span class="s2">"write_snapshot"</span><span class="p">,</span>
+    <span class="s2">"load_snapshot"</span><span class="p">,</span>
+    <span class="s2">"load_snapshots"</span><span class="p">,</span>
+    <span class="s2">"load_closures"</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">RELEASES_RELPATH</span> <span class="o">=</span> <span class="s2">"database/releases"</span>
+
+
+<div class="viewcode-block" id="SnapshotDataset">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.release_snapshot.SnapshotDataset.html#torchcell.knowledge_graphs.release_snapshot.SnapshotDataset">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SnapshotDataset</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One served dataset as the release snapshot records it."""</span>
+
+    <span class="n">dataset_class</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n_experiments</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">content_sha256</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">import_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"full"</span><span class="p">,</span> <span class="s2">"incremental"</span><span class="p">]</span>
+    <span class="n">admitted_at</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="SnapshotEvent">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.release_snapshot.SnapshotEvent.html#torchcell.knowledge_graphs.release_snapshot.SnapshotEvent">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SnapshotEvent</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One manifest event, reduced to what the compatibility page needs."""</span>
+
+    <span class="n">kind</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span>
+        <span class="s2">"bootstrap"</span><span class="p">,</span> <span class="s2">"full_build"</span><span class="p">,</span> <span class="s2">"incremental_admission"</span><span class="p">,</span> <span class="s2">"superset_admission"</span>
+    <span class="p">]</span>
+    <span class="n">at</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">torchcell_commit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">datasets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="KgReleaseSnapshot">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.release_snapshot.KgReleaseSnapshot.html#torchcell.knowledge_graphs.release_snapshot.KgReleaseSnapshot">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KgReleaseSnapshot</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The committed description of one served release."""</span>
+
+    <span class="n">release</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">torchcell_commit</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">torchcell_version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">torchcell_tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">built_at</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">neo4j_version</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">biocypher_version</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">store_host</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">datasets</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SnapshotDataset</span><span class="p">]</span>
+    <span class="n">graph_schema</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GraphSchemaEntry</span><span class="p">]</span>
+    <span class="n">events</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SnapshotEvent</span><span class="p">]</span>
+    <span class="n">composite_sha256</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="composite_sha256">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.release_snapshot.composite_sha256.html#torchcell.knowledge_graphs.release_snapshot.composite_sha256">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">composite_sha256</span><span class="p">(</span><span class="n">datasets</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SnapshotDataset</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""sha256 over the sorted ``content_sha256`` values, newline-joined, trailing newline."""</span>
+    <span class="k">return</span> <span class="n">content_sha256</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">content_sha256</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">datasets</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></div>
+
+
+
+<div class="viewcode-block" id="snapshot_from_manifest">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.release_snapshot.snapshot_from_manifest.html#torchcell.knowledge_graphs.release_snapshot.snapshot_from_manifest">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">snapshot_from_manifest</span><span class="p">(</span>
+    <span class="n">manifest</span><span class="p">:</span> <span class="n">KgBuildManifest</span><span class="p">,</span> <span class="n">n_nodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">built_at</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KgReleaseSnapshot</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The snapshot of a stamped manifest.</span>
+
+<span class="sd">    ``built_at`` defaults to the time of the manifest's last event, the one that</span>
+<span class="sd">    produced the release; the slurm scripts pass the stamp's own timestamp. A manifest</span>
+<span class="sd">    that is not stamped, or a dataset without a content hash or record count, is an</span>
+<span class="sd">    error: the snapshot never fills a value the manifest does not carry.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">version</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">manifest</span><span class="o">.</span><span class="n">release</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the manifest carries no version/release; stamp it first"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_commit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the manifest records no full-build commit"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">manifest</span><span class="o">.</span><span class="n">events</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"the manifest records no events"</span><span class="p">)</span>
+    <span class="n">datasets</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SnapshotDataset</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">content_sha256</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no content hash for served dataset </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">; stamp first"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">n_experiments</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no experiment count for served dataset </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">datasets</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">SnapshotDataset</span><span class="p">(</span>
+            <span class="n">dataset_class</span><span class="o">=</span><span class="n">entry</span><span class="o">.</span><span class="n">dataset_class</span><span class="p">,</span>
+            <span class="n">n_experiments</span><span class="o">=</span><span class="n">entry</span><span class="o">.</span><span class="n">n_experiments</span><span class="p">,</span>
+            <span class="n">content_sha256</span><span class="o">=</span><span class="n">entry</span><span class="o">.</span><span class="n">content_sha256</span><span class="p">,</span>
+            <span class="n">import_mode</span><span class="o">=</span><span class="n">entry</span><span class="o">.</span><span class="n">import_mode</span><span class="p">,</span>
+            <span class="n">admitted_at</span><span class="o">=</span><span class="n">entry</span><span class="o">.</span><span class="n">admitted_at</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">built_at</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">built_at</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">at</span>
+    <span class="k">return</span> <span class="n">KgReleaseSnapshot</span><span class="p">(</span>
+        <span class="n">release</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">release</span><span class="p">,</span>
+        <span class="n">version</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+        <span class="n">torchcell_commit</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_commit</span><span class="p">,</span>
+        <span class="n">torchcell_version</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_version</span><span class="p">,</span>
+        <span class="n">torchcell_tag</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_tag</span><span class="p">,</span>
+        <span class="n">built_at</span><span class="o">=</span><span class="n">built_at</span><span class="p">,</span>
+        <span class="n">neo4j_version</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">neo4j_version</span><span class="p">,</span>
+        <span class="n">biocypher_version</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">biocypher_version</span><span class="p">,</span>
+        <span class="n">store_host</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">store_host</span><span class="p">,</span>
+        <span class="n">n_nodes</span><span class="o">=</span><span class="n">n_nodes</span><span class="p">,</span>
+        <span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">,</span>
+        <span class="n">graph_schema</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">name</span><span class="p">:</span> <span class="n">entry</span><span class="o">.</span><span class="n">model_copy</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">graph_schema</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="p">},</span>
+        <span class="n">events</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">SnapshotEvent</span><span class="p">(</span>
+                <span class="n">kind</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">kind</span><span class="p">,</span>
+                <span class="n">at</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">at</span><span class="p">,</span>
+                <span class="n">torchcell_commit</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">torchcell_commit</span><span class="p">,</span>
+                <span class="n">datasets</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">datasets</span><span class="p">),</span>
+                <span class="n">note</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">note</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">events</span>
+        <span class="p">],</span>
+        <span class="n">composite_sha256</span><span class="o">=</span><span class="n">composite_sha256</span><span class="p">(</span><span class="n">datasets</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="bootstrap_package_version">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.release_snapshot.bootstrap_package_version.html#torchcell.knowledge_graphs.release_snapshot.bootstrap_package_version">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">bootstrap_package_version</span><span class="p">(</span>
+    <span class="n">snapshot</span><span class="p">:</span> <span class="n">KgReleaseSnapshot</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">torchcell_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">torchcell_tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KgReleaseSnapshot</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Fill the package version of a snapshot whose manifest predates the spine.</span>
+
+<span class="sd">    Refused when the manifest already recorded one: the recorded value is the truth</span>
+<span class="sd">    and an override would rewrite it. The last event's note says the values were</span>
+<span class="sd">    supplied at snapshot time, plus ``note`` (how they were derived).</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"the manifest already records torchcell_version "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_version</span><span class="si">}</span><span class="s2">; --torchcell-version is for bootstrapping"</span>
+        <span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"bootstrapped: torchcell_version </span><span class="si">{</span><span class="n">torchcell_version</span><span class="si">}</span><span class="s2"> and torchcell_tag "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">torchcell_tag</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'none'</span><span class="si">}</span><span class="s2"> were supplied to `releases snapshot "</span>
+        <span class="s2">"--torchcell-version` because the manifest predates the versioning spine"</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">note</span><span class="p">:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">; </span><span class="si">{</span><span class="n">note</span><span class="si">}</span><span class="s2">"</span>
+    <span class="n">last</span> <span class="o">=</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">joined</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">last</span><span class="o">.</span><span class="n">note</span><span class="si">}</span><span class="s2">; </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">last</span><span class="o">.</span><span class="n">note</span> <span class="k">else</span> <span class="n">text</span>
+    <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">snapshot</span><span class="o">.</span><span class="n">events</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">last</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"note"</span><span class="p">:</span> <span class="n">joined</span><span class="p">})]</span>
+    <span class="k">return</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
+        <span class="n">update</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"torchcell_version"</span><span class="p">:</span> <span class="n">torchcell_version</span><span class="p">,</span>
+            <span class="s2">"torchcell_tag"</span><span class="p">:</span> <span class="n">torchcell_tag</span><span class="p">,</span>
+            <span class="s2">"events"</span><span class="p">:</span> <span class="n">events</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="snapshot_paths">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.release_snapshot.snapshot_paths.html#torchcell.knowledge_graphs.release_snapshot.snapshot_paths">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">snapshot_paths</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">release</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``(&lt;release&gt;.json, &lt;release&gt;.closures.json)`` under ``database/releases/``."""</span>
+    <span class="n">directory</span> <span class="o">=</span> <span class="n">repo_root</span> <span class="o">/</span> <span class="n">RELEASES_RELPATH</span>
+    <span class="k">return</span> <span class="n">directory</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">release</span><span class="si">}</span><span class="s2">.json"</span><span class="p">,</span> <span class="n">directory</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">release</span><span class="si">}</span><span class="s2">.closures.json"</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_dump</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span>
+
+
+<div class="viewcode-block" id="write_snapshot">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.release_snapshot.write_snapshot.html#torchcell.knowledge_graphs.release_snapshot.write_snapshot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_snapshot</span><span class="p">(</span>
+    <span class="n">snapshot</span><span class="p">:</span> <span class="n">KgReleaseSnapshot</span><span class="p">,</span>
+    <span class="n">closures</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="n">Path</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Write the snapshot and its closures companion; returns the two paths.</span>
+
+<span class="sd">    ``closures`` is the manifest's per-dataset closure map and must name exactly the</span>
+<span class="sd">    snapshot's datasets.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">closures</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">snapshot</span><span class="o">.</span><span class="n">datasets</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"closures name different datasets than the snapshot: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">closures</span><span class="p">)</span><span class="w"> </span><span class="o">^</span><span class="w"> </span><span class="nb">set</span><span class="p">(</span><span class="n">snapshot</span><span class="o">.</span><span class="n">datasets</span><span class="p">))</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">snapshot_path</span><span class="p">,</span> <span class="n">closures_path</span> <span class="o">=</span> <span class="n">snapshot_paths</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">release</span><span class="p">)</span>
+    <span class="n">snapshot_path</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">snapshot_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">_dump</span><span class="p">(</span><span class="n">snapshot</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"json"</span><span class="p">)),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="n">closures_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+        <span class="n">_dump</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">closure</span> <span class="ow">in</span> <span class="n">closures</span><span class="o">.</span><span class="n">items</span><span class="p">()}),</span>
+        <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">snapshot_path</span><span class="p">,</span> <span class="n">closures_path</span></div>
+
+
+
+<div class="viewcode-block" id="load_snapshot">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.release_snapshot.load_snapshot.html#torchcell.knowledge_graphs.release_snapshot.load_snapshot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_snapshot</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KgReleaseSnapshot</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Read one snapshot file."""</span>
+    <span class="k">return</span> <span class="n">KgReleaseSnapshot</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="load_snapshots">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.release_snapshot.load_snapshots.html#torchcell.knowledge_graphs.release_snapshot.load_snapshots">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_snapshots</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">KgReleaseSnapshot</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Every committed snapshot, oldest build first (ties broken by release id)."""</span>
+    <span class="n">directory</span> <span class="o">=</span> <span class="n">repo_root</span> <span class="o">/</span> <span class="n">RELEASES_RELPATH</span>
+    <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">path</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">directory</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">"*.json"</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".closures.json"</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">snapshots</span> <span class="o">=</span> <span class="p">[</span><span class="n">load_snapshot</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">]</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">snapshots</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">built_at</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">release</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="load_closures">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.release_snapshot.load_closures.html#torchcell.knowledge_graphs.release_snapshot.load_closures">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_closures</span><span class="p">(</span><span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">release</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""The per-dataset closure fingerprints committed beside ``release``'s snapshot."""</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">closures_path</span> <span class="o">=</span> <span class="n">snapshot_paths</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">release</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">closures_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">closure</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">closure</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Michael Volk.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

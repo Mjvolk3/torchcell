@@ -1,8 +1,0 @@
-﻿torchcell.models.cell\_latent\_perturbation.MetabolismProcessor
-===============================================================
-
-.. currentmodule:: torchcell.models.cell_latent_perturbation
-
-.. autoclass:: MetabolismProcessor
-   :show-inheritance:
-   :members:

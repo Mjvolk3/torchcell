@@ -1,0 +1,6 @@
+﻿torchcell.data.write\_verified
+==============================
+
+.. currentmodule:: torchcell.data
+
+.. autofunction:: write_verified

@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.kg\_manifest.checkout\_package\_version
+===================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.kg_manifest
+
+.. autofunction:: checkout_package_version

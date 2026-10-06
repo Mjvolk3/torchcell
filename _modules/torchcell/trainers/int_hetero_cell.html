@@ -64,7 +64,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
@@ -72,7 +71,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
@@ -175,6 +173,8 @@
     <span class="n">plot_every_n_epochs</span><span class="p">:</span> <span class="nb">int</span>
 
 
+<div class="viewcode-block" id="scheduler_type">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.int_hetero_cell.scheduler_type.html#torchcell.trainers.int_hetero_cell.scheduler_type">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">scheduler_type</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Return the scheduler ``type`` of an lr scheduler config, refusing a missing or</span>
 <span class="sd">    unknown one by name (a misspelled type used to become a plateau scheduler).</span>
@@ -189,9 +189,12 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"lr_scheduler_config type </span><span class="si">{</span><span class="n">kind</span><span class="si">!r}</span><span class="s2"> is not one of </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">SCHEDULER_TYPES</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">kind</span><span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="normalize_accumulation_schedule">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.int_hetero_cell.normalize_accumulation_schedule.html#torchcell.trainers.int_hetero_cell.normalize_accumulation_schedule">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">normalize_accumulation_schedule</span><span class="p">(</span>
     <span class="n">schedule</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -230,16 +233,20 @@
                 <span class="sa">f</span><span class="s2">"grad_accumulation_schedule names epoch </span><span class="si">{</span><span class="n">epoch</span><span class="si">}</span><span class="s2"> twice: </span><span class="si">{</span><span class="n">schedule</span><span class="si">!r}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="n">normalized</span><span class="p">[</span><span class="n">epoch</span><span class="p">]</span> <span class="o">=</span> <span class="n">steps</span>
-    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">normalized</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">normalized</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span></div>
 
 
+
+<div class="viewcode-block" id="accumulation_steps">
+<a class="viewcode-back" href="../../../generated/torchcell.trainers.int_hetero_cell.accumulation_steps.html#torchcell.trainers.int_hetero_cell.accumulation_steps">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">accumulation_steps</span><span class="p">(</span><span class="n">schedule</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Steps of the last threshold reached (``epoch &gt;= threshold``); 1 before any."""</span>
     <span class="n">steps</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="k">for</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">schedule</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">epoch</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">:</span>
             <span class="n">steps</span> <span class="o">=</span> <span class="n">value</span>
-    <span class="k">return</span> <span class="n">steps</span>
+    <span class="k">return</span> <span class="n">steps</span></div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_as_column</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>

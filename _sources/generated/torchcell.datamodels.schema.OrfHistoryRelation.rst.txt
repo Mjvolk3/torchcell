@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.OrfHistoryRelation
+==============================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: OrfHistoryRelation
+   :show-inheritance:
+   :members:

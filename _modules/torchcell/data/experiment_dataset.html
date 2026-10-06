@@ -64,7 +64,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/database.html">torchcell.database</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodels.html">torchcell.datamodels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datamodules.html">torchcell.datamodules</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/dataset_readers.html">torchcell.dataset_readers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/datasets.html">torchcell.datasets</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/graph.html">torchcell.graph</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/knowledge_graphs.html">torchcell.knowledge_graphs</a></li>
@@ -72,7 +71,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/loader.html">torchcell.loader</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/losses.html">torchcell.losses</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/metabolism.html">torchcell.metabolism</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../modules/metrics.html">torchcell.metrics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/models.html">torchcell.models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/nn.html">torchcell.nn</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/ontology.html">torchcell.ontology</a></li>
@@ -191,6 +189,8 @@
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 
 
+<div class="viewcode-block" id="RawSha256MismatchError">
+<a class="viewcode-back" href="../../../generated/torchcell.data.RawSha256MismatchError.html#torchcell.data.RawSha256MismatchError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">RawSha256MismatchError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A file's bytes do not match the sha256 pin its loader records."""</span>
 
@@ -201,9 +201,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">observed</span> <span class="o">=</span> <span class="n">observed</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"sha256 mismatch for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">: expected </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2">, observed </span><span class="si">{</span><span class="n">observed</span><span class="si">}</span><span class="s2">"</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="ManifestPinMismatchError">
+<a class="viewcode-back" href="../../../generated/torchcell.data.ManifestPinMismatchError.html#torchcell.data.ManifestPinMismatchError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ManifestPinMismatchError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A raw-mirror manifest records a sha256 other than its loader's module pin.</span>
 
@@ -220,31 +223,43 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"raw-mirror manifest records sha256 </span><span class="si">{</span><span class="n">recorded</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">relpath</span><span class="si">}</span><span class="s2">, but the "</span>
             <span class="sa">f</span><span class="s2">"loader pins </span><span class="si">{</span><span class="n">pin</span><span class="si">}</span><span class="s2">"</span>
-        <span class="p">)</span>
+        <span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="check_manifest_pin">
+<a class="viewcode-back" href="../../../generated/torchcell.data.check_manifest_pin.html#torchcell.data.check_manifest_pin">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">check_manifest_pin</span><span class="p">(</span><span class="n">relpath</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">recorded</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pin</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Raise ``ManifestPinMismatchError`` unless the manifest's ``recorded`` is ``pin``."""</span>
     <span class="k">if</span> <span class="n">recorded</span> <span class="o">!=</span> <span class="n">pin</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">ManifestPinMismatchError</span><span class="p">(</span><span class="n">relpath</span><span class="p">,</span> <span class="n">recorded</span><span class="p">,</span> <span class="n">pin</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ManifestPinMismatchError</span><span class="p">(</span><span class="n">relpath</span><span class="p">,</span> <span class="n">recorded</span><span class="p">,</span> <span class="n">pin</span><span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="file_sha256">
+<a class="viewcode-back" href="../../../generated/torchcell.data.file_sha256.html#torchcell.data.file_sha256">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">file_sha256</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">20</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Hex sha256 of a file's bytes (symlinks are followed), read in chunks."""</span>
     <span class="n">h</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">()</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">chunk_size</span><span class="p">),</span> <span class="sa">b</span><span class="s2">""</span><span class="p">):</span>
             <span class="n">h</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">h</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
 
 
+
+<div class="viewcode-block" id="verify_sha256">
+<a class="viewcode-back" href="../../../generated/torchcell.data.verify_sha256.html#torchcell.data.verify_sha256">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">verify_sha256</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">expected</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Raise ``RawSha256MismatchError`` unless ``path`` hashes to ``expected``."""</span>
     <span class="n">observed</span> <span class="o">=</span> <span class="n">file_sha256</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">observed</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">RawSha256MismatchError</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">expected</span><span class="p">,</span> <span class="n">observed</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">RawSha256MismatchError</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">expected</span><span class="p">,</span> <span class="n">observed</span><span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="verify_raw_files">
+<a class="viewcode-back" href="../../../generated/torchcell.data.verify_raw_files.html#torchcell.data.verify_raw_files">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">verify_raw_files</span><span class="p">(</span><span class="n">raw_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pins</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Verify every pinned file in ``raw_dir`` (``{file name: sha256}``).</span>
 
@@ -252,9 +267,12 @@
 <span class="sd">    inside ``raw/`` after ``download()`` never reaches a record unchecked.</span>
 <span class="sd">    """</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">expected</span> <span class="ow">in</span> <span class="n">pins</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">verify_sha256</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">expected</span><span class="p">)</span>
+        <span class="n">verify_sha256</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">expected</span><span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="write_verified">
+<a class="viewcode-back" href="../../../generated/torchcell.data.write_verified.html#torchcell.data.write_verified">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_verified</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">dest</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">expected</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Write ``data`` to ``dest`` only if it hashes to ``expected``.</span>
 
@@ -268,9 +286,12 @@
     <span class="n">partial</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2">.partial"</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">partial</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
         <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">partial</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">partial</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="copy_verified">
+<a class="viewcode-back" href="../../../generated/torchcell.data.copy_verified.html#torchcell.data.copy_verified">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">copy_verified</span><span class="p">(</span><span class="n">src</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">dest</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">expected</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Copy ``src`` to ``dest`` after verifying ``src`` against ``expected``.</span>
 
@@ -281,9 +302,12 @@
     <span class="n">verify_sha256</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
     <span class="n">partial</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2">.partial"</span>
     <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">partial</span><span class="p">)</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">partial</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">partial</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span></div>
 
 
+
+<div class="viewcode-block" id="link_verified">
+<a class="viewcode-back" href="../../../generated/torchcell.data.link_verified.html#torchcell.data.link_verified">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">link_verified</span><span class="p">(</span><span class="n">src</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">dest</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">expected</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Symlink ``dest`` to ``src`` after verifying ``src``; an existing link is kept.</span>
 
@@ -292,7 +316,8 @@
 <span class="sd">    """</span>
     <span class="n">verify_sha256</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">expected</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">lexists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span></div>
+
 
 
 <span class="c1"># return reference_indices</span>

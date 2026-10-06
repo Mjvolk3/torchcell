@@ -1,0 +1,8 @@
+﻿torchcell.datamodels.schema.HashableProvenanceGapMixin
+======================================================
+
+.. currentmodule:: torchcell.datamodels.schema
+
+.. autoclass:: HashableProvenanceGapMixin
+   :show-inheritance:
+   :members:

@@ -1,0 +1,8 @@
+﻿torchcell.data.RawSha256MismatchError
+=====================================
+
+.. currentmodule:: torchcell.data
+
+.. autoclass:: RawSha256MismatchError
+   :show-inheritance:
+   :members:

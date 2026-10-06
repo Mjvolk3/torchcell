@@ -1,8 +1,0 @@
-﻿torchcell.trainers.int\_hetero\_cell\_nsa.RegressionTask
-========================================================
-
-.. currentmodule:: torchcell.trainers.int_hetero_cell_nsa
-
-.. autoclass:: RegressionTask
-   :show-inheritance:
-   :members:

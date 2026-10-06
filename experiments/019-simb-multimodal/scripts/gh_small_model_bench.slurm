@@ -83,8 +83,26 @@ case "$TASK" in
   # --cpus-per-task=8 so the CPU budget matches.
   6) SHAPE="cell_dataset.node_embeddings=[prot_T5_all]"
      RUNS=(K_prot_s0 K_expr_s0 K_joint_s0 K_joint_s1); CELL=t5_w90_l6_p4_w1; WORKERS=1 ;;
-  *) echo "unknown task $TASK (0..6)" >&2; exit 1 ;;
+  # DEPTH x OPERATOR GRID (2026-10-05 22:30, two hours on four cards). One card per depth
+  # (2, 3, 4, 6 layers at width 90), the four operators co-resident on it (softmax reference,
+  # null sink with the gate open, Hadamard product, rank-64 response basis), on the v21
+  # config (ProtT5 alone, v19 both-label store, split seed 0), three persistent workers per
+  # run so the card and not the main process bounds the epoch. Two hours per cell instead of
+  # four half-hour slots: the same 16 runs, but each reaches about 200 epochs, which is where
+  # the launch gate reads and where the operator's early learning is visible. Reads: seconds
+  # per epoch by depth (the throughput question) and val Pearson plus spread at epoch 200 by
+  # operator within each depth (the dead-attention question). W&B project
+  # torchcell_019_grid_bench.
+  #   sbatch --array=10-13 --time=02:00:00 --export=ALL,W5_PROJECT_ROOT=$PWD,BENCH_EPOCHS=400 \
+  #       experiments/019-simb-multimodal/scripts/gh_small_model_bench.slurm
+  1[0-3]) L=$((TASK == 10 ? 2 : TASK == 11 ? 3 : TASK == 12 ? 4 : 6))
+     GRID=1; SHAPE="model.num_transformer_layers=$L"
+     RUNS=(S_ref_s0 S_sink_s0 S_hadam_s0 S_basis64_s0); CELL="grid_w90_l${L}_p4_w3"; WORKERS=3 ;;
+  *) echo "unknown task $TASK (0..6, 10..13)" >&2; exit 1 ;;
 esac
+if [[ -n "${GRID:-}" ]]; then
+  COMMON="${COMMON/wandb.project=torchcell_019_small_bench/wandb.project=torchcell_019_grid_bench}"
+fi
 if [[ -n "${WORKERS:-}" ]]; then
   COMMON="${COMMON/data_module.num_workers=0/data_module.num_workers=$WORKERS data_module.persistent_workers=true}"
 fi
@@ -92,7 +110,9 @@ fi
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell
 
-export TORCHCELL_CONFIG=cgt_expr_v19_joint_clean
+# Cells 0 to 6 time the v19 arms on the v19 config; the grid cells run the v21 arms on v21.
+export TORCHCELL_CONFIG="${GRID:+cgt_expr_v21_small}"
+export TORCHCELL_CONFIG="${TORCHCELL_CONFIG:-cgt_expr_v19_joint_clean}"
 export TORCHCELL_EXTRA_OVERRIDES="$COMMON $SHAPE wandb.tags=[small-bench,$CELL]"
 export PYTHONPATH="$PROJECT_ROOT"
 

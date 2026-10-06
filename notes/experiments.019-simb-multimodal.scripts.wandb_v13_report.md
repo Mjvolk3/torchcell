@@ -36,3 +36,7 @@ The workspace API refuses the personal default view ("Workspace API does not cur
 The report is updated in place by title rather than recreated (a rerun once duplicated it; the duplicate was deleted). Pick the view from the dropdown on the project's Charts tab:
 
 <https://wandb.ai/zhao-group/torchcell_019_expr_v13?nw=ywphnc96tfh>
+
+## 2026.10.05 - `v20` round: the conditioned arms as one comparison view
+
+The v20 arms are read the same way as every round since v13, grouped by arm and split seed with the permuted control beside its conditioned arm, so that a partial read while the round is in flight is already in the form the checkpoint section quotes. The four empty canary runs that a plain offline sync pushed into the v20 project are excluded by id in `joint_checkpoint_readout.py` [[experiments.019-simb-multimodal.scripts.joint_checkpoint_readout]] and should be deleted from W&B once approved.

@@ -211,3 +211,7 @@ Which is precisely why `k=0` has to stay the comparable number.
 metabolism arms pick up masking, `traineval/`, `nmse`, `perf/epoch_seconds` and best-by-metric
 checkpointing without a second harness -- `forward` simply threads `observed_values` /
 `observed_mask` through to whichever model class was built.
+
+## 2026.10.05 - Conditioning on one measured modality without a mask schedule
+
+The masked objective was dropped for v20 because it did not help in v19, which left no path for a measured modality to reach the model as input. `_conditioned_step` supplies one: `multitask.condition_head` names the head whose labels are revealed in full on every step of every stage, through the same observed-label channel the masked objective used, and that head leaves the loss and the metrics so the model is scored only on the modality it predicts. `condition_permute` rolls the revealed labels by one strain inside the batch, which keeps every marginal and breaks the pairing, so the permuted arm is the control that separates "the proteome of this strain helps" from "any proteome helps". `main()` refuses the option unless `mask_schedule` is null, at least two heads are active and `model.observed_labels.enabled` is set, so a misconfigured arm fails at launch rather than training silently.

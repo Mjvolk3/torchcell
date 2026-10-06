@@ -33,3 +33,7 @@ The ceiling for the same 278 modeled features is a mean of 0.611 and a median of
 rolling maximum of 0.082 (`vsceij2v`, epoch 27 of 65). So the trained model, the linear
 baseline and the neighbor mean all sit at 0.04 to 0.11 against a ceiling of 0.61, and the
 manuscript's 0.619 was a placeholder target with no run behind it.
+
+## 2026.10.05 - Baselines on exactly the strains the joint rounds train on
+
+The matched comparison for Figure 3 needs every gene representation scored on the same strains the v19 and v20 models see, which are the strains carrying both an expression and a proteome label, not the union. `--require-labels` keeps only records that carry every named label before the split is drawn, so the twelve split seeds reproduce the joint rounds' partitions (seed 0: 1,103 train, 125 validation, 121 test, confirmed against the trainer). Output directories gain a `_both_<label>` segment so the restricted and unrestricted runs never overwrite each other. Launched for all twelve seeds and both labels on IGB CPU by `igb_expression_baselines_split.slurm` [[experiments.019-simb-multimodal.scripts.igb_expression_baselines_split]].

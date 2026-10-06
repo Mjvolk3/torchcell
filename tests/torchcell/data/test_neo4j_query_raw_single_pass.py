@@ -308,18 +308,122 @@ def test_records_read_back_equal_the_models_they_came_from(tmp_path: Any) -> Non
 
 
 def test_cached_environment_is_safe_to_pass_unvalidated() -> None:
-    """Every experiment class takes ``Environment`` as is: no validators, no revalidation.
+    """Every experiment class takes its ``Environment`` class as is: no validators.
 
-    The single pass hands a cached, already-validated ``Environment`` to the
+    The single pass hands a cached, already-validated environment model to the
     experiment constructor, which pydantic accepts without re-running validation. That
-    is only equivalent to validating the dict if no experiment-level validator reads
-    or rewrites the environment and instances are not revalidated.
+    is only equivalent to validating the dict if the cached model is an instance of
+    the class the field declares (``environment_class_for``), no experiment-level
+    validator reads or rewrites the environment, and instances are not revalidated.
     """
-    for cls in s.EXPERIMENT_TYPE_MAP.values():
+    for kind, cls in s.EXPERIMENT_TYPE_MAP.items():
         assert isinstance(cls, type) and issubclass(cls, BaseModel)
-        assert cls.model_fields["environment"].annotation is s.Environment
+        annotation = cls.model_fields["environment"].annotation
+        assert isinstance(annotation, type) and issubclass(annotation, s.Environment)
+        assert nqr.environment_class_for(kind) is annotation
+        assert nqr.ENVIRONMENT_CLASSES[annotation.__name__] is annotation
         decorators = cls.__pydantic_decorators__
         assert not decorators.model_validators, cls.__name__
         assert not decorators.field_validators, cls.__name__
         assert cls.model_config.get("revalidate_instances", "never") == "never"
         assert not cls.model_computed_fields, cls.__name__
+
+
+def _strain_record() -> tuple[
+    s.StrainEnvironmentResponseExperiment,
+    s.StrainEnvironmentResponseExperimentReference,
+]:
+    """A strain-resolved record: ``CultureEnvironment`` with a pre-culture set."""
+    from torchcell.datamodels.media import MEDIA_LIBRARY
+    from torchcell.datamodels.strain_background import (
+        BRACHMANN_1998,
+        standard_background,
+    )
+
+    environment = s.CultureEnvironment(
+        media=MEDIA_LIBRARY["YPD"],
+        temperature=s.Temperature(value=30.0),
+        pre_culture=s.PreCulture(
+            source=s.PreCultureSource.frozen_stock, source_label="-5gen"
+        ),
+    )
+    experiment = s.StrainEnvironmentResponseExperiment(
+        dataset_name="TestDataset",
+        genotype=s.Genotype(
+            perturbations=[
+                s.HeterozygousDeletionPerturbation(
+                    systematic_gene_name="YAL001C",
+                    perturbed_gene_name="TFC3",
+                    cassette="kanMX4",
+                )
+            ]
+        ),
+        environment=environment,
+        phenotype=s.EnvironmentResponsePhenotype(
+            measurement_type=s.MeasurementType.log2_ratio, environment_response=-1.5
+        ),
+    )
+    reference = s.StrainEnvironmentResponseExperimentReference(
+        dataset_name="TestDataset",
+        genome_reference=s.StrainReferenceGenome(
+            species="Saccharomyces cerevisiae",
+            strain="BY4743",
+            ploidy="diploid",
+            background=standard_background("BY4743", resolve_with=BRACHMANN_1998),
+        ),
+        environment_reference=environment,
+        phenotype_reference=s.EnvironmentResponsePhenotype(
+            measurement_type=s.MeasurementType.log2_ratio, environment_response=0.0
+        ),
+    )
+    return experiment, reference
+
+
+@pytest.mark.parametrize("layout", ["inline", "pointer"])
+def test_strain_record_environment_keeps_its_subclass_fields(
+    tmp_path: Any, layout: str
+) -> None:
+    """A family that declares ``CultureEnvironment`` gets that class back, not a
+    plain ``Environment`` (which would drop ``pre_culture`` and be rejected by the
+    experiment constructor); a plain-``Environment`` family with the same payload is
+    cached separately.
+    """
+    experiment, reference = _strain_record()
+    plain = _experiment(0)
+    query = _StoreQueryRaw(
+        uri="bolt://none", username="", password="", root_dir=str(tmp_path), query=""
+    )
+    records = []
+    for model, ref in ((experiment, reference), (plain, _reference(0))):
+        dump = model.model_dump()
+        if layout == "pointer":
+            dump, constants = split_experiment_dump(dump)
+            query.store.update({r: payload for r, _, payload in constants})
+        records.append(
+            {
+                "e_serialized": json.dumps(dump),
+                "ref_serialized": json.dumps(ref.model_dump()),
+            }
+        )
+    query.records = records
+    query.process()
+    query.close_lmdb()
+    stored = query[0]
+    assert stored["experiment"] == experiment
+    assert isinstance(stored["experiment"].environment, s.CultureEnvironment)
+    assert stored["experiment"].environment.pre_culture is not None
+    assert stored["experiment_reference"] == reference
+    assert query[1]["experiment"] == plain
+    assert (
+        nqr.Neo4jQueryRaw._environment_key(
+            json.loads(records[0]["e_serialized"])["environment"],
+            "strain_environment_response",
+        )[2]
+        == "CultureEnvironment"
+    )
+    assert (
+        nqr.Neo4jQueryRaw._environment_key(
+            json.loads(records[1]["e_serialized"])["environment"], "fitness"
+        )[2]
+        == "Environment"
+    )

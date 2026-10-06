@@ -16,7 +16,7 @@ from collections import deque
 from collections.abc import Callable, Iterator, Sequence
 from concurrent.futures import Future, ProcessPoolExecutor
 from itertools import chain, product
-from typing import Any, Literal, Protocol, cast, runtime_checkable
+from typing import Any, Literal, Protocol, cast, get_type_hints, runtime_checkable
 
 import lmdb
 from attrs import define, field
@@ -37,6 +37,35 @@ from torchcell.datamodels.schema import (
     Environment,
 )
 from torchcell.sequence import GeneSet
+
+
+def environment_class_for(experiment_type: str) -> type[Environment]:
+    """The ``Environment`` class the experiment class of ``experiment_type`` declares.
+
+    The single pass validates a record's environment once per distinct payload and
+    hands the cached MODEL to the experiment constructor. That model must be an
+    instance of the class the experiment's ``environment`` field declares, which is
+    ``Environment`` for most families and a subclass for those that state more (the
+    strain-resolved chemogenomic family declares ``CultureEnvironment``, whose extra
+    fields a plain ``Environment`` would drop and whose constructor would reject the
+    base-class instance). Raises on an experiment class whose annotation is not an
+    ``Environment`` subclass rather than guessing.
+    """
+    annotation = get_type_hints(EXPERIMENT_TYPE_MAP[experiment_type])["environment"]
+    if not (isinstance(annotation, type) and issubclass(annotation, Environment)):
+        raise TypeError(
+            f"{experiment_type!r} declares environment: {annotation!r}, "
+            "not an Environment subclass"
+        )
+    return annotation
+
+
+#: Environment class by name, over every experiment family: the cache key names the
+#: class so two families that both declare ``Environment`` share one cached model.
+ENVIRONMENT_CLASSES: dict[str, type[Environment]] = {
+    cls.__name__: cls
+    for cls in (environment_class_for(kind) for kind in EXPERIMENT_TYPE_MAP)
+}
 
 PROCESS_BATCH = 1000
 """Records resolved and written per LMDB transaction in ``Neo4jQueryRaw.process``."""
@@ -320,14 +349,16 @@ class _CachedReference:
 class _StreamState:
     """What ``process`` carries across batches instead of re-reading the LMDB.
 
-    ``environments`` is keyed by ``("ref", <constant id>)`` on the pointer layout or
-    ``("json", <environment JSON>)`` on the inline one; ``references`` by the raw
+    ``environments`` is keyed by ``("ref", <constant id>, <Environment class name>)``
+    on the pointer layout or ``("json", <environment JSON>, <class name>)`` on the
+    inline one, the class being the one the record's experiment family declares for
+    its ``environment`` field (``environment_class_for``); ``references`` by the raw
     ``ref_serialized`` string. ``reference_members`` maps each reference-index hash to
     the record indices that carry it, and ``gene_set`` collects every perturbed gene,
     both read off the exact dicts that were serialized into the LMDB.
     """
 
-    environments: dict[tuple[str, str], _CachedEnvironment] = field(factory=dict)
+    environments: dict[tuple[str, str, str], _CachedEnvironment] = field(factory=dict)
     references: dict[str, _CachedReference] = field(factory=dict)
     reference_members: dict[str, list[int]] = field(factory=dict)
     gene_set: GeneSet = field(factory=GeneSet)
@@ -484,19 +515,27 @@ class Neo4jQueryRaw:
             txn.put(key, value)
 
     @staticmethod
-    def _environment_key(environment: dict[str, Any]) -> tuple[str, str]:
-        """Cache key of a record's environment: its pointer id, else its JSON.
+    def _environment_key(
+        environment: dict[str, Any], experiment_type: str
+    ) -> tuple[str, str, str]:
+        """Cache key of a record's environment: its pointer id or JSON, and its class.
 
         A pointer (``{"$ref": id}``) is keyed by its id, which is the sha256 of the
-        payload; an inline environment by its JSON. Either key determines the input to
-        validation exactly, so a hit returns what a fresh validation would.
+        payload; an inline environment by its JSON. The third element names the
+        ``Environment`` class the record's experiment family declares, because the
+        same payload validates to a different model under a subclass. Together the
+        key determines the input and the class of validation exactly, so a hit
+        returns what a fresh validation would.
         """
+        cls_name = environment_class_for(experiment_type).__name__
         ref = environment.get(POINTER_KEY)
-        return ("ref", ref) if ref is not None else ("json", json.dumps(environment))
+        if ref is not None:
+            return ("ref", ref, cls_name)
+        return ("json", json.dumps(environment), cls_name)
 
     def _environment(
         self,
-        key: tuple[str, str],
+        key: tuple[str, str, str],
         environment: dict[str, Any],
         constants: dict[str, Any],
     ) -> _CachedEnvironment:
@@ -504,7 +543,7 @@ class Neo4jQueryRaw:
 
         The input to validation is what ``resolve_pointers`` made of the environment
         before: a pointer becomes its fetched payload as is, an inline environment
-        has any pointers nested in it resolved.
+        has any pointers nested in it resolved. The class is the one the key names.
         """
         cache = self._stream.environments
         hit = cache.get(key)
@@ -514,7 +553,7 @@ class Neo4jQueryRaw:
                 if key[0] == "ref"
                 else resolve_pointers(environment, constants)
             )
-            model = Environment(**source)
+            model = ENVIRONMENT_CLASSES[key[2]](**source)
             fragment = _dumps(model)
             hit = _CachedEnvironment(
                 model=model, fragment=fragment, parsed=json.loads(fragment)
@@ -629,14 +668,16 @@ class Neo4jQueryRaw:
                 cache.clear()
         refs: set[str] = set()
         new_references: dict[str, dict[str, Any]] = {}
-        environment_keys: list[tuple[str, str]] = []
+        environment_keys: list[tuple[str, str, str]] = []
         for _, e_node_data, ref_serialized in batch:
             # Walk the record for pointers, but an environment only on a cache miss:
             # a cached key is content that was walked (and validated) already.
             for name, value in e_node_data.items():
                 if name != "environment":
                     collect_pointers(value, refs)
-            environment_key = self._environment_key(e_node_data["environment"])
+            environment_key = self._environment_key(
+                e_node_data["environment"], e_node_data["experiment_type"]
+            )
             environment_keys.append(environment_key)
             if environment_key[0] == "ref":
                 refs.add(environment_key[1])

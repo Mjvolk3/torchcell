@@ -1,0 +1,97 @@
+{
+  "script": "experiments/036-dataset-fixes-before-kg-build/scripts/sameith2015_reference_replicates.py",
+  "sm_microarray_sameith2015": {
+    "dev": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/sm_microarray_sameith2015",
+      "n_records": 82,
+      "reference_n_entries": {
+        "1": 505858
+      },
+      "reference_n_record_max": {
+        "1": 82
+      },
+      "records_reference_n_equal_experiment_n": 11,
+      "reference_entries_below_record_max": 0
+    },
+    "baseline": {
+      "root": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-sameith-reference-replicates/baseline/sm_microarray_sameith2015",
+      "n_records": 82,
+      "reference_n_entries": {
+        "1": 505858
+      },
+      "reference_n_record_max": {
+        "1": 82
+      },
+      "records_reference_n_equal_experiment_n": 20,
+      "reference_entries_below_record_max": 0
+    },
+    "scratch": {
+      "root": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-sameith-reference-replicates/scratch/sm_microarray_sameith2015",
+      "n_records": 82,
+      "reference_n_entries": {
+        "1": 123380,
+        "2": 382478
+      },
+      "reference_n_record_max": {
+        "1": 20,
+        "2": 62
+      },
+      "records_reference_n_equal_experiment_n": 82,
+      "reference_entries_below_record_max": 0
+    },
+    "baseline_vs_scratch": {
+      "n_records": 82,
+      "records_identical_experiment": 82,
+      "records_identical_publication": 82,
+      "records_identical_reference_expression": 82,
+      "records_reference_differs_only_in_n_replicates": 62
+    }
+  },
+  "dm_microarray_sameith2015": {
+    "dev": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/dm_microarray_sameith2015",
+      "n_records": 72,
+      "reference_n_entries": {
+        "1": 444168
+      },
+      "reference_n_record_max": {
+        "1": 72
+      },
+      "records_reference_n_equal_experiment_n": 1,
+      "reference_entries_below_record_max": 0
+    },
+    "baseline": {
+      "root": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-sameith-reference-replicates/baseline/dm_microarray_sameith2015",
+      "n_records": 72,
+      "reference_n_entries": {
+        "1": 444168
+      },
+      "reference_n_record_max": {
+        "1": 72
+      },
+      "records_reference_n_equal_experiment_n": 1,
+      "reference_entries_below_record_max": 0
+    },
+    "scratch": {
+      "root": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-sameith-reference-replicates/scratch/dm_microarray_sameith2015",
+      "n_records": 72,
+      "reference_n_entries": {
+        "1": 6169,
+        "2": 437999
+      },
+      "reference_n_record_max": {
+        "1": 1,
+        "2": 71
+      },
+      "records_reference_n_equal_experiment_n": 72,
+      "reference_entries_below_record_max": 0
+    },
+    "baseline_vs_scratch": {
+      "n_records": 72,
+      "records_identical_experiment": 72,
+      "records_identical_publication": 72,
+      "records_identical_reference_expression": 72,
+      "records_reference_differs_only_in_n_replicates": 71
+    }
+  }
+}

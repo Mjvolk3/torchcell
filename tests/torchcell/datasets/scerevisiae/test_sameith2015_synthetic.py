@@ -237,6 +237,7 @@ def _record(
     se: dict[str, float],
     var: dict[str, float],
     n: dict[str, int],
+    ref_n: dict[str, int],
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     experiment = MicroarrayExpressionExperiment(
         dataset_name=dataset,
@@ -261,7 +262,7 @@ def _record(
             expression_log2_ratio=dict.fromkeys(refpool, 0.0),
             expression_log2_ratio_se=None,
             expression_log2_ratio_variance=None,
-            n_replicates=dict.fromkeys(refpool, 1),
+            n_replicates=ref_n,
         ),
     )
     return _nan_safe(experiment.model_dump()), reference.model_dump()
@@ -294,6 +295,7 @@ _SINGLE_EXPECTED = [
         _three(_SD_HALF / math.sqrt(2), 0.0, _SD_TWO / math.sqrt(2)),
         _three(_SD_HALF**2, 0.0, _SD_TWO**2),
         _N2,
+        _N2,
     ),
     _record(
         _SM,
@@ -305,6 +307,7 @@ _SINGLE_EXPECTED = [
         _NANS,
         _NANS,
         _N1,
+        _N1,
     ),
     _record(
         _SM,
@@ -315,6 +318,7 @@ _SINGLE_EXPECTED = [
         _three(0.0, 0.0, 0.0),
         _NANS,
         _NANS,
+        _N1,
         _N1,
     ),
 ]
@@ -477,6 +481,7 @@ _DOUBLE_EXPECTED = [
         _three(*[_SD_HALF / math.sqrt(2)] * 3),
         _three(*[_SD_HALF**2] * 3),
         _N2,
+        _N2,
     ),
     _record(
         _DM,
@@ -487,6 +492,7 @@ _DOUBLE_EXPECTED = [
         _three(0.0, 1.0, 2.0),
         _NANS,
         _NANS,
+        _N1,
         _N1,
     ),
 ]
@@ -560,10 +566,11 @@ def test_double_side_files(double: m.DmMicroarraySameith2015Dataset) -> None:
         "['YAL001C', 'YBR001C']",
         "['YEL001C', 'YFL001W']",
     ]
-    # Both pairs are now BY4741 with the same all-ones refpool, so they share one
-    # reference.
+    # Both pairs are BY4741 with the same all-ones refpool, but the reference
+    # n_replicates counts the arrays in each refpool mean (#630): 2 for D1 + D2, 1 for
+    # D3, so the two records no longer share one reference.
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0, 1]]
+    assert [entry["member_indices"] for entry in index] == [[0], [1]]
     assert double.raw_file_names == ["GSE42536_family.soft.gz"]
 
 
@@ -596,3 +603,58 @@ def test_a_zero_signal_probe_fails_phenotype_validation(tmp_path: Path) -> None:
         ValueError, match="n_replicates must have the same keys as expression"
     ):
         m.SmMicroarraySameith2015Dataset(root=str(root), genome=_genome())
+
+
+def _two_probe_gsm(name: str, title: str, source: str) -> GSM:
+    """An array whose table has no row for probe 2 (YBR001C)."""
+    table = pd.DataFrame(
+        {"ID_REF": [1, 3], "Signal Norm_Cy5": [2.0, 2.0], "Signal Norm_Cy3": [8.0, 2.0]}
+    )
+    metadata = {"title": [title], "source_name_ch1": [source]}
+    return GSM(name=name, metadata=metadata, table=table, columns=_describe(table))
+
+
+def test_reference_n_replicates_counts_the_arrays_in_each_refpool_mean(
+    tmp_path: Path,
+) -> None:
+    """#630: the reference ``expression`` is the refpool-channel mean over a record's
+    arrays, so its ``n_replicates`` is, per gene, the number of arrays whose refpool
+    value entered that mean, not a constant 1 and not the record's array count.
+
+    M1 carries all three probes (refpool Cy3 1 4 2); M2 names the refpool in ch1
+    (refpool Cy5 2 _ 2) and has no row for YBR001C. The YBR001C reference is then M1's
+    value alone (4, n = 1) while YAL001C (1.5) and YCR001W (2.0) average both arrays
+    (n = 2). The same holds for the double-mutant loader.
+    """
+    single_root = tmp_path / "sm_missing"
+    _write_raw(
+        single_root / "raw",
+        [
+            _gsm("M1", "yal001c-del-a", [2.0, 4.0, 8.0], [1.0, 4.0, 2.0]),
+            _two_probe_gsm("M2", "yal001c-del-b", "refpool"),
+        ],
+    )
+    single = m.SmMicroarraySameith2015Dataset(root=str(single_root), genome=_genome())
+    assert len(single) == 1
+    reference = single[0]["reference"]["phenotype_reference"]
+    assert reference["expression"] == {"YAL001C": 1.5, "YBR001C": 4.0, "YCR001W": 2.0}
+    assert reference["n_replicates"] == {"YAL001C": 2, "YBR001C": 1, "YCR001W": 2}
+    assert single[0]["experiment"]["phenotype"]["n_replicates"] == {
+        "YAL001C": 2,
+        "YBR001C": 1,
+        "YCR001W": 2,
+    }
+
+    double_root = tmp_path / "dm_missing"
+    _write_raw(
+        double_root / "raw",
+        [
+            _gsm("N1", "ycr001w-del+ydr001c-del", [2.0, 4.0, 8.0], [1.0, 4.0, 2.0]),
+            _two_probe_gsm("N2", "ycr001w-del+ydr001c-del-b", "refpool"),
+        ],
+    )
+    double = m.DmMicroarraySameith2015Dataset(root=str(double_root), genome=_genome())
+    assert len(double) == 1
+    reference = double[0]["reference"]["phenotype_reference"]
+    assert reference["expression"] == {"YAL001C": 1.5, "YBR001C": 4.0, "YCR001W": 2.0}
+    assert reference["n_replicates"] == {"YAL001C": 2, "YBR001C": 1, "YCR001W": 2}

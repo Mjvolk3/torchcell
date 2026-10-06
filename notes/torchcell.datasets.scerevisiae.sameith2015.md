@@ -511,3 +511,25 @@ Branch `fix/sameith-kemmeren-replicates`, not yet served. Numbers below are from
 
 - Every served record of both datasets changes content (the PubMed ID), and 45 SM records change values, `n_replicates` and SE. Re-admission goes with the next full build (#459).
 - Open, not part of #479: the reference `n_replicates` of both Sameith loaders is a constant 1 per gene while the reference `expression` is the refpool mean over the record's 1 or 2 arrays; this is the same mismatch #484 fixes for Kemmeren and needs its own issue. The `"wt" in title` hazard has no instance in GSE42536 (0 wildtype arrays found by the build). #480, #481 and #482 are untouched.
+
+## 2026.10.02 - Reference n_replicates counts the refpool arrays (issue #630)
+
+Branch `fix/sameith-reference-replicates`, not yet served.
+
+- Wrong: both loaders stored the reference `phenotype_reference.n_replicates` as a constant 1 per gene, while the stored reference `expression` is the mean refpool-channel signal over the record's own arrays. The count described no stored value. Same mismatch as #484 in [[torchcell.datasets.scerevisiae.kemmeren2014]].
+- Decision (mirrors `kemmeren2014.create_expression_experiment`): the reference `n_replicates` of a gene is the number of arrays whose refpool value entered that gene's reference `expression` mean. `_process_sequential` (SM and DM) and `_process_batch` (DM, parallel) already computed it as `refpool_n` from `_calculate_replicate_statistics(all_refpool_data)` and discarded it; they now pass it as the required keyword `refpool_n_replicates` to `create_single_mutant_expression_experiment` / `create_double_mutant_expression_experiment`. It is per gene, so a gene missing from one of a record's two arrays counts 1, not the record's array count. The unused placeholder `N_EXPECTED_REFPOOL_REPLICATES = None` is removed. The module comment at the reference pool quotes now records the decision: neither the WT RNA batch nor the additional WT cultures the paper names is a stored value.
+- Measured with `experiments/036-dataset-fixes-before-kg-build/scripts/sameith2015_reference_replicates.py`. It builds both datasets twice into the session scratch root from the dev tree's `raw/` files: once with the pre-#630 loader (baseline, already carrying #478/#479), once with the fix. It also reads the dev stores `data/torchcell/{sm,dm}_microarray_sameith2015` read-only (built before #478/#479). Output `experiments/036-dataset-fixes-before-kg-build/results/sameith2015_reference_replicates.json`.
+
+| store | records | reference n entries (record x gene) | largest reference n per record | records whose reference n equals the experiment n |
+|---|---:|---|---|---:|
+| SM dev | 82 | 1: 505,858 | 1: 82 | 11 |
+| SM baseline (pre-#630) | 82 | 1: 505,858 | 1: 82 | 20 |
+| SM scratch (after) | 82 | 1: 123,380, 2: 382,478 | 1: 20, 2: 62 | 82 |
+| DM dev | 72 | 1: 444,168 | 1: 72 | 1 |
+| DM baseline (pre-#630) | 72 | 1: 444,168 | 1: 72 | 1 |
+| DM scratch (after) | 72 | 1: 6,169, 2: 437,999 | 1: 1, 2: 71 | 72 |
+
+- Experiment side unchanged: baseline vs scratch, all 82 SM and all 72 DM records have an identical `experiment`, `publication` and reference `expression`; the reference differs only in `n_replicates` on 62 SM and 71 DM records (the 20 single-array SM records and the 1 single-array DM record keep 1). On GSE42536 no gene has a reference count below its record's largest count (0 entries in every store), so the per-gene path is exercised only by the synthetic test.
+- Tests: [[tests.torchcell.datasets.scerevisiae.test_sameith2015_synthetic]] expects reference counts equal to the arrays in each refpool mean (YAL001C SM record 2, the D1 + D2 DM pair 2, single-array records 1). The two DM fixture pairs no longer share one reference (index `[[0], [1]]`), since their counts differ. A new test builds a two-array SM record and a two-array DM record whose second array has no YBR001C row and pins reference `n_replicates` {YAL001C 2, YBR001C 1, YCR001W 2} with reference `expression` {1.5, 4.0, 2.0}.
+- Served-record impact: 62 of 82 SM and 71 of 72 DM records change reference content (`phenotype_reference.n_replicates`), not every record as the issue text estimated; experiment phenotypes are unchanged. Re-admission goes with the next full build (#459), together with #478/#479.
+- Open: "arrays" here are the GEO arrays per record (1 or 2), not the paper's four measurements per mutant (two arrays times two spots per gene); the spot question and the 4-array constants are #482, untouched here.

@@ -122,50 +122,54 @@
 
 <span class="sd">Vanacloig-Pedros et al. 2022 (FEMS Yeast Research, doi:10.1093/femsyr/foac036) profiled</span>
 <span class="sd">the '3DeltaAlpha' drug-sensitized barcoded yeast deletion library ANAEROBICALLY against</span>
-<span class="sd">plant-hydrolysate inhibitors at their IC30, in independent biological triplicate, alongside</span>
-<span class="sd">matched inhibitor-free controls on the same plates. The readout is log2(inhibitor/control)</span>
-<span class="sd">barcode abundance, a per-deletion fitness response.</span>
+<span class="sd">34 conditions (Fig 1B: 33 inhibitors, mostly plant-hydrolysate toxins, and DMSO), in</span>
+<span class="sd">independent biological triplicate, alongside matched inhibitor-free controls on the same</span>
+<span class="sd">plates. The readout is log2(inhibitor/control) barcode abundance, a per-deletion fitness</span>
+<span class="sd">response.</span>
 
-<span class="sd">READOUT PROVENANCE / RIGOR. The paper's published values are edgeR TMM+glmQLF PAIRED</span>
-<span class="sd">logFCs whose exact reproduction needs R/edgeR plus the OUP Supplementary Table S1 (the</span>
-<span class="sd">per-compound control pairing and the IC30 molar values), and academic.oup.com is not</span>
-<span class="sd">scriptable, so Table S1 is not mirrored. GEO GSE186866 releases only the raw barcode-count</span>
-<span class="sd">matrix, which IS scriptable and sha256-pinned. This loader therefore RECOMPUTES the paper's</span>
-<span class="sd">DEFINED quantity from that canonical artifact: per-sample CPM normalization against the</span>
-<span class="sd">library size summed over EVERY released barcode (so the stored value does not depend on</span>
-<span class="sd">this loader's own retention rules),</span>
-<span class="sd">then per gene ``log2((CPM_treated_rep + 1) / (CPM_control_batch + 1))`` for each replicate.</span>
-<span class="sd">The stored response is the mean of the three replicate log2 ratios and the uncertainty is</span>
-<span class="sd">their sample SD (SE = SD/sqrt(3)). It is NOT identical to the published edgeR logFC and</span>
-<span class="sd">must not be treated as such; nothing mirrored here can check the stored number against a</span>
-<span class="sd">published one, so L2 value fidelity checks range and finiteness only, never agreement.</span>
+<span class="sd">READOUT PROVENANCE / RIGOR. The paper's published values are edgeR glmQLFit PAIRED</span>
+<span class="sd">logFCs on TMM-normalized counts ("using TMM normalization and glmQLFit comparing paired</span>
+<span class="sd">treatment to control samples"). GEO GSE186866 releases only the raw barcode-count matrix,</span>
+<span class="sd">which IS scriptable and sha256-pinned; the per-compound logFC table (Dataset2_mclust_cdt)</span>
+<span class="sd">and Table S1 sit behind academic.oup.com, which is not scriptable. This loader recomputes</span>
+<span class="sd">the paper's normalized ratio from the canonical counts:</span>
+
+<span class="sd">- TMM scaling factors (``tmm_factors``: edgeR 3.26.8 ``calcNormFactors(method="TMM")``</span>
+<span class="sd">  with its defaults, ``logratioTrim=0.3``, ``sumTrim=0.05``, ``doWeighting=TRUE``,</span>
+<span class="sd">  ``Acutoff=-1e10``, reference = the sample whose upper-quartile fraction is closest to</span>
+<span class="sd">  the mean) computed PER CONDITION over its three replicate columns and the control</span>
+<span class="sd">  columns it is paired with, as the paper's per-compound edgeR fit does. The library</span>
+<span class="sd">  size each factor multiplies is the column total over EVERY released barcode, before</span>
+<span class="sd">  any retention rule, so the stored value does not depend on this loader's gene policy.</span>
+<span class="sd">- per gene and replicate ``log2((TMM-CPM_rep + 1) / (mean TMM-CPM of the paired</span>
+<span class="sd">  controls + 1))``; the response is the mean of the three, the uncertainty their sample</span>
+<span class="sd">  SD (SE = SD/sqrt(3)). The pseudocount of 1 CPM is a loader choice the paper does not</span>
+<span class="sd">  state (``PSEUDOCOUNT_GAP``); cells whose control mean sits near it carry a large SD,</span>
+<span class="sd">  which is the low-count flag (no separate field).</span>
+
+<span class="sd">It is NOT the published edgeR logFC (no dispersion shrinkage, no prior count) and must</span>
+<span class="sd">not be treated as such; nothing mirrored carries the published numbers.</span>
 
 <span class="sd">CONTROL PAIRING. Each replicate is paired with the control columns of its OWN ``CG00n``</span>
-<span class="sd">batch, because the paper's design is paired ("All 24-well plates contained control samples</span>
-<span class="sd">with SynBase or SynBase + 1% DMSO lacking any inhibitor for paired analysis") and the</span>
-<span class="sd">control log2 CPM measurably varies across the four batches. MMS is the one retained</span>
-<span class="sd">compound the paper analyzed UNPAIRED, so its control is the mean of all 16 control columns;</span>
-<span class="sd">its ``units`` string records that, which also keeps it distinguishable in the record key.</span>
+<span class="sd">batch, because the paper's design is paired and its comparison is "to the paired SynBase</span>
+<span class="sd">medium control"; MMS is the one served condition the paper analyzed UNPAIRED, so its</span>
+<span class="sd">control is the mean of all 16 control columns (its ``units`` string records that). DMSO</span>
+<span class="sd">is served as a condition (1% v/v) paired the same way; which inhibitors were themselves</span>
+<span class="sd">delivered in DMSO is in the unmirrored Table S1, so each inhibitor's ``solvent`` is a</span>
+<span class="sd">typed gap.</span>
 
-<span class="sd">SOURCING. Every environment and phenotype number is a module-level ``SourcedValue``</span>
-<span class="sd">carrying the verbatim quote plus the sha256 of the mirrored artifact it came from, or a</span>
-<span class="sd">typed ``ProvenanceGap``. The medium is the shared ``SYNBASE`` library object (SynH3- minus</span>
-<span class="sd">acetamide/sodium acetate/cellobiose, MSG for ammonium sulfate); its pH 5.0 rides as an</span>
-<span class="sd">``EnvironmentPhysicalPerturbation`` whose ``agent`` is the HCl the same sentence names,</span>
-<span class="sd">because ``Media`` has no pH field. The one field that is genuinely ``None`` on a dosed</span>
-<span class="sd">perturbation, ``solvent``, carries a ``deferred_pending_source_review`` gap resolvable by</span>
-<span class="sd">Table S1; the absent per-compound IC30 MOLAR value is not a second gap, because</span>
-<span class="sd">``concentration`` is never None (``basis=IC30`` is what is known and is the schema's own</span>
-<span class="sd">mechanism for a dose set to a target without a released number) and ``Concentration`` is</span>
-<span class="sd">not itself a gap carrier.</span>
+<span class="sd">STRAIN BACKGROUND (#500). The screened strains are the MATa meiotic progeny of the SGA</span>
+<span class="sd">cross of query Y13206 (MATalpha pdr1::natMX pdr3::KlURA3 snq2::KlLEU2 can1::STE2pr-</span>
+<span class="sd">Sp_his5 lyp1) to a MATa xxx::kanMX array (Piotrowski 2017, the library deferral). That</span>
+<span class="sd">constant genome content rides on the reference's ``StrainReferenceGenome`` background;</span>
+<span class="sd">each record's ``Genotype`` holds the ONE screened deletion.</span>
 
-<span class="sd">RECORDS DROPPED (rule + count written to ``preprocess/dropped_records.json``): the DMSO</span>
-<span class="sd">vehicle-control column (it is the denominator of the DMSO-delivered compounds, not a</span>
-<span class="sd">treatment); compounds with no resolvable structure identifier (MBO, whose abbreviation the</span>
-<span class="sd">paper contradicts itself on, and the two QUADRIS suspension doses); library rows whose ORF</span>
-<span class="sd">is not a current R64 gene or is the legacy spelling of an ORF already in the pool; and</span>
-<span class="sd">cells whose three replicate counts are ALL zero, where the CPM pseudocount would otherwise</span>
-<span class="sd">manufacture a finite value with a sample SD of exactly 0.</span>
+<span class="sd">RECORDS DROPPED (rule + count written to ``preprocess/dropped_records.json``): the 11</span>
+<span class="sd">matrix tokens Fig 1B does not list (the paper never reports them); compounds with no</span>
+<span class="sd">resolvable structure identifier; library rows whose ORF is not a barcoded ORF with</span>
+<span class="sd">counts, is a locus the SGA selections fix in every strain, is not a current R64 gene, or</span>
+<span class="sd">is the legacy spelling of an ORF already in the pool (those carry a typed</span>
+<span class="sd">``ConstructedOrf`` in the ledger); and cells whose three replicate counts are ALL zero.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -184,8 +188,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">npt</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">rankdata</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -205,25 +211,34 @@
     <span class="n">BarcodedKanMxDeletionPerturbation</span><span class="p">,</span>
     <span class="n">Concentration</span><span class="p">,</span>
     <span class="n">ConcentrationUnit</span><span class="p">,</span>
+    <span class="n">ConstructedOrf</span><span class="p">,</span>
+    <span class="n">CultureEnvironment</span><span class="p">,</span>
+    <span class="n">CultureFormat</span><span class="p">,</span>
     <span class="n">DoseBasis</span><span class="p">,</span>
-    <span class="n">Environment</span><span class="p">,</span>
+    <span class="n">EndpointRule</span><span class="p">,</span>
     <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">,</span>
-    <span class="n">EnvironmentResponseExperiment</span><span class="p">,</span>
-    <span class="n">EnvironmentResponseExperimentReference</span><span class="p">,</span>
     <span class="n">EnvironmentResponsePhenotype</span><span class="p">,</span>
     <span class="n">Experiment</span><span class="p">,</span>
     <span class="n">ExperimentReference</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
-    <span class="n">MarkerDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">MatingType</span><span class="p">,</span>
     <span class="n">MeasurementType</span><span class="p">,</span>
-    <span class="n">NatMxDeletionPerturbation</span><span class="p">,</span>
     <span class="n">PhysicalFactor</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
-    <span class="n">ReferenceGenome</span><span class="p">,</span>
     <span class="n">SampleUnit</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
+    <span class="n">StrainBackground</span><span class="p">,</span>
+    <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">,</span>
+    <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">,</span>
+    <span class="n">StrainReferenceGenome</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
     <span class="n">UncertaintyType</span><span class="p">,</span>
+    <span class="n">Zygosity</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.strain_background</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BRACHMANN_1998</span><span class="p">,</span>
+    <span class="n">pending_source_review</span><span class="p">,</span>
+    <span class="n">standard_allele</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.gene_name_reconcile</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_genome</span>
@@ -264,10 +279,37 @@
 <span class="n">PAPER_MD</span> <span class="o">=</span> <span class="s2">"paper.md"</span>
 <span class="n">PAPER_MD_SHA256</span> <span class="o">=</span> <span class="s2">"0b5d938b54b8424fa08203a4357bc8f7c7dfae3fbe1a6d07d422848b92f37ba3"</span>
 
-<span class="n">CPM_PRIOR</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># CPM pseudocount; the all-zero cells it would fabricate are dropped</span>
+<span class="c1">#: Fig 1B (the per-condition count of significant genes) as MinerU extracted it from the</span>
+<span class="c1">#: publisher PDF; the 34 bar labels are read from this image, not from OCR text.</span>
+<span class="n">FIG_1B_IMAGE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"images/8355ec6ee4cec3600bdfe3bb9305a3a5769788eb9bea45c0ec4e79453f8ba8b9.jpg"</span>
+<span class="p">)</span>
+<span class="n">FIG_1B_IMAGE_SHA256</span> <span class="o">=</span> <span class="s2">"f00ee21b185db86821ad11ba351f84841b38c78b5c0db22a9361ebc88b9c64cf"</span>
+
+<span class="n">PIOTROWSKI_KEY</span> <span class="o">=</span> <span class="s2">"piotrowskiFunctionalAnnotationChemical2017"</span>
+<span class="n">PIOTROWSKI_SHA256</span> <span class="o">=</span> <span class="s2">"9314a0dd932c1b20b4dc4297de4ce9452b09f314bf100f05f2fe718fb3415fc1"</span>
+<span class="n">OHNUKI_KEY</span> <span class="o">=</span> <span class="s2">"ohnukiHighthroughputPlatformYeast2022"</span>
+<span class="n">OHNUKI_SHA256</span> <span class="o">=</span> <span class="s2">"de2cad9b33c5e0f7e9ce7b7d56feb17a10dbb83de34f65330d6e35846b757ee1"</span>
+
+<span class="c1">#: A float64 count / library-size array.</span>
+<span class="n">FloatArray</span> <span class="o">=</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span>
+
+<span class="n">CPM_PRIOR</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># CPM pseudocount (PSEUDOCOUNT_GAP); all-zero cells are dropped</span>
+
+<span class="c1"># edgeR 3.26.8 calcNormFactors(method="TMM") defaults, the version the paper names.</span>
+<span class="n">TMM_LOGRATIO_TRIM</span> <span class="o">=</span> <span class="mf">0.3</span>
+<span class="n">TMM_SUM_TRIM</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="n">TMM_A_CUTOFF</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1e10</span>
+<span class="n">TMM_REFERENCE_QUANTILE</span> <span class="o">=</span> <span class="mf">0.75</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_paper</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_paper</span><span class="p">(</span>
+    <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">page</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Methods, 'Strains and growth conditions' / 'Chemical genomic experiment'"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Bind a value to a verbatim quote in the sha256-pinned paper OCR mirror."""</span>
     <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
         <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
@@ -278,7 +320,41 @@
             <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
             <span class="n">sha256</span><span class="o">=</span><span class="n">PAPER_MD_SHA256</span><span class="p">,</span>
             <span class="n">method</span><span class="o">=</span><span class="s2">"MinerU OCR of the publisher PDF (torchcell-library mirror)"</span><span class="p">,</span>
-            <span class="n">page</span><span class="o">=</span><span class="s2">"Methods, 'Strains and growth conditions' / 'Chemical genomic experiment'"</span><span class="p">,</span>
+            <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_piotrowski</span><span class="p">(</span>
+    <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">page</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Bind a value to Piotrowski 2017, the paper Vanacloig defers library methods to."""</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="n">PAPER_MD</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">PIOTROWSKI_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">PIOTROWSKI_SHA256</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"MinerU OCR of the publisher PDF (torchcell-library mirror)"</span><span class="p">,</span>
+            <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_ohnuki</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Bind a value to Ohnuki 2022, which spells out the Y13206 query genotype."""</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="n">PAPER_MD</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">OHNUKI_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">OHNUKI_SHA256</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"MinerU OCR of the publisher PDF (torchcell-library mirror)"</span><span class="p">,</span>
+            <span class="n">page</span><span class="o">=</span><span class="s2">"Methods, strains (paper.md line 128)"</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">)</span>
 
@@ -356,15 +432,41 @@
     <span class="s2">"Benomyl and MMS concentrations were used as previously published (Piotrowski et al. "</span>
     <span class="s2">"2017), $1 0 ~ </span><span class="se">\\</span><span class="s2">mathrm { u g / m L }$ and $0 . 0 1 </span><span class="se">\\</span><span class="s2">%$ , respectively."</span><span class="p">,</span>
     <span class="n">note</span><span class="o">=</span><span class="s2">"both doses were taken from Piotrowski 2017 rather than set to an IC30, so "</span>
-    <span class="s2">"their basis is 'fixed'. The MMS percent is stored as a basis only: the primary "</span>
-    <span class="s2">"writes '0.01%' with no v/v or w/v, and the deferral target (Piotrowski 2017) is "</span>
-    <span class="s2">"not mirrored, so the unit would be a guess"</span><span class="p">,</span>
+    <span class="s2">"their basis is 'fixed'. Piotrowski 2017 (mirrored) states benomyl as 34.4 uM "</span>
+    <span class="s2">"(BENOMYL_MOLAR), which is the stored value. The MMS percent is stored as a basis "</span>
+    <span class="s2">"only: neither paper writes v/v or w/v for this 0.01% (Piotrowski 2017 names no "</span>
+    <span class="s2">"MMS dose), so the unit would be a guess"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">BENOMYL_MOLAR</span> <span class="o">=</span> <span class="n">_piotrowski</span><span class="p">(</span>
+    <span class="mf">34.4</span><span class="p">,</span>
+    <span class="s2">"Cultures were then spiked with either $3 4 . 4 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M }$ benomyl, "</span>
+    <span class="s2">"$2 5 ~ </span><span class="se">\\</span><span class="s2">mathrm { n M }$ micafungin, or a $1 </span><span class="se">\\</span><span class="s2">%$ DMSO control."</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Online Methods, signal-detection optimization (paper.md line 218)"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the deferral target of Vanacloig's '10 ug/mL as previously published'. The "</span>
+    <span class="s2">"same 34.4 uM appears at paper.md lines 25 (Fig 1c, BENOMYL_MOLAR_FIG1C) and 208 "</span>
+    <span class="s2">"('34.4 uM benomyl'). Consistency check, not a source: 10 ug/mL / 290.32 g/mol "</span>
+    <span class="s2">"(benomyl, C14H18N4O3) = 34.44 uM"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">BENOMYL_MOLAR_FIG1C</span> <span class="o">=</span> <span class="n">_piotrowski</span><span class="p">(</span>
+    <span class="mf">34.4</span><span class="p">,</span>
+    <span class="s2">"at a concentration of $3 4 . 4 ~ </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M }$ , the microtubule-binding "</span>
+    <span class="s2">"compound benomyl showed a specific chemical-genetic interaction with TUB3"</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Results, drug-sensitized background (paper.md line 25)"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">UNPAIRED_COMPOUNDS_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"Gene deletions with specific fitness contributions were identified using linear "</span>
     <span class="s2">"models in edgeR version 3.26.8 (Robinson et al. 2010), using TMM normalization and "</span>
     <span class="s2">"glmQLFit comparing paired treatment to control samples, except with MMS and QUADRIS "</span>
     <span class="s2">"compounds, which were unpaired."</span>
+<span class="p">)</span>
+<span class="n">NORMALIZATION</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="s2">"TMM"</span><span class="p">,</span>
+    <span class="n">UNPAIRED_COMPOUNDS_QUOTE</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Methods, 'Chemical genomic data processing and functional analysis'"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the loader computes edgeR 3.26.8's TMM factors in numpy (tmm_factors) per "</span>
+    <span class="s2">"condition over its replicates and paired controls; glmQLFit's dispersion "</span>
+    <span class="s2">"shrinkage is not reproduced, so the stored value is the normalized ratio, not the "</span>
+    <span class="s2">"published logFC"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">PAIRED_CONTROL</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="s2">"batch-matched"</span><span class="p">,</span>
@@ -374,14 +476,47 @@
     <span class="s2">"MMS keeps the pooled 16-column control because the paper analyzed it unpaired: "</span>
     <span class="o">+</span> <span class="n">UNPAIRED_COMPOUNDS_QUOTE</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="n">PAIRED_SYNBASE_CONTROL</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="s2">"SynBase"</span><span class="p">,</span>
+    <span class="s2">"Linear modeling of quantitative barcode sequence counts identified genes whose "</span>
+    <span class="s2">"deletion produced reproducible fitness effects in the presence of each inhibitor "</span>
+    <span class="s2">"compared to the paired SynBase medium control (see Methods)."</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Results (paper.md line 103)"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the paired control is inhibitor-free SynBase, so every condition, DMSO "</span>
+    <span class="s2">"included, is paired against the ControlN columns rather than against the DMSO "</span>
+    <span class="s2">"columns"</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="n">VEHICLE_CONTROL</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="s2">"DMSO"</span><span class="p">,</span>
     <span class="s2">"Chemical compounds insoluble in water were dissolved in DMSO at 100X concentration "</span>
     <span class="s2">"so that the final concentration of DMSO in SynBase medium was $1 </span><span class="se">\\</span><span class="s2">%$ $( </span><span class="se">\\</span><span class="s2">mathrm "</span>
     <span class="s2">"{ v / v } )$ ."</span><span class="p">,</span>
-    <span class="n">note</span><span class="o">=</span><span class="s2">"DMSO is the vehicle whose own column is a control, not an inhibitor; which "</span>
-    <span class="s2">"compounds it delivered is in the unmirrored Table S1, so no per-compound Solvent "</span>
-    <span class="s2">"can be asserted"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"which compounds DMSO delivered is in the unmirrored Table S1, so no "</span>
+    <span class="s2">"per-compound Solvent can be asserted; DMSO itself is served as a condition "</span>
+    <span class="s2">"(DMSO_DOSE)"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">DMSO_DOSE</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">VEHICLE_CONTROL</span><span class="o">.</span><span class="n">quote</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"DMSO's own condition columns are the vehicle at its final 1% v/v with no "</span>
+    <span class="s2">"inhibitor; Fig 1B lists DMSO as one of the 34 analyzed conditions (FIG_1B_CONDITIONS)"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">FIG_1B_CONDITIONS</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="mi">34</span><span class="p">,</span>
+    <span class="s2">"Each colored strain depicts a different gene deletion strain, before and after "</span>
+    <span class="s2">"exposure to one of 34 different inhibitors."</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Figure 1 caption (paper.md line 89); bar labels read from the Fig 1B image "</span>
+    <span class="o">+</span> <span class="n">FIG_1B_IMAGE</span>
+    <span class="o">+</span> <span class="s2">" (sha256 "</span>
+    <span class="o">+</span> <span class="n">FIG_1B_IMAGE_SHA256</span>
+    <span class="o">+</span> <span class="s2">")"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the 34 Fig 1B bar labels, in figure order: Benomyl, Acetamide, "</span>
+    <span class="s2">"4-OH-Benzoic Acid, 5-HMF, Benzoic Acid, Sinapic Acid, 2,2'-Dipyridyl, Coumaric "</span>
+    <span class="s2">"Acid, BMIM-Cl, 4-OH-Benzaldehyde, DMSO, Vanillin, Isobutanol, Furfural, Cinnamic "</span>
+    <span class="s2">"Acid, Vanillic Acid, 4-OH-Acetophenone, MMS, Syringaldehyde, Methylglyoxal, Azelaic "</span>
+    <span class="s2">"Acid, Coumaroyl Amide, Feruloyl Amide, Syringic Acid, MBO, Acetovanillone, EMIM-Cl, "</span>
+    <span class="s2">"Ferulic Acid, Acetosyringone, NAO, 2,6-Dimethylpyrazine, GVL, CV, EtOH. The matrix "</span>
+    <span class="s2">"token of each is FIG_1B_TOKENS"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">READOUT</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="n">MeasurementType</span><span class="o">.</span><span class="n">log2_ratio</span><span class="p">,</span>
@@ -394,6 +529,54 @@
     <span class="n">note</span><span class="o">=</span><span class="s2">"the acid that REALIZES the pH factor, carried on the physical perturbation's "</span>
     <span class="s2">"`agent` slot so the medium's pH joins on a compound entity"</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="n">CULTURE_VESSEL</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="p">{</span><span class="s2">"vessel"</span><span class="p">:</span> <span class="s2">"24-well plates (Falcon)"</span><span class="p">,</span> <span class="s2">"working_volume_ul"</span><span class="p">:</span> <span class="mf">1500.0</span><span class="p">},</span>
+    <span class="s2">"the pooled yeast gene-knockout library was inoculated into $1 . 5 </span><span class="se">\\</span><span class="s2">mathrm { m L }$ "</span>
+    <span class="s2">"of SynBase or SynBase $+ ~ 1 </span><span class="se">\\</span><span class="s2">%$ DMSO containing individual inhibitors at their "</span>
+    <span class="s2">"defined $</span><span class="se">\\</span><span class="s2">mathrm { I C } _ { 3 0 }$ concentration in 24-well plates (Falcon) at an "</span>
+    <span class="s2">"$</span><span class="se">\\</span><span class="s2">mathrm { O D } _ { 6 0 0 } = 0 . 1$ ."</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"also the inoculum OD600 of 0.1"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">STATIC_CULTURE</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">_GROWTH_QUOTE</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"'without shaking' -&gt; shaking_rpm 0.0; both 24 h periods start at OD600 0.1 "</span>
+    <span class="s2">"and end at a fixed time (EndpointRule.fixed_duration)"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># --- MBO: the paper defines the abbreviation twice, as two different compounds ----- #</span>
+<span class="n">MBO_ABBREVIATION</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="s2">"2-methyl-3-butyn-2-ol"</span><span class="p">,</span>
+    <span class="s2">"MBO : 2-Methyl-3-butyn-2-ol"</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Abbreviations (paper.md line 31)"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the glossary entry, NOT adopted (MBO_IDENTITY_RULE); PubChem CID 8258"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">MBO_IDENTITY</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="s2">"2-methyl-3-buten-2-ol"</span><span class="p">,</span>
+    <span class="s2">"biofuel endproducts (ethanol, isobutanol and 2-methyl-3-buten-2-ol (MBO))"</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Results (paper.md line 103)"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the adopted identity, PubChem CID 8257 (InChIKey HNVRRHSXBLFLIG-UHFFFAOYSA-N), "</span>
+    <span class="s2">"under MBO_IDENTITY_RULE; it disagrees with MBO_ABBREVIATION (line 31)"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">MBO_IS_A_BIOFUEL</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="s2">"biofuel"</span><span class="p">,</span>
+    <span class="s2">"the two other biofuels included in our screen, IBA and MBO"</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Results (paper.md line 131)"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the second in-text use; it names MBO a biofuel product of the screen"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">MBO_IDENTITY_RULE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"When the paper defines one abbreviation as two different structures, the in-text "</span>
+    <span class="s2">"definition that names the compound where the experiment uses it outranks the "</span>
+    <span class="s2">"one-line Abbreviations glossary. MBO is defined in the Results as "</span>
+    <span class="s2">"'2-methyl-3-buten-2-ol (MBO)' among the 'biofuel endproducts' (line 103) and is "</span>
+    <span class="s2">"called one of 'the two other biofuels included in our screen' (line 131); the "</span>
+    <span class="s2">"glossary's '2-Methyl-3-butyn-2-ol' (line 31) is the single contrary statement. "</span>
+    <span class="s2">"Hypothesis (no mirrored source checks it): the glossary line is a typo, since "</span>
+    <span class="s2">"2-methyl-3-buten-2-ol is the hemiterpene alcohol produced as a biofuel and the "</span>
+    <span class="s2">"butyn alkynol is not. Table S1 (not mirrored) would settle it. The adjudication "</span>
+    <span class="s2">"is recorded on the identity row's input line "</span>
+    <span class="s2">"(compound_identity_inputs/vanacloig2022.txt)."</span>
+<span class="p">)</span>
 
 <span class="c1">#: The one unmirrored artifact that would close this dataset's recoverable gaps: the OUP</span>
 <span class="c1">#: supplement holding the per-compound IC30 molar values AND which compounds were</span>
@@ -403,6 +586,42 @@
     <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
     <span class="n">method</span><span class="o">=</span><span class="s2">"publisher supplementary table; academic.oup.com is not scriptable"</span><span class="p">,</span>
     <span class="n">page</span><span class="o">=</span><span class="s2">"Table S1"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: The protocol Vanacloig's chemical-genomic method defers to ("as previously described</span>
+<span class="c1">#: (Piotrowski et al. 2015) with modifications"), not mirrored: it would state how the</span>
+<span class="c1">#: pool was grown before inoculation.</span>
+<span class="n">PIOTROWSKI_2015</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"Piotrowski et al. 2015 (cited by Vanacloig-Pedros 2022 Methods for the "</span>
+    <span class="s2">"chemical genomic protocol)"</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">"not mirrored; the pre-inoculation culture of the pooled library"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: Zhang et al. 2019 (Front Microbiol 10:2596), the SynH3- recipe, not mirrored.</span>
+<span class="n">ZHANG_2019</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"Zhang et al. 2019, Front Microbiol 10:2596 (SynH3- recipe)"</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">"not mirrored; the amino acids and supplements SynH3- carries"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: SGD's locus history (merges and reannotations), not mirrored.</span>
+<span class="n">SGD_ORF_HISTORY</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"https://www.yeastgenome.org (locus history of the source ORF)"</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">"not mirrored; SGD locus-history notes record ORF merges and reannotations"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">PSEUDOCOUNT_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+    <span class="n">field</span><span class="o">=</span><span class="s2">"pseudocount"</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+    <span class="n">looked_in</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+        <span class="n">source_uri</span><span class="o">=</span><span class="n">PAPER_MD</span><span class="p">,</span>
+        <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+        <span class="n">sha256</span><span class="o">=</span><span class="n">PAPER_MD_SHA256</span><span class="p">,</span>
+        <span class="n">page</span><span class="o">=</span><span class="s2">"Methods, 'Chemical genomic data processing and functional analysis'"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the paper presents 'the log2 of the normalized read counts for "</span>
+    <span class="s2">"inhibitor/control ratio' and states no pseudocount; the loader adds 1 CPM "</span>
+    <span class="s2">"(CPM_PRIOR) to both sides, a loader choice, so a cell whose control mean is near "</span>
+    <span class="s2">"1 CPM has a pseudocount-dominated denominator and a large replicate SD"</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -423,15 +642,159 @@
         <span class="n">resolve_with</span><span class="o">=</span><span class="n">TABLE_S1</span><span class="p">,</span>
         <span class="n">note</span><span class="o">=</span><span class="n">VEHICLE_CONTROL</span><span class="o">.</span><span class="n">quote</span>
         <span class="o">+</span> <span class="s2">" Which compounds that covers is in Table S1, which is not mirrored, so the "</span>
-        <span class="s2">"vehicle of any one compound is unknown rather than absent."</span><span class="p">,</span>
+        <span class="s2">"vehicle of any one compound is unknown rather than absent. The vehicle's own "</span>
+        <span class="s2">"effect is served as the DMSO condition (dimethyl sulfoxide, 1% v/v)."</span><span class="p">,</span>
     <span class="p">)</span>
 
 
-<span class="c1">#: The constant 3DeltaAlpha background, deleted in EVERY library strain.</span>
-<span class="n">BACKGROUND_GENES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"YGL013C"</span><span class="p">,</span> <span class="s2">"YBL005W"</span><span class="p">,</span> <span class="s2">"YDR011W"</span><span class="p">})</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Strain background (#500): the SGA MATa progeny of Y13206 x the MATa kanMX array</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">QUERY_STRAIN</span> <span class="o">=</span> <span class="n">_piotrowski</span><span class="p">(</span>
+    <span class="s2">"Y13206"</span><span class="p">,</span>
+    <span class="s2">"The MATα pdr1Δ::natMX pdr3Δ::KI.URA3 snq2Δ::KI.LEU2 (y13206) query strain carried "</span>
+    <span class="s2">"the can1Δ::STEpr-SP_his5 and lypΔ SGA reporters."</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Online Methods, genome-wide drug-sensitive collection (paper.md line 204)"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the OCR writes K. lactis as 'KI.' and the reporters as 'STEpr-SP_his5' and "</span>
+    <span class="s2">"'lypΔ'; the allele names stored are the standard spellings pdr3Δ::KlURA3, "</span>
+    <span class="s2">"snq2Δ::KlLEU2, can1Δ::STE2pr-Sp_his5, lyp1Δ"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">MATA_PROGENY</span> <span class="o">=</span> <span class="n">_piotrowski</span><span class="p">(</span>
+    <span class="n">MatingType</span><span class="o">.</span><span class="n">a</span><span class="p">,</span>
+    <span class="s2">"The resulting spores were transferred to synthetic media lacking histidine and "</span>
+    <span class="s2">"containing canavanine and thialysine to select for the MATa meiotic progeny."</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Online Methods, genome-wide drug-sensitive collection (paper.md line 204)"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the screened strains are MATa haploid progeny; Vanacloig's 'MATα' "</span>
+    <span class="s2">"(paper.md line 54) describes the query strain"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">ARRAY_KANMX</span> <span class="o">=</span> <span class="n">_piotrowski</span><span class="p">(</span>
+    <span class="s2">"kanMX"</span><span class="p">,</span>
+    <span class="s2">"The MATα query strain was crossed to an ordered array of MATa xxxΔ::kanMX deletion "</span>
+    <span class="s2">"mutants"</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Online Methods, genome-wide drug-sensitive collection (paper.md line 204)"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the cassette of each screened deletion; Piotrowski names no kanMX version "</span>
+    <span class="s2">"and no array strain background"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">TRIPLE_SELECTION</span> <span class="o">=</span> <span class="n">_piotrowski</span><span class="p">(</span>
+    <span class="s2">"pdr1Δ pdr3Δ snq2Δ xxxΔ"</span><span class="p">,</span>
+    <span class="s2">"Finally, these cells were transferred to synthetic media lacking uracil and leucine "</span>
+    <span class="s2">"and containing G418 and NAT to select for the desired pdr1Δ pdr3Δ snq2Δ xxxΔ "</span>
+    <span class="s2">"mutants."</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Online Methods, genome-wide drug-sensitive collection (paper.md line 204)"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">Y13206_GENOTYPE</span> <span class="o">=</span> <span class="n">_ohnuki</span><span class="p">(</span>
+    <span class="s2">"Y13206"</span><span class="p">,</span>
+    <span class="s2">"The drug-hypersensitive yeast strain Y13206 (3Δ; MATα snq2Δ:: KlLEU2 pdr3Δ:: "</span>
+    <span class="s2">"KlURA3 pdr1Δ:: NATMX can1Δan11:: 2iSp_his5 lyp1Δ his3Δ1 leu2Δ0 ura3Δ0 met15Δ LYS2)"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the QUERY's full genotype; the OCR garbles the can1 token"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">Y8835_GENOTYPE</span> <span class="o">=</span> <span class="n">_ohnuki</span><span class="p">(</span>
+    <span class="s2">"Y8835"</span><span class="p">,</span>
+    <span class="s2">"its parent strain Y8835 (MATα ura3Δ0:: natMX4 can 1Δ:: STE2pr-Sp_his5 lyp1Δ "</span>
+    <span class="s2">"his3Δ1 leu2Δ0 met15Δ0 LYS2)"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the query's parent; it writes the can1 reporter legibly"</span><span class="p">,</span>
+<span class="p">)</span>
 
-<span class="c1">#: Compound column tokens that are NOT a treatment (the vehicle's own control column).</span>
-<span class="n">VEHICLE_CONTROL_TOKENS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"DMSO"</span><span class="p">})</span>
+<span class="n">LIBRARY_STRAIN</span> <span class="o">=</span> <span class="s2">"3DeltaAlpha SGA MATa progeny (Y13206 x MATa xxxΔ::kanMX array)"</span>
+<span class="n">_BY_AUXOTROPHY_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Ohnuki 2022 (mirrored) states this allele for the QUERY lineage only (Y13206 "</span>
+    <span class="s2">"'his3Δ1 leu2Δ0 ura3Δ0 met15Δ', parent Y8835 'ura3Δ0:: natMX4 ... met15Δ0'); a "</span>
+    <span class="s2">"haploid SGA segregant carries an unselected allele only when the array parent also "</span>
+    <span class="s2">"does, and no mirrored source states the array's genotype (the standard "</span>
+    <span class="s2">"BY4741-derived YKO string is Brachmann 1998)"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">library_background</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">StrainBackground</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The constant genome content of every screened strain beyond R64.</span>
+
+<span class="sd">    Sourced: MATa (selected), haploid, can1Δ::STE2pr-Sp_his5 and lyp1Δ (the SGA</span>
+<span class="sd">    reporters the query carried and the progeny were selected for), and the three</span>
+<span class="sd">    drug-sensitizing cassette deletions (query alleles, selected for at the last step).</span>
+<span class="sd">    Pending source review: the four BY auxotrophies, which only the query side states</span>
+<span class="sd">    and which disagree between Y13206 and its parent at ura3 and met15.</span>
+<span class="sd">    """</span>
+    <span class="n">reporter</span> <span class="o">=</span> <span class="p">[</span><span class="n">QUERY_STRAIN</span><span class="p">,</span> <span class="n">Y8835_GENOTYPE</span><span class="p">]</span>
+    <span class="n">sensitizer</span> <span class="o">=</span> <span class="p">[</span><span class="n">QUERY_STRAIN</span><span class="p">,</span> <span class="n">TRIPLE_SELECTION</span><span class="p">]</span>
+    <span class="n">alleles</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">standard_allele</span><span class="p">(</span><span class="s2">"can1Δ::STE2pr-Sp_his5"</span><span class="p">,</span> <span class="n">Zygosity</span><span class="o">.</span><span class="n">haploid</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="n">reporter</span><span class="p">),</span>
+        <span class="n">standard_allele</span><span class="p">(</span><span class="s2">"lyp1Δ"</span><span class="p">,</span> <span class="n">Zygosity</span><span class="o">.</span><span class="n">haploid</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="n">reporter</span><span class="p">),</span>
+        <span class="n">standard_allele</span><span class="p">(</span><span class="s2">"pdr1Δ::natMX"</span><span class="p">,</span> <span class="n">Zygosity</span><span class="o">.</span><span class="n">haploid</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="n">sensitizer</span><span class="p">),</span>
+        <span class="n">standard_allele</span><span class="p">(</span><span class="s2">"pdr3Δ::KlURA3"</span><span class="p">,</span> <span class="n">Zygosity</span><span class="o">.</span><span class="n">haploid</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="n">sensitizer</span><span class="p">),</span>
+        <span class="n">standard_allele</span><span class="p">(</span><span class="s2">"snq2Δ::KlLEU2"</span><span class="p">,</span> <span class="n">Zygosity</span><span class="o">.</span><span class="n">haploid</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="n">sensitizer</span><span class="p">),</span>
+        <span class="o">*</span><span class="p">(</span>
+            <span class="n">standard_allele</span><span class="p">(</span>
+                <span class="n">name</span><span class="p">,</span>
+                <span class="n">Zygosity</span><span class="o">.</span><span class="n">haploid</span><span class="p">,</span>
+                <span class="n">resolve_with</span><span class="o">=</span><span class="n">BRACHMANN_1998</span><span class="p">,</span>
+                <span class="n">note</span><span class="o">=</span><span class="n">_BY_AUXOTROPHY_NOTE</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"his3Δ1"</span><span class="p">,</span> <span class="s2">"leu2Δ0"</span><span class="p">,</span> <span class="s2">"ura3Δ0"</span><span class="p">,</span> <span class="s2">"met15Δ0"</span><span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="n">StrainBackground</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">LIBRARY_STRAIN</span><span class="p">,</span>
+        <span class="n">parents</span><span class="o">=</span><span class="p">[</span><span class="s2">"Y13206"</span><span class="p">,</span> <span class="s2">"MATa xxxΔ::kanMX deletion array"</span><span class="p">],</span>
+        <span class="n">construction</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"SGA: MATalpha query Y13206 crossed to the MATa xxxΔ::kanMX array; MATa "</span>
+            <span class="s2">"meiotic progeny selected on -His +canavanine +thialysine, then -Ura +NAT, "</span>
+            <span class="s2">"then -Ura -Leu +G418 +NAT (Piotrowski 2017 Online Methods)"</span>
+        <span class="p">),</span>
+        <span class="n">mating_type</span><span class="o">=</span><span class="n">MATA_PROGENY</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">ploidy</span><span class="o">=</span><span class="s2">"haploid"</span><span class="p">,</span>
+        <span class="n">alleles</span><span class="o">=</span><span class="n">alleles</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">MATA_PROGENY</span><span class="p">,</span> <span class="n">QUERY_STRAIN</span><span class="p">],</span>
+    <span class="p">)</span>
+
+
+<span class="c1">#: Loci whose allele the SGA selections fix in every library strain (the three</span>
+<span class="c1">#: sensitizing deletions and the two reporters). A library row screening one of them</span>
+<span class="c1">#: would put a kanMX deletion on a locus the background already replaced, so it is</span>
+<span class="c1">#: dropped (rule ``orf_is_a_selected_background_locus``).</span>
+<span class="n">SELECTED_BACKGROUND_LOCI</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span><span class="s2">"YGL013C"</span><span class="p">,</span> <span class="s2">"YBL005W"</span><span class="p">,</span> <span class="s2">"YDR011W"</span><span class="p">,</span> <span class="s2">"YEL063C"</span><span class="p">,</span> <span class="s2">"YNL268W"</span><span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1">#: The 34 Fig 1B conditions as matrix tokens (FIG_1B_CONDITIONS). Every other matrix</span>
+<span class="c1">#: token is a condition the paper never reported.</span>
+<span class="n">FIG_1B_TOKENS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"Benomyl"</span><span class="p">,</span>
+        <span class="s2">"Acetamide"</span><span class="p">,</span>
+        <span class="s2">"4OHBenzoicAcid"</span><span class="p">,</span>
+        <span class="s2">"5HMF"</span><span class="p">,</span>
+        <span class="s2">"BenzoicAcid"</span><span class="p">,</span>
+        <span class="s2">"SinapicAcid"</span><span class="p">,</span>
+        <span class="s2">"22Dipyridyl"</span><span class="p">,</span>
+        <span class="s2">"CoumaricAcid"</span><span class="p">,</span>
+        <span class="s2">"BMIMCl"</span><span class="p">,</span>
+        <span class="s2">"4OHBenzaldehyde"</span><span class="p">,</span>
+        <span class="s2">"DMSO"</span><span class="p">,</span>
+        <span class="s2">"Vanillin"</span><span class="p">,</span>
+        <span class="s2">"IBA"</span><span class="p">,</span>
+        <span class="s2">"Furfural"</span><span class="p">,</span>
+        <span class="s2">"CinnamicAcid"</span><span class="p">,</span>
+        <span class="s2">"VanillicAcid"</span><span class="p">,</span>
+        <span class="s2">"4OHAcetophenone"</span><span class="p">,</span>
+        <span class="s2">"MMS"</span><span class="p">,</span>
+        <span class="s2">"Syringaldehyde"</span><span class="p">,</span>
+        <span class="s2">"Methylglyoxal"</span><span class="p">,</span>
+        <span class="s2">"AzelaicAcid"</span><span class="p">,</span>
+        <span class="s2">"CoumaroylAmide"</span><span class="p">,</span>
+        <span class="s2">"FeruloylAmide"</span><span class="p">,</span>
+        <span class="s2">"SyringicAcid"</span><span class="p">,</span>
+        <span class="s2">"MBO"</span><span class="p">,</span>
+        <span class="s2">"Acetovanillone"</span><span class="p">,</span>
+        <span class="s2">"EMIMCl"</span><span class="p">,</span>
+        <span class="s2">"FerulicAcid"</span><span class="p">,</span>
+        <span class="s2">"Acetosyringone"</span><span class="p">,</span>
+        <span class="s2">"NAO"</span><span class="p">,</span>
+        <span class="s2">"26Dimethylpyrazine"</span><span class="p">,</span>
+        <span class="s2">"GVL"</span><span class="p">,</span>
+        <span class="s2">"CV"</span><span class="p">,</span>
+        <span class="s2">"EtOH"</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
 
 <span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
     <span class="sa">r</span><span class="s2">"^(Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?|Q\d</span><span class="si">{4}</span><span class="s2">|YNC[A-Q]\d</span><span class="si">{4}</span><span class="s2">[WC])$"</span>
@@ -439,20 +802,117 @@
 <span class="n">_SAMPLE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^(?P&lt;compound&gt;.+)_CG(?P&lt;batch&gt;\d+)_rep(?P&lt;rep&gt;\d+)$"</span><span class="p">)</span>
 <span class="n">_CONTROL_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Control\d+_CG(?P&lt;batch&gt;\d+)$"</span><span class="p">)</span>
 
-<span class="c1">#: The one compound the paper analyzed UNPAIRED, so it keeps the pooled control.</span>
+<span class="c1">#: The one served condition the paper analyzed UNPAIRED, so it keeps the pooled control.</span>
 <span class="n">UNPAIRED_COMPOUND_TOKENS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"MMS"</span><span class="p">})</span>
 
+<span class="c1">#: The vehicle served as its own condition (1% v/v, DMSO_DOSE).</span>
+<span class="n">DMSO_TOKEN</span> <span class="o">=</span> <span class="s2">"DMSO"</span>
+
 <span class="n">_PAIRED_UNITS</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"log2((CPM of the inhibitor replicate + 1) / (mean CPM of the SAME CG batch's "</span>
-    <span class="s2">"inhibitor-free control columns + 1)), mean of 3 biological replicates; recomputed "</span>
-    <span class="s2">"from the GEO GSE186866 raw up-tag counts, NOT the paper's edgeR logFC"</span>
+    <span class="s2">"log2((TMM-normalized CPM of the inhibitor replicate + 1) / (mean TMM-normalized "</span>
+    <span class="s2">"CPM of the SAME CG batch's inhibitor-free control columns + 1)), mean of 3 "</span>
+    <span class="s2">"biological replicates; TMM factors (edgeR 3.26.8 calcNormFactors defaults) "</span>
+    <span class="s2">"computed per condition over its replicates and paired controls; the 1 CPM "</span>
+    <span class="s2">"pseudocount is a loader choice the paper does not state; recomputed from the GEO "</span>
+    <span class="s2">"GSE186866 raw up-tag counts, NOT the paper's edgeR glmQLFit logFC"</span>
 <span class="p">)</span>
 <span class="n">_POOLED_UNITS</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"log2((CPM of the inhibitor replicate + 1) / (mean CPM of all 16 inhibitor-free "</span>
-    <span class="s2">"control columns + 1)), mean of 3 biological replicates; pooled rather than "</span>
-    <span class="s2">"batch-matched because the paper analyzed this compound unpaired; recomputed from "</span>
-    <span class="s2">"the GEO GSE186866 raw up-tag counts, NOT the paper's edgeR logFC"</span>
+    <span class="s2">"log2((TMM-normalized CPM of the inhibitor replicate + 1) / (mean TMM-normalized "</span>
+    <span class="s2">"CPM of all 16 inhibitor-free control columns + 1)), mean of 3 biological "</span>
+    <span class="s2">"replicates; pooled rather than batch-matched because the paper analyzed this "</span>
+    <span class="s2">"compound unpaired; TMM factors (edgeR 3.26.8 calcNormFactors defaults) computed "</span>
+    <span class="s2">"over its replicates and the 16 controls; the 1 CPM pseudocount is a loader choice "</span>
+    <span class="s2">"the paper does not state; recomputed from the GEO GSE186866 raw up-tag counts, NOT "</span>
+    <span class="s2">"the paper's edgeR glmQLFit logFC"</span>
 <span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># TMM normalization (edgeR 3.26.8 calcNormFactors, method="TMM", defaults)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_tmm_factor</span><span class="p">(</span>
+    <span class="n">obs</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">ref</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">libsize_obs</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">libsize_ref</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Port of edgeR's ``.calcFactorTMM``: one sample against the reference sample."""</span>
+    <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
+        <span class="n">obs_frac</span> <span class="o">=</span> <span class="n">obs</span> <span class="o">/</span> <span class="n">libsize_obs</span>
+        <span class="n">ref_frac</span> <span class="o">=</span> <span class="n">ref</span> <span class="o">/</span> <span class="n">libsize_ref</span>
+        <span class="n">log_ratio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">obs_frac</span> <span class="o">/</span> <span class="n">ref_frac</span><span class="p">)</span>
+        <span class="n">abs_expr</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">obs_frac</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">ref_frac</span><span class="p">))</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">variance</span> <span class="o">=</span> <span class="p">(</span><span class="n">libsize_obs</span> <span class="o">-</span> <span class="n">obs</span><span class="p">)</span> <span class="o">/</span> <span class="n">libsize_obs</span> <span class="o">/</span> <span class="n">obs</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">libsize_ref</span> <span class="o">-</span> <span class="n">ref</span>
+        <span class="p">)</span> <span class="o">/</span> <span class="n">libsize_ref</span> <span class="o">/</span> <span class="n">ref</span>
+    <span class="n">finite</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">log_ratio</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">abs_expr</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">abs_expr</span> <span class="o">&gt;</span> <span class="n">TMM_A_CUTOFF</span><span class="p">)</span>
+    <span class="n">log_ratio</span><span class="p">,</span> <span class="n">abs_expr</span><span class="p">,</span> <span class="n">variance</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">log_ratio</span><span class="p">[</span><span class="n">finite</span><span class="p">],</span>
+        <span class="n">abs_expr</span><span class="p">[</span><span class="n">finite</span><span class="p">],</span>
+        <span class="n">variance</span><span class="p">[</span><span class="n">finite</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">log_ratio</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">1.0</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">log_ratio</span><span class="p">)</span>
+    <span class="n">lo_l</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">TMM_LOGRATIO_TRIM</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">hi_l</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">lo_l</span>
+    <span class="n">lo_s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">TMM_SUM_TRIM</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">hi_s</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">lo_s</span>
+    <span class="n">rank_l</span> <span class="o">=</span> <span class="n">rankdata</span><span class="p">(</span><span class="n">log_ratio</span><span class="p">)</span>
+    <span class="n">rank_s</span> <span class="o">=</span> <span class="n">rankdata</span><span class="p">(</span><span class="n">abs_expr</span><span class="p">)</span>
+    <span class="n">keep</span> <span class="o">=</span> <span class="p">(</span><span class="n">rank_l</span> <span class="o">&gt;=</span> <span class="n">lo_l</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">rank_l</span> <span class="o">&lt;=</span> <span class="n">hi_l</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">rank_s</span> <span class="o">&gt;=</span> <span class="n">lo_s</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">rank_s</span> <span class="o">&lt;=</span> <span class="n">hi_s</span><span class="p">)</span>
+    <span class="n">weighted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">log_ratio</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span> <span class="o">/</span> <span class="n">variance</span><span class="p">[</span><span class="n">keep</span><span class="p">])</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span>
+        <span class="mf">1.0</span> <span class="o">/</span> <span class="n">variance</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">**</span> <span class="p">(</span><span class="mf">0.0</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">weighted</span><span class="p">)</span> <span class="k">else</span> <span class="n">weighted</span><span class="p">))</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TmmFactors</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""TMM scaling factors for one condition's sample set, with the reference used."""</span>
+
+    <span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">library_sizes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="n">factors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="n">reference_column</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">tmm_factors</span><span class="p">(</span>
+    <span class="n">counts</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">library_sizes</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">columns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TmmFactors</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Port of edgeR 3.26.8 ``calcNormFactors(method="TMM")`` with its default arguments.</span>
+
+<span class="sd">    ``counts`` is genes x samples with no missing value; all-zero rows are removed as</span>
+<span class="sd">    edgeR does. The reference sample is the one whose 75th-percentile count fraction is</span>
+<span class="sd">    closest to the mean of those fractions (``which.min``, so the first on a tie), or</span>
+<span class="sd">    the largest ``sum(sqrt(counts))`` when the median fraction is below 1e-20. Each</span>
+<span class="sd">    sample's factor is the precision-weighted mean log2 ratio against the reference</span>
+<span class="sd">    over the genes surviving a 30% log-ratio trim and a 5% abundance trim; the factors</span>
+<span class="sd">    are then scaled to a geometric mean of 1. Effective library size = library size x</span>
+<span class="sd">    factor.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"TMM needs complete counts (edgeR: 'NA counts not permitted')"</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">counts</span><span class="p">[(</span><span class="n">counts</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
+    <span class="n">upper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">TMM_REFERENCE_QUANTILE</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">library_sizes</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">upper</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-20</span><span class="p">:</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">upper</span> <span class="o">-</span> <span class="n">upper</span><span class="o">.</span><span class="n">mean</span><span class="p">())))</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">_tmm_factor</span><span class="p">(</span>
+                <span class="n">x</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span>
+                <span class="n">x</span><span class="p">[:,</span> <span class="n">reference</span><span class="p">],</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">library_sizes</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">library_sizes</span><span class="p">[</span><span class="n">reference</span><span class="p">]),</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">factors</span> <span class="o">=</span> <span class="n">raw</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">raw</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">TmmFactors</span><span class="p">(</span>
+        <span class="n">columns</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">columns</span><span class="p">),</span>
+        <span class="n">library_sizes</span><span class="o">=</span><span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">library_sizes</span><span class="p">],</span>
+        <span class="n">factors</span><span class="o">=</span><span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">factors</span><span class="p">],</span>
+        <span class="n">reference_column</span><span class="o">=</span><span class="n">columns</span><span class="p">[</span><span class="n">reference</span><span class="p">],</span>
+    <span class="p">)</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -570,6 +1030,20 @@
     <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">LegacyOrfStrain</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A dropped library strain built against an ORF the current genome merged away.</span>
+
+<span class="sd">    ``constructed_orf`` is the typed record of what the strain physically deleted; its</span>
+<span class="sd">    relation to the current gene and its deleted interval are gaps naming SGD's locus</span>
+<span class="sd">    history. Kept in the ledger so the drop is a typed record, not a silent loss.</span>
+<span class="sd">    """</span>
+
+    <span class="n">source_orf</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">current_orf</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">constructed_orf</span><span class="p">:</span> <span class="n">ConstructedOrf</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">DropLog</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Every retention rule applied to a build, in the order they were applied."""</span>
 
@@ -578,6 +1052,7 @@
     <span class="n">kept_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">dropped_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DropRule</span><span class="p">]</span>
+    <span class="n">legacy_orf_strains</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">LegacyOrfStrain</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">LibraryRows</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -589,6 +1064,7 @@
     <span class="n">barcode</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">dropped_retired</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">dropped_legacy_duplicate</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">legacy_target</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_canonical_common_names</span><span class="p">(</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
@@ -617,7 +1093,8 @@
 <span class="sd">    2005-era ORF, or a feature that is not a gene) is dropped: it cannot be keyed to a</span>
 <span class="sd">    gene entity. A row whose ORF is the LEGACY spelling of an ORF the same library also</span>
 <span class="sd">    carries under its current name is dropped too, because remapping it would merge two</span>
-<span class="sd">    physically distinct barcoded strains into one record key.</span>
+<span class="sd">    physically distinct barcoded strains into one record key; ``legacy_target`` keeps</span>
+<span class="sd">    the current ORF each legacy spelling resolves to.</span>
 <span class="sd">    """</span>
     <span class="n">gene_set</span> <span class="o">=</span> <span class="p">{</span><span class="n">gene</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">}</span>
     <span class="n">resolutions</span> <span class="o">=</span> <span class="p">{</span><span class="n">orf</span><span class="p">:</span> <span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span> <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">orfs</span><span class="o">.</span><span class="n">unique</span><span class="p">()}</span>
@@ -661,6 +1138,36 @@
         <span class="n">barcode</span><span class="o">=</span><span class="n">kept_barcodes</span><span class="p">,</span>
         <span class="n">dropped_retired</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">retired</span><span class="p">),</span>
         <span class="n">dropped_legacy_duplicate</span><span class="o">=</span><span class="n">legacy</span><span class="p">,</span>
+        <span class="n">legacy_target</span><span class="o">=</span><span class="p">{</span><span class="n">orf</span><span class="p">:</span> <span class="n">target</span><span class="p">[</span><span class="n">orf</span><span class="p">]</span> <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">legacy</span><span class="p">},</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">legacy_orf_strain</span><span class="p">(</span>
+    <span class="n">source_orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">current_orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LegacyOrfStrain</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The typed ledger entry for a dropped legacy-spelling strain."""</span>
+    <span class="k">return</span> <span class="n">LegacyOrfStrain</span><span class="p">(</span>
+        <span class="n">source_orf</span><span class="o">=</span><span class="n">source_orf</span><span class="p">,</span>
+        <span class="n">current_orf</span><span class="o">=</span><span class="n">current_orf</span><span class="p">,</span>
+        <span class="n">barcode</span><span class="o">=</span><span class="n">barcode</span><span class="p">,</span>
+        <span class="n">constructed_orf</span><span class="o">=</span><span class="n">ConstructedOrf</span><span class="p">(</span>
+            <span class="n">source_systematic_name</span><span class="o">=</span><span class="n">source_orf</span><span class="p">,</span>
+            <span class="n">relation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">deleted_span</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">pending_source_review</span><span class="p">(</span>
+                    <span class="s2">"relation"</span><span class="p">,</span>
+                    <span class="n">SGD_ORF_HISTORY</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">source_orf</span><span class="si">}</span><span class="s2"> resolves to </span><span class="si">{</span><span class="n">current_orf</span><span class="si">}</span><span class="s2"> in R64-4-1; whether it "</span>
+                    <span class="s2">"was merged into it or reannotated is SGD locus history"</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">pending_source_review</span><span class="p">(</span>
+                    <span class="s2">"deleted_span"</span><span class="p">,</span>
+                    <span class="n">SGD_ORF_HISTORY</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">"the interval the </span><span class="si">{</span><span class="n">source_orf</span><span class="si">}</span><span class="s2"> cassette replaced"</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">],</span>
+        <span class="p">),</span>
     <span class="p">)</span>
 
 
@@ -684,12 +1191,12 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Experiment schema class produced by this dataset."""</span>
-        <span class="k">return</span> <span class="n">EnvironmentResponseExperiment</span>
+        <span class="k">return</span> <span class="n">StrainEnvironmentResponseExperiment</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReference</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Experiment-reference schema class produced by this dataset."""</span>
-        <span class="k">return</span> <span class="n">EnvironmentResponseExperimentReference</span>
+        <span class="k">return</span> <span class="n">StrainEnvironmentResponseExperimentReference</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -730,23 +1237,58 @@
 <span class="w">        </span><span class="sd">"""The dose as the paper SET it: an IC30 target, or a published fixed dose."""</span>
         <span class="k">if</span> <span class="n">compound</span> <span class="o">==</span> <span class="s2">"Benomyl"</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span>
-                <span class="n">value</span><span class="o">=</span><span class="n">BENOMYL_MMS_DOSE</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="s2">"benomyl_ug_per_ml"</span><span class="p">],</span>
-                <span class="n">unit</span><span class="o">=</span><span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">ug_per_ml</span><span class="p">,</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">BENOMYL_MOLAR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">unit</span><span class="o">=</span><span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">micromolar</span><span class="p">,</span>
                 <span class="n">basis</span><span class="o">=</span><span class="n">DoseBasis</span><span class="o">.</span><span class="n">fixed</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">compound</span> <span class="o">==</span> <span class="s2">"MMS"</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span><span class="n">basis</span><span class="o">=</span><span class="n">DoseBasis</span><span class="o">.</span><span class="n">fixed</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">compound</span> <span class="o">==</span> <span class="n">DMSO_TOKEN</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">DMSO_DOSE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">unit</span><span class="o">=</span><span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">percent_v_v</span><span class="p">,</span>
+                <span class="n">basis</span><span class="o">=</span><span class="n">DoseBasis</span><span class="o">.</span><span class="n">fixed</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span><span class="n">basis</span><span class="o">=</span><span class="n">IC30_BASIS</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_base_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">perturbations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Anaerobic SynBase at pH 5.0 carrying ``perturbations`` on top."""</span>
-        <span class="k">return</span> <span class="n">Environment</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_culture_format</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CultureFormat</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Static 1.5 mL 24-well cultures inoculated at OD600 0.1, read at fixed times."""</span>
+        <span class="k">return</span> <span class="n">CultureFormat</span><span class="p">(</span>
+            <span class="n">vessel</span><span class="o">=</span><span class="n">CULTURE_VESSEL</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="s2">"vessel"</span><span class="p">],</span>
+            <span class="n">working_volume_ul</span><span class="o">=</span><span class="n">CULTURE_VESSEL</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="s2">"working_volume_ul"</span><span class="p">],</span>
+            <span class="n">shaking_rpm</span><span class="o">=</span><span class="n">STATIC_CULTURE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">inoculum_od600</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+            <span class="n">endpoint</span><span class="o">=</span><span class="n">EndpointRule</span><span class="o">.</span><span class="n">fixed_duration</span><span class="p">,</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">CULTURE_VESSEL</span><span class="p">,</span> <span class="n">STATIC_CULTURE</span><span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_base_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">perturbations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">CultureEnvironment</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Anaerobic static SynBase at pH 5.0 carrying ``perturbations`` on top."""</span>
+        <span class="k">return</span> <span class="n">CultureEnvironment</span><span class="p">(</span>
             <span class="n">media</span><span class="o">=</span><span class="n">SYNBASE</span><span class="p">,</span>
             <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">TEMPERATURE_C</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
             <span class="n">perturbations</span><span class="o">=</span><span class="n">perturbations</span><span class="p">,</span>
             <span class="n">aerobicity</span><span class="o">=</span><span class="n">AEROBICITY</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">duration_hours</span><span class="o">=</span><span class="n">DURATION_HOURS</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">duration_generations</span><span class="o">=</span><span class="n">DURATION_GENERATIONS</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">culture_format</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_culture_format</span><span class="p">(),</span>
+            <span class="n">pre_culture</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">auxotroph_supplements</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">pending_source_review</span><span class="p">(</span>
+                    <span class="s2">"pre_culture"</span><span class="p">,</span>
+                    <span class="n">PIOTROWSKI_2015</span><span class="p">,</span>
+                    <span class="s2">"Vanacloig: 'Chemical genomic experiments were performed as "</span>
+                    <span class="s2">"previously described (Piotrowski et al. 2015) with modifications'; "</span>
+                    <span class="s2">"how the pool was grown before inoculation is not stated"</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">pending_source_review</span><span class="p">(</span>
+                    <span class="s2">"auxotroph_supplements"</span><span class="p">,</span>
+                    <span class="n">ZHANG_2019</span><span class="p">,</span>
+                    <span class="s2">"the paper names no supplement for the library's auxotrophies; "</span>
+                    <span class="s2">"which amino acids SynH3- carries is in Zhang 2019"</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">],</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_ph</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">:</span>
@@ -761,31 +1303,41 @@
             <span class="n">agent</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="n">PH_AGENT</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compound</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The treated environment: SynBase + pH 5.0 + the inhibitor at its dose."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_environment</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">SmallMoleculePerturbation</span><span class="p">(</span>
-                    <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="n">compound</span><span class="p">),</span>
-                    <span class="n">concentration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_concentration</span><span class="p">(</span><span class="n">compound</span><span class="p">),</span>
-                    <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">_solvent_gap</span><span class="p">()],</span>
-                <span class="p">),</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_ph</span><span class="p">(),</span>
-            <span class="p">]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compound</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compound</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SmallMoleculePerturbation</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The dosed condition: an inhibitor with a typed solvent gap, or DMSO itself."""</span>
+        <span class="k">if</span> <span class="n">compound</span> <span class="o">==</span> <span class="n">DMSO_TOKEN</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">SmallMoleculePerturbation</span><span class="p">(</span>
+                <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="n">compound</span><span class="p">),</span>
+                <span class="n">concentration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_concentration</span><span class="p">(</span><span class="n">compound</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">SmallMoleculePerturbation</span><span class="p">(</span>
+            <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="n">compound</span><span class="p">),</span>
+            <span class="n">concentration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_concentration</span><span class="p">(</span><span class="n">compound</span><span class="p">),</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">_solvent_gap</span><span class="p">()],</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compound</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compound</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CultureEnvironment</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The treated environment: SynBase + pH 5.0 + the condition at its dose."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_environment</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_compound</span><span class="p">(</span><span class="n">compound</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ph</span><span class="p">()])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_genome_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StrainReferenceGenome</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The library's typed SGA-progeny background (constant across records)."""</span>
+        <span class="k">return</span> <span class="n">StrainReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+            <span class="n">strain</span><span class="o">=</span><span class="n">LIBRARY_STRAIN</span><span class="p">,</span>
+            <span class="n">ploidy</span><span class="o">=</span><span class="s2">"haploid"</span><span class="p">,</span>
+            <span class="n">background</span><span class="o">=</span><span class="n">library_background</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compound</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The inhibitor-FREE control the log2 ratio is taken against.</span>
 
 <span class="sd">        The reference environment is the one the denominator was measured in: SynBase at</span>
-<span class="sd">        pH 5.0 with no inhibitor. Storing the treated environment here (the previous</span>
-<span class="sd">        build) made the control for a compound contain that very compound.</span>
+<span class="sd">        pH 5.0 with no inhibitor, grown in the same culture format.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">(</span>
+        <span class="k">return</span> <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-            <span class="n">genome_reference</span><span class="o">=</span><span class="n">ReferenceGenome</span><span class="p">(</span>
-                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="s2">"S288C"</span>
-            <span class="p">),</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_genome_reference</span><span class="p">(),</span>
             <span class="n">environment_reference</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_environment</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_ph</span><span class="p">()]),</span>
             <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
                 <span class="n">measurement_type</span><span class="o">=</span><span class="n">READOUT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -815,7 +1367,7 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_genotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">systematic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">common</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Genotype</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The screened deletion (with its uptag barcode) plus the constant background."""</span>
+<span class="w">        </span><span class="sd">"""The ONE screened deletion; the constant background is on the reference."""</span>
         <span class="k">return</span> <span class="n">Genotype</span><span class="p">(</span>
             <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">BarcodedKanMxDeletionPerturbation</span><span class="p">(</span>
@@ -823,20 +1375,8 @@
                     <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
                     <span class="n">barcode</span><span class="o">=</span><span class="n">barcode</span><span class="p">,</span>
                     <span class="n">collection</span><span class="o">=</span><span class="n">LIBRARY_COLLECTION</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-                <span class="p">),</span>
-                <span class="n">NatMxDeletionPerturbation</span><span class="p">(</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"YGL013C"</span><span class="p">,</span> <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"PDR1"</span>
-                <span class="p">),</span>
-                <span class="n">MarkerDeletionPerturbation</span><span class="p">(</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"YBL005W"</span><span class="p">,</span>
-                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"PDR3"</span><span class="p">,</span>
-                    <span class="n">marker</span><span class="o">=</span><span class="s2">"KlURA3"</span><span class="p">,</span>
-                <span class="p">),</span>
-                <span class="n">MarkerDeletionPerturbation</span><span class="p">(</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"YDR011W"</span><span class="p">,</span>
-                    <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="s2">"SNQ2"</span><span class="p">,</span>
-                    <span class="n">marker</span><span class="o">=</span><span class="s2">"KlLEU2"</span><span class="p">,</span>
-                <span class="p">),</span>
+                    <span class="n">cassette</span><span class="o">=</span><span class="n">ARRAY_KANMX</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="p">)</span>
             <span class="p">]</span>
         <span class="p">)</span>
 
@@ -845,7 +1385,7 @@
 <a class="viewcode-back" href="../../../../generated/torchcell.datasets.scerevisiae.vanacloig2022.EnvChemgenVanacloig2022Dataset.html#torchcell.datasets.scerevisiae.vanacloig2022.EnvChemgenVanacloig2022Dataset.process">[docs]</a>
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Recompute per-(gene, compound) log2 responses from raw counts; write LMDB."""</span>
+<span class="w">        </span><span class="sd">"""Recompute per-(gene, condition) log2 responses from raw counts; write LMDB."""</span>
         <span class="n">verify_raw_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">DATA_FILENAME</span><span class="p">:</span> <span class="n">DATA_SHA256</span><span class="p">})</span>
         <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_matrix</span><span class="p">()</span>
         <span class="n">sample_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"std_name"</span><span class="p">)]</span>
@@ -868,14 +1408,15 @@
         <span class="n">rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DropRule</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="c1"># --- compound-level retention ----------------------------------------- #</span>
-        <span class="n">vehicle</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">compound_cols</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">VEHICLE_CONTROL_TOKENS</span><span class="p">)</span>
+        <span class="n">unreported</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">compound_cols</span><span class="p">)</span> <span class="o">-</span> <span class="n">FIG_1B_TOKENS</span><span class="p">)</span>
         <span class="n">unidentified</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
             <span class="n">token</span>
-            <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">compound_cols</span>
-            <span class="k">if</span> <span class="n">token</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VEHICLE_CONTROL_TOKENS</span>
-            <span class="ow">and</span> <span class="ow">not</span> <span class="n">resolve_compound_identity</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">token</span><span class="p">)</span><span class="o">.</span><span class="n">identified</span>
+            <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">compound_cols</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">FIG_1B_TOKENS</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">resolve_compound_identity</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">token</span><span class="p">)</span><span class="o">.</span><span class="n">identified</span>
         <span class="p">)</span>
-        <span class="n">kept_compounds</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">compound_cols</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">vehicle</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">unidentified</span><span class="p">))</span>
+        <span class="n">kept_compounds</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="nb">set</span><span class="p">(</span><span class="n">compound_cols</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">unreported</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">unidentified</span><span class="p">)</span>
+        <span class="p">)</span>
 
         <span class="c1"># --- library-row retention --------------------------------------------- #</span>
         <span class="n">split</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -883,11 +1424,11 @@
         <span class="n">barcodes</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
         <span class="n">is_orf</span> <span class="o">=</span> <span class="n">orfs</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">gene</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gene</span><span class="p">)))</span>
         <span class="n">has_counts</span> <span class="o">=</span> <span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="n">sample_cols</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">not_background</span> <span class="o">=</span> <span class="o">~</span><span class="n">orfs</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">BACKGROUND_GENES</span><span class="p">)</span>
+        <span class="n">not_background</span> <span class="o">=</span> <span class="o">~</span><span class="n">orfs</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">SELECTED_BACKGROUND_LOCI</span><span class="p">)</span>
         <span class="n">prefilter</span> <span class="o">=</span> <span class="n">is_orf</span> <span class="o">&amp;</span> <span class="n">has_counts</span> <span class="o">&amp;</span> <span class="n">not_background</span>
         <span class="n">n_non_orf</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">is_orf</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
         <span class="n">n_all_nan</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">is_orf</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">has_counts</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-        <span class="n">n_background</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">is_orf</span> <span class="o">&amp;</span> <span class="n">has_counts</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">not_background</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="n">background_rows</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">orfs</span><span class="p">[</span><span class="n">is_orf</span> <span class="o">&amp;</span> <span class="n">has_counts</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">not_background</span><span class="p">])</span>
 
         <span class="n">genome</span> <span class="o">=</span> <span class="n">default_genome</span><span class="p">()</span>
         <span class="n">library</span> <span class="o">=</span> <span class="n">resolve_library_rows</span><span class="p">(</span>
@@ -900,18 +1441,25 @@
         <span class="n">keep</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">row_keep</span><span class="o">.</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">row_keep</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
         <span class="n">n_rows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">keep</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
         <span class="n">n_kept_compounds</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kept_compounds</span><span class="p">)</span>
+        <span class="n">prefiltered_barcode</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span><span class="n">orfs</span><span class="p">[</span><span class="n">prefilter</span><span class="p">],</span> <span class="n">barcodes</span><span class="p">[</span><span class="n">prefilter</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)</span>
 
         <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">DropRule</span><span class="p">(</span>
-                <span class="n">rule</span><span class="o">=</span><span class="s2">"vehicle_control_served_as_a_treatment"</span><span class="p">,</span>
+                <span class="n">rule</span><span class="o">=</span><span class="s2">"compound_not_reported_by_the_paper"</span><span class="p">,</span>
                 <span class="n">scope</span><span class="o">=</span><span class="s2">"compound"</span><span class="p">,</span>
                 <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">"the DMSO column is the vehicle the water-insoluble compounds were "</span>
-                    <span class="s2">"delivered in and its own inhibitor-free control, not a treatment: "</span>
-                    <span class="o">+</span> <span class="n">VEHICLE_CONTROL</span><span class="o">.</span><span class="n">quote</span>
+                    <span class="s2">"the matrix token is not one of the 34 conditions Fig 1B lists ("</span>
+                    <span class="o">+</span> <span class="n">FIG_1B_CONDITIONS</span><span class="o">.</span><span class="n">quote</span>
+                    <span class="o">+</span> <span class="s2">" Bar labels read from "</span>
+                    <span class="o">+</span> <span class="n">FIG_1B_IMAGE</span>
+                    <span class="o">+</span> <span class="s2">", sha256 "</span>
+                    <span class="o">+</span> <span class="n">FIG_1B_IMAGE_SHA256</span>
+                    <span class="o">+</span> <span class="s2">"); the paper never reports these conditions or says why"</span>
                 <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">vehicle</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span>
-                <span class="n">items</span><span class="o">=</span><span class="n">vehicle</span><span class="p">,</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">unreported</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span>
+                <span class="n">items</span><span class="o">=</span><span class="n">unreported</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
         <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -933,11 +1481,24 @@
                 <span class="n">scope</span><span class="o">=</span><span class="s2">"library_row"</span><span class="p">,</span>
                 <span class="n">description</span><span class="o">=</span><span class="p">(</span>
                     <span class="s2">"the gene column is not '&lt;systematic ORF&gt;_&lt;barcode&gt;', or every count "</span>
-                    <span class="s2">"column is missing (a QC-dropped barcode), or the ORF is one of the "</span>
-                    <span class="s2">"three constant 3DeltaAlpha background deletions"</span>
+                    <span class="s2">"column is missing (a QC-dropped barcode)"</span>
                 <span class="p">),</span>
-                <span class="n">n_records</span><span class="o">=</span><span class="p">(</span><span class="n">n_non_orf</span> <span class="o">+</span> <span class="n">n_all_nan</span> <span class="o">+</span> <span class="n">n_background</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_kept_compounds</span><span class="p">,</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="p">(</span><span class="n">n_non_orf</span> <span class="o">+</span> <span class="n">n_all_nan</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_kept_compounds</span><span class="p">,</span>
                 <span class="n">items</span><span class="o">=</span><span class="p">[],</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">DropRule</span><span class="p">(</span>
+                <span class="n">rule</span><span class="o">=</span><span class="s2">"orf_is_a_selected_background_locus"</span><span class="p">,</span>
+                <span class="n">scope</span><span class="o">=</span><span class="s2">"library_row"</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">"the screened ORF is a locus whose allele the SGA selections fix in "</span>
+                    <span class="s2">"every library strain (pdr1Δ::natMX, pdr3Δ::KlURA3, snq2Δ::KlLEU2, "</span>
+                    <span class="s2">"can1Δ::STE2pr-Sp_his5, lyp1Δ; Piotrowski 2017), so a kanMX "</span>
+                    <span class="s2">"deletion of it contradicts the strain's own background"</span>
+                <span class="p">),</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">background_rows</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_kept_compounds</span><span class="p">,</span>
+                <span class="n">items</span><span class="o">=</span><span class="n">background_rows</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
         <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -960,23 +1521,28 @@
                 <span class="n">description</span><span class="o">=</span><span class="p">(</span>
                     <span class="s2">"the ORF resolves to an ORF the SAME library also carries under its "</span>
                     <span class="s2">"current name; remapping would merge two physically distinct "</span>
-                    <span class="s2">"barcoded strains into one record key, so the legacy row is dropped"</span>
+                    <span class="s2">"barcoded strains into one record key, so the legacy row is dropped "</span>
+                    <span class="s2">"and recorded as a typed ConstructedOrf in legacy_orf_strains"</span>
                 <span class="p">),</span>
                 <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">dropped_legacy_duplicate</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_kept_compounds</span><span class="p">,</span>
                 <span class="n">items</span><span class="o">=</span><span class="n">library</span><span class="o">.</span><span class="n">dropped_legacy_duplicate</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
+        <span class="n">legacy_strains</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">legacy_orf_strain</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">library</span><span class="o">.</span><span class="n">legacy_target</span><span class="p">[</span><span class="n">orf</span><span class="p">],</span> <span class="n">prefiltered_barcode</span><span class="p">[</span><span class="n">orf</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">library</span><span class="o">.</span><span class="n">dropped_legacy_duplicate</span>
+        <span class="p">]</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Vanacloig: </span><span class="si">%d</span><span class="s2"> compounds kept (</span><span class="si">%d</span><span class="s2"> vehicle, </span><span class="si">%d</span><span class="s2"> unidentified dropped); "</span>
-            <span class="s2">"</span><span class="si">%d</span><span class="s2"> library rows kept (</span><span class="si">%d</span><span class="s2"> non-ORF, </span><span class="si">%d</span><span class="s2"> all-NaN, </span><span class="si">%d</span><span class="s2"> background, </span><span class="si">%d</span><span class="s2"> retired, "</span>
-            <span class="s2">"</span><span class="si">%d</span><span class="s2"> legacy duplicates dropped)"</span><span class="p">,</span>
+            <span class="s2">"Vanacloig: </span><span class="si">%d</span><span class="s2"> conditions kept (</span><span class="si">%d</span><span class="s2"> unreported, </span><span class="si">%d</span><span class="s2"> unidentified dropped); "</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> library rows kept (</span><span class="si">%d</span><span class="s2"> non-ORF, </span><span class="si">%d</span><span class="s2"> all-NaN, </span><span class="si">%d</span><span class="s2"> background loci, </span><span class="si">%d</span><span class="s2"> "</span>
+            <span class="s2">"retired, </span><span class="si">%d</span><span class="s2"> legacy duplicates dropped)"</span><span class="p">,</span>
             <span class="n">n_kept_compounds</span><span class="p">,</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">vehicle</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">unreported</span><span class="p">),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">unidentified</span><span class="p">),</span>
             <span class="n">n_rows</span><span class="p">,</span>
             <span class="n">n_non_orf</span><span class="p">,</span>
             <span class="n">n_all_nan</span><span class="p">,</span>
-            <span class="n">n_background</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">background_rows</span><span class="p">),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">dropped_retired</span><span class="p">),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">dropped_legacy_duplicate</span><span class="p">),</span>
         <span class="p">)</span>
@@ -984,20 +1550,12 @@
         <span class="c1"># --- normalization ----------------------------------------------------- #</span>
         <span class="c1"># The library size is a property of the SEQUENCED SAMPLE, so it is summed over</span>
         <span class="c1"># EVERY released barcode (NaN = a QC-dropped barcode contributing no reads)</span>
-        <span class="c1"># BEFORE any retention rule is applied. Summing over the retained rows instead</span>
-        <span class="c1"># would make every stored value depend on this loader's gene-name policy.</span>
+        <span class="c1"># BEFORE any retention rule is applied, and TMM runs over every complete row.</span>
         <span class="n">col_idx</span> <span class="o">=</span> <span class="p">{</span><span class="n">column</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sample_cols</span><span class="p">)}</span>
-        <span class="n">library_sizes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">sample_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">kept</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">counts</span> <span class="o">=</span> <span class="n">kept</span><span class="p">[</span><span class="n">sample_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-        <span class="n">cpm</span> <span class="o">=</span> <span class="n">counts</span> <span class="o">/</span> <span class="n">library_sizes</span> <span class="o">*</span> <span class="mf">1e6</span>
-        <span class="n">pooled_log</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span>
-            <span class="n">cpm</span><span class="p">[:,</span> <span class="p">[</span><span class="n">col_idx</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">controls</span><span class="p">]]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">CPM_PRIOR</span>
-        <span class="p">)</span>
-        <span class="n">batch_log</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">batch</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">cpm</span><span class="p">[:,</span> <span class="p">[</span><span class="n">col_idx</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">]]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">CPM_PRIOR</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">batch</span><span class="p">,</span> <span class="n">cols</span> <span class="ow">in</span> <span class="n">control_by_batch</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="p">}</span>
+        <span class="n">all_counts</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">sample_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">library_sizes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">all_counts</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">complete</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">all_counts</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">kept_counts</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">keep</span><span class="p">,</span> <span class="n">sample_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
         <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span><span class="n">doi</span><span class="o">=</span><span class="n">PAPER_DOI</span><span class="p">,</span> <span class="n">doi_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://doi.org/</span><span class="si">{</span><span class="n">PAPER_DOI</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1005,35 +1563,57 @@
         <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">n_all_zero_cells</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">normalization</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TmmFactors</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">kept_compounds</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Vanacloig compounds"</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">kept_compounds</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Vanacloig conditions"</span><span class="p">):</span>
                 <span class="n">cols</span> <span class="o">=</span> <span class="n">compound_cols</span><span class="p">[</span><span class="n">compound</span><span class="p">]</span>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span> <span class="o">!=</span> <span class="n">N_REPLICATES</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">compound</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span><span class="si">}</span><span class="s2"> replicate columns, expected "</span>
                         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">N_REPLICATES</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
                     <span class="p">)</span>
-                <span class="n">indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">col_idx</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">]</span>
                 <span class="k">if</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">UNPAIRED_COMPOUND_TOKENS</span><span class="p">:</span>
-                    <span class="n">control_log</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">pooled_log</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">paired</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">controls</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">}</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">control_log</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span>
-                        <span class="p">[</span>
-                            <span class="n">batch_log</span><span class="p">[</span><span class="n">_SAMPLE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"batch"</span><span class="p">)]</span>  <span class="c1"># type: ignore[union-attr]  # every column matched above</span>
-                            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span>
-                        <span class="p">]</span>
-                    <span class="p">)</span>
-                <span class="n">log_rep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">cpm</span><span class="p">[:,</span> <span class="n">indices</span><span class="p">]</span> <span class="o">+</span> <span class="n">CPM_PRIOR</span><span class="p">)</span> <span class="o">-</span> <span class="n">control_log</span>
+                    <span class="n">paired</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="n">c</span><span class="p">:</span> <span class="n">control_by_batch</span><span class="p">[</span><span class="n">_SAMPLE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"batch"</span><span class="p">)]</span>  <span class="c1"># type: ignore[union-attr]  # every column matched above</span>
+                        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span>
+                    <span class="p">}</span>
+                <span class="n">control_set</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">c</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">paired</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">group</span><span class="p">})</span>
+                <span class="n">members</span> <span class="o">=</span> <span class="n">control_set</span> <span class="o">+</span> <span class="n">cols</span>
+                <span class="n">member_idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">col_idx</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">members</span><span class="p">]</span>
+                <span class="n">factors</span> <span class="o">=</span> <span class="n">tmm_factors</span><span class="p">(</span>
+                    <span class="n">all_counts</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">complete</span><span class="p">,</span> <span class="n">member_idx</span><span class="p">)],</span>
+                    <span class="n">library_sizes</span><span class="p">[</span><span class="n">member_idx</span><span class="p">],</span>
+                    <span class="n">members</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">normalization</span><span class="p">[</span><span class="n">compound</span><span class="p">]</span> <span class="o">=</span> <span class="n">factors</span>
+                <span class="c1"># TMM-normalized CPM of every member column over the kept rows.</span>
+                <span class="n">effective</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">factors</span><span class="o">.</span><span class="n">library_sizes</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+                    <span class="n">factors</span><span class="o">.</span><span class="n">factors</span>
+                <span class="p">)</span>
+                <span class="n">tmm_cpm</span> <span class="o">=</span> <span class="n">kept_counts</span><span class="p">[:,</span> <span class="n">member_idx</span><span class="p">]</span> <span class="o">/</span> <span class="n">effective</span> <span class="o">*</span> <span class="mf">1e6</span>
+                <span class="n">position</span> <span class="o">=</span> <span class="p">{</span><span class="n">column</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">members</span><span class="p">)}</span>
+                <span class="n">log_rep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">tmm_cpm</span><span class="p">[:,</span> <span class="n">position</span><span class="p">[</span><span class="n">c</span><span class="p">]]</span> <span class="o">+</span> <span class="n">CPM_PRIOR</span><span class="p">)</span>
+                        <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span>
+                            <span class="n">tmm_cpm</span><span class="p">[:,</span> <span class="p">[</span><span class="n">position</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">paired</span><span class="p">[</span><span class="n">c</span><span class="p">]]]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                            <span class="o">+</span> <span class="n">CPM_PRIOR</span>
+                        <span class="p">)</span>
+                        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
                 <span class="n">response</span> <span class="o">=</span> <span class="n">log_rep</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">sd</span> <span class="o">=</span> <span class="n">log_rep</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                <span class="n">all_zero</span> <span class="o">=</span> <span class="p">(</span><span class="n">counts</span><span class="p">[:,</span> <span class="n">indices</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">all_zero</span> <span class="o">=</span> <span class="p">(</span><span class="n">kept_counts</span><span class="p">[:,</span> <span class="p">[</span><span class="n">col_idx</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">]]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">n_all_zero_cells</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">all_zero</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
                 <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>
                 <span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_rows</span><span class="p">):</span>
                     <span class="k">if</span> <span class="n">all_zero</span><span class="p">[</span><span class="n">row</span><span class="p">]:</span>
                         <span class="k">continue</span>
-                    <span class="n">experiment</span> <span class="o">=</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">(</span>
+                    <span class="n">experiment</span> <span class="o">=</span> <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">(</span>
                         <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                         <span class="n">genotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span>
                             <span class="n">library</span><span class="o">.</span><span class="n">systematic</span><span class="p">[</span><span class="n">row</span><span class="p">],</span>
@@ -1073,9 +1653,18 @@
             <span class="n">kept_records</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span>
             <span class="n">dropped_records</span><span class="o">=</span><span class="n">source_records</span> <span class="o">-</span> <span class="n">idx</span><span class="p">,</span>
             <span class="n">rules</span><span class="o">=</span><span class="n">rules</span><span class="p">,</span>
+            <span class="n">legacy_orf_strains</span><span class="o">=</span><span class="n">legacy_strains</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">drop_log</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span>
+            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"normalization_factors.json"</span><span class="p">),</span> <span class="s2">"w"</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
+                <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">normalization</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+                <span class="n">handle</span><span class="p">,</span>
+                <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="n">accounted</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">rule</span><span class="o">.</span><span class="n">n_records</span> <span class="k">for</span> <span class="n">rule</span> <span class="ow">in</span> <span class="n">rules</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">accounted</span> <span class="o">!=</span> <span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>

@@ -1,4 +1,14 @@
 {
+  "grid_bench": {
+    "id": "rltcn58yxhi",
+    "name": "grid: by operator",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_grid_bench?nw=rltcn58yxhi"
+  },
+  "grid_bench/by_depth": {
+    "id": "3ne19cnkxjq",
+    "name": "grid: by depth",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_grid_bench?nw=3ne19cnkxjq"
+  },
   "v16": {
     "id": "jvc4d5ajdy1",
     "name": "v16 joint round by arm",

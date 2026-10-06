@@ -42,3 +42,11 @@ Previous behavior: a systematic-shaped name skipped the genome (a nonexistent YA
 Fix: a systematic-shaped name must be in `genome.gene_set`; an alias must name exactly one ORF; two rows resolving to one ORF and a NaN mean or SD in any Table 3 cell are refused with a named `RuntimeError`. Every record is built before `data.csv` or the store is written. Measured on the released Table 3 (17 strains, 126 cells): `YDR379C-A` is a gene of R64, every common name has exactly one candidate, 0 duplicates, 0 NaN cells, so the built records do not change.
 
 Test: `test_a_bad_table_row_is_refused_before_anything_is_written` (four cases).
+
+## 2026.10.02 - Sourced medium replaces the inline stub (issue #622)
+
+Issue #622: the loader built `Media(name="YPD", state="liquid", is_synthetic=False)` inline, a stub with no components and no provenance.
+
+Mirror `paper.md` (sha256 `e2c0b0b4...`): line 25 prints the recipe, "Strains were grown in YPD ( 1% yeast extract, 2% peptone, and 2% glucose)"; line 39 the static liquid fermentation the HPLC supernatants come from; line 82 the Table 3 note, "72-h incubation in YPD medium at 25 C". The recipe equals the library `YPD_LIQUID` percentages, so the loader now emits `YOSHIDA_YPD = restated(YPD_LIQUID, ...)` with the three quotes in `MEDIUM_SOURCED_VALUES`. `restated()` (new in `torchcell/datamodels/media.py`) returns the library object with the paper's SourcedValues appended to its provenance. `name` and `provenance` are not part of `media_identity`, so the record's medium node joins the library object exactly.
+
+Measured by `experiments/036-dataset-fixes-before-kg-build/scripts/media_stubs_seven_loaders.py` (output `experiments/036-dataset-fixes-before-kg-build/results/media_stubs_seven_loaders.csv`): scratch build 17 records (same as the dev store); all 34 environments carry `YOSHIDA_YPD` (3 components, 6 provenance entries, `media_identity` equal to `YPD_LIQUID`), against the stub on all 34 in the dev store.

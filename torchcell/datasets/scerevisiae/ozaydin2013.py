@@ -42,6 +42,8 @@ from torchcell.data import (
     verify_raw_files,
     write_verified,
 )
+from torchcell.datamodels.compound_identity import resolved_compound
+from torchcell.datamodels.media import SC_URA
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
@@ -50,6 +52,8 @@ from torchcell.datamodels.schema import (
     Genotype,
     KanMxDeletionPerturbation,
     Media,
+    MediaComponent,
+    MediaComponentRole,
     Publication,
     ReferenceGenome,
     Temperature,
@@ -58,6 +62,8 @@ from torchcell.datamodels.schema import (
     VisualScorePhenotype,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.verification.report import Provenance
+from torchcell.verification.sourced import SourcedValue
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -76,6 +82,69 @@ TARGET_PRODUCT = "beta-carotene"
 # The stored artifact + this hash is canonical, NOT the live URL; we verify on
 # download and refuse to silently follow upstream drift.
 _SI_SHA256 = "4818726e352ead3cb739fd9becf08a0c04d14b8a8761732184214344447507f0"
+
+# --------------------------------------------------------------------------- #
+# Screen medium (issue #622). Quotes are verbatim substrings of the mirror OCR
+# (MinerU, LaTeX markup kept); line numbers are that file's.
+# --------------------------------------------------------------------------- #
+CITATION_KEY = "ozaydinCarotenoidbasedPhenotypicScreen2013a"
+PAPER_MD = "paper.md"
+PAPER_MD_SHA256 = "df2f2b639331f3da4137ab61e2df2ba0899b164a85da48acafc30c55dcc699b8"
+_PAPER = Provenance(
+    source_uri=PAPER_MD, citation_key=CITATION_KEY, sha256=PAPER_MD_SHA256
+)
+
+# line 42: the transformants were selected on SC-URA agar ...
+SELECTION_PLATE_QUOTE = "spotted onto selective medium agar plates (SC-URA)"
+# line 42: ... and the carotenoid color was scored on SC-URA plates after 2 days at 30 C.
+SCORING_PLATE_QUOTE = (
+    "Next day, about $5 \\mu \\mathrm { l }$ of this culture was spotted onto SC-URA "
+    "plates. After 2 day of growth at $3 0 ^ { \\circ } \\mathrm { C } ,$ , carotenoid "
+    "levels were scored."
+)
+
+
+def _paper_sv(value: object, quote: str, note: str | None = None) -> SourcedValue:
+    """A SourcedValue pinned to the Ozaydin mirror OCR (quote + sha256)."""
+    return SourcedValue(value=value, provenance=_PAPER, quote=quote, note=note)
+
+
+SOURCED_VALUES: dict[str, SourcedValue] = {
+    "scoring_medium": _paper_sv(
+        "SC-URA, solid (plates)",
+        SCORING_PLATE_QUOTE,
+        note="line 42; the paper prints no SC or SC-URA recipe, so every ingredient "
+        "amount is the library SC_URA object's (SC with uracil dropped, Mormino 2022 "
+        "/ Wildenhain 2015 glucose), a deferral, not an Ozaydin statement",
+    ),
+    "agar": _paper_sv(
+        "agar present, amount not stated",
+        SELECTION_PLATE_QUOTE,
+        note="line 42; the paper says agar plates and prints no agar amount, so the "
+        "agar row carries no concentration (an open gap in Media.open_gaps) rather "
+        "than a borrowed 2%",
+    ),
+}
+
+OZAYDIN_SC_URA_AGAR: Media = SC_URA.model_copy(
+    update={
+        "name": "SC-Ura agar (synthetic complete minus uracil, solid; Ozaydin 2013 "
+        "screen plate)",
+        "state": "solid",
+        "components": [
+            *SC_URA.components,
+            MediaComponent(
+                compound=resolved_compound("agar"),
+                role=MediaComponentRole.gelling_agent,
+                provenance=[SOURCED_VALUES["agar"]],
+            ),
+        ],
+        "provenance": [*SC_URA.provenance, SOURCED_VALUES["scoring_medium"]],
+    }
+)
+"""The scoring plate: library ``SC_URA`` (SC, uracil dropped, URA3-plasmid selection)
+made solid with an agar row whose amount the paper does not print. Loader-local: no
+other served dataset states this plate, and ``media.py``'s ``SC_URA`` is liquid."""
 
 
 # The constant engineered background: every screened strain carries the carotenogenic
@@ -369,8 +438,7 @@ class CarotenoidOzaydin2013Dataset(ExperimentDataset):
         )
         # Screen scored on SC-URA agar (URA-selective plasmid), 30 C.
         environment = Environment(
-            media=Media(name="SC-URA", state="solid", is_synthetic=True),
-            temperature=Temperature(value=30),
+            media=OZAYDIN_SC_URA_AGAR, temperature=Temperature(value=30)
         )
 
         vmin = row["visual_score_min"]

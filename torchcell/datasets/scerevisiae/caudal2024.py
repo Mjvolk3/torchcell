@@ -84,6 +84,7 @@ from torchcell.data import (
     verify_raw_files,
     verify_sha256,
 )
+from torchcell.datamodels.media import SC, restated
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
@@ -353,6 +354,40 @@ def _methods_sv(value: object, quote: str, line: int, note: str) -> SourcedValue
         quote=quote,
         note=note,
     )
+
+
+#: methods.md line 9: the medium the RNA-seq cultures grew in, and its carbon source.
+#: The Methods name "standard synthetic complete medium" and give no recipe beyond the
+#: glucose, so the ingredient amounts are the library ``SC`` object's (issue #622).
+SC_CULTURE_QUOTE = (
+    "then grown in 1 ml of liquid standard synthetic complete medium using deep well "
+    "blocks until the mid-log phase was reached (OD ~0.3)"
+)
+SC_CARBON_QUOTE = (
+    "We measured growth in all strains using 96-well liquid growth in standard "
+    "synthetic complete medium with 2% glucose as the carbon source."
+)
+
+MEDIUM_SOURCED_VALUES: dict[str, SourcedValue] = {
+    "culture_medium": _methods_sv(
+        "liquid synthetic complete (SC), harvested at mid-log",
+        SC_CULTURE_QUOTE,
+        9,
+        note="the paper names the medium and prints no recipe; every ingredient "
+        "amount on the record is the library SC object's (Mormino 2022 / Wildenhain "
+        "2015 quotes), a deferral, not a Caudal statement",
+    ),
+    "carbon_source": _methods_sv(
+        "2% glucose",
+        SC_CARBON_QUOTE,
+        9,
+        note="the same amount as the library SC glucose row (20 g/L)",
+    ),
+}
+
+CAUDAL_SC: Media = restated(SC, *MEDIUM_SOURCED_VALUES.values())
+"""The RNA-seq culture medium: the library ``SC`` composition plus Caudal's own two
+Methods sentences. Same ``media_identity`` as ``SC`` (provenance is not identity)."""
 
 
 class BlankRowClass(StrEnum):
@@ -1105,10 +1140,7 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
         )
         genotype = Genotype(perturbations=row["perturbations"])
         # SC liquid medium, 30 C, harvested at mid-log (OD ~0.3) -- Caudal Methods.
-        environment = Environment(
-            media=Media(name="SC", state="liquid", is_synthetic=True),
-            temperature=Temperature(value=30),
-        )
+        environment = Environment(media=CAUDAL_SC, temperature=Temperature(value=30))
         phenotype = RNASeqExpressionPhenotype(
             expression_tpm=row["expression_tpm"],
             expression_count=row["expression_count"],

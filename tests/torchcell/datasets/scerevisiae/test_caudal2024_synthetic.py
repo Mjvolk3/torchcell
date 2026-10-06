@@ -60,7 +60,6 @@ from torchcell.datamodels.schema import (
     Environment,
     GenePerturbationType,
     Genotype,
-    Media,
     NaturalGeneAbsencePerturbation,
     NaturalGenePresencePerturbation,
     Publication,
@@ -254,10 +253,7 @@ def dataset(root: Path) -> m.CaudalPanTranscriptome2024Dataset:
     return m.CaudalPanTranscriptome2024Dataset(root=str(root))
 
 
-_ENVIRONMENT = Environment(
-    media=Media(name="SC", state="liquid", is_synthetic=True),
-    temperature=Temperature(value=30),
-)
+_ENVIRONMENT = Environment(media=m.CAUDAL_SC, temperature=Temperature(value=30))
 _REFERENCE_PHENOTYPE = RNASeqExpressionPhenotype(
     expression_tpm={"YAL001C": 2.5, "YBR001W": 4.0},
     expression_count={"YAL001C": 22, "YBR001W": 20},

@@ -47,3 +47,17 @@ Tests: `test_a_lipid_no_wt_row_measured_is_refused_before_anything_is_written`, 
 
 - Two mutant rows resolving to one ORF are refused with a named `RuntimeError` instead of keeping the first with a warning. Measured on the pinned Table S4: 0 such pairs of 127 mutant rows, so the built records do not change.
 - `lipid_chebi.csv` is written after every record is built, so a refused matrix writes nothing under `preprocess/` or `processed/`; on success the bytes are unchanged (`test_side_files`).
+
+## 2026.10.02 - Sourced medium replaces the inline stub (issue #622)
+
+Issue #622: the loader built `Media(name="YPD", state="liquid", is_synthetic=False)` inline, a stub with no components and no provenance.
+
+The Methods print their own "YPD", and it is not the library YPD (mirror `paper.md` line 168, sha256 `87b6e92b...`; the PDF text layer reads the same): 2% glucose, 1% Bacto Peptone, 2% Bacto Yeast Extract (yeast extract and peptone swapped against the library's 1% / 2%), 10 mM MES, "40 mg/ml" L-tryptophan, uracil and adenine; cultures grown to early exponential phase in it at 30 C. The loader now emits a loader-local `DA_SILVEIRA_YPD` (`base_medium="YPD"`, liquid) with seven components, each quoted in `SOURCED_VALUES`. Its `media_identity` is not `YPD_LIQUID`'s.
+
+Held as open gaps rather than values:
+
+- L-tryptophan: printed "40 mg/ml", which is 40 g/L. Not stored as a concentration. Hypothesis (untested): a typo for 40 mg/l. Needs the user's call.
+- uracil and adenine: no amount printed.
+- MES resolves to no InChIKey in the compound table, so the resolver attaches its `deferred_pending_source_review` gap.
+
+Measured by `experiments/036-dataset-fixes-before-kg-build/scripts/media_stubs_seven_loaders.py` (output `experiments/036-dataset-fixes-before-kg-build/results/media_stubs_seven_loaders.csv`): scratch build 127 records (same as the dev store); all 254 environments carry `DA_SILVEIRA_YPD` (7 components, 5 open gaps), against the stub on all 254 in the dev store.

@@ -49,7 +49,6 @@ from torchcell.datamodels.schema import (
     Environment,
     Genotype,
     KanMxDeletionPerturbation,
-    Media,
     Publication,
     ReferenceGenome,
     Temperature,
@@ -79,8 +78,7 @@ _TOP200_ROWS: list[tuple[str, str | None, str | None, str]] = [
 
 _NO_FLAGS = {flag: False for flag in m._FLAG_PATTERNS}
 _ENVIRONMENT = Environment(
-    media=Media(name="SC-URA", state="solid", is_synthetic=True),
-    temperature=Temperature(value=30),
+    media=m.OZAYDIN_SC_URA_AGAR, temperature=Temperature(value=30)
 )
 _PUBLICATION = Publication(
     pubmed_id="22918085",

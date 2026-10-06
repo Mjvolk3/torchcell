@@ -83,7 +83,6 @@ from torchcell.datamodels.schema import (
     Environment,
     Genotype,
     KanMxDeletionPerturbation,
-    Media,
     Publication,
     ReferenceGenome,
     Temperature,
@@ -162,10 +161,7 @@ def dataset(tmp_path: Path) -> m.ScmdOhya2005Dataset:
     return m.ScmdOhya2005Dataset(root=str(_root(tmp_path)), genome=_genome())
 
 
-_ENVIRONMENT = Environment(
-    media=Media(name="YPD", state="liquid", is_synthetic=False),
-    temperature=Temperature(value=25),
-)
+_ENVIRONMENT = Environment(media=m.OHYA_YPD, temperature=Temperature(value=25))
 _WT_PHENOTYPE = CalMorphPhenotype(
     calmorph={"A101_A": 3.0, "C103_A1B": 5.0},
     calmorph_coefficient_of_variation={"ACV103_A1B": 0.5, "CCV103_A1B": 1.0},
@@ -658,11 +654,16 @@ def test_the_interned_store_resolves_to_exactly_the_inline_records(
     """Contract (issue #546): ``process`` writes through ``_intern_record``. The same
     matrices are built twice: once as shipped, once with ``_intern_record`` replaced by
     the earlier inline writer (``pickle.dumps`` of the three dumps). The shipped store
-    has a sibling ``interned`` env holding exactly one object, the shared reference
-    (>= 512 bytes of canonical JSON), and each record carries ``{"$ref": <sha256 of its
-    canonical JSON>, "name": "ScmdOhya2005Dataset"}`` in its place; the environment and
-    publication stay inline. The inline build's ``interned`` env is empty. Read back
-    through ``get_single_item`` the six records of the two stores are exactly equal.
+    has a sibling ``interned`` env holding exactly two objects, the shared reference and
+    the shared environment (each >= 512 bytes of canonical JSON), and each record
+    carries ``{"$ref": <sha256 of its canonical JSON>, "name": ...}`` in their place;
+    the publication stays inline. The inline build's ``interned`` env is empty. Read
+    back through ``get_single_item`` the six records of the two stores are exactly
+    equal.
+
+    2026.10.02 (issue #622): the environment now carries the sourced ``OHYA_YPD`` (three
+    components, five SourcedValues) instead of a name-only stub, so it crosses the
+    interning threshold; before, it stayed inline.
     """
     interned = m.ScmdOhya2005Dataset(
         root=str(_root(tmp_path, "interned")), genome=_genome()
@@ -706,14 +707,22 @@ def test_the_interned_store_resolves_to_exactly_the_inline_records(
         {"$ref": digest, "name": "ScmdOhya2005Dataset"}
     ] * 6
     assert [r["publication"] for r in stored] == [_PUBLICATION] * 6
+    env_digest = hashlib.sha256(
+        json.dumps(_ENVIRONMENT.model_dump(mode="json"), sort_keys=True).encode()
+    ).hexdigest()
     assert [r["experiment"]["environment"] for r in stored] == [
-        _ENVIRONMENT.model_dump()
+        {"$ref": env_digest, "name": m.OHYA_YPD.name}
     ] * 6
     ienv = lmdb.open(
         str(tmp_path / "interned" / "processed" / "interned"), readonly=True, lock=False
     )
     with ienv.begin() as txn:
-        assert [key.decode() for key, _ in txn.cursor()] == [digest]
+        assert sorted(key.decode() for key, _ in txn.cursor()) == sorted(
+            [digest, env_digest]
+        )
+        raw_env = txn.get(env_digest.encode())
+        assert raw_env is not None, "the interned environment is missing"
+        assert pickle.loads(raw_env) == _ENVIRONMENT.model_dump()
         raw = txn.get(digest.encode())
         assert raw is not None, "the interned reference is missing"
         assert pickle.loads(raw) == _REFERENCE

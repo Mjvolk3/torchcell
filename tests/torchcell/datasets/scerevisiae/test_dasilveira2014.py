@@ -75,7 +75,6 @@ from torchcell.datamodels.schema import (
     Environment,
     Genotype,
     KanMxDeletionPerturbation,
-    Media,
     MetaboliteExperiment,
     MetaboliteExperimentReference,
     MetabolitePhenotype,
@@ -155,10 +154,7 @@ def dataset(tmp_path: Path) -> m.MetaboliteDaSilveira2014Dataset:
     )
 
 
-_ENVIRONMENT = Environment(
-    media=Media(name="YPD", state="liquid", is_synthetic=False),
-    temperature=Temperature(value=30),
-)
+_ENVIRONMENT = Environment(media=m.DA_SILVEIRA_YPD, temperature=Temperature(value=30))
 _PUBLICATION = Publication(
     pubmed_id="25143408",
     pubmed_url="https://pubmed.ncbi.nlm.nih.gov/25143408/",

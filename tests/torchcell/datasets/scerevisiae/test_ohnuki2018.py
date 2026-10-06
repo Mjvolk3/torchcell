@@ -71,7 +71,6 @@ from torchcell.datamodels.schema import (
     EngineeredCopyNumberPerturbation,
     Environment,
     Genotype,
-    Media,
     Publication,
     ReferenceGenome,
     Temperature,
@@ -147,10 +146,7 @@ def dataset(tmp_path: Path) -> m.ScmdOhnuki2018Dataset:
     return m.ScmdOhnuki2018Dataset(root=str(_root(tmp_path)), genome=_genome())
 
 
-_ENVIRONMENT = Environment(
-    media=Media(name="YPD", state="liquid", is_synthetic=False),
-    temperature=Temperature(value=25),
-)
+_ENVIRONMENT = Environment(media=m.OHNUKI_YPD, temperature=Temperature(value=25))
 _WT_PHENOTYPE = CalMorphPhenotype(
     calmorph={"A101_A": 3.0, "C103_A1B": 5.0},
     calmorph_coefficient_of_variation={"ACV103_A1B": 0.5, "CCV103_A1B": 1.0},

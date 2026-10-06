@@ -42,9 +42,13 @@ from torchcell.data import (
     verify_sha256,
 )
 from torchcell.datamodels.schema import (
+    ComponentDefinition,
+    Compound,
     Environment,
     Genotype,
     Media,
+    MediaComponent,
+    MediaComponentRole,
     Publication,
     ReferenceGenome,
     SgaKanMxDeletionPerturbation,
@@ -54,10 +58,15 @@ from torchcell.datamodels.schema import (
     SyntheticRescueExperiment,
     SyntheticRescueExperimentReference,
     SyntheticRescuePhenotype,
-    Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.verification.report import Provenance
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -78,6 +87,75 @@ SR_CSV_SHA256 = "d84fba780cfa55d59f4844324f5c203f85f09bcfe50bfff6de06169ade2a18f
 #: the same accession, so these bytes cannot be re-fetched; the pin is the record.
 NCBI_GFF_RELPATH = "S288C_reference_genome_R64-4-1_20230830/ncbi_genomic.gff"
 NCBI_GFF_SHA256 = "8200def54936659721e3f7b4484d725667ed4e23492edefbbca667b8430209c4"
+
+#: SynLethDB 2.0 (Wang 2022, NAR), the release paper of the aggregated CSVs (issue #622).
+#: Its mirror OCR is the only document that says what one SL entry carries.
+SYNLETHDB_CITATION_KEY = "wangSynLethDB20Webbased2022"
+SYNLETHDB_PAPER_SHA256 = (
+    "acaee2c7e16480fb39656cdf6a5e7ac621c34f08b41433dcab2cebe7daf1f20a"
+)
+_SYNLETHDB_PAPER = Provenance(
+    source_uri="paper.md",
+    citation_key=SYNLETHDB_CITATION_KEY,
+    sha256=SYNLETHDB_PAPER_SHA256,
+)
+#: paper.md line 49: the fields an SL entry carries. No growth medium and no growth
+#: temperature, and the released CSV header agrees (``n1.name, n1.identifier, n2.name,
+#: n2.identifier, r.cell_line, r.pubmed_id, r.source, r.statistic_score``).
+SYNLETHDB_ENTRY_FIELDS_QUOTE = (
+    "The species, references to PubMed, supporting evidence, cell lines and other "
+    "relevant information about an SL entry are stored as properties of the edge"
+)
+
+SYNLETHDB_MEDIUM_NOT_CARRIED: Media = Media(
+    name="growth medium not carried by SynLethDB (stated, if at all, by each record's "
+    "primary paper)",
+    state="solid",
+    is_synthetic=False,
+    components=[
+        MediaComponent(
+            compound=Compound(
+                name="growth medium of the record's primary study (not carried by "
+                "SynLethDB)"
+            ),
+            role=MediaComponentRole.other,
+            definition=ComponentDefinition.composition_deferred,
+            note="SynLethDB aggregates gene pairs from many papers and carries no "
+            "medium; the deferral target is the record's own Publication.pubmed_id, "
+            "which differs per record, so defers_to stays empty here",
+        )
+    ],
+    provenance=[
+        SourcedValue(
+            value="growth medium not carried by the curation layer",
+            provenance=_SYNLETHDB_PAPER,
+            quote=SYNLETHDB_ENTRY_FIELDS_QUOTE,
+            note="line 49. state='solid' and is_synthetic=False are NOT sourced: the "
+            "schema requires both, and they keep the old stub's values. The loader "
+            "formerly emitted an unsourced 'YEPD' solid medium",
+        )
+    ],
+)
+"""The honest medium of a SynLethDB record: a composition-deferred placeholder naming
+the absence, not a recipe. ``Media`` has no ``provenance_gaps`` and ``Environment.media``
+is required, so a typed gap on the medium itself is not expressible in the current
+schema; this object is the in-schema stand-in for one."""
+
+#: The temperature is absent for the same reason (``not_carried_by_curation``).
+SYNLETHDB_TEMPERATURE_GAP = ProvenanceGap(
+    field="temperature",
+    reason=ProvenanceGapReason.not_carried_by_curation,
+    looked_in=_SYNLETHDB_PAPER,
+    note="SynLethDB carries no growth temperature (paper.md line 49 and the CSV "
+    "header); the loader formerly stored an unsourced 30 C",
+)
+
+SYNLETHDB_ENVIRONMENT = Environment(
+    media=SYNLETHDB_MEDIUM_NOT_CARRIED,
+    temperature=None,
+    provenance_gaps=[SYNLETHDB_TEMPERATURE_GAP],
+)
+"""Every SL and SR record's environment: neither medium nor temperature is carried."""
 
 #: GFF feature types whose ``Dbxref`` ``GeneID`` names a locus (``locus_tag``).
 _NCBI_LOCUS_TYPES = frozenset({"gene", "pseudogene"})
@@ -500,10 +578,7 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
             ]
         )
 
-        environment = Environment(
-            media=Media(name="YEPD", state="solid", is_synthetic=False),
-            temperature=Temperature(value=30),
-        )
+        environment = SYNLETHDB_ENVIRONMENT
 
         phenotype = SyntheticLethalityPhenotype(
             is_synthetic_lethal=True,
@@ -636,10 +711,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
             ]
         )
 
-        environment = Environment(
-            media=Media(name="YEPD", state="solid", is_synthetic=False),
-            temperature=Temperature(value=30),
-        )
+        environment = SYNLETHDB_ENVIRONMENT
 
         phenotype = SyntheticRescuePhenotype(
             is_synthetic_rescue=True,

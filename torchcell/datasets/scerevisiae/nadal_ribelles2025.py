@@ -84,6 +84,7 @@ from torchcell.data import (
     verify_raw_files,
 )
 from torchcell.datamodels.compound_identity import resolved_compound
+from torchcell.datamodels.media import YPD_LIQUID, restated
 from torchcell.datamodels.schema import (
     Concentration,
     ConcentrationUnit,
@@ -103,9 +104,43 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
+from torchcell.verification.report import Provenance
+from torchcell.verification.sourced import SourcedValue
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+# --------------------------------------------------------------------------- #
+# Growth medium (issue #622). Quotes are verbatim substrings of the mirror OCR
+# ``paper.md`` (MinerU output, so LaTeX markup is kept as written); the line in each
+# note is that file's.
+# --------------------------------------------------------------------------- #
+MEDIUM_CITATION_KEY = "nadal-ribellesSinglecellResolvedGenotypephenotype2025"
+MEDIUM_PAPER_SHA256 = "86f4a41634a99222ccfd5d0ddb4df400faf7de2ad4e67ad224d0045c4d00cebc"
+YPD_CULTURE_QUOTE = (
+    "of cultures were refreshed into another 96 well plate containing "
+    "$2 0 0 \\mu \\up$ of YPD. Cells were allowed to grow for $^ { 6 \\mathrm { h } }$ "
+    "until they reached mid exponential phase"
+)
+
+MEDIUM_SOURCED_VALUES: dict[str, SourcedValue] = {
+    "medium": SourcedValue(
+        value="YPD, liquid (200 ul per well, grown to mid-exponential, then pooled)",
+        provenance=Provenance(
+            source_uri="paper.md",
+            citation_key=MEDIUM_CITATION_KEY,
+            sha256=MEDIUM_PAPER_SHA256,
+        ),
+        quote=YPD_CULTURE_QUOTE,
+        note="line 172; names the medium and prints no recipe, so every ingredient "
+        "amount on the record is the library YPD_LIQUID object's (Tong and Boone 2006 "
+        "/ Hoepfner 2014), a deferral, not a Nadal-Ribelles statement",
+    )
+}
+
+NADAL_RIBELLES_YPD: Media = restated(YPD_LIQUID, *MEDIUM_SOURCED_VALUES.values())
+"""Liquid YPD the pooled cells grew in: library ``YPD_LIQUID`` plus the paper's culture
+sentence. Same ``media_identity`` as ``YPD_LIQUID``."""
 
 MEASUREMENT_TYPE = "pseudobulk_scrnaseq_log2fc"
 DELETION_MARKER = "URA3"
@@ -463,7 +498,7 @@ class NadalRibellesPerturbSeq2025Dataset(ExperimentDataset):
                 f"condition {cond!r} is neither of the profiled conditions "
                 f"{list(CONDITIONS)}; refusing to store it with the control environment"
             )
-        media = Media(name="YPD", state="liquid", is_synthetic=False)
+        media = NADAL_RIBELLES_YPD
         temperature = Temperature(value=GROWTH_TEMP_C)
         if cond == "nacl":
             return Environment(

@@ -78,6 +78,7 @@ from torchcell.data import (
     post_process,
     verify_raw_files,
 )
+from torchcell.datamodels.media import YPD_LIQUID, restated
 from torchcell.datamodels.schema import (
     CalMorphExperiment,
     CalMorphExperimentReference,
@@ -98,9 +99,68 @@ from torchcell.datasets.scerevisiae.gene_name_reconcile import (
     reconcile_systematic_names,
 )
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
+from torchcell.verification.report import Provenance
+from torchcell.verification.sourced import SourcedValue
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+# --------------------------------------------------------------------------- #
+# Growth medium (issue #622). Quotes are verbatim substrings of the mirror OCR
+# ``paper.md`` (MinerU output, so LaTeX markup is kept as written); the line in each
+# note is that file's.
+# --------------------------------------------------------------------------- #
+MEDIUM_CITATION_KEY = "ohyaHighdimensionalLargescalePhenotyping2005"
+MEDIUM_PAPER_SHA256 = "86bf457c5e210c3b78f6f0687e04c3bcb5e9a217fc872b1f78531825688b5fcd"
+# Ohnuki & Ohya 2018 (same lab, same CalMorph protocol) prints the YPD recipe and says
+# the medium "was prepared as described previously [15]", and its ref 15 (line 339) is
+# this paper: the recipe chain closes inside the mirror.
+OHNUKI2018_CITATION_KEY = "ohnukiHighdimensionalSinglecellPhenotyping2018"
+OHNUKI2018_PAPER_SHA256 = (
+    "8c9d991fa03278b130d8824b755b9e1b14921a1e431eb8ed918caabf6a11ab1c"
+)
+YPD_GROWTH_QUOTE = (
+    "Each strain was grown in yeast extract/ peptone/dextrose medium, and "
+    "logarithmic-phase cells were fixed."
+)
+OHNUKI_YPD_RECIPE_QUOTE = (
+    "in nutrient-rich yeast extract peptone dextrose (YPD) medium containing "
+    "$1 \\%$ (w/v) Bacto yeast extract (BD Biosciences, San Jose, CA), $2 \\%$ (w/v) "
+    "Bacto peptone (BD Biosciences), and $2 \\%$ (w/v) glucose, which was prepared as "
+    "described previously [15]."
+)
+
+MEDIUM_SOURCED_VALUES: dict[str, SourcedValue] = {
+    "medium": SourcedValue(
+        value="YPD, liquid (logarithmic-phase culture)",
+        provenance=Provenance(
+            source_uri="paper.md",
+            citation_key=MEDIUM_CITATION_KEY,
+            sha256=MEDIUM_PAPER_SHA256,
+        ),
+        quote=YPD_GROWTH_QUOTE,
+        note="line 23; names the medium and prints no recipe. 'liquid' is read from "
+        "'logarithmic-phase cells were fixed' (a log-phase culture), not from the word "
+        "liquid, which this paper does not use",
+    ),
+    "recipe": SourcedValue(
+        value="1% yeast extract, 2% peptone, 2% glucose (Ohya-lab YPD)",
+        provenance=Provenance(
+            source_uri="paper.md",
+            citation_key=OHNUKI2018_CITATION_KEY,
+            sha256=OHNUKI2018_PAPER_SHA256,
+        ),
+        quote=OHNUKI_YPD_RECIPE_QUOTE,
+        note="Ohnuki 2018 line 179; its ref 15 (line 339) is Ohya 2005, so this is the "
+        "same lab's statement of the YPD this paper used, and it matches the library "
+        "YPD_LIQUID percentages; the amounts on the record are YPD_LIQUID's",
+    ),
+}
+
+OHYA_YPD: Media = restated(YPD_LIQUID, *MEDIUM_SOURCED_VALUES.values())
+"""Liquid YPD: library ``YPD_LIQUID`` composition plus this paper's growth sentence and
+the Ohya-lab recipe Ohnuki 2018 attributes to it. Same ``media_identity`` as
+``YPD_LIQUID``."""
 
 # CV parameters are prefixed CCV/ACV/DCV (60 + 33 + 127 = 220 in the pinned matrices; no
 # TCV parameter exists, #494); everything else is a base parameter.
@@ -334,10 +394,7 @@ class ScmdOhya2005Dataset(ExperimentDataset):
 
         # Environment -- Ohya 2005 Methods: YPD, logarithmic-phase (liquid) culture.
         # Temperature 25 C from the Ohya-lab CalMorph standard (see module docstring).
-        environment = Environment(
-            media=Media(name="YPD", state="liquid", is_synthetic=False),
-            temperature=Temperature(value=25),
-        )
+        environment = Environment(media=OHYA_YPD, temperature=Temperature(value=25))
         environment_reference = environment.model_copy()
 
         # Extract morphology measurements and separate base from CV parameters. Rows are

@@ -179,6 +179,24 @@ protein-protein interaction networks in S. cerevisiae.</p>
 2. Uses a 2-layer GNN for each network to reconstruct graph structure
 3. Shares an initial embedding layer across all networks
 4. Uses the output embeddings for downstream tasks</p>
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.models.dango.DangoPreTrain.lambda_values">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">lambda_values</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchcell.models.dango.DangoPreTrain.lambda_values" title="Link to this definition"></a></dt>
+<dd><p>Paper lambda (weight of the zero entries in the weighted MSE) per network.</p>
+<p>Zhang et al. (2020) set lambda = 0.1 for the networks whose zero entries fell
+by more than 1% from STRING v9.1 to v11.0 (neighborhood, coexpression,
+experimental) and 1.0 for the rest (fusion, cooccurence, database). The table
+is defined only for those six STRING v9.1 and v11.0 network names; any other
+name (for example a string12_0 network) is refused rather than given 1.0.
+The 005/006 training scripts do not read this table: they pass
+<code class="docutils literal notranslate"><span class="pre">determine_lambda_values()</span></code> to <code class="docutils literal notranslate"><span class="pre">DangoLoss</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – if an edge type is not a STRING v9.1 or v11.0 network name.</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.models.dango.DangoPreTrain.reset_parameters">
 <span class="sig-name descname"><span class="pre">reset_parameters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/models/dango.html#DangoPreTrain.reset_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.models.dango.DangoPreTrain.reset_parameters" title="Link to this definition"></a></dt>

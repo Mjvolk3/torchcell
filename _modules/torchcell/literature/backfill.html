@@ -160,6 +160,9 @@
 <span class="c1"># Top-level Manifest metadata fields whose absence marks incomplete provenance.</span>
 <span class="n">_METADATA_FIELDS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"doi"</span><span class="p">,</span> <span class="s2">"title"</span><span class="p">,</span> <span class="s2">"zotero_item_key"</span><span class="p">)</span>
 
+<span class="c1"># Zotero item types that are never a paper: skipped by the citation index.</span>
+<span class="n">CHILD_ITEM_TYPES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"attachment"</span><span class="p">,</span> <span class="s2">"note"</span><span class="p">,</span> <span class="s2">"annotation"</span><span class="p">})</span>
+
 
 <span class="k">class</span><span class="w"> </span><span class="nc">CorruptManifestError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""An existing ``manifest.json`` does not parse as a :class:`Manifest`."""</span>
@@ -231,32 +234,67 @@
     <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span> <span class="o">/</span> <span class="n">LIBRARY_SUBDIR</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">build_citation_index</span><span class="p">(</span><span class="n">lib</span><span class="p">:</span> <span class="n">ZoteroLibrary</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">"""Map every library item's citation key to the item (one paginated scan).</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">citation_index_with_duplicates</span><span class="p">(</span>
+    <span class="n">lib</span><span class="p">:</span> <span class="n">ZoteroLibrary</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">"""Index the library's top-level regular items by citation key, one paginated scan.</span>
 
-<span class="sd">    Raises:</span>
-<span class="sd">        DuplicateCitationKeyError: Two or more items resolve to one citation key; the</span>
-<span class="sd">            message lists every such key with all of its item keys, since picking one</span>
-<span class="sd">            item would attach the wrong paper's metadata to a directory.</span>
+<span class="sd">    Only top-level items are read (pyzotero ``top()``, the ``/items/top`` endpoint,</span>
+<span class="sd">    paginated through ``everything``): an attachment, note or annotation that is a</span>
+<span class="sd">    child of a paper is reached from its parent (``ZoteroLibrary.pdf_attachments``),</span>
+<span class="sd">    never from this index. A standalone attachment or note is top-level in Zotero, so</span>
+<span class="sd">    every item whose ``itemType`` is in :data:`CHILD_ITEM_TYPES` is skipped as well.</span>
+<span class="sd">    Such items carry no citation key and would otherwise collide under generated keys</span>
+<span class="sd">    such as ``unknownFullTextPDFXXXX``.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ``(index, duplicates)``: ``index`` maps each citation key held by exactly one</span>
+<span class="sd">        item to that item; ``duplicates`` maps each key held by two or more items to</span>
+<span class="sd">        their item keys in scan order. A duplicated key is absent from ``index``, since</span>
+<span class="sd">        picking one item would attach the wrong paper's metadata to a directory; the</span>
+<span class="sd">        caller decides whether a duplicate blocks it.</span>
 <span class="sd">    """</span>
     <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">with_zotero_retry</span><span class="p">(</span>
-        <span class="k">lambda</span><span class="p">:</span> <span class="n">lib</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">everything</span><span class="p">(</span><span class="n">lib</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="n">lib</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">everything</span><span class="p">(</span><span class="n">lib</span><span class="o">.</span><span class="n">zot</span><span class="o">.</span><span class="n">top</span><span class="p">())</span>
     <span class="p">)</span>
     <span class="n">by_key</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s2">"data"</span><span class="p">][</span><span class="s2">"itemType"</span><span class="p">]</span> <span class="ow">in</span> <span class="n">CHILD_ITEM_TYPES</span><span class="p">:</span>
+            <span class="k">continue</span>
         <span class="n">by_key</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">_resolve_citation_key</span><span class="p">(</span><span class="n">item</span><span class="p">),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
     <span class="n">duplicates</span> <span class="o">=</span> <span class="p">{</span>
         <span class="n">key</span><span class="p">:</span> <span class="p">[</span><span class="n">item</span><span class="p">[</span><span class="s2">"key"</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">group</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">by_key</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
     <span class="p">}</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">group</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">by_key</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">index</span><span class="p">,</span> <span class="n">duplicates</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">describe_duplicates</span><span class="p">(</span><span class="n">duplicates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``key: ITEM1, ITEM2; key2: ...`` sorted by citation key, for messages."""</span>
+    <span class="k">return</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">item_keys</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">item_keys</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">duplicates</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_citation_index</span><span class="p">(</span><span class="n">lib</span><span class="p">:</span> <span class="n">ZoteroLibrary</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Map each top-level regular item's citation key to the item.</span>
+
+<span class="sd">    What is indexed is documented on :func:`citation_index_with_duplicates`.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        DuplicateCitationKeyError: Two or more items resolve to one citation key; the</span>
+<span class="sd">            message lists every such key with all of its item keys, since picking one</span>
+<span class="sd">            item would attach the wrong paper's metadata to a directory.</span>
+<span class="sd">    """</span>
+    <span class="n">index</span><span class="p">,</span> <span class="n">duplicates</span> <span class="o">=</span> <span class="n">citation_index_with_duplicates</span><span class="p">(</span><span class="n">lib</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">duplicates</span><span class="p">:</span>
-        <span class="n">listed</span> <span class="o">=</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">item_keys</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
-            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">item_keys</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">duplicates</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="k">raise</span> <span class="n">DuplicateCitationKeyError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Zotero items share a citation key (</span><span class="si">{</span><span class="n">describe_duplicates</span><span class="p">(</span><span class="n">duplicates</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
         <span class="p">)</span>
-        <span class="k">raise</span> <span class="n">DuplicateCitationKeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Zotero items share a citation key (</span><span class="si">{</span><span class="n">listed</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">group</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">by_key</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+    <span class="k">return</span> <span class="n">index</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_enriched_manifest</span><span class="p">(</span>
@@ -391,7 +429,7 @@
         <span class="n">lib</span> <span class="o">=</span> <span class="n">ZoteroLibrary</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Backfill: scanning Zotero library </span><span class="si">%s</span><span class="s2"> ..."</span><span class="p">,</span> <span class="n">lib</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">library_id</span><span class="p">)</span>
         <span class="n">citation_index</span> <span class="o">=</span> <span class="n">build_citation_index</span><span class="p">(</span><span class="n">lib</span><span class="p">)</span>
-        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Backfill: indexed </span><span class="si">%d</span><span class="s2"> Zotero items"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">citation_index</span><span class="p">))</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Backfill: indexed </span><span class="si">%d</span><span class="s2"> top-level Zotero items"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">citation_index</span><span class="p">))</span>
 
     <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">KeyBackfillResult</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">artifact_dir</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()</span> <span class="k">if</span> <span class="n">is_citation_key_dir</span><span class="p">(</span><span class="n">p</span><span class="p">)):</span>

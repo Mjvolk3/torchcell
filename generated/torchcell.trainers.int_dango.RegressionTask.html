@@ -157,7 +157,13 @@
 <dd class="field-odd"><p><strong>batch</strong> – HeteroData batch containing perturbation information</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Tuple of (predictions, representations)</p>
+<dd class="field-even"><p>the model’s own outputs dict, unchanged
+(for <code class="docutils literal notranslate"><span class="pre">Dango</span></code>: <code class="docutils literal notranslate"><span class="pre">integrated_embeddings</span></code>, <code class="docutils literal notranslate"><span class="pre">reconstructions</span></code>,
+<code class="docutils literal notranslate"><span class="pre">network_embeddings</span></code>, <code class="docutils literal notranslate"><span class="pre">initial_embeddings</span></code>, <code class="docutils literal notranslate"><span class="pre">interaction_scores</span></code>),
+so one call feeds the loss, the metrics and every log of a step.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple of (predictions, outputs)</p>
 </dd>
 </dl>
 </dd></dl>
@@ -208,6 +214,9 @@
 <dt class="sig sig-object py" id="torchcell.trainers.int_dango.RegressionTask.configure_optimizers">
 <span class="sig-name descname"><span class="pre">configure_optimizers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">OptimizerLRSchedulerConfig</span></span></span><a class="reference internal" href="../_modules/torchcell/trainers/int_dango.html#RegressionTask.configure_optimizers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.trainers.int_dango.RegressionTask.configure_optimizers" title="Link to this definition"></a></dt>
 <dd><p>Build and return the optimizer and learning-rate scheduler.</p>
+<p>The ReduceLROnPlateau scheduler is built and registered, but this task uses
+manual optimization and never calls <code class="docutils literal notranslate"><span class="pre">lr_schedulers().step()</span></code>, so Lightning
+does not step it and the learning rate stays at its configured value.</p>
 </dd></dl>
 
 </dd></dl>

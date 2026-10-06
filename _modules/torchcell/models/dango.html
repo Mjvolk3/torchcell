@@ -135,6 +135,21 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.nn</span><span class="w"> </span><span class="kn">import</span> <span class="n">SAGEConv</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_scatter</span><span class="w"> </span><span class="kn">import</span> <span class="n">scatter_mean</span>
 
+<span class="c1"># Zhang et al. (2020): lambda 0.1 where zero entries fell by more than 1% from STRING</span>
+<span class="c1"># v9.1 to v11.0 (neighborhood, coexpression, experimental), else 1.0.</span>
+<span class="n">PAPER_LAMBDA_VALUES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">version</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">network</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="n">value</span>
+    <span class="k">for</span> <span class="n">version</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"string9_1"</span><span class="p">,</span> <span class="s2">"string11_0"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">network</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s2">"neighborhood"</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"fusion"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"cooccurence"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"coexpression"</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"experimental"</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">"database"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+    <span class="p">)</span>
+<span class="p">}</span>
+
 
 <div class="viewcode-block" id="DangoPreTrain">
 <a class="viewcode-back" href="../../../generated/torchcell.models.dango.DangoPreTrain.html#torchcell.models.dango.DangoPreTrain">[docs]</a>
@@ -175,9 +190,6 @@
         <span class="c1"># Reconstruction layers for each network</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">recon_layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleDict</span><span class="p">()</span>
 
-        <span class="c1"># Lambda values for weighted MSE</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_values</span> <span class="o">=</span> <span class="p">{}</span>
-
         <span class="c1"># Initialize GNN layers and reconstruction layers for each edge type</span>
         <span class="k">for</span> <span class="n">edge_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edge_types</span><span class="p">:</span>
             <span class="c1"># First layer GNN</span>
@@ -193,28 +205,33 @@
             <span class="c1"># Reconstruction layer to predict adjacency matrix row</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">recon_layers</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_channels</span><span class="p">,</span> <span class="n">gene_num</span><span class="p">)</span>
 
-            <span class="c1"># Set lambda value for weighted MSE based on network type</span>
-            <span class="c1"># For STRING v9.1 networks (as in the paper)</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="n">edge_type</span> <span class="o">==</span> <span class="s2">"string9_1_neighborhood"</span>
-                <span class="ow">or</span> <span class="n">edge_type</span> <span class="o">==</span> <span class="s2">"string11_0_neighborhood"</span>
-            <span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">lambda_values</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># &gt; 1% zeros decreased</span>
-            <span class="k">elif</span> <span class="p">(</span>
-                <span class="n">edge_type</span> <span class="o">==</span> <span class="s2">"string9_1_coexpression"</span>
-                <span class="ow">or</span> <span class="n">edge_type</span> <span class="o">==</span> <span class="s2">"string11_0_coexpression"</span>
-            <span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">lambda_values</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># &gt; 1% zeros decreased</span>
-            <span class="k">elif</span> <span class="p">(</span>
-                <span class="n">edge_type</span> <span class="o">==</span> <span class="s2">"string9_1_experimental"</span>
-                <span class="ow">or</span> <span class="n">edge_type</span> <span class="o">==</span> <span class="s2">"string11_0_experimental"</span>
-            <span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">lambda_values</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># &gt; 1% zeros decreased</span>
-            <span class="k">else</span><span class="p">:</span>  <span class="c1"># fusion, cooccurence, database (≤ 1% zeros decreased)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">lambda_values</span><span class="p">[</span><span class="n">edge_type</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
-
         <span class="c1"># Initialize weights</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reset_parameters</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">lambda_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Paper lambda (weight of the zero entries in the weighted MSE) per network.</span>
+
+<span class="sd">        Zhang et al. (2020) set lambda = 0.1 for the networks whose zero entries fell</span>
+<span class="sd">        by more than 1% from STRING v9.1 to v11.0 (neighborhood, coexpression,</span>
+<span class="sd">        experimental) and 1.0 for the rest (fusion, cooccurence, database). The table</span>
+<span class="sd">        is defined only for those six STRING v9.1 and v11.0 network names; any other</span>
+<span class="sd">        name (for example a string12_0 network) is refused rather than given 1.0.</span>
+<span class="sd">        The 005/006 training scripts do not read this table: they pass</span>
+<span class="sd">        ``determine_lambda_values()`` to ``DangoLoss``.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: if an edge type is not a STRING v9.1 or v11.0 network name.</span>
+<span class="sd">        """</span>
+        <span class="n">unknown</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edge_types</span> <span class="k">if</span> <span class="n">e</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">PAPER_LAMBDA_VALUES</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"DangoPreTrain.lambda_values is defined only for the STRING v9.1 and "</span>
+                <span class="sa">f</span><span class="s2">"v11.0 networks </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">PAPER_LAMBDA_VALUES</span><span class="p">)</span><span class="si">}</span><span class="s2">; no paper lambda for "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">unknown</span><span class="si">}</span><span class="s2">. Pass lambda values to DangoLoss explicitly (the 005/006 "</span>
+                <span class="sa">f</span><span class="s2">"scripts use determine_lambda_values())."</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">e</span><span class="p">:</span> <span class="n">PAPER_LAMBDA_VALUES</span><span class="p">[</span><span class="n">e</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">edge_types</span><span class="p">}</span>
 
 <div class="viewcode-block" id="DangoPreTrain.reset_parameters">
 <a class="viewcode-back" href="../../../generated/torchcell.models.dango.DangoPreTrain.html#torchcell.models.dango.DangoPreTrain.reset_parameters">[docs]</a>
@@ -423,24 +440,43 @@
 <div class="viewcode-block" id="HyperSAGNN.forward">
 <a class="viewcode-back" href="../../../generated/torchcell.models.dango.HyperSAGNN.html#torchcell.models.dango.HyperSAGNN.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">batch_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">batch_indices</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">num_sets</span><span class="p">:</span> <span class="nb">int</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Forward pass processing all nodes at once with masked attention.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            embeddings: Tensor of shape [total_nodes, hidden_channels]</span>
-<span class="sd">            batch_indices: Tensor of shape [total_nodes] indicating set membership</span>
+<span class="sd">            batch_indices: Tensor of shape [total_nodes] indicating set membership,</span>
+<span class="sd">                with ids in [0, num_sets)</span>
+<span class="sd">            num_sets: Number of sets (genotypes) in the batch; the output has one</span>
+<span class="sd">                score per set, ordered by set id.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Predicted interaction scores with shape [num_batches]</span>
+<span class="sd">            Predicted interaction scores with shape [num_sets]</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: if a set id is outside [0, num_sets), or a set has no node.</span>
+<span class="sd">                A set with no perturbed gene has nothing to attend over and no</span>
+<span class="sd">                interaction score, so it is refused rather than scored 0.</span>
 <span class="sd">        """</span>
         <span class="n">device</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">device</span>
         <span class="n">total_nodes</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-        <span class="c1"># Get unique batches for score aggregation</span>
-        <span class="n">unique_batches</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">batch_indices</span><span class="p">)</span>
-        <span class="n">num_batches</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_batches</span><span class="p">)</span>
+        <span class="n">out_of_range</span> <span class="o">=</span> <span class="n">batch_indices</span><span class="p">[(</span><span class="n">batch_indices</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">batch_indices</span> <span class="o">&gt;=</span> <span class="n">num_sets</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">out_of_range</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"HyperSAGNN got set ids </span><span class="si">{</span><span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">out_of_range</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s2"> for "</span>
+                <span class="sa">f</span><span class="s2">"num_sets=</span><span class="si">{</span><span class="n">num_sets</span><span class="si">}</span><span class="s2">; set ids must lie in [0, </span><span class="si">{</span><span class="n">num_sets</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+        <span class="n">set_sizes</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">batch_indices</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="n">num_sets</span><span class="p">)</span>
+        <span class="n">empty_sets</span> <span class="o">=</span> <span class="p">(</span><span class="n">set_sizes</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">empty_sets</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"HyperSAGNN needs at least one gene per set: sets </span><span class="si">{</span><span class="n">empty_sets</span><span class="si">}</span><span class="s2"> of "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">num_sets</span><span class="si">}</span><span class="s2"> have no perturbation indices, and a genotype with no "</span>
+                <span class="sa">f</span><span class="s2">"perturbed gene has no interaction score to predict"</span>
+            <span class="p">)</span>
 
         <span class="c1"># Compute static embeddings for all nodes</span>
         <span class="n">static_embeddings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">static_embedding</span><span class="p">(</span><span class="n">embeddings</span><span class="p">)</span>
@@ -483,7 +519,7 @@
 
         <span class="c1"># Aggregate scores for each set using scatter_mean</span>
         <span class="n">interaction_scores</span> <span class="o">=</span> <span class="n">scatter_mean</span><span class="p">(</span>
-            <span class="n">node_scores</span><span class="p">,</span> <span class="n">batch_indices</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dim_size</span><span class="o">=</span><span class="n">num_batches</span>
+            <span class="n">node_scores</span><span class="p">,</span> <span class="n">batch_indices</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dim_size</span><span class="o">=</span><span class="n">num_sets</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">interaction_scores</span><span class="p">)</span></div>
@@ -636,9 +672,29 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Tuple containing:</span>
-<span class="sd">                - predictions: Predicted interaction scores</span>
+<span class="sd">                - predictions: Predicted interaction scores, one per genotype</span>
+<span class="sd">                  (``batch.num_graphs``)</span>
 <span class="sd">                - outputs: Dictionary containing node embeddings and intermediate values</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: if a genotype lists the same gene twice (the HyperSAGNN self</span>
+<span class="sd">                mask is positional, so a duplicate would attend to its own copy), or</span>
+<span class="sd">                if a genotype has no perturbed gene (see ``HyperSAGNN.forward``).</span>
 <span class="sd">        """</span>
+        <span class="n">perturbation_indices</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices</span>
+        <span class="n">set_ids</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices_batch</span>
+        <span class="n">gene_num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pretrain_model</span><span class="o">.</span><span class="n">gene_num</span>
+        <span class="n">keys</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span>
+            <span class="n">set_ids</span> <span class="o">*</span> <span class="n">gene_num</span> <span class="o">+</span> <span class="n">perturbation_indices</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="n">repeated</span> <span class="o">=</span> <span class="n">keys</span><span class="p">[</span><span class="n">counts</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">repeated</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">pairs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span> <span class="o">//</span> <span class="n">gene_num</span><span class="p">,</span> <span class="n">k</span> <span class="o">%</span> <span class="n">gene_num</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">repeated</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Dango needs distinct genes within a genotype; (genotype, gene index) "</span>
+                <span class="sa">f</span><span class="s2">"pairs </span><span class="si">{</span><span class="n">pairs</span><span class="si">}</span><span class="s2"> appear more than once"</span>
+            <span class="p">)</span>
+
         <span class="c1"># Get embeddings from pre-training component</span>
         <span class="n">pretrain_outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pretrain_model</span><span class="p">(</span><span class="n">cell_graph</span><span class="p">)</span>
 
@@ -657,11 +713,11 @@
         <span class="p">}</span>
 
         <span class="c1"># Directly index into integrated_embeddings to get perturbed gene embeddings</span>
-        <span class="n">perturbed_embeddings</span> <span class="o">=</span> <span class="n">integrated_embeddings</span><span class="p">[</span><span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices</span><span class="p">]</span>
+        <span class="n">perturbed_embeddings</span> <span class="o">=</span> <span class="n">integrated_embeddings</span><span class="p">[</span><span class="n">perturbation_indices</span><span class="p">]</span>
 
-        <span class="c1"># Pass the perturbed embeddings and batch indices to HyperSAGNN</span>
+        <span class="c1"># One score per genotype in the batch, ordered by genotype</span>
         <span class="n">interaction_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hyper_sagnn</span><span class="p">(</span>
-            <span class="n">perturbed_embeddings</span><span class="p">,</span> <span class="n">batch</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">perturbation_indices_batch</span>
+            <span class="n">perturbed_embeddings</span><span class="p">,</span> <span class="n">set_ids</span><span class="p">,</span> <span class="n">num_sets</span><span class="o">=</span><span class="n">batch</span><span class="o">.</span><span class="n">num_graphs</span>
         <span class="p">)</span>
 
         <span class="c1"># Store results in the outputs dictionary</span>

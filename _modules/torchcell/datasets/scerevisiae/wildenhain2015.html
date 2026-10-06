@@ -118,38 +118,58 @@
 <span class="c1"># [[torchcell.datasets.scerevisiae.wildenhain2015]]</span>
 <span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/wildenhain2015</span>
 <span class="c1"># Test file: tests/torchcell/datasets/scerevisiae/test_wildenhain2015.py</span>
-<span class="sd">"""Wildenhain 2015 chemical-genetic matrix (CGM): env x geno -&gt; z-score response.</span>
+<span class="sd">"""Wildenhain 2015/2016 chemical-genetic matrix (CGM): env x geno -&gt; z-score response.</span>
 
-<span class="sd">Wildenhain et al. 2015 (Cell Systems, doi:10.1016/j.cels.2015.12.003) screened a panel of</span>
-<span class="sd">haploid non-essential S. cerevisiae deletion strains (Euroscarf collection, isogenic to</span>
-<span class="sd">BY4741) against thousands of compounds from four chemical libraries at a single 20 uM</span>
-<span class="sd">screening concentration, reading out growth inhibition as a normalized-OD600 Z-score. This</span>
-<span class="sd">loader builds ONLY the chemical-genetic matrix (strain x compound -&gt; z-score); the separate</span>
-<span class="sd">128x128 cryptagen chemical-chemical synergy layer is out of scope.</span>
+<span class="sd">Wildenhain et al. 2015 (Cell Systems, doi:10.1016/j.cels.2015.12.003) screened 4,915</span>
+<span class="sd">compounds from four libraries against 195 sentinel deletion strains at a single 20 uM</span>
+<span class="sd">screening concentration, reading out growth inhibition as a normalized-OD600 Z-score. The</span>
+<span class="sd">RELEASED data (PubChem AID 1159580) is the EXTENDED CGM of the 2016 Scientific Data</span>
+<span class="sd">descriptor (Wildenhain et al. 2016, doi:10.1038/sdata.2016.95, mirrored as</span>
+<span class="sd">``wildenhainSystematicChemicalgeneticChemicalchemical2016``): "the number of sentinels has</span>
+<span class="sd">been increased from 195 to 242 yeast deletion strains" and a fifth library (Bioactive 2,</span>
+<span class="sd">892 compounds) was added, giving "5,518 unique compounds, 242 sentinel strains and</span>
+<span class="sd">duplicate measurements for 492,126 pairwise chemical-gene interaction tests"; its Data</span>
+<span class="sd">citation 1 is "NCBI PubChem BioAssay 1159580". So 242 is not an unexplained excess over</span>
+<span class="sd">195: the 47 extra strains are the 2016 extension. The 2016 paper is the methods source for</span>
+<span class="sd">the protocol values below (temperature, medium, culture format, DMSO fraction, the BY4741</span>
+<span class="sd">genotype, the N(1, IQR) z rule). This loader builds ONLY the CGM; the 128x128 cryptagen</span>
+<span class="sd">chemical-chemical layer is out of scope.</span>
 
-<span class="sd">Every screened strain is one haploid gene replacement in BY4741 (NOT a HIP/HOP engineered</span>
-<span class="sd">heterozygote), so there is no engineered-dosage complication. The paper's "195 sentinel</span>
-<span class="sd">strains" is a dataset-level selection note whose roster is in the unmirrored Table S3; the</span>
-<span class="sd">RELEASED data covers 242 distinct systematic ORFs, all current R64 genes, and all 242 are</span>
-<span class="sd">served.</span>
+<span class="sd">GENOTYPES (#504). Both papers call every sentinel a Euroscarf deletion strain isogenic to</span>
+<span class="sd">BY4741, whose genotype the 2016 paper states ("MATa his3Δ1 leu2Δ0 met15Δ0 ura3Δ0"); that</span>
+<span class="sd">background rides on the reference's ``StrainReferenceGenome``. Each record's genotype is:</span>
 
-<span class="sd">DATA SOURCE. PubChem BioAssay AID 1159580 (the paper's ACCESSION NUMBERS section; the</span>
-<span class="sd">chemgrid.org/cgm portal is an interactive PHP site with no bulk export). Two artifacts are</span>
-<span class="sd">mirrored and sha256-pinned: the per-AID datapoint export ``1159580.csv.gz``, read out of the</span>
-<span class="sd">byte-stable NCBI FTP range archive with the container's OWN sha256 asserted first</span>
-<span class="sd">(``zip_member``), and the AID's PUG-REST description JSON, which is the only source for the</span>
-<span class="sd">screening protocol's medium, temperature, incubation, replicate structure and column</span>
-<span class="sd">definitions. Both are read from the raw mirror at build time; the URLs are retrieval</span>
-<span class="sd">metadata, not live dependencies.</span>
+<span class="sd">- a ``BarcodedKanMxDeletionPerturbation`` (cassette kanMX4, sourced to Giaever 2014; the</span>
+<span class="sd">  release publishes no barcode, a typed gap) for 209 of the 242 released ORFs;</span>
+<span class="sd">- a ``ConditionalAllelePerturbation`` with ``allele_class=None`` and typed gaps naming Sci</span>
+<span class="sd">  Data Table 1 / Cell Systems Table S3 (not mirrored) for the 33 released ORFs that are</span>
+<span class="sd">  SGD-essential (``ESSENTIAL_GENE_ORFS``): a haploid kanMX null of an essential gene is</span>
+<span class="sd">  not viable, so these strains carry a conditional allele whose identity the release does</span>
+<span class="sd">  not carry. They are real measurements, so they are emitted with the gap, not dropped;</span>
+<span class="sd">- the EMPTY genotype (the BY4741 background alone) for the released ``wild type`` screen.</span>
+
+<span class="sd">The released rows whose ``orf`` is not a systematic name are strain screens, not</span>
+<span class="sd">controls: ``NA/NNK1`` is the NNK1 (YKL171W) strain and is mapped to it;</span>
+<span class="sd">``NULL/wild type`` is the BY4741 screen; ``NA/TSCII``, ``NULL/YGL11`` and ``NULL/wtn01``</span>
+<span class="sd">name no resolvable strain and are held in the ledger under</span>
+<span class="sd">``strain_label_unresolved`` until Table 1 is mirrored.</span>
+
+<span class="sd">DATA SOURCE. PubChem BioAssay AID 1159580 (the chemgrid.org/cgm portal is an interactive</span>
+<span class="sd">PHP site with no bulk export). Two artifacts are mirrored and sha256-pinned: the per-AID</span>
+<span class="sd">datapoint export ``1159580.csv.gz``, read out of the byte-stable NCBI FTP range archive with</span>
+<span class="sd">the container's OWN sha256 asserted first (``zip_member``), and the AID's PUG-REST</span>
+<span class="sd">description JSON (column definitions, the protocol as submitted). Both are read from the raw</span>
+<span class="sd">mirror at build time; the URLs are retrieval metadata, not live dependencies.</span>
 
 <span class="sd">WHAT THE NUMBER IS. The stored response is the released per-screen ``z_score``, averaged</span>
 <span class="sd">over the screens of a (strain, compound) cell exactly as the paper constructs the matrix</span>
-<span class="sd">("Z scores were calculated and averaged for the replicate screens"). The z-score is</span>
-<span class="sd">standardized WITHIN a screen ("Z-Score calculated based on kernel density distribution from</span>
-<span class="sd">normalized average reads per screen"), so the reference baseline of 0 is that screen's own</span>
-<span class="sd">normalized-growth center rather than a measured wild-type value, and the reference</span>
-<span class="sd">environment is the compound's own environment. The released ``sym == 'wild type'`` rows are</span>
-<span class="sd">strain measurements, not that baseline, and are not ingested (see the dendron note).</span>
+<span class="sd">("Z scores were calculated and averaged for the replicate screens"). The z is computed by</span>
+<span class="sd">"fitting a normal distribution with N(1,IQR)" to the median-normalized OD of ONE strain's</span>
+<span class="sd">screen, so it is IQR-scaled and its 0 is that SAME strain's plate-median growth, not</span>
+<span class="sd">BY4741 under the compound. The reference therefore states the vehicle (no-compound)</span>
+<span class="sd">environment with z = 0; ``ExperimentReference`` has no genotype slot, so "the same</span>
+<span class="sd">deletion strain" lives in the reference's ``units`` text (the schema gap is recorded in the</span>
+<span class="sd">dendron note).</span>
 
 <span class="sd">SCREEN COUNTING (measured, and it corrects the previous build). A (strain, compound) cell</span>
 <span class="sd">recurs across the four libraries, and the export ALSO re-emits the same datapoint under two</span>
@@ -166,10 +186,11 @@
 <span class="sd">single-screen cells. The previous build's ``n_samples = 2 x rows`` counted OD reads of</span>
 <span class="sd">re-exported duplicates.</span>
 
-<span class="sd">RECORDS DROPPED (rule + count in ``preprocess/dropped_records.json``): cells whose compound</span>
-<span class="sd">carries no structure identifier (the 5 SID-only compounds, which have no CID and no SMILES).</span>
-<span class="sd">Everything else is served: all 5,173 CIDs resolve to an InChIKey and a canonical PubChem</span>
-<span class="sd">name through the pinned compound-identity table.</span>
+<span class="sd">RECORDS DROPPED (rule + count in ``preprocess/dropped_records.json``, applied in this</span>
+<span class="sd">order): ``strain_label_unresolved`` (the TSCII, YGL11 and wtn01 screens), then</span>
+<span class="sd">``compound_without_a_structure_identifier`` (the 5 SID-only compounds, which have no CID and</span>
+<span class="sd">no SMILES). Everything else is served: all 5,173 CIDs resolve to an InChIKey and a</span>
+<span class="sd">canonical PubChem name through the pinned compound-identity table.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -204,26 +225,43 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SC</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AssayType</span><span class="p">,</span>
+    <span class="n">BackgroundAllele</span><span class="p">,</span>
     <span class="n">BarcodedKanMxDeletionPerturbation</span><span class="p">,</span>
     <span class="n">Compound</span><span class="p">,</span>
     <span class="n">Concentration</span><span class="p">,</span>
     <span class="n">ConcentrationUnit</span><span class="p">,</span>
-    <span class="n">Environment</span><span class="p">,</span>
-    <span class="n">EnvironmentResponseExperiment</span><span class="p">,</span>
-    <span class="n">EnvironmentResponseExperimentReference</span><span class="p">,</span>
+    <span class="n">ConditionalAllelePerturbation</span><span class="p">,</span>
+    <span class="n">CultureEnvironment</span><span class="p">,</span>
+    <span class="n">CultureFormat</span><span class="p">,</span>
+    <span class="n">EndpointRule</span><span class="p">,</span>
+    <span class="n">EnvironmentPerturbationType</span><span class="p">,</span>
     <span class="n">EnvironmentResponsePhenotype</span><span class="p">,</span>
     <span class="n">Experiment</span><span class="p">,</span>
     <span class="n">ExperimentReference</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
     <span class="n">MeasurementType</span><span class="p">,</span>
+    <span class="n">Media</span><span class="p">,</span>
+    <span class="n">MediaComponent</span><span class="p">,</span>
+    <span class="n">PreCulture</span><span class="p">,</span>
+    <span class="n">PreCultureSource</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
-    <span class="n">ReferenceGenome</span><span class="p">,</span>
     <span class="n">ResponseCategory</span><span class="p">,</span>
     <span class="n">SampleUnit</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
     <span class="n">Solvent</span><span class="p">,</span>
+    <span class="n">StrainBackground</span><span class="p">,</span>
+    <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">,</span>
+    <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">,</span>
+    <span class="n">StrainReferenceGenome</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
     <span class="n">UncertaintyType</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.strain_background</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BRACHMANN_1998</span><span class="p">,</span>
+    <span class="n">GIAEVER_2002</span><span class="p">,</span>
+    <span class="n">KANMX4_CASSETTE</span><span class="p">,</span>
+    <span class="n">pending_source_review</span><span class="p">,</span>
+    <span class="n">standard_background</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.gene_name_reconcile</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_genome</span>
@@ -272,6 +310,13 @@
 <span class="n">PAPER_MD</span> <span class="o">=</span> <span class="s2">"paper.md"</span>
 <span class="n">PAPER_MD_SHA256</span> <span class="o">=</span> <span class="s2">"f46409eb8f23412c9c1015d0f8f5bb581bfddfe2796d319d407585e23c757ac2"</span>
 
+<span class="c1">#: The 2016 Scientific Data descriptor of the EXTENDED CGM, which is what AID 1159580</span>
+<span class="c1">#: releases (its Data citation 1). Mirrored in the library; the protocol values below are</span>
+<span class="c1">#: quoted from its OCR.</span>
+<span class="n">SCIDATA_CITATION_KEY</span> <span class="o">=</span> <span class="s2">"wildenhainSystematicChemicalgeneticChemicalchemical2016"</span>
+<span class="n">SCIDATA_DOI</span> <span class="o">=</span> <span class="s2">"10.1038/sdata.2016.95"</span>
+<span class="n">SCIDATA_MD_SHA256</span> <span class="o">=</span> <span class="s2">"89ff4d9bf1d31719ab15c18ab7aca0b7caf10f55c7c239c1b021908c95439e33"</span>
+
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_aid</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Bind a value to a verbatim quote in the sha256-pinned AID 1159580 description."""</span>
@@ -306,46 +351,153 @@
     <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_scidata</span><span class="p">(</span>
+    <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Bind a value to a verbatim quote in the sha256-pinned 2016 Sci Data OCR mirror."""</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="n">PAPER_MD</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">SCIDATA_CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">SCIDATA_MD_SHA256</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">"MinerU OCR of the publisher PDF (torchcell-library mirror)"</span><span class="p">,</span>
+            <span class="n">page</span><span class="o">=</span><span class="sa">f</span><span class="s2">"paper.md line </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># What the release is (2016 Sci Data extended CGM)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">EXTENDED_RELEASE</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
+    <span class="mi">492126</span><span class="p">,</span>
+    <span class="s2">"This extended CGM dataset contains data for 5,518 unique compounds, 242 sentinel "</span>
+    <span class="s2">"strains and duplicate measurements for 492,126 pairwise chemical-gene interaction "</span>
+    <span class="s2">"tests"</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"23"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the released 1159580.csv.gz has exactly 492,126 data rows, 5,518 SIDs and 242 "</span>
+    <span class="s2">"systematic ORFs (experiments/036-dataset-fixes-before-kg-build/scripts/"</span>
+    <span class="s2">"wildenhain2015_inputs.py); the paper's Data citation 1 is 'NCBI PubChem BioAssay "</span>
+    <span class="s2">"1159580 (2015).' (line 176)"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">SENTINEL_EXTENSION</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
+    <span class="mi">242</span><span class="p">,</span>
+    <span class="s2">"the number of sentinels has been increased from 195 to 242 yeast deletion strains"</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"23"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the 2015 Cell Systems paper's '195 non-essential deletion strains' is the "</span>
+    <span class="s2">"original CGM; the 47 added strains and the Bioactive 2 library are the 2016 "</span>
+    <span class="s2">"extension, so serving 242 ORFs is the release, not an excess"</span><span class="p">,</span>
+<span class="p">)</span>
+
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Sourced environment + phenotype constants</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
-<span class="n">MEDIUM</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+<span class="n">MEDIUM</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
     <span class="s2">"SC"</span><span class="p">,</span>
-    <span class="s2">"All strains were grown and screened in synthetic complete (SC) medium with 2% "</span>
-    <span class="s2">"glucose."</span><span class="p">,</span>
-    <span class="n">note</span><span class="o">=</span><span class="s2">"the paper's own medium sentence has 'All fungal species' as its subject, "</span>
-    <span class="s2">"which in context follows the list of fungal PATHOGEN isolates; the AID protocol "</span>
-    <span class="s2">"says 'All strains', which is unambiguous for the S. cerevisiae screens. The shared "</span>
-    <span class="s2">"SC library object carries D-glucose at 20 g/L, i.e. the same 2% w/v"</span><span class="p">,</span>
+    <span class="s2">"All screens were conducted in synthetic complete (SC) medium with $2 </span><span class="se">\\</span><span class="s2">%$ glucose."</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"54"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the CGM screens' own medium sentence. The 2015 paper's medium sentence has "</span>
+    <span class="s2">"'All fungal species' as its subject (the pathogen isolates), and the AID protocol "</span>
+    <span class="s2">"says 'All strains were grown and screened in synthetic complete (SC) medium with 2% "</span>
+    <span class="s2">"glucose.'; neither paper gives the lab's SC amino-acid recipe, so the components of "</span>
+    <span class="s2">"WILDENHAIN_SC are the shared SC composition, unsourced for this study"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">TEMPERATURE_C</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+<span class="n">TEMPERATURE_C</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
     <span class="mf">30.0</span><span class="p">,</span>
-    <span class="s2">"Plates were incubated at 30 C without shaking for approximately 18 h or until "</span>
-    <span class="s2">"culture saturation was achieved for the solvent controls."</span><span class="p">,</span>
-    <span class="n">note</span><span class="o">=</span><span class="s2">"the PAPER states no incubation temperature anywhere (its only temperature is "</span>
-    <span class="s2">"37 C, for HeLa/HEK cells), so this value exists only because the AID description "</span>
-    <span class="s2">"is now mirrored and hashed; it is sourced, not a default"</span><span class="p">,</span>
+    <span class="s2">"All plates were incubated at $3 0 ~ ^ { </span><span class="se">\\</span><span class="s2">circ } </span><span class="se">\\</span><span class="s2">mathrm { C }$ without shaking for "</span>
+    <span class="s2">"approximately $1 8 </span><span class="se">\\</span><span class="s2">mathrm { { h } }$ or until solvent-treated control cultures "</span>
+    <span class="s2">"were saturated."</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"54"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the 2015 Cell Systems paper states no incubation temperature for the CGM; the "</span>
+    <span class="s2">"AID protocol says the same 30 C"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">DURATION_HOURS</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+<span class="n">DURATION_HOURS</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
     <span class="mf">18.0</span><span class="p">,</span>
-    <span class="s2">"Plates were incubated at 30 C without shaking for approximately 18 h or until "</span>
-    <span class="s2">"culture saturation was achieved for the solvent controls."</span><span class="p">,</span>
+    <span class="s2">"All plates were incubated at $3 0 ~ ^ { </span><span class="se">\\</span><span class="s2">circ } </span><span class="se">\\</span><span class="s2">mathrm { C }$ without shaking for "</span>
+    <span class="s2">"approximately $1 8 </span><span class="se">\\</span><span class="s2">mathrm { { h } }$ or until solvent-treated control cultures "</span>
+    <span class="s2">"were saturated."</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"54"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"approximate: the read was taken when the solvent controls saturated "</span>
+    <span class="s2">"(ENDPOINT), so 18 h is the typical, not a fixed, duration"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">ENDPOINT</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
+    <span class="n">EndpointRule</span><span class="o">.</span><span class="n">until_control_saturation</span><span class="p">,</span>
+    <span class="s2">"or until solvent-treated control cultures were saturated."</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"54"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">STATIC_INCUBATION_RPM</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
+    <span class="mf">0.0</span><span class="p">,</span>
+    <span class="s2">"All plates were incubated at $3 0 ~ ^ { </span><span class="se">\\</span><span class="s2">circ } </span><span class="se">\\</span><span class="s2">mathrm { C }$ without shaking"</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"54"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"static during growth; the cultures were resuspended by shaking only before "</span>
+    <span class="s2">"the OD600 read"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">CULTURE_VESSEL</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
+    <span class="s2">"96-well plate"</span><span class="p">,</span>
+    <span class="s2">"in a screening volume of $1 0 0 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { l }$ in 96 well plates."</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"54"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">WORKING_VOLUME_UL</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
+    <span class="mf">100.0</span><span class="p">,</span>
+    <span class="s2">"in a screening volume of $1 0 0 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { l }$ in 96 well plates."</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"54"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the seeded volume BEFORE the 2 uL compound addition (102 uL after it)"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">INOCULUM_CELLS</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
+    <span class="mf">50000.0</span><span class="p">,</span>
+    <span class="s2">"were seeded at 50,000 cells per well from fresh overnight cultures"</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"54"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">PRE_CULTURE_SOURCE</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
+    <span class="n">PreCultureSource</span><span class="o">.</span><span class="n">overnight_culture</span><span class="p">,</span>
+    <span class="s2">"were seeded at 50,000 cells per well from fresh overnight cultures"</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"54"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the overnight culture's medium, duration and phase are not stated"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">SCREEN_CONCENTRATION_UM</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="mf">20.0</span><span class="p">,</span>
     <span class="s2">"We carried out over 600 growth-based screens in duplicate at a compound "</span>
     <span class="s2">"concentration of $2 0 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathsf { M }$ ."</span><span class="p">,</span>
-    <span class="n">note</span><span class="o">=</span><span class="s2">"the AID protocol states the same dose as a preparation: 'Strains were seeded "</span>
-    <span class="s2">"at 50,000 cells per well in a volume of 100 L in 96 well plates followed by "</span>
-    <span class="s2">"addition of 2 L of 1 mM compound stock for final concentration of 20 M.'"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the 2016 paper states it as a preparation: '$2 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { l }$ of $1 "</span>
+    <span class="s2">"</span><span class="se">\\</span><span class="s2">mathrm { m M }$ compound stock was added to each well for a final compound "</span>
+    <span class="s2">"concentration of $2 0 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M }$ .' (paper.md line 54). 20 uM is the "</span>
+    <span class="s2">"NOMINAL dose (2 uL x 1 mM / 100 uL); in the 102 uL after addition it is 19.6 uM"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">SOLVENT</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+<span class="n">SOLVENT</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
     <span class="s2">"DMSO"</span><span class="p">,</span>
-    <span class="s2">"DMSO solvent only controls and 10 uM cycloheximide positive controls were seeded "</span>
-    <span class="s2">"in columns 1 and 12 of each assay plate."</span><span class="p">,</span>
-    <span class="n">note</span><span class="o">=</span><span class="s2">"the vehicle is sourced; its FINAL fraction in the well is not released (the "</span>
-    <span class="s2">"stock's own solvent fraction is unstated), so Solvent.percent stays unset rather "</span>
-    <span class="s2">"than being back-computed from the 2 uL into 100 uL dilution"</span><span class="p">,</span>
+    <span class="s2">"compound library stocks of $1 0 </span><span class="se">\\</span><span class="s2">mathrm { m M }$ were diluted to $1 </span><span class="se">\\</span><span class="s2">mathrm { m M "</span>
+    <span class="s2">"}$ working stocks in DMSO in 96 well plates."</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"46"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">DMSO_WORKING_STOCK_UL</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
+    <span class="mf">2.0</span><span class="p">,</span>
+    <span class="s2">"$2 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { l }$ of $1 </span><span class="se">\\</span><span class="s2">mathrm { m M }$ compound stock was added to each "</span>
+    <span class="s2">"well for a final compound concentration of $2 0 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M }$ ."</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"54"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1">#: Final DMSO fraction, % v/v, derived from the two quotes above and WORKING_VOLUME_UL:</span>
+<span class="c1">#: 2 uL of working stock into a 100 uL culture is 2 / (100 + 2) = 0.019608 of the well</span>
+<span class="c1">#: volume, i.e. 1.96 % v/v (rounded to the two decimals the inputs support).</span>
+<span class="n">DMSO_PERCENT_V_V</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span>
+    <span class="mf">100.0</span>
+    <span class="o">*</span> <span class="n">DMSO_WORKING_STOCK_UL</span><span class="o">.</span><span class="n">value</span>
+    <span class="o">/</span> <span class="p">(</span><span class="n">WORKING_VOLUME_UL</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="n">DMSO_WORKING_STOCK_UL</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+    <span class="mi">2</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">SOLVENT_PERCENT</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
+    <span class="n">DMSO_PERCENT_V_V</span><span class="p">,</span>
+    <span class="s2">"$2 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { l }$ of $1 </span><span class="se">\\</span><span class="s2">mathrm { m M }$ compound stock was added to each "</span>
+    <span class="s2">"well for a final compound concentration of $2 0 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { M }$ ."</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"54"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"derived: 100 x 2 uL / (100 uL + 2 uL) = 1.96 % v/v, with the 100 uL from "</span>
+    <span class="s2">"'in a screening volume of $1 0 0 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { l }$' (line 54) and the working "</span>
+    <span class="s2">"stock 'diluted to $1 </span><span class="se">\\</span><span class="s2">mathrm { m M }$ working stocks in DMSO' (line 46). The "</span>
+    <span class="s2">"derivation treats the 1 mM working stock as neat DMSO. Hypothesis (untested): the "</span>
+    <span class="s2">"10 mM library stocks are themselves in DMSO; the paper does not state their "</span>
+    <span class="s2">"solvent, and if they were aqueous the fraction would be 0.9 x 1.96 = 1.76 % v/v"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">ASSAY</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
     <span class="n">AssayType</span><span class="o">.</span><span class="n">liquid_od_growth</span><span class="p">,</span>
@@ -359,30 +511,67 @@
     <span class="s2">"already averages ('normalized average reads per screen'); the independent unit of "</span>
     <span class="s2">"replication is therefore the SCREEN, which is what n_samples counts"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">Z_SCORE_DEFINITION</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
+<span class="n">Z_SCORE_DEFINITION</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
     <span class="n">MeasurementType</span><span class="o">.</span><span class="n">z_score</span><span class="p">,</span>
-    <span class="s2">"Z-Score calculated based on kernel density distribution from normalized average "</span>
-    <span class="s2">"reads per screen"</span><span class="p">,</span>
-    <span class="n">note</span><span class="o">=</span><span class="s2">"standardized WITHIN a screen, so 0 is that screen's normalized-growth center; "</span>
-    <span class="s2">"the companion statement is 'Z-factors for growth inhibition were calculated using "</span>
-    <span class="s2">"the median and the interquartile range (IQR) by fitting a normal distribution with "</span>
-    <span class="s2">"N(1,IQR) to the experimental data.'"</span><span class="p">,</span>
+    <span class="s2">"Z-scores for growth inhibition were calculated based on the median and the "</span>
+    <span class="s2">"interquartile range (IQR) by fitting a normal distribution with $</span><span class="se">\\</span><span class="s2">mathrm { </span><span class="se">\\</span><span class="s2">Delta N "</span>
+    <span class="s2">"( 1 , I Q R ) }$ to the experimental data."</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"66"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the fit is to the median-normalized OD of ONE strain's screen ('Median-"</span>
+    <span class="s2">"normalization was applied to all plates and experiments.', line 65), so z = 0 is "</span>
+    <span class="s2">"that strain's plate-median growth and the scale is the IQR (about 1.35 SD of a "</span>
+    <span class="s2">"normal), not a unit variance; the paper adds 'This approach slightly underestimates "</span>
+    <span class="s2">"the significance of the Z-scores.' The AID column caption 'Z-Score calculated "</span>
+    <span class="s2">"based on kernel density distribution' does not describe this rule; the released z "</span>
+    <span class="s2">"is linear in the released normalized OD with zero crossing at 1.0 "</span>
+    <span class="s2">"(experiments/036-dataset-fixes-before-kg-build/scripts/wildenhain2015_inputs.py)"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">NORMALIZATION_BY_LIBRARY</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
+    <span class="s2">"LOWESS + plate median, or DMSO controls, by library"</span><span class="p">,</span>
+    <span class="s2">"For the seven Bioactive 1 screens with higher hit rates, and for all Bioactive 2 "</span>
+    <span class="s2">"screens, the data was not LOWESS corrected but was instead normalized to DMSO "</span>
+    <span class="s2">"controls."</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"64"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"every other screen was LOWESS-corrected ('LOWESS regression was used to "</span>
+    <span class="s2">"correct spatial effects on growth across all plates for all screens performed with "</span>
+    <span class="s2">"the LOPAC, Maybridge Hitskit 1000 and Spectrum Collection libraries, and for all "</span>
+    <span class="s2">"but seven screens with the Bioactive 1 library.', line 63). The release has no "</span>
+    <span class="s2">"library, screen or plate column, so the normalization of a given cell's screens is "</span>
+    <span class="s2">"not recoverable; each record carries a typed gap on screen_id saying so"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">Z_AVERAGED</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="s2">"mean over the replicate screens"</span><span class="p">,</span>
     <span class="s2">"Z scores were calculated and averaged for the replicate screens."</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">COLLECTION</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
-    <span class="s2">"Euroscarf deletion collection"</span><span class="p">,</span>
-    <span class="s2">"All S. cerevisiae deletion strains were obtained from the Euroscarf deletion "</span>
-    <span class="s2">"collection."</span><span class="p">,</span>
-    <span class="n">note</span><span class="o">=</span><span class="s2">"the paper says the same: 'S. cerevisiae deletion strains were obtained from "</span>
-    <span class="s2">"the Euroscarf deletion set and are isogenic to BY4741 (Table S3).' Neither source "</span>
-    <span class="s2">"names the deletion cassette's marker; kanMX is a property of the Euroscarf MATa "</span>
-    <span class="s2">"collection sourced to Winzeler 1999 / Giaever 2002, which are not mirrored"</span><span class="p">,</span>
+<span class="n">BY4741_GENOTYPE</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
+    <span class="s2">"BY4741"</span><span class="p">,</span>
+    <span class="s2">"were obtained from the Euroscarf deletion collection and are isogenic to BY4741, "</span>
+    <span class="s2">"which has the genotype MATa his3Δ1 leu2Δ0 met15Δ0 ura3Δ0."</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"50"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"sources the strain name, MATa, haploidy and the four allele designations. "</span>
+    <span class="s2">"What each designation physically is (his3Δ1 an internal deletion, the Δ0 alleles "</span>
+    <span class="s2">"full ORF deletions) is the literature-standard reading from Brachmann 1998, not "</span>
+    <span class="s2">"mirrored, so each allele also carries a pending-review gap on deleted_span. The AID "</span>
+    <span class="s2">"protocol states the same string with the Δ glyphs lost ('BY 4741 MATa his31 leu20 "</span>
+    <span class="s2">"met150 ura30')"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">PARENT_STRAIN</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
-    <span class="s2">"BY4741"</span><span class="p">,</span> <span class="s2">"The wild type parental strain for this collection is BY 4741"</span>
+<span class="n">COLLECTION</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
+    <span class="s2">"Euroscarf deletion collection"</span><span class="p">,</span>
+    <span class="s2">"were obtained from the Euroscarf deletion collection and are isogenic to BY4741, "</span>
+    <span class="s2">"which has the genotype MATa his3Δ1 leu2Δ0 met15Δ0 ura3Δ0."</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"50"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the 2015 paper says the same: 'S. cerevisiae deletion strains were obtained "</span>
+    <span class="s2">"from the Euroscarf deletion set and are isogenic to BY4741 (Table S3).' The 33 "</span>
+    <span class="s2">"SGD-essential released ORFs contradict 'deletion strain' for those strains, whose "</span>
+    <span class="s2">"collection is therefore a typed gap (ESSENTIAL_GENE_ORFS)"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">WILD_TYPE_SCREEN</span> <span class="o">=</span> <span class="n">_scidata</span><span class="p">(</span>
+    <span class="s2">"BY4741 wild type"</span><span class="p">,</span>
+    <span class="s2">"we repeatedly screened the compound collections against the pdr1Δpdr3Δ strain and "</span>
+    <span class="s2">"a wild-type S. cerevisiae strain (BY4741)"</span><span class="p">,</span>
+    <span class="n">line</span><span class="o">=</span><span class="s2">"118"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the released orf=NULL / sym='wild type' rows are this strain's screens, served "</span>
+    <span class="s2">"as the empty genotype on the BY4741 background"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">NON_REPLICATE_COLUMN</span> <span class="o">=</span> <span class="n">_aid</span><span class="p">(</span>
     <span class="s2">"non replicate"</span><span class="p">,</span>
@@ -401,11 +590,200 @@
 <span class="p">)</span>
 
 <span class="n">MEASUREMENT_UNITS</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"released PubChem AID 1159580 z_score of growth inhibition, standardized within a "</span>
-    <span class="s2">"screen from the normalized OD600 average of a technical-duplicate read pair "</span>
-    <span class="s2">"(20 uM compound in DMSO, SC + 2</span><span class="si">% g</span><span class="s2">lucose, 30 C, ~18 h); negative = growth "</span>
-    <span class="s2">"inhibition, averaged over the contributing screens of the cell"</span>
+    <span class="s2">"released PubChem AID 1159580 z_score of growth inhibition: a N(1, IQR) fit to the "</span>
+    <span class="s2">"median-normalized OD600 (technical-duplicate read average) of the strain's OWN "</span>
+    <span class="s2">"screen, so 0 is that strain's plate-median growth and the scale is the screen's IQR "</span>
+    <span class="s2">"(about 1.35 SD of a normal; not unit variance); 20 uM compound in 1.96% v/v DMSO, "</span>
+    <span class="s2">"SC + 2</span><span class="si">% g</span><span class="s2">lucose, 30 C, static 100 uL 96-well culture read when the solvent controls "</span>
+    <span class="s2">"saturated (~18 h); negative = growth inhibition; averaged over the contributing "</span>
+    <span class="s2">"screens of the cell"</span>
 <span class="p">)</span>
+
+<span class="c1">#: The reference's units: the baseline is the SAME strain's screen center in the</span>
+<span class="c1">#: vehicle / plate-median environment (#504 finding 5). ``ExperimentReference`` has no</span>
+<span class="c1">#: genotype slot, so the "same strain" half is stated here and the reference genome</span>
+<span class="c1">#: carries the shared BY4741 background only.</span>
+<span class="n">REFERENCE_UNITS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">MEASUREMENT_UNITS</span>
+    <span class="o">+</span> <span class="s2">"; reference z = 0 is the SAME strain's own screen center (plate-median growth, "</span>
+    <span class="s2">"normalized OD 1) with no active compound, NOT BY4741 under the compound and NOT a "</span>
+    <span class="s2">"measured wild-type value; the reference record has no genotype slot, so its genome "</span>
+    <span class="s2">"states the shared BY4741 background only"</span>
+<span class="p">)</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Medium: a Wildenhain-local SC sourced to the CGM's own sentence</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_wildenhain_sc</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Media</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The shared SC composition, re-sourced to the 2016 CGM medium sentence.</span>
+
+<span class="sd">    The shared ``SC`` object's glucose carries the 2015 paper's fungal-pathogen sentence</span>
+<span class="sd">    and the medium-level provenance is Mormino 2022's recipe; ``SC`` is imported by five</span>
+<span class="sd">    loaders, so it is left untouched (#504). This copy has the SAME composition (so it</span>
+<span class="sd">    joins every SC record by ``media_identity`` and passes ``media_membership`` as</span>
+<span class="sd">    derived from ``SC``) with the Wildenhain provenance replaced.</span>
+<span class="sd">    """</span>
+    <span class="n">components</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">SC</span><span class="o">.</span><span class="n">components</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">component</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"D-glucose"</span><span class="p">:</span>
+            <span class="n">component</span> <span class="o">=</span> <span class="n">MediaComponent</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="o">**</span><span class="n">component</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+                    <span class="s2">"provenance"</span><span class="p">:</span> <span class="p">[</span>
+                        <span class="n">_scidata</span><span class="p">(</span>
+                            <span class="s2">"2</span><span class="si">% g</span><span class="s2">lucose"</span><span class="p">,</span>
+                            <span class="n">MEDIUM</span><span class="o">.</span><span class="n">quote</span><span class="p">,</span>
+                            <span class="n">line</span><span class="o">=</span><span class="s2">"54"</span><span class="p">,</span>
+                            <span class="n">note</span><span class="o">=</span><span class="s2">"2% w/v = the shared SC's 20 g/L D-glucose"</span><span class="p">,</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+                    <span class="p">],</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="n">components</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">component</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Media</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="o">**</span><span class="n">SC</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+            <span class="s2">"components"</span><span class="p">:</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">components</span><span class="p">],</span>
+            <span class="s2">"provenance"</span><span class="p">:</span> <span class="p">[</span><span class="n">MEDIUM</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()],</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+
+<span class="n">WILDENHAIN_SC</span> <span class="o">=</span> <span class="n">_wildenhain_sc</span><span class="p">()</span>
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Strain background (BY4741), the 33 essential-gene strains, non-ORF strain labels</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1">#: The per-strain roster (allele, collection, accession) that would resolve every</span>
+<span class="c1">#: strain-level gap below. NOT mirrored; retrieving it needs the user's go-ahead.</span>
+<span class="n">STRAIN_TABLES</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"Sci Data 2016 Table 1 (available online only); Cell Systems 2015 "</span>
+    <span class="s2">"Table S3"</span><span class="p">,</span>
+    <span class="n">citation_key</span><span class="o">=</span><span class="n">SCIDATA_CITATION_KEY</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">"not mirrored: the per-strain sentinel roster ('The 242 different S. "</span>
+    <span class="s2">"cerevisiae deletion strains used as sentinels to generate the CGM (Table 1 "</span>
+    <span class="s2">"(available online only))', Sci Data paper.md line 50)"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_background_allele</span><span class="p">(</span><span class="n">allele</span><span class="p">:</span> <span class="n">BackgroundAllele</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BackgroundAllele</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The allele with a pending-review gap on its (unpublished) construction."""</span>
+    <span class="k">return</span> <span class="n">BackgroundAllele</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="o">**</span><span class="n">allele</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+            <span class="s2">"provenance_gaps"</span><span class="p">:</span> <span class="p">[</span>
+                <span class="n">pending_source_review</span><span class="p">(</span>
+                    <span class="s2">"deleted_span"</span><span class="p">,</span>
+                    <span class="n">BRACHMANN_1998</span><span class="p">,</span>
+                    <span class="s2">"the designation is quoted (Sci Data line 50); the edit kind and "</span>
+                    <span class="s2">"the deleted interval are the literature-standard reading of "</span>
+                    <span class="s2">"Brachmann 1998, not mirrored"</span><span class="p">,</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+            <span class="p">],</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_by4741_background</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">StrainBackground</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""BY4741 as the 2016 paper states it, each allele's construction pending review."""</span>
+    <span class="n">background</span> <span class="o">=</span> <span class="n">standard_background</span><span class="p">(</span><span class="s2">"BY4741"</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">BY4741_GENOTYPE</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">StrainBackground</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="o">**</span><span class="n">background</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
+            <span class="s2">"alleles"</span><span class="p">:</span> <span class="p">[</span><span class="n">_background_allele</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">background</span><span class="o">.</span><span class="n">alleles</span><span class="p">],</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+
+
+<span class="n">BY4741_GENOME</span> <span class="o">=</span> <span class="n">StrainReferenceGenome</span><span class="p">(</span>
+    <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+    <span class="n">strain</span><span class="o">=</span><span class="n">BY4741_GENOTYPE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="n">ploidy</span><span class="o">=</span><span class="s2">"haploid"</span><span class="p">,</span>
+    <span class="n">background</span><span class="o">=</span><span class="n">_by4741_background</span><span class="p">(),</span>
+<span class="p">)</span>
+
+<span class="c1">#: The 33 released ORFs that are essential in torchcell's SGD essentiality set (#504</span>
+<span class="c1">#: finding 1). A haploid kanMX null of an essential gene is not viable, so each is served</span>
+<span class="c1">#: as a ConditionalAllelePerturbation of unknown class. Pinned here (not read at build</span>
+<span class="c1">#: time, so the build does not depend on another dataset's store); the test recomputes it</span>
+<span class="c1">#: from ESSENTIAL_GENE_SET_SOURCE when that file is present. ILV3 (YJR016C) and SLN1</span>
+<span class="c1">#: (YIL147C) are the two whose essentiality is condition/background dependent.</span>
+<span class="n">ESSENTIAL_GENE_ORFS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">"YAR019C"</span><span class="p">,</span> <span class="s2">"YBL105C"</span><span class="p">,</span> <span class="s2">"YBR135W"</span><span class="p">,</span> <span class="s2">"YBR136W"</span><span class="p">,</span> <span class="s2">"YBR160W"</span><span class="p">,</span> <span class="s2">"YDL017W"</span><span class="p">,</span> <span class="s2">"YDL028C"</span><span class="p">,</span>
+        <span class="s2">"YDL108W"</span><span class="p">,</span> <span class="s2">"YDL132W"</span><span class="p">,</span> <span class="s2">"YDR052C"</span><span class="p">,</span> <span class="s2">"YDR054C"</span><span class="p">,</span> <span class="s2">"YER133W"</span><span class="p">,</span> <span class="s2">"YFL009W"</span><span class="p">,</span> <span class="s2">"YFL029C"</span><span class="p">,</span>
+        <span class="s2">"YFR003C"</span><span class="p">,</span> <span class="s2">"YFR028C"</span><span class="p">,</span> <span class="s2">"YIL147C"</span><span class="p">,</span> <span class="s2">"YJR016C"</span><span class="p">,</span> <span class="s2">"YKL193C"</span><span class="p">,</span> <span class="s2">"YKL203C"</span><span class="p">,</span> <span class="s2">"YMR001C"</span><span class="p">,</span>
+        <span class="s2">"YMR277W"</span><span class="p">,</span> <span class="s2">"YNL006W"</span><span class="p">,</span> <span class="s2">"YNL161W"</span><span class="p">,</span> <span class="s2">"YNL207W"</span><span class="p">,</span> <span class="s2">"YNL222W"</span><span class="p">,</span> <span class="s2">"YOL078W"</span><span class="p">,</span> <span class="s2">"YOR119C"</span><span class="p">,</span>
+        <span class="s2">"YOR329C"</span><span class="p">,</span> <span class="s2">"YPL153C"</span><span class="p">,</span> <span class="s2">"YPL204W"</span><span class="p">,</span> <span class="s2">"YPL209C"</span><span class="p">,</span> <span class="s2">"YPR025C"</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>  <span class="c1"># fmt: skip</span>
+<span class="n">ESSENTIAL_GENE_SET_SOURCE</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"data/torchcell/gene_essentiality_sgd/preprocess/gene_set.json"</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="o">=</span><span class="s2">"f3c2ec54b69f61909eaee4a380ab6d10e84265a9ee31b053b27345e7de6c5dd8"</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">"intersection of the 1,140 SGD-essential genes with the 242 systematic ORFs "</span>
+    <span class="s2">"of 1159580.csv.gz, measured 2026-10-02 (path under $DATA_ROOT)"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">NonOrfStrainLabel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How one released (orf, sym) pair whose ``orf`` is not a systematic name is read.</span>
+
+<span class="sd">    ``mapped_to_orf``: a real gene's strain released without its ORF (served on that</span>
+<span class="sd">    ORF, checked against the genome at build time). ``wild_type``: the BY4741 parental</span>
+<span class="sd">    screen (served as the empty genotype). ``unresolved``: no strain the mirrored</span>
+<span class="sd">    sources name; held in the ledger under ``strain_label_unresolved``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">sym</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">disposition</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"mapped_to_orf"</span><span class="p">,</span> <span class="s2">"wild_type"</span><span class="p">,</span> <span class="s2">"unresolved"</span><span class="p">]</span>
+    <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span>
+
+
+<span class="n">NON_ORF_STRAIN_LABELS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">NonOrfStrainLabel</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s2">"NA"</span><span class="p">,</span> <span class="s2">"NNK1"</span><span class="p">):</span> <span class="n">NonOrfStrainLabel</span><span class="p">(</span>
+        <span class="n">orf</span><span class="o">=</span><span class="s2">"NA"</span><span class="p">,</span>
+        <span class="n">sym</span><span class="o">=</span><span class="s2">"NNK1"</span><span class="p">,</span>
+        <span class="n">disposition</span><span class="o">=</span><span class="s2">"mapped_to_orf"</span><span class="p">,</span>
+        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="s2">"YKL171W"</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="s2">"NNK1 is the standard name of YKL171W in R64; its NA-labelled SIDs are "</span>
+        <span class="s2">"disjoint from the 11 SIDs released under orf=YKL171W, so these are the rest of "</span>
+        <span class="s2">"the same strain's screen"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s2">"NULL"</span><span class="p">,</span> <span class="s2">"wild type"</span><span class="p">):</span> <span class="n">NonOrfStrainLabel</span><span class="p">(</span>
+        <span class="n">orf</span><span class="o">=</span><span class="s2">"NULL"</span><span class="p">,</span>
+        <span class="n">sym</span><span class="o">=</span><span class="s2">"wild type"</span><span class="p">,</span>
+        <span class="n">disposition</span><span class="o">=</span><span class="s2">"wild_type"</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="s2">"the BY4741 wild-type screen (WILD_TYPE_SCREEN)"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s2">"NA"</span><span class="p">,</span> <span class="s2">"TSCII"</span><span class="p">):</span> <span class="n">NonOrfStrainLabel</span><span class="p">(</span>
+        <span class="n">orf</span><span class="o">=</span><span class="s2">"NA"</span><span class="p">,</span>
+        <span class="n">sym</span><span class="o">=</span><span class="s2">"TSCII"</span><span class="p">,</span>
+        <span class="n">disposition</span><span class="o">=</span><span class="s2">"unresolved"</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="s2">"no R64 gene is named TSCII. Hypothesis (untested): TSC11 (AVO3, "</span>
+        <span class="s2">"YER093C, essential) with '11' typed as 'II'; needs Sci Data Table 1"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s2">"NULL"</span><span class="p">,</span> <span class="s2">"YGL11"</span><span class="p">):</span> <span class="n">NonOrfStrainLabel</span><span class="p">(</span>
+        <span class="n">orf</span><span class="o">=</span><span class="s2">"NULL"</span><span class="p">,</span>
+        <span class="n">sym</span><span class="o">=</span><span class="s2">"YGL11"</span><span class="p">,</span>
+        <span class="n">disposition</span><span class="o">=</span><span class="s2">"unresolved"</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="s2">"not a systematic name (no strand letter, short number). Hypothesis "</span>
+        <span class="s2">"(untested): a truncated ORF; needs Sci Data Table 1"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s2">"NULL"</span><span class="p">,</span> <span class="s2">"wtn01"</span><span class="p">):</span> <span class="n">NonOrfStrainLabel</span><span class="p">(</span>
+        <span class="n">orf</span><span class="o">=</span><span class="s2">"NULL"</span><span class="p">,</span>
+        <span class="n">sym</span><span class="o">=</span><span class="s2">"wtn01"</span><span class="p">,</span>
+        <span class="n">disposition</span><span class="o">=</span><span class="s2">"unresolved"</span><span class="p">,</span>
+        <span class="n">reason</span><span class="o">=</span><span class="s2">"Hypothesis (untested): a second wild-type screen (its z correlates with "</span>
+        <span class="s2">"the 'wild type' screen, #504 audit); not named in a mirrored source, so not "</span>
+        <span class="s2">"asserted to be BY4741"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+<span class="c1">#: The cell key of the wild-type screen (not an ORF; never a gene).</span>
+<span class="n">WILD_TYPE_KEY</span> <span class="o">=</span> <span class="s2">"BY4741 wild type"</span>
 
 <span class="c1">#: Released activity outcome + bioactivity -&gt; the shared ResponseCategory axis. The two</span>
 <span class="c1">#: columns' own definitions are the source (``BIOACTIVITY_COLUMN``): an Inactive datapoint</span>
@@ -421,7 +799,7 @@
     <span class="p">(</span><span class="s2">"Inconclusive"</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span> <span class="n">ResponseCategory</span><span class="o">.</span><span class="n">not_determined</span><span class="p">,</span>
 <span class="p">}</span>
 
-<span class="c1">#: Systematic ORF pattern; non-strain tokens (NA / NULL control rows) are dropped.</span>
+<span class="c1">#: Systematic ORF pattern; any other ``orf`` must be listed in NON_ORF_STRAIN_LABELS.</span>
 <span class="n">_SYSTEMATIC_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">)</span>
 
 
@@ -531,9 +909,13 @@
             <span class="n">AID_URL</span><span class="p">,</span>
         <span class="p">],</span>
         <span class="n">si_expected</span><span class="o">=</span><span class="p">[</span>
-            <span class="s2">"Tables S1/S2 (the four compound libraries) and Table S3 (the 195 sentinel "</span>
-            <span class="s2">"strains) -- cell.com supplementary files are not scriptable, so they are "</span>
-            <span class="s2">"NOT mirrored and the 195-vs-242 strain split cannot be reconstructed"</span>
+            <span class="s2">"Cell Systems 2015 Tables S1/S2 (the four compound libraries) and Table S3 "</span>
+            <span class="s2">"(the 195 original sentinel strains), and Sci Data 2016 Table 1 (all 242 "</span>
+            <span class="s2">"sentinels of the extended CGM this AID releases; 'the number of sentinels "</span>
+            <span class="s2">"has been increased from 195 to 242') -- not mirrored (cell.com and "</span>
+            <span class="s2">"nature.com supplements are not scriptable), so the per-strain allele, "</span>
+            <span class="s2">"collection and accession, which would resolve the 33 essential-gene "</span>
+            <span class="s2">"strains and the TSCII / YGL11 / wtn01 labels, are typed gaps"</span>
         <span class="p">],</span>
         <span class="n">provenance_complete</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">created_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
@@ -568,7 +950,7 @@
 <span class="w">    </span><span class="sd">"""One retention rule, the records it removed, and the items it removed them for."""</span>
 
     <span class="n">rule</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">scope</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"compound"</span><span class="p">,</span> <span class="s2">"library_row"</span><span class="p">,</span> <span class="s2">"cell"</span><span class="p">]</span>
+    <span class="n">scope</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"compound"</span><span class="p">,</span> <span class="s2">"library_row"</span><span class="p">,</span> <span class="s2">"cell"</span><span class="p">,</span> <span class="s2">"strain"</span><span class="p">]</span>
     <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -587,6 +969,9 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">MatrixCell</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""One (strain, compound) cell of the CGM, collapsed over its released screens."""</span>
 
+    <span class="c1">#: the strain key: a systematic ORF (``NA/NNK1`` rows land on YKL171W),</span>
+    <span class="c1">#: ``WILD_TYPE_KEY`` for the BY4741 screen, or ``"&lt;orf&gt;/&lt;sym&gt;"`` for an unresolved</span>
+    <span class="c1">#: strain label (held in the ledger, never served).</span>
     <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">identity</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">pubchem_cid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
@@ -682,12 +1067,12 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Experiment schema class produced by this dataset."""</span>
-        <span class="k">return</span> <span class="n">EnvironmentResponseExperiment</span>
+        <span class="k">return</span> <span class="n">StrainEnvironmentResponseExperiment</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReference</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Experiment-reference schema class produced by this dataset."""</span>
-        <span class="k">return</span> <span class="n">EnvironmentResponseExperimentReference</span>
+        <span class="k">return</span> <span class="n">StrainEnvironmentResponseExperimentReference</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -721,17 +1106,42 @@
 
 
     <span class="c1"># ---- source reading -------------------------------------------------------- #</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_collapse_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">MatrixCell</span><span class="p">],</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Read the datapoint CSV; collapse to one cell per (ORF, compound identity).</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_strain_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">sym</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The cell's strain key for one released row (see ``MatrixCell.orf``).</span>
+
+<span class="sd">        A systematic ``orf`` is its own key. Any other ``orf`` must be a listed</span>
+<span class="sd">        ``NON_ORF_STRAIN_LABELS`` pair; an unlisted one refuses, naming it, rather than</span>
+<span class="sd">        being skipped as a "control row" (they are strain screens, #504 finding 3).</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">orf</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">NON_ORF_STRAIN_LABELS</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">orf</span><span class="p">,</span> <span class="n">sym</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">label</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"released row with orf=</span><span class="si">{</span><span class="n">orf</span><span class="si">!r}</span><span class="s2"> sym=</span><span class="si">{</span><span class="n">sym</span><span class="si">!r}</span><span class="s2"> is neither a systematic "</span>
+                <span class="s2">"ORF nor a listed NON_ORF_STRAIN_LABELS pair; a new strain label needs "</span>
+                <span class="s2">"an explicit disposition, not a silent skip"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">label</span><span class="o">.</span><span class="n">disposition</span> <span class="o">==</span> <span class="s2">"mapped_to_orf"</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">label</span><span class="o">.</span><span class="n">systematic_gene_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="n">label</span><span class="o">.</span><span class="n">systematic_gene_name</span>
+        <span class="k">if</span> <span class="n">label</span><span class="o">.</span><span class="n">disposition</span> <span class="o">==</span> <span class="s2">"wild_type"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">WILD_TYPE_KEY</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">sym</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_collapse_matrix</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">MatrixCell</span><span class="p">],</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">"""Read the datapoint CSV; collapse to one cell per (strain key, compound).</span>
 
 <span class="sd">        Identity is the PubChem CID when present, else the SID. Repeated releases of the</span>
 <span class="sd">        SAME datapoint (equal parsed z) collapse; distinct screens accumulate. Returns the</span>
-<span class="sd">        cells plus the strain-row and non-strain-row counts.</span>
+<span class="sd">        cells, the datapoint-row count, and the row count of every non-ORF label.</span>
 <span class="sd">        """</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">DATA_FILENAME</span><span class="p">)</span>
         <span class="n">cells</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">MatrixCell</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">n_rows</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">n_non_strain</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">label_rows</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">with</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"rt"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
             <span class="n">header</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">reader</span><span class="p">)</span>
@@ -740,41 +1150,42 @@
             <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="p">:</span>
                     <span class="k">continue</span>
-                <span class="n">orf</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">orf</span><span class="p">):</span>
-                    <span class="n">n_non_strain</span> <span class="o">+=</span> <span class="mi">1</span>
-                    <span class="k">continue</span>
                 <span class="n">z_raw</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"z_score"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">z_raw</span><span class="p">:</span>
                     <span class="k">continue</span>
+                <span class="n">orf</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">sym</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"sym"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">strain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_strain_key</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">sym</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">strain</span> <span class="o">!=</span> <span class="n">orf</span><span class="p">:</span>
+                    <span class="n">label_rows</span><span class="p">[(</span><span class="n">orf</span><span class="p">,</span> <span class="n">sym</span><span class="p">)]</span> <span class="o">=</span> <span class="n">label_rows</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">orf</span><span class="p">,</span> <span class="n">sym</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
                 <span class="n">n_rows</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">cid</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"PUBCHEM_CID"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
                 <span class="n">sid</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"PUBCHEM_SID"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
                 <span class="n">identity</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"CID </span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">cid</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"SID </span><span class="si">{</span><span class="n">sid</span><span class="si">}</span><span class="s2">"</span>
-                <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">identity</span><span class="p">)</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">strain</span><span class="p">,</span> <span class="n">identity</span><span class="p">)</span>
                 <span class="n">cell</span> <span class="o">=</span> <span class="n">cells</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">cell</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">cell</span> <span class="o">=</span> <span class="n">MatrixCell</span><span class="p">(</span>
-                        <span class="n">orf</span><span class="o">=</span><span class="n">orf</span><span class="p">,</span>
+                        <span class="n">orf</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span>
                         <span class="n">identity</span><span class="o">=</span><span class="n">identity</span><span class="p">,</span>
                         <span class="n">pubchem_cid</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span> <span class="k">if</span> <span class="n">cid</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
                         <span class="n">smiles</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"PUBCHEM_EXT_DATASOURCE_SMILES"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
                         <span class="ow">or</span> <span class="kc">None</span><span class="p">,</span>
                     <span class="p">)</span>
                     <span class="n">cells</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">cell</span>
-                <span class="n">cell</span><span class="o">.</span><span class="n">screens</span><span class="p">[</span><span class="n">_parse_z</span><span class="p">(</span><span class="n">z_raw</span><span class="p">,</span> <span class="n">orf</span><span class="p">,</span> <span class="n">identity</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">cell</span><span class="o">.</span><span class="n">screens</span><span class="p">[</span><span class="n">_parse_z</span><span class="p">(</span><span class="n">z_raw</span><span class="p">,</span> <span class="n">strain</span><span class="p">,</span> <span class="n">identity</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span>
                     <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"non replicate"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
                     <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"PUBCHEM_ACTIVITY_OUTCOME"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
                     <span class="n">row</span><span class="p">[</span><span class="n">idx</span><span class="p">[</span><span class="s2">"bioactivity"</span><span class="p">]]</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span>
                 <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Wildenhain2015: </span><span class="si">%d</span><span class="s2"> strain datapoints (</span><span class="si">%d</span><span class="s2"> non-strain control rows) -&gt; "</span>
-            <span class="s2">"</span><span class="si">%d</span><span class="s2"> (ORF, compound) cells"</span><span class="p">,</span>
+            <span class="s2">"Wildenhain2015: </span><span class="si">%d</span><span class="s2"> datapoints (</span><span class="si">%d</span><span class="s2"> on a non-ORF strain label) -&gt; </span><span class="si">%d</span><span class="s2"> "</span>
+            <span class="s2">"(strain, compound) cells"</span><span class="p">,</span>
             <span class="n">n_rows</span><span class="p">,</span>
-            <span class="n">n_non_strain</span><span class="p">,</span>
+            <span class="nb">sum</span><span class="p">(</span><span class="n">label_rows</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">cells</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">cells</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_non_strain</span>
+        <span class="k">return</span> <span class="n">cells</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">label_rows</span>
 
     <span class="c1"># ---- environment / phenotype builders -------------------------------------- #</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_compound</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell</span><span class="p">:</span> <span class="n">MatrixCell</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Compound</span><span class="p">:</span>
@@ -783,12 +1194,65 @@
             <span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">,</span> <span class="n">pubchem_cid</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">pubchem_cid</span><span class="p">,</span> <span class="n">smiles</span><span class="o">=</span><span class="n">cell</span><span class="o">.</span><span class="n">smiles</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compound</span><span class="p">:</span> <span class="n">Compound</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Aerobic SC (2% glucose) liquid culture carrying the compound at 20 uM in DMSO."""</span>
-        <span class="k">return</span> <span class="n">Environment</span><span class="p">(</span>
-            <span class="n">media</span><span class="o">=</span><span class="n">SC</span><span class="p">,</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_culture_environment</span><span class="p">(</span>
+        <span class="n">perturbations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EnvironmentPerturbationType</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CultureEnvironment</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Static 100 uL SC (2% glucose) 96-well culture at 30 C, read at saturation."""</span>
+        <span class="k">return</span> <span class="n">CultureEnvironment</span><span class="p">(</span>
+            <span class="n">media</span><span class="o">=</span><span class="n">WILDENHAIN_SC</span><span class="p">,</span>
             <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">TEMPERATURE_C</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
-            <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">perturbations</span><span class="o">=</span><span class="n">perturbations</span><span class="p">,</span>
+            <span class="n">aerobicity</span><span class="o">=</span><span class="s2">"aerobic"</span><span class="p">,</span>
+            <span class="n">duration_hours</span><span class="o">=</span><span class="n">DURATION_HOURS</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">culture_format</span><span class="o">=</span><span class="n">CultureFormat</span><span class="p">(</span>
+                <span class="n">vessel</span><span class="o">=</span><span class="n">CULTURE_VESSEL</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">working_volume_ul</span><span class="o">=</span><span class="n">WORKING_VOLUME_UL</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">shaking_rpm</span><span class="o">=</span><span class="n">STATIC_INCUBATION_RPM</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">inoculum_cells</span><span class="o">=</span><span class="n">INOCULUM_CELLS</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">endpoint</span><span class="o">=</span><span class="n">ENDPOINT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">CULTURE_VESSEL</span><span class="p">,</span>
+                    <span class="n">WORKING_VOLUME_UL</span><span class="p">,</span>
+                    <span class="n">STATIC_INCUBATION_RPM</span><span class="p">,</span>
+                    <span class="n">INOCULUM_CELLS</span><span class="p">,</span>
+                    <span class="n">ENDPOINT</span><span class="p">,</span>
+                <span class="p">],</span>
+            <span class="p">),</span>
+            <span class="n">pre_culture</span><span class="o">=</span><span class="n">PreCulture</span><span class="p">(</span>
+                <span class="n">source</span><span class="o">=</span><span class="n">PRE_CULTURE_SOURCE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">PRE_CULTURE_SOURCE</span><span class="p">],</span>
+                <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">ProvenanceGap</span><span class="p">(</span>
+                        <span class="n">field</span><span class="o">=</span><span class="s2">"medium"</span><span class="p">,</span>
+                        <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+                        <span class="n">note</span><span class="o">=</span><span class="s2">"'fresh overnight cultures' (Sci Data line 54); the "</span>
+                        <span class="s2">"overnight medium is not stated"</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">],</span>
+            <span class="p">),</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">ProvenanceGap</span><span class="p">(</span>
+                    <span class="n">field</span><span class="o">=</span><span class="s2">"duration_generations"</span><span class="p">,</span>
+                    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+                    <span class="n">note</span><span class="o">=</span><span class="s2">"an ~18 h liquid OD growth to control saturation doses exposure "</span>
+                    <span class="s2">"in hours, not doublings, and neither paper nor the AID protocol "</span>
+                    <span class="s2">"reports a doubling count"</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">ProvenanceGap</span><span class="p">(</span>
+                    <span class="n">field</span><span class="o">=</span><span class="s2">"auxotroph_supplements"</span><span class="p">,</span>
+                    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+                    <span class="n">note</span><span class="o">=</span><span class="s2">"no supplement is named beside the medium: SC is complete, so "</span>
+                    <span class="s2">"the His/Leu/Met/Ura the BY4741 background needs are part of the "</span>
+                    <span class="s2">"medium's (shared SC) composition, which the lab does not state"</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compound</span><span class="p">:</span> <span class="n">Compound</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CultureEnvironment</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The culture environment carrying the compound at 20 uM in 1.96% v/v DMSO."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_culture_environment</span><span class="p">(</span>
+            <span class="p">[</span>
                 <span class="n">SmallMoleculePerturbation</span><span class="p">(</span>
                     <span class="n">compound</span><span class="o">=</span><span class="n">compound</span><span class="p">,</span>
                     <span class="n">concentration</span><span class="o">=</span><span class="n">Concentration</span><span class="p">(</span>
@@ -797,51 +1261,42 @@
                     <span class="p">),</span>
                     <span class="n">solvent</span><span class="o">=</span><span class="n">Solvent</span><span class="p">(</span>
                         <span class="n">name</span><span class="o">=</span><span class="n">SOLVENT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                        <span class="n">percent</span><span class="o">=</span><span class="n">SOLVENT_PERCENT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                         <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="s2">"dimethyl sulfoxide"</span><span class="p">),</span>
                     <span class="p">),</span>
                 <span class="p">)</span>
-            <span class="p">],</span>
-            <span class="n">aerobicity</span><span class="o">=</span><span class="s2">"aerobic"</span><span class="p">,</span>
-            <span class="n">duration_hours</span><span class="o">=</span><span class="n">DURATION_HOURS</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">ProvenanceGap</span><span class="p">(</span>
-                    <span class="n">field</span><span class="o">=</span><span class="s2">"duration_generations"</span><span class="p">,</span>
-                    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
-                    <span class="n">note</span><span class="o">=</span><span class="s2">"an 18 h liquid OD growth to saturation doses exposure in "</span>
-                    <span class="s2">"hours, not doublings, and neither the paper nor the AID protocol "</span>
-                    <span class="s2">"reports a doubling count"</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">],</span>
+            <span class="p">]</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_reference</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The screen's own normalized-growth center: z = 0, in the same compound well.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The one reference: z = 0, the strain's own screen center, no compound.</span>
 
-<span class="sd">        The z-score is standardized WITHIN a screen, so its 0 is that screen's center,</span>
-<span class="sd">        and the environment the baseline was measured in IS the compound environment.</span>
+<span class="sd">        The z is a N(1, IQR) fit WITHIN one strain's screen (``Z_SCORE_DEFINITION``),</span>
+<span class="sd">        so its 0 is that strain's plate-median growth with (mostly) inactive</span>
+<span class="sd">        compounds, not BY4741 under the compound (#504 finding 5). The environment is</span>
+<span class="sd">        therefore the culture with NO compound; the genome is the BY4741 background</span>
+<span class="sd">        every strain shares. "Same strain" cannot be a genotype here (the reference</span>
+<span class="sd">        record has no genotype slot), so ``REFERENCE_UNITS`` states it.</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">(</span>
+        <span class="k">return</span> <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-            <span class="n">genome_reference</span><span class="o">=</span><span class="n">ReferenceGenome</span><span class="p">(</span>
-                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="n">PARENT_STRAIN</span><span class="o">.</span><span class="n">value</span>
-            <span class="p">),</span>
-            <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="n">BY4741_GENOME</span><span class="p">,</span>
+            <span class="n">environment_reference</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_culture_environment</span><span class="p">([]),</span>
             <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
                 <span class="n">measurement_type</span><span class="o">=</span><span class="n">Z_SCORE_DEFINITION</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                 <span class="n">assay_type</span><span class="o">=</span><span class="n">ASSAY</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                 <span class="n">environment_response</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-                <span class="n">units</span><span class="o">=</span><span class="p">(</span>
-                    <span class="n">MEASUREMENT_UNITS</span>
-                    <span class="o">+</span> <span class="s2">"; the reference 0 is the screen's own normalized-growth center "</span>
-                    <span class="s2">"by construction of the z-score, NOT a measured wild-type value"</span>
-                <span class="p">),</span>
+                <span class="n">units</span><span class="o">=</span><span class="n">REFERENCE_UNITS</span><span class="p">,</span>
             <span class="p">),</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_phenotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell</span><span class="p">:</span> <span class="n">MatrixCell</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The screen-averaged z-score with its across-screen dispersion, or a typed gap."""</span>
+<span class="w">        </span><span class="sd">"""The screen-averaged z-score with its across-screen dispersion, or a typed gap.</span>
+
+<span class="sd">        Every record also carries a typed gap on ``screen_id``: the release has no</span>
+<span class="sd">        library / screen column, and the normalization differs by library</span>
+<span class="sd">        (``NORMALIZATION_BY_LIBRARY``).</span>
+<span class="sd">        """</span>
         <span class="n">z_values</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">z_values</span>
         <span class="n">category</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="n">cell</span><span class="o">.</span><span class="n">category</span><span class="p">()</span>
         <span class="n">common</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
@@ -854,37 +1309,92 @@
             <span class="s2">"sample_unit"</span><span class="p">:</span> <span class="n">SampleUnit</span><span class="o">.</span><span class="n">screen</span><span class="p">,</span>
             <span class="s2">"units"</span><span class="p">:</span> <span class="n">MEASUREMENT_UNITS</span><span class="p">,</span>
         <span class="p">}</span>
+        <span class="n">screen_gap</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+            <span class="n">field</span><span class="o">=</span><span class="s2">"screen_id"</span><span class="p">,</span>
+            <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the release has no library, screen or plate column; screens were "</span>
+            <span class="s2">"LOWESS- or DMSO-control-normalized by library (Sci Data lines 63-64), so a "</span>
+            <span class="s2">"cell's normalization is not recoverable"</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">n_screens</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
                 <span class="o">**</span><span class="n">common</span><span class="p">,</span>
                 <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
-                    <span class="n">ProvenanceGap</span><span class="p">(</span>
-                        <span class="n">field</span><span class="o">=</span><span class="n">field</span><span class="p">,</span>
-                        <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
-                        <span class="n">note</span><span class="o">=</span><span class="s2">"one released screen for this (strain, compound) cell; a "</span>
-                        <span class="s2">"dispersion across screens is undefined at n=1 and the release "</span>
-                        <span class="s2">"carries no per-screen error"</span><span class="p">,</span>
-                    <span class="p">)</span>
-                    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span>
-                        <span class="s2">"environment_response_uncertainty"</span><span class="p">,</span>
-                        <span class="s2">"environment_response_se"</span><span class="p">,</span>
-                    <span class="p">)</span>
+                    <span class="o">*</span><span class="p">(</span>
+                        <span class="n">ProvenanceGap</span><span class="p">(</span>
+                            <span class="n">field</span><span class="o">=</span><span class="n">field</span><span class="p">,</span>
+                            <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+                            <span class="n">note</span><span class="o">=</span><span class="s2">"one released screen for this (strain, compound) cell; "</span>
+                            <span class="s2">"a dispersion across screens is undefined at n=1 and the "</span>
+                            <span class="s2">"release carries no per-screen error"</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span>
+                            <span class="s2">"environment_response_uncertainty"</span><span class="p">,</span>
+                            <span class="s2">"environment_response_se"</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">),</span>
+                    <span class="n">screen_gap</span><span class="p">,</span>
                 <span class="p">],</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
             <span class="o">**</span><span class="n">common</span><span class="p">,</span>
             <span class="n">environment_response_uncertainty</span><span class="o">=</span><span class="n">stdev</span><span class="p">(</span><span class="n">z_values</span><span class="p">),</span>
             <span class="n">environment_response_uncertainty_type</span><span class="o">=</span><span class="n">UncertaintyType</span><span class="o">.</span><span class="n">sample_sd</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">screen_gap</span><span class="p">],</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_genotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">systematic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">common</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Genotype</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""One Euroscarf haploid deletion, carrying the collection it came from."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_genotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">common</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Genotype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The screened strain's genotype on the BY4741 background.</span>
+
+<span class="sd">        The wild-type screen is the empty genotype; one of the 33 essential-gene ORFs</span>
+<span class="sd">        is a conditional allele of unknown class (typed gaps naming the strain tables);</span>
+<span class="sd">        every other ORF is a kanMX4 Euroscarf haploid deletion with no released barcode.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">strain</span> <span class="o">==</span> <span class="n">WILD_TYPE_KEY</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="p">[])</span>
+        <span class="k">assert</span> <span class="n">common</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">strain</span> <span class="ow">in</span> <span class="n">ESSENTIAL_GENE_ORFS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Genotype</span><span class="p">(</span>
+                <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">ConditionalAllelePerturbation</span><span class="p">(</span>
+                        <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span>
+                        <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
+                        <span class="n">allele_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">collection</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                            <span class="n">pending_source_review</span><span class="p">(</span>
+                                <span class="s2">"allele_class"</span><span class="p">,</span>
+                                <span class="n">STRAIN_TABLES</span><span class="p">,</span>
+                                <span class="s2">"SGD-essential gene, so a haploid kanMX null is not "</span>
+                                <span class="s2">"viable; the allele (ts / DAmP / promoter replacement) "</span>
+                                <span class="s2">"is in the strain table, not the release"</span><span class="p">,</span>
+                            <span class="p">),</span>
+                            <span class="n">pending_source_review</span><span class="p">(</span>
+                                <span class="s2">"collection"</span><span class="p">,</span>
+                                <span class="n">STRAIN_TABLES</span><span class="p">,</span>
+                                <span class="s2">"both papers say Euroscarf deletion collection for "</span>
+                                <span class="s2">"every sentinel, which an essential-gene strain "</span>
+                                <span class="s2">"contradicts"</span><span class="p">,</span>
+                            <span class="p">),</span>
+                        <span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="n">Genotype</span><span class="p">(</span>
             <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">BarcodedKanMxDeletionPerturbation</span><span class="p">(</span>
-                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">systematic</span><span class="p">,</span>
+                    <span class="n">systematic_gene_name</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span>
                     <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">common</span><span class="p">,</span>
                     <span class="n">collection</span><span class="o">=</span><span class="n">COLLECTION</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">cassette</span><span class="o">=</span><span class="n">KANMX4_CASSETTE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span>
+                        <span class="n">pending_source_review</span><span class="p">(</span>
+                            <span class="s2">"barcode"</span><span class="p">,</span>
+                            <span class="n">GIAEVER_2002</span><span class="p">,</span>
+                            <span class="s2">"the release publishes no UPTAG/DNTAG; the YKO barcode "</span>
+                            <span class="s2">"table gives them by ORF"</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">],</span>
                 <span class="p">)</span>
             <span class="p">]</span>
         <span class="p">)</span>
@@ -898,13 +1408,34 @@
         <span class="n">verify_raw_files</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">DATA_FILENAME</span><span class="p">:</span> <span class="n">DATA_SHA256</span><span class="p">,</span> <span class="n">AID_FILENAME</span><span class="p">:</span> <span class="n">AID_SHA256</span><span class="p">}</span>
         <span class="p">)</span>
-        <span class="n">cells</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_non_strain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_matrix</span><span class="p">()</span>
+        <span class="n">cells</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">,</span> <span class="n">label_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_matrix</span><span class="p">()</span>
         <span class="n">source_records</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cells</span><span class="p">)</span>
 
         <span class="n">genome</span> <span class="o">=</span> <span class="n">default_genome</span><span class="p">()</span>
         <span class="n">gene_set</span> <span class="o">=</span> <span class="p">{</span><span class="n">gene</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">}</span>
         <span class="n">canonical</span> <span class="o">=</span> <span class="n">_canonical_common_names</span><span class="p">(</span><span class="n">genome</span><span class="p">)</span>
-        <span class="n">orfs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">cell</span><span class="o">.</span><span class="n">orf</span> <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">values</span><span class="p">()})</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">sym</span><span class="p">),</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">NON_ORF_STRAIN_LABELS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">label</span><span class="o">.</span><span class="n">disposition</span> <span class="o">!=</span> <span class="s2">"mapped_to_orf"</span> <span class="ow">or</span> <span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">sym</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">label_rows</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">resolved</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">sym</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="n">resolved</span><span class="o">.</span><span class="n">is_current_gene</span>
+                <span class="ow">or</span> <span class="n">resolved</span><span class="o">.</span><span class="n">systematic_name</span> <span class="o">!=</span> <span class="n">label</span><span class="o">.</span><span class="n">systematic_gene_name</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"strain label </span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">sym</span><span class="si">}</span><span class="s2"> is mapped to "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="si">}</span><span class="s2">, but the genome resolves </span><span class="si">{</span><span class="n">sym</span><span class="si">!r}</span><span class="s2"> to "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">resolved</span><span class="o">.</span><span class="n">systematic_name</span><span class="si">!r}</span><span class="s2">"</span>
+                <span class="p">)</span>
+        <span class="n">unresolved_pairs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">orf</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">sym</span><span class="si">}</span><span class="s2">"</span><span class="p">:</span> <span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">sym</span><span class="p">)</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">sym</span><span class="p">),</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">NON_ORF_STRAIN_LABELS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">label</span><span class="o">.</span><span class="n">disposition</span> <span class="o">==</span> <span class="s2">"unresolved"</span>
+        <span class="p">}</span>
+        <span class="n">unresolved</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">unresolved_pairs</span><span class="p">)</span>
+        <span class="n">orfs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">cell</span><span class="o">.</span><span class="n">orf</span> <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">values</span><span class="p">()}</span> <span class="o">-</span> <span class="n">unresolved</span> <span class="o">-</span> <span class="p">{</span><span class="n">WILD_TYPE_KEY</span><span class="p">}</span>
+        <span class="p">)</span>
         <span class="n">off_genome</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
             <span class="n">orf</span>
             <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">orfs</span>
@@ -921,11 +1452,19 @@
             <span class="p">)</span>
         <span class="n">common_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">orf</span><span class="p">:</span> <span class="n">canonical</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">orf</span><span class="p">,</span> <span class="n">orf</span><span class="p">)</span> <span class="k">for</span> <span class="n">orf</span> <span class="ow">in</span> <span class="n">orfs</span><span class="p">}</span>
 
-        <span class="c1"># Resolve each DISTINCT compound identity once; a compound carrying no InChIKey,</span>
-        <span class="c1"># CID or ChEBI id cannot be encoded, so its cells are dropped.</span>
+        <span class="c1"># Rule 1: unresolved strain labels are held, whatever their compound.</span>
+        <span class="n">held</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">orf</span> <span class="ow">in</span> <span class="n">unresolved</span><span class="p">}</span>
+        <span class="n">held_by_label</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">label</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">held</span> <span class="k">if</span> <span class="n">cells</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">orf</span> <span class="o">==</span> <span class="n">label</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">unresolved</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Rule 2: resolve each DISTINCT compound identity of the remaining cells once; a</span>
+        <span class="c1"># compound carrying no InChIKey, CID or ChEBI id cannot be encoded, so its cells</span>
+        <span class="c1"># are dropped.</span>
         <span class="n">compounds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Compound</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">compounds</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">held</span> <span class="ow">and</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">compounds</span><span class="p">:</span>
                 <span class="n">compounds</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compound</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
         <span class="n">unidentified</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
             <span class="n">identity</span>
@@ -935,8 +1474,10 @@
             <span class="ow">and</span> <span class="n">compound</span><span class="o">.</span><span class="n">chebi_id</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="p">)</span>
         <span class="n">unidentified_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">unidentified</span><span class="p">)</span>
-        <span class="n">n_dropped</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
-            <span class="mi">1</span> <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">in</span> <span class="n">unidentified_set</span>
+        <span class="n">n_dropped_compound</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">cells</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">held</span> <span class="ow">and</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">in</span> <span class="n">unidentified_set</span>
         <span class="p">)</span>
         <span class="n">names</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">compound</span><span class="o">.</span><span class="n">name</span>
@@ -949,40 +1490,46 @@
                 <span class="s2">"which would merge two conditions into one record key"</span>
             <span class="p">)</span>
 
+        <span class="c1"># The served release is the 2016 Sci Data extended CGM, but a record holds ONE</span>
+        <span class="c1"># Publication; the 2015 paper stays the record's citation and the 2016 paper is</span>
+        <span class="c1"># cited by every record's reference background, culture format and z rule</span>
+        <span class="c1"># (SourcedValues carrying its citation key + sha256).</span>
         <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span><span class="n">doi</span><span class="o">=</span><span class="n">PAPER_DOI</span><span class="p">,</span> <span class="n">doi_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://doi.org/</span><span class="si">{</span><span class="n">PAPER_DOI</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">environments</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Environment</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="n">references</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">()</span>
+        <span class="n">environments</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">CultureEnvironment</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">n_all_non_replicating</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">by_kind</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"deletion"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"conditional_allele"</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">"wild_type"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">cells</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Wildenhain2015 CGM"</span><span class="p">):</span>
                 <span class="n">cell</span> <span class="o">=</span> <span class="n">cells</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-                <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">in</span> <span class="n">unidentified_set</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">held</span> <span class="ow">or</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">in</span> <span class="n">unidentified_set</span><span class="p">:</span>
                     <span class="k">continue</span>
                 <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">identity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">environments</span><span class="p">:</span>
                     <span class="n">environments</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span>
                         <span class="n">compounds</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">]</span>
                     <span class="p">)</span>
-                    <span class="n">references</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span>
-                        <span class="n">environments</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">]</span>
-                    <span class="p">)</span>
                 <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">all_screens_non_replicating</span><span class="p">:</span>
                     <span class="n">n_all_non_replicating</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="n">experiment</span> <span class="o">=</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">(</span>
+                <span class="k">if</span> <span class="n">cell</span><span class="o">.</span><span class="n">orf</span> <span class="o">==</span> <span class="n">WILD_TYPE_KEY</span><span class="p">:</span>
+                    <span class="n">by_kind</span><span class="p">[</span><span class="s2">"wild_type"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">cell</span><span class="o">.</span><span class="n">orf</span> <span class="ow">in</span> <span class="n">ESSENTIAL_GENE_ORFS</span><span class="p">:</span>
+                    <span class="n">by_kind</span><span class="p">[</span><span class="s2">"conditional_allele"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">by_kind</span><span class="p">[</span><span class="s2">"deletion"</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">experiment</span> <span class="o">=</span> <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">(</span>
                     <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-                    <span class="n">genotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">orf</span><span class="p">,</span> <span class="n">common_names</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">orf</span><span class="p">]),</span>
+                    <span class="n">genotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">orf</span><span class="p">,</span> <span class="n">common_names</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cell</span><span class="o">.</span><span class="n">orf</span><span class="p">)),</span>
                     <span class="n">environment</span><span class="o">=</span><span class="n">environments</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">],</span>
                     <span class="n">phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_phenotype</span><span class="p">(</span><span class="n">cell</span><span class="p">),</span>
                 <span class="p">)</span>
                 <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span>
-                        <span class="n">experiment</span><span class="p">,</span> <span class="n">references</span><span class="p">[</span><span class="n">cell</span><span class="o">.</span><span class="n">identity</span><span class="p">],</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span>
-                    <span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_intern_record</span><span class="p">(</span><span class="n">experiment</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">publication</span><span class="p">,</span> <span class="n">itxn</span><span class="p">),</span>
                 <span class="p">)</span>
                 <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
@@ -995,6 +1542,23 @@
             <span class="n">dropped_records</span><span class="o">=</span><span class="n">source_records</span> <span class="o">-</span> <span class="n">idx</span><span class="p">,</span>
             <span class="n">rules</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">DropRule</span><span class="p">(</span>
+                    <span class="n">rule</span><span class="o">=</span><span class="s2">"strain_label_unresolved"</span><span class="p">,</span>
+                    <span class="n">scope</span><span class="o">=</span><span class="s2">"strain"</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                        <span class="s2">"the released orf is not a systematic name and the sym names "</span>
+                        <span class="s2">"no strain a mirrored source identifies (NON_ORF_STRAIN_LABELS); "</span>
+                        <span class="s2">"held until Sci Data Table 1 / Cell Systems Table S3 is "</span>
+                        <span class="s2">"mirrored. Items: label (cells, released rows)"</span>
+                    <span class="p">),</span>
+                    <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">held</span><span class="p">),</span>
+                    <span class="n">items</span><span class="o">=</span><span class="p">[</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> cells, "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label_rows</span><span class="p">[</span><span class="n">unresolved_pairs</span><span class="p">[</span><span class="n">label</span><span class="p">]]</span><span class="si">}</span><span class="s2"> rows)"</span>
+                        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">held_by_label</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="n">n</span>
+                    <span class="p">],</span>
+                <span class="p">),</span>
+                <span class="n">DropRule</span><span class="p">(</span>
                     <span class="n">rule</span><span class="o">=</span><span class="s2">"compound_without_a_structure_identifier"</span><span class="p">,</span>
                     <span class="n">scope</span><span class="o">=</span><span class="s2">"compound"</span><span class="p">,</span>
                     <span class="n">description</span><span class="o">=</span><span class="p">(</span>
@@ -1002,25 +1566,29 @@
                         <span class="s2">"compound has no InChIKey, CID or ChEBI id to be keyed or "</span>
                         <span class="s2">"joined by; only its submitter SID is known"</span>
                     <span class="p">),</span>
-                    <span class="n">n_records</span><span class="o">=</span><span class="n">n_dropped</span><span class="p">,</span>
+                    <span class="n">n_records</span><span class="o">=</span><span class="n">n_dropped_compound</span><span class="p">,</span>
                     <span class="n">items</span><span class="o">=</span><span class="n">unidentified</span><span class="p">,</span>
-                <span class="p">)</span>
+                <span class="p">),</span>
             <span class="p">],</span>
         <span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"dropped_records.json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">drop_log</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span> <span class="o">!=</span> <span class="n">n_dropped</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">held</span><span class="p">)</span> <span class="o">+</span> <span class="n">n_dropped_compound</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"drop accounting mismatch: rule total </span><span class="si">{</span><span class="n">n_dropped</span><span class="si">}</span><span class="s2">, "</span>
+                <span class="sa">f</span><span class="s2">"drop accounting mismatch: rule total </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">held</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n_dropped_compound</span><span class="si">}</span><span class="s2">, "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">drop_log</span><span class="o">.</span><span class="n">dropped_records</span><span class="si">}</span><span class="s2"> records missing from the build"</span>
             <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Wildenhain2015 records (</span><span class="si">%d</span><span class="s2"> dropped for an unidentifiable "</span>
-            <span class="s2">"compound; </span><span class="si">%d</span><span class="s2"> non-strain rows ignored; </span><span class="si">%d</span><span class="s2"> cells whose every screen is "</span>
-            <span class="s2">"non-replicate flagged)"</span><span class="p">,</span>
+            <span class="s2">"Wrote </span><span class="si">%d</span><span class="s2"> Wildenhain2015 records (</span><span class="si">%d</span><span class="s2"> kanMX deletion, </span><span class="si">%d</span><span class="s2"> conditional allele, "</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> wild type; </span><span class="si">%d</span><span class="s2"> held for an unresolved strain label; </span><span class="si">%d</span><span class="s2"> dropped for an "</span>
+            <span class="s2">"unidentifiable compound; </span><span class="si">%d</span><span class="s2"> cells whose every screen is non-replicate "</span>
+            <span class="s2">"flagged)"</span><span class="p">,</span>
             <span class="n">idx</span><span class="p">,</span>
-            <span class="n">n_dropped</span><span class="p">,</span>
-            <span class="n">n_non_strain</span><span class="p">,</span>
+            <span class="n">by_kind</span><span class="p">[</span><span class="s2">"deletion"</span><span class="p">],</span>
+            <span class="n">by_kind</span><span class="p">[</span><span class="s2">"conditional_allele"</span><span class="p">],</span>
+            <span class="n">by_kind</span><span class="p">[</span><span class="s2">"wild_type"</span><span class="p">],</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">held</span><span class="p">),</span>
+            <span class="n">n_dropped_compound</span><span class="p">,</span>
             <span class="n">n_all_non_replicating</span><span class="p">,</span>
         <span class="p">)</span></div>
 

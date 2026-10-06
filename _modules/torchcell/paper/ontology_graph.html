@@ -147,6 +147,14 @@
 <span class="c1"># biology, so they are recorded as a note in the legend instead.</span>
 <span class="n">CONFIG_MIXINS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"ModelStrict"</span><span class="p">,</span> <span class="s2">"ModelStrictArbitrary"</span><span class="p">})</span>
 
+<span class="c1"># Mixins that add behavior and are listed FIRST in a class's bases for a method-</span>
+<span class="c1"># resolution reason, not because they are the class's kind. ``HashableProvenanceGapMixin``</span>
+<span class="c1"># must precede a frozen parent leaf so pydantic keeps its ``__hash__`` (schema.py), so</span>
+<span class="c1"># ``BarcodedKanMxDeletionPerturbation`` lists it before ``KanMxDeletionPerturbation``.</span>
+<span class="c1"># The inheritance parent drawn in the figure is the first OTHER schema model base;</span>
+<span class="c1"># a class whose only schema base is such a mixin (``ConstructedOrf``) keeps it.</span>
+<span class="n">BEHAVIOR_MIXINS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"HashableProvenanceGapMixin"</span><span class="p">})</span>
+
 <span class="c1"># Lane assignment. Each entry is (lane key, roots) where a root's entire inheritance</span>
 <span class="c1"># subtree joins that lane. Order here is the left-to-right / top-to-bottom reading</span>
 <span class="c1"># order of the finished figure.</span>
@@ -420,6 +428,21 @@
     <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_inheritance_parent</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">registry</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The base drawn as ``obj``'s parent: its first schema model base that is not a</span>
+<span class="sd">    ``BEHAVIOR_MIXINS`` entry, else its first schema model base, else ``None``.</span>
+<span class="sd">    """</span>
+    <span class="n">bases</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">b</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__bases__</span>
+        <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">registry</span> <span class="ow">and</span> <span class="n">registry</span><span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="vm">__name__</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"model"</span>
+    <span class="p">]</span>
+    <span class="n">domain</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bases</span> <span class="k">if</span> <span class="n">b</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">BEHAVIOR_MIXINS</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">domain</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">domain</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">bases</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">bases</span> <span class="k">else</span> <span class="kc">None</span>
+
+
 <div class="viewcode-block" id="build_ontology_graph">
 <a class="viewcode-back" href="../../../generated/torchcell.paper.ontology_graph.build_ontology_graph.html#torchcell.paper.ontology_graph.build_ontology_graph">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_ontology_graph</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">OntologyGraph</span><span class="p">:</span>
@@ -443,23 +466,13 @@
     <span class="n">graph</span> <span class="o">=</span> <span class="n">OntologyGraph</span><span class="p">()</span>
 
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">parents</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">b</span><span class="o">.</span><span class="vm">__name__</span>
-            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__bases__</span>
-            <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">registry</span> <span class="ow">and</span> <span class="n">registry</span><span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="vm">__name__</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"model"</span>
-        <span class="p">]</span>
-        <span class="n">parent</span> <span class="o">=</span> <span class="n">parents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">parents</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="n">_inheritance_parent</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">registry</span><span class="p">)</span>
 
         <span class="n">chain</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">cursor</span> <span class="o">=</span> <span class="n">parent</span>
         <span class="k">while</span> <span class="n">cursor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">chain</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cursor</span><span class="p">)</span>
-            <span class="n">cursor_parents</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">b</span><span class="o">.</span><span class="vm">__name__</span>
-                <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">registry</span><span class="p">[</span><span class="n">cursor</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="vm">__bases__</span>
-                <span class="k">if</span> <span class="n">b</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">registry</span>
-            <span class="p">]</span>
-            <span class="n">cursor</span> <span class="o">=</span> <span class="n">cursor_parents</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">cursor_parents</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">cursor</span> <span class="o">=</span> <span class="n">_inheritance_parent</span><span class="p">(</span><span class="n">registry</span><span class="p">[</span><span class="n">cursor</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">registry</span><span class="p">)</span>
 
         <span class="n">entry</span> <span class="o">=</span> <span class="n">OntologyClass</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
@@ -479,7 +492,10 @@
             <span class="k">continue</span>
 
         <span class="n">model_cls</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">type</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">],</span> <span class="n">obj</span><span class="p">)</span>
-        <span class="n">declared</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">"__annotations__"</span><span class="p">,</span> <span class="p">{})</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="c1"># The class's OWN annotations: ``getattr`` can return an ancestor's dict once</span>
+        <span class="c1"># ``ABCMeta.__annotations__`` exists, and ``__dict__`` is empty under lazy</span>
+        <span class="c1"># annotations (Python 3.14); ``inspect.get_annotations`` is right on both.</span>
+        <span class="n">declared</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">get_annotations</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
         <span class="n">inherited</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">model_cls</span><span class="o">.</span><span class="n">model_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">field_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">declared</span><span class="p">:</span>

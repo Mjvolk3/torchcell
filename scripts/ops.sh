@@ -226,13 +226,40 @@ print_health() {
     fi
 }
 
+# `sync` is the one action with an exit code: 0 when every listed host serves the same
+# release, 1 when the hosts diverge or a host serves a store without a release node.
+# `kg_release.sh deploy` ends with it, and a cron or a CI step can gate on it.
+check_sync() {
+    local table gh_rel radiant_rel rc=0
+    table=$(release_table)
+    printf '%s\n' "$table"
+    gh_rel=$(default_release gilahyper "$table")
+    radiant_rel=$(default_release radiant "$table")
+    for pair in "gilahyper=$gh_rel" "radiant=$radiant_rel"; do
+        local host="${pair%%=*}" rel="${pair#*=}"
+        wants_host "$host" || continue
+        if [[ -z "$rel" || "$rel" == "-" ]]; then
+            printf '%s✗%s %s: no release node (unpaired store)\n' "$RED" "$RESET" "$host"; rc=1
+        fi
+    done
+    if wants_host gilahyper && wants_host radiant; then
+        if [[ -n "$gh_rel" && "$gh_rel" != "-" && "$gh_rel" == "$radiant_rel" ]]; then
+            printf '%s✓%s sync: in sync (%s)\n' "$GREEN" "$RESET" "$gh_rel"
+        else
+            printf '%s✗%s sync: DIVERGED -- gilahyper=%s radiant=%s\n' "$RED" "$RESET" "${gh_rel:-?}" "${radiant_rel:-?}"; rc=1
+        fi
+    fi
+    return $rc
+}
+
 ACTION="${1:-status}"
 case "$ACTION" in
     status)   print_releases; echo; print_health ;;
     releases) print_releases ;;
     health)   print_health ;;
+    sync)     check_sync ;;
     *)
-        echo "usage: $0 {status|releases|health}" >&2
+        echo "usage: $0 {status|releases|health|sync}" >&2
         exit 2
         ;;
 esac

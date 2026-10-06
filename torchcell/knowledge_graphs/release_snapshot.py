@@ -27,6 +27,7 @@ experiment records for the same dataset set. Output is byte-stable: keys sorted,
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Literal
@@ -34,7 +35,8 @@ from typing import Literal
 from pydantic import BaseModel
 
 from torchcell.knowledge_graphs.kg_manifest import GraphSchemaEntry, KgBuildManifest
-from torchcell.knowledge_graphs.releases import content_sha256
+from torchcell.knowledge_graphs.releases import closure_compatibility, content_sha256
+from torchcell.provenance.schema_deps import SchemaSurface
 
 __all__ = [
     "RELEASES_RELPATH",
@@ -44,6 +46,7 @@ __all__ = [
     "composite_sha256",
     "snapshot_from_manifest",
     "bootstrap_package_version",
+    "pair_package_tag",
     "snapshot_paths",
     "write_snapshot",
     "load_snapshot",
@@ -193,6 +196,69 @@ def bootstrap_package_version(
         update={
             "torchcell_version": torchcell_version,
             "torchcell_tag": torchcell_tag,
+            "events": events,
+        }
+    )
+
+
+_PACKAGE_TAG_RE = re.compile(r"^v(\d+\.\d+\.\d+)$")
+
+
+def pair_package_tag(
+    snapshot: KgReleaseSnapshot,
+    closures: Mapping[str, Mapping[str, str]],
+    tag: str,
+    surface: SchemaSurface,
+) -> KgReleaseSnapshot:
+    """The snapshot paired with package ``tag``, cut after the build.
+
+    The release-before-build recipe records the tag at the stamp; this is the repair
+    for a build that ran from an untagged commit. ``surface`` is the schema surface AT
+    THE TAG (``kg_manifest.surface_at_ref``), and the pairing is accepted only when it
+    reproduces every served dataset's closure, so the pair means what a stamped one
+    means: that package serializes every served record under the contract it was
+    written with. The last event's note records what the build checkout reported.
+    """
+    match = _PACKAGE_TAG_RE.match(tag)
+    if match is None:
+        raise ValueError(f"{tag!r} is not a package tag of the form vX.Y.Z")
+    if snapshot.torchcell_tag == tag:
+        return snapshot  # already paired; a second run must not append a second note
+    if snapshot.torchcell_tag is not None:
+        raise ValueError(
+            f"{snapshot.release} is already paired with {snapshot.torchcell_tag}; a "
+            "release has one paired package"
+        )
+    report = closure_compatibility(
+        snapshot.release,
+        snapshot.torchcell_commit,
+        snapshot.datasets,
+        closures,
+        surface,
+    )
+    if not report.paired:
+        drifted = ", ".join(
+            f"{d.dataset_class} ({', '.join(d.changed_symbols)})"
+            for d in report.drifted
+        )
+        raise ValueError(
+            f"{tag} is not a pair for {snapshot.release}: "
+            f"{len(report.drifted)} drifted [{drifted}], "
+            f"{len(report.unchecked)} unverified {report.unchecked}"
+        )
+    text = (
+        f"paired with package tag {tag} after the build: the build checkout reported "
+        f"torchcell {snapshot.torchcell_version or 'unknown'} "
+        f"({snapshot.torchcell_tag or 'untagged'}); the schema surface at {tag} "
+        f"reproduces every served closure"
+    )
+    last = snapshot.events[-1]
+    joined = f"{last.note}; {text}" if last.note else text
+    events = [*snapshot.events[:-1], last.model_copy(update={"note": joined})]
+    return snapshot.model_copy(
+        update={
+            "torchcell_version": match.group(1),
+            "torchcell_tag": tag,
             "events": events,
         }
     )

@@ -428,13 +428,40 @@ class Neo4jQueryRaw:
             self.env = None
 
     def _connect(self) -> tuple[Any, str]:
-        """Return ``(driver, database)`` for the configured KG version."""
+        """Return ``(driver, database)`` for the configured KG version.
+
+        The pairing gate runs here, before any query: the resolved database's
+        ``KgRelease`` node is read and the installed schema surface must reproduce
+        every served dataset's closure fingerprints (``releases.require_paired``).
+        A store that drifted from the installed package, or that carries no release
+        node, raises ``IncompatibleReleaseError`` instead of being read under the
+        wrong contract; there is no partial pair.
+        """
+        from torchcell import __version__
         from torchcell.database.connection import neo4j_connection_settings
-        from torchcell.knowledge_graphs.releases import resolve_database
+        from torchcell.knowledge_graphs import releases
+        from torchcell.provenance.schema_deps import load_default_surface
 
         version = self.version or neo4j_connection_settings().version
-        database = resolve_database(version, self.uri, self.username, self.password)
-        log.info("Connecting to Neo4j (%s -> %s)", version, database)
+        database = releases.resolve_database(
+            version, self.uri, self.username, self.password
+        )
+        release = releases.read_release(
+            self.uri, self.username, self.password, database
+        )
+        releases.require_paired(
+            release,
+            load_default_surface(),
+            installed_version=__version__,
+            database=database,
+        )
+        log.info(
+            "Connecting to Neo4j (%s -> %s, release %s paired with torchcell %s)",
+            version,
+            database,
+            release.release if release else "-",
+            releases.package_label(release),
+        )
         driver = GraphDatabase.driver(self.uri, auth=(self.username, self.password))
         return driver, database
 

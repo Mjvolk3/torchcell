@@ -148,6 +148,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # The compatibility page reads the schema surface at every package tag with
+          # `git show <tag>:...`, so the tags and their commits must be present.
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -168,6 +173,12 @@ jobs:
           # here means that closure grew: add the named package.
           python -m pip install --upgrade pip
           pip install pydantic pyyaml python-dotenv
+
+      # The pairs table and the matrix (docs/source/database/compatibility.md) are
+      # generated from the committed snapshots and the package tags; a stale page, or a
+      # release whose paired tag no longer reads it (a broken pair), fails here.
+      - name: Check the compatibility page is current and every pair holds
+        run: PYTHONPATH="$PWD" python scripts/kg_compat_page.py --repo-root "$PWD" --check
 
       - name: Check the supported queries against the newest release snapshot
         run: |

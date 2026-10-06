@@ -34,10 +34,12 @@ from torchcell.knowledge_graphs.release_snapshot import (
     load_closures,
     load_snapshot,
     load_snapshots,
+    pair_package_tag,
     snapshot_from_manifest,
     snapshot_paths,
     write_snapshot,
 )
+from torchcell.provenance.schema_deps import load_surface_from_sources
 
 COMPOSITE = "913f9338fb6c17253f3a14816fc08d52522454bfc19a8c99538a197cfb23fb41"
 
@@ -282,3 +284,50 @@ def test_bootstrap_package_version_fills_the_fields_and_notes_it_once() -> None:
         "to `releases snapshot --torchcell-version` because the manifest predates the "
         "versioning spine"
     )
+
+
+def test_pair_package_tag_pairs_once_and_only_when_the_tag_reproduces_every_closure() -> (
+    None
+):
+    """The surface at the tag must reproduce every served closure (none drifted, none
+    unverified); the pairing sets version and tag from the tag and notes what the build
+    reported. A malformed tag, a drifting surface, a missing closure, and a second,
+    different tag are refused; the same tag again is a no-op.
+    """
+    surface = load_surface_from_sources(
+        {
+            "torchcell/datamodels/schema.py": (
+                "from pydant import ModelStrict\n\nclass Experiment(ModelStrict):\n"
+                "    a: int\n\nclass Genotype(ModelStrict):\n    b: str\n"
+            ),
+            "torchcell/datamodels/pydant.py": "class ModelStrict:\n    pass\n",
+        }
+    )
+    closure = {
+        "Experiment": surface.fingerprints["Experiment"],
+        "Genotype": surface.fingerprints["Genotype"],
+    }
+    manifest = _manifest()
+    manifest.torchcell_tag = None
+    bare = snapshot_from_manifest(manifest)
+    closures = {"DsA": closure, "DsB": closure}
+    paired = pair_package_tag(bare, closures, "v1.2.1", surface)
+    assert (paired.torchcell_version, paired.torchcell_tag) == ("1.2.1", "v1.2.1")
+    assert paired.events[-1].note == (
+        "reconstructed; paired with package tag v1.2.1 after the build: the build "
+        "checkout reported torchcell 1.2.0 (untagged); the schema surface at v1.2.1 "
+        "reproduces every served closure"
+    )
+    assert paired.composite_sha256 == COMPOSITE
+    assert pair_package_tag(paired, closures, "v1.2.1", surface) == paired
+    with pytest.raises(ValueError, match="already paired with v1.2.1"):
+        pair_package_tag(paired, closures, "v1.3.0", surface)
+    with pytest.raises(ValueError, match="not a package tag of the form vX.Y.Z"):
+        pair_package_tag(bare, closures, "legacy-pre-move-2026.10", surface)
+    drifting = {"DsA": closure, "DsB": {**closure, "Genotype": "0" * 64}}
+    with pytest.raises(
+        ValueError, match=r"1 drifted \[DsB \(Genotype\)\], 0 unverified"
+    ):
+        pair_package_tag(bare, drifting, "v1.2.1", surface)
+    with pytest.raises(ValueError, match=r"0 drifted \[\], 1 unverified \['DsB'\]"):
+        pair_package_tag(bare, {"DsA": closure}, "v1.2.1", surface)

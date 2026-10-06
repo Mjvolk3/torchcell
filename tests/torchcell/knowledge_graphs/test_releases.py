@@ -39,6 +39,7 @@ from torchcell.knowledge_graphs.kg_manifest import (
 )
 from torchcell.knowledge_graphs.releases import (
     DatasetDrift,
+    IncompatibleReleaseError,
     KgRelease,
     ReleaseCompatibility,
     ReleaseDataset,
@@ -63,11 +64,13 @@ from torchcell.knowledge_graphs.releases import (
     read_release,
     release_from_manifest,
     release_id,
+    require_paired,
     resolve_database,
     stamp_manifest,
     status_rows,
     write_release,
 )
+from torchcell.provenance.schema_deps import SchemaSurface
 
 
 def _manifest(
@@ -839,7 +842,166 @@ def test_compatibility_names_compatible_drifted_and_unchecked_datasets(
         unchecked=["DsB"],
     )
     assert report.ok is False
+    assert report.paired is False
     assert compatibility(RELEASE, tmp_path).ok is True
+    # DsB has no recorded closure: ``ok`` tolerates it, the pairing gate does not.
+    assert compatibility(RELEASE, tmp_path).paired is False
+
+
+def test_require_paired_returns_the_report_or_refuses_with_the_remedy() -> None:
+    """Every served dataset verified: the report. A drifted or unverified dataset, or a
+    store without a release node, raises ``IncompatibleReleaseError`` whose text names
+    the release, its paired package, the installed version, each failing dataset and
+    the remedy (the paired package when the release names a tag, the compatibility page
+    otherwise).
+    """
+    surface = SchemaSurface(
+        specs={}, fingerprints=dict(_Surface.fingerprints), module_of={}, ref_graph={}
+    )
+    paired = RELEASE.model_copy(
+        update={
+            "torchcell_version": "1.6.2",
+            "torchcell_tag": "v1.6.2",
+            "closures": {
+                "DsA": {"Experiment": "aa"},
+                "DsB": {"Experiment": "aa", "Genotype": "gg"},
+            },
+        }
+    )
+    report = require_paired(
+        paired, surface, installed_version="1.6.2", database="torchcell"
+    )
+    assert report.paired is True
+    assert report.compatible == ["DsA", "DsB"]
+
+    with pytest.raises(IncompatibleReleaseError) as unchecked:
+        require_paired(RELEASE, surface, installed_version="1.6.1", database="db")
+    assert str(unchecked.value).splitlines() == [
+        "knowledge-graph release 2026.09.17-7715ee35 (KG 1.0, database 'db') is paired "
+        "with torchcell -; the installed torchcell 1.6.1 is not a pair:",
+        "  DsB: the release recorded no closure to verify against",
+        "0 drifted and 1 unverified of 2 served datasets. The release names no package "
+        "tag; pick one that reads it on the compatibility page "
+        "(docs/source/database/compatibility.md) or set TORCHCELL_KG_VERSION to a "
+        "release built under the installed schema.",
+    ]
+
+    drifted = paired.model_copy(
+        update={"closures": {**paired.closures, "DsA": {"Experiment": "zz"}}}
+    )
+    with pytest.raises(IncompatibleReleaseError) as drift:
+        require_paired(drifted, surface, installed_version="1.6.1", database="db")
+    assert str(drift.value).splitlines() == [
+        "knowledge-graph release 2026.09.17-7715ee35 (KG 1.0, database 'db') is paired "
+        "with torchcell v1.6.2; the installed torchcell 1.6.1 is not a pair:",
+        "  DsA: serialized under a different contract for Experiment",
+        "1 drifted and 0 unverified of 2 served datasets. Install the paired package "
+        "(pip install torchcell==1.6.2) or set TORCHCELL_KG_VERSION to a release built "
+        "under the installed schema.",
+    ]
+
+    with pytest.raises(IncompatibleReleaseError, match="carries no KgRelease node"):
+        require_paired(None, surface, installed_version="1.6.2", database="old")
+
+
+def test_cli_retag_pairs_the_snapshot_and_the_manifest_with_a_later_tag(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A release built from an untagged commit is paired with ``v1.2.1`` once the surface
+    at that tag (``kg_manifest.surface_at_ref``, patched) reproduces every closure: the
+    committed snapshot and the manifest both record version 1.2.1 and the tag, the last
+    event's note says what the build reported, a second run changes nothing, a tag whose
+    surface drifts is refused, and a manifest for another release is refused.
+    """
+    from torchcell.knowledge_graphs import kg_manifest, release_snapshot
+
+    manifest = _manifest({"DsA": 1, "DsB": 2})
+    stamp_manifest(
+        manifest,
+        kind="full",
+        built_at="2026-09-17T20:36:32-05:00",
+        content_hashes={"DsA": "a" * 64, "DsB": "b" * 64},
+        previous_version=None,
+        torchcell_version="1.2.0",
+        torchcell_tag=None,
+    )
+    manifest_path = tmp_path / "kg_manifest.json"
+    manifest_path.write_text(manifest.model_dump_json(indent=1), encoding="utf-8")
+    snapshot = release_snapshot.snapshot_from_manifest(manifest)
+    closures = {name: dict(e.closure) for name, e in manifest.datasets.items()}
+    snapshot_path, _ = release_snapshot.write_snapshot(snapshot, closures, tmp_path)
+    assert snapshot.torchcell_tag is None
+
+    class _Matching:
+        fingerprints = {"Experiment": "aa", "Genotype": "bb"}
+
+    class _Drifting:
+        fingerprints = {"Experiment": "aa", "Genotype": "changed"}
+
+    surfaces = {"v1.2.1": _Matching(), "v1.3.0": _Drifting()}
+    monkeypatch.setattr(kg_manifest, "surface_at_ref", lambda root, ref: surfaces[ref])
+    release = snapshot.release
+    argv = [
+        "retag",
+        "--release",
+        release,
+        "--tag",
+        "v1.2.1",
+        "--repo-root",
+        str(tmp_path),
+    ]
+    assert main([*argv, "--manifest", str(manifest_path)]) == 0
+    assert capsys.readouterr().out == (
+        f"{release}: paired with v1.2.1 (torchcell 1.2.1) -> {snapshot_path}, "
+        f"{manifest_path}\n"
+    )
+    paired = release_snapshot.load_snapshot(snapshot_path)
+    assert (paired.torchcell_version, paired.torchcell_tag) == ("1.2.1", "v1.2.1")
+    assert paired.events[-1].note == (
+        "paired with package tag v1.2.1 after the build: the build checkout reported "
+        "torchcell 1.2.0 (untagged); the schema surface at v1.2.1 reproduces every "
+        "served closure"
+    )
+    reloaded = kg_manifest.load_manifest(manifest_path)
+    assert (reloaded.torchcell_version, reloaded.torchcell_tag) == ("1.2.1", "v1.2.1")
+    before = snapshot_path.read_bytes()
+    assert main(argv) == 0
+    assert snapshot_path.read_bytes() == before
+    with pytest.raises(ValueError, match="already paired with v1.2.1"):
+        main(
+            [
+                "retag",
+                "--release",
+                release,
+                "--tag",
+                "v1.3.0",
+                "--repo-root",
+                str(tmp_path),
+            ]
+        )
+    fresh = snapshot.model_copy()
+    release_snapshot.write_snapshot(fresh, closures, tmp_path)
+    with pytest.raises(ValueError, match=r"v1.3.0 is not a pair .* 2 drifted"):
+        main(
+            [
+                "retag",
+                "--release",
+                release,
+                "--tag",
+                "v1.3.0",
+                "--repo-root",
+                str(tmp_path),
+            ]
+        )
+    other = tmp_path / "other.json"
+    other.write_text(
+        manifest.model_copy(
+            update={"release": "2026.01.01-00000000"}
+        ).model_dump_json(),
+        encoding="utf-8",
+    )
+    with pytest.raises(SystemExit, match="describes release 2026.01.01-00000000"):
+        main([*argv, "--manifest", str(other)])
 
 
 # --------------------------------------------------------------------------- git columns

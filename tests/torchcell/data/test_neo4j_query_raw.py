@@ -51,6 +51,7 @@ import pytest
 
 import torchcell.data.neo4j_query_raw as neo4j_query_raw
 import torchcell.knowledge_graphs.releases as releases
+from torchcell import __version__
 from torchcell.data.neo4j_query_raw import (
     Neo4jQueryRaw,
     compute_experiment_reference_index,
@@ -69,6 +70,7 @@ from torchcell.datamodels.schema import (
     Media,
     ReferenceGenome,
 )
+from torchcell.provenance.schema_deps import load_default_surface
 
 ENVIRONMENT = Environment(media=Media(name="YPD", state="solid", is_synthetic=False))
 GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
@@ -498,6 +500,8 @@ class _FakeNeo4j:
         self.records = records
         self.calls: list[tuple[Any, ...]] = []
         self.listings: list[tuple[Any, ...]] = []
+        self.release: releases.KgRelease | None = _PAIRED_RELEASE
+        self.release_reads: list[str] = []
 
     def driver(self, uri: str, auth: tuple[str, str]) -> "_FakeNeo4j":
         self.calls.append(("driver", uri, auth))
@@ -527,6 +531,31 @@ _SERVED = [
     )
 ]
 
+# The release node the fake store carries: one dataset whose closure is the INSTALLED
+# surface's own fingerprints, so the pairing gate (``releases.require_paired``) passes
+# without a real store. The refusal tests replace this with a drifted copy or None.
+_SURFACE = load_default_surface()
+_PAIRED_RELEASE = releases.KgRelease(
+    release="2026.10.06-4b293d34",
+    version="3.0",
+    torchcell_commit="4b293d3432ca1a08ad132d73c97ac12204bbf639",
+    torchcell_version="1.6.2",
+    torchcell_tag="v1.6.2",
+    built_at="2026-10-06T04:42:48-05:00",
+    biocypher_out="2026-10-06_00-13-33",
+    datasets={
+        "DsA": releases.ReleaseDataset(
+            dataset_class="DsA", n_experiments=3, content_sha256="a" * 64
+        )
+    },
+    closures={
+        "DsA": {
+            "Experiment": _SURFACE.fingerprints["Experiment"],
+            "Genotype": _SURFACE.fingerprints["Genotype"],
+        }
+    },
+)
+
 
 def _property_shape(record: dict[str, Any]) -> dict[str, Any]:
     return {
@@ -546,9 +575,114 @@ def fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> Iterator[_FakeNeo4j]:
         fake.listings.append((uri, user, password, probe))
         return _SERVED
 
+    def read_release(
+        uri: str, user: str, password: str, database: str
+    ) -> releases.KgRelease | None:
+        fake.release_reads.append(database)
+        return fake.release
+
     monkeypatch.setattr(neo4j_query_raw, "GraphDatabase", fake)
     monkeypatch.setattr(releases, "list_databases", list_databases)
+    monkeypatch.setattr(releases, "read_release", read_release)
     yield fake
+
+
+def test_connect_reads_the_release_node_of_the_resolved_database(
+    view: Neo4jQueryRaw, fake_neo4j: _FakeNeo4j, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The pairing gate reads the KgRelease node of the database the version resolved
+    to (here the alias ``pinned`` passes through) before the driver is opened, and a
+    paired release lets the query run.
+    """
+    monkeypatch.setenv("TORCHCELL_KG_VERSION", "pinned")
+    assert list(view.fetch_data()) == fake_neo4j.records
+    assert fake_neo4j.release_reads == ["pinned"]
+    assert fake_neo4j.calls[0] == ("driver", URI, ("u", "p"))
+
+
+def test_a_drifted_release_is_refused_before_any_driver_is_opened(
+    tmp_path: Path, fake_neo4j: _FakeNeo4j
+) -> None:
+    """A store whose closure fingerprints the installed schema does not reproduce raises
+    ``IncompatibleReleaseError`` naming the release, its paired package, the installed
+    version, the drifted dataset with its symbols and the remedy; no driver, session or
+    query happens and no store is written.
+    """
+    fake_neo4j.release = _PAIRED_RELEASE.model_copy(
+        update={"closures": {"DsA": {"Experiment": "0" * 64, "Genotype": "1" * 64}}}
+    )
+    with pytest.raises(releases.IncompatibleReleaseError) as excinfo:
+        Neo4jQueryRaw(
+            uri=URI,
+            username="u",
+            password="p",
+            root_dir=str(tmp_path),
+            query=QUERY,
+            version="latest",
+        )
+    lines = str(excinfo.value).splitlines()
+    assert lines[0] == (
+        "knowledge-graph release 2026.10.06-4b293d34 (KG 3.0, database 'latest') is "
+        f"paired with torchcell v1.6.2; the installed torchcell {__version__} is not a "
+        "pair:"
+    )
+    assert lines[1] == (
+        "  DsA: serialized under a different contract for Experiment, Genotype"
+    )
+    assert lines[2] == (
+        "1 drifted and 0 unverified of 1 served datasets. Install the paired package "
+        "(pip install torchcell==1.6.2) or set TORCHCELL_KG_VERSION to a release built "
+        "under the installed schema."
+    )
+    assert fake_neo4j.calls == []
+    assert not (tmp_path / "raw" / "lmdb" / "data.mdb").exists()
+
+
+def test_a_store_without_a_release_node_is_refused(
+    tmp_path: Path, fake_neo4j: _FakeNeo4j
+) -> None:
+    """No KgRelease node means no package is paired with the store: refused, with the
+    two ways a store gets its node named.
+    """
+    fake_neo4j.release = None
+    with pytest.raises(releases.IncompatibleReleaseError) as excinfo:
+        Neo4jQueryRaw(
+            uri=URI,
+            username="u",
+            password="p",
+            root_dir=str(tmp_path),
+            query=QUERY,
+            version="latest",
+        )
+    assert str(excinfo.value) == (
+        "database 'latest' carries no KgRelease node, so no package version is paired "
+        "with it; a store is served only after `releases write-node` (the live rebuild "
+        "does this) or a `kg_release.sh deploy`"
+    )
+    assert fake_neo4j.calls == []
+
+
+def test_an_unverified_dataset_is_refused_too(
+    tmp_path: Path, fake_neo4j: _FakeNeo4j
+) -> None:
+    """A release that recorded no closure for a served dataset cannot prove the pair, so
+    the gate refuses it the same way (``paired`` is stricter than ``ok``).
+    """
+    fake_neo4j.release = _PAIRED_RELEASE.model_copy(update={"closures": {}})
+    with pytest.raises(releases.IncompatibleReleaseError) as excinfo:
+        Neo4jQueryRaw(
+            uri=URI,
+            username="u",
+            password="p",
+            root_dir=str(tmp_path),
+            query=QUERY,
+            version="latest",
+        )
+    assert "  DsA: the release recorded no closure to verify against" in str(
+        excinfo.value
+    )
+    assert "0 drifted and 1 unverified of 1 served datasets." in str(excinfo.value)
+    assert fake_neo4j.calls == []
 
 
 def test_fetch_data_resolves_the_env_version_and_closes_the_driver_after_the_last_record(

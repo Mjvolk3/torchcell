@@ -436,7 +436,7 @@
         "DmfKuzmin2020Dataset"
       ],
       "kind": "superset_admission",
-      "note": "superset of served: DmfKuzmin2020Dataset +201 (served 632797); bootstrapped: torchcell_version 1.2.0 and torchcell_tag none were supplied to `releases snapshot --torchcell-version` because the manifest predates the versioning spine; derived as: git show ab6d8c5d:torchcell/__version__.py gives __version__ = 1.2.0; git tag --points-at ab6d8c5d is empty, so torchcell_tag is None; n_nodes 99724909 is the served count job 2678 (database/slurm/output/2678_increment_kg.out) passed to write-node",
+      "note": "superset of served: DmfKuzmin2020Dataset +201 (served 632797); bootstrapped: torchcell_version 1.2.0 and torchcell_tag none were supplied to `releases snapshot --torchcell-version` because the manifest predates the versioning spine; derived as: git show ab6d8c5d:torchcell/__version__.py gives __version__ = 1.2.0; git tag --points-at ab6d8c5d is empty, so torchcell_tag is None; n_nodes 99724909 is the served count job 2678 (database/slurm/output/2678_increment_kg.out) passed to write-node; paired with package tag v1.2.1 after the build: the build checkout reported torchcell 1.2.0 (untagged); the schema surface at v1.2.1 reproduces every served closure",
       "torchcell_commit": "ab6d8c5d1f8ea28f39be23329de36b5a7e4217cf"
     }
   ],
@@ -911,7 +911,7 @@
   "release": "2026.09.21-ab6d8c5d",
   "store_host": "gilahyper",
   "torchcell_commit": "7715ee35d95c535620b9e65bf59654642d6c5ffb",
-  "torchcell_tag": null,
-  "torchcell_version": "1.2.0",
+  "torchcell_tag": "v1.2.1",
+  "torchcell_version": "1.2.1",
   "version": "1.2"
 }

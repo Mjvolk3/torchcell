@@ -418,7 +418,7 @@
         "TmiKuzmin2020Dataset"
       ],
       "kind": "bootstrap",
-      "note": "reconstructed from the full build at 833970cdc1b68e81067e72337fdfba2193f571a7; built_at 2026-10-02T05:55:48-05:00",
+      "note": "reconstructed from the full build at 833970cdc1b68e81067e72337fdfba2193f571a7; built_at 2026-10-02T05:55:48-05:00; paired with package tag v1.6.1 after the build: the build checkout reported torchcell 1.6.1 (untagged); the schema surface at v1.6.1 reproduces every served closure",
       "torchcell_commit": "833970cdc1b68e81067e72337fdfba2193f571a7"
     }
   ],
@@ -884,7 +884,7 @@
   "release": "2026.10.02-833970cd",
   "store_host": "gilahyper",
   "torchcell_commit": "833970cdc1b68e81067e72337fdfba2193f571a7",
-  "torchcell_tag": null,
+  "torchcell_tag": "v1.6.1",
   "torchcell_version": "1.6.1",
   "version": "2.0"
 }

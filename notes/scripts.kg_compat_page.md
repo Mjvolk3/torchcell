@@ -34,3 +34,11 @@ Writes `docs/source/database/compatibility.md` (MyST) from the committed snapsho
   two surfaces and two snapshots and pins the whole page text and the `--check` codes.
   `pytest tests/torchcell` (the CI gate) does not collect `tests/scripts/`; run it by
   path.
+
+## 2026.10.06 - Pairs table, `incompatible` replaces `partial`, CI check
+
+The page's lead table is now **Pairs**: one row per release with its paired package (the snapshot's `torchcell_tag`, stamped at a build from a tagged commit or set afterwards by `releases retag`) and every tag that reads it. A paired tag whose verdict is not `compatible` is a broken pair and `build_page` raises, so `--check` fails in CI rather than publishing a page that contradicts the client. The matrix keeps the per-tag evidence but the word changed: `partial (...)` is now `incompatible (<n> of <m> datasets drift: ...)`, `incompatible (all <m> datasets drift)`, or `incompatible (<n> of <m> datasets unverified)` for a release whose snapshot recorded no closures, because the client (`releases.require_paired`) refuses the whole release at connect and the named datasets are evidence, not a usable subset. `package_tags` keeps only `vX.Y.Z` tags; `legacy-pre-move-2026.10` and `abandoned/...` are skipped.
+
+`--check` now runs in CI, in the `query-drift` job of `.github/workflows/docs.yaml`, whose checkout gained `fetch-depth: 0` and `fetch-tags: true` so `git show <tag>:...` works there.
+
+Measured 2026-10-06 after `releases retag` paired the three releases (`2026.09.21-ab6d8c5d` with `v1.2.1`, `2026.10.02-833970cd` with `v1.6.1`, `2026.10.06-4b293d34` with `v1.6.2`, the `DB(kg)` release cut that day): `v1.6.2` is the only tag that reads KG 3.0; `v1.2.1` through `v1.6.1` read KG 1.2 and 2.0; `v1.2.0` reads nothing.

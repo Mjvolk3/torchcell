@@ -115,6 +115,17 @@ else
     BUILD_COMMIT="${BUILD_COMMIT:-$(git -C "$TORCHCELL_SRC" rev-parse origin/main)}"
 fi
 PIP_REF="git+https://github.com/Mjvolk3/torchcell.git@$BUILD_COMMIT"
+# Pairing gate: a knowledge-graph release is served only as the pair of a package
+# release, so the commit the store is built from must carry a package tag (vX.Y.Z,
+# the bump commit semantic-release pushes for a REL / DB / PATCH / API commit), and the
+# fingerprint checkout must sit on that same commit so `stamp` records the tag. A
+# build from an untagged main would leave every published package incompatible with
+# the store (the October 2026 builds did), and `releases retag` is the only repair.
+PACKAGE_TAG=$(git -C "$TORCHCELL_SRC" describe --tags --exact-match --match 'v[0-9]*' "$BUILD_COMMIT" 2>/dev/null) \
+    || { echo "commit $BUILD_COMMIT carries no package tag: cut the release first (a REL, DB, PATCH or API commit on main), wait for semantic-release to push the vX.Y.Z bump commit, then build from it"; exit 1; }
+[ "$(git -C "$TORCHCELL_SRC" rev-parse HEAD)" = "$BUILD_COMMIT" ] \
+    || { echo "$TORCHCELL_SRC HEAD is not $BUILD_COMMIT ($PACKAGE_TAG); check out the tag so the stamp records it"; exit 1; }
+echo "package tag $PACKAGE_TAG at $BUILD_COMMIT: the release will be paired with it"
 
 echo "Running on $(hostname) at $(date); job $JOB${RESUME_JOB:+ (resuming job $RESUME_JOB)}"
 echo "config $KG_CONFIG; commit $BUILD_COMMIT; dev tree $DEV_DATA_ROOT; serve $SERVE_ROOT; next $NEXT_ROOT"
@@ -437,8 +448,9 @@ python -m torchcell.knowledge_graphs.releases write-node --manifest "$KG_MANIFES
     --built-at "$BUILT_AT" --n-nodes "$SERVED"
 # Release snapshot (plan.data-release-program.2026.09.29, Decision 1): the committed
 # database/releases/<release>.json (+ .closures.json) that scripts/kg_compat_page.py
-# turns into the docs compatibility page. Written into the checkout; commit it, then
-# regenerate the page with `python scripts/kg_compat_page.py`.
+# turns into the docs compatibility page. Written into the checkout; commit it as
+# `DB(kg): <release> snapshot ...` (DB is a patch bump; `RELEASE(kg)` is not an allowed
+# tag and bumps nothing), then regenerate the page with `python scripts/kg_compat_page.py`.
 python -m torchcell.knowledge_graphs.releases snapshot --manifest "$KG_MANIFEST" \
     --built-at "$BUILT_AT" --n-nodes "$SERVED" --repo-root "$TORCHCELL_SRC"
 docker exec "$NEO4J_CONTAINER" $CS -d system "CALL dbms.setConfigValue('server.databases.writable', '');"

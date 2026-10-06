@@ -201,3 +201,7 @@ Mirrored, not headless. Headless (`head_ontology: null`) would change the served
 - Tests: `tests/torchcell/knowledge_graphs/test_head_ontology.py`; `test_create_scerevisiae_kg_small.py` now writes a config naming the mirror and pins the refusal of a config without one.
 
 Open: `create_kg.py`, `create_scerevisiae_kg.py` and the other legacy build modules read the same configs (so they no longer fetch) but do not call the check; no slurm script runs them by default. The untracked, gitignored `PRODUCTION_linux-amd_biocypher_config.yaml` that `database/scripts/create_readonly_users.sh` names is not covered.
+
+## 2026.10.06 - Pairing gate: the build commit must carry a package tag
+
+Right after `BUILD_COMMIT` is fixed, the script requires `git describe --tags --exact-match --match 'v[0-9]*' $BUILD_COMMIT` to succeed and the fingerprint checkout's HEAD to be that commit, else it exits before touching anything. Reason: KG 2.0 and 3.0 were built from an untagged `main` (`1.6.1 (untagged)` in the status table) and no published package could read the store; the repair was `releases retag` plus a `DB(kg)` release cut after the fact. The recipe is now: land the work, push a `REL` (minor) or `DB`/`PATCH` (patch) commit, wait for semantic-release's `vX.Y.Z` bump commit on `main`, fast-forward the build checkout to it, submit. The snapshot commit after the build is `DB(kg): <release> snapshot ...`, never `RELEASE(kg)`, which is not an allowed tag.

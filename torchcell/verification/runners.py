@@ -854,12 +854,14 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_vanacloig2022": {
         "root": "data/torchcell/env_chemgen_vanacloig2022",
-        # 3608 retained library rows x 41 retained compounds (45 columns minus the DMSO
-        # vehicle control and the 3 compounds with no structure identifier) minus the
-        # 4710 all-three-replicates-zero cells. Rules + counts:
-        # preprocess/dropped_records.json.
-        "expected_count": 143218,
-        "background_genes": frozenset({"YGL013C", "YBL005W", "YDR011W"}),
+        # 3606 retained library rows x 34 Fig 1B conditions (45 matrix tokens minus the
+        # 11 the paper never reports) minus the 3942 all-three-replicates-zero cells.
+        # Rules + counts: preprocess/dropped_records.json (issue #501).
+        "expected_count": 118662,
+        # The sensitizing and reporter alleles ride on the reference's
+        # StrainReferenceGenome background (#500), so the genotype holds only the
+        # screened deletion and no background gene needs excluding.
+        "background_genes": frozenset(),
         "provenance": Provenance(
             source_uri=(
                 "$DATA_ROOT/torchcell-raw/"
@@ -870,19 +872,25 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             citation_key="vanacloig-pedrosComparativeChemicalGenomic2022",
             sha256="e29eb02769ce2180d632020dc612a7f3e14a124fc7f1e0e33f9d41b6f4e4a85a",
             method=(
-                "GEO GSE186866 raw up-tag barcode counts; per-sample CPM, then per gene "
-                "log2((CPM_treated_rep+1)/(CPM_control+1)) where the control is the mean "
-                "of the SAME CG00n batch's inhibitor-free control columns (the paper's "
-                "paired design), pooled over all 16 control columns for MMS only (the "
-                "one retained compound the paper analyzed unpaired); response = mean of "
-                "3 biological replicates, uncertainty = their sample SD (SE=SD/sqrt(3)); "
-                "recomputed readout, NOT the paper's edgeR logFC. Anaerobic SynBase "
-                "(shared MEDIA_LIBRARY object) at 30 C for 48 h / 6.5 doublings, pH 5.0 "
-                "as an EnvironmentPhysicalPerturbation; compounds at their IC30 basis "
-                "(Table S1 molar values unavailable) except Benomyl 10 ug/mL and MMS "
-                "(fixed, unit unstated). Dropped: the DMSO vehicle column, MBO and the "
-                "two QUADRIS doses (no structure identifier), 22 retired ORFs, 17 legacy "
-                "ORF spellings, and 4710 all-replicates-zero cells"
+                "GEO GSE186866 raw up-tag barcode counts; per condition, edgeR 3.26.8 "
+                "TMM factors (calcNormFactors defaults, ported to numpy) over its 3 "
+                "replicates and paired control columns, then per gene "
+                "log2((TMM-CPM_rep+1)/(mean TMM-CPM of the SAME CG00n batch's "
+                "inhibitor-free control columns+1)) (the paper's paired design), "
+                "pooled over all 16 control columns for MMS only (analyzed unpaired); "
+                "response = mean of 3 biological replicates, uncertainty = their "
+                "sample SD (SE=SD/sqrt(3)); recomputed readout, NOT the paper's edgeR "
+                "glmQLFit logFC. Anaerobic static SynBase (shared MEDIA_LIBRARY object) "
+                "at 30 C for 48 h / 6.5 doublings in 1.5 mL 24-well cultures, pH 5.0 "
+                "as an EnvironmentPhysicalPerturbation; the 34 Fig 1B conditions at "
+                "their IC30 basis (Table S1 molar values unavailable) except Benomyl "
+                "34.4 uM (Piotrowski 2017), MMS (fixed, unit unstated) and DMSO 1% "
+                "v/v; MBO adjudicated to 2-methyl-3-buten-2-ol. Strain background: "
+                "the SGA MATa progeny of Y13206 x the MATa kanMX array. Dropped: 11 "
+                "matrix tokens Fig 1B does not list, 2 all-NaN rows, 4 rows at a "
+                "selected background locus, 22 retired ORFs, 17 legacy ORF spellings "
+                "(typed ConstructedOrf ledger entries), and 3942 all-replicates-zero "
+                "cells"
             ),
             page=(
                 "FEMS Yeast Res 2022 foac036; paper.md "

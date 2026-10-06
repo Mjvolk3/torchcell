@@ -18863,6 +18863,21 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:132752",
+      "inchikey": "HNVRRHSXBLFLIG-UHFFFAOYSA-N",
+      "name": "2-methyl-3-buten-2-ol",
+      "pubchem_cid": 8257,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-02",
+      "smiles": "CC(C)(C=C)O",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/2-methyl-3-buten-2-ol/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "MBO"
+      ],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": null,
       "inchikey": "AFMHCDNELHMGHI-DUXPYHPUSA-N",
       "name": "2-methyl-3-hydroxyethylenepyran-4-one",
@@ -58070,19 +58085,6 @@
         "CID 71398"
       ],
       "unresolved_reason": null
-    },
-    {
-      "chebi_id": null,
-      "inchikey": null,
-      "name": "MBO",
-      "pubchem_cid": null,
-      "resolution_status": "UNRESOLVED_PUBLIC",
-      "retrieval_method": null,
-      "retrieved_at": "2026-09-12",
-      "smiles": null,
-      "source_url": null,
-      "synonyms": [],
-      "unresolved_reason": "the paper contradicts itself on this abbreviation: the Abbreviations block (paper.md line 30) reads \"MBO : 2-Methyl-3-butyn-2-ol\" (CID 8258) while the Introduction (paper.md lines 48, 103) reads \"2-methyl-3-buten-2-ol (MBO)\" (CID 8257); butyn and buten are different compounds, so the label needs adjudication against Table S1 before a structure is adopted"
     },
     {
       "chebi_id": "CHEBI:31530",

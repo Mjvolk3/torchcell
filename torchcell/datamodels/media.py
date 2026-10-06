@@ -967,6 +967,9 @@ SYNBASE = Media(
         resolved_compound("acetamide"),
         resolved_compound("sodium acetate"),
         resolved_compound("cellobiose"),
+        # "ammonium sulfate was replaced with 1 g/L monosodium glutamate": the SynH3-
+        # nitrogen source is omitted, which the MSG component alone does not say (#501).
+        resolved_compound("ammonium sulfate"),
     ],
     provenance=[
         _sv(

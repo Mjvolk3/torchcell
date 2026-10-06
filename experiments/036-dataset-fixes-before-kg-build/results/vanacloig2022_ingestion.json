@@ -1,0 +1,694 @@
+{
+  "before_root": "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_vanacloig2022",
+  "after_root": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-vanacloig2022-ingestion/build2/env_chemgen_vanacloig2022",
+  "before": {
+    "records": 143218,
+    "genes": 3598,
+    "conditions": [
+      "1-butyl-3-methylimidazolium chloride",
+      "1-ethyl-3-methylimidazolium chloride",
+      "2,2'-bipyridine",
+      "2,4-dimethylimidazole",
+      "2,6-dimethylpyrazine",
+      "2-methylimidazole",
+      "2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",
+      "4'-hydroxyacetophenone",
+      "4-hydroxybenzaldehyde",
+      "4-hydroxybenzoic acid",
+      "4-methylimidazole",
+      "5-(hydroxymethyl)furfural",
+      "acetamide",
+      "acetosyringone",
+      "acetovanillone",
+      "azelaic acid",
+      "benomyl",
+      "benzoic acid",
+      "caffeic acid",
+      "cinnamic acid",
+      "crystal violet",
+      "ethanol",
+      "ferulamide",
+      "ferulic acid",
+      "furfural",
+      "gamma-valerolactone",
+      "isobutanol",
+      "levulinic acid",
+      "methyl methanesulfonate",
+      "methylglyoxal",
+      "myclobutanil",
+      "nonylacridine orange",
+      "p-coumaric acid",
+      "sinapic acid",
+      "sodium acetate",
+      "sodium butyrate",
+      "sodium glyoxylate",
+      "syringaldehyde",
+      "syringic acid",
+      "vanillic acid",
+      "vanillin"
+    ],
+    "n_conditions": 41,
+    "perturbations_per_record": {
+      "4": 143218
+    },
+    "reference": {
+      "strain": "S288C",
+      "ploidy": "haploid",
+      "background": null
+    }
+  },
+  "after": {
+    "records": 118662,
+    "genes": 3587,
+    "conditions": [
+      "1-butyl-3-methylimidazolium chloride",
+      "1-ethyl-3-methylimidazolium chloride",
+      "2,2'-bipyridine",
+      "2,6-dimethylpyrazine",
+      "2-methyl-3-buten-2-ol",
+      "2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",
+      "4'-hydroxyacetophenone",
+      "4-hydroxybenzaldehyde",
+      "4-hydroxybenzoic acid",
+      "5-(hydroxymethyl)furfural",
+      "acetamide",
+      "acetosyringone",
+      "acetovanillone",
+      "azelaic acid",
+      "benomyl",
+      "benzoic acid",
+      "cinnamic acid",
+      "crystal violet",
+      "dimethyl sulfoxide",
+      "ethanol",
+      "ferulamide",
+      "ferulic acid",
+      "furfural",
+      "gamma-valerolactone",
+      "isobutanol",
+      "methyl methanesulfonate",
+      "methylglyoxal",
+      "nonylacridine orange",
+      "p-coumaric acid",
+      "sinapic acid",
+      "syringaldehyde",
+      "syringic acid",
+      "vanillic acid",
+      "vanillin"
+    ],
+    "n_conditions": 34,
+    "perturbations_per_record": {
+      "1": 118662
+    },
+    "reference": {
+      "strain": "3DeltaAlpha SGA MATa progeny (Y13206 x MATa xxx\u0394::kanMX array)",
+      "ploidy": "haploid",
+      "background": {
+        "name": "3DeltaAlpha SGA MATa progeny (Y13206 x MATa xxx\u0394::kanMX array)",
+        "mating_type": "a",
+        "parents": [
+          "Y13206",
+          "MATa xxx\u0394::kanMX deletion array"
+        ],
+        "sourced_alleles": [
+          "can1\u0394::STE2pr-Sp_his5",
+          "lyp1\u0394",
+          "pdr1\u0394::natMX",
+          "pdr3\u0394::KlURA3",
+          "snq2\u0394::KlLEU2"
+        ],
+        "pending_source_review_alleles": [
+          "his3\u03941",
+          "leu2\u03940",
+          "ura3\u03940",
+          "met15\u03940"
+        ]
+      },
+      "culture_format": {
+        "provenance_gaps": [],
+        "vessel": "24-well plates (Falcon)",
+        "working_volume_ul": 1500.0,
+        "shaking_rpm": 0.0,
+        "inoculum_cells": null,
+        "inoculum_cells_per_strain": null,
+        "inoculum_od600": 0.1,
+        "endpoint": "fixed_duration",
+        "provenance": [
+          {
+            "value": {
+              "vessel": "24-well plates (Falcon)",
+              "working_volume_ul": 1500.0
+            },
+            "provenance": {
+              "source_uri": "paper.md",
+              "citation_key": "vanacloig-pedrosComparativeChemicalGenomic2022",
+              "sha256": "0b5d938b54b8424fa08203a4357bc8f7c7dfae3fbe1a6d07d422848b92f37ba3",
+              "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+              "page": "Methods, 'Strains and growth conditions' / 'Chemical genomic experiment'",
+              "retrieved": null
+            },
+            "quote": "the pooled yeast gene-knockout library was inoculated into $1 . 5 \\mathrm { m L }$ of SynBase or SynBase $+ ~ 1 \\%$ DMSO containing individual inhibitors at their defined $\\mathrm { I C } _ { 3 0 }$ concentration in 24-well plates (Falcon) at an $\\mathrm { O D } _ { 6 0 0 } = 0 . 1$ .",
+            "note": "also the inoculum OD600 of 0.1"
+          },
+          {
+            "value": 0.0,
+            "provenance": {
+              "source_uri": "paper.md",
+              "citation_key": "vanacloig-pedrosComparativeChemicalGenomic2022",
+              "sha256": "0b5d938b54b8424fa08203a4357bc8f7c7dfae3fbe1a6d07d422848b92f37ba3",
+              "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+              "page": "Methods, 'Strains and growth conditions' / 'Chemical genomic experiment'",
+              "retrieved": null
+            },
+            "quote": "Inoculated plates were grown in an anaerobic chamber (Coy Laboratory Products, Inc.), containing $1 \\% - 2 \\%$ $\\mathrm { H } _ { 2 }$ , $4 \\% - 5 \\%$ $\\mathrm { C O } _ { 2 }$ , and $9 0 \\% { - } 9 5 \\% \\mathrm { N } _ { 2 }$ at $3 0 ^ { \\circ } \\mathrm { C }$ for $2 4 \\mathrm { { h } }$ , and then transferred into the identical fresh medium at $\\mathrm { O D } _ { 6 0 0 } = 0 . 1$ for another $2 4 \\mathrm { { h } }$ without shaking.",
+            "note": "'without shaking' -> shaking_rpm 0.0; both 24 h periods start at OD600 0.1 and end at a fixed time (EndpointRule.fixed_duration)"
+          }
+        ]
+      },
+      "environment_gaps": [
+        "pre_culture",
+        "auxotroph_supplements"
+      ],
+      "media_dropouts": [
+        "acetamide",
+        "sodium acetate",
+        "cellobiose",
+        "ammonium sulfate"
+      ]
+    }
+  },
+  "conditions_added": [
+    "2-methyl-3-buten-2-ol",
+    "dimethyl sulfoxide"
+  ],
+  "conditions_removed": [
+    "2,4-dimethylimidazole",
+    "2-methylimidazole",
+    "4-methylimidazole",
+    "caffeic acid",
+    "levulinic acid",
+    "myclobutanil",
+    "sodium acetate",
+    "sodium butyrate",
+    "sodium glyoxylate"
+  ],
+  "audit_six": {
+    "CV": {
+      "condition": "crystal violet",
+      "records_before": 3388,
+      "records_after": 3386,
+      "median_before": -2.773071423083241,
+      "median_after": -0.06246778104109296,
+      "frac_negative_before": 0.9619244391971665,
+      "frac_negative_after": 0.5230360307147076,
+      "median_sd_before": 1.033043425144073,
+      "median_sd_after": 0.5694579061538518,
+      "shared_cells": 3386.0,
+      "spearman_after_vs_before": 0.9708002485710048,
+      "median_offset_after_minus_before": 2.710603642042148,
+      "pearson_with_dmso_profile_after": 0.15401705474881053,
+      "median_edger_logfc": -0.0043814314562225
+    },
+    "NAO": {
+      "condition": "nonylacridine orange",
+      "records_before": 3507,
+      "records_after": 3505,
+      "median_before": -0.40766488326181555,
+      "median_after": 0.025480803375553418,
+      "frac_negative_before": 0.8109495295124037,
+      "frac_negative_after": 0.4730385164051355,
+      "median_sd_before": 0.5677704756382176,
+      "median_sd_after": 0.31848272348596,
+      "shared_cells": 3505.0,
+      "spearman_after_vs_before": 0.9904935194662928,
+      "median_offset_after_minus_before": 0.43314568663736897,
+      "pearson_with_dmso_profile_after": 0.0652472444396297,
+      "median_edger_logfc": 0.0319007485820134
+    },
+    "EtOH": {
+      "condition": "ethanol",
+      "records_before": 3487,
+      "records_after": 3485,
+      "median_before": -0.30539294711531867,
+      "median_after": -0.10408736323777508,
+      "frac_negative_before": 0.6484083739604244,
+      "frac_negative_after": 0.5601147776183644,
+      "median_sd_before": 0.3248438421425382,
+      "median_sd_after": 0.31018899347117096,
+      "shared_cells": 3485.0,
+      "spearman_after_vs_before": 0.9988782812099336,
+      "median_offset_after_minus_before": 0.2013055838775436,
+      "pearson_with_dmso_profile_after": 0.03365579321665723,
+      "median_edger_logfc": -0.0704946337888695
+    },
+    "Acetosyringone": {
+      "condition": "acetosyringone",
+      "records_before": 3498,
+      "records_after": 3496,
+      "median_before": -0.16315417045431974,
+      "median_after": -0.023271684840220352,
+      "frac_negative_before": 0.6320754716981132,
+      "frac_negative_after": 0.5234553775743707,
+      "median_sd_before": 0.2643040512562128,
+      "median_sd_after": 0.26028876869129847,
+      "shared_cells": 3496.0,
+      "spearman_after_vs_before": 0.9989442453016109,
+      "median_offset_after_minus_before": 0.13988248561409938,
+      "pearson_with_dmso_profile_after": 0.563075362857094,
+      "median_edger_logfc": 1.64786916626378e-15
+    },
+    "GVL": {
+      "condition": "gamma-valerolactone",
+      "records_before": 3474,
+      "records_after": 3472,
+      "median_before": -0.17847484773789768,
+      "median_after": -0.06175126078473421,
+      "frac_negative_before": 0.6387449625791595,
+      "frac_negative_after": 0.5529953917050692,
+      "median_sd_before": 0.295233415216953,
+      "median_sd_after": 0.3011072894701239,
+      "shared_cells": 3472.0,
+      "spearman_after_vs_before": 0.999543527459521,
+      "median_offset_after_minus_before": 0.11672358695316347,
+      "pearson_with_dmso_profile_after": -0.024248686103446052,
+      "median_edger_logfc": -0.0230958385302603
+    },
+    "FeruloylAmide": {
+      "condition": "ferulamide",
+      "records_before": 3490,
+      "records_after": 3488,
+      "median_before": -0.1431270613531123,
+      "median_after": -0.026672312493344563,
+      "frac_negative_before": 0.6375358166189111,
+      "frac_negative_after": 0.525802752293578,
+      "median_sd_before": 0.28334087208235886,
+      "median_sd_after": 0.28459506208689334,
+      "shared_cells": 3488.0,
+      "spearman_after_vs_before": 0.9993505630051673,
+      "median_offset_after_minus_before": 0.11645474885976773,
+      "pearson_with_dmso_profile_after": 0.6405964378433197,
+      "median_edger_logfc": 2.7404183753432e-17
+    }
+  },
+  "spearman_after_vs_before": {
+    "median_over_conditions": 0.9999269543799986,
+    "min_over_conditions": 0.9708002485710048,
+    "min_condition": "crystal violet",
+    "pooled_all_shared_cells": 0.9162135142371802
+  },
+  "abs_median_offset_after_minus_before": {
+    "max_outside_audit_six": 0.09912185536408781
+  },
+  "pearson_with_dmso_profile_after": {
+    "audit_dmso_similar": {
+      "FeruloylAmide": 0.6405964378433197,
+      "Acetovanillone": 0.5597004750030254,
+      "Acetosyringone": 0.563075362857094,
+      "4OHAcetophenone": 0.46140517099552797,
+      "Acetamide": 0.4149984092054356,
+      "CoumaroylAmide": 0.40316439349997363
+    },
+    "median_over_other_conditions": 0.11368682333337793
+  },
+  "edger": {
+    "before": {
+      "1-butyl-3-methylimidazolium chloride": {
+        "spearman": 0.9754343873488056,
+        "median_response_minus_median_logfc": -0.034968366697679644,
+        "cells": 3466
+      },
+      "1-ethyl-3-methylimidazolium chloride": {
+        "spearman": 0.9765306486010108,
+        "median_response_minus_median_logfc": -0.003544131684181495,
+        "cells": 3473
+      },
+      "2,2'-bipyridine": {
+        "spearman": 0.9932238557705994,
+        "median_response_minus_median_logfc": -0.02973728837506588,
+        "cells": 3471
+      },
+      "2,4-dimethylimidazole": {
+        "spearman": 0.988354606465292,
+        "median_response_minus_median_logfc": 0.011728820415413383,
+        "cells": 3473
+      },
+      "2,6-dimethylpyrazine": {
+        "spearman": 0.983371623788758,
+        "median_response_minus_median_logfc": -0.10271289716227308,
+        "cells": 3486
+      },
+      "2-methylimidazole": {
+        "spearman": 0.9616039474958032,
+        "median_response_minus_median_logfc": 0.002424974539638273,
+        "cells": 3470
+      },
+      "2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-": {
+        "spearman": 0.9730433844230982,
+        "median_response_minus_median_logfc": -0.10205247424269037,
+        "cells": 3466
+      },
+      "4'-hydroxyacetophenone": {
+        "spearman": 0.9458150006943594,
+        "median_response_minus_median_logfc": -0.05407957630078919,
+        "cells": 3488
+      },
+      "4-hydroxybenzaldehyde": {
+        "spearman": 0.9363566535955457,
+        "median_response_minus_median_logfc": -0.01620060358969952,
+        "cells": 3474
+      },
+      "4-hydroxybenzoic acid": {
+        "spearman": 0.9612206402818322,
+        "median_response_minus_median_logfc": -0.005946969995062086,
+        "cells": 3491
+      },
+      "4-methylimidazole": {
+        "spearman": 0.9857401920961457,
+        "median_response_minus_median_logfc": 0.014019413204272229,
+        "cells": 3482
+      },
+      "5-(hydroxymethyl)furfural": {
+        "spearman": 0.9496909535674082,
+        "median_response_minus_median_logfc": -0.020611526965577703,
+        "cells": 3486
+      },
+      "acetamide": {
+        "spearman": 0.9555778869693303,
+        "median_response_minus_median_logfc": -0.004446765132795294,
+        "cells": 3470
+      },
+      "acetosyringone": {
+        "spearman": 0.9784289882224785,
+        "median_response_minus_median_logfc": -0.1657105977222758,
+        "cells": 3479
+      },
+      "acetovanillone": {
+        "spearman": 0.9879718327905028,
+        "median_response_minus_median_logfc": -0.03190959182133754,
+        "cells": 3491
+      },
+      "azelaic acid": {
+        "spearman": 0.9808709121939484,
+        "median_response_minus_median_logfc": -0.00445716581105692,
+        "cells": 3478
+      },
+      "benomyl": {
+        "spearman": 0.9888243650917705,
+        "median_response_minus_median_logfc": -0.00128452202286123,
+        "cells": 3473
+      },
+      "benzoic acid": {
+        "spearman": 0.9758642517218851,
+        "median_response_minus_median_logfc": -0.0025070540429081582,
+        "cells": 3471
+      },
+      "caffeic acid": {
+        "spearman": 0.9851978338441396,
+        "median_response_minus_median_logfc": -0.022903545391596187,
+        "cells": 3480
+      },
+      "cinnamic acid": {
+        "spearman": 0.9823711021879373,
+        "median_response_minus_median_logfc": -0.018862974492676175,
+        "cells": 3486
+      },
+      "crystal violet": {
+        "spearman": 0.9650458305565383,
+        "median_response_minus_median_logfc": -2.8116553242196827,
+        "cells": 3369
+      },
+      "ethanol": {
+        "spearman": 0.9708733819465795,
+        "median_response_minus_median_logfc": -0.23479565956121357,
+        "cells": 3468
+      },
+      "ferulamide": {
+        "spearman": 0.9446644287355797,
+        "median_response_minus_median_logfc": -0.15750548826666044,
+        "cells": 3471
+      },
+      "ferulic acid": {
+        "spearman": 0.9864004673549231,
+        "median_response_minus_median_logfc": -0.114467278009626,
+        "cells": 3481
+      },
+      "furfural": {
+        "spearman": 0.9937514036899174,
+        "median_response_minus_median_logfc": -0.01614776850269904,
+        "cells": 3475
+      },
+      "gamma-valerolactone": {
+        "spearman": 0.9725417101750397,
+        "median_response_minus_median_logfc": -0.15898568217746792,
+        "cells": 3455
+      },
+      "isobutanol": {
+        "spearman": 0.9859683669615502,
+        "median_response_minus_median_logfc": -0.013374535153233422,
+        "cells": 3462
+      },
+      "levulinic acid": {
+        "spearman": 0.956934331624617,
+        "median_response_minus_median_logfc": -0.009839366324799531,
+        "cells": 3472
+      },
+      "methyl methanesulfonate": {
+        "spearman": 0.9737387185496038,
+        "median_response_minus_median_logfc": -0.07097748617854018,
+        "cells": 3470
+      },
+      "methylglyoxal": {
+        "spearman": 0.9767947670571172,
+        "median_response_minus_median_logfc": -0.008488609865829779,
+        "cells": 3465
+      },
+      "myclobutanil": {
+        "spearman": 0.9766404386713323,
+        "median_response_minus_median_logfc": -0.01993108749392275,
+        "cells": 3477
+      },
+      "nonylacridine orange": {
+        "spearman": 0.9826939828540732,
+        "median_response_minus_median_logfc": -0.4544054320155475,
+        "cells": 3488
+      },
+      "p-coumaric acid": {
+        "spearman": 0.7949674716887926,
+        "median_response_minus_median_logfc": -0.0763097480018046,
+        "cells": 3491
+      },
+      "sinapic acid": {
+        "spearman": 0.96256167769129,
+        "median_response_minus_median_logfc": -0.03389098706657638,
+        "cells": 3476
+      },
+      "sodium acetate": {
+        "spearman": 0.9785401147467443,
+        "median_response_minus_median_logfc": -0.006900763789429826,
+        "cells": 3491
+      },
+      "sodium butyrate": {
+        "spearman": 0.9058123822764407,
+        "median_response_minus_median_logfc": -0.021735671535394026,
+        "cells": 3471
+      },
+      "sodium glyoxylate": {
+        "spearman": 0.9396618163152533,
+        "median_response_minus_median_logfc": -0.025640029995948874,
+        "cells": 3472
+      },
+      "syringaldehyde": {
+        "spearman": 0.9580315536212303,
+        "median_response_minus_median_logfc": -0.06495422920228743,
+        "cells": 3495
+      },
+      "syringic acid": {
+        "spearman": 0.9911252155200839,
+        "median_response_minus_median_logfc": -0.0749833444572097,
+        "cells": 3482
+      },
+      "vanillic acid": {
+        "spearman": 0.9721728920681502,
+        "median_response_minus_median_logfc": -0.05163086091569848,
+        "cells": 3467
+      },
+      "vanillin": {
+        "spearman": 0.9394608425116594,
+        "median_response_minus_median_logfc": -0.05197666770235075,
+        "cells": 3487
+      }
+    },
+    "after": {
+      "1-butyl-3-methylimidazolium chloride": {
+        "spearman": 0.9747789680297844,
+        "median_response_minus_median_logfc": -0.020850569680977073,
+        "cells": 3464
+      },
+      "1-ethyl-3-methylimidazolium chloride": {
+        "spearman": 0.9773867326596775,
+        "median_response_minus_median_logfc": -0.022672851811588346,
+        "cells": 3471
+      },
+      "2,2'-bipyridine": {
+        "spearman": 0.9927731188343711,
+        "median_response_minus_median_logfc": -0.005352557502938504,
+        "cells": 3469
+      },
+      "2,6-dimethylpyrazine": {
+        "spearman": 0.9814275507331576,
+        "median_response_minus_median_logfc": -0.024855718599232267,
+        "cells": 3484
+      },
+      "2-methyl-3-buten-2-ol": {
+        "spearman": 0.9917340781309443,
+        "median_response_minus_median_logfc": -0.012143235537003146,
+        "cells": 3463
+      },
+      "2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-": {
+        "spearman": 0.9715441965777186,
+        "median_response_minus_median_logfc": -0.02338555826862137,
+        "cells": 3464
+      },
+      "4'-hydroxyacetophenone": {
+        "spearman": 0.9446414602596835,
+        "median_response_minus_median_logfc": -0.027846716088254248,
+        "cells": 3486
+      },
+      "4-hydroxybenzaldehyde": {
+        "spearman": 0.9372171192492875,
+        "median_response_minus_median_logfc": -0.019534052882924546,
+        "cells": 3472
+      },
+      "4-hydroxybenzoic acid": {
+        "spearman": 0.961562550241479,
+        "median_response_minus_median_logfc": -0.011384113452086113,
+        "cells": 3489
+      },
+      "5-(hydroxymethyl)furfural": {
+        "spearman": 0.949776147587166,
+        "median_response_minus_median_logfc": -0.013941804509833696,
+        "cells": 3484
+      },
+      "acetamide": {
+        "spearman": 0.9565985283083024,
+        "median_response_minus_median_logfc": -0.01354260017441174,
+        "cells": 3468
+      },
+      "acetosyringone": {
+        "spearman": 0.974812962502984,
+        "median_response_minus_median_logfc": -0.026866561441859442,
+        "cells": 3477
+      },
+      "acetovanillone": {
+        "spearman": 0.9876941715237189,
+        "median_response_minus_median_logfc": -0.012348017299107015,
+        "cells": 3489
+      },
+      "azelaic acid": {
+        "spearman": 0.9810796104872962,
+        "median_response_minus_median_logfc": -0.011347063335385406,
+        "cells": 3476
+      },
+      "benomyl": {
+        "spearman": 0.9889263443218421,
+        "median_response_minus_median_logfc": -0.004969078938995026,
+        "cells": 3471
+      },
+      "benzoic acid": {
+        "spearman": 0.9769153221433787,
+        "median_response_minus_median_logfc": -0.010912786198094188,
+        "cells": 3469
+      },
+      "cinnamic acid": {
+        "spearman": 0.9822110048422668,
+        "median_response_minus_median_logfc": -0.0107250292187814,
+        "cells": 3484
+      },
+      "crystal violet": {
+        "spearman": 0.9725359764482301,
+        "median_response_minus_median_logfc": -0.10058749927888651,
+        "cells": 3367
+      },
+      "dimethyl sulfoxide": {
+        "spearman": 0.9784408067987264,
+        "median_response_minus_median_logfc": -0.017741915242988765,
+        "cells": 3466
+      },
+      "ethanol": {
+        "spearman": 0.9689059861157941,
+        "median_response_minus_median_logfc": -0.032794590221344566,
+        "cells": 3466
+      },
+      "ferulamide": {
+        "spearman": 0.9423677504625011,
+        "median_response_minus_median_logfc": -0.04122273911478166,
+        "cells": 3469
+      },
+      "ferulic acid": {
+        "spearman": 0.9831709810349536,
+        "median_response_minus_median_logfc": -0.01570837934455449,
+        "cells": 3479
+      },
+      "furfural": {
+        "spearman": 0.9936041175228314,
+        "median_response_minus_median_logfc": -0.003946586705436034,
+        "cells": 3473
+      },
+      "gamma-valerolactone": {
+        "spearman": 0.9704554911590318,
+        "median_response_minus_median_logfc": -0.04220643254164674,
+        "cells": 3453
+      },
+      "isobutanol": {
+        "spearman": 0.9859153956073391,
+        "median_response_minus_median_logfc": -0.012391219238653724,
+        "cells": 3460
+      },
+      "methyl methanesulfonate": {
+        "spearman": 0.9732458519104988,
+        "median_response_minus_median_logfc": -0.022431794162585877,
+        "cells": 3468
+      },
+      "methylglyoxal": {
+        "spearman": 0.9772895881951562,
+        "median_response_minus_median_logfc": -0.02754790047197593,
+        "cells": 3463
+      },
+      "nonylacridine orange": {
+        "spearman": 0.9886330855937481,
+        "median_response_minus_median_logfc": -0.020158736169484742,
+        "cells": 3486
+      },
+      "p-coumaric acid": {
+        "spearman": 0.7923283789457688,
+        "median_response_minus_median_logfc": -0.05086515235530748,
+        "cells": 3489
+      },
+      "sinapic acid": {
+        "spearman": 0.9619013357111187,
+        "median_response_minus_median_logfc": -0.02177115175927743,
+        "cells": 3474
+      },
+      "syringaldehyde": {
+        "spearman": 0.956559457836648,
+        "median_response_minus_median_logfc": -0.026644391531148136,
+        "cells": 3493
+      },
+      "syringic acid": {
+        "spearman": 0.9903827915963394,
+        "median_response_minus_median_logfc": -0.012899384860299727,
+        "cells": 3480
+      },
+      "vanillic acid": {
+        "spearman": 0.9710347661584284,
+        "median_response_minus_median_logfc": -0.01736340214973625,
+        "cells": 3465
+      },
+      "vanillin": {
+        "spearman": 0.938670799351341,
+        "median_response_minus_median_logfc": -0.024146978704644502,
+        "cells": 3485
+      }
+    }
+  }
+}

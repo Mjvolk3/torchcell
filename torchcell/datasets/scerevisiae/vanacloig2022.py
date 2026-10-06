@@ -6,50 +6,54 @@
 
 Vanacloig-Pedros et al. 2022 (FEMS Yeast Research, doi:10.1093/femsyr/foac036) profiled
 the '3DeltaAlpha' drug-sensitized barcoded yeast deletion library ANAEROBICALLY against
-plant-hydrolysate inhibitors at their IC30, in independent biological triplicate, alongside
-matched inhibitor-free controls on the same plates. The readout is log2(inhibitor/control)
-barcode abundance, a per-deletion fitness response.
+34 conditions (Fig 1B: 33 inhibitors, mostly plant-hydrolysate toxins, and DMSO), in
+independent biological triplicate, alongside matched inhibitor-free controls on the same
+plates. The readout is log2(inhibitor/control) barcode abundance, a per-deletion fitness
+response.
 
-READOUT PROVENANCE / RIGOR. The paper's published values are edgeR TMM+glmQLF PAIRED
-logFCs whose exact reproduction needs R/edgeR plus the OUP Supplementary Table S1 (the
-per-compound control pairing and the IC30 molar values), and academic.oup.com is not
-scriptable, so Table S1 is not mirrored. GEO GSE186866 releases only the raw barcode-count
-matrix, which IS scriptable and sha256-pinned. This loader therefore RECOMPUTES the paper's
-DEFINED quantity from that canonical artifact: per-sample CPM normalization against the
-library size summed over EVERY released barcode (so the stored value does not depend on
-this loader's own retention rules),
-then per gene ``log2((CPM_treated_rep + 1) / (CPM_control_batch + 1))`` for each replicate.
-The stored response is the mean of the three replicate log2 ratios and the uncertainty is
-their sample SD (SE = SD/sqrt(3)). It is NOT identical to the published edgeR logFC and
-must not be treated as such; nothing mirrored here can check the stored number against a
-published one, so L2 value fidelity checks range and finiteness only, never agreement.
+READOUT PROVENANCE / RIGOR. The paper's published values are edgeR glmQLFit PAIRED
+logFCs on TMM-normalized counts ("using TMM normalization and glmQLFit comparing paired
+treatment to control samples"). GEO GSE186866 releases only the raw barcode-count matrix,
+which IS scriptable and sha256-pinned; the per-compound logFC table (Dataset2_mclust_cdt)
+and Table S1 sit behind academic.oup.com, which is not scriptable. This loader recomputes
+the paper's normalized ratio from the canonical counts:
+
+- TMM scaling factors (``tmm_factors``: edgeR 3.26.8 ``calcNormFactors(method="TMM")``
+  with its defaults, ``logratioTrim=0.3``, ``sumTrim=0.05``, ``doWeighting=TRUE``,
+  ``Acutoff=-1e10``, reference = the sample whose upper-quartile fraction is closest to
+  the mean) computed PER CONDITION over its three replicate columns and the control
+  columns it is paired with, as the paper's per-compound edgeR fit does. The library
+  size each factor multiplies is the column total over EVERY released barcode, before
+  any retention rule, so the stored value does not depend on this loader's gene policy.
+- per gene and replicate ``log2((TMM-CPM_rep + 1) / (mean TMM-CPM of the paired
+  controls + 1))``; the response is the mean of the three, the uncertainty their sample
+  SD (SE = SD/sqrt(3)). The pseudocount of 1 CPM is a loader choice the paper does not
+  state (``PSEUDOCOUNT_GAP``); cells whose control mean sits near it carry a large SD,
+  which is the low-count flag (no separate field).
+
+It is NOT the published edgeR logFC (no dispersion shrinkage, no prior count) and must
+not be treated as such; nothing mirrored carries the published numbers.
 
 CONTROL PAIRING. Each replicate is paired with the control columns of its OWN ``CG00n``
-batch, because the paper's design is paired ("All 24-well plates contained control samples
-with SynBase or SynBase + 1% DMSO lacking any inhibitor for paired analysis") and the
-control log2 CPM measurably varies across the four batches. MMS is the one retained
-compound the paper analyzed UNPAIRED, so its control is the mean of all 16 control columns;
-its ``units`` string records that, which also keeps it distinguishable in the record key.
+batch, because the paper's design is paired and its comparison is "to the paired SynBase
+medium control"; MMS is the one served condition the paper analyzed UNPAIRED, so its
+control is the mean of all 16 control columns (its ``units`` string records that). DMSO
+is served as a condition (1% v/v) paired the same way; which inhibitors were themselves
+delivered in DMSO is in the unmirrored Table S1, so each inhibitor's ``solvent`` is a
+typed gap.
 
-SOURCING. Every environment and phenotype number is a module-level ``SourcedValue``
-carrying the verbatim quote plus the sha256 of the mirrored artifact it came from, or a
-typed ``ProvenanceGap``. The medium is the shared ``SYNBASE`` library object (SynH3- minus
-acetamide/sodium acetate/cellobiose, MSG for ammonium sulfate); its pH 5.0 rides as an
-``EnvironmentPhysicalPerturbation`` whose ``agent`` is the HCl the same sentence names,
-because ``Media`` has no pH field. The one field that is genuinely ``None`` on a dosed
-perturbation, ``solvent``, carries a ``deferred_pending_source_review`` gap resolvable by
-Table S1; the absent per-compound IC30 MOLAR value is not a second gap, because
-``concentration`` is never None (``basis=IC30`` is what is known and is the schema's own
-mechanism for a dose set to a target without a released number) and ``Concentration`` is
-not itself a gap carrier.
+STRAIN BACKGROUND (#500). The screened strains are the MATa meiotic progeny of the SGA
+cross of query Y13206 (MATalpha pdr1::natMX pdr3::KlURA3 snq2::KlLEU2 can1::STE2pr-
+Sp_his5 lyp1) to a MATa xxx::kanMX array (Piotrowski 2017, the library deferral). That
+constant genome content rides on the reference's ``StrainReferenceGenome`` background;
+each record's ``Genotype`` holds the ONE screened deletion.
 
-RECORDS DROPPED (rule + count written to ``preprocess/dropped_records.json``): the DMSO
-vehicle-control column (it is the denominator of the DMSO-delivered compounds, not a
-treatment); compounds with no resolvable structure identifier (MBO, whose abbreviation the
-paper contradicts itself on, and the two QUADRIS suspension doses); library rows whose ORF
-is not a current R64 gene or is the legacy spelling of an ORF already in the pool; and
-cells whose three replicate counts are ALL zero, where the CPM pseudocount would otherwise
-manufacture a finite value with a sample SD of exactly 0.
+RECORDS DROPPED (rule + count written to ``preprocess/dropped_records.json``): the 11
+matrix tokens Fig 1B does not list (the paper never reports them); compounds with no
+resolvable structure identifier; library rows whose ORF is not a barcoded ORF with
+counts, is a locus the SGA selections fix in every strain, is not a current R64 gene, or
+is the legacy spelling of an ORF already in the pool (those carry a typed
+``ConstructedOrf`` in the ledger); and cells whose three replicate counts are ALL zero.
 """
 
 from __future__ import annotations
@@ -68,8 +72,10 @@ from pathlib import Path
 from typing import Any, Literal
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from pydantic import BaseModel
+from scipy.stats import rankdata
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -89,25 +95,34 @@ from torchcell.datamodels.schema import (
     BarcodedKanMxDeletionPerturbation,
     Concentration,
     ConcentrationUnit,
+    ConstructedOrf,
+    CultureEnvironment,
+    CultureFormat,
     DoseBasis,
-    Environment,
+    EndpointRule,
     EnvironmentPhysicalPerturbation,
-    EnvironmentResponseExperiment,
-    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
     Genotype,
-    MarkerDeletionPerturbation,
+    MatingType,
     MeasurementType,
-    NatMxDeletionPerturbation,
     PhysicalFactor,
     Publication,
-    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainBackground,
+    StrainEnvironmentResponseExperiment,
+    StrainEnvironmentResponseExperimentReference,
+    StrainReferenceGenome,
     Temperature,
     UncertaintyType,
+    Zygosity,
+)
+from torchcell.datamodels.strain_background import (
+    BRACHMANN_1998,
+    pending_source_review,
+    standard_allele,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.scerevisiae.gene_name_reconcile import default_genome
@@ -148,10 +163,37 @@ DATA_RETRIEVED_AT = "2026-09-13"
 PAPER_MD = "paper.md"
 PAPER_MD_SHA256 = "0b5d938b54b8424fa08203a4357bc8f7c7dfae3fbe1a6d07d422848b92f37ba3"
 
-CPM_PRIOR = 1.0  # CPM pseudocount; the all-zero cells it would fabricate are dropped
+#: Fig 1B (the per-condition count of significant genes) as MinerU extracted it from the
+#: publisher PDF; the 34 bar labels are read from this image, not from OCR text.
+FIG_1B_IMAGE = (
+    "images/8355ec6ee4cec3600bdfe3bb9305a3a5769788eb9bea45c0ec4e79453f8ba8b9.jpg"
+)
+FIG_1B_IMAGE_SHA256 = "f00ee21b185db86821ad11ba351f84841b38c78b5c0db22a9361ebc88b9c64cf"
+
+PIOTROWSKI_KEY = "piotrowskiFunctionalAnnotationChemical2017"
+PIOTROWSKI_SHA256 = "9314a0dd932c1b20b4dc4297de4ce9452b09f314bf100f05f2fe718fb3415fc1"
+OHNUKI_KEY = "ohnukiHighthroughputPlatformYeast2022"
+OHNUKI_SHA256 = "de2cad9b33c5e0f7e9ce7b7d56feb17a10dbb83de34f65330d6e35846b757ee1"
+
+#: A float64 count / library-size array.
+FloatArray = npt.NDArray[np.float64]
+
+CPM_PRIOR = 1.0  # CPM pseudocount (PSEUDOCOUNT_GAP); all-zero cells are dropped
+
+# edgeR 3.26.8 calcNormFactors(method="TMM") defaults, the version the paper names.
+TMM_LOGRATIO_TRIM = 0.3
+TMM_SUM_TRIM = 0.05
+TMM_A_CUTOFF = -1e10
+TMM_REFERENCE_QUANTILE = 0.75
 
 
-def _paper(value: Any, quote: str, *, note: str | None = None) -> SourcedValue:
+def _paper(
+    value: Any,
+    quote: str,
+    *,
+    note: str | None = None,
+    page: str = "Methods, 'Strains and growth conditions' / 'Chemical genomic experiment'",
+) -> SourcedValue:
     """Bind a value to a verbatim quote in the sha256-pinned paper OCR mirror."""
     return SourcedValue(
         value=value,
@@ -162,7 +204,41 @@ def _paper(value: Any, quote: str, *, note: str | None = None) -> SourcedValue:
             citation_key=CITATION_KEY,
             sha256=PAPER_MD_SHA256,
             method="MinerU OCR of the publisher PDF (torchcell-library mirror)",
-            page="Methods, 'Strains and growth conditions' / 'Chemical genomic experiment'",
+            page=page,
+        ),
+    )
+
+
+def _piotrowski(
+    value: Any, quote: str, *, page: str, note: str | None = None
+) -> SourcedValue:
+    """Bind a value to Piotrowski 2017, the paper Vanacloig defers library methods to."""
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=PAPER_MD,
+            citation_key=PIOTROWSKI_KEY,
+            sha256=PIOTROWSKI_SHA256,
+            method="MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            page=page,
+        ),
+    )
+
+
+def _ohnuki(value: Any, quote: str, *, note: str | None = None) -> SourcedValue:
+    """Bind a value to Ohnuki 2022, which spells out the Y13206 query genotype."""
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=PAPER_MD,
+            citation_key=OHNUKI_KEY,
+            sha256=OHNUKI_SHA256,
+            method="MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            page="Methods, strains (paper.md line 128)",
         ),
     )
 
@@ -240,15 +316,41 @@ BENOMYL_MMS_DOSE = _paper(
     "Benomyl and MMS concentrations were used as previously published (Piotrowski et al. "
     "2017), $1 0 ~ \\mathrm { u g / m L }$ and $0 . 0 1 \\%$ , respectively.",
     note="both doses were taken from Piotrowski 2017 rather than set to an IC30, so "
-    "their basis is 'fixed'. The MMS percent is stored as a basis only: the primary "
-    "writes '0.01%' with no v/v or w/v, and the deferral target (Piotrowski 2017) is "
-    "not mirrored, so the unit would be a guess",
+    "their basis is 'fixed'. Piotrowski 2017 (mirrored) states benomyl as 34.4 uM "
+    "(BENOMYL_MOLAR), which is the stored value. The MMS percent is stored as a basis "
+    "only: neither paper writes v/v or w/v for this 0.01% (Piotrowski 2017 names no "
+    "MMS dose), so the unit would be a guess",
+)
+BENOMYL_MOLAR = _piotrowski(
+    34.4,
+    "Cultures were then spiked with either $3 4 . 4 \\mu \\mathrm { M }$ benomyl, "
+    "$2 5 ~ \\mathrm { n M }$ micafungin, or a $1 \\%$ DMSO control.",
+    page="Online Methods, signal-detection optimization (paper.md line 218)",
+    note="the deferral target of Vanacloig's '10 ug/mL as previously published'. The "
+    "same 34.4 uM appears at paper.md lines 25 (Fig 1c, BENOMYL_MOLAR_FIG1C) and 208 "
+    "('34.4 uM benomyl'). Consistency check, not a source: 10 ug/mL / 290.32 g/mol "
+    "(benomyl, C14H18N4O3) = 34.44 uM",
+)
+BENOMYL_MOLAR_FIG1C = _piotrowski(
+    34.4,
+    "at a concentration of $3 4 . 4 ~ \\mu \\mathrm { M }$ , the microtubule-binding "
+    "compound benomyl showed a specific chemical-genetic interaction with TUB3",
+    page="Results, drug-sensitized background (paper.md line 25)",
 )
 UNPAIRED_COMPOUNDS_QUOTE = (
     "Gene deletions with specific fitness contributions were identified using linear "
     "models in edgeR version 3.26.8 (Robinson et al. 2010), using TMM normalization and "
     "glmQLFit comparing paired treatment to control samples, except with MMS and QUADRIS "
     "compounds, which were unpaired."
+)
+NORMALIZATION = _paper(
+    "TMM",
+    UNPAIRED_COMPOUNDS_QUOTE,
+    page="Methods, 'Chemical genomic data processing and functional analysis'",
+    note="the loader computes edgeR 3.26.8's TMM factors in numpy (tmm_factors) per "
+    "condition over its replicates and paired controls; glmQLFit's dispersion "
+    "shrinkage is not reproduced, so the stored value is the normalized ratio, not the "
+    "published logFC",
 )
 PAIRED_CONTROL = _paper(
     "batch-matched",
@@ -258,14 +360,47 @@ PAIRED_CONTROL = _paper(
     "MMS keeps the pooled 16-column control because the paper analyzed it unpaired: "
     + UNPAIRED_COMPOUNDS_QUOTE,
 )
+PAIRED_SYNBASE_CONTROL = _paper(
+    "SynBase",
+    "Linear modeling of quantitative barcode sequence counts identified genes whose "
+    "deletion produced reproducible fitness effects in the presence of each inhibitor "
+    "compared to the paired SynBase medium control (see Methods).",
+    page="Results (paper.md line 103)",
+    note="the paired control is inhibitor-free SynBase, so every condition, DMSO "
+    "included, is paired against the ControlN columns rather than against the DMSO "
+    "columns",
+)
 VEHICLE_CONTROL = _paper(
     "DMSO",
     "Chemical compounds insoluble in water were dissolved in DMSO at 100X concentration "
     "so that the final concentration of DMSO in SynBase medium was $1 \\%$ $( \\mathrm "
     "{ v / v } )$ .",
-    note="DMSO is the vehicle whose own column is a control, not an inhibitor; which "
-    "compounds it delivered is in the unmirrored Table S1, so no per-compound Solvent "
-    "can be asserted",
+    note="which compounds DMSO delivered is in the unmirrored Table S1, so no "
+    "per-compound Solvent can be asserted; DMSO itself is served as a condition "
+    "(DMSO_DOSE)",
+)
+DMSO_DOSE = _paper(
+    1.0,
+    VEHICLE_CONTROL.quote,
+    note="DMSO's own condition columns are the vehicle at its final 1% v/v with no "
+    "inhibitor; Fig 1B lists DMSO as one of the 34 analyzed conditions (FIG_1B_CONDITIONS)",
+)
+FIG_1B_CONDITIONS = _paper(
+    34,
+    "Each colored strain depicts a different gene deletion strain, before and after "
+    "exposure to one of 34 different inhibitors.",
+    page="Figure 1 caption (paper.md line 89); bar labels read from the Fig 1B image "
+    + FIG_1B_IMAGE
+    + " (sha256 "
+    + FIG_1B_IMAGE_SHA256
+    + ")",
+    note="the 34 Fig 1B bar labels, in figure order: Benomyl, Acetamide, "
+    "4-OH-Benzoic Acid, 5-HMF, Benzoic Acid, Sinapic Acid, 2,2'-Dipyridyl, Coumaric "
+    "Acid, BMIM-Cl, 4-OH-Benzaldehyde, DMSO, Vanillin, Isobutanol, Furfural, Cinnamic "
+    "Acid, Vanillic Acid, 4-OH-Acetophenone, MMS, Syringaldehyde, Methylglyoxal, Azelaic "
+    "Acid, Coumaroyl Amide, Feruloyl Amide, Syringic Acid, MBO, Acetovanillone, EMIM-Cl, "
+    "Ferulic Acid, Acetosyringone, NAO, 2,6-Dimethylpyrazine, GVL, CV, EtOH. The matrix "
+    "token of each is FIG_1B_TOKENS",
 )
 READOUT = _paper(
     MeasurementType.log2_ratio,
@@ -278,6 +413,54 @@ PH_AGENT = _paper(
     note="the acid that REALIZES the pH factor, carried on the physical perturbation's "
     "`agent` slot so the medium's pH joins on a compound entity",
 )
+CULTURE_VESSEL = _paper(
+    {"vessel": "24-well plates (Falcon)", "working_volume_ul": 1500.0},
+    "the pooled yeast gene-knockout library was inoculated into $1 . 5 \\mathrm { m L }$ "
+    "of SynBase or SynBase $+ ~ 1 \\%$ DMSO containing individual inhibitors at their "
+    "defined $\\mathrm { I C } _ { 3 0 }$ concentration in 24-well plates (Falcon) at an "
+    "$\\mathrm { O D } _ { 6 0 0 } = 0 . 1$ .",
+    note="also the inoculum OD600 of 0.1",
+)
+STATIC_CULTURE = _paper(
+    0.0,
+    _GROWTH_QUOTE,
+    note="'without shaking' -> shaking_rpm 0.0; both 24 h periods start at OD600 0.1 "
+    "and end at a fixed time (EndpointRule.fixed_duration)",
+)
+
+# --- MBO: the paper defines the abbreviation twice, as two different compounds ----- #
+MBO_ABBREVIATION = _paper(
+    "2-methyl-3-butyn-2-ol",
+    "MBO : 2-Methyl-3-butyn-2-ol",
+    page="Abbreviations (paper.md line 31)",
+    note="the glossary entry, NOT adopted (MBO_IDENTITY_RULE); PubChem CID 8258",
+)
+MBO_IDENTITY = _paper(
+    "2-methyl-3-buten-2-ol",
+    "biofuel endproducts (ethanol, isobutanol and 2-methyl-3-buten-2-ol (MBO))",
+    page="Results (paper.md line 103)",
+    note="the adopted identity, PubChem CID 8257 (InChIKey HNVRRHSXBLFLIG-UHFFFAOYSA-N), "
+    "under MBO_IDENTITY_RULE; it disagrees with MBO_ABBREVIATION (line 31)",
+)
+MBO_IS_A_BIOFUEL = _paper(
+    "biofuel",
+    "the two other biofuels included in our screen, IBA and MBO",
+    page="Results (paper.md line 131)",
+    note="the second in-text use; it names MBO a biofuel product of the screen",
+)
+MBO_IDENTITY_RULE = (
+    "When the paper defines one abbreviation as two different structures, the in-text "
+    "definition that names the compound where the experiment uses it outranks the "
+    "one-line Abbreviations glossary. MBO is defined in the Results as "
+    "'2-methyl-3-buten-2-ol (MBO)' among the 'biofuel endproducts' (line 103) and is "
+    "called one of 'the two other biofuels included in our screen' (line 131); the "
+    "glossary's '2-Methyl-3-butyn-2-ol' (line 31) is the single contrary statement. "
+    "Hypothesis (no mirrored source checks it): the glossary line is a typo, since "
+    "2-methyl-3-buten-2-ol is the hemiterpene alcohol produced as a biofuel and the "
+    "butyn alkynol is not. Table S1 (not mirrored) would settle it. The adjudication "
+    "is recorded on the identity row's input line "
+    "(compound_identity_inputs/vanacloig2022.txt)."
+)
 
 #: The one unmirrored artifact that would close this dataset's recoverable gaps: the OUP
 #: supplement holding the per-compound IC30 molar values AND which compounds were
@@ -287,6 +470,42 @@ TABLE_S1 = Provenance(
     citation_key=CITATION_KEY,
     method="publisher supplementary table; academic.oup.com is not scriptable",
     page="Table S1",
+)
+
+#: The protocol Vanacloig's chemical-genomic method defers to ("as previously described
+#: (Piotrowski et al. 2015) with modifications"), not mirrored: it would state how the
+#: pool was grown before inoculation.
+PIOTROWSKI_2015 = Provenance(
+    source_uri="Piotrowski et al. 2015 (cited by Vanacloig-Pedros 2022 Methods for the "
+    "chemical genomic protocol)",
+    method="not mirrored; the pre-inoculation culture of the pooled library",
+)
+
+#: Zhang et al. 2019 (Front Microbiol 10:2596), the SynH3- recipe, not mirrored.
+ZHANG_2019 = Provenance(
+    source_uri="Zhang et al. 2019, Front Microbiol 10:2596 (SynH3- recipe)",
+    method="not mirrored; the amino acids and supplements SynH3- carries",
+)
+
+#: SGD's locus history (merges and reannotations), not mirrored.
+SGD_ORF_HISTORY = Provenance(
+    source_uri="https://www.yeastgenome.org (locus history of the source ORF)",
+    method="not mirrored; SGD locus-history notes record ORF merges and reannotations",
+)
+
+PSEUDOCOUNT_GAP = ProvenanceGap(
+    field="pseudocount",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=Provenance(
+        source_uri=PAPER_MD,
+        citation_key=CITATION_KEY,
+        sha256=PAPER_MD_SHA256,
+        page="Methods, 'Chemical genomic data processing and functional analysis'",
+    ),
+    note="the paper presents 'the log2 of the normalized read counts for "
+    "inhibitor/control ratio' and states no pseudocount; the loader adds 1 CPM "
+    "(CPM_PRIOR) to both sides, a loader choice, so a cell whose control mean is near "
+    "1 CPM has a pseudocount-dominated denominator and a large replicate SD",
 )
 
 
@@ -307,15 +526,159 @@ def _solvent_gap() -> ProvenanceGap:
         resolve_with=TABLE_S1,
         note=VEHICLE_CONTROL.quote
         + " Which compounds that covers is in Table S1, which is not mirrored, so the "
-        "vehicle of any one compound is unknown rather than absent.",
+        "vehicle of any one compound is unknown rather than absent. The vehicle's own "
+        "effect is served as the DMSO condition (dimethyl sulfoxide, 1% v/v).",
     )
 
 
-#: The constant 3DeltaAlpha background, deleted in EVERY library strain.
-BACKGROUND_GENES = frozenset({"YGL013C", "YBL005W", "YDR011W"})
+# --------------------------------------------------------------------------- #
+# Strain background (#500): the SGA MATa progeny of Y13206 x the MATa kanMX array
+# --------------------------------------------------------------------------- #
+QUERY_STRAIN = _piotrowski(
+    "Y13206",
+    "The MATα pdr1Δ::natMX pdr3Δ::KI.URA3 snq2Δ::KI.LEU2 (y13206) query strain carried "
+    "the can1Δ::STEpr-SP_his5 and lypΔ SGA reporters.",
+    page="Online Methods, genome-wide drug-sensitive collection (paper.md line 204)",
+    note="the OCR writes K. lactis as 'KI.' and the reporters as 'STEpr-SP_his5' and "
+    "'lypΔ'; the allele names stored are the standard spellings pdr3Δ::KlURA3, "
+    "snq2Δ::KlLEU2, can1Δ::STE2pr-Sp_his5, lyp1Δ",
+)
+MATA_PROGENY = _piotrowski(
+    MatingType.a,
+    "The resulting spores were transferred to synthetic media lacking histidine and "
+    "containing canavanine and thialysine to select for the MATa meiotic progeny.",
+    page="Online Methods, genome-wide drug-sensitive collection (paper.md line 204)",
+    note="the screened strains are MATa haploid progeny; Vanacloig's 'MATα' "
+    "(paper.md line 54) describes the query strain",
+)
+ARRAY_KANMX = _piotrowski(
+    "kanMX",
+    "The MATα query strain was crossed to an ordered array of MATa xxxΔ::kanMX deletion "
+    "mutants",
+    page="Online Methods, genome-wide drug-sensitive collection (paper.md line 204)",
+    note="the cassette of each screened deletion; Piotrowski names no kanMX version "
+    "and no array strain background",
+)
+TRIPLE_SELECTION = _piotrowski(
+    "pdr1Δ pdr3Δ snq2Δ xxxΔ",
+    "Finally, these cells were transferred to synthetic media lacking uracil and leucine "
+    "and containing G418 and NAT to select for the desired pdr1Δ pdr3Δ snq2Δ xxxΔ "
+    "mutants.",
+    page="Online Methods, genome-wide drug-sensitive collection (paper.md line 204)",
+)
+Y13206_GENOTYPE = _ohnuki(
+    "Y13206",
+    "The drug-hypersensitive yeast strain Y13206 (3Δ; MATα snq2Δ:: KlLEU2 pdr3Δ:: "
+    "KlURA3 pdr1Δ:: NATMX can1Δan11:: 2iSp_his5 lyp1Δ his3Δ1 leu2Δ0 ura3Δ0 met15Δ LYS2)",
+    note="the QUERY's full genotype; the OCR garbles the can1 token",
+)
+Y8835_GENOTYPE = _ohnuki(
+    "Y8835",
+    "its parent strain Y8835 (MATα ura3Δ0:: natMX4 can 1Δ:: STE2pr-Sp_his5 lyp1Δ "
+    "his3Δ1 leu2Δ0 met15Δ0 LYS2)",
+    note="the query's parent; it writes the can1 reporter legibly",
+)
 
-#: Compound column tokens that are NOT a treatment (the vehicle's own control column).
-VEHICLE_CONTROL_TOKENS = frozenset({"DMSO"})
+LIBRARY_STRAIN = "3DeltaAlpha SGA MATa progeny (Y13206 x MATa xxxΔ::kanMX array)"
+_BY_AUXOTROPHY_NOTE = (
+    "Ohnuki 2022 (mirrored) states this allele for the QUERY lineage only (Y13206 "
+    "'his3Δ1 leu2Δ0 ura3Δ0 met15Δ', parent Y8835 'ura3Δ0:: natMX4 ... met15Δ0'); a "
+    "haploid SGA segregant carries an unselected allele only when the array parent also "
+    "does, and no mirrored source states the array's genotype (the standard "
+    "BY4741-derived YKO string is Brachmann 1998)"
+)
+
+
+def library_background() -> StrainBackground:
+    """The constant genome content of every screened strain beyond R64.
+
+    Sourced: MATa (selected), haploid, can1Δ::STE2pr-Sp_his5 and lyp1Δ (the SGA
+    reporters the query carried and the progeny were selected for), and the three
+    drug-sensitizing cassette deletions (query alleles, selected for at the last step).
+    Pending source review: the four BY auxotrophies, which only the query side states
+    and which disagree between Y13206 and its parent at ura3 and met15.
+    """
+    reporter = [QUERY_STRAIN, Y8835_GENOTYPE]
+    sensitizer = [QUERY_STRAIN, TRIPLE_SELECTION]
+    alleles = [
+        standard_allele("can1Δ::STE2pr-Sp_his5", Zygosity.haploid, provenance=reporter),
+        standard_allele("lyp1Δ", Zygosity.haploid, provenance=reporter),
+        standard_allele("pdr1Δ::natMX", Zygosity.haploid, provenance=sensitizer),
+        standard_allele("pdr3Δ::KlURA3", Zygosity.haploid, provenance=sensitizer),
+        standard_allele("snq2Δ::KlLEU2", Zygosity.haploid, provenance=sensitizer),
+        *(
+            standard_allele(
+                name,
+                Zygosity.haploid,
+                resolve_with=BRACHMANN_1998,
+                note=_BY_AUXOTROPHY_NOTE,
+            )
+            for name in ("his3Δ1", "leu2Δ0", "ura3Δ0", "met15Δ0")
+        ),
+    ]
+    return StrainBackground(
+        name=LIBRARY_STRAIN,
+        parents=["Y13206", "MATa xxxΔ::kanMX deletion array"],
+        construction=(
+            "SGA: MATalpha query Y13206 crossed to the MATa xxxΔ::kanMX array; MATa "
+            "meiotic progeny selected on -His +canavanine +thialysine, then -Ura +NAT, "
+            "then -Ura -Leu +G418 +NAT (Piotrowski 2017 Online Methods)"
+        ),
+        mating_type=MATA_PROGENY.value,
+        ploidy="haploid",
+        alleles=alleles,
+        provenance=[MATA_PROGENY, QUERY_STRAIN],
+    )
+
+
+#: Loci whose allele the SGA selections fix in every library strain (the three
+#: sensitizing deletions and the two reporters). A library row screening one of them
+#: would put a kanMX deletion on a locus the background already replaced, so it is
+#: dropped (rule ``orf_is_a_selected_background_locus``).
+SELECTED_BACKGROUND_LOCI = frozenset(
+    {"YGL013C", "YBL005W", "YDR011W", "YEL063C", "YNL268W"}
+)
+
+#: The 34 Fig 1B conditions as matrix tokens (FIG_1B_CONDITIONS). Every other matrix
+#: token is a condition the paper never reported.
+FIG_1B_TOKENS = frozenset(
+    {
+        "Benomyl",
+        "Acetamide",
+        "4OHBenzoicAcid",
+        "5HMF",
+        "BenzoicAcid",
+        "SinapicAcid",
+        "22Dipyridyl",
+        "CoumaricAcid",
+        "BMIMCl",
+        "4OHBenzaldehyde",
+        "DMSO",
+        "Vanillin",
+        "IBA",
+        "Furfural",
+        "CinnamicAcid",
+        "VanillicAcid",
+        "4OHAcetophenone",
+        "MMS",
+        "Syringaldehyde",
+        "Methylglyoxal",
+        "AzelaicAcid",
+        "CoumaroylAmide",
+        "FeruloylAmide",
+        "SyringicAcid",
+        "MBO",
+        "Acetovanillone",
+        "EMIMCl",
+        "FerulicAcid",
+        "Acetosyringone",
+        "NAO",
+        "26Dimethylpyrazine",
+        "GVL",
+        "CV",
+        "EtOH",
+    }
+)
 
 _SYSTEMATIC_RE = re.compile(
     r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$"
@@ -323,20 +686,117 @@ _SYSTEMATIC_RE = re.compile(
 _SAMPLE_RE = re.compile(r"^(?P<compound>.+)_CG(?P<batch>\d+)_rep(?P<rep>\d+)$")
 _CONTROL_RE = re.compile(r"^Control\d+_CG(?P<batch>\d+)$")
 
-#: The one compound the paper analyzed UNPAIRED, so it keeps the pooled control.
+#: The one served condition the paper analyzed UNPAIRED, so it keeps the pooled control.
 UNPAIRED_COMPOUND_TOKENS = frozenset({"MMS"})
 
+#: The vehicle served as its own condition (1% v/v, DMSO_DOSE).
+DMSO_TOKEN = "DMSO"
+
 _PAIRED_UNITS = (
-    "log2((CPM of the inhibitor replicate + 1) / (mean CPM of the SAME CG batch's "
-    "inhibitor-free control columns + 1)), mean of 3 biological replicates; recomputed "
-    "from the GEO GSE186866 raw up-tag counts, NOT the paper's edgeR logFC"
+    "log2((TMM-normalized CPM of the inhibitor replicate + 1) / (mean TMM-normalized "
+    "CPM of the SAME CG batch's inhibitor-free control columns + 1)), mean of 3 "
+    "biological replicates; TMM factors (edgeR 3.26.8 calcNormFactors defaults) "
+    "computed per condition over its replicates and paired controls; the 1 CPM "
+    "pseudocount is a loader choice the paper does not state; recomputed from the GEO "
+    "GSE186866 raw up-tag counts, NOT the paper's edgeR glmQLFit logFC"
 )
 _POOLED_UNITS = (
-    "log2((CPM of the inhibitor replicate + 1) / (mean CPM of all 16 inhibitor-free "
-    "control columns + 1)), mean of 3 biological replicates; pooled rather than "
-    "batch-matched because the paper analyzed this compound unpaired; recomputed from "
-    "the GEO GSE186866 raw up-tag counts, NOT the paper's edgeR logFC"
+    "log2((TMM-normalized CPM of the inhibitor replicate + 1) / (mean TMM-normalized "
+    "CPM of all 16 inhibitor-free control columns + 1)), mean of 3 biological "
+    "replicates; pooled rather than batch-matched because the paper analyzed this "
+    "compound unpaired; TMM factors (edgeR 3.26.8 calcNormFactors defaults) computed "
+    "over its replicates and the 16 controls; the 1 CPM pseudocount is a loader choice "
+    "the paper does not state; recomputed from the GEO GSE186866 raw up-tag counts, NOT "
+    "the paper's edgeR glmQLFit logFC"
 )
+
+
+# --------------------------------------------------------------------------- #
+# TMM normalization (edgeR 3.26.8 calcNormFactors, method="TMM", defaults)
+# --------------------------------------------------------------------------- #
+def _tmm_factor(
+    obs: FloatArray, ref: FloatArray, libsize_obs: float, libsize_ref: float
+) -> float:
+    """Port of edgeR's ``.calcFactorTMM``: one sample against the reference sample."""
+    with np.errstate(divide="ignore", invalid="ignore"):
+        obs_frac = obs / libsize_obs
+        ref_frac = ref / libsize_ref
+        log_ratio = np.log2(obs_frac / ref_frac)
+        abs_expr = (np.log2(obs_frac) + np.log2(ref_frac)) / 2
+        variance = (libsize_obs - obs) / libsize_obs / obs + (
+            libsize_ref - ref
+        ) / libsize_ref / ref
+    finite = np.isfinite(log_ratio) & np.isfinite(abs_expr) & (abs_expr > TMM_A_CUTOFF)
+    log_ratio, abs_expr, variance = (
+        log_ratio[finite],
+        abs_expr[finite],
+        variance[finite],
+    )
+    if np.max(np.abs(log_ratio)) < 1e-6:
+        return 1.0
+    n = len(log_ratio)
+    lo_l = np.floor(n * TMM_LOGRATIO_TRIM) + 1
+    hi_l = n + 1 - lo_l
+    lo_s = np.floor(n * TMM_SUM_TRIM) + 1
+    hi_s = n + 1 - lo_s
+    rank_l = rankdata(log_ratio)
+    rank_s = rankdata(abs_expr)
+    keep = (rank_l >= lo_l) & (rank_l <= hi_l) & (rank_s >= lo_s) & (rank_s <= hi_s)
+    weighted = np.nansum(log_ratio[keep] / variance[keep]) / np.nansum(
+        1.0 / variance[keep]
+    )
+    return float(2.0 ** (0.0 if np.isnan(weighted) else weighted))
+
+
+class TmmFactors(BaseModel):
+    """TMM scaling factors for one condition's sample set, with the reference used."""
+
+    columns: list[str]
+    library_sizes: list[float]
+    factors: list[float]
+    reference_column: str
+
+
+def tmm_factors(
+    counts: FloatArray, library_sizes: FloatArray, columns: list[str]
+) -> TmmFactors:
+    """Port of edgeR 3.26.8 ``calcNormFactors(method="TMM")`` with its default arguments.
+
+    ``counts`` is genes x samples with no missing value; all-zero rows are removed as
+    edgeR does. The reference sample is the one whose 75th-percentile count fraction is
+    closest to the mean of those fractions (``which.min``, so the first on a tie), or
+    the largest ``sum(sqrt(counts))`` when the median fraction is below 1e-20. Each
+    sample's factor is the precision-weighted mean log2 ratio against the reference
+    over the genes surviving a 30% log-ratio trim and a 5% abundance trim; the factors
+    are then scaled to a geometric mean of 1. Effective library size = library size x
+    factor.
+    """
+    if np.isnan(counts).any():
+        raise ValueError("TMM needs complete counts (edgeR: 'NA counts not permitted')")
+    x = counts[(counts > 0).any(axis=1)]
+    upper = np.quantile(x, TMM_REFERENCE_QUANTILE, axis=0) / library_sizes
+    if np.median(upper) < 1e-20:
+        reference = int(np.argmax(np.sqrt(x).sum(axis=0)))
+    else:
+        reference = int(np.argmin(np.abs(upper - upper.mean())))
+    raw = np.array(
+        [
+            _tmm_factor(
+                x[:, i],
+                x[:, reference],
+                float(library_sizes[i]),
+                float(library_sizes[reference]),
+            )
+            for i in range(x.shape[1])
+        ]
+    )
+    factors = raw / np.exp(np.mean(np.log(raw)))
+    return TmmFactors(
+        columns=list(columns),
+        library_sizes=[float(v) for v in library_sizes],
+        factors=[float(v) for v in factors],
+        reference_column=columns[reference],
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -454,6 +914,20 @@ class DropRule(BaseModel):
     items: list[str] = []
 
 
+class LegacyOrfStrain(BaseModel):
+    """A dropped library strain built against an ORF the current genome merged away.
+
+    ``constructed_orf`` is the typed record of what the strain physically deleted; its
+    relation to the current gene and its deleted interval are gaps naming SGD's locus
+    history. Kept in the ledger so the drop is a typed record, not a silent loss.
+    """
+
+    source_orf: str
+    current_orf: str
+    barcode: str
+    constructed_orf: ConstructedOrf
+
+
 class DropLog(BaseModel):
     """Every retention rule applied to a build, in the order they were applied."""
 
@@ -462,6 +936,7 @@ class DropLog(BaseModel):
     kept_records: int
     dropped_records: int
     rules: list[DropRule]
+    legacy_orf_strains: list[LegacyOrfStrain] = []
 
 
 class LibraryRows(BaseModel):
@@ -473,6 +948,7 @@ class LibraryRows(BaseModel):
     barcode: list[str]
     dropped_retired: list[str]
     dropped_legacy_duplicate: list[str]
+    legacy_target: dict[str, str] = {}
 
 
 def _canonical_common_names(genome: SCerevisiaeGenome) -> dict[str, str]:
@@ -501,7 +977,8 @@ def resolve_library_rows(
     2005-era ORF, or a feature that is not a gene) is dropped: it cannot be keyed to a
     gene entity. A row whose ORF is the LEGACY spelling of an ORF the same library also
     carries under its current name is dropped too, because remapping it would merge two
-    physically distinct barcoded strains into one record key.
+    physically distinct barcoded strains into one record key; ``legacy_target`` keeps
+    the current ORF each legacy spelling resolves to.
     """
     gene_set = {gene.upper() for gene in genome.gene_set}
     resolutions = {orf: genome.resolve_gene_name(orf) for orf in orfs.unique()}
@@ -545,6 +1022,36 @@ def resolve_library_rows(
         barcode=kept_barcodes,
         dropped_retired=sorted(retired),
         dropped_legacy_duplicate=legacy,
+        legacy_target={orf: target[orf] for orf in legacy},
+    )
+
+
+def legacy_orf_strain(
+    source_orf: str, current_orf: str, barcode: str
+) -> LegacyOrfStrain:
+    """The typed ledger entry for a dropped legacy-spelling strain."""
+    return LegacyOrfStrain(
+        source_orf=source_orf,
+        current_orf=current_orf,
+        barcode=barcode,
+        constructed_orf=ConstructedOrf(
+            source_systematic_name=source_orf,
+            relation=None,
+            deleted_span=None,
+            provenance_gaps=[
+                pending_source_review(
+                    "relation",
+                    SGD_ORF_HISTORY,
+                    f"{source_orf} resolves to {current_orf} in R64-4-1; whether it "
+                    "was merged into it or reannotated is SGD locus history",
+                ),
+                pending_source_review(
+                    "deleted_span",
+                    SGD_ORF_HISTORY,
+                    f"the interval the {source_orf} cassette replaced",
+                ),
+            ],
+        ),
     )
 
 
@@ -566,12 +1073,12 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return EnvironmentResponseExperiment
+        return StrainEnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return EnvironmentResponseExperimentReference
+        return StrainEnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -609,23 +1116,58 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         """The dose as the paper SET it: an IC30 target, or a published fixed dose."""
         if compound == "Benomyl":
             return Concentration(
-                value=BENOMYL_MMS_DOSE.value["benomyl_ug_per_ml"],
-                unit=ConcentrationUnit.ug_per_ml,
+                value=BENOMYL_MOLAR.value,
+                unit=ConcentrationUnit.micromolar,
                 basis=DoseBasis.fixed,
             )
         if compound == "MMS":
             return Concentration(basis=DoseBasis.fixed)
+        if compound == DMSO_TOKEN:
+            return Concentration(
+                value=DMSO_DOSE.value,
+                unit=ConcentrationUnit.percent_v_v,
+                basis=DoseBasis.fixed,
+            )
         return Concentration(basis=IC30_BASIS.value)
 
-    def _base_environment(self, perturbations: list[Any]) -> Environment:
-        """Anaerobic SynBase at pH 5.0 carrying ``perturbations`` on top."""
-        return Environment(
+    def _culture_format(self) -> CultureFormat:
+        """Static 1.5 mL 24-well cultures inoculated at OD600 0.1, read at fixed times."""
+        return CultureFormat(
+            vessel=CULTURE_VESSEL.value["vessel"],
+            working_volume_ul=CULTURE_VESSEL.value["working_volume_ul"],
+            shaking_rpm=STATIC_CULTURE.value,
+            inoculum_od600=0.1,
+            endpoint=EndpointRule.fixed_duration,
+            provenance=[CULTURE_VESSEL, STATIC_CULTURE],
+        )
+
+    def _base_environment(self, perturbations: list[Any]) -> CultureEnvironment:
+        """Anaerobic static SynBase at pH 5.0 carrying ``perturbations`` on top."""
+        return CultureEnvironment(
             media=SYNBASE,
             temperature=Temperature(value=TEMPERATURE_C.value),
             perturbations=perturbations,
             aerobicity=AEROBICITY.value,
             duration_hours=DURATION_HOURS.value,
             duration_generations=DURATION_GENERATIONS.value,
+            culture_format=self._culture_format(),
+            pre_culture=None,
+            auxotroph_supplements=None,
+            provenance_gaps=[
+                pending_source_review(
+                    "pre_culture",
+                    PIOTROWSKI_2015,
+                    "Vanacloig: 'Chemical genomic experiments were performed as "
+                    "previously described (Piotrowski et al. 2015) with modifications'; "
+                    "how the pool was grown before inoculation is not stated",
+                ),
+                pending_source_review(
+                    "auxotroph_supplements",
+                    ZHANG_2019,
+                    "the paper names no supplement for the library's auxotrophies; "
+                    "which amino acids SynH3- carries is in Zhang 2019",
+                ),
+            ],
         )
 
     def _ph(self) -> EnvironmentPhysicalPerturbation:
@@ -640,31 +1182,41 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
             agent=resolved_compound(PH_AGENT.value),
         )
 
-    def _environment(self, compound: str) -> Environment:
-        """The treated environment: SynBase + pH 5.0 + the inhibitor at its dose."""
-        return self._base_environment(
-            [
-                SmallMoleculePerturbation(
-                    compound=resolved_compound(compound),
-                    concentration=self._concentration(compound),
-                    provenance_gaps=[_solvent_gap()],
-                ),
-                self._ph(),
-            ]
+    def _compound(self, compound: str) -> SmallMoleculePerturbation:
+        """The dosed condition: an inhibitor with a typed solvent gap, or DMSO itself."""
+        if compound == DMSO_TOKEN:
+            return SmallMoleculePerturbation(
+                compound=resolved_compound(compound),
+                concentration=self._concentration(compound),
+            )
+        return SmallMoleculePerturbation(
+            compound=resolved_compound(compound),
+            concentration=self._concentration(compound),
+            provenance_gaps=[_solvent_gap()],
         )
 
-    def _reference(self, compound: str) -> EnvironmentResponseExperimentReference:
+    def _environment(self, compound: str) -> CultureEnvironment:
+        """The treated environment: SynBase + pH 5.0 + the condition at its dose."""
+        return self._base_environment([self._compound(compound), self._ph()])
+
+    def _genome_reference(self) -> StrainReferenceGenome:
+        """The library's typed SGA-progeny background (constant across records)."""
+        return StrainReferenceGenome(
+            species="Saccharomyces cerevisiae",
+            strain=LIBRARY_STRAIN,
+            ploidy="haploid",
+            background=library_background(),
+        )
+
+    def _reference(self, compound: str) -> StrainEnvironmentResponseExperimentReference:
         """The inhibitor-FREE control the log2 ratio is taken against.
 
         The reference environment is the one the denominator was measured in: SynBase at
-        pH 5.0 with no inhibitor. Storing the treated environment here (the previous
-        build) made the control for a compound contain that very compound.
+        pH 5.0 with no inhibitor, grown in the same culture format.
         """
-        return EnvironmentResponseExperimentReference(
+        return StrainEnvironmentResponseExperimentReference(
             dataset_name=self.name,
-            genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain="S288C"
-            ),
+            genome_reference=self._genome_reference(),
             environment_reference=self._base_environment([self._ph()]),
             phenotype_reference=EnvironmentResponsePhenotype(
                 measurement_type=READOUT.value,
@@ -694,7 +1246,7 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         )
 
     def _genotype(self, systematic: str, common: str, barcode: str) -> Genotype:
-        """The screened deletion (with its uptag barcode) plus the constant background."""
+        """The ONE screened deletion; the constant background is on the reference."""
         return Genotype(
             perturbations=[
                 BarcodedKanMxDeletionPerturbation(
@@ -702,27 +1254,15 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                     perturbed_gene_name=common,
                     barcode=barcode,
                     collection=LIBRARY_COLLECTION.value,
-                ),
-                NatMxDeletionPerturbation(
-                    systematic_gene_name="YGL013C", perturbed_gene_name="PDR1"
-                ),
-                MarkerDeletionPerturbation(
-                    systematic_gene_name="YBL005W",
-                    perturbed_gene_name="PDR3",
-                    marker="KlURA3",
-                ),
-                MarkerDeletionPerturbation(
-                    systematic_gene_name="YDR011W",
-                    perturbed_gene_name="SNQ2",
-                    marker="KlLEU2",
-                ),
+                    cassette=ARRAY_KANMX.value,
+                )
             ]
         )
 
     # ---- build ---------------------------------------------------------------- #
     @post_process
     def process(self) -> None:
-        """Recompute per-(gene, compound) log2 responses from raw counts; write LMDB."""
+        """Recompute per-(gene, condition) log2 responses from raw counts; write LMDB."""
         verify_raw_files(self.raw_dir, {DATA_FILENAME: DATA_SHA256})
         df = self._load_matrix()
         sample_cols = [c for c in df.columns if c not in ("gene", "std_name")]
@@ -745,14 +1285,15 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         rules: list[DropRule] = []
 
         # --- compound-level retention ----------------------------------------- #
-        vehicle = sorted(set(compound_cols) & VEHICLE_CONTROL_TOKENS)
+        unreported = sorted(set(compound_cols) - FIG_1B_TOKENS)
         unidentified = sorted(
             token
-            for token in compound_cols
-            if token not in VEHICLE_CONTROL_TOKENS
-            and not resolve_compound_identity(name=token).identified
+            for token in set(compound_cols) & FIG_1B_TOKENS
+            if not resolve_compound_identity(name=token).identified
         )
-        kept_compounds = sorted(set(compound_cols) - set(vehicle) - set(unidentified))
+        kept_compounds = sorted(
+            set(compound_cols) - set(unreported) - set(unidentified)
+        )
 
         # --- library-row retention --------------------------------------------- #
         split = df["gene"].astype(str).str.split("_", n=1)
@@ -760,11 +1301,11 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         barcodes = split.str[1].fillna("")
         is_orf = orfs.map(lambda gene: bool(_SYSTEMATIC_RE.match(gene)))
         has_counts = ~df[sample_cols].isna().any(axis=1)
-        not_background = ~orfs.isin(BACKGROUND_GENES)
+        not_background = ~orfs.isin(SELECTED_BACKGROUND_LOCI)
         prefilter = is_orf & has_counts & not_background
         n_non_orf = int((~is_orf).sum())
         n_all_nan = int((is_orf & ~has_counts).sum())
-        n_background = int((is_orf & has_counts & ~not_background).sum())
+        background_rows = sorted(orfs[is_orf & has_counts & ~not_background])
 
         genome = default_genome()
         library = resolve_library_rows(
@@ -777,18 +1318,25 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         keep.loc[row_keep.index] = row_keep.to_numpy()
         n_rows = int(keep.sum())
         n_kept_compounds = len(kept_compounds)
+        prefiltered_barcode = dict(
+            zip(orfs[prefilter], barcodes[prefilter], strict=True)
+        )
 
         rules.append(
             DropRule(
-                rule="vehicle_control_served_as_a_treatment",
+                rule="compound_not_reported_by_the_paper",
                 scope="compound",
                 description=(
-                    "the DMSO column is the vehicle the water-insoluble compounds were "
-                    "delivered in and its own inhibitor-free control, not a treatment: "
-                    + VEHICLE_CONTROL.quote
+                    "the matrix token is not one of the 34 conditions Fig 1B lists ("
+                    + FIG_1B_CONDITIONS.quote
+                    + " Bar labels read from "
+                    + FIG_1B_IMAGE
+                    + ", sha256 "
+                    + FIG_1B_IMAGE_SHA256
+                    + "); the paper never reports these conditions or says why"
                 ),
-                n_records=len(vehicle) * len(df),
-                items=vehicle,
+                n_records=len(unreported) * len(df),
+                items=unreported,
             )
         )
         rules.append(
@@ -810,11 +1358,24 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                 scope="library_row",
                 description=(
                     "the gene column is not '<systematic ORF>_<barcode>', or every count "
-                    "column is missing (a QC-dropped barcode), or the ORF is one of the "
-                    "three constant 3DeltaAlpha background deletions"
+                    "column is missing (a QC-dropped barcode)"
                 ),
-                n_records=(n_non_orf + n_all_nan + n_background) * n_kept_compounds,
+                n_records=(n_non_orf + n_all_nan) * n_kept_compounds,
                 items=[],
+            )
+        )
+        rules.append(
+            DropRule(
+                rule="orf_is_a_selected_background_locus",
+                scope="library_row",
+                description=(
+                    "the screened ORF is a locus whose allele the SGA selections fix in "
+                    "every library strain (pdr1Δ::natMX, pdr3Δ::KlURA3, snq2Δ::KlLEU2, "
+                    "can1Δ::STE2pr-Sp_his5, lyp1Δ; Piotrowski 2017), so a kanMX "
+                    "deletion of it contradicts the strain's own background"
+                ),
+                n_records=len(background_rows) * n_kept_compounds,
+                items=background_rows,
             )
         )
         rules.append(
@@ -837,23 +1398,28 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                 description=(
                     "the ORF resolves to an ORF the SAME library also carries under its "
                     "current name; remapping would merge two physically distinct "
-                    "barcoded strains into one record key, so the legacy row is dropped"
+                    "barcoded strains into one record key, so the legacy row is dropped "
+                    "and recorded as a typed ConstructedOrf in legacy_orf_strains"
                 ),
                 n_records=len(library.dropped_legacy_duplicate) * n_kept_compounds,
                 items=library.dropped_legacy_duplicate,
             )
         )
+        legacy_strains = [
+            legacy_orf_strain(orf, library.legacy_target[orf], prefiltered_barcode[orf])
+            for orf in library.dropped_legacy_duplicate
+        ]
         log.info(
-            "Vanacloig: %d compounds kept (%d vehicle, %d unidentified dropped); "
-            "%d library rows kept (%d non-ORF, %d all-NaN, %d background, %d retired, "
-            "%d legacy duplicates dropped)",
+            "Vanacloig: %d conditions kept (%d unreported, %d unidentified dropped); "
+            "%d library rows kept (%d non-ORF, %d all-NaN, %d background loci, %d "
+            "retired, %d legacy duplicates dropped)",
             n_kept_compounds,
-            len(vehicle),
+            len(unreported),
             len(unidentified),
             n_rows,
             n_non_orf,
             n_all_nan,
-            n_background,
+            len(background_rows),
             len(library.dropped_retired),
             len(library.dropped_legacy_duplicate),
         )
@@ -861,20 +1427,12 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         # --- normalization ----------------------------------------------------- #
         # The library size is a property of the SEQUENCED SAMPLE, so it is summed over
         # EVERY released barcode (NaN = a QC-dropped barcode contributing no reads)
-        # BEFORE any retention rule is applied. Summing over the retained rows instead
-        # would make every stored value depend on this loader's gene-name policy.
+        # BEFORE any retention rule is applied, and TMM runs over every complete row.
         col_idx = {column: i for i, column in enumerate(sample_cols)}
-        library_sizes = np.nansum(df[sample_cols].to_numpy(dtype=np.float64), axis=0)
-        kept = df.loc[keep].reset_index(drop=True)
-        counts = kept[sample_cols].to_numpy(dtype=np.float64)
-        cpm = counts / library_sizes * 1e6
-        pooled_log = np.log2(
-            cpm[:, [col_idx[c] for c in controls]].mean(axis=1) + CPM_PRIOR
-        )
-        batch_log = {
-            batch: np.log2(cpm[:, [col_idx[c] for c in cols]].mean(axis=1) + CPM_PRIOR)
-            for batch, cols in control_by_batch.items()
-        }
+        all_counts = df[sample_cols].to_numpy(dtype=np.float64)
+        library_sizes = np.nansum(all_counts, axis=0)
+        complete = ~np.isnan(all_counts).any(axis=1)
+        kept_counts = df.loc[keep, sample_cols].to_numpy(dtype=np.float64)
 
         publication = Publication(doi=PAPER_DOI, doi_url=f"https://doi.org/{PAPER_DOI}")
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -882,35 +1440,57 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
         n_all_zero_cells = 0
+        normalization: dict[str, TmmFactors] = {}
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for compound in tqdm(kept_compounds, desc="Vanacloig compounds"):
+            for compound in tqdm(kept_compounds, desc="Vanacloig conditions"):
                 cols = compound_cols[compound]
                 if len(cols) != N_REPLICATES.value:
                     raise RuntimeError(
                         f"{compound}: {len(cols)} replicate columns, expected "
                         f"{N_REPLICATES.value}"
                     )
-                indices = [col_idx[c] for c in cols]
                 if compound in UNPAIRED_COMPOUND_TOKENS:
-                    control_log = np.repeat(pooled_log[:, None], len(cols), axis=1)
+                    paired = {c: controls for c in cols}
                 else:
-                    control_log = np.column_stack(
-                        [
-                            batch_log[_SAMPLE_RE.match(c).group("batch")]  # type: ignore[union-attr]  # every column matched above
-                            for c in cols
-                        ]
-                    )
-                log_rep = np.log2(cpm[:, indices] + CPM_PRIOR) - control_log
+                    paired = {
+                        c: control_by_batch[_SAMPLE_RE.match(c).group("batch")]  # type: ignore[union-attr]  # every column matched above
+                        for c in cols
+                    }
+                control_set = sorted({c for group in paired.values() for c in group})
+                members = control_set + cols
+                member_idx = [col_idx[c] for c in members]
+                factors = tmm_factors(
+                    all_counts[np.ix_(complete, member_idx)],
+                    library_sizes[member_idx],
+                    members,
+                )
+                normalization[compound] = factors
+                # TMM-normalized CPM of every member column over the kept rows.
+                effective = np.asarray(factors.library_sizes) * np.asarray(
+                    factors.factors
+                )
+                tmm_cpm = kept_counts[:, member_idx] / effective * 1e6
+                position = {column: i for i, column in enumerate(members)}
+                log_rep = np.column_stack(
+                    [
+                        np.log2(tmm_cpm[:, position[c]] + CPM_PRIOR)
+                        - np.log2(
+                            tmm_cpm[:, [position[k] for k in paired[c]]].mean(axis=1)
+                            + CPM_PRIOR
+                        )
+                        for c in cols
+                    ]
+                )
                 response = log_rep.mean(axis=1)
                 sd = log_rep.std(axis=1, ddof=1)
-                all_zero = (counts[:, indices] == 0).all(axis=1)
+                all_zero = (kept_counts[:, [col_idx[c] for c in cols]] == 0).all(axis=1)
                 n_all_zero_cells += int(all_zero.sum())
                 environment = self._environment(compound)
                 reference = self._reference(compound)
                 for row in range(n_rows):
                     if all_zero[row]:
                         continue
-                    experiment = EnvironmentResponseExperiment(
+                    experiment = StrainEnvironmentResponseExperiment(
                         dataset_name=self.name,
                         genotype=self._genotype(
                             library.systematic[row],
@@ -950,9 +1530,18 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
             kept_records=idx,
             dropped_records=source_records - idx,
             rules=rules,
+            legacy_orf_strains=legacy_strains,
         )
         with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as handle:
             handle.write(drop_log.model_dump_json(indent=2))
+        with open(
+            osp.join(self.preprocess_dir, "normalization_factors.json"), "w"
+        ) as handle:
+            json.dump(
+                {name: f.model_dump() for name, f in normalization.items()},
+                handle,
+                indent=2,
+            )
         accounted = sum(rule.n_records for rule in rules)
         if accounted != drop_log.dropped_records:
             raise RuntimeError(

@@ -1331,7 +1331,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     }
     assert _oracles(runners.ENVIRONMENT_RESPONSE_DATASETS) == {
         "yeastphenome": 296777,
-        "env_chemgen_vanacloig2022": 143218,
+        "env_chemgen_vanacloig2022": 118662,
         "env_chemgen_mota2024": 1270,
         "env_chemgen_hoepfner2014": 3124319,
         "env_chemgen_wildenhain2015": 428206,
@@ -1359,10 +1359,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         name: set(spec["background_genes"])
         for name, spec in runners.ENVIRONMENT_RESPONSE_DATASETS.items()
         if spec["background_genes"]
-    } == {
-        "env_chemgen_vanacloig2022": {"YGL013C", "YBL005W", "YDR011W"},
-        "crispri_mormino2022": {"BM3R1-HAA1-mTurquoise2", "sfpHluorin"},
-    }
+    } == {"crispri_mormino2022": {"BM3R1-HAA1-mTurquoise2", "sfpHluorin"}}
     assert _oracles(runners.FITNESS_DATASETS) == {
         "smf_oduibhir2014": 1312,
         "smf_baryshnikova2010": 5993,

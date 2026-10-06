@@ -1,22 +1,28 @@
 # tests/torchcell/datasets/scerevisiae/test_vanacloig2022.py
 # [[tests.torchcell.datasets.scerevisiae.test_vanacloig2022]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_vanacloig2022.py
-"""Vanacloig-Pedros 2022 loader: retention rules, sourced encoding, batch-matched control.
+"""Vanacloig-Pedros 2022 loader: TMM ratio, Fig 1B ledger, DMSO, background, MBO.
 
-Everything but the mirror audit runs on a synthetic count matrix and a fake genome, so
+Everything but the mirror audit runs on synthetic count matrices and a fake genome, so
 no build tree and no network are needed. The audit test binds each module-level
 ``SourcedValue`` to its verbatim quote in the sha256-pinned mirror and skips when the
 mirror is not mounted.
 
-2026.09.30 (Phase 13): a gzipped TSV in the GEO GSE186866 layout (``gene`` =
-``<ORF>_<barcode>``, ``std_name``, then ``ControlN_CG00b`` and ``<token>_CG00b_repN``
+The GEO-layout fixture (``_geo_matrix``): a gzipped TSV in the GSE186866 layout (``gene``
+= ``<ORF>_<barcode>``, ``std_name``, then ``ControlN_CG00b`` and ``<token>_CG00b_repN``
 count columns) read by the real ``_load_matrix``. Two batches with two controls each;
-six compound tokens (Furfural, MMS, SodiumGlyoxylate, DMSO, MBO, QUADRIS1) with three
-replicate columns each (batches 001, 002, 001, except MMS 001, 002, 002). Eight rows:
+six tokens (Furfural, MMS, SodiumGlyoxylate, DMSO, MBO, QUADRIS1) with three replicate
+columns each (batches 001, 002, 001, except MMS 001, 002, 002). Seven library rows:
 YAL001C, YAL002W, YAL003W (legacy spelling of YAL002W), YPL999C (retired), YGL013C (a
-3DeltaAlpha background gene), YBR001C (one NaN count), YBR002C (no barcode) and a
-non-ORF ``Filler`` row whose counts bring EVERY column total to 1,000,000, so CPM equals
-the raw count (``c / 1e6 * 1e6 == c`` exactly for these integers, checked in Python).
+selected background locus), YBR001C (one NaN count), YBR002C (no barcode); 60 non-ORF
+``Const`` rows holding 1,000 reads in every column; and a non-ORF ``Filler`` row whose
+counts bring EVERY column total to 1,000,000.
+
+Why the closed forms survive TMM: every column has the same library size, so a
+``Const`` row's log ratio against any reference is exactly 0. Those 60 tied rows sit in
+the middle of the log-ratio ranks, inside edgeR's 30% trim, and no nonzero row does, so
+every trimmed weighted mean is exactly 0, every TMM factor is exactly 1, and TMM-CPM
+equals the raw count (pinned by ``test_geo_fixture_tmm_factors_are_exactly_one``).
 
 Expected values, with ``L(x) = log2(x + 1)``:
 
@@ -24,33 +30,29 @@ Expected values, with ``L(x) = log2(x + 1)``:
   replicates 15 (CG001), 63 (CG002), 63 (CG001) -> 4 - 2, 6 - 3, 6 - 2 = 2, 3, 4;
   response 3.0, sample SD 1.0, SE 1/sqrt(3).
 - YAL001C / MMS (pooled over all four controls, mean 5 -> log2 6): replicates 11, 23,
-  47 -> log2(12 / 6), log2(24 / 6), log2(48 / 6) = 1, 2, 3; response 2.0, SD 1.0. Paired
-  controls would have given log2(12) - 2 for replicate 1, not an integer.
-- YAL001C / SodiumGlyoxylate: replicates equal their batch controls; 0.0, SD 0.0.
-- YAL002W: controls all 0; Furfural 0, 1, 3 -> 0, 1, 2; response 1.0, SD 1.0. MMS and
-  SodiumGlyoxylate are all-zero cells and are dropped.
-- YBR002C: every count 1, so every ratio is 0; kept with barcode ``""`` and its own
-  systematic name as ``perturbed_gene_name`` (no standard name in the genome).
+  47 -> 1, 2, 3; response 2.0, SD 1.0.
+- DMSO and MBO hold 5 reads in every replicate of every library row: YAL001C ->
+  L(5) - (2, 3, 2), response log2(6) - 7/3, SD sqrt(1/3); YAL002W (controls 0) ->
+  log2(6), SD 0; YBR002C (controls 1) -> log2(6) - 1, SD 0.
+- YAL002W: Furfural 0, 1, 3 -> 0, 1, 2; response 1.0, SD 1.0. MMS is an all-zero cell.
+- YBR002C: every other count 1, so every Furfural / MMS ratio is 0.
 
-Records, compound-major over the kept compounds sorted (Furfural, MMS,
-SodiumGlyoxylate) then kept rows: 0 YAL001C/Furfural, 1 YAL002W/Furfural, 2
-YBR002C/Furfural, 3 YAL001C/MMS, 4 YBR002C/MMS, 5 YAL001C/SodiumGlyoxylate, 6
-YBR002C/SodiumGlyoxylate. Ledger: source 8 rows x 6 tokens = 48; vehicle DMSO 1 x 8 = 8;
-unidentified MBO, QUADRIS1 2 x 8 = 16; non-ORF 1 + one-NaN 1 + background 1 = 3 rows x 3
-kept compounds = 9; retired YPL999C 3; legacy YAL003W 3; all-zero cells 2; so 41
-dropped and 7 kept. Every reference is the inhibitor-free control, so Furfural and
-SodiumGlyoxylate share one (paired units) and MMS has its own (pooled units).
+Records, condition-major over the kept conditions sorted (DMSO, Furfural, MBO, MMS),
+then kept rows (YAL001C, YAL002W, YBR002C): 0-2 DMSO, 3-5 Furfural, 6-8 MBO, 9 YAL001C /
+MMS, 10 YBR002C / MMS. Ledger: source 68 rows x 6 tokens = 408; SodiumGlyoxylate and
+QUADRIS1 are not Fig 1B conditions, 2 x 68 = 136; 61 non-ORF rows + YBR001C = 62 x 4 =
+248; background locus YGL013C 4; retired YPL999C 4; legacy YAL003W 4; all-zero 1; so
+397 dropped and 11 kept.
 
-Findings pinned (issue #501 is the ingestion audit; source lines in
-``vanacloig2022.py``): the stored value is CPM against the library size summed over
-every released row, not the paper's TMM (#501 finding 1; lines 865-868); an identified
-compound the paper never reported (SodiumGlyoxylate) is served (#501 finding 2); DMSO is
-dropped as the vehicle and a DMSO-delivered compound's environment names no DMSO (#501
-finding 3; line 746); MBO is dropped as unidentified (#501 finding 5; lines 747-752); a
-single NaN count drops the whole row under the rule described as "every count column is
-missing" (line 760 versus line 811); a row with no barcode is served with ``barcode ""``
-(line 758); a replicate set whose counts are equal but nonzero keeps SD exactly 0 (only
-all-zero cells are dropped, line 904).
+Issue #501 pins: TMM factors equal edgeR's ``calcNormFactors`` (finding 1, and a
+compositional takeover leaves no TMM offset); the nine unreported tokens are dropped
+under the Fig 1B rule (finding 2); DMSO is a served condition at 1% v/v (finding 3); the
+background is the SGA MATa progeny with ONE perturbation per genotype (finding 4, #500);
+MBO is 2-methyl-3-buten-2-ol, CID 8257 (finding 5); the legacy-spelling strains are
+typed ``ConstructedOrf`` ledger entries (finding 6); ammonium sulfate is a SynBase
+dropout (finding 7). Findings still pinned as-is: a single NaN count drops the whole row
+under the rule described as "every count column is missing"; a row with no barcode is
+served with ``barcode ""``; equal nonzero replicate counts keep SD exactly 0.
 """
 
 from __future__ import annotations
@@ -65,42 +67,39 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
-from torchcell.datamodels.compound_identity import resolved_compound
+from torchcell.datamodels.compound_identity import (
+    resolve_compound_identity,
+    resolved_compound,
+)
 from torchcell.datamodels.media import MEDIA_LIBRARY, SYNBASE
 from torchcell.datamodels.schema import (
+    AlleleEdit,
     AssayType,
     BarcodedKanMxDeletionPerturbation,
-    Concentration,
     ConcentrationUnit,
+    CultureEnvironment,
     DoseBasis,
-    Environment,
+    EndpointRule,
     EnvironmentPhysicalPerturbation,
-    EnvironmentResponseExperiment,
-    EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
     Genotype,
-    MarkerDeletionPerturbation,
+    MatingType,
     MeasurementType,
-    NatMxDeletionPerturbation,
     PhysicalFactor,
     Publication,
-    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
-    Temperature,
+    StrainEnvironmentResponseExperiment,
+    StrainEnvironmentResponseExperimentReference,
     UncertaintyType,
 )
 from torchcell.datasets.scerevisiae import vanacloig2022 as v
-from torchcell.verification.sourced import (
-    ProvenanceGap,
-    ProvenanceGapReason,
-    SourcedValue,
-    audit_sourced_value,
-)
+from torchcell.verification.sourced import SourcedValue, audit_sourced_value
 
 # The synthetic library: two current genes, one retired ORF, one legacy spelling of a
 # gene the library ALSO carries under its current name.
@@ -138,7 +137,7 @@ class _FakeGenome:
 
 
 def _matrix() -> pd.DataFrame:
-    """Four library rows x (2 controls per batch + 2 compounds x 3 reps)."""
+    """Four library rows x (2 controls per batch + 3 conditions x 3 reps)."""
     rows = [
         ("YAL001C_AAAACCCCGGGGTTTTACGT", "TFC3"),
         ("YAL002W_CCCCGGGGTTTTAAAACGTA", "VPS8"),
@@ -156,11 +155,11 @@ def _matrix() -> pd.DataFrame:
         "Benomyl_CG003_rep1": [110, 0, 310, 410],
         "Benomyl_CG004_rep2": [410, 0, 210, 110],
         "Benomyl_CG003_rep3": [130, 0, 330, 430],
-        # DMSO: the vehicle control column, dropped whole
+        # DMSO: a Fig 1B condition, served at 1% v/v
         "DMSO_CG003_rep1": [90, 190, 290, 390],
         "DMSO_CG004_rep2": [390, 290, 190, 90],
         "DMSO_CG003_rep3": [95, 195, 295, 395],
-        # MBO: no structure identifier resolves, dropped whole
+        # MBO: a Fig 1B condition, adjudicated to 2-methyl-3-buten-2-ol
         "MBO_CG003_rep1": [70, 170, 270, 370],
         "MBO_CG004_rep2": [370, 270, 170, 70],
         "MBO_CG003_rep3": [75, 175, 275, 375],
@@ -188,35 +187,31 @@ def test_drop_rules_account_for_every_source_record(built: Any) -> None:
         open(osp.join(built.root, "preprocess", "dropped_records.json")).read()
     )
     rules = {rule.rule: rule for rule in log.rules}
-    assert rules["vehicle_control_served_as_a_treatment"].items == ["DMSO"]
-    assert rules["compound_without_a_structure_identifier"].items == ["MBO"]
+    # Benomyl, DMSO and MBO are all Fig 1B conditions, and MBO now resolves
+    assert rules["compound_not_reported_by_the_paper"].items == []
+    assert rules["compound_without_a_structure_identifier"].items == []
     assert rules["orf_is_not_a_current_genome_gene"].items == ["YPL999C"]
     assert rules["orf_is_a_legacy_spelling_of_another_library_orf"].items == ["YAL003W"]
-    # one compound (Benomyl) x two kept rows, minus the all-zero cell
+    # three conditions x two kept rows, minus the Benomyl all-zero cell
     assert rules["all_three_replicate_counts_are_zero"].n_records == 1
     assert log.source_records == 4 * 3
-    assert log.kept_records == 1
+    assert log.kept_records == 5
     assert log.dropped_records == sum(rule.n_records for rule in log.rules)
     assert len(built) == log.kept_records
 
 
-def test_record_carries_the_barcode_the_canonical_name_and_the_shared_medium(
-    built: Any,
-) -> None:
+def test_record_carries_one_screened_deletion_and_the_shared_medium(built: Any) -> None:
+    """#500 / #501 finding 4: the genotype is the ONE screened kanMX deletion."""
     record = built[0]
     experiment = record["experiment"]
-    deletion = experiment["genotype"]["perturbations"][0]
+    assert experiment["experiment_type"] == "strain_environment_response"
+    (deletion,) = experiment["genotype"]["perturbations"]
     assert deletion["perturbation_type"] == "barcoded_kanmx_deletion"
     assert deletion["systematic_gene_name"] == "YAL001C"
-    assert (
-        deletion["perturbed_gene_name"] == "TFC3"
-    )  # the genome's spelling, not std_name
+    assert deletion["perturbed_gene_name"] == "TFC3"  # the genome's spelling
     assert deletion["barcode"] == "AAAACCCCGGGGTTTTACGT"
     assert deletion["collection"] == v.LIBRARY_COLLECTION.value
-    # the three constant background deletions ride on every genotype
-    assert {
-        p["systematic_gene_name"] for p in experiment["genotype"]["perturbations"]
-    } == {"YAL001C", "YGL013C", "YBL005W", "YDR011W"}
+    assert deletion["cassette"] == "kanMX"  # Piotrowski: 'MATa xxxΔ::kanMX'
     assert experiment["environment"]["media"] == MEDIA_LIBRARY["SYNBASE"].model_dump()
     assert experiment["environment"]["aerobicity"] == "anaerobic"
     assert experiment["environment"]["duration_hours"] == 48.0
@@ -230,11 +225,10 @@ def test_environment_carries_the_compound_and_a_typed_ph(built: Any) -> None:
     )
     assert compound["compound"]["name"] == "benomyl"
     assert compound["compound"]["inchikey"] == "RIOXQFHNBCKOKP-UHFFFAOYSA-N"
-    assert compound["concentration"]["value"] == 10.0
-    assert compound["concentration"]["unit"] == "ug/mL"
+    # Piotrowski 2017's molar statement of Vanacloig's '10 ug/mL as previously published'
+    assert compound["concentration"]["value"] == 34.4
+    assert compound["concentration"]["unit"] == "uM"
     assert compound["concentration"]["basis"] == "fixed"
-    # the vehicle is the field that is actually None, so it is the one that is gapped;
-    # the dose is not gapped, because an IC30 / fixed basis is always known
     assert compound["solvent"] is None
     assert [g["field"] for g in compound["provenance_gaps"]] == ["solvent"]
     assert compound["provenance_gaps"][0]["reason"] == "deferred_pending_source_review"
@@ -248,7 +242,9 @@ def test_environment_carries_the_compound_and_a_typed_ph(built: Any) -> None:
     assert ph["provenance_gaps"] == []
 
 
-def test_reference_environment_holds_no_inhibitor(built: Any) -> None:
+def test_reference_environment_holds_no_inhibitor_and_the_typed_background(
+    built: Any,
+) -> None:
     reference = built[0]["reference"]
     types = {
         p["perturbation_type"]
@@ -256,25 +252,11 @@ def test_reference_environment_holds_no_inhibitor(built: Any) -> None:
     }
     assert types == {"environment_physical"}  # pH only: the control is inhibitor-free
     assert reference["phenotype_reference"]["environment_response"] == 0.0
-    assert reference["genome_reference"]["strain"] == "S288C"
-
-
-def test_response_is_the_batch_matched_log2_ratio_with_a_nonzero_sample_sd(
-    built: Any,
-) -> None:
-    phenotype = built[0]["experiment"]["phenotype"]
-    assert phenotype["measurement_type"] == "log2_ratio"
-    assert phenotype["assay_type"] == "pooled_competitive_growth_barcode"
-    assert phenotype["n_samples"] == 3
-    assert phenotype["sample_unit"] == "biological_replicate"
-    assert (
-        phenotype["environment_response_uncertainty_type"] == UncertaintyType.sample_sd
-    )
-    assert phenotype["environment_response_uncertainty"] > 0.0
-    assert phenotype["environment_response_se"] == pytest.approx(
-        phenotype["environment_response_uncertainty"] / math.sqrt(3)
-    )
-    assert "SAME CG batch" in phenotype["units"]
+    genome = reference["genome_reference"]
+    assert genome["strain"] == v.LIBRARY_STRAIN
+    assert genome["ploidy"] == "haploid"
+    assert genome["background"]["mating_type"] == "a"
+    assert reference["experiment_reference_type"] == "strain_environment_response"
 
 
 def test_unpaired_compound_keeps_the_pooled_control_in_its_units() -> None:
@@ -282,10 +264,17 @@ def test_unpaired_compound_keeps_the_pooled_control_in_its_units() -> None:
     dataset.name = "EnvChemgenVanacloig2022Dataset"
     assert "pooled rather than batch-matched" in dataset._units("MMS")
     assert "SAME CG batch" in dataset._units("Furfural")
+    assert "TMM-normalized" in dataset._units("Furfural")
     # MMS's dose was published, not set to an IC30, but its unit is not stated
     mms = dataset._concentration("MMS")
     assert mms.value is None and mms.basis is DoseBasis.fixed
     assert dataset._concentration("Furfural").basis is DoseBasis.IC30
+    dmso = dataset._concentration("DMSO")
+    assert (dmso.value, dmso.unit, dmso.basis) == (
+        1.0,
+        ConcentrationUnit.percent_v_v,
+        DoseBasis.fixed,
+    )
 
 
 def test_resolve_library_rows_separates_retired_from_legacy_duplicates() -> None:
@@ -299,6 +288,7 @@ def test_resolve_library_rows_separates_retired_from_legacy_duplicates() -> None
     assert rows.common == ["TFC3", "VPS8"]
     assert rows.dropped_retired == ["YPL999C"]
     assert rows.dropped_legacy_duplicate == ["YAL003W"]
+    assert rows.legacy_target == {"YAL003W": "YAL002W"}
 
 
 def test_every_sourced_value_is_backed_by_a_verbatim_quote_in_the_mirror() -> None:
@@ -313,28 +303,240 @@ def test_every_sourced_value_is_backed_by_a_verbatim_quote_in_the_mirror() -> No
         for name in dir(v)
         if isinstance(getattr(v, name), SourcedValue)
     ]
-    assert len(values) >= 12
+    assert len(values) >= 30
+    citation_keys = {value.provenance.citation_key for value in values}
+    assert citation_keys == {v.CITATION_KEY, v.PIOTROWSKI_KEY, v.OHNUKI_KEY}
     for value in values:
         assert audit_sourced_value(value, library).passed
+
+
+def test_fig_1b_image_is_the_pinned_artifact() -> None:
+    """The 34 Fig 1B bar labels are read from this exact image file."""
+    data_root = os.environ.get("DATA_ROOT")
+    if data_root is None:
+        pytest.skip("DATA_ROOT not set")
+    image = Path(data_root) / "torchcell-library" / v.CITATION_KEY / v.FIG_1B_IMAGE
+    if not image.exists():
+        pytest.skip("paper mirror not mounted")
+    assert hashlib.sha256(image.read_bytes()).hexdigest() == v.FIG_1B_IMAGE_SHA256
 
 
 def test_perturbation_leaves_are_the_typed_ones() -> None:
     dataset = v.EnvChemgenVanacloig2022Dataset.__new__(v.EnvChemgenVanacloig2022Dataset)
     dataset.name = "EnvChemgenVanacloig2022Dataset"
     genotype = dataset._genotype("YAL001C", "TFC3", "ACGT")
+    assert len(genotype.perturbations) == 1
     assert isinstance(genotype.perturbations[0], BarcodedKanMxDeletionPerturbation)
     environment = dataset._environment("Furfural")
+    assert isinstance(environment, CultureEnvironment)
     assert isinstance(environment.perturbations[0], SmallMoleculePerturbation)
     assert isinstance(environment.perturbations[1], EnvironmentPhysicalPerturbation)
     assert environment.perturbations[1].factor is PhysicalFactor.ph
 
 
 # --------------------------------------------------------------------------- #
-# Phase 13: the GEO-layout matrix, the exact records, the ledger, the refusals
+# #501 finding 1: TMM, ported from edgeR
+# --------------------------------------------------------------------------- #
+#: A 24-gene x 4-sample matrix (numpy default_rng(501): Poisson around one base
+#: profile at depths 1.0, 1.3, 0.7, 1.0; gene 0 takes over sample 4 with 6,000 reads;
+#: gene 1 is all zero) and edgeR 4.4.2's ``calcNormFactors(x, method="TMM")`` on it,
+#: printed with ``sprintf("%.15f")``. edgeR 4.4.2's TMM code path (reference choice,
+#: ``.calcFactorTMM``) reads the same as 3.26.8's.
+_SMALL = np.array(
+    [
+        [348, 0, 180, 271, 187, 189, 5, 197, 271, 312, 168, 366]
+        + [119, 34, 76, 297, 152, 50, 81, 319, 273, 188, 359, 339],
+        [477, 0, 232, 320, 208, 222, 5, 301, 365, 440, 220, 497]
+        + [158, 29, 86, 412, 231, 79, 116, 401, 342, 285, 502, 434],
+        [251, 0, 109, 169, 117, 116, 3, 150, 222, 249, 120, 283]
+        + [80, 17, 58, 255, 116, 46, 56, 203, 173, 130, 276, 247],
+        [6000, 0, 171, 244, 160, 156, 9, 214, 324, 383, 164, 417]
+        + [136, 32, 63, 325, 151, 51, 70, 258, 280, 168, 400, 326],
+    ],
+    dtype=np.float64,
+).T
+_EDGER_SMALL = [
+    1.221962662869660,
+    1.217307425526262,
+    1.188537312695488,
+    0.565625489178291,
+]
+
+
+def test_tmm_factors_equal_edger_calc_norm_factors() -> None:
+    factors = v.tmm_factors(_SMALL, _SMALL.sum(axis=0), ["a", "b", "c", "d"])
+    assert factors.factors == pytest.approx(_EDGER_SMALL, abs=1e-12)
+    assert factors.library_sizes == [4781.0, 6362.0, 3446.0, 10502.0]
+    assert factors.reference_column == "a"
+    assert math.prod(factors.factors) == pytest.approx(1.0)
+
+
+def test_tmm_refuses_missing_counts() -> None:
+    counts = _SMALL.copy()
+    counts[2, 1] = np.nan
+    with pytest.raises(ValueError, match="NA counts not permitted"):
+        v.tmm_factors(counts, np.nansum(counts, axis=0), ["a", "b", "c", "d"])
+
+
+def test_a_compositional_takeover_leaves_no_tmm_offset() -> None:
+    """#501 finding 1, the crystal-violet pattern: one resistant strain takes half of
+    every treated library. Library-size CPM then shifts EVERY other strain down by
+    log2(2) = 1; the TMM ratio of an unaffected strain stays at 0.
+    """
+    profile = np.arange(1, 201, dtype=np.float64) * 10.0
+    control = profile.copy()
+    treated = profile.copy()
+    treated[0] = profile.sum()  # strain 0 holds half of the treated reads
+    counts = np.column_stack([control, treated])
+    sizes = counts.sum(axis=0)
+    factors = v.tmm_factors(counts, sizes, ["control", "treated"])
+    effective = sizes * np.asarray(factors.factors)
+    cpm_ratio = np.log2((treated / sizes[1]) / (control / sizes[0]))[1:]
+    tmm_ratio = np.log2((treated / effective[1]) / (control / effective[0]))[1:]
+    assert np.median(cpm_ratio) == pytest.approx(-1.0, abs=1e-2)
+    assert np.median(tmm_ratio) == pytest.approx(0.0, abs=1e-12)
+
+
+# --------------------------------------------------------------------------- #
+# #501 findings 2, 4, 5, 7: the condition list, the background, MBO, the medium
+# --------------------------------------------------------------------------- #
+#: The 11 matrix tokens Fig 1B does not list (#501 finding 2).
+_UNREPORTED = {
+    "QUADRIS1",
+    "QUADRIS2",
+    "24Dimethylimidazole",
+    "2Methylimidazole",
+    "45Methylimidazole",
+    "CaffeicAcid",
+    "LevulinicAcid",
+    "Mycobutanil",
+    "SodiumAcetate",
+    "SodiumButyrate",
+    "SodiumGlyoxylate",
+}
+
+
+def test_fig_1b_lists_34_conditions_including_dmso_and_mbo() -> None:
+    assert len(v.FIG_1B_TOKENS) == v.FIG_1B_CONDITIONS.value == 34
+    assert {"DMSO", "MBO", "MMS", "Benomyl"} <= v.FIG_1B_TOKENS
+    assert not _UNREPORTED & v.FIG_1B_TOKENS
+    # every Fig 1B token resolves to a structure (MBO included), so the
+    # unidentified-compound rule removes nothing from the real matrix
+    assert all(resolve_compound_identity(name=t).identified for t in v.FIG_1B_TOKENS)
+
+
+def test_mbo_is_adjudicated_to_2_methyl_3_buten_2_ol() -> None:
+    """#501 finding 5: the Results definition wins over the Abbreviations line."""
+    compound = resolved_compound("MBO")
+    assert compound.name == "2-methyl-3-buten-2-ol"
+    assert compound.pubchem_cid == 8257
+    assert compound.inchikey == "HNVRRHSXBLFLIG-UHFFFAOYSA-N"
+    assert compound.smiles == "CC(C)(C=C)O"
+    assert compound.provenance_gaps == []
+    assert v.MBO_IDENTITY.value == compound.name
+    # both conflicting lines stay on record, verbatim
+    assert v.MBO_ABBREVIATION.quote == "MBO : 2-Methyl-3-butyn-2-ol"
+    assert "2-methyl-3-buten-2-ol (MBO)" in v.MBO_IDENTITY.quote
+    assert "line 31" in v.MBO_IDENTITY_RULE and "line 103" in v.MBO_IDENTITY_RULE
+
+
+def test_library_background_is_the_sga_mata_progeny() -> None:
+    """#500: MATa haploid SGA progeny; reporters and sensitizers sourced, BY pending."""
+    background = v.library_background()
+    assert background.name == v.LIBRARY_STRAIN
+    assert background.mating_type is MatingType.a
+    assert background.ploidy == "haploid"
+    assert background.parents == ["Y13206", "MATa xxxΔ::kanMX deletion array"]
+    by_name = {a.allele_name: a for a in background.alleles}
+    assert list(by_name) == [
+        "can1Δ::STE2pr-Sp_his5",
+        "lyp1Δ",
+        "pdr1Δ::natMX",
+        "pdr3Δ::KlURA3",
+        "snq2Δ::KlLEU2",
+        "his3Δ1",
+        "leu2Δ0",
+        "ura3Δ0",
+        "met15Δ0",
+    ]
+    sourced = {name for name, a in by_name.items() if a.is_sourced}
+    assert sourced == {
+        "can1Δ::STE2pr-Sp_his5",
+        "lyp1Δ",
+        "pdr1Δ::natMX",
+        "pdr3Δ::KlURA3",
+        "snq2Δ::KlLEU2",
+    }
+    for name in ("his3Δ1", "leu2Δ0", "ura3Δ0", "met15Δ0"):
+        (gap,) = by_name[name].provenance_gaps
+        assert gap.field == "provenance"
+        assert gap.reason.value == "deferred_pending_source_review"
+        assert gap.resolve_with is not None and "Brachmann" in str(
+            gap.resolve_with.method
+        )
+    assert by_name["can1Δ::STE2pr-Sp_his5"].edit is AlleleEdit.cassette_replacement
+    assert by_name["can1Δ::STE2pr-Sp_his5"].provenance == [
+        v.QUERY_STRAIN,
+        v.Y8835_GENOTYPE,
+    ]
+    assert by_name["pdr1Δ::natMX"].provenance == [v.QUERY_STRAIN, v.TRIPLE_SELECTION]
+    assert background.provenance == [v.MATA_PROGENY, v.QUERY_STRAIN]
+    assert background.functional_copies("YGL013C") == 0  # PDR1
+    assert background.functional_copies("YAL001C") == 1  # untouched haploid locus
+    assert not background.is_fully_sourced
+
+
+def test_synbase_lists_ammonium_sulfate_as_a_dropout() -> None:
+    """#501 finding 7: MSG replaced ammonium sulfate, so the medium omits it."""
+    assert [c.name for c in SYNBASE.dropouts] == [
+        "acetamide",
+        "sodium acetate",
+        "cellobiose",
+        "ammonium sulfate",
+    ]
+
+
+def test_culture_environment_states_the_protocol_and_gaps_the_rest() -> None:
+    dataset = v.EnvChemgenVanacloig2022Dataset.__new__(v.EnvChemgenVanacloig2022Dataset)
+    dataset.name = "EnvChemgenVanacloig2022Dataset"
+    environment = dataset._environment("Furfural")
+    culture = environment.culture_format
+    assert culture is not None
+    assert (
+        culture.vessel,
+        culture.working_volume_ul,
+        culture.shaking_rpm,
+        culture.inoculum_od600,
+        culture.endpoint,
+    ) == ("24-well plates (Falcon)", 1500.0, 0.0, 0.1, EndpointRule.fixed_duration)
+    assert culture.provenance == [v.CULTURE_VESSEL, v.STATIC_CULTURE]
+    assert environment.pre_culture is None and environment.auxotroph_supplements is None
+    assert [(g.field, g.resolve_with) for g in environment.provenance_gaps] == [
+        ("pre_culture", v.PIOTROWSKI_2015),
+        ("auxotroph_supplements", v.ZHANG_2019),
+    ]
+
+
+def test_dmso_condition_has_no_vehicle_gap_and_inhibitors_keep_theirs() -> None:
+    """#501 finding 3: DMSO is its own condition; an inhibitor's vehicle stays a gap."""
+    dataset = v.EnvChemgenVanacloig2022Dataset.__new__(v.EnvChemgenVanacloig2022Dataset)
+    dataset.name = "EnvChemgenVanacloig2022Dataset"
+    dmso = dataset._compound("DMSO")
+    assert dmso.compound.name == "dimethyl sulfoxide"
+    assert dmso.compound.inchikey == "IAZDPXIOMUYVGZ-UHFFFAOYSA-N"
+    assert dmso.solvent is None and dmso.provenance_gaps == []
+    furfural = dataset._compound("Furfural")
+    assert [g.field for g in furfural.provenance_gaps] == ["solvent"]
+    assert furfural.provenance_gaps[0].resolve_with == v.TABLE_S1
+
+
+# --------------------------------------------------------------------------- #
+# The GEO-layout matrix, the exact records, the ledger, the refusals
 # --------------------------------------------------------------------------- #
 _CONTROLS = ["Control1_CG001", "Control2_CG001", "Control1_CG002", "Control2_CG002"]
 _BATCHES = {"MMS": ("001", "002", "002")}
 _TOKENS = ["Furfural", "MMS", "SodiumGlyoxylate", "DMSO", "MBO", "QUADRIS1"]
+_N_CONST = 60
 
 
 def _replicates(token: str) -> list[str]:
@@ -343,7 +545,7 @@ def _replicates(token: str) -> list[str]:
 
 
 _COLUMNS = _CONTROLS + [c for token in _TOKENS for c in _replicates(token)]
-_FILLED = 5.0  # DMSO, MBO and QUADRIS1 counts for every non-filler row
+_FILLED = 5.0  # DMSO, MBO and QUADRIS1 counts for every library row
 
 
 def _row(
@@ -391,7 +593,11 @@ def _geo_matrix() -> pd.DataFrame:
         _row("YBR002C", "YBR002C", {}, 1),
     ]
     rows[5]["Control1_CG001"] = float("nan")
-    frame = pd.DataFrame(rows)
+    const = [
+        {"gene": f"Const{i}_row", "std_name": "none", **dict.fromkeys(_COLUMNS, 1000)}
+        for i in range(_N_CONST)
+    ]
+    frame = pd.DataFrame(rows + const)
     filler: dict[str, Any] = {"gene": "Filler_row", "std_name": "none"}
     for column in _COLUMNS:
         filler[column] = 1_000_000 - frame[column].sum(skipna=True)
@@ -431,65 +637,8 @@ def _build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, frame: pd.DataFrame)
 
 @pytest.fixture()
 def geo_built(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
-    """The eight-row matrix of the module docstring, built end to end."""
+    """The GEO-layout matrix of the module docstring, built end to end."""
     return _build(tmp_path, monkeypatch, _geo_matrix())
-
-
-def _solvent_gap() -> ProvenanceGap:
-    return ProvenanceGap(
-        field="solvent",
-        reason=ProvenanceGapReason.deferred_pending_source_review,
-        resolve_with=v.TABLE_S1,
-        note=v.VEHICLE_CONTROL.quote
-        + " Which compounds that covers is in Table S1, which is not mirrored, so the "
-        "vehicle of any one compound is unknown rather than absent.",
-    )
-
-
-def _ph() -> EnvironmentPhysicalPerturbation:
-    return EnvironmentPhysicalPerturbation(
-        factor=PhysicalFactor.ph,
-        magnitude=Concentration(value=5.0, unit=ConcentrationUnit.ph),
-        agent=resolved_compound("hydrochloric acid"),
-    )
-
-
-def _synbase(perturbations: list[Any]) -> Environment:
-    return Environment(
-        media=SYNBASE,
-        temperature=Temperature(value=30.0),
-        perturbations=perturbations,
-        aerobicity="anaerobic",
-        duration_hours=48.0,
-        duration_generations=6.5,
-    )
-
-
-def _genotype(systematic: str, common: str, barcode: str) -> Genotype:
-    return Genotype(
-        perturbations=[
-            BarcodedKanMxDeletionPerturbation(
-                systematic_gene_name=systematic,
-                perturbed_gene_name=common,
-                barcode=barcode,
-                collection="3DeltaAlpha drug-sensitive yeast deletion collection of "
-                "4309 mutants",
-            ),
-            NatMxDeletionPerturbation(
-                systematic_gene_name="YGL013C", perturbed_gene_name="PDR1"
-            ),
-            MarkerDeletionPerturbation(
-                systematic_gene_name="YBL005W",
-                perturbed_gene_name="PDR3",
-                marker="KlURA3",
-            ),
-            MarkerDeletionPerturbation(
-                systematic_gene_name="YDR011W",
-                perturbed_gene_name="SNQ2",
-                marker="KlLEU2",
-            ),
-        ]
-    )
 
 
 def _phenotype(response: float, sd: float, units: str) -> EnvironmentResponsePhenotype:
@@ -505,39 +654,43 @@ def _phenotype(response: float, sd: float, units: str) -> EnvironmentResponsePhe
     )
 
 
-def _reference(units: str) -> dict[str, Any]:
-    return EnvironmentResponseExperimentReference(
-        dataset_name="EnvChemgenVanacloig2022Dataset",
-        genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
-        ),
-        environment_reference=_synbase([_ph()]),
-        phenotype_reference=EnvironmentResponsePhenotype(
-            measurement_type=MeasurementType.log2_ratio,
-            assay_type=AssayType.pooled_competitive_growth_barcode,
-            environment_response=0.0,
-            units=units,
-        ),
-    ).model_dump()
+def _genotype(systematic: str, common: str, barcode: str) -> Genotype:
+    return Genotype(
+        perturbations=[
+            BarcodedKanMxDeletionPerturbation(
+                systematic_gene_name=systematic,
+                perturbed_gene_name=common,
+                barcode=barcode,
+                collection="3DeltaAlpha drug-sensitive yeast deletion collection of "
+                "4309 mutants",
+                cassette="kanMX",
+            )
+        ]
+    )
 
 
-def test_records_are_compound_major_with_the_closed_form_responses(
+def test_geo_fixture_tmm_factors_are_exactly_one(geo_built: Any) -> None:
+    """The fixture premise: every condition's TMM factors are exactly 1.0."""
+    factors = json.loads(
+        (Path(geo_built.preprocess_dir) / "normalization_factors.json").read_text()
+    )
+    assert sorted(factors) == ["DMSO", "Furfural", "MBO", "MMS"]
+    for entry in factors.values():
+        assert set(entry["factors"]) == {1.0}
+        assert set(entry["library_sizes"]) == {1_000_000.0}
+    assert factors["MMS"]["columns"] == sorted(_CONTROLS) + _replicates("MMS")
+    assert factors["Furfural"]["columns"] == sorted(_CONTROLS) + _replicates("Furfural")
+
+
+def test_records_are_condition_major_with_the_closed_form_responses(
     geo_built: Any,
 ) -> None:
-    """(screened ORF, compound, response, SD) for all seven records, in LMDB order.
-
-    ``Genotype`` stores perturbations sorted by systematic name, so the screened
-    deletion is found by its type, not its position (YBL005W sorts before YBR002C).
-    """
+    """(screened ORF, condition, response, SD) for all eleven records, in LMDB order."""
     got = []
     for i in range(len(geo_built)):
         experiment = geo_built[i]["experiment"]
         compound = experiment["environment"]["perturbations"][0]["compound"]["name"]
-        (screened,) = [
-            p
-            for p in experiment["genotype"]["perturbations"]
-            if p["perturbation_type"] == "barcoded_kanmx_deletion"
-        ]
+        (screened,) = experiment["genotype"]["perturbations"]
         got.append(
             (
                 screened["systematic_gene_name"],
@@ -546,46 +699,53 @@ def test_records_are_compound_major_with_the_closed_form_responses(
                 experiment["phenotype"]["environment_response_uncertainty"],
             )
         )
-    assert got == [
+    l6 = math.log2(6)
+    expected = [
+        ("YAL001C", "dimethyl sulfoxide", l6 - 7 / 3, math.sqrt(1 / 3)),
+        ("YAL002W", "dimethyl sulfoxide", l6, 0.0),
+        ("YBR002C", "dimethyl sulfoxide", l6 - 1, 0.0),
         ("YAL001C", "furfural", 3.0, 1.0),
         ("YAL002W", "furfural", 1.0, 1.0),
         ("YBR002C", "furfural", 0.0, 0.0),
+        ("YAL001C", "2-methyl-3-buten-2-ol", l6 - 7 / 3, math.sqrt(1 / 3)),
+        ("YAL002W", "2-methyl-3-buten-2-ol", l6, 0.0),
+        ("YBR002C", "2-methyl-3-buten-2-ol", l6 - 1, 0.0),
         ("YAL001C", "methyl methanesulfonate", 2.0, 1.0),
         ("YBR002C", "methyl methanesulfonate", 0.0, 0.0),
-        ("YAL001C", "sodium glyoxylate", 0.0, 0.0),
-        ("YBR002C", "sodium glyoxylate", 0.0, 0.0),
     ]
+    assert [g[:2] for g in got] == [e[:2] for e in expected]
+    for (_, _, response, sd), (_, _, want_response, want_sd) in zip(
+        got, expected, strict=True
+    ):
+        assert response == pytest.approx(want_response, abs=1e-12)
+        assert sd == pytest.approx(want_sd, abs=1e-12)
 
 
 def test_full_paired_record_equals_the_hand_built_experiment(geo_built: Any) -> None:
-    """Record 0, YAL001C / Furfural: CPM log2 ratio against its OWN batch's controls.
-
-    Finding (#501 finding 1): the value is CPM-normalized against the library size
-    summed over every released row, filler and dropped rows included (lines 865-868),
-    not the paper's edgeR TMM. Finding (#501 finding 3): the environment carries no
-    DMSO; the vehicle is only a typed ``solvent`` gap. Pinned until #501 is resolved.
-    """
-    experiment = EnvironmentResponseExperiment(
-        dataset_name="EnvChemgenVanacloig2022Dataset",
-        genotype=_genotype("YAL001C", "TFC3", "AAAACCCC"),
-        environment=_synbase(
-            [
-                SmallMoleculePerturbation(
-                    compound=resolved_compound("Furfural"),
-                    concentration=Concentration(basis=DoseBasis.IC30),
-                    provenance_gaps=[_solvent_gap()],
-                ),
-                _ph(),
-            ]
-        ),
-        phenotype=_phenotype(3.0, 1.0, v._PAIRED_UNITS),
+    """Record 3, YAL001C / Furfural: TMM log2 ratio against its OWN batch's controls."""
+    record = geo_built[3]
+    experiment = record["experiment"]
+    assert experiment["experiment_type"] == "strain_environment_response"
+    assert (
+        experiment["genotype"] == _genotype("YAL001C", "TFC3", "AAAACCCC").model_dump()
     )
-    record = geo_built[0]
-    assert record["experiment"] == experiment.model_dump()
-    assert record["experiment"]["phenotype"]["environment_response_se"] == (
-        1.0 / math.sqrt(3)
+    assert experiment["phenotype"] == _phenotype(3.0, 1.0, v._PAIRED_UNITS).model_dump()
+    assert experiment["phenotype"]["environment_response_se"] == 1.0 / math.sqrt(3)
+    environment = experiment["environment"]
+    furfural = environment["perturbations"][0]
+    assert furfural["compound"] == resolved_compound("Furfural").model_dump()
+    assert furfural["concentration"] == {"value": None, "unit": None, "basis": "IC30"}
+    assert [g["field"] for g in furfural["provenance_gaps"]] == ["solvent"]
+    assert environment["culture_format"]["working_volume_ul"] == 1500.0
+    reference = record["reference"]
+    assert reference["phenotype_reference"]["units"] == v._PAIRED_UNITS
+    assert (
+        StrainEnvironmentResponseExperimentReference.model_validate(
+            reference
+        ).genome_reference.background
+        == v.library_background()
     )
-    assert record["reference"] == _reference(v._PAIRED_UNITS)
+    assert StrainEnvironmentResponseExperiment.model_validate(experiment)
     assert (
         record["publication"]
         == Publication(
@@ -595,62 +755,49 @@ def test_full_paired_record_equals_the_hand_built_experiment(geo_built: Any) -> 
     )
 
 
-def test_pooled_mms_edge_record_equals_the_hand_built_experiment(
-    geo_built: Any,
-) -> None:
-    """Record 3, YAL001C / MMS: the pooled control and the fixed, unitless MMS dose."""
-    experiment = EnvironmentResponseExperiment(
-        dataset_name="EnvChemgenVanacloig2022Dataset",
-        genotype=_genotype("YAL001C", "TFC3", "AAAACCCC"),
-        environment=_synbase(
-            [
-                SmallMoleculePerturbation(
-                    compound=resolved_compound("MMS"),
-                    concentration=Concentration(basis=DoseBasis.fixed),
-                    provenance_gaps=[_solvent_gap()],
-                ),
-                _ph(),
-            ]
-        ),
-        phenotype=_phenotype(2.0, 1.0, v._POOLED_UNITS),
-    )
-    assert geo_built[3]["experiment"] == experiment.model_dump()
-    assert geo_built[3]["reference"] == _reference(v._POOLED_UNITS)
+def test_dmso_record_is_served_at_one_percent(geo_built: Any) -> None:
+    """#501 finding 3: DMSO paired against the SynBase Control columns, 1% v/v."""
+    dmso = geo_built[0]["experiment"]["environment"]["perturbations"][0]
+    assert dmso["compound"]["name"] == "dimethyl sulfoxide"
+    assert dmso["concentration"] == {
+        "value": 1.0,
+        "unit": "percent_v/v",
+        "basis": "fixed",
+    }
+    assert dmso["solvent"] is None and dmso["provenance_gaps"] == []
+    assert (
+        geo_built[0]["experiment"]["phenotype"]["units"] == v._PAIRED_UNITS
+    )  # Control columns, same batch
+
+
+def test_pooled_mms_edge_record(geo_built: Any) -> None:
+    """Record 9, YAL001C / MMS: the pooled control and the fixed, unitless MMS dose."""
+    experiment = geo_built[9]["experiment"]
+    assert experiment["phenotype"] == _phenotype(2.0, 1.0, v._POOLED_UNITS).model_dump()
+    mms = experiment["environment"]["perturbations"][0]
+    assert mms["compound"]["name"] == "methyl methanesulfonate"
+    assert mms["concentration"] == {"value": None, "unit": None, "basis": "fixed"}
+    assert geo_built[9]["reference"]["phenotype_reference"]["units"] == v._POOLED_UNITS
 
 
 def test_a_row_without_a_barcode_is_served_with_an_empty_barcode(
     geo_built: Any,
 ) -> None:
-    """Finding: ``YBR002C`` has no ``_<barcode>`` suffix; ``fillna("")`` (line 758)
-    serves it with ``barcode ""`` instead of refusing it, and with no standard name the
-    genome's canonical-name map falls back to the systematic name. Its equal nonzero
-    counts give SD exactly 0, which the all-zero rule (line 904) does not catch. Pinned
-    until a barcodeless row is dropped with a reason.
+    """Finding: ``YBR002C`` has no ``_<barcode>`` suffix; ``fillna("")`` serves it with
+    ``barcode ""`` instead of refusing it, and with no standard name the genome's
+    canonical-name map falls back to the systematic name. Its equal nonzero counts give
+    SD exactly 0, which the all-zero rule does not catch. Pinned until a barcodeless row
+    is dropped with a reason.
     """
-    experiment = EnvironmentResponseExperiment(
-        dataset_name="EnvChemgenVanacloig2022Dataset",
-        genotype=_genotype("YBR002C", "YBR002C", ""),
-        environment=_synbase(
-            [
-                SmallMoleculePerturbation(
-                    compound=resolved_compound("SodiumGlyoxylate"),
-                    concentration=Concentration(basis=DoseBasis.IC30),
-                    provenance_gaps=[_solvent_gap()],
-                ),
-                _ph(),
-            ]
-        ),
-        phenotype=_phenotype(0.0, 0.0, v._PAIRED_UNITS),
-    )
-    assert geo_built[6]["experiment"] == experiment.model_dump()
+    experiment = geo_built[5]["experiment"]
+    assert experiment["genotype"] == _genotype("YBR002C", "YBR002C", "").model_dump()
+    assert experiment["phenotype"] == _phenotype(0.0, 0.0, v._PAIRED_UNITS).model_dump()
 
 
 def test_drop_ledger_is_written_exactly(geo_built: Any) -> None:
-    """Finding (#501 findings 2, 3, 5): SodiumGlyoxylate, a compound the paper never
-    reported, is served because it resolves; DMSO is dropped as the vehicle; MBO is
-    dropped as unidentified. Finding: YBR001C has ONE NaN count yet is dropped under a
-    rule described as "every count column is missing" (``any`` at line 760). Pinned
-    until #501 and the NaN rule are resolved.
+    """#501 finding 2: SodiumGlyoxylate and QUADRIS1 are not Fig 1B conditions.
+    Finding still pinned: YBR001C has ONE NaN count yet is dropped under a rule
+    described as "every count column is missing" (``any`` in the row filter).
     """
     log = json.loads(
         (Path(geo_built.preprocess_dir) / "dropped_records.json").read_text()
@@ -658,47 +805,73 @@ def test_drop_ledger_is_written_exactly(geo_built: Any) -> None:
     rules = [(r["rule"], r["scope"], r["n_records"], r["items"]) for r in log["rules"]]
     assert (log["dataset"], log["source_records"], log["kept_records"]) == (
         "EnvChemgenVanacloig2022Dataset",
-        48,
-        7,
+        68 * 6,
+        11,
     )
-    assert log["dropped_records"] == 41
+    assert log["dropped_records"] == 397
     assert rules == [
-        ("vehicle_control_served_as_a_treatment", "compound", 8, ["DMSO"]),
         (
-            "compound_without_a_structure_identifier",
+            "compound_not_reported_by_the_paper",
             "compound",
-            16,
-            ["MBO", "QUADRIS1"],
+            136,
+            ["QUADRIS1", "SodiumGlyoxylate"],
         ),
-        ("row_is_not_a_barcoded_orf_or_carries_no_counts", "library_row", 9, []),
-        ("orf_is_not_a_current_genome_gene", "library_row", 3, ["YPL999C"]),
+        ("compound_without_a_structure_identifier", "compound", 0, []),
+        ("row_is_not_a_barcoded_orf_or_carries_no_counts", "library_row", 248, []),
+        ("orf_is_a_selected_background_locus", "library_row", 4, ["YGL013C"]),
+        ("orf_is_not_a_current_genome_gene", "library_row", 4, ["YPL999C"]),
         (
             "orf_is_a_legacy_spelling_of_another_library_orf",
             "library_row",
-            3,
+            4,
             ["YAL003W"],
         ),
-        ("all_three_replicate_counts_are_zero", "cell", 2, []),
+        ("all_three_replicate_counts_are_zero", "cell", 1, []),
     ]
+    assert v.FIG_1B_IMAGE_SHA256 in log["rules"][0]["description"]
     assert log["rules"][2]["description"].startswith(
         "the gene column is not '<systematic ORF>_<barcode>', or every count column "
         "is missing (a QC-dropped barcode)"
     )
 
 
+def test_legacy_strain_is_a_typed_constructed_orf_in_the_ledger(geo_built: Any) -> None:
+    """#501 finding 6: the dropped legacy-spelling strain is a typed record."""
+    log = v.DropLog.model_validate_json(
+        (Path(geo_built.preprocess_dir) / "dropped_records.json").read_text()
+    )
+    (strain,) = log.legacy_orf_strains
+    assert (strain.source_orf, strain.current_orf, strain.barcode) == (
+        "YAL003W",
+        "YAL002W",
+        "GGGGTTTT",
+    )
+    orf = strain.constructed_orf
+    assert orf.source_systematic_name == "YAL003W"
+    assert orf.relation is None and orf.deleted_span is None
+    assert [(g.field, g.resolve_with) for g in orf.provenance_gaps] == [
+        ("relation", v.SGD_ORF_HISTORY),
+        ("deleted_span", v.SGD_ORF_HISTORY),
+    ]
+
+
 def test_reference_index_splits_paired_from_pooled_and_the_gene_set(
     geo_built: Any,
 ) -> None:
-    """The inhibitor-free reference is shared across paired compounds; MMS differs
-    only in its units string. The gene set includes the three background genes.
+    """The inhibitor-free reference is shared across paired conditions; MMS differs
+    only in its units string. The gene set is the screened genes only: the background
+    loci ride on the reference, not on the genotype.
     """
     index = geo_built.experiment_reference_index
     assert index is not None
     by_units = {e.reference.phenotype_reference.units: e.member_indices for e in index}
-    assert by_units == {v._PAIRED_UNITS: [0, 1, 2, 5, 6], v._POOLED_UNITS: [3, 4]}
+    assert by_units == {
+        v._PAIRED_UNITS: [0, 1, 2, 3, 4, 5, 6, 7, 8],
+        v._POOLED_UNITS: [9, 10],
+    }
     assert json.loads(
         (Path(geo_built.preprocess_dir) / "gene_set.json").read_text()
-    ) == ["YAL001C", "YAL002W", "YBL005W", "YBR002C", "YDR011W", "YGL013C"]
+    ) == ["YAL001C", "YAL002W", "YBR002C"]
 
 
 def _with_columns(extra: dict[str, float], drop: list[str]) -> pd.DataFrame:
@@ -1029,8 +1202,8 @@ def test_schema_classes_raw_file_and_the_inline_stubs() -> None:
     refuses because both steps live inside ``process``.
     """
     dataset = v.EnvChemgenVanacloig2022Dataset.__new__(v.EnvChemgenVanacloig2022Dataset)
-    assert dataset.experiment_class is EnvironmentResponseExperiment
-    assert dataset.reference_class is EnvironmentResponseExperimentReference
+    assert dataset.experiment_class is StrainEnvironmentResponseExperiment
+    assert dataset.reference_class is StrainEnvironmentResponseExperimentReference
     assert dataset.raw_file_names == ["GSE186866_ChemGenomics_Raw_Counts_matrix.txt.gz"]
     frame = pd.DataFrame({"a": [1]})
     assert dataset.preprocess_raw(frame) is frame

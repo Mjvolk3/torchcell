@@ -42,7 +42,18 @@ Furfural | query=furfural
 GVL | query=gamma-valerolactone
 IBA | query=isobutanol
 LevulinicAcid | query=levulinic acid
-MBO | unresolved=the paper contradicts itself on this abbreviation: the Abbreviations block (paper.md line 30) reads "MBO : 2-Methyl-3-butyn-2-ol" (CID 8258) while the Introduction (paper.md lines 48, 103) reads "2-methyl-3-buten-2-ol (MBO)" (CID 8257); butyn and buten are different compounds, so the label needs adjudication against Table S1 before a structure is adopted
+# MBO -- ADJUDICATED 2026-10-02 (issue #501 finding 5; rule MBO_IDENTITY_RULE in
+# torchcell/datasets/scerevisiae/vanacloig2022.py). The paper contradicts itself:
+#   paper.md line 31 (Abbreviations): "MBO : 2-Methyl-3-butyn-2-ol"  (CID 8258)
+#   paper.md line 103 (Results):      "biofuel endproducts (ethanol, isobutanol and
+#                                      2-methyl-3-buten-2-ol (MBO))"  (CID 8257)
+#   paper.md line 131 (Results):      "the two other biofuels included in our screen,
+#                                      IBA and MBO"
+# Rule: the in-text definition that names the compound where the experiment uses it
+# (twice, both as a biofuel product) outranks the one-line glossary entry, so MBO is
+# 2-methyl-3-buten-2-ol. Table S1 (not mirrored) would confirm it. The previous line
+# was `MBO | unresolved=...` (the conflict, unadjudicated).
+MBO | query=2-methyl-3-buten-2-ol
 MMS | query=methyl methanesulfonate
 Methylglyoxal | query=methylglyoxal
 Mycobutanil | query=myclobutanil

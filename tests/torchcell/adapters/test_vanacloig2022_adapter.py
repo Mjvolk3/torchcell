@@ -16,6 +16,7 @@ import os.path as osp
 import re
 from typing import Any, cast
 
+import pytest
 import yaml
 
 import torchcell.adapters.vanacloig2022_adapter as adapter_module
@@ -25,15 +26,20 @@ from torchcell.datamodels.media import SYNBASE
 from torchcell.datamodels.schema import (
     AssayType,
     BarcodedKanMxDeletionPerturbation,
+    CultureEnvironment,
     DoseBasis,
     Environment,
     EnvironmentPhysicalPerturbation,
     EnvironmentResponsePhenotype,
     Genotype,
+    MatingType,
     MeasurementType,
     PhysicalFactor,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainEnvironmentResponseExperiment,
+    StrainEnvironmentResponseExperimentReference,
+    StrainReferenceGenome,
     UncertaintyType,
 )
 
@@ -192,3 +198,115 @@ def test_environment_response_properties_project_the_typed_axes() -> None:
     assert props["assay_type"] == "pooled_competitive_growth_barcode"
     assert props["environment_response_se"] is not None
     assert "serialized_data" not in props
+
+
+# --------------------------------------------------------------------------- #
+# #500 / #501: the strain-resolved family through the node builders, end to end
+# --------------------------------------------------------------------------- #
+class _Gene:
+    """The slice of a genome resolution the loader's gene-name policy reads."""
+
+    def __init__(self, systematic: str) -> None:
+        self.systematic_name = systematic
+        self.is_current_gene = True
+
+
+class _TinyGenome:
+    gene_set = {"YAL001C", "YAL002W"}
+    feature_index = {"standard_to_ids": {"TFC3": ["YAL001C"], "VPS8": ["YAL002W"]}}
+
+    def resolve_gene_name(self, name: str) -> _Gene:
+        return _Gene({"TFC3": "YAL001C", "VPS8": "YAL002W"}.get(name, name))
+
+
+def _tiny_matrix() -> Any:
+    import pandas as pd
+
+    data: dict[str, Any] = {
+        "gene": ["YAL001C_AAAACCCC", "YAL002W_CCCCGGGG"],
+        "std_name": ["TFC3", "VPS8"],
+        "Control1_CG003": [100, 200],
+        "Control2_CG003": [120, 220],
+    }
+    for token in ("Furfural", "DMSO"):
+        for rep, counts in enumerate(([110, 190], [90, 230], [130, 210]), start=1):
+            data[f"{token}_CG003_rep{rep}"] = counts
+    return pd.DataFrame(data)
+
+
+@pytest.fixture()
+def tiny(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
+    """Two genes x (Furfural, DMSO), built through the real ``process``."""
+    import gzip
+    import os
+
+    monkeypatch.setattr(loader, "default_genome", lambda: _TinyGenome())
+    monkeypatch.setattr(
+        loader.EnvChemgenVanacloig2022Dataset, "download", lambda self: None
+    )
+    monkeypatch.setattr(
+        loader.EnvChemgenVanacloig2022Dataset,
+        "_load_matrix",
+        lambda self: _tiny_matrix(),
+    )
+    root = str(tmp_path / "env_chemgen_vanacloig2022")
+    os.makedirs(osp.join(root, "raw"), exist_ok=True)
+    with gzip.open(osp.join(root, "raw", loader.DATA_FILENAME), "wt") as handle:
+        handle.write("placeholder\n")
+    return loader.EnvChemgenVanacloig2022Dataset(root=root)
+
+
+def _adapter(dataset: Any) -> CellAdapter:
+    adapter = CellAdapter.__new__(CellAdapter)
+    adapter.dataset = dataset
+    return adapter
+
+
+def test_strain_resolved_records_emit_the_expected_nodes(tiny: Any) -> None:
+    assert len(tiny) == 4  # 2 genes x (DMSO, Furfural)
+    adapter = _adapter(tiny)
+    data = tiny.transform_item(tiny[0])
+    experiment = data["experiment"]
+    assert isinstance(experiment, StrainEnvironmentResponseExperiment)
+    assert isinstance(data["reference"], StrainEnvironmentResponseExperimentReference)
+    assert isinstance(experiment.environment, CultureEnvironment)
+
+    (experiment_node, *constants) = cast(Any, CellAdapter._experiment_node).__wrapped__(
+        adapter, data, "experiment (chunked)"
+    )
+    assert experiment_node.get_label() == "experiment"
+    blob = json.loads(experiment_node.get_properties()["serialized_data"])
+    assert blob["experiment_type"] == "strain_environment_response"
+    assert len(blob["genotype"]["perturbations"]) == 1
+    assert {c.get_label() for c in constants} <= {"interned constant"}
+
+    (genome,) = adapter._get_genome_nodes()
+    assert genome.get_label() == "genome"
+    props = genome.get_properties()
+    assert props["strain"] == loader.LIBRARY_STRAIN
+    back = StrainReferenceGenome.model_validate_json(props["serialized_data"])
+    assert back.background == loader.library_background()
+    assert back.background.mating_type is MatingType.a
+
+    (reference_node,) = adapter._get_experiment_reference_nodes()
+    assert reference_node.get_label() == "experiment reference"
+    reference = StrainEnvironmentResponseExperimentReference.model_validate_json(
+        reference_node.get_properties()["serialized_data"]
+    )
+    assert reference.experiment_reference_type == "strain_environment_response"
+    assert reference.environment_reference.culture_format is not None
+
+    phenotype = cast(Any, CellAdapter._environment_response_phenotype_node).__wrapped__(
+        adapter, data, "environment response phenotype (chunked)"
+    )
+    assert phenotype.get_label() == "environment response phenotype"
+    assert phenotype.get_properties()["environment_response"] == pytest.approx(
+        experiment.phenotype.environment_response
+    )
+    assert phenotype.get_properties()["measurement_type"] == "log2_ratio"
+
+    dmso = cast(Any, CellAdapter._environment_perturbation_node).__wrapped__(
+        adapter, data, "environment perturbation (chunked)"
+    )
+    names = {node.get_properties()["compound_name"] for node in dmso}
+    assert names == {"dimethyl sulfoxide", "hydrochloric acid"}

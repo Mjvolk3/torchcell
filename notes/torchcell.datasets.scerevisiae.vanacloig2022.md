@@ -191,3 +191,77 @@ Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `DATA_
 ## 2026.09.30 - Module constant is the one pin at download (issue #561)
 
 Before this change, `download()` verified the mirror bytes against the digest recorded in the raw-mirror `manifest.json`, and `process()` verified them against the module constant. Because `deposit_raw_mirror` writes the manifest from the constant, the two were equal by construction, but the loader still carried two pins. Now `download()` verifies the bytes against the module constant, and `check_manifest_pin` refuses a manifest that records any other digest, raising `ManifestPinMismatchError` named by path with both digests. The manifest stays the retrieval record. Built records are unchanged. Tests: `test_download_refuses_a_manifest_digest_off_the_module_pin` in [[tests.torchcell.datasets.scerevisiae.test_raw_pins]].
+
+## 2026.10.02 - Ingestion audit fixes: TMM, Fig 1B conditions, DMSO, SGA background, MBO (#501, #500)
+
+Issue #501 (ingestion audit, seven ranked findings) and #500 (library strain background). Loader `torchcell/datasets/scerevisiae/vanacloig2022.py`; identity row `torchcell/datamodels/compound_identity_inputs/vanacloig2022.txt` + `compound_identity_table.json` (re-pinned); medium `torchcell/datamodels/media.py` (`SYNBASE`); verifier entry `torchcell/verification/runners.py`. Measurement: `experiments/036-dataset-fixes-before-kg-build/scripts/vanacloig2022_ingestion.py`, outputs `experiments/036-dataset-fixes-before-kg-build/results/vanacloig2022_ingestion.json` and `vanacloig2022_ingestion_per_condition.csv`, run on the dev store (before, built 2026-09-13) vs a full scratch build of this branch (after).
+
+### 1. Normalization: TMM replaces library-size CPM
+
+The paper's quantity is TMM-normalized ("using TMM normalization and glmQLFit comparing paired treatment to control samples", paper.md line 66, now `NORMALIZATION`). `tmm_factors` ports edgeR 3.26.8 `calcNormFactors(method="TMM")` with its defaults: `logratioTrim=0.3`, `sumTrim=0.05`, `doWeighting=TRUE`, `Acutoff=-1e10`, all-zero rows removed, reference = the sample whose 75th-percentile count fraction is closest to the mean (first on a tie), factors scaled to geometric mean 1. Factors are computed per condition over its 3 replicates and the control columns it is paired with (same-batch Controls; all 16 for MMS), over every complete row of the matrix, against the library size summed over every released barcode. Ratio per replicate: `log2((TMM-CPM_rep + 1) / (mean TMM-CPM of the paired controls + 1))`.
+
+- Port check (scratch, not committed): factors for CV, NAO, EtOH, MMS, DMSO, Benomyl, FeruloylAmide equal edgeR 4.4.2 `calcNormFactors` on the same sample sets to max |diff| 4.9e-15. edgeR 4.4.2's TMM code reads the same as 3.26.8's (reference choice and `.calcFactorTMM`). The test `test_tmm_factors_equal_edger_calc_norm_factors` pins a 24 x 4 matrix to edgeR 4.4.2's printed factors.
+- Pseudocount: 1 CPM, a loader choice the paper does not state, recorded as `PSEUDOCOUNT_GAP` (`not_reported_by_primary`) and in the `units` string. The low-count flag stays the stored SD/SE (no new field).
+
+Measured, per-condition median response (before CPM, after TMM) and median SD:
+
+| condition | median before | median after | median SD before | median SD after | Spearman after vs before |
+|---|---|---|---|---|---|
+| crystal violet | -2.773 | -0.062 | 1.033 | 0.569 | 0.971 |
+| nonylacridine orange | -0.408 | 0.025 | 0.568 | 0.318 | 0.990 |
+| ethanol | -0.305 | -0.104 | 0.325 | 0.310 | 0.999 |
+| acetosyringone | -0.163 | -0.023 | 0.264 | 0.260 | 0.999 |
+| gamma-valerolactone | -0.178 | -0.062 | 0.295 | 0.301 | 1.000 |
+| ferulamide | -0.143 | -0.027 | 0.283 | 0.285 | 0.999 |
+
+Across the 32 conditions both stores serve, Spearman after vs before: median 0.99993, minimum 0.971 (crystal violet); outside the six the largest |median shift| is 0.099. Against the audit's edgeR reconstruction (`--edger-tsv` pointed at the #501 audit's scratch `edger_logfc.tsv`, not committed): median response minus median edgeR logFC was -2.812 (CV), -0.454 (NAO), -0.235 (EtOH) before and is -0.101 (CV), -0.020 (NAO), -0.033 (EtOH) after; the largest |offset| over the 34 served conditions is 0.101 (CV). Spearman vs edgeR is unchanged by normalization (median 0.975 over conditions in both stores, minimum p-coumaric acid 0.79), as expected for a per-condition scale factor.
+
+### 2. The 11 tokens Fig 1B does not list are dropped
+
+Rule `compound_not_reported_by_the_paper`: a matrix token not among the 34 Fig 1B conditions (`FIG_1B_TOKENS`; caption quote "before and after exposure to one of 34 different inhibitors", bar labels read from `images/8355ec...jpg`, image sha256 `f00ee21b...64cf`). 34 = 32 previously served + DMSO + MBO. Dropped tokens: 24Dimethylimidazole, 2Methylimidazole, 45Methylimidazole, CaffeicAcid, LevulinicAcid, Mycobutanil, SodiumAcetate, SodiumButyrate, SodiumGlyoxylate, QUADRIS1, QUADRIS2 (the QUADRIS pair moves here from the unidentified rule). Replicate agreement the #501 audit measured for the nine previously served ones (audit `analysis2.py`: mean pairwise replicate Pearson / reliability = 1 - mean(SE^2)/Var(mean); not re-measured here): SodiumGlyoxylate -0.157 / -0.91, SodiumButyrate -0.101 / -0.43, 45Methylimidazole 0.016 / 0.04, 2Methylimidazole 0.030 / 0.08, LevulinicAcid 0.083 / 0.17, SodiumAcetate 0.229 / 0.37, CaffeicAcid 0.235 / 0.46, 24Dimethylimidazole 0.292 / 0.55, Mycobutanil 0.356 / 0.56 (median reliability 0.17 vs 0.77 for the 32 published). Decision the user may reverse: drop (the paper does not report them) rather than serve with a flag.
+
+### 3. DMSO is a served condition
+
+DMSO is served as `SmallMoleculePerturbation(dimethyl sulfoxide, 1.0 percent_v/v, basis fixed)` (`DMSO_DOSE`, "the final concentration of DMSO in SynBase medium was 1% (v/v)"), paired against the same-batch Control columns, which the Results call "the paired SynBase medium control" (paper.md line 103, `PAIRED_SYNBASE_CONTROL`). Its `solvent` is None with no gap (it is the vehicle itself). Which inhibitors DMSO delivered is still only in Table S1 (not mirrored), so every inhibitor keeps its `solvent` gap; no inhibitor's environment names DMSO. Measured Pearson of each condition's response profile with the DMSO profile (after store): ferulamide 0.641, acetosyringone 0.563, acetovanillone 0.560, 4'-hydroxyacetophenone 0.461, acetamide 0.415, coumaroyl amide 0.403; median over the other 27 conditions 0.114. Hypothesis (untested): those six are the DMSO-delivered compounds; acetamide is water-miscible, so its correlation may not mean DMSO delivery.
+
+### 4. Strain background (#500): SGA MATa progeny, one perturbation per record
+
+Records move to `StrainEnvironmentResponseExperiment` / `...Reference`. The reference genome is `StrainReferenceGenome(strain="3DeltaAlpha SGA MATa progeny (Y13206 x MATa xxxΔ::kanMX array)", ploidy="haploid", background=library_background())`:
+
+- MATa (Piotrowski 2017 paper.md line 204, "to select for the MATa meiotic progeny"); parents Y13206 and the MATa xxxΔ::kanMX array.
+- Sourced alleles: can1Δ::STE2pr-Sp_his5 and lyp1Δ (Piotrowski line 204 query quote + Ohnuki 2022 Y8835 genotype), pdr1Δ::natMX, pdr3Δ::KlURA3, snq2Δ::KlLEU2 (Piotrowski query quote + the final G418/NAT/-Ura/-Leu selection sentence).
+- Pending source review (`BRACHMANN_1998`): his3Δ1, leu2Δ0, ura3Δ0, met15Δ0. Only the query lineage states them (Ohnuki: Y13206 "ura3Δ0 met15Δ", parent Y8835 "ura3Δ0:: natMX4 ... met15Δ0", which disagree), and no mirrored source states the array's genotype, which a segregant's unselected allele depends on.
+- Each genotype now holds ONE `BarcodedKanMxDeletionPerturbation` with `cassette="kanMX"` (Piotrowski "MATa xxxΔ::kanMX"), measured 4 -> 1 perturbations per record on all records.
+- New rule `orf_is_a_selected_background_locus`: a library row screening a locus the SGA selections fix (PDR1, PDR3, SNQ2, CAN1, LYP1) contradicts the background; PDR3 and SNQ2 rows were already dropped, CAN1 (YEL063C) and LYP1 (YNL268W) rows are new drops (68 records).
+- Benomyl dose is now 34.4 uM (`BENOMYL_MOLAR`, Piotrowski paper.md lines 218/208/25; Vanacloig's "10 ug/mL as previously published"); consistency check, not a source: 10 / 290.32 g/mol = 34.44 uM.
+- Environment is a `CultureEnvironment`: 24-well plates (Falcon), 1,500 uL, static (0 rpm), inoculum OD600 0.1, `fixed_duration`; `pre_culture` gapped (Piotrowski 2015, not mirrored) and `auxotroph_supplements` gapped (Zhang 2019, not mirrored).
+
+### 5. MBO adjudicated to 2-methyl-3-buten-2-ol
+
+Rule `MBO_IDENTITY_RULE`: the in-text definition where the experiment uses the compound outranks the glossary. Both lines are sourced values: `MBO_ABBREVIATION` ("MBO : 2-Methyl-3-butyn-2-ol", line 31, not adopted) and `MBO_IDENTITY` ("biofuel endproducts (ethanol, isobutanol and 2-methyl-3-buten-2-ol (MBO))", line 103), plus `MBO_IS_A_BIOFUEL` (line 131). The identity table's MBO row is now RESOLVED: CID 8257, InChIKey HNVRRHSXBLFLIG-UHFFFAOYSA-N, SMILES CC(C)(C=C)O, ChEBI CHEBI:132752 (PubChem PUG REST, 2026-10-02; RDKit derives the same key from the SMILES). The conflict and the rule are recorded as comment lines on the identity input row: a RESOLVED `CompoundIdentityRecord` has no note field. The row was replaced in place as the curator would emit `MBO | query=2-methyl-3-buten-2-ol`, not by a full re-curation (that would restamp `retrieved_at` on all 5,498 rows); table sha256 `e8f97bdf...7f50`. MBO adds 3,482 records; its median after-store SD is 0.227.
+
+### 6, 7. Legacy ORFs, identity details
+
+- The 17 legacy-spelling strains stay dropped; each is now a typed `LegacyOrfStrain` in `dropped_records.json` (`legacy_orf_strains`) carrying `ConstructedOrf(source_systematic_name, relation=None, deleted_span=None)` with both fields gapped pending SGD locus history (e.g. YGL046W -> YGL045W).
+- `SYNBASE.dropouts` now lists ammonium sulfate ("ammonium sulfate was replaced with 1 g/L monosodium glutamate"). Cross-dataset joins of salts vs free acids (sodium acetate vs acetic acid) are a note, not a loader change; sodium acetate is no longer served.
+
+### Counts (scratch build, `preprocess/dropped_records.json`)
+
+Source 45 tokens x 3,651 rows = 164,295; kept **118,662** (was 143,218); 34 conditions (was 41); 3,587 genes (was 3,598).
+
+| rule | records | items |
+|---|---|---|
+| `compound_not_reported_by_the_paper` | 40,161 | 11 tokens |
+| `compound_without_a_structure_identifier` | 0 | |
+| `row_is_not_a_barcoded_orf_or_carries_no_counts` | 68 | 2 all-NaN rows |
+| `orf_is_a_selected_background_locus` | 136 | YBL005W, YDR011W, YEL063C, YNL268W |
+| `orf_is_not_a_current_genome_gene` | 748 | 22 ORFs |
+| `orf_is_a_legacy_spelling_of_another_library_orf` | 578 | 17 ORFs |
+| `all_three_replicate_counts_are_zero` | 3,942 | cells |
+
+### Open
+
+- Which inhibitors DMSO delivered (Table S1, academic.oup.com, not scriptable) and whether any Control column is SynBase + DMSO (GEO GSE186866 SOFT / series matrix, scriptable, not mirrored; needs a retrieval go-ahead).
+- The four BY auxotrophies stay pending until Brachmann 1998 or the Piotrowski 2017 strain table (Supplementary, not mirrored) is mirrored.
+- Pre-existing on main, not caused here: `tests/torchcell/data/test_neo4j_query_raw_single_pass.py::test_cached_environment_is_safe_to_pass_unvalidated` asserts every experiment class's `environment` is exactly `Environment`, which `StrainEnvironmentResponseExperiment` (#507) is not; the neo4j single-pass query path may therefore hand a cached plain `Environment` to a strain-resolved record.
+- Experiment 033's cell table keys on `"environment_response"`; it must add `"strain_environment_response"` to keep Vanacloig records.

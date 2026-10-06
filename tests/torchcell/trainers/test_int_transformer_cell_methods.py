@@ -991,7 +991,8 @@ def test_effective_batch_multiplies_the_world_size_only_for_a_strategy_named_ddp
     Reach: 006 equivariant_cell_graph_transformer_delta_011.yaml (strategy ddp,
     grad_accumulation_schedule {0: 2}) with scripts/equivariant_cell_graph_transformer.py
     logs the per-process value; it is a diagnostic only, no loss or metric uses it. The
-    same check sits untested at int_hetero_cell_nsa.py:418 and :1075. Each case runs in
+    same check sat untested at int_hetero_cell_nsa.py:418 and :1075 (int_hetero_cell_nsa.py,
+    retired 2026-10-06 to the graveyard). Each case runs in
     its own ``monkeypatch.context()`` so the autouse conftest guards stay in place.
     Pinned until the check reads the strategy type (or ``trainer.world_size``).
     """

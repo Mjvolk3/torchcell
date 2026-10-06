@@ -196,7 +196,8 @@ def test_std_forward_cannot_call_its_own_supcr() -> None:
 
     It calls ``self.supcr_fn(z_P, z_I, targets)`` (isomorphic_cell_loss.py:181) but
     WeightedSupCRCell.forward takes (perturbed_embeddings, labels) only, so the class
-    cannot produce a loss; its one caller is commented out (hetero_cell_pma.py:1068).
+    cannot produce a loss; its one caller is commented out (hetero_cell_pma.py:1068,
+    retired 2026-10-06 to the graveyard).
     Pinned until the call matches the two-argument SupCR or the class is retired.
     """
     z = _embeddings()

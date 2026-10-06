@@ -41,47 +41,47 @@ The owner approved, on 2026-10-06, retiring every module that `scripts/legacy_pa
 
 ### Retired modules
 
-Lines are `wc -l` before the move. The newest experiment era is the newest experiment folder that imports the module (from the importer scan of the review pass; `none` means no experiment imports it). Successors are as the reviewers named them; the second reviewer named successors only in its transcript, so its half reads `not recorded` unless the successor is the same-named live module.
+Lines are `wc -l` before the move. The newest experiment era is the newest experiment folder that imports the module (from the importer scan of the review pass; `none` means no experiment imports it). Successors are as the two reviewers named them (the second reviewer's table, 2026.10.06, filled the half that first read `not recorded`); a PyG class is an external-library successor.
 
 | Module | wc lines | Newest experiment era | Live successor | Verdict reason |
 |---|---:|---|---|---|
-| `torchcell/cell.py` | 1 | none | not recorded | shadowed by the cell/ package, never importable |
-| `torchcell/config.py` | 30 | none | not recorded | unreached from every root |
-| `torchcell/data/sgd_expression.py` | 80 | none | not recorded | unreached from every root |
-| `torchcell/data_download_yeastmine.py` | 65 | none | not recorded | broken import: intermine needs collections.MutableMapping |
+| `torchcell/cell.py` | 1 | none | none | shadowed by the cell/ package, never importable |
+| `torchcell/config.py` | 30 | none | none | unreached from every root |
+| `torchcell/data/sgd_expression.py` | 80 | none | none | unreached from every root |
+| `torchcell/data_download_yeastmine.py` | 65 | none | `torchcell/sequence/genome/scerevisiae/s288c.py` (genomes registry) | broken import: intermine needs collections.MutableMapping |
 | `torchcell/database/biocypher_out_combine.py` | 329 | none | the live rebuild and incremental import | unreached from every root |
-| `torchcell/dataloading_lmdb.py` | 64 | none | not recorded | broken import: torchcell.datasets.CellDataset is gone |
+| `torchcell/dataloading_lmdb.py` | 64 | none | `torchcell/data/neo4j_cell.py` | broken import: torchcell.datasets.CellDataset is gone |
 | `torchcell/datamodules/dcell_DEPRECATED.py` | 83 | none | `models/dcell`, `models/dcell_opt` | unreached from every root |
-| `torchcell/dataset_preprocess/__init__.py` | 1 | none | not recorded | empty package once its members left |
-| `torchcell/dataset_readers/__init__.py` | 5 | none | not recorded | empty package once its members left |
-| `torchcell/dataset_readers/reader.py` | 115 | none | not recorded | unreached from every root |
-| `torchcell/datasets/add_datasets_check.py` | 62 | none | not recorded | unreached from every root |
+| `torchcell/dataset_preprocess/__init__.py` | 1 | none | none | empty package once its members left |
+| `torchcell/dataset_readers/__init__.py` | 5 | none | `torchcell/data/neo4j_cell.py` | empty package once its members left |
+| `torchcell/dataset_readers/reader.py` | 115 | none | `torchcell/data/neo4j_cell.py` | unreached from every root |
+| `torchcell/datasets/add_datasets_check.py` | 62 | none | none | unreached from every root |
 | `torchcell/datasets/base_cell.py` | 350 | none | `data/neo4j_cell` | broken import: torchcell.data.Dataset is gone |
 | `torchcell/datasets/cell.py` | 593 | none (reached only by test_esm2) | `data/neo4j_cell` (`Neo4jCellDataset`, `create_embedding_graph`) | reached only by test_esm2 (rewritten onto the live create_embedding_graph) |
-| `torchcell/datasets/cell_scratch.py` | 122 | none | not recorded | broken import: torchcell.data_prior is gone |
+| `torchcell/datasets/cell_scratch.py` | 122 | none | `torchcell/data/neo4j_cell.py` | broken import: torchcell.data_prior is gone |
 | `torchcell/datasets/dcell_DEPRECATED.py` | 515 | none | `models/dcell`, `models/dcell_opt` | broken import: torchcell.models.DCellLinear is gone |
-| `torchcell/datasets/dummy.py` | 6 | none | not recorded | unreached from every root |
+| `torchcell/datasets/dummy.py` | 6 | none | none | unreached from every root |
 | `torchcell/datasets/experiment.py` | 358 | none | `data/neo4j_cell` | broken import: torchcell.data.Dataset is gone |
-| `torchcell/datasets/genome.py` | 32 | none | not recorded | unreached from every root |
-| `torchcell/datasets/go.py` | 181 | none | not recorded | unreached from every root |
+| `torchcell/datasets/genome.py` | 32 | none | none | unreached from every root |
+| `torchcell/datasets/go.py` | 181 | none | `torchcell/graph/graph.py` | unreached from every root |
 | `torchcell/datasets/ontology.py` | 256 | none | the `datamodels` schema | unreached from every root |
-| `torchcell/datasets/pronto_ontology.py` | 91 | none | not recorded | unreached from every root |
+| `torchcell/datasets/pronto_ontology.py` | 91 | none | none | unreached from every root |
 | `torchcell/datasets/scerevisiae/costanzo2016_deprecated.py` | 871 | none | `datasets/scerevisiae/costanzo2016` | broken import: torchcell.data.Dataset is gone |
-| `torchcell/datasets/scerevisiae/mechanisitc_aware.py` | 32 | none | not recorded | broken import: rpy2 not installed |
-| `torchcell/datasets/scerevisiae/tutorial_joining_nucleotide_embeddings.py` | 31 | none | not recorded | broken import: fungal_utr_transformer is gone |
+| `torchcell/datasets/scerevisiae/mechanisitc_aware.py` | 32 | none | none | broken import: rpy2 not installed |
+| `torchcell/datasets/scerevisiae/tutorial_joining_nucleotide_embeddings.py` | 31 | none | none | broken import: fungal_utr_transformer is gone |
 | `torchcell/datasets/sgd_gene_graph_hot.py` | 262 | none | `datasets/sgd_gene_graph` | unreached from every root |
-| `torchcell/delete_subset.py` | 53 | none | not recorded | unreached from every root |
-| `torchcell/go/__init__.py` | 1 | none | not recorded | empty package once its members left |
-| `torchcell/go/check_deprecated.py` | 21 | none | not recorded | unreached; cwd-relative GODag load at import |
+| `torchcell/delete_subset.py` | 53 | none | none | unreached from every root |
+| `torchcell/go/__init__.py` | 1 | none | `torchcell/graph/graph.py` | empty package once its members left |
+| `torchcell/go/check_deprecated.py` | 21 | none | `torchcell/graph/graph.py` | unreached; cwd-relative GODag load at import |
 | `torchcell/graph/graph_analysis.py` | 658 | none | none | unreached from every root |
-| `torchcell/graph/metabolism.py` | 54 | none | not recorded | unreached; builds a metabolism graph at import |
-| `torchcell/graph/uniprot_api_ec.py` | 36 | none | not recorded | unreached; web API query at import |
-| `torchcell/graph/validation/raw_structure.py` | 201 | none | not recorded | unreached from every root |
+| `torchcell/graph/metabolism.py` | 54 | none | `torchcell/metabolism/yeast_GEM.py` | unreached; builds a metabolism graph at import |
+| `torchcell/graph/uniprot_api_ec.py` | 36 | none | `torchcell/metabolism/enzyme_kinetics.py` / `parameters.py` | unreached; web API query at import |
+| `torchcell/graph/validation/raw_structure.py` | 201 | none | none | unreached from every root |
 | `torchcell/knowledge_graphs/create_pypy_scerevisiae_kg.py` | 63 | none | the live KG build | unreached; SSL env mutation at import; PyPy path abandoned |
-| `torchcell/knowledge_graphs/gene_interactions_scerevisae_kg_small.py` | 206 | none | not recorded | unreached; SSL env mutation at import |
-| `torchcell/knowledge_graphs/smf_kg.py` | 191 | none | not recorded | unreached; SSL env mutation at import |
-| `torchcell/knowledge_graphs/smf_tmi_combine_kg.py` | 190 | none | not recorded | unreached; SSL env mutation at import |
-| `torchcell/losses/SupCr.py` | 104 | none | not recorded | broken import: pytorch_metric_learning not installed |
+| `torchcell/knowledge_graphs/gene_interactions_scerevisae_kg_small.py` | 206 | none | `torchcell/knowledge_graphs/create_kg.py` | unreached; SSL env mutation at import |
+| `torchcell/knowledge_graphs/smf_kg.py` | 191 | none | `torchcell/knowledge_graphs/create_kg.py` | unreached; SSL env mutation at import |
+| `torchcell/knowledge_graphs/smf_tmi_combine_kg.py` | 190 | none | `torchcell/knowledge_graphs/create_kg.py` | unreached; SSL env mutation at import |
+| `torchcell/losses/SupCr.py` | 104 | none | `torchcell/losses/multi_dim_nan_tolerant.py` | broken import: pytorch_metric_learning not installed |
 | `torchcell/losses/dcell_DEPRECATED.py` | 35 | none | `losses/dcell` | unreached from every root |
 | `torchcell/metrics/__init__.py` | 1 | none | none | empty package once its two members left |
 | `torchcell/metrics/nan_tolerant_classification_metrics.py` | 323 | 003-fit-int (through its trainers) | NaN mask in the trainer, then plain torchmetrics (#617) | only importers were retiring 003 trainers; NaN-tolerant metrics ruled the wrong design |
@@ -95,7 +95,7 @@ Lines are `wc -l` before the move. The newest experiment era is the newest exper
 | `torchcell/models/cell_sagpool.py` | 574 | 003-fit-int | none | unreached; frozen-era code, abandoned architecture |
 | `torchcell/models/cell_sagpool_inception.py` | 805 | 003-fit-int | none | unreached; frozen-era code, abandoned architecture |
 | `torchcell/models/dcell_DEPRECATED.py` | 359 | none | `models/dcell`, `models/dcell_opt` | unreached from every root |
-| `torchcell/models/dense_gat_conv.py` | 136 | none | not recorded | unreached from every root |
+| `torchcell/models/dense_gat_conv.py` | 136 | none | PyG `torch_geometric.nn.DenseGATConv` (external library) | unreached from every root |
 | `torchcell/models/early_cell_diffpool_dense.py` | 583 | none | none | unreached from every root |
 | `torchcell/models/gat_diffpool.py` | 655 | 003-fit-int | none | unreached; frozen-era code, abandoned architecture |
 | `torchcell/models/gat_diffpool_alt.py` | 635 | none | none | unreached from every root |
@@ -110,37 +110,37 @@ Lines are `wc -l` before the move. The newest experiment era is the newest exper
 | `torchcell/models/isomorphic_cell.py` | 1673 | none | none | unreached from every root |
 | `torchcell/models/isomorphic_cell_attentional.py` | 1750 | 003-fit-int | none | unreached; frozen-era code, abandoned architecture |
 | `torchcell/models/nsa_hetero_cell.py` | 1094 | none | `models/hetero_cell_nsa_retry`, `nn/hetero_nsa` | unreached from every root |
-| `torchcell/models/self_attention_sag.py` | 184 | none | not recorded | unreached from every root |
-| `torchcell/models/species_aware_lm.py` | 243 | none | not recorded | unreached; HuggingFace download at import |
-| `torchcell/ncbi.py` | 118 | none | not recorded | shadowed by the ncbi/ package, never importable |
-| `torchcell/ncbi/__init__.py` | 2 | none | not recorded | empty package once its members left |
-| `torchcell/ncbi/ncbi.py` | 37 | none | not recorded | unreached; web API query at import |
-| `torchcell/ncbi/sequence.py` | 172 | none | not recorded | unreached from every root |
-| `torchcell/ncbi/sequence_scratch.py` | 70 | none | not recorded | unreached; cwd-relative read_csv at import |
-| `torchcell/neo4j_example.py` | 193 | none | not recorded | unreached from every root |
-| `torchcell/neo4j_fitness_lmdb.py` | 40 | none | not recorded | unreached from every root |
-| `torchcell/nn/aggr/__init__.py` | 1 | none | not recorded | empty package once its members left |
-| `torchcell/nn/aggr/set_transformer.py` | 168 | none | not recorded | unreached from every root |
-| `torchcell/nn/flex_attention_graph.py` | 70 | none | not recorded | unreached; dataset build and plt.show() at import |
-| `torchcell/nn/flex_attention_graph_adj.py` | 116 | none | not recorded | unreached; dataset build and plt.show() at import |
+| `torchcell/models/self_attention_sag.py` | 184 | none | none | unreached from every root |
+| `torchcell/models/species_aware_lm.py` | 243 | none | `torchcell/models/fungal_up_down_transformer.py` | unreached; HuggingFace download at import |
+| `torchcell/ncbi.py` | 118 | none | `torchcell/sequence/genome/scerevisiae/s288c.py` (genomes registry) | shadowed by the ncbi/ package, never importable |
+| `torchcell/ncbi/__init__.py` | 2 | none | none | empty package once its members left |
+| `torchcell/ncbi/ncbi.py` | 37 | none | `torchcell/sequence/genome/scerevisiae/s288c.py` (genomes registry) | unreached; web API query at import |
+| `torchcell/ncbi/sequence.py` | 172 | none | `torchcell/sequence/genome/scerevisiae/s288c.py` | unreached from every root |
+| `torchcell/ncbi/sequence_scratch.py` | 70 | none | none | unreached; cwd-relative read_csv at import |
+| `torchcell/neo4j_example.py` | 193 | none | `torchcell/adapters/` + `torchcell/knowledge_graphs/create_kg.py` | unreached from every root |
+| `torchcell/neo4j_fitness_lmdb.py` | 40 | none | `torchcell/data/neo4j_cell.py` | unreached from every root |
+| `torchcell/nn/aggr/__init__.py` | 1 | none | PyG `torch_geometric.nn.aggr` (external library) | empty package once its members left |
+| `torchcell/nn/aggr/set_transformer.py` | 168 | none | PyG `torch_geometric.nn.aggr.SetTransformerAggregation` (external library) | unreached from every root |
+| `torchcell/nn/flex_attention_graph.py` | 70 | none | none | unreached; dataset build and plt.show() at import |
+| `torchcell/nn/flex_attention_graph_adj.py` | 116 | none | none | unreached; dataset build and plt.show() at import |
 | `torchcell/nn/flex_attention_graph_nsa.py` | 402 | none | `nn/nsa_encoder` | unreached from every root |
-| `torchcell/nn/sort_adj_block_model.py` | 122 | none | not recorded | unreached; dataset build and plt.show() at import |
-| `torchcell/prof.py` | 77 | DEPRECATED_dna_llm_viz | not recorded | unreached; frozen-era code, abandoned architecture |
+| `torchcell/nn/sort_adj_block_model.py` | 122 | none | none | unreached; dataset build and plt.show() at import |
+| `torchcell/prof.py` | 77 | DEPRECATED_dna_llm_viz | none | unreached; frozen-era code, abandoned architecture |
 | `torchcell/profilers/__init__.py` | 1 | none | `lightning.pytorch.profilers.PyTorchProfiler` | empty package once its members left |
 | `torchcell/profilers/pytorch.py` | 660 | 003-fit-int | `lightning.pytorch.profilers.PyTorchProfiler` | unreached; frozen-era code |
 | `torchcell/pypy_adapters/__init__.py` | 16 | none | `adapters/` | empty package once its members left |
 | `torchcell/pypy_adapters/costanzo2016_pypy_adapter.py` | 1355 | none | `adapters/costanzo2016_adapter` | unreached from every root |
 | `torchcell/pypy_adapters/kuzmin2018_pypy_adapter.py` | 2000 | none | `adapters/kuzmin2018_adapter` | unreached from every root |
 | `torchcell/sc_graph.py` | 296 | none | the costanzo2016 and kuzmin2018 loaders | unreached from every root |
-| `torchcell/sequence/data_scratch.py` | 13 | none | not recorded | unreached from every root |
-| `torchcell/sequence/sequence_plot.py` | 122 | none | not recorded | broken import: torchcell.sgd is gone |
-| `torchcell/sequence/sequence_scratch.py` | 28 | none | not recorded | unreached from every root |
-| `torchcell/trainers/cell.py` | 63 | none | not recorded | unreached from every root |
+| `torchcell/sequence/data_scratch.py` | 13 | none | none | unreached from every root |
+| `torchcell/sequence/sequence_plot.py` | 122 | none | none | broken import: torchcell.sgd is gone |
+| `torchcell/sequence/sequence_scratch.py` | 28 | none | none | unreached from every root |
+| `torchcell/trainers/cell.py` | 63 | none | none | unreached from every root |
 | `torchcell/trainers/fit_int_cell_diffpool_dense_regression.py` | 514 | 003-fit-int | none | unreached; frozen-era code, abandoned architecture |
 | `torchcell/trainers/fit_int_cell_gin_diffpool_dense_binary.py` | 546 | 003-fit-int | none | unreached; frozen-era code, abandoned architecture |
 | `torchcell/trainers/fit_int_cell_sagpool_regression.py` | 486 | 003-fit-int | none | unreached; frozen-era code, abandoned architecture |
 | `torchcell/trainers/fit_int_deep_set_regression.py` | 449 | 003-fit-int | `trainers/neo_regression` | unreached; frozen-era code |
-| `torchcell/trainers/fit_int_gat_diffpool_inception_regression.py` | 589 | 003-fit-int | not recorded | broken import (NaNTolerantPearsonCorrCoef); reached only by a test pinning that failure |
+| `torchcell/trainers/fit_int_gat_diffpool_inception_regression.py` | 589 | 003-fit-int | none (the GAT-DiffPool family is an abandoned 003 architecture; the module was on neither reviewer table) | broken import (NaNTolerantPearsonCorrCoef); reached only by a test pinning that failure |
 | `torchcell/trainers/fit_int_gat_diffpool_regression.py` | 676 | 003-fit-int | none | unreached; frozen-era code |
 | `torchcell/trainers/fit_int_hetero_cell.py` | 597 | 005-kuzmin2018-tmi | `trainers/int_hetero_cell.RegressionTask` | unreached; frozen-era code |
 | `torchcell/trainers/fit_int_hetero_cell_multiset_decomposition.py` | 815 | 003-fit-int | none | unreached; frozen-era code, abandoned architecture |
@@ -152,7 +152,7 @@ Lines are `wc -l` before the move. The newest experiment era is the newest exper
 | `torchcell/trainers/int_hetero_cell_nsa.py` | 1370 | none | `trainers/int_hetero_cell` | unreached from every root |
 | `torchcell/trainers/regression.py` | 459 | none | `trainers/neo_regression` | broken import: WeightedMSELoss moved |
 | `torchcell/trainers/regression_deep_set_transformer.py` | 353 | none | `trainers/neo_regression` | broken import: WeightedMSELoss moved |
-| `torchcell/trainers/utils.py` | 63 | none | not recorded | broken import: pydantic-v1 ConstrainedStr |
+| `torchcell/trainers/utils.py` | 63 | none | none | broken import: pydantic-v1 ConstrainedStr |
 | `torchcell/transforms/hetero_to_dense.py` | 176 | 003-fit-int (the 004-011 hits are commented-out imports) | `transforms/hetero_to_dense_mask.HeteroToDenseMask` | unreached; frozen-era code |
 | `torchcell/viz/datamodules.py` | 195 | 003-fit-int | none | unreached; frozen-era code, abandoned architecture |
 

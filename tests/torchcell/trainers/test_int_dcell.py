@@ -590,7 +590,8 @@ def test_the_accumulation_schedule_values_are_never_read(
     """Finding: ``grad_accumulation_schedule`` is only tested for ``None``
     (int_dcell.py:383, :388); nothing in the module sets ``current_accumulation_steps``
     from it (it stays the 1 of :59; no ``on_train_epoch_start`` reads the schedule, unlike
-    ``fit_int_cell_diffpool_dense_regression.py:170``). A schedule ``{0: 4}`` therefore
+    ``fit_int_cell_diffpool_dense_regression.py:170``, retired 2026-10-06 to the
+    graveyard). A schedule ``{0: 4}`` therefore
     divides by 1 and steps on every batch. Every 005/006 DCell config sets the schedule to
     null, so no recorded run is affected. Pinned until the schedule is applied or the
     argument is removed.

@@ -201,8 +201,11 @@
 <span class="c1"># - Applied in dye-swap to one channel of each microarray</span>
 <span class="c1"># - Additional WT cultures grown alongside mutants for batch effect monitoring</span>
 <span class="c1">#</span>
-<span class="c1"># NOTE: Actual n_replicates for reference are COMPUTED from WT sample count in data</span>
-<span class="n">N_EXPECTED_REFPOOL_REPLICATES</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Computed from data (varies by batch/day)</span>
+<span class="c1"># The stored reference ``expression`` of a record is the mean refpool-channel signal</span>
+<span class="c1"># over that record's own arrays, so the reference ``n_replicates`` of a gene is the</span>
+<span class="c1"># number of arrays whose refpool value entered that mean (#630, as kemmeren2014 does</span>
+<span class="c1"># for #484). Neither the WT RNA batch nor the additional WT cultures above is a stored</span>
+<span class="c1"># value, so no count of them is stored.</span>
 
 <span class="c1"># PubMed ID of Sameith et al. 2015, BMC Biology (DOI 10.1186/s12915-015-0222-5).</span>
 <span class="c1"># Source: the GEO series record this loader reads, GSE42536_family.soft.gz (sha256</span>
@@ -531,6 +534,7 @@
                         <span class="n">log2_se</span><span class="p">,</span>
                         <span class="n">log2_var</span><span class="p">,</span>
                         <span class="n">log2_n</span><span class="p">,</span>
+                        <span class="n">refpool_n_replicates</span><span class="o">=</span><span class="n">refpool_n</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
 
@@ -893,18 +897,29 @@
         <span class="n">log2_ratio_se</span><span class="p">:</span> <span class="n">SortedDict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">log2_ratio_variance</span><span class="p">:</span> <span class="n">SortedDict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">n_replicates</span><span class="p">:</span> <span class="n">SortedDict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">refpool_n_replicates</span><span class="p">:</span> <span class="n">SortedDict</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Create experiment for single deletion mutant.</span>
+
+<span class="sd">        The reference ``expression`` is the mean refpool signal over the record's</span>
+<span class="sd">        arrays, so the reference ``n_replicates`` of a gene is the number of arrays</span>
+<span class="sd">        whose refpool value entered that mean (1 or 2 on GEO for a single mutant),</span>
+<span class="sd">        counted per gene: a gene missing from one array's refpool channel counts only</span>
+<span class="sd">        the arrays that carry it (#630; the WT RNA batch and the additional WT cultures</span>
+<span class="sd">        are not the stored value, see the module comment at the reference pool quotes).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            dataset_name: Name of the dataset</span>
 <span class="sd">            sample_info: Sample metadata dictionary</span>
 <span class="sd">            mutant_data: Expression values for deletion mutant</span>
-<span class="sd">            refpool_data: Expression values for reference pool</span>
+<span class="sd">            refpool_data: Mean refpool expression over the record's arrays</span>
 <span class="sd">            log2_ratio_data: log2(mutant/refpool) ratios</span>
 <span class="sd">            log2_ratio_se: Standard error for log2 ratios (optional)</span>
 <span class="sd">            log2_ratio_variance: Variance for log2 ratios (optional)</span>
 <span class="sd">            n_replicates: Number of replicates per gene (optional)</span>
+<span class="sd">            refpool_n_replicates: Arrays in each gene's refpool mean, same keys as</span>
+<span class="sd">                ``refpool_data``</span>
 <span class="sd">        """</span>
         <span class="c1"># BY4742 (MATalpha) for every single mutant. Paper: "All single mutants and</span>
         <span class="c1"># most double mutants carry the mating type matα and are in the genetic</span>
@@ -951,18 +966,15 @@
         <span class="c1"># Create reference phenotype from reference pool</span>
         <span class="c1"># Reference is self-referential, so log2 ratios are all 0</span>
         <span class="n">reference_log2_ratios</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-        <span class="n">reference_n_replicates</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">refpool_data</span><span class="p">:</span>
             <span class="n">reference_log2_ratios</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-            <span class="c1"># Reference samples don't have meaningful n_replicates (they're the baseline)</span>
-            <span class="n">reference_n_replicates</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
         <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">MicroarrayExpressionPhenotype</span><span class="p">(</span>
             <span class="n">expression</span><span class="o">=</span><span class="n">refpool_data</span><span class="p">,</span>
             <span class="n">expression_log2_ratio</span><span class="o">=</span><span class="n">reference_log2_ratios</span><span class="p">,</span>
             <span class="n">expression_log2_ratio_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">expression_log2_ratio_variance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">n_replicates</span><span class="o">=</span><span class="n">reference_n_replicates</span><span class="p">,</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="n">refpool_n_replicates</span><span class="p">,</span>  <span class="c1"># Arrays in each refpool mean</span>
         <span class="p">)</span>
 
         <span class="c1"># Create reference</span>
@@ -1389,6 +1401,7 @@
                         <span class="n">log2_var</span><span class="p">,</span>
                         <span class="n">log2_n</span><span class="p">,</span>
                         <span class="n">strain</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span>  <span class="c1"># NEW: Pass per-sample strain</span>
+                        <span class="n">refpool_n_replicates</span><span class="o">=</span><span class="n">refpool_n</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="p">)</span>
 
@@ -1572,6 +1585,7 @@
                     <span class="n">log2_var</span><span class="p">,</span>
                     <span class="n">log2_n</span><span class="p">,</span>
                     <span class="n">strain</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span>  <span class="c1"># NEW: Pass per-sample strain</span>
+                    <span class="n">refpool_n_replicates</span><span class="o">=</span><span class="n">refpool_n</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
 
@@ -1999,19 +2013,30 @@
         <span class="n">log2_ratio_variance</span><span class="p">:</span> <span class="n">SortedDict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">n_replicates</span><span class="p">:</span> <span class="n">SortedDict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"BY4742"</span><span class="p">,</span>  <span class="c1"># NEW: Accept per-sample strain parameter</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">refpool_n_replicates</span><span class="p">:</span> <span class="n">SortedDict</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Create experiment for double deletion mutant with PER-SAMPLE strain.</span>
+
+<span class="sd">        The reference ``expression`` is the mean refpool signal over the record's</span>
+<span class="sd">        arrays, so the reference ``n_replicates`` of a gene is the number of arrays</span>
+<span class="sd">        whose refpool value entered that mean, counted per gene: a gene missing from</span>
+<span class="sd">        one array's refpool channel counts only the arrays that carry it (#630; the WT</span>
+<span class="sd">        RNA batch and the additional WT cultures are not the stored value, see the</span>
+<span class="sd">        module comment at the reference pool quotes).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            dataset_name: Name of the dataset</span>
 <span class="sd">            sample_info: Sample metadata dictionary</span>
 <span class="sd">            mutant_data: Expression values for deletion mutant</span>
-<span class="sd">            refpool_data: Expression values for reference pool</span>
+<span class="sd">            refpool_data: Mean refpool expression over the record's arrays</span>
 <span class="sd">            log2_ratio_data: log2(mutant/refpool) ratios</span>
 <span class="sd">            log2_ratio_se: Standard error for log2 ratios (optional)</span>
 <span class="sd">            log2_ratio_variance: Variance for log2 ratios (optional)</span>
 <span class="sd">            n_replicates: Number of replicates per gene (optional)</span>
 <span class="sd">            strain: Strain background (BY4742 or BY4741), extracted from Excel comments</span>
+<span class="sd">            refpool_n_replicates: Arrays in each gene's refpool mean, same keys as</span>
+<span class="sd">                ``refpool_data``</span>
 <span class="sd">        """</span>
         <span class="c1"># Per-pair strain from the SI comments column: "MATa" -&gt; BY4741, otherwise</span>
         <span class="c1"># BY4742 (see _load_authoritative_gstf_pairs).</span>
@@ -2067,18 +2092,15 @@
         <span class="c1"># Create reference phenotype from reference pool</span>
         <span class="c1"># Reference is self-referential, so log2 ratios are all 0</span>
         <span class="n">reference_log2_ratios</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
-        <span class="n">reference_n_replicates</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">gene</span> <span class="ow">in</span> <span class="n">refpool_data</span><span class="p">:</span>
             <span class="n">reference_log2_ratios</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
-            <span class="c1"># Reference samples don't have meaningful n_replicates (they're the baseline)</span>
-            <span class="n">reference_n_replicates</span><span class="p">[</span><span class="n">gene</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
         <span class="n">phenotype_reference</span> <span class="o">=</span> <span class="n">MicroarrayExpressionPhenotype</span><span class="p">(</span>
             <span class="n">expression</span><span class="o">=</span><span class="n">refpool_data</span><span class="p">,</span>  <span class="c1"># Reference pool</span>
             <span class="n">expression_log2_ratio</span><span class="o">=</span><span class="n">reference_log2_ratios</span><span class="p">,</span>
             <span class="n">expression_log2_ratio_se</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">expression_log2_ratio_variance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">n_replicates</span><span class="o">=</span><span class="n">reference_n_replicates</span><span class="p">,</span>
+            <span class="n">n_replicates</span><span class="o">=</span><span class="n">refpool_n_replicates</span><span class="p">,</span>  <span class="c1"># Arrays in each refpool mean</span>
         <span class="p">)</span>
 
         <span class="c1"># Create reference</span>

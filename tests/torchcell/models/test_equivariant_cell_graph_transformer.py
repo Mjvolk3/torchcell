@@ -263,3 +263,53 @@ def test_linear_readout_is_wired_into_the_head() -> None:
         p.numel() for p in mlp.parameters()
     )
     assert _per_gene_output(linear).shape == (BATCH_SIZE, GENE_NUM)
+
+
+@pytest.mark.parametrize("residual", ["postln", "rezero"])
+@pytest.mark.parametrize("variant", ["ref", "sink", "hadamard_add", "hadamard_replace"])
+def test_batched_perturbation_operator_matches_loop(
+    residual: str, variant: str
+) -> None:
+    """The batched operator is the per-strain loop, strain for strain.
+
+    Mixed set sizes (1, 2, 3 and 0 perturbed genes), two stacked layers, both residual
+    forms, the null sink and both Hadamard modes; eval mode so dropout is off.
+    """
+    from torchcell.models.equivariant_cell_graph_transformer import (
+        EquivariantPerturbationTransform,
+    )
+
+    torch.manual_seed(0)
+    kwargs: dict[str, Any] = {"residual": residual, "num_layers": 2}
+    if variant == "sink":
+        kwargs.update(null_sink=True, null_sink_bias_init=0.0)
+    elif variant.startswith("hadamard"):
+        kwargs["hadamard"] = variant.split("_")[1]
+    op = EquivariantPerturbationTransform(HIDDEN, num_heads=NUM_HEADS, **kwargs)
+    if residual == "rezero":
+        with torch.no_grad():
+            op.beta_attn.fill_(0.7)
+            op.beta_ffn.fill_(0.3)
+    if op.hadamard_gamma is not None:
+        with torch.no_grad():
+            for p in op.hadamard_gamma.parameters():
+                p.normal_(0.0, 0.2)
+    op.eval()
+    n_genes = 11
+    H = torch.randn(n_genes, HIDDEN)
+    # Strain 0: genes {2}; strain 1: {4, 7}; strain 2: none; strain 3: {1, 5, 9}.
+    pert_idx = torch.tensor([2, 4, 7, 1, 5, 9])
+    pert_batch = torch.tensor([0, 1, 1, 3, 3, 3])
+    # A strain with no perturbation never appears in `batch_assignment`, so the batch
+    # size is read from the max index; strain 2 is the empty one.
+    op.batched = False
+    loop_out, loop_ctx = op(H, pert_idx, pert_batch)
+    op.batched = True
+    fast_out, fast_ctx = op(H, pert_idx, pert_batch)
+    assert fast_out.shape == loop_out.shape == (4, n_genes, HIDDEN)
+    assert torch.allclose(fast_out, loop_out, atol=1e-5), (
+        (fast_out - loop_out).abs().max()
+    )
+    assert torch.allclose(fast_ctx, loop_ctx, atol=1e-5), (
+        (fast_ctx - loop_ctx).abs().max()
+    )

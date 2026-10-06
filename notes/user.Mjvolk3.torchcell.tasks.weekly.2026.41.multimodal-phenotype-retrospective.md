@@ -34,3 +34,10 @@ created: 1791255604174
 - [ ] score the 40 pulled checkpoints on GilaHyper (val must reproduce W&B, test dumped), then the v13 and v14 test readouts with the gene-disjoint subset
 - [ ] v17 wave 2 and v18 reads once they reach epoch 1,000; both sides of v16 at the loss-minimum checkpoint once a checkpoint home is chosen
 - [ ] readout stitching: `v13_split_readout.py --round v16` and `v16_expr` must concatenate a continued run's history onto its source run by `wandb.resumed_from` before the 1,200-epoch read; the view script should group the two segments under one arm
+
+## 2026.10.06
+
+- [x] **profile of the expression CGT epoch** ([[experiments.019-simb-multimodal.scripts.gh_profile_cgt_expr]], GilaHyper jobs 3302 to 3313): a sample costs about 50 ms to produce (LMDB, JSON, pydantic, processor), 57 s of a 151 s epoch at zero workers; the model step is 8 s per epoch at batch 32 and is paced per step because the encoder's self-attention over 6,607 genes (70 percent of CUDA time) runs once per step whatever the batch; the eval-mode train pass respawns its loader workers on every call (about 30 s)
+- [x] fast code path: batched perturbation operator (40 percent off the step, equivalence test on eight cases), `pooled_perturbed`, `MaterializedSplit` (`+data_module.materialize=true`), `trainer.profiler` pass-through
+- [x] **v22 wave 1 launched** ([[experiments.019-simb-multimodal.scripts.gh_expr_v22_fast]], job 3315, 16 runs, 1,200 epochs): F_ref, F_b128 (lr 6e-4), F_b128lr4 (lr 1.2e-3), F_l4w180 on split seeds 0 to 3, one card per split seed
+- [ ] read v22 at the registered window; fix the eval-train pass loader respawn; decide the Delta round from v22 and v21

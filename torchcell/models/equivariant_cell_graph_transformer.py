@@ -357,6 +357,33 @@ class HyperSAGNN(nn.Module):
         return cast(torch.Tensor, beta * out + x)
 
 
+def pooled_perturbed(
+    H_genes_pert: torch.Tensor,
+    perturbation_indices: torch.Tensor,
+    batch_assignment: torch.Tensor,
+    pooling: str,
+) -> torch.Tensor:
+    """Pool each strain's perturbed gene rows: sum or mean, zeros for an empty set.
+
+    Args:
+        H_genes_pert: [batch, N, d] per-strain gene embeddings.
+        perturbation_indices: [total_pert_genes] gene index of each perturbed gene.
+        batch_assignment: [total_pert_genes] strain index of each perturbed gene.
+        pooling: ``sum`` or ``mean``.
+
+    Returns:
+        [batch, d]
+    """
+    batch_size, _, d = H_genes_pert.shape
+    z_S = H_genes_pert.new_zeros(batch_size, d)
+    rows = H_genes_pert[batch_assignment, perturbation_indices]  # [P, d]
+    z_S = z_S.index_add(0, batch_assignment, rows)
+    if pooling != "sum":
+        counts = torch.bincount(batch_assignment, minlength=batch_size).clamp(min=1)
+        z_S = z_S / counts.to(z_S.dtype).unsqueeze(-1)
+    return z_S
+
+
 class EquivariantPerturbationTransform(nn.Module):
     """Equivariant perturbation transformation that preserves per-gene structure.
 
@@ -549,6 +576,10 @@ class EquivariantPerturbationTransform(nn.Module):
         if residual == "rezero":
             self.beta_attn = nn.Parameter(torch.zeros(1))
             self.beta_ffn = nn.Parameter(torch.zeros(1))
+        # Run the batched form of the operator (default). Set False to run the original
+        # per-strain loop, which is the reference the equivalence test compares against;
+        # `TORCHCELL_PERT_OPERATOR=loop` selects it for a timing comparison.
+        self.batched = os.environ.get("TORCHCELL_PERT_OPERATOR", "batched") != "loop"
 
         # Cross-attention: each gene attends to perturbation context
         # DEPTH. Stage 2 is where ALL strain conditioning happens, and it has been ONE
@@ -663,6 +694,99 @@ class EquivariantPerturbationTransform(nn.Module):
                 separately so downstream heads can condition on it directly (the
                 concat/bilinear/FiLM arms all need c_b, not only h_i + c_b).
         """
+        # BATCHED FORM (2026-10-06). The per-strain loop below ran one cross-attention
+        # over all N genes and one FFN block per strain, 32 sequential passes per step.
+        # The batched form pads every strain's perturbed set to the largest |S| in the
+        # batch, masks the padding, and runs the N-query attention and the FFN once on
+        # [batch, N, d]. It is the same function: `_forward_loop` is kept as the
+        # reference and `tests/.../test_equivariant_cell_graph_transformer.py` checks
+        # the two agree in eval mode for |S| of 1 to 3, the null sink, the Hadamard
+        # modes and both residual forms.
+        if self.batched:
+            return self._forward_batched(
+                H_genes, perturbation_indices, batch_assignment
+            )
+        return self._forward_loop(H_genes, perturbation_indices, batch_assignment)
+
+    def _forward_batched(
+        self,
+        H_genes: torch.Tensor,
+        perturbation_indices: torch.Tensor,
+        batch_assignment: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """The operator on the whole batch at once; see ``forward``."""
+        batch_size = int(batch_assignment.max().item()) + 1
+        N, d = H_genes.shape
+        device = H_genes.device
+        # Padded index table [batch, S_max] and its padding mask (True = padding). A
+        # strain with no perturbation keeps one unmasked dummy key (gene 0) so its
+        # softmax is defined, and its attended output is zeroed below, as the loop does.
+        counts = torch.bincount(batch_assignment, minlength=batch_size)
+        s_max = max(int(counts.max().item()), 1)
+        order = torch.argsort(batch_assignment, stable=True)
+        sorted_batch = batch_assignment[order]
+        sorted_idx = perturbation_indices[order]
+        offsets = torch.cumsum(counts, dim=0) - counts
+        slot = torch.arange(sorted_batch.numel(), device=device) - offsets[sorted_batch]
+        idx = torch.zeros(batch_size, s_max, dtype=torch.long, device=device)
+        idx[sorted_batch, slot] = sorted_idx
+        pad = torch.ones(batch_size, s_max, dtype=torch.bool, device=device)
+        pad[sorted_batch, slot] = False
+        has_pert = counts > 0
+        pad[~has_pert, 0] = False
+        key_mask: torch.Tensor = pad
+        attn_mask: torch.Tensor | None = None
+        if self.null_sink:
+            # The sink is key column 0, never padded; its logit carries `null_bias`.
+            pad = torch.cat([pad.new_zeros(batch_size, 1), pad], dim=1)
+            attn_mask = torch.cat(
+                [
+                    self.null_bias.to(H_genes.dtype).view(1, 1).expand(N, 1),
+                    H_genes.new_zeros(N, s_max),
+                ],
+                dim=1,
+            )  # [N, S_max + 1], shared by every strain
+            # Both masks are ADDED to the logits, so they must share a dtype.
+            key_mask = torch.zeros(pad.shape, dtype=H_genes.dtype, device=device)
+            key_mask = key_mask.masked_fill(pad, float("-inf"))
+
+        H_cur = H_genes.unsqueeze(0).expand(batch_size, -1, -1)  # [batch, N, d]
+        first_context: torch.Tensor | None = None
+        for layer_idx in range(self.num_layers):
+            # K/V read the CURRENT representation of each strain's perturbed genes.
+            kv = torch.gather(
+                H_cur, 1, idx.unsqueeze(-1).expand(-1, -1, d)
+            )  # [batch, S_max, d]
+            if self.null_sink:
+                kv = torch.cat([kv.new_zeros(batch_size, 1, d), kv], dim=1)
+            attended, _ = self.cross_attn_layers[layer_idx](
+                query=H_cur,
+                key=kv,
+                value=kv,
+                key_padding_mask=key_mask,
+                attn_mask=attn_mask,
+                need_weights=False,
+            )  # [batch, N, d]
+            if self.null_scale != 1.0:
+                attended = attended * self.null_scale
+            if not bool(has_pert.all()):
+                attended = attended * has_pert.view(-1, 1, 1).to(attended.dtype)
+            if self.hadamard_gamma is not None:
+                mod = H_cur * self.hadamard_gamma(attended)
+                attended = mod if self.hadamard == "replace" else attended + mod
+            if first_context is None:
+                first_context = attended
+            H_cur = self._apply_residual(H_cur, attended, layer_idx)
+        assert first_context is not None
+        return H_cur, first_context
+
+    def _forward_loop(
+        self,
+        H_genes: torch.Tensor,
+        perturbation_indices: torch.Tensor,
+        batch_assignment: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """The original one-strain-at-a-time operator, kept as the reference."""
         batch_size = int(batch_assignment.max().item()) + 1
         N, d = H_genes.shape
 
@@ -1320,27 +1444,11 @@ class PerturbationHead(nn.Module):
         """
         batch_size = H_genes_pert.shape[0]
 
-        # Aggregate perturbed genes per sample
-        z_S_list = []
-        for b in range(batch_size):
-            mask = batch_assignment == b
-            pert_idx_b = perturbation_indices[mask]
-
-            if len(pert_idx_b) > 0:
-                # Extract perturbed genes for this sample from H_genes_pert
-                h_pert_b = H_genes_pert[b, pert_idx_b, :]  # [|S_b|, d]
-                z_S_list.append(
-                    h_pert_b.sum(dim=0)
-                    if self.pooling == "sum"
-                    else h_pert_b.mean(dim=0)
-                )  # [d]
-            else:
-                # No perturbation
-                z_S_list.append(
-                    torch.zeros(self.hidden_dim, device=H_genes_pert.device)
-                )
-
-        z_S = torch.stack(z_S_list, dim=0)  # [batch_size, d]
+        # Aggregate perturbed genes per sample: one gather and one index_add in place of
+        # a loop over strains (2026-10-06). A strain with no perturbation stays zero.
+        z_S = pooled_perturbed(
+            H_genes_pert, perturbation_indices, batch_assignment, self.pooling
+        )  # [batch_size, d]
 
         # Concatenate with CLS token: [h_CLS || z_S]
         h_CLS_expanded = h_CLS.unsqueeze(0).expand(batch_size, -1)  # [batch_size, d]
@@ -3086,20 +3194,12 @@ class CellGraphTransformer(nn.Module):
                 or self.response_basis is not None
             ):
                 bsz = H_genes_pert.shape[0]
-                pert_idx = batch["gene"].perturbation_indices
-                pert_b = batch["gene"].perturbation_indices_batch
-                z_S = torch.zeros(
-                    bsz, self.hidden_channels, device=device, dtype=H_genes_pert.dtype
+                z_S = pooled_perturbed(
+                    H_genes_pert,
+                    batch["gene"].perturbation_indices,
+                    batch["gene"].perturbation_indices_batch,
+                    self.pert_pooling,
                 )
-                for b in range(bsz):
-                    sel = pert_idx[pert_b == b]
-                    if len(sel) > 0:
-                        h_sel = H_genes_pert[b, sel, :]
-                        z_S[b] = (
-                            h_sel.sum(dim=0)
-                            if self.pert_pooling == "sum"
-                            else h_sel.mean(dim=0)
-                        )
                 pert_cond = torch.cat([z_S, h_CLS.unsqueeze(0).expand(bsz, -1)], dim=-1)
             if self.per_gene_pert_set and pert_cond is not None:
                 pg_in = torch.cat(

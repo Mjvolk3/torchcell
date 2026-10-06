@@ -826,6 +826,56 @@ def compute_per_feature_target_stats(
     return stats
 
 
+def _identity(item: Any) -> Any:
+    """Collate for a batch_size=None loader: the sample itself.
+
+    Module-level so worker processes can pickle it.
+    """
+    return item
+
+
+class MaterializedSplit(torch.utils.data.Dataset):
+    """A split held in memory: every processed sample fetched once, up front.
+
+    WHY (2026-10-06 profile, GilaHyper job 3302). A sample costs about 50 ms to produce
+    (LMDB read, JSON parse, pydantic reconstruction of an experiment with thousands of
+    phenotype values, the graph processor), and the loader repeats that for every sample
+    every epoch: 57 s of a 151 s epoch at zero workers, and still 8 to 12 s of a 60 s
+    epoch with three persistent workers, which is also what made the runs fight for
+    CPUs when packed four to a card. The processed sample is small (two gene masks and
+    a COO phenotype list, about 100 KB), so the whole both-label store is about 130 MB.
+    Fetching once and indexing a list removes the loader from the epoch and the need
+    for workers.
+
+    Keeps ``dataset`` and ``indices`` so the code that reads a split's row indices (the
+    supervised counts, the normalization fit, the prediction dumps) is unchanged.
+    """
+
+    def __init__(self, subset: torch.utils.data.Subset, num_workers: int) -> None:
+        """Fetch every sample of ``subset`` once, with ``num_workers`` loader workers."""
+        self.dataset = subset.dataset
+        self.indices = list(subset.indices)
+        # Spawned workers, as the datamodule uses: the LMDB environment must not be
+        # shared across a fork.
+        loader = torch.utils.data.DataLoader(
+            subset,
+            batch_size=None,
+            shuffle=False,
+            num_workers=num_workers,
+            collate_fn=_identity,
+            multiprocessing_context="spawn" if num_workers > 0 else None,
+        )
+        self.items: list[Any] = list(loader)
+
+    def __len__(self) -> int:
+        """Return the number of samples held."""
+        return len(self.items)
+
+    def __getitem__(self, idx: int) -> Any:
+        """Return the stored sample at position ``idx`` of the split."""
+        return self.items[idx]
+
+
 class MultitaskCGTTask(L.LightningModule):
     """Lightning wrapper: multitask CGT + ``MaskedMultitaskLoss`` + optim/sched.
 
@@ -1830,7 +1880,17 @@ class MultitaskCGTTask(L.LightningModule):
         during-training series. Cost is one extra no-grad forward pass over the train split
         (~4 batches at the 019 expression size), gated by ``trainer.train_eval_every``.
         """
-        loader = self.trainer.datamodule.train_dataloader()
+        dm = self.trainer.datamodule
+        if isinstance(dm.train_dataset, MaterializedSplit):
+            # Splits in memory: a zero-worker loader costs only collation (about 3 s for
+            # the 35 batches), where a loader with workers spawns and imports them again
+            # on EVERY call, about 30 s (2026-10-06 profile, job 3302).
+            configured_workers = dm.num_workers
+            dm.num_workers = 0
+            loader = dm.train_dataloader()
+            dm.num_workers = configured_workers
+        else:
+            loader = dm.train_dataloader()
         was_training = self.training
         self.eval()
         # Fresh cache for the namespace, so a previous epoch's tensors cannot leak in.
@@ -2824,6 +2884,23 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
                 f"(all of {require_head_targets})"
             )
 
+    # `+data_module.materialize=true`: fetch every sample of every split once, now, and
+    # train from memory (see MaterializedSplit). Runs after every index filter above so
+    # the materialized rows are exactly the rows the run would have read.
+    if bool(cfg.data_module.get("materialize", False)):
+        for split_attr in ("train_dataset", "val_dataset", "test_dataset"):
+            sub = getattr(data_module, split_attr)
+            t0 = time.monotonic()
+            setattr(
+                data_module,
+                split_attr,
+                MaterializedSplit(sub, int(cfg.data_module.num_workers)),
+            )
+            print(
+                f"[materialize] {split_attr}: {len(sub.indices)} rows in "
+                f"{time.monotonic() - t0:.1f} s"
+            )
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     heads_config = build_heads_config(cfg)
     # Model class. `cell_graph_transformer` is the Fig-3 model; `metabolism` is the
@@ -3474,6 +3551,11 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         limit_val_batches=cfg.trainer.get("limit_val_batches", 1.0),
         precision=cfg.trainer.get("precision", "32-true"),
         fast_dev_run=cfg.trainer.get("fast_dev_run", False),
+        # `trainer.profiler=simple` prints Lightning's per-hook wall-time table at the end
+        # of fit (dataloader fetch, training_step, backward, optimizer step, the
+        # validation hooks), which is how the 2026-10-06 throughput profile located the
+        # epoch's cost. Off by default; it adds nothing to a normal run.
+        profiler=cfg.trainer.get("profiler", None),
     )
     # EVALUATION ONLY. `trainer.eval_ckpt_path` loads a saved checkpoint's weights into the
     # task built above (same config, same partition) and, instead of training, scores the

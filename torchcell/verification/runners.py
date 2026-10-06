@@ -1017,9 +1017,10 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_wildenhain2015": {
         "root": "data/torchcell/env_chemgen_wildenhain2015",
-        # 428573 (ORF, compound-identity) cells minus the 367 cells of the 5 SID-only
-        # compounds. Rules + counts: preprocess/dropped_records.json.
-        "expected_count": 428206,
+        # (strain, compound-identity) cells minus the strain_label_unresolved cells
+        # (TSCII, YGL11, wtn01) and the SID-only compounds' cells (#504). Rules +
+        # counts: preprocess/dropped_records.json.
+        "expected_count": 430820,
         "background_genes": frozenset(),
         "stream": True,
         "provenance": Provenance(
@@ -1033,22 +1034,27 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             method=(
                 "PubChem BioAssay AID 1159580 datapoint export (member of the FTP range "
                 "archive, container sha256 d1fd5dc2bf7c526ad9845e0a14ae9981256fb820aaf42"
-                "28b48a3ba0724ee59b0 asserted before the member is read); released "
-                "normalized-OD600 z_score per (deletion strain x compound) at 20 uM in "
-                "DMSO, SC + 2% glucose (shared MEDIA_LIBRARY object), 30 C, ~18 h. A "
-                "cell's contributing SCREENS are its distinct released datapoints (the "
-                "export re-emits the same datapoint under two gene-symbol spellings); "
-                "response = mean over screens, n_samples = screens (sample_unit=screen), "
-                "uncertainty = sample SD across screens or a typed ProvenanceGap at n=1. "
-                "PUBCHEM_ACTIVITY_OUTCOME + bioactivity map onto ResponseCategory "
-                "(Inactive->no_change, Active->sensitive/resistant, Inconclusive and "
-                "disagreeing screens->not_determined) with the source words verbatim in "
-                "category_label. Dropped: the 367 cells of the 5 SID-only compounds"
+                "28b48a3ba0724ee59b0 asserted before the member is read), the extended "
+                "CGM of the 2016 Sci Data descriptor (doi:10.1038/sdata.2016.95; 242 "
+                "strains, 492,126 tests); released z_score (N(1, IQR) fit within the "
+                "strain's own screen) per (strain x compound) at 20 uM in 1.96% v/v DMSO, "
+                "SC + 2% glucose, 30 C, static 100 uL 96-well culture read at solvent-"
+                "control saturation (StrainEnvironmentResponseExperiment, "
+                "CultureEnvironment). Genotypes on a BY4741 StrainReferenceGenome: "
+                "kanMX4 Euroscarf deletions; the 33 SGD-essential ORFs as "
+                "ConditionalAllelePerturbation with typed gaps; NA/NNK1 mapped to "
+                "YKL171W; the wild-type screen as the empty genotype. One reference: "
+                "z = 0, no compound. Response = mean over a cell's distinct released "
+                "screens, n_samples = screens, sample SD or a typed gap at n=1. "
+                "PUBCHEM_ACTIVITY_OUTCOME + bioactivity map onto ResponseCategory. "
+                "Held/dropped: the TSCII / YGL11 / wtn01 labels and the SID-only "
+                "compounds"
             ),
             page=(
                 "Cell Systems 2015 (doi:10.1016/j.cels.2015.12.003); AID description "
                 "sha256=23c5f8c56af94786cfe8e22c93fdde0b719ca2165975305944557ab39087b0e4; "
-                "paper.md sha256=f46409eb8f23412c9c1015d0f8f5bb581bfddfe2796d319d407585e23c757ac2"
+                "paper.md sha256=f46409eb8f23412c9c1015d0f8f5bb581bfddfe2796d319d407585e23c757ac2; "
+                "Sci Data 2016 paper.md sha256=89ff4d9bf1d31719ab15c18ab7aca0b7caf10f55c7c239c1b021908c95439e33"
             ),
         ),
     },

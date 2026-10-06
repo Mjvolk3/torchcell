@@ -8,8 +8,14 @@ reach the graph as properties, or a CGM cell joins nothing.
 
 from __future__ import annotations
 
+import gc
+import json
 import os.path as osp
+from typing import Any
 
+import pytest
+
+import torchcell.adapters.cell_adapter as cell_adapter_module
 import torchcell.adapters.wildenhain2015_adapter as adapter_module
 from tests.torchcell.adapters.test_vanacloig2022_adapter import (
     adapter_method_names,
@@ -105,3 +111,101 @@ def test_environment_response_properties_project_the_z_score_axes() -> None:
     assert props["category_label"] == "Active / sensitive"
     assert props["environment_response_se"] == 1.0
     assert "serialized_data" not in props
+
+
+# ---- #504: the strain-resolved records through the real adapter ------------------ #
+def _panel_store(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
+    """A real scratch build: CDC28 (conditional allele), NNK1 on YKL171W, the wild type,
+    plus the held TSCII / YGL11 / wtn01 labels (4 served records).
+    """
+    from tests.torchcell.datasets.scerevisiae.test_wildenhain2015 import (
+        _build,
+        _panel_row,
+        _panel_rows,
+        _PanelGenome,
+        _write_raw,
+    )
+
+    rows = [*_panel_rows(), _panel_row("NULL", "wild type", "8", "1183", "-2.0")]
+    _write_raw(tmp_path, rows)
+    return _build(tmp_path, monkeypatch, _PanelGenome())
+
+
+class _Table:
+    def __init__(self, columns: list[Any], data: list[Any]) -> None:
+        self.columns = columns
+        self.data = data
+
+
+class _Recorder:
+    """Stands in for ``wandb`` (the adapter logs a method table)."""
+
+    Table = _Table
+
+    def init(self) -> None:
+        return None
+
+    def log(self, payload: dict[str, Any]) -> None:
+        return None
+
+
+def test_adapter_emits_the_strain_resolved_nodes(
+    tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Contract (#504 / #507): the experiment, reference, genome and phenotype nodes come
+    out for the new family with no adapter change. One reference and one genome node
+    (the BY4741 background, MATa, four alleles) serve all four records; the
+    perturbation nodes carry the conditional-allele and kanMX-deletion leaves; the
+    wild-type record has a genotype node with no perturbation edge.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    monkeypatch.setattr(cell_adapter_module, "wandb", _Recorder())
+    dataset = _panel_store(tmp_path, monkeypatch)
+    assert len(dataset) == 4
+    adapter = adapter_module.EnvChemgenWildenhain2015Adapter(
+        dataset=dataset,
+        process_workers=1,
+        io_workers=1,
+        chunk_size=4,
+        loader_batch_size=4,
+    )
+    try:
+        nodes = list(adapter.get_nodes())
+        edges = list(adapter.get_edges())
+    finally:
+        gc.unfreeze()
+    by_label: dict[str, list[Any]] = {}
+    for node in nodes:
+        by_label.setdefault(node.get_label(), []).append(node)
+    assert len(by_label["experiment"]) == 4
+    assert len(by_label["experiment reference"]) == 1
+    reference = json.loads(
+        by_label["experiment reference"][0].get_properties()["serialized_data"]
+    )
+    assert reference["experiment_reference_type"] == "strain_environment_response"
+    assert reference["environment_reference"]["perturbations"] == []
+    assert reference["phenotype_reference"]["environment_response"] == 0.0
+    assert len(by_label["genome"]) == 1
+    genome = json.loads(by_label["genome"][0].get_properties()["serialized_data"])
+    assert genome["strain"] == "BY4741"
+    assert genome["background"]["mating_type"] == "a"
+    assert [a["allele_name"] for a in genome["background"]["alleles"]] == [
+        "his3Δ1",
+        "leu2Δ0",
+        "met15Δ0",
+        "ura3Δ0",
+    ]
+    experiments = [
+        json.loads(n.get_properties()["serialized_data"])
+        for n in by_label["experiment"]
+    ]
+    assert {e["experiment_type"] for e in experiments} == {
+        "strain_environment_response"
+    }
+    assert {
+        n.get_properties()["perturbation_type"] for n in by_label["perturbation"]
+    } == {"conditional_allele", "barcoded_kanmx_deletion"}
+    assert len(by_label["environment response phenotype"]) == 5  # 4 records + reference
+    assert len(by_label["genotype"]) == 4
+    perturbation_edges = [e for e in edges if e.get_label() == "perturbation member of"]
+    assert len(perturbation_edges) == 3  # the wild type has no perturbation

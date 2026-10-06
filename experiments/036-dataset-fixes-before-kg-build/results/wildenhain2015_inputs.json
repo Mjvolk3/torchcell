@@ -1,0 +1,233 @@
+{
+  "raw": {
+    "data_rows": 492126,
+    "distinct_sids": 5518,
+    "systematic_orfs": 242,
+    "non_orf_label_rows": {
+      "NA/NNK1": 678,
+      "NA/TSCII": 678,
+      "NULL/YGL11": 2000,
+      "NULL/wild type": 1940,
+      "NULL/wtn01": 2000
+    },
+    "non_orf_label_sids": {
+      "NA/NNK1": 678,
+      "NA/TSCII": 678,
+      "NULL/YGL11": 2000,
+      "NULL/wild type": 1940,
+      "NULL/wtn01": 2000
+    },
+    "nnk1_sids_shared_with_ykl171w": 0,
+    "nnk1_cids_shared_with_ykl171w": 0,
+    "ykl171w_orf_labelled_sids": 11,
+    "essential_orfs": [
+      "YAR019C",
+      "YBL105C",
+      "YBR135W",
+      "YBR136W",
+      "YBR160W",
+      "YDL017W",
+      "YDL028C",
+      "YDL108W",
+      "YDL132W",
+      "YDR052C",
+      "YDR054C",
+      "YER133W",
+      "YFL009W",
+      "YFL029C",
+      "YFR003C",
+      "YFR028C",
+      "YIL147C",
+      "YJR016C",
+      "YKL193C",
+      "YKL203C",
+      "YMR001C",
+      "YMR277W",
+      "YNL006W",
+      "YNL161W",
+      "YNL207W",
+      "YNL222W",
+      "YOL078W",
+      "YOR119C",
+      "YOR329C",
+      "YPL153C",
+      "YPL204W",
+      "YPL209C",
+      "YPR025C"
+    ],
+    "essential_orfs_match_loader_pin": true,
+    "z_vs_normalized_od_fit": {
+      "n_strain_screens_fitted": 246,
+      "rule": "per strain label with >= 50 rows: least-squares z = a + b * normOD",
+      "median_r2": 0.9999956702068271,
+      "median_normalized_od_at_z0": 0.9999961271287225,
+      "mean_normalized_od_at_z0": 0.9902520078771357,
+      "median_slope": 43.00684630205185
+    }
+  },
+  "new_root": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-wildenhain2015-inputs/env_chemgen_wildenhain2015",
+  "new": {
+    "records": 430820,
+    "experiment_types": {
+      "strain_environment_response": 430820
+    },
+    "records_by_genotype_kind": {
+      "wild_type (empty genotype)": 1936,
+      "barcoded_kanmx_deletion": 406477,
+      "conditional_allele": 22407
+    },
+    "essential_strain_records_by_perturbation_type": {
+      "conditional_allele": 22407
+    },
+    "essential_strain_gap_fields": {
+      "allele_class,collection": 22407
+    },
+    "essential_strains_served": [
+      "YAR019C",
+      "YBL105C",
+      "YBR135W",
+      "YBR136W",
+      "YBR160W",
+      "YDL017W",
+      "YDL028C",
+      "YDL108W",
+      "YDL132W",
+      "YDR052C",
+      "YDR054C",
+      "YER133W",
+      "YFL009W",
+      "YFL029C",
+      "YFR003C",
+      "YFR028C",
+      "YIL147C",
+      "YJR016C",
+      "YKL193C",
+      "YKL203C",
+      "YMR001C",
+      "YMR277W",
+      "YNL006W",
+      "YNL161W",
+      "YNL207W",
+      "YNL222W",
+      "YOL078W",
+      "YOR119C",
+      "YOR329C",
+      "YPL153C",
+      "YPL204W",
+      "YPL209C",
+      "YPR025C"
+    ],
+    "ykl171w_records": 689,
+    "wild_type_records": 1936,
+    "distinct_references": 1,
+    "reference": {
+      "experiment_reference_type": "strain_environment_response",
+      "environment_perturbations": [],
+      "environment_response": 0.0,
+      "units": "released PubChem AID 1159580 z_score of growth inhibition: a N(1, IQR) fit to the median-normalized OD600 (technical-duplicate read average) of the strain's OWN screen, so 0 is that strain's plate-median growth and the scale is the screen's IQR (about 1.35 SD of a normal; not unit variance); 20 uM compound in 1.96% v/v DMSO, SC + 2% glucose, 30 C, static 100 uL 96-well culture read when the solvent controls saturated (~18 h); negative = growth inhibition; averaged over the contributing screens of the cell; reference z = 0 is the SAME strain's own screen center (plate-median growth, normalized OD 1) with no active compound, NOT BY4741 under the compound and NOT a measured wild-type value; the reference record has no genotype slot, so its genome states the shared BY4741 background only"
+    },
+    "background": {
+      "name": "BY4741",
+      "mating_type": "a",
+      "ploidy": "haploid",
+      "alleles": [
+        {
+          "allele_name": "his3\u03941",
+          "systematic_gene_name": "YOR202W",
+          "edit": "partial_deletion",
+          "sourced_by": [
+            "wildenhainSystematicChemicalgeneticChemicalchemical2016"
+          ],
+          "gaps": [
+            "deleted_span"
+          ]
+        },
+        {
+          "allele_name": "leu2\u03940",
+          "systematic_gene_name": "YCL018W",
+          "edit": "full_deletion",
+          "sourced_by": [
+            "wildenhainSystematicChemicalgeneticChemicalchemical2016"
+          ],
+          "gaps": [
+            "deleted_span"
+          ]
+        },
+        {
+          "allele_name": "met15\u03940",
+          "systematic_gene_name": "YLR303W",
+          "edit": "full_deletion",
+          "sourced_by": [
+            "wildenhainSystematicChemicalgeneticChemicalchemical2016"
+          ],
+          "gaps": [
+            "deleted_span"
+          ]
+        },
+        {
+          "allele_name": "ura3\u03940",
+          "systematic_gene_name": "YEL021W",
+          "edit": "full_deletion",
+          "sourced_by": [
+            "wildenhainSystematicChemicalgeneticChemicalchemical2016"
+          ],
+          "gaps": [
+            "deleted_span"
+          ]
+        }
+      ],
+      "provenance_citation_keys": [
+        "wildenhainSystematicChemicalgeneticChemicalchemical2016"
+      ]
+    },
+    "solvent_percent_counts": {
+      "1.96": 430820
+    },
+    "drop_ledger": {
+      "dataset": "EnvChemgenWildenhain2015Dataset",
+      "source_records": 435857,
+      "kept_records": 430820,
+      "dropped_records": 5037,
+      "rules": [
+        {
+          "rule": "strain_label_unresolved",
+          "scope": "strain",
+          "description": "the released orf is not a systematic name and the sym names no strain a mirrored source identifies (NON_ORF_STRAIN_LABELS); held until Sci Data Table 1 / Cell Systems Table S3 is mirrored. Items: label (cells, released rows)",
+          "n_records": 4669,
+          "items": [
+            "NA/TSCII (678 cells, 678 rows)",
+            "NULL/YGL11 (1994 cells, 2000 rows)",
+            "NULL/wtn01 (1997 cells, 2000 rows)"
+          ]
+        },
+        {
+          "rule": "compound_without_a_structure_identifier",
+          "scope": "compound",
+          "description": "the released row carries no PUBCHEM_CID and no SMILES, so the compound has no InChIKey, CID or ChEBI id to be keyed or joined by; only its submitter SID is known",
+          "n_records": 368,
+          "items": [
+            "SID 268734404",
+            "SID 268735390",
+            "SID 268737906",
+            "SID 277425705",
+            "SID 277425722"
+          ]
+        }
+      ]
+    }
+  },
+  "old_root": "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_wildenhain2015",
+  "old": {
+    "records": 428206,
+    "keys": 428206,
+    "keys_shared_with_new": 428206,
+    "keys_only_in_old": 0,
+    "keys_only_in_new": 2614,
+    "only_in_new_by_strain": {
+      "wild type": 1936,
+      "YKL171W": 678
+    },
+    "shared_keys_with_a_different_z": 0,
+    "changed_examples": []
+  }
+}

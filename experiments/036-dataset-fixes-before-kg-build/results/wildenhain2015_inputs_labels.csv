@@ -1,0 +1,6 @@
+label,released_rows,released_sids,disposition
+NA/NNK1,678,678,mapped_to_orf
+NA/TSCII,678,678,unresolved
+NULL/YGL11,2000,2000,unresolved
+NULL/wild type,1940,1940,wild_type
+NULL/wtn01,2000,2000,unresolved

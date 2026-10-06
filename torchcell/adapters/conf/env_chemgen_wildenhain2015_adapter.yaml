@@ -1,6 +1,7 @@
-# Wildenhain 2015 chemical-genetic matrix: 428,206 (deletion, compound) records.
-# Gene-keyed genotype (one Euroscarf haploid deletion per record), so genotype +
-# perturbation nodes are served. The screened compound at 20 uM is an environment
+# Wildenhain 2015/2016 chemical-genetic matrix: 430,820 (strain, compound) records
+# (#504). Gene-keyed genotype (one kanMX4 deletion or one conditional allele per record;
+# the wild-type screen has none), so genotype + perturbation nodes are served; the BY4741
+# background rides on the one reference's genome node. The screened compound at 20 uM is an environment
 # perturbation node, which is what lets its PubChem CID / InChIKey join across the
 # chemogenomic datasets instead of hiding inside a serialized environment.
 cell_adapter:

@@ -193,3 +193,39 @@ Record-neutral, measured on the pinned `1159580.csv.gz`: 484,830 strain datapoin
 Tests: `test_two_z_strings_of_equal_value_are_one_screen`, `test_download_without_a_manifest_refuses_naming_the_deposit_step`.
 
 Review follow-up (same day): `_parse_z` refuses, naming the cell and the raw string, for an unparseable z ("is not a number") or a non-finite one ("is not finite"). Two `nan` rows would otherwise be two float keys. The refusal fires in `_collapse_matrix`, before the store opens. Measured on the pinned export: 0 unparseable and 0 non-finite z of 484,830. Test: `test_a_non_finite_or_unparseable_z_refuses_naming_the_cell`.
+
+## 2026.10.02 - Input audit fixes: essential-gene strains, Sci Data 2016 sourcing, strain screens, background, z reference (#504)
+
+Issue #504 (input-definition audit). Built on the #507 schema ([[torchcell.datamodels.strain-background]]). Measurement script: `experiments/036-dataset-fixes-before-kg-build/scripts/wildenhain2015_inputs.py`, output `experiments/036-dataset-fixes-before-kg-build/results/wildenhain2015_inputs.json` (+ `_labels.csv`); inputs: the pinned `1159580.csv.gz`, a full scratch build of this branch, and the pre-fix dev store.
+
+### What was wrong
+
+- 33 of the 242 released ORFs are SGD-essential (CDC28, TOR2, IPL1, RAD53, ...) and were served as haploid kanMX nulls, which are not viable.
+- The release is the 2016 Sci Data extended CGM (doi:10.1038/sdata.2016.95, mirrored as `wildenhainSystematicChemicalgeneticChemicalchemical2016`), not the 2015 195-strain CGM; it was cited nowhere, and the "195 vs 242" text called the 47 extra strains unexplained.
+- The `NA` / `NULL` rows (7,296) were dropped as "non-strain control rows"; they are strain screens.
+- The BY4741 background was a bare string; the z reference claimed BY4741 in the same compound well; `Z_SCORE_DEFINITION` quoted the AID's "kernel density" caption; the DMSO fraction, culture format and endpoint rule were not recorded.
+
+### What the loader does now
+
+- Records are `StrainEnvironmentResponseExperiment` on a `CultureEnvironment`; one `StrainEnvironmentResponseExperimentReference` for every record.
+- Background: `StrainReferenceGenome(strain="BY4741", background=standard_background("BY4741", provenance=[BY4741_GENOTYPE]))`, the string quoted from Sci Data paper.md line 50 ("isogenic to BY4741, which has the genotype MATa his3Δ1 leu2Δ0 met15Δ0 ura3Δ0"); each allele also carries a `deferred_pending_source_review` gap on `deleted_span` naming Brachmann 1998 (the edit kind of each designation is not in a mirrored source).
+- Genotype: `BarcodedKanMxDeletionPerturbation(collection="Euroscarf deletion collection", cassette="kanMX4")` (Giaever 2014) with a pending gap on `barcode` (Giaever 2002) for 209 ORFs; `ConditionalAllelePerturbation(allele_class=None, collection=None)` with pending gaps naming Sci Data Table 1 / Cell Systems Table S3 for the 33 essential ORFs (`ESSENTIAL_GENE_ORFS`, pinned; the test recomputes it from `gene_essentiality_sgd/preprocess/gene_set.json`). Emit-with-gap was chosen over a drop because the records are real measurements.
+- Non-ORF labels (`NON_ORF_STRAIN_LABELS`): `NA/NNK1` is mapped to YKL171W (checked against the genome at build time); `NULL/wild type` is served as the empty genotype; `NA/TSCII`, `NULL/YGL11`, `NULL/wtn01` are held under the ledger rule `strain_label_unresolved`. An unlisted label refuses the build.
+- Environment: a Wildenhain-local `WILDENHAIN_SC` (same composition as the shared `SC`, so one `media_identity`; provenance replaced by the Sci Data line 54 medium sentence). The shared `SC` in `media.py` (which still carries the 2015 fungal-species sentence) is imported by five loaders and is untouched. 30 C, ~18 h, `CultureFormat(vessel="96-well plate", working_volume_ul=100, shaking_rpm=0, inoculum_cells=50000, endpoint=until_control_saturation)`, `PreCulture(source=overnight_culture)` with a gap on its medium, gaps on `duration_generations` and `auxotroph_supplements`. `Solvent(DMSO, percent=1.96)`: 100 x 2 uL / (100 uL + 2 uL) = 1.96 % v/v from lines 46 and 54, treating the 1 mM working stock as neat DMSO (hypothesis, untested: the 10 mM library stocks are themselves DMSO; if aqueous, 1.76 %).
+- Z: `Z_SCORE_DEFINITION` quotes the N(1, IQR) rule (Sci Data line 66); the units say IQR-scaled, 0 = the strain's own plate median. The reference environment has no compound and its units say the baseline is the SAME strain's screen center. Every phenotype carries a `screen_id` gap: the release has no library column, and normalization differs by library (LOWESS vs DMSO controls, lines 63-64).
+- Publication stays the 2015 Cell Systems paper (a record holds ONE `Publication`); the 2016 paper reaches every record through the reference background, the culture format, the medium and the z rule (`SourcedValue`s with its citation key and sha256).
+
+### Measured (script above)
+
+- Release: 492,126 rows, 5,518 SIDs, 242 ORFs (= Sci Data's stated counts). Non-ORF labels (rows = SIDs): NNK1 678, TSCII 678, YGL11 2,000, wild type 1,940, wtn01 2,000. NNK1's SIDs and CIDs share 0 with the 11 rows released under `orf=YKL171W`.
+- z vs normalized OD, per strain label with >= 50 rows (246 fitted): median r^2 0.999996, median normalized OD at z = 0 0.999996 (mean 0.990), median slope 43.0.
+- Records: before 428,206 (dev store), after 430,820 (scratch build) = 406,477 kanMX deletion + 22,407 conditional allele (all 33 essential ORFs, every one with gaps on `allele_class` and `collection`) + 1,936 wild type. YKL171W: 11 -> 689 records. One distinct reference. Ledger: 435,857 cells; `strain_label_unresolved` 4,669 (TSCII 678, YGL11 1,994, wtn01 1,997); `compound_without_a_structure_identifier` 368 (was 367; one wild-type cell is an SID-only compound).
+- z identity: all 428,206 pre-fix (ORF, compound) keys are in the new store and 0 have a different z; the 2,614 new keys are 1,936 wild type + 678 YKL171W.
+- Verifier (streaming, `torchcell/verification/runners.py` entry, on the scratch build): PASS, L1 count 430,820 = expected, pair_uniqueness 430,820 unique, deferred gap fields `allele_class`, `barcode`, `collection`, L3 reference_zero for all records, L3 media_membership 430,820 records on a medium deriving from `SC`.
+
+### Open
+
+- Retrieval go-ahead needed: Sci Data 2016 Table 1 and Cell Systems 2015 Table S3 (would resolve the 33 alleles' class and collection, TSCII / YGL11 / wtn01, the Euroscarf accessions); Brachmann 1998 (the four BY allele constructions); Giaever 2002 (barcodes).
+- Schema items (not edited, shared classes): `ExperimentReference` has no genotype slot, so "same strain, vehicle environment" is half encoded (environment yes, genotype only in `units`); a record holds one `Publication`, so the Sci Data paper cannot be a second one.
+- `aerobicity="aerobic"` stays the default for a static 100 uL culture. Hypothesis (untested): it is oxygen-limited.
+- The KG needs a full rebuild (closure moves to the strain-resolved family); the dev store must be rebuilt under slurm.

@@ -1,0 +1,366 @@
+study_name,pcl_filename,condition_name,token,systematic_name,match,sga_allele_classes,sga_sources
+Albulescu_2012_PMID_22479188,GSE34330GPL8154.sfp.pcl,CFT2-ts (Cy5) vs. CFT2 (Cy3) at 37C,CFT2-ts,YLR115W,same_gene_other_allele,damp|ts,costanzo2016|kuzmin2020
+Albulescu_2012_PMID_22479188,GSE34330GPL8154.sfp.pcl,FIP1-ts (Cy5) vs. FIP1 (Cy3) at 37C,FIP1-ts,YJR093C,same_gene_other_allele,damp|ts,costanzo2016
+Albulescu_2012_PMID_22479188,GSE34330GPL8154.sfp.pcl,RSC9-ts (Cy5) vs. RSC9 (Cy3) at 25C,RSC9-ts,YML127W,same_gene_other_allele,damp|ts,costanzo2016
+Albulescu_2012_PMID_22479188,GSE34330GPL8154.sfp.pcl,YTH1-ts (Cy5) vs. YTH1 (Cy3) at 16C,YTH1-ts,YPR107C,same_gene_other_allele,damp|ts,costanzo2016
+Albulescu_2012_PMID_22479188,GSE34330GPL8154.sfp.pcl,YTH1-ts (Cy5) vs. YTH1 (Cy3) at 37C,YTH1-ts,YPR107C,same_gene_other_allele,damp|ts,costanzo2016
+Angus-Hill_2001_PMID_11336698,2010.Angus01.flt.knn.avg.pcl,rsc3-2 a1,rsc3-2,YDR303C,same_gene_other_allele,damp|ts,costanzo2016
+Angus-Hill_2001_PMID_11336698,2010.Angus01.flt.knn.avg.pcl,rsc3-2 a2,rsc3-2,YDR303C,same_gene_other_allele,damp|ts,costanzo2016
+Angus-Hill_2001_PMID_11336698,2010.Angus01.flt.knn.avg.pcl,rsc3-2 b1,rsc3-2,YDR303C,same_gene_other_allele,damp|ts,costanzo2016
+Angus-Hill_2001_PMID_11336698,2010.Angus01.flt.knn.avg.pcl,rsc3-2 b2,rsc3-2,YDR303C,same_gene_other_allele,damp|ts,costanzo2016
+Aristizabal_2013_PMID_24009531,GSE43120.remapped.final.pcl,ref1 vs. rpb1-ctrunc-CTD1-11+cdk8-del-1-a,rpb1-ctrunc,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Aristizabal_2013_PMID_24009531,GSE43120.remapped.final.pcl,ref1 vs. rpb1-ctrunc-CTD1-11-1-a,rpb1-ctrunc,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Aristizabal_2013_PMID_24009531,GSE43120.remapped.final.pcl,ref1 vs. rpb1-ctrunc-CTD1-12+cdk8-del-1-a,rpb1-ctrunc,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Aristizabal_2013_PMID_24009531,GSE43120.remapped.final.pcl,ref1 vs. rpb1-ctrunc-CTD1-12-1-a,rpb1-ctrunc,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Aristizabal_2013_PMID_24009531,GSE43120.remapped.final.pcl,ref1 vs. rpb1-ctrunc-CTD1-13-1-a,rpb1-ctrunc,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Aristizabal_2013_PMID_24009531,GSE43120.remapped.final.pcl,ref1 vs. rpb1-ctrunc-CTD1-20-1-a,rpb1-ctrunc,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Aristizabal_2013_PMID_24009531,GSE43120.remapped.final.pcl,ref1 vs. rpb1-ctrunc-CTD1-26-1-a,rpb1-ctrunc,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Aristizabal_2013_PMID_24009531,GSE43120.remapped.final.pcl,rpb1-ctrunc-CTD1-11+cdk8-del-1-b vs. ref1,rpb1-ctrunc,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Aristizabal_2013_PMID_24009531,GSE43120.remapped.final.pcl,rpb1-ctrunc-CTD1-11-1-b vs. ref1,rpb1-ctrunc,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Aristizabal_2013_PMID_24009531,GSE43120.remapped.final.pcl,rpb1-ctrunc-CTD1-12+cdk8-del-1-b vs. ref1,rpb1-ctrunc,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Aristizabal_2013_PMID_24009531,GSE43120.remapped.final.pcl,rpb1-ctrunc-CTD1-12-1-b vs. ref1,rpb1-ctrunc,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Aristizabal_2013_PMID_24009531,GSE43120.remapped.final.pcl,rpb1-ctrunc-CTD1-13-1-b vs. ref1,rpb1-ctrunc,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Aristizabal_2013_PMID_24009531,GSE43120.remapped.final.pcl,rpb1-ctrunc-CTD1-20-1-b vs. ref1,rpb1-ctrunc,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Aristizabal_2013_PMID_24009531,GSE43120.remapped.final.pcl,rpb1-ctrunc-CTD1-26-1-b vs. ref1,rpb1-ctrunc,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Auld_2006_PMID_16543154,GSE4272_set0_family.pcl,pre1-1_prof_rep2,pre1-1,YER012W,same_allele,ts,costanzo2016
+Auld_2006_PMID_16543154,GSE4272_set0_family.pcl,pre1-1_prof_rep3,pre1-1,YER012W,same_allele,ts,costanzo2016
+Auld_2006_PMID_16543154,GSE4272_set0_family.pcl,pre1-1_prof_rep1,pre1-1,YER012W,same_allele,ts,costanzo2016
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Eco1-W216G_YPD_0min_1,Eco1-W216G,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Eco1-W216G_YPD_0min_2,Eco1-W216G,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Eco1-W216G_YPD_0min_3,Eco1-W216G,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Eco1-W216G_SD_15min_1,Eco1-W216G,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Eco1-W216G_SD_15min_2,Eco1-W216G,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Eco1-W216G_SD_15min_3,Eco1-W216G,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Eco1-W216G_SD_35min_1,Eco1-W216G,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Eco1-W216G_SD_35min_2,Eco1-W216G,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Eco1-W216G_SD_35min_3,Eco1-W216G,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Eco1-W216G_SD_55min_1,Eco1-W216G,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Eco1-W216G_SD_55min_2,Eco1-W216G,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Eco1-W216G_SD_55min_3,Eco1-W216G,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Scc2-D730V_YPD_0min_1,Scc2-D730V,YDR180W,same_gene_other_allele,damp|ts,costanzo2016|kuzmin2020
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Scc2-D730V_YPD_0min_2,Scc2-D730V,YDR180W,same_gene_other_allele,damp|ts,costanzo2016|kuzmin2020
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Scc2-D730V_YPD_0min_3,Scc2-D730V,YDR180W,same_gene_other_allele,damp|ts,costanzo2016|kuzmin2020
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Scc2-D730V_SD_15min_1,Scc2-D730V,YDR180W,same_gene_other_allele,damp|ts,costanzo2016|kuzmin2020
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Scc2-D730V_SD_15min_2,Scc2-D730V,YDR180W,same_gene_other_allele,damp|ts,costanzo2016|kuzmin2020
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Scc2-D730V_SD_15min_3,Scc2-D730V,YDR180W,same_gene_other_allele,damp|ts,costanzo2016|kuzmin2020
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Scc2-D730V_SD_35min_1,Scc2-D730V,YDR180W,same_gene_other_allele,damp|ts,costanzo2016|kuzmin2020
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Scc2-D730V_SD_35min_2,Scc2-D730V,YDR180W,same_gene_other_allele,damp|ts,costanzo2016|kuzmin2020
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Scc2-D730V_SD_35min_3,Scc2-D730V,YDR180W,same_gene_other_allele,damp|ts,costanzo2016|kuzmin2020
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Scc2-D730V_SD_55min_1,Scc2-D730V,YDR180W,same_gene_other_allele,damp|ts,costanzo2016|kuzmin2020
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Scc2-D730V_SD_55min_2,Scc2-D730V,YDR180W,same_gene_other_allele,damp|ts,costanzo2016|kuzmin2020
+Bose_2012_PMID_22719263,GSE27235.final.pcl,Scc2-D730V_SD_55min_3,Scc2-D730V,YDR180W,same_gene_other_allele,damp|ts,costanzo2016|kuzmin2020
+Chasman_2014_PMID_25411400,GSE56995.final.pcl,W303_cdc14-3_2hr at 35C_vs_+0.7M NaCl at 35C_Replicate2,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Chasman_2014_PMID_25411400,GSE56995.final.pcl,W303_cdc14-3_2hr at 35C_vs_+0.7M NaCl at 35C_Replicate3,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Chasman_2014_PMID_25411400,GSE56995.final.pcl,W303_cdc14-3_snf1_90 min at 35C_vs_+0.7M NaCl at 35C_Replicate1,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Chasman_2014_PMID_25411400,GSE56995.final.pcl,W303_cdc14-3_snf1_2hr at 35C_vs_+0.7M NaCl at 35C_Replicate2,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Chasman_2014_PMID_25411400,GSE56995.final.pcl,W303_cdc14-3_snf1_2hr at 35C_vs_+0.7M NaCl at 35C_Replicate3,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_0min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_12min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_24min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_36min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_48min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_60min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_72min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_84min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_96min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_108min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_120min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_132min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_144min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_156min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_168min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_180min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_192min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_204min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_216min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_228min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc14-3_240min,cdc14-3,YFR028C,same_gene_other_allele,damp|ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_0min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_12min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_24min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_36min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_48min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_60min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_72min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_84min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_96min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_108min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_120min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_132min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_144min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_156min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_168min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cho_2017_PMID_28934013,GSE96997.mapped.pcl,cdc15-2_180min,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Cullen_2004_PMID_15256499,2010.glycosylation.pcl,"pmi40-101, -/+ mannose",pmi40-101,YER003C,same_gene_other_allele,damp|ts,costanzo2016
+Cullen_2004_PMID_15256499,2010.glycosylation.pcl,"pmi40-101, - mannose, -/+ STE12",pmi40-101,YER003C,same_gene_other_allele,damp|ts,costanzo2016
+Duvel_2003_PMID_12820961,2010.Duvel03_delayedRap.flt.knn.avg.pcl,tap42-109 45,tap42-109,YMR028W,same_gene_other_allele,ts,costanzo2016|kuzmin2020
+Duvel_2003_PMID_12820961,2010.Duvel03_delayedRap.flt.knn.avg.pcl,tap42-109 75,tap42-109,YMR028W,same_gene_other_allele,ts,costanzo2016|kuzmin2020
+Duvel_2003_PMID_12820961,2010.Duvel03_delayedRap.flt.knn.avg.pcl,tap42-109 90,tap42-109,YMR028W,same_gene_other_allele,ts,costanzo2016|kuzmin2020
+Duvel_2003_PMID_12820961,2010.Duvel03_delayedRap.flt.knn.avg.pcl,tap42-109 120,tap42-109,YMR028W,same_gene_other_allele,ts,costanzo2016|kuzmin2020
+Felipe-Abrio_2015_PMID_25452497,GSE55223.final.pcl,"rpb1-1, biological rep. 1",rpb1-1,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Felipe-Abrio_2015_PMID_25452497,GSE55223.final.pcl,"rpb1-1, biological rep. 2",rpb1-1,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Felipe-Abrio_2015_PMID_25452497,GSE55223.final.pcl,"rpb1-1, biological rep. 3",rpb1-1,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Felipe-Abrio_2015_PMID_25452497,GSE55223.final.pcl,"rpb2-10, biological rep. 1",rpb2-10,YOR151C,same_gene_other_allele,damp|ts,costanzo2016
+Felipe-Abrio_2015_PMID_25452497,GSE55223.final.pcl,"rpb2-10, biological rep. 2",rpb2-10,YOR151C,same_gene_other_allele,damp|ts,costanzo2016
+Felipe-Abrio_2015_PMID_25452497,GSE55223.final.pcl,"rpb2-10, biological rep. 3",rpb2-10,YOR151C,same_gene_other_allele,damp|ts,costanzo2016
+Gaillard_2014_PMID_24603480,GSE50947.remapped.final.pcl,"rna14-1, biological rep. 1",rna14-1,YMR061W,same_gene_other_allele,ts,costanzo2016
+Gaillard_2014_PMID_24603480,GSE50947.remapped.final.pcl,"rna14-1, biological rep. 2",rna14-1,YMR061W,same_gene_other_allele,ts,costanzo2016
+Gaillard_2014_PMID_24603480,GSE50947.remapped.final.pcl,"rna14-1, biological rep. 3",rna14-1,YMR061W,same_gene_other_allele,ts,costanzo2016
+Gaillard_2014_PMID_24603480,GSE50947.remapped.final.pcl,"rna15-1, biological rep. 1",rna15-1,YGL044C,same_gene_other_allele,ts,costanzo2016
+Gaillard_2014_PMID_24603480,GSE50947.remapped.final.pcl,"rna15-1, biological rep. 2",rna15-1,YGL044C,same_gene_other_allele,ts,costanzo2016
+Gaillard_2014_PMID_24603480,GSE50947.remapped.final.pcl,"rna15-1, biological rep. 3",rna15-1,YGL044C,same_gene_other_allele,ts,costanzo2016
+Garrido-Godino_2016_PMID_27001033,GSE65283.mapped.pcl,cDNA1 30ºC rpo21-4 on filter V8-L1-10,rpo21-4,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Garrido-Godino_2016_PMID_27001033,GSE65283.mapped.pcl,cDNA2 30ºC rpo21-4 on filter V8-L1-8,rpo21-4,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Garrido-Godino_2016_PMID_27001033,GSE65283.mapped.pcl,cDNA3 30ºC rpo21-4 on filter V8-L1-11,rpo21-4,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Garrido-Godino_2016_PMID_27001033,GSE65283.mapped.pcl,cDNA1 37ºC rpo21-4 on filter V8-L1-12,rpo21-4,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Garrido-Godino_2016_PMID_27001033,GSE65283.mapped.pcl,cDNA2 37ºC rpo21-4 on filter V8-L1-13,rpo21-4,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Garrido-Godino_2016_PMID_27001033,GSE65283.mapped.pcl,cDNA3 37ºC rpo21-4 on filter V8-L1-14,rpo21-4,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Garrido-Godino_2016_PMID_27001033,GSE65283.mapped.pcl,cDNA1 30ºC rpb1-84 on filter V8-L1-12,rpb1-84,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Garrido-Godino_2016_PMID_27001033,GSE65283.mapped.pcl,cDNA2 30ºC rpb1-84 on filter V8-L1-13,rpb1-84,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Garrido-Godino_2016_PMID_27001033,GSE65283.mapped.pcl,cDNA3 30ºC rpb1-84 on filter V8-L1-14,rpb1-84,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Garrido-Godino_2016_PMID_27001033,GSE65283.mapped.pcl,cDNA1 37ºC rpb1-84 on filter V8-L1-12,rpb1-84,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Garrido-Godino_2016_PMID_27001033,GSE65283.mapped.pcl,cDNA2 37ºC rpb1-84 on filter V8-L1-13,rpb1-84,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Garrido-Godino_2016_PMID_27001033,GSE65283.mapped.pcl,cDNA3 37ºC rpb1-84 on filter V8-L1-14,rpb1-84,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Gonzalez-Aguilera_2011_PMID_21680710,GSE19302_final.pcl,nab2-td 0 min rep-1,nab2-td,YGL122C,same_gene_other_allele,damp|ts,costanzo2016
+Gonzalez-Aguilera_2011_PMID_21680710,GSE19302_final.pcl,nab2-td 0 min rep-2,nab2-td,YGL122C,same_gene_other_allele,damp|ts,costanzo2016
+Gonzalez-Aguilera_2011_PMID_21680710,GSE19302_final.pcl,nab2-td 0 min rep-3,nab2-td,YGL122C,same_gene_other_allele,damp|ts,costanzo2016
+Gonzalez-Aguilera_2011_PMID_21680710,GSE19302_final.pcl,nab2-td 30 min rep-1,nab2-td,YGL122C,same_gene_other_allele,damp|ts,costanzo2016
+Gonzalez-Aguilera_2011_PMID_21680710,GSE19302_final.pcl,nab2-td 30 min rep-2,nab2-td,YGL122C,same_gene_other_allele,damp|ts,costanzo2016
+Gonzalez-Aguilera_2011_PMID_21680710,GSE19302_final.pcl,nab2-td 30 min rep-3,nab2-td,YGL122C,same_gene_other_allele,damp|ts,costanzo2016
+Gonzalez-Aguilera_2011_PMID_21680710,GSE19302_final.pcl,nab2-td 75 min rep-1,nab2-td,YGL122C,same_gene_other_allele,damp|ts,costanzo2016
+Gonzalez-Aguilera_2011_PMID_21680710,GSE19302_final.pcl,nab2-td 75 min rep-2,nab2-td,YGL122C,same_gene_other_allele,damp|ts,costanzo2016
+Gonzalez-Aguilera_2011_PMID_21680710,GSE19302_final.pcl,nab2-td 75 min rep-3,nab2-td,YGL122C,same_gene_other_allele,damp|ts,costanzo2016
+Gonzalez-Aguilera_2011_PMID_21680710,GSE26303_final.pcl,nab2-1 rep-1,nab2-1,YGL122C,same_gene_other_allele,damp|ts,costanzo2016
+Gonzalez-Aguilera_2011_PMID_21680710,GSE26303_final.pcl,nab2-1 rep-2,nab2-1,YGL122C,same_gene_other_allele,damp|ts,costanzo2016
+Gonzalez-Aguilera_2011_PMID_21680710,GSE26303_final.pcl,nab2-1 rep-3,nab2-1,YGL122C,same_gene_other_allele,damp|ts,costanzo2016
+Hashikawa_2006_PMID_16361698,GSE3361.final.pcl,hsf1-ba1 #1,hsf1-ba1,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+Hashikawa_2006_PMID_16361698,GSE3361.final.pcl,hsf1-ba1 #2,hsf1-ba1,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+Herrera-Moyano_2014_PMID_24636987,GSE54340.remapped.final.pcl,"spt16-11, biological rep. 1",spt16-11,YGL207W,same_gene_other_allele,damp|ts,costanzo2016
+Herrera-Moyano_2014_PMID_24636987,GSE54340.remapped.final.pcl,"spt16-11, biological rep. 2",spt16-11,YGL207W,same_gene_other_allele,damp|ts,costanzo2016
+Herrera-Moyano_2014_PMID_24636987,GSE54340.remapped.final.pcl,"spt16-11, biological rep. 3",spt16-11,YGL207W,same_gene_other_allele,damp|ts,costanzo2016
+Herrera-Moyano_2014_PMID_24636987,GSE54340.remapped.final.pcl,"pob3-7, biological rep. 1",pob3-7,YML069W,same_allele,ts,costanzo2016
+Herrera-Moyano_2014_PMID_24636987,GSE54340.remapped.final.pcl,"pob3-7, biological rep. 2",pob3-7,YML069W,same_allele,ts,costanzo2016
+Herrera-Moyano_2014_PMID_24636987,GSE54340.remapped.final.pcl,"pob3-7, biological rep. 3",pob3-7,YML069W,same_allele,ts,costanzo2016
+Holbein_2009_PMID_19324962,GSE14619_setA_family.pcl,Yeast_pap1-1_25??C_Rep1,pap1-1,YKR002W,same_gene_other_allele,ts,costanzo2016
+Holbein_2009_PMID_19324962,GSE14619_setA_family.pcl,Yeast_pap1-1_25??C_Rep2,pap1-1,YKR002W,same_gene_other_allele,ts,costanzo2016
+Holbein_2009_PMID_19324962,GSE14619_setA_family.pcl,Yeast_pap1-1_25??C_Rep3,pap1-1,YKR002W,same_gene_other_allele,ts,costanzo2016
+Holbein_2009_PMID_19324962,GSE14619_setA_family.pcl,Yeast_pap1-1_25??C_Crodycepin_Rep1,pap1-1,YKR002W,same_gene_other_allele,ts,costanzo2016
+Holbein_2009_PMID_19324962,GSE14619_setA_family.pcl,Yeast_pap1-1_25??C_Crodycepin_Rep2,pap1-1,YKR002W,same_gene_other_allele,ts,costanzo2016
+Holbein_2009_PMID_19324962,GSE14619_setA_family.pcl,Yeast_pap1-1_25??C_Crodycepin_Rep3,pap1-1,YKR002W,same_gene_other_allele,ts,costanzo2016
+James_2007_PMID_17660549,GSE9432_setA_family.pcl,not1-2_rep1,not1-2,YCR093W,same_gene_other_allele,damp|ts,costanzo2016
+James_2007_PMID_17660549,GSE9432_setA_family.pcl,not1-2_rep2,not1-2,YCR093W,same_gene_other_allele,damp|ts,costanzo2016
+James_2007_PMID_17660549,GSE9432_setA_family.pcl,not1-2_spt3_rep1,not1-2,YCR093W,same_gene_other_allele,damp|ts,costanzo2016
+James_2007_PMID_17660549,GSE9432_setA_family.pcl,not1-2_spt3_rep2,not1-2,YCR093W,same_gene_other_allele,damp|ts,costanzo2016
+Lenstra_2013_PMID_24324601,GSE40254.remapped.final.pcl,pcf11-mut-ts-2-1-b,pcf11-mut,YDR228C,same_gene_other_allele,damp|ts,costanzo2016
+Lenstra_2013_PMID_24324601,GSE40254.remapped.final.pcl,pcf11-mut-ts-ts2-1-a,pcf11-mut,YDR228C,same_gene_other_allele,damp|ts,costanzo2016
+Lenstra_2013_PMID_24324601,GSE40254.remapped.final.pcl,rpb1-mut-S2A-matA-ypd-1-a,rpb1-mut,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Lenstra_2013_PMID_24324601,GSE40254.remapped.final.pcl,rpb1-mut-S2A-matA-ypd-1-b,rpb1-mut,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Lenstra_2013_PMID_24324601,GSE40254.remapped.final.pcl,sen1-mut-ts-1-1-a,sen1-mut,YLR430W,same_gene_other_allele,damp|ts,costanzo2016
+Lenstra_2013_PMID_24324601,GSE40254.remapped.final.pcl,sen1-mut-ts-1-1-b,sen1-mut,YLR430W,same_gene_other_allele,damp|ts,costanzo2016
+Lindgren_2014_PMID_25483075,GSE61530.final.pcl,"scc2-4- exp1, biological rep1",scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lindgren_2014_PMID_25483075,GSE61530.final.pcl,"scc2-4- exp1, biological rep2",scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lindgren_2014_PMID_25483075,GSE61530.final.pcl,"scc2-4- exp1, biological rep3",scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lindgren_2014_PMID_25483075,GSE61530.final.pcl,"scc2-4+ exp1, biological rep1",scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lindgren_2014_PMID_25483075,GSE61530.final.pcl,"scc2-4+ exp1, biological rep2",scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lindgren_2014_PMID_25483075,GSE61530.final.pcl,"scc2-4+ exp1, biological rep3",scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lindgren_2014_PMID_25483075,GSE61530.final.pcl,"scc2-4- exp2, biological rep1",scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lindgren_2014_PMID_25483075,GSE61530.final.pcl,"scc2-4- exp2, biological rep2",scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lindgren_2014_PMID_25483075,GSE61530.final.pcl,"scc2-4- exp2, biological rep3",scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lindgren_2014_PMID_25483075,GSE61530.final.pcl,"scc2-4- exp2, biological rep4",scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lindgren_2014_PMID_25483075,GSE61530.final.pcl,"scc2-4+ exp2, biological rep1",scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lindgren_2014_PMID_25483075,GSE61530.final.pcl,"scc2-4+ exp2, biological rep2",scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lindgren_2014_PMID_25483075,GSE61530.final.pcl,"scc2-4+ exp2, biological rep3",scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lindgren_2014_PMID_25483075,GSE61530.final.pcl,"scc2-4+ exp2, biological rep4",scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lopez-Serra_2014_PMID_25173104,GSE56991.final.pcl,cDNA from scc2-4 cells_37C rep1,scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lopez-Serra_2014_PMID_25173104,GSE56991.final.pcl,cDNA from scc2-4 cells_37C rep2,scc2-4,YDR180W,same_allele,ts,costanzo2016|kuzmin2020
+Lopez-Serra_2014_PMID_25173104,GSE56991.final.pcl,cDNA from sth1-3 cells_37C rep1,sth1-3,YIL126W,same_gene_other_allele,damp,costanzo2016
+Lopez-Serra_2014_PMID_25173104,GSE56991.final.pcl,cDNA from sth1-3 cells_37C rep2,sth1-3,YIL126W,same_gene_other_allele,damp,costanzo2016
+Lu_2014_PMID_24631914,GSE54741.remapped.final.pcl,yeast-eco1-Jun2011-1,eco1-Jun2011,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Lu_2014_PMID_24631914,GSE54741.remapped.final.pcl,yeast-eco1-Jun2011-2,eco1-Jun2011,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Lu_2014_PMID_24631914,GSE54741.remapped.final.pcl,yeast-eco1-Jun2011-3,eco1-Jun2011,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Lu_2014_PMID_24631914,GSE54741.remapped.final.pcl,yeast-rad61_eco1-Apr2011-1,eco1-Apr2011,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Lu_2014_PMID_24631914,GSE54741.remapped.final.pcl,yeast-rad61_eco1-Apr2011-2,eco1-Apr2011,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Lu_2014_PMID_24631914,GSE54741.remapped.final.pcl,yeast-rad61_eco1-Apr2011-3,eco1-Apr2011,YFR027W,same_gene_other_allele,damp|ts,costanzo2016
+Lu_2014_PMID_24631914,GSE54741.remapped.final.pcl,yeast-mcd1-Apr2011-1,mcd1-Apr2011,YDL003W,same_gene_other_allele,damp|ts,costanzo2016
+Lu_2014_PMID_24631914,GSE54741.remapped.final.pcl,yeast-mcd1-Apr2011-2,mcd1-Apr2011,YDL003W,same_gene_other_allele,damp|ts,costanzo2016
+Lu_2014_PMID_24631914,GSE54741.remapped.final.pcl,yeast-mcd1-Apr2011-3,mcd1-Apr2011,YDL003W,same_gene_other_allele,damp|ts,costanzo2016
+Lu_2022_PMID_36066422,GSE137261.final.pcl,epl1-tag-flag-1-b vs. ref1,epl1-tag,YFL024C,same_gene_other_allele,damp,costanzo2016
+Lu_2022_PMID_36066422,GSE137261.final.pcl,epl1-trunc-1:380-tag-flag-1-b vs. ref1,epl1-trunc,YFL024C,same_gene_other_allele,damp,costanzo2016
+Lu_2022_PMID_36066422,GSE137261.final.pcl,epl1-trunc-1:485-tag-flag-1-b vs. ref1,epl1-trunc,YFL024C,same_gene_other_allele,damp,costanzo2016
+Lu_2022_PMID_36066422,GSE137261.final.pcl,ref1 vs. epl1-tag-flag-1-a,epl1-tag,YFL024C,same_gene_other_allele,damp,costanzo2016
+Lu_2022_PMID_36066422,GSE137261.final.pcl,ref1 vs. epl1-trunc-1:380-tag-flag-1-a,epl1-trunc,YFL024C,same_gene_other_allele,damp,costanzo2016
+Lu_2022_PMID_36066422,GSE137261.final.pcl,ref1 vs. epl1-trunc-1:485-tag-flag-1-a,epl1-trunc,YFL024C,same_gene_other_allele,damp,costanzo2016
+Malagon_2006_PMID_16510790,GSE2831_setA_family.pcl,RPB1-N1,RPB1-N1,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Malagon_2006_PMID_16510790,GSE2831_setA_family.pcl,RPB1-N2,RPB1-N2,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Malagon_2006_PMID_16510790,GSE2831_setA_family.pcl,rpb1-D260N-N1,rpb1-D260N,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Malagon_2006_PMID_16510790,GSE2831_setA_family.pcl,rpb1-D260N-N2,rpb1-D260N,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Malagon_2006_PMID_16510790,GSE2831_setA_family.pcl,rpb1-D261N-N1,rpb1-D261N,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Malagon_2006_PMID_16510790,GSE2831_setA_family.pcl,rpb1-D261N-N2,rpb1-D261N,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Malagon_2006_PMID_16510790,GSE2831_setA_family.pcl,rpb1-R320C-N1,rpb1-R320C,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Malagon_2006_PMID_16510790,GSE2831_setA_family.pcl,rpb1-R320C-N2,rpb1-R320C,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Malagon_2006_PMID_16510790,GSE2831_setA_family.pcl,rpb1-N488D-N1,rpb1-N488D,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Malagon_2006_PMID_16510790,GSE2831_setA_family.pcl,rpb1-N488D-N2,rpb1-N488D,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Malagon_2006_PMID_16510790,GSE2831_setA_family.pcl,rpb1-E1103G-N1,rpb1-E1103G,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Malagon_2006_PMID_16510790,GSE2831_setA_family.pcl,rpb1-E1103G-N2,rpb1-E1103G,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Malagon_2006_PMID_16510790,GSE2831_setA_family.pcl,rpb1-E1230K-N1,rpb1-E1230K,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Malagon_2006_PMID_16510790,GSE2831_setA_family.pcl,rpb1-E1230K-N2,rpb1-E1230K,YDL140C,same_gene_other_allele,damp|ts,costanzo2016
+Miyake_2004_PMID_15192094,2010.Miyake04.flt.knn.avg.pcl,abf1-1 microarray#1; src: abf1-1 shift from 30 to 36 degree (45min)<->wild type shift from 30 to 36 degree (45min),abf1-1,YKL112W,same_gene_other_allele,damp|ts,costanzo2016
+Miyake_2004_PMID_15192094,2010.Miyake04.flt.knn.avg.pcl,abf1-1 microarray#2; src: abf1-1 shift from 30 to 36 degree (45min)<->wild type shift from 30 to 36 degree (45min),abf1-1,YKL112W,same_gene_other_allele,damp|ts,costanzo2016
+Miyake_2004_PMID_15192094,2010.Miyake04.flt.knn.avg.pcl,abf1-1 microarray#3; src: abf1-1 shift from 30 to 36 degree (45min)<->wild type shift from 30 to 36 degree (45min),abf1-1,YKL112W,same_gene_other_allele,damp|ts,costanzo2016
+Miyake_2004_PMID_15192094,2010.Miyake04.flt.knn.avg.pcl,abf1-1 microarray#4; src: abf1-1 shift from 30 to 36 degree (45min)<->wild type shift from 30 to 36 degree (45min),abf1-1,YKL112W,same_gene_other_allele,damp|ts,costanzo2016
+O'Duibhir_2014_PMID_24952590,GSE54539.remapped.final.pcl,DL009-wt_in_npl3-medium,npl3-medium,YDR432W,same_gene_other_allele,damp,costanzo2016
+O'Duibhir_2014_PMID_24952590,GSE54539.remapped.final.pcl,DL009-wt_in_npl3-medium-1b,npl3-medium,YDR432W,same_gene_other_allele,damp,costanzo2016
+Renaud-Young_2015_PMID_25701288,GSE66176.final.pcl,esa1-L254P WT G1 No Treatment Replicate 1,esa1-L254P,YOR244W,same_allele,ts,costanzo2016|kuzmin2020
+Renaud-Young_2015_PMID_25701288,GSE66176.final.pcl,esa1-L254P WT G1 No Treatment Replicate 2,esa1-L254P,YOR244W,same_allele,ts,costanzo2016|kuzmin2020
+Renaud-Young_2015_PMID_25701288,GSE66176.final.pcl,esa1-L254P WT G1 MMS Treatment Replicate 1,esa1-L254P,YOR244W,same_allele,ts,costanzo2016|kuzmin2020
+Renaud-Young_2015_PMID_25701288,GSE66176.final.pcl,esa1-L254P WT G1 MMS Treatment Replicate 2,esa1-L254P,YOR244W,same_allele,ts,costanzo2016|kuzmin2020
+Renaud-Young_2015_PMID_25701288,GSE66176.final.pcl,esa1-L254P G1 MMS Treatment Replicate 1,esa1-L254P,YOR244W,same_allele,ts,costanzo2016|kuzmin2020
+Renaud-Young_2015_PMID_25701288,GSE66176.final.pcl,esa1-L254P G1 MMS Treatment Replicate 2,esa1-L254P,YOR244W,same_allele,ts,costanzo2016|kuzmin2020
+Renaud-Young_2015_PMID_25701288,GSE66176.final.pcl,esa1-L254P WT S No Treatment Replicate 1,esa1-L254P,YOR244W,same_allele,ts,costanzo2016|kuzmin2020
+Renaud-Young_2015_PMID_25701288,GSE66176.final.pcl,esa1-L254P WT S No Treatment Replicate 2,esa1-L254P,YOR244W,same_allele,ts,costanzo2016|kuzmin2020
+Renaud-Young_2015_PMID_25701288,GSE66176.final.pcl,esa1-L254P WT S MMS Treatment Replicate 1,esa1-L254P,YOR244W,same_allele,ts,costanzo2016|kuzmin2020
+Renaud-Young_2015_PMID_25701288,GSE66176.final.pcl,esa1-L254P WT S MMS Treatment Replicate 2,esa1-L254P,YOR244W,same_allele,ts,costanzo2016|kuzmin2020
+Renaud-Young_2015_PMID_25701288,GSE66176.final.pcl,esa1-L254P S MMS Treatment Replicate 1,esa1-L254P,YOR244W,same_allele,ts,costanzo2016|kuzmin2020
+Renaud-Young_2015_PMID_25701288,GSE66176.final.pcl,esa1-L254P S MMS Treatment Replicate 2,esa1-L254P,YOR244W,same_allele,ts,costanzo2016|kuzmin2020
+Robertson_2000_PMID_10811893,2010.Robertson00.filter.flt.knn.avg.div.log.pcl,TPK3-1stVal,TPK3-1stVal,YKL166C,same_gene_other_allele,damp,costanzo2016
+Robertson_2000_PMID_10811893,2010.Robertson00.filter.flt.knn.avg.div.log.pcl,TPK3-2ndVal,TPK3-2ndVal,YKL166C,same_gene_other_allele,damp,costanzo2016
+Rossmann_2011_PMID_21474074,GSE27222_final.pcl,"pol30-8 strain, biological replicate 1",pol30-8,YBR088C,same_gene_other_allele,damp|ts,costanzo2016
+Rossmann_2011_PMID_21474074,GSE27222_final.pcl,"pol30-8 strain, biological replicate 2",pol30-8,YBR088C,same_gene_other_allele,damp|ts,costanzo2016
+Rossmann_2011_PMID_21474074,GSE27222_final.pcl,"pol30-8 strain, biological replicate 3",pol30-8,YBR088C,same_gene_other_allele,damp|ts,costanzo2016
+Rossmann_2011_PMID_21474074,GSE27222_final.pcl,"pol30-8 dot1Δ strain, biological replicate 1",pol30-8,YBR088C,same_gene_other_allele,damp|ts,costanzo2016
+Rossmann_2011_PMID_21474074,GSE27222_final.pcl,"pol30-8 dot1Δ strain, biological replicate 2",pol30-8,YBR088C,same_gene_other_allele,damp|ts,costanzo2016
+Rossmann_2011_PMID_21474074,GSE27222_final.pcl,"pol30-8 dot1Δ strain, biological replicate 3",pol30-8,YBR088C,same_gene_other_allele,damp|ts,costanzo2016
+Sahi_2010_PMID_19822657,GSE18485.final.pcl,cwc23-1-225 (Cy5) vs. CWC23 (Cy3) at 16C for 30 min,cwc23-1,YGL128C,same_gene_other_allele,damp,costanzo2016
+Sahi_2010_PMID_19822657,GSE18485.final.pcl,cwc23-1-225 (Cy5) vs. CWC23 (Cy3) at 30C,cwc23-1,YGL128C,same_gene_other_allele,damp,costanzo2016
+Sahi_2010_PMID_19822657,GSE18485.final.pcl,CWC23 (Cy5) vs. cwc23-1-225 (Cy3) at 16C for 30 min,cwc23-1,YGL128C,same_gene_other_allele,damp,costanzo2016
+Sahi_2010_PMID_19822657,GSE18485.final.pcl,CWC23 (Cy5) vs. cwc23-1-225 at 30C,cwc23-1,YGL128C,same_gene_other_allele,damp,costanzo2016
+Sahi_2010_PMID_19822657,GSE18485.final.pcl,CWC23 (Cy5) vs. cwc23-deltaJ (Cy3) at 30C,cwc23-deltaJ,YGL128C,same_gene_other_allele,damp,costanzo2016
+Sahi_2010_PMID_19822657,GSE18485.final.pcl,cwc23-deltaJ (Cy5) vs. CWC23 (Cy3) at 30C,cwc23-deltaJ,YGL128C,same_gene_other_allele,damp,costanzo2016
+Sahi_2010_PMID_19822657,GSE18485.final.pcl,PRP43 (Cy5) vs. prp43-Y402A (Cy3) at 37C for 30min,prp43-Y402A,YGL120C,same_gene_other_allele,damp|ts,costanzo2016
+Sahi_2010_PMID_19822657,GSE18485.final.pcl,prp43-Y402A (Cy5) vs. PRP43 (Cy3) at 37C for 30 min,prp43-Y402A,YGL120C,same_gene_other_allele,damp|ts,costanzo2016
+Saint_2014_PMID_24550006,GSE44544.remapped.final.pcl,taf9-tCRD2 SM-induced vs uninduced_1,taf9-tCRD2,YMR236W,same_gene_other_allele,ts,costanzo2016
+Saint_2014_PMID_24550006,GSE44544.remapped.final.pcl,taf9-tCRD2 SM-induced vs uninduced_2,taf9-tCRD2,YMR236W,same_gene_other_allele,ts,costanzo2016
+Saint_2014_PMID_24550006,GSE44544.remapped.final.pcl,taf9-tCRD2 SM-induced vs uninduced_3,taf9-tCRD2,YMR236W,same_gene_other_allele,ts,costanzo2016
+Saint_2014_PMID_24550006,GSE44544.remapped.final.pcl,taf9-tCRD2 SM-induced vs uninduced_4,taf9-tCRD2,YMR236W,same_gene_other_allele,ts,costanzo2016
+Saint_2014_PMID_24550006,GSE44544.remapped.final.pcl,taf9-tCRD2 vs TAF9 in SM_1,taf9-tCRD2,YMR236W,same_gene_other_allele,ts,costanzo2016
+Saint_2014_PMID_24550006,GSE44544.remapped.final.pcl,taf9-tCRD2 vs TAF9 in SM_2,taf9-tCRD2,YMR236W,same_gene_other_allele,ts,costanzo2016
+Saint_2014_PMID_24550006,GSE44544.remapped.final.pcl,taf9-tCRD2 vs TAF9 in SM_3,taf9-tCRD2,YMR236W,same_gene_other_allele,ts,costanzo2016
+Saint_2014_PMID_24550006,GSE44544.remapped.final.pcl,taf9-tCRD2 vs TAF9 in SM_4,taf9-tCRD2,YMR236W,same_gene_other_allele,ts,costanzo2016
+Sapra_2004_PMID_15452114,2010.Sapra04.flt.knn.avg.pcl,"prp17-1 cells, time 0 hours; src: prp17-1, 0 hours CH1 Cy5<->yeast genomic DNA CH2 Cy3",prp17-1,YDR364C,same_gene_other_allele,damp|ts,costanzo2016
+Sapra_2004_PMID_15452114,2010.Sapra04.flt.knn.avg.pcl,"prp17-1 cells, time 5min; src: prp17-1, 5min CH1 Cy5<->yeast genomic DNA CH2 Cy3",prp17-1,YDR364C,same_gene_other_allele,damp|ts,costanzo2016
+Sapra_2004_PMID_15452114,2010.Sapra04.flt.knn.avg.pcl,"prp17-1 cells, time 15min; src: prp17-1, 15min CH1 Cy5<->yeast genomic DNA CH2 Cy3",prp17-1,YDR364C,same_gene_other_allele,damp|ts,costanzo2016
+Sapra_2004_PMID_15452114,2010.Sapra04.flt.knn.avg.pcl,"prp17-1 cells, time 30min; src: prp17-1, 30min CH1 Cy5<->yeast genomic DNA CH2 Cy3",prp17-1,YDR364C,same_gene_other_allele,damp|ts,costanzo2016
+Sapra_2004_PMID_15452114,2010.Sapra04.flt.knn.avg.pcl,"prp17-1 cells, time 60min; src: prp17-1, 60min CH1 Cy5<->yeast genomic DNA CH2 Cy3",prp17-1,YDR364C,same_gene_other_allele,damp|ts,costanzo2016
+Sapra_2004_PMID_15452114,2010.Sapra04.flt.knn.avg.pcl,"prp17-1 cells, time 120min; src: prp17-1, 120min CH1 Cy5<->yeast genomic DNA CH2 Cy3",prp17-1,YDR364C,same_gene_other_allele,damp|ts,costanzo2016
+Sapra_2004_PMID_15452114,2010.Sapra04.flt.knn.avg.pcl,"prp22-1 cells, time 0 hours; src: prp22-1, 0 hours CH1 Cy5<->yeast genomic DNA CH2 Cy3",prp22-1,YER013W,same_allele,ts,costanzo2016
+Sapra_2004_PMID_15452114,2010.Sapra04.flt.knn.avg.pcl,"prp22-1 cells, time 5min; src: prp22-1, 5min CH1 Cy5<->yeast genomic DNA CH2 Cy3",prp22-1,YER013W,same_allele,ts,costanzo2016
+Sapra_2004_PMID_15452114,2010.Sapra04.flt.knn.avg.pcl,"prp22-1 cells, time 15min; src: prp22-1, 15min CH1 Cy5<->yeast genomic DNA CH2 Cy3",prp22-1,YER013W,same_allele,ts,costanzo2016
+Sapra_2004_PMID_15452114,2010.Sapra04.flt.knn.avg.pcl,"prp22-1 cells, time 30min; src: prp22-1, 30min CH1 Cy5<->yeast genomic DNA CH2 Cy3",prp22-1,YER013W,same_allele,ts,costanzo2016
+Sapra_2004_PMID_15452114,2010.Sapra04.flt.knn.avg.pcl,"prp22-1 cells, time 60min; src: prp22-1, 60min CH1 Cy5<->yeast genomic DNA CH2 Cy3",prp22-1,YER013W,same_allele,ts,costanzo2016
+Sapra_2004_PMID_15452114,2010.Sapra04.flt.knn.avg.pcl,"prp22-1 cells, time 120min; src: prp22-1, 120min CH1 Cy5<->yeast genomic DNA CH2 Cy3",prp22-1,YER013W,same_allele,ts,costanzo2016
+Sen_2011_PMID_21835776,GSE30675.final.pcl,Snf2-2FLAG (WT),Snf2-2FLAG,YOR290C,same_gene_other_allele,damp,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=10, replicate 1",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=30, replicate 1",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=50, replicate 1",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=70, replicate 1",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=90, replicate 1",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=110, replicate 1",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=130, replicate 1",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=150, replicate 1",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=170, replicate 1",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=190, replicate 1",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=210, replicate 1",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=230, replicate 1",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=250, replicate 1",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=270, replicate 1",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=290, replicate 1",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=10, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=30, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=50, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=70, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=90, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=110, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=130, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=150, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=170, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=190, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=210, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=230, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=250, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=270, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=290, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=310, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=330, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Simmons_Kovacs_2012_PMID_22306294,GSE32974_final.pcl,"cdc28-4, 37 degrees, t=350, replicate 2",cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Spedale_2012_PMID_21976730,GSE30148_final.pcl,GS3-Mot1-FRB-a,Mot1-FRB,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+Spedale_2012_PMID_21976730,GSE30148_final.pcl,GS3-Mot1-FRB-b,Mot1-FRB,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+Spedale_2012_PMID_21976730,GSE30148_final.pcl,GS3-Mot1-FRB-r-a,Mot1-FRB,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+Spedale_2012_PMID_21976730,GSE30148_final.pcl,GS3-Mot1-FRB-r-b,Mot1-FRB,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+Spedale_2012_PMID_21976730,GSE30148_final.pcl,GS3-NCB2-FRB-a,NCB2-FRB,YDR397C,same_gene_other_allele,damp|ts,costanzo2016
+Spedale_2012_PMID_21976730,GSE30148_final.pcl,GS3-NCB2-FRB-b,NCB2-FRB,YDR397C,same_gene_other_allele,damp|ts,costanzo2016
+Spedale_2012_PMID_21976730,GSE30148_final.pcl,GS3-NCB2-FRB-r-a,NCB2-FRB,YDR397C,same_gene_other_allele,damp|ts,costanzo2016
+Spedale_2012_PMID_21976730,GSE30148_final.pcl,GS3-NCB2-FRB-r-b,NCB2-FRB,YDR397C,same_gene_other_allele,damp|ts,costanzo2016
+Sprouse_2009_PMID_19098311,GSE12371_setA_family.pcl,WT MOT1+ vs. mot1-14,mot1-14,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+Sprouse_2009_PMID_19098311,GSE12371_setA_family.pcl,mot1-14 vs. WT MOT1+,mot1-14,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+Torres_2007_PMID_17702937,GSE7812_set0_family.pcl,Fig 1B: cdc23-1 (A755) batch RNA,cdc23-1,YHR166C,same_allele,ts,costanzo2016|kuzmin2020
+Torres_2007_PMID_17702937,GSE7812_set0_family.pcl,Fig 1B: cdc28-4 (A2594) batch RNA,cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Torres_2007_PMID_17702937,GSE7812_set0_family.pcl,Fig 1B: cdc15-2 (A2596) batch RNA,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Torres_2007_PMID_17702937,GSE7812_set1_family.pcl,Fig 1C: cdc23-1 (A755) chem RNA,cdc23-1,YHR166C,same_allele,ts,costanzo2016|kuzmin2020
+Torres_2007_PMID_17702937,GSE7812_set1_family.pcl,Fig 1C: cdc28-4 (A2594) chem RNA,cdc28-4,YBR160W,same_allele,ts,costanzo2016
+Torres_2007_PMID_17702937,GSE7812_set1_family.pcl,Fig 1C: cdc15-2 (A2596) chem RNA,cdc15-2,YAR019C,same_allele,ts,costanzo2016
+Yamamoto_2005_PMID_15647283,2010.Yamamoto05.filter.flt.knn.avg.div.log.pcl,hsf1-R206S/F256S replicate 1; src: hsf1-R206S/F256S cells grown at 39oC for 15 min,hsf1-R206S,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+Yamamoto_2005_PMID_15647283,2010.Yamamoto05.filter.flt.knn.avg.div.log.pcl,hsf1-R206S/F256S replicate 2; src: hsf1-R206S/F256S cells grown at 39oC for 15 min,hsf1-R206S,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,4tU-refpool-pooled-hsf1-rapaT vs. hsf1-aa-0min-2-a,hsf1-aa,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,4tU-refpool-pooled-hsf1-rapaT vs. hsf1-aa-0min-2-a,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,4tU-refpool-pooled-hsf1-rapaT vs. hsf1-aa-15min-2-a,hsf1-aa,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,4tU-refpool-pooled-hsf1-rapaT vs. hsf1-aa-15min-2-a,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,4tU-refpool-pooled-hsf1-rapaT vs. hsf1-aa-30min-2-a,hsf1-aa,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,4tU-refpool-pooled-hsf1-rapaT vs. hsf1-aa-30min-2-a,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,4tU-refpool-pooled-hsf1-rapaT vs. hsf1-aa-60min-2-a,hsf1-aa,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,4tU-refpool-pooled-hsf1-rapaT vs. hsf1-aa-60min-2-a,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,4tU-refpool-pooled-hsf1-rapaT vs. hsf1-aa-90min-2-a,hsf1-aa,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,4tU-refpool-pooled-hsf1-rapaT vs. hsf1-aa-90min-2-a,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,4tU-refpool-pooled-hsf1-rapaT vs. wt-aa-0min-5-a,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,4tU-refpool-pooled-hsf1-rapaT vs. wt-aa-15min-5-a,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,4tU-refpool-pooled-hsf1-rapaT vs. wt-aa-30min-5-a,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,4tU-refpool-pooled-hsf1-rapaT vs. wt-aa-60min-5-a,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,4tU-refpool-pooled-hsf1-rapaT vs. wt-aa-90min-5-a,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,hsf1-aa-0min-2-b vs. 4tU-refpool-pooled-hsf1-rapaT,hsf1-aa,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,hsf1-aa-0min-2-b vs. 4tU-refpool-pooled-hsf1-rapaT,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,hsf1-aa-15min-2-b vs. 4tU-refpool-pooled-hsf1-rapaT,hsf1-aa,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,hsf1-aa-15min-2-b vs. 4tU-refpool-pooled-hsf1-rapaT,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,hsf1-aa-30min-2-b vs. 4tU-refpool-pooled-hsf1-rapaT,hsf1-aa,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,hsf1-aa-30min-2-b vs. 4tU-refpool-pooled-hsf1-rapaT,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,hsf1-aa-60min-2-b vs. 4tU-refpool-pooled-hsf1-rapaT,hsf1-aa,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,hsf1-aa-60min-2-b vs. 4tU-refpool-pooled-hsf1-rapaT,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,hsf1-aa-90min-2-b vs. 4tU-refpool-pooled-hsf1-rapaT,hsf1-aa,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,hsf1-aa-90min-2-b vs. 4tU-refpool-pooled-hsf1-rapaT,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,wt-aa-0min-5-b vs. 4tU-refpool-pooled-hsf1-rapaT,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,wt-aa-15min-5-b vs. 4tU-refpool-pooled-hsf1-rapaT,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,wt-aa-30min-5-b vs. 4tU-refpool-pooled-hsf1-rapaT,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,wt-aa-60min-5-b vs. 4tU-refpool-pooled-hsf1-rapaT,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81479.mapped.pcl,wt-aa-90min-5-b vs. 4tU-refpool-pooled-hsf1-rapaT,hsf1-rapaT,YGL073W,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,4tU-refpool-pooled-Mot1-WT2 vs. Mot1-aa-0-min-4tU-a1-2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,4tU-refpool-pooled-Mot1-WT2 vs. Mot1-aa-0-min-4tU-a1-2,Mot1-aa,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,4tU-refpool-pooled-Mot1-WT2 vs. Mot1-aa-10-min-4tU-a1-2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,4tU-refpool-pooled-Mot1-WT2 vs. Mot1-aa-10-min-4tU-a1-2,Mot1-aa,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,4tU-refpool-pooled-Mot1-WT2 vs. Mot1-aa-20-min-4tU-a1-2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,4tU-refpool-pooled-Mot1-WT2 vs. Mot1-aa-20-min-4tU-a1-2,Mot1-aa,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,4tU-refpool-pooled-Mot1-WT2 vs. Mot1-aa-30-min-4tU-a1-2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,4tU-refpool-pooled-Mot1-WT2 vs. Mot1-aa-30-min-4tU-a1-2,Mot1-aa,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,4tU-refpool-pooled-Mot1-WT2 vs. WT-aa-0-min-4tU-a-2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,4tU-refpool-pooled-Mot1-WT2 vs. WT-aa-10-min-4tU-a-2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,4tU-refpool-pooled-Mot1-WT2 vs. WT-aa-20-min-4tU-a-2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,4tU-refpool-pooled-Mot1-WT2 vs. WT-aa-30-min-4tU-a-2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,Mot1-aa-0-min-4tU-b2-2 vs. 4tU-refpool-pooled-Mot1-WT2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,Mot1-aa-0-min-4tU-b2-2 vs. 4tU-refpool-pooled-Mot1-WT2,Mot1-aa,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,Mot1-aa-10-min-4tU-b2-2 vs. 4tU-refpool-pooled-Mot1-WT2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,Mot1-aa-10-min-4tU-b2-2 vs. 4tU-refpool-pooled-Mot1-WT2,Mot1-aa,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,Mot1-aa-20-min-4tU-b2-2 vs. 4tU-refpool-pooled-Mot1-WT2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,Mot1-aa-20-min-4tU-b2-2 vs. 4tU-refpool-pooled-Mot1-WT2,Mot1-aa,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,Mot1-aa-30-min-4tU-b2-2 vs. 4tU-refpool-pooled-Mot1-WT2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,Mot1-aa-30-min-4tU-b2-2 vs. 4tU-refpool-pooled-Mot1-WT2,Mot1-aa,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,WT-aa-0-min-4tU-b-2 vs. 4tU-refpool-pooled-Mot1-WT2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,WT-aa-10-min-4tU-b-2 vs. 4tU-refpool-pooled-Mot1-WT2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,WT-aa-20-min-4tU-b-2 vs. 4tU-refpool-pooled-Mot1-WT2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016
+de_Jonge_2017_PMID_27979920,GSE81480.mapped.pcl,WT-aa-30-min-4tU-b-2 vs. 4tU-refpool-pooled-Mot1-WT2,Mot1-WT2,YPL082C,same_gene_other_allele,damp|ts,costanzo2016

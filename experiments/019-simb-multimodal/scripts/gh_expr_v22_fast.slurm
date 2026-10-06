@@ -62,6 +62,15 @@ ARM_OVERRIDES[F_ref]=""
 ARM_OVERRIDES[F_b128]="data_module.batch_size=128 regression_task.optimizer.lr=6.0e-4"
 ARM_OVERRIDES[F_b128lr4]="data_module.batch_size=128 regression_task.optimizer.lr=1.2e-3"
 ARM_OVERRIDES[F_l4w180]="model.num_transformer_layers=4 model.hidden_channels=180"
+# WAVE 2 (04:05, on the two cards wave 1 freed). At epochs 300 to 460 F_b128lr4 had
+# collapsed to the per-gene mean on 3 of 3 split seeds (prediction spread 0.000), F_l4w180
+# on 2 of 2, and F_b128 on 1 of 3, while F_ref was alive on 3 of 3. So the question for
+# batch 128 is stability, and the two arms bracket it: the unscaled learning rate, and the
+# doubled rate behind a 50-epoch linear warmup (the scheduler steps per epoch; a first
+# cycle of 100,000 epochs makes the cosine flat over the 1,200 run, so warmup is the one
+# change against F_b128).
+ARM_OVERRIDES[F_b128lr1]="data_module.batch_size=128"
+ARM_OVERRIDES[F_b128wu]="data_module.batch_size=128 regression_task.optimizer.lr=6.0e-4 regression_task.lr_scheduler.type=CosineAnnealingWarmupRestarts regression_task.lr_scheduler.first_cycle_steps=100000 regression_task.lr_scheduler.warmup_steps=50 regression_task.lr_scheduler.max_lr=6.0e-4 regression_task.lr_scheduler.min_lr=1.0e-6"
 
 # ONE ARM PER CARD. The first submission (job 3315, cancelled ten minutes in) put the four
 # arms on each card, one card per split seed. The four processes time-slice the card, so a
@@ -77,6 +86,8 @@ case "$WAVE:$TASK" in
   1:1) ARM=F_b128lr4; SPLITS=(0 1 2) ;;
   1:2) ARM=F_ref;     SPLITS=(0 1 2) ;;
   1:3) ARM=F_l4w180;  SPLITS=(0 1) ;;
+  2:0) ARM=F_b128lr1; SPLITS=(0 1 2) ;;
+  2:1) ARM=F_b128wu;  SPLITS=(0 1 2) ;;
   *) echo "unknown wave:task $WAVE:$TASK" >&2; exit 1 ;;
 esac
 

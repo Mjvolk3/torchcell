@@ -585,10 +585,27 @@ def test_gap_mixin_rule_is_never_weakened_by_a_subclass(cls: type[BaseModel]) ->
     one inherited validator. A subclass that redefined either the field or the
     validator would keep the attribute name while dropping the guarantee, and every
     downstream reader would still treat its gaps as audited.
+
+    "Redeclares" means an annotation in the class's OWN namespace, so it is read from
+    ``cls.__dict__``. ``getattr(cls, "__annotations__")`` is not that: once any code
+    has read ``ABCMeta.__annotations__`` (a lazily created ``{}`` then sits in
+    ``ABCMeta.__dict__``, ahead of ``type``'s descriptor in a pydantic model's
+    metaclass MRO), it resolves through the class MRO and returns the nearest
+    ancestor's annotations for a class with none of its own. That is what CI saw for
+    ``HashableProvenanceGapMixin`` (#640), which declares no field at all; reproduced
+    in the CI environment (Python 3.13.0, pydantic 2.13.5). The field and validator
+    the subclass resolves are also checked to be the mixin's own.
     """
     assert "validate_provenance_gaps" not in cls.__dict__
-    assert "provenance_gaps" not in (getattr(cls, "__annotations__", {}) or {})
-    assert "provenance_gaps" in cls.model_fields
+    assert "provenance_gaps" not in cls.__dict__.get("__annotations__", {})
+    field = cls.model_fields["provenance_gaps"]
+    assert field.annotation == list[ProvenanceGap]
+    assert field.default_factory is list
+    mixin = s.ProvenanceGapMixin.__pydantic_decorators__.model_validators
+    validators = cls.__pydantic_decorators__.model_validators
+    assert validators["validate_provenance_gaps"].func is (
+        mixin["validate_provenance_gaps"].func
+    )
 
 
 def test_gap_on_a_populated_field_is_rejected_on_each_mixin_family() -> None:

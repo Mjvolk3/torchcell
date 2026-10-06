@@ -31,6 +31,14 @@ from torchcell.datamodels import schema as schema_module
 # biology, so they are recorded as a note in the legend instead.
 CONFIG_MIXINS = frozenset({"ModelStrict", "ModelStrictArbitrary"})
 
+# Mixins that add behavior and are listed FIRST in a class's bases for a method-
+# resolution reason, not because they are the class's kind. ``HashableProvenanceGapMixin``
+# must precede a frozen parent leaf so pydantic keeps its ``__hash__`` (schema.py), so
+# ``BarcodedKanMxDeletionPerturbation`` lists it before ``KanMxDeletionPerturbation``.
+# The inheritance parent drawn in the figure is the first OTHER schema model base;
+# a class whose only schema base is such a mixin (``ConstructedOrf``) keeps it.
+BEHAVIOR_MIXINS = frozenset({"HashableProvenanceGapMixin"})
+
 # Lane assignment. Each entry is (lane key, roots) where a root's entire inheritance
 # subtree joins that lane. Order here is the left-to-right / top-to-bottom reading
 # order of the finished figure.
@@ -280,6 +288,21 @@ def _lane_for(name: str, parent_chain: list[str]) -> str:
     )
 
 
+def _inheritance_parent(obj: type, registry: dict[str, tuple[str, type]]) -> str | None:
+    """The base drawn as ``obj``'s parent: its first schema model base that is not a
+    ``BEHAVIOR_MIXINS`` entry, else its first schema model base, else ``None``.
+    """
+    bases = [
+        b.__name__
+        for b in obj.__bases__
+        if b.__name__ in registry and registry[b.__name__][0] == "model"
+    ]
+    domain = [b for b in bases if b not in BEHAVIOR_MIXINS]
+    if domain:
+        return domain[0]
+    return bases[0] if bases else None
+
+
 def build_ontology_graph() -> OntologyGraph:
     """Introspect the live schema modules into an :class:`OntologyGraph`."""
     modules = (schema_module, media_module, pydant_module, compound_identity_module)
@@ -301,23 +324,13 @@ def build_ontology_graph() -> OntologyGraph:
     graph = OntologyGraph()
 
     for name, (kind, obj) in registry.items():
-        parents = [
-            b.__name__
-            for b in obj.__bases__
-            if b.__name__ in registry and registry[b.__name__][0] == "model"
-        ]
-        parent = parents[0] if parents else None
+        parent = _inheritance_parent(obj, registry)
 
         chain: list[str] = []
         cursor = parent
         while cursor is not None:
             chain.append(cursor)
-            cursor_parents = [
-                b.__name__
-                for b in registry[cursor][1].__bases__
-                if b.__name__ in registry
-            ]
-            cursor = cursor_parents[0] if cursor_parents else None
+            cursor = _inheritance_parent(registry[cursor][1], registry)
 
         entry = OntologyClass(
             name=name,
@@ -337,7 +350,9 @@ def build_ontology_graph() -> OntologyGraph:
             continue
 
         model_cls = cast(type[BaseModel], obj)
-        declared = set(getattr(obj, "__annotations__", {}) or {})
+        # The class's OWN annotations: ``getattr`` can return an ancestor's dict once
+        # ``ABCMeta.__annotations__`` exists (see test_ontology_coherence.py).
+        declared = set(obj.__dict__.get("__annotations__", {}))
         inherited = 0
         for field_name, info in model_cls.model_fields.items():
             if field_name not in declared:

@@ -125,3 +125,35 @@ def test_every_lane_frame_holds_its_full_membership(graph):
             assert sorted(layout.lanes[lane].card_names) == graph.lane_members(lane), (
                 f"compact={compact}: lane {lane} membership diverged from the graph"
             )
+
+
+def test_behavior_mixin_listed_first_is_not_drawn_as_the_parent(graph):
+    """``HashableProvenanceGapMixin`` precedes a leaf's domain base in its bases (the
+    MRO keeps the mixin's ``__hash__``), so taking the first base filed the three #507
+    perturbation leaves under the mixin, in the provenance lane. The drawn parent is
+    the first base that is not a ``BEHAVIOR_MIXINS`` entry; ``ConstructedOrf``, whose
+    only schema base is the mixin, keeps it.
+    """
+    parents = {
+        name: (graph.classes[name].parent, graph.classes[name].lane)
+        for name in (
+            "BarcodedKanMxDeletionPerturbation",
+            "HeterozygousDeletionPerturbation",
+            "ConditionalAllelePerturbation",
+            "ConstructedOrf",
+            "HashableProvenanceGapMixin",
+        )
+    }
+    assert parents == {
+        "BarcodedKanMxDeletionPerturbation": ("KanMxDeletionPerturbation", "genotype"),
+        "HeterozygousDeletionPerturbation": ("PresenceAbsencePerturbation", "genotype"),
+        "ConditionalAllelePerturbation": ("SequencePerturbation", "genotype"),
+        "ConstructedOrf": ("HashableProvenanceGapMixin", "genotype"),
+        "HashableProvenanceGapMixin": ("ProvenanceGapMixin", "provenance"),
+    }
+    assert graph.children_of("HashableProvenanceGapMixin") == ["ConstructedOrf"]
+    assert {
+        "BarcodedKanMxDeletionPerturbation",
+        "HeterozygousDeletionPerturbation",
+        "ConditionalAllelePerturbation",
+    } <= set(graph.descendants_of("GenePerturbation"))

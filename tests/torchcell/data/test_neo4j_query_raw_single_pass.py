@@ -315,7 +315,24 @@ def test_cached_environment_is_safe_to_pass_unvalidated() -> None:
     is only equivalent to validating the dict if the cached model is an instance of
     the class the field declares (``environment_class_for``), no experiment-level
     validator reads or rewrites the environment, and instances are not revalidated.
+
+    The declared classes are pinned exactly: ``CultureEnvironment`` for
+    ``strain_environment_response`` (#507, the one family that states its culture
+    protocol), ``Environment`` for every other family. A new family or environment
+    subclass must be added here deliberately.
     """
+    assert {
+        kind: nqr.environment_class_for(kind) for kind in s.EXPERIMENT_TYPE_MAP
+    } == {
+        kind: s.CultureEnvironment
+        if kind == "strain_environment_response"
+        else s.Environment
+        for kind in s.EXPERIMENT_TYPE_MAP
+    }
+    assert nqr.ENVIRONMENT_CLASSES == {
+        "Environment": s.Environment,
+        "CultureEnvironment": s.CultureEnvironment,
+    }
     for kind, cls in s.EXPERIMENT_TYPE_MAP.items():
         assert isinstance(cls, type) and issubclass(cls, BaseModel)
         annotation = cls.model_fields["environment"].annotation

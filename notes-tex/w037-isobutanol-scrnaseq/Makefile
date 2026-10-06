@@ -7,21 +7,19 @@
 # and carries a `%% SOURCE:` line naming it. Regenerate before rebuilding; never
 # hand-edit anything under tables/.
 #
-# No ZOTERO_COLLECTION, and references.bib is an empty placeholder that exists
-# only because the shared build rules list it as a prerequisite. The source
-# paper (Zhang et al. 2022, doi 10.1038/s41467-021-27852-x, citation key
-# zhangBiosensorBranchedchainAmino2022) is named inline rather than cited,
-# because it is not in a collection this document exports and putting it in one
-# is a curation decision that needs an explicit instruction. To turn the inline
-# reference into a real \cite: set ZOTERO_COLLECTION to the collection holding
-# the paper, run `make bib`, then replace the inline mention in
-# sections/2-on-hand.tex.
+# No ZOTERO_COLLECTION, so `make bib` is not meant to run here. references.bib
+# holds the single cited entry, extracted from the `library` bibliography that
+# tc-lit serves (scripts/lit_bib.py exports it nightly from Zotero). The whole
+# library bib carries 646 entries, which is why only the cited one is committed.
+# Nothing was written to Zotero to produce it. The file's own header gives the
+# regenerate command.
 #
 # The values in this document were read from the canonical Zotero PDFs, whose
 # sha256 are pinned in the generating script. `python
 # experiments/W037-isobutanol-scrnaseq/scripts/strain_tables.py --verify`
-# recomputes them. The OCR mirror ($DATA_ROOT/torchcell-library) does not exist
-# on this machine, so the Zotero PDF is the artifact of record.
+# recomputes them, and `--verify-mirror` additionally checks them against the
+# copies tc-lit serves under the citation key. Both matched when this document
+# was written, so the artifacts read here are the mirrored ones.
 #
 # Build:  make            -> w037-isobutanol-scrnaseq.pdf       (draft view)
 #         make clean-view -> w037-isobutanol-scrnaseq-clean.pdf (share view)

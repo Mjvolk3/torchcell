@@ -220,6 +220,7 @@ Classes
    :toctree: ../generated
    :template: autosummary/class.rst
 
+   yeast_GEM.MemberlessReactionError
    yeast_GEM.YeastGEM
 
 Functions

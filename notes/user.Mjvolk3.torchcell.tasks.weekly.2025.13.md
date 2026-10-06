@@ -7,4 +7,4 @@ created: 1743634439786
 ---
 ## 2025.03.28
 
-[x] [[Hetero_cell_bipartite|dendron://torchcell/torchcell.models.hetero_cell_bipartite]]
+[x] `torchcell/models/hetero_cell_bipartite.py` (retired 2026-10-06 to the graveyard)

@@ -1,6 +1,6 @@
-# torchcell/trainers/regression.py
-# [[torchcell.trainers.regression]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/regression.py
+# torchcell/trainers/neo_regression.py
+# [[torchcell.trainers.neo_regression]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/neo_regression.py
 # Test file: torchcell/trainers/test_regression.py
 """Lightning regression trainer with MSE/ListMLE losses and correlation metrics."""
 

@@ -590,7 +590,7 @@ def test_no_split_indices_is_refused_at_construction(
     default, or an empty list) every record would land in no split and the module would
     train on nothing. Construction refuses before any cache is written. The argument keeps
     its ``None`` default because legacy callers (experiments 002, smf-dmf-tmf-001, the
-    DEPRECATED_costanzo scripts, ``torchcell/trainers/cell.py``) omit it.
+    DEPRECATED_costanzo scripts) omit it.
     """
     with pytest.raises(ValueError) as excinfo:
         CellDataModule(

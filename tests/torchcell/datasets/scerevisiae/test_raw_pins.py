@@ -263,15 +263,7 @@ def test_process_verifies_every_raw_file_against_its_pin_before_reading(
 #: Loader modules with a ``process()`` and no build-time pin yet: the pin debt. A module
 #: leaves this list only by gaining a ``verify_raw_files`` call.
 UNPINNED_LOADERS = frozenset(
-    {
-        "costanzo2016",
-        "costanzo2016_deprecated",
-        "kemmeren2014",
-        "kuzmin2018",
-        "kuzmin2020",
-        "sameith2015",
-        "sgd",
-    }
+    {"costanzo2016", "kemmeren2014", "kuzmin2018", "kuzmin2020", "sameith2015", "sgd"}
 )
 
 

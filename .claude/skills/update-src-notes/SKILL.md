@@ -137,5 +137,5 @@ All module notes staged.
 
 - `/update-src-notes` -- auto-discover (staged then modified)
 - `/update-src-notes torchcell/models/dcell.py`
-- `/update-src-notes scripts/build.sh torchcell/cell.py`
+- `/update-src-notes scripts/build.sh torchcell/timestamp.py`
 - "update source notes for changed files"

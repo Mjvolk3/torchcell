@@ -110,10 +110,3 @@ The 52 classes in ``dataset_registry``, grouped by source module (one module per
    yoshida2012.OrganicAcidYoshida2012Dataset
    zelezniak2018.MetaboliteZelezniak2018Dataset
    zelezniak2018.ProteomeZelezniak2018Dataset
-
-Not documented
---------------
-
-Submodules left out of this page:
-
-- ``scerevisiae.mechanisitc_aware`` (import fails: ModuleNotFoundError)

@@ -42,51 +42,19 @@ PACKAGE_DIR = Path(torchcell.__file__).resolve().parent
 REPO_DIR = PACKAGE_DIR.parent
 
 NEVER_IMPORT: tuple[str, ...] = (
-    # carve-outs: one-off scratch scripts, experiment code, the PyPy adapter path
-    r"^torchcell\.(scratch|experiments|pypy_adapters)(\.|$)",
-    # HuggingFace download of the species-aware LM at import
-    r"^torchcell\.models\.species_aware_lm$",
-    # cwd-relative GODag load at import
-    r"^torchcell\.go\.check_deprecated$",
-    # cwd-relative read_csv at import
-    r"^torchcell\.ncbi\.sequence_scratch$",
-    # dataset build and plt.show() at import
-    r"^torchcell\.nn\.(sort_adj_block_model|flex_attention_graph_adj|flex_attention_graph)$",
-    # builds a metabolism graph and prints at import
-    r"^torchcell\.graph\.metabolism$",
-    # SSL env mutation and cwd log files at import
-    r"^torchcell\.knowledge_graphs\.(create_|gene_interactions_|smf_)",
-    # web API queries at import (caught by the tests/conftest.py network guard)
-    r"^torchcell\.(graph\.uniprot_api_ec|ncbi\.ncbi)$",
+    # carve-outs: one-off scratch scripts and experiment code
+    r"^torchcell\.(scratch|experiments)(\.|$)",
 )
 
 # module -> reason; strict xfail, so a fix must remove the entry. Recorded from the
-# first sweep (2026.09.26); every entry is in the legacy or init-only partition of
-# scripts/legacy_partition.py and leaves with the Phase 0d move.
-KNOWN_BROKEN: dict[str, str] = {
-    "torchcell.data_download_yeastmine": "intermine imports collections.MutableMapping (removed in 3.10)",
-    "torchcell.dataloading_lmdb": "imports torchcell.datasets.CellDataset, which no longer exists",
-    "torchcell.datasets.base_cell": "imports torchcell.data.Dataset, which no longer exists",
-    "torchcell.datasets.cell_scratch": "imports torchcell.data_prior, which no longer exists",
-    "torchcell.datasets.dcell_DEPRECATED": "imports torchcell.models.DCellLinear, which no longer exists",
-    "torchcell.datasets.experiment": "imports torchcell.data.Dataset, which no longer exists",
-    "torchcell.datasets.scerevisiae.costanzo2016_deprecated": "imports torchcell.data.Dataset, which no longer exists",
-    "torchcell.datasets.scerevisiae.mechanisitc_aware": "imports rpy2, not installed",
-    "torchcell.datasets.scerevisiae.tutorial_joining_nucleotide_embeddings": "imports torchcell.datasets.fungal_utr_transformer, which no longer exists",
-    "torchcell.losses.SupCr": "imports pytorch_metric_learning, not installed",
-    "torchcell.sequence.sequence_plot": "imports torchcell.sgd, which no longer exists",
-    "torchcell.trainers.fit_int_gat_diffpool_inception_regression": "imports NaNTolerantPearsonCorrCoef, which no longer exists",
-    "torchcell.trainers.graph_convolution_regression": "imports WeightedMSELoss, which no longer exists",
-    "torchcell.trainers.regression": "imports WeightedMSELoss, which no longer exists",
-    "torchcell.trainers.regression_deep_set_transformer": "imports WeightedMSELoss, which no longer exists",
-    "torchcell.trainers.utils": "pydantic-v1 ConstrainedStr, removed in pydantic 2",
-}
+# first sweep (2026.09.26); every entry was in the legacy partition of
+# scripts/legacy_partition.py and left with the 2026.10.06 legacy retirement, which
+# emptied the list (and the side-effecting NEVER_IMPORT entries with it).
+KNOWN_BROKEN: dict[str, str] = {}
 
 # Machine-specific absolute paths in package source, with the line that carries each.
 # A new hit fails test_no_hard_coded_machine_paths; a fixed one must be removed here.
 HARD_CODED_PATH_ALLOWLIST: dict[str, int] = {
-    "torchcell/data/sgd_expression.py": 72,
-    "torchcell/datasets/scerevisiae/mechanisitc_aware.py": 26,
     "torchcell/datasets/scerevisiae/spell.py": 23,
     "torchcell/models/hetero_cell_bipartite_dango_diff_gi.py": 360,
 }

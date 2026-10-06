@@ -43,7 +43,7 @@ created: 1675887826601
 
 - [ ] Add after we get run going on GPU [[torchcell.viz.visual_regression]]
 
-- [ ] Edit to get most up to date formula of the problem. [[Isomorphic_cell|dendron://torchcell/torchcell.models.isomorphic_cell]]
+- [ ] Edit to get most up to date formula of the problem. `torchcell/models/isomorphic_cell.py` (retired 2026-10-06 to the graveyard)
 
 ***
 **Node Embeddings for Whole Genome**

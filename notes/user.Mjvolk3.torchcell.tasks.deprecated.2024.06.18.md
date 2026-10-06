@@ -235,7 +235,7 @@ This note was deprecated and we changed to weekly tasks notes to reduce lag of r
 - [x] local test categoricals → [[torchcell.datasets.sgd_gene_graph]]
 - [x] Test `Esm`
 - [x] Adding categoricals is way to involved right now, and we need to launch models. We need to most files to make this happen. Datasets, `HeteroData`, models, etc. Putting on hold for now, although it would be good add.
-- [x] Make chromosome number a numerical feature. → [[Sgd_gene_graph_hot|dendron://torchcell/torchcell.datasets.sgd_gene_graph_hot]] it is working properly
+- [x] Make chromosome number a numerical feature. → `torchcell/datasets/sgd_gene_graph_hot.py` (retired 2026-10-06 to the graveyard) it is working properly
 - 🔲 Launch experiments
 
 ## 2024.04.04
@@ -466,7 +466,7 @@ This note was deprecated and we changed to weekly tasks notes to reduce lag of r
 - [x] We need to see the `networkx` graph structure. Globus transfer data for graphs. → Can't login to globus → Rebuild data locally and troubleshoot globus. → Submitted a ticket via email. → transfer with `rsync` [[Rsync Example to Copy Data From Delta To Local|dendron://torchcell/computer.delta.rsync#rsync-example-to-copy-data-from-delta-to-local]] → `rsync` succeeded. → Trying to rebuild the data failed.
 - [x] `subset_graph` → "experiments are all you need to get started". → The reason we split up the two datasets is that we wanted one to be concerned mainly with just querying the data, and the next to be concerned with transforming the data into usable form using `torch` and `pyg`. This also separates the process from needing the database running vs having the raw data on disk and being able to move on from any potential `neo4j` issue. This will help more readily isolate bugs → We don't have the data downloaded from `sgd`. → changing to `process_graph` since we can include label adding with the new data model. → Left off with trying to get indexing to work in `get` method
 - 🔲 One class to implement dataset
-- 🔲 There is some good stuff in [[torchcell.datasets.cell]] that we don't want to forget about like `extract_subgraph`
+- 🔲 There is some good stuff in `torchcell/datasets/cell.py` (retired 2026-10-06 to the graveyard) that we don't want to forget about like `extract_subgraph`
 
 ## 2024.03.15
 
@@ -590,7 +590,7 @@ This note was deprecated and we changed to weekly tasks notes to reduce lag of r
 - [x] local test on `dmf_costanzo2016_subset_n_1e4`
 - [x] Test `SmfCostanzo2016Adapter` on `Delta`
 - [x] Make sure the database is queryable.
-- [x] #ramble The path to now build the database is getting well established. I think the next thing to do is construct a `NeoCellDataset`. This will be possible in two steps first is to build at the query [[torchcell.neo4j_fitness_query]] so we can construct a raw lmdb where instances are not represented by pytorch geometric data. This raw data should be passed through the data model at some point and then used to write `pyg` data. For this we will want to repurpose [[torchcell.datasets.cell]] it should be nice that we can avoid this notion of a combined dataset, and some other older parts.
+- [x] #ramble The path to now build the database is getting well established. I think the next thing to do is construct a `NeoCellDataset`. This will be possible in two steps first is to build at the query [[torchcell.neo4j_fitness_query]] so we can construct a raw lmdb where instances are not represented by pytorch geometric data. This raw data should be passed through the data model at some point and then used to write `pyg` data. For this we will want to repurpose `torchcell/datasets/cell.py` (retired 2026-10-06 to the graveyard) it should be nice that we can avoid this notion of a combined dataset, and some other older parts.
 
 ## 2024.03.03
 
@@ -878,7 +878,7 @@ This note was deprecated and we changed to weekly tasks notes to reduce lag of r
 ## 2024.01.25
 
 - [x] Check `torchcell env` run of [[torchcell.knowledge_graphs.create_scerevisiae_kg]]. Did not finish in 10 hrs of running. → Used 4 workers and got through 3 total iterations on the `2e7` data instances. → Killed job since need computer for development around neo4j db on `Delta`.
-- [x] Look into `ERROR -- Edge generation method generated an exception: 'ExperimentReference'  object has no attribute 'environment'`, which appeared when running [[Create_pypy_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_pypy_scerevisiae_kg]] → Think this is fixed. Had some typos related to dict key vs attr
+- [x] Look into `ERROR -- Edge generation method generated an exception: 'ExperimentReference'  object has no attribute 'environment'`, which appeared when running `torchcell/knowledge_graphs/create_pypy_scerevisiae_kg.py` (retired 2026-10-06 to the graveyard) → Think this is fixed. Had some typos related to dict key vs attr
 - [x] [Push docker image](https://hub.docker.com/repository/docker/michaelvolk/torchcell_biocypher/general) → Doing this so we can potentilly pursue the singularity option on delta. This way we could avoid the neo4j install directly to `delta`.
 - [x] Transfer `Jdk17` to Delta with Globus `x64 Compressed Archive 174.03 MB
 https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)`
@@ -887,7 +887,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 
 - [x] Result of building db with 6 workers. → Ran out of memory and crashed computer when running `DmfCostanzo2016`
 - [x] Update python envs for use with python → Using a virtual env instead of conda env.
-- [x] There is no `pypy torch`. This looks like the last necessary lib. Investigate chain of files to make Datasets. → no `torch` in [[torchcell.data.data]], [[torchcell.datamodels.pydantic]], [[Ontology_pydantic|dendron://torchcell/torchcell.datamodels.ontology_pydantic]] → Separated out all `torch`. Used [[Reader|dendron://torchcell/torchcell.dataset_readers.reader]] to be able to do this. Now we can run the env with pypy.
+- [x] There is no `pypy torch`. This looks like the last necessary lib. Investigate chain of files to make Datasets. → no `torch` in [[torchcell.data.data]], [[torchcell.datamodels.pydantic]], [[Ontology_pydantic|dendron://torchcell/torchcell.datamodels.ontology_pydantic]] → Separated out all `torch`. Used `torchcell/dataset_readers/reader.py` (retired 2026-10-06 to the graveyard) to be able to do this. Now we can run the env with pypy.
 - [x] Rebuild `tc` with pypy 3.9. It seems with conda env I can only use 3.9 but mac m1 allows for 3.10 install. I am unsure how to use this pypy3.10 with my conda env libs. → Have a working version that uses local `pypy3.10` since I couldn't get `pypy3.9` to install in a conda env. I use a virtual env with pypy3.10 called `pypy`. This is now stored in the env dir. It can be activated  and used with the pypy_adapter modules.
 - [x] pypy run `Kuzmin2018`
 - [x] Update `add_frontmatter` because it was replacing the `.pypy` with `py`. This is because I previously thought no other `.py` would show. → Now we just replace the file extension. → split out file extension for this.
@@ -1207,9 +1207,9 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 
 - [x] Switching plot font to default `DejaVu Sans` since this is platform agnotic.
 - [x] Train [experiments.costanzo_smd_dmf_dcell.dmf_dcell] on Delta. → Training both a fitness model an interaction model.
-- [x] Recording work with pronto [[torchcell.datasets.pronto_ontology]]
-- 🔲 Build an ontology that can be used from `smf` and `dmf` [[Ontology|dendron://torchcell/torchcell.datasets.ontology]].
-- 🔲 Combine `smf` and `dmf` into one dataset. Some work has already been done on this. [[Experiment|dendron://torchcell/torchcell.datasets.experiment]]
+- [x] Recording work with pronto `torchcell/datasets/pronto_ontology.py` (retired 2026-10-06 to the graveyard)
+- 🔲 Build an ontology that can be used from `smf` and `dmf` `torchcell/datasets/ontology.py` (retired 2026-10-06 to the graveyard).
+- 🔲 Combine `smf` and `dmf` into one dataset. Some work has already been done on this. `torchcell/datasets/experiment.py` (retired 2026-10-06 to the graveyard)
 
 ## 2023.11.13
 
@@ -1220,7 +1220,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 
 ## 2023.11.04
 
-- [x] Get the [[Cell|dendron://torchcell/torchcell.datasets.cell]] working since [[Graph|dendron://torchcell/torchcell.graph.graph]] was recently updated. It is now obvious that we need a well defined interface between `Graphs` and `CellDataset` need unit tests for these. I think we should probably use pydantic data validation. For instance I think that we need to ensure that any graphs specify a graph dictionary. I think this is a better option compared to the multigraph, because this allows us to process only individual graphs, and the current functions for conversion.
+- [x] Get the `torchcell/datasets/cell.py` (retired 2026-10-06 to the graveyard) working since [[Graph|dendron://torchcell/torchcell.graph.graph]] was recently updated. It is now obvious that we need a well defined interface between `Graphs` and `CellDataset` need unit tests for these. I think we should probably use pydantic data validation. For instance I think that we need to ensure that any graphs specify a graph dictionary. I think this is a better option compared to the multigraph, because this allows us to process only individual graphs, and the current functions for conversion.
 - 🔲 Build out [[dataset.dcell|dendron://torchcell/torchcell.datasets.dcell]]
 
 ## 2023.11.03
@@ -1308,9 +1308,9 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 
 - [x] Something looks strange with the interaction distribution. → 0.04 is about one std away so the genetic interaction score plots show the range of one std.
 - [x] In `nx.compose` the second graph will overwrite data if there are duplicate keys. →
-- [x] Hack to using graphs on perturbation graph → one hop for removed nodes, not yet zeroing out node features. Not sure if it'll be necessary. [[Cell|dendron://torchcell/torchcell.datasets.cell]]
+- [x] Hack to using graphs on perturbation graph → one hop for removed nodes, not yet zeroing out node features. Not sure if it'll be necessary. `torchcell/datasets/cell.py` (retired 2026-10-06 to the graveyard)
 - [x] Hack for e issue with `genome.gene_set` vs `genome` → using `gene_set` as arg [[Graph|dendron://torchcell/torchcell.graph.graph]], when using `genome` things get hung up on `Sanity Checking:`.
-- [x] Implement a trainer for graph convolution network → [[Graph_convolution_regression|dendron://torchcell/torchcell.trainers.graph_convolution_regression]]
+- [x] Implement a trainer for graph convolution network → `torchcell/trainers/graph_convolution_regression.py` (retired 2026-10-06 to the graveyard)
 - [x] Implement option to train on fitness and interaction simultaneously → set up the beginnings of this, but it is going to be a lot of work.
 - [x] Issue with `genome.gene_set` vs `genome` might instead be an issue with `num_workers`. When I set `num_workers=0` things run. `num_workers=4` things don't run. Gets hung up at `Sanity Checking:` → `num_workers=2` works but it takes a very long time to get going. `num_workers=4` probably also works
 - [x] Launch on `Delta`.
@@ -1381,7 +1381,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 - [x] Rewrite `SmfCostanzoDataset` [[Costanzo2016|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016]] to use `Dataset`instead of in memory dataset. This might be unnecessary overkill, but it should allow for inheritance from a generalized `Dataset` class and will make `+` and merges easier. [[Summing vs. Merging Experiment Datasets|dendron://torchcell/torchcell#summing-vs-merging-experiment-datasets]] → converted over, but haven't done any testing.
 - [x] Check for duplicates in `SmfCostanzoDataset` → Add many duplicate methods. I thing the `both_` methods might abuse the `duplicate` notation.
 - [x] `dmf + smf` dataset. → This creates some issues. I've pursued it some, but the main issue is that another database should be constructed. I think this is the most straightforward way, although it will create duplicate data. This is the easiest solution for now.
-- [x] Implement `MergeExperiments` → We had to move away from Dunder add. [[Dunder Adding of Experiments is a Bad Idea|dendron://torchcell/torchcell.datasets.experiment#dunder-adding-of-experiments-is-a-bad-idea]] I took from the individual experiment design and modified it to do simple merges, where are really concatentations. [[Use Dataset Logic but Use Process for Merger Operations|dendron://torchcell/torchcell.datasets.experiment#use-dataset-logic-but-use-process-for-merger-operations]]
+- [x] Implement `MergeExperiments` → We had to move away from Dunder add. `torchcell/datasets/experiment.py` (retired 2026-10-06 to the graveyard) I took from the individual experiment design and modified it to do simple merges, where are really concatentations. `torchcell/datasets/experiment.py` (retired 2026-10-06 to the graveyard)
 - [x] Fix dmf data_list iteration.
 - [x] Make box plot for [[Genetic_interaction_score|dendron://torchcell/torchcell.viz.genetic_interaction_score]] → If we want a closer match we could make a few more adjustments.
 - [x] Train `1e6` on interaction. → queued priority.
@@ -1483,15 +1483,15 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 - [x] Implement `LayerNorm` normalization and activation parameterization
 - [x] Implement gradient clipping. → No implementation needed. This is easy on pytorch lightning as it can be done by simply passing args to the `Trainer`
 - [x] Add option to include skip connections in instance layers and set layers of [[torchcell.models.deep_set]]. Of course skip connections can only be applied to layers of the same dimension so the boolean corresponds to layers with repeat of the same dimension.
-- [x] Automatic clipping only works if we don't use manual backward... [[Manual Backward with Forcing Node Wt to Ones|dendron://torchcell/torchcell.trainers.regression#manual-backward-with-forcing-node-wt-to-ones]] → This along with layer norm has appeared to smooth out the loss.
+- [x] Automatic clipping only works if we don't use manual backward... `torchcell/trainers/regression.py` (retired 2026-10-06 to the graveyard) → This along with layer norm has appeared to smooth out the loss.
 - [x] Implement set transformer → [[Deep_set_transformer|dendron://torchcell/torchcell.models.deep_set_transformer]]
 - [x] Add weighted MSE in case the models don't learn distribution but instead just predict the mean. → [[Weighted_mse|dendron://torchcell/torchcell.losses.weighted_mse]]
 - 🔲 Create a sweep locally for `1e4` data.
 
 ## 2023.09.29
 
-- [x] Send query to @Yunan-Luo about [[Training Instability with Wildtype Embedding Difference|dendron://torchcell/torchcell.trainers.regression#training-instability-with-wildtype-embedding-difference]]
-- [x] Kill run → [Wandb Run](https://wandb.ai/zhao-group/torchcell/groups/2459252_ad9b6cf8e9b4acd6438053d0ff7a6d814888f8e2931913741695b28cdffa1030/workspace?workspace=user-mjvolk3), some sides notes on this run [[Training Instability with Wildtype Embedding Difference|dendron://torchcell/torchcell.trainers.regression#training-instability-with-wildtype-embedding-difference]]
+- [x] Send query to @Yunan-Luo about `torchcell/trainers/regression.py` (retired 2026-10-06 to the graveyard)
+- [x] Kill run → [Wandb Run](https://wandb.ai/zhao-group/torchcell/groups/2459252_ad9b6cf8e9b4acd6438053d0ff7a6d814888f8e2931913741695b28cdffa1030/workspace?workspace=user-mjvolk3), some sides notes on this run `torchcell/trainers/regression.py` (retired 2026-10-06 to the graveyard)
 - [x] [[Fixing Padding on Upstream Model to Match GitHub Issue Recommendation|dendron://torchcell/torchcell.models.fungal_up_down_transformer#fixing-padding-on-upstream-model-to-match-github-issue-recommendation]]
 - [x] Delete old upstream embeddings and rerun [[Fungal_up_down_transformer|dendron://torchcell/torchcell.datasets.fungal_up_down_transformer]]. → Tried running but there is an issue [[Parse Genome and Return None For Dunder Add - Need Genome in Process|dendron://torchcell/torchcell.datasets.fungal_up_down_transformer#parse-genome-and-return-none-for-dunder-add---need-genome-in-process]]
 - [x] Try to regularize by forcing `wt` embedding to 1, can also try 0 which should be fine because you can get to 1 with bias from linear.
@@ -1506,7 +1506,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 - [x] Configure `weight_decay` and `learning_rate`
 - [x] Launch [Wandb - 1e5 Deep Set DDP Find Unused](https://wandb.ai/zhao-group/torchcell/groups/2459252_ad9b6cf8e9b4acd6438053d0ff7a6d814888f8e2931913741695b28cdffa1030/workspace?workspace=user-mjvolk3)
 - [x] Try to fix forced ddp find unused by passing two `wt` instances and only computing the loss for one. We lose significant speedups according to [GitHub Issue](https://github.com/Lightning-AI/lightning/issues/17212) [[Deep Set Model Only Works with DDP Find Unused|dendron://torchcell/experiments.costanzo_smf_dmf_supervised.dmf_costanzo_deepset_1e5#deep-set-model-only-works-with-ddp-find-unused]] → This works, using a batch of `wt` [[Deep Set Model Only Works with DDP Find Unused - Solution|dendron://torchcell/experiments.costanzo_smf_dmf_supervised.dmf_costanzo_deepset_1e5#deep-set-model-only-works-with-ddp-find-unused---solution]]
-- [x] Write set transformer model → Threw something quick together [[Regression_deep_set_transformer|dendron://torchcell/torchcell.trainers.regression_deep_set_transformer]]
+- [x] Write set transformer model → Threw something quick together `torchcell/trainers/regression_deep_set_transformer.py` (retired 2026-10-06 to the graveyard)
 - 🔲 Add codon frequency dataset → This is a bit more difficult than I anticipated since we have codon frequency of gene with intron and codon frequency of mRNA.
 - 🔲 Need tex for plotting settings on delta → [conda install texlive-core](https://anaconda.org/conda-forge/texlive-core)
 - 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
@@ -1526,7 +1526,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 - [x] Document [[Fungal_up_down_transformer|dendron://torchcell/torchcell.models.fungal_up_down_transformer]] → Added some documentation and made docs. Still difficult for me to tell how the raw strings will render using sphinx.
 - [x] Generate new embeddings using upstream model change.
 - [x] Think more on label adding → [[Adding Fitness Labels|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016#adding-fitness-labels]] using a temporary solution for now to handle multiple different cases `dmf`, 'fitness', and mapping them all to `fitness`.
-- [x] Implement wt difference embedding → This has gotten a bit complicated, I am often running into this error `Trying to backward through the graph a second time (or directly access saved tensors after they have already been freed)` when trying to embed the wild type and instances from the batch. I overcame this with explicityly handling the optimization. → [[Explicitly Optimising the training_step and train_wt|dendron://torchcell/torchcell.trainers.regression#explicitly-optimising-the-training_step-and-train_wt]]
+- [x] Implement wt difference embedding → This has gotten a bit complicated, I am often running into this error `Trying to backward through the graph a second time (or directly access saved tensors after they have already been freed)` when trying to embed the wild type and instances from the batch. I overcame this with explicityly handling the optimization. → `torchcell/trainers/regression.py` (retired 2026-10-06 to the graveyard)
 - [x] Change [[torchcell.models.deep_set]] to have only dropout on last layer - [[Dropout on Last Layer Only|dendron://torchcell/torchcell.models.deep_set#dropout-on-last-layer-only]]
 - [x] Glbous transfer `cell_1e4`, `cell_1e5`, `costanzo2016_1e4`, `costanzo2016_1e5`. →  running `cell` and `costanzo` for later transfer.
 - [x] Review [Github issue](https://github.com/gagneurlab/SpeciesLM/issues/2#issuecomment-1737756856) → It appears there is nothing to do about sequences like this. 🚂 Moving on .
@@ -1681,7 +1681,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 ## 2023.09.15
 
 - [x] We have an issue where where if `drop_mt` isn't changing data. fix this. I found that `drop_mt` and `drop_empty_go` aren't reducing `gene_set` size. This might have to do with the reading and writing of the `db`. This is indeed the case. I am not sure if this is the behavior we want. We should try to go back to always writing the `db`, since I think the `sqlite` errors were due to not removing the `db` then double check `ddp`. I think better behavior is to start with the fresh genome each time. → changed back but haven't tested.
-- [x] Make sqlite db removal less hacky and change the `CellDataset` arg to take `genome` again. →  [[Genome Sqlite DB Removal For Dataset Pickling|dendron://torchcell/torchcell.datasets.cell#genome-sqlite-db-removal-for-dataset-pickling]]. I've also added a `GeneSet` object to enfoce `SortedSet[str]` for gene sets.
+- [x] Make sqlite db removal less hacky and change the `CellDataset` arg to take `genome` again. →  `torchcell/datasets/cell.py` (retired 2026-10-06 to the graveyard). I've also added a `GeneSet` object to enfoce `SortedSet[str]` for gene sets.
 - 🔲 In plotting we have some `dmf` data that has only one perturbation on the gene set. fix.
 - 🔲 Recompute `nt dataset` with SortedSet
 - 🔲 Organize Umap visualization overlays
@@ -1783,7 +1783,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 
 - [x] Run test run on `cell.py` on interactive cpu. → `20it/s` very slow, M1 is nearly `2000 it/s`
 - [x] Filter in cell dataset talking a terribly long time. Can Globus transfer for now but should figure out how we can speed up filtering. → Started transfer
-- [x] Write on dataset merge issues → [[Merging Dataset Issues|dendron://torchcell/torchcell.datasets.cell#merging-dataset-issues]]
+- [x] Write on dataset merge issues → `torchcell/datasets/cell.py` (retired 2026-10-06 to the graveyard)
 - [x] The limitation again looks like IO from reading data from `lmdb`. We should be able to take advantage of multithreading for this. Try multithreading filtering delta interactive cpu. → There does look to be a speed up to `120it/s` on 16 cpu. With this the job with finish in 30 hrs... For now just going to run things locally and tranfer with Globus, since it takes around 2 hours to transfer the data... This isn't a great solution for the library.
 - [x] Try a cpu slurm job with 32 cpu. → This fails due to some `sqlite3` error. To use `num_workers > 0` we need to be to pickle the dataset for multiprocessing, this cannot be done if there is a database open. `self.genome` is using a `sqlite3` database.
 - [x] Fix `dmf` dataset so it can work with `lmdb` and `num_workers > 0`  → [[Using LMDB with Dataloader num_workers ge 0|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016#using-lmdb-with-dataloader-num_workers-ge-0]]
@@ -1817,7 +1817,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 - 🔲 Gene ontology for `DCell`
 - 🔲 Add in gene essentiality dataset.
 - 🔲 Add plotting functionality on genomes [[Rough Plots of Gene Ontology Terms per Gene|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016#rough-plots-of-gene-ontology-terms-per-gene]]
-- 🔲 Filtering cell takes a long time on `Delta` filter is `123.78it/s` on `M1` filter is `2000it/s`. Try to speed up. → [[Cell|dendron://torchcell/torchcell.datasets.cell]]
+- 🔲 Filtering cell takes a long time on `Delta` filter is `123.78it/s` on `M1` filter is `2000it/s`. Try to speed up. → `torchcell/datasets/cell.py` (retired 2026-10-06 to the graveyard)
 
 ## 2023.09.05
 
@@ -1877,7 +1877,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 - [x] Refactor `CellDataset` so it can handle experiments of type `CellDatset`. → copied over the gene set property. I think writing to file is a decent solution, and will save compute. To do this had to make a small dataset `DMFCostanzo2016SmallDataset`
 - [x] Transfer `DMFCostanzo2016SmallDataset` to `DMFCostanzo2016LargeDataset`
 - [x] Rerun `DMFCostanzo2016LargeDataset` to get with new `gene_set`
-- [x] Rerun [[torchcell/datasets/cell.py]] to get a new cell dataset → [[torchcell.datasets.cell]]
+- [x] Rerun [[torchcell/datasets/cell.py]] to get a new cell dataset → `torchcell/datasets/cell.py` (retired 2026-10-06 to the graveyard)
 
 ## 2023.08.28
 
@@ -1902,10 +1902,10 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 - [x] Save `DmfCosanzoDataset` small. → 1000 samples
 - [x] Fix pre-commit [[.pre-commit-config.yaml]] → Needed to add configuration to [[pyproject.toml]] and deleted `mypy.ini`, since the mypy config can be directly recognized from the `toml`. Needed to make sure that `isort` and `black` were compatible. For now ignoring `flake8` and `mypy` settings.
 - [x] Look at `torchgeo` pre-commit → taking a lot of tips from this.o
-- [x] In `cell.py` [[Cell|torchcell.datasets.cell]] construct base sequence graph. → It is a set but we add a dummy edge index to make it look more like the standard `pyg` graph. We know there are no edges since it is size `(2,0)`.
-- [x] In `cell.py` [[Cell|torchcell.datasets.cell]] allow for getting diff items. → We implement this with a series of methods. We have to overwrite the `get` method of `InMemoryDatset`, then we add a few methods `_subset_graph` and `_add_label` to construct set to be trained on. This is the key part of the library will need careful consideration.
+- [x] In `cell.py` `torchcell/datasets/cell.py` (retired 2026-10-06 to the graveyard) construct base sequence graph. → It is a set but we add a dummy edge index to make it look more like the standard `pyg` graph. We know there are no edges since it is size `(2,0)`.
+- [x] In `cell.py` `torchcell/datasets/cell.py` (retired 2026-10-06 to the graveyard) allow for getting diff items. → We implement this with a series of methods. We have to overwrite the `get` method of `InMemoryDatset`, then we add a few methods `_subset_graph` and `_add_label` to construct set to be trained on. This is the key part of the library will need careful consideration.
 - [x] Create a lightning data module for `DmfCosanzoDataset`, using small. → [[Cell|torchcell.datamodules.cell]]
-- [x] Build trainer for fitness prediction. → [[Regression|torchcell.trainers.regression]]
+- [x] Build trainer for fitness prediction. → `torchcell/trainers/regression.py` (retired 2026-10-06 to the graveyard)
 - [x] Add wandb log. → [[Dmf_costanzo_deepset|experiments.dmf_costanzo_deepset]]
 - [x] Add fitness prediction plot to wandb log. Just plot on validation.
 - [x] Setup `.env` for local for data dir
@@ -1952,7 +1952,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 
 ## 2023.08.08
 
-- [x] Review `TorchGeo` data joins. → Looked over enough to get the gist. Ran debugger on this [[../torchgeo/torchgeo_tutorial.py]]. The thing I am most concerned about is joins. Joins really need to be done based on some hybrid `genotype-phenotype-environment` ontology. → [[Genotype-Phenotype-Environment Ontology For Data Merge|dendron://torchcell/torchcell.datasets.cell#genotype-phenotype-environment-ontology-for-data-merge]]
+- [x] Review `TorchGeo` data joins. → Looked over enough to get the gist. Ran debugger on this [[../torchgeo/torchgeo_tutorial.py]]. The thing I am most concerned about is joins. Joins really need to be done based on some hybrid `genotype-phenotype-environment` ontology. → `torchcell/datasets/cell.py` (retired 2026-10-06 to the graveyard)
 - 🔲 Clean up the `pretrain_LLM` interface. We should just be able to import models, not have to run a series of commands on them.
 - 🔲 Do a join between a cell dataset and costanzo dataset.
 - 🔲 I am thinking that `CellDataset` is going to be so complex that we will need some sort of configuration. → moved to [[user.mjvolk3.torchcell.tasks.future]]

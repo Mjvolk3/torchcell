@@ -27,7 +27,7 @@ created: 1739703537035
 
 ## 2025.02.20
 
-- [x] overfit batch and trying to simplify the sweep [[torchcell.models.hetero_cell]]
+- [x] overfit batch and trying to simplify the sweep `torchcell/models/hetero_cell.py` (retired 2026-10-06 to the graveyard)
 Parameter count: 255,462
 ![](./assets/images/hetero_cell_correlation_plots_2025-02-20-15-11-51.png)
 ![](./assets/images/hetero_cell_training_loss_2025-02-20-15-11-51.png)

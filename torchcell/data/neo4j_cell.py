@@ -1635,8 +1635,6 @@ def main_transform_standardization() -> None:
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.metabolism.yeast_GEM import YeastGEM
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-
-    # from torchcell.transforms.hetero_to_dense import HeteroToDense
     from torchcell.transforms.hetero_to_dense_mask import HeteroToDenseMask
     from torchcell.transforms.regression_to_classification import (
         LabelNormalizationTransform,

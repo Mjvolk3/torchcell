@@ -6,7 +6,7 @@ updated: 1750221887941
 created: 1749503722566
 ---
 
-- [x] Implement transforms. → [[2025.04.02 - Named Phenotype Labelling|dendron://torchcell/torchcell.models.hetero_cell_bipartite#20250402---named-phenotype-labelling]]
+- [x] Implement transforms. → `torchcell/models/hetero_cell_bipartite.py` (retired 2026-10-06 to the graveyard)
 - [x] Make sure tests pass.
 - [x] Run model locally to check if running.
 - [x] Check logging of data.

@@ -8,8 +8,8 @@ created: 1737999272613
 ## 2025.01.27
 
 - [x] Implement isomorphic cell. Fix Metabolism Processor. → wip
-- [x] [[2025.01.27 - Metabolism Processor|dendron://torchcell/torchcell.models.isomorphic_cell#20250127---metabolism-processor]]
-- [x] [[2025.01.27 - Metabolism Processor Algorithm|dendron://torchcell/torchcell.models.isomorphic_cell#20250127---metabolism-processor-algorithm]]
+- [x] `torchcell/models/isomorphic_cell.py` (retired 2026-10-06 to the graveyard)
+- [x] `torchcell/models/isomorphic_cell.py` (retired 2026-10-06 to the graveyard)
 - ![](./assets/images/level_sets_epistasis_2025-01-27-18-03-50.png)
 - ![](./assets/images/3d_epistasis_scatter_2025-01-27-18-03-45.png)
 
@@ -19,7 +19,7 @@ created: 1737999272613
 
 ## 2025.01.29
 
-- [x] [[Isomorphic_cell_attentional|dendron://torchcell/torchcell.models.isomorphic_cell_attentional]] → [AttentionalAggr](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.nn.aggr.AttentionalAggregation.html)
+- [x] `torchcell/models/isomorphic_cell_attentional.py` (retired 2026-10-06 to the graveyard) → [AttentionalAggr](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.nn.aggr.AttentionalAggregation.html)
 - [x] StoichiometricGraphConv Gating Ideas - [[175438|dendron://torchcell/scratch.2025.01.29.175438]] → [[Stoichiometric_hypergraph_conv|dendron://torchcell/torchcell.nn.stoichiometric_hypergraph_conv]]
 - [x] Implement `SupCR` loss. → [[SupCR|dendron://torchcell/torchcell.losses.SupCR]]
 

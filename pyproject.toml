@@ -55,8 +55,6 @@ venv = "torchcell"
 [tool.ruff]
 line-length = 88
 target-version = "py313"
-# Dead/legacy trainer: kept for history, not linted (also ignored by mypy below).
-extend-exclude = ["torchcell/trainers/graph_convolution_regression.py"]
 # Honor the exclude even when the path is passed explicitly (pre-commit, CI diff-scope).
 force-exclude = true
 
@@ -94,24 +92,18 @@ quote-style = "double"
 skip-magic-trailing-comma = true
 
 [tool.mypy]
-# Directories, not globs: torchcell/cell.py and torchcell/cell/ both map to the
-# module `torchcell.cell`, so a recursive *.py glob feeds mypy the name twice and
-# aborts discovery. Passing the package dirs lets mypy resolve the tree.
+# Directories, not globs: passing the package dirs lets mypy resolve the tree. (A
+# file and a package spelling one module, as torchcell/cell.py and torchcell/cell/ did
+# until the 2026.10.06 legacy retirement, make a recursive *.py glob abort discovery.)
 files = ["torchcell", "tests"]
-# Frozen dead modules (verified zero live importers): scratch one-offs, the dcell
-# DEPRECATED quad, and *_scratch / deprecated leftovers. Excluded from the strict
-# gate rather than hand-annotated -- WS2 scopes to LIVE source first; type-cleaning
-# dead code is wasted effort. torchcell/experiments/ is excluded per Decision 5
+# Frozen modules outside the strict gate: scratch one-offs and the hetero_cell_nsa_retry
+# model (the dead DEPRECATED / *_scratch / pypy leftovers left with the 2026.10.06 legacy
+# retirement, notes/torchcell.legacy-retirement.2026.10.06.md). torchcell/experiments/ is excluded per Decision 5
 # (experiments out of the gate; new experiments enter CI under WS5). Verbose (?x)
 # regex, one alternative per line.
 exclude = '''(?x)(
     torchcell/scratch/
-  | _DEPRECATED\.py$
-  | costanzo2016_deprecated\.py$
-  | _scratch\.py$
-  | torchcell/delete_subset\.py$
   | torchcell/models/hetero_cell_nsa_retry\.py$
-  | torchcell/pypy_adapters/
   | torchcell/experiments/
 )'''
 python_version = "3.13"
@@ -125,17 +117,12 @@ explicit_package_bases = true
 namespace_packages = true
 
 [[tool.mypy.overrides]]
-# Dead/legacy modules that mypy still PROCESSES (so the discovery `exclude` above
-# cannot drop them): reached via imports, or passed explicitly by the diff-scoped CI
-# mypy (which bypasses `exclude`). ignore_errors is module-scoped and honored in both
-# cases, so it is the robust mechanism for changed-but-dead files. Covers: scratch
-# one-offs; the PyPy-only adapter path (imported by
-# knowledge_graphs/create_pypy_scerevisiae_kg.py); and trainers/utils (pydantic-v1,
-# raises on import, zero importers).
+# Scratch modules that mypy still PROCESSES (so the discovery `exclude` above cannot
+# drop them): reached via imports, or passed explicitly by the diff-scoped CI mypy
+# (which bypasses `exclude`). ignore_errors is module-scoped and honored in both cases,
+# so it is the robust mechanism for changed-but-dead files.
 module = [
     "torchcell.scratch.*",
-    "torchcell.pypy_adapters.*",
-    "torchcell.trainers.utils",
 ]
 ignore_errors = true
 
@@ -196,12 +183,6 @@ module = [
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-# Dead/legacy trainer (commented out of trainers/__init__.py, referenced only by
-# experiments/DEPRECATED_*). Kept for history but not gated; do not maintain.
-module = "torchcell.trainers.graph_convolution_regression"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
 # pydantic is resolved as Any in the mypy env (untyped-import override above), so
 # BaseModel subclasses trip disallow_subclassing_any. This is an env artifact, not a
 # code defect (pydantic ships types when installed); relax only subclassing for the
@@ -236,20 +217,12 @@ norecursedirs = ["*.egg", ".*", "_darcs", "build", "CVS", "dist", "node_modules"
 # module added under torchcell/ (with --strict, changed too) must ship
 # tests/torchcell/<same dir>/test_<name>.py unless it matches an entry here. A trailing
 # "/" is a directory prefix, "*" a glob, anything else an exact path. Seeded verbatim
-# from the mypy exclude/ignore_errors and ruff extend-exclude carve-outs above; after
-# the legacy move (plan.test-suite-buildout Phase 0d) this collapses to the three
-# directory prefixes torchcell/legacy/, torchcell/scratch/, torchcell/experiments/.
+# from the mypy exclude/ignore_errors carve-outs above; the legacy entries left with the
+# 2026.10.06 retirement to the graveyard (notes/torchcell.legacy-retirement.2026.10.06.md).
 paths = [
     "torchcell/scratch/",
     "torchcell/experiments/",
-    "torchcell/pypy_adapters/",
-    "*_DEPRECATED.py",
-    "*_scratch.py",
-    "torchcell/datasets/scerevisiae/costanzo2016_deprecated.py",
-    "torchcell/delete_subset.py",
     "torchcell/models/hetero_cell_nsa_retry.py",
-    "torchcell/trainers/graph_convolution_regression.py",
-    "torchcell/trainers/utils.py",
 ]
 
 [tool.torchcell.test_exceptions.pairs]

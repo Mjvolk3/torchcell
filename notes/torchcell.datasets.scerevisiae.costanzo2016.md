@@ -8,7 +8,7 @@ created: 1704437089340
 
 ## Costanzo2016 Notes on Design
 
-- Much of the design comes from the previous `Datasets` [[Costanzo2016|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016_deprecated]], then we also use the newer notion of capturing all data in a pydantic objects to make the transition to adapters easier.
+- Much of the design comes from the previous `Datasets` `torchcell/datasets/scerevisiae/costanzo2016_deprecated.py` (retired 2026-10-06 to the graveyard), then we also use the newer notion of capturing all data in a pydantic objects to make the transition to adapters easier.
 
 ## Legacy SmfCostanzo2016
 

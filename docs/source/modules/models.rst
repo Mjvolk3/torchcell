@@ -10,82 +10,6 @@ Model implementations, one module per architecture. They range from sequence lan
 .. contents:: Contents
     :local:
 
-``cell_diffpool_dense``
------------------------
-
-Dense DiffPool models over cell graphs for hierarchical graph pooling.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   cell_diffpool_dense.DenseDiffPool
-   cell_diffpool_dense.DenseCellDiffPool
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   cell_diffpool_dense.load_sample_data_batch
-
-``cell_diffpool_sparse``
-------------------------
-
-Sparse DiffPool cell model with GAT-based pooling over multiple graphs.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   cell_diffpool_sparse.SingleDiffPool
-   cell_diffpool_sparse.CellDiffPool
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   cell_diffpool_sparse.from_dense_batch
-   cell_diffpool_sparse.load_sample_data_batch
-
-``cell_gin_diffpool_dense``
----------------------------
-
-Dense GIN-based DiffPool cell model over dense adjacency matrices.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   cell_gin_diffpool_dense.DenseDiffPool
-   cell_gin_diffpool_dense.DenseCellDiffPool
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   cell_gin_diffpool_dense.load_sample_data_batch
-
 ``cell_graph_transformer``
 --------------------------
 
@@ -141,155 +65,6 @@ Functions
    :toctree: ../generated
 
    cell_graph_transformer_metabolism.perturbed_gene_pool
-
-``cell_latent_perturbation``
-----------------------------
-
-Latent-perturbation cell model: hetero GNN pooling over gene and metabolism graphs.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   cell_latent_perturbation.ProjectedGATConv
-   cell_latent_perturbation.PredictionHead
-   cell_latent_perturbation.HeteroGnnPool
-   cell_latent_perturbation.SetTransformer
-   cell_latent_perturbation.SetNet
-   cell_latent_perturbation.MetabolismProcessor
-   cell_latent_perturbation.CellLatentPerturbation
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   cell_latent_perturbation.load_sample_data_batch
-   cell_latent_perturbation.plot_correlations
-
-``cell_latent_perturbation_tform``
-----------------------------------
-
-Cell latent perturbation model with set-transformer and metabolism encoders.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   cell_latent_perturbation_tform.ProjectedGATConv
-   cell_latent_perturbation_tform.PredictionHead
-   cell_latent_perturbation_tform.HeteroGnnPool
-   cell_latent_perturbation_tform.SetTransformer
-   cell_latent_perturbation_tform.SetNet
-   cell_latent_perturbation_tform.MetabolismProcessor
-   cell_latent_perturbation_tform.CellLatentPerturbation
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   cell_latent_perturbation_tform.load_sample_data_batch
-   cell_latent_perturbation_tform.plot_correlations
-
-``cell_latent_perturbation_unified``
-------------------------------------
-
-Unified cell latent perturbation model over gene, reaction, and metabolism graphs.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   cell_latent_perturbation_unified.WholeIntactProcessor
-   cell_latent_perturbation_unified.PerturbedProcessor
-   cell_latent_perturbation_unified.BaseGenePreprocessor
-   cell_latent_perturbation_unified.ReactionGeneProcessor
-   cell_latent_perturbation_unified.ProjectedGATConv
-   cell_latent_perturbation_unified.PredictionHead
-   cell_latent_perturbation_unified.HeteroGnn
-   cell_latent_perturbation_unified.SetNet
-   cell_latent_perturbation_unified.MetabolismProcessor
-   cell_latent_perturbation_unified.CellLatentPerturbation
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   cell_latent_perturbation_unified.load_sample_data_batch
-   cell_latent_perturbation_unified.plot_correlations
-
-``cell_sagpool``
-----------------
-
-Self-attention graph pooling (SAGPool) models for cell graphs.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   cell_sagpool.SingleSAGPool
-   cell_sagpool.CellSAGPool
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   cell_sagpool.load_sample_data_batch
-   cell_sagpool.analyze_node_selections
-
-``cell_sagpool_inception``
---------------------------
-
-Inception-style multi-graph SAGPooling model for cell graph regression.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   cell_sagpool_inception.MLP
-   cell_sagpool_inception.SingleSAGPool
-   cell_sagpool_inception.CellSAGPool
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   cell_sagpool_inception.load_sample_data_batch
-   cell_sagpool_inception.analyze_node_selections
 
 ``dango``
 ---------
@@ -356,21 +131,6 @@ Classes
 
    deep_set.DeepSet
 
-``dense_gat_conv``
-------------------
-
-Dense (adjacency-matrix) implementation of the graph attention layer.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   dense_gat_conv.DenseGATConv
-
 ``diffusion_decoder``
 ---------------------
 
@@ -388,30 +148,6 @@ Classes
    diffusion_decoder.CrossAttention
    diffusion_decoder.DenoisingBlock
    diffusion_decoder.DiffusionDecoder
-
-``early_cell_diffpool_dense``
------------------------------
-
-Dense DiffPool cell model over multiple per-graph GAT stacks.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   early_cell_diffpool_dense.EarlyDenseCellDiffPool
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   early_cell_diffpool_dense.load_sample_data_batch
 
 ``equivariant_cell_graph_transformer``
 --------------------------------------
@@ -483,78 +219,6 @@ Classes
 
    fungal_up_down_transformer.FungalUpDownTransformer
 
-``gat_diffpool``
-----------------
-
-GAT-then-DiffPool model that pools each input graph into a graph embedding.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   gat_diffpool.GatDiffPool
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   gat_diffpool.load_sample_data_batch
-
-``gat_diffpool_alt``
---------------------
-
-Multi-graph GATv2 encoder with hierarchical DiffPool clustering.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   gat_diffpool_alt.GatDiffPool
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   gat_diffpool_alt.load_sample_data_batch
-
-``gat_diffpool_inception``
---------------------------
-
-GAT-with-DiffPool inception model over multiple graphs for graph-level prediction.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   gat_diffpool_inception.GatDiffPool
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   gat_diffpool_inception.load_sample_data_batch
-
 ``gpu_edge_mask_generator``
 ---------------------------
 
@@ -569,60 +233,6 @@ Classes
    :template: autosummary/class.rst
 
    gpu_edge_mask_generator.GPUEdgeMaskGenerator
-
-``hetero_cell``
----------------
-
-Heterogeneous GNN over gene, reaction, and metabolite graphs for fitness.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   hetero_cell.AttentionalGraphAggregation
-   hetero_cell.PreProcessor
-   hetero_cell.AttentionConvWrapper
-   hetero_cell.HeteroCell
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   hetero_cell.get_norm_layer
-
-``hetero_cell_bipartite``
--------------------------
-
-Bipartite hetero GNN over gene, reaction, and metabolite graphs.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   hetero_cell_bipartite.AttentionalGraphAggregation
-   hetero_cell_bipartite.PreProcessor
-   hetero_cell_bipartite.AttentionConvWrapper
-   hetero_cell_bipartite.HeteroCellBipartite
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   hetero_cell_bipartite.get_norm_layer
 
 ``hetero_cell_bipartite_dango``
 -------------------------------
@@ -684,6 +294,7 @@ Classes
 
    hetero_cell_bipartite_dango_gi.SelfAttentionGraphAggregation
    hetero_cell_bipartite_dango_gi.PairwiseGraphAggregation
+   hetero_cell_bipartite_dango_gi.AggregationNormNotImplementedError
    hetero_cell_bipartite_dango_gi.HeteroConvAggregator
    hetero_cell_bipartite_dango_gi.AttentionalGraphAggregation
    hetero_cell_bipartite_dango_gi.DangoLikeHyperSAGNN
@@ -699,6 +310,8 @@ Functions
    :nosignatures:
    :toctree: ../generated
 
+   hetero_cell_bipartite_dango_gi.get_activation
+   hetero_cell_bipartite_dango_gi.require_no_aggregation_norm
    hetero_cell_bipartite_dango_gi.get_norm_layer
    hetero_cell_bipartite_dango_gi.create_conv_layer
    hetero_cell_bipartite_dango_gi.calculate_weight_l2_norm
@@ -739,93 +352,6 @@ Functions
    hetero_cell_bipartite_dango_gi_lazy.calculate_weight_l2_norm
    hetero_cell_bipartite_dango_gi_lazy.calculate_rolling_correlation
 
-``hetero_cell_flex``
---------------------
-
-Flexible heterogeneous cell model over gene, reaction, and metabolite graphs.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   hetero_cell_flex.GraphMaskedAttention
-   hetero_cell_flex.Combiner
-   hetero_cell_flex.AttentionalGraphAggregation
-   hetero_cell_flex.PreProcessor
-   hetero_cell_flex.AttentionConvWrapper
-   hetero_cell_flex.HeteroCell
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   hetero_cell_flex.get_norm_layer
-   hetero_cell_flex.load_sample_data_batch
-   hetero_cell_flex.plot_correlations
-
-``hetero_cell_isab_split``
---------------------------
-
-Heterogeneous cell model with ISAB set-transformer aggregation splits.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   hetero_cell_isab_split.SortedSetTransformerAggregation
-   hetero_cell_isab_split.PreProcessor
-   hetero_cell_isab_split.AttentionConvWrapper
-   hetero_cell_isab_split.HeteroCell
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   hetero_cell_isab_split.get_norm_layer
-   hetero_cell_isab_split.load_sample_data_batch
-   hetero_cell_isab_split.plot_correlations
-   hetero_cell_isab_split.plot_embeddings
-
-``hetero_cell_nsa``
--------------------
-
-Heterogeneous cell model built from Node-Set Attention (NSA) blocks.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   hetero_cell_nsa.AttentionalGraphAggregation
-   hetero_cell_nsa.PreProcessor
-   hetero_cell_nsa.HeteroCellNSA
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   hetero_cell_nsa.get_norm_layer
-
 ``hetero_cell_nsa_retry``
 -------------------------
 
@@ -851,134 +377,6 @@ Functions
    :toctree: ../generated
 
    hetero_cell_nsa_retry.get_norm_layer
-
-``hetero_cell_pma``
--------------------
-
-Heterogeneous cell graph model with PMA pooling for fitness/interaction.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   hetero_cell_pma.SimplePMA
-   hetero_cell_pma.PreProcessor
-   hetero_cell_pma.AttentionConvWrapper
-   hetero_cell_pma.HeteroCell
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   hetero_cell_pma.get_norm_layer
-   hetero_cell_pma.load_sample_data_batch
-   hetero_cell_pma.plot_correlations
-   hetero_cell_pma.plot_embeddings
-
-``hetero_gnn_pool``
--------------------
-
-Heterogeneous GNN with graph pooling and a configurable prediction head.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   hetero_gnn_pool.ProjectedGATConv
-   hetero_gnn_pool.PredictionHead
-   hetero_gnn_pool.HeteroGnnPool
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   hetero_gnn_pool.load_sample_data_batch
-
-``isomorphic_cell``
--------------------
-
-Isomorphic cell model combining gene GNN and metabolism hypergraph branches.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   isomorphic_cell.PreProcessor
-   isomorphic_cell.Combiner
-   isomorphic_cell.ProjectedGATConv
-   isomorphic_cell.PredictionHead
-   isomorphic_cell.HeteroGnn
-   isomorphic_cell.GeneContextProcessor
-   isomorphic_cell.MetaboliteProcessor
-   isomorphic_cell.ReactionMapper
-   isomorphic_cell.GeneMapper
-   isomorphic_cell.MetabolismProcessor
-   isomorphic_cell.IsomorphicCell
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   isomorphic_cell.initialize_model
-   isomorphic_cell.load_sample_data_batch
-   isomorphic_cell.plot_correlations
-
-``isomorphic_cell_attentional``
--------------------------------
-
-Attentional isomorphic cell model over gene, reaction, and metabolite graphs.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   isomorphic_cell_attentional.AttentionalGraphAggregation
-   isomorphic_cell_attentional.PreProcessor
-   isomorphic_cell_attentional.Combiner
-   isomorphic_cell_attentional.ProjectedGATConv
-   isomorphic_cell_attentional.PredictionHead
-   isomorphic_cell_attentional.HeteroGnn
-   isomorphic_cell_attentional.GeneContextProcessor
-   isomorphic_cell_attentional.ReactionMapper
-   isomorphic_cell_attentional.GeneMapper
-   isomorphic_cell_attentional.MetabolismProcessor
-   isomorphic_cell_attentional.IsomorphicCell
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   isomorphic_cell_attentional.get_norm_layer
-   isomorphic_cell_attentional.load_sample_data_batch
-   isomorphic_cell_attentional.plot_correlations
 
 ``linear``
 ----------
@@ -1027,37 +425,6 @@ Classes
 
    mlp.Mlp
 
-``nsa_hetero_cell``
--------------------
-
-Heterogeneous Node-Set Attention model over gene/metabolite/reaction graphs.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   nsa_hetero_cell.BlockContainer
-   nsa_hetero_cell.AttentionBlock
-   nsa_hetero_cell.MAB
-   nsa_hetero_cell.SAB
-   nsa_hetero_cell.StoichiometricMAB
-   nsa_hetero_cell.CellGraphHeteroNSA
-   nsa_hetero_cell.CellGraphNSAModel
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   nsa_hetero_cell.load_sample_data_batch
-   nsa_hetero_cell.group
-
 ``nucleotide_transformer``
 --------------------------
 
@@ -1103,27 +470,3 @@ Classes
 
    self_attention_deep_set.SelfAttention
    self_attention_deep_set.SelfAttentionDeepSet
-
-``self_attention_sag``
-----------------------
-
-Self-attention pooling model combining multi-head attention with SAGPooling GCNs.
-
-Classes
-~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-   :template: autosummary/class.rst
-
-   self_attention_sag.SelfAttention
-   self_attention_sag.SelfAttentionSAG
-
-Not documented
---------------
-
-Submodules left out of this page:
-
-- ``dcell_DEPRECATED`` (scratch, demo or deprecated)
-- ``species_aware_lm`` (import fails: ModuleNotFoundError)

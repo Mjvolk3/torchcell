@@ -17,7 +17,7 @@ created: 1739216011880
 
 - [x] Collected key papers for sparse graph transformer
 - [x] Reviewed data of IGB run. Model didn't fit... Bit troubling. We plan to changed the model a bit to get matching parameters in both sides of model. Maybe use `GAT` instead. Then run sweep over fitness and gene interactions. First sweep should be short fast, attempt to get quick smooth learning. I also want to use that as an opportunity to add plot logging and adjust the logged metrics.
-- [x] Did new description of data [[2025.02.12 - Data Masking|dendron://torchcell/torchcell.models.isomorphic_cell_attentional#20250212---data-masking]]
+- [x] Did new description of data `torchcell/models/isomorphic_cell_attentional.py` (retired 2026-10-06 to the graveyard)
 - [x] Did residual connection on preprocessor
 - [x] Did read in model initialization from config.
 

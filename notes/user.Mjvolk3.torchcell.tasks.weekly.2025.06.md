@@ -34,7 +34,7 @@ created: 1738521316295
 - [ ] Sweep file for
 - [ ] Run over fit batch with sweep. This should not be difficult. Should parameterize the overfit number. To have in logs.
 
-- [ ] Edit to get most up to date formula of the problem. [[Isomorphic_cell|dendron://torchcell/torchcell.models.isomorphic_cell]]
+- [ ] Edit to get most up to date formula of the problem. `torchcell/models/isomorphic_cell.py` (retired 2026-10-06 to the graveyard)
 
 ## 2025.02.04
 

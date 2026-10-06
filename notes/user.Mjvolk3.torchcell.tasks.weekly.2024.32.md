@@ -15,7 +15,7 @@ Changing as of this week, days are going down chronologically. Before it made se
 
 ## 2024.08.08
 
-- [x] biocypher-out combine so we can combine partial knowledge graph builds → [[2024.08.08 - How it works|dendron://torchcell/torchcell.database.biocypher_out_combine#20240808---how-it-works]]
+- [x] biocypher-out combine so we can combine partial knowledge graph builds → `torchcell/database/biocypher_out_combine.py` (retired 2026-10-06 to the graveyard)
 - [x] Test that the combine gives the same as all at once. → [[2024.08.08 - Checking that Combine Produces the Same Import Summary|dendron://torchcell/torchcell.knowledge_graphs.dmf_tmi_combine_kg#20240808---checking-that-combine-produces-the-same-import-summary]] → Not working correctly.
 
 ## 2024.08.10
@@ -25,4 +25,3 @@ Changing as of this week, days are going down chronologically. Before it made se
 - [x] Note to track builds [[GilaHyper Builds|dendron://torchcell/database.docker.builds#gilahyper-builds]] → [[GilaHyper 2024-08-08_18-24-33|dendron://torchcell/database.docker.builds#gilahyper-2024-08-08_18-24-33]]
 - [x] Start script for `traditional_ml`[[Traditional_ml_dataset|dendron://torchcell/experiments.002-dmi-tmi.scripts.traditional_ml_dataset]]
 - [x] Construct `dmi` and `tmi` `kuzmin` kgs
-

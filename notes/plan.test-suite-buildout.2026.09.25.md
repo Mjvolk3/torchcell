@@ -561,4 +561,7 @@ checkout's.
    settle: `pypy_adapters` moves only if `knowledge_graphs/create_pypy_scerevisiae_kg.py`
    is reached by no root (a `database/` slurm launcher would make it live), and
    `models/graph_attention.py`/`graph_convolution.py` move only with the
-   `models/__init__.py` re-export edit.
+   `models/__init__.py` re-export edit. 2026.10.06: the owner confirmed the list
+   (109 modules after a two-reviewer pass) and the cluster was retired to the graveyard
+   behind the tag `legacy-pre-move-2026.10`, not relocated to `torchcell/legacy/`
+   ([[torchcell.legacy-retirement.2026.10.06]]).

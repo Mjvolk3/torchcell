@@ -17,7 +17,7 @@ Run ruff check on staged or specified Python files, then fix errors following to
 
 ## Arguments
 
-- **With arguments** (e.g. `/ruff torchcell/cell.py`): run on those files.
+- **With arguments** (e.g. `/ruff torchcell/timestamp.py`): run on those files.
 - **No arguments**: run on staged `.py` files under `torchcell/` and `tests/torchcell/`. If nothing staged, target both directories.
 
 ## Step 1: Determine target files
@@ -112,5 +112,5 @@ This mirrors the existing black (double quotes, skip-magic-trailing-comma), isor
 ## Example Invocations
 
 - `/ruff` -- staged Python (or the whole project)
-- `/ruff torchcell/cell.py`
+- `/ruff torchcell/timestamp.py`
 - "fix lint errors in dcell.py"

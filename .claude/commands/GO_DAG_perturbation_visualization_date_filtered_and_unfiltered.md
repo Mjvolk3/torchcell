@@ -3,7 +3,7 @@
 Relevant files:
 experiments/005-kuzmin2018-tmi/scripts/GO_graph_date_filter_comparison.py
 experiments/005-kuzmin2018-tmi/scripts/dcell_go_perturbation_visualization.py
-torchcell/graph/graph_analysis.py
+torchcell/graph/graph_analysis.py (retired 2026-10-06 to the graveyard)
 /Users/michaelvolk/Documents/projects/torchcell/notes/assets/images/go_graph_unfiltered_visualization_2025-05-13-17-54-25.png
 /Users/michaelvolk/Documents/projects/torchcell/experiments/005-kuzmin2018-tmi/scripts/dcell_batch_005_verify_mutant_state.py
 [[Dcell_batch_005_verify_mutant_state|dendron://torchcell/experiments.005-kuzmin2018-tmi.scripts.dcell_batch_005_verify_mutant_state]]

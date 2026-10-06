@@ -88,12 +88,6 @@ DESC: dict[str, str] = {
         "(:class:`~torchcell.datamodules.DataModuleIndex` and related models) are "
         "pydantic objects, cached as JSON in the data module's cache directory."
     ),
-    "dataset_readers": (
-        "Read-only access to a processed dataset. "
-        ":class:`~torchcell.dataset_readers.LmdbDatasetReader` opens a built dataset's "
-        "LMDB environment read-only and returns its stored items by index, together "
-        "with the dataset's experiment reference index."
-    ),
     "datasets": (
         "Dataset loaders. The top level of ``torchcell.datasets`` holds the "
         "per-gene embedding datasets (sequence language-model embeddings, codon "
@@ -171,14 +165,6 @@ DESC: dict[str, str] = {
         "``yeast_GEM`` imports cobra and downloads the model on first use; import "
         "the submodule you need."
     ),
-    "metrics": (
-        "TorchMetrics metrics that ignore missing labels. Each metric masks "
-        "``NaN`` targets before updating its state, so a batch with partially "
-        "labeled multi-task targets can be scored under distributed training. "
-        "``nan_tolerant_metrics`` covers regression and correlation (RMSE, MAE, "
-        "MSE, Pearson, Spearman, R2) and ``nan_tolerant_classification_metrics`` "
-        "covers classification (accuracy, F1, AUROC, precision, recall)."
-    ),
     "models": (
         "Model implementations, one module per architecture. They range from "
         "sequence language-model wrappers (Nucleotide Transformer, ESM-2, ProtT5, "
@@ -196,9 +182,7 @@ DESC: dict[str, str] = {
         "under the module that defines it."
     ),
     "nn": (
-        "Neural-network layers shared by the models. ``aggr.set_transformer`` "
-        "provides Set Transformer aggregation (SAB and ISAB encoders with PMA "
-        "pooling) for PyG; ``hetero_nsa``, ``nsa_encoder``, "
+        "Neural-network layers shared by the models. ``hetero_nsa``, ``nsa_encoder``, "
         "``masked_attention_block`` and ``self_attention_block`` build node-set "
         "attention over graphs with FlexAttention adjacency masks; "
         "``masked_gin_conv`` is a GIN convolution for the lazy, masked subgraph "
@@ -280,9 +264,8 @@ DESC: dict[str, str] = {
     "transforms": (
         "PyG transforms applied to cell graphs. ``regression_to_classification`` "
         "and its COO variants normalize regression labels, bin them into "
-        "classification targets, and invert the binning; ``hetero_to_dense`` and "
-        "``hetero_to_dense_mask`` convert the sparse adjacencies of a ``HeteroData`` "
-        "graph into dense matrices or boolean masks."
+        "classification targets, and invert the binning; ``hetero_to_dense_mask`` "
+        "converts the sparse adjacencies of a ``HeteroData`` graph into boolean masks."
     ),
     "utils": (
         "Shared helpers. ``paths`` resolves output directories relative to the "
@@ -322,7 +305,6 @@ MODE = {
     "loader": "modules",
     "losses": "modules",
     "metabolism": "modules",
-    "metrics": "modules",
     "models": "modules",
     "nn": "modules",
     "paper": "modules",
@@ -334,10 +316,7 @@ MODE = {
 }
 
 # Submodules left out of "modules" mode: scratch sketches, demos and deprecated code.
-SKIP_MODULE = re.compile(
-    r"(DEPRECATED|deprecated|scratch|tutorial|flex_attention_graph$|"
-    r"flex_attention_graph_adj$|sort_adj_block_model$)"
-)
+SKIP_MODULE = re.compile(r"(DEPRECATED|deprecated|scratch|tutorial)")
 # Script entry points (`main`, `main_incidence`, ...) are not API.
 SKIP_FUNC = re.compile(r"^main(_|$)")
 

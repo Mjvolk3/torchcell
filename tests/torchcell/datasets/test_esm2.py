@@ -34,8 +34,7 @@ import torch
 from torch_geometric.data import Data
 
 import torchcell.datasets.esm2 as esm2_module
-from torchcell.datasets.cell import CellDataset
-from torchcell.datasets.cell import ParsedGenome as CellParsedGenome
+from torchcell.data.neo4j_cell import create_embedding_graph
 from torchcell.datasets.esm2 import Esm2Dataset
 from torchcell.sequence import ParsedGenome
 
@@ -213,9 +212,14 @@ def test_lookup_by_gene_id_and_by_index_return_the_same_row(
 ) -> None:
     """``ds["<gene>"]`` and ``ds[i]`` return the gene's exact ``[1, 4]`` row (issue #543).
 
-    The collate is ``[3, 4]`` with one row per gene in gene-set order. The node
-    feature ``CellDataset.create_embedding_graph`` builds (``squeeze(0)`` of each row)
-    is the gene's ``[4]`` vector, as it was for the old flat layout.
+    The collate is ``[3, 4]`` with one row per gene in gene-set order. The live
+    consumer ``torchcell.data.neo4j_cell.create_embedding_graph`` min-max normalizes
+    each feature over the three genes in place, then gives each node the ``squeeze(0)``
+    of its row, a ``[4]`` vector: feature columns [5, 4, 5], [6, 5, 6], [7, 6, 8] and
+    [8, 7, 9] scale to [1, 0, 1], [1, 0, 1], [0.5, 0, 1] and [0.5, 0, 1]. It runs on a
+    fresh construction over the same store: PyG caches every item already read, and
+    the normalization rewrites only the collated tensor, so on ``ds`` (all three items
+    read above) the nodes would keep the raw rows.
     """
     name = "esm2_t6_8M_UR50D_all"
     ds = Esm2Dataset(root=str(tmp_path), genome=embedding_genome, model_name=name)
@@ -230,10 +234,16 @@ def test_lookup_by_gene_id_and_by_index_return_the_same_row(
 
     parsed = ds.genome
     assert isinstance(parsed, ParsedGenome)
-    graph = CellDataset.create_embedding_graph(
-        CellParsedGenome(gene_set=parsed.gene_set), ds
-    )
-    assert {g: graph.nodes[g]["embedding"].tolist() for g in graph.nodes} == EMBEDDED
+    fresh = Esm2Dataset(root=str(tmp_path), genome=embedding_genome, model_name=name)
+    graph = create_embedding_graph(parsed.gene_set, fresh)
+    assert graph.name == "Esm2Dataset"
+    assert {
+        g: graph.graph.nodes[g]["embedding"].tolist() for g in graph.graph.nodes
+    } == {
+        "YAL001W": [1.0, 1.0, 0.5, 0.5],
+        "YAL002C": [0.0, 0.0, 0.0, 0.0],
+        "YAL003W": [1.0, 1.0, 1.0, 1.0],
+    }
 
 
 @pytest.mark.parametrize("model_name", ["esm2_t6_8M_UR50D_bogus", "esm2_t6_8M"])

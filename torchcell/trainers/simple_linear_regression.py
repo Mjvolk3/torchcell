@@ -1,6 +1,6 @@
-# torchcell/trainers/regression.py
-# [[torchcell.trainers.regression]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/regression.py
+# torchcell/trainers/simple_linear_regression.py
+# [[torchcell.trainers.simple_linear_regression]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/simple_linear_regression.py
 # Test file: torchcell/trainers/test_regression.py
 """Lightning task for simple linear regression on graph perturbation data."""
 

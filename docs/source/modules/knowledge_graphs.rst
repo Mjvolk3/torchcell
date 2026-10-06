@@ -100,10 +100,21 @@ Functions
 
    gene_interactions_scerevisae_kg.get_num_workers
 
-``gene_interactions_scerevisae_kg_small``
------------------------------------------
+``head_ontology``
+-----------------
 
-Build a small S. cerevisiae gene-interaction BioCypher knowledge graph.
+The sha256-pinned local mirror of BioCypher's head ontology (Biolink 3.2.1).
+
+Classes
+~~~~~~~
+
+.. autosummary::
+   :nosignatures:
+   :toctree: ../generated
+   :template: autosummary/class.rst
+
+   head_ontology.HeadOntologyError
+   head_ontology.HeadOntologyMirror
 
 Functions
 ~~~~~~~~~
@@ -112,7 +123,11 @@ Functions
    :nosignatures:
    :toctree: ../generated
 
-   gene_interactions_scerevisae_kg_small.get_num_workers
+   head_ontology.record_path
+   head_ontology.load_mirror_record
+   head_ontology.configured_head_ontology
+   head_ontology.verify_head_ontology
+   head_ontology.build_mirror_record
 
 ``incremental_import``
 ----------------------
@@ -194,6 +209,10 @@ Functions
    kg_manifest.value_surface_drift
    kg_manifest.closure_at_ref
    kg_manifest.closure_in_worktree
+   kg_manifest.package_version_from_source
+   kg_manifest.package_version_at_ref
+   kg_manifest.package_tag_at_ref
+   kg_manifest.checkout_package_version
    kg_manifest.load_manifest
    kg_manifest.save_manifest
    kg_manifest.bootstrap_manifest
@@ -214,6 +233,39 @@ Functions
    kg_manifest.load_report
    kg_manifest.split_dataset_args
    kg_manifest.parse_n_experiments
+
+``release_snapshot``
+--------------------
+
+Committed snapshots of served knowledge-graph releases.
+
+Classes
+~~~~~~~
+
+.. autosummary::
+   :nosignatures:
+   :toctree: ../generated
+   :template: autosummary/class.rst
+
+   release_snapshot.SnapshotDataset
+   release_snapshot.SnapshotEvent
+   release_snapshot.KgReleaseSnapshot
+
+Functions
+~~~~~~~~~
+
+.. autosummary::
+   :nosignatures:
+   :toctree: ../generated
+
+   release_snapshot.composite_sha256
+   release_snapshot.snapshot_from_manifest
+   release_snapshot.bootstrap_package_version
+   release_snapshot.snapshot_paths
+   release_snapshot.write_snapshot
+   release_snapshot.load_snapshot
+   release_snapshot.load_snapshots
+   release_snapshot.load_closures
 
 ``releases``
 ------------
@@ -257,39 +309,15 @@ Functions
    releases.datasets
    releases.diff
    releases.compatibility
+   releases.compatibility_with_surface
+   releases.closure_compatibility
+   releases.package_checkout
    releases.commit_index
    releases.commit_date
    releases.behind_main
+   releases.package_label
    releases.status_rows
    releases.format_table
-
-``smf_kg``
-----------
-
-Build a BioCypher knowledge graph from S. cerevisiae single-mutant fitness data.
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   smf_kg.get_num_workers
-
-``smf_tmi_combine_kg``
-----------------------
-
-Build a combined BioCypher knowledge graph from SMF Costanzo and TMI Kuzmin data.
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   smf_tmi_combine_kg.get_num_workers
 
 ``subset``
 ----------
@@ -317,10 +345,88 @@ Functions
    subset.select_indices
    subset.subset_dataset
 
+``supported_queries.check``
+---------------------------
+
+The supported-query drift check: does each registered query still hold on a release?
+
+Classes
+~~~~~~~
+
+.. autosummary::
+   :nosignatures:
+   :toctree: ../generated
+   :template: autosummary/class.rst
+
+   supported_queries.check.QueryDrift
+   supported_queries.check.QueryResult
+   supported_queries.check.CheckReport
+   supported_queries.check.GraphLabels
+
+Functions
+~~~~~~~~~
+
+.. autosummary::
+   :nosignatures:
+   :toctree: ../generated
+
+   supported_queries.check.pascal_label
+   supported_queries.check.schema_is_a
+   supported_queries.check.graph_labels
+   supported_queries.check.selected_composite
+   supported_queries.check.query_drifts
+   supported_queries.check.run_check
+   supported_queries.check.checkout_commit
+   supported_queries.check.resolve_snapshot
+   supported_queries.check.check_repo
+   supported_queries.check.validate_query
+
+``supported_queries.cypher_deps``
+---------------------------------
+
+What a Cypher query reads from the graph, extracted from its text.
+
+Functions
+~~~~~~~~~
+
+.. autosummary::
+   :nosignatures:
+   :toctree: ../generated
+
+   supported_queries.cypher_deps.strip_comments
+   supported_queries.cypher_deps.blank_literals
+   supported_queries.cypher_deps.split_blocks
+   supported_queries.cypher_deps.extract_dependencies
+
+``supported_queries.registry``
+------------------------------
+
+The supported-query registry: which shipped ``.cql`` queries the project stands behind.
+
+Classes
+~~~~~~~
+
+.. autosummary::
+   :nosignatures:
+   :toctree: ../generated
+   :template: autosummary/class.rst
+
+   supported_queries.registry.QueryDependencies
+   supported_queries.registry.SupportedQuery
+   supported_queries.registry.QueryRegistry
+
+Functions
+~~~~~~~~~
+
+.. autosummary::
+   :nosignatures:
+   :toctree: ../generated
+
+   supported_queries.registry.registry_path
+
 Not documented
 --------------
 
 Submodules left out of this page:
 
 - ``conf`` (configuration files only)
-- ``create_pypy_scerevisiae_kg`` (import fails: ImportError)

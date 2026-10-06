@@ -26,7 +26,7 @@ created: 1741634702492
 - Standardizing labels since it is likely fitness was dominating.
 
 - [x] [[Plot_ppi_reg_rcm|dendron://torchcell/torchcell.experiments.003-fit-int.scripts.plot_ppi_reg_rcm]]
-- [x] [[2025.03.04 - Data with All Reactions|dendron://torchcell/torchcell.models.hetero_cell_isab_split#20250304---data-with-all-reactions]]
+- [x] `torchcell/models/hetero_cell_isab_split.py` (retired 2026-10-06 to the graveyard)
 
 - [x] Fix reaction map with no rxn if $\emptyset$. Fix the compound map so that we have all reactions. They can be named according to `Yeast9` reaction scheme. We just need to have associated genes as properties. Direction of reaction can be captured with directionality of the graph. → skipped this and just went to running updated code and works. Will need more inspection, but likelihood of entire pipeline just working are pretty low without it already being correct.
 - [x] Make sure `SubgraphRepresentation` works → Working in practice..

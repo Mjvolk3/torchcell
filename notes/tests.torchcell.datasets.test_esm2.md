@@ -15,3 +15,7 @@ Findings: `ds["<gene>"]` returns a scalar slice of the wrong gene because the sq
 ## 2026.09.30 - Findings retired (issue #543)
 
 Retired: flat collate and wrong-gene lookup, lowercase exclusion list, bare `KeyError`. Now asserted: every stored row is `[1, 4]` float32 and the collate is `[3, 4]`; `ds["<gene>"]` and `ds[i]` return the same exact row; `CellDataset.create_embedding_graph` gives each gene's exact `[4]` vector; `_no_dubious_uncharacterized` zeroes YAL002C and YAL003W and embeds only YAL001W; an unknown name is the base `ValueError` with the full valid list; `model_name=None` builds no backbone and writes only PyG's markers.
+
+## 2026.10.06 - Live embedding-graph consumer
+
+`torchcell/datasets/cell.py` retired with the legacy cluster ([[torchcell.legacy-retirement.2026.10.06]]), so the node-feature check in `test_lookup_by_gene_id_and_by_index_return_the_same_row` now calls the live `torchcell.data.neo4j_cell.create_embedding_graph`. That function min-max normalizes each feature in place first, so the pinned nodes are YAL001W [1, 1, 0.5, 0.5], YAL002C [0, 0, 0, 0], YAL003W [1, 1, 1, 1]. It runs on a fresh `Esm2Dataset` over the same store: on the dataset whose three items were already read, PyG served its cached items and the nodes kept the raw rows (observed in the first run of the rewrite).

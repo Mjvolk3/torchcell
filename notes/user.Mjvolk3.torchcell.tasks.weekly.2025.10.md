@@ -18,7 +18,7 @@ created: 1740986084819
 
 - [x] Added ISAB.
 - [x] Try to get function over perturbed genes for gene interaction working → Second time I've tried something like this and it doesn't work. → ![](./assets/images/hetero_cell_isab_gene_interaction_split_training_loss_2025-03-04-20-17-32.png)
-- [x] [[2025.03.04|dendron://torchcell/torchcell.models.hetero_cell_isab_split#20250304]] → Couldn't get it to work. The splitting make the network degenerate.
+- [x] `torchcell/models/hetero_cell_isab_split.py` (retired 2026-10-06 to the graveyard) → Couldn't get it to work. The splitting make the network degenerate.
 
 ## 2025.03.05
 
@@ -40,4 +40,4 @@ created: 1740986084819
 ## 2025.03.09
 
 - [x] `plot_every_n_epochs`
-- [x] Launch `4e5` run `Delta`. → Ran 2 gpu script with optimal params with hetero conv. 
+- [x] Launch `4e5` run `Delta`. → Ran 2 gpu script with optimal params with hetero conv.

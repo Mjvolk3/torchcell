@@ -24,10 +24,10 @@ torchcell/trainers/int_dango.py
 ## Other Useful Files
 
 We want to use the plotting showing in
-torchcell/trainers/fit_int_hetero_cell.py
+torchcell/trainers/fit_int_hetero_cell.py (retired 2026-10-06 to the graveyard)
 
 torchcell/trainers/int_hetero_cell.py
-torchcell/trainers/fit_int_hetero_cell.py
+torchcell/trainers/fit_int_hetero_cell.py (retired 2026-10-06 to the graveyard)
 
 ## Plotting
 

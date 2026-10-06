@@ -39,8 +39,8 @@ created: 1746570667745
 ## 2025.05.10
 
 - [x] [[2025.05.10 DCell Inclusion|dendron://torchcell/torchcell.scratch.load_batch_005#20250510-dcell-inclusion]]
-- [x] [[2025.05.10 - Inspecting Data in GoGraph|dendron://torchcell/torchcell.models.dcell_DEPRECATED#20250510---inspecting-data-in-gograph]]
-- [x] [[2025.05.10 - DCell Not Compliant With Torch Norms|dendron://torchcell/torchcell.models.dcell_DEPRECATED#20250510---dcell-not-compliant-with-torch-norms]]
+- [x] `torchcell/models/dcell_DEPRECATED.py` (retired 2026-10-06 to the graveyard)
+- [x] `torchcell/models/dcell_DEPRECATED.py` (retired 2026-10-06 to the graveyard)
 - [x] [[2025.05.10 - Gene Perturbations Without GO will Be Improperly Represented|dendron://torchcell/experiments.005-kuzmin2018-tmi.scripts.batch_005_investigate_pert_size_2#20250510---gene-perturbations-without-go-will-be-improperly-represented]]
 - [x] Move data away from using `dicts` → [[2025.05.10 - DCell No Dicts|dendron://torchcell/torchcell.scratch.load_batch_005#20250510---dcell-no-dicts]]
 - [x] [[Dango_lambda_determination_string11_0_to_string12_0|dendron://torchcell/experiments.005-kuzmin2018-tmi.scripts.dango_lambda_determination_string11_0_to_string12_0]]

@@ -9,27 +9,27 @@ created: 1736717919222
 
 ## 2025.01.12
 
-- [x] Working prototype [[Cell_latent_perturbation|dendron://torchcell/torchcell.models.cell_latent_perturbation]] →
+- [x] Working prototype `torchcell/models/cell_latent_perturbation.py` (retired 2026-10-06 to the graveyard) →
 
 ## 2025.01.13
 
-- [x] Working prototype [[Cell_latent_perturbation|dendron://torchcell/torchcell.models.cell_latent_perturbation]] → Added in stoichiometry for [[Met_hypergraph_conv|dendron://torchcell/torchcell.nn.stoichiometric_hypergraph_conv]]
+- [x] Working prototype `torchcell/models/cell_latent_perturbation.py` (retired 2026-10-06 to the graveyard) → Added in stoichiometry for [[Met_hypergraph_conv|dendron://torchcell/torchcell.nn.stoichiometric_hypergraph_conv]]
 - [x] Overfit on one batch size of 16
 - [x] Optimized some for loop to matrix ops
 
 ## 2025.01.14
 
 - [x] Overfitting batch and plotting training curves and correlation plot.
-- [x] [[Hetero_data|dendron://torchcell/torchcell.data.hetero_data]] → monkey patch `__repr__` to get better printing. [[2025.01.14 - Sample of Dataset|dendron://torchcell/torchcell.models.cell_latent_perturbation#20250114---sample-of-dataset]]
+- [x] [[Hetero_data|dendron://torchcell/torchcell.data.hetero_data]] → monkey patch `__repr__` to get better printing. `torchcell/models/cell_latent_perturbation.py` (retired 2026-10-06 to the graveyard)
 - [x] Begin RMA process for GH
-- [x] Exploring alternative data structure. → [[2025.01.14 - Current Batching Versus Proposed Efficient Batching|dendron://torchcell/torchcell.models.cell_latent_perturbation#20250114---current-batching-versus-proposed-efficient-batching]] → Added `Perturbation(GraphProcessor)`
+- [x] Exploring alternative data structure. → `torchcell/models/cell_latent_perturbation.py` (retired 2026-10-06 to the graveyard) → Added `Perturbation(GraphProcessor)`
 - [x] Add skip connections to `hypergraph_conv`
 - [x] Remove excess data `attrs` for improved virtual mem → `reaction_to_genes_indices`
 - [x] Check model works on `cpu` and `gpu`
 - [x] Add `log(cosh)`
 - 🔲 Memory issue with regression to classification scripts. We still have issue of processing memory accumulation. Unsure where it is coming from. Will only need to be solved if we use these losses. → still not solved.
-- [x] Experiment scripts and lightning module for [[Cell_latent_perturbation|dendron://torchcell/torchcell.models.cell_latent_perturbation]]
-- 🔲 Model walk through check each method [[Cell_latent_perturbation|dendron://torchcell/torchcell.models.cell_latent_perturbation]]
+- [x] Experiment scripts and lightning module for `torchcell/models/cell_latent_perturbation.py` (retired 2026-10-06 to the graveyard)
+- 🔲 Model walk through check each method `torchcell/models/cell_latent_perturbation.py` (retired 2026-10-06 to the graveyard)
 
 ## 2025.01.16
 

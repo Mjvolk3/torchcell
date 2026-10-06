@@ -10,20 +10,6 @@ Plotting helpers used during training and analysis: predicted-versus-measured fi
 .. contents:: Contents
     :local:
 
-``datamodules``
----------------
-
-Visualization helpers for dataset index splits.
-
-Functions
-~~~~~~~~~
-
-.. autosummary::
-   :nosignatures:
-   :toctree: ../generated
-
-   datamodules.plot_dataset_index_split
-
 ``fitness``
 -----------
 

@@ -1445,3 +1445,14 @@ Reviewers: two independent read-only agents on Opus 5.5, one on lanes A and C (l
 After the audit: 6741 passed.
 
 CI addendum (2026.10.06): the first CI run of PR-21 ended `1 failed, 6739 passed`: `test_models_esm2.py::test_real_esm_tokenizer_truncation_keeps_1020_residues`, the one test that uses the real `EsmTokenizer`, failed with `AttributeError: EsmTokenizer has no attribute batch_encode_plus` raised from `torchcell/models/esm2.py:83`. CI installs transformers 5.18.0 (unpinned), which removed `batch_encode_plus`; this machine has 4.57.1. The same call sits in `torchcell/models/nucleotide_transformer.py:78`, so on a fresh install neither embedding wrapper can embed anything, and the other wrapper tests pass only because their fake tokenizers define the method. The test now proves the truncation through the tokenizer's supported call on both versions and pins the wrapper's behavior per version: the truncated embedding under transformers 4, the exact `AttributeError` under 5 or later. Filed with the Phase 21 wrapper findings.
+
+## 2026.10.06 - Retiring the legacy cluster
+
+The owner confirmed the legacy list and the cluster was retired to the graveyard behind the tag `legacy-pre-move-2026.10` rather than moved to `torchcell/legacy/`: 110 modules (46,207 lines), 3 test files, 29 notes and 2 generated API pages, recorded module by module in [[torchcell.legacy-retirement.2026.10.06]]. Kept: `spell.py`, `build_time_projection.py`, `paper/signal.py`, the two `conf/__init__.py` packages and `nn/stoichiometric_hypergraph_conv.py`. The coverage tables above are history and still list the retired modules.
+
+| | | Statements | Before | After | Import-only | Delta |
+|---|---|---:|---:|---:|---:|---:|
+| TOTAL (line+branch) |  | 51648 | 68.1% | 91.2% | 16.9% | +23.1 |
+| TOTAL (line only) | | 51648 | 68.2% | 91.5% | 21.3% | |
+
+Runs: retirement worktree on `03b9d6bc8` plus the retirement edits: full hermetic suite including `test_import_all.py`, 6998 passed, 125 skipped, 9 xfailed, 7408 warnings in 305.08s (0:05:05); behavioral coverage run (import-all deselected) 6675 passed, 1 failed, 125 skipped, 322 deselected, 9 xfailed in 430.21s, the one failure being the `costanzo2016_deprecated` pin-debt entry fixed after that run (the fixed file and `test_import_all.py` then 372 passed); `legacy_partition.py --check` exit 1 on the five kept modules and `models/constants.py` only; `test_quality_check.py` 348 files clean; `check_paired_tests.py --base origin/main` 0 added modules; ruff and mypy (CI form) clean on every changed .py; `gen_api_pages.py --check` exit 0; `sphinx-build` is not installed in the torchcell env, so the docs were not built.

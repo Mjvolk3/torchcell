@@ -1,0 +1,46 @@
+%% notes-tex/kg-build-system/sections/5-recipes.tex
+
+\section{Recipes\secstatus{todo}}
+\label{sec:recipes}
+
+\notesec{Cut a release and build}
+Land everything the store should serialize under. Push a \texttt{REL} commit for
+a minor, or \texttt{DB}/\texttt{PATCH} for a patch; semantic-release pushes the
+\texttt{vX.Y.Z} bump commit to \texttt{main} and publishes to PyPI. Fast-forward
+the build checkout to that commit. Confirm every mapped dev store reads fresh
+under \texttt{python -m torchcell.provenance.build\_manifest}, then submit:
+\begin{verbatim}
+sbatch --cpus-per-task=64 --mem=256G --time=12:00:00 \
+  database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm
+\end{verbatim}
+The script refuses an untagged commit before touching anything. When it finishes,
+commit the snapshot it wrote as \texttt{DB(kg): <release> snapshot ...}, run
+\texttt{python scripts/kg\_compat\_page.py}, and commit the page.
+
+\notesec{Archive and ship}
+\begin{verbatim}
+sbatch -J kg-release -c 4 --mem=16G --time=6:00:00 \
+  --wrap "bash scripts/kg_release.sh backup"
+# backup runs detached inside the container; wait for 'exit 0' in backup.log
+sbatch -J kg-release-ship -c 2 --mem=8G --time=2:00:00 \
+  --wrap "bash scripts/kg_release.sh archive && bash scripts/kg_release.sh ship"
+\end{verbatim}
+\texttt{ship} ends with \texttt{sha256sum -c} on Taiga; the release is archived
+only when that prints OK for every file.
+
+\notesec{Deploy, test a restore, repair a pairing}
+\begin{verbatim}
+bash scripts/kg_release.sh deploy <release> [--pin]   # on the serving host
+bash scripts/kg_release.sh restore-test <release>     # throwaway database, dropped
+bash scripts/kg_release.sh retag <release> vX.Y.Z     # untagged build, later tag
+make ops-sync                                         # exit 1 on DIVERGED
+\end{verbatim}
+On GilaHyper each of the first three runs under slurm with
+\texttt{sbatch -c 4 --mem=16G --wrap "..."}, since they touch the DBMS.
+
+\notesec{Choose a release from code}
+Set \texttt{TORCHCELL\_KG\_VERSION} to \texttt{latest} (the default),
+\texttt{pinned}, a release id, or a \texttt{major.minor} version. The client
+resolves it to a database, reads that database's release node, and refuses with
+\texttt{IncompatibleReleaseError} unless the installed \texttt{torchcell}
+reproduces every served closure. The error names the package to install.

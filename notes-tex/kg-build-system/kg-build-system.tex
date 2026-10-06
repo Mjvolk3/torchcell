@@ -1,0 +1,61 @@
+%% notes-tex/kg-build-system/kg-build-system.tex
+%% [[kg-build-system]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/kg-build-system/kg-build-system.tex
+%%
+%% The knowledge-graph build, release and serving system as of 2026-10-06: the build
+%% host (GilaHyper today, replaceable), the release artifact and its archive on Taiga,
+%% the package/release pairing gates, and the deploy step that makes a serving host
+%% follow a release. The two figures are mermaid diagrams (make diagrams); every table
+%% is hand-authored from the scripts and the measured jobs and says so.
+%%
+%% Build:  make            -> kg-build-system.pdf
+%%         make diagrams   -> re-render the two mermaid figures
+%%         make check      -> the gate
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{array}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}The Knowledge-Graph Build, Release and Serving System\\
+  {\large Where a store is built, what a release is, how a package version and a
+   store are paired, and how a serving host follows a release}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+A knowledge-graph store is built on one host from the development LMDBs, under
+slurm, from a commit that carries a package tag; it is stamped with a release id
+and a \texttt{KgRelease} node, swapped into the serving container, and written out
+as an online backup that the archive on Taiga holds beside its manifest and
+checksums. A package version and a store are used only as a pair: the build
+refuses an untagged commit, the client refuses a store whose schema contracts the
+installed package does not reproduce for every dataset, the committed snapshots
+drive a pairs table that CI holds current, and \texttt{ops.sh sync} fails when two
+hosts serve different releases. The build host is GilaHyper today and is the one
+replaceable box in the diagram: the artifact it produces, the archive, and the
+deploy step that restores an artifact into any serving host do not depend on
+where the build ran. Radiant cannot serve a release yet, because Neo4j does not
+run a store on NFS and the VM has no other disk; the fix is a block volume and
+one \texttt{deploy} command.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-overview}
+\input{sections/2-build-host}
+\input{sections/3-release-pairing}
+\input{sections/4-archive-serving}
+\input{sections/5-recipes}
+
+\end{document}

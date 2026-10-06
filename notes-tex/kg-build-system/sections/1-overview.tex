@@ -1,0 +1,59 @@
+%% notes-tex/kg-build-system/sections/1-overview.tex
+
+\section{The system in one figure\secstatus{todo}}
+\label{sec:overview}
+
+%% SOURCE: notes/kg-build-system.mermaid.build-flow.md, rendered by
+%% notes/assets/publish/scripts/mermaid_pdf.sh and scaled to the text block by
+%% `make diagrams`; the boxes name the scripts under scripts/ and database/slurm/scripts/.
+\tcfig{figures/build-flow.pdf}{From source to release artifact. Yellow boxes are
+files in git or the development data tree; orange boxes are steps that run on the
+build host; the purple box is the release artifact; the blue box is the store the
+build host serves; red hexagons are gates that refuse rather than degrade. The
+cluster is the one box that moves when the build moves.}{fig:flow}
+
+%% SOURCE: notes/kg-build-system.mermaid.serve-flow.md, rendered by
+%% notes/assets/publish/scripts/mermaid_pdf.sh and scaled to the text block by
+%% `make diagrams`; the steps are those of scripts/kg_release.sh and scripts/ops.sh.
+\tcfig{figures/serve-flow.pdf}{From release artifact to a client. The archive on
+Taiga holds every release as verified files; \texttt{deploy} restores one into any
+serving host; \texttt{ops.sh sync} fails while hosts differ; the client gate
+refuses a store the installed package does not fully reproduce. Same palette as
+Fig.~\ref{fig:flow}.}{fig:serve}
+
+\notesec{Five stages}
+A release passes through five stages, each with one owner and one output
+(Table~\ref{tab:stages}). The source stage lives in git on every machine. The
+build stage is host-bound: it needs the development LMDB tree, docker, slurm and a
+fast local disk, and today that host is GilaHyper. The archive stage is Taiga,
+where a release is a directory of files and nothing runs. The serving stage is any
+host with a Neo4j container on local disk, and the client stage is whatever
+process opens a bolt connection with \texttt{torchcell} installed.
+
+%% SOURCE: hand-authored from scripts/kg_release.sh, scripts/ops.sh,
+%% database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm and
+%% torchcell/knowledge_graphs/releases.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The five stages, their owner, and the gate each one enforces.}
+\label{tab:stages}
+\begin{tabular}{l>{\raggedright\arraybackslash}p{0.22\textwidth}>{\raggedright\arraybackslash}p{0.26\textwidth}>{\raggedright\arraybackslash}p{0.26\textwidth}}
+\toprule
+Stage & Runs on & Produces & Gate \\
+\midrule
+Source & git, every machine & a tagged commit \texttt{vX.Y.Z}; the committed snapshot \texttt{database/releases/<release>.json} & semantic-release bumps only on \texttt{REL}, \texttt{DB}, \texttt{PATCH}, \texttt{API} \\
+Build & the build host, under slurm & the store on \texttt{/db}, the \texttt{KgRelease} node, the manifest, the snapshot written into the checkout & the build commit must carry a package tag; every dev LMDB must be fresh \\
+Archive & the build host, then Taiga & \texttt{<release>/} with the \texttt{.backup}, \texttt{kg\_manifest.json}, \texttt{release.json}, \texttt{SHA256SUMS} & \texttt{sha256sum -c} on arrival \\
+Serve & any host with a Neo4j container on local disk & database \texttt{kg-<release>}, aliases \texttt{latest} and \texttt{pinned} & the restored node must match \texttt{release.json}; \texttt{ops.sh sync} fails on divergence \\
+Client & any process with \texttt{torchcell} installed & an LMDB of query records & \texttt{require\_paired}: every served dataset's closure reproduced, else refused \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\notesec{What is host-independent}
+Everything in Fig.~\ref{fig:serve}. The backup file
+is Neo4j's own online-backup format, the archive directory is plain files with
+checksums, and \texttt{kg\_release.sh deploy} runs on whichever host has the
+container, reading the archive root from an environment variable. Moving the
+build changes the second column of Table~\ref{tab:stages} for one row.

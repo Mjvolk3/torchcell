@@ -611,7 +611,7 @@ def test_cli_validate_writes_the_registry(
 
 
 def test_real_registry_holds_on_the_committed_snapshot() -> None:
-    release = "2026.10.02-833970cd"
+    release = "2026.10.06-4b293d34"
     registry = QueryRegistry.load(registry_path(REPO))
     report = check_repo(REPO, registry, release)
     # ``contract_changed`` is the designed state between a landed schema change and the

@@ -12,8 +12,8 @@
       "status": "supported",
       "since_kg_version": "1.2",
       "deprecated_in": null,
-      "validated_release": "2026.10.02-833970cd",
-      "dataset_composite": "57a11b968ce6e9a7e9de154d3c7c7bd50a8a648a831cfe935268866e26b2fb13",
+      "validated_release": "2026.10.06-4b293d34",
+      "dataset_composite": "b69f835000c15f3752bf4dc4c0d509268330c6332461ec46064909da06f2f773",
       "docs_page": "docs/source/datasets/scerevisiae/amino-acid-betaxanthin.md"
     },
     {
@@ -28,8 +28,8 @@
       "status": "supported",
       "since_kg_version": "1.2",
       "deprecated_in": null,
-      "validated_release": "2026.10.02-833970cd",
-      "dataset_composite": "9704a2985f8935417ae027176c3eab73d52c65cb6a523fc894e146b02b07ea5f",
+      "validated_release": "2026.10.06-4b293d34",
+      "dataset_composite": "ad8e69a5ccb575fe4d17dcfc023218a87c54ecfb534297eb99dd957745351b1f",
       "docs_page": "docs/source/datasets/scerevisiae/essentiality-smf.md"
     },
     {
@@ -45,8 +45,8 @@
       "status": "supported",
       "since_kg_version": "1.2",
       "deprecated_in": null,
-      "validated_release": "2026.10.02-833970cd",
-      "dataset_composite": "cc5fd500d93bcb16ef83a67d22b4568a4eafe2714e7ab2fb76b01fafe07d8866",
+      "validated_release": "2026.10.06-4b293d34",
+      "dataset_composite": "8f2a09663ec09b33df646ccc439339a8269df58ea73b97f0f82dcd827b1118ae",
       "docs_page": null
     },
     {
@@ -63,8 +63,8 @@
       "status": "supported",
       "since_kg_version": "1.2",
       "deprecated_in": null,
-      "validated_release": "2026.10.02-833970cd",
-      "dataset_composite": "cc00363ea5f72d4f68a6d08e5592085120680ea6c78f8acc050bab947f389714",
+      "validated_release": "2026.10.06-4b293d34",
+      "dataset_composite": "d644690fa79541be87af2a3cc4e1bb70cdbb23ce79f787cd29b83412b0317e5a",
       "docs_page": null
     }
   ]

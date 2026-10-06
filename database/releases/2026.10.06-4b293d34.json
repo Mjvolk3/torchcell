@@ -1,0 +1,892 @@
+{
+  "biocypher_version": "0.15.2",
+  "built_at": "2026-10-06T04:42:48-05:00",
+  "composite_sha256": "34c804a21587d5cc98ebe8ba572d19197c70dbe1fbb571d340c93597c318fe39",
+  "datasets": {
+    "AminoAcidCooper2010Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "09ddfc956c239ac4aaec81d5b4f04d2e3e47c7023b7948a0ef616719f77ed42a",
+      "dataset_class": "AminoAcidCooper2010Dataset",
+      "import_mode": "full",
+      "n_experiments": 4313
+    },
+    "AminoAcidMulleder2016Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "275f30134a0a01fd6d4c520cad065eaead5a57c8293131e9f00b181550a932ea",
+      "dataset_class": "AminoAcidMulleder2016Dataset",
+      "import_mode": "full",
+      "n_experiments": 4678
+    },
+    "BetaxanthinCachera2023Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "b0c22171f9c8f50059c453530f660a95576752ddc0672c5873be58e8e2a4184b",
+      "dataset_class": "BetaxanthinCachera2023Dataset",
+      "import_mode": "full",
+      "n_experiments": 4719
+    },
+    "Bloom2019Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "f88b626c46ef3275539abac642327e5c3fa0bf396706a8ba2dd9b9c797301810",
+      "dataset_class": "Bloom2019Dataset",
+      "import_mode": "full",
+      "n_experiments": 530100
+    },
+    "CarotenoidOzaydin2013Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "ccbab398b9e667364287adb7040ca9203f587bcb1000a5f1d4e98893fec95b43",
+      "dataset_class": "CarotenoidOzaydin2013Dataset",
+      "import_mode": "full",
+      "n_experiments": 4474
+    },
+    "CaudalPanTranscriptome2024Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "01ba903080575e4a5a601e4f56f8a5844f4608caf47b5f1652220dc9bf98ca80",
+      "dataset_class": "CaudalPanTranscriptome2024Dataset",
+      "import_mode": "full",
+      "n_experiments": 943
+    },
+    "CrisprMagicLian2019Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "8e2d5b91aa1343aeacd8158e2b58afa8ea2d3ea62dd54091524a7c37571d277d",
+      "dataset_class": "CrisprMagicLian2019Dataset",
+      "import_mode": "full",
+      "n_experiments": 266304
+    },
+    "CrispriChemgenSmith2016Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "5213b5bf8b0dbf1de589e9d4a678231974895a04f0bf4ebdf4e2dfce08da855f",
+      "dataset_class": "CrispriChemgenSmith2016Dataset",
+      "import_mode": "full",
+      "n_experiments": 7053
+    },
+    "CrispriMormino2022Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "bdc60e05cfcbfb3f58ddb1c2c03f609399368a07fad45eb529f57ea1780c4a45",
+      "dataset_class": "CrispriMormino2022Dataset",
+      "import_mode": "full",
+      "n_experiments": 12
+    },
+    "DmMicroarraySameith2015Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "33f9d4898705c3fbfe68cf44bb009392d1aeb97ce3a158b3784b4b79ed665db5",
+      "dataset_class": "DmMicroarraySameith2015Dataset",
+      "import_mode": "full",
+      "n_experiments": 72
+    },
+    "DmfCostanzo2016Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "86c7516ff8609d205e0db96dd41dcae3edacf425666f25cc792f7f9451446303",
+      "dataset_class": "DmfCostanzo2016Dataset",
+      "import_mode": "full",
+      "n_experiments": 20705612
+    },
+    "DmfKuzmin2018Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "363465599f0c198de9ad5f6dd07048882e66623a7bc687eb355cc161bdc64f9a",
+      "dataset_class": "DmfKuzmin2018Dataset",
+      "import_mode": "full",
+      "n_experiments": 410571
+    },
+    "DmfKuzmin2020Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "f2db2b38e5e2a126429ab2e3c36d1187c379a0b3c98a803625fcbb15f4e33e6b",
+      "dataset_class": "DmfKuzmin2020Dataset",
+      "import_mode": "full",
+      "n_experiments": 632998
+    },
+    "DmiCostanzo2016Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "8e6e73f1d47aa521aec0bd59c51b691a4ea93f225c615d184b09edb9dd6e4c0b",
+      "dataset_class": "DmiCostanzo2016Dataset",
+      "import_mode": "full",
+      "n_experiments": 20705612
+    },
+    "DmiKuzmin2018Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "b0416f4e3c949d4b03307807f637016490cc78e687e6a2180f52dd2201d4d732",
+      "dataset_class": "DmiKuzmin2018Dataset",
+      "import_mode": "full",
+      "n_experiments": 410399
+    },
+    "DmiKuzmin2020Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "fe79424c7ed6799b1360700b8a91b844f0d66a3809ea6840a33f5711a29c41b2",
+      "dataset_class": "DmiKuzmin2020Dataset",
+      "import_mode": "full",
+      "n_experiments": 632797
+    },
+    "EnvChemgenAuesukaree2009Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "ac4fcbc0caf8f711c79528e69937104933c127f0e527002126e722c93aa831a4",
+      "dataset_class": "EnvChemgenAuesukaree2009Dataset",
+      "import_mode": "full",
+      "n_experiments": 525
+    },
+    "EnvChemgenCostanzo2021Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "378aaa8228f5eb3003bc74a419ae13a3fc3fea9e59a35b33cd0acbfde862c5bf",
+      "dataset_class": "EnvChemgenCostanzo2021Dataset",
+      "import_mode": "full",
+      "n_experiments": 61430
+    },
+    "EnvChemgenHoepfner2014Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "7657dabcafa1c8ed6359f51d09e9faa8bece42160a941ac3be326e02e629431a",
+      "dataset_class": "EnvChemgenHoepfner2014Dataset",
+      "import_mode": "full",
+      "n_experiments": 3083827
+    },
+    "EnvChemgenMota2024Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "5de4085d2003e7ce7d3381db8bf8e10469a96b3a1661ffad2fb130bbed61d417",
+      "dataset_class": "EnvChemgenMota2024Dataset",
+      "import_mode": "full",
+      "n_experiments": 1270
+    },
+    "EnvChemgenVanacloig2022Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "12c4d7dc98f8cea989a140267e4fefa8cb57516bcfdbee003ca62855f92bb632",
+      "dataset_class": "EnvChemgenVanacloig2022Dataset",
+      "import_mode": "full",
+      "n_experiments": 118662
+    },
+    "EnvChemgenWildenhain2015Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "5eb5d238262eb85512064db3dc8181f78e3ceb18660c7b97170b14f97f5fbad4",
+      "dataset_class": "EnvChemgenWildenhain2015Dataset",
+      "import_mode": "full",
+      "n_experiments": 430820
+    },
+    "FattyAcidSmith2006Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "cfc3dfb193aeb50211d8094fb975ce2c630552a8e68b682f5f7d7ee6b6cf4fcf",
+      "dataset_class": "FattyAcidSmith2006Dataset",
+      "import_mode": "full",
+      "n_experiments": 12747
+    },
+    "FattyAcidXue2025Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "41d62a62ce57d5db3271f77b4015068a9f57c417a5405c8d2b37cf3ea44dee75",
+      "dataset_class": "FattyAcidXue2025Dataset",
+      "import_mode": "full",
+      "n_experiments": 176
+    },
+    "GeneEssentialitySgdDataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "110f3764564ba8f0a1cb68c1b63000c2a66bfcf8e9b7ff47d35ed8d9980f93ae",
+      "dataset_class": "GeneEssentialitySgdDataset",
+      "import_mode": "full",
+      "n_experiments": 1140
+    },
+    "HetHillenmeyer2008Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "6e05c09c1b07e8415af6b90d0cb00a965047f1b73eb13760b8017fe202dbf09a",
+      "dataset_class": "HetHillenmeyer2008Dataset",
+      "import_mode": "full",
+      "n_experiments": 2712677
+    },
+    "HomHillenmeyer2008Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "681f3d9913a208bd5377de1ce0a70b84e44dcf6a0a8b2936f6c86dc9709f45ef",
+      "dataset_class": "HomHillenmeyer2008Dataset",
+      "import_mode": "full",
+      "n_experiments": 1063034
+    },
+    "IsobutanolScreenLopez2024Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "ccc967c4c7667b6c94328721ad404f992a86370019ce8214aa2e172fe9cac682",
+      "dataset_class": "IsobutanolScreenLopez2024Dataset",
+      "import_mode": "full",
+      "n_experiments": 4554
+    },
+    "IsobutanolValidatedLopez2024Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "b93d895006c9000b185c07a3252430dcdd9a77532351f6822afe56a74cc0a517",
+      "dataset_class": "IsobutanolValidatedLopez2024Dataset",
+      "import_mode": "full",
+      "n_experiments": 224
+    },
+    "MetaboliteDaSilveira2014Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "70c62b2473a01cb2cd19763f76e12d10d45e7941519d0e7a119fc4e6406e838e",
+      "dataset_class": "MetaboliteDaSilveira2014Dataset",
+      "import_mode": "full",
+      "n_experiments": 127
+    },
+    "MetaboliteZelezniak2018Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "af76c4f6174e0002c7a9b56f40e64e100ce79ee9fc91b90dae5d252049009989",
+      "dataset_class": "MetaboliteZelezniak2018Dataset",
+      "import_mode": "full",
+      "n_experiments": 129
+    },
+    "MicroarrayKemmeren2014Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "e59a870c4184d7afd0967425fb6829cc3bece13cc42ecd9bd8c115d7514a7574",
+      "dataset_class": "MicroarrayKemmeren2014Dataset",
+      "import_mode": "full",
+      "n_experiments": 1484
+    },
+    "NadalRibellesPerturbSeq2025Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "81e7667efc98a8f118d51fa4b0c71d0b6e4292837d174d3a079ccb612fde8601",
+      "dataset_class": "NadalRibellesPerturbSeq2025Dataset",
+      "import_mode": "full",
+      "n_experiments": 6188
+    },
+    "OrganicAcidYoshida2012Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "a5aef04a37e77d264d53c5ef02f6c836e6b17ed2bfa928af561acb82ee5fd0bf",
+      "dataset_class": "OrganicAcidYoshida2012Dataset",
+      "import_mode": "full",
+      "n_experiments": 17
+    },
+    "ProteomeMessner2023Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "d8b92fb218e9b24bdeebe3abaf6bc8c7c80428d13282f48833268adaaff64b17",
+      "dataset_class": "ProteomeMessner2023Dataset",
+      "import_mode": "full",
+      "n_experiments": 4699
+    },
+    "ProteomeZelezniak2018Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "d37e9a7401680319e9f8527a396ba5ae570aff37532ff7207debdcf737110a2f",
+      "dataset_class": "ProteomeZelezniak2018Dataset",
+      "import_mode": "full",
+      "n_experiments": 97
+    },
+    "ScmdOhnuki2018Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "361c0a6d8732f656abc04640250402d73de6938987f25d8237fc28eafd83047b",
+      "dataset_class": "ScmdOhnuki2018Dataset",
+      "import_mode": "full",
+      "n_experiments": 1112
+    },
+    "ScmdOhnuki2022Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "7305ab001a246b1d574f7bf80d7fb931bfa4cbb8b34b190292379cb4bf916d04",
+      "dataset_class": "ScmdOhnuki2022Dataset",
+      "import_mode": "full",
+      "n_experiments": 1979
+    },
+    "ScmdOhya2005Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "99e79aec0c073eda79b2808dbb2c0efc821c0805469f7d8a80cf3c81961a6e3c",
+      "dataset_class": "ScmdOhya2005Dataset",
+      "import_mode": "full",
+      "n_experiments": 4718
+    },
+    "SmMicroarraySameith2015Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "a9b72c4ed6d22c2826578d8a482216ccde295f91f6097cb34a096818c3875c79",
+      "dataset_class": "SmMicroarraySameith2015Dataset",
+      "import_mode": "full",
+      "n_experiments": 82
+    },
+    "SmfBaryshnikova2010Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "d55357ff6fec60b5d92685cfd2b916c8e0dd5623be7ce6bdb6cbf2e28949c847",
+      "dataset_class": "SmfBaryshnikova2010Dataset",
+      "import_mode": "full",
+      "n_experiments": 5993
+    },
+    "SmfCostanzo2016Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "db89e594ad0aed58d108b3fa97f261d0bda7f74d7bd5335ce3da637357451c4a",
+      "dataset_class": "SmfCostanzo2016Dataset",
+      "import_mode": "full",
+      "n_experiments": 20484
+    },
+    "SmfKuzmin2018Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "21c78116102cb68d6e3b9f70206258b6381847bef10d35b488531e57ae2dea1d",
+      "dataset_class": "SmfKuzmin2018Dataset",
+      "import_mode": "full",
+      "n_experiments": 1539
+    },
+    "SmfKuzmin2020Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "2db8ef03e0452663444b8eb2002253906fdbd624fe87ab9ce751801b71d8ef14",
+      "dataset_class": "SmfKuzmin2020Dataset",
+      "import_mode": "full",
+      "n_experiments": 472
+    },
+    "SmfODuibhir2014Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "23168afca5314991bea1a1cb3f73a54a45eff159f1a6f4e8925338cffdef0370",
+      "dataset_class": "SmfODuibhir2014Dataset",
+      "import_mode": "full",
+      "n_experiments": 1312
+    },
+    "SynthLethalityYeastSynthLethDbDataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "2c195c12dddb6148cb3706617f66f1ac0b292e353720e2db57c65ac0d67bd286",
+      "dataset_class": "SynthLethalityYeastSynthLethDbDataset",
+      "import_mode": "full",
+      "n_experiments": 13996
+    },
+    "SynthRescueYeastSynthLethDbDataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "d236e89d877d0de35e62e5bd68a8625a9b89241abb89543d4bff61503158ce7e",
+      "dataset_class": "SynthRescueYeastSynthLethDbDataset",
+      "import_mode": "full",
+      "n_experiments": 6942
+    },
+    "TmfKuzmin2018Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "4794320fca7dcffcf8495fbb660351815b480dfef33c901b82177e1a151202d6",
+      "dataset_class": "TmfKuzmin2018Dataset",
+      "import_mode": "full",
+      "n_experiments": 91111
+    },
+    "TmfKuzmin2020Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "e1dd546050c19482ac68de2f3a98944c8b1472616ace3c0061514a064e3d9e9c",
+      "dataset_class": "TmfKuzmin2020Dataset",
+      "import_mode": "full",
+      "n_experiments": 301798
+    },
+    "TmiKuzmin2018Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "e86d9ce97ba279696dffed04ce167e004113427b21d8c2d635fef1f9adb6d360",
+      "dataset_class": "TmiKuzmin2018Dataset",
+      "import_mode": "full",
+      "n_experiments": 91111
+    },
+    "TmiKuzmin2020Dataset": {
+      "admitted_at": "2026-10-06T04:42:48-05:00",
+      "content_sha256": "bc89fb63ae6d04d63736c7cd5a7d3a2d34dc171251056ad0cc8d7052d2e8a62f",
+      "dataset_class": "TmiKuzmin2020Dataset",
+      "import_mode": "full",
+      "n_experiments": 301798
+    }
+  },
+  "events": [
+    {
+      "at": "2026-10-06T09:43:12.185404+00:00",
+      "datasets": [
+        "AminoAcidCooper2010Dataset",
+        "AminoAcidMulleder2016Dataset",
+        "BetaxanthinCachera2023Dataset",
+        "Bloom2019Dataset",
+        "CarotenoidOzaydin2013Dataset",
+        "CaudalPanTranscriptome2024Dataset",
+        "CrisprMagicLian2019Dataset",
+        "CrispriChemgenSmith2016Dataset",
+        "CrispriMormino2022Dataset",
+        "DmMicroarraySameith2015Dataset",
+        "DmfCostanzo2016Dataset",
+        "DmfKuzmin2018Dataset",
+        "DmfKuzmin2020Dataset",
+        "DmiCostanzo2016Dataset",
+        "DmiKuzmin2018Dataset",
+        "DmiKuzmin2020Dataset",
+        "EnvChemgenAuesukaree2009Dataset",
+        "EnvChemgenCostanzo2021Dataset",
+        "EnvChemgenHoepfner2014Dataset",
+        "EnvChemgenMota2024Dataset",
+        "EnvChemgenVanacloig2022Dataset",
+        "EnvChemgenWildenhain2015Dataset",
+        "FattyAcidSmith2006Dataset",
+        "FattyAcidXue2025Dataset",
+        "GeneEssentialitySgdDataset",
+        "HetHillenmeyer2008Dataset",
+        "HomHillenmeyer2008Dataset",
+        "IsobutanolScreenLopez2024Dataset",
+        "IsobutanolValidatedLopez2024Dataset",
+        "MetaboliteDaSilveira2014Dataset",
+        "MetaboliteZelezniak2018Dataset",
+        "MicroarrayKemmeren2014Dataset",
+        "NadalRibellesPerturbSeq2025Dataset",
+        "OrganicAcidYoshida2012Dataset",
+        "ProteomeMessner2023Dataset",
+        "ProteomeZelezniak2018Dataset",
+        "ScmdOhnuki2018Dataset",
+        "ScmdOhnuki2022Dataset",
+        "ScmdOhya2005Dataset",
+        "SmMicroarraySameith2015Dataset",
+        "SmfBaryshnikova2010Dataset",
+        "SmfCostanzo2016Dataset",
+        "SmfKuzmin2018Dataset",
+        "SmfKuzmin2020Dataset",
+        "SmfODuibhir2014Dataset",
+        "SynthLethalityYeastSynthLethDbDataset",
+        "SynthRescueYeastSynthLethDbDataset",
+        "TmfKuzmin2018Dataset",
+        "TmfKuzmin2020Dataset",
+        "TmiKuzmin2018Dataset",
+        "TmiKuzmin2020Dataset"
+      ],
+      "kind": "bootstrap",
+      "note": "reconstructed from the full build at 4b293d3432ca1a08ad132d73c97ac12204bbf639; built_at 2026-10-06T04:42:48-05:00",
+      "torchcell_commit": "4b293d3432ca1a08ad132d73c97ac12204bbf639"
+    }
+  ],
+  "graph_schema": {
+    "calmorph phenotype": {
+      "kind": "node",
+      "properties": [
+        "calmorph",
+        "calmorph_coefficient_of_variation",
+        "graph_level",
+        "label_name",
+        "label_statistic_name"
+      ],
+      "source": [],
+      "target": []
+    },
+    "crispr construct": {
+      "kind": "node",
+      "properties": [
+        "effector",
+        "effector_plasmid_sha256",
+        "effector_plasmid_uri",
+        "guide_sequence",
+        "library_pool",
+        "n_guides"
+      ],
+      "source": [],
+      "target": []
+    },
+    "crispr construct member of": {
+      "kind": "edge",
+      "properties": [],
+      "source": [
+        "crispr construct"
+      ],
+      "target": [
+        "perturbation"
+      ]
+    },
+    "dataset": {
+      "kind": "node",
+      "properties": [],
+      "source": [],
+      "target": []
+    },
+    "environment": {
+      "kind": "node",
+      "properties": [
+        "media",
+        "serialized_data",
+        "temperature"
+      ],
+      "source": [],
+      "target": []
+    },
+    "environment member of": {
+      "kind": "edge",
+      "properties": [],
+      "source": [
+        "environment"
+      ],
+      "target": [
+        "experiment",
+        "experiment reference"
+      ]
+    },
+    "environment perturbation": {
+      "kind": "node",
+      "properties": [
+        "compound_name",
+        "concentration_unit",
+        "concentration_value",
+        "description",
+        "factor",
+        "inchikey",
+        "perturbation_type"
+      ],
+      "source": [],
+      "target": []
+    },
+    "environment perturbation member of": {
+      "kind": "edge",
+      "properties": [],
+      "source": [
+        "environment perturbation"
+      ],
+      "target": [
+        "environment"
+      ]
+    },
+    "environment response phenotype": {
+      "kind": "node",
+      "properties": [
+        "assay_type",
+        "category",
+        "category_label",
+        "environment_response",
+        "environment_response_se",
+        "graph_level",
+        "label_name",
+        "label_statistic_name",
+        "measurement_type",
+        "screen_id"
+      ],
+      "source": [],
+      "target": []
+    },
+    "experiment": {
+      "kind": "node",
+      "properties": [
+        "serialized_data"
+      ],
+      "source": [],
+      "target": []
+    },
+    "experiment member of": {
+      "kind": "edge",
+      "properties": [],
+      "source": [
+        "experiment"
+      ],
+      "target": [
+        "dataset"
+      ]
+    },
+    "experiment reference": {
+      "kind": "node",
+      "properties": [
+        "serialized_data"
+      ],
+      "source": [],
+      "target": []
+    },
+    "experiment reference member of": {
+      "kind": "edge",
+      "properties": [],
+      "source": [
+        "experiment reference"
+      ],
+      "target": [
+        "dataset"
+      ]
+    },
+    "experiment reference of": {
+      "kind": "edge",
+      "properties": [],
+      "source": [
+        "experiment reference"
+      ],
+      "target": [
+        "experiment"
+      ]
+    },
+    "fitness phenotype": {
+      "kind": "node",
+      "properties": [
+        "fitness",
+        "fitness_std",
+        "graph_level",
+        "label_name",
+        "label_statistic_name",
+        "screen_id"
+      ],
+      "source": [],
+      "target": []
+    },
+    "gene essentiality phenotype": {
+      "kind": "node",
+      "properties": [
+        "graph_level",
+        "is_essential",
+        "label_name"
+      ],
+      "source": [],
+      "target": []
+    },
+    "gene interaction phenotype": {
+      "kind": "node",
+      "properties": [
+        "gene_interaction",
+        "gene_interaction_p_value",
+        "graph_level",
+        "label_name",
+        "label_statistic_name",
+        "screen_id"
+      ],
+      "source": [],
+      "target": []
+    },
+    "genome": {
+      "kind": "node",
+      "properties": [
+        "serialized_data",
+        "species",
+        "strain"
+      ],
+      "source": [],
+      "target": []
+    },
+    "genome member of": {
+      "kind": "edge",
+      "properties": [],
+      "source": [
+        "genome"
+      ],
+      "target": [
+        "experiment reference"
+      ]
+    },
+    "genotype": {
+      "kind": "node",
+      "properties": [
+        "perturbation_types",
+        "perturbed_gene_names",
+        "systematic_gene_names"
+      ],
+      "source": [],
+      "target": []
+    },
+    "genotype member of": {
+      "kind": "edge",
+      "properties": [],
+      "source": [
+        "genotype",
+        "segregant genotype"
+      ],
+      "target": [
+        "experiment"
+      ]
+    },
+    "interned constant": {
+      "kind": "node",
+      "properties": [
+        "kind",
+        "serialized_data"
+      ],
+      "source": [],
+      "target": []
+    },
+    "media": {
+      "kind": "node",
+      "properties": [
+        "name",
+        "serialized_data",
+        "state"
+      ],
+      "source": [],
+      "target": []
+    },
+    "media member of": {
+      "kind": "edge",
+      "properties": [],
+      "source": [
+        "media"
+      ],
+      "target": [
+        "environment"
+      ]
+    },
+    "metabolite phenotype": {
+      "kind": "node",
+      "properties": [
+        "graph_level",
+        "label_name",
+        "label_statistic_name",
+        "measurement_type",
+        "metabolite_level",
+        "metabolite_level_se"
+      ],
+      "source": [],
+      "target": []
+    },
+    "microarray expression phenotype": {
+      "kind": "node",
+      "properties": [
+        "expression_log2_ratio",
+        "expression_log2_ratio_se",
+        "graph_level",
+        "label_name",
+        "label_statistic_name"
+      ],
+      "source": [],
+      "target": []
+    },
+    "perturbation": {
+      "kind": "node",
+      "properties": [
+        "description",
+        "perturbation_type",
+        "perturbed_gene_name",
+        "strain_id",
+        "systematic_gene_name"
+      ],
+      "source": [],
+      "target": []
+    },
+    "perturbation member of": {
+      "kind": "edge",
+      "properties": [],
+      "source": [
+        "perturbation"
+      ],
+      "target": [
+        "genotype"
+      ]
+    },
+    "phenotype member of": {
+      "kind": "edge",
+      "properties": [],
+      "source": [
+        "calmorph phenotype",
+        "environment response phenotype",
+        "fitness phenotype",
+        "gene essentiality phenotype",
+        "gene interaction phenotype",
+        "metabolite phenotype",
+        "microarray expression phenotype",
+        "protein abundance phenotype",
+        "pseudobulk expression phenotype",
+        "rnaseq expression phenotype",
+        "synthetic lethality phenotype",
+        "synthetic rescue phenotype",
+        "visual score phenotype"
+      ],
+      "target": [
+        "experiment",
+        "experiment reference"
+      ]
+    },
+    "protein abundance phenotype": {
+      "kind": "node",
+      "properties": [
+        "graph_level",
+        "label_name",
+        "label_statistic_name",
+        "measurement_type",
+        "protein_abundance",
+        "protein_abundance_se"
+      ],
+      "source": [],
+      "target": []
+    },
+    "pseudobulk expression phenotype": {
+      "kind": "node",
+      "properties": [
+        "dispersion",
+        "expression_log2_ratio",
+        "graph_level",
+        "label_name",
+        "label_statistic_name",
+        "measurement_type",
+        "n_cells"
+      ],
+      "source": [],
+      "target": []
+    },
+    "publication": {
+      "kind": "node",
+      "properties": [
+        "doi",
+        "doi_url",
+        "pubmed_id",
+        "pubmed_url",
+        "serialized_data"
+      ],
+      "source": [],
+      "target": []
+    },
+    "publication mentions experiment": {
+      "kind": "edge",
+      "properties": [],
+      "source": [
+        "publication"
+      ],
+      "target": [
+        "experiment"
+      ]
+    },
+    "rnaseq expression phenotype": {
+      "kind": "node",
+      "properties": [
+        "expression_tpm",
+        "graph_level",
+        "label_name",
+        "label_statistic_name",
+        "measurement_type",
+        "n_mapped_reads"
+      ],
+      "source": [],
+      "target": []
+    },
+    "segregant genotype": {
+      "kind": "node",
+      "properties": [
+        "cross",
+        "n_blocks",
+        "parent_1",
+        "parent_2",
+        "segregant_id"
+      ],
+      "source": [],
+      "target": []
+    },
+    "synthetic lethality phenotype": {
+      "kind": "node",
+      "properties": [
+        "graph_level",
+        "is_synthetic_lethal",
+        "label_name",
+        "label_statistic_name",
+        "synthetic_lethality_statistic_score"
+      ],
+      "source": [],
+      "target": []
+    },
+    "synthetic rescue phenotype": {
+      "kind": "node",
+      "properties": [
+        "graph_level",
+        "is_synthetic_rescue",
+        "label_name",
+        "label_statistic_name",
+        "synthetic_rescue_statistic_score"
+      ],
+      "source": [],
+      "target": []
+    },
+    "temperature": {
+      "kind": "node",
+      "properties": [
+        "serialized_data",
+        "unit",
+        "value"
+      ],
+      "source": [],
+      "target": []
+    },
+    "temperature member of": {
+      "kind": "edge",
+      "properties": [],
+      "source": [
+        "temperature"
+      ],
+      "target": [
+        "environment"
+      ]
+    },
+    "visual score phenotype": {
+      "kind": "node",
+      "properties": [
+        "graph_level",
+        "label_name",
+        "label_statistic_name",
+        "n_replicates",
+        "target_metabolite_id",
+        "target_product",
+        "visual_score"
+      ],
+      "source": [],
+      "target": []
+    }
+  },
+  "n_nodes": 100127515,
+  "neo4j_version": "5.26.28",
+  "release": "2026.10.06-4b293d34",
+  "store_host": "gilahyper",
+  "torchcell_commit": "4b293d3432ca1a08ad132d73c97ac12204bbf639",
+  "torchcell_tag": null,
+  "torchcell_version": "1.6.1",
+  "version": "3.0"
+}

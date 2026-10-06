@@ -84,6 +84,8 @@ ops-health:
 	@bash scripts/ops.sh health
 ops-releases:
 	@bash scripts/ops.sh releases
+ops-sync:
+	@bash scripts/ops.sh sync
 
 # --- Manuscript (paper/nature-biotech) passthrough targets ---
 .PHONY: paper paper-submission paper-editing paper-twocolumn paper-figproto paper-figlimits paper-figures paper-fig paper-flat paper-clean paper-sync paper-pull

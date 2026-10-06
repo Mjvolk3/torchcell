@@ -35,3 +35,9 @@ subset that can.
   torchcell.knowledge_graphs.releases snapshot` ([[torchcell.knowledge_graphs.releases]]).
 - First snapshot: `2026.09.21-ab6d8c5d` (torchcell 1.2.0, untagged, 99,724,909 nodes,
   composite `39e26472ceb731c22f882e80fbd9c10a941637e57823317795283fcfbf36d2dc`).
+
+## 2026.10.06 - `pair_package_tag`: pairing a snapshot after the build
+
+`pair_package_tag(snapshot, closures, tag, surface)` is the repair for a release built from an untagged commit (`torchcell_tag` None). It accepts only a `vX.Y.Z` tag and only when `surface`, the schema surface at that tag (`kg_manifest.surface_at_ref`), reproduces every served closure (`ReleaseCompatibility.paired`: none drifted, none unverified); it then sets `torchcell_version` from the tag and `torchcell_tag` to it and appends to the last event's note what the build checkout had reported. The same tag again is a no-op (byte-stable snapshot), a different tag on an already paired snapshot is refused: a release has one paired package. `releases retag` is the CLI; `scripts/kg_release.sh retag` chains it with the manifest and the store's node.
+
+Applied 2026-10-06 to the three committed snapshots: `2026.09.21-ab6d8c5d` paired with `v1.2.1` (tag of 2026-09-27, the first that reads it; built from 1.2.0 untagged), `2026.10.02-833970cd` with `v1.6.1` (tag of 2026-10-02 02:41 UTC, before the 10:55 UTC build; built from 1.6.1 untagged), `2026.10.06-4b293d34` with `v1.6.2` (the `DB(kg)` release cut after the build, PR #679).

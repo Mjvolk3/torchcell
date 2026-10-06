@@ -198,6 +198,27 @@ class ReleaseCompatibility(BaseModel):
         """True when no served dataset drifted from the local schema surface."""
         return not self.drifted
 
+    @property
+    def paired(self) -> bool:
+        """True when EVERY served dataset is verified: none drifted, none unchecked.
+
+        ``ok`` tolerates datasets whose closure the release did not record; the
+        pairing gate does not, because an unverified dataset is one the client may
+        read under the wrong contract.
+        """
+        return not self.drifted and not self.unchecked
+
+
+class IncompatibleReleaseError(RuntimeError):
+    """A served release and the installed package are not a pair.
+
+    Raised by :func:`require_paired` when the installed schema surface does not
+    reproduce every served dataset's contract fingerprints, or when the store carries
+    no release node at all. A package version and a knowledge-graph release either
+    read every served record under the contract it was written with, or the client
+    refuses; there is no partial pair.
+    """
+
 
 # --------------------------------------------------------------------------- identity
 
@@ -605,6 +626,60 @@ def closure_compatibility(
     )
 
 
+def require_paired(
+    release: KgRelease | None,
+    surface: SchemaSurface,
+    *,
+    installed_version: str,
+    database: str,
+) -> ReleaseCompatibility:
+    """The compatibility report, or :class:`IncompatibleReleaseError`.
+
+    The gate every client passes at connect: ``release`` is the store's node (None when
+    the store has none), ``surface`` the installed package's schema surface
+    (``schema_deps.load_default_surface``). The report comes back only when every
+    served dataset's closure fingerprints are reproduced; a drifted or unverified
+    dataset, or a store without a release node, raises with the paired package named
+    so the remedy is one line: install that package, or point
+    ``TORCHCELL_KG_VERSION`` at a release built under the installed one.
+    """
+    if release is None:
+        raise IncompatibleReleaseError(
+            f"database {database!r} carries no {RELEASE_LABEL} node, so no package "
+            "version is paired with it; a store is served only after `releases "
+            "write-node` (the live rebuild does this) or a `kg_release.sh deploy`"
+        )
+    report = compatibility_with_surface(release, surface)
+    if report.paired:
+        return report
+    paired = package_label(release)
+    lines = [
+        f"knowledge-graph release {release.release} (KG {release.version}, database "
+        f"{database!r}) is paired with torchcell {paired}; the installed torchcell "
+        f"{installed_version} is not a pair:"
+    ]
+    for drift in report.drifted:
+        lines.append(
+            f"  {drift.dataset_class}: serialized under a different contract for "
+            + ", ".join(drift.changed_symbols)
+        )
+    for name in report.unchecked:
+        lines.append(f"  {name}: the release recorded no closure to verify against")
+    if release.torchcell_tag is not None:
+        remedy = f"Install the paired package (pip install torchcell=={paired[1:]})"
+    else:
+        remedy = (
+            "The release names no package tag; pick one that reads it on the "
+            "compatibility page (docs/source/database/compatibility.md)"
+        )
+    lines.append(
+        f"{len(report.drifted)} drifted and {len(report.unchecked)} unverified of "
+        f"{release.n_datasets} served datasets. {remedy} or set "
+        "TORCHCELL_KG_VERSION to a release built under the installed schema."
+    )
+    raise IncompatibleReleaseError("\n".join(lines))
+
+
 # --------------------------------------------------------------------------- reporting
 
 
@@ -838,6 +913,26 @@ def main(argv: list[str] | None = None) -> int:
         "snapshot's last event note",
     )
 
+    p_retag = sub.add_parser(
+        "retag",
+        help="pair a committed snapshot (and the manifest) with a package tag cut "
+        "after the build, once the surface at that tag reproduces every closure",
+    )
+    p_retag.add_argument("--release", required=True, help="the release id")
+    p_retag.add_argument("--tag", required=True, help="the package tag, vX.Y.Z")
+    p_retag.add_argument(
+        "--repo-root",
+        default=None,
+        help="checkout holding database/releases/ and the tag (default: the checkout "
+        "this torchcell was imported from)",
+    )
+    p_retag.add_argument(
+        "--manifest",
+        default=None,
+        help="also record the pairing in this kg_manifest.json, so `write-node` "
+        "carries it into the store",
+    )
+
     p_node = sub.add_parser(
         "write-node", help="write the KgRelease node from a manifest"
     )
@@ -916,6 +1011,45 @@ def main(argv: list[str] | None = None) -> int:
             f"{snapshot.release}: torchcell {snapshot.torchcell_version} "
             f"({snapshot.torchcell_tag or 'untagged'}), composite "
             f"{snapshot.composite_sha256} -> {paths[0]}, {paths[1]}"
+        )
+        return 0
+
+    if args.command == "retag":
+        from torchcell.knowledge_graphs.kg_manifest import (
+            load_manifest,
+            save_manifest,
+            surface_at_ref,
+        )
+        from torchcell.knowledge_graphs.release_snapshot import (
+            load_closures,
+            load_snapshot,
+            pair_package_tag,
+            snapshot_paths,
+            write_snapshot,
+        )
+
+        root = Path(args.repo_root).resolve() if args.repo_root else package_checkout()
+        snapshot_path, _ = snapshot_paths(root, args.release)
+        snapshot = load_snapshot(snapshot_path)
+        closures = load_closures(root, args.release)
+        paired = pair_package_tag(
+            snapshot, closures, args.tag, surface_at_ref(root, args.tag)
+        )
+        write_snapshot(paired, closures, root)
+        if args.manifest:
+            manifest = load_manifest(Path(args.manifest))
+            if manifest.release != paired.release:
+                raise SystemExit(
+                    f"{args.manifest} describes release {manifest.release}, "
+                    f"not {paired.release}"
+                )
+            manifest.torchcell_version = paired.torchcell_version
+            manifest.torchcell_tag = paired.torchcell_tag
+            save_manifest(manifest, Path(args.manifest))
+        print(
+            f"{paired.release}: paired with {args.tag} (torchcell "
+            f"{paired.torchcell_version}) -> {snapshot_path}"
+            + (f", {args.manifest}" if args.manifest else "")
         )
         return 0
 

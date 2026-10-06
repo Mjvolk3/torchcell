@@ -106,3 +106,13 @@ the closures, the same fingerprints `closure_compatibility` compares. A new snap
 by `snapshot` is therefore also the release that the next `validate` runs against, and on
 `main` a drifted supported query files a `before-next-kg-build` issue
 ([[database.supported-queries]]). Nothing in `releases.py` changed.
+
+## 2026.10.06 - Pairing: `require_paired`, `IncompatibleReleaseError`, `retag`
+
+The two October full builds (KG 2.0, 3.0) ran from an untagged `main` and their snapshot commits were tagged `RELEASE(kg)`, which bumps nothing, so no published package was compatible with the served store and nothing refused the mismatch: `Neo4jQueryRaw._connect` resolved the database name and ran the query. The pairing rule is now enforced at three points.
+
+- `ReleaseCompatibility.paired` is stricter than `ok`: no drifted AND no unverified dataset. `require_paired(release, surface, installed_version=, database=)` returns the report or raises `IncompatibleReleaseError` (a `RuntimeError`) whose text names the release, its paired package (`package_label`), the installed version, each failing dataset with its symbols, and the remedy (`pip install torchcell==X.Y.Z` when the release names a tag, the compatibility page otherwise). A store with no `KgRelease` node is refused the same way. `Neo4jQueryRaw._connect` calls it with `schema_deps.load_default_surface()` (the installed package's `schema.py` + `pydant.py`, 0.3 s to parse, 129 symbols) before opening a driver.
+- `retag --release <id> --tag vX.Y.Z [--repo-root] [--manifest]` pairs a snapshot built from an untagged commit with a tag cut afterwards, accepted only when `kg_manifest.surface_at_ref(root, tag)` reproduces every served closure (`release_snapshot.pair_package_tag`); it sets `torchcell_version`/`torchcell_tag` from the tag, notes what the build checkout reported in the last event, is idempotent for the same tag, and refuses a second, different tag. With `--manifest` the manifest carries the pairing so `write-node` rewrites the store's node (`scripts/kg_release.sh retag` chains the two under the writable toggle).
+- The live rebuild script refuses to start unless `BUILD_COMMIT` carries a `v*` tag and the fingerprint checkout sits on it, so future stamps record the tag and `retag` is never needed again.
+
+Measured 2026-10-06 on `e6367528b` (main after the `DB(kg)` cut): `compat --version latest` 51 compatible, 0 drifted, 0 unchecked; the three committed snapshots were retagged to `v1.2.1`, `v1.6.1`, `v1.6.2`.

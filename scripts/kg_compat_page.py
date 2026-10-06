@@ -6,19 +6,30 @@
 
 Reads the committed release snapshots (``database/releases/<release>.json`` and their
 ``.closures.json`` companions, ``torchcell.knowledge_graphs.release_snapshot``) and the
-package tags from ``v1.2.0`` on (``git tag --sort=v:refname``), and for every (tag,
-release) pair runs the closure check of ``releases.closure_compatibility`` against the
-schema surface AS IT WAS AT THAT TAG (``git show <tag>:torchcell/datamodels/schema.py``
-and ``pydant.py`` parsed with ``schema_deps.load_surface_from_sources``, no checkout,
-no temp files). The verdicts:
+package tags ``vX.Y.Z`` from ``v1.2.0`` on (``git tag --sort=v:refname``; other tags
+such as ``legacy-pre-move-2026.10`` are not package releases and are skipped), and for
+every (tag, release) pair runs the closure check of ``releases.closure_compatibility``
+against the schema surface AS IT WAS AT THAT TAG (``git show
+<tag>:torchcell/datamodels/schema.py`` and ``pydant.py`` parsed with
+``schema_deps.load_surface_from_sources``, no checkout, no temp files). The verdicts:
 
 - ``compatible``: every served dataset's closure fingerprints match the surface at the
-  tag, so that package version serializes the served records under the contract they
-  were built with.
-- ``partial (<n> datasets drifted: A, B)``: the named datasets would serialize
-  differently under that package version; when every served dataset drifted the cell
-  says so (``partial (all <n> datasets drifted)``) instead of listing all of them.
+  tag, so that package version serializes every served record under the contract it
+  was built with. This is the pairing verdict, the one ``releases.require_paired``
+  accepts at connect.
+- ``incompatible (<n> of <m> datasets drift: A, B)``: the named datasets would
+  serialize differently under that package version; when every served dataset
+  drifted the cell says ``incompatible (all <m> datasets drift)``, and a release
+  whose snapshot recorded no closures reads ``incompatible (<n> of <m> datasets
+  unverified)``. The client refuses the whole release; the names are evidence, not
+  a usable subset.
 - ``unknown``: the tag predates the surface modules, so there is nothing to compare.
+
+The page opens with the **pairs table**: one row per release naming its paired package
+(the snapshot's ``torchcell_tag``, stamped at a build from a tagged commit or set by
+``releases retag``) and every tag that reads it. A paired tag whose verdict is not
+``compatible`` is a broken pair and the generator refuses to render, so ``--check``
+fails loudly in CI (``.github/workflows/docs.yaml``, job ``query-drift``).
 
 Writes ``docs/source/database/compatibility.md`` (MyST); ``--check`` exits 1 when the
 file on disk differs from what would be written, so CI can hold the page to the
@@ -33,6 +44,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -58,9 +70,11 @@ HOW_DECIDED = (
     "the schema surface at that tag (`torchcell/datamodels/schema.py` and `pydant.py`) "
     "reproduces every one of those fingerprints, which is the same drift check the "
     "admission gate runs before an incremental import, turned around to face a client. "
-    "A partial verdict names the datasets whose records that package version would "
-    "serialize differently; the rest read unchanged."
+    "An incompatible verdict names the datasets whose records that package version "
+    "would serialize differently, and the client refuses the whole release at connect "
+    "(`releases.require_paired`) rather than reading the rest."
 )
+PACKAGE_TAG_RE = re.compile(r"^v\d+\.\d+\.\d+$")
 
 
 def package_tags(repo_root: Path, first: str = FIRST_TAG) -> list[str]:
@@ -71,7 +85,7 @@ def package_tags(repo_root: Path, first: str = FIRST_TAG) -> list[str]:
         text=True,
         check=True,
     )
-    tags = result.stdout.split()
+    tags = [tag for tag in result.stdout.split() if PACKAGE_TAG_RE.match(tag)]
     if first not in tags:
         raise ValueError(f"tag {first} is not in {repo_root}; fetch the tags first")
     return tags[tags.index(first) :]
@@ -98,7 +112,12 @@ def verdict(
     closures: dict[str, dict[str, str]],
     surface: SchemaSurface | None,
 ) -> str:
-    """``compatible``, ``partial (...)`` naming the drifted datasets, or ``unknown``."""
+    """``compatible``, ``incompatible (...)`` naming the drifted datasets, or ``unknown``.
+
+    ``compatible`` is the pairing verdict: every served dataset verified, none drifted
+    and none unverified. Anything less is ``incompatible``, the word the client's gate
+    acts on; the drifted datasets are named as evidence, not as a usable subset.
+    """
     if surface is None:
         return "unknown"
     report = closure_compatibility(
@@ -108,16 +127,58 @@ def verdict(
         closures,
         surface,
     )
-    if report.ok:
+    if report.paired:
         return "compatible"
+    total = len(snapshot.datasets)
+    if report.unchecked and not report.drifted:
+        return f"incompatible ({len(report.unchecked)} of {total} datasets unverified)"
     if not report.compatible and not report.unchecked:
-        return f"partial (all {len(report.drifted)} datasets drifted)"
+        return f"incompatible (all {total} datasets drift)"
     names = ", ".join(drift.dataset_class for drift in report.drifted)
-    return f"partial ({len(report.drifted)} datasets drifted: {names})"
+    return f"incompatible ({len(report.drifted)} of {total} datasets drift: {names})"
 
 
 def _row(cells: list[str]) -> str:
     return "| " + " | ".join(cells) + " |"
+
+
+def pairs_rows(
+    snapshots: list[KgReleaseSnapshot],
+    tags: list[str],
+    verdicts: dict[tuple[str, str], str],
+) -> list[list[str]]:
+    """One row per release: its paired package and every tag that reads it.
+
+    The paired package is the snapshot's ``torchcell_tag``; a release built from an
+    untagged commit and never retagged has none, and the row says so. A paired tag
+    that is not ``compatible`` is a broken pair, and the page refuses to render.
+    """
+    rows: list[list[str]] = []
+    for snapshot in snapshots:
+        compatible = [
+            tag for tag in tags if verdicts[tag, snapshot.release] == "compatible"
+        ]
+        if snapshot.torchcell_tag is None:
+            paired = (
+                f"(unpaired: built from {snapshot.torchcell_version or 'an unknown version'}"
+                " untagged)"
+            )
+        else:
+            paired = snapshot.torchcell_tag
+            if paired in tags and verdicts[paired, snapshot.release] != "compatible":
+                raise ValueError(
+                    f"broken pair: {snapshot.release} records {paired} as its package "
+                    f"but the verdict is {verdicts[paired, snapshot.release]!r}"
+                )
+        rows.append(
+            [
+                snapshot.release,
+                snapshot.version,
+                paired,
+                ", ".join(compatible) if compatible else "(none)",
+            ]
+        )
+    return rows
 
 
 def render_page(
@@ -125,7 +186,7 @@ def render_page(
     tags: list[str],
     verdicts: dict[tuple[str, str], str],
 ) -> str:
-    """The page text: releases table, tag-by-release matrix, and the decision rule."""
+    """The page text: pairs table, releases table, tag-by-release matrix, the rule."""
     lines = [
         f"<!-- Generated by {SCRIPT_RELPATH}. Do not edit by hand. -->",
         "",
@@ -135,6 +196,17 @@ def render_page(
         "committed under `database/releases/` and must not be edited by hand; "
         "regenerate it with `python scripts/kg_compat_page.py` after a release is "
         "stamped, and `--check` fails when it is stale.",
+        "",
+        "## Pairs",
+        "",
+        "A knowledge-graph release and a package version are used as a pair. The "
+        "client refuses to read a release whose paired package is not the installed "
+        "one unless the installed version also reads it (listed under *reads it*), "
+        "so install the package named here for the release you query.",
+        "",
+        _row(["KG release", "KG version", "paired package", "reads it"]),
+        _row(["---"] * 4),
+        *(_row(row) for row in pairs_rows(snapshots, tags, verdicts)),
         "",
         "## Releases",
         "",

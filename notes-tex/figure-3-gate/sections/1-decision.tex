@@ -17,9 +17,9 @@ and nearest-neighbor baselines (\cref{fig:mockup-b}). The choice is A, B, or nei
 \cref{fig:mockup-si-1,fig:mockup-si-2} hold the supporting panels, none of which repeats a
 main panel, and
 \cref{tab:remaining} lists what each panel lacks. The joint-training round v19 is a null on
-both registered tests. The conditioned round v20 is in flight at 2 of 12 split seeds and
-about 160 of 1,200 epochs, so framing A currently rests on the ridge triangle and on a
-partial run. On file, the best nearest-neighbor baseline is within $0.01$ of the best model
+both registered tests. The conditioned round v20 is complete on 2 of 12 split seeds at
+1{,}200 epochs, with two more below epoch 90 and eight waiting, so framing A currently rests
+on the ridge triangle and on two partitions (\cref{sec:status}). On file, the best nearest-neighbor baseline is within $0.01$ of the best model
 score on expression and above it on the proteome and on morphology, each a maximum over
 keys selected on validation (\cref{fig:mockup-a}b).
 \src{experiments/019-simb-multimodal/results/joint_checkpoint_readout.json}

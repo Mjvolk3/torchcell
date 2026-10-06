@@ -9,7 +9,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Matplotlib v3.10.7, https://matplotlib.org/</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -49,7 +49,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_1">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="70.391339" y="131.103597" transform="rotate(-0 70.391339 131.103597)">expression</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="70.391339" y="131.030121" transform="rotate(-0 70.391339 131.030121)">expression</text>
      </g>
     </g>
     <g id="xtick_2">
@@ -59,7 +59,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_2">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="137.820472" y="131.103597" transform="rotate(-0 137.820472 131.103597)">proteome</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="137.820472" y="131.030121" transform="rotate(-0 137.820472 131.030121)">proteome</text>
      </g>
     </g>
     <g id="xtick_3">
@@ -69,7 +69,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_3">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="205.249606" y="131.103597" transform="rotate(-0 205.249606 131.103597)">morphology</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="205.249606" y="131.030121" transform="rotate(-0 205.249606 131.030121)">morphology</text>
      </g>
     </g>
    </g>
@@ -91,7 +91,7 @@ L -3.5 0
       </g>
      </g>
      <g id="text_4">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="22.933858" y="121.919515" transform="rotate(-0 22.933858 121.919515)">0.0</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="22.933858" y="121.882777" transform="rotate(-0 22.933858 121.882777)">0.0</text>
      </g>
     </g>
     <g id="ytick_2">
@@ -106,7 +106,7 @@ L 245.707087 103.407874
       </g>
      </g>
      <g id="text_5">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="22.933858" y="105.591956" transform="rotate(-0 22.933858 105.591956)">0.2</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="22.933858" y="105.555218" transform="rotate(-0 22.933858 105.555218)">0.2</text>
      </g>
     </g>
     <g id="ytick_3">
@@ -121,7 +121,7 @@ L 245.707087 87.080315
       </g>
      </g>
      <g id="text_6">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="22.933858" y="89.264397" transform="rotate(-0 22.933858 89.264397)">0.4</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="22.933858" y="89.227659" transform="rotate(-0 22.933858 89.227659)">0.4</text>
      </g>
     </g>
     <g id="ytick_4">
@@ -136,7 +136,7 @@ L 245.707087 70.752756
       </g>
      </g>
      <g id="text_7">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="22.933858" y="72.936838" transform="rotate(-0 22.933858 72.936838)">0.6</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="22.933858" y="72.9001" transform="rotate(-0 22.933858 72.9001)">0.6</text>
      </g>
     </g>
     <g id="ytick_5">
@@ -151,7 +151,7 @@ L 245.707087 54.425197
       </g>
      </g>
      <g id="text_8">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="22.933858" y="56.609279" transform="rotate(-0 22.933858 56.609279)">0.8</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="22.933858" y="56.572541" transform="rotate(-0 22.933858 56.572541)">0.8</text>
      </g>
     </g>
     <g id="ytick_6">
@@ -166,7 +166,7 @@ L 245.707087 38.097638
       </g>
      </g>
      <g id="text_9">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="22.933858" y="40.28172" transform="rotate(-0 22.933858 40.28172)">1.0</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="22.933858" y="40.244982" transform="rotate(-0 22.933858 40.244982)">1.0</text>
      </g>
     </g>
     <g id="ytick_7">
@@ -210,7 +210,7 @@ L 245.707087 46.261417
      <g id="line2d_25"/>
     </g>
     <g id="text_10">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="9.331163" y="78.916535" transform="rotate(-90 9.331163 78.916535)">Pearson per feature</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="9.401358" y="78.916535" transform="rotate(-90 9.401358 78.916535)">Pearson per feature</text>
     </g>
    </g>
    <g id="patch_3">
@@ -339,90 +339,90 @@ L 245.707087 38.097638
 " style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_11">
-    <text style="font-size: 6px; font-family: 'Arial'" transform="translate(212.870904 117.286299) rotate(-90)">not yet run</text>
+    <text style="font-size: 6px; font-family: 'Arial'" transform="translate(212.79901 117.286299) rotate(-90)">not yet run</text>
    </g>
    <g id="text_12">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="48.139724" y="53.601144" transform="rotate(-0 48.139724 53.601144)">0.775</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="48.139724" y="53.671339" transform="rotate(-0 48.139724 53.671339)">0.775</text>
    </g>
    <g id="text_13">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="69.042756" y="97.44262" transform="rotate(-0 69.042756 97.44262)">29%</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="69.042756" y="97.512815" transform="rotate(-0 69.042756 97.512815)">29%</text>
    </g>
    <g id="text_14">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="115.568858" y="66.746167" transform="rotate(-0 115.568858 66.746167)">0.417–0.614</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="115.568858" y="66.816362" transform="rotate(-0 115.568858 66.816362)">0.417–0.614</text>
    </g>
    <g id="text_15">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="125.683228" y="106.919768" transform="rotate(-0 125.683228 106.919768)">16–24%</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="125.683228" y="106.989963" transform="rotate(-0 125.683228 106.989963)">16–24%</text>
    </g>
    <g id="text_16">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="182.997992" y="66.977523" transform="rotate(-0 182.997992 66.977523)">0.611</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="182.997992" y="67.047718" transform="rotate(-0 182.997992 67.047718)">0.611</text>
    </g>
    <g id="text_17">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="203.901024" y="109.293601" transform="rotate(-0 203.901024 109.293601)">13%</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="203.901024" y="109.363797" transform="rotate(-0 203.901024 109.363797)">13%</text>
    </g>
   </g>
   <g id="legend_1">
    <g id="patch_20">
-    <path d="M 29.933858 29.733875 
-L 227.479171 29.733875 
+    <path d="M 29.933858 29.659695 
+L 227.479171 29.659695 
 L 227.479171 2.040945 
 L 29.933858 2.040945 
 z
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="patch_21">
-    <path d="M 32.333858 8.809109 
-L 44.333858 8.809109 
-L 44.333858 4.609109 
-L 32.333858 4.609109 
+    <path d="M 32.333858 8.735632 
+L 44.333858 8.735632 
+L 44.333858 4.535632 
+L 32.333858 4.535632 
 z
 " style="fill: #f5f5f5; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_18">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="47.333858" y="8.809109" transform="rotate(-0 47.333858 8.809109)">replicate ceiling</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="47.333858" y="8.735632" transform="rotate(-0 47.333858 8.735632)">replicate ceiling</text>
    </g>
    <g id="patch_22">
-    <path d="M 32.333858 17.440086 
-L 44.333858 17.440086 
-L 44.333858 13.240086 
-L 32.333858 13.240086 
+    <path d="M 32.333858 17.366257 
+L 44.333858 17.366257 
+L 44.333858 13.166257 
+L 32.333858 13.166257 
 z
 " style="fill: url(#h24eaa65d56); stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_19">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="47.333858" y="17.440086" transform="rotate(-0 47.333858 17.440086)">ceiling, HIS3 replicates</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="47.333858" y="17.366257" transform="rotate(-0 47.333858 17.366257)">ceiling, HIS3 replicates</text>
    </g>
    <g id="patch_23">
-    <path d="M 32.333858 26.071062 
-L 44.333858 26.071062 
-L 44.333858 21.871062 
-L 32.333858 21.871062 
+    <path d="M 32.333858 25.996882 
+L 44.333858 25.996882 
+L 44.333858 21.796882 
+L 32.333858 21.796882 
 z
 " style="fill: #666666; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_20">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="47.333858" y="26.071062" transform="rotate(-0 47.333858 26.071062)">best genotype-only model (% of ceiling)</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="47.333858" y="25.996882" transform="rotate(-0 47.333858 25.996882)">best genotype-only model (% of ceiling)</text>
    </g>
    <g id="patch_24">
-    <path d="M 158.382608 8.809109 
-L 170.382608 8.809109 
-L 170.382608 4.609109 
-L 158.382608 4.609109 
+    <path d="M 158.382608 8.735632 
+L 170.382608 8.735632 
+L 170.382608 4.535632 
+L 158.382608 4.535632 
 z
 " style="fill: url(#h51784bd3c9); stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_21">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="173.382608" y="8.809109" transform="rotate(-0 173.382608 8.809109)">best linear baseline</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="173.382608" y="8.735632" transform="rotate(-0 173.382608 8.735632)">best linear baseline</text>
    </g>
    <g id="patch_25">
-    <path d="M 158.382608 17.439968 
-L 170.382608 17.439968 
-L 170.382608 13.239968 
-L 158.382608 13.239968 
+    <path d="M 158.382608 17.22282 
+L 170.382608 17.22282 
+L 170.382608 13.02282 
+L 158.382608 13.02282 
 z
 " style="fill: url(#hac10b2828c); stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_22">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="173.382608" y="17.439968" transform="rotate(-0 173.382608 17.439968)">best kNN baseline</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="173.382608" y="17.22282" transform="rotate(-0 173.382608 17.22282)">best kNN baseline</text>
    </g>
   </g>
  </g>

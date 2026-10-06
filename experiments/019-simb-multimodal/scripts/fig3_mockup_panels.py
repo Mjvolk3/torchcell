@@ -535,7 +535,10 @@ def panel_v20_partial() -> None:
     colors = PLOT_PALETTE[: len(splits)]
     epochs = [int(r["last_epoch"]) for r in runs]
     fig, ax = _figure("third")
-    fig.subplots_adjust(left=0.24, right=0.97, bottom=0.2, top=0.86)
+    # Two legend rows once more than two split seeds are on file; a third-width
+    # panel holds two entries per row.
+    legend_rows = (len(splits) + 1) // 2
+    fig.subplots_adjust(left=0.24, right=0.97, bottom=0.2, top=0.86 - 0.07 * (legend_rows - 1))
     w = 0.8 / len(splits)
     for j, split in enumerate(splits):
         vals = [
@@ -565,7 +568,7 @@ def panel_v20_partial() -> None:
     _grid(ax, 0.04, 0.02)
     _box(ax)
     handles, _ = ax.get_legend_handles_labels()
-    _top_legend(fig, ax, handles, ncol=len(splits))
+    _top_legend(fig, ax, handles, ncol=min(len(splits), 2))
     _save(fig, "v20_partial")
 
 

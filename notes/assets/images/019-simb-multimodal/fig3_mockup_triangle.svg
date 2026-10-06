@@ -9,7 +9,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Matplotlib v3.10.7, https://matplotlib.org/</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -49,9 +49,9 @@ L 0 3.5
       </g>
      </g>
      <g id="text_1">
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(40.395568 113.865115)">proteome</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(50.068225 120.395389)">→</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(38.56135 126.925662)">expression</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(40.395568 113.341932)">proteome</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(50.068225 119.688057)">→</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(38.56135 126.034182)">expression</text>
      </g>
     </g>
     <g id="xtick_2">
@@ -61,9 +61,9 @@ L 0 3.5
       </g>
      </g>
      <g id="text_2">
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(72.961146 113.865115)">expression</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(84.468021 120.395389)">→</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(74.795365 126.925662)">proteome</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(72.961146 113.341932)">expression</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(84.468021 119.688057)">→</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(74.795365 126.034182)">proteome</text>
      </g>
     </g>
     <g id="xtick_3">
@@ -73,9 +73,9 @@ L 0 3.5
       </g>
      </g>
      <g id="text_3">
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(109.195162 113.865115)">proteome</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(118.867818 120.395389)">→</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(106.193756 126.925662)">morphology</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(109.195162 113.341932)">proteome</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(118.867818 119.688057)">→</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(106.193756 126.034182)">morphology</text>
      </g>
     </g>
     <g id="xtick_4">
@@ -85,9 +85,9 @@ L 0 3.5
       </g>
      </g>
      <g id="text_4">
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(140.593552 113.865115)">morphology</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(153.267615 120.395506)">→</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(143.594959 126.925779)">proteome</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(140.593552 113.341932)">morphology</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(153.267615 119.758369)">→</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(143.594959 126.104494)">proteome</text>
      </g>
     </g>
     <g id="xtick_5">
@@ -97,9 +97,9 @@ L 0 3.5
       </g>
      </g>
      <g id="text_5">
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(176.160537 113.865115)">expression</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(187.667412 120.395389)">→</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(174.993349 126.925662)">morphology</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(176.160537 113.341932)">expression</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(187.667412 119.688057)">→</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(174.993349 126.034182)">morphology</text>
      </g>
     </g>
     <g id="xtick_6">
@@ -109,9 +109,9 @@ L 0 3.5
       </g>
      </g>
      <g id="text_6">
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(209.393146 113.865115)">morphology</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(222.067209 120.395506)">→</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(210.560334 126.925779)">expression</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(209.393146 113.341932)">morphology</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(222.067209 119.758369)">→</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(210.560334 126.104494)">expression</text>
      </g>
     </g>
    </g>
@@ -133,7 +133,7 @@ L -3.5 0
       </g>
      </g>
      <g id="text_7">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.428346" y="101.077139" transform="rotate(-0 25.428346 101.077139)">0.0</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.428346" y="101.0404" transform="rotate(-0 25.428346 101.0404)">0.0</text>
      </g>
     </g>
     <g id="ytick_2">
@@ -148,7 +148,7 @@ L 245.707087 67.351181
       </g>
      </g>
      <g id="text_8">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.428346" y="69.535263" transform="rotate(-0 25.428346 69.535263)">0.2</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.428346" y="69.498525" transform="rotate(-0 25.428346 69.498525)">0.2</text>
      </g>
     </g>
     <g id="ytick_3">
@@ -163,7 +163,7 @@ L 245.707087 35.809306
       </g>
      </g>
      <g id="text_9">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.428346" y="37.993388" transform="rotate(-0 25.428346 37.993388)">0.4</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.428346" y="37.956649" transform="rotate(-0 25.428346 37.956649)">0.4</text>
      </g>
     </g>
     <g id="ytick_4">
@@ -183,7 +183,7 @@ L 245.707087 51.580243
      <g id="line2d_16"/>
     </g>
     <g id="text_10">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="11.825651" y="67.351181" transform="rotate(-90 11.825651 67.351181)">held-out Pearson per feature</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="11.895846" y="67.351181" transform="rotate(-90 11.895846 67.351181)">held-out Pearson per feature</text>
     </g>
    </g>
    <g id="patch_3">
@@ -271,10 +271,10 @@ L 245.707087 32.655118
 " style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_11">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="53.068225" y="60.095529" transform="rotate(-0 53.068225 60.095529)">n = 1,349</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="53.068225" y="60.165725" transform="rotate(-0 53.068225 60.165725)">n = 1,349</text>
    </g>
    <g id="text_12">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="87.468021" y="61.357204" transform="rotate(-0 87.468021 61.357204)">n = 1,349</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="87.468021" y="61.4274" transform="rotate(-0 87.468021 61.4274)">n = 1,349</text>
    </g>
    <g id="line2d_17">
     <path d="M 109.483891 99.252124 
@@ -282,7 +282,7 @@ L 134.251745 99.252124
 " clip-path="url(#p03766bc641)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
    <g id="text_13">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="121.867818" y="51.656973" transform="rotate(-0 121.867818 51.656973)">n = 4,314</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="121.867818" y="51.727168" transform="rotate(-0 121.867818 51.727168)">n = 4,314</text>
    </g>
    <g id="line2d_18">
     <path d="M 143.883688 99.648678 
@@ -290,7 +290,7 @@ L 168.651542 99.648678
 " clip-path="url(#p03766bc641)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
    <g id="text_14">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="156.267615" y="82.923952" transform="rotate(-0 156.267615 82.923952)">n = 4,314</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="156.267615" y="82.994147" transform="rotate(-0 156.267615 82.994147)">n = 4,314</text>
    </g>
    <g id="line2d_19">
     <path d="M 178.283485 97.627149 
@@ -298,7 +298,7 @@ L 203.051339 97.627149
 " clip-path="url(#p03766bc641)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
    <g id="text_15">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="190.667412" y="44.702974" transform="rotate(-0 190.667412 44.702974)">n = 1,438</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="190.667412" y="44.773169" transform="rotate(-0 190.667412 44.773169)">n = 1,438</text>
    </g>
    <g id="line2d_20">
     <path d="M 212.683282 97.810576 
@@ -306,48 +306,48 @@ L 237.451135 97.810576
 " clip-path="url(#p03766bc641)" style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
    <g id="text_16">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="225.067209" y="82.010106" transform="rotate(-0 225.067209 82.010106)">n = 1,438</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="225.067209" y="82.080302" transform="rotate(-0 225.067209 82.080302)">n = 1,438</text>
    </g>
   </g>
   <g id="legend_1">
    <g id="patch_15">
-    <path d="M 32.428346 21.102781 
-L 238.625846 21.102781 
+    <path d="M 32.428346 20.958757 
+L 238.625846 20.958757 
 L 238.625846 2.040945 
 L 32.428346 2.040945 
 z
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="patch_16">
-    <path d="M 34.828346 8.809109 
-L 46.828346 8.809109 
-L 46.828346 4.609109 
-L 34.828346 4.609109 
+    <path d="M 34.828346 8.735632 
+L 46.828346 8.735632 
+L 46.828346 4.535632 
+L 34.828346 4.535632 
 z
 " style="fill: #d79b00; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_17">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="49.828346" y="8.809109" transform="rotate(-0 49.828346 8.809109)">all features</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="49.828346" y="8.735632" transform="rotate(-0 49.828346 8.735632)">all features</text>
    </g>
    <g id="patch_17">
-    <path d="M 34.828346 17.439968 
-L 46.828346 17.439968 
-L 46.828346 13.239968 
-L 34.828346 13.239968 
+    <path d="M 34.828346 17.295945 
+L 46.828346 17.295945 
+L 46.828346 13.095945 
+L 34.828346 13.095945 
 z
 " style="fill: #b85450; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_18">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="49.828346" y="17.439968" transform="rotate(-0 49.828346 17.439968)">moving features (morphology targets only)</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="49.828346" y="17.295945" transform="rotate(-0 49.828346 17.295945)">moving features (morphology targets only)</text>
    </g>
    <g id="line2d_21">
-    <path d="M 168.205534 6.709109 
-L 174.205534 6.709109 
-L 180.205534 6.709109 
+    <path d="M 168.205534 6.635632 
+L 174.205534 6.635632 
+L 180.205534 6.635632 
 " style="fill: none; stroke: #000000; stroke-linecap: square"/>
    </g>
    <g id="text_19">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="183.205534" y="8.809109" transform="rotate(-0 183.205534 8.809109)">strain-permuted null</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="183.205534" y="8.735632" transform="rotate(-0 183.205534 8.735632)">strain-permuted null</text>
    </g>
   </g>
  </g>

@@ -15,7 +15,7 @@ the sample size and the status; the table under each figure gives the files and 
 \clearpage
 \tcfig{figures/fig3-mockup-A-conditioning.pdf}{\textbf{Ridge from one measured modality
 reaches a held-out Pearson of 0.17 to 0.23 on all features of another, and the conditioned
-model (d) has trained 160 of 1,200 epochs.}
+model (d) is complete on 2 of 12 split seeds.}
 \textbf{a}, The three single-deletion panels and their pairwise overlaps. Counts of distinct
 deletion strains; no statistic. Ready.
 \textbf{b}, Replicate ceiling (pale; dotted, the HIS3-replicate proteome estimator), best
@@ -32,7 +32,9 @@ measured (1,349, 4,314 and 1,438 strains; 5 folds): median held-out Pearson per 
 proteome and expression side is a mean per feature from a review file. Partial.
 \textbf{d}, Round v20, conditioned arm minus unconditioned control: difference of the mean
 validation Pearson over the latest 20 epochs of each conditioned run and the same epochs of
-its control; 2 of 12 split seeds, 8 runs, epochs 157 to 163 of 1,200. Not a result. Partial.
+its control; 16 runs on 4 of 12 split seeds, of which split seeds 0 and 1 are complete at
+epoch 1{,}199 and split seeds 2 and 3 were at epochs 36 to 88 when read. Not a result.
+Partial.
 \textbf{e}, Conditioned morphology. Not run. Not done.
 \textbf{f}, Linear and nearest-neighbor baselines and the v19 single-head model per split
 seed (expression 11, proteome 4). Baselines: one validation Pearson per split seed, best

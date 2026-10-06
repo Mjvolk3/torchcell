@@ -1,0 +1,162 @@
+%% notes-tex/figure-3-gate/sections/5-status.tex
+%% SOURCE: hand-authored status, evening of 2026-10-05. Round numbers are those of
+%% experiments/019-simb-multimodal/results/joint_checkpoint_readout.json (v19 tests, the
+%% v20_partial block); benchmark numbers are from the W&B projects torchcell_019_small_bench
+%% and torchcell_019_grid_bench and the task logs of GilaHyper jobs 3267, 3271, 3273 and 3274;
+%% queue states from squeue on IGB and Delta at the times given (CDT). Each is a reading of a
+%% log or a results file, not a result, unless the paragraph says otherwise.
+
+\clearpage
+\section{Status on the evening of 2026-10-05\secstatus{todo}}
+\label{sec:status}
+
+What has finished, what is running, and what each framing rests on tonight. The mockups of
+\cref{sec:mockups} were redrawn from the result files as they stand at 22:30; the only panel
+whose data changed since the morning is \cref{fig:mockup-a}d.
+
+\pfstep{Round v19 is complete and null on both registered tests} All twelve split seeds
+finished training on IGB; the readout on file reads eleven, split seed 11 having been
+unfinished when it was taken. Expression at the registered window (epochs 1{,}000 to
+1{,}200), joint minus single head: mean $-0.001$, standard deviation across partitions
+$0.030$, 5 of 11 above zero, one-sided $t$ test $p = 0.55$. Proteome at epochs 200 to 400:
+mean $-0.017$, 1 of 11 above zero, $p = 0.64$ against the non-inferiority margin of
+$-0.015$. Joint training on identical both-label rows buys nothing on either head at this
+budget. \cref{fig:mockup-b}c and \cref{fig:mockup-si-1}e draw these eleven; the twelfth is
+added when the readout is rerun.
+\src{joint_checkpoint_readout.json, v19.tests}
+
+\pfstep{Round v20 is complete on two of twelve partitions} Tasks 0 and 1 of IGB job 2423190
+reached epoch 1{,}199 after 31 hours each on \file{cabbi}; tasks 2 and 3 were at epochs 36
+to 88 at 22:25 and tasks 4 to 11 wait under a two-at-a-time throttle. On the two complete
+partitions, each statistic the mean validation Pearson per feature over the latest 20
+epochs of the conditioned run against the same epochs of the unconditioned v19 arm:
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+head & given & split seed & conditioned & unconditioned & permuted control \\
+\midrule
+proteome   & expression & 0 & 0.168 & 0.112 & 0.126 \\
+proteome   & expression & 1 & 0.095 & 0.016 & 0.029 \\
+expression & proteome   & 0 & 0.125 & 0.117 & 0.122 \\
+expression & proteome   & 1 & 0.126 & 0.083 & 0.003 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The proteome head conditioned on the strain's own expression sits $+0.056$ and $+0.079$
+above the unconditioned arm, and the permuted-expression control gains only $+0.014$ and
+$+0.013$, so the gain uses the strain's own measurement and not the presence of a second
+input. The expression head conditioned on the proteome gains $+0.008$ and $+0.043$, and on
+split seed 0 its permuted control gains as much ($+0.005$), so there is no separation there
+yet. The bar the plan set is the per-partition ridge from genotype plus the measured
+modality, $0.236$ on expression and $0.214$ on the proteome on one split; both conditioned
+arms are below it on both partitions. Two partitions are two draws from a distribution whose
+between-partition spread is $0.02$ to $0.03$ (\cref{sec:review}); this is a reading, not a
+result. W\&B runs \texttt{7tiaq7pe}, \texttt{fg63qx22} (conditioned proteome),
+\texttt{3o61ceay}, \texttt{izzszopm} (its permuted control), \texttt{7a7tc6xb},
+\texttt{qvmr4wyl} (conditioned expression), \texttt{zxlow2i4}, \texttt{u6p781n5}, project
+\texttt{torchcell\_019\_prot\_v20}.
+\src{joint_checkpoint_readout.json, v20_partial.runs}
+
+\pfstep{Track A: the matched baselines have run and are unread} IGB job 2423302, the linear
+and nearest-neighbor baselines on exactly the strains of the both-label store at twelve
+split seeds, finished on 2026-10-04 and has not been read. Until it is, \cref{fig:mockup-a}f
+and \cref{fig:mockup-b}d keep the caveat that baselines and model share a seed number and
+not a store.
+
+\pfstep{Depth and width do not set the epoch time} A three-hour window on the four GilaHyper
+cards (RTX 6000 Ada, 44.4 GiB) was spent timing the model at reduced size rather than
+training it, since convergence cannot be read in three hours. Four cells at zero
+data-loader workers, four to eight runs sharing a card: the v19 model on the 3{,}328-d
+stack (6.68 million parameters), ProtT5 alone at the same trunk (1.45 million), ProtT5 at
+three layers (1.15 million), and ProtT5 at width 54 with two layers (0.74 million). Card
+memory was 8 to 10 GB per run at every shape, so eight runs on a card ran out of memory
+(three of eight), six sat at the limit, and four is the ceiling; the memory is the
+activations over 6{,}600 gene tokens at batch 32, not the parameters. Steady-state epoch
+time at four per card was 78 s for the full model and 80 to 81 s for every ProtT5 shape. The
+same held with the cards fed: with three persistent workers per run the epoch fell to 35 to
+40 s at four per card and did not move with depth. Delta's own v11 round logged 81 to 134 s
+per epoch at one run per A40 with zero workers. So at both worker settings the trunk is not
+where the time goes. The runs are in W\&B project \texttt{torchcell\_019\_small\_bench}
+(GilaHyper jobs 3267, 3271 and 3273) and \texttt{torchcell\_019\_grid\_bench} (job 3274).
+\src{notes/experiments.019-simb-multimodal.scripts.gh_small_model_bench.md}
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+cell (four runs per card) & workers per run & seconds per epoch per run & card memory \\
+\midrule
+3{,}328-d stack, width 90, six layers & 0 & 78 & 36 GB \\
+ProtT5, width 90, six layers & 0 & 80 to 81 & 36 GB \\
+ProtT5, width 90, three layers (six per card) & 0 & 80 & at the limit \\
+ProtT5, width 54, two layers (eight per card) & 0 & 81 & out of memory \\
+ProtT5, width 90, six layers & 3 & 35 to 40 & 38 GB \\
+ProtT5, width 90, six layers & 1 (eight CPUs) & 58 to 64 & 38 GB \\
+ProtT5, width 90, two layers & 3 & 37 to 40 & 33 GB \\
+ProtT5, width 90, three layers & 3 & 38 to 41 & 37 GB \\
+ProtT5, width 90, four layers & 3 & 39 to 43 & 36 GB \\
+ProtT5, width 90, six layers & 3 & 39 to 42 & 37 GB \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The last four rows are the depth-by-operator grid (job 3274) at epoch 9, each row the range
+over its four operators; the operators sit within 3 s of each other at every depth. The
+persistent-worker setting is the one lever found: the Delta rule of zero workers dates from
+July, when workers were re-spawned every epoch and re-imported torch from Lustre; persistent
+workers pay that import once. Hypothesis (untested): the time scales with batch size times
+gene count, through the node tensors, the per-gene readout and loss, the metric passes and
+the eval-mode passes, and one place it can go is the perturbation operator, which the code
+runs as a Python loop over the strains in a batch
+(\file{torchcell/models/equivariant_cell_graph_transformer.py}), one cross-attention
+over all genes per strain; a one-step profile would settle it. The cached-encoder speedup of
+\cref{sec:review} was measured on a CPU and does not transfer to a GPU on this evidence.
+
+\pfstep{Decision taken: the small trunk is ProtT5 alone at width 90 and six layers} Since
+depth and width buy no time and no packing, the v21 configuration
+(\file{conf/cgt_expr_v21_small.yaml}) changes one thing against v19, the input: ProtT5
+alone, 1.45 million parameters against 6.68, with every other setting inherited. Hypothesis
+(untested until v21 reads out): the smaller trunk reaches the v19 single-head level on these
+rows.
+
+\pfstep{Round v21 is on Delta} Track B, wave 1, submitted at 21:58 on
+\file{bfjt-delta-gpu} at source 9ca207582: nine arms on twelve split seeds, 108 runs, as 27
+independent single-A40 jobs of four runs each (jobs 22690625 to 22690651), one persistent
+worker per run on eight CPUs, 1{,}200 epochs, a two-day limit, no dependency between jobs.
+A canary of four reference copies at three epochs with a test pass (job 22690624) runs
+beside them; if it fails, the round is canceled. The queue was faster than the scheduler's
+estimate: \texttt{sbatch --test-only} placed the first pack at 16:08 the next day, and
+fifteen packs were running by 22:50, the canary 54 minutes in and still importing the store
+from Lustre. The arms, each one change against the reference S\_ref (the v21 configuration as
+is): S\_mask, the masked objective restored; S\_sink, the sigmoid-gated operator with the
+gate open; S\_prop2, the deletion propagated two hops along the graphs; S\_nodrop, operator
+attention dropout off; S\_stack, the four-part embedding stack in place of ProtT5 (the size
+control); S\_prot, the single-head proteome model on this trunk; S\_basis64, the rank-64
+response basis; S\_hadam, the elementwise product at the operator. Scoring is
+pre-registered in the configuration header: the mean of the validation Pearson per feature
+over epochs 1{,}000 to 1{,}200 (the proteome arm over 200 to 400); an arm is carried to wave
+2 if it beats S\_ref on at least nine of twelve split seeds; a run whose prediction spread
+ratio is below $0.05$ at epoch 200 is relaunched with a new initialization seed. The store
+is v19's: fig3\_proteome restricted to the 1{,}349 genotypes carrying both labels, synced to
+Delta tonight.
+\src{experiments/019-simb-multimodal/scripts/delta_expr_v21_small.slurm,
+conf/cgt_expr_v21_small.yaml, scripts/gh_expr_008_arm.sh}
+
+\pfstep{The operator question has three candidates under test} \cref{fig:mockup-si-2}e
+still waits on the author's choice between Fig.~1f and the Methods. Three operators that
+give each gene its own response at one deletion are in v21 at twelve paired seeds each
+(S\_sink, S\_hadam, S\_basis64) and in the GilaHyper grid tonight on split seed 0 at four
+depths. The grid's operator read, validation Pearson and its spread at about epoch 200 by
+operator within each depth, lands when job 3274 reaches its wall at 00:00 (its two-hour
+limit was cut to 96 minutes to fit the window, so the runs end near epoch 160 rather than
+200) and is appended to this document in its next version. Sixteen runs on one split seed cannot decide
+the operator; they size what v21 decides.
+
+\pfstep{What this leaves for the two framings} Framing A rests on two complete partitions of
+v20 and the ridge triangle; the conditioned proteome arm clears its permuted control by
+$0.04$ to $0.07$ on both and is below the ridge bar on both. Framing B is unchanged: v19 is
+null, the matched baselines are on disk unread, and no trained model on file beats the
+nearest-neighbor key on matched strains. The first number that can move either framing is
+the v21 readout on 2026-10-07 and 2026-10-08, and the next partitions of v20 as \file{cabbi}
+releases them.

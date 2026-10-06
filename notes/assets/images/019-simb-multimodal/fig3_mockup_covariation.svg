@@ -9,7 +9,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Matplotlib v3.10.7, https://matplotlib.org/</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -54,7 +54,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_1">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="70.452283" y="112.054778" transform="rotate(-0 70.452283 112.054778)">0.0</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="70.452283" y="111.981302" transform="rotate(-0 70.452283 111.981302)">0.0</text>
      </g>
     </g>
     <g id="xtick_2">
@@ -69,7 +69,7 @@ L 92.36622 9.524409
       </g>
      </g>
      <g id="text_2">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="92.36622" y="112.054778" transform="rotate(-0 92.36622 112.054778)">0.2</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="92.36622" y="111.981302" transform="rotate(-0 92.36622 111.981302)">0.2</text>
      </g>
     </g>
     <g id="xtick_3">
@@ -84,7 +84,7 @@ L 114.280157 9.524409
       </g>
      </g>
      <g id="text_3">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="114.280157" y="112.054778" transform="rotate(-0 114.280157 112.054778)">0.4</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="114.280157" y="111.981302" transform="rotate(-0 114.280157 111.981302)">0.4</text>
      </g>
     </g>
     <g id="xtick_4">
@@ -99,7 +99,7 @@ L 136.194094 9.524409
       </g>
      </g>
      <g id="text_4">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="136.194094" y="112.054778" transform="rotate(-0 136.194094 112.054778)">0.6</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="136.194094" y="111.981302" transform="rotate(-0 136.194094 111.981302)">0.6</text>
      </g>
     </g>
     <g id="xtick_5">
@@ -114,7 +114,7 @@ L 158.108031 9.524409
       </g>
      </g>
      <g id="text_5">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="158.108031" y="112.054778" transform="rotate(-0 158.108031 112.054778)">0.8</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="158.108031" y="111.981302" transform="rotate(-0 158.108031 111.981302)">0.8</text>
      </g>
     </g>
     <g id="xtick_6">
@@ -150,8 +150,8 @@ L 147.151063 9.524409
      <g id="line2d_18"/>
     </g>
     <g id="text_6">
-     <text style="font-size: 6px; font-family: 'Arial'" transform="translate(80.093751 122.135345)">Spearman of gene-gene r</text>
-     <text style="font-size: 6px; font-family: 'Arial'" transform="translate(87.763907 128.665735)">between two panels</text>
+     <text style="font-size: 6px; font-family: 'Arial'" transform="translate(80.093751 121.541614)">Spearman of gene-gene r</text>
+     <text style="font-size: 6px; font-family: 'Arial'" transform="translate(87.763907 127.958052)">between two panels</text>
     </g>
    </g>
    <g id="matplotlib.axis_2">
@@ -167,8 +167,8 @@ L -3.5 0
       </g>
      </g>
      <g id="text_7">
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(30.776658 17.490357)">Kemmeren /</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(44.439783 24.020631)">Caudal</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(30.776658 17.750308)">Kemmeren /</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(44.439783 24.096433)">Caudal</text>
      </g>
     </g>
     <g id="ytick_2">
@@ -178,8 +178,8 @@ L -3.5 0
       </g>
      </g>
      <g id="text_8">
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(37.113221 32.193939)">Messner /</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(44.439783 38.724212)">Caudal</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(37.113221 32.45389)">Messner /</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(44.439783 38.800015)">Caudal</text>
      </g>
     </g>
     <g id="ytick_3">
@@ -189,8 +189,8 @@ L -3.5 0
       </g>
      </g>
      <g id="text_9">
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(37.113221 46.89752)">Messner /</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(34.110408 53.427793)">Kemmeren</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(37.113221 47.157471)">Messner /</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(34.110408 53.503596)">Kemmeren</text>
      </g>
     </g>
     <g id="ytick_4">
@@ -200,8 +200,8 @@ L -3.5 0
       </g>
      </g>
      <g id="text_10">
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(30.776658 61.601101)">Kemmeren /</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(24.436346 68.131375)">Nadal-Ribelles</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(30.776658 61.861053)">Kemmeren /</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(24.436346 68.207178)">Nadal-Ribelles</text>
      </g>
     </g>
     <g id="ytick_5">
@@ -211,8 +211,8 @@ L -3.5 0
       </g>
      </g>
      <g id="text_11">
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(41.106033 76.304683)">Caudal /</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(24.436346 82.834956)">Nadal-Ribelles</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(41.106033 76.564634)">Caudal /</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(24.436346 82.910759)">Nadal-Ribelles</text>
      </g>
     </g>
     <g id="ytick_6">
@@ -222,8 +222,8 @@ L -3.5 0
       </g>
      </g>
      <g id="text_12">
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(37.113221 91.008264)">Messner /</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(24.436346 97.538538)">Nadal-Ribelles</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(37.113221 91.268215)">Messner /</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(24.436346 97.61434)">Nadal-Ribelles</text>
      </g>
     </g>
    </g>
@@ -296,22 +296,22 @@ L 158.108031 9.524409
 " style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="text_13">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="124.799028" y="19.899293" transform="rotate(-0 124.799028 19.899293)">n = 1,799</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="124.799028" y="19.897652" transform="rotate(-0 124.799028 19.897652)">n = 1,799</text>
    </g>
    <g id="text_14">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="111.077558" y="34.602874" transform="rotate(-0 111.077558 34.602874)">n = 1,777</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="111.077558" y="34.601233" transform="rotate(-0 111.077558 34.601233)">n = 1,777</text>
    </g>
    <g id="text_15">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="106.028655" y="49.306455" transform="rotate(-0 106.028655 49.306455)">n = 1,783</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="106.028655" y="49.304815" transform="rotate(-0 106.028655 49.304815)">n = 1,783</text>
    </g>
    <g id="text_16">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="83.807826" y="64.010037" transform="rotate(-0 83.807826 64.010037)">n = 1,665</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="83.807826" y="64.008396" transform="rotate(-0 83.807826 64.008396)">n = 1,665</text>
    </g>
    <g id="text_17">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="81.175987" y="78.713618" transform="rotate(-0 81.175987 78.713618)">n = 1,660</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="81.175987" y="78.711978" transform="rotate(-0 81.175987 78.711978)">n = 1,660</text>
    </g>
    <g id="text_18">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="77.292846" y="93.4172" transform="rotate(-0 77.292846 93.4172)">n = 1,650</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="77.292846" y="93.415559" transform="rotate(-0 77.292846 93.415559)">n = 1,650</text>
    </g>
   </g>
  </g>

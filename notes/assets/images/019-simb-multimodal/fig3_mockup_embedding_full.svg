@@ -9,7 +9,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Matplotlib v3.10.7, https://matplotlib.org/</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -49,7 +49,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_1">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="93.921078" y="261.72407" transform="rotate(-0 93.921078 261.72407)">0.0</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="93.921078" y="261.650593" transform="rotate(-0 93.921078 261.650593)">0.0</text>
      </g>
     </g>
     <g id="xtick_2">
@@ -59,7 +59,7 @@ L 0 3.5
       </g>
      </g>
      <g id="text_2">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="132.597638" y="261.72407" transform="rotate(-0 132.597638 261.72407)">0.1</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="132.597638" y="261.650593" transform="rotate(-0 132.597638 261.650593)">0.1</text>
      </g>
     </g>
    </g>
@@ -81,7 +81,7 @@ L -3.5 0
       </g>
      </g>
      <g id="text_3">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="48.792894" transform="rotate(-0 75.31811 48.792894)">ProtT5</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="48.756156" transform="rotate(-0 75.31811 48.756156)">ProtT5</text>
      </g>
     </g>
     <g id="ytick_2">
@@ -96,7 +96,7 @@ L 159.67123 53.990953
       </g>
      </g>
      <g id="text_4">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="56.175035" transform="rotate(-0 75.31811 56.175035)">ProtT5, no dubious</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="56.138297" transform="rotate(-0 75.31811 56.138297)">ProtT5, no dubious</text>
      </g>
     </g>
     <g id="ytick_3">
@@ -111,7 +111,7 @@ L 159.67123 61.373094
       </g>
      </g>
      <g id="text_5">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="63.557176" transform="rotate(-0 75.31811 63.557176)">ESM2 650M, no dubious</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="63.520438" transform="rotate(-0 75.31811 63.520438)">ESM2 650M, no dubious</text>
      </g>
     </g>
     <g id="ytick_4">
@@ -126,7 +126,7 @@ L 159.67123 68.755235
       </g>
      </g>
      <g id="text_6">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="70.939317" transform="rotate(-0 75.31811 70.939317)">ESM2 650M</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="70.902579" transform="rotate(-0 75.31811 70.902579)">ESM2 650M</text>
      </g>
     </g>
     <g id="ytick_5">
@@ -141,7 +141,7 @@ L 159.67123 76.137376
       </g>
      </g>
      <g id="text_7">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="78.321458" transform="rotate(-0 75.31811 78.321458)">CaLM</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="78.28472" transform="rotate(-0 75.31811 78.28472)">CaLM</text>
      </g>
     </g>
     <g id="ytick_6">
@@ -156,7 +156,7 @@ L 159.67123 83.519518
       </g>
      </g>
      <g id="text_8">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="85.7036" transform="rotate(-0 75.31811 85.7036)">codon frequency</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="85.703424" transform="rotate(-0 75.31811 85.703424)">codon frequency</text>
      </g>
     </g>
     <g id="ytick_7">
@@ -171,7 +171,7 @@ L 159.67123 90.901659
       </g>
      </g>
      <g id="text_9">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="93.085741" transform="rotate(-0 75.31811 93.085741)">species LM, both flanks</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="93.085565" transform="rotate(-0 75.31811 93.085565)">species LM, both flanks</text>
      </g>
     </g>
     <g id="ytick_8">
@@ -186,7 +186,7 @@ L 159.67123 98.2838
       </g>
      </g>
      <g id="text_10">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="100.467882" transform="rotate(-0 75.31811 100.467882)">species LM, 5' flank</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="100.467706" transform="rotate(-0 75.31811 100.467706)">species LM, 5' flank</text>
      </g>
     </g>
     <g id="ytick_9">
@@ -201,7 +201,7 @@ L 159.67123 105.665941
       </g>
      </g>
      <g id="text_11">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="107.850023" transform="rotate(-0 75.31811 107.850023)">NT, 5,979 window (mean)</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="107.849847" transform="rotate(-0 75.31811 107.849847)">NT, 5,979 window (mean)</text>
      </g>
     </g>
     <g id="ytick_10">
@@ -216,7 +216,7 @@ L 159.67123 113.048082
       </g>
      </g>
      <g id="text_12">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="115.232164" transform="rotate(-0 75.31811 115.232164)">NT, 5,979 window (max)</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="115.231988" transform="rotate(-0 75.31811 115.231988)">NT, 5,979 window (max)</text>
      </g>
     </g>
     <g id="ytick_11">
@@ -231,7 +231,7 @@ L 159.67123 120.430223
       </g>
      </g>
      <g id="text_13">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="122.614305" transform="rotate(-0 75.31811 122.614305)">NT, 5' 1,003</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="122.577567" transform="rotate(-0 75.31811 122.577567)">NT, 5' 1,003</text>
      </g>
     </g>
     <g id="ytick_12">
@@ -246,7 +246,7 @@ L 159.67123 127.812364
       </g>
      </g>
      <g id="text_14">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="129.996446" transform="rotate(-0 75.31811 129.996446)">NT, 5' 1,003 + 3' 300</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="129.959708" transform="rotate(-0 75.31811 129.959708)">NT, 5' 1,003 + 3' 300</text>
      </g>
     </g>
     <g id="ytick_13">
@@ -261,7 +261,7 @@ L 159.67123 135.194505
       </g>
      </g>
      <g id="text_15">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="137.378587" transform="rotate(-0 75.31811 137.378587)">species LM, 3' flank</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="137.378411" transform="rotate(-0 75.31811 137.378411)">species LM, 3' flank</text>
      </g>
     </g>
     <g id="ytick_14">
@@ -276,7 +276,7 @@ L 159.67123 142.576646
       </g>
      </g>
      <g id="text_16">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="144.760728" transform="rotate(-0 75.31811 144.760728)">NT, 3' 300</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="144.72399" transform="rotate(-0 75.31811 144.72399)">NT, 3' 300</text>
      </g>
     </g>
     <g id="ytick_15">
@@ -291,7 +291,7 @@ L 159.67123 149.958787
       </g>
      </g>
      <g id="text_17">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="152.142869" transform="rotate(-0 75.31811 152.142869)">NT, 3' 5,979</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="152.106131" transform="rotate(-0 75.31811 152.106131)">NT, 3' 5,979</text>
      </g>
     </g>
     <g id="ytick_16">
@@ -306,7 +306,7 @@ L 159.67123 157.340928
       </g>
      </g>
      <g id="text_18">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="159.52501" transform="rotate(-0 75.31811 159.52501)">NT, 5' 5,979</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="159.488272" transform="rotate(-0 75.31811 159.488272)">NT, 5' 5,979</text>
      </g>
     </g>
     <g id="ytick_17">
@@ -321,7 +321,7 @@ L 159.67123 164.723069
       </g>
      </g>
      <g id="text_19">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="166.907151" transform="rotate(-0 75.31811 166.907151)">ProtT5 + CaLM</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="166.870413" transform="rotate(-0 75.31811 166.870413)">ProtT5 + CaLM</text>
      </g>
     </g>
     <g id="ytick_18">
@@ -336,7 +336,7 @@ L 159.67123 172.10521
       </g>
      </g>
      <g id="text_20">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="174.289292" transform="rotate(-0 75.31811 174.289292)">ProtT5 + ESM2</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="174.252554" transform="rotate(-0 75.31811 174.252554)">ProtT5 + ESM2</text>
      </g>
     </g>
     <g id="ytick_19">
@@ -351,7 +351,7 @@ L 159.67123 179.487351
       </g>
      </g>
      <g id="text_21">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="181.671433" transform="rotate(-0 75.31811 181.671433)">model stack + ESM2</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="181.634695" transform="rotate(-0 75.31811 181.634695)">model stack + ESM2</text>
      </g>
     </g>
     <g id="ytick_20">
@@ -366,7 +366,7 @@ L 159.67123 186.869492
       </g>
      </g>
      <g id="text_22">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="189.053574" transform="rotate(-0 75.31811 189.053574)">ESM2 + CaLM</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="189.016836" transform="rotate(-0 75.31811 189.016836)">ESM2 + CaLM</text>
      </g>
     </g>
     <g id="ytick_21">
@@ -381,7 +381,7 @@ L 159.67123 194.251633
       </g>
      </g>
      <g id="text_23">
-      <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="196.435715" transform="rotate(-0 75.31811 196.435715)">CGT input stack</text>
+      <text style="font-weight: 700; font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="196.43554" transform="rotate(-0 75.31811 196.43554)">CGT input stack</text>
      </g>
     </g>
     <g id="ytick_22">
@@ -396,7 +396,7 @@ L 159.67123 201.633775
       </g>
      </g>
      <g id="text_24">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="203.817857" transform="rotate(-0 75.31811 203.817857)">ProtT5 + species LM</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="203.781118" transform="rotate(-0 75.31811 203.781118)">ProtT5 + species LM</text>
      </g>
     </g>
     <g id="ytick_23">
@@ -411,7 +411,7 @@ L 159.67123 209.015916
       </g>
      </g>
      <g id="text_25">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="211.199998" transform="rotate(-0 75.31811 211.199998)">all sequence (+ NT window)</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="211.199822" transform="rotate(-0 75.31811 211.199822)">all sequence (+ NT window)</text>
      </g>
     </g>
     <g id="ytick_24">
@@ -426,7 +426,7 @@ L 159.67123 216.398057
       </g>
      </g>
      <g id="text_26">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="218.582139" transform="rotate(-0 75.31811 218.582139)">ESM2 + species LM</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="218.581963" transform="rotate(-0 75.31811 218.581963)">ESM2 + species LM</text>
      </g>
     </g>
     <g id="ytick_25">
@@ -441,7 +441,7 @@ L 159.67123 223.780198
       </g>
      </g>
      <g id="text_27">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="225.96428" transform="rotate(-0 75.31811 225.96428)">chromatin pathways</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="225.927541" transform="rotate(-0 75.31811 225.927541)">chromatin pathways</text>
      </g>
     </g>
     <g id="ytick_26">
@@ -456,7 +456,7 @@ L 159.67123 231.162339
       </g>
      </g>
      <g id="text_28">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="233.346421" transform="rotate(-0 75.31811 233.346421)">random (1,024)</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="233.346245" transform="rotate(-0 75.31811 233.346245)">random (1,024)</text>
      </g>
     </g>
     <g id="ytick_27">
@@ -471,7 +471,7 @@ L 159.67123 238.54448
       </g>
      </g>
      <g id="text_29">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="240.728562" transform="rotate(-0 75.31811 240.728562)">random (100)</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="240.728386" transform="rotate(-0 75.31811 240.728386)">random (100)</text>
      </g>
     </g>
     <g id="ytick_28">
@@ -486,7 +486,7 @@ L 159.67123 245.926621
       </g>
      </g>
      <g id="text_30">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="248.110703" transform="rotate(-0 75.31811 248.110703)">random (10)</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="75.31811" y="248.110527" transform="rotate(-0 75.31811 248.110527)">random (10)</text>
      </g>
     </g>
    </g>
@@ -1186,7 +1186,7 @@ z
       </g>
      </g>
      <g id="text_32">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="177.462447" y="261.72407" transform="rotate(-0 177.462447 261.72407)">0.0</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="177.462447" y="261.650593" transform="rotate(-0 177.462447 261.650593)">0.0</text>
      </g>
     </g>
     <g id="xtick_4">
@@ -1196,7 +1196,7 @@ z
       </g>
      </g>
      <g id="text_33">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="216.139007" y="261.72407" transform="rotate(-0 216.139007 261.72407)">0.1</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="216.139007" y="261.650593" transform="rotate(-0 216.139007 261.650593)">0.1</text>
      </g>
     </g>
    </g>
@@ -2128,12 +2128,12 @@ L 181.33796 247.181585
    </g>
   </g>
   <g id="text_35">
-   <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="124.724409" y="268.142029" transform="rotate(-0 124.724409 268.142029)">validation Pearson per feature</text>
+   <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="124.724409" y="268.212224" transform="rotate(-0 124.724409 268.212224)">validation Pearson per feature</text>
   </g>
   <g id="legend_1">
    <g id="patch_12">
-    <path d="M 32.428346 31.774702 
-L 185.946784 31.774702 
+    <path d="M 32.428346 31.484077 
+L 185.946784 31.484077 
 L 185.946784 4.08189 
 L 32.428346 4.08189 
 z
@@ -2149,11 +2149,11 @@ z
 " style="stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
     </defs>
     <g>
-     <use xlink:href="#me4aa420ec5" x="40.828346" y="8.750054" style="fill: #ffffff; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
+     <use xlink:href="#me4aa420ec5" x="40.828346" y="8.676577" style="fill: #ffffff; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
     </g>
    </g>
    <g id="text_36">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="49.828346" y="10.850054" transform="rotate(-0 49.828346 10.850054)">ridge</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="49.828346" y="10.776577" transform="rotate(-0 49.828346 10.776577)">ridge</text>
    </g>
    <g id="line2d_232">
     <defs>
@@ -2164,77 +2164,77 @@ z
 " style="stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
     </defs>
     <g>
-     <use xlink:href="#m1310fd7b5b" x="40.828346" y="17.38103" style="fill: #ffffff; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
+     <use xlink:href="#m1310fd7b5b" x="40.828346" y="17.234077" style="fill: #ffffff; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
     </g>
    </g>
    <g id="text_37">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="49.828346" y="19.48103" transform="rotate(-0 49.828346 19.48103)">kNN</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="49.828346" y="19.334077" transform="rotate(-0 49.828346 19.334077)">kNN</text>
    </g>
    <g id="patch_13">
-    <path d="M 34.828346 28.11189 
-L 46.828346 28.11189 
-L 46.828346 23.91189 
-L 34.828346 23.91189 
+    <path d="M 34.828346 27.821265 
+L 46.828346 27.821265 
+L 46.828346 23.621265 
+L 34.828346 23.621265 
 z
 " style="fill: #d79b00; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_38">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="49.828346" y="28.11189" transform="rotate(-0 49.828346 28.11189)">protein LM</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="49.828346" y="27.821265" transform="rotate(-0 49.828346 27.821265)">protein LM</text>
    </g>
    <g id="patch_14">
-    <path d="M 84.173659 10.850054 
-L 96.173659 10.850054 
-L 96.173659 6.650054 
-L 84.173659 6.650054 
+    <path d="M 84.173659 10.776577 
+L 96.173659 10.776577 
+L 96.173659 6.576577 
+L 84.173659 6.576577 
 z
 " style="fill: #b85450; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_39">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="99.173659" y="10.850054" transform="rotate(-0 99.173659 10.850054)">coding sequence</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="99.173659" y="10.776577" transform="rotate(-0 99.173659 10.776577)">coding sequence</text>
    </g>
    <g id="patch_15">
-    <path d="M 84.173659 19.48103 
-L 96.173659 19.48103 
-L 96.173659 15.28103 
-L 84.173659 15.28103 
+    <path d="M 84.173659 19.334077 
+L 96.173659 19.334077 
+L 96.173659 15.134077 
+L 84.173659 15.134077 
 z
 " style="fill: #9673a6; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_40">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="99.173659" y="19.48103" transform="rotate(-0 99.173659 19.48103)">regulatory DNA</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="99.173659" y="19.334077" transform="rotate(-0 99.173659 19.334077)">regulatory DNA</text>
    </g>
    <g id="patch_16">
-    <path d="M 84.173659 28.112007 
-L 96.173659 28.112007 
-L 96.173659 23.912007 
-L 84.173659 23.912007 
+    <path d="M 84.173659 27.891577 
+L 96.173659 27.891577 
+L 96.173659 23.691577 
+L 84.173659 23.691577 
 z
 " style="fill: #d6b656; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_41">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="99.173659" y="28.112007" transform="rotate(-0 99.173659 28.112007)">composite</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="99.173659" y="27.891577" transform="rotate(-0 99.173659 27.891577)">composite</text>
    </g>
    <g id="patch_17">
-    <path d="M 150.539284 10.850054 
-L 162.539284 10.850054 
-L 162.539284 6.650054 
-L 150.539284 6.650054 
+    <path d="M 150.539284 10.776577 
+L 162.539284 10.776577 
+L 162.539284 6.576577 
+L 150.539284 6.576577 
 z
 " style="fill: #6c8ebf; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_42">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="165.539284" y="10.850054" transform="rotate(-0 165.539284 10.850054)">graph</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="165.539284" y="10.776577" transform="rotate(-0 165.539284 10.776577)">graph</text>
    </g>
    <g id="patch_18">
-    <path d="M 150.539284 19.48103 
-L 162.539284 19.48103 
-L 162.539284 15.28103 
-L 150.539284 15.28103 
+    <path d="M 150.539284 19.334077 
+L 162.539284 19.334077 
+L 162.539284 15.134077 
+L 150.539284 15.134077 
 z
 " style="fill: #666666; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="text_43">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="165.539284" y="19.48103" transform="rotate(-0 165.539284 19.48103)">control</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="165.539284" y="19.334077" transform="rotate(-0 165.539284 19.334077)">control</text>
    </g>
   </g>
  </g>

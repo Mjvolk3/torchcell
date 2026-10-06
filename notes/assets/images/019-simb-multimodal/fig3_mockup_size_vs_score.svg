@@ -9,7 +9,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+      <dc:title>Matplotlib v3.10.7, https://matplotlib.org/</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -50,11 +50,11 @@ L 0 3.5
      </g>
      <g id="text_1">
       <!-- $\mathdefault{10^{5}}$ -->
-      <g transform="translate(29.675141 121.310394)">
+      <g transform="translate(29.585141 121.977894)">
        <text>
-        <tspan x="0" y="-0.557938" style="font-size: 6px; font-family: 'Arial'">1</tspan>
-        <tspan x="3.336914" y="-0.557938" style="font-size: 6px; font-family: 'Arial'">0</tspan>
-        <tspan x="6.73125" y="-3.035938" style="font-size: 4.2px; font-family: 'Arial'">5</tspan>
+        <tspan x="0" y="-0.854313" style="font-size: 6px; font-family: 'Arial'">1</tspan>
+        <tspan x="3.336914" y="-0.854313" style="font-size: 6px; font-family: 'Arial'">0</tspan>
+        <tspan x="6.778369" y="-5.035938" style="font-size: 4.2px; font-family: 'Arial'">5</tspan>
        </text>
       </g>
      </g>
@@ -67,11 +67,11 @@ L 0 3.5
      </g>
      <g id="text_2">
       <!-- $\mathdefault{10^{6}}$ -->
-      <g transform="translate(92.904164 121.370394)">
+      <g transform="translate(92.814164 122.037894)">
        <text>
-        <tspan x="0" y="-0.50325" style="font-size: 6px; font-family: 'Arial'">1</tspan>
-        <tspan x="3.336914" y="-0.50325" style="font-size: 6px; font-family: 'Arial'">0</tspan>
-        <tspan x="6.73125" y="-2.98125" style="font-size: 4.2px; font-family: 'Arial'">6</tspan>
+        <tspan x="0" y="-0.799625" style="font-size: 6px; font-family: 'Arial'">1</tspan>
+        <tspan x="3.336914" y="-0.799625" style="font-size: 6px; font-family: 'Arial'">0</tspan>
+        <tspan x="6.778369" y="-4.98125" style="font-size: 4.2px; font-family: 'Arial'">6</tspan>
        </text>
       </g>
      </g>
@@ -194,7 +194,7 @@ L 0 2
      </g>
     </g>
     <g id="text_3">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="95.438268" y="131.001253" transform="rotate(-0 95.438268 131.001253)">parameters</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="95.438268" y="131.525081" transform="rotate(-0 95.438268 131.525081)">parameters</text>
     </g>
    </g>
    <g id="matplotlib.axis_2">
@@ -215,7 +215,7 @@ L -3.5 0
       </g>
      </g>
      <g id="text_4">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.768504" y="104.911641" transform="rotate(-0 25.768504 104.911641)">0.0</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.768504" y="104.874903" transform="rotate(-0 25.768504 104.874903)">0.0</text>
      </g>
     </g>
     <g id="ytick_2">
@@ -230,7 +230,7 @@ L 158.108031 90.48189
       </g>
      </g>
      <g id="text_5">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.768504" y="92.665972" transform="rotate(-0 25.768504 92.665972)">0.1</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.768504" y="92.629234" transform="rotate(-0 25.768504 92.629234)">0.1</text>
      </g>
     </g>
     <g id="ytick_3">
@@ -245,7 +245,7 @@ L 158.108031 78.23622
       </g>
      </g>
      <g id="text_6">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.768504" y="80.420303" transform="rotate(-0 25.768504 80.420303)">0.2</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.768504" y="80.383564" transform="rotate(-0 25.768504 80.383564)">0.2</text>
      </g>
     </g>
     <g id="ytick_4">
@@ -260,7 +260,7 @@ L 158.108031 65.990551
       </g>
      </g>
      <g id="text_7">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.768504" y="68.174633" transform="rotate(-0 25.768504 68.174633)">0.3</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.768504" y="68.137895" transform="rotate(-0 25.768504 68.137895)">0.3</text>
      </g>
     </g>
     <g id="ytick_5">
@@ -275,7 +275,7 @@ L 158.108031 53.744882
       </g>
      </g>
      <g id="text_8">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.768504" y="55.928964" transform="rotate(-0 25.768504 55.928964)">0.4</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.768504" y="55.892226" transform="rotate(-0 25.768504 55.892226)">0.4</text>
      </g>
     </g>
     <g id="ytick_6">
@@ -290,7 +290,7 @@ L 158.108031 41.499213
       </g>
      </g>
      <g id="text_9">
-      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.768504" y="43.683295" transform="rotate(-0 25.768504 43.683295)">0.5</text>
+      <text style="font-size: 6px; font-family: 'Arial'; text-anchor: end" x="25.768504" y="43.646556" transform="rotate(-0 25.768504 43.646556)">0.5</text>
      </g>
     </g>
     <g id="ytick_7">
@@ -350,8 +350,8 @@ L 158.108031 35.376378
      <g id="line2d_44"/>
     </g>
     <g id="text_10">
-     <text style="font-size: 6px; font-family: 'Arial'" transform="translate(5.185711 103.297917) rotate(-90)">best validation Pearson</text>
-     <text style="font-size: 6px; font-family: 'Arial'" transform="translate(11.715984 95.947917) rotate(-90)">(rolling maximum)</text>
+     <text style="font-size: 6px; font-family: 'Arial'" transform="translate(5.731816 103.297917) rotate(-90)">best validation Pearson</text>
+     <text style="font-size: 6px; font-family: 'Arial'" transform="translate(12.165691 95.947917) rotate(-90)">(rolling maximum)</text>
     </g>
    </g>
    <g id="PathCollection_1"/>
@@ -1581,24 +1581,24 @@ L 149.639541 35.376378
    </g>
    <g id="text_11">
     <g id="patch_7">
-     <path d="M 34.54869 72.212317 
-L 135.571815 72.212317 
+     <path d="M 34.54869 70.927848 
+L 135.571815 70.927848 
 L 135.571815 35.600598 
 L 34.54869 35.600598 
 z
 " style="fill: #ffffff; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
     </g>
-    <text style="font-size: 6px; font-family: 'Arial'" transform="translate(36.52869 42.39847)">n = 1,182 runs</text>
-    <text style="font-size: 6px; font-family: 'Arial'" transform="translate(36.52869 48.928743)">r(log10 parameters, score) = -0.001</text>
-    <text style="font-size: 6px; font-family: 'Arial'" transform="translate(36.52869 55.459134)">training strains: median 1,244</text>
-    <text style="font-size: 6px; font-family: 'Arial'" transform="translate(36.52869 61.989524)">(1,125 to 1,253); v19: 1,099 to 1,108</text>
-    <text style="font-size: 6px; font-family: 'Arial'" transform="translate(36.52869 68.519915)">v19 CGT: 6.67 M parameters</text>
+    <text style="font-size: 6px; font-family: 'Arial'" transform="translate(36.52869 41.875286)">n = 1,182 runs</text>
+    <text style="font-size: 6px; font-family: 'Arial'" transform="translate(36.52869 48.309161)">r(log10 parameters, score) = -0.001</text>
+    <text style="font-size: 6px; font-family: 'Arial'" transform="translate(36.52869 54.746973)">training strains: median 1,244</text>
+    <text style="font-size: 6px; font-family: 'Arial'" transform="translate(36.52869 61.251161)">(1,125 to 1,253); v19: 1,099 to 1,108</text>
+    <text style="font-size: 6px; font-family: 'Arial'" transform="translate(36.52869 67.755348)">v19 CGT: 6.67 M parameters</text>
    </g>
   </g>
   <g id="legend_1">
    <g id="patch_8">
-    <path d="M 32.768504 12.471804 
-L 162.931004 12.471804 
+    <path d="M 32.768504 12.328132 
+L 162.931004 12.328132 
 L 162.931004 2.040945 
 L 32.768504 2.040945 
 z
@@ -1619,11 +1619,11 @@ z
 " style="stroke: #000000; stroke-width: 0.3"/>
     </defs>
     <g>
-     <use xlink:href="#m5aa233c35d" x="41.168504" y="6.709109" style="fill: #d79b00; stroke: #000000; stroke-width: 0.3"/>
+     <use xlink:href="#m5aa233c35d" x="41.168504" y="6.635632" style="fill: #d79b00; stroke: #000000; stroke-width: 0.3"/>
     </g>
    </g>
    <g id="text_12">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="50.168504" y="8.809109" transform="rotate(-0 50.168504 8.809109)">run</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="50.168504" y="8.735632" transform="rotate(-0 50.168504 8.735632)">run</text>
    </g>
    <g id="line2d_47">
     <defs>
@@ -1640,20 +1640,20 @@ z
 " style="stroke: #666666; stroke-width: 0.5"/>
     </defs>
     <g>
-     <use xlink:href="#ma92c701c05" x="70.839441" y="6.709109" style="fill: #ffffff; stroke: #666666; stroke-width: 0.5"/>
+     <use xlink:href="#ma92c701c05" x="70.839441" y="6.635632" style="fill: #ffffff; stroke: #666666; stroke-width: 0.5"/>
     </g>
    </g>
    <g id="text_13">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="79.839441" y="8.809109" transform="rotate(-0 79.839441 8.809109)">collapsed run</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="79.839441" y="8.735632" transform="rotate(-0 79.839441 8.735632)">collapsed run</text>
    </g>
    <g id="line2d_48">
-    <path d="M 121.526316 6.709109 
-L 127.526316 6.709109 
-L 133.526316 6.709109 
+    <path d="M 121.526316 6.635632 
+L 127.526316 6.635632 
+L 133.526316 6.635632 
 " style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #000000; stroke-width: 0.8"/>
    </g>
    <g id="text_14">
-    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="136.526316" y="8.809109" transform="rotate(-0 136.526316 8.809109)">v19 CGT</text>
+    <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="136.526316" y="8.735632" transform="rotate(-0 136.526316 8.735632)">v19 CGT</text>
    </g>
   </g>
  </g>

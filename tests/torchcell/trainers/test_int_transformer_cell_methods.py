@@ -956,3 +956,61 @@ def test_model_profiling_skips_the_optimizer(tmp_path: Any) -> None:
     assert trainer.global_step == 0
     assert _scripted(task).scale.item() == 1.0
     assert "learning_rate" not in trainer.callback_metrics
+
+
+# --- 2026.10.06 (phase 21): the DDP world size in the effective batch ---------------- #
+
+
+class _FakeOptimizer:
+    """Records step / zero_grad; exposes the one param group the log reads."""
+
+    def __init__(self) -> None:
+        self.param_groups = [{"lr": 0.5}]
+        self.events: list[str] = []
+
+    def step(self) -> None:
+        self.events.append("step")
+
+    def zero_grad(self) -> None:
+        self.events.append("zero_grad")
+
+
+def test_effective_batch_multiplies_the_world_size_only_for_a_strategy_named_ddp(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Any
+) -> None:
+    """Finding: the DDP branch of ``training_step`` (int_transformer_cell.py:1214-1222)
+    reads ``trainer.strategy._strategy_name``, an attribute Lightning 2.5.5's
+    ``DDPStrategy`` does not have, so a real DDP run logs effective_batch_size =
+    B * accumulation (per process) instead of B * accumulation * world size.
+
+    The branch itself works when the attribute exists: with ``_strategy_name = "ddp"``
+    set on the attached strategy and ``torch.distributed`` reporting 4 processes, two
+    genotypes with accumulation 2 log 2 * 2 * 4 = 16; without the attribute the same
+    step logs 4. The logged learning rate is the optimizer's group lr 0.5.
+
+    Reach: 006 equivariant_cell_graph_transformer_delta_011.yaml (strategy ddp,
+    grad_accumulation_schedule {0: 2}) with scripts/equivariant_cell_graph_transformer.py
+    logs the per-process value; it is a diagnostic only, no loss or metric uses it. The
+    same check sits untested at int_hetero_cell_nsa.py:418 and :1075. Each case runs in
+    its own ``monkeypatch.context()`` so the autouse conftest guards stay in place.
+    Pinned until the check reads the strategy type (or ``trainer.world_size``).
+    """
+    from lightning.pytorch.strategies import DDPStrategy
+
+    assert not hasattr(DDPStrategy(), "_strategy_name")
+    for name, world, expected in (("ddp", 4, 16.0), (None, 4, 4.0)):
+        with monkeypatch.context() as mp:
+            task, recorder = _task(mp, grad_accumulation_schedule={0: 2})
+            _attach_trainer(task, tmp_path)
+            task.current_accumulation_steps = 2
+            optimizer = _FakeOptimizer()
+            mp.setattr(task, "optimizers", lambda optimizer=optimizer: optimizer)
+            mp.setattr(task, "manual_backward", lambda loss: None)
+            if name is not None:
+                mp.setattr(task.trainer.strategy, "_strategy_name", name, raising=False)
+            mp.setattr(torch.distributed, "is_initialized", lambda: True)
+            mp.setattr(torch.distributed, "get_world_size", lambda world=world: world)
+            task.training_step(_batch([2.0, 5.0]), 0)
+            assert recorder.values["effective_batch_size"] == expected
+            assert recorder.values["learning_rate"] == 0.5
+            assert optimizer.events == []  # batch 0 of 2 accumulates, no step yet

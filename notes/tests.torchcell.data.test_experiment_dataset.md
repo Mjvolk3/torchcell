@@ -19,3 +19,13 @@ Issues #518, #524, #528, #537. Five tests for the shared raw-pin helpers: `file_
 ## 2026.09.30 - Findings Retired (Issue #532)
 
 Both findings are retired. `transform_item` constructs the reference once (count 1). A reference model and its dump serialize to the same string and hash; the fixture's three dict reference ids equal the literal pre-fix hashes, pinning that the index path is unchanged.
+
+## 2026.10.06 - Phase 21: abstract bodies, interned cache, splice and harvest
+
+- `ExperimentDataset` refuses instantiation naming its seven abstract members; through the base class, `download` and `process` raise `NotImplementedError` and the other abstract bodies return `None`.
+- A second dataset on one root re-attaches the same interned table and validated-instance dict (identity); `_load_interned` is idempotent; `get_single_item` reopens a closed env.
+- `__getstate__` nulls `_interned` and `_experiment_reference_index` and empties `_validated_interned` in copies and pickles only; it keeps the LMDB handle, so pickling with the env open raises `TypeError: cannot pickle 'Environment' object`.
+- `_splice_validated` is copy-on-write through dicts and lists; `_harvest_validated` caches list members the first time only; `_build` returns a cached constant without calling the model class.
+- `check_manifest_pin` message and attributes.
+
+Finding: `_INTERNED_BY_DIR` (experiment_dataset.py line 236, read at 505, filled at 525) is never invalidated, so deleting and rebuilding a store at the same root in one process with a new constant fails with `KeyError` on the new constant's digest. Audit 1 rates it latent and loud: keys are content hashes, so it can never return a wrong constant, and no production path deletes and rebuilds in one process (REPL or test only).

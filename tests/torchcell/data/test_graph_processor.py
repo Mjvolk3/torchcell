@@ -888,3 +888,73 @@ def test_neighbor_phenotypes_write_the_shared_placeholder() -> None:
     assert placeholder.phenotype_type_indices.tolist() == [0]
     assert placeholder.phenotype_sample_indices.tolist() == [0]
     assert placeholder.phenotype_types == ["gene_interaction"]
+
+
+# --- 2026.10.06 (phase 21): the one-line guards ------------------------------------- #
+
+PROCESSORS_WITH_REACTIONS = [
+    SubgraphRepresentation,
+    IncidenceSubgraphRepresentation,
+    LazySubgraphRepresentation,
+]
+
+
+@pytest.mark.parametrize("processor_class", PROCESSORS_WITH_REACTIONS)
+def test_empty_reaction_info_and_missing_reactions_write_nothing(
+    processor_class: type[Any],
+) -> None:
+    """``_add_reaction_data`` with ``reaction_info = {}`` returns before reading it, and
+    ``_process_metabolic_network`` returns when the cell graph has no reaction node
+    type, even with a non-empty reaction_info: the output keeps no node and no edge
+    type (graph_processor.py:371/390, 1058/1077, 1720/1740).
+    """
+    processor = processor_class()
+    out = HeteroData()
+    processor._add_reaction_data(out, {}, _small_graph())
+    processor._process_metabolic_network(out, _small_graph(), {"valid_reactions": [0]})
+    processor._process_metabolic_network(out, _small_graph(reactions=True), {})
+    assert (out.node_types, out.edge_types) == ([], [])
+
+
+@pytest.mark.parametrize(
+    "processor_class", [*PROCESSORS_WITH_REACTIONS, DCellGraphProcessor]
+)
+def test_a_device_of_none_falls_back_to_the_cpu(processor_class: type[Any]) -> None:
+    """Every processor sets ``device = cpu`` in ``__init__``, so the ``device is None``
+    guard of ``_add_phenotype_data`` runs only when a caller clears it: it restores
+    the CPU and writes the same phenotype tensors as the default processor.
+    """
+    records = [_record(["YAL002W"], 0.9, 0.05), _record(["YAL001C"], 0.4)]
+    default = HeteroData()
+    processor_class()._add_phenotype_data(default, PHENOTYPES, records)
+    cleared_processor = processor_class()
+    cleared_processor.device = None
+    cleared = HeteroData()
+    cleared_processor._add_phenotype_data(cleared, PHENOTYPES, records)
+    assert cleared_processor.device == torch.device("cpu")
+    assert sorted(cleared["gene"].keys()) == sorted(default["gene"].keys())
+    for key in default["gene"].keys():
+        value = default["gene"][key]
+        if isinstance(value, torch.Tensor):
+            torch.testing.assert_close(cleared["gene"][key], value, equal_nan=True)
+        else:
+            assert cleared["gene"][key] == value, key
+    torch.testing.assert_close(
+        default["gene"].phenotype_values, torch.tensor([0.9, 0.4])
+    )
+
+
+def test_the_processor_base_class_cannot_be_instantiated() -> None:
+    """``GraphProcessor`` is abstract in ``process``: instantiation is refused."""
+    import re
+
+    from torchcell.data.graph_processor import GraphProcessor
+
+    with pytest.raises(
+        TypeError,
+        match=re.escape(
+            "Can't instantiate abstract class GraphProcessor without an implementation "
+            "for abstract method 'process'"
+        ),
+    ):
+        GraphProcessor()  # type: ignore[abstract, unused-ignore]

@@ -553,3 +553,42 @@ def test_output_size_two_matches_the_reference_head_for_head() -> None:
         assert value.shape == (3, 2), key
         assert torch.equal(out["linear_outputs"][key], value), key
     assert opt.num_parameters["total"] == ref.num_parameters["total"] == 54
+
+
+# ---------------------------------------------------------------------------
+# 2026.10.06 (phase 21): the plain-int term index. Both helpers accept a Python int
+# as well as a tensor (dcell_opt.py:370-371 and 724-727); the int path must give the
+# same states and the same concatenated input. Hand values as in the gene-state test
+# above: knockouts {0}, {2, 3}, {1}; term 1 annotates genes 0 and 1.
+# ---------------------------------------------------------------------------
+
+
+def test_an_int_term_index_equals_the_tensor_index() -> None:
+    """Term 1 states [[0, 1], [1, 1], [1, 0]] for int 1 and tensor(1). With the two
+    children (terms 1, 2) already written into the activation buffer as 1s and 2s, the
+    root's input for int 0 is [child 1 (2 cols), child 2 (2 cols), zero gene column],
+    identical to the tensor-index input.
+    """
+    graph = make_dcell_graph()
+    with torch.random.fork_rng():
+        torch.manual_seed(0)
+        opt = DCellOpt(graph, min_subsystem_size=2, subsystem_ratio=0.5)
+    batch = make_dcell_batch(_BATCH)
+    term1 = torch.tensor([[0.0, 1.0], [1.0, 1.0], [1.0, 0.0]])
+    assert torch.equal(opt._extract_gene_states_for_term(1, batch), term1)  # type: ignore[arg-type, unused-ignore]
+    assert torch.equal(
+        opt._extract_gene_states_for_term(torch.tensor([1]), batch), term1
+    )
+
+    all_act = torch.zeros(3, 3, 2)
+    all_act[:, 1, :] = 1.0
+    all_act[:, 2, :] = 2.0
+    mask = torch.zeros(3, 3, dtype=torch.bool)
+    mask[:, 1:] = True
+    from_int = opt._prepare_term_input_optimized(0, batch, all_act, mask)  # type: ignore[arg-type, unused-ignore]
+    from_tensor = opt._prepare_term_input_optimized(
+        torch.tensor(0), batch, all_act, mask
+    )
+    expected = torch.cat([torch.ones(3, 2), 2 * torch.ones(3, 2), torch.zeros(3, 1)], 1)
+    assert torch.equal(from_int, expected)
+    assert torch.equal(from_tensor, expected)

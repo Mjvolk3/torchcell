@@ -15,3 +15,11 @@ Polarity: HIP and HOP cells of -3.0 are both stored as -3.0 and the units string
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.10.06 - Phase 21: the remaining one-line branches
+
+- `_strain_construction`: one entry keeps plate and well, two agreeing entries drop them; a lab mismatch and a batch mismatch are each tested and raise with the sorted sets.
+- `_load_ic30`: both MoA sheets contribute (novel-MoA CMB 99 -> 4.0), any other sheet is ignored, a MoA sheet without `IC30 (uM)` is skipped whole, digit ids only (`12`, ` 45 ` kept; `CMB7`, blank id, blank value skipped).
+- `_column_census`: a CMB991 column is detection and positive control.
+- `_iter_records`: an excluded CMB4019 cell is counted, and a short row (five fields) is kept under the detection rule (3 of 6 >= 0.5 * 6) but gets no record for the kept column past its end.
+- Left uncovered: the 250,000-record commit branch, the deposit's existing-file branch and the dose-outside-IC30 append in `_write_drop_ledger`, which need a full build.

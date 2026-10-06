@@ -19,3 +19,9 @@ Issues #518, #524, #528, #537. Finding retired: `test_a_stale_raw_matrix_is_kept
 ## 2026.10.01 - Fix PR for the pinned findings
 
 Retired the bare StopIteration and silent unextractable-member findings (issue #541): a zip with zero or two `.tab` members raises `MissingTabMemberError` and a forced unextractable member raises `UnextractableMemberError`, both with exact messages. The blank `systematic_name` finding stays pinned as record-changing (459,790 affected rows in the built isolates).
+
+## 2026.10.06 - Phase 21: ledger refusals and _sha256
+
+- `BlankRowRule`: a gap whose field is not `definition` is refused; a served class without `id_rule` and a dropped class with one share the message "a served class needs an id_rule".
+- `BlankNameLedger`: a ten-row consistent ledger validates; 7 + 3 != 11 rows, 3 classified against 4 blank rows, and 1 served id row against 2 served-class rows are each refused with their own message.
+- Finding: `_sha256` (caudal2024.py lines 1189-1195) has no caller in the module; its chunked digest equals `hashlib.sha256` for chunk sizes 1, 1024 and the default, and the empty file gives e3b0c442....

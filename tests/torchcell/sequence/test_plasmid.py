@@ -3,6 +3,9 @@
 
 from __future__ import annotations
 
+import hashlib
+from pathlib import Path
+
 import pytest
 
 from torchcell.sequence.plasmid import (
@@ -11,6 +14,8 @@ from torchcell.sequence.plasmid import (
     Location,
     SequenceProvenance,
     SORole,
+    _sha256,
+    parse_genbank_component,
 )
 
 PROV = SequenceProvenance(source_file="t.gb", sha256="0" * 64, citation_key="test")
@@ -97,3 +102,97 @@ def test_subcomponent_carves_and_rebases():
 def test_round_trip():
     c = _component("circular")
     assert c == Component(**c.model_dump())
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.06 (Phase 21): GenBank ingestion of a hand-written 20 bp circular map.
+# Features: promoter 1..4 (label pTEF), CDS complement(5..10) (gene KanR, no label),
+# rep_origin 11..14 (no name), misc_binding 15..16 (an unmapped type), and gene
+# join(18..20,1..2) (label wrap) that spans the origin. GenBank is 1-based closed, so
+# 1..4 is half-open [0, 4).
+# --------------------------------------------------------------------------- #
+_GENBANK = """\
+LOCUS       pTEST                     20 bp    DNA     circular SYN 01-JAN-2026
+DEFINITION  test plasmid.
+ACCESSION   pTEST
+VERSION     pTEST
+KEYWORDS    .
+SOURCE      synthetic DNA construct
+  ORGANISM  synthetic DNA construct
+            other sequences.
+FEATURES             Location/Qualifiers
+     source          1..20
+                     /organism="synthetic DNA construct"
+     promoter        1..4
+                     /label="pTEF"
+     CDS             complement(5..10)
+                     /gene="KanR"
+     rep_origin      11..14
+     misc_binding    15..16
+                     /label="odd"
+     gene            join(18..20,1..2)
+                     /label="wrap"
+ORIGIN
+        1 atgcgtacgt acgtacgtac
+//
+"""
+
+
+def _gb(tmp_path: Path) -> Path:
+    path = tmp_path / "pTEST.gb"
+    path.write_text(_GENBANK)
+    return path
+
+
+def test_parse_genbank_component_features_roles_and_provenance(tmp_path: Path) -> None:
+    path = _gb(tmp_path)
+    comp = parse_genbank_component(str(path), "testKey2026")
+    assert (comp.identity, comp.topology, comp.length) == ("pTEST", "circular", 20)
+    assert comp.sequence == "ATGCGTACGTACGTACGTAC"
+    assert comp.roles == [SORole(so_id="SO:0000155", name="plasmid_vector")]
+    assert comp.provenance == SequenceProvenance(
+        source_file="pTEST.gb",
+        sha256=hashlib.sha256(_GENBANK.encode()).hexdigest(),
+        citation_key="testKey2026",
+    )
+    got = [
+        (
+            f.name,
+            f.roles[0].so_id,
+            f.location.start,
+            f.location.end,
+            f.location.orientation,
+        )
+        for f in comp.features
+    ]
+    assert got[:4] == [
+        ("pTEF", "SO:0000167", 0, 4, "inline"),
+        ("KanR", "SO:0000316", 4, 10, "reverse_complement"),
+        ("", "SO:0000296", 10, 14, "inline"),
+        ("odd", "SO:0000110", 14, 16, "inline"),
+    ]
+    # [4, 10) is GTACGT; reversed TGCATG; complemented ACGTAC
+    assert comp.feature_sequence("KanR") == "ACGTAC"
+
+
+def test_parse_genbank_component_flattens_an_origin_spanning_feature(
+    tmp_path: Path,
+) -> None:
+    """Finding: a compound location is reduced to ``[min start, max end)``, so the
+    origin-spanning ``join(18..20,1..2)`` (5 bp: ``TAC`` + ``AT``) is stored as
+    ``[0, 20)``, the WHOLE plasmid, and its extracted sequence is all 20 bp. Plasmid
+    maps routinely carry features across the origin. Pinned until compound/wrapping
+    locations are kept (plasmid.py:200-208). Reach: nothing calls
+    ``parse_genbank_component`` yet, so latent.
+    """
+    comp = parse_genbank_component(str(_gb(tmp_path)), "k")
+    wrap = comp.get_feature("wrap")
+    assert (wrap.location.start, wrap.location.end) == (0, 20)
+    assert comp.feature_sequence("wrap") == "ATGCGTACGTACGTACGTAC"
+
+
+def test_sha256_streams_more_than_one_block(tmp_path: Path) -> None:
+    data = bytes(range(256)) * 9000  # 2,304,000 bytes: three 1 MiB reads
+    path = tmp_path / "big.bin"
+    path.write_bytes(data)
+    assert _sha256(str(path)) == hashlib.sha256(data).hexdigest()

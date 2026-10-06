@@ -133,3 +133,19 @@ The init test now asserts Kaiming fan_out: the std of a seeded Linear(256, 128) 
 ### Mutants, round 2
 
 All 9 were killed: the auditor's L1-L8 and a swapped norm map.
+
+## 2026.10.06 - Phase 21: remaining forward branches and init branches
+
+Expected values are the model's own submodules applied to the subset or index each branch promises.
+
+- Two guards are reachable only through an infinite (not NaN) parameter, found by filling each of the 54 parameters in turn with +inf and -inf under both combination methods: an infinite `global_aggregator.transform_nn.0.bias` makes z_w and z_i both +inf, so "NaN detected in perturbation difference (z_p_global)" (line 1304); an infinite local prediction bias gives two +inf gate logits whose softmax is NaN, "NaN detected in gate weights after softmax" (line 1399).
+- A wildtype `pert_mask` restricts the wildtype pool to the kept genes (line 1240); a batch without `pert_mask` pools every row by `gene.batch` (lines 1275-1276).
+- `forward_single` skips a relation absent from the data and one whose store holds only a mask (lines 1177, 1188).
+- `PairwiseGraphAggregation` skips a missing second graph (options [pp(a, a), a]); the conv wrapper passes kwargs (`edge_weight`) to a non-GIN conv.
+- `_init_weights` on any module tree resets nn.LayerNorm and BatchNorm1d to (1, 0) and leaves a GATv2Conv untouched (the eager model's pinned finding; the lazy factory refuses GATv2, so the branch is dead here); a GATv2Conv given the `lin_src` / `lin_dst` / `att_src` / `att_dst` names is re-initialized exactly as the branch says, checked by replaying the draws.
+
+Left uncovered: the remaining NaN guards (each sits after a guard that a NaN or inf reaches first), `HeteroConvAggregator` lines 360 and 380-381 (unreachable through the constructor), and `main`.
+
+## 2026.10.06 - Phase 21 audit 2
+
+The four Phase 21 manual seeds now run inside `torch.random.fork_rng()`, and the two `_init_weights` ignores use the two-sided `[arg-type, unused-ignore]` form.

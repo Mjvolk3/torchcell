@@ -44,9 +44,13 @@ from __future__ import annotations
 import json
 import math
 import pickle
+import re
+import urllib.request
 from pathlib import Path
 from typing import Any, cast
 
+import GEOparse
+import lmdb
 import openpyxl
 import pandas as pd
 import pytest
@@ -658,3 +662,512 @@ def test_reference_n_replicates_counts_the_arrays_in_each_refpool_mean(
     reference = double[0]["reference"]["phenotype_reference"]
     assert reference["expression"] == {"YAL001C": 1.5, "YBR001C": 4.0, "YCR001W": 2.0}
     assert reference["n_replicates"] == {"YAL001C": 2, "YBR001C": 1, "YCR001W": 2}
+
+
+# ---------------------------------------------------------------------------
+# 2026.10.06 (Phase 21): download, the parallel batch path and the static helpers.
+# ---------------------------------------------------------------------------
+
+_SUPPL_URL = (
+    "https://static-content.springer.com/esm/art%3A10.1186%2Fs12915-015-0222-5/"
+    "MediaObjects/12915_2015_222_MOESM1_ESM.xlsx"
+)
+_PROBES = {"1": "YAL001C", "2": "YBR001C", "3": "YCR001W"}
+
+
+class _GeoRecorder:
+    """Stand-in for ``GEOparse.get_GEO`` that records its keyword arguments."""
+
+    def __init__(self, result: object, error: Exception | None = None) -> None:
+        self.result = result
+        self.error = error
+        self.calls: list[dict[str, Any]] = []
+
+    def __call__(self, **kwargs: Any) -> object:
+        self.calls.append(kwargs)
+        if self.error is not None:
+            raise self.error
+        return self.result
+
+
+class _RetrieveRecorder:
+    """Stand-in for ``urllib.request.urlretrieve`` that writes hand-made bytes."""
+
+    def __init__(self, payload: bytes, error: Exception | None = None) -> None:
+        self.payload = payload
+        self.error = error
+        self.calls: list[tuple[str, str]] = []
+
+    def __call__(self, url: str, path: str) -> None:
+        self.calls.append((url, path))
+        if self.error is not None:
+            raise self.error
+        Path(path).write_bytes(self.payload)
+
+
+def _fresh_raw(dataset: Any) -> Path:
+    """Empty the dataset's raw dir so ``download`` writes into a known state."""
+    raw = Path(dataset.raw_dir)
+    for child in raw.iterdir():
+        child.unlink()
+    return raw
+
+
+@pytest.mark.parametrize("fixture", ["single", "double"])
+def test_download_pickles_the_geo_object_and_fetches_the_si_workbook(
+    fixture: str, request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Finding: ``download`` (sameith2015.py lines 155-185 and 928-960) writes the
+    pickled GEO object and the SI workbook with no sha256, no
+    ``source_url`` / ``retrieval_command`` record, so a rebuilt raw dir cannot be
+    checked against the bytes the served build consumed. ``get_GEO`` receives exactly
+    ``geo="GSE42536", destdir=<raw_dir>, silent=False`` and ``urlretrieve`` the
+    Springer ESM URL and ``<raw_dir>/12915_2015_222_MOESM1_ESM.xlsx``; the pickle
+    round-trips the object ``get_GEO`` returned. Under the stub (which writes no SOFT
+    file) ``raw/`` then holds exactly those two files; a real ``get_GEO`` also leaves
+    ``GSE42536_family.soft.gz`` there, likewise unrecorded. Pinned until download records a
+    retrieval manifest with the sha256 of each file.
+    """
+    dataset = request.getfixturevalue(fixture)
+    raw = _fresh_raw(dataset)
+    geo = _GeoRecorder(result={"stand-in": "GSE42536"})
+    retrieve = _RetrieveRecorder(b"hand-made workbook bytes")
+    monkeypatch.setattr(GEOparse, "get_GEO", geo)
+    monkeypatch.setattr(urllib.request, "urlretrieve", retrieve)
+    dataset.download()
+    assert geo.calls == [{"geo": "GSE42536", "destdir": str(raw), "silent": False}]
+    assert retrieve.calls == [(_SUPPL_URL, str(raw / "12915_2015_222_MOESM1_ESM.xlsx"))]
+    assert sorted(p.name for p in raw.iterdir()) == [
+        "12915_2015_222_MOESM1_ESM.xlsx",
+        "GSE42536.pkl",
+    ]
+    with open(raw / "GSE42536.pkl", "rb") as handle:
+        assert pickle.load(handle) == {"stand-in": "GSE42536"}
+    assert (raw / "12915_2015_222_MOESM1_ESM.xlsx").read_bytes() == (
+        b"hand-made workbook bytes"
+    )
+
+
+def test_single_download_refetches_an_existing_workbook_double_does_not(
+    single: m.SmMicroarraySameith2015Dataset,
+    double: m.DmMicroarraySameith2015Dataset,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """With the workbook already in ``raw/``, the single-mutant ``download`` calls
+    ``urlretrieve`` again and overwrites it (line 179, no existence check) while the
+    double-mutant one leaves it alone (line 950, ``if not osp.exists``).
+    """
+    monkeypatch.setattr(GEOparse, "get_GEO", _GeoRecorder(result="gse"))
+    for dataset, expected_calls, expected_bytes in (
+        (single, 1, b"new"),
+        (double, 0, b"old"),
+    ):
+        raw = _fresh_raw(dataset)
+        (raw / "12915_2015_222_MOESM1_ESM.xlsx").write_bytes(b"old")
+        retrieve = _RetrieveRecorder(b"new")
+        monkeypatch.setattr(urllib.request, "urlretrieve", retrieve)
+        dataset.download()
+        assert len(retrieve.calls) == expected_calls
+        assert (raw / "12915_2015_222_MOESM1_ESM.xlsx").read_bytes() == expected_bytes
+
+
+@pytest.mark.parametrize(
+    ("fixture", "geo_message"),
+    [
+        ("single", "GEO download failed"),
+        ("double", "Failed to download GSE42536 from GEO"),
+    ],
+)
+def test_download_refusals(
+    fixture: str,
+    geo_message: str,
+    request: pytest.FixtureRequest,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A ``get_GEO`` failure raises ``RuntimeError`` with the class's own message and
+    writes no pickle and fetches no workbook; a workbook failure raises ``Failed to
+    download supplementary data`` after the pickle is already on disk.
+    """
+    dataset = request.getfixturevalue(fixture)
+    raw = _fresh_raw(dataset)
+    retrieve = _RetrieveRecorder(b"x")
+    monkeypatch.setattr(urllib.request, "urlretrieve", retrieve)
+    monkeypatch.setattr(
+        GEOparse, "get_GEO", _GeoRecorder(result=None, error=OSError("offline"))
+    )
+    with pytest.raises(RuntimeError, match=f"^{re.escape(geo_message)}$"):
+        dataset.download()
+    assert retrieve.calls == []
+    assert list(raw.iterdir()) == []
+
+    monkeypatch.setattr(GEOparse, "get_GEO", _GeoRecorder(result="gse"))
+    monkeypatch.setattr(
+        urllib.request, "urlretrieve", _RetrieveRecorder(b"x", error=OSError("404"))
+    )
+    with pytest.raises(
+        RuntimeError, match=f"^{re.escape('Failed to download supplementary data')}$"
+    ):
+        dataset.download()
+    assert [p.name for p in raw.iterdir()] == ["GSE42536.pkl"]
+
+
+@pytest.mark.parametrize(
+    ("cls", "gsms", "expected"),
+    [
+        (m.SmMicroarraySameith2015Dataset, _SINGLE_GSMS, _SINGLE_EXPECTED),
+        (m.DmMicroarraySameith2015Dataset, _DOUBLE_GSMS, _DOUBLE_EXPECTED),
+    ],
+)
+def test_process_refetches_the_geo_object_when_the_pickle_is_missing(
+    cls: Any,
+    gsms: list[GSM],
+    expected: list[tuple[dict[str, Any], dict[str, Any]]],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Without ``GSE42536.pkl``, ``process`` calls ``get_GEO(geo="GSE42536",
+    destdir=<raw_dir>, silent=False)`` once (lines 222 and 1045) and builds the same
+    records from the object it returns as from the pickle.
+    """
+    root = tmp_path / "nopkl"
+    _write_raw(root / "raw", gsms)
+    (root / "raw" / "GSE42536.pkl").unlink()
+    geo = _GeoRecorder(result=_gse(gsms))
+    monkeypatch.setattr(GEOparse, "get_GEO", geo)
+    dataset = cls(root=str(root), genome=_genome())
+    assert geo.calls == [
+        {"geo": "GSE42536", "destdir": str(root / "raw"), "silent": False}
+    ]
+    assert len(dataset) == len(expected)
+    for i, (experiment, reference) in enumerate(expected):
+        assert _nan_safe(dataset[i]["experiment"]) == experiment
+        assert dataset[i]["reference"] == reference
+
+
+def _info(
+    accession: str, genes: list[str], gsm: GSM | object, double: bool = True
+) -> dict[str, Any]:
+    return {
+        "geo_accession": accession,
+        "is_double_mutant": double,
+        "is_single_mutant": not double,
+        "gene_names": genes,
+        "gsm_object": gsm,
+    }
+
+
+def _no_id_ref_gsm() -> GSM:
+    table = pd.DataFrame(
+        {"PROBE": [1], "Signal Norm_Cy5": [1.0], "Signal Norm_Cy3": [1.0]}
+    )
+    return GSM(
+        name="X1",
+        metadata={"title": ["x"], "source_name_ch1": [""]},
+        table=table,
+        columns=_describe(table),
+    )
+
+
+_D1, _D2, _D3 = _DOUBLE_GSMS[2], _DOUBLE_GSMS[3], _DOUBLE_GSMS[4]
+_BATCH_GROUPS = [
+    [
+        _info("D1", ["YCR001W", "YDR001C"], _D1),
+        _info("D2", ["YCR001W", "YDR001C"], _D2),
+    ],
+    [_info("N1", ["YCR001W", "YDR001C"], _D1, double=False)],
+    [_info("N2", ["YAL001C"], _D3)],
+    [_info("X1", ["YEL001C", "YFL001W"], _no_id_ref_gsm())],
+    [_info("D3", ["YAL001C", "YBR001C"], _D3)],
+    [_info("U1", ["YFL001W", "YEL001C"], _DOUBLE_GSMS[5])],
+]
+_BATCH_EXPECTED = [
+    _DOUBLE_EXPECTED[0],
+    _DOUBLE_EXPECTED[1],
+    _record(
+        _DM,
+        "BY4742",
+        [_kan("YFL001W"), _nat("YEL001C")],
+        _three(1.0, 1.0, 1.0),
+        _three(1.0, 1.0, 1.0),
+        _three(0.0, 0.0, 0.0),
+        _NANS,
+        _NANS,
+        _N1,
+        _N1,
+    ),
+]
+
+
+def test_double_process_batch_matches_process_sequential_record_by_record(
+    double: m.DmMicroarraySameith2015Dataset,
+) -> None:
+    """The static batch path (lines 1372-1460, run in worker processes under
+    ``process_workers > 0`` and so invisible to coverage there) and the sequential path
+    (lines 1194-1278) produce the same records, in order, on six hand-made groups:
+    D1 + D2 and D3 as in ``_DOUBLE_EXPECTED``; a group flagged not double and a
+    one-gene group are skipped; a group whose only array has no ``ID_REF`` column has
+    no data and is skipped; the pair (YFL001W, YEL001C), absent from the SI pairs
+    (D4's pair is ``failed``), takes the default strain BY4742 and all-ones signals
+    (log2 0, n 1, NaN SE).
+    """
+    batch = m.DmMicroarraySameith2015Dataset._process_batch(
+        _BATCH_GROUPS, _PROBES, _DM, double.gstf_pairs
+    )
+    batch_records = [pickle.loads(blob) for blob in batch]
+    assert len(batch_records) == 3
+    for record, (experiment, reference) in zip(
+        batch_records, _BATCH_EXPECTED, strict=True
+    ):
+        assert _nan_safe(record["experiment"]) == experiment
+        assert record["reference"] == reference
+        assert record["publication"] == _PUBLICATION.model_dump()
+
+    double.close_lmdb()
+    lmdb_dir = Path(double.processed_dir) / "lmdb"
+    for child in lmdb_dir.iterdir():
+        child.unlink()
+    double._process_sequential(_BATCH_GROUPS, _PROBES)
+    env = lmdb.open(str(lmdb_dir), readonly=True, lock=False)
+    with env.begin() as txn:
+        sequential = [pickle.loads(value) for _, value in txn.cursor()]
+    env.close()
+    assert [_nan_safe(r) for r in sequential] == [_nan_safe(r) for r in batch_records]
+
+
+def test_double_process_batch_takes_strain_from_the_sorted_upper_pair() -> None:
+    """The batch path looks the strain up under the SORTED pair, so a title that names
+    the genes in reverse SI order still finds its row. The first title gene still
+    gets the KanMX marker and the second NatMX; ``Genotype`` then stores the
+    perturbations sorted by gene name, so YAL001C (NatMX) comes first.
+    """
+    pairs = {("YAL001C", "YBR001C"): {"strain": "BY4741"}}
+    group = [[_info("D3", ["YBR001C", "YAL001C"], _D3)]]
+    [blob] = m.DmMicroarraySameith2015Dataset._process_batch(group, _PROBES, _DM, pairs)
+    record = pickle.loads(blob)
+    assert record["reference"]["genome_reference"]["strain"] == "BY4741"
+    assert [
+        (p["systematic_gene_name"], p["strain_id"])
+        for p in record["experiment"]["genotype"]["perturbations"]
+    ] == [("YAL001C", "NatMX_YAL001C"), ("YBR001C", "KanMX_YBR001C")]
+
+
+def test_static_replicate_statistics_equal_the_instance_method(
+    double: m.DmMicroarraySameith2015Dataset,
+) -> None:
+    """Values A = [1, 3] (two arrays) and B = [5] (one array): mean A 2, sample SD
+    sqrt(2), variance 2.0000000000000004 (float sd**2), SE sqrt(2)/sqrt(2) = 1; B mean
+    5, NaN SE and variance, n 1. An empty list returns four empty SortedDicts.
+    """
+    data = [{"A": 1.0, "B": 5.0}, {"A": 3.0}]
+    static = m.DmMicroarraySameith2015Dataset._calculate_replicate_statistics_static
+    mean, se, var, n = static(data)
+    assert dict(mean) == {"A": 2.0, "B": 5.0}
+    assert dict(n) == {"A": 2, "B": 1}
+    assert se["A"] == pytest.approx(1.0, abs=1e-15)
+    assert var["A"] == _SD_TWO**2
+    assert math.isnan(se["B"]) and math.isnan(var["B"])
+    instance = double._calculate_replicate_statistics(data)
+    assert [_nan_safe(dict(d)) for d in instance] == [
+        _nan_safe(dict(d)) for d in (mean, se, var, n)
+    ]
+    assert static([]) == ({}, {}, {}, {})
+    assert double._calculate_replicate_statistics([]) == ({}, {}, {}, {})
+
+
+class _NoTable:
+    """An object with no ``table`` attribute."""
+
+
+def _gsm_table(table: pd.DataFrame, source: str = "") -> GSM:
+    return GSM(
+        name="T",
+        metadata={"title": ["t"], "source_name_ch1": [source]},
+        table=table,
+        columns=_describe(table),
+    )
+
+
+_EXTRACT_CASES: list[
+    tuple[str, object, dict[str, str] | None, tuple[dict[str, float], ...]]
+] = [
+    ("no table attribute", _NoTable(), _PROBES, ({}, {}, {})),
+    ("no ID_REF", _no_id_ref_gsm(), _PROBES, ({}, {}, {})),
+    (
+        "no Cy3 column",
+        _gsm_table(pd.DataFrame({"ID_REF": [1], "Signal Norm_Cy5": [2.0]})),
+        _PROBES,
+        ({}, {}, {}),
+    ),
+    ("no probe map", _D3, None, ({}, {}, {})),
+    (
+        "unmapped probe, non-numeric cell, zero signal",
+        _gsm_table(
+            pd.DataFrame(
+                {
+                    "ID_REF": [1, 2, 3, 9],
+                    "Signal Norm_Cy5": [4.0, "bad", 0.0, 7.0],
+                    "Signal Norm_Cy3": [1.0, 1.0, 2.0, 7.0],
+                }
+            )
+        ),
+        _PROBES,
+        (
+            {"YAL001C": 4.0, "YCR001W": 0.0},
+            {"YAL001C": 1.0, "YCR001W": 2.0},
+            {"YAL001C": 2.0},
+        ),
+    ),
+    (
+        "refpool in ch1 swaps the channels",
+        _gsm_table(
+            pd.DataFrame(
+                {"ID_REF": [1], "Signal Norm_Cy5": [2.0], "Signal Norm_Cy3": [8.0]}
+            ),
+            source="WT RefPool",
+        ),
+        _PROBES,
+        ({"YAL001C": 8.0}, {"YAL001C": 2.0}, {"YAL001C": 2.0}),
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    ("label", "gsm", "probes", "expected"),
+    _EXTRACT_CASES,
+    ids=[case[0] for case in _EXTRACT_CASES],
+)
+def test_static_expression_extraction_equals_the_instance_method_on_every_branch(
+    label: str,
+    gsm: object,
+    probes: dict[str, str] | None,
+    expected: tuple[dict[str, float], ...],
+    single: m.SmMicroarraySameith2015Dataset,
+    double: m.DmMicroarraySameith2015Dataset,
+) -> None:
+    """Each branch returns (mutant, refpool, log2): a missing table, a missing
+    ``ID_REF`` or Cy3 column, or no probe map give three empty dicts; probe 9 is not
+    mapped, probe 2's ``"bad"`` Cy5 cell is skipped by the ``ValueError`` guard, probe
+    3's 0 mutant signal stays in mutant/refpool but has no log2 (log2(4/1) = 2 for probe
+    1); a ``refpool`` source (any case) makes Cy3 the mutant, log2(8/2) = 2. The static,
+    double-instance and single-instance extractors agree on every case.
+    """
+    static = m.DmMicroarraySameith2015Dataset._extract_expression_from_gsm_static
+    for extractor in (
+        static,
+        double._extract_expression_from_gsm,
+        single._extract_expression_from_gsm,
+    ):
+        assert tuple(dict(d) for d in extractor(gsm, probes)) == expected
+
+
+@pytest.mark.parametrize("fixture", ["single", "double"])
+def test_probe_mapping_branches(fixture: str, request: pytest.FixtureRequest) -> None:
+    """Finding: the "Clean and validate gene name" block (sameith2015.py lines
+    605-613 and 1631-1639) has three arms that all store ``gene_name.upper()``, so a
+    control probe named ``Empty`` becomes the gene ``EMPTY`` exactly like an ORF, and a
+    ``None`` cell becomes the gene ``NONE`` (``str(None)``); only the string ``"nan"``
+    (a float NaN cell) is dropped. ``SPOT`` is accepted as the ID
+    column, ``Gene`` as the gene column when ``ORF`` is absent; a GSE without
+    platforms, and a platform without an ID or gene column, map nothing. ``EMPTY`` and
+    ``NONE`` do not occur in the real platform, but the same ``.upper()`` path stores
+    ``SNR10``, a non-systematic name, as an expression key in every served record (82
+    single-mutant, 72 double-mutant; audit 1, 2026.10.06). Pinned until the validation
+    arms reject names that are not ORFs.
+    """
+    dataset = request.getfixturevalue(fixture)
+
+    def platform(table: pd.DataFrame) -> GSE:
+        gpl = GPL(name="GPL", metadata={}, table=table, columns=_describe(table))
+        return GSE(name="G", metadata={}, gpls={"GPL": gpl}, gsms={})
+
+    spot = pd.DataFrame(
+        {
+            "SPOT": [1.0, 2.0, 3.0, 4.0, 5.0],
+            "Gene": ["yal001c", "q0010", "Empty", None, float("nan")],
+        }
+    )
+    assert dataset._extract_probe_to_gene_mapping(platform(spot)) == {
+        "1": "YAL001C",
+        "2": "Q0010",
+        "3": "EMPTY",
+        "4": "NONE",
+    }
+    assert (
+        dataset._extract_probe_to_gene_mapping(
+            GSE(name="G", metadata={}, gpls={}, gsms={})
+        )
+        == {}
+    )
+    no_gene = pd.DataFrame({"ID": [1], "Description": ["x"]})
+    assert dataset._extract_probe_to_gene_mapping(platform(no_gene)) == {}
+    no_id = pd.DataFrame({"NAME": [1], "ORF": ["YAL001C"]})
+    assert dataset._extract_probe_to_gene_mapping(platform(no_id)) == {}
+
+
+def test_double_convert_to_systematic_and_name_validation(
+    double: m.DmMicroarraySameith2015Dataset, single: m.SmMicroarraySameith2015Dataset
+) -> None:
+    """The double-mutant ``_convert_to_systematic`` (lines 1550-1583) tries, in order,
+    the systematic pattern, the gene-table ``gene`` column, its ``Alias`` column and the
+    first ``alias_to_systematic`` candidate. ``_is_valid_systematic_name`` rejects the
+    empty string and accepts a ``-A`` suffix, in both classes.
+    """
+    convert = double._convert_to_systematic
+    assert [
+        convert(name) for name in ("", "yal001c", "nth2", "oldname", "alias9", "none9")
+    ] == [None, "YAL001C", "YBR001C", "YGL999W", "YHR999W", None]
+    for dataset in (single, double):
+        assert [
+            dataset._is_valid_systematic_name(name)
+            for name in ("", "YBR089C-A", "ybr089c", "YZR001C", "YAL01C")
+        ] == [False, True, True, False, False]
+
+
+def test_single_process_sequential_skips_non_single_empty_and_no_data_groups(
+    single: m.SmMicroarraySameith2015Dataset,
+) -> None:
+    """Four groups: one flagged not single, one with no gene, one whose only array has
+    no ``ID_REF`` (no data), and S1 + S2 for YAL001C. Only the last writes a record,
+    at key 0, equal to the fixture's first record (``_SINGLE_EXPECTED[0]``).
+    """
+
+    def info(genes: list[str], gsm: object, is_single: bool = True) -> dict[str, Any]:
+        return {"is_single_mutant": is_single, "gene_names": genes, "gsm_object": gsm}
+
+    groups = [
+        [info(["YAL001C"], _S1, is_single=False)],
+        [info([], _S1)],
+        [info(["YBR001C"], _no_id_ref_gsm())],
+        [info(["YAL001C"], _S1), info(["YAL001C"], _S2)],
+    ]
+    single.close_lmdb()
+    lmdb_dir = Path(single.processed_dir) / "lmdb"
+    for child in lmdb_dir.iterdir():
+        child.unlink()
+    single._process_sequential(groups, _PROBES)
+    env = lmdb.open(str(lmdb_dir), readonly=True, lock=False)
+    with env.begin() as txn:
+        stored = [(key, pickle.loads(value)) for key, value in txn.cursor()]
+    env.close()
+    experiment, reference = _SINGLE_EXPECTED[0]
+    assert [key for key, _ in stored] == [b"0"]
+    assert _nan_safe(stored[0][1]["experiment"]) == experiment
+    assert stored[0][1]["reference"] == reference
+
+
+def test_double_class_surface_and_empty_helpers(
+    single: m.SmMicroarraySameith2015Dataset, double: m.DmMicroarraySameith2015Dataset
+) -> None:
+    """The double-mutant class's schema classes and ``preprocess_raw`` pass-through;
+    empty inputs give four (replicate statistics) and two (wildtype reference) empty
+    SortedDicts; one wildtype array (_S4, refpool Cy3 5) gives mean 5 and std 0.0,
+    the ``len(values) > 1`` guard's fallback instead of a ddof=1 NaN.
+    """
+    assert double.experiment_class is MicroarrayExpressionExperiment
+    assert double.reference_class is MicroarrayExpressionExperimentReference
+    frame = pd.DataFrame({"a": [1]})
+    assert double.preprocess_raw(frame) is frame
+    assert single._calculate_replicate_statistics([]) == ({}, {}, {}, {})
+    assert double._calculate_wt_reference_with_std([], _PROBES) == ({}, {})
+    mean, std = double._calculate_wt_reference_with_std([_S4], {"1": "YAL001C"})
+    assert (dict(mean), dict(std)) == ({"YAL001C": 5.0}, {"YAL001C": 0.0})

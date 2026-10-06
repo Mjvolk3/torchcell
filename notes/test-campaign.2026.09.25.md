@@ -1325,3 +1325,121 @@ After the audit: 6007 passed.
 
 CI addendum (2026.10.06): the first CI run of PR-20 ended `2 failed, 40 errors`, all `lmdb.Error: The environment ... is already open in this process` in the two preprocessed-dataset files, because CI runs lmdb 2.3.0 and this machine 1.7.5. Reproduced under the lmdb 2.3.0 side install (35 errors locally). Two causes: the fixtures opened the source store while the source handle was open (fixed in the fixtures with `close_lmdb()` before every second open), and the SOURCE itself double-opens: `preprocess_from_source` calls `source_dataset._init_lmdb_read()` once per record (`neo4j_preprocessed_cell.py:342`) and never closes the previous handle, and the 006 full-mask writer makes the same per-record call (`preprocess_lazy_dataset_full_masks.py:259`), so both 006 preprocess scripts fail at the second record under lmdb 2.x. Pinned as a Finding (`test_preprocess_reopens_the_source_lmdb_per_record`: the exact error under lmdb 2 or later, success under 1.7.5); same class as #611. After the fix all nine files pass under both versions: 234 passed under lmdb 2.3.0 and 1.7.5.
 The second CI run then failed 17 tests of the full-mask file with `ModuleNotFoundError: No module named 'torchvision'`: the fixture's stub-restore loop ran `getattr(module, "load_dotenv", None)` over every entry of `sys.modules`, and a lazy module (transformers' `_LazyModule`) answers an unknown attribute by importing submodules, which on the runner without torchvision raises an error `getattr` with a default does not catch. Same trap as PR #585's `_run_mineru._patch_dpi`. The loop now reads each module's own `__dict__`; a new test installs a lazy stand-in whose attribute access raises and asserts the loader never probes it. Verified under a simulated no-torchvision runner, under the lazy stand-in, and under lmdb 2.3.0: 130 passed each (three lane B files with the ontology test).
+
+## 2026.10.06 - Phase 21: the remaining reached code outside demo mains; loader download and parallel paths, the NSA attention stack, the embedding wrappers, the adapters' conf loading, the PubChem curation tool, the literature retrieval helpers (PR-21)
+
+Targets, from the table on `4b293d343` (main `815c96dd3` plus PR-20; 6007 passed; TOTAL 65.1% line+branch, 70101 statements). Of the 22873 statements still uncovered, 17413 lie in the 116 modules `scripts/legacy_partition.py` classifies as legacy (unreached from every root; the Phase 0d move still waits on Open Question 1 of the plan) and 2831 in demo `main` functions of live modules; this phase takes the remaining 2629 statements of reached, non-demo code and leaves both other groups to their decisions. Four Opus 5.5 writers in parallel in one worktree, two independent Opus 5.5 auditors before the commit.
+
+- Lane A, loaders: `torchcell/datasets/scerevisiae/sameith2015.py` (891 statements, 71.5%: both `download` methods, the static batch path `_process_batch`, `_calculate_replicate_statistics_static`, `_extract_expression_from_gsm_static`, `_convert_to_systematic`; `main` out of scope), `kemmeren2014.py` (652, 78.5%: `download`, `_process_batch`, `resolve_gene_name_comprehensive`, `convert_gene_name`, `_load_mating_type_map`), the remainders of `hillenmeyer2008.py`, `cooper2010.py`, `caudal2024.py`, `hoepfner2014.py` and `torchcell/data/experiment_dataset.py`.
+- Lane B, the attention stack and model remainders: `torchcell/nn/masked_attention_block.py` (221, 43.5%), `hetero_nsa.py` (215, 62.7%), `nsa_encoder.py` (81, 65.5%), `torchcell/losses/isomorphic_cell_loss.py` (67, 45.2%), `diffusion_loss.py` (46, 53.2%), `losses/dango.py` (85, 83.2%), `torchcell/datamodules/lazy_collate.py` (122, 71.8%), and the non-`main` remainders of `hetero_cell_bipartite_dango_gi_lazy.py`, `hetero_cell_bipartite_dango_gi.py`, `dcell_opt.py`, `trainers/int_transformer_cell.py`, `trainers/int_dcell.py`, `data/graph_processor.py`.
+- Lane C, embedding wrappers, small models, and the adapters: `torchcell/models/esm2.py` (47, 25.5%), `models/protT5.py` (47, 30.2%), `models/mlp.py` (37, 10.5%), `models/linear.py`, `datasets/one_hot_gene.py` (49, 27.9%), `datasets/node_embedding_builder.py` (38, 32.7%), `data/hetero_data.py` (49, 13.0%), and the `__init__` of every dataset adapter still under 50 percent (`synth_leth_db_adapter.py`, `sgd_adapter.py`, `oduibhir2014_adapter.py` and 24 single-dataset adapters at 31.8%), whose conf enable-lists decide what the knowledge graph serves.
+- Lane D, curation, literature, metabolism and the small live remainders: `torchcell/datamodels/compound_identity_curate.py` (315, 0.0%; the PubChem client against a fake opener), `torchcell/literature/extract.py` (62, 17.9%), `si_data.py` (46, 17.2%), `retrieve.py` (37, 22.2%), `capture.py` (45, 54.2%), `calmorph.py`, `_run_mineru.py`, `torchcell/metabolism/betaxanthin.py` (37, 0.0%), `yeast_GEM.py`, `pathway.py`, `torchcell/paper/tables.py`, `torchcell/sequence/db_connection.py`, `plasmid.py`, `data.py`, `torchcell/database/build_command.py`, `directory_setup.py`, `tcdb.py`, `torchcell/sga/image.py`, `cellpose_seg.py`, `torchcell/graph/graph.py`, `torchcell/knowledge_graphs/head_ontology.py`.
+
+Left out on purpose: `torchcell/datasets/cell.py` (246, 21.6%) and `torchcell/trainers/fit_int_gat_diffpool_inception_regression.py` (245, 6.1%) are live only because one test file imports them; they belong with the legacy decision.
+
+Files: lane A extended seven paired files in place (`tests/torchcell/datasets/scerevisiae/test_sameith2015_synthetic.py`, `test_kemmeren2014_synthetic.py`, `test_hillenmeyer2008_synthetic.py`, `test_cooper2010.py`, `test_caudal2024.py`, `test_hoepfner2014.py`, `tests/torchcell/data/test_experiment_dataset.py`); lane B extended ten (`tests/torchcell/nn/test_masked_attention_block.py`, `test_hetero_nsa.py`, `test_nsa_encoder.py`, `tests/torchcell/losses/test_isomorphic_cell_loss.py`, `tests/torchcell/datamodules/test_lazy_collate.py`, `tests/torchcell/models/test_hetero_cell_bipartite_dango_gi_lazy.py`, `test_dcell_opt.py`, `tests/torchcell/trainers/test_int_dcell.py`, `test_int_transformer_cell_methods.py`, `tests/torchcell/data/test_graph_processor.py`) and added `tests/torchcell/losses/test_diffusion_loss.py` and `test_losses_dango.py`; lane C added `tests/torchcell/models/test_models_esm2.py`, `test_models_protT5.py`, `test_mlp.py`, `test_linear.py`, `tests/torchcell/datasets/test_one_hot_gene.py`, `test_node_embedding_builder.py`, `tests/torchcell/data/test_hetero_data.py`, the harness `tests/torchcell/adapters/_adapter_init_harness.py`, 17 new adapter test files and extended 15 (every adapter under `torchcell/adapters/` now has its `__init__` pinned: the exact conf it serves, rebuilt from the paired dataset's graph shape, the registered method table in execution order, the refusal path); lane D added `tests/torchcell/datamodels/test_compound_identity_curate.py`, `tests/torchcell/literature/test_si_data.py`, `test_retrieve.py`, `test_capture.py`, `tests/torchcell/metabolism/test_betaxanthin.py`, `tests/torchcell/sequence/test_db_connection.py`, `tests/torchcell/database/test_build_command.py`, `test_tcdb.py`, `test_directory_setup.py` and extended eleven (`literature/test_extract.py`, `test_calmorph.py`, `test_run_mineru.py`, `metabolism/test_pathway.py`, `test_yeast_GEM.py`, `paper/test_tables.py`, `sequence/test_plasmid.py`, `graph/test_graph.py`, `knowledge_graphs/test_head_ontology.py`, `sga/test_image.py`, `test_cellpose_seg.py`). Three pyproject pair entries (`models/esm2.py`, `models/protT5.py`, `losses/dango.py`). No source file changed.
+
+Findings, pinned as behavior, none fixed here (source lines in the paired notes; reach as the audits established it):
+
+- Loaders. Neither Sameith download nor the Kemmeren download records a sha256 or a retrieval record, and the Kemmeren Table S1 comes from a personal `uofi.box.com` link while the missing-file message names Cell's `mmc1.xlsx` (provenance of all 154 Sameith and 1484 Kemmeren served records). The probe-to-gene mapping stores `gene_name.upper()` on every branch, so the non-systematic name `SNR10` is a gene key in 82 single-mutant, 72 double-mutant and 1484 Kemmeren served records (and a control probe `Empty` or a `None` cell would become genes `EMPTY` and `NONE`). A Kemmeren Table S1 without a mating-type column is logged and swallowed by a broad `except Exception`, and the build then fails at `post_process` with `Cannot set an empty or None value for gene_set`. The Kemmeren parallel path drops skipped genes and logs the written count as "Total gene deletions attempted" (the served build takes the sequential path; only `experiments/012-sameith-kemmeren/scripts/kemmeren_volcano.py` reaches it). `already_assigned` is accepted and never read, `convert_gene_name` and Caudal `_sha256` have no caller, `_log_processing_summary` counts dict keys so its duplicate branch cannot run. `ExperimentDataset`'s per-process interned-constant cache is never invalidated, so a delete-and-rebuild at one root in one process fails with a `KeyError` on the new digest (latent and loud; REPL only).
+- Attention stack and losses. A fully masked query row attends uniformly to every key, masked ones included, because the fill value is a finite `-1e9`; the same fill in `NodeSelfAttention` is live in the 006 NSA retry model. A dict `edge_attr` is ignored unless an unused `edge_index` is also passed; the per-head edge MLPs never receive a gradient; `inc_mask` relations never pass `edge_attr`; an `edge_index`-only relation gets an identity mask; `"attention"` aggregation returns one row per relation in hash-seed order; `HeteroNSAEncoder` pools a whole batch into one vector; NSA "S" blocks attend to padding rows. `ICLossStd.forward` always raises `TypeError` and its only caller is commented out; it also cuts the graph so only `log_sigma` trains. `DiffusionLoss` samples the full range for an unknown `t_mode` despite its "no silent fallbacks" docstring. `DangoLoss` validates `reduction` and never reads it, crashes with `AttributeError` when no edge type matches, and `log(cosh(r))` overflows in float32 above about 89. `verify_batch_structure` does not implement its documented offset check, raises on a zero-edge relation, and is a no-op under `python -O` (no caller). The transformer trainer's DDP branch reads `strategy._strategy_name`, which Lightning 2.5.5's `DDPStrategy` lacks, so 006 `equivariant_cell_graph_transformer_delta_011.yaml` logs a per-process `effective_batch_size` (diagnostic only; the same bug sits untested in `int_hetero_cell_nsa.py`).
+- Embedding wrappers, small models, adapters. The ESM-2 "already downloaded" check looks for `<cache>/facebook/<ckpt>` where the Hub writes `models--facebook--<ckpt>`, so the download reruns every time; `max_length=1022` counts CLS and EOS, so a protein over 1020 residues is truncated to 1020 where ESM-2 accepts 1022 (reaches stored `Esm2Dataset` vectors; effect size not measured). ProtT5 compares `torch.device("cpu") == "cpu"`, which is False, so the CPU model is always cast to half precision and the other branch calls a nonexistent `.full()`; its mean pooling is unmasked. `Mlp` places dropout after the final Linear against its docstring, and `num_layers=1` silently ignores `dropout_prob`: the `dropout_prob: 0.2` arm of the smf-dmf-tmf-001 deep-set sweeps was a no-op in the head. `SimpleLinearModel` crashes on `scatter="max"` and does not refuse an unknown mode. `OneHotGeneDataset` calls `initialize_transformer`, defined nowhere. The synthetic-rescue adapter annotates its dataset as the lethality dataset (type-level only). `CellAdapter.get_nodes`/`get_edges` claim config order but run in registration order (every conf today is in registration order, now pinned per adapter).
+- Curation, literature, metabolism, misc. `read_name_list` strips only full-line comments; the PubChem backoff also sleeps after the last of seven attempts (140 s per abort); a CID missing from a batch answer caches the whole batch payload under its own URL. `pdf_kind` calls a PDF scanned only if every page has a page-sized image where the docstring says most. `si_data` keeps the query string in the local filename. `product_ids` returns water, NADP+ and betanidin alongside betaxanthin. `tables.scientific(99_999)` renders `10.0×10⁴` (exponent taken before rounding; reachable through the supported-datasets table script, no current value triggers it). `DatabaseConnectionManager` drops constructor kwargs across pickling. An origin-spanning GenBank feature is stored as the whole plasmid. `tcdb build --mode fresh` names a script file that does not exist. `_detect_blobs` crashes on an empty kept list or a single wall-hugging blob (an empty plate in `grid_mode="roi"`). `GeneGraph.validate_genes_in_graph` can never warn because `graph` is declared before `max_gene_set` in the pydantic model.
+
+Runs: behavioral suite under the sentinel, PR-21 worktree on `4b293d343` after the audit edits: 6741 passed, 125 skipped, 410 deselected, 9 xfailed, 7408 warnings in 444.45s (0:07:24); the 78 changed test files alone 1099 passed, 40 skipped under `PYTHONHASHSEED` 0, 19 and 37 and under the lmdb 2.3.0 side install, 1098 passed, 41 skipped with torchvision simulated absent; ruff, mypy (CI form, 79 files), `test_quality_check.py` (351 files clean) and `check_paired_tests.py` pass; diff-cover has no source lines to score (no source changed); `/tmp/torchcell-test-data-root` absent afterwards. Rows with a nonzero delta, from the all-modules table (the default table omits modules under 50 statements, which is where most of the adapters and the small wrappers sit):
+
+Generated by: python scripts/coverage_gaps.py --before coverage-base.json --after coverage-p21.json --import-only coverage-import.json --all
+Live-critical: importer graph (scripts/legacy_partition.py) @ 4b293d343
+
+| Module | Live-critical | Statements | before @ 4b293d343 | after @ 4b293d343 | import-only @ 4b293d343 | Delta |
+|---|---|---|---|---|---|---|
+| `torchcell/models/linear.py` | yes | 33 | 38.5% | 61.5% | 17.9% | +23.1 |
+| `torchcell/sequence/db_connection.py` | yes | 49 | 67.3% | 85.5% | 41.8% | +18.2 |
+| `torchcell/datasets/one_hot_gene.py` | yes | 49 | 27.9% | 91.8% | 27.9% | +63.9 |
+| `torchcell/datasets/scerevisiae/sameith2015.py` | yes | 891 | 71.5% | 93.2% | 7.2% | +21.7 |
+| `torchcell/trainers/int_transformer_cell.py` | yes | 650 | 94.5% | 95.2% | 5.6% | +0.7 |
+| `torchcell/sga/cellpose_seg.py` | yes | 443 | 94.9% | 95.9% | 10.2% | +1.0 |
+| `torchcell/database/build_command.py` | yes | 27 | 29.0% | 96.8% | 29.0% | +67.7 |
+| `torchcell/database/directory_setup.py` | yes | 27 | 0.0% | 96.8% | 32.3% | +96.8 |
+| `torchcell/sga/image.py` | yes | 380 | 94.8% | 97.0% | 5.0% | +2.2 |
+| `torchcell/datasets/scerevisiae/hillenmeyer2008.py` | yes | 652 | 95.9% | 97.8% | 29.0% | +1.9 |
+| `torchcell/datasets/scerevisiae/kemmeren2014.py` | yes | 652 | 78.5% | 98.0% | 6.9% | +19.4 |
+| `torchcell/models/mlp.py` | yes | 37 | 10.5% | 98.2% | 10.5% | +87.7 |
+| `torchcell/datasets/scerevisiae/cooper2010.py` | yes | 353 | 96.4% | 98.5% | 42.3% | +2.2 |
+| `torchcell/metabolism/yeast_GEM.py` | yes | 495 | 95.4% | 99.1% | 7.9% | +3.7 |
+| `torchcell/data/graph_processor.py` | yes | 1013 | 97.7% | 99.2% | 7.3% | +1.5 |
+| `torchcell/data/experiment_dataset.py` | yes | 402 | 96.4% | 99.2% | 20.4% | +2.8 |
+| `torchcell/datasets/scerevisiae/hoepfner2014.py` | yes | 710 | 97.9% | 99.3% | 30.9% | +1.4 |
+| `torchcell/adapters/auesukaree2009_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/baryshnikova2010_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/bloom2019_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/cachera2023_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/caudal2024_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/cooper2010_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/costanzo2021_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/dasilveira2014_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/hillenmeyer2008_adapter.py` | yes | 30 | 29.4% | 100.0% | 29.4% | +70.6 |
+| `torchcell/adapters/hoepfner2014_adapter.py` | yes | 20 | 90.9% | 100.0% | 31.8% | +9.1 |
+| `torchcell/adapters/kemmeren2014_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/lian2019_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/lopez2024_adapter.py` | yes | 35 | 23.1% | 100.0% | 23.1% | +76.9 |
+| `torchcell/adapters/messner2023_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/mormino2022_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/mota2024_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/mulleder2016_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/nadal_ribelles2025_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/oduibhir2014_adapter.py` | yes | 26 | 46.4% | 100.0% | 46.4% | +53.6 |
+| `torchcell/adapters/ohnuki2018_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/ohnuki2022_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/ozaydin2013_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/sameith2015_adapter.py` | yes | 35 | 23.1% | 100.0% | 23.1% | +76.9 |
+| `torchcell/adapters/sgd_adapter.py` | yes | 28 | 46.7% | 100.0% | 46.7% | +53.3 |
+| `torchcell/adapters/smith2006_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/smith2016_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/synth_leth_db_adapter.py` | yes | 44 | 33.3% | 100.0% | 33.3% | +66.7 |
+| `torchcell/adapters/vanacloig2022_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/wildenhain2015_adapter.py` | yes | 20 | 90.9% | 100.0% | 31.8% | +9.1 |
+| `torchcell/adapters/xue2025_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/yoshida2012_adapter.py` | yes | 20 | 31.8% | 100.0% | 31.8% | +68.2 |
+| `torchcell/adapters/zelezniak2018_adapter.py` | yes | 35 | 23.1% | 100.0% | 23.1% | +76.9 |
+| `torchcell/data/hetero_data.py` | yes | 49 | 13.0% | 100.0% | 13.0% | +87.0 |
+| `torchcell/database/tcdb.py` | yes | 11 | 0.0% | 100.0% | 63.6% | +100.0 |
+| `torchcell/datasets/node_embedding_builder.py` | yes | 38 | 32.7% | 100.0% | 32.7% | +67.3 |
+| `torchcell/datasets/scerevisiae/caudal2024.py` | yes | 418 | 96.7% | 100.0% | 26.8% | +3.3 |
+| `torchcell/knowledge_graphs/head_ontology.py` | yes | 75 | 72.5% | 100.0% | 33.0% | +27.5 |
+| `torchcell/literature/_run_mineru.py` | yes | 133 | 87.3% | 100.0% | 10.5% | +12.7 |
+| `torchcell/literature/capture.py` | yes | 45 | 54.2% | 100.0% | 20.3% | +45.8 |
+| `torchcell/literature/retrieve.py` | yes | 37 | 22.2% | 100.0% | 22.2% | +77.8 |
+| `torchcell/literature/si_data.py` | yes | 46 | 17.2% | 100.0% | 17.2% | +82.8 |
+| `torchcell/models/esm2.py` | yes | 47 | 25.5% | 100.0% | 25.5% | +74.5 |
+| `torchcell/models/protT5.py` | yes | 47 | 30.2% | 100.0% | 30.2% | +69.8 |
+| `torchcell/models/hetero_cell_bipartite_dango_gi_lazy.py` |  | 1308 | 41.1% | 43.9% | 3.6% | +2.7 |
+| `torchcell/models/dcell_opt.py` |  | 529 | 66.4% | 67.0% | 6.9% | +0.6 |
+| `torchcell/nn/masked_attention_block.py` |  | 221 | 43.5% | 81.9% | 5.0% | +38.5 |
+| `torchcell/datamodels/compound_identity_curate.py` |  | 315 | 0.0% | 91.4% | 20.2% | +91.4 |
+| `torchcell/trainers/int_dcell.py` |  | 322 | 91.8% | 94.4% | 7.7% | +2.5 |
+| `torchcell/nn/hetero_nsa.py` |  | 215 | 62.7% | 95.4% | 5.5% | +32.7 |
+| `torchcell/nn/nsa_encoder.py` |  | 81 | 65.5% | 96.6% | 6.7% | +31.1 |
+| `torchcell/datamodules/lazy_collate.py` |  | 122 | 71.8% | 97.3% | 6.9% | +25.5 |
+| `torchcell/losses/dango.py` |  | 85 | 83.2% | 99.0% | 21.8% | +15.8 |
+| `torchcell/literature/calmorph.py` |  | 24 | 62.5% | 100.0% | 21.9% | +37.5 |
+| `torchcell/literature/extract.py` |  | 62 | 17.9% | 100.0% | 16.7% | +82.1 |
+| `torchcell/losses/diffusion_loss.py` |  | 46 | 53.2% | 100.0% | 14.5% | +46.8 |
+| `torchcell/losses/isomorphic_cell_loss.py` |  | 67 | 45.2% | 100.0% | 13.7% | +54.8 |
+| `torchcell/metabolism/betaxanthin.py` |  | 37 | 0.0% | 100.0% | 46.5% | +100.0 |
+| `torchcell/metabolism/pathway.py` |  | 121 | 88.2% | 100.0% | 32.3% | +11.8 |
+| `torchcell/paper/tables.py` |  | 218 | 90.1% | 100.0% | 24.8% | +9.9 |
+| `torchcell/sequence/plasmid.py` |  | 76 | 78.3% | 100.0% | 45.7% | +21.7 |
+| TOTAL (line+branch) |  | 70101 | 65.1% | 68.1% | 16.9% | +3.0 |
+| TOTAL (line only) | | 70101 | 65.5% | 68.2% | 21.3% | |
+
+### Quality audit
+
+Reviewers: two independent read-only agents on Opus 5.5, one on lanes A and C (loaders, embedding wrappers, small models, adapters), one on lanes B and D (attention stack, losses, collate, curation, literature, metabolism), each re-deriving every constant from the source or an independent oracle (numpy, scipy, the real ESM tokenizer, hand arithmetic), reproducing every finding with its own script, establishing reach by grep over `experiments/` and the committed configs, and running its own mutants.
+
+- Test functions reviewed: 418 (182 and 236). Rejected: 1 (a test that called an abstract `pass` body for a line; deleted, not replaced). Rewritten: 7 (the Kemmeren download-size boundary, now 999 and 1000 bytes; the Kemmeren missing-mating-column Finding, misstated as "zero records, no exception" where the build in fact fails at `post_process` on the empty gene set; the Hoepfner strain-construction batch mismatch and the IC30 novel-MoA sheet, each of which a mutant had shown untested; the two numpy-reference attention tests, whose default LayerNorm affine parameters let a norm swap pass; the NSA encoder unpadding test, which compared the encoder with itself; and the DDP effective-batch test, whose `monkeypatch.undo()` had removed the conftest network and wandb guards for the rest of the test). Accepted with note: 96, all applied (62 of them one note on the adapter harness, which now derives the segregant flag from the dataset's genotype type, takes the paired dataset from `dataset_adapter_map`, and checks the registered methods in execution order; line cites in the ProtT5 docstrings corrected from 199 and 223 to 75 and 99; exact retrieval records on the Hillenmeyer deposit; a `no_grad` assertion on both ProtT5 paths; a dtype assertion on the zero-mode diffusion timestep; the x- and y-ppi axes of `pdf_kind` distinguished; literal oracles instead of the function under test; 12 px not 16 px after the cross opening). Accepted: 314. Wrong constants: 0.
+- Findings: 58 checked, all confirmed in mechanism; 2 corrected in statement (the Kemmeren mating column; the ProtT5 pin wording, since a masked mean still averages the EOS position). Reach established: one finding reaches a reported sweep (`Mlp` with `num_layers=1` ignoring `dropout_prob`, so the 0.2 arm of the smf-dmf-tmf-001 deep-set sweeps was a no-op in the head); the ESM-2 truncation reaches stored embeddings with an unmeasured effect; the uniform attention of a fully masked row is live in the 006 NSA retry model; the DDP `_strategy_name` bug reaches one 006 config as a diagnostic log; the `scientific` mantissa reaches the supported-datasets table without a current trigger; the `_detect_blobs` crashes reach empty plates in the W019 callers; the interned-constant cache (rated "most serious" by its writer) is latent, loud and REPL-only; the rest are provenance-only, latent or dead code.
+- Mutants: 173 by the auditors (155 killed, 11 survivors of which 7 equivalent and 4 real gaps, each now closed by a rewrite) on top of the writers' 66 (all killed after one rewrite each in lanes B and D).
+- Style: 4 `cast(` and 10 one-sided `type: ignore` removed; four global seeds wrapped in `fork_rng`; one `monkeypatch.undo()` replaced by `monkeypatch.context()`; one module re-import now restores the package attribute it had rebound.
+
+After the audit: 6741 passed.

@@ -15,3 +15,9 @@ Finding: the Table 4 sha256 pin is checked only inside `download()` (lines 1102-
 ## 2026.09.30 - Raw sha256 pin enforced at build time
 
 Issues #518, #524, #528, #537. Finding retired: `test_a_raw_file_placed_in_raw_dir_is_never_sha256_checked` (#518) is now `test_a_raw_file_placed_in_raw_dir_is_refused_at_build_time`. Every sha256 refusal now asserts `RawSha256MismatchError` with its exact message (`sha256 mismatch for <file or URL>: expected <pin>, observed <digest>`) and the on-disk state after it: a download refusal leaves nothing in `raw/` (no `.partial`), a deposit refusal leaves no mirror directory, and a build-time refusal leaves `processed/` empty and the raw file as found. The build tests run under the `raw_pin_calls` recorder from [[tests.torchcell.conftest]]; the refusal tests restore the real check.
+
+## 2026.10.06 - Phase 21: default resolver, early-return download, class surface
+
+- `_resolver` with `genome=None` calls `load_dotenv()` (stubbed) and builds `SCerevisiaeGenome(genome_root=<DATA_ROOT>/data/sgd/genome, go_root=<DATA_ROOT>/data/go, overwrite=False)` once.
+- `download()` returns before consulting the mirror when `raw/` already holds Table 4 (no mirror exists, nothing raises, the file is not replaced by a link).
+- `experiment_class`, `reference_class`, `raw_file_names`, `preprocess_raw` pinned. `main` left uncovered.

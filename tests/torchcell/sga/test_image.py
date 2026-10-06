@@ -28,6 +28,7 @@ node columns x = 110, 170, 230, 290:
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -759,3 +760,96 @@ def test_quantify_backlit_disk_colony_is_preserved(
     assert int(row["size"]) == 709
     assert float(row["circularity"]) == 1.0
     assert (float(row["cx"]), float(row["cy"])) == (230.0, 210.0)
+
+
+# --- 2026.10.06 (Phase 21): blob-filter edge cases and the watershed bright branch ---
+
+
+def test_detect_blobs_crashes_when_every_blob_is_filtered(tmp_path: Path) -> None:
+    """Finding: ``_detect_blobs`` has no guard for an empty ``keep`` list (the backlit
+    detector has one). Two 4x4 specks clear the threshold (n = 2) but after the cross
+    opening each is 12 px (16 minus 4 corners), below the 25 px floor, so ``center_of_mass(..., [])`` gives a 1-D empty array and
+    ``cents[:, 0]`` raises ``IndexError`` instead of returning no blobs; through
+    ``quantify_plate_image`` this replaces the actionable "only 0 colony blobs" refusal
+    with a numpy error. Pinned until an empty ``keep`` returns ``(empty (0, 2), 60.0)``
+    (image.py:126-132). Reach: an empty or speck-only plate in the default
+    ``grid_mode="roi"`` (the W019 callers) crashes; no wrong number is produced.
+    """
+    g = np.zeros((300, 400), float)
+    g[20:280, 20:380] = 60.0
+    g[100:104, 150:154] = 200.0
+    g[200:204, 250:254] = 200.0
+    roi = (35, 264, 41, 358)
+    with pytest.raises(
+        IndexError,
+        match=re.escape(
+            "too many indices for array: array is 1-dimensional, but 2 were indexed"
+        ),
+    ):
+        _detect_blobs(g, np.zeros_like(g), roi, False, 4)
+    path = str(tmp_path / "specks.png")
+    Image.fromarray(g.astype(np.uint8), "L").save(path)
+    with pytest.raises(
+        IndexError,
+        match=re.escape(
+            "too many indices for array: array is 1-dimensional, but 2 were indexed"
+        ),
+    ):
+        quantify_plate_image(path, 3, 4, grid_mode="roi")
+
+
+def test_detect_blobs_crashes_when_every_kept_blob_hugs_the_wall() -> None:
+    """Finding: one 7x7 colony whose centroid (y = 39) is within the 0.03 * 317 = 9.5 px
+    wall band of the ROI top (35) is dropped, leaving a (0, 2) array whose
+    nearest-neighbour ``min`` has no identity: ``ValueError`` rather than an empty
+    detection. Pinned with the empty-``keep`` Finding (image.py:137-141). Same
+    reach: a crash in ``grid_mode="roi"``, never a wrong number.
+    """
+    g = np.zeros((300, 400), float)
+    g[20:280, 20:380] = 60.0
+    g[36:43, 150:157] = 200.0
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "zero-size array to reduction operation minimum which has no identity"
+        ),
+    ):
+        _detect_blobs(g, np.zeros_like(g), (35, 264, 41, 358), False, 4)
+
+
+def test_detect_blobs_backlit_drops_blobs_below_the_area_floor() -> None:
+    """A 4x4 depression (12 px after the cross opening, <= 20) is detected by the mask but filtered by area:
+    no kept blob -> empty centroids, the 60 px default pitch and the whole frame.
+    """
+    g = np.full((300, 400), 213.0)
+    g[150:154, 200:204] = 150.0
+    cents, pitch, roi = _detect_blobs_backlit(g, 4)
+    assert cents.shape == (0, 2)
+    assert (pitch, roi) == (60.0, (0, 300, 0, 400))
+
+
+def test_detect_blobs_backlit_single_colony_has_infinite_pitch() -> None:
+    """One 7x7 colony: its nearest-neighbour distance is +inf (diagonal filled), so the
+    median pitch is +inf and the ``nn < 1.8 * pitch`` filter (inf < inf) drops the only
+    colony: an empty array, pitch inf, whole-frame ROI.
+    """
+    g = np.full((300, 400), 213.0)
+    g[147:154, 197:204] = 150.0
+    cents, pitch, roi = _detect_blobs_backlit(g, 4)
+    assert cents.shape == (0, 2)
+    assert pitch == float("inf")
+    assert roi == (0, 300, 0, 400)
+
+
+def test_segment_watershed_bright_branch_mirrors_the_dark_branch() -> None:
+    """Structural identity: every quantity is symmetric under ``x -> 255 - x``
+    (percentiles 80/20 and 55/45 swap, the MAD and the Sobel magnitude are unchanged),
+    so a bright colony on dark agar segments to exactly the dark-branch mask of the
+    mirrored cell (77 px, rows/cols 22..30).
+    """
+    cell = _backlit_cell()
+    cell[0, 0] = 214.0
+    dark = _segment_watershed(cell, True, PITCH)
+    bright = _segment_watershed(255.0 - cell, False, PITCH)
+    assert_array_equal(bright, dark)
+    assert int(bright.sum()) == 77

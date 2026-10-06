@@ -1134,3 +1134,92 @@ def test_plot_random_network_unknown_layout(
     plt.close("all")
     assert calls == []
     assert not (tmp_path / "r.png").exists()
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.06 (Phase 21): the warning branches of ``sanity_check_metabolic_networks``
+# and the inconsistency branch of ``analyze_reactions_without_genes``, which real
+# YeastGEM graphs cannot reach (no ``bipartite`` key, no isolated node, cobra keeps
+# rule and genes in step). Both run on a duck-typed stand-in.
+# --------------------------------------------------------------------------- #
+def test_sanity_check_reports_same_type_edges_and_isolated_nodes(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Hand graph: r1..r5 (``bipartite=0``), m1, m2 (``bipartite=1``), i1..i4 untyped
+    and edge-free. Edges r1-r2, r2-r3, r3-r4, r4-r5, r1-m1, m1-m2: 4 reaction-reaction
+    plus 1 metabolite-metabolite = 5 same-type edges, 3 shown; 4 isolated, 3 shown. An
+    empty cobra model means no reaction is sampled.
+    """
+    B = nx.Graph()
+    for r in ["r1", "r2", "r3", "r4", "r5"]:
+        B.add_node(r, bipartite=0, node_type="reaction")
+    for m in ["m1", "m2"]:
+        B.add_node(m, bipartite=1, node_type="metabolite")
+    for n in ["i1", "i2", "i3", "i4"]:
+        B.add_node(n, node_type="orphan")
+    B.add_edges_from(
+        [
+            ("r1", "r2"),
+            ("r2", "r3"),
+            ("r3", "r4"),
+            ("r4", "r5"),
+            ("r1", "m1"),
+            ("m1", "m2"),
+        ]
+    )
+    gem = SimpleNamespace(
+        model=cobra.Model("empty"),
+        reaction_map=SimpleNamespace(edges=[], nodes=[]),
+        bipartite_graph=B,
+    )
+    sanity_check_metabolic_networks(gem, num_reactions=3)  # type: ignore[arg-type, unused-ignore]
+    out = capsys.readouterr().out
+    assert out[out.index("Total edges in bipartite graph") :] == (
+        "Total edges in bipartite graph: 6\n"
+        "Total nodes in bipartite graph: 11\n"
+        "Reaction nodes: 5\n"
+        "Metabolite nodes: 2\n"
+        "WARNING: 5 edges connect nodes of the same type!\n"
+        "  1. r1 -- r2\n"
+        "     Node types: reaction -- reaction\n"
+        "  2. r2 -- r3\n"
+        "     Node types: reaction -- reaction\n"
+        "  3. r3 -- r4\n"
+        "     Node types: reaction -- reaction\n"
+        "  ... and 2 more problematic edges\n"
+        "WARNING: 4 isolated nodes found!\n"
+        "  1. i1 (Type: orphan)\n"
+        "  2. i2 (Type: orphan)\n"
+        "  3. i3 (Type: orphan)\n"
+        "  ... and 1 more isolated nodes\n"
+    )
+
+
+def test_analyze_reports_inconsistent_detection_methods(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """One gene-free transport ``R: a(c) --> b(e)``; a parser that never returns
+    ``[set()]`` makes method 3 disagree (1, 1, 0).
+    """
+    model = cobra.Model("x")
+    a = cobra.Metabolite("a", compartment="c")
+    b = cobra.Metabolite("b", compartment="e")
+    rxn = cobra.Reaction("R")
+    rxn.add_metabolites({a: -1, b: 1})
+    model.add_reactions([rxn])
+    gem = SimpleNamespace(model=model, _parse_gene_combinations=lambda rule: [{"x"}])
+    result = analyze_reactions_without_genes(gem)  # type: ignore[arg-type, unused-ignore]
+    assert result == {
+        "total_reactions": 1,
+        "no_gene_reactions": ["R"],
+        "exchange_reactions": [],
+        "transport_reactions": ["R"],
+        "other_reactions": [],
+        "methods_consistent": False,
+    }
+    assert (
+        "⚠ Inconsistency in detection methods:\n"
+        "  - Empty gene_reaction_rule: 1\n"
+        "  - No genes attribute: 1\n"
+        "  - Empty gene combinations: 0\n"
+    ) in capsys.readouterr().out

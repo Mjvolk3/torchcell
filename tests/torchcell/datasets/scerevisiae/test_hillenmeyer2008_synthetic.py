@@ -48,6 +48,7 @@ import math
 import os
 import re
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -73,7 +74,7 @@ from torchcell.datamodels.schema import (
     heterozygous_deletion_functional_copies,
 )
 from torchcell.datasets.scerevisiae import hillenmeyer2008 as m
-from torchcell.literature.manifest import ArtifactRecord
+from torchcell.literature.manifest import ArtifactRecord, RetrievalMethod
 from torchcell.sequence.genome.registry import (
     SGD_S288C_R64,
     GenomeIntegrityError,
@@ -813,3 +814,167 @@ def test_key_file_headers_are_checked(tmp_path: Path) -> None:
         ),
     ):
         m.read_control_set_sizes(keyfile)
+
+
+# ---------------------------------------------------------------------------
+# 2026.10.06 (Phase 21): the verify_source re-run, the default resolver, small branches.
+# ---------------------------------------------------------------------------
+
+
+class _FixedDate:
+    """``date`` stand-in whose ``today()`` is 2026-10-06."""
+
+    @staticmethod
+    def today() -> Any:
+        import datetime as _dt
+
+        return _dt.date(2026, 10, 6)
+
+
+def _staging(tmp_path: Path, name: str) -> Path:
+    source = tmp_path / name
+    source.mkdir()
+    for file_name, text in _source_files().items():
+        (source / file_name).write_text(text)
+    return source
+
+
+def test_deposit_with_verify_source_reruns_each_archived_retrieval(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``verify_source=True`` calls ``torchcell.literature.retrieve.direct_url`` once
+    per file on its Wayback URL, in ``raw_relpaths`` order, and records on each
+    retrieval ``last_check = SourceCheck(checked_at=<today>, produced_sha256=<sha256
+    of the re-fetched bytes>, matches=True)``; the stub serves the staged bytes, so
+    each produced digest equals the deposited one. The rest of each retrieval record
+    is the ``direct_url`` method, the Wayback URL as ``source_url`` and as the
+    retriever's ``url`` param, the file's sha256, and ``retrieved_at`` at its default
+    ``RAW_RETRIEVED_AT`` = 2026-07-11.
+    """
+    import torchcell.literature.retrieve as retrieve
+
+    data_root = tmp_path / "dr"
+    source = _staging(tmp_path, "staging")
+    by_url = {
+        m.wayback_url(name): text.encode() for name, text in _source_files().items()
+    }
+    fetched: list[str] = []
+
+    def direct_url(url: str) -> bytes:
+        fetched.append(url)
+        return by_url[url]
+
+    monkeypatch.setattr(retrieve, "direct_url", direct_url)
+    monkeypatch.setattr(m, "date", _FixedDate)
+    m.deposit_raw_mirror(source, data_root=str(data_root), verify_source=True)
+    assert fetched == [m.wayback_url(name) for name in m.raw_relpaths()]
+    manifest = m.load_manifest(str(data_root))
+    for record in manifest.files:
+        name = Path(record.path).name
+        assert record.retrieval is not None
+        check = record.retrieval.last_check
+        assert check is not None
+        digest = hashlib.sha256(_source_files()[name].encode()).hexdigest()
+        assert check.model_dump() == {
+            "checked_at": "2026-10-06",
+            "produced_sha256": digest,
+            "matches": True,
+        }
+        assert record.retrieval.model_dump(exclude={"last_check"}) == {
+            "method": RetrievalMethod.direct_url,
+            "source_url": m.wayback_url(name),
+            "retriever": "torchcell.literature.retrieve.direct_url",
+            "params": {"url": m.wayback_url(name)},
+            "sha256": digest,
+            "retrieved_at": "2026-07-11",
+        }
+
+
+def test_deposit_with_verify_source_refuses_a_changed_archive(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """When the archived URL now yields other bytes, the deposit raises naming both
+    digests before copying that file, and writes no manifest.
+    """
+    import torchcell.literature.retrieve as retrieve
+
+    data_root = tmp_path / "dr"
+    source = _staging(tmp_path, "staging")
+    monkeypatch.setattr(retrieve, "direct_url", lambda url: b"drifted")
+    first = next(iter(m.raw_relpaths()))
+    deposited = hashlib.sha256(_source_files()[first].encode()).hexdigest()
+    produced = hashlib.sha256(b"drifted").hexdigest()
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape(
+            f"{first}: the archived URL now yields sha256 {produced}, the deposited "
+            f"bytes are {deposited}"
+        ),
+    ):
+        m.deposit_raw_mirror(source, data_root=str(data_root), verify_source=True)
+    mirror = m.raw_mirror_dir(str(data_root))
+    assert not (mirror / "manifest.json").exists()
+    assert not (mirror / m.raw_relpaths()[first]).exists()
+
+
+def test_resolver_without_a_genome_opens_a_read_only_s288c_genome(
+    het: m.HetHillenmeyer2008Dataset, data_root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With ``genome=None``, ``_resolver`` builds ``SCerevisiaeGenome(genome_root=
+    <DATA_ROOT>/data/sgd/genome, go_root=<DATA_ROOT>/data/go, overwrite=False)``
+    (``overwrite=False`` so a build never rewrites a gffutils database another process
+    holds), stores it on the dataset and returns its ``resolve_gene_name``; a second
+    call reuses it.
+    """
+    import dotenv
+
+    import torchcell.sequence.genome.scerevisiae as scerevisiae
+
+    built: list[dict[str, Any]] = []
+
+    class _Genome:
+        def __init__(self, **kwargs: Any) -> None:
+            built.append(kwargs)
+
+        def resolve_gene_name(self, name: str) -> str:
+            return f"resolved:{name}"
+
+    monkeypatch.setattr(dotenv, "load_dotenv", lambda *a, **k: False)
+    monkeypatch.setattr(scerevisiae, "SCerevisiaeGenome", _Genome)
+    het.genome = None
+    resolver = het._resolver()
+    assert built == [
+        {
+            "genome_root": os.path.join(str(data_root), "data/sgd/genome"),
+            "go_root": os.path.join(str(data_root), "data/go"),
+            "overwrite": False,
+        }
+    ]
+    assert isinstance(het.genome, _Genome)
+    assert resolver("YAL001C") == "resolved:YAL001C"
+    het._resolver()
+    assert len(built) == 1
+
+
+def test_canonical_concentration_below_one_nanomolar_stays_nanomolar() -> None:
+    """0.5 nM = 5e-10 M: no unit of the family leaves a value >= 1 (M 5e-10, mM 5e-7,
+    uM 5e-4, nM 0.5), so the fallback stores 5e-10 / 1e-9 = 0.5 nM.
+    """
+    dose = m.canonical_concentration("0.5", "nM")
+    assert (dose.value, dose.unit) == (0.5, ConcentrationUnit.nanomolar)
+
+
+def test_read_key_conditions_maps_filename_to_condition_and_checks_the_header(
+    tmp_path: Path,
+) -> None:
+    keyfile = tmp_path / "het.txt"
+    keyfile.write_text(
+        "filename\tcondition\tcontrol_set\nA1\tbenomyl\tCS1\nA2\tx\tCS2\n"
+    )
+    assert m.read_key_conditions(keyfile) == {"A1": "benomyl", "A2": "x"}
+    keyfile.write_text("filename\tcondition\tcs\n")
+    message = (
+        f"unexpected key-file header in {keyfile}: ['filename', 'condition', 'cs']"
+    )
+    with pytest.raises(ValueError, match=f"^{re.escape(message)}$"):
+        m.read_key_conditions(keyfile)

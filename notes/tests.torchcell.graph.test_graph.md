@@ -24,3 +24,11 @@ Findings: only the last evidence row per gene and term is kept, so the IGI filte
 ## 2026.10.01 - Real genome only when its database is trusted
 
 The data-gated genome construction now first calls `require_trusted_genome_database` (see [[tests.torchcell.conftest]]): when the real `data.db` would be built or migrated, the test fails by name instead of migrating the shared root.
+
+## 2026.10.06 - Phase 21 lane D tests
+
+Phase 21 (lane D): Finding: `GeneGraph.validate_genes_in_graph` can never warn, because `graph` is declared before `max_gene_set` and so `info.data` never holds `max_gene_set` when the `graph` validator runs; a graph with a node outside `max_gene_set` is accepted silently in either input order (graph.py:51-61 unreachable).
+
+### Audit 2 notes applied
+
+- Audit 2 confirmed the cause: declaring `max_gene_set` before `graph` makes the warning fire.

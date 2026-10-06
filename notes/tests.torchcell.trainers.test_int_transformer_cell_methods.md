@@ -17,3 +17,14 @@ Twenty-five tests on the LightningModule with a scripted stand-in model with fix
 ## 2026.10.01 - Batches carry num_graphs (issue #567)
 
 `_batch` sets `num_graphs = 2`, as a collated PyG batch does, because `_get_batch_size` now reads it. No assertion changed.
+
+## 2026.10.06 - Phase 21: the DDP world size in the logged effective batch
+
+Finding: `training_step` multiplies the effective batch by the world size only when `trainer.strategy._strategy_name == "ddp"` (int_transformer_cell.py:1214-1222), and Lightning 2.5.5's `DDPStrategy` has no `_strategy_name`, so a DDP run logs `effective_batch_size` = B * accumulation per process. With the attribute set on the attached strategy and `torch.distributed` reporting 4 processes, 2 genotypes with accumulation 2 log 16; without it, 4. The logged learning rate is the optimizer group's lr, and accumulation step 0 of 2 does not step. The value is a logged diagnostic only.
+
+Left uncovered: CUDA-only cleanups (406-407, 1376, 1409-1411, 1504) and dead initializations (344-347, 577-578: both accumulator creators write the degree fields; 1054, 1079, 1112, 1137, 1161: every sample dict carries "latents").
+
+## 2026.10.06 - Phase 21 audit 2: reach and monkeypatch scope
+
+- Reach: 006 `equivariant_cell_graph_transformer_delta_011.yaml` (strategy ddp, grad_accumulation_schedule {0: 2}) with `scripts/equivariant_cell_graph_transformer.py` logs the per-process effective_batch_size (diagnostic only). The same check sits untested at `int_hetero_cell_nsa.py:418` and `:1075`.
+- Each case now runs inside `monkeypatch.context()`; the earlier `monkeypatch.undo()` also undid the autouse conftest guards (network, wandb.init, Popen).

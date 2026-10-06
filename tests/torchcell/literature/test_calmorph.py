@@ -5,9 +5,11 @@
 """Tests for torchcell.literature.calmorph."""
 
 import os
+import re
 
 import pytest
 
+import torchcell.literature.calmorph as calmorph
 from torchcell.literature.calmorph import (
     extract_calmorph_parameters,
     parse_calmorph_table,
@@ -58,3 +60,59 @@ def test_extract_reproduces_manual_schema_exactly():
     assert _SAMPLE_PDF is not None
     extracted = extract_calmorph_parameters(_SAMPLE_PDF)
     assert extracted == CALMORPH_PARAMETERS
+
+
+# 2026.10.06 (Phase 21): ``extract_calmorph_parameters`` with the poppler helpers
+# replaced at their import site in ``calmorph`` (no PDF, no subprocess).
+def test_extract_refuses_a_scanned_pdf(monkeypatch: pytest.MonkeyPatch) -> None:
+    texts: list[str] = []
+
+    def fake_text(p: object, layout: bool) -> str:
+        texts.append(str(p))
+        return ""
+
+    monkeypatch.setattr(calmorph, "pdf_kind", lambda p: "scanned")
+    monkeypatch.setattr(calmorph, "pdf_text", fake_text)
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "table1.pdf is 'scanned'; this recipe needs a born-digital PDF with a "
+            "trustworthy text layer (route scans through OCR)."
+        ),
+    ):
+        calmorph.extract_calmorph_parameters("/x/table1.pdf")
+    assert texts == []  # the text layer is never read for a scan
+
+
+def test_extract_reads_the_layout_text_of_a_born_digital_pdf(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[str, bool]] = []
+
+    def fake_text(p: object, layout: bool) -> str:
+        calls.append((str(p), layout))
+        return _LAYOUT
+
+    monkeypatch.setattr(calmorph, "pdf_kind", lambda p: "born_digital")
+    monkeypatch.setattr(calmorph, "pdf_text", fake_text)
+    assert calmorph.extract_calmorph_parameters("/x/table1.pdf") == {
+        "C11-1_A": "Whole_cell_size",
+        "C12-1_A": "Whole_cell_outline_length",
+        "CCV11-1_A": "Coefficient_of_variation_of_C11-1_A",
+        "C119": "no_bud_ratio",
+        "D196_C": "Maximal_intensity_of_nuclear_brightness_in_whole_cell",
+    }
+    assert calls == [("/x/table1.pdf", True)]
+
+
+def test_extract_refuses_a_text_layer_with_no_rows(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(calmorph, "pdf_kind", lambda p: "born_digital")
+    monkeypatch.setattr(
+        calmorph, "pdf_text", lambda p, layout: "Table 1\nNo. ID Description\n"
+    )
+    with pytest.raises(
+        ValueError, match=re.escape("No CalMorph parameters parsed from table1.pdf")
+    ):
+        calmorph.extract_calmorph_parameters("/x/table1.pdf")

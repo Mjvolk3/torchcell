@@ -27,3 +27,15 @@ All six Phase 14 findings in this file are fixed in [[torchcell.data.graph_proce
 ## 2026.09.30 - Review corrections (issue #527)
 
 DCell writes no per-sample `perturbation_indices_batch`; the outside-gene test now collates [inside, outside] with `follow_batch=["perturbation_indices"]` and asserts `perturbation_indices` [1], batch [0]. The tensor-subsystem test stores `w_growth` [0, 1, 0], the opposite of a naive decode of `tensor([1, 0, 1])`, so a reintroduced decoder fails it.
+
+## 2026.10.06 - Phase 21: the one-line guards
+
+- `SubgraphRepresentation`, `IncidenceSubgraphRepresentation` and `LazySubgraphRepresentation`: `_add_reaction_data` with an empty reaction_info and `_process_metabolic_network` on a graph without reactions write nothing.
+- The `device is None` guard of `_add_phenotype_data` (dead in practice: every `__init__` sets the CPU) restores the CPU and writes the same phenotype tensors, for the three processors and `DCellGraphProcessor`.
+- `GraphProcessor` cannot be instantiated; its abstract `process` body returns None.
+
+Left uncovered: `NeighborSubgraphRepresentation.process` after line 2696, unreachable because of the pinned list-versus-tensor finding.
+
+## 2026.10.06 - Phase 21 audit 2
+
+The base-class test keeps only the instantiation refusal; the call of the abstract `pass` body was removed as padding.

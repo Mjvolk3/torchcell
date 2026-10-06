@@ -824,3 +824,515 @@ def test_gpu_flex_attention_error_propagation():
 
     # Restore the original method
     first_block._process_with_mask = original_process
+
+
+# ---------------------------------------------------------------------------
+# 2026.10.06 - Phase 21: routing contracts of _HeteroNSA_Block and HeteroNSAEncoder
+#
+# Fixture: 3 genes and 2 reactions with hidden_dim 4, two heads, dropout 0, eval mode,
+# seeded weights. Expected outputs are the block's own NodeSelfAttention /
+# SelfAttentionBlock submodules applied by hand to the mask the routing should hand
+# them (structural identities), and a spy on NodeSelfAttention.forward records exactly
+# which mask, edge_attr and edge_index each relation passes. CUDA is hidden.
+# ---------------------------------------------------------------------------
+
+import re  # noqa: E402
+from collections.abc import Callable, Iterator  # noqa: E402
+from typing import Any  # noqa: E402
+
+from torch_geometric.nn.aggr.attention import AttentionalAggregation  # noqa: E402
+
+from torchcell.nn.hetero_nsa import _HeteroNSA_Block  # noqa: E402
+from torchcell.nn.masked_attention_block import NodeSelfAttention  # noqa: E402
+
+GG = ("gene", "physical", "gene")
+GG2 = ("gene", "regulatory", "gene")
+GR = ("gene", "gpr", "reaction")
+RMR = ("reaction", "rmr", "metabolite")
+
+Call = tuple[torch.Tensor, torch.Tensor, Any, Any]
+
+
+@pytest.fixture(autouse=True)
+def _fork_rng() -> Iterator[None]:
+    """Every test runs inside its own RNG fork so seeding never leaks."""
+    with torch.random.fork_rng():
+        yield
+
+
+@pytest.fixture
+def nsa_calls(monkeypatch: pytest.MonkeyPatch) -> list[Call]:
+    """Record (x, adj_mask, edge_attr, edge_index) of every NodeSelfAttention call."""
+    calls: list[Call] = []
+    original: Callable[..., torch.Tensor] = NodeSelfAttention.forward
+
+    def spy(
+        self: NodeSelfAttention,
+        x: torch.Tensor,
+        adj_mask: torch.Tensor,
+        edge_attr: Any = None,
+        edge_index: Any = None,
+    ) -> torch.Tensor:
+        calls.append((x, adj_mask, edge_attr, edge_index))
+        return original(self, x, adj_mask, edge_attr, edge_index)
+
+    monkeypatch.setattr(NodeSelfAttention, "forward", spy)
+    return calls
+
+
+def _block(
+    layer_type: str,
+    edge_types: set[tuple[str, str, str]],
+    node_types: set[str] | None = None,
+    aggregation: str = "sum",
+) -> _HeteroNSA_Block:
+    torch.manual_seed(0)
+    return _HeteroNSA_Block(
+        layer_type,  # type: ignore[arg-type, unused-ignore]
+        4,
+        node_types or {"gene", "reaction"},
+        edge_types,
+        num_heads=2,
+        dropout=0.0,
+        aggregation=aggregation,  # type: ignore[arg-type, unused-ignore]
+    ).eval()
+
+
+def _x() -> dict[str, torch.Tensor]:
+    torch.manual_seed(7)
+    return {"gene": torch.randn(3, 4), "reaction": torch.randn(2, 4)}
+
+
+def _nsa(block: _HeteroNSA_Block, edge_type: tuple[str, str, str]) -> NodeSelfAttention:
+    module = block.masked_blocks["__".join(edge_type)]
+    assert isinstance(module, NodeSelfAttention)
+    return module
+
+
+GG_MASK = torch.tensor([[True, True, False], [False, True, True], [True, False, True]])
+GR_MASK = torch.tensor([[True, False], [False, True], [True, True]])
+
+
+def test_invalid_layer_type_is_refused_by_the_block() -> None:
+    """The block itself refuses 'X' with the exact message (hetero_nsa.py:37)."""
+    with pytest.raises(
+        ValueError, match=re.escape("Invalid layer_type 'X'. Must be 'M' or 'S'.")
+    ):
+        _block("X", {GG})
+
+
+def test_same_type_relation_passes_its_mask_and_edge_attributes(
+    nsa_calls: list[Call],
+) -> None:
+    """A gene-gene adj_mask relation: one call with mask [1, 3, 3], edge_attr and index.
+
+    The output is that relation's NodeSelfAttention applied to (x[None], mask[None]) and
+    squeezed back; the untouched reaction type keeps its input tensor object.
+    """
+    block = _block("M", {GG})
+    data = HeteroData()
+    data[GG].adj_mask = GG_MASK
+    data[GG].edge_index = torch.tensor([[0, 1], [1, 2]])
+    data[GG].edge_attr = torch.tensor([0.5, -1.0])
+    x = _x()
+    with torch.no_grad():
+        out = block(x, data)
+        expected = _nsa(block, GG)(
+            x["gene"][None], GG_MASK[None], data[GG].edge_attr, data[GG].edge_index
+        )[0]
+    assert len(nsa_calls) == 2  # the block call and the expected call above
+    seen_x, seen_mask, seen_attr, seen_index = nsa_calls[0]
+    assert torch.equal(seen_x, x["gene"][None])
+    assert torch.equal(seen_mask, GG_MASK[None])
+    assert seen_attr is data[GG].edge_attr
+    assert seen_index is data[GG].edge_index
+    assert torch.equal(out["gene"], expected)
+    assert out["reaction"] is x["reaction"]
+
+
+def test_bipartite_relation_runs_the_source_mask_and_its_transpose(
+    nsa_calls: list[Call],
+) -> None:
+    """gene->reaction with adj_mask [3, 2]: genes get the mask, reactions its transpose.
+
+    Both go through the SAME NodeSelfAttention, each as a self-attention over its own
+    node type with a non-square mask (padded / cropped, Phase 20 finding), and no edge
+    attributes because the store has no edge_attr.
+    """
+    block = _block("M", {GR})
+    data = HeteroData()
+    data[GR].adj_mask = GR_MASK
+    data[GR].edge_index = torch.tensor([[0, 2], [0, 1]])
+    x = _x()
+    with torch.no_grad():
+        out = block(x, data)
+    assert [c[1].tolist() for c in nsa_calls] == [
+        GR_MASK[None].tolist(),
+        GR_MASK.T[None].tolist(),
+    ]
+    assert [c[2] for c in nsa_calls] == [None, None]
+    nsa = _nsa(block, GR)
+    with torch.no_grad():
+        torch.testing.assert_close(out["gene"], nsa(x["gene"], GR_MASK))
+        torch.testing.assert_close(out["reaction"], nsa(x["reaction"], GR_MASK.T))
+
+
+def test_rmr_relation_swaps_edge_attr_for_stoichiometry(nsa_calls: list[Call]) -> None:
+    """An ``rmr`` adj_mask store passes ``stoichiometry`` as edge_attr, not edge_attr."""
+    block = _block("M", {RMR}, {"reaction", "metabolite"})
+    data = HeteroData()
+    data[RMR].adj_mask = torch.ones(2, 3, dtype=torch.bool)
+    data[RMR].edge_index = torch.tensor([[0, 1], [2, 0]])
+    data[RMR].edge_attr = torch.tensor([9.0, 9.0])
+    data[RMR].stoichiometry = torch.tensor([-1.0, 2.0])
+    x = {"reaction": torch.randn(2, 4), "metabolite": torch.randn(3, 4)}
+    with torch.no_grad():
+        block(x, data)
+    assert len(nsa_calls) == 2
+    for _, _, attr, index in nsa_calls:
+        assert attr is data[RMR].stoichiometry
+        assert index is data[RMR].edge_index
+
+
+def test_inc_mask_relation_drops_edge_attr_unless_rmr(nsa_calls: list[Call]) -> None:
+    """Finding: an inc_mask relation never passes its edge_attr (hetero_nsa.py:160-161).
+
+    The same store with ``adj_mask`` would pass edge_attr (line 136); with ``inc_mask``
+    a non-rmr relation always gets (None, None), so its edge attributes are silently
+    unused. An rmr inc_mask store passes stoichiometry with hyperedge_index preferred
+    over edge_index, and edge_index when there is no hyperedge_index. Reach: latent;
+    the 006 retry model names its metabolic relation "reaction", not "rmr", and its
+    relations carry adj_mask. Pinned until the inc_mask branch forwards edge attributes
+    like the adj_mask branch.
+    """
+    block = _block("M", {GR})
+    data = HeteroData()
+    data[GR].inc_mask = GR_MASK
+    data[GR].edge_index = torch.tensor([[0], [1]])
+    data[GR].edge_attr = torch.tensor([3.0])
+    with torch.no_grad():
+        out = block(_x(), data)
+    assert [(c[2], c[3]) for c in nsa_calls] == [(None, None), (None, None)]
+    assert [c[1].tolist() for c in nsa_calls] == [
+        GR_MASK[None].tolist(),
+        GR_MASK.T[None].tolist(),
+    ]
+    assert out["gene"].shape == (3, 4) and out["reaction"].shape == (2, 4)
+
+    nsa_calls.clear()
+    rmr_block = _block("M", {RMR}, {"reaction", "metabolite"})
+    rmr = HeteroData()
+    rmr[RMR].inc_mask = torch.ones(2, 3, dtype=torch.bool)
+    rmr[RMR].edge_index = torch.tensor([[0], [0]])
+    rmr[RMR].hyperedge_index = torch.tensor([[1], [1]])
+    rmr[RMR].stoichiometry = torch.tensor([-1.0])
+    x = {"reaction": torch.randn(2, 4), "metabolite": torch.randn(3, 4)}
+    with torch.no_grad():
+        rmr_block(x, rmr)
+    assert [
+        (c[2] is rmr[RMR].stoichiometry, c[3] is rmr[RMR].hyperedge_index)
+        for c in nsa_calls
+    ] == [(True, True), (True, True)]
+    nsa_calls.clear()
+    del rmr[RMR].hyperedge_index
+    with torch.no_grad():
+        rmr_block(x, rmr)
+    assert [c[3] is rmr[RMR].edge_index for c in nsa_calls] == [True, True]
+
+
+def test_relation_without_masks_ignores_its_edges() -> None:
+    """Finding: an edge_index-only relation attends each node to itself alone.
+
+    The fallback (hetero_nsa.py:181-204) builds an identity mask, so a node's softmax
+    has one key and the edge bias (only on self-loops) cannot change it: two different
+    edge_index tensors give bit-identical outputs, equal to the block run with no
+    edges. The relation's graph never reaches the representation. Pinned until the
+    fallback builds the mask from edge_index.
+    """
+    block = _block("M", {GG})
+    x = _x()
+    outs = []
+    for edges in ([[0, 1], [1, 2]], [[2, 0, 1], [0, 1, 1]]):
+        data = HeteroData()
+        data[GG].edge_index = torch.tensor(edges)
+        data[GG].edge_attr = torch.tensor([5.0, -5.0, 1.0][: len(edges[0])])
+        with torch.no_grad():
+            outs.append(block(x, data)["gene"])
+    with torch.no_grad():
+        no_edges = _nsa(block, GG)(x["gene"], torch.eye(3, dtype=torch.bool))
+    assert torch.equal(outs[0], outs[1])
+    assert torch.equal(outs[0], no_edges)
+
+
+def test_bipartite_relation_without_masks_uses_two_identity_masks() -> None:
+    """gene->reaction with only edge_index: genes and reactions each attend to themselves."""
+    block = _block("M", {GR})
+    data = HeteroData()
+    data[GR].edge_index = torch.tensor([[0, 2], [0, 1]])
+    x = _x()
+    nsa = _nsa(block, GR)
+    with torch.no_grad():
+        out = block(x, data)
+        torch.testing.assert_close(out["gene"], nsa(x["gene"], torch.eye(3).bool()))
+        torch.testing.assert_close(
+            out["reaction"], nsa(x["reaction"], torch.eye(2).bool())
+        )
+
+
+def _two_gene_relations() -> HeteroData:
+    data = HeteroData()
+    data[GG].adj_mask = GG_MASK
+    data[GG2].adj_mask = GG_MASK.T.contiguous()
+    return data
+
+
+@pytest.mark.parametrize("aggregation", ["sum", "mean"])
+def test_two_relations_on_one_type_are_summed_or_averaged(aggregation: str) -> None:
+    """Gene outputs of two relations o1, o2: 'sum' gives o1 + o2, 'mean' (o1 + o2) / 2."""
+    block = _block("M", {GG, GG2}, aggregation=aggregation)
+    x = _x()
+    with torch.no_grad():
+        out = block(x, _two_gene_relations())
+        o1 = _nsa(block, GG)(x["gene"], GG_MASK)
+        o2 = _nsa(block, GG2)(x["gene"], GG_MASK.T)
+    expected = o1 + o2 if aggregation == "sum" else (o1 + o2) / 2
+    torch.testing.assert_close(out["gene"], expected)
+
+
+def test_attention_aggregation_pools_each_relation_into_one_vector() -> None:
+    """Finding: 'attention' aggregation returns one row per RELATION, not per node.
+
+    ``node_indices = arange(len(outs)).repeat_interleave(num_nodes)`` (hetero_nsa.py:224)
+    puts all 3 genes of relation j into group j, so AttentionalAggregation returns
+    [2 relations, 4] instead of [3 genes, 4]: row j is the gated softmax pool of
+    relation j's node outputs, and j follows the iteration order of the edge-type set,
+    so which row is which relation depends on PYTHONHASHSEED (Phase 20). Per-node
+    aggregation needs ``arange(num_nodes).repeat(len(outs))``. Reach: latent; the 006
+    retry config uses "sum". Pinned until the index groups the same node across
+    relations.
+    """
+    block = _block("M", {GG, GG2}, {"gene"}, aggregation="attention")
+    x = {"gene": _x()["gene"]}
+    with torch.no_grad():
+        out = block(x, _two_gene_relations())
+        o1 = _nsa(block, GG)(x["gene"], GG_MASK)
+        o2 = _nsa(block, GG2)(x["gene"], GG_MASK.T)
+        aggr = block.node_aggregators["gene"]
+        assert isinstance(aggr, AttentionalAggregation)
+        # relation order is the iteration order of the edge-type SET (hash seed)
+        ordered = [{GG: o1, GG2: o2}[et] for et in block.edge_types]
+        expected = aggr(torch.cat(ordered), index=torch.tensor([0, 0, 0, 1, 1, 1]))
+    assert out["gene"].shape == (2, 4)
+    torch.testing.assert_close(out["gene"], expected)
+
+
+def test_an_unknown_aggregation_given_to_the_block_falls_back_to_the_mean() -> None:
+    """``HeteroNSA`` refuses aggregation 'max', but ``_HeteroNSA_Block`` does not
+    validate it: built directly, two relations on genes reach the final else (line 233)
+    and are averaged, (o1 + o2) / 2. Reachable only outside HeteroNSA.
+    """
+    block = _block("M", {GG, GG2}, aggregation="max")
+    x = _x()
+    with torch.no_grad():
+        out = block(x, _two_gene_relations())
+        o1 = _nsa(block, GG)(x["gene"], GG_MASK)
+        o2 = _nsa(block, GG2)(x["gene"], GG_MASK.T)
+    torch.testing.assert_close(out["gene"], (o1 + o2) / 2)
+
+
+def test_attention_aggregation_without_an_aggregator_falls_back_to_the_mean() -> None:
+    """A type in only one relation gets no aggregator (needs > 1); a type in two that
+    lacks one (deleted here) gets the mean, as line 231 promises.
+    """
+    block = _block("M", {GG, GG2}, {"gene", "reaction"}, aggregation="attention")
+    assert sorted(block.node_aggregators.keys()) == ["gene"]
+    del block.node_aggregators["gene"]
+    x = _x()
+    with torch.no_grad():
+        out = block(x, _two_gene_relations())
+        o1 = _nsa(block, GG)(x["gene"], GG_MASK)
+        o2 = _nsa(block, GG2)(x["gene"], GG_MASK.T)
+    torch.testing.assert_close(out["gene"], (o1 + o2) / 2)
+
+
+def test_missing_relation_or_embedding_is_skipped_and_absent_types_become_none() -> (
+    None
+):
+    """A relation absent from data, or whose destination (reaction) embedding is missing,
+    is skipped:
+    the gene type keeps its input object; reaction, absent from x_dict, maps to None.
+    """
+    block = _block("M", {GG, GR})
+    data = HeteroData()
+    data[GR].adj_mask = GR_MASK
+    gene = torch.randn(3, 4)
+    out = block({"gene": gene}, data)
+    assert sorted(out) == ["gene", "reaction"]
+    assert out["gene"] is gene
+    assert out["reaction"] is None
+
+
+def test_process_with_mask_broadcasts_a_2d_mask_over_a_batch() -> None:
+    """Mask [3, 3] with embeddings [2, 3, 4] is expanded to both samples; a [1, 3, 3]
+    mask with [3, 4] embeddings unsqueezes the embeddings and squeezes the result.
+    """
+    block = _block("M", {GG})
+    nsa = _nsa(block, GG)
+    torch.manual_seed(3)
+    batched = torch.randn(2, 3, 4)
+    with torch.no_grad():
+        out = block._process_with_mask(nsa, batched, GG_MASK)
+        expected = nsa(batched, GG_MASK.expand(2, 3, 3))
+        assert torch.equal(out, expected)
+        flat = block._process_with_mask(nsa, batched[0], GG_MASK[None])
+        assert torch.equal(flat, nsa(batched[0][None], GG_MASK[None])[0])
+
+
+def test_process_with_mask_calls_a_non_nsa_block_without_the_mask() -> None:
+    """A non-NodeSelfAttention block (a SelfAttentionBlock) is called as block(x)."""
+    block = _block("S", {GG}, {"gene"})
+    sab = block.self_blocks["gene"]
+    torch.manual_seed(3)
+    x = torch.randn(3, 4)
+    with torch.no_grad():
+        out = block._process_with_mask(sab, x, GG_MASK)
+        assert torch.equal(out, sab(x[None])[0])
+
+
+def test_self_attention_block_handles_2d_and_3d_and_passes_unknown_types() -> None:
+    """'S': 2-D gene input -> sab(x[None])[0]; 3-D input -> sab(x); an unknown type
+    ('metabolite', no block) is returned as the same object.
+    """
+    block = _block("S", set(), {"gene"})
+    sab = block.self_blocks["gene"]
+    torch.manual_seed(4)
+    gene = torch.randn(3, 4)
+    other = torch.randn(5, 4)
+    with torch.no_grad():
+        out = block({"gene": gene, "metabolite": other}, HeteroData())
+        assert torch.equal(out["gene"], sab(gene[None])[0])
+        assert out["metabolite"] is other
+        out3 = block({"gene": gene[None]}, HeteroData())
+        assert torch.equal(out3["gene"], sab(gene[None]))
+
+
+def _encoder(pattern: list[str], node_types: set[str]) -> HeteroNSAEncoder:
+    torch.manual_seed(0)
+    return HeteroNSAEncoder(
+        input_dims={nt: 2 for nt in node_types},
+        hidden_dim=4,
+        node_types=node_types,
+        edge_types={GG},
+        pattern=pattern,
+        num_layers=1,
+        num_heads=2,
+        dropout=0.0,
+    ).eval()
+
+
+def test_encoder_composes_projection_residual_norm_and_pooling() -> None:
+    """Pattern ['S'], one layer, genes only.
+
+    h0 = input_projections.gene(x); h1 = LayerNorm_0(SAB(h0[None])[0] + h0); the graph
+    vector is final_projection(mean over genes of graph_projections.gene(h1)). The
+    returned node embeddings are h1.
+    """
+    enc = _encoder(["S"], {"gene"})
+    data = HeteroData()
+    torch.manual_seed(5)
+    data["gene"].x = torch.randn(3, 2)
+    with torch.no_grad():
+        nodes, graph = enc(data)
+        h0 = enc.input_projections["gene"](data["gene"].x)
+        layer = enc.nsa_layers[0]
+        assert isinstance(layer, HeteroNSA)
+        s_block = layer.blocks[0]
+        assert isinstance(s_block, _HeteroNSA_Block)
+        sab = s_block.self_blocks["gene"]
+        norms = enc.layer_norms["gene"]
+        assert isinstance(norms, nn.ModuleList)
+        h1 = norms[0](sab(h0[None])[0] + h0)
+        pooled = enc.graph_projections["gene"](h1).mean(dim=0, keepdim=True)
+        expected_graph = enc.final_projection(pooled)
+    torch.testing.assert_close(nodes["gene"], h1)
+    torch.testing.assert_close(graph, expected_graph)
+
+
+def test_encoder_pools_a_whole_batch_into_one_graph_vector() -> None:
+    """Finding: HeteroNSAEncoder ignores the batch vector when pooling.
+
+    ``data["gene"].batch`` is collected into batch_idx (hetero_nsa.py:393-394) but no
+    block reads it, and the graph vector is ``mean(dim=1)`` over every node
+    (line 415). Two graphs of 2 and 1 genes in one batch give a [1, 4] graph
+    embedding equal to the pool over all 3 nodes. Pinned until pooling is per graph.
+    """
+    enc = _encoder(["S"], {"gene"})
+    data = HeteroData()
+    torch.manual_seed(6)
+    data["gene"].x = torch.randn(3, 2)
+    data["gene"].batch = torch.tensor([0, 0, 1])
+    with torch.no_grad():
+        nodes, graph = enc(data)
+        pooled = enc.graph_projections["gene"](nodes["gene"]).mean(0, keepdim=True)
+        expected = enc.final_projection(pooled)
+    assert graph.shape == (1, 4)
+    torch.testing.assert_close(graph, expected)
+
+
+def test_encoder_fills_an_absent_type_with_zeros_in_sorted_order() -> None:
+    """Pattern ['S'], types {gene, reaction}, data with genes only: the concat follows
+    sorted type names, [gene pool, reaction zeros(1, 4)], into final_projection.
+    """
+    enc = _encoder(["S"], {"gene", "reaction"})
+    data = HeteroData()
+    torch.manual_seed(8)
+    data["gene"].x = torch.randn(3, 2)
+    with torch.no_grad():
+        nodes, graph = enc(data)
+        pooled = enc.graph_projections["gene"](nodes["gene"]).mean(0, keepdim=True)
+        expected = enc.final_projection(torch.cat([pooled, torch.zeros(1, 4)], dim=-1))
+    assert sorted(nodes) == ["gene"]
+    torch.testing.assert_close(graph, expected)
+
+
+def test_encoder_with_a_masked_block_crashes_on_an_absent_type() -> None:
+    """Finding: with an 'M' block an absent node type crashes the encoder.
+
+    The M block returns ``None`` for every declared type with no relation output and no
+    input (hetero_nsa.py:210); the encoder stores it in final_embeddings and then calls
+    ``emb.dim()`` on it (line 412). The zeros fallback (line 423) is reachable only with
+    S-only patterns. Pinned until absent types are left out of the block output.
+    """
+    enc = _encoder(["M"], {"gene", "reaction"})
+    data = HeteroData()
+    data["gene"].x = torch.randn(3, 2)
+    data[GG].adj_mask = GG_MASK
+    with pytest.raises(
+        AttributeError, match=re.escape("'NoneType' object has no attribute 'dim'")
+    ):
+        enc(data)
+
+
+def test_encoder_refuses_an_unknown_aggregation() -> None:
+    """The encoder validates aggregation before building anything (line 341)."""
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "Invalid aggregation 'max'. Must be 'sum', 'mean', or 'attention'."
+        ),
+    ):
+        HeteroNSAEncoder(
+            input_dims={"gene": 2},
+            hidden_dim=4,
+            node_types={"gene"},
+            edge_types={GG},
+            pattern=["S"],
+            aggregation="max",  # type: ignore[arg-type, unused-ignore]
+        )
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "Invalid aggregation 'max'. Must be 'sum', 'mean', or 'attention'."
+        ),
+    ):
+        HeteroNSA(4, {"gene"}, {GG}, ["S"], aggregation="max")  # type: ignore[arg-type, unused-ignore]

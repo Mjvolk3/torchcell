@@ -16,24 +16,40 @@ exact message.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 import shutil
+from datetime import datetime
 from pathlib import Path
+from typing import Any
 
+import httpx
 import pytest
 import yaml
 
+import torchcell.knowledge_graphs.head_ontology as head_ontology
 from torchcell.knowledge_graphs.head_ontology import (
+    BIOLINK_ROOT_NODE,
     BIOLINK_SOURCE_URL,
     CONTAINER_BIOCYPHER_DIR,
     CONTAINER_ONTOLOGY_PATH,
     REPO_ONTOLOGY_PATH,
     HeadOntologyError,
+    HeadOntologyMirror,
+    build_mirror_record,
     load_mirror_record,
+    main,
     record_path,
     verify_head_ontology,
 )
-from torchcell.literature.manifest import sha256_file
+from torchcell.literature.manifest import (
+    ArtifactRecord,
+    RetrievalMethod,
+    RetrievalRecord,
+    SourceCheck,
+    sha256_file,
+)
 
 REPO = Path(__file__).resolve().parents[3]
 MIRROR = REPO / REPO_ONTOLOGY_PATH
@@ -193,3 +209,151 @@ def test_verify_refuses_altered_bytes(tmp_path: Path) -> None:
     )
     with pytest.raises(HeadOntologyError, match=f"^{re.escape(message)}$"):
         verify_head_ontology(cfg)
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.06 (Phase 21): ``build_mirror_record`` and the ``record`` / ``verify`` CLI on a
+# tmp ontology file. The re-check runs the REAL ``check_source`` -> ``direct_url``
+# retriever with ``httpx.Client`` replaced at ``torchcell.literature.retrieve.httpx`` by
+# a MockTransport client, and ``datetime`` frozen at 2026-10-06T12:00:00Z.
+# --------------------------------------------------------------------------- #
+_TTL = b"@prefix biolink: <https://w3id.org/biolink/vocab/> .\n"
+_REAL_CLIENT = httpx.Client
+
+
+class _FrozenDatetime:
+    @staticmethod
+    def now(tz: Any) -> datetime:
+        return datetime(2026, 10, 6, 12, 0, 0, tzinfo=tz)
+
+
+def _serve(monkeypatch: pytest.MonkeyPatch, body: bytes) -> list[str]:
+    seen: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(str(request.url))
+        return httpx.Response(200, content=body)
+
+    monkeypatch.setattr(
+        httpx,
+        "Client",
+        lambda **kw: _REAL_CLIENT(transport=httpx.MockTransport(handler), **kw),
+    )
+    monkeypatch.setattr(head_ontology, "datetime", _FrozenDatetime)
+    return seen
+
+
+def _expected(path: Path, last_check: SourceCheck | None) -> HeadOntologyMirror:
+    sha = hashlib.sha256(_TTL).hexdigest()
+    return HeadOntologyMirror(
+        ontology="biolink 3.2.1",
+        root_node="entity",
+        retrieval_command="curl -sL -o o.ttl URL",
+        file=ArtifactRecord(
+            path=path.name,
+            role="ontology",
+            bytes=len(_TTL),
+            sha256=sha,
+            source=BIOLINK_SOURCE_URL,
+            retrieval=RetrievalRecord(
+                method=RetrievalMethod.direct_url,
+                source_url=BIOLINK_SOURCE_URL,
+                retriever="torchcell.literature.retrieve.direct_url",
+                params={"url": BIOLINK_SOURCE_URL},
+                sha256=sha,
+                retrieved_at="2026-10-02T00:00:00Z",
+                last_check=last_check,
+            ),
+        ),
+    )
+
+
+def test_build_mirror_record_without_check(tmp_path: Path) -> None:
+    path = tmp_path / "o.ttl"
+    path.write_bytes(_TTL)
+    got = build_mirror_record(
+        path, "2026-10-02T00:00:00Z", "curl -sL -o o.ttl URL", False
+    )
+    assert got == _expected(path, None)
+
+
+@pytest.mark.parametrize(("served", "matches"), [(_TTL, True), (b"drifted\n", False)])
+def test_build_mirror_record_check_reruns_the_retriever(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, served: bytes, matches: bool
+) -> None:
+    """The check fetches the canonical Biolink URL once; ``matches`` compares the
+    produced sha256 with the stored file's, and upstream drift never rewrites ``sha256``.
+    """
+    seen = _serve(monkeypatch, served)
+    path = tmp_path / "o.ttl"
+    path.write_bytes(_TTL)
+    got = build_mirror_record(
+        path, "2026-10-02T00:00:00Z", "curl -sL -o o.ttl URL", True
+    )
+    check = SourceCheck(
+        checked_at="2026-10-06T12:00:00Z",
+        produced_sha256=hashlib.sha256(served).hexdigest(),
+        matches=matches,
+    )
+    assert got == _expected(path, check)
+    assert seen == [BIOLINK_SOURCE_URL]
+
+
+def test_main_record_then_verify(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``record`` writes ``<file>.provenance.json`` (model JSON, indent 2, trailing
+    newline) and prints its sha256; ``verify`` on a config naming the file prints ``ok``.
+    """
+    path = tmp_path / "o.ttl"
+    path.write_bytes(_TTL)
+    main(
+        [
+            "record",
+            "--file",
+            str(path),
+            "--retrieved-at",
+            "2026-10-02T00:00:00Z",
+            "--retrieval-command",
+            "curl -sL -o o.ttl URL",
+        ]
+    )
+    rec = record_path(path)
+    sha = hashlib.sha256(_TTL).hexdigest()
+    assert capsys.readouterr().out == f"wrote {rec} sha256={sha}\n"
+    assert rec.read_text() == _expected(path, None).model_dump_json(indent=2) + "\n"
+    assert json.loads(rec.read_text())["root_node"] == BIOLINK_ROOT_NODE
+    config = tmp_path / "cfg.yaml"
+    config.write_text(
+        yaml.safe_dump(
+            {"biocypher": {"head_ontology": {"url": str(path), "root_node": "entity"}}}
+        )
+    )
+    main(["verify", str(config)])
+    assert capsys.readouterr().out == f"ok {path.resolve()}\n"
+
+
+def test_main_record_with_check_writes_the_last_check(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _serve(monkeypatch, _TTL)
+    path = tmp_path / "o.ttl"
+    path.write_bytes(_TTL)
+    main(
+        [
+            "record",
+            "--file",
+            str(path),
+            "--retrieved-at",
+            "2026-10-02T00:00:00Z",
+            "--retrieval-command",
+            "c",
+            "--check",
+        ]
+    )
+    payload = json.loads(record_path(path).read_text())
+    assert payload["file"]["retrieval"]["last_check"] == {
+        "checked_at": "2026-10-06T12:00:00Z",
+        "produced_sha256": hashlib.sha256(_TTL).hexdigest(),
+        "matches": True,
+    }

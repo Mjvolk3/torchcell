@@ -1418,3 +1418,124 @@ def test_forward_always_moves_the_batch_because_hetero_data_has_no_gene_attribut
     assert moves == [cpu, cpu, cpu]
     assert model.calls[-1][1] is batch
     assert task._cell_graph_device == cpu
+
+
+# ---------------------------------------------------------------------------
+# 2026.10.06 (phase 21): the 0-dim reshapes, a 2-D inverse result, a first train
+# collection that is already over the ceiling, and latents subsampled in the plot.
+# ---------------------------------------------------------------------------
+
+
+class _Scalar(nn.Module):
+    """A model returning a 0-dim prediction w * 0.5 and no heads."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.w = nn.Parameter(torch.ones(()))
+
+    def forward(
+        self, cell_graph: HeteroData, batch: HeteroData
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
+        return self.w * torch.tensor(0.5), {}
+
+
+def test_zero_dim_prediction_and_targets_become_one_by_one(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """0-dim prediction 0.5, target 1.0 and original 4.0 are each unsqueezed twice
+    (int_dcell.py:170, :182, :198): the plain loss sees ((1, 1), (1, 1)) and returns
+    (0.5 - 1)^2 = 0.25; original metrics get [0.5] vs [4.0].
+    """
+    loss_func = _PlainLoss(False)
+    task = _task(model=_Scalar(), loss_func=loss_func)
+    _recorded(monkeypatch, task)
+    orig = _record_updates(monkeypatch, task._metrics("val_metrics"))
+    batch = HeteroData()
+    batch["gene"].phenotype_values = torch.tensor(1.0)
+    batch["gene"].phenotype_values_original = torch.tensor(4.0)
+    loss, predictions, target = task._shared_step(batch, 0, "val")
+    assert loss_func.shapes == [((1, 1), (1, 1))]
+    assert loss.item() == pytest.approx(0.25)
+    assert predictions.tolist() == [[0.5]]
+    assert target.tolist() == [[4.0]]
+    assert orig == [([0.5], [4.0])]
+
+
+def test_a_two_dimensional_inverse_result_is_used_as_is(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An inverse transform returning [B, 1] (here 10 * root as a column) is taken
+    unchanged (int_dcell.py:285): original metrics get [0, -10, 10] vs y.
+    """
+
+    class _Column(nn.Module):
+        def forward(self, data: HeteroData) -> HeteroData:
+            out = HeteroData()
+            out["gene"].gene_interaction = 10 * data["gene"]["gene_interaction"].view(
+                -1, 1
+            )
+            return out
+
+    task = _task(inverse_transform=_Column())
+    _recorded(monkeypatch, task)
+    orig = _record_updates(monkeypatch, task._metrics("val_metrics"))
+    task._shared_step(_batch(), 0, "val")
+    assert orig == [([0.0, -10.0, 10.0], Y)]
+
+
+def test_a_first_train_batch_over_the_ceiling_is_subsampled_with_its_latents(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ceiling 2, B = 3, nothing collected yet: remaining 2 < 3, so the FIRST batch is
+    already subsampled to ``randperm(3)[:2]`` (oracle: same seed), and the latent list
+    is created on that path (int_dcell.py:315-316) with the same two rows.
+    """
+    task = _task(model=_WithLatents(), plot_every_n_epochs=1, plot_sample_ceiling=2)
+    _recorded(monkeypatch, task)
+    with torch.random.fork_rng():
+        torch.manual_seed(0)
+        idx = torch.randperm(3)[:2].tolist()
+        torch.manual_seed(0)
+        task._shared_step(_batch(), 0, "train")
+    train = task.train_samples
+    assert [t.tolist() for t in train["true_values"]] == [[[Y[i]] for i in idx]]
+    assert [t.tolist() for t in train["predictions"]] == [[[ROOT[i]] for i in idx]]
+    assert [t.tolist() for t in train["latents"]["subsystem_outputs"]] == [
+        [_WithLatents.LATENT[i] for i in idx]
+    ]
+
+
+def test_plot_samples_subsamples_latents_with_the_same_rows(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """Ceiling 2 with three latent rows: ``randperm(3)[:2]`` selects the same rows of
+    true, prediction and latent (int_dcell.py:454), and the smoothness log is the
+    Frobenius norm of the two centered latent rows: for rows a, b it is |a - b| / sqrt 2.
+    """
+    visual, logged = _stub_plots(monkeypatch)
+    task = _task(plot_sample_ceiling=2)
+    _attach(task, tmp_path)
+    latent = torch.tensor(_WithLatents.LATENT)
+    with torch.random.fork_rng():
+        torch.manual_seed(0)
+        idx = torch.randperm(3)[:2].tolist()
+        torch.manual_seed(0)
+        task._plot_samples(
+            {
+                "true_values": [torch.tensor(Y)],
+                "predictions": [torch.tensor(ROOT)],
+                "latents": {"subsystem_outputs": [latent]},
+            },
+            "val_sample",
+        )
+    args, _ = visual[1]
+    assert args[0].tolist() == [[ROOT[i]] for i in idx]
+    assert args[1].tolist() == [[Y[i]] for i in idx]
+    assert args[2]["subsystem_outputs"].tolist() == [
+        _WithLatents.LATENT[i] for i in idx
+    ]
+    a, b = latent[idx[0]], latent[idx[1]]
+    expected = ((a - b).norm() / math.sqrt(2.0)).item()
+    assert logged[0]["val_sample/oversmoothing_subsystem"] == pytest.approx(
+        expected, abs=1e-6
+    )

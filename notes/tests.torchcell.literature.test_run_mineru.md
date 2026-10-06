@@ -21,3 +21,7 @@ Parametrized over the recorded phase (`retiring`, `installing`, `swapped`, none)
 ## 2026.10.01 - Real kills
 
 Replaced the hand-built post-kill states with `_Killer`, which kills the k-th `Path.rename`, `Path.write_text` (after writing half its text), `os.replace`, `shutil.copytree` or `shutil.rmtree` of the real runner. `test_any_single_kill_...` and `test_any_double_kill_...` loop over every kill point (and every pair) followed by an exit-5 run and assert every reference in the markdown and content list resolves; `test_a_kill_during_install_then_during_recovery_keeps_the_old_figures` pins the reviewer's double-kill sequence with exact file lists.
+
+## 2026.10.06 - Phase 21 lane D tests
+
+Phase 21 (lane D): `_ensure_hf_home` on all three branches (kept, derived from `DATA_ROOT` as `models/mineru/hf_cache`, exit 4 with the exact stderr line), `_find_first` returning None, and the early exits of `main`: 2 for a missing PDF (nothing created), 4 before MinerU runs, 3 when MinerU writes no markdown (the scratch directory stays, unlike exit 5), and a markdown-only MinerU tree that writes just the markdown.

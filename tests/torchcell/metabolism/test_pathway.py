@@ -13,6 +13,7 @@ betaxanthin chemistry are marked and skipped when the yeast-GEM checkout is abse
 
 import os
 import os.path as osp
+import re
 
 import cobra
 import pytest
@@ -212,3 +213,133 @@ def test_cassette_genes_are_constitutive_in_the_flux_layer() -> None:
     undeclared.availability = layer.availability
     gamma_off = undeclared.gene_availability(h, empty, empty)
     assert gamma_off[0, gene_ids.index("DOD")].item() == pytest.approx(0.0)
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.06 (Phase 21): every refusal of ``apply_pathway`` and
+# ``_derive_formula_and_charge`` with its exact message, ``product_ids`` on a toy,
+# and ``inplace``. The toy host is ``_toy_model``: a_c C3H7NO2, b_c C3H6O3, h2o_c H2O.
+# --------------------------------------------------------------------------- #
+def _pw(
+    *reactions: ReactionSpec, mets: list[MetaboliteSpec] | None = None
+) -> HeterologousPathway:
+    return HeterologousPathway(
+        name="t", base_strain="toy", metabolites=mets or [], reactions=list(reactions)
+    )
+
+
+def test_metabolite_id_clash_is_refused() -> None:
+    pw = _pw(mets=[MetaboliteSpec(id="a_c", name="dup", formula="C", charge=0)])
+    with pytest.raises(
+        ValueError, match=re.escape("t: metabolite ids already in model: ['a_c']")
+    ):
+        apply_pathway(_toy_model(), pw)
+
+
+def test_derivation_needs_exactly_one_producing_reaction() -> None:
+    pw = _pw(
+        ReactionSpec(id="DM_p", name="d", stoichiometry={"p_c": -1}),
+        mets=[MetaboliteSpec(id="p_c", name="p")],
+    )
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "p_c: need exactly one producing reaction to derive a formula, found 0"
+        ),
+    ):
+        apply_pathway(_toy_model(), pw)
+
+
+def test_derivation_needs_a_unit_product_coefficient() -> None:
+    pw = _pw(
+        ReactionSpec(
+            id="r", name="r", stoichiometry={"a_c": -2, "p_c": 2}, spontaneous=True
+        ),
+        mets=[MetaboliteSpec(id="p_c", name="p")],
+    )
+    with pytest.raises(
+        ValueError,
+        match=re.escape("p_c: deriving a formula needs coefficient 1, got 2.0"),
+    ):
+        apply_pathway(_toy_model(), pw)
+
+
+def test_derivation_refuses_a_negative_element_count() -> None:
+    """b_c (C3H6O3) -> a_c (C3H7NO2) + p_c leaves p = C0 H-1 N-1 O1."""
+    pw = _pw(
+        ReactionSpec(
+            id="r",
+            name="r",
+            stoichiometry={"b_c": -1, "a_c": 1, "p_c": 1},
+            spontaneous=True,
+        ),
+        mets=[MetaboliteSpec(id="p_c", name="p")],
+    )
+    with pytest.raises(
+        ValueError,
+        match=re.escape("p_c: derived a negative element count {'H': -1, 'N': -1}"),
+    ):
+        apply_pathway(_toy_model(), pw)
+
+
+def test_a_fractional_coefficient_truncates_and_is_caught_by_the_balance_check() -> (
+    None
+):
+    """``int()`` truncates toward zero, so 0.7 a_c (C3H7NO2) -> p_c derives
+    C ``int(2.1) = 2``, H ``int(4.9) = 4``, N ``int(0.7) = 0``, O ``int(1.4) = 1``:
+    p = C2H4O, not the exact C2.1H4.9N0.7O1.4. The derivation is not exact for
+    fractional coefficients; the final mass-balance check is what refuses the reaction.
+    ``inplace=True`` leaves the truncated formula visible on the model after the raise.
+    """
+    m = _toy_model()
+    pw = _pw(
+        ReactionSpec(
+            id="r", name="r", stoichiometry={"a_c": -0.7, "p_c": 1}, spontaneous=True
+        ),
+        mets=[MetaboliteSpec(id="p_c", name="p")],
+    )
+    with pytest.raises(ValueError, match=re.escape("t: unbalanced reactions {'r': {")):
+        apply_pathway(m, pw, inplace=True)
+    assert (
+        m.metabolites.get_by_id("p_c").formula,
+        m.metabolites.get_by_id("p_c").charge,
+    ) == ("C2H4O", 0)
+
+
+def test_gene_rule_annotation_and_inplace() -> None:
+    """An isomer pair a_c -> q_c (both C3H7NO2) carrying a gene rule, edited in place."""
+    m = _toy_model()
+    pw = _pw(
+        ReactionSpec(
+            id="r_enz",
+            name="enz",
+            stoichiometry={"a_c": -1, "q_c": 1},
+            gene_reaction_rule="GENE1 and GENE2",
+            evidence=EvidenceTier.CONVENTION,
+            subsystem="sub",
+        ),
+        mets=[
+            MetaboliteSpec(
+                id="q_c", name="q", formula="C3H7NO2", charge=0, chebi_id="CHEBI:1"
+            )
+        ],
+    )
+    out = apply_pathway(m, pw, inplace=True)
+    assert out is m
+    rxn = m.reactions.get_by_id("r_enz")
+    assert rxn.gene_reaction_rule == "GENE1 and GENE2"
+    assert rxn.annotation == {"evidence_tier": "convention"}
+    assert rxn.subsystem == "sub"
+    assert (rxn.lower_bound, rxn.upper_bound) == (0.0, 1000.0)
+    assert m.metabolites.get_by_id("q_c").annotation == {"chebi": "CHEBI:1"}
+
+
+def test_product_ids_ignore_demands_and_intermediates() -> None:
+    """X -> y (internal), y + a -> z (internal), DM_z drains z: products = {z}."""
+    pw = _pw(
+        ReactionSpec(id="r1", name="1", stoichiometry={"x": -1, "y": 1}),
+        ReactionSpec(id="r2", name="2", stoichiometry={"y": -1, "a": -1, "z": 1}),
+        ReactionSpec(id="DM_z", name="d", stoichiometry={"z": -1}),
+    )
+    assert pw.product_ids() == ["z"]
+    assert pw.evidence_census() == {"sourced": 3}

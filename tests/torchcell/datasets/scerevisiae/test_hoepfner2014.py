@@ -1243,3 +1243,191 @@ def test_main_builds_the_dataset_under_data_root(
     module.main()
     assert calls == [{"root": f"{tmp_path}/data/torchcell/env_chemgen_hoepfner2014"}]
     assert capsys.readouterr().out == "len = 13\nitem[0]\n"
+
+
+# ---- 2026.10.06 (Phase 21): the remaining one-line branches ----------------------- #
+def _entry(lab: str, batch: str, plate: str = "201", well: str = "A2") -> Any:
+    return module.TableS5Entry(
+        orf="YAL001C",
+        table_s5_id="1",
+        plate=plate,
+        row_column=well,
+        cluster="",
+        base_cluster="",
+        is_positional=False,
+        mutation="",
+        validation_result="",
+        lab=lab,
+        batch=batch,
+        chromosome_arm="",
+        flagged=False,
+    )
+
+
+def test_strain_construction_refuses_entries_that_disagree_on_lab_or_batch() -> None:
+    """One entry keeps plate and well; two agreeing entries drop them (the deposited
+    row does not say which copy was pooled); entries whose lab differs, and entries
+    whose batch differs, each raise with the sorted sets.
+    """
+    one = module._strain_construction([_entry("Lab 1", "b1")])
+    assert one.model_dump() == {
+        "lab": "Lab 1",
+        "batch": "b1",
+        "plate": "201",
+        "well": "A2",
+        "strain_accession": None,
+    }
+    two = module._strain_construction(
+        [_entry("Lab 1", "b1"), _entry("Lab 1", "b1", "202", "B3")]
+    )
+    assert two.model_dump() == {
+        "lab": "Lab 1",
+        "batch": "b1",
+        "plate": None,
+        "well": None,
+        "strain_accession": None,
+    }
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "Table S5 entries for YAL001C disagree on lab / batch: "
+            "['Lab 1', 'Lab 2'] / ['b1']"
+        ),
+    ):
+        module._strain_construction([_entry("Lab 2", "b1"), _entry("Lab 1", "b1")])
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "Table S5 entries for YAL001C disagree on lab / batch: "
+            "['Lab 1'] / ['b1', 'b2']"
+        ),
+    ):
+        module._strain_construction([_entry("Lab 1", "b2"), _entry("Lab 1", "b1")])
+
+
+def test_load_ic30_reads_digit_ids_from_the_two_moa_sheets(tmp_path: Path) -> None:
+    """Both MoA sheets contribute and any other sheet is ignored (``Other``'s CMB 77
+    never appears). Known-MoA rows: CMB 12 (int) -> "12"; " 45 " (string) -> "45";
+    "CMB7" (not digits), a blank id and a blank IC30 are skipped. Novel-MoA: 99 -> 4.0.
+    Expected {"12": 3.0, "45": 2.5, "99": 4.0}. With the novel sheet's IC30 column
+    renamed, that sheet is skipped whole and only the known-MoA ids remain.
+    """
+    import openpyxl
+
+    workbook = openpyxl.Workbook()
+    known = workbook.active
+    known.title = "Reference Substances known MoA"
+    known.append(["CMB ID", "IC30 (uM)"])
+    for row in ([12, 3.0], [" 45 ", 2.5], ["CMB7", 1.0], [None, 9.0], [13, None]):
+        known.append(row)
+    novel = workbook.create_sheet("Substances novel MoA")
+    novel.append(["CMB ID", "IC30 (uM)"])
+    novel.append([99, 4.0])
+    other = workbook.create_sheet("Other")
+    other.append(["CMB ID", "IC30 (uM)"])
+    other.append([77, 7.0])
+    path = tmp_path / "Table_S1.xlsx"
+    workbook.save(path)
+    assert module._load_ic30(str(path)) == {"12": 3.0, "45": 2.5, "99": 4.0}
+    novel.cell(row=1, column=2, value="MoA")
+    workbook.save(path)
+    assert module._load_ic30(str(path)) == {"12": 3.0, "45": 2.5}
+
+
+def test_column_census_records_the_positive_control_columns() -> None:
+    """A CMB991 column (``POSITIVE_CONTROL_CMB``) is a detection column AND a positive
+    control; its z-score companion and the other assay's column are not counted.
+    """
+    header = [
+        *HEADER,
+        '"Ad. scores for Exp. 991_5_HIP_0077"',
+        '"Ad. scores for Exp. 991_5_HIP_0077 z-score"',
+        '"Ad. scores for Exp. 991_5_HOP_0077"',
+    ]
+    meta: dict[str, dict[str, str | None]] = {
+        **META,
+        "991": {"common_name": "Control", "smiles": AMITRIPTYLINE_SMILES},
+    }
+    census = _dataset()._column_census(header, "HIP", meta)
+    assert census.positive_control == [8]
+    assert census.detection == [1, 3, 4, 5, 6, 8]
+    assert census.cmbs == {"3", "409", "777", "888", "991"}
+    assert census.unencodable == [(6, "888")]
+
+
+def test_iter_records_counts_excluded_cells_and_skips_columns_past_a_short_row(
+    tmp_path: Path,
+) -> None:
+    """HEADER plus an excluded CMB4019 column at index 8. Kept HIP columns are 1, 3, 5
+    (409 is a compound drop, 888 unencodable). Detection columns: 1, 3, 4, 5, 6, 8.
+
+    YAL001C fills every cell: three records (0.1 each, screens 0077, 0091, 0077), and
+    its index-4, index-6 and index-8 cells count as one dropped (409), one unencodable
+    and one excluded (4019) cell. YAL034C-B is a SHORT row of five fields (indices 0-4:
+    0.2, "", 0.3, 0.4): it is scored in 1, 3 and 4, i.e. 3 >= 0.5 * 6, so it is kept;
+    columns 1 and 3 give records 0.2 and 0.3 and column 5 lies past the row and is
+    skipped (line 2147), so no record is invented for it; its 409 cell counts as a
+    drop and it has no excluded cell.
+    """
+    from pydantic import TypeAdapter
+
+    from torchcell.datamodels.schema import ExperimentType
+
+    header = [*HEADER, '"Ad. scores for Exp. 4019_0.5_HIP_0125"']
+    meta: dict[str, dict[str, str | None]] = {
+        **META,
+        "4019": {
+            "common_name": "D-Glucose (starvation)",
+            "smiles": "OCC1OC(O)C(O)C(O)C1O",
+        },
+    }
+    columns, dropped = _dataset()._column_meta(header, "HIP", meta, _FakeTxn())
+    assert ([c.index for c in columns], dropped) == ([1, 3, 5], [(4, "409")])
+    census = _dataset()._column_census(header, "HIP", meta)
+    path = tmp_path / "HIP_scores.txt"
+    path.write_text(
+        "\n".join(
+            [
+                "\t".join(header),
+                "\t".join(['"YAL001C"'] + ['"0.1"'] * 7 + ['"0.7"']),
+                "\t".join(['"YAL034C-B"', '"0.2"', '""', '"0.3"', '"0.4"']),
+            ]
+        )
+        + "\n"
+    )
+    counts = module._BuildCounts()
+    records = [
+        pickle.loads(value)
+        for value in _dataset()._iter_records(
+            str(path),
+            "HIP",
+            {"YAL001C", "YAL034C-B"},
+            columns,
+            dropped,
+            {("HIP", s): {"$ref": s} for s in {c.study for c in columns}},
+            {"$ref": "pub"},
+            counts,
+            {},
+            TypeAdapter(ExperimentType).validate_python,
+            lambda name: _RESOLVER[name],
+            census,
+        )
+    ]
+    assert [
+        (
+            r["experiment"]["genotype"]["perturbations"][0]["perturbed_gene_name"],
+            r["experiment"]["phenotype"]["environment_response"],
+            r["experiment"]["phenotype"]["screen_id"],
+        )
+        for r in records
+    ] == [
+        ("YAL001C", 0.1, "0077"),
+        ("YAL001C", 0.1, "0091"),
+        ("YAL001C", 0.1, "0077"),
+        ("YAL034C-B", 0.2, "0077"),
+        ("YAL034C-B", 0.3, "0091"),
+    ]
+    assert dict(counts.excluded) == {("HIP", "4019"): 1}
+    assert dict(counts.dropped) == {("HIP", "409"): 2}
+    assert counts.unencodable["HIP"] == 1
+    assert counts.detected_rows["HIP"] == 2

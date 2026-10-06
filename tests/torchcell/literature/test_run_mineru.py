@@ -626,3 +626,113 @@ def test_a_kill_during_install_then_during_recovery_keeps_the_old_figures(
         "# si1\n![](images/si1/a.jpg)\n![](images/si1/b.jpg)\n![](images/si1/c.jpg)\n"
     )
     assert _unresolved(si) == []
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.06 (Phase 21): the early exits (2, 3, 4), ``_ensure_hf_home`` on every
+# branch, and a MinerU tree with no content list or middle JSON.
+# --------------------------------------------------------------------------- #
+def test_ensure_hf_home_keeps_an_existing_hf_home(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("HF_HOME", str(tmp_path / "given"))
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path / "root"))
+    assert runner._ensure_hf_home() == 0
+    assert os.environ["HF_HOME"] == str(tmp_path / "given")
+    assert not (tmp_path / "root").exists()
+
+
+def test_ensure_hf_home_derives_it_from_data_root(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """``$DATA_ROOT/models/mineru/hf_cache`` is created and exported."""
+    monkeypatch.delenv("HF_HOME")
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path / "root"))
+    assert runner._ensure_hf_home() == 0
+    expected = tmp_path / "root" / "models" / "mineru" / "hf_cache"
+    assert os.environ["HF_HOME"] == str(expected)
+    assert expected.is_dir()
+
+
+def test_ensure_hf_home_without_either_variable_is_exit_4(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.delenv("HF_HOME")
+    monkeypatch.delenv("DATA_ROOT", raising=False)
+    assert runner._ensure_hf_home() == 4
+    assert capsys.readouterr().err == "ERROR: set HF_HOME or DATA_ROOT for MinerU\n"
+    assert "HF_HOME" not in os.environ
+
+
+def test_find_first_returns_none_when_absent(tmp_path: Path) -> None:
+    (tmp_path / "a" / "b").mkdir(parents=True)
+    (tmp_path / "a" / "b" / "x.md").write_text("x")
+    assert runner._find_first(tmp_path, "x.md") == tmp_path / "a" / "b" / "x.md"
+    assert runner._find_first(tmp_path, "y.md") is None
+
+
+def test_a_missing_pdf_is_exit_2_before_anything_is_made(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    _install(monkeypatch, {})
+    pdf = tmp_path / "out" / "nope.pdf"
+    assert _run(monkeypatch, pdf) == 2
+    assert capsys.readouterr().err == f"ERROR: PDF not found: {pdf.resolve()}\n"
+    assert not (tmp_path / "out").exists()
+
+
+def test_an_underivable_hf_home_is_exit_4_before_mineru_runs(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The out dir exists (made before the check) but MinerU never parses anything."""
+    fake = _install(monkeypatch, {"si1": ["a.jpg"]})
+    monkeypatch.delenv("HF_HOME")
+    monkeypatch.delenv("DATA_ROOT", raising=False)
+    si1 = _pdf(tmp_path / "si", "si1.pdf")
+    assert _run(monkeypatch, si1) == 4
+    captured = capsys.readouterr()
+    assert captured.err == "ERROR: set HF_HOME or DATA_ROOT for MinerU\n"
+    assert captured.out == ""
+    assert fake.dpis == []
+    assert _tree(tmp_path / "si") == ["si1.pdf"]
+
+
+def test_no_markdown_is_exit_3_and_leaves_the_scratch(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """MinerU writes nothing: exit 3 naming the scratch. Unlike exit 5 the scratch
+    directory stays (the next run's ``_restore_after_kill`` + rmtree clears it).
+    """
+    _install(monkeypatch, {})
+    monkeypatch.setattr(
+        sys.modules["mineru.cli.common"], "do_parse", lambda **kwargs: None
+    )
+    si = tmp_path / "si"
+    si1 = _pdf(si, "si1.pdf")
+    assert _run(monkeypatch, si1) == 3
+    scratch = si.resolve() / ".mineru_scratch_si1"
+    assert capsys.readouterr().err == (
+        f"ERROR: MinerU produced no si1.md under {scratch}\n"
+    )
+    assert sorted(p.name for p in si.iterdir()) == [".mineru_scratch_si1", "si1.pdf"]
+
+
+def test_markdown_only_output_writes_just_the_markdown(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """A tree with only ``<stem>.md`` and no figures: no content list, no middle JSON,
+    no images directory are created, and the scratch is removed.
+    """
+    _install(monkeypatch, {})
+
+    def md_only(output_dir: str, pdf_file_names: list[str], **kwargs: Any) -> None:
+        (stem,) = pdf_file_names
+        auto = Path(output_dir) / stem / "auto"
+        auto.mkdir(parents=True)
+        (auto / f"{stem}.md").write_text("# only text\n")
+
+    monkeypatch.setattr(sys.modules["mineru.cli.common"], "do_parse", md_only)
+    paper = _pdf(tmp_path / "ck", "paper.pdf")
+    assert _run(monkeypatch, paper) == 0
+    assert _tree(tmp_path / "ck") == ["paper.md", "paper.pdf"]
+    assert (tmp_path / "ck" / "paper.md").read_text() == "# only text\n"

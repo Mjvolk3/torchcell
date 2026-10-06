@@ -19,3 +19,7 @@ Findings: a reaction with no metabolites is missing from `reaction_map` (hyperne
 - `test_main_with_gene_set_filters_by_the_induced_gene_set`: the second construction receives `induced_gene_set`, prints 5 edges before and after, one partial-overlap warning for RBIG.
 - `test_plot_random_network_unknown_layout`: exact `ValueError` naming the three valid layouts.
 - The sanity check and the seed-42 entry point tests are re-derived on four reactions (seed 0 order R_OTHER, EX_A_irr, RBIG, T_A; seed 42 picks RBIG, R_OTHER, EX_A_irr).
+
+## 2026.10.06 - Phase 21 lane D tests
+
+Phase 21 (lane D): the branches real YeastGEM graphs cannot reach, on duck-typed stand-ins. `sanity_check_metabolic_networks` on a hand graph with 5 same-type edges and 4 isolated nodes (3 of each shown, then the remainder count); `analyze_reactions_without_genes` with a parser that never returns `[set()]`, so the three detection methods disagree (1, 1, 0) and the inconsistency report prints.

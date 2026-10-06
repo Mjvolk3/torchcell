@@ -10,13 +10,22 @@ import os.path as osp
 import re
 from typing import Any
 
+import pytest
 import yaml
 
+import torchcell.adapters.costanzo2021_adapter as _init_module
+from tests.torchcell.adapters._adapter_init_harness import (
+    AdapterCase,
+    Shape,
+    assert_construction,
+    assert_missing_conf,
+)
 from torchcell.adapters.cell_adapter import CellAdapter
 from torchcell.adapters.costanzo2021_adapter import EnvChemgenCostanzo2021Adapter
 from torchcell.datamodels.media import SGA_DM_SELECTION
 from torchcell.datamodels.schema import Media
 from torchcell.datasets.scerevisiae import costanzo2021 as c
+from torchcell.datasets.scerevisiae.costanzo2021 import EnvChemgenCostanzo2021Dataset
 
 _CONF_DIR = osp.join(osp.dirname(inspect.getfile(CellAdapter)), "conf")
 _METHOD_NAME_RE = re.compile(r'\(\s*"([^"]+)",\s*self\._', re.MULTILINE)
@@ -94,3 +103,44 @@ def test_the_dosed_compound_is_projected_on_the_perturbation_node() -> None:
     ).get_properties()
     assert props["compound_name"] == "benomyl"
     assert props["inchikey"] == "RIOXQFHNBCKOKP-UHFFFAOYSA-N"
+
+
+# 2026.10.06, Phase 21: the constructor (exact conf content, wiring, refusal); the
+# checks are in tests/torchcell/adapters/_adapter_init_harness.py.
+_INIT_CASES = [
+    AdapterCase(
+        EnvChemgenCostanzo2021Adapter,
+        "costanzo2021_adapter.yaml",
+        Shape("environment response phenotype", env_perturbation=True),
+        EnvChemgenCostanzo2021Dataset,
+    )
+]
+
+
+@pytest.mark.parametrize("case", _INIT_CASES, ids=lambda c: c.adapter_cls.__name__)
+def test_init_serves_the_exact_conf_and_wires_the_base_adapter(
+    case: AdapterCase,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The conf the constructor loads is exactly the one its dataset's shape needs.
+
+    * ``EnvChemgenCostanzo2021Adapter`` loads ``conf/costanzo2021_adapter.yaml``: 17 node and 15 edge methods (``environment response phenotype``; gene-keyed genotype; perturbation nodes; environment-perturbation nodes; memory_reduction_factor 1.0 on every chunked method).
+
+    The adapter is checked against the dataset ``dataset_adapter_map`` pairs it with
+    (asserted to be the class above). The conf lists its methods in the order the
+    adapter runs them, no edge dangles, every chunked entity node is linked, and the
+    phenotype method matches that dataset's ``experiment_class``. The adapter keeps the dataset and the worker / chunk sizes
+    it was given (3, 2, 500, 50), calls ``wandb.init`` once and logs the method table
+    (event number, name, node/edge, factor or NaN for a non-chunked method) then the
+    dataset name and the pinned start time; nothing is printed.
+    """
+    assert_construction(case, monkeypatch, capsys)
+
+
+@pytest.mark.parametrize("case", _INIT_CASES, ids=lambda c: c.adapter_cls.__name__)
+def test_init_refuses_a_missing_conf_before_wandb(
+    case: AdapterCase, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With the conf absent the error names ``<adapters dir>/conf/<conf name>``."""
+    assert_missing_conf(case, _init_module, monkeypatch)

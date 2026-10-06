@@ -37,6 +37,7 @@ expected and the observed digest, and leaves the destination exactly as it was.
 import io
 import json
 import pickle
+import re
 import socket
 import tarfile
 from pathlib import Path
@@ -681,3 +682,198 @@ def test_link_verified_links_only_a_matching_source_and_keeps_an_existing_link(
     assert dest.is_symlink() and dest.readlink() == src
     link_verified(other, dest, _ABC)
     assert dest.readlink() == src
+
+
+# ---- 2026.10.06 (Phase 21): abstract bodies, the interned cache, splice/harvest ---- #
+def test_the_base_class_cannot_be_instantiated_and_its_abstract_bodies() -> None:
+    """``ExperimentDataset`` itself refuses instantiation, naming all seven abstract
+    members. Called through the base class on a concrete instance, ``download`` and
+    ``process`` raise ``NotImplementedError`` (the base ``process`` carries no
+    ``post_process`` decorator, so nothing else runs), while the three
+    abstract properties and ``preprocess_raw`` / ``create_experiment`` have ``...``
+    bodies and return ``None``.
+    """
+    with pytest.raises(
+        TypeError,
+        match=re.escape(
+            "Can't instantiate abstract class ExperimentDataset without an "
+            "implementation for abstract methods 'create_experiment', 'download', "
+            "'experiment_class', 'preprocess_raw', 'process', 'raw_file_names', "
+            "'reference_class'"
+        ),
+    ):
+        ExperimentDataset(root="unused")
+    toy = ToyDataset.__new__(ToyDataset)
+    with pytest.raises(NotImplementedError):
+        ExperimentDataset.download(toy)
+    with pytest.raises(NotImplementedError):
+        ExperimentDataset.process(toy)
+    base = ExperimentDataset.__dict__
+    assert base["experiment_class"].fget(toy) is None
+    assert base["reference_class"].fget(toy) is None
+    assert base["raw_file_names"].fget(toy) is None
+    assert ExperimentDataset.preprocess_raw(toy, pd.DataFrame()) is None
+    assert ExperimentDataset.create_experiment(toy) is None
+
+
+def test_a_second_dataset_on_one_root_shares_the_interned_tables(
+    tmp_path: Path, no_git: None
+) -> None:
+    """``_load_interned`` caches each ``interned`` dir per process: a second dataset on
+    the same root re-attaches the SAME raw table and validated-instance dict (identity,
+    not equality) instead of reading the env again; ``get_single_item`` called with
+    the env closed reopens it.
+    """
+    first = _build(tmp_path)
+    assert first[0] == _dumped(0)
+    first.close_lmdb()
+    second = _build(tmp_path)
+    assert second.env is None
+    assert second.get_single_item(1) == _dumped(1)
+    assert second._interned is first._interned
+    assert second._validated_interned is first._validated_interned
+    loaded = second._interned
+    second._load_interned()
+    assert second._interned is loaded
+
+
+def test_a_store_rebuilt_in_place_in_one_process_reads_the_stale_interned_table(
+    tmp_path: Path, no_git: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Finding: ``_INTERNED_BY_DIR`` (experiment_dataset.py line 236, read at line
+    505 and filled at line 525) is keyed by directory and never invalidated, so when a store is deleted
+    and rebuilt at the same root in the same process with a different constant (here
+    the environment at 30 C instead of 26 C), reading the new records looks up the
+    new environment's content hash in the OLD table and the rebuild fails with a
+    ``KeyError`` on that digest. Pinned until the cache is keyed by something that
+    changes with the store (or cleared when ``process`` writes the interned env).
+    """
+    import shutil
+    import sys
+
+    first = _build(tmp_path)
+    assert first[0] == _dumped(0)
+    first.close_lmdb()
+    shutil.rmtree(tmp_path / "toy_slug")
+    warm = Environment(media=SGA_DM_SELECTION, temperature=Temperature(value=30))
+    rebuilt = [(e.model_copy(update={"environment": warm}), r) for e, r in RECORDS]
+    monkeypatch.setattr(sys.modules[__name__], "RECORDS", rebuilt)
+    digest = compute_sha256_hash(canonical_json(warm))
+    with pytest.raises(KeyError, match=re.escape(digest)):
+        _build(tmp_path)
+
+
+def test_copy_and_pickle_drop_the_per_directory_tables(
+    tmp_path: Path, no_git: None
+) -> None:
+    """``__getstate__`` nulls ``_interned`` and ``_experiment_reference_index`` and
+    empties ``_validated_interned`` in the copy (they are re-attached from the
+    per-process cache or recomputed), and leaves the original untouched; the
+    unpickled copy still reads record 2. ``__getstate__`` does NOT drop the open LMDB
+    handle, so pickling a dataset whose env is open raises ``TypeError: cannot pickle
+    'Environment' object``; the test pins that, then closes the env (as ``len`` and the
+    DataLoader path do) before copying.
+    """
+    import copy
+
+    dataset = _build(tmp_path)
+    assert dataset[0] == _dumped(0)
+    dataset.transform_item(dataset[0])
+    assert dataset.env is not None
+    with pytest.raises(TypeError, match=r"^cannot pickle 'Environment' object$"):
+        pickle.dumps(dataset)
+    dataset.close_lmdb()
+    assert dataset._interned is not None and len(dataset._interned) == 3
+    assert dataset._validated_interned != {}
+    state = dataset.__getstate__()
+    assert (
+        state["_interned"],
+        state["_validated_interned"],
+        state["_experiment_reference_index"],
+    ) == (None, {}, None)
+    shallow = copy.copy(dataset)
+    assert shallow._interned is None and shallow._validated_interned == {}
+    assert dataset._interned is not None and len(dataset._interned) == 3
+    restored = pickle.loads(pickle.dumps(dataset))
+    assert restored._interned is None
+    assert restored[2] == _dumped(2)
+
+
+def test_splice_is_copy_on_write_through_dicts_and_lists() -> None:
+    """With ref ``r1`` cached as ``sentinel`` and ``r2`` not cached: ``{"a": [r1, 5],
+    "b": r2}`` returns a NEW dict whose list is a NEW list ``[sentinel, 5]``, ``b`` is
+    the same uncached ``InternedDict``, and the pending flag is True (r2); the input is
+    not mutated. A structure with nothing to replace comes back as the very same
+    objects with pending False.
+    """
+    from torchcell.data.experiment_dataset import InternedDict
+
+    toy = ToyDataset.__new__(ToyDataset)
+    sentinel = object()
+    toy._validated_interned = {"r1": sentinel}
+    r1 = InternedDict({"x": 1}, "r1")
+    r2 = InternedDict({"y": 2}, "r2")
+    inner = [r1, 5]
+    obj: dict[str, Any] = {"a": inner, "b": r2}
+    spliced, pending = toy._splice_validated(obj)
+    assert pending is True
+    assert spliced is not obj and spliced["a"] is not inner
+    assert spliced["a"][0] is sentinel and spliced["a"][1] == 5
+    assert spliced["b"] is r2
+    assert obj["a"] is inner and inner[0] is r1
+    plain: dict[str, Any] = {"a": [1, {"b": 2}]}
+    same, plain_pending = toy._splice_validated(plain)
+    assert same is plain and plain_pending is False
+    only_cached = [r1]
+    replaced, list_pending = toy._splice_validated(only_cached)
+    assert replaced == [sentinel] and replaced is not only_cached
+    assert list_pending is False
+    out, out_pending = toy._splice_validated([r2])
+    assert out[0] is r2 and out_pending is True
+
+
+def test_harvest_caches_list_members_once_and_build_returns_a_cached_constant() -> None:
+    """``_harvest_validated`` walks dicts and lists in step with the built model and
+    caches the instance behind each ``InternedDict`` the FIRST time only; ``_build`` on
+    an interned constant that is already cached returns that instance without calling
+    the model class.
+    """
+    from torchcell.data.experiment_dataset import InternedDict
+
+    toy = ToyDataset.__new__(ToyDataset)
+    toy._validated_interned = {}
+    raw = {"items": [InternedDict({"x": 1}, "r3"), 7], "tag": "t"}
+    first = {"items": ["model-r3", 7], "tag": "t"}
+    toy._harvest_validated(first, raw)
+    assert toy._validated_interned == {"r3": "model-r3"}
+    toy._harvest_validated({"items": ["other", 7], "tag": "t"}, raw)
+    assert toy._validated_interned == {"r3": "model-r3"}
+
+    toy._validated_interned = {"ref-a": REF_A}
+
+    def refuse(**_: Any) -> None:
+        raise AssertionError("the model class must not be called")
+
+    assert toy._build(refuse, InternedDict(REF_A.model_dump(), "ref-a")) is REF_A
+
+
+def test_check_manifest_pin_names_the_path_and_both_digests() -> None:
+    """Equal digests pass silently; a mismatch raises ``ManifestPinMismatchError``
+    carrying the path and both digests as attributes and in the message.
+    """
+    from torchcell.data.experiment_dataset import (
+        ManifestPinMismatchError,
+        check_manifest_pin,
+    )
+
+    check_manifest_pin("data/a.csv", "aa", "aa")
+    with pytest.raises(ManifestPinMismatchError) as excinfo:
+        check_manifest_pin("data/a.csv", "aa", "bb")
+    assert str(excinfo.value) == (
+        "raw-mirror manifest records sha256 aa for data/a.csv, but the loader pins bb"
+    )
+    assert (excinfo.value.relpath, excinfo.value.recorded, excinfo.value.pin) == (
+        "data/a.csv",
+        "aa",
+        "bb",
+    )

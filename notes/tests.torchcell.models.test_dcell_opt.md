@@ -30,3 +30,11 @@ Coverage of `torchcell/models/dcell_opt.py` from this file: 53% -> 66% (`main`, 
 - New: two roots at stratum 0 (terms 0 and 2). The prediction is the head of `root_terms[0]` only (dcell.py:341, dcell_opt.py:677-678). Root 2's head is computed, differs from the prediction, and reaches the loss only as an auxiliary term, with no warning (a Finding). Not measured whether any served GO hierarchy has two roots. DCellOpt equals the reference on every head.
 - New: with `output_size=2`, every head and the prediction are [3, 2] and equal the reference bitwise; 54 parameters (45 + 9).
 - Global reseeds wrapped in `torch.random.fork_rng()`. Mutants killed: `root_terms[-1]`, heads built with output 1.
+
+## 2026.10.06 - Phase 21: the plain-int term index
+
+`_extract_gene_states_for_term(1)` equals the tensor index (term 1 states [[0, 1], [1, 1], [1, 0]] for knockouts {0}, {2, 3}, {1}); `_prepare_term_input_optimized(0)` with children 1 and 2 written as 1s and 2s gives [1, 1, 2, 2, 0] per row for int and tensor indices alike. Left uncovered: the CUDA-stream branch of `_process_stratum_parallel` (lines 554-580, CUDA hidden), line 764 (unreachable: the gene-state block always has at least one column) and `main`.
+
+## 2026.10.06 - Phase 21 audit 2
+
+The two int-index ignores use the two-sided `[arg-type, unused-ignore]` form.

@@ -12,11 +12,21 @@ from __future__ import annotations
 
 import json
 import os.path as osp
+import re
+from types import SimpleNamespace
 from typing import Any
 
+import pytest
 import yaml
 
 import torchcell.adapters as adapters_package
+import torchcell.adapters.hillenmeyer2008_adapter as _init_module
+from tests.torchcell.adapters._adapter_init_harness import (
+    AdapterCase,
+    Shape,
+    assert_construction,
+    assert_missing_conf,
+)
 from torchcell.adapters.cell_adapter import CellAdapter
 from torchcell.adapters.hillenmeyer2008_adapter import (
     HetHillenmeyer2008Adapter,
@@ -28,6 +38,10 @@ from torchcell.datamodels.schema import (
     MeasurementType,
     SampleUnit,
     UncertaintyType,
+)
+from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
+    HetHillenmeyer2008Dataset,
+    HomHillenmeyer2008Dataset,
 )
 
 CONFS = ("het_hillenmeyer2008_adapter.yaml", "hom_hillenmeyer2008_adapter.yaml")
@@ -202,3 +216,73 @@ def test_strain_resolved_record_emits_genome_reference_experiment_and_phenotype_
     assert phenotype.get_properties()["environment_response"] == 0.7
     assert isinstance(experiment, StrainEnvironmentResponseExperiment)
     assert experiment.experiment_type == "strain_environment_response"
+
+
+# 2026.10.06, Phase 21: the constructor (exact conf content, wiring, refusal); the
+# checks are in tests/torchcell/adapters/_adapter_init_harness.py.
+_INIT_CASES = [
+    AdapterCase(
+        HetHillenmeyer2008Adapter,
+        "het_hillenmeyer2008_adapter.yaml",
+        Shape("environment response phenotype", env_perturbation=True),
+        HetHillenmeyer2008Dataset,
+    ),
+    AdapterCase(
+        HomHillenmeyer2008Adapter,
+        "hom_hillenmeyer2008_adapter.yaml",
+        Shape("environment response phenotype", env_perturbation=True),
+        HomHillenmeyer2008Dataset,
+    ),
+]
+
+
+@pytest.mark.parametrize("case", _INIT_CASES, ids=lambda c: c.adapter_cls.__name__)
+def test_init_serves_the_exact_conf_and_wires_the_base_adapter(
+    case: AdapterCase,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The conf the constructor loads is exactly the one its dataset's shape needs.
+
+    * ``HetHillenmeyer2008Adapter`` loads ``conf/het_hillenmeyer2008_adapter.yaml``: 17 node and 15 edge methods (``environment response phenotype``; gene-keyed genotype; perturbation nodes; environment-perturbation nodes; memory_reduction_factor 1.0 on every chunked method).
+    * ``HomHillenmeyer2008Adapter`` loads ``conf/hom_hillenmeyer2008_adapter.yaml``: 17 node and 15 edge methods (``environment response phenotype``; gene-keyed genotype; perturbation nodes; environment-perturbation nodes; memory_reduction_factor 1.0 on every chunked method).
+
+    The adapter is checked against the dataset ``dataset_adapter_map`` pairs it with
+    (asserted to be the class above). The conf lists its methods in the order the
+    adapter runs them, no edge dangles, every chunked entity node is linked, and the
+    phenotype method matches that dataset's ``experiment_class``. The adapter keeps the dataset and the worker / chunk sizes
+    it was given (3, 2, 500, 50), calls ``wandb.init`` once and logs the method table
+    (event number, name, node/edge, factor or NaN for a non-chunked method) then the
+    dataset name and the pinned start time; nothing is printed.
+    """
+    assert_construction(case, monkeypatch, capsys)
+
+
+@pytest.mark.parametrize("case", _INIT_CASES, ids=lambda c: c.adapter_cls.__name__)
+def test_init_refuses_a_missing_conf_before_wandb(
+    case: AdapterCase, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With the conf absent the error names ``<adapters dir>/conf/<conf name>``."""
+    assert_missing_conf(case, _init_module, monkeypatch)
+
+
+def test_init_refuses_a_conf_that_is_not_a_mapping(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A conf parsing to a YAML list is refused by name before ``wandb.init``.
+
+    ``_config`` builds an ``OmegaConf`` object from ``yaml.safe_load``; a list becomes a
+    ``ListConfig``, and the exact message names the file and that type.
+    """
+    from tests.torchcell.adapters._adapter_init_harness import install_recorder
+
+    rec = install_recorder(monkeypatch)
+    monkeypatch.setattr(yaml, "safe_load", lambda handle: ["a", "b"])
+    message = (
+        "het_hillenmeyer2008_adapter.yaml must parse to a mapping, got "
+        "<class 'omegaconf.listconfig.ListConfig'>"
+    )
+    dataset: Any = SimpleNamespace(name="x")
+    with pytest.raises(TypeError, match=f"^{re.escape(message)}$"):
+        HetHillenmeyer2008Adapter(dataset=dataset, process_workers=1, io_workers=1)
+    assert rec.init_calls == 0

@@ -772,3 +772,55 @@ def test_quantify_cellpose_rejected_shape_and_off_gel_instances(
     assert (rec["detector"], rec["size"]) == ("", 0)
     assert (rec["cx"], rec["cy"]) == pytest.approx((230.0, 150.0), abs=0.1)
     assert 20 not in res.kept_color and 21 not in res.kept_color
+
+
+# --- 2026.10.06 (Phase 21): the three remaining ``_recover_colony`` refusals ---------
+
+
+def _agar_with_disk(radius: int, value: float = 190.0) -> NDArray[Any]:
+    g = np.full((200, 200), 213.0)
+    y, x = np.ogrid[-100:100, -100:100]
+    g[(x * x + y * y) <= radius * radius] = value
+    return g
+
+
+def test_recover_colony_refuses_a_window_too_small_to_measure() -> None:
+    """Pitch 7: the core is ``r <= 0.28 * 7 = 1.96`` px, the 3x3 block of 9 pixels
+    (< 20), so the depression is never measured. The radius-3 colony (29 px) would
+    otherwise be recovered: the core is all colony and the 3.85..5 px annulus all agar
+    (depth 23 > 12), and it fills 29 of the 37 window pixels (r <= 3.22), above 20.
+    At pitch 8 the core is already 21 pixels.
+    """
+    rr = np.hypot(*np.mgrid[-5:6, -5:6])
+    assert int((rr <= 0.28 * 7).sum()) == 9
+    assert int((rr <= 0.28 * 8).sum()) == 21
+    assert int((rr <= 3).sum()) == 29
+    assert _recover_colony(_agar_with_disk(3), 100, 100, 7.0, True, 12.0, 0) is None
+
+
+def test_recover_colony_refuses_a_uniform_window() -> None:
+    """A radius-30 colony at 190 covers the whole 0.46 * 60 = 27.6 px window while the
+    0.55..0.78-pitch annulus (33..46.8 px) is bare agar: the depth 213 - 190 = 23 clears
+    12, but the window is constant (no Otsu split) and the well is reported empty.
+    """
+    assert _recover_colony(_agar_with_disk(30), 100, 100, 60.0, True, 12.0, 0) is None
+
+
+@pytest.mark.parametrize("grow_px", [0, 1])
+def test_recover_colony_refuses_a_fragmented_core(grow_px: int) -> None:
+    """A checkerboard of 190 pixels inside the radius-15 disk: 349 dark pixels in the
+    885-pixel core (counted below) put its 25th percentile at 190 since 349 / 885 is
+    0.39 > 0.25 (depth 23 > 12), but no two dark
+    pixels share an edge, so the largest component is 1 px, 5 px after a disk(1)
+    dilation, below ``MIN_COLONY_AREA = 20`` either way.
+    """
+    g = np.full((200, 200), 213.0)
+    y, x = np.ogrid[-100:100, -100:100]
+    checker = (np.add.outer(np.arange(200), np.arange(200)) % 2 == 0) & (
+        (x * x + y * y) <= 225
+    )
+    g[checker] = 190.0
+    rr = np.hypot(*np.mgrid[-100:100, -100:100])
+    core = g[rr <= 0.28 * 60]
+    assert (core.size, int((core == 190.0).sum())) == (885, 349)
+    assert _recover_colony(g, 100, 100, 60.0, True, 12.0, grow_px) is None

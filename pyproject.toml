@@ -265,6 +265,9 @@ paths = [
 "torchcell/datasets/nucleotide_transformer.py" = "tests/torchcell/datasets/test_datasets_nucleotide_transformer.py"
 "torchcell/datasets/fungal_up_down_transformer.py" = "tests/torchcell/datasets/test_datasets_fungal_up_down_transformer.py"
 "torchcell/knowledge_graphs/supported_queries/registry.py" = "tests/torchcell/knowledge_graphs/supported_queries/test_supported_queries_registry.py"
+"torchcell/models/esm2.py" = "tests/torchcell/models/test_models_esm2.py"
+"torchcell/models/protT5.py" = "tests/torchcell/models/test_models_protT5.py"
+"torchcell/losses/dango.py" = "tests/torchcell/losses/test_losses_dango.py"
 
 [tool.coverage.run]
 source = ["torchcell"]

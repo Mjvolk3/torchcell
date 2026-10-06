@@ -1048,3 +1048,67 @@ def test_deposit_refuses_a_sha256sums_listing_that_disagrees_with_the_pin(
         f"{digests[module.TABLE4_NAME]}"
     )
     assert not (tmp_path / "data_root").exists()
+
+
+# ---- 2026.10.06 (Phase 21): default resolver, early-return download, class surface #
+def test_resolver_without_a_genome_opens_a_read_only_s288c_genome(
+    built: AminoAcidCooper2010Dataset, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With ``genome=None``, ``_resolver`` loads ``.env`` (stubbed here), reads
+    ``DATA_ROOT`` and builds ``SCerevisiaeGenome(genome_root=<DATA_ROOT>/data/sgd/genome,
+    go_root=<DATA_ROOT>/data/go, overwrite=False)`` once, then returns its
+    ``resolve_gene_name``; a second call reuses the stored genome.
+    """
+    import dotenv
+
+    import torchcell.sequence.genome.scerevisiae as scerevisiae
+
+    built_with: list[dict[str, Any]] = []
+    dotenv_calls: list[tuple[Any, ...]] = []
+
+    class _Genome:
+        def __init__(self, **kwargs: Any) -> None:
+            built_with.append(kwargs)
+
+        def resolve_gene_name(self, name: str) -> str:
+            return f"resolved:{name}"
+
+    monkeypatch.setattr(dotenv, "load_dotenv", lambda *a, **k: dotenv_calls.append(a))
+    monkeypatch.setattr(scerevisiae, "SCerevisiaeGenome", _Genome)
+    data_root = str(tmp_path / "data_root")
+    built.genome = None
+    resolver = built._resolver()
+    assert built_with == [
+        {
+            "genome_root": osp.join(data_root, "data/sgd/genome"),
+            "go_root": osp.join(data_root, "data/go"),
+            "overwrite": False,
+        }
+    ]
+    assert dotenv_calls == [()]
+    assert resolver("YAL001C") == "resolved:YAL001C"
+    built._resolver()
+    assert len(built_with) == 1
+
+
+def test_download_keeps_a_raw_file_already_in_place(
+    built: AminoAcidCooper2010Dataset,
+) -> None:
+    """``download()`` returns before consulting the mirror when ``raw/`` already holds
+    Table 4: the data root has no mirror, yet nothing raises, and the regular file is
+    neither replaced nor turned into a link. The build-time sha256 check
+    (``test_a_raw_file_placed_in_raw_dir_is_refused_at_build_time``) is what guards it.
+    """
+    raw = Path(built.raw_dir) / module.TABLE4_NAME
+    before = raw.read_bytes()
+    built.download()
+    assert raw.read_bytes() == before
+    assert not raw.is_symlink()
+
+
+def test_class_surface(built: AminoAcidCooper2010Dataset) -> None:
+    assert built.experiment_class is MetaboliteExperiment
+    assert built.reference_class is MetaboliteExperimentReference
+    assert built.raw_file_names == [module.TABLE4_NAME]
+    frame = object()
+    assert built.preprocess_raw(frame) is frame

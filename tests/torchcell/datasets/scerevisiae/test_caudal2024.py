@@ -44,6 +44,7 @@ import io
 import json
 import os
 import os.path as osp
+import re
 import tarfile
 import zipfile
 from pathlib import Path
@@ -479,3 +480,100 @@ def test_main_builds_under_data_root_and_prints_record_zero(
         f"record[0] genome_reference: {genome}\n"
     )
     assert (target / "processed" / "lmdb" / "data.mdb").is_file()
+
+
+# ---- 2026.10.06 (Phase 21): the remaining refusals of the ledger models, _sha256 -- #
+def test_a_blank_row_rule_gap_must_name_definition_and_served_needs_an_id_rule() -> (
+    None
+):
+    """A gap whose ``field`` is not ``definition`` is refused; a ``served`` class
+    without an ``id_rule``, and a ``dropped`` class with one, are refused with the same
+    message (the check is an equivalence, lines 427-428).
+    """
+    bad = m.BLANK_ROW_RULES[m.BlankRowClass.bad_annotation]
+    assert bad.gap is not None
+    with pytest.raises(
+        ValueError,
+        match=re.escape("bad_annotation: gap must name the 'definition' field"),
+    ):
+        m.BlankRowRule(
+            **{**bad.model_dump(), "gap": bad.gap.model_copy(update={"field": "tpm"})}
+        )
+    served = m.BLANK_ROW_RULES[m.BlankRowClass.present_pangenome_orf]
+    with pytest.raises(
+        ValueError,
+        match=re.escape("present_pangenome_orf: a served class needs an id_rule"),
+    ):
+        m.BlankRowRule(**{**served.model_dump(), "id_rule": None})
+    absent = m.BLANK_ROW_RULES[m.BlankRowClass.absent]
+    with pytest.raises(
+        ValueError, match=re.escape("absent: a served class needs an id_rule")
+    ):
+        m.BlankRowRule(**{**absent.model_dump(), "id_rule": "serve it"})
+
+
+def _ledger_fields() -> dict[str, Any]:
+    """Ten rows: seven named, three blank (one per served class plus one absent)."""
+    classes = m.BlankRowClass
+    counts = dict.fromkeys(classes, 0)
+    counts[classes.present_s288c_homolog] = 1
+    counts[classes.present_pangenome_orf] = 1
+    counts[classes.absent] = 1
+    return {
+        "rules": list(m.BLANK_ROW_RULES.values()),
+        "n_rows": 10,
+        "n_rows_named": 7,
+        "n_rows_blank": 3,
+        "counts": counts,
+        "tpm_by_class": dict.fromkeys(classes, 0.0),
+        "served_ids": {"YBR020W": 1, "X5-contig_7": 1},
+        "named_pan_absence_counts": {"present": 7},
+    }
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        ({"n_rows": 11}, "named + blank rows must equal all rows"),
+        (
+            {"n_rows_blank": 4, "n_rows": 11},
+            "every blank row must be in exactly one class",
+        ),
+        (
+            {"served_ids": {"YBR020W": 1}},
+            "served_ids must account for every served row",
+        ),
+    ],
+    ids=["rows", "classes", "served"],
+)
+def test_the_blank_name_ledger_refuses_rows_it_cannot_account_for(
+    change: dict[str, Any], message: str
+) -> None:
+    """The consistent ledger validates; 7 + 3 != 11 rows, 3 classified rows against 4
+    blank ones, and 1 served id row against the 2 served-class rows (1 s288c homolog +
+    1 pangenome ORF) are each refused with their own message.
+    """
+    assert m.BlankNameLedger(**_ledger_fields()).n_rows == 10
+    with pytest.raises(ValueError, match=re.escape(message)):
+        m.BlankNameLedger(**{**_ledger_fields(), **change})
+
+
+def test_sha256_reads_in_chunks_and_matches_hashlib(tmp_path: Path) -> None:
+    """Finding: ``caudal2024._sha256`` (lines 1189-1195) has no caller in the module
+    (raw-file checks go through ``verify_sha256``). Its contract: the hex sha256 of the
+    whole file whatever the chunk size; 2500 bytes read 1024 at a time (three chunks)
+    and 1 at a time both equal ``hashlib.sha256`` over the bytes, and an empty file
+    gives the empty-input digest e3b0c442.... Pinned until it is used or removed.
+    """
+    payload = bytes(range(250)) * 10
+    path = tmp_path / "blob.bin"
+    path.write_bytes(payload)
+    expected = hashlib.sha256(payload).hexdigest()
+    assert m._sha256(str(path), chunk_size=1024) == expected
+    assert m._sha256(str(path), chunk_size=1) == expected
+    assert m._sha256(str(path)) == expected
+    empty = tmp_path / "empty.bin"
+    empty.write_bytes(b"")
+    assert m._sha256(str(empty)) == (
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    )

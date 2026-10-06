@@ -1492,3 +1492,217 @@ def test_an_infinite_parameter_passes_every_guard() -> None:
         last.bias.fill_(float("inf"))
         pred, _ = model(_cell_graph(), _collate(GENOTYPES, FOLLOW_LIVE))
     assert pred.flatten().tolist() == [float("inf")] * 3
+
+
+# ---------------------------------------------------------------------------
+# 2026.10.06 - Phase 21: remaining forward branches, the two guards an infinite
+# parameter reaches, and the init branches the lazy factory cannot build.
+# Expected values are structural identities: the model's own submodules applied by
+# hand to the subset or index the branch promises.
+# ---------------------------------------------------------------------------
+
+
+def _wildtype_embeddings(model: GeneInteractionDango) -> torch.Tensor:
+    out: torch.Tensor = model.preprocessor(model.gene_embedding(torch.arange(N)))
+    return out
+
+
+@pytest.mark.parametrize(
+    ("parameter", "message"),
+    [
+        (
+            "global_aggregator.transform_nn.0.bias",
+            "NaN detected in perturbation difference (z_p_global)",
+        ),
+        (
+            "gene_interaction_predictor.prediction_layer.bias",
+            "NaN detected in gate weights after softmax",
+        ),
+    ],
+)
+def test_an_infinite_parameter_trips_the_late_guards(
+    parameter: str, message: str
+) -> None:
+    """+inf (not NaN) reaches two guards no NaN parameter can reach first: an infinite
+    transform bias makes z_w_global and z_i_global both +inf, so z_w - z_i is NaN
+    (line 1304); an infinite local prediction makes both gate logits +inf, finite
+    under isnan, and their softmax NaN (line 1399). Found by filling each parameter in
+    turn with +inf and -inf (54 parameters x 2 signs x 2 combination methods).
+    """
+    model = _lazy().eval()
+    with torch.no_grad():
+        dict(model.named_parameters())[parameter].fill_(float("inf"))
+    with pytest.raises(RuntimeError, match=re.escape(message)):
+        model(_cell_graph(), _collate(GENOTYPES, FOLLOW_LIVE))
+
+
+def test_a_wildtype_pert_mask_restricts_the_wildtype_pool() -> None:
+    """A cell_graph carrying pert_mask (gene 4 removed) pools z_w over genes 0..3 only
+    (line 1240): z_w equals the global aggregator on those four rows; without the mask
+    it pools all five.
+    """
+    model = _lazy().eval()
+    cell = _cell_graph()
+    cell["gene"].pert_mask = torch.tensor([False, False, False, False, True])
+    with torch.no_grad():
+        _, out = model(cell, _collate(GENOTYPES, FOLLOW_LIVE))
+        z_w = model.forward_single(_cell_graph())
+        kept = model.global_aggregator(
+            z_w[:4], index=torch.zeros(4, dtype=torch.long), dim_size=1
+        )
+        full = model.global_aggregator(
+            z_w, index=torch.zeros(5, dtype=torch.long), dim_size=1
+        )
+        _, plain = model(_cell_graph(), _collate(GENOTYPES, FOLLOW_LIVE))
+    torch.testing.assert_close(out["z_w"], kept)
+    torch.testing.assert_close(plain["z_w"], full)
+    assert not torch.allclose(kept, full)
+
+
+def test_a_batch_without_pert_mask_pools_every_gene_by_its_batch_vector() -> None:
+    """Without ``pert_mask`` the perturbed pool uses all rows and the full batch vector
+    (lines 1275-1276): z_i equals the aggregator on forward_single(batch) indexed by
+    gene.batch, so deleted genes are pooled too.
+    """
+    model = _lazy().eval()
+    batch = _collate(GENOTYPES, FOLLOW_LIVE)
+    del batch["gene"].pert_mask
+    with torch.no_grad():
+        _, out = model(_cell_graph(), batch)
+        z_i = model.forward_single(batch)
+        expected = model.global_aggregator(z_i, index=batch["gene"].batch)
+    torch.testing.assert_close(out["z_i"], expected)
+    assert out["z_i"].shape == (3, HIDDEN)
+
+
+def test_forward_single_skips_absent_and_index_free_relations() -> None:
+    """A graph without the regulatory relation, or with a regulatory store holding only
+    a mask, runs the physical conv alone (lines 1177 and 1188): both equal the first
+    conv layer applied to {physical: edges} with an all-True mask.
+    """
+    model = _lazy().eval()
+    absent = _cell_graph(edges={"physical": EDGES["physical"]})
+    index_free = _cell_graph(edges={"physical": EDGES["physical"]})
+    index_free[REG].mask = torch.tensor([True, True, True])
+    phys_edges = _edge_index(EDGES["physical"])
+    with torch.no_grad():
+        layer = model.convs[0]
+        assert isinstance(layer, HeteroConvAggregator)
+        expected, _ = layer(
+            {"gene": _wildtype_embeddings(model)},
+            {PHYS: phys_edges},
+            {PHYS: torch.ones(4, dtype=torch.bool)},
+        )
+        torch.testing.assert_close(model.forward_single(absent), expected["gene"])
+        torch.testing.assert_close(model.forward_single(index_free), expected["gene"])
+
+
+def test_pairwise_aggregation_skips_a_missing_second_graph() -> None:
+    """Names [physical, regulatory], only physical present: the inner loop skips
+    regulatory (line 206), leaving options [pp(a, a), a] (identity = mean of one).
+    """
+    with torch.random.fork_rng():
+        torch.manual_seed(0)
+        agg = PairwiseGraphAggregation(HIDDEN, ["physical", "regulatory"]).eval()
+        a = torch.randn(3, HIDDEN)
+        with torch.no_grad():
+            out, weights = agg({"physical": a})
+            options = torch.stack(
+                [agg.interaction_mlps["physical_physical"](torch.cat([a, a], -1)), a],
+                dim=1,
+            )
+            w = torch.softmax(agg.pair_scorer(options).squeeze(-1), dim=-1)
+        assert weights is not None and weights.shape == (3, 2)
+        torch.testing.assert_close(weights, w)
+        torch.testing.assert_close(out, (options * w.unsqueeze(-1)).sum(1))
+
+
+def test_wrapper_passes_kwargs_to_a_non_gin_conv() -> None:
+    """A GCNConv inside the wrapper is called as conv(x, edge_index, **kwargs)
+    (line 849): edge_weight reaches it, and the output is act(proj(conv(...))).
+    """
+    with torch.random.fork_rng():
+        torch.manual_seed(0)
+        conv = GCNConv(HIDDEN, 5)
+        wrapper = AttentionConvWrapper(
+            conv, HIDDEN, norm=None, activation="tanh", dropout=0
+        ).eval()
+        x = torch.randn(4, HIDDEN)
+        edges = _edge_index([(0, 1), (1, 2), (3, 2)])
+        weight = torch.tensor([1.0, 0.5, 2.0])
+        with torch.no_grad():
+            out = wrapper(
+                x,
+                edges,
+                edge_mask=torch.tensor([False, False, False]),
+                edge_weight=weight,
+            )
+            expected = torch.tanh(wrapper.proj(conv(x, edges, edge_weight=weight)))
+            unweighted = wrapper(x, edges)
+        torch.testing.assert_close(out, expected)
+        assert not torch.allclose(out, unweighted)
+
+
+def test_init_resets_batch_norm_and_leaves_gatv2_untouched() -> None:
+    """``_init_weights`` on any module tree: nn.LayerNorm and BatchNorm1d go to (1, 0)
+    (lines 1098-1103; the model itself uses PyG norms, which are neither); a GATv2Conv keeps every parameter, because the branch looks for
+    ``lin_src`` / ``lin_dst`` / ``att_src`` / ``att_dst`` and PyG 2.8 names them
+    ``lin_l`` / ``lin_r`` / ``att`` (the eager model's pinned finding,
+    test_hetero_cell_bipartite_dango_gi.py:620; the lazy factory refuses GATv2, so
+    here the branch is dead code). A GATv2Conv given those names is re-initialized
+    exactly as the branch says: zero biases, Kaiming fan_out weights, Xavier
+    attention vectors (checked by replaying the draws under the same seed).
+    """
+    holder = nn.Module()
+    bn = nn.BatchNorm1d(3)
+    ln = nn.LayerNorm(3)
+    gat = GATv2Conv(4, 2, heads=2)
+    holder.bn = bn
+    holder.ln = ln
+    holder.gat = gat
+    with torch.no_grad():
+        for norm in (bn, ln):
+            norm.weight.fill_(5.0)
+            norm.bias.fill_(-2.0)
+    before = {n: p.detach().clone() for n, p in gat.named_parameters()}
+    GeneInteractionDango._init_weights(holder)  # type: ignore[arg-type, unused-ignore]
+    state = holder.state_dict()
+    for norm_name in ("bn", "ln"):
+        assert torch.equal(state[f"{norm_name}.weight"], torch.ones(3)), norm_name
+        assert torch.equal(state[f"{norm_name}.bias"], torch.zeros(3)), norm_name
+    for name, value in gat.named_parameters():
+        assert torch.equal(value, before[name]), name
+
+    stand_in = GATv2Conv(4, 2, heads=2)  # given the names the branch expects
+    stand_in.lin_src = stand_in.lin_l
+    stand_in.lin_dst = stand_in.lin_r
+    stand_in.att_src = nn.Parameter(torch.zeros(1, 2, 2))
+    stand_in.att_dst = nn.Parameter(torch.zeros(1, 2, 2))
+    with torch.no_grad():
+        stand_in.lin_l.bias.fill_(3.0)
+        stand_in.lin_r.bias.fill_(3.0)
+    holder2 = nn.Module()
+    holder2.gat = stand_in
+    with torch.random.fork_rng():
+        torch.manual_seed(0)
+        GeneInteractionDango._init_weights(holder2)  # type: ignore[arg-type, unused-ignore]
+    assert not stand_in.lin_l.bias.any() and not stand_in.lin_r.bias.any()
+    # replay: apply() visits the GATv2Conv after its children (PyG Linear, untouched),
+    # then draws kaiming(lin_src), kaiming(lin_dst), xavier(att_src), xavier(att_dst)
+    replay = [
+        torch.empty(4, 4),
+        torch.empty(4, 4),
+        torch.empty(1, 2, 2),
+        torch.empty(1, 2, 2),
+    ]
+    with torch.random.fork_rng():
+        torch.manual_seed(0)
+        nn.init.kaiming_normal_(replay[0], mode="fan_out", nonlinearity="relu")
+        nn.init.kaiming_normal_(replay[1], mode="fan_out", nonlinearity="relu")
+        nn.init.xavier_normal_(replay[2])
+        nn.init.xavier_normal_(replay[3])
+    state = holder2.state_dict()
+    for key, expected in zip(
+        ["gat.lin_l.weight", "gat.lin_r.weight", "gat.att_src", "gat.att_dst"], replay
+    ):
+        assert torch.equal(state[key], expected), key

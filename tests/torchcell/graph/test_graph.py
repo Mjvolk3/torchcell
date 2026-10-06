@@ -1215,3 +1215,30 @@ def test_main_opens_the_genome_with_overwrite_false(
         "GO:0008150",
     ]
     assert lines[3:] == ["", ""]
+
+
+# 2026.10.06 (Phase 21): ``GeneGraph.validate_genes_in_graph``.
+@pytest.mark.parametrize("order", ["kwargs", "max_gene_set_first"])
+def test_gene_graph_validator_never_sees_max_gene_set(
+    caplog: pytest.LogCaptureFixture, order: str
+) -> None:
+    """Finding: ``graph`` is declared before ``max_gene_set``, so when the ``graph``
+    field validator runs ``info.data`` holds only ``name`` and the validator returns at
+    its first branch. A graph carrying ``YZZ999W``, a node outside ``max_gene_set``,
+    is accepted with no warning, whatever order the input supplies the fields in. The
+    warning branch (graph.py:51-61) is unreachable. Pinned until ``max_gene_set`` is
+    declared first or the check moves to a model validator. Audit confirmed the cause:
+    declaring ``max_gene_set`` before ``graph`` makes the warning fire.
+    """
+    caplog.set_level(logging.DEBUG)
+    g = nx.Graph()
+    g.add_edge("YAL001C", "YZZ999W")
+    payload: dict[str, Any] = (
+        {"name": "toy", "graph": g, "max_gene_set": GENES}
+        if order == "kwargs"
+        else {"max_gene_set": GENES, "name": "toy", "graph": g}
+    )
+    gg = GeneGraph.model_validate(payload)
+    assert sorted(gg.graph.nodes()) == ["YAL001C", "YZZ999W"]
+    assert [r for r in caplog.records if "max_gene_set" in r.getMessage()] == []
+    assert list(GeneGraph.model_fields) == ["name", "graph", "max_gene_set"]

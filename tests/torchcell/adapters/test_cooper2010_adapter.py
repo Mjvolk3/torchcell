@@ -17,9 +17,17 @@ import json
 import os.path as osp
 from typing import Any, cast
 
+import pytest
 import yaml
 
 import torchcell.adapters as adapters_package
+import torchcell.adapters.cooper2010_adapter as _init_module
+from tests.torchcell.adapters._adapter_init_harness import (
+    AdapterCase,
+    Shape,
+    assert_construction,
+    assert_missing_conf,
+)
 from torchcell.adapters.cell_adapter import CellAdapter
 from torchcell.adapters.cooper2010_adapter import AminoAcidCooper2010Adapter
 from torchcell.datamodels.schema import MetabolitePhenotype
@@ -97,3 +105,44 @@ def test_metabolite_phenotype_node_is_keyed_on_the_serialized_phenotype() -> Non
     assert props["measurement_type"] == MEASUREMENT_TYPE
     assert json.loads(props["metabolite_level"])["glutamine+valine"] == 1.154314489
     assert "serialized_data" not in props
+
+
+# 2026.10.06, Phase 21: the constructor (exact conf content, wiring, refusal); the
+# checks are in tests/torchcell/adapters/_adapter_init_harness.py.
+_INIT_CASES = [
+    AdapterCase(
+        AminoAcidCooper2010Adapter,
+        "amino_acid_cooper2010_adapter.yaml",
+        Shape("metabolite phenotype"),
+        AminoAcidCooper2010Dataset,
+    )
+]
+
+
+@pytest.mark.parametrize("case", _INIT_CASES, ids=lambda c: c.adapter_cls.__name__)
+def test_init_serves_the_exact_conf_and_wires_the_base_adapter(
+    case: AdapterCase,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The conf the constructor loads is exactly the one its dataset's shape needs.
+
+    * ``AminoAcidCooper2010Adapter`` loads ``conf/amino_acid_cooper2010_adapter.yaml``: 15 node and 13 edge methods (``metabolite phenotype``; gene-keyed genotype; perturbation nodes; memory_reduction_factor 1.0 on every chunked method).
+
+    The adapter is checked against the dataset ``dataset_adapter_map`` pairs it with
+    (asserted to be the class above). The conf lists its methods in the order the
+    adapter runs them, no edge dangles, every chunked entity node is linked, and the
+    phenotype method matches that dataset's ``experiment_class``. The adapter keeps the dataset and the worker / chunk sizes
+    it was given (3, 2, 500, 50), calls ``wandb.init`` once and logs the method table
+    (event number, name, node/edge, factor or NaN for a non-chunked method) then the
+    dataset name and the pinned start time; nothing is printed.
+    """
+    assert_construction(case, monkeypatch, capsys)
+
+
+@pytest.mark.parametrize("case", _INIT_CASES, ids=lambda c: c.adapter_cls.__name__)
+def test_init_refuses_a_missing_conf_before_wandb(
+    case: AdapterCase, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With the conf absent the error names ``<adapters dir>/conf/<conf name>``."""
+    assert_missing_conf(case, _init_module, monkeypatch)

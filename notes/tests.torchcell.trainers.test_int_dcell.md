@@ -52,3 +52,12 @@ Coverage of `torchcell/trainers/int_dcell.py` from this file: 31% -> 89%. Left u
 ## 2026.10.02 - The checkpoint test loads the state dict directly
 
 `test_dcell_in_training_mode_always_gets_a_dummy_that_breaks_checkpoint_reload` failed on the CI runner for both models: its newer Lightning unpickles a checkpoint with `weights_only=True` and stops on the hyperparameters (`Unsupported global: torch_geometric.data.storage.BaseStorage`) before it reaches the state dict. The test now asserts `model.dummy` is in the saved state dict and that `load_state_dict` on a freshly built task raises `Unexpected key(s) in state_dict: "model.dummy"`, which is the strict load `load_from_checkpoint` ends with, on every Lightning version. The CI observation is a second obstacle to resuming a DCell run on a current Lightning and is recorded on issue 615.
+
+## 2026.10.06 - Phase 21: 0-dim reshapes, a 2-D inverse, subsampled latents
+
+- A 0-dim prediction (0.5), target (1.0) and original target (4.0) each become [1, 1]: the plain loss sees ((1, 1), (1, 1)) and returns 0.25; the original metrics get [0.5] vs [4.0].
+- An inverse transform returning [B, 1] is used unchanged (original metrics get 10 * root).
+- A first train batch already over the ceiling (2 < B = 3) is subsampled to `randperm(3)[:2]` together with its latents.
+- `_plot_samples` subsamples latents with the same rows; the smoothness log for two rows a, b is |a - b| / sqrt 2.
+
+Left uncovered: line 134 (pinned unreachable by the Phase 19 device finding) and lines 314, 332, 352, 369 (the "latents" key always exists, every reset writes it).

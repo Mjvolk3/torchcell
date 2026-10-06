@@ -61,6 +61,12 @@
    "centered_slope": 0.17910132317848132
   }
  },
+ "pooled_decomposition": {
+  "pooled_pearson_train_mean_vs_measured": 0.4026665451472551,
+  "pooled_pearson_model_vs_train_mean": 0.7702900274435784,
+  "fraction_of_pooled_variance_in_gene_means": 0.16725170612335205,
+  "sd_of_gene_means": 0.08985443413257599
+ },
  "examples": {
   "strain_strong": {
    "deleted": [

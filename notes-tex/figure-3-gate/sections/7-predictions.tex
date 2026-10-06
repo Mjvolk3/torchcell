@@ -1,0 +1,65 @@
+%% notes-tex/figure-3-gate/sections/7-predictions.tex
+%% SOURCE: every number here is in experiments/019-simb-multimodal/results/prediction_scatter.json,
+%% written by experiments/019-simb-multimodal/scripts/prediction_scatter.py from the v13
+%% validation prediction dump ($DATA_ROOT/val-predictions, run wq8y8nd5) and the fig3_core
+%% split-seed-0 records; the figure is the script's SVG converted by `make plots`.
+
+\clearpage
+\section{What the expression predictions look like\secstatus{todo}}
+
+The scores above are per-gene Pearson summaries. Figure~\ref{fig:predscatter} shows the
+predictions themselves for the best expression checkpoint on file, the v13 reference on
+split seed 0 (validation Pearson per gene 0.223), beside the bilinear ridge (0.134) and the
+nearest-neighbor average (0.130) on ProtT5, refit on the same 155 validation strains and
+6{,}127 graph genes with the cells selected on validation.
+
+\pfstep{The pooled correlation is mostly the gene means} The 0.45 of panel a is not a model
+score. The per-gene train mean alone, repeated for every strain, correlates 0.40 with the
+measurements across all pairs, because genes differ in their mean log2 ratio (the gene means
+have sd 0.09 against a pooled sd of 0.22 and carry 16.7 percent of the pooled variance), and
+the model's predictions correlate 0.77 with that mean profile. With the gene means removed
+from both sides (panel b) the pooled correlation is 0.28 and the mean per-gene Pearson is
+0.22.
+
+\pfstep{Direction, not distance} Within a gene the model's deviations have a third of the
+measured spread (median sd ratio 0.32, panel e) and a regression slope of 0.09 on the
+measured value. The nearest-neighbor average has the full spread (1.08) at a lower
+correlation (0.17). The ratio that minimizes squared error is the Pearson itself, 0.22, so
+the model is 1.4 times too spread for squared error and three times too narrow against the
+measurements; both statements describe the same 0.32. Per-gene Pearson rises with how much a
+gene moves (panel d): from 0.1 on the quietest genes to about 0.4 on the most variable for
+the model, 0.1 to 0.2 for both baselines.
+
+\pfstep{No predictor reaches the large responses} The strongest validation strain (panel f,
+the YER068W deletion) spans measured log2 ratios from $-2$ to $+2.5$ across genes; neither
+predictor leaves $\pm 0.5$. A median strain (panel g) is the gene-mean profile with a small
+offset. The model's best gene (panel h, YKL145W, Pearson 0.62) has its strains in the right
+order over a predicted range of 0.0 to 0.15 against a measured $-1$ to $0.5$.
+
+\tcfig{figures/prediction_scatter_2026-10-06-17-47-55.pdf}{\textbf{The v13 reference
+predicts the direction a gene moves across strains and not the distance; the large responses
+are missing from every predictor.} Validation strains of split seed 0 on fig3\_core (155
+strains, 6{,}127 graph genes). CGT: v13 reference checkpoint, run wq8y8nd5; ridge and
+neighbor average: B2 and B3 on ProtT5, cells selected on validation.
+\textbf{a}, Predicted against measured log2 ratio, every strain-gene pair (hexbin, log
+count); pooled Pearson 0.45. \textbf{b}, The same with each gene's train mean removed from
+both axes; pooled Pearson 0.28, regression slope 0.09 (orange). \textbf{c}, The neighbor
+average on the axes of b; 0.17, slope 0.18. \textbf{d}, Per-gene Pearson over the 155
+strains against the gene's train sd, with the running median per predictor (40 bins);
+means 0.223, 0.134, 0.130. \textbf{e}, Per-gene sd(predicted) / sd(measured) on the same
+axis; the solid line is 1, the dotted line 0.22 is the model's mean Pearson; medians 0.32,
+0.56, 1.08. \textbf{f}, \textbf{g}, One strain each, genes ordered by the measured value:
+the strongest-response strain (YER068W deletion, sd over genes 0.56, per-strain Pearson
+0.26) and a median one (YJL187C deletion, 0.17, 0.17). \textbf{h}, \textbf{i}, One gene
+each over the 155 strains: the gene with the highest model Pearson (YKL145W, 0.62; neighbor
+average 0.58) and the gene at the model's median (YHL028W, 0.22; 0.06). Dashed lines are
+the identity. One checkpoint, one partition; no uncertainty is shown.}{fig:predscatter}
+
+\begin{tabular}{@{}p{8mm}p{170mm}@{}}
+%% SOURCE: experiments/019-simb-multimodal/results/prediction_scatter.json (prediction_scatter.py)
+\toprule
+panel & files and keys \\
+\midrule
+all & \file{prediction_scatter.json}: \texttt{predictors} (per-gene mean and median Pearson, pooled raw and centered Pearson, median spread ratio, centered slope), \texttt{pooled\_decomposition}, \texttt{examples}; predictions from \file{val-predictions/compute-0-2-2397312\_3fcfb279\ldots.json}; baseline cells from \file{expression\_baselines\_split/seed0.json} \\
+\bottomrule
+\end{tabular}

@@ -168,6 +168,17 @@ def main() -> None:
         "n_val_strains_without_embedding": int((~ok_va).sum()),
         "predictors": {},
     }
+    # Where the pooled correlation comes from: the per-gene TRAIN mean alone, repeated for
+    # every strain, correlates with the measurements across all pairs through the
+    # between-gene differences; the per-gene Pearson removes exactly that part.
+    mu_rep = np.broadcast_to(mu, y_va.shape)
+    gm = np.nanmean(y_va, axis=0, keepdims=True)
+    out["pooled_decomposition"] = {
+        "pooled_pearson_train_mean_vs_measured": float(np.corrcoef(mu_rep[ok], y_va[ok])[0, 1]),
+        "pooled_pearson_model_vs_train_mean": float(np.corrcoef(pred_m[ok], mu_rep[ok])[0, 1]),
+        "fraction_of_pooled_variance_in_gene_means": float(1 - np.nanvar(y_va - gm) / np.nanvar(y_va)),
+        "sd_of_gene_means": float(np.std(gm)),
+    }
     per_gene: dict[str, np.ndarray] = {}
     ratio: dict[str, np.ndarray] = {}
     for name, p in preds.items():
@@ -201,6 +212,7 @@ def main() -> None:
     }
     with open(osp.join(results_dir, "prediction_scatter.json"), "w") as fh:
         json.dump(out, fh, indent=1)
+    print("pooled decomposition:", json.dumps(out["pooled_decomposition"]))
     for name, s in out["predictors"].items():
         print(f"{name:<6} " + "  ".join(f"{k} {v:.3f}" for k, v in s.items()))
     print(json.dumps(out["examples"], indent=1))
@@ -216,6 +228,9 @@ def main() -> None:
             "legend.fontsize": 5,
             "svg.fonttype": "none",
             "axes.linewidth": 0.5,
+            # An imported module leaves a tight save box in rcParams; the canvas is
+            # authored at its print width, so save it as is.
+            "savefig.bbox": None,
         }
     )
     fig, axes = plt.subplots(3, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(165)))

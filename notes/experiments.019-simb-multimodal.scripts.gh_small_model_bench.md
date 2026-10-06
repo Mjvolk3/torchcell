@@ -60,3 +60,28 @@ still inside two days).
 | 6 | 4 | 1 persistent | 8 | 58 to 64 | about 20 h |
 | 5 | 4 alive of 5 | 2 persistent | 16 | 38 to 40 | about 13 h |
 | 4 | 4 | 3 persistent | 16 | 35 to 38 | about 12 h |
+
+## 2026.10.05 - Depth by operator grid (job 3274, cells 10 to 13)
+
+One card per depth (2, 3, 4, 6 layers at width 90), the four operators co-resident on each
+(softmax reference, null sink with the gate open, Hadamard product, rank-64 response basis),
+v21 config on split seed 0, three persistent workers per run, two hours. Steady-state seconds
+per epoch per run at epoch 9, cards at 86 to 100 percent utilization:
+
+| layers | S_ref | S_sink | S_hadam | S_basis64 | card memory |
+|---|---|---|---|---|---|
+| 2 | 37 to 40 | | | | 33 GB |
+| 3 | 38 to 41 | | | | 37 GB |
+| 4 | 39 to 43 | | | | 36 GB |
+| 6 | 39 to 42 | | | | 37 GB |
+
+(Per-operator columns are within 3 s of each other at every depth; the table collapses them.)
+So with the card fed, the epoch still does not depend on depth: the encoder's six layers over
+6,600 gene tokens are not where the time goes, and neither is the main process any more (that
+was the zero-worker regime). What remains is everything that scales with batch size times
+genes and not with depth: the per-batch node tensors, the per-gene readout and loss over
+6,607 outputs for 32 strains, the metrics, and the eval passes. Hypothesis (untested): the
+cost center is the batched node-feature tensor and the readout, which a batch-size sweep
+or a profile of one step would show in minutes. The 2026-10-04 audit's cached-encoder
+speedup (42 s to 2.6 s per step) was measured on a CPU, where the encoder dominates; on a
+GPU this grid says it would not. The operator read at the two-hour mark follows below.

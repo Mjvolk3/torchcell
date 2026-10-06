@@ -17,9 +17,11 @@ Twelve strains from Zhang et al. 2022, *Nature Communications* 13:270,
 doi `10.1038/s41467-021-27852-x`, citation key
 `zhangBiosensorBranchedchainAmino2022`.
 
-The tc-lit mirror on GilaHyper was unreachable while this was written, so values were
-read from the canonical Zotero PDFs instead. Both are pinned by sha256 in the
-generating script and re-verify with `--verify`:
+The tc-lit mirror on GilaHyper was unreachable while this was first written, so values
+were read from the canonical Zotero PDFs. See the 2026.10.05 section below: the mirror
+came back and both artifacts were confirmed byte-identical to what it serves, so the
+document is mirror-backed after all. Both are pinned by sha256 in the generating script
+and re-verify with `--verify`:
 
 | role | sha256 |
 |---|---|
@@ -106,3 +108,65 @@ python experiments/W037-isobutanol-scrnaseq/scripts/strain_tables.py --verify
 make -C notes-tex/w037-isobutanol-scrnaseq
 make -C notes-tex/w037-isobutanol-scrnaseq check
 ```
+
+## 2026.10.05 - Mirror Back: Provenance Closed, Citation Wired, SI Numbering Trap
+
+GilaHyper returned, so the three things that were blocked on it are settled.
+
+### The document is mirror-backed, confirmed by hash
+
+Both artifacts read for this document are byte-identical to what tc-lit serves under
+`zhangBiosensorBranchedchainAmino2022`. This is now a check rather than an assertion:
+
+```bash
+python experiments/W037-isobutanol-scrnaseq/scripts/strain_tables.py --verify-mirror
+```
+
+`--verify` proves only that the local file still matches what was read. `--verify-mirror`
+asks tc-lit what it holds and compares, which is the claim the document actually makes. An
+unreachable mirror is a failure rather than a skip, since a silent skip would let the claim
+go unchecked exactly when it stops being true.
+
+| artifact | mirror path | sha256 |
+|---|---|---|
+| primary article | `paper.pdf` | `551ba08e...` |
+| Supplementary Information | `si/si3.pdf` | `74de9b6c...` |
+
+### The mirror's SI numbering is not the publisher's MOESM numbering
+
+Caught by `--verify-mirror` on its first run, which reported DIVERGED for the SI.
+
+| mirror path | bytes | actually is |
+|---|---|---|
+| `si/si1.pdf` | 3,545,488 | MOESM3, the Peer Review File |
+| `si/si2.pdf` | 375,128 | MOESM2 |
+| `si/si3.pdf` | 7,881,989 | MOESM1, the Supplementary Information |
+
+So pulling `si/si1.md` for this key expecting the Supplementary Information returns reviewer
+comments instead. The strain and plasmid tables are in `si/si3.md`. Worth checking whether
+other keys in the mirror share this offset before trusting an `si1` path anywhere.
+
+### Citation is real now
+
+`references.bib` holds the single cited entry, extracted from the `library` bibliography
+tc-lit serves (646 entries, exported nightly from Zotero by `scripts/lit_bib.py`). Nothing
+was written to Zotero. `make check` reports `1 cited, 1 in bib, 0 missing`.
+
+### Open items, revised
+
+Resolved since 2026.10.04:
+
+- [x] Turn the inline reference into a real `\cite`. Done without a Zotero write, by
+      extracting the one entry from the served `library` bib.
+- [x] Confirm whether the paper is mirror-backed. It is, and `--verify-mirror` proves it
+      on demand.
+
+Still open, unchanged:
+
+- [ ] Transform JC0052 with empty pYZ125 so all six share SC-ura. Without it Axis 1
+      carries a medium difference on top of its genetic one.
+- [ ] Decide whether Axis 1 needs an isogenic native-level ILV6 wild type.
+- [ ] ddPCR the four delta-integrated strains (JC0044, JC0045, JC0050, JC0051) if
+      transgene expression level enters the analysis.
+- [ ] Confirm which genes the isobutanol YKO dataset covers.
+- [ ] Decide whether to obtain the paper's top producers, none of which are on hand.

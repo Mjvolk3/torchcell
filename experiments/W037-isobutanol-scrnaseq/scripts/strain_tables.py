@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # experiments/W037-isobutanol-scrnaseq/scripts/strain_tables.py
-# [[experiments.W037-isobutanol-scrnaseq.strain-selection]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/W037-isobutanol-scrnaseq/scripts/strain_tables.py
+# [[experiments.W037-isobutanol-scrnaseq.scripts.strain_tables]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/W037-isobutanol-scrnaseq/scripts/strain_tables
 """Strain records for the twelve JC strains on hand, and the tables they emit.
 
 Every value here is read from the primary paper or its Supplementary Information
@@ -16,19 +16,23 @@ are distinguished and the distinction is load bearing:
   approximate and is printed with a leading tilde.
 
 The source PDFs are the canonical Zotero copies, pinned by sha256 in
-``SOURCE_ARTIFACTS``. ``--verify`` recomputes those hashes. The OCR mirror
-(``$DATA_ROOT/torchcell-library``) does not exist on this machine, so the Zotero
-PDF is the artifact of record here.
+``SOURCE_ARTIFACTS``. ``--verify`` recomputes those hashes from the local files.
+``--verify-mirror`` additionally asks tc-lit what it holds under the citation
+key and compares, which closes the provenance loop: the bytes read here are the
+bytes the literature mirror holds, not merely a copy that happens to sit on this
+machine. Both checks passed when this document was written.
 
 Usage:
     python experiments/W037-isobutanol-scrnaseq/scripts/strain_tables.py
     python experiments/W037-isobutanol-scrnaseq/scripts/strain_tables.py --verify
+    python experiments/W037-isobutanol-scrnaseq/scripts/strain_tables.py --verify-mirror
 """
 
 from __future__ import annotations
 
 import argparse
 import hashlib
+import os
 import os.path as osp
 from enum import Enum
 
@@ -50,11 +54,18 @@ SOURCE_ARTIFACTS: dict[str, dict[str, str]] = {
         ),
         "sha256": "551ba08ec3bf584ef49b72186050d4bb3230df59edfa664a8a6af3460a2a8bec",
         "role": "primary article",
+        "mirror_path": "paper.pdf",
     },
     "si": {
         "path": osp.join(ZOTERO_ROOT, "669BLB7N", "41467_2021_27852_MOESM1_ESM.pdf"),
         "sha256": "74de9b6cff654c5d9b6988a0a0c08672eb7defad4f002ecce6b9e6b9fa48824f",
         "role": "Supplementary Information (Tables 1-9, Notes 1-5)",
+        # Not si/si1.pdf. The mirror numbers its SI files in its own order,
+        # which is not the publisher's MOESM order: si1 is MOESM3, the Peer
+        # Review File, and si3 is MOESM1, the Supplementary Information that
+        # holds the strain and plasmid tables. Pulling si/si1.md expecting the
+        # SI returns reviewer comments, and --verify-mirror is what caught it.
+        "mirror_path": "si/si3.pdf",
     },
 }
 
@@ -927,6 +938,49 @@ def verify() -> int:
     return bad
 
 
+def verify_mirror() -> int:
+    """Compare the pinned hashes against what tc-lit holds for this key.
+
+    ``verify`` only proves the local file still matches what was read. This
+    proves the artifact read here is the one the literature mirror holds, which
+    is the claim the document actually makes. A mirror that cannot be reached is
+    a failure rather than a skip, because a silent skip would let the claim go
+    unchecked exactly when it stops being true.
+    """
+    import json
+    import urllib.request
+
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    url = os.environ.get("TC_LIT_URL", "").rstrip("/")
+    api_key = os.environ.get("TC_LIT_API_KEY", "")
+    if not url or not api_key:
+        print("TC_LIT_URL / TC_LIT_API_KEY not set; cannot reach the mirror")
+        return 1
+
+    req = urllib.request.Request(
+        f"{url}/keys/{CITATION_KEY}/files", headers={"X-API-Key": api_key}
+    )
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        payload = json.load(resp)
+    rows = payload if isinstance(payload, list) else payload.get("files", [])
+    by_path = {r["path"]: r.get("sha256", "") for r in rows}
+
+    bad = 0
+    for key, rec in SOURCE_ARTIFACTS.items():
+        want_path = rec["mirror_path"]
+        mirrored = by_path.get(want_path)
+        if mirrored is None:
+            print(f"ABSENT   {key}: {want_path} not served under {CITATION_KEY}")
+            bad += 1
+            continue
+        ok = mirrored == rec["sha256"]
+        print(f"{'MATCH   ' if ok else 'DIVERGED'} {key}  {want_path}  {mirrored}")
+        bad += 0 if ok else 1
+    return bad
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument(
@@ -934,11 +988,18 @@ def main() -> None:
         action="store_true",
         help="recompute source PDF hashes and exit",
     )
+    ap.add_argument(
+        "--verify-mirror",
+        action="store_true",
+        help="compare the pinned hashes against what tc-lit serves, and exit",
+    )
     ap.add_argument("--doc-dir", default=DOC_DIR)
     args = ap.parse_args()
 
     if args.verify:
         raise SystemExit(verify())
+    if args.verify_mirror:
+        raise SystemExit(verify_mirror())
 
     out_dir = osp.join(args.doc_dir, "tables")
     for name, fn in TABLES.items():

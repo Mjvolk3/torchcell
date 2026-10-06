@@ -85,3 +85,20 @@ cost center is the batched node-feature tensor and the readout, which a batch-si
 or a profile of one step would show in minutes. The 2026-10-04 audit's cached-encoder
 speedup (42 s to 2.6 s per step) was measured on a CPU, where the encoder dominates; on a
 GPU this grid says it would not. The operator read at the two-hour mark follows below.
+
+## 2026.10.06 - Depth x operator grid read (job 3274, cells 10 to 13)
+
+Job 3274 was cut from two hours to 96 minutes (`scontrol update TimeLimit=01:36:00`) to fit the user's window and ended by time limit with all sixteen runs alive at epoch 119 (six layers) to 132 (two layers). W&B project `torchcell_019_grid_bench`, read by `scratchpad/grid_bench_read.py` (val last-20 mean, rolling max, train-eval Pearson, pred_sd_ratio at the last epoch, mean seconds per epoch after epoch 5). One split seed, one init, at about a tenth of the budget: NOT a result. The validation Pearson per feature is 0.00 to 0.04 against 0.09 to 0.13 for the same arm at 1,200 epochs in v19; pred_sd_ratio 0.05 to 0.27 against the launch gate 0.05.
+
+| layers | S_ref | S_sink | S_hadam | S_basis64 | s per epoch (mean of four) |
+|---|---|---|---|---|---|
+| 2 | 0.010 | 0.017 | 0.020 | 0.007 | 41.9 |
+| 3 | 0.013 | 0.018 | 0.033 | 0.017 | 43.5 |
+| 4 | 0.004 | 0.010 | 0.029 | 0.012 | 44.4 |
+| 6 | 0.034 | 0.032 | 0.039 | 0.039 | 45.8 |
+
+Train-eval Pearson at the last eval-mode pass: S_ref 0.166 to 0.246, S_sink 0.152 to 0.235, S_hadam 0.146 to 0.217, S_basis64 0.191 to 0.250. Rolling max 0.046 to 0.063 on every run, separates nothing.
+
+- Throughput: the operators are within 1 s of each other at every depth; depth costs about 1 s per layer per epoch, a tenth of the epoch between two and six layers. That is the whole case for a shallower trunk, and it does not buy packing (memory is 33 to 37 GB per four runs at every depth).
+- Hypothesis (one seed, early): the Hadamard operator is above the softmax reference at all four depths on val last-20 (+0.005 to +0.025) with the lowest train-eval fit at every depth. Six layers is above the shallower trunks on every operator despite the fewest epochs, with the lowest train fit. Both are read against v21 (twelve paired seeds at budget), not acted on.
+- Example runs: depth 3 Hadamard <https://wandb.ai/zhao-group/torchcell_019_grid_bench/runs/ydyxxub2> and its reference <https://wandb.ai/zhao-group/torchcell_019_grid_bench/runs/gfzwmdq8>

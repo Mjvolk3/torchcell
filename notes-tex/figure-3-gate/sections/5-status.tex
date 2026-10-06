@@ -127,8 +127,11 @@ worker per run on eight CPUs, 1{,}200 epochs, a two-day limit, no dependency bet
 A canary of four reference copies at three epochs with a test pass (job 22690624) runs
 beside them; if it fails, the round is canceled. The queue was faster than the scheduler's
 estimate: \texttt{sbatch --test-only} placed the first pack at 16:08 the next day, and
-fifteen packs were running by 22:50, the canary 54 minutes in and still importing the store
-from Lustre. The arms, each one change against the reference S\_ref (the v21 configuration as
+fifteen packs were running by 22:50. The canary completed in 1 h 42 min with the test pass
+logged on all four runs, about 87 minutes of it the store import from Lustre; pack 0 under
+the round's settings read 49 to 59 s per epoch per run at epoch 8, so a pack finishes in
+about 22 to 24 h against the 48 h limit (a projection from epoch 8). The arms, each one
+change against the reference S\_ref (the v21 configuration as
 is): S\_mask, the masked objective restored; S\_sink, the sigmoid-gated operator with the
 gate open; S\_prop2, the deletion propagated two hops along the graphs; S\_nodrop, operator
 attention dropout off; S\_stack, the four-part embedding stack in place of ProtT5 (the size
@@ -148,10 +151,46 @@ still waits on the author's choice between Fig.~1f and the Methods. Three operat
 give each gene its own response at one deletion are in v21 at twelve paired seeds each
 (S\_sink, S\_hadam, S\_basis64) and in the GilaHyper grid tonight on split seed 0 at four
 depths. The grid's operator read, validation Pearson and its spread at about epoch 200 by
-operator within each depth, lands when job 3274 reaches its wall at 00:00 (its two-hour
-limit was cut to 96 minutes to fit the window, so the runs end near epoch 160 rather than
-200) and is appended to this document in its next version. Sixteen runs on one split seed cannot decide
-the operator; they size what v21 decides.
+operator within each depth, follows. Sixteen runs on one split seed cannot decide the
+operator; they size what v21 decides.
+
+\pfstep{The grid at epochs 119 to 132: a partial read at the launch stage} Job 3274 was cut
+from two hours to 96 minutes to fit the window and ended by time limit with all sixteen runs
+alive, at epoch 119 (six layers) to 132 (two layers). Every number below is from a stage
+where the heads have barely launched: the validation Pearson per feature sits at $0.00$ to
+$0.04$ against $0.09$ to $0.13$ for the same arm at 1{,}200 epochs in v19, and the
+prediction spread ratio is $0.05$ to $0.27$ against the launch gate of $0.05$. One split
+seed, one initialization. Not a result.
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+ & \multicolumn{4}{c}{validation Pearson per feature, mean of the last 20 epochs} & \\
+\cmidrule(lr){2-5}
+layers & S\_ref & S\_sink & S\_hadam & S\_basis64 & s per epoch \\
+\midrule
+2 & 0.010 & 0.017 & \textbf{0.020} & 0.007 & 41.9 \\
+3 & 0.013 & 0.018 & \textbf{0.033} & 0.017 & 43.5 \\
+4 & 0.004 & 0.010 & \textbf{0.029} & 0.012 & 44.4 \\
+6 & 0.034 & 0.032 & 0.039 & \textbf{0.039} & 45.8 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Seconds per epoch are the mean over the four operators of each run's mean after epoch 5,
+including the eval-mode train pass every tenth epoch; the four operators are within 1 s of
+each other at every depth. Depth costs about one second per layer per epoch, a tenth of the
+epoch between two and six layers, and that is the whole throughput case for a shallower
+trunk. Two readings, each on one seed at one tenth of the budget, and so hypotheses to be
+read against v21: the Hadamard operator is above the softmax reference at all four depths
+(by $0.005$ to $0.025$) while its eval-mode train Pearson is the lowest at every depth
+($0.15$ to $0.22$ against $0.17$ to $0.25$), so it fits the training strains less and the
+held-out strains more at this stage; and the six-layer trunk, which has run the fewest
+epochs, is above the shallower ones on every operator at this stage, with the lowest train
+fit. The rolling maximum reads $0.046$ to $0.063$ on every run and separates nothing. W\&B
+project \texttt{torchcell\_019\_grid\_bench}; the depth 3 Hadamard run is
+\texttt{ydyxxub2}, its reference \texttt{gfzwmdq8}.
+\src{scratchpad/grid_bench_read.py, job 3274 task logs}
 
 \pfstep{What this leaves for the two framings} Framing A rests on two complete partitions of
 v20 and the ridge triangle; the conditioned proteome arm clears its permuted control by

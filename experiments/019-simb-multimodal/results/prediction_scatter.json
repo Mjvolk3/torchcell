@@ -1,0 +1,96 @@
+{
+ "generated_by": "experiments/019-simb-multimodal/scripts/prediction_scatter.py",
+ "checkpoint": {
+  "round": "v13",
+  "run": "wq8y8nd5",
+  "arm": "V_ref_s0",
+  "seed": 0,
+  "split_seed": 0,
+  "group": "compute-0-2-2397312_3fcfb279cc58c21f926585737901556cf40cded9e6c3fc039c1b34abbc9b7248"
+ },
+ "baselines": {
+  "B2": {
+   "k_gene": 64,
+   "ridge": 100.0,
+   "val_pearson_per_feature": 0.1349428304976303,
+   "val_nmse": 1.1165165775212138,
+   "test_pearson_per_feature": 0.08473269350631071,
+   "test_nmse": 1.2118966088244263
+  },
+  "B3": {
+   "k": 1,
+   "val_pearson_per_feature": 0.13004112708281723,
+   "val_nmse": 1.789851919362619,
+   "test_pearson_per_feature": 0.04563767716439801,
+   "test_nmse": 1.9769333818254418
+  },
+  "embedding": "prot_T5_all",
+  "source": "results/expression_baselines_split/seed0.json"
+ },
+ "n_val_strains": 155,
+ "n_genes": 6127,
+ "n_val_strains_without_embedding": 0,
+ "predictors": {
+  "model": {
+   "pearson_per_gene_mean": 0.22274555686365569,
+   "pearson_per_gene_median": 0.22044006847119646,
+   "pooled_pearson_raw": 0.45246460956717366,
+   "pooled_pearson_centered": 0.2775194478170332,
+   "spread_ratio_median": 0.31593703329560097,
+   "sd_pred_pooled": 0.11850784108456261,
+   "sd_target_pooled": 0.21971221268177032,
+   "centered_slope": 0.09277610909696463
+  },
+  "B2": {
+   "pearson_per_gene_mean": 0.13423748052063564,
+   "pearson_per_gene_median": 0.1330565533065404,
+   "pooled_pearson_raw": 0.3688167663837664,
+   "pooled_pearson_centered": 0.17153576662414435,
+   "spread_ratio_median": 0.5622809479272278,
+   "sd_pred_pooled": 0.14277441821270745,
+   "sd_target_pooled": 0.21971221268177032
+  },
+  "B3": {
+   "pearson_per_gene_mean": 0.12976175892051567,
+   "pearson_per_gene_median": 0.12570061495757678,
+   "pooled_pearson_raw": 0.2962992938155565,
+   "pooled_pearson_centered": 0.16591597148210133,
+   "spread_ratio_median": 1.077677607536316,
+   "sd_pred_pooled": 0.23592635989189148,
+   "sd_target_pooled": 0.21971221268177032,
+   "centered_slope": 0.17910132317848132
+  }
+ },
+ "examples": {
+  "strain_strong": {
+   "deleted": [
+    "YER068W"
+   ],
+   "sd_over_genes": 0.5572473406791687
+  },
+  "strain_median": {
+   "deleted": [
+    "YJL187C"
+   ],
+   "sd_over_genes": 0.16631831228733063
+  },
+  "gene_best": {
+   "gene": "YKL145W",
+   "pearson": {
+    "model": 0.6248832232865774,
+    "B2": 0.4307908127035051,
+    "B3": 0.583944118205511
+   },
+   "train_sd": 0.17019076645374298
+  },
+  "gene_median": {
+   "gene": "YHL028W",
+   "pearson": {
+    "model": 0.22044006847119646,
+    "B2": 0.2862765490052269,
+    "B3": 0.06498867790892088
+   },
+   "train_sd": 0.352816641330719
+  }
+ }
+}

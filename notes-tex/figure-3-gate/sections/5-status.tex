@@ -160,13 +160,12 @@ alive, at epoch 119 (six layers) to 132 (two layers). Every number below is from
 where the heads have barely launched: the validation Pearson per feature sits at $0.00$ to
 $0.04$ against $0.09$ to $0.13$ for the same arm at 1{,}200 epochs in v19, and the
 prediction spread ratio is $0.05$ to $0.27$ against the launch gate of $0.05$. One split
-seed, one initialization. Not a result.
+seed, one initialization. Not a result. The four operator columns are the validation
+Pearson per feature, mean of the last 20 epochs:
 
 \begin{center}\footnotesize
 \begin{tabular}{@{}lrrrrr@{}}
 \toprule
- & \multicolumn{4}{c}{validation Pearson per feature, mean of the last 20 epochs} & \\
-\cmidrule(lr){2-5}
 layers & S\_ref & S\_sink & S\_hadam & S\_basis64 & s per epoch \\
 \midrule
 2 & 0.010 & 0.017 & \textbf{0.020} & 0.007 & 41.9 \\

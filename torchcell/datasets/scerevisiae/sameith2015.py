@@ -85,8 +85,11 @@ N_EXPECTED_MAX_REPLICATES_DELETION = 4  # 2 biological × 2 dye-swap measurement
 # - Applied in dye-swap to one channel of each microarray
 # - Additional WT cultures grown alongside mutants for batch effect monitoring
 #
-# NOTE: Actual n_replicates for reference are COMPUTED from WT sample count in data
-N_EXPECTED_REFPOOL_REPLICATES = None  # Computed from data (varies by batch/day)
+# The stored reference ``expression`` of a record is the mean refpool-channel signal
+# over that record's own arrays, so the reference ``n_replicates`` of a gene is the
+# number of arrays whose refpool value entered that mean (#630, as kemmeren2014 does
+# for #484). Neither the WT RNA batch nor the additional WT cultures above is a stored
+# value, so no count of them is stored.
 
 # PubMed ID of Sameith et al. 2015, BMC Biology (DOI 10.1186/s12915-015-0222-5).
 # Source: the GEO series record this loader reads, GSE42536_family.soft.gz (sha256
@@ -407,6 +410,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
                         log2_se,
                         log2_var,
                         log2_n,
+                        refpool_n_replicates=refpool_n,
                     )
                 )
 
@@ -761,18 +765,29 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         log2_ratio_se: SortedDict | None = None,
         log2_ratio_variance: SortedDict | None = None,
         n_replicates: SortedDict | None = None,
+        *,
+        refpool_n_replicates: SortedDict,
     ) -> tuple[Any, Any, Any]:
         """Create experiment for single deletion mutant.
+
+        The reference ``expression`` is the mean refpool signal over the record's
+        arrays, so the reference ``n_replicates`` of a gene is the number of arrays
+        whose refpool value entered that mean (1 or 2 on GEO for a single mutant),
+        counted per gene: a gene missing from one array's refpool channel counts only
+        the arrays that carry it (#630; the WT RNA batch and the additional WT cultures
+        are not the stored value, see the module comment at the reference pool quotes).
 
         Args:
             dataset_name: Name of the dataset
             sample_info: Sample metadata dictionary
             mutant_data: Expression values for deletion mutant
-            refpool_data: Expression values for reference pool
+            refpool_data: Mean refpool expression over the record's arrays
             log2_ratio_data: log2(mutant/refpool) ratios
             log2_ratio_se: Standard error for log2 ratios (optional)
             log2_ratio_variance: Variance for log2 ratios (optional)
             n_replicates: Number of replicates per gene (optional)
+            refpool_n_replicates: Arrays in each gene's refpool mean, same keys as
+                ``refpool_data``
         """
         # BY4742 (MATalpha) for every single mutant. Paper: "All single mutants and
         # most double mutants carry the mating type matα and are in the genetic
@@ -819,18 +834,15 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         # Create reference phenotype from reference pool
         # Reference is self-referential, so log2 ratios are all 0
         reference_log2_ratios = SortedDict()
-        reference_n_replicates = SortedDict()
         for gene in refpool_data:
             reference_log2_ratios[gene] = 0.0
-            # Reference samples don't have meaningful n_replicates (they're the baseline)
-            reference_n_replicates[gene] = 1
 
         phenotype_reference = MicroarrayExpressionPhenotype(
             expression=refpool_data,
             expression_log2_ratio=reference_log2_ratios,
             expression_log2_ratio_se=None,
             expression_log2_ratio_variance=None,
-            n_replicates=reference_n_replicates,
+            n_replicates=refpool_n_replicates,  # Arrays in each refpool mean
         )
 
         # Create reference
@@ -1247,6 +1259,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                         log2_var,
                         log2_n,
                         strain=strain,  # NEW: Pass per-sample strain
+                        refpool_n_replicates=refpool_n,
                     )
                 )
 
@@ -1430,6 +1443,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                     log2_var,
                     log2_n,
                     strain=strain,  # NEW: Pass per-sample strain
+                    refpool_n_replicates=refpool_n,
                 )
             )
 
@@ -1849,19 +1863,30 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         log2_ratio_variance: SortedDict | None = None,
         n_replicates: SortedDict | None = None,
         strain: str = "BY4742",  # NEW: Accept per-sample strain parameter
+        *,
+        refpool_n_replicates: SortedDict,
     ) -> tuple[Any, Any, Any]:
         """Create experiment for double deletion mutant with PER-SAMPLE strain.
+
+        The reference ``expression`` is the mean refpool signal over the record's
+        arrays, so the reference ``n_replicates`` of a gene is the number of arrays
+        whose refpool value entered that mean, counted per gene: a gene missing from
+        one array's refpool channel counts only the arrays that carry it (#630; the WT
+        RNA batch and the additional WT cultures are not the stored value, see the
+        module comment at the reference pool quotes).
 
         Args:
             dataset_name: Name of the dataset
             sample_info: Sample metadata dictionary
             mutant_data: Expression values for deletion mutant
-            refpool_data: Expression values for reference pool
+            refpool_data: Mean refpool expression over the record's arrays
             log2_ratio_data: log2(mutant/refpool) ratios
             log2_ratio_se: Standard error for log2 ratios (optional)
             log2_ratio_variance: Variance for log2 ratios (optional)
             n_replicates: Number of replicates per gene (optional)
             strain: Strain background (BY4742 or BY4741), extracted from Excel comments
+            refpool_n_replicates: Arrays in each gene's refpool mean, same keys as
+                ``refpool_data``
         """
         # Per-pair strain from the SI comments column: "MATa" -> BY4741, otherwise
         # BY4742 (see _load_authoritative_gstf_pairs).
@@ -1917,18 +1942,15 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         # Create reference phenotype from reference pool
         # Reference is self-referential, so log2 ratios are all 0
         reference_log2_ratios = SortedDict()
-        reference_n_replicates = SortedDict()
         for gene in refpool_data:
             reference_log2_ratios[gene] = 0.0
-            # Reference samples don't have meaningful n_replicates (they're the baseline)
-            reference_n_replicates[gene] = 1
 
         phenotype_reference = MicroarrayExpressionPhenotype(
             expression=refpool_data,  # Reference pool
             expression_log2_ratio=reference_log2_ratios,
             expression_log2_ratio_se=None,
             expression_log2_ratio_variance=None,
-            n_replicates=reference_n_replicates,
+            n_replicates=refpool_n_replicates,  # Arrays in each refpool mean
         )
 
         # Create reference

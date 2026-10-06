@@ -15,3 +15,7 @@ Finding: `ohya2005.py` `process` writes records inline and never calls `_intern_
 ## 2026.10.01 - Findings retired (issues #537, #546)
 
 Retired the #546 finding: the built Ohya store now carries the reference as a `$ref` pointer (environment and publication inline), and the adapter's node and edge lists are unchanged.
+
+## 2026.10.06 - Sourced YPD medium from ca0734254 (#622)
+
+ca0734254 (#622) replaced the loader's componentless `Media(name="YPD")` stub with `OHYA_YPD`: library `YPD_LIQUID` (1% yeast extract, 2% peptone, 2% D-glucose, w/v) restated with Ohya 2005's growth sentence and the Ohya-lab recipe that Ohnuki 2018 attributes to it. `test_ohya2005.py` was updated in that commit, but this adapter test's exact lists were not, so three tests failed on main. The expected graph now uses `OHYA_YPD`. The media node id is pinned (`aea23796...`) and equals `YPD_LIQUID`'s identity, so it is the library YPD node; the environment id is pinned (`2f4cd08a...`). The environment JSON is now 5168 bytes, over the 512-byte pointer floor, so each Experiment node's blob carries `{"$ref", "kind": "environment"}` and the experiment method emits one `interned constant` node per record (id `28919698...`, the sha256 of the environment JSON). That makes 25 nodes, up from 23; the 22 edges are unchanged in shape. In the LMDB the environment is now interned as well, named by its medium.

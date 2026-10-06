@@ -35,10 +35,12 @@ for the reference.
 
 Payloads: genotype, perturbation and phenotype nodes carry no ``serialized_data``;
 experiment, experiment reference, genome, environment, media, temperature and
-publication nodes keep it. The experiment method emits no ``interned constant`` node
-here: the environment's JSON is 315 bytes, under the 512-byte environment floor, and
-the one-deletion genotype is 395 bytes, under the 8192-byte genotype floor
-(``EXPERIMENT_POINTER_MIN_BYTES``), so each Experiment blob stays fully inline.
+publication nodes keep it. Since ca0734254 (#622) the medium is the loader's sourced
+``OHYA_YPD`` (the library ``YPD_LIQUID`` node, restated with the paper's quotes), so
+the environment's JSON is 5168 bytes, over the 512-byte environment floor: each
+Experiment blob points at it and the experiment method also emits it as one
+``interned constant`` node per record. The one-deletion genotype is 395 bytes, under
+the 8192-byte genotype floor (``EXPERIMENT_POINTER_MIN_BYTES``), and stays inline.
 
 ``wandb`` is replaced by a recorder bound to the name ``cell_adapter`` imported.
 """
@@ -70,6 +72,7 @@ from torchcell.datamodels.identity import (
     temperature_identity,
 )
 from torchcell.datamodels.interned_constant import EXPERIMENT_POINTER_MIN_BYTES
+from torchcell.datamodels.media import YPD_LIQUID
 from torchcell.datamodels.schema import (
     CalMorphExperiment,
     CalMorphExperimentReference,
@@ -77,12 +80,11 @@ from torchcell.datamodels.schema import (
     Environment,
     Genotype,
     KanMxDeletionPerturbation,
-    Media,
     Publication,
     ReferenceGenome,
     Temperature,
 )
-from torchcell.datasets.scerevisiae.ohya2005 import ScmdOhya2005Dataset
+from torchcell.datasets.scerevisiae.ohya2005 import OHYA_YPD, ScmdOhya2005Dataset
 from torchcell.sequence.genome.scerevisiae.s288c import (
     GeneNameResolution,
     GeneNameStatus,
@@ -92,7 +94,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import (
 DATASET = "ScmdOhya2005Dataset"
 FEATURES = ["A101_A", "C103_A1B", "ACV103_A1B", "CCV103_A1B"]
 GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="BY4741")
-MEDIA = Media(name="YPD", state="liquid", is_synthetic=False)
+MEDIA = OHYA_YPD
 TEMPERATURE = Temperature(value=25)
 ENVIRONMENT = Environment(media=MEDIA, temperature=TEMPERATURE)
 PUBLICATION = Publication(
@@ -158,6 +160,22 @@ ENVIRONMENT_ID = identity_sha256(environment_identity(ENVIRONMENT))
 MEDIA_ID = identity_sha256(media_identity(MEDIA))
 TEMPERATURE_ID = identity_sha256(temperature_identity(TEMPERATURE))
 REFERENCE_ID = _sha(REFERENCE)
+
+# The environment's JSON, served as one interned constant since ca0734254 (#622) made
+# it larger than the 512-byte pointer floor; its id is the sha256 of these bytes.
+ENVIRONMENT_JSON = json.dumps(ENVIRONMENT.model_dump())
+ENVIRONMENT_CONSTANT_ID = (
+    "28919698ebe47c62582394ac960b08cded51399610bb3aa23e9d9812067ed577"
+)
+
+
+def _experiment_blob(experiment: CalMorphExperiment) -> str:
+    """The Experiment node's ``serialized_data``: the record with its environment
+    replaced by a ``{"$ref", "kind"}`` pointer to the interned constant.
+    """
+    dump = experiment.model_dump()
+    dump["environment"] = {"$ref": ENVIRONMENT_CONSTANT_ID, "kind": "environment"}
+    return json.dumps(dump)
 
 
 # ------------------------------------------------------------------- fixtures
@@ -286,7 +304,11 @@ def _expected_nodes() -> list[BioCypherNode]:
         node_id=MEDIA_ID,
         preferred_id="media",
         node_label="media",
-        properties={"name": "YPD", "state": "liquid", **_serialized(MEDIA)},
+        properties={
+            "name": "YPD (yeast extract / peptone / dextrose), liquid",
+            "state": "liquid",
+            **_serialized(MEDIA),
+        },
     )
     temperature = BioCypherNode(
         node_id=TEMPERATURE_ID,
@@ -324,13 +346,26 @@ def _expected_nodes() -> list[BioCypherNode]:
             },
         ),
         *[
-            BioCypherNode(
-                node_id=_sha(experiment),
-                preferred_id="experiment",
-                node_label="experiment",
-                properties=_serialized(experiment),
-            )
+            node
             for experiment in EXPERIMENTS
+            for node in (
+                BioCypherNode(
+                    node_id=_sha(experiment),
+                    preferred_id="experiment",
+                    node_label="experiment",
+                    properties={"serialized_data": _experiment_blob(experiment)},
+                ),
+                # once per record; the sink dedups by id
+                BioCypherNode(
+                    node_id=ENVIRONMENT_CONSTANT_ID,
+                    preferred_id="interned constant",
+                    node_label="interned constant",
+                    properties={
+                        "kind": "environment",
+                        "serialized_data": ENVIRONMENT_JSON,
+                    },
+                ),
+            )
         ],
         *[
             BioCypherNode(
@@ -467,12 +502,30 @@ def test_ids_are_the_sha256_of_the_literal_json() -> None:
 def test_get_nodes_emits_the_exact_ohya_node_list(
     tmp_path: Path, recorder: _WandbRecorder
 ) -> None:
-    """Two records, one shared reference: 23 nodes, in the registration-table order,
+    """Two records, one shared reference: 25 nodes, in the registration-table order,
     compared by value (id, label, preferred id and every property). The event log names
     the 15 node methods the conf enables, which is the conf's whole contract.
+
+    The medium is the loader's sourced ``OHYA_YPD`` since ca0734254 (#622): library
+    ``YPD_LIQUID`` (1% yeast extract, 2% peptone, 2% D-glucose, w/v) restated with Ohya
+    2005's growth sentence and the Ohya-lab recipe Ohnuki 2018 attributes to it, in
+    place of the componentless ``Media(name="YPD")`` stub. Its media node keeps
+    ``YPD_LIQUID``'s identity, so it is the library YPD node, not a new one.
     """
-    # No interned constant: both pointer candidates sit under their floors.
-    assert len(json.dumps(ENVIRONMENT.model_dump())) == 315
+    assert MEDIA_ID == identity_sha256(media_identity(YPD_LIQUID))
+    assert MEDIA_ID == (
+        "aea23796700e8b3a95fce85defa3c999208717499a582a5b7862db7f3f605232"
+    )
+    assert ENVIRONMENT_ID == (
+        "2f4cd08aa982db58cc7d5324f79b3808f517bff1d3d221fa815771b4bcdf19b5"
+    )
+    # The sourced medium takes the environment past the Neo4j pointer floor, so each
+    # Experiment node points at one ``interned constant`` node (emitted per record,
+    # deduplicated by the sink: 23 nodes before #622, 25 now); the genotype is not.
+    assert (
+        ENVIRONMENT_CONSTANT_ID == hashlib.sha256(ENVIRONMENT_JSON.encode()).hexdigest()
+    )
+    assert len(json.dumps(ENVIRONMENT.model_dump())) == 5168
     assert EXPERIMENT_POINTER_MIN_BYTES["environment"] == 512
     genotypes = [e.genotype for e in EXPERIMENTS]
     assert all(isinstance(g, Genotype) for g in genotypes)
@@ -493,7 +546,9 @@ def test_get_edges_emits_the_exact_ohya_edge_list(
     tmp_path: Path, recorder: _WandbRecorder
 ) -> None:
     """22 edges from the 13 edge methods the conf enables, part to whole, in table
-    order; per-record media and temperature edges repeat once per record.
+    order; per-record media and temperature edges repeat once per record. The media
+    endpoint is the library YPD node of the sourced ``OHYA_YPD`` medium (ca0734254,
+    #622; see the node test).
     """
     adapter = _adapter(_dataset(_build(tmp_path)))
     recorder.logged.clear()
@@ -508,9 +563,11 @@ def test_the_loader_interns_the_reference_and_the_graph_is_unchanged(
     """Contract (issue #546): ``ScmdOhya2005Dataset.process`` writes through the base
     writer ``_intern_record``, as the thirteen other interning loaders do. In the built
     store the reference (>= 512 bytes of canonical JSON) is a ``{"$ref", "name"}``
-    pointer whose body sits in the sibling ``interned`` env; the environment (315
-    bytes) and the publication stay inline. ``get_single_item`` splices the pointer
-    back, so the adapter's node and edge lists are exactly the hand-built graph.
+    pointer whose body sits in the sibling ``interned`` env. Since ca0734254 (#622)
+    the environment carries the sourced ``OHYA_YPD`` medium and is interned too (named
+    by its medium); the publication stays inline. ``get_single_item`` splices the
+    pointers back, so the adapter's node and edge lists are exactly the hand-built
+    graph.
     """
     root = _build(tmp_path)
     records_path = osp.join(root, "processed", "lmdb")
@@ -525,7 +582,13 @@ def test_the_loader_interns_the_reference_and_the_graph_is_unchanged(
         json.dumps(REFERENCE.model_dump(mode="json"), sort_keys=True).encode()
     ).hexdigest()
     assert stored["reference"] == {"$ref": reference_digest, "name": DATASET}
-    assert stored["experiment"]["environment"] == ENVIRONMENT.model_dump()
+    environment_digest = hashlib.sha256(
+        json.dumps(ENVIRONMENT.model_dump(mode="json"), sort_keys=True).encode()
+    ).hexdigest()
+    assert stored["experiment"]["environment"] == {
+        "$ref": environment_digest,
+        "name": "YPD (yeast extract / peptone / dextrose), liquid",
+    }
     assert stored["publication"] == PUBLICATION.model_dump()
 
     adapter = _adapter(_dataset(root))

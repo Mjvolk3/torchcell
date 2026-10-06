@@ -351,8 +351,9 @@ def build_ontology_graph() -> OntologyGraph:
 
         model_cls = cast(type[BaseModel], obj)
         # The class's OWN annotations: ``getattr`` can return an ancestor's dict once
-        # ``ABCMeta.__annotations__`` exists (see test_ontology_coherence.py).
-        declared = set(obj.__dict__.get("__annotations__", {}))
+        # ``ABCMeta.__annotations__`` exists, and ``__dict__`` is empty under lazy
+        # annotations (Python 3.14); ``inspect.get_annotations`` is right on both.
+        declared = set(inspect.get_annotations(obj))
         inherited = 0
         for field_name, info in model_cls.model_fields.items():
             if field_name not in declared:

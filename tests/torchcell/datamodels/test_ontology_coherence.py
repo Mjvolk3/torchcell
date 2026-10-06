@@ -34,6 +34,7 @@ Findings and rejected checks: [[torchcell.datamodels.ontology-checks]].
 
 from __future__ import annotations
 
+import inspect
 import itertools
 import typing
 from typing import Any, cast
@@ -586,8 +587,9 @@ def test_gap_mixin_rule_is_never_weakened_by_a_subclass(cls: type[BaseModel]) ->
     validator would keep the attribute name while dropping the guarantee, and every
     downstream reader would still treat its gaps as audited.
 
-    "Redeclares" means an annotation in the class's OWN namespace, so it is read from
-    ``cls.__dict__``. ``getattr(cls, "__annotations__")`` is not that: once any code
+    "Redeclares" means an annotation in the class's OWN namespace, so it is read with
+    ``inspect.get_annotations(cls)`` (``cls.__dict__`` would be empty under Python
+    3.14's lazy annotations). ``getattr(cls, "__annotations__")`` is not that: once any code
     has read ``ABCMeta.__annotations__`` (a lazily created ``{}`` then sits in
     ``ABCMeta.__dict__``, ahead of ``type``'s descriptor in a pydantic model's
     metaclass MRO), it resolves through the class MRO and returns the nearest
@@ -597,7 +599,7 @@ def test_gap_mixin_rule_is_never_weakened_by_a_subclass(cls: type[BaseModel]) ->
     the subclass resolves are also checked to be the mixin's own.
     """
     assert "validate_provenance_gaps" not in cls.__dict__
-    assert "provenance_gaps" not in cls.__dict__.get("__annotations__", {})
+    assert "provenance_gaps" not in inspect.get_annotations(cls)
     field = cls.model_fields["provenance_gaps"]
     assert field.annotation == list[ProvenanceGap]
     assert field.default_factory is list

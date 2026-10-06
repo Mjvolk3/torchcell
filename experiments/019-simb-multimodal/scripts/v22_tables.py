@@ -41,6 +41,7 @@ ARMS = {
     "F_b128wu_hadam": "F\\_b128wu with the Hadamard operator",
     "F_b128wu_wd": "F\\_b128wu with weight decay 0.3, 800 epochs",
     "F_b128wu_drop": "F\\_b128wu with dropout 0.3, 800 epochs",
+    "F_b256lr1": "batch 256, lr $3\\times10^{-4}$, 1{,}000 epochs",
 }
 
 
@@ -202,6 +203,8 @@ def main() -> None:
         "nightDropVsWarmupEarly": contrast("F_b128wu_drop - F_b128wu @ 400"),
         "nightDecayVsWarmupLate": contrast("F_b128wu_wd - F_b128wu @ 799"),
         "nightDropVsWarmupLate": contrast("F_b128wu_drop - F_b128wu @ 799"),
+        "nightBigBatchVsLrOne": contrast("F_b256lr1 - F_b128lr1 @ 799"),
+        "nightBigBatchVsRef": contrast("F_b256lr1 - F_ref @ 799"),
         "nightDropCollapsed": str(sum(collapsed(r) for r in runs.get("F_b128wu_drop", {}).values())),
         "nightDecayCollapsed": str(sum(collapsed(r) for r in runs.get("F_b128wu_wd", {}).values())),
     }

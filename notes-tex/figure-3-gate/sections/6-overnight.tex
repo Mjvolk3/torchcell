@@ -191,7 +191,19 @@ is \nightDecayVsWarmupLate, and dropout is \nightDropVsWarmupLate. Runs collapse
 The 800-epoch runs stop before the registered window, so these are matched-epoch reads and
 not window scores.
 
-%%NIGHT-TIMING
+\pfstep{Two further speed levers, timed for 40 epochs each} With three batch-128 runs on a
+card the new code runs a plain epoch in 8.8 to 9.5 s and an epoch that carries the eval-mode
+train pass in 21.5 to 22.5 s. Narrowing the operator's feed-forward block from four times
+the width to one takes the plain epoch to 8.0 to 8.5 s, about a tenth, and frees 3.4 GB of
+the card; whether the narrower block scores the same is not measured. A single batch-256
+run alone on a card takes 3.0 s per plain epoch and 6.0 s with the eval pass, in 19.6 GB,
+so two fit on a card and a 1{,}200-epoch run takes about an hour. One batch-256 run at the
+unscaled rate was then trained for 1{,}000 epochs on split seed 0: at epoch 799 it is
+\nightBigBatchVsLrOne{} against the batch-128 unscaled arm and \nightBigBatchVsRef{} against
+the reference, one split seed each.
+The timing runs are in W\&B project \texttt{torchcell\_019\_profile} (GilaHyper job 3332).
+\src{notes/experiments.019-simb-multimodal.scripts.gh_profile_cgt_expr.md}
+
 
 \pfstep{What follows for the next rounds} New rounds should run on the new code with the
 splits in memory, zero loader workers on Delta, and one arm per card. Batch 128 at the

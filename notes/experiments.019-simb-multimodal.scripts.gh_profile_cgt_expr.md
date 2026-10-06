@@ -73,3 +73,15 @@ Correction to the section above: its statement that four runs on a card are GPU-
 Stack samples after the decode fix (job 3323): the main thread now waits at the first GPU sync after the encoder and in the prediction gather, so the runs are GPU-bound. The operator alone costs about 55 ms forward and backward at batch 32 and 190 ms at batch 128 on a shared card, independent of the perturbed-set size (1, 3 or 16): it is the feed-forward block and the norms over every gene token of every strain, batch times 6,607 tokens, not the attention. What is left is the architecture's own per-strain, per-gene work; further speed is an architecture arm (a narrower operator feed-forward, fewer tokens), not a code fix.
 
 The encoder change: the graph regularizer reads the attention of the layers named in `regularized_heads[*].layer` (layer 1 here) and no other, but every layer was asked for its weights whenever lambda > 0, so all six took the manual path. Only the regularized layers are asked now; `test_fused_attention_on_unregularized_layers_matches_manual_everywhere` holds outputs and the regularization loss equal in eval mode, and `TORCHCELL_ENCODER_ATTENTION=manual` restores the old path.
+
+## 2026.10.06 - Next-speed timing cells (job 3332, cells 13 to 15)
+
+Forty epochs each on the fast code, eval-mode train pass every tenth epoch, from W&B `perf/epoch_seconds` after epoch 5 (project `torchcell_019_profile`):
+
+| cell | runs per card | plain epoch, s per run | epoch with the eval-mode train pass, s | card memory |
+|---|---|---|---|---|
+| batch 128, operator feed-forward 4x (control) | 3 | 8.8, 9.2, 9.5 | 21.5 to 22.5 | 36.7 GB |
+| batch 128, operator feed-forward 1x | 3 | 8.0, 8.4, 8.5 | 18.8 to 21.4 | 33.3 GB |
+| batch 256 | 1 | 3.0 | 6.0 | 19.6 GB |
+
+The narrower operator feed-forward buys about a tenth of the epoch and 3.4 GB; its effect on the score is not measured. Batch 256 alone on a card runs 1,200 epochs in about an hour, and two fit on a card. Runs: control `mowwj6v4`, `vcdm52g5`, `kmz5xv0g`; narrow `o3sdhpxw`, `6999exns`, `rfjtqih5`; batch 256 `tw14ns0s`.

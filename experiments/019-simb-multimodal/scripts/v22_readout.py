@@ -47,6 +47,8 @@ EXTRA_CONTRASTS = [
     ("F_b128wu_drop", "F_b128wu", "400"),
     ("F_b128lr1", "F_ref", "1000"),
     ("F_b128wu", "F_ref", "1000"),
+    ("F_b256lr1", "F_b128lr1", "799"),
+    ("F_b256lr1", "F_ref", "799"),
 ]
 WINDOW = (1000, 1199)
 KEYS = [

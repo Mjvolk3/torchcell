@@ -85,6 +85,10 @@ ARM_OVERRIDES[F_b128wu_hadam]="${ARM_OVERRIDES[F_b128wu]} model.perturbation_hea
 # the operator (the lineage runs 0.1).
 ARM_OVERRIDES[F_b128wu_wd]="${ARM_OVERRIDES[F_b128wu]} regression_task.optimizer.weight_decay=0.3"
 ARM_OVERRIDES[F_b128wu_drop]="${ARM_OVERRIDES[F_b128wu]} model.dropout=0.3 model.perturbation_head.dropout=0.3"
+# WAVE 5 (09:52, one hour left on the freed card, V22_EPOCHS=1000). Batch 256 alone on a
+# card ran at 3.0 s per epoch and 19.6 GB (profile cell 15). One run at the unscaled rate,
+# read against F_b128lr1 and F_ref at matched epochs up to 1,000: does it still train.
+ARM_OVERRIDES[F_b256lr1]="data_module.batch_size=256"
 
 # ONE ARM PER CARD. The first submission (job 3315, cancelled ten minutes in) put the four
 # arms on each card, one card per split seed. The four processes time-slice the card, so a
@@ -105,6 +109,7 @@ case "$WAVE:$TASK" in
   3:0) ARM=F_b128wu_hadam; SPLITS=(0 1 2) ;;
   4:0) ARM=F_b128wu_wd;   SPLITS=(0 1 2) ;;
   4:1) ARM=F_b128wu_drop; SPLITS=(0 1 2) ;;
+  5:0) ARM=F_b256lr1; SPLITS=(0) ;;
   *) echo "unknown wave:task $WAVE:$TASK" >&2; exit 1 ;;
 esac
 

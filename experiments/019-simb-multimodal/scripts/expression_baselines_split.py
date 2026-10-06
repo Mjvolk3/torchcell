@@ -128,6 +128,7 @@ EMBEDDING_SETS = {"gate": EMBEDDINGS, "full": EMBEDDINGS_FULL}
 
 DATASET_TAG = "fig3_core"
 EXPRESSION_LABEL = "expression_log2_ratio"
+PROTEOME_LABEL = "protein_abundance"
 
 
 def per_feature_pearson(pred: np.ndarray, true: np.ndarray) -> float:
@@ -487,8 +488,15 @@ def main() -> None:
         family = f"morphology_baselines_split_{args.dataset_tag}"
     elif args.dataset_tag == DATASET_TAG:
         family = "expression_baselines_split"
-    else:
+    elif args.label == PROTEOME_LABEL:
+        # The fig3_proteome store's own label; baselines_split_fig3_proteome(_full)/ holds
+        # protein_abundance and every reader of it assumes so.
         family = f"baselines_split_{args.dataset_tag}"
+    else:
+        # Any other label on a non-default store carries the label in the name. Job 2423302
+        # (2026-10-04) ran expression_log2_ratio on fig3_proteome with the default of the
+        # branch above and overwrote the protein_abundance seeds 0 to 3.
+        family = f"baselines_split_{args.dataset_tag}_{args.label}"
     dst_dir = osp.join(
         experiment_results_dir("019-simb-multimodal", __file__),
         family + ("" if args.embedding_set == "gate" else f"_{args.embedding_set}"),

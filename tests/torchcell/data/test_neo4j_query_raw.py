@@ -1171,7 +1171,9 @@ def test_full_caches_are_emptied_between_batches(
         built.append(1)
         return real(**kwargs)
 
-    monkeypatch.setattr(neo4j_query_raw, "Environment", counting)
+    # The module validates through ``ENVIRONMENT_CLASSES[<class name>]``, keyed by the
+    # class each experiment family declares; the fixtures are plain ``Environment``.
+    monkeypatch.setitem(neo4j_query_raw.ENVIRONMENT_CLASSES, "Environment", counting)
     monkeypatch.setattr(neo4j_query_raw, "PROCESS_BATCH", 1)
     rows_default = neo4j_query_raw._render_partition("A")
     assert len(built) == 1

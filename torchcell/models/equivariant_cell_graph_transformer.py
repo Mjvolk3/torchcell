@@ -2341,6 +2341,26 @@ class CellGraphTransformer(nn.Module):
             self.adjacency_matrices = None
             self.regularized_head_config = None
             self.row_sampling_rate = 1.0
+        # THE LAYERS WHOSE ATTENTION THE REGULARIZER READS (2026-10-06). The KL term
+        # consumes the weights of the layers named in `regularized_heads[*].layer` and of
+        # no other (`compute_graph_regularization_loss` skips the rest), yet the forward
+        # pass asked EVERY layer for its weights whenever lambda > 0, so every layer took
+        # the manual path and materialized a [1, heads, N+1, N+1] matrix, forward and
+        # backward, to have it discarded. With `graph_reg_layer: [1]` on a six-layer
+        # encoder that was five of six layers. Only the regularized layers are asked now;
+        # the others run the fused kernel. The loss is unchanged and the layer function is
+        # the same (dropout on the attention weights in both paths, drawn differently).
+        # `TORCHCELL_ENCODER_ATTENTION=manual` restores the old behaviour for comparison.
+        self._graph_reg_layers: set[int] = set()
+        if self.regularized_head_config is not None:
+            for head_cfg in self.regularized_head_config.values():
+                layer_spec = head_cfg["layer"]
+                self._graph_reg_layers.update(
+                    [layer_spec] if isinstance(layer_spec, int) else layer_spec
+                )
+        self._manual_attention_all_layers = (
+            os.environ.get("TORCHCELL_ENCODER_ATTENTION", "fused") == "manual"
+        )
 
         # Transformer encoder layers
         self.transformer_layers = nn.ModuleList(
@@ -3050,7 +3070,9 @@ class CellGraphTransformer(nn.Module):
             # CRITICAL FIX: Only compute attention when actually needed
             # - During training: need for graph_reg_loss (if graph_reg_lambda > 0)
             # - During validation with return_attention=True: need for diagnostics
-            need_attention_for_graph_reg = self.graph_reg_lambda > 0.0
+            need_attention_for_graph_reg = self.graph_reg_lambda > 0.0 and (
+                self._manual_attention_all_layers or layer_idx in self._graph_reg_layers
+            )
             should_return_attention = need_attention_for_graph_reg or return_attention
 
             layer_mask = (

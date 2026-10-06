@@ -313,3 +313,40 @@ def test_batched_perturbation_operator_matches_loop(
     assert torch.allclose(fast_ctx, loop_ctx, atol=1e-5), (
         (fast_ctx - loop_ctx).abs().max()
     )
+
+
+def test_fused_attention_on_unregularized_layers_matches_manual_everywhere() -> None:
+    """Asking only the regularized layer for its weights changes nothing in eval mode.
+
+    The graph regularizer reads layer 1's attention and no other, so layer 0 may run the
+    fused kernel. Outputs and the regularization loss must equal the old behaviour, where
+    every layer took the manual path.
+    """
+    torch.manual_seed(0)
+    cg = _make_cell_graph()
+    model = CellGraphTransformer(
+        gene_num=GENE_NUM,
+        hidden_channels=HIDDEN,
+        num_transformer_layers=NUM_LAYERS,
+        num_attention_heads=NUM_HEADS,
+        cell_graph=cg,
+        heads_config={"per_gene": {"output_dim": 1}},
+        graph_reg_lambda=0.5,
+        graph_regularization_config={
+            "regularized_heads": {"physical": {"head": 0, "layer": [1], "lambda": 0.5}}
+        },
+    )
+    model.eval()
+    assert model._graph_reg_layers == {1}
+    batch = _make_batch()
+    with torch.no_grad():
+        model._manual_attention_all_layers = True
+        _, manual = model(cg, batch)
+        model._manual_attention_all_layers = False
+        _, fused = model(cg, batch)
+    assert float(manual["graph_reg_loss"]) > 0.0
+    assert torch.allclose(fused["graph_reg_loss"], manual["graph_reg_loss"], atol=1e-6)
+    assert torch.allclose(fused["H_genes"], manual["H_genes"], atol=1e-5)
+    assert torch.allclose(
+        fused["head_outputs"]["per_gene"], manual["head_outputs"]["per_gene"], atol=1e-5
+    )

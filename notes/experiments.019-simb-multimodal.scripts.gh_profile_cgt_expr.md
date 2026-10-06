@@ -60,3 +60,16 @@ The simple profiler lumps everything inside `training_step`, so the tables above
 Fix: `torchcell/trainers/coo_targets.py`, `decode_head_targets`, the same decode in a fixed number of tensor operations (name table gather, one group id per graph and experiment, `bincount` for group sizes, one stable sort); the loop is kept as `decode_head_targets_loop` and `tests/torchcell/trainers/test_coo_targets.py` holds the two equal on ten cases (vector and scalar heads, a keep mask, an absent label, a wrong-width group beside a correct one, both error paths). The trainer calls the vectorized form. Timing with the fix is the v22 relaunch (job 3323).
 
 Correction to the section above: its statement that four runs on a card are GPU-bound was an inference from the step time under packing; the step time included these waits, so the GPU-bound floor is not yet measured.
+
+## 2026.10.06 - What each fix bought, and where the floor now is
+
+| change | measured effect | where measured |
+|---|---|---|
+| batched perturbation operator | model step 14.3 to 8.6 s per epoch, one run per card | profile cells 1 and 7 |
+| vectorized target decode | batch 128 at three per card 19 to 20 s per epoch down to 10 to 12; batch 32 at three per card 29 to 32 down to 23 to 24 | jobs 3319 and 3323, W&B `perf/epoch_seconds`, last 20 epochs |
+| fused attention on unregularized encoder layers | optimizer step 0.526 to 0.466 s at batch 128 (11 percent) | A/B inside job 3323, five epochs each, card shared with two other runs |
+| torch-native ranks, metric reduction on the device | not yet timed in a full run (the CPU reduction was 26 percent of a batch-128 run's main thread) | stack samples, job 3323 |
+
+Stack samples after the decode fix (job 3323): the main thread now waits at the first GPU sync after the encoder and in the prediction gather, so the runs are GPU-bound. The operator alone costs about 55 ms forward and backward at batch 32 and 190 ms at batch 128 on a shared card, independent of the perturbed-set size (1, 3 or 16): it is the feed-forward block and the norms over every gene token of every strain, batch times 6,607 tokens, not the attention. What is left is the architecture's own per-strain, per-gene work; further speed is an architecture arm (a narrower operator feed-forward, fewer tokens), not a code fix.
+
+The encoder change: the graph regularizer reads the attention of the layers named in `regularized_heads[*].layer` (layer 1 here) and no other, but every layer was asked for its weights whenever lambda > 0, so all six took the manual path. Only the regularized layers are asked now; `test_fused_attention_on_unregularized_layers_matches_manual_everywhere` holds outputs and the regularization loss equal in eval mode, and `TORCHCELL_ENCODER_ATTENTION=manual` restores the old path.

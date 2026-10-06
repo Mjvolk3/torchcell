@@ -76,6 +76,15 @@ ARM_OVERRIDES[F_b128wu]="data_module.batch_size=128 regression_task.optimizer.lr
 # 340. The operator question on the warmup arm: the Hadamard operator of v21's S_hadam
 # (model.perturbation_head.hadamard=replace), paired with F_b128wu by split seed.
 ARM_OVERRIDES[F_b128wu_hadam]="${ARM_OVERRIDES[F_b128wu]} model.perturbation_head.hadamard=replace"
+# WAVE 4 (queued 05:35 behind the wave-2 cards, 800 epochs: V22_EPOCHS=800). On split seed 2
+# every live arm peaks near epoch 100 to 200 (validation Pearson 0.10 to 0.12) and decays
+# to 0.03 to 0.07 by epoch 400 to 800 while the train Pearson climbs, and the shrinkage
+# probe found the predictions 1.4 to 2.2 times too spread for their correlation. Two
+# regularizers on the warmup arm, read against F_b128wu at matched epochs up to 800:
+# decoupled weight decay 0.3 (the lineage runs 1e-8), and dropout 0.3 in the encoder and
+# the operator (the lineage runs 0.1).
+ARM_OVERRIDES[F_b128wu_wd]="${ARM_OVERRIDES[F_b128wu]} regression_task.optimizer.weight_decay=0.3"
+ARM_OVERRIDES[F_b128wu_drop]="${ARM_OVERRIDES[F_b128wu]} model.dropout=0.3 model.perturbation_head.dropout=0.3"
 
 # ONE ARM PER CARD. The first submission (job 3315, cancelled ten minutes in) put the four
 # arms on each card, one card per split seed. The four processes time-slice the card, so a
@@ -94,6 +103,8 @@ case "$WAVE:$TASK" in
   2:0) ARM=F_b128lr1; SPLITS=(0 1 2) ;;
   2:1) ARM=F_b128wu;  SPLITS=(0 1 2) ;;
   3:0) ARM=F_b128wu_hadam; SPLITS=(0 1 2) ;;
+  4:0) ARM=F_b128wu_wd;   SPLITS=(0 1 2) ;;
+  4:1) ARM=F_b128wu_drop; SPLITS=(0 1 2) ;;
   *) echo "unknown wave:task $WAVE:$TASK" >&2; exit 1 ;;
 esac
 

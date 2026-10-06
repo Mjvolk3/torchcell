@@ -14,24 +14,30 @@ empty, so ``download()`` symlinks the three mirror files and ``process()`` runs 
 The resolver is a dict-backed stub returning real ``GeneNameResolution`` objects.
 
 HET matrix columns (filename: condition, dose, generations -> control set): A1 and A2
-benomyl 6.9 uM 20gen -> CS1 (one group of two arrays), A3 benomyl 6.9 uM -5gen -> CS2 (a
-second group), A4 amphotericin (no structure identifier: dropped), A5 ``37c, 45c``
-(heat-shock cycle: dropped). CS1 has 3 control arrays, CS2 has 2.
+benomyl 6.9 uM 20gen -> CS1 (pool het_01; one group of two arrays), A3 benomyl 6.9 uM
+-5gen -> CS2 (pool het_02; a second group), A4 amphotericin (no structure identifier:
+dropped), A5 ``37c, 45c`` (heat-shock cycle: dropped), A6 colchicine whose key file says
+colchiceine (compound conflict: dropped), A7 minimal media at 0gen (no exposure:
+dropped). CS1 has 3 control arrays, CS2 has 2.
 
-HET rows (A1..A5), ``-`` for a missing token:
+HET rows (A1..A7):
 
-    "YAL001C:chr00_1"  1.0   3.0   0.5  2.0  NA     suspicious batch chr00_1
-    YAL001C:chr1_2     2.0   NA    ""   ""   ""     second construction of YAL001C
+    "YAL001C:chr00_1"  1.0   3.0   0.5  2.0  NA  1.0  1.0   suspicious batch chr00_1
+    YAL001C:chr1_2     2.0   NA    ""   ""   ""               second construction
     YBR001C:chr3_9     0.25  0.25  NaN  null 1.0
-    YOLD01W:chr5_1     4.0   (line ends)           RENAMED -> YBR002W (current)
-    YDUB01C, YRET01W, YOLD02W                       dropped (see the drop test)
+    YOLD01W:chr5_1     4.0   (line ends)                      RENAMED -> YBR002W, alone
+    YOLD03W:chr6_1     1.0   NA                               RENAMED -> YBR001C (merge)
+    YOR202W:chr15_3    1.0                                    HIS3, a BY4743 marker locus
+    YDL227C:ctrl_1     5.0   5.0                              HO control strain: dropped
+    YDUB01C, YRET01W, YOLD02W                                 dropped (see the drop test)
 
-Per-array values average an ORF's construction rows first: YAL001C in CS1 is A1
-(1.0 + 2.0)/2 = 1.5 and A2 3.0, so mean 2.25 and sample SD sqrt((0.75^2 + 0.75^2)/1) =
-sqrt(1.125); in CS2 A3 0.5 alone (n = 1, no SD). YBR001C in CS1 is 0.25 twice, a sample
-SD of exactly 0 that is stored as a typed gap. YBR002W is 4.0 alone. Records: 0
-YAL001C/CS1, 1 YAL001C/CS2, 2 YBR001C/CS1, 3 YBR002W/CS1. Dropped cells: amphotericin
-has YAL001C 2.0 (1 record), the heat-shock column YBR001C 1.0 (1 record).
+Each row is its own strain, so nothing averages across rows: YAL001C chr00_1 in CS1 is
+A1 1.0 and A2 3.0, mean 2.0, sample SD sqrt(2); in CS2 A3 0.5 alone. YAL001C chr1_2 in
+CS1 is 2.0 alone. YBR001C in CS1 is 0.25 twice, a sample SD of exactly 0 that is stored
+as a typed gap. YBR002W (built against YOLD01W) is 4.0; YBR001C built against YOLD03W is
+1.0 (merged: two source ORFs land on YBR001C); HIS3 is 1.0. Records: 0 YAL001C/chr00_1
+CS1, 1 YAL001C/chr00_1 CS2, 2 YAL001C/chr1_2 CS1, 3 YBR001C/chr3_9 CS1, 4 YBR002W CS1,
+5 YBR001C/YOLD03W CS1, 6 YOR202W CS1.
 """
 
 from __future__ import annotations
@@ -49,24 +55,22 @@ from torchcell.data import RawSha256MismatchError
 from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.media import YPD_LIQUID
 from torchcell.datamodels.schema import (
-    AssayType,
+    BarcodedKanMxDeletionPerturbation,
     Compound,
     Concentration,
     ConcentrationUnit,
-    EngineeredCopyNumberPerturbation,
-    Environment,
-    EnvironmentPerturbationType,
-    EnvironmentResponseExperiment,
-    EnvironmentResponseExperimentReference,
-    EnvironmentResponsePhenotype,
+    CultureEnvironment,
     Genotype,
-    KanMxDeletionPerturbation,
+    HeterozygousDeletionPerturbation,
     MeasurementType,
+    OrfHistoryRelation,
+    PreCultureSource,
     Publication,
-    ReferenceGenome,
-    SampleUnit,
     SmallMoleculePerturbation,
-    UncertaintyType,
+    StrainConstruction,
+    StrainEnvironmentResponseExperiment,
+    StrainEnvironmentResponseExperimentReference,
+    heterozygous_deletion_functional_copies,
 )
 from torchcell.datasets.scerevisiae import hillenmeyer2008 as m
 from torchcell.literature.manifest import ArtifactRecord
@@ -79,8 +83,6 @@ from torchcell.sequence.genome.scerevisiae.s288c import (
     GeneNameResolution,
     GeneNameStatus,
 )
-from torchcell.verification.report import Provenance
-from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 _HET = "HetHillenmeyer2008Dataset"
 _HOM = "HomHillenmeyer2008Dataset"
@@ -93,6 +95,8 @@ _RESOLUTIONS: dict[str, tuple[GeneNameStatus, str]] = {
     "YBR001C": (GeneNameStatus.CURRENT, "YBR001C"),
     "YBR002W": (GeneNameStatus.CURRENT, "YBR002W"),
     "YOLD01W": (GeneNameStatus.RENAMED, "YBR002W"),
+    "YOLD03W": (GeneNameStatus.RENAMED, "YBR001C"),
+    "YOR202W": (GeneNameStatus.CURRENT, "YOR202W"),
     "YDUB01C": (GeneNameStatus.NON_GENE_FEATURE, "YDUB01C"),
     "YRET01W": (GeneNameStatus.CURRENT, "YRET01W"),
     "YOLD02W": (GeneNameStatus.RENAMED, "YBR003W"),
@@ -112,6 +116,7 @@ class _StubGenome:
 
 _ORF_FASTA = (
     ">YAL001C TFC3\nATG\n>YBR001C NTH2\nATG\n>YBR002W RER2\nATG\n>YBR003W COQ1\nATG\n"
+    ">YOR202W HIS3\nATG\n"
 )
 _RNA_FASTA = ">YNCA0001W tA(UGC)A\nGGG\n"
 
@@ -122,16 +127,22 @@ _HET_HEADER = [
     "A3:benomyl:6.9:um::::-5gen:het_02:old scanner",
     "A4:amphotericin:10:um::::20gen:het_01:old scanner",
     "A5:37c, 45c::::::20gen:het_01:old scanner",
+    "A6:colchicine:250:um::::20gen:het_01:old scanner",
+    "A7:minimal media::::::0gen:het_02:old scanner",
 ]
 _HET_ROWS = [
-    ['"YAL001C:chr00_1"', "1.0", "3.0", "0.5", "2.0", "NA"],
+    ['"YAL001C:chr00_1"', "1.0", "3.0", "0.5", "2.0", "NA", "1.0", "1.0"],
     ["YAL001C:chr1_2", "2.0", "NA", "", "", ""],
     ["YBR001C:chr3_9", "0.25", "0.25", "NaN", "null", "1.0"],
     ["YOLD01W:chr5_1", "4.0"],
+    ["YOLD03W:chr6_1", "1.0", "NA"],
+    ["YOR202W:chr15_3", "1.0"],
+    ["YDL227C:ctrl_1", "5.0", "5.0"],
     ["YDUB01C:chr1_1", "9", "9", "9", "9", "9"],
     ["YRET01W:chr1_1", "9", "9", "9", "9", "9"],
     ["YOLD02W:chr1_1", "9", "9", "9", "9", "9"],
 ]
+_CS0 = "het_02::old scanner::0::tag3::YPD::dmso::0"
 
 
 def _tsv(rows: list[list[str]]) -> str:
@@ -142,7 +153,11 @@ def _source_files() -> dict[str, str]:
     return {
         "het.ratio_result_nm.pub": _tsv([_HET_HEADER, *_HET_ROWS]),
         "hom.z_result_nm.pub": _tsv(
-            [["Orf", "B1:benomyl:6.9:um::::20gen"], ["YAL001C:chr00_1", "1.5"]]
+            [
+                ["Orf", "B1:benomyl:6.9:um::::20gen"],
+                ["YAL001C:chr00_1", "1.5"],
+                ["YOR153W:chr15_2", "2.5"],
+            ]
         ),
         "het.txt": _tsv(
             [
@@ -152,6 +167,8 @@ def _source_files() -> dict[str, str]:
                 ["A3", "benomyl", _CS2],
                 ["A4", "amphotericin", _CS1],
                 ["A5", "37c, 45c", _CS1],
+                ["A6", "colchiceine", _CS1],
+                ["A7", "no drug minimal media", _CS0],
             ]
         ),
         "hom.txt": _tsv(
@@ -165,6 +182,7 @@ def _source_files() -> dict[str, str]:
                 [_CS1, "C3"],
                 [_CS2, "C4"],
                 [_CS2, "C5"],
+                [_CS0, "C6"],
             ]
         ),
         "hom_controls.txt": _tsv(
@@ -228,169 +246,153 @@ def het(tmp_path: Path, data_root: Path) -> m.HetHillenmeyer2008Dataset:
     return m.HetHillenmeyer2008Dataset(root=str(tmp_path / "het"), genome=_StubGenome())
 
 
-_BENOMYL = SmallMoleculePerturbation(
-    compound=Compound(
-        name="benomyl",
-        inchikey="RIOXQFHNBCKOKP-UHFFFAOYSA-N",
-        smiles="CCCCNC(=O)N1C2=CC=CC=C2N=C1NC(=O)OC",
-        pubchem_cid=28780,
-        chebi_id="CHEBI:3015",
-    ),
-    concentration=Concentration(value=6.9, unit=ConcentrationUnit.micromolar),
-)
-_SOM = Provenance(
-    source_uri="paper.md",
-    citation_key="hillenmeyerChemicalGenomicPortrait2008",
-    sha256="cf4759f00083de78dd953b12dd66d4360a2f645321305f768403f26b451c1df0",
-)
-_TEMPERATURE_GAP = ProvenanceGap(
-    field="temperature",
-    reason=ProvenanceGapReason.deferred_pending_source_review,
-    looked_in=_SOM,
-    resolve_with=Provenance(
-        source_uri="paper.pdf",
-        citation_key="pierceGenomewideAnalysisBarcoded2006",
-        sha256="not-mirrored",
-        method="S. E. Pierce et al., Nat Methods 3, 601 (Aug, 2006) -- ref (2) of the "
-        "Hillenmeyer SOM, the declared source of the growth protocol",
-    ),
-    note="the SOM states no growth temperature for the non-temperature conditions "
-    "and defers the whole pooled-growth protocol to Pierce 2006, which is not "
-    "mirrored; 30 C is the community default but this paper never states it",
+_BENOMYL_COMPOUND = Compound(
+    name="benomyl",
+    inchikey="RIOXQFHNBCKOKP-UHFFFAOYSA-N",
+    smiles="CCCCNC(=O)N1C2=CC=CC=C2N=C1NC(=O)OC",
+    pubchem_cid=28780,
+    chebi_id="CHEBI:3015",
 )
 
 
-def _environment(
-    perturbations: list[EnvironmentPerturbationType], generations: float
-) -> Environment:
-    return Environment(
-        media=YPD_LIQUID,
-        temperature=None,
-        perturbations=perturbations,
-        aerobicity="aerobic",
-        duration_generations=generations,
-        provenance_gaps=[_TEMPERATURE_GAP],
-    )
+def _experiment(
+    dataset: m._Hillenmeyer2008Base, i: int
+) -> StrainEnvironmentResponseExperiment:
+    return StrainEnvironmentResponseExperiment.model_validate(dataset[i]["experiment"])
 
 
-def _het_genotype(orf: str) -> Genotype:
-    return Genotype(
-        perturbations=[
-            EngineeredCopyNumberPerturbation(
-                systematic_gene_name=orf,
-                perturbed_gene_name=orf,
-                copy_number=1,
-                reference_copy_number=2,
-                marker="KanMX",
-            )
-        ]
-    )
-
-
-def _phenotype(
-    mean: float,
-    n: int,
-    sd: float | None,
-    control_set: str,
-    gaps: list[ProvenanceGap] | None = None,
-    measurement: MeasurementType = MeasurementType.log2_ratio,
-    units: str = m.UNITS_HET,
-) -> EnvironmentResponsePhenotype:
-    return EnvironmentResponsePhenotype(
-        measurement_type=measurement,
-        assay_type=AssayType.pooled_competitive_growth_barcode,
-        environment_response=mean,
-        n_samples=n,
-        sample_unit=SampleUnit.biological_replicate,
-        environment_response_uncertainty=sd,
-        environment_response_uncertainty_type=(
-            UncertaintyType.sample_sd if sd is not None else None
-        ),
-        screen_id=control_set,
-        units=units,
-        provenance_gaps=gaps or [],
-    )
+def _genotype(experiment: StrainEnvironmentResponseExperiment) -> Genotype:
+    """The record's single genotype (Hillenmeyer never emits a genotype list)."""
+    genotype = experiment.genotype
+    assert isinstance(genotype, Genotype)
+    return genotype
 
 
 def _reference(
-    dataset: str,
-    control_set: str,
-    n: int,
-    generations: float,
-    strain: str = "heterozygous diploid deletion collection (Giaever 2002)",
-    measurement: MeasurementType = MeasurementType.log2_ratio,
-) -> EnvironmentResponseExperimentReference:
-    return EnvironmentResponseExperimentReference(
-        dataset_name=dataset,
-        genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain=strain, ploidy="diploid"
-        ),
-        environment_reference=_environment([], generations),
-        phenotype_reference=EnvironmentResponsePhenotype(
-            measurement_type=measurement,
-            assay_type=AssayType.pooled_competitive_growth_barcode,
-            environment_response=0.0,
-            n_samples=n,
-            sample_unit=SampleUnit.biological_replicate,
-            screen_id=control_set,
-            units=(
-                f"no-drug control set {control_set!r}: {n} control arrays on the same "
-                "deletion pool, generation count and scanner, run in YPD with a DMSO "
-                "vehicle at concentration 0 as the release spells it. The score is 0 by "
-                "construction -- it is the control mean this set's treatment arrays are "
-                "scored against"
-            ),
-        ),
+    dataset: m._Hillenmeyer2008Base, i: int
+) -> StrainEnvironmentResponseExperimentReference:
+    return StrainEnvironmentResponseExperimentReference.model_validate(
+        dataset[i]["reference"]
     )
 
 
-_ZERO_SD_GAP = ProvenanceGap(
-    field="environment_response_uncertainty",
-    reason=ProvenanceGapReason.not_reported_by_primary,
-    looked_in=_SOM,
-    note="the 2 arrays of this group print the identical score to the release's last "
-    "decimal, so the replicate dispersion is below the released precision rather than "
-    "measured to be zero",
-)
-
+#: (row id, current gene, source ORF if renamed, mean, n, sd, control set, pool)
 _HET_EXPECTED = [
-    ("YAL001C", _phenotype(2.25, 2, math.sqrt(1.125), _CS1), 20.0),
-    ("YAL001C", _phenotype(0.5, 1, None, _CS2), 5.0),
-    ("YBR001C", _phenotype(0.25, 2, None, _CS1, [_ZERO_SD_GAP]), 20.0),
-    ("YBR002W", _phenotype(4.0, 1, None, _CS1), 20.0),
+    ("YAL001C", "chr00_1", None, 2.0, 2, math.sqrt(2.0), _CS1, "het_01"),
+    ("YAL001C", "chr00_1", None, 0.5, 1, None, _CS2, "het_02"),
+    ("YAL001C", "chr1_2", None, 2.0, 1, None, _CS1, "het_01"),
+    ("YBR001C", "chr3_9", None, 0.25, 2, None, _CS1, "het_01"),
+    ("YBR002W", "chr5_1", "YOLD01W", 4.0, 1, None, _CS1, "het_01"),
+    ("YBR001C", "chr6_1", "YOLD03W", 1.0, 1, None, _CS1, "het_01"),
+    ("YOR202W", "chr15_3", None, 1.0, 1, None, _CS1, "het_01"),
 ]
-_REF_CS1 = _reference(_HET, _CS1, 3, 20.0)
-_REF_CS2 = _reference(_HET, _CS2, 2, 5.0)
 
 
-def test_het_records_average_constructions_then_arrays(
+def test_het_records_are_one_per_constructed_strain_and_control_set(
     het: m.HetHillenmeyer2008Dataset,
 ) -> None:
-    """Four records in ORF-then-group order, each a heterozygous CNV in YPD with the
-    temperature gap; the renamed row is stored under YBR002W.
+    """Seven records in row-then-group order; two rows of YAL001C (chr00_1, chr1_2) and
+    the two strains on YBR001C never average (#505 G3, n_samples counts arrays of ONE
+    construction).
     """
-    assert len(het) == 4
-    for i, (orf, phenotype, generations) in enumerate(_HET_EXPECTED):
-        assert (
-            het[i]["experiment"]
-            == EnvironmentResponseExperiment(
-                dataset_name=_HET,
-                genotype=_het_genotype(orf),
-                environment=_environment([_BENOMYL], generations),
-                phenotype=phenotype,
-            ).model_dump()
+    assert len(het) == 7
+    for i, (orf, batch, source, mean, n, sd, cs, pool) in enumerate(_HET_EXPECTED):
+        experiment = _experiment(het, i)
+        assert experiment.experiment_type == "strain_environment_response"
+        (pert,) = _genotype(experiment).perturbations
+        assert isinstance(pert, HeterozygousDeletionPerturbation)
+        assert (pert.systematic_gene_name, pert.cassette, pert.collection) == (
+            orf,
+            "kanMX4",
+            pool,
         )
-    assert [het[i]["reference"] for i in range(4)] == [
-        _REF_CS1.model_dump(),
-        _REF_CS2.model_dump(),
-        _REF_CS1.model_dump(),
-        _REF_CS1.model_dump(),
-    ]
+        assert pert.construction == StrainConstruction(batch=batch)
+        if source is None:
+            assert pert.constructed_orf is None
+        else:
+            assert pert.constructed_orf is not None
+            assert pert.constructed_orf.source_systematic_name == source
+        phenotype = experiment.phenotype
+        assert (phenotype.screen_id, phenotype.n_samples) == (cs, n)
+        assert phenotype.environment_response == pytest.approx(mean)
+        if sd is None:
+            assert phenotype.environment_response_uncertainty is None
+        else:
+            assert phenotype.environment_response_uncertainty == pytest.approx(sd)
+        assert phenotype.units == m.UNITS_HET
+    # the zero-SD group is a typed gap, not a dispersion of 0
+    assert _experiment(het, 3).phenotype.gapped_fields() == {
+        "environment_response_uncertainty"
+    }
+    # a merge (two source ORFs on YBR001C) vs a lone rename (YOLD01W -> YBR002W)
+    merged = _genotype(_experiment(het, 5)).perturbations[0]
+    lone = _genotype(_experiment(het, 4)).perturbations[0]
+    assert isinstance(merged, HeterozygousDeletionPerturbation)
+    assert isinstance(lone, HeterozygousDeletionPerturbation)
+    assert merged.constructed_orf is not None and lone.constructed_orf is not None
+    assert merged.constructed_orf.relation is OrfHistoryRelation.merged
+    assert lone.constructed_orf.relation is None
+    assert lone.constructed_orf.gapped_fields() == {"relation", "deleted_span"}
+    # G2: HIS3 is null in BY4743 before and after the deletion
+    his3 = _genotype(_experiment(het, 6)).perturbations[0]
+    assert isinstance(his3, HeterozygousDeletionPerturbation)
+    assert his3.gapped_fields() == {"barcode", "downtag_barcode", "replaced_allele"}
+    background = _reference(het, 6).genome_reference.background
+    assert heterozygous_deletion_functional_copies(background, his3) == 0
     doi = "10.1126/science.1150021"
     assert (
         het[0]["publication"]
         == Publication(doi=doi, doi_url=f"https://doi.org/{doi}").model_dump()
     )
+
+
+def test_het_environment_carries_the_pre_culture_its_generation_sign_implies(
+    het: m.HetHillenmeyer2008Dataset,
+) -> None:
+    """20gen and -5gen of one drug: same compound, different pre-culture (#505 E3)."""
+    grown, frozen = _experiment(het, 0).environment, _experiment(het, 1).environment
+    for environment, generations in ((grown, 20.0), (frozen, 5.0)):
+        assert isinstance(environment, CultureEnvironment)
+        assert environment.media == YPD_LIQUID
+        assert environment.duration_generations == generations
+        assert environment.gapped_fields() == {"temperature", "culture_format"}
+        (drug,) = environment.perturbations
+        assert isinstance(drug, SmallMoleculePerturbation)
+        assert drug.compound == _BENOMYL_COMPOUND
+        assert drug.concentration == Concentration(
+            value=6.9, unit=ConcentrationUnit.micromolar
+        )
+        assert drug.gapped_fields() == {"solvent"}
+    assert grown.pre_culture is not None and frozen.pre_culture is not None
+    assert grown.pre_culture.source is PreCultureSource.log_phase_culture
+    assert grown.pre_culture.medium == YPD_LIQUID
+    assert frozen.pre_culture.source is PreCultureSource.frozen_stock
+    assert frozen.pre_culture.source_label == "-5gen"
+
+
+def test_het_reference_is_by4743_with_the_matched_control_set(
+    het: m.HetHillenmeyer2008Dataset,
+) -> None:
+    reference = _reference(het, 0)
+    genome = reference.genome_reference
+    assert (genome.strain, genome.ploidy, genome.background.name) == (
+        "BY4743",
+        "diploid",
+        "BY4743",
+    )
+    assert genome.background == m.hillenmeyer_background()
+    assert reference.phenotype_reference.screen_id == _CS1
+    assert reference.phenotype_reference.n_samples == 3
+    assert reference.environment_reference.perturbations == []
+    assert reference.environment_reference.duration_generations == 20.0
+    assert reference.environment_reference.pre_culture is not None
+    assert (
+        _reference(het, 1).environment_reference.pre_culture
+        == _experiment(het, 1).environment.pre_culture
+    )
+    assert [
+        het[i]["reference"]["phenotype_reference"]["screen_id"] for i in range(7)
+    ] == [_CS1, _CS2, _CS1, _CS1, _CS1, _CS1, _CS1]
 
 
 def test_het_side_files_gene_set_reference_index_and_manifest(
@@ -401,6 +403,7 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
         "YAL001C",
         "YBR001C",
         "YBR002W",
+        "YOR202W",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
     assert sorted(
@@ -409,19 +412,26 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
             entry["reference"]["phenotype_reference"]["screen_id"],
         )
         for entry in index
-    ) == [([0, 2, 3], _CS1), ([1], _CS2)]
+    ) == [([0, 2, 3, 4, 5, 6], _CS1), ([1], _CS2)]
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "het"
     assert manifest["loader_class"] == _HET
+    # the old EngineeredCopyNumberPerturbation leaf has left the closure (#505 G1)
     assert sorted(manifest["closure"]) == [
+        "AlleleEdit",
         "AssayType",
+        "BackgroundAllele",
+        "BarcodedKanMxDeletionPerturbation",
         "ComponentDefinition",
         "Compound",
         "Concentration",
         "ConcentrationUnit",
+        "ConstructedOrf",
+        "CultureEnvironment",
+        "CultureFormat",
         "DeletionPerturbation",
         "DoseBasis",
-        "EngineeredCopyNumberPerturbation",
+        "EndpointRule",
         "Environment",
         "EnvironmentPerturbation",
         "EnvironmentPhysicalPerturbation",
@@ -431,15 +441,22 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
         "Experiment",
         "ExperimentReference",
         "GenePerturbation",
+        "GenomicSpan",
         "Genotype",
+        "HashableProvenanceGapMixin",
+        "HeterozygousDeletionPerturbation",
         "KanMxDeletionPerturbation",
+        "MatingType",
         "MeasurementType",
         "Media",
         "MediaComponent",
         "MediaComponentRole",
         "ModelStrict",
+        "OrfHistoryRelation",
         "Phenotype",
         "PhysicalFactor",
+        "PreCulture",
+        "PreCultureSource",
         "PresenceAbsencePerturbation",
         "ProvenanceGapMixin",
         "Publication",
@@ -448,71 +465,77 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
         "SampleUnit",
         "SmallMoleculePerturbation",
         "Solvent",
+        "StrainBackground",
+        "StrainConstruction",
+        "StrainEnvironmentResponseExperiment",
+        "StrainEnvironmentResponseExperimentReference",
+        "StrainReferenceGenome",
         "Temperature",
         "TemperatureUnit",
         "UncertaintyType",
+        "Zygosity",
     ]
     assert het.raw_file_names == [
         "het.ratio_result_nm.pub",
         "het.txt",
         "het_controls.txt",
     ]
-    assert het.experiment_class is EnvironmentResponseExperiment
-    assert het.reference_class is EnvironmentResponseExperimentReference
+    assert het.experiment_class is StrainEnvironmentResponseExperiment
+    assert het.reference_class is StrainEnvironmentResponseExperimentReference
     with pytest.raises(
         NotImplementedError,
-        match="Hillenmeyer2008 builds its records in process\\(\\); see _array_values",
+        match="Hillenmeyer2008 builds its records in process\\(\\); see iter_records",
     ):
         het.create_experiment()
     frame = {"untouched": True}
     assert het.preprocess_raw(frame) is frame
 
 
-def test_het_drop_reports_count_columns_and_genes(
+def test_het_drop_reports_count_columns_strains_and_genes(
     het: m.HetHillenmeyer2008Dataset,
 ) -> None:
-    """Each dropped column is its own environment with one array and one record not
-    written; the three dropped row ids are the non-gene feature, a current name absent
-    from the FASTA, and a rename onto a retired target.
+    """Each dropped column is its own environment; records-not-written are counted over
+    the kept strain rows. The HO control row is a dropped strain, not a YDL227C record.
     """
     preprocess = Path(het.root) / "preprocess"
     report = json.loads((preprocess / "dropped_records.json").read_text())
     assert report["dataset"] == _HET
     assert report["matrix"] == "het.ratio_result_nm.pub"
-    assert report["kept_records"] == 4
-    assert sorted(report["rules"]) == [
-        "heat_shock_cycle_not_representable",
-        "unidentifiable_agent",
-        "unnamed_agent_dosed_into_a_media_swap",
-    ]
+    assert report["kept_records"] == 7
+    assert sorted(report["rules"]) == sorted(m.DROP_RULES)
     assert report["by_rule"] == {
-        "unidentifiable_agent": {
-            "n_environments": 1,
-            "n_arrays": 1,
-            "n_records_not_written": 1,
-        },
-        "heat_shock_cycle_not_representable": {
-            "n_environments": 1,
-            "n_arrays": 1,
-            "n_records_not_written": 1,
-        },
+        rule: {"n_environments": 1, "n_arrays": 1, "n_records_not_written": n}
+        for rule, n in (
+            ("unidentifiable_agent", 1),
+            ("heat_shock_cycle_not_representable", 1),
+            ("key_header_compound_conflict_no_tie_breaker", 1),
+            ("zero_generations_no_exposure", 1),
+        )
     }
-    assert report["environments"] == [
-        {
-            "rule": "heat_shock_cycle_not_representable",
-            "detail": "37c, 45c",
-            "n_arrays": 1,
-            "headers": [_HET_HEADER[5]],
+    details = {(e["rule"], e["detail"]) for e in report["environments"]}
+    assert details == {
+        ("heat_shock_cycle_not_representable", "37c, 45c"),
+        ("unidentifiable_agent", "amphotericin"),
+        (
+            "key_header_compound_conflict_no_tie_breaker",
+            "header 'colchicine' vs key file 'colchiceine'",
+        ),
+        ("zero_generations_no_exposure", "minimal media: 0gen"),
+    }
+    strains = json.loads((preprocess / "dropped_strains.json").read_text())
+    assert strains["by_rule"] == {
+        "ho_control_strain_unknown_construction": {
+            "row_ids": ["YDL227C:ctrl_1"],
             "n_records_not_written": 1,
-        },
-        {
-            "rule": "unidentifiable_agent",
-            "detail": "amphotericin",
-            "n_arrays": 1,
-            "headers": [_HET_HEADER[4]],
-            "n_records_not_written": 1,
-        },
-    ]
+        }
+    }
+    checks = json.loads((preprocess / "key_header_checks.json").read_text())
+    assert checks["n_by_outcome"] == {"agree": 5, "spelling_variant": 1, "conflict": 1}
+    constructed = json.loads((preprocess / "constructed_orfs.json").read_text())
+    assert (
+        constructed["n_renamed_source_orfs"],
+        constructed["n_merged_source_orfs"],
+    ) == (2, 1)
     genes = json.loads((preprocess / "dropped_genes.json").read_text())
     assert genes["n_dropped"] == 3
     assert genes["dropped"] == {
@@ -546,11 +569,12 @@ def test_het_batch_reports_flag_the_suspicious_construction(
         batches["n_orfs"],
         batches["n_rows"],
         batches["n_orfs_with_multiple_batches"],
-    ) == (3, 4, 1)
+    ) == (4, 6, 2)
     assert batches["batches_by_orf"] == {
         "YAL001C": ["chr00_1", "chr1_2"],
-        "YBR001C": ["chr3_9"],
+        "YBR001C": ["chr3_9", "chr6_1"],
         "YBR002W": ["chr5_1"],
+        "YOR202W": ["chr15_3"],
     }
     suspicious = json.loads((preprocess / "suspicious_batch_strains.json").read_text())
     assert suspicious["collection"] == "heterozygous"
@@ -568,44 +592,40 @@ def test_download_symlinks_the_three_mirror_files(
     }
 
 
-def test_hom_record_is_a_kanmx_deletion_scored_as_a_z_score(
+def test_hom_record_is_a_barcoded_kanmx4_deletion_and_pdr5_is_dropped(
     tmp_path: Path, data_root: Path
 ) -> None:
+    """The SOM says the homozygous PDR5 strain had the wrong gene deleted (#505 G4)."""
     hom = m.HomHillenmeyer2008Dataset(root=str(tmp_path / "hom"), genome=_StubGenome())
     assert len(hom) == 1
-    assert (
-        hom[0]["experiment"]
-        == EnvironmentResponseExperiment(
-            dataset_name=_HOM,
-            genotype=Genotype(
-                perturbations=[
-                    KanMxDeletionPerturbation(
-                        systematic_gene_name="YAL001C", perturbed_gene_name="YAL001C"
-                    )
-                ]
-            ),
-            environment=_environment([_BENOMYL], 20.0),
-            phenotype=_phenotype(
-                1.5,
-                1,
-                None,
-                _HOM_CS,
-                measurement=MeasurementType.z_score,
-                units=m.UNITS_HOM,
-            ),
-        ).model_dump()
+    experiment = _experiment(hom, 0)
+    (pert,) = _genotype(experiment).perturbations
+    assert isinstance(pert, BarcodedKanMxDeletionPerturbation)
+    assert (pert.systematic_gene_name, pert.cassette, pert.collection) == (
+        "YAL001C",
+        "kanMX4",
+        "hom_01",
     )
-    assert (
-        hom[0]["reference"]
-        == _reference(
-            _HOM,
-            _HOM_CS,
-            2,
-            20.0,
-            strain="homozygous diploid deletion collection (Giaever 2002)",
-            measurement=MeasurementType.z_score,
-        ).model_dump()
+    assert pert.construction == StrainConstruction(batch="chr00_1")
+    assert pert.gapped_fields() == {"barcode", "downtag_barcode"}
+    phenotype = experiment.phenotype
+    assert (phenotype.measurement_type, phenotype.environment_response) == (
+        MeasurementType.z_score,
+        1.5,
     )
+    assert (phenotype.screen_id, phenotype.units) == (_HOM_CS, m.UNITS_HOM)
+    reference = _reference(hom, 0)
+    assert reference.genome_reference.strain == "BY4743"
+    assert reference.phenotype_reference.n_samples == 2
+    strains = json.loads(
+        (tmp_path / "hom" / "preprocess" / "dropped_strains.json").read_text()
+    )
+    assert strains["by_rule"] == {
+        "som_wrong_gene_deleted": {
+            "row_ids": ["YOR153W:chr15_2"],
+            "n_records_not_written": 1,
+        }
+    }
     suspicious = json.loads(
         (tmp_path / "hom" / "preprocess" / "suspicious_batch_strains.json").read_text()
     )

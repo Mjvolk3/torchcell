@@ -10,6 +10,7 @@ are keyed on.
 
 from __future__ import annotations
 
+import json
 import os.path as osp
 from typing import Any
 
@@ -99,3 +100,105 @@ def test_environment_response_properties_carry_the_screen_and_the_derived_se() -
     assert props["assay_type"] == "pooled_competitive_growth_barcode"
     assert props["screen_id"] == phenotype.screen_id
     assert "serialized_data" not in props
+
+
+# --------------------------------------------------------------------------- #
+# #505: the strain-resolved records go through the existing node builders
+# --------------------------------------------------------------------------- #
+_CS = "het_06_03::new scanner::-5::tag3::YPD::dmso::0"
+
+
+def _hillenmeyer_record() -> tuple[Any, Any]:
+    """One het record and its reference, built with the loader's own builders."""
+    from torchcell.datasets.scerevisiae import hillenmeyer2008 as h
+
+    spec = h.MATRICES["het"]
+    header = ["Orf", "a1:benomyl:6.9:um::::-5gen:het_06_03:new scanner"]
+    columns = h.parse_columns(header, {"a1": _CS}, {"a1": "benomyl"})
+    groups, _ = h.group_columns(columns)
+    background = h.hillenmeyer_background()
+    rows = h.MatrixRows(
+        rows=[
+            h.StrainRow(
+                row_id="YBR115C:chr2_3",
+                source_orf="YBR115C",
+                orf="YBR115C",
+                batch="chr2_3",
+                values=[None, 0.7],
+            )
+        ],
+        dropped_strains=[],
+        dropped_genes={},
+        constructed={},
+    )
+    ((experiment, control_set),) = list(
+        h.iter_records("HetHillenmeyer2008Dataset", spec, rows, groups, background)
+    )
+    reference = h.build_reference(
+        "HetHillenmeyer2008Dataset", spec, control_set, 4, background
+    )
+    return experiment, reference
+
+
+def test_strain_resolved_record_emits_genome_reference_experiment_and_phenotype_nodes() -> (
+    None
+):
+    from types import SimpleNamespace
+
+    from torchcell.data.data import ExperimentReferenceIndex
+    from torchcell.datamodels.schema import (
+        StrainEnvironmentResponseExperiment,
+        StrainEnvironmentResponseExperimentReference,
+        StrainReferenceGenome,
+    )
+
+    experiment, reference = _hillenmeyer_record()
+    adapter = CellAdapter.__new__(CellAdapter)
+    adapter.dataset = SimpleNamespace(
+        experiment_reference_index=[
+            ExperimentReferenceIndex(reference=reference, member_indices=[0])
+        ]
+    )
+    (genome,) = adapter._get_genome_nodes()
+    assert genome.get_label() == "genome"
+    props = genome.get_properties()
+    assert props["strain"] == "BY4743"
+    back = StrainReferenceGenome.model_validate_json(props["serialized_data"])
+    assert back.background.functional_copies("YOR202W") == 0
+    (ref_node,) = adapter._get_experiment_reference_nodes()
+    assert ref_node.get_label() == "experiment reference"
+    assert (
+        StrainEnvironmentResponseExperimentReference.model_validate_json(
+            ref_node.get_properties()["serialized_data"]
+        )
+        == reference
+    )
+    data = {"experiment": experiment}
+    experiment_nodes = CellAdapter._experiment_node.__wrapped__(  # type: ignore[attr-defined]
+        adapter, data, "experiment (chunked)"
+    )
+    assert experiment_nodes[0].get_label() == "experiment"
+    (perturbation,) = CellAdapter._perturbation_node.__wrapped__(  # type: ignore[attr-defined]
+        adapter, data, "perturbation (chunked)"
+    )
+    assert perturbation.get_label() == "perturbation"
+    assert perturbation.get_properties()["perturbation_type"] == "heterozygous_deletion"
+    assert perturbation.get_properties()["systematic_gene_name"] == "YBR115C"
+    environment = CellAdapter._environment_node.__wrapped__(  # type: ignore[attr-defined]
+        adapter, data, "environment (chunked)"
+    )
+    assert environment.get_label() == "environment"
+    assert (
+        json.loads(environment.get_properties()["serialized_data"])["pre_culture"][
+            "source"
+        ]
+        == "frozen_stock"
+    )
+    phenotype = CellAdapter._environment_response_phenotype_node.__wrapped__(  # type: ignore[attr-defined]
+        adapter, data, "environment response phenotype (chunked)"
+    )
+    assert phenotype.get_label() == "environment response phenotype"
+    assert phenotype.get_properties()["screen_id"] == _CS
+    assert phenotype.get_properties()["environment_response"] == 0.7
+    assert isinstance(experiment, StrainEnvironmentResponseExperiment)
+    assert experiment.experiment_type == "strain_environment_response"

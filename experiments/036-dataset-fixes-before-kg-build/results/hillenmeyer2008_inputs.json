@@ -1,0 +1,1621 @@
+{
+  "arms": {
+    "het": {
+      "arrays": 726,
+      "kept_arrays": 651,
+      "kept_environment_groups": 470,
+      "dropped_arrays_by_rule": {
+        "heat_shock_cycle_not_representable": 1,
+        "unidentifiable_agent": 66,
+        "key_header_compound_conflict_no_tie_breaker": 4,
+        "zero_generations_no_exposure": 4
+      },
+      "dropped_records_by_rule": {
+        "heat_shock_cycle_not_representable": 5813,
+        "key_header_compound_conflict_no_tie_breaker": 23074,
+        "unidentifiable_agent": 317723,
+        "zero_generations_no_exposure": 23452
+      },
+      "key_header_outcomes": {
+        "agree": 696,
+        "spelling_variant": 26,
+        "conflict": 4
+      },
+      "n_conflicts": 4,
+      "conflicts": [
+        {
+          "arm": "het",
+          "filename": "02_06_05_01",
+          "header_condition": "bathophenanthroline disulfonate",
+          "key_condition": "bisphenol s",
+          "rule": "drop_compound_conflict",
+          "served": "dropped: key_header_compound_conflict_no_tie_breaker",
+          "records_affected": 5754
+        },
+        {
+          "arm": "het",
+          "filename": "02_10_02_16",
+          "header_condition": "colchicine",
+          "key_condition": "colchiceine",
+          "rule": "drop_compound_conflict",
+          "served": "dropped: key_header_compound_conflict_no_tie_breaker",
+          "records_affected": 5754
+        },
+        {
+          "arm": "het",
+          "filename": "04_02_04_01",
+          "header_condition": "chemical diversity labs 14a",
+          "key_condition": "Tyrphostin",
+          "rule": "drop_compound_conflict",
+          "served": "dropped: key_header_compound_conflict_no_tie_breaker",
+          "records_affected": 5783
+        },
+        {
+          "arm": "het",
+          "filename": "04_10_06_07",
+          "header_condition": "sodium arsenite",
+          "key_condition": "sodium sulfate",
+          "rule": "drop_compound_conflict",
+          "served": "dropped: key_header_compound_conflict_no_tie_breaker",
+          "records_affected": 5783
+        }
+      ],
+      "kept_rows": 5949,
+      "kept_current_genes": 5863,
+      "dropped_source_orfs": 24,
+      "new_record_count": 2712677,
+      "old_record_count_dev_store": 2698797,
+      "records_changing_class": 2712677,
+      "renamed_source_orfs": 52,
+      "merged_relation_source_orfs": 29,
+      "n_genes_fed_by_two_source_orfs": 28,
+      "genes_fed_by_two_source_orfs": {
+        "YAR042W": [
+          "YAR042W",
+          "YAR044W"
+        ],
+        "YBR074W": [
+          "YBR074W",
+          "YBR075W"
+        ],
+        "YBR098W": [
+          "YBR098W",
+          "YBR100W"
+        ],
+        "YCL004W": [
+          "YCL003W",
+          "YCL004W"
+        ],
+        "YCL014W": [
+          "YCL012W",
+          "YCL014W"
+        ],
+        "YCL061C": [
+          "YCL060C",
+          "YCL061C"
+        ],
+        "YCL063W": [
+          "YCL062W",
+          "YCL063W"
+        ],
+        "YCR061W": [
+          "YCR061W",
+          "YCR062W"
+        ],
+        "YDL039C": [
+          "YDL038C",
+          "YDL039C"
+        ],
+        "YDL133C-A": [
+          "YDL133C-A",
+          "YDL134C-A"
+        ],
+        "YDR475C": [
+          "YDR474C",
+          "YDR475C"
+        ],
+        "YFL007W": [
+          "YFL006W",
+          "YFL007W"
+        ],
+        "YFL034C-A": [
+          "YFL034C-A",
+          "YFL035C-B"
+        ],
+        "YFL034C-B": [
+          "YFL035C",
+          "YFL035C-A"
+        ],
+        "YFL042C": [
+          "YFL042C",
+          "YFL043C"
+        ],
+        "YFR024C-A": [
+          "YFR024C",
+          "YFR024C-A"
+        ],
+        "YGL045W": [
+          "YGL045W",
+          "YGL046W"
+        ],
+        "YJL016W": [
+          "YJL016W",
+          "YJL017W"
+        ],
+        "YJL019W": [
+          "YJL018W",
+          "YJL019W"
+        ],
+        "YJL020C": [
+          "YJL020C",
+          "YJL021C"
+        ],
+        "YKL157W": [
+          "YKL157W",
+          "YKL158W"
+        ],
+        "YKL198C": [
+          "YKL198C",
+          "YKL199C"
+        ],
+        "YKL201C": [
+          "YKL200C",
+          "YKL201C"
+        ],
+        "YLR390W-A": [
+          "YLR390W-A",
+          "YLR391W"
+        ],
+        "YML034W": [
+          "YML033W",
+          "YML034W"
+        ],
+        "YOR087W": [
+          "YOR087W",
+          "YOR088W"
+        ],
+        "YOR239W": [
+          "YOR239W",
+          "YOR240W"
+        ],
+        "YPR089W": [
+          "YPR089W",
+          "YPR090W"
+        ]
+      },
+      "records_per_source_orf_of_those_genes": {
+        "YAR042W": {
+          "YAR042W": 470,
+          "YAR044W": 470
+        },
+        "YBR074W": {
+          "YBR074W": 470,
+          "YBR075W": 476
+        },
+        "YBR098W": {
+          "YBR098W": 470,
+          "YBR100W": 470
+        },
+        "YCL004W": {
+          "YCL003W": 470,
+          "YCL004W": 470
+        },
+        "YCL014W": {
+          "YCL012W": 470,
+          "YCL014W": 34
+        },
+        "YCL061C": {
+          "YCL060C": 470,
+          "YCL061C": 470
+        },
+        "YCL063W": {
+          "YCL062W": 470,
+          "YCL063W": 470
+        },
+        "YCR061W": {
+          "YCR061W": 0,
+          "YCR062W": 470
+        },
+        "YDL039C": {
+          "YDL038C": 470,
+          "YDL039C": 470
+        },
+        "YDL133C-A": {
+          "YDL133C-A": 470,
+          "YDL134C-A": 470
+        },
+        "YDR475C": {
+          "YDR474C": 470,
+          "YDR475C": 470
+        },
+        "YFL007W": {
+          "YFL006W": 470,
+          "YFL007W": 470
+        },
+        "YFL034C-A": {
+          "YFL034C-A": 470,
+          "YFL035C-B": 470
+        },
+        "YFL034C-B": {
+          "YFL035C": 470,
+          "YFL035C-A": 470
+        },
+        "YFL042C": {
+          "YFL042C": 470,
+          "YFL043C": 470
+        },
+        "YFR024C-A": {
+          "YFR024C": 470,
+          "YFR024C-A": 470
+        },
+        "YGL045W": {
+          "YGL045W": 470,
+          "YGL046W": 470
+        },
+        "YJL016W": {
+          "YJL016W": 470,
+          "YJL017W": 470
+        },
+        "YJL019W": {
+          "YJL018W": 470,
+          "YJL019W": 470
+        },
+        "YJL020C": {
+          "YJL020C": 470,
+          "YJL021C": 470
+        },
+        "YKL157W": {
+          "YKL157W": 470,
+          "YKL158W": 470
+        },
+        "YKL198C": {
+          "YKL198C": 470,
+          "YKL199C": 470
+        },
+        "YKL201C": {
+          "YKL200C": 20,
+          "YKL201C": 470
+        },
+        "YLR390W-A": {
+          "YLR390W-A": 470,
+          "YLR391W": 470
+        },
+        "YML034W": {
+          "YML033W": 470,
+          "YML034W": 470
+        },
+        "YOR087W": {
+          "YOR087W": 470,
+          "YOR088W": 470
+        },
+        "YOR239W": {
+          "YOR239W": 470,
+          "YOR240W": 470
+        },
+        "YPR089W": {
+          "YPR089W": 470,
+          "YPR090W": 470
+        }
+      },
+      "n_source_orfs_built_in_two_or_more_batches": 58,
+      "rows_of_those_source_orfs": 116,
+      "minimal_media_arrays": [
+        {
+          "filename": "03_06_05_01",
+          "header": "03_06_05_01:minimal media::::::-5gen:het_09_02:old scanner",
+          "key_condition": "no drug minimal media",
+          "old_medium": "SD",
+          "new_medium": "SD minimal (YNB + ammonium sulfate + glucose)",
+          "supplement_gap": true,
+          "drop_reason": null
+        },
+        {
+          "filename": "03_06_05_02",
+          "header": "03_06_05_02:minimal media::::::0gen:het_09_02:old scanner",
+          "key_condition": "no drug minimal media",
+          "old_medium": "SD",
+          "new_medium": null,
+          "supplement_gap": false,
+          "drop_reason": "zero_generations_no_exposure"
+        },
+        {
+          "filename": "03_06_05_03",
+          "header": "03_06_05_03:minimal media::::::0gen:het_09_02:old scanner",
+          "key_condition": "no drug minimal media",
+          "old_medium": "SD",
+          "new_medium": null,
+          "supplement_gap": false,
+          "drop_reason": "zero_generations_no_exposure"
+        },
+        {
+          "filename": "03_06_05_04",
+          "header": "03_06_05_04:minimal media::::::5gen:het_09_02:old scanner",
+          "key_condition": "no drug minimal media",
+          "old_medium": "SD",
+          "new_medium": "SD minimal (YNB + ammonium sulfate + glucose)",
+          "supplement_gap": true,
+          "drop_reason": null
+        },
+        {
+          "filename": "03_06_05_05",
+          "header": "03_06_05_05:minimal media::::::10gen:het_09_02:old scanner",
+          "key_condition": "no drug minimal media",
+          "old_medium": "SD",
+          "new_medium": "SD minimal (YNB + ammonium sulfate + glucose)",
+          "supplement_gap": true,
+          "drop_reason": null
+        },
+        {
+          "filename": "03_06_05_06",
+          "header": "03_06_05_06:minimal media::::::-5gen:het_09_02:old scanner",
+          "key_condition": "no drug minimal media",
+          "old_medium": "SD",
+          "new_medium": "SD minimal (YNB + ammonium sulfate + glucose)",
+          "supplement_gap": true,
+          "drop_reason": null
+        },
+        {
+          "filename": "03_06_05_07",
+          "header": "03_06_05_07:minimal media::::::0gen:het_09_02:old scanner",
+          "key_condition": "no drug minimal media",
+          "old_medium": "SD",
+          "new_medium": null,
+          "supplement_gap": false,
+          "drop_reason": "zero_generations_no_exposure"
+        },
+        {
+          "filename": "03_06_05_09",
+          "header": "03_06_05_09:minimal media::::::5gen:het_09_02:old scanner",
+          "key_condition": "no drug minimal media",
+          "old_medium": "SD",
+          "new_medium": "SD minimal (YNB + ammonium sulfate + glucose)",
+          "supplement_gap": true,
+          "drop_reason": null
+        },
+        {
+          "filename": "03_06_05_10",
+          "header": "03_06_05_10:minimal media::::::10gen:het_09_02:old scanner",
+          "key_condition": "no drug minimal media",
+          "old_medium": "SD",
+          "new_medium": "SD minimal (YNB + ammonium sulfate + glucose)",
+          "supplement_gap": true,
+          "drop_reason": null
+        },
+        {
+          "filename": "03_06_06_11",
+          "header": "03_06_06_11:minimal media::::::5gen:het_09_02:old scanner",
+          "key_condition": "no drug minimal media",
+          "old_medium": "SD",
+          "new_medium": "SD minimal (YNB + ammonium sulfate + glucose)",
+          "supplement_gap": true,
+          "drop_reason": null
+        },
+        {
+          "filename": "03_06_06_12",
+          "header": "03_06_06_12:minimal media::::::0gen:het_09_02:old scanner",
+          "key_condition": "no drug minimal media",
+          "old_medium": "SD",
+          "new_medium": null,
+          "supplement_gap": false,
+          "drop_reason": "zero_generations_no_exposure"
+        }
+      ],
+      "zero_generation_arrays": [
+        {
+          "filename": "03_06_05_02",
+          "header": "03_06_05_02:minimal media::::::0gen:het_09_02:old scanner",
+          "records_not_written": 5863
+        },
+        {
+          "filename": "03_06_05_03",
+          "header": "03_06_05_03:minimal media::::::0gen:het_09_02:old scanner",
+          "records_not_written": 5863
+        },
+        {
+          "filename": "03_06_05_07",
+          "header": "03_06_05_07:minimal media::::::0gen:het_09_02:old scanner",
+          "records_not_written": 5863
+        },
+        {
+          "filename": "03_06_06_12",
+          "header": "03_06_06_12:minimal media::::::0gen:het_09_02:old scanner",
+          "records_not_written": 5863
+        }
+      ],
+      "zero_generation_records_not_written": 23452,
+      "marker_loci": {
+        "YOR202W": {
+          "gene": "HIS3",
+          "rows": [
+            "YOR202W:chr15_3"
+          ],
+          "records": 470,
+          "background_functional_copies": 0,
+          "het_functional_copies_after_deletion": [
+            0
+          ],
+          "old_encoding": "copy_number 1 of reference_copy_number 2 (functional_dose 0.5)",
+          "gapped_fields": [
+            "barcode",
+            "downtag_barcode",
+            "replaced_allele"
+          ]
+        },
+        "YBR115C": {
+          "gene": "LYS2",
+          "rows": [
+            "YBR115C:chr2_3"
+          ],
+          "records": 470,
+          "background_functional_copies": 1,
+          "het_functional_copies_after_deletion": [
+            null
+          ],
+          "old_encoding": "copy_number 1 of reference_copy_number 2 (functional_dose 0.5)",
+          "gapped_fields": [
+            "barcode",
+            "downtag_barcode",
+            "replaced_allele"
+          ]
+        },
+        "YLR303W": {
+          "gene": "MET15/MET17",
+          "rows": [
+            "YLR303W:chr12_4"
+          ],
+          "records": 470,
+          "background_functional_copies": 1,
+          "het_functional_copies_after_deletion": [
+            null
+          ],
+          "old_encoding": "copy_number 1 of reference_copy_number 2 (functional_dose 0.5)",
+          "gapped_fields": [
+            "barcode",
+            "downtag_barcode",
+            "replaced_allele"
+          ]
+        }
+      },
+      "dropped_strains": {
+        "ho_control_strain_unknown_construction": {
+          "rows": [
+            "YDL227C:ctrl_1",
+            "YDL227C:ctrl_10",
+            "YDL227C:ctrl_11",
+            "YDL227C:ctrl_2",
+            "YDL227C:ctrl_3",
+            "YDL227C:ctrl_4",
+            "YDL227C:ctrl_5",
+            "YDL227C:ctrl_6",
+            "YDL227C:ctrl_7",
+            "YDL227C:ctrl_8",
+            "YDL227C:ctrl_9"
+          ],
+          "records": 2043
+        }
+      },
+      "suspicious_batches": {
+        "raw_rows_exact_batch": 783,
+        "raw_rows_exact_batch_with_any_value": 778,
+        "raw_rows_incl_slash_joined_batches": 785,
+        "kept_rows_exact_batch": 777,
+        "kept_distinct_current_orfs_exact_batch": 772,
+        "kept_distinct_source_orfs_exact_batch": 777,
+        "som_count": 647
+      }
+    },
+    "hom": {
+      "arrays": 418,
+      "kept_arrays": 368,
+      "kept_environment_groups": 249,
+      "dropped_arrays_by_rule": {
+        "unnamed_agent_dosed_into_a_media_swap": 2,
+        "key_header_compound_conflict_no_tie_breaker": 7,
+        "unidentifiable_agent": 32,
+        "zero_generations_no_exposure": 9
+      },
+      "dropped_records_by_rule": {
+        "key_header_compound_conflict_no_tie_breaker": 24756,
+        "unidentifiable_agent": 114704,
+        "unnamed_agent_dosed_into_a_media_swap": 8692,
+        "zero_generations_no_exposure": 41649
+      },
+      "key_header_outcomes": {
+        "agree": 371,
+        "conflict": 29,
+        "spelling_variant": 18
+      },
+      "n_conflicts": 29,
+      "conflicts": [
+        {
+          "arm": "hom",
+          "filename": "01_11_20_05",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "dropped: unnamed_agent_dosed_into_a_media_swap",
+          "records_affected": 4250
+        },
+        {
+          "arm": "hom",
+          "filename": "02_03_12_02",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "dropped: unnamed_agent_dosed_into_a_media_swap",
+          "records_affected": 4442
+        },
+        {
+          "arm": "hom",
+          "filename": "02_06_05_04",
+          "header_condition": "bathophenanthroline disulfonate",
+          "key_condition": "bisphenol s",
+          "rule": "drop_compound_conflict",
+          "served": "dropped: key_header_compound_conflict_no_tie_breaker",
+          "records_affected": 4118
+        },
+        {
+          "arm": "hom",
+          "filename": "02_07_03_01",
+          "header_condition": "bathophenanthroline disulfonate",
+          "key_condition": "bisphenol s",
+          "rule": "drop_compound_conflict",
+          "served": "dropped: key_header_compound_conflict_no_tie_breaker",
+          "records_affected": 4118
+        },
+        {
+          "arm": "hom",
+          "filename": "02_07_03_02",
+          "header_condition": "bathophenanthroline disulfonate",
+          "key_condition": "bisphenol s",
+          "rule": "drop_compound_conflict",
+          "served": "dropped: key_header_compound_conflict_no_tie_breaker",
+          "records_affected": 4118
+        },
+        {
+          "arm": "hom",
+          "filename": "03_06_06_01",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "records_affected": 4696
+        },
+        {
+          "arm": "hom",
+          "filename": "03_06_06_02",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "dropped: zero_generations_no_exposure",
+          "records_affected": 4651
+        },
+        {
+          "arm": "hom",
+          "filename": "03_06_06_03",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "dropped: zero_generations_no_exposure",
+          "records_affected": 4651
+        },
+        {
+          "arm": "hom",
+          "filename": "03_06_06_04",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "records_affected": 4553
+        },
+        {
+          "arm": "hom",
+          "filename": "03_06_06_05",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "records_affected": 4459
+        },
+        {
+          "arm": "hom",
+          "filename": "03_06_06_06",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "records_affected": 4696
+        },
+        {
+          "arm": "hom",
+          "filename": "03_06_06_07",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "dropped: zero_generations_no_exposure",
+          "records_affected": 4651
+        },
+        {
+          "arm": "hom",
+          "filename": "03_06_06_08",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "dropped: zero_generations_no_exposure",
+          "records_affected": 4651
+        },
+        {
+          "arm": "hom",
+          "filename": "03_06_06_09",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "records_affected": 4553
+        },
+        {
+          "arm": "hom",
+          "filename": "03_06_06_10",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "records_affected": 4459
+        },
+        {
+          "arm": "hom",
+          "filename": "03_09_11_12",
+          "header_condition": "sodium arsenite",
+          "key_condition": "sodium sulfate",
+          "rule": "drop_compound_conflict",
+          "served": "dropped: key_header_compound_conflict_no_tie_breaker",
+          "records_affected": 4130
+        },
+        {
+          "arm": "hom",
+          "filename": "03_12_19_12",
+          "header_condition": "ptp2",
+          "key_condition": "phosphatase inhibitor",
+          "rule": "drop_compound_conflict",
+          "served": "dropped: key_header_compound_conflict_no_tie_breaker",
+          "records_affected": 4130
+        },
+        {
+          "arm": "hom",
+          "filename": "03_12_19_13",
+          "header_condition": "ptp2",
+          "key_condition": "phosphatase inhibitor",
+          "rule": "drop_compound_conflict",
+          "served": "dropped: key_header_compound_conflict_no_tie_breaker",
+          "records_affected": 4130
+        },
+        {
+          "arm": "hom",
+          "filename": "04_02_06_01",
+          "header_condition": "chemical diversity labs 14a",
+          "key_condition": "Tyrphostin",
+          "rule": "drop_compound_conflict",
+          "served": "dropped: key_header_compound_conflict_no_tie_breaker",
+          "records_affected": 4130
+        },
+        {
+          "arm": "hom",
+          "filename": "04_03_02_05",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "records_affected": 4670
+        },
+        {
+          "arm": "hom",
+          "filename": "04_03_02_06",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "dropped: zero_generations_no_exposure",
+          "records_affected": 4609
+        },
+        {
+          "arm": "hom",
+          "filename": "04_03_02_07",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "records_affected": 4504
+        },
+        {
+          "arm": "hom",
+          "filename": "04_03_02_08",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "records_affected": 4347
+        },
+        {
+          "arm": "hom",
+          "filename": "04_08_03_06",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "records_affected": 4347
+        },
+        {
+          "arm": "hom",
+          "filename": "04_08_04_02",
+          "header_condition": "minimal media",
+          "key_condition": "synthetic complete for BY4743",
+          "rule": "key_wins_strain_medium",
+          "served": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "records_affected": 4693
+        },
+        {
+          "arm": "hom",
+          "filename": "04_11_17_01",
+          "header_condition": "pH8",
+          "key_condition": "ph4",
+          "rule": "header_wins_table_s1",
+          "served": "YPD (yeast extract / peptone / dextrose), liquid",
+          "records_affected": 4130
+        },
+        {
+          "arm": "hom",
+          "filename": "04_11_17_02",
+          "header_condition": "pH8",
+          "key_condition": "ph4",
+          "rule": "header_wins_table_s1",
+          "served": "YPD (yeast extract / peptone / dextrose), liquid",
+          "records_affected": 4130
+        },
+        {
+          "arm": "hom",
+          "filename": "05_03_25_03",
+          "header_condition": "pH7.5",
+          "key_condition": "ph4",
+          "rule": "header_wins_table_s1",
+          "served": "YPD (yeast extract / peptone / dextrose), liquid",
+          "records_affected": 4670
+        },
+        {
+          "arm": "hom",
+          "filename": "05_03_25_04",
+          "header_condition": "pH7.5",
+          "key_condition": "ph4",
+          "rule": "header_wins_table_s1",
+          "served": "YPD (yeast extract / peptone / dextrose), liquid",
+          "records_affected": 4670
+        }
+      ],
+      "kept_rows": 4735,
+      "kept_current_genes": 4694,
+      "dropped_source_orfs": 22,
+      "new_record_count": 1063034,
+      "old_record_count_dev_store": 1088620,
+      "records_changing_class": 1063034,
+      "renamed_source_orfs": 46,
+      "merged_relation_source_orfs": 25,
+      "n_genes_fed_by_two_source_orfs": 25,
+      "genes_fed_by_two_source_orfs": {
+        "YAR042W": [
+          "YAR042W",
+          "YAR044W"
+        ],
+        "YBR074W": [
+          "YBR074W",
+          "YBR075W"
+        ],
+        "YBR098W": [
+          "YBR098W",
+          "YBR100W"
+        ],
+        "YCL014W": [
+          "YCL012W",
+          "YCL014W"
+        ],
+        "YCL061C": [
+          "YCL060C",
+          "YCL061C"
+        ],
+        "YCL063W": [
+          "YCL062W",
+          "YCL063W"
+        ],
+        "YCR061W": [
+          "YCR061W",
+          "YCR062W"
+        ],
+        "YDL039C": [
+          "YDL038C",
+          "YDL039C"
+        ],
+        "YDL133C-A": [
+          "YDL133C-A",
+          "YDL134C-A"
+        ],
+        "YDR475C": [
+          "YDR474C",
+          "YDR475C"
+        ],
+        "YFL007W": [
+          "YFL006W",
+          "YFL007W"
+        ],
+        "YFL034C-A": [
+          "YFL034C-A",
+          "YFL035C-B"
+        ],
+        "YFL042C": [
+          "YFL042C",
+          "YFL043C"
+        ],
+        "YFR024C-A": [
+          "YFR024C",
+          "YFR024C-A"
+        ],
+        "YGL045W": [
+          "YGL045W",
+          "YGL046W"
+        ],
+        "YJL016W": [
+          "YJL016W",
+          "YJL017W"
+        ],
+        "YJL020C": [
+          "YJL020C",
+          "YJL021C"
+        ],
+        "YKL157W": [
+          "YKL157W",
+          "YKL158W"
+        ],
+        "YKL198C": [
+          "YKL198C",
+          "YKL199C"
+        ],
+        "YKL201C": [
+          "YKL200C",
+          "YKL201C"
+        ],
+        "YLR390W-A": [
+          "YLR390W-A",
+          "YLR391W"
+        ],
+        "YML034W": [
+          "YML033W",
+          "YML034W"
+        ],
+        "YOR087W": [
+          "YOR087W",
+          "YOR088W"
+        ],
+        "YOR239W": [
+          "YOR239W",
+          "YOR240W"
+        ],
+        "YPR089W": [
+          "YPR089W",
+          "YPR090W"
+        ]
+      },
+      "records_per_source_orf_of_those_genes": {
+        "YAR042W": {
+          "YAR042W": 249,
+          "YAR044W": 249
+        },
+        "YBR074W": {
+          "YBR074W": 249,
+          "YBR075W": 498
+        },
+        "YBR098W": {
+          "YBR098W": 249,
+          "YBR100W": 249
+        },
+        "YCL014W": {
+          "YCL012W": 249,
+          "YCL014W": 249
+        },
+        "YCL061C": {
+          "YCL060C": 249,
+          "YCL061C": 249
+        },
+        "YCL063W": {
+          "YCL062W": 249,
+          "YCL063W": 249
+        },
+        "YCR061W": {
+          "YCR061W": 249,
+          "YCR062W": 249
+        },
+        "YDL039C": {
+          "YDL038C": 249,
+          "YDL039C": 249
+        },
+        "YDL133C-A": {
+          "YDL133C-A": 249,
+          "YDL134C-A": 249
+        },
+        "YDR475C": {
+          "YDR474C": 249,
+          "YDR475C": 172
+        },
+        "YFL007W": {
+          "YFL006W": 249,
+          "YFL007W": 249
+        },
+        "YFL034C-A": {
+          "YFL034C-A": 249,
+          "YFL035C-B": 249
+        },
+        "YFL042C": {
+          "YFL042C": 249,
+          "YFL043C": 249
+        },
+        "YFR024C-A": {
+          "YFR024C": 249,
+          "YFR024C-A": 249
+        },
+        "YGL045W": {
+          "YGL045W": 249,
+          "YGL046W": 249
+        },
+        "YJL016W": {
+          "YJL016W": 249,
+          "YJL017W": 249
+        },
+        "YJL020C": {
+          "YJL020C": 249,
+          "YJL021C": 249
+        },
+        "YKL157W": {
+          "YKL157W": 249,
+          "YKL158W": 249
+        },
+        "YKL198C": {
+          "YKL198C": 249,
+          "YKL199C": 249
+        },
+        "YKL201C": {
+          "YKL200C": 249,
+          "YKL201C": 249
+        },
+        "YLR390W-A": {
+          "YLR390W-A": 249,
+          "YLR391W": 249
+        },
+        "YML034W": {
+          "YML033W": 249,
+          "YML034W": 249
+        },
+        "YOR087W": {
+          "YOR087W": 249,
+          "YOR088W": 249
+        },
+        "YOR239W": {
+          "YOR239W": 249,
+          "YOR240W": 249
+        },
+        "YPR089W": {
+          "YPR089W": 249,
+          "YPR090W": 249
+        }
+      },
+      "n_source_orfs_built_in_two_or_more_batches": 16,
+      "rows_of_those_source_orfs": 32,
+      "minimal_media_arrays": [
+        {
+          "filename": "01_07_27_21",
+          "header": "01_07_27_21:minimal media::::::5gen:hom_05_01:old scanner",
+          "key_condition": "minimal media",
+          "old_medium": "SD",
+          "new_medium": "SD minimal (YNB + ammonium sulfate + glucose)",
+          "supplement_gap": true,
+          "drop_reason": null
+        },
+        {
+          "filename": "01_07_27_22",
+          "header": "01_07_27_22:minimal media::::::20gen:hom_05_01:old scanner",
+          "key_condition": "minimal media",
+          "old_medium": "SD",
+          "new_medium": "SD minimal (YNB + ammonium sulfate + glucose)",
+          "supplement_gap": true,
+          "drop_reason": null
+        },
+        {
+          "filename": "01_11_20_05",
+          "header": "01_11_20_05:minimal media:400:um::::15gen:hom_05_01:old scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "supplement_gap": false,
+          "drop_reason": "unnamed_agent_dosed_into_a_media_swap"
+        },
+        {
+          "filename": "01_11_28_03",
+          "header": "01_11_28_03:minimal media::::::15gen:hom_05_01:old scanner",
+          "key_condition": "minimal media",
+          "old_medium": "SD",
+          "new_medium": "SD minimal (YNB + ammonium sulfate + glucose)",
+          "supplement_gap": true,
+          "drop_reason": null
+        },
+        {
+          "filename": "01_11_28_04",
+          "header": "01_11_28_04:minimal media::::::20gen:hom_05_01:old scanner",
+          "key_condition": "minimal media",
+          "old_medium": "SD",
+          "new_medium": "SD minimal (YNB + ammonium sulfate + glucose)",
+          "supplement_gap": true,
+          "drop_reason": null
+        },
+        {
+          "filename": "02_03_12_02",
+          "header": "02_03_12_02:minimal media:400:um::::5gen:hom_05_01:old scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "supplement_gap": false,
+          "drop_reason": "unnamed_agent_dosed_into_a_media_swap"
+        },
+        {
+          "filename": "03_06_06_01",
+          "header": "03_06_06_01:minimal media::::::-5gen:hom_09_02:old scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "supplement_gap": false,
+          "drop_reason": null
+        },
+        {
+          "filename": "03_06_06_02",
+          "header": "03_06_06_02:minimal media::::::0gen:hom_09_02:old scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": null,
+          "supplement_gap": false,
+          "drop_reason": "zero_generations_no_exposure"
+        },
+        {
+          "filename": "03_06_06_03",
+          "header": "03_06_06_03:minimal media::::::0gen:hom_09_02:old scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": null,
+          "supplement_gap": false,
+          "drop_reason": "zero_generations_no_exposure"
+        },
+        {
+          "filename": "03_06_06_04",
+          "header": "03_06_06_04:minimal media::::::5gen:hom_09_02:old scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "supplement_gap": false,
+          "drop_reason": null
+        },
+        {
+          "filename": "03_06_06_05",
+          "header": "03_06_06_05:minimal media::::::10gen:hom_09_02:old scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "supplement_gap": false,
+          "drop_reason": null
+        },
+        {
+          "filename": "03_06_06_06",
+          "header": "03_06_06_06:minimal media::::::-5gen:hom_09_02:old scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "supplement_gap": false,
+          "drop_reason": null
+        },
+        {
+          "filename": "03_06_06_07",
+          "header": "03_06_06_07:minimal media::::::0gen:hom_09_02:old scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": null,
+          "supplement_gap": false,
+          "drop_reason": "zero_generations_no_exposure"
+        },
+        {
+          "filename": "03_06_06_08",
+          "header": "03_06_06_08:minimal media::::::0gen:hom_09_02:old scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": null,
+          "supplement_gap": false,
+          "drop_reason": "zero_generations_no_exposure"
+        },
+        {
+          "filename": "03_06_06_09",
+          "header": "03_06_06_09:minimal media::::::5gen:hom_09_02:old scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "supplement_gap": false,
+          "drop_reason": null
+        },
+        {
+          "filename": "03_06_06_10",
+          "header": "03_06_06_10:minimal media::::::10gen:hom_09_02:old scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "supplement_gap": false,
+          "drop_reason": null
+        },
+        {
+          "filename": "04_03_02_05",
+          "header": "04_03_02_05:minimal media::::::-5gen:hom_09_02:new scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "supplement_gap": false,
+          "drop_reason": null
+        },
+        {
+          "filename": "04_03_02_06",
+          "header": "04_03_02_06:minimal media::::::0gen:hom_09_02:new scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": null,
+          "supplement_gap": false,
+          "drop_reason": "zero_generations_no_exposure"
+        },
+        {
+          "filename": "04_03_02_07",
+          "header": "04_03_02_07:minimal media::::::5gen:hom_09_02:new scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "supplement_gap": false,
+          "drop_reason": null
+        },
+        {
+          "filename": "04_03_02_08",
+          "header": "04_03_02_08:minimal media::::::10gen:hom_09_02:new scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "supplement_gap": false,
+          "drop_reason": null
+        },
+        {
+          "filename": "04_08_03_06",
+          "header": "04_08_03_06:minimal media::::::10gen:hom_09_02:new scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "supplement_gap": false,
+          "drop_reason": null
+        },
+        {
+          "filename": "04_08_04_02",
+          "header": "04_08_04_02:minimal media::::::-10gen:hom_09_02:new scanner",
+          "key_condition": "synthetic complete for BY4743",
+          "old_medium": "SD",
+          "new_medium": "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)",
+          "supplement_gap": false,
+          "drop_reason": null
+        }
+      ],
+      "zero_generation_arrays": [
+        {
+          "filename": "03_06_06_02",
+          "header": "03_06_06_02:minimal media::::::0gen:hom_09_02:old scanner",
+          "records_not_written": 4651
+        },
+        {
+          "filename": "03_06_06_03",
+          "header": "03_06_06_03:minimal media::::::0gen:hom_09_02:old scanner",
+          "records_not_written": 4651
+        },
+        {
+          "filename": "03_06_06_07",
+          "header": "03_06_06_07:minimal media::::::0gen:hom_09_02:old scanner",
+          "records_not_written": 4651
+        },
+        {
+          "filename": "03_06_06_08",
+          "header": "03_06_06_08:minimal media::::::0gen:hom_09_02:old scanner",
+          "records_not_written": 4651
+        },
+        {
+          "filename": "03_12_10_05",
+          "header": "03_12_10_05:mechlorethamine:62.5:um::::0gen:hom_09_02:new scanner",
+          "records_not_written": 4609
+        },
+        {
+          "filename": "03_12_19_02",
+          "header": "03_12_19_02:mechlorethamine:62.5:um::::0gen:hom_09_02:new scanner",
+          "records_not_written": 4609
+        },
+        {
+          "filename": "04_01_21_11",
+          "header": "04_01_21_11:mechlorethamine:62.5:um::::0gen:hom_09_02:new scanner",
+          "records_not_written": 4609
+        },
+        {
+          "filename": "04_01_22_10",
+          "header": "04_01_22_10:rapamycin:9:nm::::0gen:hom_09_02:new scanner",
+          "records_not_written": 4609
+        },
+        {
+          "filename": "04_03_02_06",
+          "header": "04_03_02_06:minimal media::::::0gen:hom_09_02:new scanner",
+          "records_not_written": 4609
+        }
+      ],
+      "zero_generation_records_not_written": 41649,
+      "marker_loci": {
+        "YOR202W": {
+          "gene": "HIS3",
+          "rows": [
+            "YOR202W:chr15_3"
+          ],
+          "records": 249,
+          "background_functional_copies": 0,
+          "het_functional_copies_after_deletion": null,
+          "old_encoding": "KanMxDeletionPerturbation of a present gene",
+          "gapped_fields": [
+            "barcode",
+            "constructed_orf",
+            "downtag_barcode"
+          ]
+        },
+        "YBR115C": {
+          "gene": "LYS2",
+          "rows": [
+            "YBR115C:chr2_3"
+          ],
+          "records": 237,
+          "background_functional_copies": 1,
+          "het_functional_copies_after_deletion": null,
+          "old_encoding": "KanMxDeletionPerturbation of a present gene",
+          "gapped_fields": [
+            "barcode",
+            "constructed_orf",
+            "downtag_barcode"
+          ]
+        },
+        "YLR303W": {
+          "gene": "MET15/MET17",
+          "rows": [
+            "YLR303W:chr12_4"
+          ],
+          "records": 249,
+          "background_functional_copies": 1,
+          "het_functional_copies_after_deletion": null,
+          "old_encoding": "KanMxDeletionPerturbation of a present gene",
+          "gapped_fields": [
+            "barcode",
+            "constructed_orf",
+            "downtag_barcode"
+          ]
+        }
+      },
+      "dropped_strains": {
+        "ho_control_strain_unknown_construction": {
+          "rows": [
+            "YDL227C:ctrl_1",
+            "YDL227C:ctrl_10",
+            "YDL227C:ctrl_11",
+            "YDL227C:ctrl_2",
+            "YDL227C:ctrl_3",
+            "YDL227C:ctrl_4",
+            "YDL227C:ctrl_5",
+            "YDL227C:ctrl_6",
+            "YDL227C:ctrl_7",
+            "YDL227C:ctrl_8",
+            "YDL227C:ctrl_9"
+          ],
+          "records": 1186
+        },
+        "som_wrong_gene_deleted": {
+          "rows": [
+            "YOR153W:chr15_2"
+          ],
+          "records": 2
+        }
+      },
+      "suspicious_batches": {
+        "raw_rows_exact_batch": 643,
+        "raw_rows_exact_batch_with_any_value": 637,
+        "raw_rows_incl_slash_joined_batches": 645,
+        "kept_rows_exact_batch": 638,
+        "kept_distinct_current_orfs_exact_batch": 634,
+        "kept_distinct_source_orfs_exact_batch": 638,
+        "som_count": 647
+      }
+    }
+  },
+  "slice": {
+    "het": {
+      "arrays": [
+        "01_04_24_02",
+        "01_04_24_03",
+        "01_04_24_04",
+        "03_06_05_01",
+        "03_06_05_04"
+      ],
+      "dropped_arrays": {},
+      "rows": [
+        "YAR042W:chr1_1",
+        "YAR044W:chr1_1",
+        "YBR020W:chr00_18",
+        "YBR020W:chr2_2",
+        "YBR115C:chr2_3",
+        "YDL227C:chr4_3",
+        "YLR303W:chr12_4",
+        "YOR202W:chr15_3"
+      ],
+      "n_records": 40,
+      "records_path": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-hillenmeyer2008-inputs/build/env_chemgen_hillenmeyer2008_het_slice/records.json",
+      "perturbation_types": {
+        "heterozygous_deletion": 40
+      },
+      "media": {
+        "YPD (yeast extract / peptone / dextrose), liquid": 24,
+        "SD minimal (YNB + ammonium sulfate + glucose)": 16
+      },
+      "pre_culture_sources": {
+        "log_phase_culture": 32,
+        "frozen_stock": 8
+      },
+      "constructed_orfs": [
+        "\"YAR044W\":merged"
+      ],
+      "verifier": [
+        {
+          "level": 0,
+          "name": "structural",
+          "passed": true,
+          "message": "40 records validated"
+        },
+        {
+          "level": 1,
+          "name": "count",
+          "passed": true,
+          "message": "observed 40, expected 40"
+        },
+        {
+          "level": 1,
+          "name": "pair_uniqueness",
+          "passed": true,
+          "message": "40 unique (study, strain, condition) records, one each"
+        },
+        {
+          "level": 2,
+          "name": "value_fidelity",
+          "passed": true,
+          "message": "40 values checked"
+        },
+        {
+          "level": 2,
+          "name": "se_nonnegative",
+          "passed": true,
+          "message": "0 values checked"
+        },
+        {
+          "level": 3,
+          "name": "measurement_type_consistent",
+          "passed": true,
+          "message": "single measurement_type: 'log2_ratio'"
+        },
+        {
+          "level": 3,
+          "name": "reference_zero",
+          "passed": true,
+          "message": "numeric rule: reference response == 0 for all 40 records"
+        },
+        {
+          "level": 3,
+          "name": "environment_perturbed",
+          "passed": true,
+          "message": "all 40 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=None, media='YPD (yeast extract / peptone / dextrose), liquid')"
+        },
+        {
+          "level": 1,
+          "name": "provenance_gaps",
+          "passed": true,
+          "message": "220 documented provenance gaps over 40/40 records; 8 deferred field(s): ['auxotroph_supplements', 'barcode', 'culture_format', 'deleted_span', 'downtag_barcode', 'replaced_allele', 'solvent', 'temperature']; 1212 undeclared None values over 18 carrier fields (top: Compound.inchi x240, Compound.chebi_id x200, Compound.inchikey x128, Compound.pubchem_cid x128, Compound.smiles x128)"
+        },
+        {
+          "level": 1,
+          "name": "canonical_gene_names",
+          "passed": true,
+          "message": "6 systematic names, one canonical spelling each, each current in the genome"
+        },
+        {
+          "level": 2,
+          "name": "uncertainty_sanity",
+          "passed": true,
+          "message": "0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty"
+        },
+        {
+          "level": 3,
+          "name": "compound_identity",
+          "passed": true,
+          "message": "environment edits: 24 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable)"
+        },
+        {
+          "level": 3,
+          "name": "media_compound_identity",
+          "passed": true,
+          "message": "medium components: 56 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable)"
+        },
+        {
+          "level": 3,
+          "name": "media_membership",
+          "passed": true,
+          "message": "40 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (2 distinct media)"
+        },
+        {
+          "level": 4,
+          "name": "gene_containment_sgd",
+          "passed": true,
+          "message": "1.000 of 6 measured genes are S288C reference genes (>= 0.9)"
+        },
+        {
+          "level": 4,
+          "name": "current_genome_genes",
+          "passed": true,
+          "message": "every one of the 6 measured systematic names is a gene of the current genome"
+        }
+      ],
+      "adapter_perturbation_node_types": [
+        "heterozygous_deletion"
+      ],
+      "adapter_experiment_node_labels": [
+        "experiment",
+        "interned constant"
+      ]
+    },
+    "hom": {
+      "arrays": [
+        "03_06_06_04",
+        "04_02_24_13",
+        "04_11_17_01",
+        "04_11_24_10"
+      ],
+      "dropped_arrays": {},
+      "rows": [
+        "YAR042W:chr1_1",
+        "YAR044W:chr1_1",
+        "YBR020W:chr00_18",
+        "YBR020W:chr2_2",
+        "YBR115C:chr2_3",
+        "YDL227C:chr4_3",
+        "YLR303W:chr12_4",
+        "YOR202W:chr15_3"
+      ],
+      "n_records": 32,
+      "records_path": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-hillenmeyer2008-inputs/build/env_chemgen_hillenmeyer2008_hom_slice/records.json",
+      "perturbation_types": {
+        "barcoded_kanmx_deletion": 32
+      },
+      "media": {
+        "SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose)": 8,
+        "YPD (yeast extract / peptone / dextrose), liquid": 16,
+        "SC, partial biotin drop-out (Hillenmeyer 2008 'biotin partial drop-out')": 8
+      },
+      "pre_culture_sources": {
+        "log_phase_culture": 24,
+        "frozen_stock": 8
+      },
+      "constructed_orfs": [
+        "\"YAR044W\":merged"
+      ],
+      "verifier": [
+        {
+          "level": 0,
+          "name": "structural",
+          "passed": true,
+          "message": "32 records validated"
+        },
+        {
+          "level": 1,
+          "name": "count",
+          "passed": true,
+          "message": "observed 32, expected 32"
+        },
+        {
+          "level": 1,
+          "name": "pair_uniqueness",
+          "passed": true,
+          "message": "32 unique (study, strain, condition) records, one each"
+        },
+        {
+          "level": 2,
+          "name": "value_fidelity",
+          "passed": true,
+          "message": "32 values checked"
+        },
+        {
+          "level": 2,
+          "name": "se_nonnegative",
+          "passed": true,
+          "message": "0 values checked"
+        },
+        {
+          "level": 3,
+          "name": "measurement_type_consistent",
+          "passed": true,
+          "message": "single measurement_type: 'z_score'"
+        },
+        {
+          "level": 3,
+          "name": "reference_zero",
+          "passed": true,
+          "message": "numeric rule: reference response == 0 for all 32 records"
+        },
+        {
+          "level": 3,
+          "name": "environment_perturbed",
+          "passed": true,
+          "message": "all 32 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=None, media='YPD (yeast extract / peptone / dextrose), liquid')"
+        },
+        {
+          "level": 1,
+          "name": "provenance_gaps",
+          "passed": true,
+          "message": "152 documented provenance gaps over 32/32 records; 7 deferred field(s): ['barcode', 'constructed_orf', 'culture_format', 'deleted_span', 'downtag_barcode', 'solvent', 'temperature']; 1736 undeclared None values over 19 carrier fields (top: Compound.inchi x640, Compound.chebi_id x536, Compound.inchikey x80, Compound.pubchem_cid x80, Compound.smiles x80)"
+        },
+        {
+          "level": 1,
+          "name": "canonical_gene_names",
+          "passed": true,
+          "message": "6 systematic names, one canonical spelling each, each current in the genome"
+        },
+        {
+          "level": 2,
+          "name": "uncertainty_sanity",
+          "passed": true,
+          "message": "0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty"
+        },
+        {
+          "level": 3,
+          "name": "compound_identity",
+          "passed": true,
+          "message": "environment edits: 8 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable)"
+        },
+        {
+          "level": 3,
+          "name": "media_compound_identity",
+          "passed": true,
+          "message": "medium components: 528 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable)"
+        },
+        {
+          "level": 3,
+          "name": "media_membership",
+          "passed": true,
+          "message": "32 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (3 distinct media)"
+        },
+        {
+          "level": 4,
+          "name": "gene_containment_sgd",
+          "passed": true,
+          "message": "1.000 of 6 measured genes are S288C reference genes (>= 0.9)"
+        },
+        {
+          "level": 4,
+          "name": "current_genome_genes",
+          "passed": true,
+          "message": "every one of the 6 measured systematic names is a gene of the current genome"
+        }
+      ],
+      "adapter_perturbation_node_types": [
+        "barcoded_kanmx_deletion"
+      ],
+      "adapter_experiment_node_labels": [
+        "experiment",
+        "interned constant"
+      ]
+    }
+  }
+}

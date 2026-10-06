@@ -152,6 +152,22 @@ def _genotype_signature(
         # in the donor (Lian 2019, 150 groups)
         if p.get("donor_sequence") is not None:
             ident = ident + (p["donor_sequence"],)
+        # The strain discriminators of the #507 chemogenomic leaves: two strains that
+        # delete one ORF but were constructed separately (Hillenmeyer "constructed more
+        # than once, in different batches"), sit in different collections or pools, or
+        # were built against different historical ORFs are different strains, never
+        # duplicates. Absent on every other leaf, so their keys are unchanged.
+        construction = p.get("construction")
+        if isinstance(construction, dict):
+            ident = ident + tuple(
+                construction.get(field)
+                for field in ("strain_accession", "lab", "batch", "plate", "well")
+            )
+        if p.get("collection") is not None:
+            ident = ident + (p["collection"],)
+        constructed = p.get("constructed_orf")
+        if isinstance(constructed, dict):
+            ident = ident + (constructed.get("source_systematic_name"),)
         return ident
 
     return tuple(

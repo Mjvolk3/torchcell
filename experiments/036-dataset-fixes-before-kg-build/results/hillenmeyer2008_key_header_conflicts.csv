@@ -1,0 +1,34 @@
+arm,filename,header_condition,key_condition,rule,served,records_affected
+het,02_06_05_01,bathophenanthroline disulfonate,bisphenol s,drop_compound_conflict,dropped: key_header_compound_conflict_no_tie_breaker,5754
+het,02_10_02_16,colchicine,colchiceine,drop_compound_conflict,dropped: key_header_compound_conflict_no_tie_breaker,5754
+het,04_02_04_01,chemical diversity labs 14a,Tyrphostin,drop_compound_conflict,dropped: key_header_compound_conflict_no_tie_breaker,5783
+het,04_10_06_07,sodium arsenite,sodium sulfate,drop_compound_conflict,dropped: key_header_compound_conflict_no_tie_breaker,5783
+hom,01_11_20_05,minimal media,synthetic complete for BY4743,key_wins_strain_medium,dropped: unnamed_agent_dosed_into_a_media_swap,4250
+hom,02_03_12_02,minimal media,synthetic complete for BY4743,key_wins_strain_medium,dropped: unnamed_agent_dosed_into_a_media_swap,4442
+hom,02_06_05_04,bathophenanthroline disulfonate,bisphenol s,drop_compound_conflict,dropped: key_header_compound_conflict_no_tie_breaker,4118
+hom,02_07_03_01,bathophenanthroline disulfonate,bisphenol s,drop_compound_conflict,dropped: key_header_compound_conflict_no_tie_breaker,4118
+hom,02_07_03_02,bathophenanthroline disulfonate,bisphenol s,drop_compound_conflict,dropped: key_header_compound_conflict_no_tie_breaker,4118
+hom,03_06_06_01,minimal media,synthetic complete for BY4743,key_wins_strain_medium,SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose),4696
+hom,03_06_06_02,minimal media,synthetic complete for BY4743,key_wins_strain_medium,dropped: zero_generations_no_exposure,4651
+hom,03_06_06_03,minimal media,synthetic complete for BY4743,key_wins_strain_medium,dropped: zero_generations_no_exposure,4651
+hom,03_06_06_04,minimal media,synthetic complete for BY4743,key_wins_strain_medium,SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose),4553
+hom,03_06_06_05,minimal media,synthetic complete for BY4743,key_wins_strain_medium,SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose),4459
+hom,03_06_06_06,minimal media,synthetic complete for BY4743,key_wins_strain_medium,SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose),4696
+hom,03_06_06_07,minimal media,synthetic complete for BY4743,key_wins_strain_medium,dropped: zero_generations_no_exposure,4651
+hom,03_06_06_08,minimal media,synthetic complete for BY4743,key_wins_strain_medium,dropped: zero_generations_no_exposure,4651
+hom,03_06_06_09,minimal media,synthetic complete for BY4743,key_wins_strain_medium,SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose),4553
+hom,03_06_06_10,minimal media,synthetic complete for BY4743,key_wins_strain_medium,SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose),4459
+hom,03_09_11_12,sodium arsenite,sodium sulfate,drop_compound_conflict,dropped: key_header_compound_conflict_no_tie_breaker,4130
+hom,03_12_19_12,ptp2,phosphatase inhibitor,drop_compound_conflict,dropped: key_header_compound_conflict_no_tie_breaker,4130
+hom,03_12_19_13,ptp2,phosphatase inhibitor,drop_compound_conflict,dropped: key_header_compound_conflict_no_tie_breaker,4130
+hom,04_02_06_01,chemical diversity labs 14a,Tyrphostin,drop_compound_conflict,dropped: key_header_compound_conflict_no_tie_breaker,4130
+hom,04_03_02_05,minimal media,synthetic complete for BY4743,key_wins_strain_medium,SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose),4670
+hom,04_03_02_06,minimal media,synthetic complete for BY4743,key_wins_strain_medium,dropped: zero_generations_no_exposure,4609
+hom,04_03_02_07,minimal media,synthetic complete for BY4743,key_wins_strain_medium,SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose),4504
+hom,04_03_02_08,minimal media,synthetic complete for BY4743,key_wins_strain_medium,SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose),4347
+hom,04_08_03_06,minimal media,synthetic complete for BY4743,key_wins_strain_medium,SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose),4347
+hom,04_08_04_02,minimal media,synthetic complete for BY4743,key_wins_strain_medium,SC (synthetic complete: YNB + 20 amino acids + uracil + adenine + glucose),4693
+hom,04_11_17_01,pH8,ph4,header_wins_table_s1,"YPD (yeast extract / peptone / dextrose), liquid",4130
+hom,04_11_17_02,pH8,ph4,header_wins_table_s1,"YPD (yeast extract / peptone / dextrose), liquid",4130
+hom,05_03_25_03,pH7.5,ph4,header_wins_table_s1,"YPD (yeast extract / peptone / dextrose), liquid",4670
+hom,05_03_25_04,pH7.5,ph4,header_wins_table_s1,"YPD (yeast extract / peptone / dextrose), liquid",4670

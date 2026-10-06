@@ -206,6 +206,7 @@ def dropout(
     name: str,
     partial: tuple[str, ...] = (),
     provenance: list[SourcedValue] | None = None,
+    partial_note: str | None = None,
 ) -> Media:
     """``base`` with the named compounds moved from ``components`` into ``dropouts``.
 
@@ -221,6 +222,9 @@ def dropout(
     ``partial`` names compounds the source REDUCED rather than removed. They stay in
     ``components`` with the concentration cleared, because the reduced level is a
     number the source does not give; dropping them instead would overstate the edit.
+    ``partial_note`` replaces the default note on those components when the source
+    does say something about the level (e.g. a released percentage whose basis it
+    never defines).
     """
     removed = [resolved_compound(n) for n in compound_names]
     reduced = [resolved_compound(n) for n in partial]
@@ -240,7 +244,8 @@ def dropout(
                     "concentration": Concentration(
                         value=None, basis=DoseBasis.reduced_from_standard
                     ),
-                    "note": "partial drop-out; the source does not state the reduced "
+                    "note": partial_note
+                    or "partial drop-out; the source does not state the reduced "
                     "level, so the amount is a typed reduction rather than a removal",
                 }
             )
@@ -811,14 +816,32 @@ shipped gaps are the honest state and no dataset-specific sibling is created.
 # a DERIVED MEDIUM off SC rather than an EnvironmentPhysicalPerturbation on YPD --
 # which is what lets a tryptophan dropout join SC, SC-Ura and the SGA media.
 #
-# The SOM states neither the base recipe nor the reduced level of the three "partial"
-# conditions; the base is SC because a named-nutrient dropout is only defined against
-# a synthetic complete medium, and that inference is recorded on every object.
+# The SOM states no base recipe; the base is SC because a named-nutrient dropout is
+# only defined against a synthetic complete medium, and that inference is recorded on
+# every object. The SOM also never states the reduced level of the three "partial"
+# conditions, but the RELEASE does: the HOM score-matrix header carries it in the
+# dose fields (``biotin partial drop-out:25:%``, ``calcium pantothenate partial
+# drop-out:25:%``, ``pyridoxine HCl partial drop-out:12.5:%``; #505 E4). What the
+# percentage is a percentage OF is defined nowhere, so the level rides in the
+# component note and the medium's provenance verbatim, and the amount stays a typed
+# ``reduced_from_standard`` (no ConcentrationUnit means "percent of the recipe level").
 # --------------------------------------------------------------------------- #
 _HILLENMEYER_DROPOUT_QUOTE = (
     "we restricted our analysis to small molecule experiments, excluding conditions "
     "of environmental change, such as amino acid dropout"
 )
+#: sha256 of the raw-mirror HOM score matrix whose header states the partial levels
+#: (``$DATA_ROOT/torchcell-raw/hillenmeyerChemicalGenomicPortrait2008/data/``).
+_HILLENMEYER2008_HOM_MATRIX_SHA = (
+    "0b7d5e4dad0e5b4336b1dac97fb32ef14d7d0bf9f5d1b0d5ddb382c393362b71"
+)
+#: condition label -> the released partial level, verbatim from the matrix header's
+#: ``conc1:unit1`` fields (every array of a label carries the same level).
+HILLENMEYER_PARTIAL_DROPOUT_LEVELS: dict[str, tuple[str, str]] = {
+    "biotin partial drop-out": ("25", "%"),
+    "calcium pantothenate partial drop-out": ("25", "%"),
+    "pyridoxine HCl partial drop-out": ("12.5", "%"),
+}
 
 
 def _hm_dropout(label: str, compound: str, *, partial: bool = False) -> Media:
@@ -835,11 +858,30 @@ def _hm_dropout(label: str, compound: str, *, partial: bool = False) -> Media:
         )
     ]
     if partial:
+        value, unit = HILLENMEYER_PARTIAL_DROPOUT_LEVELS[label]
+        token = f"{label}:{value}:{unit}"
+        provenance.append(
+            _sv(
+                f"{value} {unit}",
+                token,
+                ck=_HILLENMEYER2008,
+                sha=_HILLENMEYER2008_HOM_MATRIX_SHA,
+                uri="data/hom.z_result_nm.pub",
+                note="the released partial level, read from the HOM score-matrix "
+                "header (raw mirror torchcell-raw/hillenmeyerChemicalGenomicPortrait2008"
+                "/data/hom.z_result_nm.pub). The SOM does not define the basis of the "
+                "percentage. Hypothesis (untested): percent of the standard SC level",
+            )
+        )
         return dropout(
             SC,
             name=f"SC, partial {compound} drop-out (Hillenmeyer 2008 '{label}')",
             partial=(compound,),
             provenance=provenance,
+            partial_note=f"partial drop-out; the release states the level as "
+            f"'{value} {unit}' (HOM matrix header '{token}') and never defines what it "
+            "is a percentage of, so the amount is a typed reduction with the level "
+            "recorded here and in the medium's provenance",
         )
     return dropout(
         SC,
@@ -851,7 +893,8 @@ def _hm_dropout(label: str, compound: str, *, partial: bool = False) -> Media:
 
 #: (condition label in the HOM score matrix, the SC component it names, partial?).
 #: "partial" is the source's own word for three vitamin conditions: the nutrient is
-#: reduced, not removed, and the reduced level is never stated.
+#: reduced, not removed. The SOM never states the reduced level; the release's matrix
+#: header does (``HILLENMEYER_PARTIAL_DROPOUT_LEVELS``), without defining its basis.
 _HILLENMEYER_DROPOUTS: tuple[tuple[str, str, bool], ...] = (
     ("adenine dropout", "adenine", False),
     ("arginine dropout", "L-arginine", False),

@@ -1340,8 +1340,8 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "crispr_magic_lian2019": 266304,
         "crispri_mormino2022": 12,
         "env_chemgen_costanzo2021": 61430,
-        "env_chemgen_hillenmeyer2008_het": 2698797,
-        "env_chemgen_hillenmeyer2008_hom": 1088620,
+        "env_chemgen_hillenmeyer2008_het": 2712677,
+        "env_chemgen_hillenmeyer2008_hom": 1063034,
         "crispri_chemgen_smith2016": 7053,
     }
     assert {

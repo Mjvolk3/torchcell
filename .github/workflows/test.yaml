@@ -115,6 +115,15 @@ jobs:
         git fetch origin main || true
         python scripts/check_paired_tests.py --base origin/main
 
+    # Legacy gate (Decision 22, hard mode): every torchcell/ module outside
+    # torchcell/legacy/ and the carve-outs is reached from a root (tests, scripts,
+    # database, experiments >= 016, Makefile, pre-commit, workflows, entry points), or
+    # is a package __init__ shipping [tool.setuptools.package-data]; no root imports
+    # the legacy package. Stdlib only. (A dotted module name in this comment would be
+    # read as a reference: workflows are roots and are string-scanned.)
+    - name: Legacy partition (live tree closed under imports, blocking)
+      run: python scripts/legacy_partition.py --check
+
     # Diff coverage (Decision 21): the lines this PR adds or changes under torchcell/
     # must be at least 80% covered by the run above. Empty on a push to main.
     - name: Diff coverage of changed lines (blocking)

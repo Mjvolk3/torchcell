@@ -145,6 +145,20 @@
 <dd><p>True when no served dataset drifted from the local schema surface.</p>
 </dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.knowledge_graphs.releases.ReleaseCompatibility.paired">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">paired</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><a class="headerlink" href="#torchcell.knowledge_graphs.releases.ReleaseCompatibility.paired" title="Link to this definition"></a></dt>
+<dd><p>none drifted, none unchecked.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ok</span></code> tolerates datasets whose closure the release did not record; the
+pairing gate does not, because an unverified dataset is one the client may
+read under the wrong contract.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True when EVERY served dataset is verified</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py attribute">
 <dt class="sig sig-object py" id="torchcell.knowledge_graphs.releases.ReleaseCompatibility.model_config">
 <span class="sig-name descname"><span class="pre">model_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><span class="pre">ConfigDict</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#torchcell.knowledge_graphs.releases.ReleaseCompatibility.model_config" title="Link to this definition"></a></dt>

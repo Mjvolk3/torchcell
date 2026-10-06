@@ -141,6 +141,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
@@ -148,7 +149,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.kg_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphSchemaEntry</span><span class="p">,</span> <span class="n">KgBuildManifest</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.releases</span><span class="w"> </span><span class="kn">import</span> <span class="n">content_sha256</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.releases</span><span class="w"> </span><span class="kn">import</span> <span class="n">closure_compatibility</span><span class="p">,</span> <span class="n">content_sha256</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.schema_deps</span><span class="w"> </span><span class="kn">import</span> <span class="n">SchemaSurface</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"RELEASES_RELPATH"</span><span class="p">,</span>
@@ -158,6 +160,7 @@
     <span class="s2">"composite_sha256"</span><span class="p">,</span>
     <span class="s2">"snapshot_from_manifest"</span><span class="p">,</span>
     <span class="s2">"bootstrap_package_version"</span><span class="p">,</span>
+    <span class="s2">"pair_package_tag"</span><span class="p">,</span>
     <span class="s2">"snapshot_paths"</span><span class="p">,</span>
     <span class="s2">"write_snapshot"</span><span class="p">,</span>
     <span class="s2">"load_snapshot"</span><span class="p">,</span>
@@ -328,6 +331,69 @@
         <span class="p">}</span>
     <span class="p">)</span></div>
 
+
+
+<span class="n">_PACKAGE_TAG_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^v(\d+\.\d+\.\d+)$"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">pair_package_tag</span><span class="p">(</span>
+    <span class="n">snapshot</span><span class="p">:</span> <span class="n">KgReleaseSnapshot</span><span class="p">,</span>
+    <span class="n">closures</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span>
+    <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KgReleaseSnapshot</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The snapshot paired with package ``tag``, cut after the build.</span>
+
+<span class="sd">    The release-before-build recipe records the tag at the stamp; this is the repair</span>
+<span class="sd">    for a build that ran from an untagged commit. ``surface`` is the schema surface AT</span>
+<span class="sd">    THE TAG (``kg_manifest.surface_at_ref``), and the pairing is accepted only when it</span>
+<span class="sd">    reproduces every served dataset's closure, so the pair means what a stamped one</span>
+<span class="sd">    means: that package serializes every served record under the contract it was</span>
+<span class="sd">    written with. The last event's note records what the build checkout reported.</span>
+<span class="sd">    """</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">_PACKAGE_TAG_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">tag</span><span class="si">!r}</span><span class="s2"> is not a package tag of the form vX.Y.Z"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_tag</span> <span class="o">==</span> <span class="n">tag</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">snapshot</span>  <span class="c1"># already paired; a second run must not append a second note</span>
+    <span class="k">if</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_tag</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2"> is already paired with </span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_tag</span><span class="si">}</span><span class="s2">; a "</span>
+            <span class="s2">"release has one paired package"</span>
+        <span class="p">)</span>
+    <span class="n">report</span> <span class="o">=</span> <span class="n">closure_compatibility</span><span class="p">(</span>
+        <span class="n">snapshot</span><span class="o">.</span><span class="n">release</span><span class="p">,</span>
+        <span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_commit</span><span class="p">,</span>
+        <span class="n">snapshot</span><span class="o">.</span><span class="n">datasets</span><span class="p">,</span>
+        <span class="n">closures</span><span class="p">,</span>
+        <span class="n">surface</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">report</span><span class="o">.</span><span class="n">paired</span><span class="p">:</span>
+        <span class="n">drifted</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">d</span><span class="o">.</span><span class="n">dataset_class</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">changed_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">drifted</span>
+        <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2"> is not a pair for </span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2">: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">drifted</span><span class="p">)</span><span class="si">}</span><span class="s2"> drifted [</span><span class="si">{</span><span class="n">drifted</span><span class="si">}</span><span class="s2">], "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">unchecked</span><span class="p">)</span><span class="si">}</span><span class="s2"> unverified </span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">unchecked</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"paired with package tag </span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2"> after the build: the build checkout reported "</span>
+        <span class="sa">f</span><span class="s2">"torchcell </span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_version</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'unknown'</span><span class="si">}</span><span class="s2"> "</span>
+        <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_tag</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'untagged'</span><span class="si">}</span><span class="s2">); the schema surface at </span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2"> "</span>
+        <span class="sa">f</span><span class="s2">"reproduces every served closure"</span>
+    <span class="p">)</span>
+    <span class="n">last</span> <span class="o">=</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">joined</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">last</span><span class="o">.</span><span class="n">note</span><span class="si">}</span><span class="s2">; </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">last</span><span class="o">.</span><span class="n">note</span> <span class="k">else</span> <span class="n">text</span>
+    <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">snapshot</span><span class="o">.</span><span class="n">events</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">last</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"note"</span><span class="p">:</span> <span class="n">joined</span><span class="p">})]</span>
+    <span class="k">return</span> <span class="n">snapshot</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span>
+        <span class="n">update</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"torchcell_version"</span><span class="p">:</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+            <span class="s2">"torchcell_tag"</span><span class="p">:</span> <span class="n">tag</span><span class="p">,</span>
+            <span class="s2">"events"</span><span class="p">:</span> <span class="n">events</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
 
 
 <div class="viewcode-block" id="snapshot_paths">

@@ -333,8 +333,29 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">ok</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""True when no served dataset drifted from the local schema surface."""</span>
-        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">drifted</span></div>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">drifted</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">paired</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True when EVERY served dataset is verified: none drifted, none unchecked.</span>
+
+<span class="sd">        ``ok`` tolerates datasets whose closure the release did not record; the</span>
+<span class="sd">        pairing gate does not, because an unverified dataset is one the client may</span>
+<span class="sd">        read under the wrong contract.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">drifted</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">unchecked</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">IncompatibleReleaseError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A served release and the installed package are not a pair.</span>
+
+<span class="sd">    Raised by :func:`require_paired` when the installed schema surface does not</span>
+<span class="sd">    reproduce every served dataset's contract fingerprints, or when the store carries</span>
+<span class="sd">    no release node at all. A package version and a knowledge-graph release either</span>
+<span class="sd">    read every served record under the contract it was written with, or the client</span>
+<span class="sd">    refuses; there is no partial pair.</span>
+<span class="sd">    """</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------- identity</span>
@@ -794,6 +815,60 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">require_paired</span><span class="p">(</span>
+    <span class="n">release</span><span class="p">:</span> <span class="n">KgRelease</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">installed_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">database</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReleaseCompatibility</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The compatibility report, or :class:`IncompatibleReleaseError`.</span>
+
+<span class="sd">    The gate every client passes at connect: ``release`` is the store's node (None when</span>
+<span class="sd">    the store has none), ``surface`` the installed package's schema surface</span>
+<span class="sd">    (``schema_deps.load_default_surface``). The report comes back only when every</span>
+<span class="sd">    served dataset's closure fingerprints are reproduced; a drifted or unverified</span>
+<span class="sd">    dataset, or a store without a release node, raises with the paired package named</span>
+<span class="sd">    so the remedy is one line: install that package, or point</span>
+<span class="sd">    ``TORCHCELL_KG_VERSION`` at a release built under the installed one.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">release</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">IncompatibleReleaseError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"database </span><span class="si">{</span><span class="n">database</span><span class="si">!r}</span><span class="s2"> carries no </span><span class="si">{</span><span class="n">RELEASE_LABEL</span><span class="si">}</span><span class="s2"> node, so no package "</span>
+            <span class="s2">"version is paired with it; a store is served only after `releases "</span>
+            <span class="s2">"write-node` (the live rebuild does this) or a `kg_release.sh deploy`"</span>
+        <span class="p">)</span>
+    <span class="n">report</span> <span class="o">=</span> <span class="n">compatibility_with_surface</span><span class="p">(</span><span class="n">release</span><span class="p">,</span> <span class="n">surface</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">paired</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">report</span>
+    <span class="n">paired</span> <span class="o">=</span> <span class="n">package_label</span><span class="p">(</span><span class="n">release</span><span class="p">)</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">"knowledge-graph release </span><span class="si">{</span><span class="n">release</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2"> (KG </span><span class="si">{</span><span class="n">release</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">, database "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">database</span><span class="si">!r}</span><span class="s2">) is paired with torchcell </span><span class="si">{</span><span class="n">paired</span><span class="si">}</span><span class="s2">; the installed torchcell "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">installed_version</span><span class="si">}</span><span class="s2"> is not a pair:"</span>
+    <span class="p">]</span>
+    <span class="k">for</span> <span class="n">drift</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">drifted</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">drift</span><span class="o">.</span><span class="n">dataset_class</span><span class="si">}</span><span class="s2">: serialized under a different contract for "</span>
+            <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">drift</span><span class="o">.</span><span class="n">changed_symbols</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">unchecked</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: the release recorded no closure to verify against"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">release</span><span class="o">.</span><span class="n">torchcell_tag</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">remedy</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Install the paired package (pip install torchcell==</span><span class="si">{</span><span class="n">paired</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="si">}</span><span class="s2">)"</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">remedy</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"The release names no package tag; pick one that reads it on the "</span>
+            <span class="s2">"compatibility page (docs/source/database/compatibility.md)"</span>
+        <span class="p">)</span>
+    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">drifted</span><span class="p">)</span><span class="si">}</span><span class="s2"> drifted and </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">unchecked</span><span class="p">)</span><span class="si">}</span><span class="s2"> unverified of "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">release</span><span class="o">.</span><span class="n">n_datasets</span><span class="si">}</span><span class="s2"> served datasets. </span><span class="si">{</span><span class="n">remedy</span><span class="si">}</span><span class="s2"> or set "</span>
+        <span class="s2">"TORCHCELL_KG_VERSION to a release built under the installed schema."</span>
+    <span class="p">)</span>
+    <span class="k">raise</span> <span class="n">IncompatibleReleaseError</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
+
+
 <span class="c1"># --------------------------------------------------------------------------- reporting</span>
 
 
@@ -1048,6 +1123,26 @@
         <span class="s2">"snapshot's last event note"</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="n">p_retag</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"retag"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"pair a committed snapshot (and the manifest) with a package tag cut "</span>
+        <span class="s2">"after the build, once the surface at that tag reproduces every closure"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_retag</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--release"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"the release id"</span><span class="p">)</span>
+    <span class="n">p_retag</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--tag"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"the package tag, vX.Y.Z"</span><span class="p">)</span>
+    <span class="n">p_retag</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--repo-root"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"checkout holding database/releases/ and the tag (default: the checkout "</span>
+        <span class="s2">"this torchcell was imported from)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_retag</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--manifest"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"also record the pairing in this kg_manifest.json, so `write-node` "</span>
+        <span class="s2">"carries it into the store"</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="n">p_node</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
         <span class="s2">"write-node"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"write the KgRelease node from a manifest"</span>
     <span class="p">)</span>
@@ -1126,6 +1221,45 @@
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2">: torchcell </span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_version</span><span class="si">}</span><span class="s2"> "</span>
             <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">torchcell_tag</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'untagged'</span><span class="si">}</span><span class="s2">), composite "</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">snapshot</span><span class="o">.</span><span class="n">composite_sha256</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">paths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">paths</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"retag"</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.kg_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">load_manifest</span><span class="p">,</span>
+            <span class="n">save_manifest</span><span class="p">,</span>
+            <span class="n">surface_at_ref</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.release_snapshot</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">load_closures</span><span class="p">,</span>
+            <span class="n">load_snapshot</span><span class="p">,</span>
+            <span class="n">pair_package_tag</span><span class="p">,</span>
+            <span class="n">snapshot_paths</span><span class="p">,</span>
+            <span class="n">write_snapshot</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">repo_root</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">repo_root</span> <span class="k">else</span> <span class="n">package_checkout</span><span class="p">()</span>
+        <span class="n">snapshot_path</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">snapshot_paths</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">release</span><span class="p">)</span>
+        <span class="n">snapshot</span> <span class="o">=</span> <span class="n">load_snapshot</span><span class="p">(</span><span class="n">snapshot_path</span><span class="p">)</span>
+        <span class="n">closures</span> <span class="o">=</span> <span class="n">load_closures</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">release</span><span class="p">)</span>
+        <span class="n">paired</span> <span class="o">=</span> <span class="n">pair_package_tag</span><span class="p">(</span>
+            <span class="n">snapshot</span><span class="p">,</span> <span class="n">closures</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span> <span class="n">surface_at_ref</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">tag</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">write_snapshot</span><span class="p">(</span><span class="n">paired</span><span class="p">,</span> <span class="n">closures</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="p">:</span>
+            <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">release</span> <span class="o">!=</span> <span class="n">paired</span><span class="o">.</span><span class="n">release</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="si">}</span><span class="s2"> describes release </span><span class="si">{</span><span class="n">manifest</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2">, "</span>
+                    <span class="sa">f</span><span class="s2">"not </span><span class="si">{</span><span class="n">paired</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_version</span> <span class="o">=</span> <span class="n">paired</span><span class="o">.</span><span class="n">torchcell_version</span>
+            <span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_tag</span> <span class="o">=</span> <span class="n">paired</span><span class="o">.</span><span class="n">torchcell_tag</span>
+            <span class="n">save_manifest</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">paired</span><span class="o">.</span><span class="n">release</span><span class="si">}</span><span class="s2">: paired with </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">tag</span><span class="si">}</span><span class="s2"> (torchcell "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">paired</span><span class="o">.</span><span class="n">torchcell_version</span><span class="si">}</span><span class="s2">) -&gt; </span><span class="si">{</span><span class="n">snapshot_path</span><span class="si">}</span><span class="s2">"</span>
+            <span class="o">+</span> <span class="p">(</span><span class="sa">f</span><span class="s2">", </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">manifest</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="mi">0</span>
 

@@ -235,7 +235,7 @@ def test_main_prints_the_table_writes_json_and_summarizes_counts(
             )
             if category == c
         )
-        for c in ("live", "init-only", "legacy", "carve-out")
+        for c in ("live", "init-only", "legacy", "carve-out", "package-data")
     }
     printed = capsys.readouterr().out.splitlines()
     assert printed[0] == f"wrote {out}"
@@ -251,10 +251,17 @@ def test_main_prints_the_table_writes_json_and_summarizes_counts(
     assert printed[8] == ""
     assert printed[9] == (
         f"modules: live 5 ({lines_by['live']} lines), init-only 1 ({lines_by['init-only']} lines), "
-        f"legacy 4 ({lines_by['legacy']} lines), carve-out 1 ({lines_by['carve-out']} lines)"
+        f"legacy 4 ({lines_by['legacy']} lines), carve-out 1 ({lines_by['carve-out']} lines), "
+        "package-data 0 (0 lines)"
     )
     payload = json.loads(out.read_text())
-    assert payload["counts"] == {"live": 5, "init-only": 1, "legacy": 4, "carve-out": 1}
+    assert payload["counts"] == {
+        "live": 5,
+        "init-only": 1,
+        "legacy": 4,
+        "carve-out": 1,
+        "package-data": 0,
+    }
     assert payload["lines"] == lines_by
     assert [r["module"] for r in payload["rows"]] == sorted(EXPECTED)
 
@@ -303,3 +310,275 @@ def test_string_references(text: str, names: set[str]) -> None:
 def test_git_last_commit_is_untracked_outside_a_repository(repo: Path) -> None:
     """No git history under tmp_path gives the sentinel rather than an error."""
     assert lp._git_last_commit(repo / "torchcell" / "live.py") == "untracked"
+
+
+# --- package-data (2026.10.06) ------------------------------------------------------
+
+PACKAGE_DATA_TOML = (
+    '\n[tool.setuptools.package-data]\ntorchcell = ["py.typed", "conf/*.yaml"]\n'
+)
+
+
+def _package_data_files(*, with_entry: bool) -> dict[str, str]:
+    """FILES plus an unimported ``torchcell/conf`` package that ships ``a.yaml``."""
+    files = dict(FILES)
+    files["torchcell/conf/__init__.py"] = '"""Ships YAML."""\n'
+    files["torchcell/conf/a.yaml"] = "k: 1\n"
+    if with_entry:
+        files["pyproject.toml"] = FILES["pyproject.toml"] + PACKAGE_DATA_TOML
+    return files
+
+
+def _rows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, files: dict[str, str]
+) -> dict[str, dict[str, object]]:
+    _build(tmp_path, monkeypatch, files)
+    return {
+        str(r["module"]): r for r in lp.partition(lp.ImporterGraph(), with_git=False)
+    }
+
+
+def test_an_unimported_package_listed_as_package_data_is_package_data(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``conf/*.yaml`` under the ``torchcell`` key matches ``torchcell/conf/a.yaml``, so
+    the never-imported ``torchcell/conf/__init__.py`` is ``package-data`` (via names the
+    pattern) and ``--check`` reports only the three violations of the base tree.
+    """
+    _build(tmp_path, monkeypatch, _package_data_files(with_entry=True))
+    graph = lp.ImporterGraph()
+    rows = lp.partition(graph, with_git=False)
+    by_module = {str(r["module"]): r for r in rows}
+    assert (
+        by_module["torchcell.conf"]["category"],
+        by_module["torchcell.conf"]["via"],
+    ) == ("package-data", "ships torchcell:conf/*.yaml")
+    assert by_module["torchcell.conf"]["live_critical"] is False
+    assert {
+        m: r["category"] for m, r in by_module.items() if m != "torchcell.conf"
+    } == {m: e[0] for m, e in EXPECTED.items()}
+    assert lp.check(graph, rows) == 1
+    assert capsys.readouterr().out.splitlines() == [
+        "legacy-check: torchcell/dead.py: legacy (unreachable from every root)",
+        "legacy-check: torchcell/deadb.py: legacy (unreachable from every root)",
+        "legacy-check: torchcell/pkg/init_only.py: init-only (torchcell.pkg)",
+        "legacy-check: 3 violation(s)",
+    ]
+
+
+def test_the_same_package_without_the_pyproject_entry_is_legacy(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The YAML alone keeps nothing: no package-data table, the ``__init__`` is legacy
+    and ``--check`` names it.
+    """
+    _build(tmp_path, monkeypatch, _package_data_files(with_entry=False))
+    graph = lp.ImporterGraph()
+    rows = lp.partition(graph, with_git=False)
+    by_module = {str(r["module"]): r for r in rows}
+    assert (
+        by_module["torchcell.conf"]["category"],
+        by_module["torchcell.conf"]["via"],
+    ) == ("legacy", "unreachable from every root")
+    assert lp.check(graph, rows) == 1
+    assert capsys.readouterr().out.splitlines() == [
+        "legacy-check: torchcell/conf/__init__.py: legacy (unreachable from every root)",
+        "legacy-check: torchcell/dead.py: legacy (unreachable from every root)",
+        "legacy-check: torchcell/deadb.py: legacy (unreachable from every root)",
+        "legacy-check: torchcell/pkg/init_only.py: init-only (torchcell.pkg)",
+        "legacy-check: 4 violation(s)",
+    ]
+
+
+def test_a_module_beside_the_package_data_is_classified_on_its_own(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``torchcell/conf/loader.py`` is not an ``__init__``: unreached, it is legacy and a
+    violation, while the ``__init__`` keeps ``package-data`` (its only member is legacy,
+    which would otherwise make it ``legacy`` by the package rule).
+    """
+    files = _package_data_files(with_entry=True)
+    files["torchcell/conf/loader.py"] = "X = 1\n"
+    _build(tmp_path, monkeypatch, files)
+    graph = lp.ImporterGraph()
+    rows = lp.partition(graph, with_git=False)
+    by_module = {str(r["module"]): r for r in rows}
+    assert (
+        by_module["torchcell.conf.loader"]["category"],
+        by_module["torchcell.conf.loader"]["via"],
+    ) == ("legacy", "unreachable from every root")
+    assert by_module["torchcell.conf"]["category"] == "package-data"
+    assert lp.check(graph, rows) == 1
+    assert capsys.readouterr().out.splitlines() == [
+        "legacy-check: torchcell/conf/loader.py: legacy (unreachable from every root)",
+        "legacy-check: torchcell/dead.py: legacy (unreachable from every root)",
+        "legacy-check: torchcell/deadb.py: legacy (unreachable from every root)",
+        "legacy-check: torchcell/pkg/init_only.py: init-only (torchcell.pkg)",
+        "legacy-check: 4 violation(s)",
+    ]
+
+
+def test_a_python_file_matched_by_a_pattern_is_not_package_data(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``conf/*`` matches ``__init__.py``, ``loader.py`` and the subpackage directory
+    ``conf/sub`` in a YAML-free package: a ``.py`` match ships code, not data, and a
+    matched directory is not a file, so nothing is marked and the ``__init__`` stays
+    ``legacy``.
+    """
+    files = dict(FILES)
+    files["torchcell/conf/__init__.py"] = ""
+    files["torchcell/conf/loader.py"] = "X = 1\n"
+    files["torchcell/conf/sub/__init__.py"] = ""
+    files["pyproject.toml"] = (
+        FILES["pyproject.toml"]
+        + '\n[tool.setuptools.package-data]\ntorchcell = ["conf/*"]\n'
+    )
+    rows = _rows(tmp_path, monkeypatch, files)
+    assert rows["torchcell.conf"]["category"] == "legacy"
+    assert lp.package_data_dirs() == {}
+
+
+def test_package_data_keys_are_package_names_and_foreign_keys_are_skipped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A dotted key globs from its own directory (``torchcell.kg.conf`` + ``*.yaml``,
+    two YAMLs, one directory entry); ``torchcell = ["conf/*.yaml"]`` matches only the
+    top-level ``torchcell/conf`` (a glob, not a recursive search, so the nested
+    ``torchcell/kg/conf`` keeps its own key); a key that only shares the prefix
+    (``torchcellx``) is not this package and is ignored although
+    ``torchcellx/conf/a.yaml`` matches.
+    """
+    files = dict(FILES)
+    files["torchcell/kg/__init__.py"] = ""
+    files["torchcell/kg/conf/__init__.py"] = ""
+    files["torchcell/kg/conf/x.yaml"] = "a: 1\n"
+    files["torchcell/kg/conf/y.yaml"] = "b: 2\n"
+    files["torchcell/conf/__init__.py"] = ""
+    files["torchcell/conf/a.yaml"] = "k: 1\n"
+    files["torchcellx/conf/a.yaml"] = "k: 1\n"
+    files["pyproject.toml"] = FILES["pyproject.toml"] + (
+        "\n[tool.setuptools.package-data]\n"
+        'torchcell = ["conf/*.yaml"]\n'
+        '"torchcell.kg.conf" = ["*.yaml"]\n'
+        'torchcellx = ["conf/*.yaml"]\n'
+    )
+    repo = _build(tmp_path, monkeypatch, files)
+    assert lp.package_data_dirs() == {
+        repo / "torchcell" / "conf": "torchcell:conf/*.yaml",
+        repo / "torchcell" / "kg" / "conf": "torchcell.kg.conf:*.yaml",
+    }
+    rows = {
+        str(r["module"]): r for r in lp.partition(lp.ImporterGraph(), with_git=False)
+    }
+    assert (
+        rows["torchcell.kg.conf"]["category"],
+        rows["torchcell.kg.conf"]["via"],
+    ) == ("package-data", "ships torchcell.kg.conf:*.yaml")
+    # the parent package counts a package-data member as non-legacy
+    assert (rows["torchcell.kg"]["category"], rows["torchcell.kg"]["via"]) == (
+        "live",
+        "package has live members",
+    )
+    assert rows["torchcell.conf"]["category"] == "package-data"
+
+
+def test_main_counts_package_data_in_the_summary(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Line counts per category on the base tree plus the docstring-only conf
+    ``__init__``: live torchcell 1 + cli 2 + helper 2 + live 1 + pkg 1 = 7; init-only 1;
+    legacy dead 1 + deadb 1 + legacy/__init__ 0 + legacy/old 1 = 3; carve-out 1;
+    package-data 1.
+    """
+    _build(tmp_path, monkeypatch, _package_data_files(with_entry=True))
+    assert lp.main(["--no-git", "--check"]) == 1
+    assert capsys.readouterr().out.splitlines()[0] == (
+        "modules: live 5 (7 lines), init-only 1 (1 lines), legacy 4 (3 lines), "
+        "carve-out 1 (1 lines), package-data 1 (1 lines)"
+    )
+
+
+def test_the_first_pattern_that_marks_a_directory_is_the_one_reported(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``conf/*.yaml`` then ``conf/*.txt`` both match files in ``torchcell/conf``; the
+    reported pattern is the first in pyproject order, not the last.
+    """
+    files = _package_data_files(with_entry=False)
+    files["torchcell/conf/genes.txt"] = "YAL001C\n"
+    files["pyproject.toml"] = (
+        FILES["pyproject.toml"]
+        + '\n[tool.setuptools.package-data]\ntorchcell = ["conf/*.yaml", "conf/*.txt"]\n'
+    )
+    rows = _rows(tmp_path, monkeypatch, files)
+    assert rows["torchcell.conf"]["via"] == "ships torchcell:conf/*.yaml"
+
+
+def test_a_package_data_init_that_a_root_imports_stays_live(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Reachability wins: a test importing ``torchcell.conf`` makes its ``__init__``
+    ``live`` via that test, although its directory ships listed YAML.
+    """
+    files = _package_data_files(with_entry=True)
+    files["tests/test_conf.py"] = "import torchcell.conf\n"
+    rows = _rows(tmp_path, monkeypatch, files)
+    assert (rows["torchcell.conf"]["category"], rows["torchcell.conf"]["via"]) == (
+        "live",
+        "tests/test_conf.py",
+    )
+
+
+@pytest.mark.parametrize(
+    ("init_text", "category", "via"),
+    [
+        ("", "package-data", "ships torchcell:conf/*.yaml"),
+        ('"""Ships YAML."""\n', "package-data", "ships torchcell:conf/*.yaml"),
+        ("X = 1\n", "legacy", "unreachable from every root"),
+        ('"""Ships YAML."""\nimport os\n', "legacy", "unreachable from every root"),
+    ],
+)
+def test_only_an_empty_or_docstring_only_init_is_package_data(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    init_text: str,
+    category: str,
+    via: str,
+) -> None:
+    """An ``__init__`` holding code beside listed YAML is classified as before (legacy
+    when unreached) and is a ``--check`` violation, so the category cannot hide code.
+    """
+    files = _package_data_files(with_entry=True)
+    files["torchcell/conf/__init__.py"] = init_text
+    _build(tmp_path, monkeypatch, files)
+    graph = lp.ImporterGraph()
+    rows = lp.partition(graph, with_git=False)
+    by_module = {str(r["module"]): r for r in rows}
+    assert (
+        by_module["torchcell.conf"]["category"],
+        by_module["torchcell.conf"]["via"],
+    ) == (category, via)
+    lp.check(graph, rows)
+    flagged = (
+        "legacy-check: torchcell/conf/__init__.py: legacy (unreachable from every root)"
+        in capsys.readouterr().out.splitlines()
+    )
+    assert flagged is (category == "legacy")
+
+
+def test_a_docstring_only_module_beside_package_data_is_still_legacy(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Only an ``__init__.py`` can be ``package-data``: a docstring-only
+    ``torchcell/conf/notes.py`` beside listed YAML is unreached and stays ``legacy``.
+    """
+    files = _package_data_files(with_entry=True)
+    files["torchcell/conf/notes.py"] = '"""Only a docstring."""\n'
+    rows = _rows(tmp_path, monkeypatch, files)
+    assert (
+        rows["torchcell.conf.notes"]["category"],
+        rows["torchcell.conf.notes"]["via"],
+    ) == ("legacy", "unreachable from every root")
+    assert rows["torchcell.conf"]["category"] == "package-data"

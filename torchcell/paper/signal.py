@@ -1,7 +1,7 @@
 # torchcell/paper/signal.py
 # [[torchcell.paper.signal]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/paper/signal.py
-# Test file: tests/torchcell/paper/test_tables.py
+# Test file: tests/torchcell/paper/test_signal.py
 """CLI to compute a dataset's gzip 'signal' + derived shape/graph-role from its
 built LMDB. Use as new datasets are added, without touching the paper table.
 

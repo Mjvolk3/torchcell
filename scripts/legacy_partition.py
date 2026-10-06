@@ -33,12 +33,28 @@ Categories in the report:
 * ``legacy``: unreachable from every root.
 * ``carve-out``: ``torchcell/scratch/`` and ``torchcell/experiments/``, excluded from
   every gate already and not classified.
+* ``package-data``: an ``__init__.py`` that no root imports but whose directory holds a
+  file matched by a ``[tool.setuptools.package-data]`` pattern in ``pyproject.toml``
+  (``adapters/conf/*.yaml``). The data is read by path (``osp.join(current_dir, "conf",
+  ...)``), never imported, so the ``__init__`` exists only to ship it. This is not a
+  string scan of pyproject: the table is parsed with ``tomllib``, its patterns are
+  globbed against the tree, and only a matched non-``.py`` file counts. The ``__init__``
+  itself must be empty or docstring-only; one holding code is classified as before
+  (``legacy`` when unreached), so the category cannot hide dead code.
 
 An ``__init__.py`` follows its package: it is ``live`` while any module under it is
-live, init-only or carve-out, and ``legacy`` only when the whole package is.
+live, init-only, package-data or carve-out, and ``legacy`` only when the whole package
+is. A ``package-data`` ``__init__`` with no live member keeps its category.
+
+Known limit: because a ``package-data`` member counts as non-legacy, an otherwise
+unreached parent package ``__init__`` above it is relabeled ``live`` ("package has live
+members"). The parent stays importable for the data's sake, but any code it holds is
+not checked by ``--check``.
 
 ``--check`` exits 1 when a module outside ``torchcell/legacy/`` and the carve-outs is
-``legacy`` or ``init-only``, or when any root imports ``torchcell.legacy``. Used by
+``legacy`` or ``init-only``, or when any root imports ``torchcell.legacy``;
+``package-data`` is not a violation, and it applies to ``__init__.py`` files only, so a
+non-``__init__`` module beside the data is classified like any other. Used by
 ``make legacy-check`` and the CI test workflow after the move (plan
 [[plan.test-suite-buildout.2026.09.25]], Decision 22).
 
@@ -74,7 +90,9 @@ LEGACY_PREFIX = "torchcell/legacy/"
 ROOT_DIRS = ("tests", "scripts", "database")
 # pyproject.toml is NOT string-scanned: its mypy/ruff carve-out lists and the
 # test-exception table name modules precisely because they are dead. Only its
-# [project.scripts] entry points and the setuptools version attr count (below).
+# [project.scripts] entry points and the setuptools version attr count as roots
+# (below). The [tool.setuptools.package-data] table is parsed separately and is not a
+# root either: it marks a data-only package __init__ as kept, it never makes code live.
 ROOT_FILES = ("Makefile", ".pre-commit-config.yaml")
 # Roots whose string constants name modules because they are broken or side-effecting
 # (the import-all NEVER_IMPORT / KNOWN_BROKEN lists), never because they use them.
@@ -233,6 +251,42 @@ def _entry_point_modules() -> set[str]:
     return names
 
 
+def package_data_dirs() -> dict[Path, str]:
+    """Directories holding ``[tool.setuptools.package-data]`` files -> first pattern.
+
+    Keys of the table are package names (``torchcell`` or ``torchcell.sub``); each
+    pattern is globbed relative to that package's directory, and a matched regular file
+    that is not ``.py`` marks its parent directory. Keys outside ``torchcell`` are not
+    this tree's packages and are skipped.
+    """
+    pyproject = tomllib.loads((REPO / "pyproject.toml").read_text(encoding="utf-8"))
+    table = pyproject.get("tool", {}).get("setuptools", {}).get("package-data", {})
+    dirs: dict[Path, str] = {}
+    for package, patterns in table.items():
+        if package != PACKAGE and not package.startswith(PACKAGE + "."):
+            continue
+        base = REPO.joinpath(*package.split("."))
+        for pattern in patterns:
+            for match in sorted(base.glob(pattern)):
+                if match.is_file() and match.suffix != ".py":
+                    dirs.setdefault(match.parent, f"{package}:{pattern}")
+    return dirs
+
+
+def _is_trivial_init(path: Path) -> bool:
+    """True for an empty or docstring-only module (nothing executes on import)."""
+    tree = _parse(path)
+    if tree is None:
+        return False
+    body = tree.body
+    return not body or (
+        len(body) == 1
+        and isinstance(body[0], ast.Expr)
+        and isinstance(body[0].value, ast.Constant)
+        and isinstance(body[0].value.value, str)
+    )
+
+
 class ImporterGraph:
     """Import edges among ``torchcell`` modules plus the root files that import them."""
 
@@ -379,6 +433,7 @@ def partition(graph: ImporterGraph, with_git: bool = True) -> list[dict[str, obj
     full, pred_full = graph.reachable(all_roots)
     no_init, _ = graph.reachable(all_roots, skip_init_edges=True)
     critical, _ = graph.reachable(graph.production_roots())
+    data_dirs = package_data_dirs()
     rows: dict[str, dict[str, object]] = {}
     for name in sorted(graph.modules):
         path = graph.modules[name]
@@ -389,6 +444,12 @@ def partition(graph: ImporterGraph, with_git: bool = True) -> list[dict[str, obj
             category, via = "live", no_init[name]
         elif name in full:
             category, via = "init-only", _nearest_init(graph, pred_full, name)
+        elif (
+            path.name == "__init__.py"
+            and path.parent in data_dirs
+            and _is_trivial_init(path)
+        ):
+            category, via = "package-data", f"ships {data_dirs[path.parent]}"
         else:
             category, via = "legacy", "unreachable from every root"
         rows[name] = {
@@ -412,6 +473,8 @@ def partition(graph: ImporterGraph, with_git: bool = True) -> list[dict[str, obj
         ]
         if any(r["category"] != "legacy" for r in members):
             row["category"], row["via"] = "live", "package has live members"
+        elif row["category"] == "package-data":
+            continue
         elif members:
             row["category"], row["via"] = "legacy", "every package member is legacy"
     return list(rows.values())
@@ -470,7 +533,7 @@ def main(argv: list[str] | None = None) -> int:
 
     graph = ImporterGraph()
     rows = partition(graph, with_git=not args.no_git)
-    categories = ("live", "init-only", "legacy", "carve-out")
+    categories = ("live", "init-only", "legacy", "carve-out", "package-data")
     counts = {c: sum(1 for r in rows if r["category"] == c) for c in categories}
     lines = {
         c: sum(cast(int, r["lines"]) for r in rows if r["category"] == c)

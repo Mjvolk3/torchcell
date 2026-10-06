@@ -1333,7 +1333,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "yeastphenome": 296777,
         "env_chemgen_vanacloig2022": 118662,
         "env_chemgen_mota2024": 1270,
-        "env_chemgen_hoepfner2014": 3124319,
+        "env_chemgen_hoepfner2014": 3083827,
         "env_chemgen_wildenhain2015": 428206,
         "env_chemgen_auesukaree2009": 525,
         "env_chemgen_smith2006": 12747,

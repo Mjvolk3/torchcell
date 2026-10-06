@@ -948,25 +948,25 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     "env_chemgen_hoepfner2014": {
         "root": "data/torchcell/env_chemgen_hoepfner2014",
         # ENCODABLE-COMPOUNDS-ONLY build (only compounds with a released SMILES in Table S1;
-        # ~92% proprietary black-box CMBxxx dropped, incl. the named-but-structureless
-        # CMB222), MINUS the one kept compound that resolves to no structure identifier
-        # (CMB409 Boromycin: 2 columns, 10,232 records). Row ORFs through the shared
-        # resolver: 6,651 rows kept per assay (6,599 CURRENT + 52 RENAMED merged-ORF
-        # strains kept as distinct strains of the current gene), 30 rows dropped per
-        # assay (18 NON_GENE_FEATURE: 9 blocked reading frames, 8 pseudogenes, 1
-        # transposable-element gene; 12 RETIRED), 7,273 HIP + 6,671 HOP cells lost.
-        # HIP 1,759,255 (305 encodable het-CNV experiments) + HOP 1,365,064 (303
-        # encodable deletion experiments) = 3,124,319 records over 608 of 5,879
-        # sensitivity columns (149 identified compounds, 148 distinct InChIKeys). One
-        # record per (row, sensitivity column); the compound is keyed by structure and
-        # the deposited study number lives on phenotype.screen_id. Drop ledger:
-        # <root>/dropped_records.json. See the loader docstring +
-        # experiments/017-hoepfner-background-mutations/compound_encodability.json.
-        "expected_count": 3124319,
+        # the proprietary CMBxxx columns are counted in the ledger's encodable_filter),
+        # MINUS the one kept compound that resolves to no structure identifier (CMB409
+        # Boromycin), MINUS the six CMB4019 "D-Glucose (starvation)" columns excluded by
+        # rule (#506: HIP 17,289 + HOP 13,479 records), MINUS the rows scored in fewer
+        # than half of their arm's deposited sensitivity columns (#506 detection rule:
+        # HIP 72 rows / 2,263 records, HOP 452 rows / 7,344 records, 328 of the HOP rows
+        # SGD-essential). Row ORFs through the shared resolver (CURRENT kept; RENAMED kept
+        # under the current name with a ConstructedOrf; NON_GENE_FEATURE / RETIRED
+        # dropped, 30 rows per assay). HIP 1,739,664 (302 encodable heterozygous kanMX4
+        # deletion experiments) + HOP 1,344,163 (300 barcoded kanMX4 deletion
+        # experiments) = 3,083,827 records, measured by
+        # experiments/036-dataset-fixes-before-kg-build/scripts/hoepfner2014_inputs.py
+        # over the real record path. Drop ledger: <root>/dropped_records.json.
+        "expected_count": 3083827,
         # ~3.1M records -> single-pass streaming gate (retained from the 30M full-atlas build).
         "stream": True,
-        # HIP het-CNV + HOP homozygous-deletion diploid collections (BY4743): no constant
-        # background genes.
+        # HIP heterozygous + HOP homozygous kanMX4 deletion diploid collections (BY4743):
+        # no constant background genes in the genotype (the BY4743 alleles ride on the
+        # StrainReferenceGenome background, not on Genotype).
         "background_genes": frozenset(),
         "provenance": Provenance(  # noqa: F821  # resolved in runners.py's namespace
             source_uri=(
@@ -978,26 +978,31 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             method=(
                 "Novartis HIP-HOP chemogenomic atlas; deposited (adjusted) MADL "
                 "sensitivity score = (r_L - med(r_L))/MAD(r_L) per (deletion strain x "
-                "compound/concentration) at IC30 in YPD_LIQUID, 30 C, 2% DMSO vehicle; "
-                "encodable compounds only (released Table S1 SMILES), and every kept "
-                "compound carries a structure identifier -- curated "
+                "compound/concentration) at IC30 in YPD_LIQUID, 30 C, 24-well culture "
+                "(CultureEnvironment); 2% DMSO vehicle up to 200 uM, a solvent "
+                "ProvenanceGap above it, a pH ProvenanceGap for HCl / NaOH / sodium "
+                "acetate; encodable compounds only (released Table S1 SMILES), and every "
+                "kept compound carries a structure identifier -- curated "
                 "compound_identity_table row first, else an InChIKey derived from the "
                 "released SMILES with RDKit; the one compound resolving to no identifier "
-                "(CMB409 Boromycin) is DROPPED (2 columns, 10,161 records). HIP = "
-                "heterozygous (EngineeredCopyNumberPerturbation copy 1/2, KanMX) diploid "
-                "incl. essential genes at ~20 generations over four 16 h passages "
-                "(duration_hours a ProvenanceGap), HOP = homozygous KanMx deletion diploid "
-                "at 16 h / ~5 generations; n_samples = 2 (Ad. columns) / 1 (MADL columns), "
-                "technical duplicate, reference n_samples = 4 (conservative lower end of "
-                "the paper's 4-8 control replicates); screen_id = the deposited study "
-                "number, which keeps same-compound same-dose columns from two screens "
-                "L1-distinct; assay_type = pooled_competitive_growth_barcode; the 157 "
-                "Table S5 background-mutation HIP strains are KEPT and flagged in "
-                "<root>/table_s5_affected_strains.json; row ORFs go through the SHARED "
-                "resolve_gene_name (CURRENT kept; RENAMED kept under the current name with "
-                "the source ORF as perturbed_gene_name, a distinct strain; NON_GENE_FEATURE "
-                "such as pseudogenes and blocked reading frames, and RETIRED names, dropped "
-                "to <root>/dropped_records.json)"
+                "(CMB409 Boromycin) is DROPPED; CMB4019 glucose starvation is EXCLUDED "
+                "(medium change not expressible with a sourced value); rows scored in "
+                "fewer than half of their arm's columns are DROPPED (detection rule). "
+                "StrainEnvironmentResponseExperiment records on a BY4743 "
+                "StrainReferenceGenome whose name and alleles are pending-review gaps. "
+                "HIP = HeterozygousDeletionPerturbation (kanMX4, YSC1055, Table S5 "
+                "construction lab / batch / plate / well) incl. essential genes, HIP "
+                "duration hours, generations and endpoint all gaps (Fig. S2); HOP = "
+                "BarcodedKanMxDeletionPerturbation (kanMX4, YSC1056) at 16 h / ~5 "
+                "generations; RENAMED source ORFs carry a ConstructedOrf; n_samples = 2 "
+                "(Ad. columns) / 1 (MADL columns), technical duplicate, reference "
+                "n_samples = 4 (conservative lower end of the paper's 4-8 control "
+                "replicates); screen_id = the deposited study number; assay_type = "
+                "pooled_competitive_growth_barcode; Table S5 background-mutation HIP "
+                "strains are KEPT and flagged in <root>/table_s5_affected_strains.json; "
+                "row ORFs go through the SHARED resolve_gene_name (CURRENT kept; RENAMED "
+                "kept under the current name; NON_GENE_FEATURE and RETIRED dropped to "
+                "<root>/dropped_records.json)"
             ),
             page=(
                 "Microbiol Res 2014 (doi:10.1016/j.micres.2013.11.004); Dryad "

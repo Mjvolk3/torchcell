@@ -1,0 +1,173 @@
+{
+  "by_assay": {
+    "HIP": {
+      "detection_columns": 2956,
+      "detection_records_dropped": 2263,
+      "detection_records_dropped_sgd_essential": 320,
+      "detection_rows_dropped": 72,
+      "detection_rows_dropped_sgd_essential": 11,
+      "detection_rows_kept": 5773,
+      "experiment_types": {
+        "strain_environment_response": 1739664
+      },
+      "glucose_starvation_columns": 3,
+      "glucose_starvation_records_excluded": 17289,
+      "hip_construction_records": {
+        "lab_and_batch_only": 25660,
+        "none": 2718,
+        "plate_and_well": 1711286
+      },
+      "hip_construction_rows": {
+        "duplicate_entries": 85,
+        "not_listed": 9,
+        "one_entry": 5679
+      },
+      "hip_marker_functional_copies": {
+        "HIS3": 0,
+        "LYS2": null,
+        "MET17": null
+      },
+      "kept_columns": 302,
+      "kept_columns_outside_half_to_twice_ic30": 64,
+      "kept_columns_with_ic30": 293,
+      "marker_locus_records": {
+        "HIS3": 288,
+        "LYS2": 302,
+        "MET17": 302
+      },
+      "orf_rule_rows_dropped": 30,
+      "perturbation_types": {
+        "heterozygous_deletion": 1739664
+      },
+      "ph_gap_columns": 6,
+      "ph_gap_records": 34578,
+      "positive_control_columns": 0,
+      "records_kept": 1739664,
+      "renamed_records": 15663,
+      "renamed_records_sgd_essential": 1812,
+      "renamed_rows": 52,
+      "renamed_targets_sgd_essential": [
+        "YAL034C-B",
+        "YCL004W",
+        "YFL017W-A",
+        "YFL034C-B",
+        "YJL019W"
+      ],
+      "rows_without_any_score": 806,
+      "solvent_gap_cmb_ids": [
+        "1080",
+        "1089",
+        "1171",
+        "1966",
+        "1968",
+        "2175",
+        "2761",
+        "2762",
+        "4008",
+        "4009",
+        "4010",
+        "4011",
+        "4013",
+        "4015",
+        "4016",
+        "4017",
+        "87"
+      ],
+      "solvent_gap_columns": 33,
+      "solvent_gap_records": 190207,
+      "unencodable_cmb_ids": 1666,
+      "unencodable_columns": 2650,
+      "unencodable_records": 15263802
+    },
+    "HOP": {
+      "detection_columns": 2923,
+      "detection_records_dropped": 7344,
+      "detection_records_dropped_sgd_essential": 3649,
+      "detection_rows_dropped": 452,
+      "detection_rows_dropped_sgd_essential": 328,
+      "detection_rows_kept": 4495,
+      "experiment_types": {
+        "strain_environment_response": 1344163
+      },
+      "glucose_starvation_columns": 3,
+      "glucose_starvation_records_excluded": 13479,
+      "hip_construction_records": {},
+      "hip_construction_rows": {},
+      "hip_marker_functional_copies": {},
+      "kept_columns": 300,
+      "kept_columns_outside_half_to_twice_ic30": 60,
+      "kept_columns_with_ic30": 291,
+      "marker_locus_records": {
+        "HIS3": 300
+      },
+      "orf_rule_rows_dropped": 30,
+      "perturbation_types": {
+        "barcoded_kanmx_deletion": 1344163
+      },
+      "ph_gap_columns": 6,
+      "ph_gap_records": 26958,
+      "positive_control_columns": 0,
+      "records_kept": 1344163,
+      "renamed_records": 13791,
+      "renamed_records_sgd_essential": 0,
+      "renamed_rows": 46,
+      "renamed_targets_sgd_essential": [],
+      "rows_without_any_score": 1704,
+      "solvent_gap_cmb_ids": [
+        "1080",
+        "1089",
+        "1171",
+        "1966",
+        "1968",
+        "2175",
+        "2761",
+        "2762",
+        "4008",
+        "4009",
+        "4010",
+        "4011",
+        "4013",
+        "4015",
+        "4016",
+        "4017",
+        "87"
+      ],
+      "solvent_gap_columns": 33,
+      "solvent_gap_records": 148185,
+      "unencodable_cmb_ids": 1675,
+      "unencodable_columns": 2619,
+      "unencodable_records": 11728428
+    }
+  },
+  "deposited_cmb_ids_both_arms": 1852,
+  "dev_ledger_kept_by_assay_before": {
+    "HIP": 1759255,
+    "HOP": 1365064
+  },
+  "flags": {
+    "flagged_in_table_s5_without_kept_hip_records": [
+      "YCR061W",
+      "YIL167W",
+      "YIL171W"
+    ],
+    "flagged_now_not_in_017_csv": [
+      "YCR035C",
+      "YIL015C-A",
+      "YJL017W"
+    ],
+    "in_017_csv_not_flagged_now": [
+      "YIL167W",
+      "YIL171W"
+    ],
+    "n_017_csv_strains": 185,
+    "n_flagged_in_table_s5": 189,
+    "n_flagged_records": 56148,
+    "n_flagged_strains_with_records": 186
+  },
+  "records_kept_after": {
+    "HIP": 1739664,
+    "HOP": 1344163
+  },
+  "records_kept_total_after": 3083827,
+  "unencodable_cmb_ids_both_arms": 1702
+}

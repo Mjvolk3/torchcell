@@ -6,7 +6,7 @@
 ``process()`` reads three things besides ``raw/``: the S288C gene universe from the
 genomes tier (``$DATA_ROOT/torchcell-genomes/sgd_S288C_R64-4-1_20230830``, two FASTAs
 sha256-pinned by a ``GenomeManifest``), the committed Table S5 strain CSV of experiment
-017 (sha256-pinned, read from the worktree), and the injected genome's
+036 (sha256-pinned, read from the worktree), and the injected genome's
 ``resolve_gene_name``. ``DATA_ROOT`` is pointed into ``tmp_path`` with a five-gene tier
 (YAL001C, YAL034C-B, YBR271W, YLR074C, YCL074W in the ORF FASTA; YNCA0001W in the RNA
 FASTA) and the resolver is a dict-backed stub returning real ``GeneNameResolution``s.
@@ -34,18 +34,26 @@ HIP rows (cells at columns 1..7) and what they become:
     YCL074W    0.5 0.5  0.5  0.5 ""   0.5 9.9   NON_GENE_FEATURE pseudogene: dropped, 2 cells
     YBR271W   -3.0 -3.1 -2.0 -1.0 -0.5 0.3 9.9  CURRENT, Table S5 positional: records 5, 6, 7
     YHR999W    0.7 (all seven)                  CURRENT but not in the FASTA: dropped, 3 cells
-    YLR074C    0.6 (line ends after column 1)  CURRENT, Table S5 non-positional: record 8
+    YLR074C    0.6 "" 0.6 "" 0.6 (line ends)    CURRENT, scored in 3 of 5 HIP columns,
+                                                Table S5 CL1+ MUT: records 8, 9, 10
+    YAL034C-B  0.8 (line ends)                  CURRENT, scored in 1 of 5 HIP columns:
+                                                dropped by the DETECTION rule, 1 cell
 
-HOP rows: YAL001C 1.0 0.7 (record 9), YBR271W -0.25 "" (record 10), YAL034C-B 0.33
-with no second cell (record 11; the short line exercises the column-bound guard), and
-YAL001C again 0.99 "" (record 12; a repeated ORF row is stored, see the Finding test).
+HOP rows: YAL001C 1.0 0.7 (record 11), YBR271W -0.25 "" (record 12; scored in exactly
+1 of 2 HOP columns, the rule's 50% boundary, kept), YAL034C-B 0.33 with no second cell
+(record 13; the short line exercises the column-bound guard), and YAL001C again 0.99 ""
+(record 14; a repeated ORF row is stored, see the Finding test).
 
-Ledger arithmetic: kept HIP 9 + HOP 4 = 13; dropped-compound cells are the non-empty
+Ledger arithmetic: kept HIP 11 + HOP 4 = 15; dropped-compound cells are the non-empty
 column-4 cells of KEPT HIP rows (YAL001C 0.9, YBR271W -1.0 = 2) plus the column-2 cell
 of kept HOP rows (YAL001C 0.7 = 1), so 3 over 2 columns; the pseudogene row loses its
-two non-empty kept-column cells and the FASTA-absent row its three. References are one
-per (assay, study): HIP_0077 members [0, 2, 3, 4, 5, 7, 8], HIP_0091 [1, 6], HOP_0077
-[9, 10, 11, 12]. Table S5 flags: YBR271W 3 HIP records, YLR074C 1.
+two non-empty kept-column cells and the FASTA-absent row its three. The unencodable
+CMB 888 column holds 3 cells of kept HIP rows. References are one per (assay, study):
+HIP_0077 members [0, 2, 3, 4, 5, 7, 8, 10], HIP_0091 [1, 6, 9], HOP_0077 [11, 12, 13,
+14]. Table S5 flags: YBR271W 3 HIP records, YLR074C 3. Every kept HIP row is in Table
+S5 once (YAL035C-A as ``YAL035C-a``), so each HIP record carries lab, batch, plate and
+well. The records are ``StrainEnvironmentResponseExperiment``s on the BY4743
+``StrainReferenceGenome`` (#506).
 """
 
 from __future__ import annotations
@@ -64,23 +72,28 @@ from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.media import YPD_LIQUID
 from torchcell.datamodels.schema import (
     AssayType,
+    BarcodedKanMxDeletionPerturbation,
     Compound,
     Concentration,
     ConcentrationUnit,
+    ConstructedOrf,
+    CultureEnvironment,
+    CultureFormat,
     DoseBasis,
-    EngineeredCopyNumberPerturbation,
-    Environment,
-    EnvironmentResponseExperiment,
-    EnvironmentResponseExperimentReference,
+    EndpointRule,
     EnvironmentResponsePhenotype,
     Genotype,
-    KanMxDeletionPerturbation,
+    HeterozygousDeletionPerturbation,
     MeasurementType,
+    PreCulture,
+    PreCultureSource,
     Publication,
-    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
     Solvent,
+    StrainConstruction,
+    StrainEnvironmentResponseExperiment,
+    StrainEnvironmentResponseExperimentReference,
     Temperature,
 )
 from torchcell.datasets.scerevisiae import hoepfner2014 as m
@@ -141,7 +154,8 @@ _HIP_ROWS: list[list[str]] = [
     ["YCL074W", "0.5", "0.5", "0.5", "0.5", "", "0.5", "9.9"],
     ["YBR271W", "-3.0", "-3.1", "-2.0", "-1.0", "-0.5", "0.3", "9.9"],
     ["YHR999W"] + ["0.7"] * 7,
-    ["YLR074C", "0.6"],
+    ["YLR074C", "0.6", "", "0.6", "", "0.6"],
+    ["YAL034C-B", "0.8"],
 ]
 _HOP_HEADER = [
     "Systematic Name",
@@ -263,12 +277,6 @@ _DMSO = Compound(
     pubchem_cid=679,
     chebi_id="CHEBI:28262",
 )
-_HIP_DURATION_GAP = ProvenanceGap(
-    field="duration_hours",
-    reason=ProvenanceGapReason.not_reported_by_primary,
-    note="HIP ran four sequential 16 h incubations to ~20 generations; the paper does not "
-    "state which passage's plate was hybridized, so neither 16 nor 64 h can be asserted",
-)
 _SE_NOTE = (
     "no per-cell uncertainty is released: the replicate t-test p-value is folded into the "
     "adjusted score a_L = min(0.05/p, 1) * s_L"
@@ -300,23 +308,77 @@ def _uncertainty_gaps() -> list[ProvenanceGap]:
     ]
 
 
-def _environment(assay: str, perturbation: SmallMoleculePerturbation) -> Environment:
+def _culture_format(assay: str) -> CultureFormat:
+    """24-well Greiner 662102, 1600 ul, 550 rpm; HIP 250 cells/strain with a gapped
+    endpoint, HOP 320 cells/strain read after a fixed 16 h.
+    """
+    sv = m.SOURCED_VALUES
     if assay == "HIP":
-        return Environment(
+        return CultureFormat(
+            vessel="24-well plate (Greiner 662102)",
+            working_volume_ul=1600.0,
+            shaking_rpm=550.0,
+            inoculum_cells_per_strain=250.0,
+            provenance=[sv["culture_vessel"], sv["shaking_rpm"], sv["hip_inoculum"]],
+            provenance_gaps=[
+                ProvenanceGap(
+                    field="endpoint",
+                    reason=ProvenanceGapReason.deferred_pending_source_review,
+                    resolve_with=m.HOEPFNER_SUPPLEMENT,
+                    note=m._HIP_PASSAGE_NOTE + " (Fig. S2)",
+                )
+            ],
+        )
+    return CultureFormat(
+        vessel="24-well plate (Greiner 662102)",
+        working_volume_ul=1600.0,
+        shaking_rpm=550.0,
+        inoculum_cells_per_strain=320.0,
+        endpoint=EndpointRule.fixed_duration,
+        provenance=[
+            sv["culture_vessel"],
+            sv["shaking_rpm"],
+            sv["hop_inoculum"],
+            sv["hop_duration_hours"],
+        ],
+    )
+
+
+def _environment(
+    assay: str, perturbation: SmallMoleculePerturbation
+) -> CultureEnvironment:
+    sv = m.SOURCED_VALUES
+    if assay == "HIP":
+        return CultureEnvironment(
             media=YPD_LIQUID,
             temperature=Temperature(value=30.0),
             perturbations=[perturbation],
             aerobicity="aerobic",
-            duration_generations=20.0,
-            provenance_gaps=[_HIP_DURATION_GAP],
+            culture_format=_culture_format("HIP"),
+            pre_culture=PreCulture(
+                source=PreCultureSource.log_phase_culture,
+                medium=YPD_LIQUID,
+                source_label="overnight log phase pre-culture",
+                provenance=[sv["hip_inoculum"]],
+            ),
+            provenance_gaps=[*m._HIP_DURATION_GAPS, m._AUXOTROPH_GAP],
         )
-    return Environment(
+    return CultureEnvironment(
         media=YPD_LIQUID,
         temperature=Temperature(value=30.0),
         perturbations=[perturbation],
         aerobicity="aerobic",
         duration_hours=16.0,
         duration_generations=5.0,
+        culture_format=_culture_format("HOP"),
+        pre_culture=PreCulture(
+            source=PreCultureSource.thaw_recovery,
+            medium=YPD_LIQUID,
+            duration_hours=3.0,
+            source_label="thawed and recovered for 3 h in YPD",
+            provenance=[sv["hop_thaw_recovery"]],
+        ),
+        provenance_gaps=[m._AUXOTROPH_GAP],
     )
 
 
@@ -345,15 +407,53 @@ def _phenotype(
     )
 
 
-def _hip_genotype(orf: str, perturbed: str) -> Genotype:
+def _hip_genotype(
+    orf: str, perturbed: str, construction: StrainConstruction
+) -> Genotype:
+    constructed = None
+    if orf != perturbed:
+        note = (
+            f"R64-4-1 lists {perturbed} as an alias of {orf}; whether it was merged, "
+            "reannotated or renamed, and its deleted interval, need the SGD locus history"
+        )
+        constructed = ConstructedOrf(
+            source_systematic_name=perturbed,
+            relation=None,
+            deleted_span=None,
+            provenance_gaps=[
+                ProvenanceGap(
+                    field=field,
+                    reason=ProvenanceGapReason.deferred_pending_source_review,
+                    resolve_with=m.SGD_LOCUS_HISTORY,
+                    note=note,
+                )
+                for field in ("relation", "deleted_span")
+            ],
+        )
     return Genotype(
         perturbations=[
-            EngineeredCopyNumberPerturbation(
+            HeterozygousDeletionPerturbation(
                 systematic_gene_name=orf,
                 perturbed_gene_name=perturbed,
-                copy_number=1,
-                reference_copy_number=2,
-                marker="KanMX",
+                cassette="kanMX4",
+                collection="YSC1055",
+                construction=construction,
+                constructed_orf=constructed,
+                provenance_gaps=[m._BARCODE_GAP],
+            )
+        ]
+    )
+
+
+def _hop_genotype(orf: str) -> Genotype:
+    return Genotype(
+        perturbations=[
+            BarcodedKanMxDeletionPerturbation(
+                systematic_gene_name=orf,
+                perturbed_gene_name=orf,
+                cassette="kanMX4",
+                collection="YSC1056",
+                provenance_gaps=[m._BARCODE_GAP],
             )
         ]
     )
@@ -366,11 +466,9 @@ def _reference(assay: str, study: str) -> dict[str, Any]:
             value=2.0, unit=ConcentrationUnit.percent_v_v, basis=DoseBasis.fixed
         ),
     )
-    return EnvironmentResponseExperimentReference(
+    return StrainEnvironmentResponseExperimentReference(
         dataset_name=_DATASET,
-        genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="BY4743", ploidy="diploid"
-        ),
+        genome_reference=m.hoepfner_reference_genome(),
         environment_reference=_environment(assay, vehicle),
         phenotype_reference=EnvironmentResponsePhenotype(
             measurement_type=MeasurementType.sensitivity_score,
@@ -410,16 +508,16 @@ def _summary(
     return out
 
 
-def test_thirteen_records_stream_hip_then_hop_in_row_then_column_order(
+def test_fifteen_records_stream_hip_then_hop_in_row_then_column_order(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
     """Kept HIP columns are header indices 1, 3, 5, so each kept HIP row yields three
     records (fewer where a cell is empty or the line ends), then the HOP rows follow
     with their one kept column; the ``MADL`` column stores n = 1, the ``Ad.`` columns
-    n = 2.
+    n = 2. The sparse HIP row YAL034C-B (1 of 5 columns) is gone.
     """
-    assert len(dataset) == 13
-    hip, hop = "engineered_copy_number", "kanmx_deletion"
+    assert len(dataset) == 15
+    hip, hop = "heterozygous_deletion", "barcoded_kanmx_deletion"
     assert _summary(dataset) == [
         (hip, "YAL001C", "YAL001C", "amitriptyline", 50.0, 0.1, 2, "0077"),
         (hip, "YAL001C", "YAL001C", "amitriptyline", 50.0, -1.5, 1, "0091"),
@@ -430,6 +528,8 @@ def test_thirteen_records_stream_hip_then_hop_in_row_then_column_order(
         (hip, "YBR271W", "YBR271W", "amitriptyline", 50.0, -2.0, 1, "0091"),
         (hip, "YBR271W", "YBR271W", "CMB777", 10.0, -0.5, 2, "0077"),
         (hip, "YLR074C", "YLR074C", "amitriptyline", 50.0, 0.6, 2, "0077"),
+        (hip, "YLR074C", "YLR074C", "amitriptyline", 50.0, 0.6, 1, "0091"),
+        (hip, "YLR074C", "YLR074C", "CMB777", 10.0, 0.6, 2, "0077"),
         (hop, "YAL001C", "YAL001C", "amitriptyline", 50.0, 1.0, 2, "0077"),
         (hop, "YBR271W", "YBR271W", "amitriptyline", 50.0, -0.25, 2, "0077"),
         (hop, "YAL034C-B", "YAL034C-B", "amitriptyline", 50.0, 0.33, 2, "0077"),
@@ -437,23 +537,31 @@ def test_thirteen_records_stream_hip_then_hop_in_row_then_column_order(
     ]
 
 
-def test_hip_record_is_a_heterozygous_cnv_in_ypd_liquid_with_a_dmso_vehicle(
+def test_hip_record_is_a_heterozygous_kanmx4_deletion_in_ypd_with_a_dmso_vehicle(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
-    """Record 0 field by field: YAL001C copy 1 of 2 marked KanMX; YPD liquid, 30 C,
-    aerobic, 20 generations with the ``duration_hours`` gap; amitriptyline 50 uM set at
-    IC30 in 2 percent DMSO (the vehicle carries its own curated identity); score 0.1
-    over 2 technical replicates in study 0077 with the three uncertainty gaps.
+    """Record 0 field by field: YAL001C heterozygous kanMX4 deletion from YSC1055 with
+    its Table S5 construction (Lab 4, chr1_1, plate 201, well E12) and a barcode gap;
+    YPD liquid, 30 C, the 24-well HIP culture with every duration gapped; amitriptyline
+    50 uM set at IC30 in 2 percent DMSO; score 0.1 over 2 technical replicates in study
+    0077 with the three uncertainty gaps.
     """
     assert (
         dataset[0]["experiment"]
-        == EnvironmentResponseExperiment(
+        == StrainEnvironmentResponseExperiment(
             dataset_name=_DATASET,
-            genotype=_hip_genotype("YAL001C", "YAL001C"),
+            genotype=_hip_genotype(
+                "YAL001C",
+                "YAL001C",
+                StrainConstruction(
+                    lab="Lab 4", batch="chr1_1", plate="201", well="E12"
+                ),
+            ),
             environment=_environment("HIP", _treated(_AMITRIPTYLINE_COMPOUND, 50.0)),
             phenotype=_phenotype(0.1, 2, "0077"),
         ).model_dump()
     )
+    assert dataset[0]["experiment"]["experiment_type"] == "strain_environment_response"
     assert dataset[0]["reference"] == _reference("HIP", "0077")
     assert (
         dataset[0]["publication"]
@@ -465,43 +573,44 @@ def test_renamed_row_keeps_the_source_orf_and_a_structure_only_compound_is_cmb_n
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
     """Record 4: YAL035C-A is stored under YAL034C-B with the source ORF as
-    ``perturbed_gene_name``; CMB 777 has no released name, so its compound is named
-    ``CMB777`` with the InChIKey derived from its SMILES and no PubChem or ChEBI id.
+    ``perturbed_gene_name`` and as ``constructed_orf`` (relation and span gapped), and
+    its construction from Table S5's ``YAL035C-a`` entry; CMB 777 has no released name,
+    so its compound is named ``CMB777`` with the InChIKey derived from its SMILES.
     """
     assert (
         dataset[4]["experiment"]
-        == EnvironmentResponseExperiment(
+        == StrainEnvironmentResponseExperiment(
             dataset_name=_DATASET,
-            genotype=_hip_genotype("YAL034C-B", "YAL035C-A"),
+            genotype=_hip_genotype(
+                "YAL034C-B",
+                "YAL035C-A",
+                StrainConstruction(
+                    lab="Lab 4", batch="chr1_1", plate="262", well="E10"
+                ),
+            ),
             environment=_environment("HIP", _treated(_CMB777_COMPOUND, 10.0)),
             phenotype=_phenotype(0.4, 2, "0077"),
         ).model_dump()
     )
 
 
-def test_hop_record_is_a_kanmx_deletion_over_a_16_hour_exposure(
+def test_hop_record_is_a_barcoded_kanmx4_deletion_over_a_16_hour_exposure(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
-    """Record 9: the HOP arm stores ``KanMxDeletionPerturbation`` and an environment
-    with both durations (16 h, 5 generations) and no gap; its reference is the HOP
-    control of study 0077.
+    """Record 11: the HOP arm stores ``BarcodedKanMxDeletionPerturbation`` from YSC1056
+    and an environment with both durations (16 h, 5 generations); its reference is the
+    HOP control of study 0077.
     """
     assert (
-        dataset[9]["experiment"]
-        == EnvironmentResponseExperiment(
+        dataset[11]["experiment"]
+        == StrainEnvironmentResponseExperiment(
             dataset_name=_DATASET,
-            genotype=Genotype(
-                perturbations=[
-                    KanMxDeletionPerturbation(
-                        systematic_gene_name="YAL001C", perturbed_gene_name="YAL001C"
-                    )
-                ]
-            ),
+            genotype=_hop_genotype("YAL001C"),
             environment=_environment("HOP", _treated(_AMITRIPTYLINE_COMPOUND, 50.0)),
             phenotype=_phenotype(1.0, 2, "0077"),
         ).model_dump()
     )
-    assert dataset[9]["reference"] == _reference("HOP", "0077")
+    assert dataset[11]["reference"] == _reference("HOP", "0077")
 
 
 def test_reference_index_has_one_entry_per_assay_and_study(
@@ -513,9 +622,9 @@ def test_reference_index_has_one_entry_per_assay_and_study(
         ).read_text()
     )
     assert [entry["member_indices"] for entry in index] == [
-        [0, 2, 3, 4, 5, 7, 8],
-        [1, 6],
-        [9, 10, 11, 12],
+        [0, 2, 3, 4, 5, 7, 8, 10],
+        [1, 6, 9],
+        [11, 12, 13, 14],
     ]
     assert [entry["reference"] for entry in index] == [
         _reference("HIP", "0077"),
@@ -524,13 +633,16 @@ def test_reference_index_has_one_entry_per_assay_and_study(
     ]
 
 
-def test_drop_ledger_measures_the_compound_and_orf_rules(
+def test_drop_ledger_measures_every_rule(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
     """``<root>/dropped_records.json``: Boromycin's two columns cost 3 cells (HIP 2,
     HOP 1) with the RDKit parse failure as the unresolved reason; the pseudogene row
     loses 2 kept-column cells and the FASTA-absent CURRENT row 3; the one RENAMED row is
-    listed per assay.
+    listed per assay; the detection rule drops the sparse HIP row YAL034C-B (1 of 5
+    columns, 1 cell) and keeps HOP YBR271W at exactly half; CMB 888 is the one
+    unencodable id (3 cells of kept HIP rows); amitriptyline's 50 uM equals its Table S1
+    IC30 (in range); every kept HIP row has one Table S5 entry.
     """
     report = json.loads((Path(dataset.root) / "dropped_records.json").read_text())
     report.pop("created_at")
@@ -550,9 +662,11 @@ def test_drop_ledger_measures_the_compound_and_orf_rules(
             "NON_GENE_FEATURE (pseudogene, blocked reading frame, transposable-element "
             "gene) or a RETIRED name drops the row and every one of its cells"
         ),
-        "n_kept": 13,
+        "detection_rule": m.DETECTION_RULE,
+        "exclusion_rule": m.EXCLUSION_RULE,
+        "n_kept": 15,
         "n_dropped": 3,
-        "kept_by_assay": {"HIP": 9, "HOP": 4},
+        "kept_by_assay": {"HIP": 11, "HOP": 4},
         "dropped_by_assay": {"HIP": 2, "HOP": 1},
         "dropped_compounds": [
             {
@@ -591,15 +705,61 @@ def test_drop_ledger_measures_the_compound_and_orf_rules(
             "HOP": [],
         },
         "renamed_orfs": {"HIP": {"YAL035C-A": "YAL034C-B"}, "HOP": {}},
+        "detection": {
+            "HIP": {
+                "n_columns": 5,
+                "n_rows_without_any_score": 0,
+                "n_rows_kept": 4,
+                "n_records_dropped": 1,
+                "dropped": [
+                    {
+                        "source_name": "YAL034C-B",
+                        "systematic_name": "YAL034C-B",
+                        "n_scored_columns": 1,
+                        "n_columns": 5,
+                        "n_records": 1,
+                    }
+                ],
+            },
+            "HOP": {
+                "n_columns": 2,
+                "n_rows_without_any_score": 0,
+                "n_rows_kept": 4,
+                "n_records_dropped": 0,
+                "dropped": [],
+            },
+        },
+        "excluded_conditions": [
+            {
+                "cmb_id": "4019",
+                "table_s1_name": "D-Glucose (starvation)",
+                "n_columns_by_assay": {"HIP": 0, "HOP": 0},
+                "n_records_by_assay": {"HIP": 0, "HOP": 0},
+            }
+        ],
+        "encodable_filter": {
+            "rule": m.ENCODABLE_RULE,
+            "n_cmb_ids": 1,
+            "n_cmb_ids_by_assay": {"HIP": 1, "HOP": 0},
+            "n_columns_by_assay": {"HIP": 1, "HOP": 0},
+            "n_records_by_assay": {"HIP": 3, "HOP": 0},
+            "n_deposited_cmb_ids": 4,
+        },
+        "positive_control": {"HIP": 0, "HOP": 0},
+        "solvent_gap_columns": {"HIP": 0, "HOP": 0},
+        "ph_gap_columns": {"HIP": 0, "HOP": 0},
+        "dose_outside_ic30_range": [],
+        "n_kept_columns_with_ic30": {"HIP": 2, "HOP": 1},
+        "hip_construction": {"one_entry": 4},
     }
 
 
 def test_table_s5_flag_file_counts_kept_hip_records_per_listed_strain(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
-    """Two Table S5 strains appear in the HIP matrix: YBR271W (EFM2, cluster CL1,
-    positional) with 3 kept records and YLR074C (BUD20, CL1+, not positional) with 1; the
-    HOP rows of YBR271W are not flagged. The file pins the source CSV and Table S5 by
+    """Two flagged Table S5 strains appear in the HIP matrix: YBR271W (CL1, positional,
+    MUT) and YLR074C (CL1+, not positional, MUT), 3 kept records each; the HOP rows of
+    YBR271W are not flagged. The file pins the regenerated 036 CSV and Table S5 by
     sha256 and carries the paper's cluster paragraph verbatim.
     """
     flags = json.loads(
@@ -610,59 +770,43 @@ def test_table_s5_flag_file_counts_kept_hip_records_per_listed_strain(
         "dataset": _DATASET,
         "citation_key": _CITATION_KEY,
         "source_csv": (
-            "experiments/017-hoepfner-background-mutations/results/"
-            "table_s5_affected_strains.csv"
+            "experiments/036-dataset-fixes-before-kg-build/results/"
+            "hoepfner2014_table_s5_strains.csv"
         ),
-        "source_csv_sha256": (
-            "05bb74330f7118a8bc565fcbc587c2732daf5785db54b9a29a1aedbaca64bdc1"
-        ),
+        "source_csv_sha256": m.TABLE_S5_STRAINS_CSV_SHA256,
+        "source_script": m.TABLE_S5_STRAINS_SCRIPT,
         "table_s5_path": "si/Table_S5.xls",
         "table_s5_sha256": (
             "b123dc3e87fc10d3b4256f449fcd2eb38c91d1779000278af5a1a788356624a2"
         ),
-        "paper_quote": (
-            "For clusters 1 and 2, the hypersensitive phenotype did not track with any "
-            "one mutation, but correlated with an increased sequencing coverage of "
-            "chromosome XI suggestive of aneuploidy (Fig. S15). In contrast, Cluster 3 "
-            "strains revealed a common point mutation in the WHI2/YOR043w gene resulting "
-            "in a premature stop codon which truncates the ORF by $6 0 \\%$ and likely "
-            "results in a non-functional protein (Fig. S16A). In support of this, the "
-            "original WHI2/whi2 HIP strain significantly correlates with all identified "
-            "cluster 3 strains (Fig. S16B). Finally, close analysis of Cluster 4 strain "
-            "sequences revealed a discrete 12 kbps region on chromosome V where the "
-            "relative coverage was increased by $5 0 \\%$ (Fig. S17). This region "
-            "contains 6 annotated chromosomal features, including 3 genes with defined "
-            "functions."
-        ),
-        "policy": (
-            "KEPT and FLAGGED, never dropped: the measurement is real, and the paper "
-            "reports that the hypersensitivity did not track with any one mutation, so no "
-            "per-gene perturbation is invented for the background mutation. The flag is a "
-            "property of the physical strain and no served class carries a slot for it, "
-            "so it lives here and is joined on systematic_gene_name."
-        ),
+        "paper_quote": str(m.SOURCED_VALUES["table_s5_mutations"].quote),
+        "policy": m.TABLE_S5_POLICY,
         "n_strains": 2,
         "n_positional_strains": 1,
-        "n_records_flagged": 4,
+        "n_records_flagged": 6,
         "n_positional_records_flagged": 3,
         "strains": [
             {
                 "systematic_gene_name": "YBR271W",
-                "common_gene_name": "EFM2",
                 "cluster": "CL1",
                 "is_positional": True,
-                "mutation": "Chromosome XI aneuploidy",
+                "mutation": "Chromosome XI Aneuploidy",
+                "validation_result": "MUT",
                 "construction_lab": "Lab 14",
+                "construction_batch": "chr00_1",
+                "n_table_s5_entries": 1,
                 "n_records": 3,
             },
             {
                 "systematic_gene_name": "YLR074C",
-                "common_gene_name": "BUD20",
                 "cluster": "CL1+",
                 "is_positional": False,
-                "mutation": "Chromosome XI aneuploidy",
+                "mutation": "Chromosome XI Aneuploidy",
+                "validation_result": "MUT",
                 "construction_lab": "Lab 3",
-                "n_records": 1,
+                "construction_batch": "chr12_2",
+                "n_table_s5_entries": 1,
+                "n_records": 3,
             },
         ],
     }
@@ -671,32 +815,14 @@ def test_table_s5_flag_file_counts_kept_hip_records_per_listed_strain(
 def test_sourced_values_file_and_gene_set(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
-    """``preprocess/sourced_values.json`` holds the 18 sourced constants in key order;
+    """``preprocess/sourced_values.json`` holds the sourced constants in key order;
     ``temperature_c`` is checked literally and the whole file equals the JSON dump of
     ``SOURCED_VALUES``. The gene set is the four current ORFs the kept rows resolve to.
     """
     preprocess = Path(dataset.root) / "preprocess"
     payload = json.loads((preprocess / "sourced_values.json").read_text())
-    assert list(payload) == [
-        "assay_type",
-        "concentration_unit",
-        "dose_basis",
-        "dose_basis_qualification",
-        "hip_collection",
-        "hip_duration_generations",
-        "hip_marker",
-        "hop_collection",
-        "hop_duration_generations",
-        "hop_duration_hours",
-        "measurement_definition",
-        "n_samples_reference",
-        "n_samples_treated",
-        "screen_id",
-        "solvent_percent",
-        "table_s5_affected_strains",
-        "table_s5_mutations",
-        "temperature_c",
-    ]
+    assert list(payload) == sorted(m.SOURCED_VALUES)
+    assert "hip_duration_generations" not in payload
     assert payload["temperature_c"] == {
         "value": 30.0,
         "provenance": {
@@ -727,12 +853,12 @@ def test_sourced_values_file_and_gene_set(
     assert manifest["dataset_name"] == "env_chemgen_hoepfner2014"
     assert manifest["loader_class"] == _DATASET
     assert {
-        "EnvironmentResponseExperiment",
-        "EngineeredCopyNumberPerturbation",
-        "KanMxDeletionPerturbation",
+        "StrainEnvironmentResponseExperiment",
+        "HeterozygousDeletionPerturbation",
+        "BarcodedKanMxDeletionPerturbation",
     } <= set(manifest["closure"])
-    assert dataset.experiment_class is EnvironmentResponseExperiment
-    assert dataset.reference_class is EnvironmentResponseExperimentReference
+    assert dataset.experiment_class is StrainEnvironmentResponseExperiment
+    assert dataset.reference_class is StrainEnvironmentResponseExperimentReference
     assert dataset.raw_file_names == [
         "HIP_scores.txt",
         "HOP_scores.txt",
@@ -793,7 +919,7 @@ def test_download_links_the_mirror_only_when_its_bytes_match_the_pinned_sha256(
     is not the pinned Dryad digest raises ``RawSha256MismatchError`` with both digests
     and links nothing; with the pins repointed at the fixture's digests each absent raw
     file is symlinked, a raw file already present (``Table_S1.xls``, a plain copy) is
-    left as it is, and the build runs to its thirteen records under the real build-time
+    left as it is, and the build runs to its fifteen records under the real build-time
     check.
     """
     monkeypatch.setattr(m, "verify_raw_files", verify_raw_files)
@@ -822,7 +948,7 @@ def test_download_links_the_mirror_only_when_its_bytes_match_the_pinned_sha256(
             mirror / name
         )
     assert not (raw / "Table_S1.xls").is_symlink()
-    assert len(dataset) == 13
+    assert len(dataset) == 15
 
 
 class _FakeResponse:
@@ -887,7 +1013,7 @@ def test_download_fetches_a_file_the_mirror_lacks_and_verifies_the_pin(
     hop = tmp_path / "b" / "raw" / "HOP_scores.txt"
     assert not hop.is_symlink() and hop.read_bytes() == hop_bytes
     assert (tmp_path / "b" / "raw" / "HIP_scores.txt").is_symlink()
-    assert len(dataset) == 13
+    assert len(dataset) == 15
 
 
 def test_deposit_raw_mirror_records_the_dryad_retrieval_per_file(
@@ -940,18 +1066,13 @@ def test_deposit_raw_mirror_records_the_dryad_retrieval_per_file(
 def test_a_short_matrix_line_stops_at_its_last_cell(
     dataset: m.EnvChemgenHoepfner2014Dataset,
 ) -> None:
-    """Record 11 is the HOP row ``YAL034C-B`` whose line carries only the first kept
+    """Record 13 is the HOP row ``YAL034C-B`` whose line carries only the first kept
     cell (0.33); the dropped-compound column lies beyond the line's end and adds nothing
     to the HOP drop count (1, from YAL001C's 0.7 alone).
     """
-    (perturbation,) = dataset[11]["experiment"]["genotype"]["perturbations"]
-    assert (
-        perturbation
-        == KanMxDeletionPerturbation(
-            systematic_gene_name="YAL034C-B", perturbed_gene_name="YAL034C-B"
-        ).model_dump()
-    )
-    assert dataset[11]["experiment"]["phenotype"]["environment_response"] == 0.33
+    (perturbation,) = dataset[13]["experiment"]["genotype"]["perturbations"]
+    assert perturbation == _hop_genotype("YAL034C-B").perturbations[0].model_dump()
+    assert dataset[13]["experiment"]["phenotype"]["environment_response"] == 0.33
     report = json.loads((Path(dataset.root) / "dropped_records.json").read_text())
     assert report["dropped_by_assay"]["HOP"] == 1
 
@@ -979,18 +1100,20 @@ def test_a_repeated_orf_row_is_stored_twice_under_one_genotype(
 ) -> None:
     """Finding: ``_iter_records`` (hoepfner2014.py lines 1266-1269) caches the genotype
     per source ORF and never checks that an ORF row is unique, so the second HOP
-    ``YAL001C`` line becomes record 12 with the same genotype and reference as record 9
+    ``YAL001C`` line becomes record 14 with the same genotype and reference as record 11
     and a second (strain, condition) measurement of 0.99; nothing in the ledger reports
     the repeat.
     """
-    assert dataset[12]["experiment"]["genotype"] == dataset[9]["experiment"]["genotype"]
-    assert dataset[12]["reference"] == dataset[9]["reference"]
     assert (
-        dataset[12]["experiment"]["environment"]
-        == dataset[9]["experiment"]["environment"]
+        dataset[14]["experiment"]["genotype"] == dataset[11]["experiment"]["genotype"]
     )
-    assert dataset[12]["experiment"]["phenotype"]["environment_response"] == 0.99
-    assert dataset[9]["experiment"]["phenotype"]["environment_response"] == 1.0
+    assert dataset[14]["reference"] == dataset[11]["reference"]
+    assert (
+        dataset[14]["experiment"]["environment"]
+        == dataset[11]["experiment"]["environment"]
+    )
+    assert dataset[14]["experiment"]["phenotype"]["environment_response"] == 0.99
+    assert dataset[11]["experiment"]["phenotype"]["environment_response"] == 1.0
 
 
 def test_a_raw_file_off_the_pin_is_refused_at_build_time(

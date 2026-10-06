@@ -1,0 +1,361 @@
+{
+  "examples": {
+    "lys2_hip": {
+      "barcode": null,
+      "cassette": "kanMX4",
+      "collection": "YSC1055",
+      "constructed_orf": null,
+      "construction": {
+        "batch": "chr2_3",
+        "lab": "Lab 9",
+        "plate": "270",
+        "strain_accession": null,
+        "well": "A10"
+      },
+      "description": "Heterozygous deletion: one allele of a diploid replaced by a cassette",
+      "downtag_barcode": null,
+      "mechanism_so_id": "SO:0000159",
+      "mechanism_so_name": "deletion",
+      "perturbation_type": "heterozygous_deletion",
+      "perturbed_gene_name": "YBR115C",
+      "provenance": "engineered",
+      "provenance_gaps": [
+        {
+          "field": "barcode",
+          "looked_in": null,
+          "note": "the UPTAG / DNTAG 20-mers are not released by Hoepfner 2014 and no YKO tag table is mirrored",
+          "reason": "deferred_pending_source_review",
+          "resolve_with": {
+            "citation_key": null,
+            "method": "not mirrored; YKO collection construction, incl. homozygous diploids by mating MATa x MATalpha deletants (Giaever et al. 2002, Nature 418:387)",
+            "page": null,
+            "retrieved": null,
+            "sha256": null,
+            "source_uri": "https://doi.org/10.1038/nature00935"
+          }
+        },
+        {
+          "field": "replaced_allele",
+          "looked_in": null,
+          "note": "the background carries an allele at this locus; which allele the kanMX4 cassette replaced in this heterozygote is in no mirrored source, so the functional dose (heterozygous_deletion_functional_copies) is undetermined unless the background is null on both copies",
+          "reason": "deferred_pending_source_review",
+          "resolve_with": {
+            "citation_key": null,
+            "method": "not mirrored; YKO collection construction, incl. homozygous diploids by mating MATa x MATalpha deletants (Giaever et al. 2002, Nature 418:387)",
+            "page": null,
+            "retrieved": null,
+            "sha256": null,
+            "source_uri": "https://doi.org/10.1038/nature00935"
+          }
+        }
+      ],
+      "replaced_allele": null,
+      "state": "present",
+      "systematic_gene_name": "YBR115C"
+    },
+    "renamed": {
+      "barcode": null,
+      "cassette": "kanMX4",
+      "collection": "YSC1055",
+      "constructed_orf": {
+        "deleted_span": null,
+        "provenance_gaps": [
+          {
+            "field": "relation",
+            "looked_in": null,
+            "note": "R64-4-1 lists YBR075W as an alias of YBR074W; whether it was merged, reannotated or renamed, and its deleted interval, need the SGD locus history",
+            "reason": "deferred_pending_source_review",
+            "resolve_with": {
+              "citation_key": null,
+              "method": "not mirrored; SGD ORF merge / reannotation history, which states how a deletion-collection ORF relates to the current gene and its R64 coordinates",
+              "page": null,
+              "retrieved": null,
+              "sha256": null,
+              "source_uri": "https://www.yeastgenome.org (locus history of the source ORF)"
+            }
+          },
+          {
+            "field": "deleted_span",
+            "looked_in": null,
+            "note": "R64-4-1 lists YBR075W as an alias of YBR074W; whether it was merged, reannotated or renamed, and its deleted interval, need the SGD locus history",
+            "reason": "deferred_pending_source_review",
+            "resolve_with": {
+              "citation_key": null,
+              "method": "not mirrored; SGD ORF merge / reannotation history, which states how a deletion-collection ORF relates to the current gene and its R64 coordinates",
+              "page": null,
+              "retrieved": null,
+              "sha256": null,
+              "source_uri": "https://www.yeastgenome.org (locus history of the source ORF)"
+            }
+          }
+        ],
+        "relation": null,
+        "source_systematic_name": "YBR075W"
+      },
+      "construction": {
+        "batch": "chr00_18",
+        "lab": "Lab 13",
+        "plate": null,
+        "strain_accession": null,
+        "well": null
+      },
+      "description": "Heterozygous deletion: one allele of a diploid replaced by a cassette",
+      "downtag_barcode": null,
+      "mechanism_so_id": "SO:0000159",
+      "mechanism_so_name": "deletion",
+      "perturbation_type": "heterozygous_deletion",
+      "perturbed_gene_name": "YBR075W",
+      "provenance": "engineered",
+      "provenance_gaps": [
+        {
+          "field": "barcode",
+          "looked_in": null,
+          "note": "the UPTAG / DNTAG 20-mers are not released by Hoepfner 2014 and no YKO tag table is mirrored",
+          "reason": "deferred_pending_source_review",
+          "resolve_with": {
+            "citation_key": null,
+            "method": "not mirrored; YKO collection construction, incl. homozygous diploids by mating MATa x MATalpha deletants (Giaever et al. 2002, Nature 418:387)",
+            "page": null,
+            "retrieved": null,
+            "sha256": null,
+            "source_uri": "https://doi.org/10.1038/nature00935"
+          }
+        }
+      ],
+      "replaced_allele": null,
+      "state": "present",
+      "systematic_gene_name": "YBR074W"
+    }
+  },
+  "experiment_types": {
+    "strain_environment_response": 102544
+  },
+  "ledger_detection_dropped": {
+    "HIP": 72,
+    "HOP": 452
+  },
+  "ledger_excluded_conditions": [
+    {
+      "cmb_id": "4019",
+      "n_columns_by_assay": {
+        "HIP": 3,
+        "HOP": 3
+      },
+      "n_records_by_assay": {
+        "HIP": 17289,
+        "HOP": 13479
+      },
+      "table_s1_name": "D-Glucose (starvation)"
+    }
+  ],
+  "ledger_kept_by_assay": {
+    "HIP": 57631,
+    "HOP": 44913
+  },
+  "n_records": 102544,
+  "perturbation_types": {
+    "barcoded_kanmx_deletion": 44913,
+    "heterozygous_deletion": 57631
+  },
+  "records_with_ph_factor": 61536,
+  "records_with_solvent_gap": 82048,
+  "reference_genome": {
+    "background": {
+      "alleles": [
+        {
+          "allele_name": "his3\u03941",
+          "cassette": null,
+          "deleted_span": null,
+          "edit": "partial_deletion",
+          "functional": false,
+          "gene_name": "HIS3",
+          "provenance": null,
+          "provenance_gaps": [
+            {
+              "field": "provenance",
+              "looked_in": null,
+              "note": "the BY4743 genotype (BY4741 x BY4742) is in no mirrored source; asserted pending Brachmann 1998",
+              "reason": "deferred_pending_source_review",
+              "resolve_with": {
+                "citation_key": null,
+                "method": "not mirrored; BY4741/BY4742/BY4743 genotypes and the delta0 designer deletions (Brachmann et al. 1998, Yeast 14:115-132)",
+                "page": null,
+                "retrieved": null,
+                "sha256": null,
+                "source_uri": "https://doi.org/10.1002/(SICI)1097-0061(19980130)14:2<115::AID-YEA204>3.0.CO;2-2"
+              }
+            }
+          ],
+          "systematic_gene_name": "YOR202W",
+          "zygosity": "homozygous"
+        },
+        {
+          "allele_name": "leu2\u03940",
+          "cassette": null,
+          "deleted_span": null,
+          "edit": "full_deletion",
+          "functional": false,
+          "gene_name": "LEU2",
+          "provenance": null,
+          "provenance_gaps": [
+            {
+              "field": "provenance",
+              "looked_in": null,
+              "note": "the BY4743 genotype (BY4741 x BY4742) is in no mirrored source; asserted pending Brachmann 1998",
+              "reason": "deferred_pending_source_review",
+              "resolve_with": {
+                "citation_key": null,
+                "method": "not mirrored; BY4741/BY4742/BY4743 genotypes and the delta0 designer deletions (Brachmann et al. 1998, Yeast 14:115-132)",
+                "page": null,
+                "retrieved": null,
+                "sha256": null,
+                "source_uri": "https://doi.org/10.1002/(SICI)1097-0061(19980130)14:2<115::AID-YEA204>3.0.CO;2-2"
+              }
+            }
+          ],
+          "systematic_gene_name": "YCL018W",
+          "zygosity": "homozygous"
+        },
+        {
+          "allele_name": "lys2\u03940",
+          "cassette": null,
+          "deleted_span": null,
+          "edit": "full_deletion",
+          "functional": false,
+          "gene_name": "LYS2",
+          "provenance": null,
+          "provenance_gaps": [
+            {
+              "field": "provenance",
+              "looked_in": null,
+              "note": "the BY4743 genotype (BY4741 x BY4742) is in no mirrored source; asserted pending Brachmann 1998",
+              "reason": "deferred_pending_source_review",
+              "resolve_with": {
+                "citation_key": null,
+                "method": "not mirrored; BY4741/BY4742/BY4743 genotypes and the delta0 designer deletions (Brachmann et al. 1998, Yeast 14:115-132)",
+                "page": null,
+                "retrieved": null,
+                "sha256": null,
+                "source_uri": "https://doi.org/10.1002/(SICI)1097-0061(19980130)14:2<115::AID-YEA204>3.0.CO;2-2"
+              }
+            }
+          ],
+          "systematic_gene_name": "YBR115C",
+          "zygosity": "heterozygous"
+        },
+        {
+          "allele_name": "met15\u03940",
+          "cassette": null,
+          "deleted_span": null,
+          "edit": "full_deletion",
+          "functional": false,
+          "gene_name": "MET17",
+          "provenance": null,
+          "provenance_gaps": [
+            {
+              "field": "provenance",
+              "looked_in": null,
+              "note": "the BY4743 genotype (BY4741 x BY4742) is in no mirrored source; asserted pending Brachmann 1998",
+              "reason": "deferred_pending_source_review",
+              "resolve_with": {
+                "citation_key": null,
+                "method": "not mirrored; BY4741/BY4742/BY4743 genotypes and the delta0 designer deletions (Brachmann et al. 1998, Yeast 14:115-132)",
+                "page": null,
+                "retrieved": null,
+                "sha256": null,
+                "source_uri": "https://doi.org/10.1002/(SICI)1097-0061(19980130)14:2<115::AID-YEA204>3.0.CO;2-2"
+              }
+            }
+          ],
+          "systematic_gene_name": "YLR303W",
+          "zygosity": "heterozygous"
+        },
+        {
+          "allele_name": "ura3\u03940",
+          "cassette": null,
+          "deleted_span": null,
+          "edit": "full_deletion",
+          "functional": false,
+          "gene_name": "URA3",
+          "provenance": null,
+          "provenance_gaps": [
+            {
+              "field": "provenance",
+              "looked_in": null,
+              "note": "the BY4743 genotype (BY4741 x BY4742) is in no mirrored source; asserted pending Brachmann 1998",
+              "reason": "deferred_pending_source_review",
+              "resolve_with": {
+                "citation_key": null,
+                "method": "not mirrored; BY4741/BY4742/BY4743 genotypes and the delta0 designer deletions (Brachmann et al. 1998, Yeast 14:115-132)",
+                "page": null,
+                "retrieved": null,
+                "sha256": null,
+                "source_uri": "https://doi.org/10.1002/(SICI)1097-0061(19980130)14:2<115::AID-YEA204>3.0.CO;2-2"
+              }
+            }
+          ],
+          "systematic_gene_name": "YEL021W",
+          "zygosity": "homozygous"
+        }
+      ],
+      "construction": null,
+      "mating_type": "a/alpha",
+      "name": "BY4743",
+      "parents": [
+        "BY4741",
+        "BY4742"
+      ],
+      "ploidy": "diploid",
+      "provenance": null,
+      "provenance_gaps": [
+        {
+          "field": "provenance",
+          "looked_in": {
+            "citation_key": "hoepfnerHighresolutionChemicalDissection2014",
+            "method": null,
+            "page": "line 102: 'BY4741 or BY4743 strains deleted for 8 genes involved in drug resistance' and 'the parental strain (BY4743-delta8 or BY4741-MATa-delta8)', the only BY474x strings",
+            "retrieved": null,
+            "sha256": "a9877549eff2fe1aaf8aa403d9fea1c381284de030326f4475e869c102af0aeb",
+            "source_uri": "paper.md"
+          },
+          "note": "the paper names the pools' collections, 'YSC1055 and YSC1056, OpenBiosystems' (line 64, sourced), never their background strain; the BY4743 name, its MATa/MATalpha mating type and diploid ploidy are asserted pending Giaever 2002 or the OpenBiosystems YSC1055/YSC1056 collection records, and its alleles pending Brachmann 1998",
+          "reason": "deferred_pending_source_review",
+          "resolve_with": {
+            "citation_key": null,
+            "method": "not mirrored; YKO collection construction, incl. homozygous diploids by mating MATa x MATalpha deletants (Giaever et al. 2002, Nature 418:387)",
+            "page": null,
+            "retrieved": null,
+            "sha256": null,
+            "source_uri": "https://doi.org/10.1038/nature00935"
+          }
+        },
+        {
+          "field": "construction",
+          "looked_in": {
+            "citation_key": "hoepfnerHighresolutionChemicalDissection2014",
+            "method": "MinerU OCR of the publisher PDF (mirrored artifact)",
+            "page": null,
+            "retrieved": null,
+            "sha256": "a9877549eff2fe1aaf8aa403d9fea1c381284de030326f4475e869c102af0aeb",
+            "source_uri": "paper.md"
+          },
+          "note": "strains were built by a consortium of labs (line 174); 157 HIP strains carry documented secondary mutations not constant across the collection (Table S5: chromosome XI aneuploidy CL1/CL2, a WHI2/YOR043w premature stop truncating 60% of the ORF CL3, a 12 kbp chromosome V region at +50% coverage CL4) and 'more remain' (line 194); none is an allele of the background. The schema has no per-chromosome copy number, so the aneuploidy and the amplification cannot be recorded per strain; the WHI2 zygosity and the chromosome V coordinates are in Figs. S16, S17. HOP strains were not assessed by the paper. Per-strain status: <root>/table_s5_affected_strains.json",
+          "reason": "deferred_pending_source_review",
+          "resolve_with": {
+            "citation_key": "hoepfnerHighresolutionChemicalDissection2014",
+            "method": "not mirrored; Hoepfner 2014 Supplementary Material (Figs. S1 to S17, Tables S2 to S4 and S6)",
+            "page": null,
+            "retrieved": null,
+            "sha256": null,
+            "source_uri": "https://doi.org/10.1016/j.micres.2013.11.004 (Supplementary Material)"
+          }
+        }
+      ],
+      "reference_strain": "S288C"
+    },
+    "ploidy": "diploid",
+    "species": "Saccharomyces cerevisiae",
+    "strain": "BY4743"
+  },
+  "root": "/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/93b444d6-f496-44d4-ad33-c18ef14a65ff/scratchpad/fix-hoepfner2014-inputs/slice/env_chemgen_hoepfner2014_slice"
+}

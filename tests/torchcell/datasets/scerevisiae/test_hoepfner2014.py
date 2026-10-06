@@ -33,10 +33,14 @@ this file adds the pieces that build does not reach, on the same synthetic heade
   resistant" (negative-is-sick, the opposite of Hillenmeyer's positive-is-sick; memory
   ``chemogenomic-response-polarity-splits``), so the loader does not orient.
 - the dosage-duration confound (memory ``033-env-chemgen-pooled-build``): for one
-  compound, dose and study, the HIP and HOP environments differ in exactly
-  ``duration_hours`` (None vs 16.0), ``duration_generations`` (20.0 vs 5.0) and
-  ``provenance_gaps`` (the HIP hours gap), while both references sit on the same
-  ``BY4743`` diploid genome, so no cell is paired across the two arms in one environment.
+  compound, dose and study, the HIP and HOP environments differ in exactly their
+  durations (HIP gapped, HOP 16 h / 5 generations), their duration gaps, their culture
+  format and their pre-culture, while both references sit on the same ``BY4743``
+  ``StrainReferenceGenome``, so no cell is paired across the two arms in one environment.
+- #506: the BY4743 background as typed gaps, the heterozygous / barcoded kanMX4 leaves
+  with Table S5 construction and ``constructed_orf``, the detection rule, the
+  glucose-starvation exclusion, the solvent and pH gaps, and (when ``DATA_ROOT`` and the
+  raw mirror are present) the deposited-header and HOP detection counts.
 - ``transform_item`` on a spliced record, the inert hooks, the default-genome resolver
   (``load_dotenv`` stubbed, ``SCerevisiaeGenome`` a recorder built once with
   ``overwrite=False``) and ``main`` with the dataset class as a recorder.
@@ -58,15 +62,24 @@ import pytest
 import requests
 
 from torchcell.data import RawSha256MismatchError
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import YPD_LIQUID
 from torchcell.datamodels.schema import (
     AssayType,
+    BarcodedKanMxDeletionPerturbation,
     ConcentrationUnit,
     DoseBasis,
+    EndpointRule,
+    EnvironmentPhysicalPerturbation,
+    HeterozygousDeletionPerturbation,
     MeasurementType,
+    PhysicalFactor,
+    PreCultureSource,
     SampleUnit,
     SmallMoleculePerturbation,
+    heterozygous_deletion_functional_copies,
 )
+from torchcell.datamodels.strain_background import BRACHMANN_1998, GIAEVER_2002
 from torchcell.datasets.scerevisiae import hoepfner2014 as module
 from torchcell.datasets.scerevisiae.hoepfner2014 import (
     DROP_RULE,
@@ -247,16 +260,62 @@ def test_dose_is_typed_and_the_vehicle_carries_its_own_identity() -> None:
     assert solvent["compound"]["pubchem_cid"] == 679
 
 
-def test_hip_duration_is_a_typed_gap_and_hop_states_both_durations() -> None:
+def test_hip_duration_fields_are_both_gapped_and_hop_states_both_durations() -> None:
+    """#506 item 5: HIP hours, generations and endpoint are all gaps (Fig. S2)."""
     dataset = _dataset()
     hip = dataset._environment("HIP", [])
-    assert hip.duration_hours is None
-    assert hip.duration_generations == 20.0
-    assert [gap.field for gap in hip.provenance_gaps] == ["duration_hours"]
+    assert (hip.duration_hours, hip.duration_generations) == (None, None)
+    assert [gap.field for gap in hip.provenance_gaps] == [
+        "duration_hours",
+        "duration_generations",
+        "auxotroph_supplements",
+    ]
+    assert [gap.resolve_with for gap in hip.provenance_gaps[:2]] == [
+        module.HOEPFNER_SUPPLEMENT
+    ] * 2
+    assert hip.culture_format is not None and hip.culture_format.endpoint is None
+    assert [g.field for g in hip.culture_format.provenance_gaps] == ["endpoint"]
     hop = dataset._environment("HOP", [])
     assert (hop.duration_hours, hop.duration_generations) == (16.0, 5.0)
-    assert hop.provenance_gaps == []
+    assert [gap.field for gap in hop.provenance_gaps] == ["auxotroph_supplements"]
     assert hip.temperature is not None and hip.temperature.value == 30.0
+
+
+def test_culture_protocol_is_the_24_well_format_and_its_pre_culture() -> None:
+    dataset = _dataset()
+    hip, hop = dataset._environment("HIP", []), dataset._environment("HOP", [])
+    assert hip.culture_format is not None and hop.culture_format is not None
+    for env in (hip, hop):
+        assert env.culture_format is not None
+        assert env.culture_format.vessel == "24-well plate (Greiner 662102)"
+        assert env.culture_format.working_volume_ul == 1600.0
+        assert env.culture_format.shaking_rpm == 550.0
+    assert hip.culture_format.inoculum_cells_per_strain == 250.0
+    assert hop.culture_format.inoculum_cells_per_strain == 320.0
+    assert hop.culture_format.endpoint is EndpointRule.fixed_duration
+    assert hip.pre_culture is not None and hop.pre_culture is not None
+    assert hip.pre_culture.source is PreCultureSource.log_phase_culture
+    assert hop.pre_culture.source is PreCultureSource.thaw_recovery
+    assert hop.pre_culture.duration_hours == 3.0
+
+
+def test_dose_above_200_um_has_a_solvent_gap_and_an_acid_a_ph_gap() -> None:
+    """#506 item 4: the 2% DMSO vehicle covers doses up to 200 uM only."""
+    dataset = _dataset()
+    hcl = resolved_compound("Hydrochloric Acid", smiles="Cl", derive_from_smiles=True)
+    at_ceiling = dataset._treatment("3", hcl, 200.0)
+    assert len(at_ceiling) == 1
+    assert isinstance(at_ceiling[0], SmallMoleculePerturbation)
+    assert at_ceiling[0].solvent is not None and at_ceiling[0].solvent.percent == 2.0
+    above = dataset._treatment("4016", hcl, 60000.0)
+    small, ph = above
+    assert isinstance(small, SmallMoleculePerturbation)
+    assert small.solvent is None
+    assert [gap.field for gap in small.provenance_gaps] == ["solvent"]
+    assert isinstance(ph, EnvironmentPhysicalPerturbation)
+    assert ph.factor is PhysicalFactor.ph and ph.magnitude is None
+    assert [gap.field for gap in ph.provenance_gaps] == ["magnitude"]
+    assert set(module.PH_AGENT_CONDITIONS) == {"4013", "4016", "4017"}
 
 
 # ---- reference ------------------------------------------------------------------ #
@@ -264,6 +323,26 @@ def test_reference_is_a_vehicle_control_on_the_joinable_strain_token() -> None:
     reference = _dataset()._reference("HOP", "0077")
     genome = reference.genome_reference
     assert genome.strain == "BY4743" and genome.ploidy == "diploid"
+    background = genome.background
+    assert background.name == "BY4743" and background.provenance is None
+    name_gap, construction_gap = background.provenance_gaps
+    assert name_gap.field == "provenance"
+    assert name_gap.resolve_with == GIAEVER_2002
+    assert name_gap.looked_in is not None
+    assert name_gap.looked_in.sha256 == module.PAPER_MD_SHA256
+    assert "line 102" in str(name_gap.looked_in.page)
+    assert construction_gap.field == "construction"
+    assert construction_gap.resolve_with == module.HOEPFNER_SUPPLEMENT
+    assert {a.allele_name for a in background.alleles} == {
+        "his3Δ1",
+        "leu2Δ0",
+        "lys2Δ0",
+        "met15Δ0",
+        "ura3Δ0",
+    }
+    assert all(
+        a.provenance_gaps[0].resolve_with == BRACHMANN_1998 for a in background.alleles
+    )
     vehicles = [
         p
         for p in reference.environment_reference.perturbations
@@ -296,22 +375,90 @@ def test_every_phenotype_declares_its_uncertainty_absences() -> None:
 
 
 # ---- genotype ------------------------------------------------------------------- #
-def test_hip_is_a_heterozygous_cnv_and_hop_a_kanmx_deletion() -> None:
+def test_hip_is_a_heterozygous_kanmx4_deletion_and_hop_a_barcoded_deletion() -> None:
     dataset = _dataset()
     hip = dataset._genotype("HIP", "YAL001C").perturbations[0]
-    assert hip.perturbation_type == "engineered_copy_number"
-    assert (hip.copy_number, hip.reference_copy_number) == (1.0, 2.0)
-    assert hip.marker == "KanMX"
+    assert isinstance(hip, HeterozygousDeletionPerturbation)
+    assert (hip.cassette, hip.collection) == ("kanMX4", "YSC1055")
+    assert hip.state == "present" and hip.constructed_orf is None
+    assert [g.field for g in hip.provenance_gaps] == ["barcode", "construction"]
     hop = dataset._genotype("HOP", "YAL001C").perturbations[0]
-    assert hop.perturbation_type == "kanmx_deletion"
+    assert isinstance(hop, BarcodedKanMxDeletionPerturbation)
+    assert (hop.cassette, hop.collection) == ("kanMX4", "YSC1056")
+    assert [g.field for g in hop.provenance_gaps] == ["barcode"]
+
+
+def test_marker_locus_dose_is_derived_against_the_background() -> None:
+    """#506 item 1: HIS3 is 0 copies before and after; LYS2 / MET17 are undetermined."""
+    dataset = _dataset()
+    background = module.hoepfner_background()
+    doses = {}
+    for orf in ("YOR202W", "YBR115C", "YLR303W", "YAL001C"):
+        leaf = dataset._genotype("HIP", orf).perturbations[0]
+        assert isinstance(leaf, HeterozygousDeletionPerturbation)
+        doses[orf] = heterozygous_deletion_functional_copies(background, leaf)
+        gapped = [g.field for g in leaf.provenance_gaps]
+        assert ("replaced_allele" in gapped) is (orf != "YAL001C")
+    assert doses == {"YOR202W": 0, "YBR115C": None, "YLR303W": None, "YAL001C": 1}
+
+
+def test_table_s5_construction_is_carried_per_hip_strain() -> None:
+    """Lab / Batch / Plate / Well verbatim; a duplicated ORF keeps lab and batch only."""
+    strains = load_table_s5_strains(REPO_ROOT)
+    dataset = _dataset()
+    single = dataset._genotype("HIP", "YBR271W", "YBR271W", strains["YBR271W"])
+    leaf = single.perturbations[0]
+    assert isinstance(leaf, HeterozygousDeletionPerturbation)
+    assert leaf.construction is not None
+    assert (leaf.construction.lab, leaf.construction.batch) == ("Lab 14", "chr00_1")
+    assert leaf.construction.plate is not None and leaf.construction.well is not None
+    assert [g.field for g in leaf.provenance_gaps] == ["barcode"]
+    assert len(strains["YCL023C"]) == 2
+    duplicate = dataset._genotype("HIP", "YCL023C", "YCL023C", strains["YCL023C"])
+    dup = duplicate.perturbations[0]
+    assert isinstance(dup, HeterozygousDeletionPerturbation)
+    assert dup.construction is not None
+    assert (dup.construction.lab, dup.construction.batch) == ("Lab 5", "chr3_1")
+    assert (dup.construction.plate, dup.construction.well) == (None, None)
+
+
+def test_renamed_orf_records_what_was_built_not_the_whole_current_gene() -> None:
+    """#506 item 8: a RENAMED source ORF carries a ConstructedOrf with gapped history."""
+    dataset = _dataset()
+    for assay in ("HIP", "HOP"):
+        leaf = dataset._genotype(assay, "YJL019W", "YJL018W").perturbations[0]
+        assert isinstance(
+            leaf, (HeterozygousDeletionPerturbation, BarcodedKanMxDeletionPerturbation)
+        )
+        assert leaf.perturbed_gene_name == "YJL018W"
+        constructed = leaf.constructed_orf
+        assert constructed is not None
+        assert constructed.source_systematic_name == "YJL018W"
+        assert (constructed.relation, constructed.deleted_span) == (None, None)
+        assert [g.field for g in constructed.provenance_gaps] == [
+            "relation",
+            "deleted_span",
+        ]
+        assert constructed.provenance_gaps[0].resolve_with == module.SGD_LOCUS_HISTORY
 
 
 # ---- provenance ----------------------------------------------------------------- #
 def test_table_s5_strain_list_is_sha256_pinned() -> None:
+    """#506 item 5: the regenerated list carries every HIP entry and the four strains
+    the 017 CSV missed (YCR061W CL2, YJL017W CL4, YIL015C-A CL4, YCR035C MUT).
+    """
     strains = load_table_s5_strains(REPO_ROOT)
-    assert len(strains) == 185
-    assert sum(row["is_positional"] == "True" for row in strains.values()) == 157
-    assert strains["YBR271W"]["mutation"] == "Chromosome XI aneuploidy"
+    assert sum(len(entries) for entries in strains.values()) == 5996
+    flagged = {
+        orf for orf, entries in strains.items() if any(e.flagged for e in entries)
+    }
+    assert len(flagged) == 189
+    assert {"YCR061W", "YJL017W", "YIL015C-A", "YCR035C"} <= flagged
+    assert strains["YCR035C"][0].cluster == ""
+    assert strains["YCR035C"][0].validation_result == "MUT"
+    assert strains["YBR271W"][0].mutation == "Chromosome XI Aneuploidy"
+    # case-insensitive key: Table S5 writes 'YAL035C-a'
+    assert strains["YAL035C-A"][0].orf == "YAL035C-a"
 
 
 def test_table_s5_csv_hash_mismatch_raises(tmp_path: Path, monkeypatch: Any) -> None:
@@ -340,10 +487,21 @@ def test_every_sourced_value_quote_is_verbatim_in_the_mirrored_paper() -> None:
     )
     if not osp.exists(paper):
         pytest.skip("the literature mirror is not mounted on this machine")
-    text = Path(paper).read_text()
+    texts: dict[str, str] = {}
     for key, sourced in SOURCED_VALUES.items():
-        assert sourced.quote in text, key
-        assert sourced.provenance.sha256 == module.PAPER_MD_SHA256
+        citation_key = sourced.provenance.citation_key
+        assert citation_key is not None, key
+        if citation_key not in texts:
+            path = osp.join(data_root, "torchcell-library", citation_key, "paper.md")
+            texts[citation_key] = Path(path).read_text()
+            assert hashlib.sha256(texts[citation_key].encode()).hexdigest() == (
+                sourced.provenance.sha256
+            ), key
+        assert sourced.quote in texts[citation_key], key
+    assert {sv.provenance.citation_key for sv in SOURCED_VALUES.values()} == {
+        module.CITATION_KEY,
+        module.GIAEVER_2014_KEY,
+    }
 
 
 def test_identifier_rule_reads_every_identity_field() -> None:
@@ -390,6 +548,24 @@ def _matrix(tmp_path: Path) -> str:
     return str(path)
 
 
+def _flagged_entry(orf: str) -> module.TableS5Entry:
+    return module.TableS5Entry(
+        orf=orf,
+        table_s5_id="1",
+        plate="201",
+        row_column="A2",
+        cluster="CL1",
+        base_cluster="CL1",
+        is_positional=True,
+        mutation="Chromosome XI Aneuploidy",
+        validation_result="",
+        lab="Lab 14",
+        batch="chr00_1",
+        chromosome_arm="AL",
+        flagged=True,
+    )
+
+
 def _records(tmp_path: Path) -> tuple[list[dict[str, Any]], Any]:
     import pickle
 
@@ -411,9 +587,10 @@ def _records(tmp_path: Path) -> tuple[list[dict[str, Any]], Any]:
             refs,
             {"$ref": "pub"},
             counts,
-            frozenset({"YAL034C-B"}),
+            {"YAL034C-B": [_flagged_entry("YAL034C-B")]},
             TypeAdapter(ExperimentType).validate_python,
             lambda name: _RESOLVER[name],
+            _dataset()._column_census(HEADER, "HIP", META),
         )
     ]
     return records, counts
@@ -455,6 +632,196 @@ def test_renamed_row_is_a_distinct_strain_of_the_current_gene(tmp_path: Path) ->
     # Table S5 names physical strains: the listed gene's own row is flagged, the
     # renamed merged-ORF strain that now maps to that gene is not
     assert counts.flagged == {"YAL034C-B": len(_columns("HIP")[0])}
+
+
+def test_detection_rule_drops_a_row_scored_in_under_half_its_columns(
+    tmp_path: Path,
+) -> None:
+    """#506 item 2: the HIP arm of HEADER has five sensitivity columns (1, 3, 4, 5, 6);
+    a row scored in 2 of them is dropped with its kept-column cells counted, a row
+    scored in 3 is kept, and a row scored nowhere is counted as empty, not as a drop.
+    """
+    rows = [
+        "\t".join(HEADER),
+        "\t".join(['"YAL001C"', '"0.1"', '""', '"0.1"', '""', '""', '""', '"9"']),
+        "\t".join(['"YAL034C-B"', '"0.2"', '""', '"0.2"', '""', '"0.2"', '""', '""']),
+        "\t".join(['"R0010W"'] + ['""'] * 7),
+    ]
+    path = tmp_path / "HIP_scores.txt"
+    path.write_text("\n".join(rows) + "\n")
+    import pickle
+
+    from pydantic import TypeAdapter
+
+    from torchcell.datamodels.schema import ExperimentType
+
+    columns, dropped = _columns("HIP")
+    census = _dataset()._column_census(HEADER, "HIP", META)
+    assert census.detection == [1, 3, 4, 5, 6]
+    counts = module._BuildCounts()
+    resolver = {
+        **_RESOLVER,
+        "R0010W": _Resolution(GeneNameStatus.CURRENT, "R0010W", None),
+    }
+    records = [
+        pickle.loads(value)
+        for value in _dataset()._iter_records(
+            str(path),
+            "HIP",
+            {"YAL001C", "YAL034C-B", "R0010W"},
+            columns,
+            dropped,
+            {("HIP", s): {"$ref": s} for s in {c.study for c in columns}},
+            {"$ref": "pub"},
+            counts,
+            {},
+            TypeAdapter(ExperimentType).validate_python,
+            lambda name: resolver[name],
+            census,
+        )
+    ]
+    kept = {
+        r["experiment"]["genotype"]["perturbations"][0]["perturbed_gene_name"]
+        for r in records
+    }
+    assert kept == {"YAL034C-B"}
+    (undetected,) = counts.undetected["HIP"]
+    assert (undetected.source_name, undetected.n_scored_columns) == ("YAL001C", 2)
+    assert (undetected.n_columns, undetected.n_records) == (5, 2)
+    assert counts.empty_rows["HIP"] == 1
+    assert counts.detected_rows["HIP"] == 1
+    # a HIP row absent from Table S5 carries a construction gap
+    pert = records[0]["experiment"]["genotype"]["perturbations"][0]
+    assert pert["construction"] is None
+    assert "construction" in {g["field"] for g in pert["provenance_gaps"]}
+    assert counts.construction == {"not_listed": 1}
+
+
+def test_glucose_starvation_is_excluded_and_counted_never_built() -> None:
+    """#506 item 3: CMB4019 is neither kept nor a compound drop; its columns are
+    EXCLUDED under the named rule, and a Table S1 name other than the pinned one
+    fails the build instead of excluding a renamed compound blind.
+    """
+    header = [*HEADER, '"Ad. scores for Exp. 4019_0.5_HIP_0125"']
+    meta: dict[str, dict[str, str | None]] = {
+        **META,
+        "4019": {
+            "common_name": "D-Glucose (starvation)",
+            "smiles": "OCC1OC(O)C(O)C(O)C1O",
+        },
+    }
+    kept, dropped = _dataset()._column_meta(header, "HIP", meta, _FakeTxn())
+    assert "4019" not in {c.cmb for c in kept} | {c for _, c in dropped}
+    census = _dataset()._column_census(header, "HIP", meta)
+    assert census.excluded == [(8, "4019")]
+    assert 8 in census.detection
+    renamed: dict[str, dict[str, str | None]] = {
+        **meta,
+        "4019": {"common_name": "D-Glucose", "smiles": "C"},
+    }
+    with pytest.raises(ValueError, match="CMB4019 is excluded as"):
+        _dataset()._column_census(header, "HIP", renamed)
+    assert "never describes" in module.EXCLUSION_RULE
+
+
+def _real_raw() -> Path:
+    import os
+
+    data_root = os.environ.get("DATA_ROOT")
+    if data_root is None:
+        pytest.skip("DATA_ROOT is not set")
+    raw = Path(data_root) / "torchcell-raw" / module.CITATION_KEY
+    if not (raw / "HOP_scores.txt").exists():
+        pytest.skip("the Hoepfner raw mirror is not mounted on this machine")
+    return raw
+
+
+def test_real_header_solvent_ph_and_ic30_columns() -> None:
+    """#506 items 4 and 7 on the deposited headers: 33 kept columns per arm above
+    200 uM (17 CMB ids, 66 columns), 6 pH-agent columns per arm, and 64 HIP / 60 HOP of
+    the kept columns with a Table S1 IC30 (293 / 291) outside 0.5x to 2x it.
+    """
+    raw = _real_raw()
+    meta = module._load_compound_meta(str(raw / "Table_S1.xls"))
+    ic30 = module._load_ic30(str(raw / "Table_S1.xls"))
+    over: set[str] = set()
+    for filename, assay, n_over, n_ic30, n_out in (
+        ("HIP_scores.txt", "HIP", 33, 293, 64),
+        ("HOP_scores.txt", "HOP", 33, 291, 60),
+    ):
+        with open(raw / filename) as handle:
+            header = handle.readline().rstrip("\n").split("\t")
+        kept, _ = _dataset()._column_meta(header, assay, meta, _FakeTxn())
+        above = [c for c in kept if c.conc > module.DMSO_CEILING_UM]
+        over |= {c.cmb for c in above}
+        assert len(above) == n_over
+        for col in above:
+            assert col.env_dump["perturbations"][0]["solvent"] is None
+        assert sum(1 for c in kept if c.cmb in module.PH_AGENT_CONDITIONS) == 6
+        with_ic30 = [c for c in kept if c.cmb in ic30]
+        assert len(with_ic30) == n_ic30
+        assert (
+            sum(1 for c in with_ic30 if not 0.5 <= c.conc / ic30[c.cmb] <= 2.0) == n_out
+        )
+        census = _dataset()._column_census(header, assay, meta)
+        assert len(census.excluded) == 3  # CMB4019 at 0.25, 0.5, 0.75
+        assert census.positive_control == []  # Benomyl is in the separate files
+    assert len(over) == 17
+
+
+def test_real_hop_detection_rule_drops_328_sgd_essential_rows() -> None:
+    """#506 item 2 pinned on the deposited HOP matrix with the real S288C resolver:
+    452 scored rows fall under half of the 2,923 HOP sensitivity columns, 328 of them
+    SGD-essential genes (``gene_essentiality_sgd`` gene set), and 4,495 rows pass.
+    The audit's 321 essential / 444 genes counted the 2026-09 cell table over the 280
+    kept environments; the rule here uses every deposited column of the arm.
+    """
+    import json
+    import os
+
+    raw = _real_raw()
+    data_root = os.environ["DATA_ROOT"]
+    essential_path = (
+        Path(data_root)
+        / "data/torchcell/gene_essentiality_sgd/preprocess/gene_set.json"
+    )
+    if not essential_path.exists():
+        pytest.skip("the SGD essentiality build is not on this machine")
+    essential = set(json.loads(essential_path.read_text()))
+    from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
+
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(data_root, "data/sgd/genome"),
+        go_root=osp.join(data_root, "data/go"),
+        overwrite=False,
+    )
+    meta = module._load_compound_meta(str(raw / "Table_S1.xls"))
+    with open(raw / "HOP_scores.txt") as handle:
+        header = handle.readline().rstrip("\n").split("\t")
+    census = _dataset()._column_census(header, "HOP", meta)
+    counts = module._BuildCounts()
+    out = list(
+        _dataset()._iter_records(
+            str(raw / "HOP_scores.txt"),
+            "HOP",
+            module._load_sgd_genes(data_root),
+            [],
+            [],
+            {},
+            {"$ref": "pub"},
+            counts,
+            {},
+            lambda _: None,
+            genome.resolve_gene_name,
+            census,
+        )
+    )
+    assert out == []
+    undetected = counts.undetected["HOP"]
+    assert len(census.detection) == 2923
+    assert len(undetected) == 452
+    assert sum(1 for row in undetected if row.systematic_name in essential) == 328
+    assert counts.detected_rows["HOP"] == 4495
 
 
 # ---- Dryad retrieval (no network) ------------------------------------------------ #
@@ -673,9 +1040,14 @@ def test_fetch_from_dryad_skips_empty_chunks_and_verifies_the_pin(
 
 # ---- sign convention and the dosage-duration confound ----------------------------- #
 def _signed_matrix(tmp_path: Path) -> str:
-    """One YAL001C row: -3.0 in the HIP column 1 and the HOP column 7, empty elsewhere."""
+    """One YAL001C row: -3.0 in the HIP column 1 and the HOP column 7; the HIP
+    columns 4 (dropped compound) and 6 (unencodable) carry 1.0 so the row is scored in 3
+    of 5 HIP columns and passes the detection rule without adding a kept-column record.
+    """
     cells = ['""'] * 7
     cells[0] = '"-3.0"'
+    cells[3] = '"1.0"'
+    cells[5] = '"1.0"'
     cells[6] = '"-3.0"'
     path = tmp_path / "signed.txt"
     path.write_text("\n".join(["\t".join(HEADER), "\t".join(['"YAL001C"', *cells])]))
@@ -699,9 +1071,10 @@ def _stream(tmp_path: Path, assay: str) -> list[dict[str, Any]]:
             {(assay, c.study): {"$ref": c.study} for c in columns},
             {"$ref": "pub"},
             module._BuildCounts(),
-            frozenset(),
+            {},
             TypeAdapter(ExperimentType).validate_python,
             lambda name: _RESOLVER[name],
+            _dataset()._column_census(HEADER, assay, META),
         )
     ]
 
@@ -731,34 +1104,35 @@ def test_both_assays_store_the_deposited_sign_negative_is_hypersensitive(
     assert [
         r["experiment"]["genotype"]["perturbations"][0]["perturbation_type"]
         for r in hip + hop
-    ] == ["engineered_copy_number", "kanmx_deletion"]
+    ] == ["heterozygous_deletion", "barcoded_kanmx_deletion"]
 
 
-def test_hip_and_hop_environments_differ_only_in_exposure_duration() -> None:
+def test_hip_and_hop_environments_differ_only_in_exposure_and_culture() -> None:
     """For CMB 3 at 50 uM in study 0077, the HIP and HOP environments differ in exactly
-    three fields: ``duration_hours`` (None vs 16.0), ``duration_generations`` (20.0 vs
-    5.0) and ``provenance_gaps`` (the HIP hours gap vs none). Both references sit on the
-    same BY4743 diploid genome, so the dosage arm (copy 1 of 2 vs 0 of 2) is confounded
-    with the exposure: no cell is paired across the arms within one environment (memory
-    ``033-env-chemgen-pooled-build``). Pinned as the loader's behavior.
+    the exposure and culture fields: ``duration_hours`` (None vs 16.0),
+    ``duration_generations`` (None vs 5.0), ``provenance_gaps`` (the HIP duration gaps),
+    ``culture_format`` (inoculum and endpoint) and ``pre_culture`` (log phase vs thaw
+    recovery). Both references sit on the same BY4743 ``StrainReferenceGenome``, so the
+    dosage arm is confounded with the exposure: no cell is paired across the arms within
+    one environment (memory ``033-env-chemgen-pooled-build``).
     """
     hip = next(col for col in _columns("HIP")[0] if col.index == 1).env_dump
     hop = next(col for col in _columns("HOP")[0] if col.index == 7).env_dump
     differing = sorted(key for key in hip if hip[key] != hop[key])
-    assert differing == ["duration_generations", "duration_hours", "provenance_gaps"]
+    assert differing == [
+        "culture_format",
+        "duration_generations",
+        "duration_hours",
+        "pre_culture",
+        "provenance_gaps",
+    ]
     assert (hip["duration_hours"], hop["duration_hours"]) == (None, 16.0)
-    assert (hip["duration_generations"], hop["duration_generations"]) == (20.0, 5.0)
-    assert hip["provenance_gaps"] == [module._HIP_DURATION_HOURS_GAP.model_dump()]
-    assert hop["provenance_gaps"] == []
+    assert (hip["duration_generations"], hop["duration_generations"]) == (None, 5.0)
     dataset = _dataset()
     assert (
         dataset._reference("HIP", "0077").genome_reference.model_dump()
         == dataset._reference("HOP", "0077").genome_reference.model_dump()
-        == {
-            "species": "Saccharomyces cerevisiae",
-            "strain": "BY4743",
-            "ploidy": "diploid",
-        }
+        == module.hoepfner_reference_genome().model_dump()
     )
 
 
@@ -768,12 +1142,12 @@ def test_a_spliced_record_retypes_through_the_environment_response_classes(
 ) -> None:
     """A streamed HIP record with its environment pointer spliced back to the column's
     inline environment, its reference and publication resolved, rebuilds through
-    ``EnvironmentResponseExperiment`` / ``...Reference`` and dumps back unchanged.
+    ``StrainEnvironmentResponseExperiment`` / ``...Reference`` and dumps back unchanged.
     """
     from torchcell.datamodels.schema import (
-        EnvironmentResponseExperiment,
-        EnvironmentResponseExperimentReference,
         Publication,
+        StrainEnvironmentResponseExperiment,
+        StrainEnvironmentResponseExperimentReference,
     )
 
     record = _stream(tmp_path, "HIP")[0]
@@ -787,8 +1161,8 @@ def test_a_spliced_record_retypes_through_the_environment_response_classes(
         ).model_dump(),
     }
     typed = dataset.transform_item(item)
-    assert type(typed["experiment"]) is EnvironmentResponseExperiment
-    assert type(typed["reference"]) is EnvironmentResponseExperimentReference
+    assert type(typed["experiment"]) is StrainEnvironmentResponseExperiment
+    assert type(typed["reference"]) is StrainEnvironmentResponseExperimentReference
     assert typed["experiment"].model_dump() == item["experiment"]
     assert typed["reference"].model_dump() == item["reference"]
     assert typed["publication"].model_dump() == item["publication"]

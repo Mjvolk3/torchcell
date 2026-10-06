@@ -18,7 +18,11 @@ ids appear in a kept HIP column and 149 in a kept HOP column), so every stored
 recoverable by removing the ``smiles is None`` skip in ``_column_meta``. Provenance:
 paper.md line 110 ("In addition to 1641 proprietary compounds (named CMBxxx), we included
 135 reference compounds ... Table S1"); analysis in
-``experiments/017-hoepfner-background-mutations`` (``compound_encodability.json``).
+``experiments/017-hoepfner-background-mutations`` (``compound_encodability.json``). The
+exclusion is a measured ledger entry (``encodable_filter``): 1,702 of the 1,852 deposited
+CMB ids, 2,650 HIP + 2,619 HOP columns, 15,263,802 HIP + 11,728,428 HOP cells of rows that
+pass the ORF and detection rules (``experiments/036-dataset-fixes-before-kg-build/scripts/
+hoepfner2014_inputs.py``).
 
 COMPOUND IDENTITY -- the compound is keyed by structure, never by a tagged label. The
 resolver is called with the CLEAN common name (or ``CMB<id>`` for a proprietary compound
@@ -34,11 +38,14 @@ key).
 RECORDS DROPPED -- rule: a column is dropped when its compound carries NO structure
 identifier after resolution (no curated identifier, and no RDKit-parseable released
 SMILES). Measured: ONE compound, CMB409 "Boromycin", whose released SMILES RDKit
-2026.03.6 cannot parse (boron cage). That is 2 columns and 10,232 records (HIP 5,746 +
-HOP 4,486), 0.327% of the encodable build, leaving 3,124,319 records over 149 compounds
-and 608 sensitivity columns (HIP 1,759,255 + HOP 1,365,064). The ORF rule below removes
-30 rows per assay (7,273 HIP + 6,671 HOP cells) on top of that. The rules and the
-measured counts are written to ``<root>/dropped_records.json`` at build time.
+2026.03.6 cannot parse (boron cage), 2 columns. The ORF rule below removes 30 rows per
+assay; the DETECTION rule removes 72 HIP rows (2,263 records) and 452 HOP rows (7,344
+records, 328 of the rows SGD-essential); the CMB4019 exclusion removes 6 columns (HIP
+17,289 + HOP 13,479 records). Measured over the real record path
+(``experiments/036-dataset-fixes-before-kg-build/scripts/hoepfner2014_inputs.py``):
+3,083,827 records over 602 sensitivity columns (HIP 1,739,664 over 302 + HOP 1,344,163
+over 300), against 3,124,319 before #506. The rules and the measured counts are written to
+``<root>/dropped_records.json`` at build time.
 
 SCREEN (study) IDENTITY -- ``EnvironmentResponsePhenotype.screen_id`` carries the
 deposited study number. It is a real batch covariate, *"<Study number>: an internal id
@@ -49,51 +56,85 @@ measured, 47 kept columns collide on (compound, dose) alone (HIP 22, HOP 25) and
 on (compound, dose, study). The reference is per (assay, study) for the same reason: each
 study normalizes against its OWN control samples.
 
-It is the canonical use case for the WS15 schema extension
-(``EngineeredCopyNumberPerturbation`` + ``ReferenceGenome.ploidy``), because HIP and HOP
-are two DIPLOID deletion collections:
+STRAIN BACKGROUND AND GENOTYPE (#506, on the #507 schema). The records are
+``StrainEnvironmentResponseExperiment``s; the reference genome is a
+``StrainReferenceGenome`` whose ``StrainBackground`` is ``BY4743`` with the five
+literature-standard BY4743 alleles (his3, leu2, ura3 homozygous null; lys2, met15
+heterozygous) each ASSERTED with a ``deferred_pending_source_review`` gap naming Brachmann
+1998, because no mirrored source states them. The paper never names the background of its
+pools: the only ``BY474x`` strings are the drug-resistant-mutant selection parents
+(paper.md line 102), so the strain name itself is a typed gap (``provenance`` on the
+background) whose ``looked_in`` is the paper and whose ``resolve_with`` is Giaever 2002 /
+the OpenBiosystems YSC1055/YSC1056 collection records. The collections ARE sourced:
+*"The heterozygous and homozygous deletion strain collections were acquired (YSC1055 and
+YSC1056, OpenBiosystems) and pools generated as published (Pierce et al. 2007)."* (line 64).
+The cassette ``kanMX4`` is sourced to Giaever and Nislow 2014 (*"Successful Deletion,
+kanMX4module replaces ORF"*, line 48) and to the paper's own *"KanMx replacement of the
+ORF"* (line 176).
 
-- HIP (haploinsufficiency profiling) uses the HETEROZYGOUS deletion collection (YSC1055):
-  in a DIPLOID one of the two autosomal copies is deleted (KanMX), leaving one copy ->
-  reduced dosage. This collection INCLUDES ESSENTIAL genes (they are viable as
-  heterozygotes), so HIP reaches genes the homozygous collection cannot. A HIP strain is
-  ``EngineeredCopyNumberPerturbation(copy_number=1, reference_copy_number=2,
-  marker="KanMX")`` in a ``ReferenceGenome(ploidy="diploid")``, exactly as the paper
-  constructs it: *"The heterozygous and homozygous deletion strain collections were
-  acquired (YSC1055 and YSC1056, OpenBiosystems) and pools generated as published (Pierce
-  et al. 2007)."* (line 64); the cassette is KanMX, *"the compound hypersensitivity
-  phenotype did not result from the KanMx replacement of the ORF"* (line 176).
-- HOP (homozygous deletion profiling) uses the HOMOZYGOUS deletion collection (YSC1056):
-  BOTH copies deleted in a diploid -> total absence; only non-essential genes are viable.
-  A HOP strain is the existing absence leaf ``KanMxDeletionPerturbation`` in a
-  ``ReferenceGenome(ploidy="diploid")``.
+- HIP (YSC1055, heterozygous diploid; reaches essential genes): one
+  ``HeterozygousDeletionPerturbation(cassette="kanMX4", collection="YSC1055",
+  construction=StrainConstruction(lab, batch, plate, well))``. The functional dose is
+  DERIVED by ``heterozygous_deletion_functional_copies(background, perturbation)``: 1 at an
+  ordinary locus, 0 at HIS3 (``his3Δ1/his3Δ1``), undetermined at LYS2 / MET17 where the
+  background is heterozygous and nothing says which allele the cassette replaced. At every
+  locus where the background carries an allele, ``replaced_allele`` is a pending gap (the
+  physical allele state is in no mirrored source). The construction record comes from
+  Table S5 (``Lab``, ``Batch``, ``Plate``, ``Row_Column``) matched on the deposited (2014)
+  ORF name, case-insensitively; an ORF Table S5 lists twice keeps lab and batch (identical
+  in every duplicate) and leaves plate and well unset; an ORF Table S5 does not list has
+  ``construction=None`` with a gap.
+- HOP (YSC1056, homozygous diploid): one ``BarcodedKanMxDeletionPerturbation(
+  cassette="kanMX4", collection="YSC1056")``. No barcode is released by the paper, so
+  ``barcode`` is a pending gap on both arms.
+- A RENAMED source ORF (an old deletion-collection ORF that R64 lists as an alias of a
+  current gene) carries ``constructed_orf=ConstructedOrf(source_systematic_name=<source>)``
+  with ``relation`` and ``deleted_span`` gapped pending the SGD locus history, so the strain
+  is never recorded as a deletion of the whole current gene.
 
-A HIP strain is dosage-accurate, not sequence-accurate: one allele is physically REPLACED
-by a KanMX cassette, and the CNV leaf records the dosage plus the marker, not the
-deletion+insertion edit at that locus.
+DETECTION RULE (strains not in the pool). Paper: *"For HOP, 4520 strains were detected
+(96.0%) from 4705 strains obtained from OpenBiosystems."* and an average of 5796 of 5910
+HIP strains (line 64). The deposited matrices carry a score for 4,970 HOP rows, 265 more
+than the 4,705 strains obtained, so some scored rows are not strains of the pool. The
+paper gives the detection COUNT, not a per-row rule; this loader's rule (a decision the user
+may reverse) is: a row is dropped when it is scored in fewer than half of its arm's deposited
+sensitivity columns (all compounds, encodable or not). The rows it removes and the records
+they lose are in the drop ledger.
 
-``ReferenceGenome.strain`` is the bare strain token ``BY4743`` on BOTH arms, so the two
-reference genomes join each other and the served BY4743 diploid reference
-(``ohnuki2018.py``). The deletion-collection catalogue numbers (YSC1055 for HIP, YSC1056
-for HOP) are recorded here and in ``preprocess/sourced_values.json``, NOT in the strain
-string: neither ``EngineeredCopyNumberPerturbation`` nor ``KanMxDeletionPerturbation``
-carries a collection slot, and both sit inside served dataset closures, so adding one is a
-full-rebuild trigger rather than this dataset's call.
+CONDITIONS EXCLUDED. CMB4019 "D-Glucose (starvation)" (Table S1) is a glucose-starvation
+condition the paper never describes: its header number cannot be a uM addition to YPD and
+no glucose concentration is stated, so the medium change cannot be expressed with a
+sourced value. Its columns are EXCLUDED under a named rule and counted in the ledger.
+
+VEHICLE AND pH. Every compound dosed at or below 200 uM carries the 2% DMSO vehicle
+(*"DMSO was normalized to 2% to allow testing compounds up to 200 uM"*, line 58); above
+200 uM the paper says only that *"concentrated stock solutions were prepared if solubility
+permitted"*, so ``solvent`` is ``None`` with a ``ProvenanceGap``. Hydrochloric acid
+(CMB4016), sodium hydroxide (CMB4017) and sodium acetate (CMB4013) also carry an
+``EnvironmentPhysicalPerturbation(factor=pH)`` whose magnitude is a gap: the paper reports
+no pH for any condition.
+
+DOSE BASIS. ``basis=IC30`` records how the dose was SET. The IC30 itself was measured on
+the HIP pool in a 96-well, 120 ul, 770 rpm, 11 h assay (line 58), not in the 24-well HIP or
+HOP culture, and HOP was dosed with the same numbers; that sourcing is in
+``SOURCED_VALUES["ic30_assay"]`` (the schema has no slot on the environment for it). Every
+kept column whose dose lies outside 0.5x to 2x its Table S1 IC30 is listed in the ledger.
 
 TABLE S5 BACKGROUND MUTATIONS -- 157 positional HIP strains carry a documented background
 mutation (chromosome XI aneuploidy for clusters 1 and 2, a WHI2/YOR043w nonsense mutation
-for cluster 3, a 12 kbp chromosome V amplification for cluster 4). Their records are KEPT,
-not dropped: the phenotype is real and measured, and the paper states the hypersensitivity
-*"did not track with any one mutation"* (line 176), so inventing a per-gene perturbation
-for it would encode an inference as an observation. The flag is a property of the physical
-REAGENT and no served-class slot exists for it (``Genotype`` is not a
-``ProvenanceGapMixin``, so a gap cannot be asserted on it, and a field on ``Genotype`` or
-on either deletion leaf is a full-rebuild trigger), so it is carried as a typed,
-sha256-anchored per-strain file beside the build:
-``<root>/table_s5_affected_strains.json``, written from
-``experiments/017-hoepfner-background-mutations/results/table_s5_affected_strains.csv``
-(itself cross-validated against the mirrored ``si/Table_S5.xls``) with the per-strain
-cluster, mutation and measured record counts, joinable on ``systematic_gene_name``.
+for cluster 3, a 12 kbp chromosome V amplification for cluster 4), and the paper says more
+remain (line 194). Their records are KEPT: the phenotype is real, and the paper states the
+hypersensitivity *"did not track with any one mutation"* (line 176). None of the three is a
+constant of the collection, so none is a ``BackgroundAllele`` (which would assert it for
+every strain); the background instead carries a typed gap on ``construction`` naming the
+findings and the Hoepfner Supplementary Material (Figs. S15 to S17) that would resolve them.
+The schema has no per-chromosome copy number (``ploidy`` is ``haploid | diploid``), so the
+aneuploidy and the chromosome V amplification cannot be recorded per strain. The per-strain
+flag is a typed, sha256-anchored file beside the build,
+``<root>/table_s5_affected_strains.json``, regenerated from the mirrored ``si/Table_S5.xls``
+by ``experiments/036-dataset-fixes-before-kg-build/scripts/hoepfner2014_table_s5_strains.py``
+(a strain is flagged when Table S5 gives it a cluster label or a ``MUT`` sequencing
+result), joinable on the deposited ORF name.
 
 READOUT -- the stored score is the (adjusted) MADL SENSITIVITY score
 (``measurement_type=sensitivity_score``), the paper's DEFINED per-experiment quantity:
@@ -125,16 +166,19 @@ typed ``ProvenanceGap`` on the record:
   ``basis=IC30`` records how the dose was SET, not that every column is exactly IC30.
 - Medium: the shared ``MEDIA_LIBRARY`` object ``YPD_LIQUID`` on BOTH the treated and the
   control arm (the control differs by carrying no compound, not by being a different
-  medium). The 2% DMSO vehicle rides on the treated perturbation's ``Solvent`` and is an
-  explicit 2% v/v ``SmallMoleculePerturbation`` on the control arm, so the vehicle control
-  is chemically stated rather than implied by a medium name.
-- Temperature 30 C (lines 68, 70). No pH is reported anywhere in the paper, so nothing is
-  owed on the physical-factor axis.
+  medium). The 2% DMSO vehicle rides on the treated perturbation's ``Solvent`` (up to
+  200 uM) and is an explicit 2% v/v ``SmallMoleculePerturbation`` on the control arm.
+- Culture (``CultureEnvironment``): 24-well Greiner 662102 plates, 1600 ul/well, 550 rpm,
+  about 250 (HIP) or 320 (HOP) cells per strain at inoculation; HIP from an overnight
+  log-phase pre-culture, HOP from a pool thawed and recovered 3 h in YPD (lines 68, 70).
+  ``auxotroph_supplements`` is a gap: the medium is YPD and the paper names no supplement.
+- Temperature 30 C (lines 68, 70).
 - Duration: HOP is ONE 16 h incubation, ~5 doublings (line 70) ->
-  ``duration_hours=16.0, duration_generations=5.0``. HIP is FOUR sequential 16 h
-  incubations reaching ~20 generations (line 68) -> ``duration_generations=20.0``, with
-  ``duration_hours`` a ``ProvenanceGap(not_reported_by_primary)`` because the paper never
-  states WHICH passage's plate was hybridized, so neither 16 nor 64 can be asserted.
+  ``duration_hours=16.0, duration_generations=5.0``, endpoint ``fixed_duration``. HIP is
+  four sequential ~5-doubling cultures, the final plate at ~20 generations (line 68); the
+  paper does not say which passage was hybridized, so ``duration_hours``,
+  ``duration_generations`` and the culture ``endpoint`` are ALL gaps resolved by the
+  unmirrored Fig. S2 (asserting 20 generations would already presume the final passage).
 - No per-cell uncertainty is released: the replicate t-test p-value is folded into the
   adjusted score (line 84), so ``environment_response_se``,
   ``environment_response_uncertainty`` and ``environment_response_uncertainty_type`` are
@@ -208,27 +252,43 @@ from torchcell.datamodels.compound_identity import (
 from torchcell.datamodels.media import YPD_LIQUID
 from torchcell.datamodels.schema import (
     AssayType,
+    BarcodedKanMxDeletionPerturbation,
     Compound,
     Concentration,
     ConcentrationUnit,
+    ConstructedOrf,
+    CultureEnvironment,
+    CultureFormat,
     DoseBasis,
-    EngineeredCopyNumberPerturbation,
-    Environment,
+    EndpointRule,
     EnvironmentPerturbationType,
-    EnvironmentResponseExperiment,
-    EnvironmentResponseExperimentReference,
+    EnvironmentPhysicalPerturbation,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
     Genotype,
-    KanMxDeletionPerturbation,
+    HeterozygousDeletionPerturbation,
     MeasurementType,
+    PhysicalFactor,
+    PreCulture,
+    PreCultureSource,
     Publication,
-    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
     Solvent,
+    StrainBackground,
+    StrainConstruction,
+    StrainEnvironmentResponseExperiment,
+    StrainEnvironmentResponseExperimentReference,
+    StrainReferenceGenome,
     Temperature,
+)
+from torchcell.datamodels.strain_background import (
+    BRACHMANN_1998,
+    GIAEVER_2002,
+    STANDARD_BY_GENOTYPES,
+    pending_source_review,
+    standard_allele,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -261,15 +321,24 @@ PAPER_MD_SHA256 = "a9877549eff2fe1aaf8aa403d9fea1c381284de030326f4475e869c102af0
 TABLE_S5_XLS = "si/Table_S5.xls"
 TABLE_S5_XLS_SHA256 = "b123dc3e87fc10d3b4256f449fcd2eb38c91d1779000278af5a1a788356624a2"
 
-# The 017 cross-validation of Table S5 against the deposited HIP strains: one row per
-# affected strain, sha256-pinned so the flag file beside the build stays auditable.
+# Every HIP strain Table S5 lists (construction Lab / Batch / Plate / Row_Column, cluster
+# label, sequencing result), regenerated from the mirrored si/Table_S5.xls by a committed
+# script and sha256-pinned so the construction records and flags stay auditable (#506).
 TABLE_S5_STRAINS_CSV = (
-    "experiments/017-hoepfner-background-mutations/results/"
-    "table_s5_affected_strains.csv"
+    "experiments/036-dataset-fixes-before-kg-build/results/"
+    "hoepfner2014_table_s5_strains.csv"
 )
 TABLE_S5_STRAINS_CSV_SHA256 = (
-    "05bb74330f7118a8bc565fcbc587c2732daf5785db54b9a29a1aedbaca64bdc1"
+    "c867ce511d73ad6e93b20ba2f3ebdb5e084f951bd2b82a1d90bfbf8acadbe50b"
 )
+TABLE_S5_STRAINS_SCRIPT = (
+    "experiments/036-dataset-fixes-before-kg-build/scripts/"
+    "hoepfner2014_table_s5_strains.py"
+)
+
+# The deletion-collection review the cassette is sourced to (mirrored).
+GIAEVER_2014_KEY = "giaeverYeastDeletionCollection2014"
+GIAEVER_2014_SHA256 = "4a177a8658be57938eb0e45e736762281793ac7799d358e3a3349af61acf1719"
 
 # Dryad doi:10.5061/dryad.v5m8v file-stream ids + pinned sha256 of the deposited files.
 DRYAD_DOI = "10.5061/dryad.v5m8v"
@@ -336,10 +405,60 @@ ORF_RULE = (
 TABLE_S5_POLICY = (
     "KEPT and FLAGGED, never dropped: the measurement is real, and the paper reports that "
     "the hypersensitivity did not track with any one mutation, so no per-gene "
-    "perturbation is invented for the background mutation. The flag is a property of the "
-    "physical strain and no served class carries a slot for it, so it lives here and is "
-    "joined on systematic_gene_name."
+    "perturbation is invented for the background mutation. A strain is flagged when "
+    "Table S5 gives it a cluster label (CLn positional, CLn+ correlated) or a MUT "
+    "sequencing result. The flag is a property of the physical strain and no served "
+    "class carries a slot for it, so it lives here and is joined on the deposited ORF "
+    "name; the strain's construction Lab / Batch / Plate / Well rides on the record."
 )
+
+#: Fraction of an arm's deposited sensitivity columns a row must be scored in to count as
+#: a strain of the pool (the loader's rule, NOT the paper's: see DETECTION_RULE).
+DETECTION_MIN_FRACTION = 0.5
+
+DETECTION_RULE = (
+    "a row is kept only when it carries a score in at least half of its arm's deposited "
+    "sensitivity columns (every compound, encodable or not; z-score companions excluded). "
+    "The paper gives the detection COUNT ('For HOP, 4520 strains were detected (96.0%) "
+    "from 4705 strains obtained', paper.md line 64), not a per-row rule; the 50% "
+    "threshold is this loader's decision and may be reversed. A row scored in fewer "
+    "columns is treated as a strain absent from the pool and dropped with its records"
+)
+
+#: Table S1 CMB ids excluded under a named rule, with the Table S1 name each must carry.
+EXCLUDED_CONDITIONS: dict[str, str] = {"4019": "D-Glucose (starvation)"}
+
+EXCLUSION_RULE = (
+    "CMB4019 'D-Glucose (starvation)' is excluded: it is a glucose-starvation condition "
+    "the paper never describes, its header number (0.25 / 0.5 / 0.75) is not a uM "
+    "addition of glucose to YPD, and no glucose concentration is stated anywhere, so the "
+    "medium change cannot be expressed with a sourced value. Storing it as YPD plus "
+    "added glucose would state the opposite of starvation"
+)
+
+ENCODABLE_RULE = (
+    "a sensitivity column is built only when its CMB id has a released SMILES in Table "
+    "S1; the other (proprietary Novartis CMBxxx) columns are black-box perturbations no "
+    "molecular encoder can represent and are excluded. Paper: 'In addition to 1641 "
+    "proprietary compounds (named CMBxxx), we included 135 reference compounds' "
+    "(paper.md line 110)"
+)
+
+#: Highest dose the paper's 2% DMSO normalization covers (SOURCED_VALUES["dmso_ceiling_um"]).
+DMSO_CEILING_UM = 200.0
+
+#: Table S1 compounds whose dose changes medium pH; the paper reports no pH.
+PH_AGENT_CONDITIONS: dict[str, str] = {
+    "4013": "Sodium Acetate",
+    "4016": "Hydrochloric Acid",
+    "4017": "Sodium Hydroxide",
+}
+
+#: A kept column's dose outside [low, high] x its Table S1 IC30 is listed in the ledger.
+IC30_RATIO_RANGE = (0.5, 2.0)
+
+#: The positive control on every plate; its scores are in separate Benomyl files.
+POSITIVE_CONTROL_CMB = "991"
 
 _UA = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
@@ -426,17 +545,17 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "The HOP assay was performed similar to the HIP experiment but the duration was "
         "reduced to ${ \\sim } 5$ doublings and no dilutions were necessary.",
     ),
-    "hip_duration_generations": _sv(
-        20.0,
+    "hip_passages": _sv(
+        "four sequential ~5-doubling cultures; the final plate at ~20 generations",
         "Once inoculated the new plate was incubated at $3 0 ^ { \\circ } C / 5 5 0$ RPM "
         "to allow the next 5 yeast generations (generation 6–10) and the plate "
         "containing the first 5 doubling cultures was stored at "
         "$4 ^ { \\circ } \\mathrm { C } .$ . This procedure was repeated 2 more times "
         "until the final plate containing the yeast with ${ \\sim } 2 0$ generations were "
         "stored at $4 ^ { \\circ } \\mathsf C$ (Fig. S2).",
-        note="HIP is four sequential 16 h incubations reaching ~20 generations; the paper "
-        "does not state which passage was hybridized, so duration_hours is a "
-        "ProvenanceGap rather than a guessed 16 or 64",
+        note="NOT stored as a duration: every passage's plate was kept and the paper does "
+        "not say which one was hybridized, so HIP duration_hours, duration_generations "
+        "and the culture endpoint are all gaps resolved by the unmirrored Fig. S2",
     ),
     "assay_type": _sv(
         "pooled_competitive_growth_barcode",
@@ -454,16 +573,16 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "The heterozygous and homozygous deletion strain collections were acquired "
         "(YSC1055 and YSC1056, OpenBiosystems) and pools generated as published (Pierce "
         "et al. 2007).",
-        note="the HIP heterozygous deletion collection; recorded here because no served "
-        "perturbation leaf carries a collection slot",
+        note="the HIP heterozygous deletion collection, on every HIP record's "
+        "HeterozygousDeletionPerturbation.collection",
     ),
     "hop_collection": _sv(
         "YSC1056",
         "The heterozygous and homozygous deletion strain collections were acquired "
         "(YSC1055 and YSC1056, OpenBiosystems) and pools generated as published (Pierce "
         "et al. 2007).",
-        note="the HOP homozygous deletion collection; recorded here because no served "
-        "perturbation leaf carries a collection slot",
+        note="the HOP homozygous deletion collection, on every HOP record's "
+        "BarcodedKanMxDeletionPerturbation.collection",
     ),
     "hip_marker": _sv(
         "KanMX",
@@ -505,16 +624,306 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         note="the flag is a reagent property; the paper says the phenotype did not track "
         "with any one mutation, so no per-gene perturbation is invented for it",
     ),
+    "background_mutations_remain": _sv(
+        "uncharacterized background mutations remain",
+        "While we have characterized those mutations for 157 strains, more remain which "
+        "obscure the true biological impact of deleting single ORFs.",
+    ),
+    "construction_labs": _sv(
+        "a consortium of laboratories, one per chromosomal region",
+        "The individual strains of the yeast deletion collection were constructed by a "
+        "consortium of laboratories, where each group was responsible for defined "
+        "chromosomal regions.",
+        note="why Table S5's Lab / Batch / Plate / Row_Column ride on each HIP strain's "
+        "StrainConstruction",
+    ),
+    "by474x_only_mention": _sv(
+        "BY4741 / BY4743 named only as resistant-mutant selection parents",
+        "BY4741 or BY4743 strains deleted for 8 genes involved in drug resistance (Pumps: "
+        "SNQ2, PDR5, YOR1; transcription factors: PDR1, PDR2, PDR3, YAP1, YRM1)",
+        note="the ONLY BY474x strings in the paper (with 'the parental strain "
+        "(BY4743-delta8 or BY4741-MATa-delta8)', same line 102); neither names the "
+        "background of the YSC1055/YSC1056 pools, so the BY4743 background is a "
+        "pending-review gap, not a sourced value",
+    ),
+    "hip_detection": _sv(
+        5796,
+        "an average of 5796 out of 5910 HIP strains received were detectable "
+        "$( 9 8 . 0 \\% )$",
+        note="the paper's detection COUNT; the loader's per-row rule (DETECTION_RULE) is "
+        "its own decision",
+    ),
+    "hop_detection": _sv(
+        4520,
+        "For HOP, 4520 strains were detected $( 9 6 . 0 \\% )$ from 4705 strains "
+        "obtained from OpenBiosystems.",
+        note="the paper's detection COUNT; the loader's per-row rule (DETECTION_RULE) is "
+        "its own decision",
+    ),
+    "dmso_ceiling_um": _sv(
+        200.0,
+        "In all experiments DMSO was normalized to $2 \\%$ to allow testing compounds up "
+        "to $2 0 0 \\mu \\mathrm { M }$ . Where higher concentrations were required, "
+        "concentrated stock solutions were prepared if solubility permitted.",
+        note="doses above 200 uM carry solvent=None with a ProvenanceGap: the vehicle of "
+        "the concentrated stocks is not stated",
+    ),
+    "ic30_assay": _sv(
+        "HIP pool, 96-well, 120 ul, 770 rpm, 30 C, OD600 at 11 h",
+        "11-point serial dilutions (3.1 dilution factor) were prepared in 96 well plates "
+        "with log phase growth yeast cultures (HIP pool) in YPD $2 \\%$ glucose, $2 \\%$ "
+        "BactoPeptone, $1 \\%$ yeast extract), giving a compound dilution range from "
+        "$2 0 0 \\mu \\mathrm { M }$ to $2 . 4 4 \\mathrm { n M }$ and a DMSO control. "
+        "Starting ${ \\mathrm { O D } } _ { 6 0 0 }$ was 0.05, total volume per well "
+        "$1 2 0 \\mu \\mathrm { l }$ . Plates were incubated at $3 0 ^ { \\circ } "
+        "\\mathsf C$ with 770 RPM orbital shaking and growth was monitored by "
+        "${ \\mathrm { 0 D } } _ { 6 0 0 }$ values hourly on a robotic system for "
+        "$1 6 \\mathrm { h }$ . The $1 1 \\mathrm { h }$ time point represented late log "
+        "phase and was used to calculate $\\mathrm { I C } _ { 3 0 }$ values",
+        note="the assay the IC30 dose basis came from: the HIP pool in a 96-well format, "
+        "not the 24-well HIP or HOP culture; HOP was dosed with the same IC30. The "
+        "schema has no slot on the environment for this, so it is recorded here",
+    ),
+    "culture_vessel": _sv(
+        "24-well plate (Greiner 662102), 1600 ul/well YPD",
+        "The HIP assay was performed in 24 well plates (Greiner 662102), with "
+        "$1 6 0 0 \\mu \\mathrm { l } /$ well YPD.",
+        note="HOP: 'performed similar to the HIP experiment' (line 70)",
+    ),
+    "shaking_rpm": _sv(
+        550.0,
+        "Plates were incubated for $1 6 \\mathrm { h }$ in a robotic shaking incubator at "
+        "$3 0 ^ { \\circ } C / 5 5 0$ RPM allowing for ${ \\sim } 5$ doublings.",
+    ),
+    "hip_inoculum": _sv(
+        250.0,
+        "YPD/compound filled wells were inoculated with $\\sim 2 5 0$ yeast cells/strain "
+        "( $1 0 0 \\mu \\mathrm { l }$ of a 1.5 $\\mathrm { { 0 D _ { 6 0 0 } } / \\mathrm "
+        "{ { m l } } }$ culture) from an overnight log phase pre-culture to start the "
+        "experiment (Fig. S2).",
+        note="cells per strain; the source is an overnight log-phase pre-culture",
+    ),
+    "hop_inoculum": _sv(
+        320.0,
+        "The robotic system inoculated the wells prefilled with YPD and compound at the "
+        "onset of the experiment with ${ \\sim } 3 2 0$ yeast cells/strain ( $1 1 0 \\mu "
+        "\\mathrm { l }$ of a $1 . 5 \\ : 0 \\mathrm { D } _ { 6 0 0 } / \\mathrm { m l }$ "
+        "culture).",
+        note="cells per strain",
+    ),
+    "hop_thaw_recovery": _sv(
+        3.0,
+        "Before the experiment, aliquots of the HOP pool were thawed and recovered for "
+        "$^ { 3 \\mathrm { h } }$ in YPD.",
+        note="the HOP pre-culture: a 3 h recovery in YPD after thawing",
+    ),
+    "positive_control": _sv(
+        "Benomyl, CMB991, on every plate",
+        "Each plate contained two no drug controls, one positive control (Benomyl, "
+        "CMB991), 10 experimental compounds in duplicates and one contamination control "
+        "that received no cells.",
+        note="its scores are in the separate Benomyl score files (not in the raw mirror); "
+        "the build counts its columns in the two deposited matrices (ledger)",
+    ),
+    "proprietary_compounds": _sv(
+        1641,
+        "In addition to 1641 proprietary compounds (named CMBxxx), we included 135 "
+        "reference compounds with a previously reported molecular mechanism of action "
+        "(Table S1).",
+        note="the encodable-only filter excludes the CMB ids with no released SMILES; the "
+        "build counts them in the ledger",
+    ),
+    "cassette": SourcedValue(
+        value="kanMX4",
+        provenance=Provenance(
+            source_uri=PAPER_MD,
+            citation_key=GIAEVER_2014_KEY,
+            sha256=GIAEVER_2014_SHA256,
+            method="MinerU OCR of the publisher PDF (mirrored artifact)",
+        ),
+        quote="Successful Deletion, kanMX4module replaces ORF",
+        note="Giaever and Nislow 2014, line 48 (the YKO deletion cassette); Hoepfner names "
+        "it 'the KanMx replacement of the ORF' (paper.md line 176, hip_marker). That the "
+        "OpenBiosystems YSC1055/YSC1056 pools are YKO strains is not stated in a "
+        "mirrored source",
+    ),
 }
 
-# The typed absences. HIP's duration in hours, and the per-cell uncertainty on every
-# phenotype, are values the primary never reported: declared, never defaulted.
-_HIP_DURATION_HOURS_GAP = ProvenanceGap(
-    field="duration_hours",
-    reason=ProvenanceGapReason.not_reported_by_primary,
-    note="HIP ran four sequential 16 h incubations to ~20 generations; the paper does not "
-    "state which passage's plate was hybridized, so neither 16 nor 64 h can be asserted",
+
+# The typed absences: values the primary never reported, declared, never defaulted.
+HOEPFNER_SUPPLEMENT = Provenance(
+    source_uri=f"https://doi.org/{DOI} (Supplementary Material)",
+    citation_key=CITATION_KEY,
+    method="not mirrored; Hoepfner 2014 Supplementary Material (Figs. S1 to S17, Tables "
+    "S2 to S4 and S6)",
 )
+"""``resolve_with`` target for the HIP passage question (Fig. S2) and the background
+mutation coordinates (Figs. S15 to S17)."""
+
+SGD_LOCUS_HISTORY = Provenance(
+    source_uri="https://www.yeastgenome.org (locus history of the source ORF)",
+    method="not mirrored; SGD ORF merge / reannotation history, which states how a "
+    "deletion-collection ORF relates to the current gene and its R64 coordinates",
+)
+"""``resolve_with`` target for a RENAMED ORF's relation and deleted span."""
+
+_PAPER = Provenance(
+    source_uri=PAPER_MD,
+    citation_key=CITATION_KEY,
+    sha256=PAPER_MD_SHA256,
+    method="MinerU OCR of the publisher PDF (mirrored artifact)",
+)
+
+_HIP_PASSAGE_NOTE = (
+    "HIP ran four sequential ~5-doubling cultures and stored every plate, the final one at "
+    "~20 generations (paper.md line 68); the paper does not state which passage's plate "
+    "was hybridized, so neither the hours nor the generations nor the endpoint can be "
+    "asserted"
+)
+
+_HIP_DURATION_GAPS = [
+    ProvenanceGap(
+        field=field,
+        reason=ProvenanceGapReason.deferred_pending_source_review,
+        resolve_with=HOEPFNER_SUPPLEMENT,
+        note=_HIP_PASSAGE_NOTE + " (Fig. S2)",
+    )
+    for field in ("duration_hours", "duration_generations")
+]
+
+_AUXOTROPH_GAP = ProvenanceGap(
+    field="auxotroph_supplements",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=_PAPER,
+    note="the medium is YPD (rich); the paper names no auxotroph supplement",
+)
+
+_SOLVENT_GAP = ProvenanceGap(
+    field="solvent",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=_PAPER,
+    note="dose above the 200 uM ceiling of the 2% DMSO normalization: 'Where higher "
+    "concentrations were required, concentrated stock solutions were prepared if "
+    "solubility permitted' (paper.md line 58); the stock vehicle is not stated",
+)
+
+_PH_GAP = ProvenanceGap(
+    field="magnitude",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=_PAPER,
+    note="an acid, base or acetate salt dosed at tens of mM into YPD; the paper reports "
+    "no pH for any condition. Hypothesis (untested): the dose shifts the medium pH",
+)
+
+_BARCODE_GAP = pending_source_review(
+    "barcode",
+    GIAEVER_2002,
+    "the UPTAG / DNTAG 20-mers are not released by Hoepfner 2014 and no YKO tag table is "
+    "mirrored",
+)
+
+_CONSTRUCTION_GAP = ProvenanceGap(
+    field="construction",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=Provenance(
+        source_uri=TABLE_S5_XLS,
+        citation_key=CITATION_KEY,
+        sha256=TABLE_S5_XLS_SHA256,
+        page="Data sheet",
+    ),
+    note="the deposited HIP ORF is not listed in Table S5 (matched case-insensitively "
+    "on the 2014 ORF name), so its construction Lab / Batch / Plate / Well is unknown",
+)
+
+_REPLACED_ALLELE_NOTE = (
+    "the background carries an allele at this locus; which allele the kanMX4 cassette "
+    "replaced in this heterozygote is in no mirrored source, so the functional dose "
+    "(heterozygous_deletion_functional_copies) is undetermined unless the background is "
+    "null on both copies"
+)
+
+_BACKGROUND_NOTE = (
+    "the BY4743 genotype (BY4741 x BY4742) is in no mirrored source; asserted pending "
+    "Brachmann 1998"
+)
+
+BACKGROUND_STRAIN = "BY4743"
+
+
+def hoepfner_background() -> StrainBackground:
+    """The BY4743 background both pools are recorded on, every element gapped.
+
+    The paper names the collections (YSC1055 / YSC1056, OpenBiosystems, line 64) but
+    never their background; ``BY4743`` is the literature-standard YKO diploid background,
+    asserted with a pending-review gap whose ``looked_in`` is the paper's only BY474x line
+    (102, the resistant-mutant selection parents). Each BY4743 allele is asserted pending
+    Brachmann 1998 (``standard_allele``). The Table S5 background mutations are NOT
+    alleles of the collection background (each affects a subset of strains), so they are a
+    typed gap on ``construction`` naming the unmirrored Figs. S15 to S17.
+    """
+    genotype = STANDARD_BY_GENOTYPES[BACKGROUND_STRAIN]
+    alleles = [
+        standard_allele(
+            allele_name, zygosity, resolve_with=BRACHMANN_1998, note=_BACKGROUND_NOTE
+        )
+        for allele_name, zygosity in genotype.alleles.items()
+    ]
+    return StrainBackground(
+        name=BACKGROUND_STRAIN,
+        parents=list(genotype.parents),
+        construction=None,
+        mating_type=genotype.mating_type,
+        ploidy=genotype.ploidy,
+        alleles=alleles,
+        provenance=None,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="provenance",
+                reason=ProvenanceGapReason.deferred_pending_source_review,
+                looked_in=Provenance(
+                    source_uri=PAPER_MD,
+                    citation_key=CITATION_KEY,
+                    sha256=PAPER_MD_SHA256,
+                    page="line 102: 'BY4741 or BY4743 strains deleted for 8 genes "
+                    "involved in drug resistance' and 'the parental strain "
+                    "(BY4743-delta8 or BY4741-MATa-delta8)', the only BY474x strings",
+                ),
+                resolve_with=GIAEVER_2002,
+                note="the paper names the pools' collections, 'YSC1055 and YSC1056, "
+                "OpenBiosystems' (line 64, sourced), never their background strain; the "
+                "BY4743 name, its MATa/MATalpha mating type and diploid ploidy are "
+                "asserted pending Giaever 2002 or the OpenBiosystems YSC1055/YSC1056 "
+                "collection records, and its alleles pending Brachmann 1998",
+            ),
+            ProvenanceGap(
+                field="construction",
+                reason=ProvenanceGapReason.deferred_pending_source_review,
+                looked_in=_PAPER,
+                resolve_with=HOEPFNER_SUPPLEMENT,
+                note="strains were built by a consortium of labs (line 174); 157 HIP "
+                "strains carry documented secondary mutations not constant across the "
+                "collection (Table S5: chromosome XI aneuploidy CL1/CL2, a WHI2/YOR043w "
+                "premature stop truncating 60% of the ORF CL3, a 12 kbp chromosome V "
+                "region at +50% coverage CL4) and 'more remain' (line 194); none is an "
+                "allele of the background. The schema has no per-chromosome copy number, "
+                "so the aneuploidy and the amplification cannot be recorded per strain; "
+                "the WHI2 zygosity and the chromosome V coordinates are in Figs. S16, "
+                "S17. HOP strains were not assessed by the paper. Per-strain status: "
+                "<root>/table_s5_affected_strains.json",
+            ),
+        ],
+    )
+
+
+def hoepfner_reference_genome() -> StrainReferenceGenome:
+    """The diploid reference both arms share: BY4743 with its typed background."""
+    return StrainReferenceGenome(
+        species="Saccharomyces cerevisiae",
+        strain=BACKGROUND_STRAIN,
+        ploidy="diploid",
+        background=hoepfner_background(),
+    )
+
 
 _SE_GAP_NOTE = (
     "no per-cell uncertainty is released: the replicate t-test p-value is folded into the "
@@ -526,6 +935,12 @@ _UNCERTAINTY_FIELDS = (
     "environment_response_uncertainty",
     "environment_response_uncertainty_type",
 )
+
+
+_BACKGROUND_LOCI = frozenset(
+    allele.systematic_gene_name for allele in hoepfner_background().alleles
+)
+"""Loci where the background carries an allele (the HIP ``replaced_allele`` gap)."""
 
 
 def _phenotype_gaps() -> list[ProvenanceGap]:
@@ -656,6 +1071,79 @@ class DroppedOrf(BaseModel):
     )
 
 
+class UndetectedStrain(BaseModel):
+    """One row the detection rule removed: scored in too few of its arm's columns."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    source_name: str = Field(description="the 'Systematic Name' cell, verbatim")
+    systematic_name: str = Field(
+        description="the current systematic name it resolves to"
+    )
+    n_scored_columns: int = Field(
+        description="deposited sensitivity columns of the arm this row carries a score in"
+    )
+    n_columns: int = Field(description="deposited sensitivity columns of the arm")
+    n_records: int = Field(description="non-empty cells in KEPT columns lost with it")
+
+
+class DetectionLedger(BaseModel):
+    """The detection rule for one arm and what it removed."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    n_columns: int = Field(description="deposited sensitivity columns of the arm")
+    n_rows_without_any_score: int = Field(
+        description="rows scored in no column at all (no records; not strains of the pool)"
+    )
+    n_rows_kept: int = Field(description="scored rows that pass the rule")
+    n_records_dropped: int
+    dropped: list[UndetectedStrain]
+
+
+class ExcludedCondition(BaseModel):
+    """One Table S1 condition excluded under ``EXCLUSION_RULE``."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    cmb_id: str
+    table_s1_name: str
+    n_columns_by_assay: dict[str, int]
+    n_records_by_assay: dict[str, int]
+
+
+class EncodableFilterLedger(BaseModel):
+    """The encodable-only build filter (no released SMILES), measured per arm."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    rule: str
+    n_cmb_ids: int = Field(description="distinct CMB ids excluded over both arms")
+    n_cmb_ids_by_assay: dict[str, int]
+    n_columns_by_assay: dict[str, int]
+    n_records_by_assay: dict[str, int] = Field(
+        description="non-empty cells in excluded columns of rows that pass the ORF and "
+        "detection rules (the records a full-atlas build would add)"
+    )
+    n_deposited_cmb_ids: int = Field(
+        description="distinct CMB ids in the deposited sensitivity columns of both arms"
+    )
+
+
+class DoseOutsideIc30(BaseModel):
+    """A kept column whose dose lies outside ``IC30_RATIO_RANGE`` x its Table S1 IC30."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    assay: str
+    cmb_id: str
+    compound: str
+    study: str
+    concentration_um: float
+    ic30_um: float
+    ratio: float = Field(description="concentration / IC30")
+
+
 class DroppedRecordReport(BaseModel):
     """The build's drop ledger: the rules, and exactly what they removed."""
 
@@ -664,6 +1152,8 @@ class DroppedRecordReport(BaseModel):
     dataset: str
     rule: str
     orf_rule: str
+    detection_rule: str
+    exclusion_rule: str
     n_kept: int
     n_dropped: int
     kept_by_assay: dict[str, int]
@@ -675,9 +1165,55 @@ class DroppedRecordReport(BaseModel):
     )
     renamed_orfs: dict[str, dict[str, str]] = Field(
         description="per assay, source ORF -> current systematic name for every RENAMED "
-        "row kept; the source ORF stays on the record as perturbed_gene_name"
+        "row kept; the source ORF stays on the record as perturbed_gene_name and as "
+        "constructed_orf.source_systematic_name"
+    )
+    detection: dict[str, DetectionLedger] = Field(
+        description="per assay, the DETECTION_RULE and the rows it removed"
+    )
+    excluded_conditions: list[ExcludedCondition]
+    encodable_filter: EncodableFilterLedger
+    positive_control: dict[str, int] = Field(
+        description="per assay, deposited sensitivity columns of the plate positive control "
+        "Benomyl (CMB991); its 97 experiments are in the separate Benomyl score files, "
+        "which are not in the raw mirror"
+    )
+    solvent_gap_columns: dict[str, int] = Field(
+        description="per assay, kept columns dosed above 200 uM (solvent is a gap)"
+    )
+    ph_gap_columns: dict[str, int] = Field(
+        description="per assay, kept columns of an acid / base / acetate (pH is a gap)"
+    )
+    dose_outside_ic30_range: list[DoseOutsideIc30] = Field(
+        description="kept columns whose dose is outside 0.5x to 2x the Table S1 IC30; "
+        "basis stays IC30 (how the dose was SET)"
+    )
+    n_kept_columns_with_ic30: dict[str, int]
+    hip_construction: dict[str, int] = Field(
+        description="kept HIP rows by Table S5 construction match: 'one_entry', "
+        "'duplicate_entries' (lab and batch kept, plate and well unset), 'not_listed'"
     )
     created_at: str
+
+
+class TableS5Entry(BaseModel):
+    """One HIP collection entry of Table S5 (the regenerated 036 CSV, verbatim tokens)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    orf: str
+    table_s5_id: str
+    plate: str
+    row_column: str
+    cluster: str
+    base_cluster: str
+    is_positional: bool
+    mutation: str
+    validation_result: str
+    lab: str
+    batch: str
+    chromosome_arm: str
+    flagged: bool
 
 
 class TableS5Strain(BaseModel):
@@ -685,12 +1221,17 @@ class TableS5Strain(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    systematic_gene_name: str
-    common_gene_name: str
-    cluster: str
+    systematic_gene_name: str = Field(
+        description="the deposited (2014) ORF name, the join key with the records' "
+        "perturbed_gene_name"
+    )
+    cluster: str = Field(description="distinct Table S5 cluster labels, '; '-joined")
     is_positional: bool
-    mutation: str
+    mutation: str = Field(description="distinct mutations of its clusters, '; '-joined")
+    validation_result: str = Field(description="distinct sequencing results ('' none)")
     construction_lab: str
+    construction_batch: str
+    n_table_s5_entries: int
     n_records: int
 
 
@@ -698,10 +1239,10 @@ class TableS5FlagFile(BaseModel):
     """Per-strain reagent-quality flag for the HIP records this build KEPT.
 
     The flag is a property of the physical strain, not of a measurement, and no served
-    class carries a slot for it: ``Genotype`` is not a ``ProvenanceGapMixin`` (so a typed
-    gap cannot be asserted on it) and a field on ``Genotype`` or on a deletion leaf would
-    force a full rebuild of every served dataset importing it. It is therefore a typed,
-    sha256-anchored file beside the build, joinable on ``systematic_gene_name``.
+    class carries a slot for it (``Genotype`` has no optional field to gap, and the
+    secondary mutations are not alleles of the collection background). It is therefore
+    a typed, sha256-anchored file beside the build, joinable on the deposited ORF name.
+    The strain's construction Lab / Batch / Plate / Well rides on each HIP record.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -710,6 +1251,7 @@ class TableS5FlagFile(BaseModel):
     citation_key: str
     source_csv: str
     source_csv_sha256: str
+    source_script: str
     table_s5_path: str
     table_s5_sha256: str
     paper_quote: str
@@ -842,12 +1384,38 @@ def _load_compound_meta(table_s1_path: str) -> dict[str, dict[str, str | None]]:
     return meta
 
 
-def load_table_s5_strains(repo_root: str | Path) -> dict[str, dict[str, str]]:
-    """Table S5 affected HIP strains from the 017 cross-validation CSV (sha256-pinned).
+def _load_ic30(table_s1_path: str) -> dict[str, float]:
+    """CMB id -> Table S1 ``IC30 (uM)`` for the reference and novel-MoA compounds."""
+    import pandas as pd
 
-    Keyed by systematic ORF name. The CSV is the committed result of
-    ``experiments/017-hoepfner-background-mutations``, which reconciled the mirrored
-    ``si/Table_S5.xls`` against the deposited HIP strain list.
+    ic30: dict[str, float] = {}
+    xl = pd.ExcelFile(table_s1_path)
+    for sheet in ("Reference Substances known MoA", "Substances novel MoA"):
+        frame = xl.parse(sheet, header=0)
+        if "IC30 (uM)" not in frame.columns:
+            continue
+        for _, row in frame.iterrows():
+            cmb_id, value = row.get("CMB ID"), row.get("IC30 (uM)")
+            if pd.isna(cmb_id) or pd.isna(value):
+                continue
+            token = (
+                str(int(cmb_id))
+                if isinstance(cmb_id, (int, float))
+                else str(cmb_id).strip()
+            )
+            if token.isdigit():
+                ic30[token] = float(value)
+    return ic30
+
+
+def load_table_s5_strains(repo_root: str | Path) -> dict[str, list[TableS5Entry]]:
+    """Every Table S5 HIP entry from the regenerated 036 CSV (sha256-pinned).
+
+    Keyed by the UPPER-CASED ORF token (Table S5 writes a few suffixes in lower case,
+    e.g. ``YAL035C-a``); a token that is not a systematic name (``YCLO51W``) is kept
+    verbatim and simply matches no deposited row. An ORF listed more than once maps to
+    every entry. The CSV is written by ``TABLE_S5_STRAINS_SCRIPT`` from the mirrored
+    ``si/Table_S5.xls``.
     """
     path = Path(repo_root) / TABLE_S5_STRAINS_CSV
     digest = sha256_file(path)
@@ -855,8 +1423,41 @@ def load_table_s5_strains(repo_root: str | Path) -> dict[str, dict[str, str]]:
         raise RuntimeError(
             f"{path} sha256 {digest} != pinned {TABLE_S5_STRAINS_CSV_SHA256}"
         )
+    entries: dict[str, list[TableS5Entry]] = {}
     with path.open() as handle:
-        return {row["orf"]: row for row in csv.DictReader(handle)}
+        for row in csv.DictReader(handle):
+            entry = TableS5Entry.model_validate(
+                {
+                    **row,
+                    "is_positional": row["is_positional"] == "True",
+                    "flagged": row["flagged"] == "True",
+                }
+            )
+            entries.setdefault(entry.orf.upper(), []).append(entry)
+    return entries
+
+
+def _strain_construction(entries: list[TableS5Entry]) -> StrainConstruction:
+    """The construction record Table S5 gives one deposited HIP ORF.
+
+    One entry: lab, batch, plate and well verbatim. Several entries (the same ORF listed
+    on two plates): lab and batch, which agree across every duplicate, and no plate or
+    well, since the deposited row does not say which physical copy was pooled.
+    """
+    labs = {entry.lab for entry in entries}
+    batches = {entry.batch for entry in entries}
+    if len(labs) != 1 or len(batches) != 1:
+        raise ValueError(
+            f"Table S5 entries for {entries[0].orf} disagree on lab / batch: "
+            f"{sorted(labs)} / {sorted(batches)}"
+        )
+    single = len(entries) == 1
+    return StrainConstruction(
+        lab=entries[0].lab or None,
+        batch=entries[0].batch or None,
+        plate=(entries[0].plate or None) if single else None,
+        well=(entries[0].row_column or None) if single else None,
+    )
 
 
 def _has_identifier(compound: Compound) -> bool:
@@ -871,7 +1472,16 @@ def _has_identifier(compound: Compound) -> bool:
 class _ColumnMeta:
     """One kept sensitivity column: its record templates and its identity fields."""
 
-    __slots__ = ("index", "cmb", "study", "exp_base", "pheno_base", "env_dump")
+    __slots__ = (
+        "index",
+        "cmb",
+        "study",
+        "conc",
+        "compound",
+        "exp_base",
+        "pheno_base",
+        "env_dump",
+    )
 
     def __init__(
         self,
@@ -881,15 +1491,39 @@ class _ColumnMeta:
         exp_base: dict[str, Any],
         pheno_base: dict[str, Any],
         env_dump: dict[str, Any],
+        conc: float = 0.0,
+        compound: str = "",
     ) -> None:
         self.index = index
         self.cmb = cmb
         self.study = study
+        self.conc = conc
+        self.compound = compound
         self.exp_base = exp_base
         self.pheno_base = pheno_base
         # The environment INLINE, for the per-column schema validation: what the LMDB
         # stores is the interned pointer, and the schema only accepts the resolved form.
         self.env_dump = env_dump
+
+
+class _ColumnCensus:
+    """Every deposited sensitivity column of one arm, by what the build does with it.
+
+    ``detection`` is every sensitivity column of the arm (the DETECTION_RULE
+    denominator); ``unencodable`` the columns with no released SMILES (the encodable-only
+    filter); ``excluded`` the columns of an ``EXCLUDED_CONDITIONS`` compound;
+    ``positive_control`` the Benomyl (CMB991) columns; ``cmbs`` every CMB id seen. Kept and dropped-compound columns
+    come from ``_column_meta``.
+    """
+
+    __slots__ = ("detection", "cmbs", "unencodable", "excluded", "positive_control")
+
+    def __init__(self) -> None:
+        self.detection: list[int] = []
+        self.cmbs: set[str] = set()
+        self.unencodable: list[tuple[int, str]] = []
+        self.excluded: list[tuple[int, str]] = []
+        self.positive_control: list[int] = []
 
 
 class _BuildCounts:
@@ -900,7 +1534,19 @@ class _BuildCounts:
     (``DroppedRecordReport``, ``TableS5FlagFile``).
     """
 
-    __slots__ = ("kept", "dropped", "flagged", "dropped_orfs", "renamed_orfs")
+    __slots__ = (
+        "kept",
+        "dropped",
+        "flagged",
+        "dropped_orfs",
+        "renamed_orfs",
+        "undetected",
+        "empty_rows",
+        "detected_rows",
+        "unencodable",
+        "excluded",
+        "construction",
+    )
 
     def __init__(self) -> None:
         self.kept: Counter[str] = Counter()  # assay -> kept records
@@ -908,11 +1554,17 @@ class _BuildCounts:
         self.flagged: Counter[str] = Counter()  # ORF -> kept HIP records, Table S5 only
         self.dropped_orfs: dict[str, list[DroppedOrf]] = {}  # assay -> dropped rows
         self.renamed_orfs: dict[str, dict[str, str]] = {}  # assay -> source -> current
+        self.undetected: dict[str, list[UndetectedStrain]] = {}  # assay -> rows
+        self.empty_rows: Counter[str] = Counter()  # assay -> rows scored nowhere
+        self.detected_rows: Counter[str] = Counter()  # assay -> rows passing the rule
+        self.unencodable: Counter[str] = Counter()  # assay -> cells in filtered columns
+        self.excluded: Counter[tuple[str, str]] = Counter()  # (assay, CMB) -> cells
+        self.construction: Counter[str] = Counter()  # HIP rows by Table S5 match
 
 
 @register_dataset
 class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
-    """Hoepfner 2014 HIP-HOP atlas: env x (het-CNV | hom-deletion) -> sensitivity score."""
+    """Hoepfner 2014 HIP-HOP atlas: env x (het | hom kanMX4 deletion) -> sensitivity score."""
 
     def __init__(
         self,
@@ -951,12 +1603,12 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return EnvironmentResponseExperiment
+        return StrainEnvironmentResponseExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return EnvironmentResponseExperimentReference
+        return StrainEnvironmentResponseExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -1024,31 +1676,96 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         """The DMSO vehicle, resolved to its curated structure identity."""
         return resolved_compound("DMSO")
 
+    @staticmethod
+    def _culture_format(assay: str) -> CultureFormat:
+        """The 24-well culture each arm was grown in (paper.md lines 68, 70)."""
+        shared = [SOURCED_VALUES["culture_vessel"], SOURCED_VALUES["shaking_rpm"]]
+        if assay == "HIP":
+            return CultureFormat(
+                vessel="24-well plate (Greiner 662102)",
+                working_volume_ul=1600.0,
+                shaking_rpm=550.0,
+                inoculum_cells_per_strain=250.0,
+                endpoint=None,
+                provenance=[*shared, SOURCED_VALUES["hip_inoculum"]],
+                provenance_gaps=[
+                    ProvenanceGap(
+                        field="endpoint",
+                        reason=ProvenanceGapReason.deferred_pending_source_review,
+                        resolve_with=HOEPFNER_SUPPLEMENT,
+                        note=_HIP_PASSAGE_NOTE + " (Fig. S2)",
+                    )
+                ],
+            )
+        return CultureFormat(
+            vessel="24-well plate (Greiner 662102)",
+            working_volume_ul=1600.0,
+            shaking_rpm=550.0,
+            inoculum_cells_per_strain=320.0,
+            endpoint=EndpointRule.fixed_duration,
+            provenance=[
+                *shared,
+                SOURCED_VALUES["hop_inoculum"],
+                SOURCED_VALUES["hop_duration_hours"],
+            ],
+        )
+
+    @staticmethod
+    def _pre_culture(assay: str) -> PreCulture:
+        """HIP: an overnight log-phase YPD pre-culture; HOP: a 3 h thaw recovery."""
+        if assay == "HIP":
+            return PreCulture(
+                source=PreCultureSource.log_phase_culture,
+                medium=YPD_LIQUID,
+                source_label="overnight log phase pre-culture",
+                provenance=[SOURCED_VALUES["hip_inoculum"]],
+            )
+        return PreCulture(
+            source=PreCultureSource.thaw_recovery,
+            medium=YPD_LIQUID,
+            duration_hours=3.0,
+            source_label="thawed and recovered for 3 h in YPD",
+            provenance=[SOURCED_VALUES["hop_thaw_recovery"]],
+        )
+
     def _environment(
         self, assay: str, perturbations: list[EnvironmentPerturbationType]
-    ) -> Environment:
-        """The assay's environment: YPD liquid at 30 C for its own exposure duration."""
+    ) -> CultureEnvironment:
+        """The assay's environment: YPD liquid at 30 C in its own culture protocol.
+
+        HOP states its 16 h / ~5 doubling exposure. HIP's hours, generations and endpoint
+        are all gaps: every passage's plate was stored and the paper does not say which
+        one was hybridized (Fig. S2, not mirrored).
+        """
         if assay == "HIP":
-            return Environment(
+            return CultureEnvironment(
                 media=YPD_LIQUID,
                 temperature=Temperature(value=30.0),
                 perturbations=perturbations,
                 aerobicity="aerobic",
-                duration_generations=20.0,
-                provenance_gaps=[_HIP_DURATION_HOURS_GAP],
+                duration_hours=None,
+                duration_generations=None,
+                culture_format=self._culture_format(assay),
+                pre_culture=self._pre_culture(assay),
+                auxotroph_supplements=None,
+                provenance_gaps=[*_HIP_DURATION_GAPS, _AUXOTROPH_GAP],
             )
-        return Environment(
+        return CultureEnvironment(
             media=YPD_LIQUID,
             temperature=Temperature(value=30.0),
             perturbations=perturbations,
             aerobicity="aerobic",
             duration_hours=16.0,
             duration_generations=5.0,
+            culture_format=self._culture_format(assay),
+            pre_culture=self._pre_culture(assay),
+            auxotroph_supplements=None,
+            provenance_gaps=[_AUXOTROPH_GAP],
         )
 
     def _reference(
         self, assay: str, study: str
-    ) -> EnvironmentResponseExperimentReference:
+    ) -> StrainEnvironmentResponseExperimentReference:
         """The screen's own no-drug DMSO control of the diploid collection, score 0.
 
         Compound-INDEPENDENT but study-SPECIFIC: *"All compound profiles of one study use
@@ -1069,11 +1786,9 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                 )
             ],
         )
-        return EnvironmentResponseExperimentReference(
+        return StrainEnvironmentResponseExperimentReference(
             dataset_name=self.name,
-            genome_reference=ReferenceGenome(
-                species="Saccharomyces cerevisiae", strain="BY4743", ploidy="diploid"
-            ),
+            genome_reference=hoepfner_reference_genome(),
             environment_reference=control_env,
             phenotype_reference=EnvironmentResponsePhenotype(
                 measurement_type=MeasurementType.sensitivity_score,
@@ -1087,35 +1802,118 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             ),
         )
 
+    @staticmethod
+    def _constructed_orf(orf: str, source_orf: str) -> ConstructedOrf | None:
+        """The ORF a RENAMED strain was built against; ``None`` when it is the gene.
+
+        The shared resolver only says the source ORF is an alias of the current gene, so
+        whether it was merged into it, reannotated or merely renamed, and which interval
+        the cassette replaced, are gaps pending the SGD locus history.
+        """
+        if source_orf == orf:
+            return None
+        note = (
+            f"R64-4-1 lists {source_orf} as an alias of {orf}; whether it was merged, "
+            "reannotated or renamed, and its deleted interval, need the SGD locus history"
+        )
+        return ConstructedOrf(
+            source_systematic_name=source_orf,
+            relation=None,
+            deleted_span=None,
+            provenance_gaps=[
+                pending_source_review("relation", SGD_LOCUS_HISTORY, note),
+                pending_source_review("deleted_span", SGD_LOCUS_HISTORY, note),
+            ],
+        )
+
     def _genotype(
-        self, assay: str, orf: str, source_orf: str | None = None
+        self,
+        assay: str,
+        orf: str,
+        source_orf: str | None = None,
+        strain_entries: list[TableS5Entry] | None = None,
     ) -> Genotype:
-        """HIP -> heterozygous engineered-CNV (copy 1 of 2); HOP -> homozygous deletion.
+        """HIP -> heterozygous kanMX4 deletion; HOP -> homozygous barcoded deletion.
 
         ``orf`` is the CURRENT systematic name; ``source_orf`` is the deposited row name,
-        which differs only for a RENAMED (merged) ORF and then stays on the record as
-        ``perturbed_gene_name`` so that strain is not conflated with the gene's own row.
+        which differs only for a RENAMED ORF and then stays on the record as
+        ``perturbed_gene_name`` and ``constructed_orf``. ``strain_entries`` are the Table
+        S5 entries of the deposited HIP ORF (``None`` or empty when it is not listed).
         """
         perturbed = orf if source_orf is None else source_orf
+        constructed_orf = self._constructed_orf(orf, perturbed)
         if assay == "HIP":
+            gaps = [_BARCODE_GAP]
+            construction = None
+            if strain_entries:
+                construction = _strain_construction(strain_entries)
+            else:
+                gaps.append(_CONSTRUCTION_GAP)
+            if orf in _BACKGROUND_LOCI:
+                gaps.append(
+                    pending_source_review(
+                        "replaced_allele", GIAEVER_2002, _REPLACED_ALLELE_NOTE
+                    )
+                )
             return Genotype(
                 perturbations=[
-                    EngineeredCopyNumberPerturbation(
+                    HeterozygousDeletionPerturbation(
                         systematic_gene_name=orf,
                         perturbed_gene_name=perturbed,
-                        copy_number=1,
-                        reference_copy_number=2,
-                        marker="KanMX",
+                        cassette=str(SOURCED_VALUES["cassette"].value),
+                        collection=str(SOURCED_VALUES["hip_collection"].value),
+                        construction=construction,
+                        constructed_orf=constructed_orf,
+                        replaced_allele=None,
+                        provenance_gaps=gaps,
                     )
                 ]
             )
         return Genotype(
             perturbations=[
-                KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=perturbed
+                BarcodedKanMxDeletionPerturbation(
+                    systematic_gene_name=orf,
+                    perturbed_gene_name=perturbed,
+                    cassette=str(SOURCED_VALUES["cassette"].value),
+                    collection=str(SOURCED_VALUES["hop_collection"].value),
+                    constructed_orf=constructed_orf,
+                    provenance_gaps=[_BARCODE_GAP],
                 )
             ]
         )
+
+    def _treatment(
+        self, cmb: str, compound: Compound, conc: float
+    ) -> list[EnvironmentPerturbationType]:
+        """The column's perturbations: the compound, plus a pH factor for an acid/base.
+
+        At or below 200 uM the vehicle is the paper's 2% DMSO; above it the vehicle is a
+        typed gap. An ``PH_AGENT_CONDITIONS`` compound also carries a pH factor whose
+        magnitude is a gap (no pH is reported).
+        """
+        above_ceiling = conc > DMSO_CEILING_UM
+        perturbations: list[EnvironmentPerturbationType] = [
+            SmallMoleculePerturbation(
+                compound=compound,
+                concentration=Concentration(
+                    value=conc, unit=ConcentrationUnit.micromolar, basis=DoseBasis.IC30
+                ),
+                solvent=None
+                if above_ceiling
+                else Solvent(name="DMSO", percent=2.0, compound=self._vehicle()),
+                provenance_gaps=[_SOLVENT_GAP] if above_ceiling else [],
+            )
+        ]
+        if cmb in PH_AGENT_CONDITIONS:
+            perturbations.append(
+                EnvironmentPhysicalPerturbation(
+                    factor=PhysicalFactor.ph,
+                    magnitude=None,
+                    agent=compound,
+                    provenance_gaps=[_PH_GAP],
+                )
+            )
+        return perturbations
 
     def _intern_ref(self, obj: Any, hint: str, itxn: Any) -> Any:
         """Intern one constant sub-object and return the ``{"$ref": ...}`` pointer.
@@ -1138,7 +1936,8 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
 
         Returns ``(kept, dropped)``, where ``dropped`` is ``(column index, CMB id)`` for a
         column whose compound carries NO structure identifier after resolution. A CMB id
-        with no released SMILES at all is the encodable-only build filter, not a drop.
+        with no released SMILES (the encodable-only filter) and an ``EXCLUDED_CONDITIONS``
+        compound are neither kept nor dropped here; ``_column_census`` counts them.
         """
         kept: list[_ColumnMeta] = []
         dropped: list[tuple[int, str]] = []
@@ -1151,12 +1950,8 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                 continue
             cmb = match.group("cmb")
             smiles = (meta.get(cmb) or {}).get("smiles")
-            if smiles is None:
-                # ENCODABLE-COMPOUNDS-ONLY build: ~92% of the atlas is proprietary Novartis
-                # CMBxxx with no released structure (plus the lone named-but-structureless
-                # CMB222 "Enniatin derivative"); these are black-box perturbations a
-                # molecular encoder cannot represent, so they are dropped at build time.
-                continue
+            if smiles is None or cmb in EXCLUDED_CONDITIONS:
+                continue  # ENCODABLE_RULE / EXCLUSION_RULE, counted by _column_census
             compound = resolved_compound(
                 self._compound_name(cmb, meta),
                 smiles=smiles,
@@ -1168,22 +1963,7 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                 continue
             conc = float(match.group("conc"))
             study = match.group("study")
-            environment = self._environment(
-                assay,
-                [
-                    SmallMoleculePerturbation(
-                        compound=compound,
-                        concentration=Concentration(
-                            value=conc,
-                            unit=ConcentrationUnit.micromolar,
-                            basis=DoseBasis.IC30,
-                        ),
-                        solvent=Solvent(
-                            name="DMSO", percent=2.0, compound=self._vehicle()
-                        ),
-                    )
-                ],
-            )
+            environment = self._environment(assay, self._treatment(cmb, compound, conc))
             phenotype = EnvironmentResponsePhenotype(
                 measurement_type=MeasurementType.sensitivity_score,
                 assay_type=AssayType.pooled_competitive_growth_barcode,
@@ -1196,7 +1976,7 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             )
             # The template experiment is a real model dump; only the genotype, the score
             # and the interned environment pointer differ per record.
-            exp_base = EnvironmentResponseExperiment(
+            exp_base = StrainEnvironmentResponseExperiment(
                 dataset_name=self.name,
                 genotype=self._genotype(assay, "YAL001C"),
                 environment=environment,
@@ -1209,10 +1989,50 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             }
             kept.append(
                 _ColumnMeta(
-                    index, cmb, study, exp_base, phenotype.model_dump(), env_dump
+                    index,
+                    cmb,
+                    study,
+                    exp_base,
+                    phenotype.model_dump(),
+                    env_dump,
+                    conc=conc,
+                    compound=compound.name,
                 )
             )
         return kept, dropped
+
+    @staticmethod
+    def _column_census(
+        header: list[str], assay: str, meta: dict[str, dict[str, str | None]]
+    ) -> _ColumnCensus:
+        """Classify every deposited sensitivity column of ``assay`` (see ``_ColumnCensus``).
+
+        An ``EXCLUDED_CONDITIONS`` column must carry its expected Table S1 name, so a
+        renumbered or renamed compound fails the build instead of being excluded blind.
+        """
+        census = _ColumnCensus()
+        for index, raw in enumerate(header):
+            match = _COL_RE.match(raw.strip().strip('"'))
+            if match is None or match.group("z") is not None:
+                continue
+            if match.group("assay") != assay:
+                continue
+            cmb = match.group("cmb")
+            census.detection.append(index)
+            census.cmbs.add(cmb)
+            if cmb == POSITIVE_CONTROL_CMB:
+                census.positive_control.append(index)
+            if (meta.get(cmb) or {}).get("smiles") is None:
+                census.unencodable.append((index, cmb))
+            elif cmb in EXCLUDED_CONDITIONS:
+                name = (meta.get(cmb) or {}).get("common_name")
+                if name != EXCLUDED_CONDITIONS[cmb]:
+                    raise ValueError(
+                        f"CMB{cmb} is excluded as {EXCLUDED_CONDITIONS[cmb]!r} but Table "
+                        f"S1 names it {name!r}"
+                    )
+                census.excluded.append((index, cmb))
+        return census
 
     # ---- build ---------------------------------------------------------------- #
     def _read_header(self, filename: str) -> list[str]:
@@ -1230,22 +2050,32 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         reference_refs: dict[tuple[str, str], Any],
         pub_ref: Any,
         counts: _BuildCounts,
-        flag_orfs: frozenset[str],
+        strains: dict[str, list[TableS5Entry]],
         validate: Callable[[Any], object],
         resolve: Callable[[str], Any],
+        census: _ColumnCensus,
     ) -> Iterator[bytes]:
         """Yield one pickled record per (kept row, kept sensitivity column).
 
-        A row's ORF goes through ``resolve`` under ``ORF_RULE``; the cells a dropped
-        row loses in KEPT columns are counted, and the dropped columns' non-empty cells
-        are counted in the SAME pass, so the drop ledger is measured rather than
-        estimated. The first record of each column is validated against the experiment
-        schema, which is what makes the per-column template safe.
+        A row's ORF goes through ``resolve`` under ``ORF_RULE``, then the row must pass
+        ``DETECTION_RULE`` over ``census.detection``. The cells a dropped row loses in
+        KEPT columns are counted, and the dropped / excluded / unencodable columns'
+        non-empty cells of every surviving row are counted in the SAME pass, so the drop
+        ledger is measured rather than estimated. The first record of each column is
+        validated against the experiment schema, which is what makes the per-column
+        template safe. ``strains`` (Table S5, keyed by upper-cased ORF) gives a HIP
+        strain its construction record and its flag.
         """
+
+        def filled(parts: list[str], index: int) -> bool:
+            return index < len(parts) and parts[index].strip().strip('"') != ""
+
         dropped_orfs: list[DroppedOrf] = []
+        undetected: list[UndetectedStrain] = []
         renamed: dict[str, str] = {}
         validated: set[int] = set()
         genotypes: dict[str, dict[str, Any]] = {}
+        n_detection = len(census.detection)
         with open(path) as handle:
             handle.readline()
             for line in tqdm(handle, desc=f"Hoepfner2014 {assay}"):
@@ -1253,6 +2083,7 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                 source_orf = parts[0].strip().strip('"')
                 resolution = resolve(source_orf)
                 orf = resolution.systematic_name
+                lost = sum(1 for col in columns if filled(parts, col.index))
                 if resolution.status not in _KEPT_STATUSES or orf not in sgd_genes:
                     dropped_orfs.append(
                         DroppedOrf(
@@ -1260,29 +2091,57 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                             status=str(resolution.status.value),
                             resolved_to=orf,
                             feature_type=resolution.feature_type,
-                            n_records=sum(
-                                1
-                                for col in columns
-                                if col.index < len(parts)
-                                and parts[col.index].strip().strip('"') != ""
-                            ),
+                            n_records=lost,
                         )
                     )
                     continue
+                n_scored = sum(1 for index in census.detection if filled(parts, index))
+                if n_scored == 0:
+                    counts.empty_rows[assay] += 1
+                    continue
+                if n_scored < DETECTION_MIN_FRACTION * n_detection:
+                    undetected.append(
+                        UndetectedStrain(
+                            source_name=source_orf,
+                            systematic_name=orf,
+                            n_scored_columns=n_scored,
+                            n_columns=n_detection,
+                            n_records=lost,
+                        )
+                    )
+                    continue
+                counts.detected_rows[assay] += 1
                 if resolution.status == GeneNameStatus.RENAMED:
                     renamed[source_orf] = orf
+                entries = strains.get(source_orf.upper(), [])
                 genotype = genotypes.get(source_orf)
                 if genotype is None:
-                    genotype = self._genotype(assay, orf, source_orf).model_dump()
+                    if assay == "HIP":
+                        counts.construction[
+                            "not_listed"
+                            if not entries
+                            else "one_entry"
+                            if len(entries) == 1
+                            else "duplicate_entries"
+                        ] += 1
+                    genotype = self._genotype(
+                        assay, orf, source_orf, entries
+                    ).model_dump()
                     genotypes[source_orf] = genotype
                 for index, cmb in dropped_columns:
-                    if index < len(parts) and parts[index].strip().strip('"') != "":
+                    if filled(parts, index):
                         counts.dropped[(assay, cmb)] += 1
+                for index, cmb in census.excluded:
+                    if filled(parts, index):
+                        counts.excluded[(assay, cmb)] += 1
+                counts.unencodable[assay] += sum(
+                    1 for index, _ in census.unencodable if filled(parts, index)
+                )
                 # Table S5 names PHYSICAL strains by their 2014 name, so the flag matches
                 # on the deposited (source) name only: a RENAMED merged-ORF strain is not
                 # the listed strain of the gene it now maps to, and is never flagged
                 # through the current name.
-                flagged = assay == "HIP" and source_orf in flag_orfs
+                flagged = assay == "HIP" and any(entry.flagged for entry in entries)
                 for col in columns:
                     if col.index >= len(parts):
                         continue
@@ -1314,16 +2173,20 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                         }
                     )
         counts.dropped_orfs[assay] = sorted(dropped_orfs, key=lambda d: d.source_name)
+        counts.undetected[assay] = sorted(undetected, key=lambda d: d.source_name)
         counts.renamed_orfs[assay] = dict(sorted(renamed.items()))
         log.info(
             "Hoepfner2014 %s: wrote %d records; kept %d RENAMED rows under their current "
-            "name; dropped %d rows (%d cells) whose ORF is no current gene: %s",
+            "name; dropped %d rows (%d cells) whose ORF is no current gene: %s; dropped "
+            "%d rows (%d cells) under the detection rule",
             assay,
             counts.kept[assay],
             len(renamed),
             len(dropped_orfs),
             sum(d.n_records for d in dropped_orfs),
             [f"{d.source_name}:{d.status}" for d in counts.dropped_orfs[assay]],
+            len(undetected),
+            sum(d.n_records for d in undetected),
         )
 
     @post_process
@@ -1347,8 +2210,10 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         data_root = os.environ["DATA_ROOT"]
         repo_root = Path(__file__).resolve().parents[3]
         sgd_genes = _load_sgd_genes(data_root)
-        meta = _load_compound_meta(osp.join(self.raw_dir, "Table_S1.xls"))
-        table_s5 = load_table_s5_strains(repo_root)
+        table_s1 = osp.join(self.raw_dir, "Table_S1.xls")
+        meta = _load_compound_meta(table_s1)
+        ic30 = _load_ic30(table_s1)
+        strains = load_table_s5_strains(repo_root)
         publication = Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
         validate: Callable[[Any], object] = TypeAdapter(ExperimentType).validate_python
 
@@ -1358,20 +2223,24 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
 
         columns: dict[str, list[_ColumnMeta]] = {}
         dropped_columns: dict[str, list[tuple[int, str]]] = {}
+        censuses: dict[str, _ColumnCensus] = {}
         reference_refs: dict[tuple[str, str], Any] = {}
         with interned_env.begin(write=True) as itxn:
             for filename, assay in _ASSAYS:
-                kept, dropped = self._column_meta(
-                    self._read_header(filename), assay, meta, itxn
-                )
+                header = self._read_header(filename)
+                kept, dropped = self._column_meta(header, assay, meta, itxn)
                 columns[assay] = kept
                 dropped_columns[assay] = dropped
+                censuses[assay] = self._column_census(header, assay, meta)
                 log.info(
                     "Hoepfner2014 %s: %d kept sensitivity experiments, %d dropped "
-                    "(compound without a structure identifier)",
+                    "(compound without a structure identifier), %d excluded by rule, "
+                    "%d without a released structure",
                     assay,
                     len(kept),
                     len(dropped),
+                    len(censuses[assay].excluded),
+                    len(censuses[assay].unencodable),
                 )
                 for study in sorted({col.study for col in kept}):
                     reference_refs[(assay, study)] = self._intern_ref(
@@ -1380,7 +2249,6 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             pub_ref = self._intern_ref(publication, DOI, itxn)
 
         counts = _BuildCounts()
-        flag_orfs = frozenset(table_s5)
         resolve = self._resolver()
         idx = 0
         batch_size = 500_000
@@ -1395,9 +2263,10 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                 reference_refs,
                 pub_ref,
                 counts,
-                flag_orfs,
+                strains,
                 validate,
                 resolve,
+                censuses[assay],
             ):
                 txn.put(f"{idx}".encode(), value)
                 idx += 1
@@ -1409,17 +2278,20 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         interned_env.close()
         log.info("Wrote %d Hoepfner2014 environment-response experiments to LMDB", idx)
 
-        self._write_drop_ledger(meta, dropped_columns, counts)
-        self._write_table_s5_flags(table_s5, counts)
+        self._write_drop_ledger(meta, ic30, columns, dropped_columns, censuses, counts)
+        self._write_table_s5_flags(strains, counts)
         self._write_sourced_values()
 
     def _write_drop_ledger(
         self,
         meta: dict[str, dict[str, str | None]],
+        ic30: dict[str, float],
+        columns: dict[str, list[_ColumnMeta]],
         dropped_columns: dict[str, list[tuple[int, str]]],
+        censuses: dict[str, _ColumnCensus],
         counts: _BuildCounts,
     ) -> None:
-        """Write ``<root>/dropped_records.json``: the rule and what it measured."""
+        """Write ``<root>/dropped_records.json``: every rule and what it measured."""
         cmb_columns: Counter[str] = Counter()
         for dropped in dropped_columns.values():
             for _, cmb in dropped:
@@ -1446,10 +2318,75 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
                     ),
                 )
             )
+        detection = {
+            assay: DetectionLedger(
+                n_columns=len(census.detection),
+                n_rows_without_any_score=counts.empty_rows[assay],
+                n_rows_kept=counts.detected_rows[assay],
+                n_records_dropped=sum(
+                    d.n_records for d in counts.undetected.get(assay, [])
+                ),
+                dropped=counts.undetected.get(assay, []),
+            )
+            for assay, census in censuses.items()
+        }
+        excluded = [
+            ExcludedCondition(
+                cmb_id=cmb,
+                table_s1_name=name,
+                n_columns_by_assay={
+                    assay: sum(1 for _, c in census.excluded if c == cmb)
+                    for assay, census in censuses.items()
+                },
+                n_records_by_assay={
+                    assay: counts.excluded[(assay, cmb)] for assay in censuses
+                },
+            )
+            for cmb, name in sorted(EXCLUDED_CONDITIONS.items())
+        ]
+        unencodable_ids = {
+            assay: {cmb for _, cmb in census.unencodable}
+            for assay, census in censuses.items()
+        }
+        encodable = EncodableFilterLedger(
+            rule=ENCODABLE_RULE,
+            n_cmb_ids=len(set().union(*unencodable_ids.values())),
+            n_cmb_ids_by_assay={a: len(ids) for a, ids in unencodable_ids.items()},
+            n_columns_by_assay={
+                a: len(census.unencodable) for a, census in censuses.items()
+            },
+            n_records_by_assay={a: counts.unencodable[a] for a in censuses},
+            n_deposited_cmb_ids=len(set().union(*(c.cmbs for c in censuses.values()))),
+        )
+        low, high = IC30_RATIO_RANGE
+        outside: list[DoseOutsideIc30] = []
+        with_ic30: dict[str, int] = {}
+        for assay, assay_columns in columns.items():
+            with_ic30[assay] = 0
+            for col in assay_columns:
+                if col.cmb not in ic30:
+                    continue
+                with_ic30[assay] += 1
+                ratio = col.conc / ic30[col.cmb]
+                if low <= ratio <= high:
+                    continue
+                outside.append(
+                    DoseOutsideIc30(
+                        assay=assay,
+                        cmb_id=col.cmb,
+                        compound=col.compound,
+                        study=col.study,
+                        concentration_um=col.conc,
+                        ic30_um=ic30[col.cmb],
+                        ratio=ratio,
+                    )
+                )
         report = DroppedRecordReport(
             dataset=self.name,
             rule=DROP_RULE,
             orf_rule=ORF_RULE,
+            detection_rule=DETECTION_RULE,
+            exclusion_rule=EXCLUSION_RULE,
             n_kept=sum(counts.kept.values()),
             n_dropped=sum(counts.dropped.values()),
             kept_by_assay=dict(counts.kept),
@@ -1460,6 +2397,24 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
             dropped_compounds=compounds,
             dropped_orfs=counts.dropped_orfs,
             renamed_orfs=counts.renamed_orfs,
+            detection=detection,
+            excluded_conditions=excluded,
+            encodable_filter=encodable,
+            positive_control={
+                assay: len(census.positive_control)
+                for assay, census in censuses.items()
+            },
+            solvent_gap_columns={
+                assay: sum(1 for col in cols if col.conc > DMSO_CEILING_UM)
+                for assay, cols in columns.items()
+            },
+            ph_gap_columns={
+                assay: sum(1 for col in cols if col.cmb in PH_AGENT_CONDITIONS)
+                for assay, cols in columns.items()
+            },
+            dose_outside_ic30_range=outside,
+            n_kept_columns_with_ic30=with_ic30,
+            hip_construction=dict(counts.construction),
             created_at=datetime.now(UTC).isoformat(),
         )
         out = osp.join(self.root, "dropped_records.json")
@@ -1473,38 +2428,46 @@ class EnvChemgenHoepfner2014Dataset(ExperimentDataset):
         )
 
     def _write_table_s5_flags(
-        self, table_s5: dict[str, dict[str, str]], counts: _BuildCounts
+        self, strains: dict[str, list[TableS5Entry]], counts: _BuildCounts
     ) -> None:
         """Write ``<root>/table_s5_affected_strains.json``: the reagent-quality flag."""
         flagged = counts.flagged
-        strains = [
-            TableS5Strain(
-                systematic_gene_name=orf,
-                common_gene_name=row["gene"],
-                cluster=row["Cluster"],
-                is_positional=row["is_positional"] == "True",
-                mutation=row["mutation"],
-                construction_lab=row["Lab"],
-                n_records=flagged[orf],
+        rows: list[TableS5Strain] = []
+        for source_orf in sorted(flagged):
+            entries = strains[source_orf.upper()]
+
+            def joined(values: list[str]) -> str:
+                return "; ".join(sorted({v for v in values if v}))
+
+            rows.append(
+                TableS5Strain(
+                    systematic_gene_name=source_orf,
+                    cluster=joined([e.cluster for e in entries]),
+                    is_positional=any(e.is_positional for e in entries),
+                    mutation=joined([e.mutation for e in entries]),
+                    validation_result=joined([e.validation_result for e in entries]),
+                    construction_lab=joined([e.lab for e in entries]),
+                    construction_batch=joined([e.batch for e in entries]),
+                    n_table_s5_entries=len(entries),
+                    n_records=flagged[source_orf],
+                )
             )
-            for orf, row in sorted(table_s5.items())
-            if flagged[orf] > 0
-        ]
-        positional = [strain for strain in strains if strain.is_positional]
+        positional = [strain for strain in rows if strain.is_positional]
         flag_file = TableS5FlagFile(
             dataset=self.name,
             citation_key=CITATION_KEY,
             source_csv=TABLE_S5_STRAINS_CSV,
             source_csv_sha256=TABLE_S5_STRAINS_CSV_SHA256,
+            source_script=TABLE_S5_STRAINS_SCRIPT,
             table_s5_path=TABLE_S5_XLS,
             table_s5_sha256=TABLE_S5_XLS_SHA256,
             paper_quote=str(SOURCED_VALUES["table_s5_mutations"].quote),
             policy=TABLE_S5_POLICY,
-            n_strains=len(strains),
+            n_strains=len(rows),
             n_positional_strains=len(positional),
-            n_records_flagged=sum(strain.n_records for strain in strains),
+            n_records_flagged=sum(strain.n_records for strain in rows),
             n_positional_records_flagged=sum(strain.n_records for strain in positional),
-            strains=strains,
+            strains=rows,
             created_at=datetime.now(UTC).isoformat(),
         )
         out = osp.join(self.root, "table_s5_affected_strains.json")

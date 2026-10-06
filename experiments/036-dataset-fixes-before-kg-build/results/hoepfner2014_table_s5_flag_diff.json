@@ -1,0 +1,40 @@
+{
+  "table_s5_sha256": "b123dc3e87fc10d3b4256f449fcd2eb38c91d1779000278af5a1a788356624a2",
+  "n_entries": 5996,
+  "n_placeholder_rows_skipped": 244,
+  "n_distinct_orf_tokens": 5911,
+  "n_orf_tokens_not_systematic": [
+    "YAL034W-a",
+    "YAL035C-a",
+    "YAL043C-a",
+    "YCLO51W",
+    "YML009c",
+    "YMR23C"
+  ],
+  "n_entries_with_cluster": 188,
+  "n_entries_positional": 160,
+  "n_entries_mut_without_cluster": [
+    "YCR035C"
+  ],
+  "n_flagged_orfs": 189,
+  "n_flagged_orfs_017_csv": 185,
+  "flagged_not_in_017_csv": [
+    "YCR035C",
+    "YCR061W",
+    "YIL015C-A",
+    "YJL017W"
+  ],
+  "in_017_csv_not_flagged": [],
+  "n_duplicate_orfs": 85,
+  "duplicate_orfs_with_differing_lab_or_batch": [],
+  "duplicate_orfs_with_differing_cluster": [
+    "YMR198W"
+  ],
+  "n_entries_without_batch": 14,
+  "mutations": {
+    "CL1": "Chromosome XI Aneuploidy",
+    "CL2": "Chromosome XI Aneuploidy",
+    "CL3": "WHI2 nonsense mutation",
+    "CL4": "Chromosome V locus amplification"
+  }
+}

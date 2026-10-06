@@ -83,7 +83,9 @@ WORKERS="${V21_WORKERS:-1}"
 # Flipped to 0 in the commit that fixed the trunk shape from the benchmark (2026-10-05).
 BENCH_PENDING="${V21_BENCH_PENDING:-0}"
 
-ARMS_ROUND=(S_ref S_mask S_sink S_prop2 S_nodrop S_stack S_prot)
+# Nine arms: the seven single changes plus the two higher-rank operator forms
+# (S_basis64, S_hadam) that, with S_sink against S_ref, settle the operator on twelve seeds.
+ARMS_ROUND=(S_ref S_mask S_sink S_prop2 S_nodrop S_stack S_prot S_basis64 S_hadam)
 SEEDS=(0 1 2 3 4 5 6 7 8 9 10 11)
 case "$STAGE" in
   canary) JOBS=(); for i in $(seq 1 "$PACK"); do JOBS+=("S_ref_s$((i-1)):0"); done

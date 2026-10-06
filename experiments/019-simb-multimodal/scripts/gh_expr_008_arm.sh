@@ -703,6 +703,16 @@ case "$ARM" in
                      OVERRIDES=("cell_dataset.node_embeddings=[fudt_upstream,calm,prot_T5_all,fudt_downstream]"
                                 data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(small-stack mask-off "split${ARM##*_s}" expression stage-small round-small) ;;
+  # The two higher-rank pair forms of the operator document (notes-tex/perturbation-operator,
+  # tab:rank): one run each at 4,100 epochs (0.228 and 0.214 against 0.210), never
+  # replicated. Twelve seeds here, paired with S_ref and S_sink, settle which operator the
+  # next training uses.
+  S_basis64_s[0-9]|S_basis64_s1[01])
+                     OVERRIDES=(multitask.response_basis_rank=64 data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(small-basis64 pair-rank64 mask-off "split${ARM##*_s}" expression stage-small round-small) ;;
+  S_hadam_s[0-9]|S_hadam_s1[01])
+                     OVERRIDES=(model.perturbation_head.hadamard=replace data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(small-hadamard pair-rank90 mask-off "split${ARM##*_s}" expression stage-small round-small) ;;
   S_prot_s[0-9]|S_prot_s1[01])
                      OVERRIDES=("multitask.head_phenotypes.per_gene=[protein_abundance]"
                                 multitask.head_phenotype_names.per_gene=proteome

@@ -30,6 +30,12 @@
 #   S_nodrop  operator attention dropout off
 #   S_stack   the four-part embedding stack instead of ProtT5 alone (the size control)
 #   S_prot    the single-head PROTEOME model on this trunk (the proteome reference)
+#   S_basis64 the rank-64 response basis at the readout (pair rank 64)
+#   S_hadam   the elementwise product at the operator (pair rank 90)
+# The last two and S_sink are the operator question of notes-tex/perturbation-operator: the
+# softmax operator hands every gene the same vector at one deletion, the sigmoid gate gives
+# each gene nine dials, the two product forms give each gene a vector of its own. Each has
+# one unreplicated run at budget; twelve paired seeds here decide the operator.
 # Masked objective OFF in the default (mask_schedule [0]), inherited from v19, because the
 # round contrasts arms against the unmasked reference the matched baselines were drawn for;
 # S_mask is the arm that restores it.

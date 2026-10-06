@@ -71,6 +71,11 @@ ARM_OVERRIDES[F_l4w180]="model.num_transformer_layers=4 model.hidden_channels=18
 # change against F_b128).
 ARM_OVERRIDES[F_b128lr1]="data_module.batch_size=128"
 ARM_OVERRIDES[F_b128wu]="data_module.batch_size=128 regression_task.optimizer.lr=6.0e-4 regression_task.lr_scheduler.type=CosineAnnealingWarmupRestarts regression_task.lr_scheduler.first_cycle_steps=100000 regression_task.lr_scheduler.warmup_steps=50 regression_task.lr_scheduler.max_lr=6.0e-4 regression_task.lr_scheduler.min_lr=1.0e-6"
+# WAVE 3 (queued 05:15 behind wave 1's batch-128 card). At 05:11 F_b128 had collapsed on a
+# second split seed (2 of 3) while F_b128lr1 and F_b128wu were alive on 3 of 3 at epoch
+# 340. The operator question on the warmup arm: the Hadamard operator of v21's S_hadam
+# (model.perturbation_head.hadamard=replace), paired with F_b128wu by split seed.
+ARM_OVERRIDES[F_b128wu_hadam]="${ARM_OVERRIDES[F_b128wu]} model.perturbation_head.hadamard=replace"
 
 # ONE ARM PER CARD. The first submission (job 3315, cancelled ten minutes in) put the four
 # arms on each card, one card per split seed. The four processes time-slice the card, so a
@@ -88,6 +93,7 @@ case "$WAVE:$TASK" in
   1:3) ARM=F_l4w180;  SPLITS=(0 1) ;;
   2:0) ARM=F_b128lr1; SPLITS=(0 1 2) ;;
   2:1) ARM=F_b128wu;  SPLITS=(0 1 2) ;;
+  3:0) ARM=F_b128wu_hadam; SPLITS=(0 1 2) ;;
   *) echo "unknown wave:task $WAVE:$TASK" >&2; exit 1 ;;
 esac
 

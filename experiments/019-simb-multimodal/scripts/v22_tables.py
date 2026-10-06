@@ -1,0 +1,204 @@
+# experiments/019-simb-multimodal/scripts/v22_tables.py
+# [[experiments.019-simb-multimodal.scripts.v22_tables]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/019-simb-multimodal/scripts/v22_tables
+"""Typeset the v22 round from results/v22_readout.json (written by v22_readout.py).
+
+Writes two tables into notes-tex/figure-3-gate/tables/:
+
+  v22_arms.tex   one row per arm: what it changes, split seeds run, how many collapsed, the
+                 mean registered-window score over the complete runs, the paired difference
+                 against F_ref on shared split seeds, seconds per epoch
+  v22_runs.tex   one row per run with its W&B link
+  shrinkage.tex  the one-scalar shrinkage probe on saved validation predictions
+
+Conventions (stated in the captions): the best value of a score column is bold; an arm
+whose complete runs are all above (below) F_ref on the shared split seeds carries an up
+(down) arrow. A run is COLLAPSED when its prediction spread ratio never reached 0.05 in 300
+epochs, or reached it and then stayed below 0.01 for 50 consecutive epochs; COMPLETE when it reached its last epoch; otherwise PARTIAL, and a
+partial run has no window score.
+
+    python experiments/019-simb-multimodal/scripts/v22_tables.py
+"""
+from __future__ import annotations
+
+import json
+import os
+import os.path as osp
+import statistics as st
+
+HERE = osp.dirname(osp.abspath(__file__))
+RESULTS = osp.join(osp.dirname(HERE), "results", "v22_readout.json")
+OUT = osp.join(osp.dirname(osp.dirname(osp.dirname(HERE))), "notes-tex", "figure-3-gate", "tables")
+URL = "https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/"
+ARMS = {
+    "F_ref": "the v21 reference: batch 32, lr $3\\times10^{-4}$, six layers, width 90",
+    "F_b128lr1": "batch 128, lr $3\\times10^{-4}$",
+    "F_b128": "batch 128, lr $6\\times10^{-4}$",
+    "F_b128wu": "batch 128, lr $6\\times10^{-4}$ after a 50-epoch warmup",
+    "F_b128lr4": "batch 128, lr $1.2\\times10^{-3}$",
+    "F_l4w180": "batch 32, four layers, width 180",
+    "F_b128wu_hadam": "F\\_b128wu with the Hadamard operator",
+    "F_b128wu_wd": "F\\_b128wu with weight decay 0.3, 800 epochs",
+    "F_b128wu_drop": "F\\_b128wu with dropout 0.3, 800 epochs",
+}
+
+
+def tex(name: str) -> str:
+    return name.replace("_", "\\_")
+
+
+def collapsed(r: dict) -> bool:
+    """Launched and then at least 50 consecutive epochs at spread below 0.01, or never
+    launched (spread never reached 0.05) with at least 300 epochs run.
+    """
+    never = r["launch_epoch"] is None and r["last_epoch"] >= 300
+    return never or r["longest_dead_stretch"] >= 50
+
+
+def complete(r: dict) -> bool:
+    return r["last_epoch"] >= r["max_epochs"] - 1
+
+
+def state(r: dict) -> str:
+    last = f"{r['last_epoch']:,}".replace(",", "{,}")
+    if collapsed(r):
+        if r["launch_epoch"] is None:
+            return f"never launched ({last})"
+        return f"collapsed at {r['dead_from_epoch']} ({last})"
+    if complete(r):
+        return "complete"
+    return f"running ({last})" if r["state"] == "running" else f"stopped ({last})"
+
+
+def num(v: float | None, places: int = 3, bold: bool = False) -> str:
+    if v is None:
+        return ""
+    s = f"{v:.{places}f}"
+    return f"\\textbf{{{s}}}" if bold else s
+
+
+def main() -> None:
+    with open(RESULTS) as f:
+        data = json.load(f)
+    runs = {a: {int(k): v for k, v in d.items()} for a, d in data["runs"].items() if a in ARMS}
+    os.makedirs(OUT, exist_ok=True)
+    ref = runs.get("F_ref", {})
+
+    def window(r: dict) -> float | None:
+        return r["window_mean"] if complete(r) and not collapsed(r) and r["max_epochs"] >= 1200 else None
+
+    # ---- arms
+    arm_rows = []
+    for arm in ARMS:
+        if arm not in runs:
+            continue
+        rs = runs[arm]
+        wins = {s: window(r) for s, r in rs.items() if window(r) is not None}
+        diffs = {s: wins[s] - window(ref[s]) for s in wins if s in ref and window(ref[s]) is not None}
+        mark = ""
+        if arm != "F_ref" and len(diffs) >= 2:
+            if all(d > 0 for d in diffs.values()):
+                mark = " $\\uparrow$"
+            elif all(d < 0 for d in diffs.values()):
+                mark = " $\\downarrow$"
+        secs = [r["epoch_seconds"] for r in rs.values() if r["epoch_seconds"] is not None]
+        arm_rows.append(
+            {
+                "arm": arm,
+                "n": len(rs),
+                "n_collapsed": sum(collapsed(r) for r in rs.values()),
+                "n_complete": len(wins),
+                "mean_window": st.mean(wins.values()) if wins else None,
+                "mean_diff": st.mean(diffs.values()) if diffs else None,
+                "n_diff": len(diffs),
+                "mark": mark,
+                "secs": st.mean(secs) if secs else None,
+            }
+        )
+    best = max((a["mean_window"] for a in arm_rows if a["mean_window"] is not None), default=None)
+    lines = [
+        "%% SOURCE: generated by experiments/019-simb-multimodal/scripts/v22_tables.py from results/v22_readout.json",
+        "\\begin{tabular}{@{}lp{46mm}rrrrrr@{}}",
+        "\\toprule",
+        "arm & change against the reference & \\shortstack[r]{split\\\\seeds\\\\run} & "
+        "\\shortstack[r]{collapsed\\\\or never\\\\launched} & "
+        "\\shortstack[r]{complete\\\\at 1{,}200\\\\epochs} & "
+        "\\shortstack[r]{mean val Pearson\\\\per feature, epochs\\\\1{,}000 to 1{,}200\\\\(complete runs)} & "
+        "\\shortstack[r]{mean paired\\\\difference vs F\\_ref\\\\($n$ shared split seeds)} & "
+        "\\shortstack[r]{s per\\\\epoch} \\\\",
+        "\\midrule",
+    ]
+    for a in arm_rows:
+        diff = "" if a["mean_diff"] is None else f"{a['mean_diff']:+.3f} ({a['n_diff']}){a['mark']}"
+        lines.append(
+            f"{tex(a['arm'])} & {ARMS[a['arm']]} & {a['n']} & {a['n_collapsed']} & {a['n_complete']} & "
+            f"{num(a['mean_window'], 3, a['mean_window'] is not None and a['mean_window'] == best)} & "
+            f"{diff} & {num(a['secs'], 1)} \\\\"
+        )
+    lines += ["\\bottomrule", "\\end{tabular}"]
+    with open(osp.join(OUT, "v22_arms.tex"), "w") as f:
+        f.write("\n".join(lines) + "\n")
+
+    # ---- runs
+    best_run = max((window(r) for rs in runs.values() for r in rs.values() if window(r) is not None), default=None)
+    lines = [
+        "%% SOURCE: generated by experiments/019-simb-multimodal/scripts/v22_tables.py from results/v22_readout.json",
+        "\\begin{tabular}{@{}llrrrrrrrl@{}}",
+        "\\toprule",
+        " & & & \\multicolumn{3}{c}{\\shortstack{val Pearson per\\\\feature, mean of the 20\\\\epochs ending at epoch}} & & & & \\\\",
+        "\\cmidrule(lr){4-6}",
+        "arm & W\\&B run & \\shortstack[r]{split\\\\seed} & 200 & 600 & 1{,}199 & "
+        "\\shortstack[r]{val Pearson,\\\\mean over\\\\epochs 1{,}000\\\\to 1{,}200} & "
+        "\\shortstack[r]{spread\\\\ratio, last\\\\epoch} & "
+        "\\shortstack[r]{train Pearson,\\\\last eval-mode\\\\pass} & \\shortstack[l]{state (last\\\\epoch)} \\\\",
+        "\\midrule",
+    ]
+    for arm in ARMS:
+        if arm not in runs:
+            continue
+        for split in sorted(runs[arm]):
+            r = runs[arm][split]
+            w = window(r)
+            lines.append(
+                f"{tex(arm)} & \\href{{{URL}{r['id']}}}{{\\texttt{{{r['id']}}}}} & {split} & "
+                f"{num(r['ladder']['200'])} & {num(r['ladder']['600'])} & {num(r['ladder']['1199'])} & "
+                f"{num(w, 3, w is not None and w == best_run)} & {num(r['pred_sd_ratio_last'])} & "
+                f"{num(r['traineval_pearson_last'])} & {state(r)} \\\\"
+            )
+        lines.append("\\addlinespace")
+    lines[-1] = "\\bottomrule"
+    lines.append("\\end{tabular}")
+    with open(osp.join(OUT, "v22_runs.tex"), "w") as f:
+        f.write("\n".join(lines) + "\n")
+    for a in arm_rows:
+        print(a)
+
+    # ---- shrinkage probe (results/prediction_shrinkage_probe.json)
+    with open(osp.join(osp.dirname(RESULTS), "prediction_shrinkage_probe.json")) as f:
+        probe = json.load(f)["rows"]
+    lines = [
+        "%% SOURCE: generated by experiments/019-simb-multimodal/scripts/v22_tables.py from results/prediction_shrinkage_probe.json",
+        "\\begin{tabular}{@{}lrrrrrrr@{}}",
+        "\\toprule",
+        "checkpoint & \\shortstack[r]{val\\\\strains} & \\shortstack[r]{val Pearson\\\\per feature} & "
+        "\\shortstack[r]{sd(pred) /\\\\sd(target)} & \\shortstack[r]{fitted\\\\scalar $c$} & "
+        "\\shortstack[r]{NMSE,\\\\per-gene\\\\mean} & \\shortstack[r]{NMSE,\\\\model\\\\as is} & "
+        "\\shortstack[r]{NMSE,\\\\shrunk\\\\by $c$} \\\\",
+        "\\midrule",
+    ]
+    for row in probe:
+        arm = next(t for t in row["tags"] if t[:2] in ("V_", "P_"))
+        head = "expression" if arm.startswith("V_") else "proteome"
+        trio = [row["nmse_mean"], row["nmse_raw"], row["nmse_shrunk"]]
+        cells = [num(v, 3, v == min(trio)) for v in trio]
+        lines.append(
+            f"{head}, {tex(arm)} & {row['n_strains']} & {num(row['pearson_per_feature'])} & "
+            f"{num(row['pred_sd_ratio'])} & {num(row['c'], 2)} & {cells[0]} & {cells[1]} & {cells[2]} \\\\"
+        )
+    lines += ["\\bottomrule", "\\end{tabular}"]
+    with open(osp.join(OUT, "shrinkage.tex"), "w") as f:
+        f.write("\n".join(lines) + "\n")
+
+
+if __name__ == "__main__":
+    main()

@@ -71,8 +71,36 @@ def read_run(run: wandb.apis.public.Run) -> dict:
         return vals[-1] if vals else None
 
     secs = [rows[e]["perf/epoch_seconds"] for e in rows if "perf/epoch_seconds" in rows[e] and e >= 20]
+    # LAUNCH AND COLLAPSE from the prediction spread ratio (sd of predictions over sd of
+    # targets across validation strains). A head LAUNCHES at the first epoch the ratio
+    # reaches 0.05 (the round's launch gate). A run COLLAPSED if, after launching, the
+    # ratio stayed below 0.01 for at least 50 consecutive logged epochs (the count is
+    # stored; the threshold is applied in v22_tables.py): the per-gene-mean
+    # predictor. A single-epoch dip is not a collapse.
+    sp = sorted(
+        (e, rows[e]["val/expression/pred_sd_ratio"])
+        for e in rows
+        if "val/expression/pred_sd_ratio" in rows[e]
+    )
+    launch_epoch = next((e for e, v in sp if v >= 0.05), None)
+    longest_dead, run_len, dead_from = 0, 0, None
+    start = None
+    for e, v in sp:
+        if launch_epoch is not None and e > launch_epoch and v < 0.01:
+            if run_len == 0:
+                start = e
+            run_len += 1
+            if run_len > longest_dead:
+                longest_dead, dead_from = run_len, start
+        else:
+            run_len = 0
     return {
         "id": run.id,
+        "state": run.state,
+        "max_epochs": int(run.config["trainer"]["max_epochs"]),
+        "launch_epoch": launch_epoch,
+        "longest_dead_stretch": longest_dead,
+        "dead_from_epoch": dead_from,
         "last_epoch": last,
         "ladder": {str(e): trailing(e) for e in LADDER},
         "window_mean": window,

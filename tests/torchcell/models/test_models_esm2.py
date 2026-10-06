@@ -33,6 +33,7 @@ download.
 """
 
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -280,26 +281,63 @@ def test_embed_wraps_a_bare_string_into_a_batch_of_one(
     torch.testing.assert_close(out, torch.tensor([[[2.0, 0.0]]]), rtol=0.0, atol=0.0)
 
 
+def _has_batch_encode_plus(tokenizer: Any) -> bool:
+    """Whether the installed tokenizer CLASS still provides ``batch_encode_plus``.
+
+    The honest predicate for the wrapper's call: it is the attribute lookup
+    esm2.py:83 makes, not a version number (transformers 4.57.1 has it, 5.x removed it).
+    """
+    return hasattr(type(tokenizer), "batch_encode_plus")
+
+
 def test_real_esm_tokenizer_truncation_keeps_1020_residues(
     wrapper: Esm2, tmp_path: Path, faked: tuple[CallLog, _FakeTokenizer, _FakeMaskedLM]
 ) -> None:
-    """Finding: ``max_sequence_size`` 1022 is spent on TOKENS, so 1020 residues survive.
+    """Finding: ``max_sequence_size`` 1022 is spent on TOKENS, so 1020 residues survive;
+    and on transformers 5 the wrapper cannot tokenize at all.
 
     ESM-2 has 1024 positions: 1022 residues plus CLS and EOS. esm2.py:88 passes
-    ``max_length=self.max_sequence_size`` (1022) to ``batch_encode_plus``, whose
-    ``max_length`` counts the special tokens, so a 1024-residue protein is cut to
-    1022 tokens = CLS + 1020 residues + EOS, two residues fewer than the model
-    accepts. Verified with the real ``EsmTokenizer`` on the published vocabulary
-    (``A`` is id 5, CLS 0, EOS 2). Pinned until ``max_length`` is
-    ``max_sequence_size + 2`` or the property is redefined as a token budget.
+    ``max_length=self.max_sequence_size`` (1022) to the tokenizer, whose ``max_length``
+    counts the special tokens, so a 1024-residue protein is cut to 1022 tokens = CLS +
+    1020 residues + EOS, two residues fewer than the model accepts. Proved first with
+    the real ``EsmTokenizer`` (published vocabulary: ``A`` is id 5, CLS 0, EOS 2)
+    through its ``__call__`` API, which both transformers 4 and 5 support. Pinned until
+    ``max_length`` is ``max_sequence_size + 2`` or the property is redefined as a token
+    budget.
+
+    esm2.py:83 and nucleotide_transformer.py:78 call ``batch_encode_plus``, removed in
+    transformers 5; CI runs 5.18.0 (unpinned), this machine 4.57.1. The branch is on
+    ``hasattr(type(tokenizer), "batch_encode_plus")`` (``_has_batch_encode_plus``):
+    where it holds (transformers 4) the wrapper reproduces the truncation exactly;
+    where it does not (transformers 5) ``embed`` raises ``AttributeError: EsmTokenizer
+    has no attribute batch_encode_plus`` and the model is never called. Pinned until
+    both wrappers call the tokenizer directly.
     """
     _, _, model = faked
     vocab = tmp_path / "vocab.txt"
     vocab.write_text("\n".join(ESM_VOCAB) + "\n")
-    wrapper.tokenizer = EsmTokenizer(vocab_file=str(vocab))
-    wrapper.embed(["A" * 1024])
-    ((ids, kwargs),) = model.calls
-    assert ids.shape == (1, 1022)
-    assert ids[0, 0].item() == 0 and ids[0, -1].item() == 2
-    assert torch.equal(ids[0, 1:-1], torch.full((1020,), 5))
-    assert torch.equal(kwargs["attention_mask"], torch.ones(1, 1022, dtype=torch.long))
+    tokenizer = EsmTokenizer(vocab_file=str(vocab))
+    direct = tokenizer(
+        ["A" * 1024],
+        max_length=1022,
+        truncation=True,
+        padding=True,
+        return_tensors="pt",
+    )
+    expected_ids = torch.tensor([[0] + [5] * 1020 + [2]])
+    assert torch.equal(direct["input_ids"], expected_ids)
+    assert torch.equal(direct["attention_mask"], torch.ones(1, 1022, dtype=torch.long))
+
+    wrapper.tokenizer = tokenizer
+    if _has_batch_encode_plus(tokenizer):
+        wrapper.embed(["A" * 1024])
+        ((ids, kwargs),) = model.calls
+        assert torch.equal(ids, expected_ids)
+        assert torch.equal(
+            kwargs["attention_mask"], torch.ones(1, 1022, dtype=torch.long)
+        )
+    else:
+        message = "EsmTokenizer has no attribute batch_encode_plus"
+        with pytest.raises(AttributeError, match=f"^{re.escape(message)}$"):
+            wrapper.embed(["A" * 1024])
+        assert model.calls == []

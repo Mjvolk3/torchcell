@@ -27,11 +27,13 @@ stray leading axis).
 """
 
 import os
+import re
 from pathlib import Path
 from typing import Any
 
 import pytest
 import torch
+from transformers import EsmTokenizer
 
 import torchcell.models.nucleotide_transformer as nt_module
 from torchcell.models.nucleotide_transformer import NucleotideTransformer
@@ -270,3 +272,55 @@ def test_embed_wraps_a_bare_string_into_a_batch_of_one(
     out = wrapper.embed("ACG", mean_embedding=True)
     assert tok.calls[0][0] == ["ACG"]
     torch.testing.assert_close(out, torch.tensor([[1.5, 0.0]]))
+
+
+# 2026.10.06, Phase 21 CI addendum: the wrapper on a REAL tokenizer.
+NT_STANDIN_VOCAB = ["<unk>", "<pad>", "<mask>", "<cls>", "<eos>", "A", "C", "G", "T"]
+
+
+def test_real_tokenizer_path_depends_on_batch_encode_plus(
+    wrapper: NucleotideTransformer,
+    faked: tuple[CallLog, _FakeTokenizer, _FakeMaskedLM],
+    tmp_path: Path,
+) -> None:
+    """Finding: nucleotide_transformer.py:78 calls ``batch_encode_plus``, removed in
+    transformers 5; CI runs 5.18.0 (unpinned), this machine 4.57.1.
+
+    Stand-in: a real ``EsmTokenizer`` (the class the Nucleotide Transformer checkpoints
+    load) on a 9-token single-base vocabulary written to ``tmp_path``, with
+    ``model_max_length = 6``: ids unk 0, pad 1, mask 2, cls 3, eos 4, A 5, C 6, G 7,
+    T 8. Its ``__call__`` API (both transformers 4 and 5) pads ``["AC", "ACGT"]`` to
+    ``[[3, 5, 6, 4, 1, 1], [3, 5, 6, 7, 8, 4]]``.
+
+    The branch is on ``hasattr(type(tokenizer), "batch_encode_plus")``, the attribute
+    lookup the wrapper makes. Where it holds the wrapper sends exactly those ids, the
+    mask ``ids != 1``, and the masked mean of the fake's ``[t, 10 * b]`` state is
+    ``[[6 / 4, 0], [15 / 6, 10]] = [[1.5, 0], [2.5, 10]]``. Where it does not, ``embed``
+    raises ``AttributeError: EsmTokenizer has no attribute batch_encode_plus`` before
+    the model runs. Pinned until the wrapper calls the tokenizer directly.
+    """
+    _, _, model = faked
+    vocab = tmp_path / "nt_vocab.txt"
+    vocab.write_text("\n".join(NT_STANDIN_VOCAB) + "\n")
+    tokenizer = EsmTokenizer(vocab_file=str(vocab), model_max_length=6)
+    expected_ids = torch.tensor([[3, 5, 6, 4, 1, 1], [3, 5, 6, 7, 8, 4]])
+    direct = tokenizer(
+        ["AC", "ACGT"], return_tensors="pt", padding="max_length", max_length=6
+    )
+    assert torch.equal(direct["input_ids"], expected_ids)
+    assert tokenizer.pad_token_id == 1
+
+    wrapper.tokenizer = tokenizer
+    if hasattr(type(tokenizer), "batch_encode_plus"):
+        out = wrapper.embed(["AC", "ACGT"], mean_embedding=True)
+        ((ids, kwargs),) = model.calls
+        assert torch.equal(ids, expected_ids)
+        assert torch.equal(kwargs["attention_mask"], expected_ids != 1)
+        torch.testing.assert_close(
+            out, torch.tensor([[1.5, 0.0], [2.5, 10.0]]), rtol=0.0, atol=1e-6
+        )
+    else:
+        message = "EsmTokenizer has no attribute batch_encode_plus"
+        with pytest.raises(AttributeError, match=f"^{re.escape(message)}$"):
+            wrapper.embed(["AC", "ACGT"], mean_embedding=True)
+        assert model.calls == []

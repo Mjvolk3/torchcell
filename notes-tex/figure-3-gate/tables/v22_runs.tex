@@ -5,9 +5,9 @@
 \cmidrule(lr){4-6}
 arm & W\&B run & \shortstack[r]{split\\seed} & 200 & 600 & 1{,}199 & \shortstack[r]{val Pearson,\\mean over\\epochs 1{,}000\\to 1{,}200} & \shortstack[r]{spread\\ratio, last\\epoch} & \shortstack[r]{train Pearson,\\last eval-mode\\pass} & \shortstack[l]{state (last\\epoch)} \\
 \midrule
-F\_ref & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/o053grx1}{\texttt{o053grx1}} & 0 & 0.004 & 0.007 &  &  & 0.437 & 0.512 & running (1{,}034) \\
-F\_ref & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/7cmz3r5i}{\texttt{7cmz3r5i}} & 1 & -0.017 & 0.026 &  &  & 0.305 & 0.451 & running (1{,}029) \\
-F\_ref & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/60puupp0}{\texttt{60puupp0}} & 2 & 0.095 & 0.033 &  &  & 0.347 & 0.443 & running (1{,}030) \\
+F\_ref & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/o053grx1}{\texttt{o053grx1}} & 0 & 0.004 & 0.007 & 0.061 & 0.055 & 0.378 & 0.561 & complete \\
+F\_ref & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/7cmz3r5i}{\texttt{7cmz3r5i}} & 1 & -0.017 & 0.026 & 0.071 & 0.071 & 0.349 & 0.522 & complete \\
+F\_ref & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/60puupp0}{\texttt{60puupp0}} & 2 & 0.095 & 0.033 & 0.070 & 0.059 & 0.413 & 0.513 & complete \\
 \addlinespace
 F\_b128lr1 & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/671rcqge}{\texttt{671rcqge}} & 0 & 0.014 & 0.013 & 0.076 & 0.069 & 0.401 & 0.525 & complete \\
 F\_b128lr1 & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/jock61jk}{\texttt{jock61jk}} & 1 & -0.014 & 0.005 & 0.083 & 0.075 & 0.314 & 0.509 & complete \\
@@ -32,12 +32,14 @@ F\_b128wu\_hadam & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs
 F\_b128wu\_hadam & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/j3l6huyu}{\texttt{j3l6huyu}} & 1 & -0.013 & -0.007 & 0.019 & 0.013 & 0.270 & 0.410 & complete \\
 F\_b128wu\_hadam & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/wcp7wryw}{\texttt{wcp7wryw}} & 2 & 0.099 & 0.047 & 0.044 & 0.048 & 0.411 & 0.499 & complete \\
 \addlinespace
-F\_b128wu\_wd & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/18gw3p46}{\texttt{18gw3p46}} & 0 & 0.011 &  &  &  & 0.209 & 0.274 & running (443) \\
-F\_b128wu\_wd & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/k38jsllm}{\texttt{k38jsllm}} & 1 & -0.020 &  &  &  & 0.190 & 0.264 & running (437) \\
-F\_b128wu\_wd & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/t9avzqjw}{\texttt{t9avzqjw}} & 2 & 0.089 &  &  &  & 0.191 & 0.270 & running (430) \\
+F\_b128wu\_wd & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/18gw3p46}{\texttt{18gw3p46}} & 0 & 0.011 & 0.009 &  &  & 0.077 & 0.152 & complete \\
+F\_b128wu\_wd & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/k38jsllm}{\texttt{k38jsllm}} & 1 & -0.020 & 0.009 &  &  & 0.206 & 0.320 & complete \\
+F\_b128wu\_wd & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/t9avzqjw}{\texttt{t9avzqjw}} & 2 & 0.089 & 0.039 &  &  & 0.348 & 0.332 & complete \\
 \addlinespace
-F\_b128wu\_drop & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/w6sy4dlf}{\texttt{w6sy4dlf}} & 0 & 0.022 &  &  &  & 0.160 & 0.257 & running (441) \\
-F\_b128wu\_drop & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/w08c6cda}{\texttt{w08c6cda}} & 1 & -0.013 &  &  &  & 0.000 & 0.108 & collapsed at 213 (436) \\
-F\_b128wu\_drop & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/jo6tr18b}{\texttt{jo6tr18b}} & 2 & 0.110 &  &  &  & 0.082 & 0.224 & running (429) \\
+F\_b128wu\_drop & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/w6sy4dlf}{\texttt{w6sy4dlf}} & 0 & 0.022 & -0.004 &  &  & 0.178 & 0.282 & complete \\
+F\_b128wu\_drop & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/w08c6cda}{\texttt{w08c6cda}} & 1 & -0.013 & 0.000 &  &  & 0.000 & -0.000 & collapsed at 213 (799) \\
+F\_b128wu\_drop & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/jo6tr18b}{\texttt{jo6tr18b}} & 2 & 0.110 & 0.058 &  &  & 0.139 & 0.259 & complete \\
+\addlinespace
+F\_b256lr1 & \href{https://wandb.ai/zhao-group/torchcell_019_expr_v22/runs/qqphe2y4}{\texttt{qqphe2y4}} & 0 & 0.046 & -0.003 &  &  & 0.287 & 0.354 & running (821) \\
 \bottomrule
 \end{tabular}

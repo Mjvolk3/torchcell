@@ -3,14 +3,15 @@
 \toprule
 arm & change against the reference & \shortstack[r]{split\\seeds\\run} & \shortstack[r]{collapsed\\or never\\launched} & \shortstack[r]{complete\\at 1{,}200\\epochs} & \shortstack[r]{mean val Pearson\\per feature, epochs\\1{,}000 to 1{,}200\\(complete runs)} & \shortstack[r]{mean paired\\difference vs F\_ref\\($n$ shared split seeds)} & \shortstack[r]{s per\\epoch} \\
 \midrule
-F\_ref & the v21 reference: batch 32, lr $3\times10^{-4}$, six layers, width 90 & 3 & 0 & 0 &  &  & 24.0 \\
-F\_b128lr1 & batch 128, lr $3\times10^{-4}$ & 3 & 0 & 3 & \textbf{0.075} &  & 11.4 \\
-F\_b128 & batch 128, lr $6\times10^{-4}$ & 3 & 2 & 1 & 0.059 &  & 10.2 \\
-F\_b128wu & batch 128, lr $6\times10^{-4}$ after a 50-epoch warmup & 3 & 0 & 3 & 0.067 &  & 11.4 \\
+F\_ref & the v21 reference: batch 32, lr $3\times10^{-4}$, six layers, width 90 & 3 & 0 & 3 & 0.062 & +0.000 (3) & 24.0 \\
+F\_b128lr1 & batch 128, lr $3\times10^{-4}$ & 3 & 0 & 3 & \textbf{0.075} & +0.013 (3) $\uparrow$ & 11.4 \\
+F\_b128 & batch 128, lr $6\times10^{-4}$ & 3 & 2 & 1 & 0.059 & +0.000 (1) & 10.2 \\
+F\_b128wu & batch 128, lr $6\times10^{-4}$ after a 50-epoch warmup & 3 & 0 & 3 & 0.067 & +0.005 (3) & 11.4 \\
 F\_b128lr4 & batch 128, lr $1.2\times10^{-3}$ & 3 & 3 & 0 &  &  & 12.0 \\
 F\_l4w180 & batch 32, four layers, width 180 & 2 & 2 & 0 &  &  & 17.6 \\
-F\_b128wu\_hadam & F\_b128wu with the Hadamard operator & 3 & 0 & 3 & 0.036 &  & 11.2 \\
+F\_b128wu\_hadam & F\_b128wu with the Hadamard operator & 3 & 0 & 3 & 0.036 & -0.025 (3) $\downarrow$ & 11.2 \\
 F\_b128wu\_wd & F\_b128wu with weight decay 0.3, 800 epochs & 3 & 0 & 0 &  &  & 11.4 \\
 F\_b128wu\_drop & F\_b128wu with dropout 0.3, 800 epochs & 3 & 1 & 0 &  &  & 11.4 \\
+F\_b256lr1 & batch 256, lr $3\times10^{-4}$, 1{,}000 epochs & 1 & 0 & 0 &  &  & 3.1 \\
 \bottomrule
 \end{tabular}

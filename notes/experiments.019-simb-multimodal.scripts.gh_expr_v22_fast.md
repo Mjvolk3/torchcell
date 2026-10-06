@@ -53,3 +53,15 @@ Read at 03:59 (`v22_readout.py`, PARTIAL, epochs 216 to 461; trailing 20-epoch m
 | F_b128wu | batch 128, lr 6e-4 behind a 50-epoch linear warmup from 1e-6, flat afterwards |
 
 They bracket the stability question for batch 128: is the collapse the learning rate, and does warmup remove it.
+
+## 2026.10.06 - Waves 2 to 5: results as of 09:50
+
+Scores are the mean validation Pearson per feature over epochs 1,000 to 1,200, per split seed 0, 1, 2 (`results/v22_readout.json`, tables in `notes-tex/figure-3-gate/tables/`).
+
+- **Wave 2 complete, no collapse.** F_b128lr1 (lr 3e-4): 0.069, 0.075, 0.081 (mean 0.075). F_b128wu (lr 6e-4 behind a 50-epoch warmup): 0.081, 0.071, 0.049 (mean 0.067). Wave 1's F_b128 (lr 6e-4, no warmup): 0.059 on split seed 2, collapsed at epochs 212 and 658 on the other two.
+- **Wave 3 complete (job 3329).** F_b128wu_hadam: 0.048, 0.013, 0.048 (mean 0.036); paired against F_b128wu -0.033, -0.058, -0.002, mean -0.031, 0 of 3 above. The Hadamard operator launches later and is still the steepest curve at epoch 1,199, so this reads the 1,200-epoch budget.
+- **Matched epoch 1,000 against F_ref** (reference still running): F_b128lr1 minus F_ref -0.002, -0.001, +0.019 (mean +0.005); F_b128wu minus F_ref +0.018, -0.018, +0.038 (mean +0.013).
+- **Wave 4 (job 3330, 800 epochs), partial at epoch 430:** weight decay 0.3 tracks F_b128wu (+0.001 at epoch 400, 3 of 3 above by under 0.001); dropout 0.3 is +0.015 at epoch 400 (+0.002, +0.008, +0.034) and one of its three runs collapsed at epoch 213.
+- **Wave 5 (job 3335, 09:51):** F_b256lr1, batch 256 at lr 3e-4, one run on split seed 0 for 1,000 epochs, alone on the card (3.0 s per epoch in the timing cell).
+- Curves: every surviving run rises early, dips through epochs 400 to 800 while train Pearson passes 0.4, and is still gaining about 0.02 per 200 epochs at epoch 1,199.
+- Collapse signature: gradient norm 0.01 to 0.05 throughout, clipping never engaged, spread to zero within about 30 epochs, validation loss back to 0.2506 (the per-gene-mean predictor), below the 0.254 to 0.257 of the runs that keep training.

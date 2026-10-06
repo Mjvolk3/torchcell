@@ -35,7 +35,19 @@ ENTITY = "zhao-group"
 PROJECT = "torchcell_019_expr_v22"
 DELTA_PROJECT = "torchcell_019_expr_v21"
 VAL = "val/expression/pearson_per_feature"
-LADDER = [100, 200, 300, 400, 600, 800, 1000, 1199]
+LADDER = [100, 200, 300, 400, 600, 799, 1000, 1199]
+# Paired contrasts beyond "every arm against F_ref": (arm, reference, score). `window` is
+# the registered window mean; a number is the ladder epoch (trailing 20-epoch mean), used
+# for the 800-epoch regularization arms.
+EXTRA_CONTRASTS = [
+    ("F_b128wu_hadam", "F_b128wu", "window"),
+    ("F_b128wu_wd", "F_b128wu", "799"),
+    ("F_b128wu_drop", "F_b128wu", "799"),
+    ("F_b128wu_wd", "F_b128wu", "400"),
+    ("F_b128wu_drop", "F_b128wu", "400"),
+    ("F_b128lr1", "F_ref", "1000"),
+    ("F_b128wu", "F_ref", "1000"),
+]
 WINDOW = (1000, 1199)
 KEYS = [
     "epoch",
@@ -179,6 +191,33 @@ def main() -> None:
                 f"{sum(v > 0 for v in vals)} positive, per split "
                 + ", ".join(f"{s}: {v:+.4f}" for s, v in diffs.items())
             )
+    for arm, ref, score in EXTRA_CONTRASTS:
+        if arm not in runs or ref not in runs:
+            continue
+
+        def val(r: dict, score: str = score) -> float | None:
+            return r["window_mean"] if score == "window" else r["ladder"][score]
+
+        diffs = {
+            sp: val(runs[arm][sp]) - val(runs[ref][sp])
+            for sp in sorted(runs[arm])
+            if sp in runs[ref] and val(runs[arm][sp]) is not None and val(runs[ref][sp]) is not None
+        }
+        if not diffs:
+            continue
+        vals = list(diffs.values())
+        key = f"{arm} - {ref} @ {score}"
+        contrasts[key] = {
+            "per_split": diffs,
+            "mean": st.mean(vals),
+            "n_positive": sum(v > 0 for v in vals),
+            "n": len(vals),
+        }
+        print(
+            f"{key}: mean {st.mean(vals):+.4f} over {len(vals)} split seeds, "
+            f"{sum(v > 0 for v in vals)} positive, per split "
+            + ", ".join(f"{sp}: {v:+.4f}" for sp, v in diffs.items())
+        )
     with open(osp.join(RESULTS, "v22_readout.json"), "w") as f:
         json.dump(
             {

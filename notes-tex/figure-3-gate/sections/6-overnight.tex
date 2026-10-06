@@ -11,6 +11,7 @@
 \clearpage
 \section{The night of 2026-10-05: speed, the Delta round, and the fast round v22\secstatus{todo}}
 \label{sec:night}
+\input{tables/v22_numbers}
 
 \pfstep{Correction: v21 on Delta cannot reach its window as launched} \Cref{sec:status}
 projected 22 to 24 hours per pack from the training progress bar, 49 to 59 s. The logged
@@ -21,8 +22,10 @@ was read from forty stack dumps of one run over six minutes: in all forty the ma
 sat in the eval-mode train pass, spawning a data-loader worker. That pass rebuilt its loader
 every tenth epoch, and on Delta a spawned worker re-imports the software stack from Lustre,
 more than twelve minutes each time. It follows from launching the round with one loader
-worker; with zero the pass would have been slow but would not have respawned anything.
-\src{W\&B torchcell_019_expr_v21, perf/epoch_seconds; Delta job 22690625}
+worker; with zero the pass would have been slow but would not have respawned anything. The
+epoch times are \texttt{perf/epoch\_seconds} of W\&B project
+\texttt{torchcell\_019\_expr\_v21}; the dumps were taken on Delta job 22690625.
+\src{notes/experiments.019-simb-multimodal.scripts.v22_readout.md}
 
 \pfstep{Where an epoch went} A profile of the reference run on the GilaHyper cards, then
 stack samples of live runs, located five costs, none of them the model's own arithmetic
@@ -71,9 +74,9 @@ with zero loader workers and the splits in memory. They log 38 to 41 s per epoch
 every tenth, about 45 s on average, which is 15 hours for 1{,}200 epochs. The other 26
 packs were left as launched. Replacing them the same way is prepared and was run without
 effect as a check; it needs the author's decision, as does the alternative of canceling and
-resubmitting through the queue.
-\src{experiments/019-simb-multimodal/scripts/delta_v21_inplace_swap.sh; W\&B runs iuqwl2p8,
-tdnhpkid, fcq0xkke, 0jajrluv}
+resubmitting through the queue. The four restarted runs are W\&B \texttt{iuqwl2p8},
+\texttt{tdnhpkid}, \texttt{fcq0xkke} and \texttt{0jajrluv}.
+\src{experiments/019-simb-multimodal/scripts/delta_v21_inplace_swap.sh}
 
 \pfstep{The rising validation loss on expression is a scale problem} Earlier sections
 record that the validation loss bottoms out early and rises while the per-feature Pearson
@@ -135,4 +138,68 @@ Two to three split seeds per arm size an effect and do not decide one.
   \input{tables/v22_runs}
 \end{table}
 
-%%NIGHT-FINDINGS
+\pfstep{Batch 128 needs its learning rate left alone or warmed up} At four times the
+reference rate no run launched (3 of 3 split seeds): the prediction spread stayed at zero
+from the first epoch. At twice the rate without warmup two of three runs launched and then
+returned to the per-gene-mean predictor, at epochs 212 and 658. At the unscaled rate, and
+at twice the rate behind a 50-epoch linear warmup, all six runs completed; their window
+scores are \nightLrOneWindows{} and \nightWarmupWindows{} on split seeds 0, 1 and 2. The
+batch-32 reference on the same code reads \nightRefWindows. Against it the unscaled arm is
+\nightLrOneVsRef, and the warmup arm is \nightWarmupVsRef. Three split seeds resolve only
+a difference whose sign all three share, which \cref{tab:night-arms} marks with an arrow;
+the partition moves the score more than either arm does. What the batch buys is time: 11.4 s
+per epoch against 24, three runs to a card in both cases.
+\src{experiments/019-simb-multimodal/results/v22_readout.json}
+
+\pfstep{A collapse is a return to the per-gene mean, and the validation loss rewards it}
+In the collapsed runs the gradient norm stays between 0.01 and 0.05 and the clip at 10
+never engages, so nothing diverges; the prediction spread falls to zero within about 30
+epochs and the validation loss returns to 0.2506, the loss of the per-gene-mean predictor.
+The runs that keep training sit at a validation loss of 0.254 to 0.257, above it. On
+held-out strains the loss prefers the collapsed predictor to the trained one, which is the
+scale problem of \cref{tab:night-shrink} seen from the other side. The collapsed runs are
+\texttt{l885wzyv}, \texttt{zz9sbrr3}, \texttt{pbqtgnpe} and \texttt{ntn060cz}; a run that
+kept training is \texttt{o053grx1} (\cref{tab:night-runs} links each).
+\src{notes/experiments.019-simb-multimodal.scripts.gh_expr_v22_fast.md}
+
+\pfstep{Four layers at width 180 did not train at the reference rate} Both split seeds
+launched and collapsed, at epochs 215 and 119, and were stopped near epoch 310. No wider
+trunk has yet been run with a warmup or a lower rate, so this is a statement about one
+setting.
+
+\pfstep{The Hadamard operator is behind the softmax operator at this budget} On the warmup
+arm, with the same split seeds, the Hadamard operator of v21's S\_hadam reads
+\nightHadamWindows{} at the window, against the softmax operator \nightHadamVsWarmup. Its
+heads launch later and its curves are still the steepest at epoch 1{,}199, so the read is
+of this budget; in the two-hour grid of \cref{sec:status} it led at epoch 120, which shows
+how little an early read predicts. v21 carries the same contrast at batch 32 on twelve
+split seeds.
+
+\pfstep{Every curve dips and is still climbing at 1{,}200 epochs} On each surviving run the
+validation Pearson rises early (to 0.10 to 0.12 near epoch 200 on split seed 2), falls
+through epochs 400 to 800 while the train Pearson climbs past 0.4, and rises again; between
+epochs 1{,}000 and 1{,}199 the 20-epoch mean still gains about 0.02 (the ladder columns of
+\cref{tab:night-runs}). The registered window therefore reads a budget and not a plateau,
+as the audit of \cref{sec:review} found for the longer runs.
+
+\pfstep{Two regularizers at 800 epochs} On the warmup arm, weight decay raised from
+$10^{-8}$ to 0.3 and dropout raised from 0.1 to 0.3 were each run for 800 epochs and read
+against the warmup arm at matched epochs. At epoch 400, in the dip, weight decay is
+\nightDecayVsWarmupEarly, and dropout is \nightDropVsWarmupEarly. At epoch 799 weight decay
+is \nightDecayVsWarmupLate, and dropout is \nightDropVsWarmupLate. Runs collapsed:
+\nightDecayCollapsed{} of 3 under weight decay and \nightDropCollapsed{} of 3 under dropout.
+The 800-epoch runs stop before the registered window, so these are matched-epoch reads and
+not window scores.
+
+%%NIGHT-TIMING
+
+\pfstep{What follows for the next rounds} New rounds should run on the new code with the
+splits in memory, zero loader workers on Delta, and one arm per card. Batch 128 at the
+unscaled rate is the candidate default if its difference from the reference above is
+acceptable to the author: it halves the time per epoch and has not collapsed in three runs.
+Any arm that raises the learning rate needs a warmup. Run time is to be projected from the
+logged epoch seconds over at least 20 epochs, never from the progress bar. The decisions
+that are the author's: whether the other 26 packs of v21 are replaced in place, resubmitted,
+or left to stop near epoch 945; and whether the registered window should move later, given
+that every curve is still rising at 1{,}200.
+

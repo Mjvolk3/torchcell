@@ -130,7 +130,8 @@ estimate: \texttt{sbatch --test-only} placed the first pack at 16:08 the next da
 fifteen packs were running by 22:50. The canary completed in 1 h 42 min with the test pass
 logged on all four runs, about 87 minutes of it the store import from Lustre; pack 0 under
 the round's settings read 49 to 59 s per epoch per run at epoch 8, so a pack finishes in
-about 22 to 24 h against the 48 h limit (a projection from epoch 8). The arms, each one
+about 22 to 24 h against the 48 h limit (a projection from epoch 8). That projection was wrong: it read the
+training progress bar, and the logged epoch time was 177 s (\cref{sec:night}). The arms, each one
 change against the reference S\_ref (the v21 configuration as
 is): S\_mask, the masked objective restored; S\_sink, the sigmoid-gated operator with the
 gate open; S\_prop2, the deletion propagated two hops along the graphs; S\_nodrop, operator

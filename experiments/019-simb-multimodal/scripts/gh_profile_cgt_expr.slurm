@@ -66,14 +66,22 @@ case "$TASK" in
   10) BATCH=32;  WORKERS=0; MATERIALIZE=1 ;;
   11) BATCH=32;  WORKERS=0; MATERIALIZE=1; PACK=4 ;;
   12) BATCH=64;  WORKERS=0; MATERIALIZE=1; PACK=4 ;;
-  *) echo "unknown task $TASK (0..12)" >&2; exit 1 ;;
+  # NEXT-SPEED CELLS (2026-10-06 morning), on the fast code, 40 epochs with the eval-mode
+  # train pass at the round's interval of 10, read from W&B perf/epoch_seconds. After the
+  # fixes the cost is the operator's feed-forward block over batch x 6,607 gene tokens:
+  # cell 13 narrows it from 4x to 1x the width, cell 14 is its control under the same
+  # packing, cell 15 asks what batch 256 costs in time and card memory.
+  13) BATCH=128; WORKERS=2; MATERIALIZE=1; PACK=3; EPOCHS=40; TEVAL=10; SHAPE="model.perturbation_head.ffn_mult=1" ;;
+  14) BATCH=128; WORKERS=2; MATERIALIZE=1; PACK=3; EPOCHS=40; TEVAL=10 ;;
+  15) BATCH=256; WORKERS=2; MATERIALIZE=1; PACK=1; EPOCHS=40; TEVAL=10 ;;
+  *) echo "unknown task $TASK (0..15)" >&2; exit 1 ;;
 esac
 export TORCHCELL_PERT_OPERATOR="${OPERATOR:-batched}"
 PROFILER="${PROFILER:-simple}"
 CELL="profile_b${BATCH}_w${WORKERS}_p${PACK}_${TORCHCELL_PERT_OPERATOR}_${PROFILER}${MATERIALIZE:+_mat}"
 
 # `+trainer.profiler`: the key is not in the config, so hydra needs the append form.
-COMMON="trainer.max_epochs=$EPOCHS trainer.train_eval_every=1 trainer.early_stopping.enabled=false +trainer.profiler=$PROFILER data_module.batch_size=$BATCH data_module.num_workers=$WORKERS wandb.project=torchcell_019_profile"
+COMMON="trainer.max_epochs=$EPOCHS trainer.train_eval_every=${TEVAL:-1} trainer.early_stopping.enabled=false +trainer.profiler=$PROFILER data_module.batch_size=$BATCH data_module.num_workers=$WORKERS wandb.project=torchcell_019_profile ${SHAPE:-}"
 if [[ -n "${MATERIALIZE:-}" ]]; then
   COMMON="$COMMON +data_module.materialize=true"
 fi

@@ -398,3 +398,81 @@ triple deletions are the one thing left out of every table**. acrA with acrB, an
 double with tolC, both reported non-additive against their singles with a complementation
 control, exist only in Figure 4, which is also the only place the 0.75 percent dose
 appears. The combinatorial arm, the part most worth having, is a provenance gap.
+
+## 2026.10.05 - The prose had drifted from the tables, and the pins were not named
+
+A read-over of the built PDF against the generated tables. The tables were correct; the
+hand-authored prose was not, and the two disagreed on the same page. Nothing about the
+ranking changed, so this is a reporting fix rather than a result.
+
+### What had drifted
+
+The abstract and Sec. 1.2 still carried figures from the 75-candidate pass, while
+`tables/final.tex` had moved to 89. Every replacement below is now printed by
+`build_bacteria_candidate_datasets_table.py` rather than computed by hand, so the prose
+can be rechecked by rerunning the generator.
+
+| claim | stale | current |
+|---|---|---|
+| candidates ranked | 75 | 89 |
+| reserve | 25 | 39 |
+| hosts in the fifty | 39 E. coli, 11 P. putida | 35 and 15 |
+| engineering median measurements | 145 | 137 |
+| screen median measurements | 282,906 | 226,575 |
+| ratio of medians | 1,944 | 1,654 |
+| engineering rows | 24 | 32 |
+| engineering rows in reserve | 21 of 24 | 30 of 32 on the rule, 19 after the pins |
+| tranche 1 by host | 14 and 6 | 11 and 9 after the pins, 14 and 6 on the rule |
+| isoprenol rows in reserve on the rule | four of eight | nine of ten |
+
+### Two defects worth more than the numbers
+
+**The document described an ordering it no longer had.** Both the abstract and the Table 5
+caption said rows were ranked by measurements descending. The isoprenol pin had been
+lifting rows into positions 12 through 20 since 2026.10.02, so the lifted rows sat
+visibly out of measurement order on the same page as a caption claiming otherwise. A
+reader checking the table against its own caption would find it wrong at row 12. Both now
+state that the pin applies and point at `tables/pins.tex`, which prints both ranks.
+
+**Two rank claims quoted the printed rank as though it were the measurement rank.** The
+distinction is the whole point of reporting the pin as moves, so collapsing it in prose
+undoes the auditability the pin was chosen for.
+
+| row | measurement rank | printed rank |
+|---|---|---|
+| Rachwalski 2024 mobile CRISPRi | 31 | 40 |
+| Silvis 2021 CRISPRi morphology | 52 | 64 |
+
+Silvis is the sharper case: it was reported as placed 64th *by the rule*, which made the
+modality-coverage argument look like a consequence of the measurement ordering alone. It
+is 52nd on measurements and the pins push it to 64th, so it is in the reserve either way
+and the argument survives, but the mechanism named was the wrong one.
+
+### The pin's cost, now measured on both sides
+
+The generator prints this rather than leaving it to be recomputed. Of the 17
+transposon-fitness and chemical-genomics rows, all 17 reach the fifty on measurements
+alone and **14** do after the pins, so promoting eleven engineering rows displaces three
+screens below the cut: Thompson 2019 lysine (52), Thompson 2019 valerolactam (56) and
+Gerdes 2003 (61). That cost was never stated before. It is the honest other half of
+"thirteen engineering rows now sit in the fifty."
+
+### What was NOT done, and why
+
+**A 200-row recommendation was asked for and is not in the document.** It appears nowhere
+in the pushed state, and `TARGET_COUNT` cannot be raised to 200 against 89 curated rows:
+`main()` raises `SystemExit` when the target exceeds the row count, which is the right
+behavior. Three readings were put to the author and none chosen yet: a stated target of
+200 with 89 curated and the 271 remaining queue leads as the path; recommending all 89 now
+with a route to 200; or 200 as a whole-database figure rather than this document's share.
+Until one is picked, the document continues to recommend fifty. Promoting unverified queue
+rows to reach a count would put leads and sourced rows in one ranking, which is the thing
+the queue was split out to prevent.
+
+### Build note for the Mac
+
+Bare `make` fails in this shell: it runs x86_64 while the Command Line Tools `xcrun` shim
+is arm64-only, so `make` aborts before Tectonic starts. `arch -arm64 make` works. The gate
+passes clean, 0 errors and 0 warnings over 17 SOURCE comments, and the 61-page PDF was
+published to Zotero as `bc664c2d`, the third version in
+`torchcell / notes-tex / database-expansion-bacteria`.

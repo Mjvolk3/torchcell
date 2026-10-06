@@ -29,6 +29,7 @@ iff all its genes kept; RMR kept iff its reaction kept; GPR kept iff its gene ke
   reaction, GPR and RMR entries kept.
 """
 
+import functools
 import importlib.util
 import json
 import logging
@@ -36,6 +37,7 @@ import os
 import pickle
 import re
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -198,6 +200,7 @@ def _source(
     records: list[dict[str, Any]] = RECORDS,
     labels: list[str] = LABELS,
     processor: LazySubgraphRepresentation | None = None,
+    reopen_safe: bool = True,
 ) -> Neo4jCellDataset:
     if not (root / "processed" / "lmdb").exists():
         types = ["fitness", "gene interaction"] if len(labels) == 2 else ["fitness"]
@@ -210,7 +213,18 @@ def _source(
         "graph_processor": processor,
         "phenotype_labels": labels,
     }
-    return Neo4jCellDataset(**kwargs)
+    ds = Neo4jCellDataset(**kwargs)
+    if reopen_safe:
+        # Workaround for the lmdb >= 2 double-open (see the Finding test
+        # `test_preprocess_reopens_the_source_lmdb_per_record`): close before reopen.
+        ds.__dict__["_init_lmdb_read"] = functools.partial(_close_then_open, ds)
+    return ds
+
+
+def _close_then_open(ds: Neo4jCellDataset, readahead: bool = False) -> None:
+    """`Neo4jCellDataset._init_lmdb_read`, preceded by `close_lmdb()`."""
+    ds.close_lmdb()
+    Neo4jCellDataset._init_lmdb_read(ds, readahead=readahead)
 
 
 def _load_writer() -> ModuleType:
@@ -266,9 +280,16 @@ def source(tmp_path: Path) -> Neo4jCellDataset:
 
 
 @pytest.fixture
-def live(tmp_path: Path, source: Neo4jCellDataset) -> Neo4jCellDataset:
-    """The live path the store replaces: same build, Lazy processor."""
-    return _source(tmp_path / "src", processor=LazySubgraphRepresentation())
+def live(tmp_path: Path, source: Neo4jCellDataset) -> Iterator[Neo4jCellDataset]:
+    """The live path the store replaces: same build, Lazy processor.
+
+    The source handle is closed first and this one at teardown: lmdb >= 2 refuses a
+    second open of one path in one process.
+    """
+    source.close_lmdb()
+    ds = _source(tmp_path / "src", processor=LazySubgraphRepresentation())
+    yield ds
+    ds.close_lmdb()
 
 
 @pytest.fixture
@@ -280,6 +301,7 @@ def written(tmp_path: Path, live: Neo4jCellDataset) -> list[dict[str, Any]]:
         item = live.get(idx)
         assert isinstance(item, HeteroData)
         records.append(writer.extract_full_masks(item))
+    live.close_lmdb()  # a later preprocess of the source must not meet this handle
     _write_store(
         tmp_path / "fm",
         records,
@@ -604,8 +626,13 @@ def test_missing_key_and_index_mapping(
         dataset[3]
     assert _pert(dataset[-1]) == [4]
     view = dataset[[1, 0]]
+    # a `copy.copy` through `__getstate__`: no shared handle, so close the parent's
+    # first (lmdb >= 2 refuses two opens of one path in one process)
+    assert view.env is None
+    dataset.close_lmdb()
     assert len(view) == 2
     assert _pert(view[0]) == [0, 3]
+    view.close_lmdb()
 
     def tag(item: HeteroData) -> HeteroData:
         item["gene"].tag = 5
@@ -627,10 +654,12 @@ def test_env_lifecycle_and_pickle(
     assert dataset.env is not None
     clone = pickle.loads(pickle.dumps(dataset))
     assert clone.env is None
-    assert _pert(clone[1]) == [0, 3]
-    clone.close_lmdb()
-    dataset.close_lmdb()
+    assert dataset.env is not None
+    dataset.close_lmdb()  # lmdb >= 2: one open handle per path per process
     assert dataset.env is None
+    assert _pert(clone[1]) == [0, 3]
+    assert clone.env is not None
+    clone.close_lmdb()
     dataset.close_lmdb()
     assert dataset.env is None
 

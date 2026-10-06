@@ -37,12 +37,14 @@ survives iff its reaction survives, a GPR edge survives iff its gene survives:
   physical False at 2,7; regulatory False at 1,6; every reaction, GPR and RMR edge kept.
 """
 
+import functools
 import json
 import os
 import pickle
 import re
 import subprocess
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -192,6 +194,7 @@ def _source(
     records: list[dict[str, Any]] = RECORDS,
     labels: list[str] = LABELS,
     processor: LazySubgraphRepresentation | None = None,
+    reopen_safe: bool = True,
 ) -> Neo4jCellDataset:
     if not (root / "processed" / "lmdb").exists():
         types = ["fitness", "gene interaction"] if len(labels) == 2 else ["fitness"]
@@ -204,7 +207,18 @@ def _source(
         "graph_processor": processor,
         "phenotype_labels": labels,
     }
-    return Neo4jCellDataset(**kwargs)
+    ds = Neo4jCellDataset(**kwargs)
+    if reopen_safe:
+        # Workaround for the lmdb >= 2 double-open (see the Finding test
+        # `test_preprocess_reopens_the_source_lmdb_per_record`): close before reopen.
+        ds.__dict__["_init_lmdb_read"] = functools.partial(_close_then_open, ds)
+    return ds
+
+
+def _close_then_open(ds: Neo4jCellDataset, readahead: bool = False) -> None:
+    """`Neo4jCellDataset._init_lmdb_read`, preceded by `close_lmdb()`."""
+    ds.close_lmdb()
+    Neo4jCellDataset._init_lmdb_read(ds, readahead=readahead)
 
 
 @pytest.fixture
@@ -224,9 +238,16 @@ def preprocessed(
 
 
 @pytest.fixture
-def live(tmp_path: Path, source: Neo4jCellDataset) -> Neo4jCellDataset:
-    """The live path the preprocessed store replaces: same build, Lazy processor."""
-    return _source(tmp_path / "src", processor=LazySubgraphRepresentation())
+def live(tmp_path: Path, source: Neo4jCellDataset) -> Iterator[Neo4jCellDataset]:
+    """The live path the preprocessed store replaces: same build, Lazy processor.
+
+    The source handle is closed first and this one at teardown: lmdb >= 2 refuses a
+    second open of one path in one process.
+    """
+    source.close_lmdb()
+    ds = _source(tmp_path / "src", processor=LazySubgraphRepresentation())
+    yield ds
+    ds.close_lmdb()
 
 
 def _read_raw(root: Path, idx: int) -> dict[str, Any]:
@@ -631,9 +652,14 @@ def test_index_mapping_slicing_and_transform(
     assert _pert(preprocessed[-1]) == [4]
     view = preprocessed[[2, 0]]
     assert isinstance(view, Neo4jPreprocessedCellDataset)
+    # the view is a `copy.copy`, which goes through `__getstate__`: no shared handle,
+    # so close the parent's first (lmdb >= 2 refuses two opens of one path)
+    assert view.env is None
+    preprocessed.close_lmdb()
     assert len(view) == 2
     assert _pert(view[0]) == [4]
     assert _pert(view[1]) == [1]
+    view.close_lmdb()
     seen: list[list[int]] = []
 
     def record(item: HeteroData) -> HeteroData:
@@ -670,11 +696,11 @@ def test_env_opens_lazily_closes_idempotently_and_is_dropped_by_pickle(
     clone = pickle.loads(pickle.dumps(preprocessed))
     assert clone.env is None
     assert preprocessed.env is not None
+    preprocessed.close_lmdb()  # lmdb >= 2: one open handle per path per process
+    assert preprocessed.env is None
     assert _pert(clone[1]) == [0, 3]
     assert clone.env is not None
     clone.close_lmdb()
-    preprocessed.close_lmdb()
-    assert preprocessed.env is None
     preprocessed.close_lmdb()
     assert preprocessed.env is None
 
@@ -859,3 +885,39 @@ def test_get_after_close_reopens_a_new_environment(
     assert _pert(after) == [0, 3]
     assert _differences(before, after) == {}
     preprocessed.close_lmdb()
+
+
+LMDB_MAJOR = int(lmdb.__version__.split(".")[0])
+
+
+def test_preprocess_reopens_the_source_lmdb_per_record(tmp_path: Path) -> None:
+    """Finding: `preprocess_from_source` calls `source_dataset._init_lmdb_read()` once
+    PER RECORD (`neo4j_preprocessed_cell.py:342`) and never closes the previous handle,
+    so from record 1 on it opens the source LMDB while its own earlier env is still open.
+    lmdb 1.x allows that; lmdb >= 2 (CI runs 2.3.0) refuses it, so on a 3-record source
+    the run dies at record 1 with the error below, and a 1-record source succeeds. The
+    006 full-mask writer repeats the call per record
+    (`experiments/006-kuzmin-tmi/scripts/preprocess_lazy_dataset_full_masks.py:259`).
+    The fixtures here work around it by wrapping the source's `_init_lmdb_read` with
+    `close_lmdb()` first. Pinned until the preprocessor opens the source once.
+    """
+    one = _source(tmp_path / "one", records=RECORDS[:1], reopen_safe=False)
+    single = Neo4jPreprocessedCellDataset(root=str(tmp_path / "pre1"))
+    single.preprocess_from_source(one, LazySubgraphRepresentation())
+    assert len(single) == 1
+    three = _source(tmp_path / "src", reopen_safe=False)
+    ds = Neo4jPreprocessedCellDataset(root=str(tmp_path / "pre3"))
+    if LMDB_MAJOR >= 2:
+        path = str(tmp_path / "src" / "processed" / "lmdb")
+        with pytest.raises(
+            lmdb.Error,
+            match="^"
+            + re.escape(f"The environment '{path}' is already open in this process.")
+            + "$",
+        ):
+            ds.preprocess_from_source(three, LazySubgraphRepresentation())
+        assert ds._is_preprocessed() is False
+    else:
+        ds.preprocess_from_source(three, LazySubgraphRepresentation())
+        assert len(ds) == 3
+    three.close_lmdb()

@@ -48,3 +48,13 @@ Reach (audit 2): the two field differences are latent. The lazy collater keeps r
 - Line cites corrected at 4a179a2e1: `graph_processor.py:1724` (reaction ids), `1691-1693` (GPR count), `cell_data.py:557-559` (cell-graph GPR count), `graph_processor.py:1858-1868` (statistic keys).
 - New Finding pinned: `ids_pert` is `list(set)` (`graph_processor.py:1550`), so its order follows `PYTHONHASHSEED`. Record 1 built in two fresh interpreters gives [YAL001C, YAL004W] under seed 0 and [YAL004W, YAL001C] under seed 1, with `perturbation_indices` [0, 3] both times. The store freezes the preprocessing process's order.
 - New pin: after `close_lmdb`, the next `get` opens a new read env (a different object) and serves the same record.
+
+## 2026.10.06 - lmdb 2.x double open (CI failure on PR #662)
+
+CI (lmdb 2.3.0) failed 2 tests and errored 40 in these two files with `The environment '.../src/processed/lmdb' is already open in this process`; lmdb 1.7.5 allows the second open. Reproduced locally with the 2.3.0 side install (`PYTHONPATH=<scratchpad>/rev-605g/lmdb2:$WT`): 2 failed, 35 errors in the two files.
+
+Cause: both. (a) The source code double-opens by itself: `preprocess_from_source` calls `source_dataset._init_lmdb_read()` once per record (`neo4j_preprocessed_cell.py:342`) without closing the previous env, so any source with two or more records fails at record 1 under lmdb >= 2. The 006 full-mask writer has the same per-record call (`preprocess_lazy_dataset_full_masks.py:259`). Pinned as a Finding in `test_preprocess_reopens_the_source_lmdb_per_record`: under lmdb >= 2 it asserts the exact error on a 3-record source, and success on a 1-record source; under 1.7.5 both succeed. (b) The fixtures also double-opened: the live dataset opened the source path while the source's handle was open, and the slicing and pickle tests read through an in-process copy (`copy.copy` and pickle both drop `env` through `__getstate__`) while the parent's env was still open.
+
+Workarounds in the fixtures: `_source` wraps each source's `_init_lmdb_read` with `close_lmdb()` first (`functools.partial`, so the dataset still pickles); `live` closes the source handle first and its own at teardown; the copy and clone tests close the parent's env before reading through the copy. The production split path (`torch.utils.data.Subset` in `CellDataModule`) shares one dataset object and does not hit the copy case.
+
+Both lmdb versions now give `129 passed, 2 xfailed` for the three Lane B files plus `test_ontology_all_trees.py`.

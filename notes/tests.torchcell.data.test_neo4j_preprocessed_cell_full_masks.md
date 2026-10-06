@@ -36,3 +36,7 @@ Lines 233-235 and 254-256 (non-`pert_mask` keys under reaction and metabolite) a
 - Reach: the two field differences are latent (see [[tests.torchcell.data.test_neo4j_preprocessed_cell]]); the store is read by 006 config 077; the no-fingerprint finding reaches 077; the storage-type finding reaches 077 only if it is pointed at a compact root; the no-source TypeError is latent (the script always passes a source).
 - Hermeticity: `_load_writer` now stubs `load_dotenv` and `basicConfig` only around `exec_module`, then rebinds every module that captured the stub (dcell, yeast_GEM, sgd, kemmeren2014, sameith2015) to the real `load_dotenv`. `test_writer_import_leaves_no_stubbed_load_dotenv` checks this and fails (on `torchcell.models.dcell`) when the restore is removed, run in a fresh process.
 - The storage-type mismatch match is anchored to the full message.
+
+## 2026.10.06 - lmdb 2.x double open (CI failure on PR #662)
+
+Same CI failure as [[tests.torchcell.data.test_neo4j_preprocessed_cell]]; see that note for the cause, which is both (a) a per-record reopen in the compact preprocessor and in the 006 full-mask writer (`preprocess_lazy_dataset_full_masks.py:259`), pinned in the compact file, and (b) fixture double opens. Here: the shared `_source` wrapper (close before reopen), the `live` fixture closing the source first and itself at teardown, `written` closing `live` after the writer loop so a later preprocess of the source does not meet its handle, and the view and pickle tests closing the parent's env before reading through the copy.

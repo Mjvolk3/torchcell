@@ -5,7 +5,7 @@
 #
 # v22, THE FAST-MODEL ROUND (2026-10-06, GilaHyper, four RTX 6000 Ada). The v21 single-head
 # expression model on the fast code path of the same night (batched perturbation operator,
-# splits held in memory), one card per split seed, four arms on each card. Every arm is the
+# splits held in memory), one ARM per card (see the case block for why). Every arm is the
 # v21 reference (cgt_expr_v21_small, arm S_ref) with one change:
 #
 #   wave 1
@@ -24,7 +24,8 @@
 # past 151 epochs (round_leaderboards.csv).
 #
 # SCORING, as v21 (pre-registered there): mean of val/expression/pearson_per_feature over
-# epochs 1,000 to 1,200, paired by split seed against F_ref. Four split seeds cannot reach
+# epochs 1,000 to 1,200, paired by split seed against the reference (F_ref here on split
+# seeds 0 to 2, v21's S_ref on Delta for all twelve). Two to four split seeds cannot reach
 # p < 0.05 on a sign test; this round sizes effects and throughput, it does not decide.
 #
 #   sbatch --array=0-3 --export=ALL,V22_PROJECT_ROOT=$PWD \
@@ -51,25 +52,31 @@ mkdir -p "$OUT_DIR"
 
 PROJECT_ROOT="${V22_PROJECT_ROOT:?set V22_PROJECT_ROOT to the checkout to run}"
 ARM_SH="$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/gh_expr_008_arm.sh"
-SPLIT="${SLURM_ARRAY_TASK_ID:?this script must be submitted with --array (the split seed)}"
+TASK="${SLURM_ARRAY_TASK_ID:?this script must be submitted with --array (the pack index)}"
 WAVE="${V22_WAVE:-1}"
 EPOCHS="${V22_EPOCHS:-1200}"
 
 # arm name -> overrides against the v21 reference
 declare -A ARM_OVERRIDES
-case "$WAVE" in
-  1)
-    ARMS=(F_ref F_b128 F_b128lr4 F_l4w180)
-    ARM_OVERRIDES[F_ref]=""
-    ARM_OVERRIDES[F_b128]="data_module.batch_size=128 regression_task.optimizer.lr=6.0e-4"
-    ARM_OVERRIDES[F_b128lr4]="data_module.batch_size=128 regression_task.optimizer.lr=1.2e-3"
-    ARM_OVERRIDES[F_l4w180]="model.num_transformer_layers=4 model.hidden_channels=180"
-    ;;
-  *) echo "unknown V22_WAVE $WAVE" >&2; exit 1 ;;
+ARM_OVERRIDES[F_ref]=""
+ARM_OVERRIDES[F_b128]="data_module.batch_size=128 regression_task.optimizer.lr=6.0e-4"
+ARM_OVERRIDES[F_b128lr4]="data_module.batch_size=128 regression_task.optimizer.lr=1.2e-3"
+ARM_OVERRIDES[F_l4w180]="model.num_transformer_layers=4 model.hidden_channels=180"
+
+# ONE ARM PER CARD. The first submission (job 3315, cancelled ten minutes in) put the four
+# arms on each card, one card per split seed. The four processes time-slice the card, so a
+# batch-128 run's nine heavy steps took as long as a batch-32 run's 35 light ones (19 to 22
+# s per epoch for both) and nothing would have reached 1,200 epochs inside the window. A
+# card of batch-128 runs alone is the configuration whose speed the profile measured.
+# Batch-32 arms run two or three to a card for the same reason. F_ref's split seeds 0 to 11
+# also exist as v21's S_ref on Delta (same config and seeds, loop operator).
+case "$WAVE:$TASK" in
+  1:0) ARM=F_b128;    SPLITS=(0 1 2 3) ;;
+  1:1) ARM=F_b128lr4; SPLITS=(0 1 2 3) ;;
+  1:2) ARM=F_ref;     SPLITS=(0 1 2) ;;
+  1:3) ARM=F_l4w180;  SPLITS=(0 1) ;;
+  *) echo "unknown wave:task $WAVE:$TASK" >&2; exit 1 ;;
 esac
-if [[ -n "${V22_ARMS:-}" ]]; then
-  read -r -a ARMS <<< "$V22_ARMS"
-fi
 
 COMMON="trainer.max_epochs=$EPOCHS trainer.early_stopping.enabled=false +data_module.materialize=true data_module.num_workers=2 data_module.persistent_workers=true wandb.project=torchcell_019_expr_v22"
 
@@ -81,10 +88,10 @@ export PYTHONPATH="$PROJECT_ROOT"
 
 echo "=========================================================="
 echo "host          : $(hostname)"
-echo "job           : ${SLURM_ARRAY_JOB_ID:-none} split=${SPLIT} wave=${WAVE}"
+echo "job           : ${SLURM_ARRAY_JOB_ID:-none} task=${TASK} wave=${WAVE}"
 echo "project root  : $PROJECT_ROOT ($(git -C "$PROJECT_ROOT" rev-parse --short HEAD))"
 echo "config        : $TORCHCELL_CONFIG"
-echo "gpu           : ${CUDA_VISIBLE_DEVICES:-unset}  arms: ${ARMS[*]}"
+echo "gpu           : ${CUDA_VISIBLE_DEVICES:-unset}  arm: $ARM  split seeds: ${SPLITS[*]}"
 echo "common        : $COMMON"
 echo "=========================================================="
 
@@ -96,12 +103,12 @@ echo "=========================================================="
 SAMPLER=$!
 
 PIDS=(); LABELS=()
-for ARM in "${ARMS[@]}"; do
-  LOG="$OUT_DIR/019-v22_${SLURM_ARRAY_JOB_ID}_s${SPLIT}_${ARM}.out"
+for SPLIT in "${SPLITS[@]}"; do
+  LOG="$OUT_DIR/019-v22_${SLURM_ARRAY_JOB_ID}_${ARM}_s${SPLIT}.out"
   echo "  launching $ARM split $SPLIT -> $LOG   [${ARM_OVERRIDES[$ARM]}]"
   TORCHCELL_EXTRA_OVERRIDES="$COMMON ${ARM_OVERRIDES[$ARM]} wandb.tags=[v22,$ARM,split$SPLIT]" \
     bash "$ARM_SH" "S_ref_s${SPLIT}" 0 > "$LOG" 2>&1 &
-  PIDS+=("$!"); LABELS+=("$ARM")
+  PIDS+=("$!"); LABELS+=("${ARM}_s${SPLIT}")
   sleep 30
 done
 

@@ -1,0 +1,135 @@
+{
+  "generated_by": "experiments/019-simb-multimodal/scripts/prediction_shrinkage_probe.py",
+  "seed": 0,
+  "rows": [
+    {
+      "c": 0.45515371140471467,
+      "nmse_mean": 1.030045089351357,
+      "nmse_raw": 1.0523345931873096,
+      "nmse_shrunk": 1.0156353377106855,
+      "pearson_per_feature": 0.1435525527164567,
+      "pred_sd_ratio": 0.3174195760213626,
+      "n_features": 6127.0,
+      "file": "compute-0-1-2397316_f4f3eb97310e9f0ded0ac8f43fac8569a5fa44a5d023576aeac414c734472433.json",
+      "tags": [
+        "cgt_expr_v13_split",
+        "V_ref_s2",
+        "seed0",
+        "readout-shared-mlp",
+        "split2",
+        "stage-split",
+        "round-split"
+      ],
+      "n_strains": 155,
+      "spread_over_r": 2.211173330009157
+    },
+    {
+      "c": 0.6974143917874742,
+      "nmse_mean": 1.0357883747970138,
+      "nmse_raw": 0.9934718733663681,
+      "nmse_shrunk": 0.9840506587217138,
+      "pearson_per_feature": 0.22497559427923192,
+      "pred_sd_ratio": 0.31856907375477805,
+      "n_features": 6127.0,
+      "file": "compute-0-2-2397312_3fcfb279cc58c21f926585737901556cf40cded9e6c3fc039c1b34abbc9b7248.json",
+      "tags": [
+        "cgt_expr_v13_split",
+        "V_ref_s0",
+        "seed0",
+        "readout-shared-mlp",
+        "split0",
+        "stage-split",
+        "round-split"
+      ],
+      "n_strains": 155,
+      "spread_over_r": 1.4160161451085274
+    },
+    {
+      "c": 0.5176757595023982,
+      "nmse_mean": 1.0357883747970138,
+      "nmse_raw": 1.0290121293613739,
+      "nmse_shrunk": 0.9969044321832721,
+      "pearson_per_feature": 0.1920056124144287,
+      "pred_sd_ratio": 0.34307187597538014,
+      "n_features": 6127.0,
+      "file": "compute-0-2-2397312_ecd690dcabb6286e9a2f646c3232e14167f234c7778433803e0420024f402c61.json",
+      "tags": [
+        "cgt_expr_v13_split",
+        "V_concat_s0",
+        "seed0",
+        "readout-concat",
+        "split0",
+        "stage-split",
+        "round-split"
+      ],
+      "n_strains": 155,
+      "spread_over_r": 1.7867804574112502
+    },
+    {
+      "c": 1.7504509923329494,
+      "nmse_mean": 1.009883510514672,
+      "nmse_raw": 0.9971349612590255,
+      "nmse_shrunk": 1.0020906190199594,
+      "pearson_per_feature": 0.11336019722669904,
+      "pred_sd_ratio": 0.061761609335672485,
+      "n_features": 1850.0,
+      "file": "compute-3-3-2400351_190566f3daabdfe4dc73d7309269139c074951adb6e07764d3234aa0b20a9247.json",
+      "tags": [
+        "cgt_expr_v14_proteome",
+        "P_concat_s0",
+        "seed0",
+        "readout-concat",
+        "split0",
+        "proteome",
+        "stage-proteome",
+        "round-proteome"
+      ],
+      "n_strains": 448,
+      "spread_over_r": 0.5448262339572407
+    },
+    {
+      "c": 1.3801285416909548,
+      "nmse_mean": 1.009883510514672,
+      "nmse_raw": 0.9945990213121214,
+      "nmse_shrunk": 0.996866166025449,
+      "pearson_per_feature": 0.11644187470356093,
+      "pred_sd_ratio": 0.08519546931757459,
+      "n_features": 1850.0,
+      "file": "compute-3-3-2400351_45b093533290bd592f8cfc6d59a1f07556b3c4aa16eb56882545a02c020b8845.json",
+      "tags": [
+        "cgt_expr_v14_proteome",
+        "P_ref_s0",
+        "seed0",
+        "readout-shared-mlp",
+        "split0",
+        "proteome",
+        "stage-proteome",
+        "round-proteome"
+      ],
+      "n_strains": 448,
+      "spread_over_r": 0.7316566272611652
+    },
+    {
+      "c": 1.8851626377141553,
+      "nmse_mean": 1.0082118312363546,
+      "nmse_raw": 0.9915925890415911,
+      "nmse_shrunk": 0.9870281275188852,
+      "pearson_per_feature": 0.1277502922813738,
+      "pred_sd_ratio": 0.06297196943067221,
+      "n_features": 1850.0,
+      "file": "compute-3-3-2401108_e4609a5c2e63232a6035fab136b7875f37697ad44dfd33241d871e14adddd99b.json",
+      "tags": [
+        "cgt_expr_v14_proteome",
+        "P_ref_s2",
+        "seed1",
+        "readout-shared-mlp",
+        "split2",
+        "proteome",
+        "stage-proteome",
+        "round-proteome"
+      ],
+      "n_strains": 448,
+      "spread_over_r": 0.49293013977591993
+    }
+  ]
+}

@@ -113,5 +113,15 @@
     "id": "s9ydl4r238i",
     "name": "C_protperm: one line per split",
     "url": "https://wandb.ai/zhao-group/torchcell_019_prot_v20?nw=s9ydl4r238i"
+  },
+  "v22": {
+    "id": "05fxsoepu1v",
+    "name": "v22: by arm",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_expr_v22?nw=05fxsoepu1v"
+  },
+  "v22/runs": {
+    "id": "7jcrcldrrpn",
+    "name": "v22: every run",
+    "url": "https://wandb.ai/zhao-group/torchcell_019_expr_v22?nw=7jcrcldrrpn"
   }
 }

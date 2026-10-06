@@ -89,7 +89,10 @@ ARMS_ROUND=(S_ref S_mask S_sink S_prop2 S_nodrop S_stack S_prot S_basis64 S_hada
 SEEDS=(0 1 2 3 4 5 6 7 8 9 10 11)
 case "$STAGE" in
   canary) JOBS=(); for i in $(seq 1 "$PACK"); do JOBS+=("S_ref_s$((i-1)):0"); done
-          EXTRA_OV="trainer.max_epochs=3 trainer.train_eval_every=1 wandb.project=torchcell_019_expr_v21_canary" ;;
+          # V21_CANARY_EPOCHS / V21_CANARY_TRAIN_EVAL: the default (3 epochs, eval-mode train
+          # pass every epoch) exercises every code path; 12 epochs at the round's own
+          # interval of 10 with V21_PROFILER=simple TIMES an epoch hook by hook.
+          EXTRA_OV="trainer.max_epochs=${V21_CANARY_EPOCHS:-3} trainer.train_eval_every=${V21_CANARY_TRAIN_EVAL:-1} wandb.project=torchcell_019_expr_v21_canary" ;;
   round)  if [[ "$BENCH_PENDING" == "1" ]]; then
             echo "REFUSED: the trunk shape in $STAGE_CONFIG.yaml is a placeholder until the GilaHyper benchmark reads out; set V21_BENCH_PENDING=0 in the commit that fixes it." >&2
             exit 1
@@ -153,7 +156,17 @@ if [[ "$WORKERS" -gt 0 ]]; then
 else
   WORKER_OV="data_module.num_workers=0"
 fi
-export TORCHCELL_EXTRA_OVERRIDES="$EXTRA_OV $WORKER_OV trainer.early_stopping.enabled=false"
+# SPLITS IN MEMORY (default on since 2026-10-06). The first submission of this round (jobs
+# 22690625 to 22690651) logged 177 s per epoch on every run, against 50 to 57 s on the
+# training progress bar, so 1,200 epochs would have taken 59 h against a 48 h limit. The
+# GilaHyper profile of the same night put the cost in the per-sample loader work, a
+# per-graph target decode and CPU metrics, all since removed; holding the splits in memory
+# is the loader half and is opt-out here (V21_MATERIALIZE=0).
+MAT_OV=""
+if [[ "${V21_MATERIALIZE:-1}" == "1" ]]; then MAT_OV="+data_module.materialize=true"; fi
+PROF_OV=""
+if [[ -n "${V21_PROFILER:-}" ]]; then PROF_OV="+trainer.profiler=$V21_PROFILER"; fi
+export TORCHCELL_EXTRA_OVERRIDES="$EXTRA_OV $WORKER_OV $MAT_OV $PROF_OV trainer.early_stopping.enabled=false"
 ARM_SH="$PROJECT_ROOT/experiments/019-simb-multimodal/scripts/gh_expr_008_arm.sh"
 
 echo "=========================================================="

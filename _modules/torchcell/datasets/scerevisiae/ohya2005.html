@@ -194,6 +194,7 @@
     <span class="n">post_process</span><span class="p">,</span>
     <span class="n">verify_raw_files</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">YPD_LIQUID</span><span class="p">,</span> <span class="n">restated</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CalMorphExperiment</span><span class="p">,</span>
     <span class="n">CalMorphExperimentReference</span><span class="p">,</span>
@@ -214,9 +215,68 @@
     <span class="n">reconcile_systematic_names</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourcedValue</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Growth medium (issue #622). Quotes are verbatim substrings of the mirror OCR</span>
+<span class="c1"># ``paper.md`` (MinerU output, so LaTeX markup is kept as written); the line in each</span>
+<span class="c1"># note is that file's.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">MEDIUM_CITATION_KEY</span> <span class="o">=</span> <span class="s2">"ohyaHighdimensionalLargescalePhenotyping2005"</span>
+<span class="n">MEDIUM_PAPER_SHA256</span> <span class="o">=</span> <span class="s2">"86bf457c5e210c3b78f6f0687e04c3bcb5e9a217fc872b1f78531825688b5fcd"</span>
+<span class="c1"># Ohnuki &amp; Ohya 2018 (same lab, same CalMorph protocol) prints the YPD recipe and says</span>
+<span class="c1"># the medium "was prepared as described previously [15]", and its ref 15 (line 339) is</span>
+<span class="c1"># this paper: the recipe chain closes inside the mirror.</span>
+<span class="n">OHNUKI2018_CITATION_KEY</span> <span class="o">=</span> <span class="s2">"ohnukiHighdimensionalSinglecellPhenotyping2018"</span>
+<span class="n">OHNUKI2018_PAPER_SHA256</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"8c9d991fa03278b130d8824b755b9e1b14921a1e431eb8ed918caabf6a11ab1c"</span>
+<span class="p">)</span>
+<span class="n">YPD_GROWTH_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Each strain was grown in yeast extract/ peptone/dextrose medium, and "</span>
+    <span class="s2">"logarithmic-phase cells were fixed."</span>
+<span class="p">)</span>
+<span class="n">OHNUKI_YPD_RECIPE_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"in nutrient-rich yeast extract peptone dextrose (YPD) medium containing "</span>
+    <span class="s2">"$1 </span><span class="se">\\</span><span class="s2">%$ (w/v) Bacto yeast extract (BD Biosciences, San Jose, CA), $2 </span><span class="se">\\</span><span class="s2">%$ (w/v) "</span>
+    <span class="s2">"Bacto peptone (BD Biosciences), and $2 </span><span class="se">\\</span><span class="s2">%$ (w/v) glucose, which was prepared as "</span>
+    <span class="s2">"described previously [15]."</span>
+<span class="p">)</span>
+
+<span class="n">MEDIUM_SOURCED_VALUES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"medium"</span><span class="p">:</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="s2">"YPD, liquid (logarithmic-phase culture)"</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">MEDIUM_CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">MEDIUM_PAPER_SHA256</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">YPD_GROWTH_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"line 23; names the medium and prints no recipe. 'liquid' is read from "</span>
+        <span class="s2">"'logarithmic-phase cells were fixed' (a log-phase culture), not from the word "</span>
+        <span class="s2">"liquid, which this paper does not use"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"recipe"</span><span class="p">:</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="s2">"1% yeast extract, 2% peptone, 2</span><span class="si">% g</span><span class="s2">lucose (Ohya-lab YPD)"</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">OHNUKI2018_CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">OHNUKI2018_PAPER_SHA256</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">OHNUKI_YPD_RECIPE_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"Ohnuki 2018 line 179; its ref 15 (line 339) is Ohya 2005, so this is the "</span>
+        <span class="s2">"same lab's statement of the YPD this paper used, and it matches the library "</span>
+        <span class="s2">"YPD_LIQUID percentages; the amounts on the record are YPD_LIQUID's"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">OHYA_YPD</span><span class="p">:</span> <span class="n">Media</span> <span class="o">=</span> <span class="n">restated</span><span class="p">(</span><span class="n">YPD_LIQUID</span><span class="p">,</span> <span class="o">*</span><span class="n">MEDIUM_SOURCED_VALUES</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+<span class="sd">"""Liquid YPD: library ``YPD_LIQUID`` composition plus this paper's growth sentence and</span>
+<span class="sd">the Ohya-lab recipe Ohnuki 2018 attributes to it. Same ``media_identity`` as</span>
+<span class="sd">``YPD_LIQUID``."""</span>
 
 <span class="c1"># CV parameters are prefixed CCV/ACV/DCV (60 + 33 + 127 = 220 in the pinned matrices; no</span>
 <span class="c1"># TCV parameter exists, #494); everything else is a base parameter.</span>
@@ -469,10 +529,7 @@
 
         <span class="c1"># Environment -- Ohya 2005 Methods: YPD, logarithmic-phase (liquid) culture.</span>
         <span class="c1"># Temperature 25 C from the Ohya-lab CalMorph standard (see module docstring).</span>
-        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
-            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"YPD"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">25</span><span class="p">),</span>
-        <span class="p">)</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">media</span><span class="o">=</span><span class="n">OHYA_YPD</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">25</span><span class="p">))</span>
         <span class="n">environment_reference</span> <span class="o">=</span> <span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">()</span>
 
         <span class="c1"># Extract morphology measurements and separate base from CV parameters. Rows are</span>

@@ -200,6 +200,7 @@
     <span class="n">verify_raw_files</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.compound_identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolved_compound</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">YPD_LIQUID</span><span class="p">,</span> <span class="n">restated</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Concentration</span><span class="p">,</span>
     <span class="n">ConcentrationUnit</span><span class="p">,</span>
@@ -219,9 +220,43 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourcedValue</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Growth medium (issue #622). Quotes are verbatim substrings of the mirror OCR</span>
+<span class="c1"># ``paper.md`` (MinerU output, so LaTeX markup is kept as written); the line in each</span>
+<span class="c1"># note is that file's.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">MEDIUM_CITATION_KEY</span> <span class="o">=</span> <span class="s2">"nadal-ribellesSinglecellResolvedGenotypephenotype2025"</span>
+<span class="n">MEDIUM_PAPER_SHA256</span> <span class="o">=</span> <span class="s2">"86f4a41634a99222ccfd5d0ddb4df400faf7de2ad4e67ad224d0045c4d00cebc"</span>
+<span class="n">YPD_CULTURE_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"of cultures were refreshed into another 96 well plate containing "</span>
+    <span class="s2">"$2 0 0 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">up$ of YPD. Cells were allowed to grow for $^ { 6 </span><span class="se">\\</span><span class="s2">mathrm { h } }$ "</span>
+    <span class="s2">"until they reached mid exponential phase"</span>
+<span class="p">)</span>
+
+<span class="n">MEDIUM_SOURCED_VALUES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"medium"</span><span class="p">:</span> <span class="n">SourcedValue</span><span class="p">(</span>
+        <span class="n">value</span><span class="o">=</span><span class="s2">"YPD, liquid (200 ul per well, grown to mid-exponential, then pooled)"</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+            <span class="n">source_uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
+            <span class="n">citation_key</span><span class="o">=</span><span class="n">MEDIUM_CITATION_KEY</span><span class="p">,</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">MEDIUM_PAPER_SHA256</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">quote</span><span class="o">=</span><span class="n">YPD_CULTURE_QUOTE</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"line 172; names the medium and prints no recipe, so every ingredient "</span>
+        <span class="s2">"amount on the record is the library YPD_LIQUID object's (Tong and Boone 2006 "</span>
+        <span class="s2">"/ Hoepfner 2014), a deferral, not a Nadal-Ribelles statement"</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="p">}</span>
+
+<span class="n">NADAL_RIBELLES_YPD</span><span class="p">:</span> <span class="n">Media</span> <span class="o">=</span> <span class="n">restated</span><span class="p">(</span><span class="n">YPD_LIQUID</span><span class="p">,</span> <span class="o">*</span><span class="n">MEDIUM_SOURCED_VALUES</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+<span class="sd">"""Liquid YPD the pooled cells grew in: library ``YPD_LIQUID`` plus the paper's culture</span>
+<span class="sd">sentence. Same ``media_identity`` as ``YPD_LIQUID``."""</span>
 
 <span class="n">MEASUREMENT_TYPE</span> <span class="o">=</span> <span class="s2">"pseudobulk_scrnaseq_log2fc"</span>
 <span class="n">DELETION_MARKER</span> <span class="o">=</span> <span class="s2">"URA3"</span>
@@ -587,7 +622,7 @@
                 <span class="sa">f</span><span class="s2">"condition </span><span class="si">{</span><span class="n">cond</span><span class="si">!r}</span><span class="s2"> is neither of the profiled conditions "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">CONDITIONS</span><span class="p">)</span><span class="si">}</span><span class="s2">; refusing to store it with the control environment"</span>
             <span class="p">)</span>
-        <span class="n">media</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"YPD"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">media</span> <span class="o">=</span> <span class="n">NADAL_RIBELLES_YPD</span>
         <span class="n">temperature</span> <span class="o">=</span> <span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">GROWTH_TEMP_C</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cond</span> <span class="o">==</span> <span class="s2">"nacl"</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Environment</span><span class="p">(</span>

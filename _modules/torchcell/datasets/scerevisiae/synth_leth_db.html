@@ -158,9 +158,13 @@
     <span class="n">verify_sha256</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ComponentDefinition</span><span class="p">,</span>
+    <span class="n">Compound</span><span class="p">,</span>
     <span class="n">Environment</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
     <span class="n">Media</span><span class="p">,</span>
+    <span class="n">MediaComponent</span><span class="p">,</span>
+    <span class="n">MediaComponentRole</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">ReferenceGenome</span><span class="p">,</span>
     <span class="n">SgaKanMxDeletionPerturbation</span><span class="p">,</span>
@@ -170,10 +174,15 @@
     <span class="n">SyntheticRescueExperiment</span><span class="p">,</span>
     <span class="n">SyntheticRescueExperimentReference</span><span class="p">,</span>
     <span class="n">SyntheticRescuePhenotype</span><span class="p">,</span>
-    <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProvenanceGap</span><span class="p">,</span>
+    <span class="n">ProvenanceGapReason</span><span class="p">,</span>
+    <span class="n">SourcedValue</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -194,6 +203,75 @@
 <span class="c1">#: the same accession, so these bytes cannot be re-fetched; the pin is the record.</span>
 <span class="n">NCBI_GFF_RELPATH</span> <span class="o">=</span> <span class="s2">"S288C_reference_genome_R64-4-1_20230830/ncbi_genomic.gff"</span>
 <span class="n">NCBI_GFF_SHA256</span> <span class="o">=</span> <span class="s2">"8200def54936659721e3f7b4484d725667ed4e23492edefbbca667b8430209c4"</span>
+
+<span class="c1">#: SynLethDB 2.0 (Wang 2022, NAR), the release paper of the aggregated CSVs (issue #622).</span>
+<span class="c1">#: Its mirror OCR is the only document that says what one SL entry carries.</span>
+<span class="n">SYNLETHDB_CITATION_KEY</span> <span class="o">=</span> <span class="s2">"wangSynLethDB20Webbased2022"</span>
+<span class="n">SYNLETHDB_PAPER_SHA256</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"acaee2c7e16480fb39656cdf6a5e7ac621c34f08b41433dcab2cebe7daf1f20a"</span>
+<span class="p">)</span>
+<span class="n">_SYNLETHDB_PAPER</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
+    <span class="n">citation_key</span><span class="o">=</span><span class="n">SYNLETHDB_CITATION_KEY</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="o">=</span><span class="n">SYNLETHDB_PAPER_SHA256</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1">#: paper.md line 49: the fields an SL entry carries. No growth medium and no growth</span>
+<span class="c1">#: temperature, and the released CSV header agrees (``n1.name, n1.identifier, n2.name,</span>
+<span class="c1">#: n2.identifier, r.cell_line, r.pubmed_id, r.source, r.statistic_score``).</span>
+<span class="n">SYNLETHDB_ENTRY_FIELDS_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"The species, references to PubMed, supporting evidence, cell lines and other "</span>
+    <span class="s2">"relevant information about an SL entry are stored as properties of the edge"</span>
+<span class="p">)</span>
+
+<span class="n">SYNLETHDB_MEDIUM_NOT_CARRIED</span><span class="p">:</span> <span class="n">Media</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"growth medium not carried by SynLethDB (stated, if at all, by each record's "</span>
+    <span class="s2">"primary paper)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"solid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">MediaComponent</span><span class="p">(</span>
+            <span class="n">compound</span><span class="o">=</span><span class="n">Compound</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">"growth medium of the record's primary study (not carried by "</span>
+                <span class="s2">"SynLethDB)"</span>
+            <span class="p">),</span>
+            <span class="n">role</span><span class="o">=</span><span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">other</span><span class="p">,</span>
+            <span class="n">definition</span><span class="o">=</span><span class="n">ComponentDefinition</span><span class="o">.</span><span class="n">composition_deferred</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"SynLethDB aggregates gene pairs from many papers and carries no "</span>
+            <span class="s2">"medium; the deferral target is the record's own Publication.pubmed_id, "</span>
+            <span class="s2">"which differs per record, so defers_to stays empty here"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">SourcedValue</span><span class="p">(</span>
+            <span class="n">value</span><span class="o">=</span><span class="s2">"growth medium not carried by the curation layer"</span><span class="p">,</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="n">_SYNLETHDB_PAPER</span><span class="p">,</span>
+            <span class="n">quote</span><span class="o">=</span><span class="n">SYNLETHDB_ENTRY_FIELDS_QUOTE</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"line 49. state='solid' and is_synthetic=False are NOT sourced: the "</span>
+            <span class="s2">"schema requires both, and they keep the old stub's values. The loader "</span>
+            <span class="s2">"formerly emitted an unsourced 'YEPD' solid medium"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""The honest medium of a SynLethDB record: a composition-deferred placeholder naming</span>
+<span class="sd">the absence, not a recipe. ``Media`` has no ``provenance_gaps`` and ``Environment.media``</span>
+<span class="sd">is required, so a typed gap on the medium itself is not expressible in the current</span>
+<span class="sd">schema; this object is the in-schema stand-in for one."""</span>
+
+<span class="c1">#: The temperature is absent for the same reason (``not_carried_by_curation``).</span>
+<span class="n">SYNLETHDB_TEMPERATURE_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+    <span class="n">field</span><span class="o">=</span><span class="s2">"temperature"</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_carried_by_curation</span><span class="p">,</span>
+    <span class="n">looked_in</span><span class="o">=</span><span class="n">_SYNLETHDB_PAPER</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"SynLethDB carries no growth temperature (paper.md line 49 and the CSV "</span>
+    <span class="s2">"header); the loader formerly stored an unsourced 30 C"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">SYNLETHDB_ENVIRONMENT</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+    <span class="n">media</span><span class="o">=</span><span class="n">SYNLETHDB_MEDIUM_NOT_CARRIED</span><span class="p">,</span>
+    <span class="n">temperature</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">SYNLETHDB_TEMPERATURE_GAP</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Every SL and SR record's environment: neither medium nor temperature is carried."""</span>
 
 <span class="c1">#: GFF feature types whose ``Dbxref`` ``GeneID`` names a locus (``locus_tag``).</span>
 <span class="n">_NCBI_LOCUS_TYPES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"gene"</span><span class="p">,</span> <span class="s2">"pseudogene"</span><span class="p">})</span>
@@ -629,10 +707,7 @@
             <span class="p">]</span>
         <span class="p">)</span>
 
-        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
-            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"YEPD"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"solid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>
-        <span class="p">)</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">SYNLETHDB_ENVIRONMENT</span>
 
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">SyntheticLethalityPhenotype</span><span class="p">(</span>
             <span class="n">is_synthetic_lethal</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -780,10 +855,7 @@
             <span class="p">]</span>
         <span class="p">)</span>
 
-        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
-            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"YEPD"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"solid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
-            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>
-        <span class="p">)</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">SYNLETHDB_ENVIRONMENT</span>
 
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">SyntheticRescuePhenotype</span><span class="p">(</span>
             <span class="n">is_synthetic_rescue</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>

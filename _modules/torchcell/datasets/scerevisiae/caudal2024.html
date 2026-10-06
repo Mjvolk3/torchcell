@@ -200,6 +200,7 @@
     <span class="n">verify_raw_files</span><span class="p">,</span>
     <span class="n">verify_sha256</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SC</span><span class="p">,</span> <span class="n">restated</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Environment</span><span class="p">,</span>
     <span class="n">Experiment</span><span class="p">,</span>
@@ -469,6 +470,40 @@
         <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span>
         <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
     <span class="p">)</span>
+
+
+<span class="c1">#: methods.md line 9: the medium the RNA-seq cultures grew in, and its carbon source.</span>
+<span class="c1">#: The Methods name "standard synthetic complete medium" and give no recipe beyond the</span>
+<span class="c1">#: glucose, so the ingredient amounts are the library ``SC`` object's (issue #622).</span>
+<span class="n">SC_CULTURE_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"then grown in 1 ml of liquid standard synthetic complete medium using deep well "</span>
+    <span class="s2">"blocks until the mid-log phase was reached (OD ~0.3)"</span>
+<span class="p">)</span>
+<span class="n">SC_CARBON_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"We measured growth in all strains using 96-well liquid growth in standard "</span>
+    <span class="s2">"synthetic complete medium with 2</span><span class="si">% g</span><span class="s2">lucose as the carbon source."</span>
+<span class="p">)</span>
+
+<span class="n">MEDIUM_SOURCED_VALUES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"culture_medium"</span><span class="p">:</span> <span class="n">_methods_sv</span><span class="p">(</span>
+        <span class="s2">"liquid synthetic complete (SC), harvested at mid-log"</span><span class="p">,</span>
+        <span class="n">SC_CULTURE_QUOTE</span><span class="p">,</span>
+        <span class="mi">9</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the paper names the medium and prints no recipe; every ingredient "</span>
+        <span class="s2">"amount on the record is the library SC object's (Mormino 2022 / Wildenhain "</span>
+        <span class="s2">"2015 quotes), a deferral, not a Caudal statement"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"carbon_source"</span><span class="p">:</span> <span class="n">_methods_sv</span><span class="p">(</span>
+        <span class="s2">"2</span><span class="si">% g</span><span class="s2">lucose"</span><span class="p">,</span>
+        <span class="n">SC_CARBON_QUOTE</span><span class="p">,</span>
+        <span class="mi">9</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the same amount as the library SC glucose row (20 g/L)"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">CAUDAL_SC</span><span class="p">:</span> <span class="n">Media</span> <span class="o">=</span> <span class="n">restated</span><span class="p">(</span><span class="n">SC</span><span class="p">,</span> <span class="o">*</span><span class="n">MEDIUM_SOURCED_VALUES</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+<span class="sd">"""The RNA-seq culture medium: the library ``SC`` composition plus Caudal's own two</span>
+<span class="sd">Methods sentences. Same ``media_identity`` as ``SC`` (provenance is not identity)."""</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">BlankRowClass</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
@@ -1234,10 +1269,7 @@
         <span class="p">)</span>
         <span class="n">genotype</span> <span class="o">=</span> <span class="n">Genotype</span><span class="p">(</span><span class="n">perturbations</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"perturbations"</span><span class="p">])</span>
         <span class="c1"># SC liquid medium, 30 C, harvested at mid-log (OD ~0.3) -- Caudal Methods.</span>
-        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
-            <span class="n">media</span><span class="o">=</span><span class="n">Media</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">"SC"</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span> <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-            <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">),</span>
-        <span class="p">)</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">media</span><span class="o">=</span><span class="n">CAUDAL_SC</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="mi">30</span><span class="p">))</span>
         <span class="n">phenotype</span> <span class="o">=</span> <span class="n">RNASeqExpressionPhenotype</span><span class="p">(</span>
             <span class="n">expression_tpm</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"expression_tpm"</span><span class="p">],</span>
             <span class="n">expression_count</span><span class="o">=</span><span class="n">row</span><span class="p">[</span><span class="s2">"expression_count"</span><span class="p">],</span>

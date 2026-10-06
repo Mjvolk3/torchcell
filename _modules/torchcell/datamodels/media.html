@@ -380,6 +380,20 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">restated</span><span class="p">(</span><span class="n">base</span><span class="p">:</span> <span class="n">Media</span><span class="p">,</span> <span class="o">*</span><span class="n">statements</span><span class="p">:</span> <span class="n">SourcedValue</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Media</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``base`` with a dataset paper's own medium statements appended to its provenance.</span>
+
+<span class="sd">    The loader-side half of a deferral: a paper that names a library medium ("YPD",</span>
+<span class="sd">    "synthetic complete") but prints no recipe, or prints the same recipe, keeps the</span>
+<span class="sd">    library object's composition and adds its own verbatim sentence(s). ``name`` and</span>
+<span class="sd">    ``provenance`` are not part of ``media_identity``, so the result joins the library</span>
+<span class="sd">    object exactly; only the record's statement of who said so grows.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">statements</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"restated() needs at least one SourcedValue from the paper"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">base</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(</span><span class="n">update</span><span class="o">=</span><span class="p">{</span><span class="s2">"provenance"</span><span class="p">:</span> <span class="p">[</span><span class="o">*</span><span class="n">base</span><span class="o">.</span><span class="n">provenance</span><span class="p">,</span> <span class="o">*</span><span class="n">statements</span><span class="p">]})</span>
+
+
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># SD/MSG -- the SGA base. Tong &amp; Boone 2006 recipe #16 (per L): 1.7 g YNB w/o amino</span>
 <span class="c1"># acids or ammonium sulfate, 1 g MSG, 2 g amino-acids supplement powder</span>
@@ -679,11 +693,10 @@
 <span class="p">)</span>
 <span class="sd">"""Liquid YPD: the object every pooled-culture screen on YPD should carry.</span>
 
-<span class="sd">Hoepfner 2014, Hillenmeyer 2008 and the served Nadal-Ribelles / Ohya / Ohnuki /</span>
-<span class="sd">da Silveira loaders all describe liquid YPD and today emit a bare</span>
-<span class="sd">``Media(name="YPD", state="liquid", is_synthetic=False)`` with no components, which</span>
-<span class="sd">reaches no FBA bound. Migrating them is a full-rebuild event, so it is scheduled with</span>
-<span class="sd">one, not slipped in per dataset.</span>
+<span class="sd">Hoepfner 2014 and Hillenmeyer 2008 carry it directly; since issue #622 the Ohya 2005,</span>
+<span class="sd">Ohnuki 2018, Nadal-Ribelles 2025 and Yoshida 2012 loaders carry it through</span>
+<span class="sd">:func:`restated` with their own paper's sentence appended. da Silveira 2014 prints a</span>
+<span class="sd">different "YPD" recipe and carries a loader-local object instead.</span>
 <span class="sd">"""</span>
 
 <span class="n">YPD_AGAR</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>

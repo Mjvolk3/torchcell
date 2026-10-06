@@ -67,6 +67,7 @@ from torchcell.data import (
     post_process,
     verify_raw_files,
 )
+from torchcell.datamodels.media import YPD_LIQUID, restated
 from torchcell.datamodels.schema import (
     CalMorphExperiment,
     CalMorphExperimentReference,
@@ -87,9 +88,58 @@ from torchcell.datasets.scerevisiae.gene_name_reconcile import (
     reconcile_systematic_names,
 )
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
+from torchcell.verification.report import Provenance
+from torchcell.verification.sourced import SourcedValue
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+# --------------------------------------------------------------------------- #
+# Growth medium (issue #622). Quotes are verbatim substrings of the mirror OCR
+# ``paper.md`` (MinerU output, so LaTeX markup is kept as written); the line in each
+# note is that file's.
+# --------------------------------------------------------------------------- #
+MEDIUM_CITATION_KEY = "ohnukiHighdimensionalSinglecellPhenotyping2018"
+MEDIUM_PAPER_SHA256 = "8c9d991fa03278b130d8824b755b9e1b14921a1e431eb8ed918caabf6a11ab1c"
+YPD_RECIPE_QUOTE = (
+    "in nutrient-rich yeast extract peptone dextrose (YPD) medium containing "
+    "$1 \\%$ (w/v) Bacto yeast extract (BD Biosciences, San Jose, CA), $2 \\%$ (w/v) "
+    "Bacto peptone (BD Biosciences), and $2 \\%$ (w/v) glucose, which was prepared as "
+    "described previously [15]."
+)
+YPD_LIQUID_QUOTE = (
+    "Three colonies from each strain were inoculated into $2 \\mathrm { m L }$ of YPD "
+    "liquid medium"
+)
+
+MEDIUM_SOURCED_VALUES: dict[str, SourcedValue] = {
+    "recipe": SourcedValue(
+        value="1% (w/v) yeast extract, 2% (w/v) peptone, 2% (w/v) glucose",
+        provenance=Provenance(
+            source_uri="paper.md",
+            citation_key=MEDIUM_CITATION_KEY,
+            sha256=MEDIUM_PAPER_SHA256,
+        ),
+        quote=YPD_RECIPE_QUOTE,
+        note="line 179; the paper's own recipe, identical to the library YPD_LIQUID "
+        "percentages, so the record carries YPD_LIQUID's components; ref 15 is Ohya "
+        "2005 (line 339)",
+    ),
+    "state": SourcedValue(
+        value="liquid",
+        provenance=Provenance(
+            source_uri="paper.md",
+            citation_key=MEDIUM_CITATION_KEY,
+            sha256=MEDIUM_PAPER_SHA256,
+        ),
+        quote=YPD_LIQUID_QUOTE,
+        note="line 181",
+    ),
+}
+
+OHNUKI_YPD: Media = restated(YPD_LIQUID, *MEDIUM_SOURCED_VALUES.values())
+"""Liquid YPD at the paper's own 1/2/2% recipe: library ``YPD_LIQUID`` plus the two
+Methods sentences. Same ``media_identity`` as ``YPD_LIQUID``."""
 
 # CV parameters are prefixed CCV/ACV/DCV (60 + 33 + 127 = 220 in the pinned matrices; no
 # TCV parameter exists, #494); everything else is a base parameter.
@@ -298,10 +348,7 @@ class ScmdOhnuki2018Dataset(ExperimentDataset):
         )
 
         # Optimal growth conditions: nutrient-rich liquid YPD at 25 C (Methods).
-        environment = Environment(
-            media=Media(name="YPD", state="liquid", is_synthetic=False),
-            temperature=Temperature(value=25),
-        )
+        environment = Environment(media=OHNUKI_YPD, temperature=Temperature(value=25))
         environment_reference = environment.model_copy()
 
         # Separate the 501-length feature vector into 281 base + 220 CV parameters.

@@ -42,9 +42,7 @@ from pydantic import ValidationError
 
 from torchcell.data import ExperimentDataset, RawSha256MismatchError
 from torchcell.datamodels.schema import (
-    Environment,
     Genotype,
-    Media,
     Publication,
     ReferenceGenome,
     SgaKanMxDeletionPerturbation,
@@ -54,7 +52,6 @@ from torchcell.datamodels.schema import (
     SyntheticRescueExperiment,
     SyntheticRescueExperimentReference,
     SyntheticRescuePhenotype,
-    Temperature,
 )
 from torchcell.datasets.scerevisiae import synth_leth_db as s
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
@@ -163,10 +160,7 @@ _SR_ROWS = [
     "EFB1,1003,EFB1,1003,,33333333\n",
 ]
 
-_ENVIRONMENT = Environment(
-    media=Media(name="YEPD", state="solid", is_synthetic=False),
-    temperature=Temperature(value=30),
-)
+_ENVIRONMENT = s.SYNLETHDB_ENVIRONMENT
 _GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
 
 
@@ -317,7 +311,8 @@ def test_sl_common_name_pair_record_matches_the_source_row(
     sl: s.SynthLethalityYeastSynthLethDbDataset,
 ) -> None:
     """Record 0 (``TFC3,1001,VPS8,1002,0.85,12345678``): two SGA KanMX deletions with
-    ``strain_id="S288C"`` on YAL001C / YAL002W, YEPD solid non-synthetic at 30 C,
+    ``strain_id="S288C"`` on YAL001C / YAL002W, the ``SYNLETHDB_ENVIRONMENT`` (medium
+    and temperature not carried by SynLethDB, issue #622),
     ``is_synthetic_lethal True`` with score 0.85; reference ``False`` with score None;
     publication PMID 12345678 with no DOI.
     """

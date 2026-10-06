@@ -261,6 +261,20 @@ def dropout(
     )
 
 
+def restated(base: Media, *statements: SourcedValue) -> Media:
+    """``base`` with a dataset paper's own medium statements appended to its provenance.
+
+    The loader-side half of a deferral: a paper that names a library medium ("YPD",
+    "synthetic complete") but prints no recipe, or prints the same recipe, keeps the
+    library object's composition and adds its own verbatim sentence(s). ``name`` and
+    ``provenance`` are not part of ``media_identity``, so the result joins the library
+    object exactly; only the record's statement of who said so grows.
+    """
+    if not statements:
+        raise ValueError("restated() needs at least one SourcedValue from the paper")
+    return base.model_copy(update={"provenance": [*base.provenance, *statements]})
+
+
 # --------------------------------------------------------------------------- #
 # SD/MSG -- the SGA base. Tong & Boone 2006 recipe #16 (per L): 1.7 g YNB w/o amino
 # acids or ammonium sulfate, 1 g MSG, 2 g amino-acids supplement powder
@@ -560,11 +574,10 @@ YPD_LIQUID = Media(
 )
 """Liquid YPD: the object every pooled-culture screen on YPD should carry.
 
-Hoepfner 2014, Hillenmeyer 2008 and the served Nadal-Ribelles / Ohya / Ohnuki /
-da Silveira loaders all describe liquid YPD and today emit a bare
-``Media(name="YPD", state="liquid", is_synthetic=False)`` with no components, which
-reaches no FBA bound. Migrating them is a full-rebuild event, so it is scheduled with
-one, not slipped in per dataset.
+Hoepfner 2014 and Hillenmeyer 2008 carry it directly; since issue #622 the Ohya 2005,
+Ohnuki 2018, Nadal-Ribelles 2025 and Yoshida 2012 loaders carry it through
+:func:`restated` with their own paper's sentence appended. da Silveira 2014 prints a
+different "YPD" recipe and carries a loader-local object instead.
 """
 
 YPD_AGAR = Media(

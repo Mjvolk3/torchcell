@@ -92,13 +92,20 @@ from torchcell.data import (
     post_process,
     verify_raw_files,
 )
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
+    ComponentDefinition,
+    Compound,
+    Concentration,
+    ConcentrationUnit,
     Environment,
     Experiment,
     ExperimentReference,
     Genotype,
     KanMxDeletionPerturbation,
     Media,
+    MediaComponent,
+    MediaComponentRole,
     MetaboliteExperiment,
     MetaboliteExperimentReference,
     MetabolitePhenotype,
@@ -108,6 +115,8 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.verification.report import Provenance
+from torchcell.verification.sourced import SourcedValue
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -133,6 +142,131 @@ DATA_SHA256 = "91409229756c132823e6e7a8dbe552d4d7451833b2ff902740f24a29bced3894"
 # TableS10 -- per-lipid LipidX/ChEBI ids (copied for provenance; ChEBI mapping deferred).
 CHEBI_FILENAME = "TableS10_lipidX_chebi_ids.xlsx"
 CHEBI_SHA256 = "29a7ed0a11af4700fa051b99717e4686e0399a59c7a7b9be130ae674ed5d58f9"
+
+# --------------------------------------------------------------------------- #
+# Growth medium (issue #622). The Methods print their OWN "YPD" recipe, which is not
+# the library YPD: yeast extract and peptone are swapped (2% / 1%, not 1% / 2%) and the
+# medium is buffered with MES and supplemented with tryptophan, uracil and adenine. So
+# the medium is loader-local, every row quoted from the mirror OCR ``paper.md`` (MinerU,
+# LaTeX markup kept as written; the PDF text layer reads the same words and numbers).
+# --------------------------------------------------------------------------- #
+PAPER_MD = "paper.md"
+PAPER_MD_SHA256 = "87b6e92bb9cf2826205bf0351ea236ef7e3079a146122d89898beef9736f8a48"
+_PAPER = Provenance(
+    source_uri=PAPER_MD, citation_key=_LIBRARY_CITATION_KEY, sha256=PAPER_MD_SHA256
+)
+
+# line 168: the full recipe sentence.
+YPD_RECIPE_QUOTE = (
+    "Yeast precultures were grown in rich medium (yeast extract/peptone/dextrose "
+    "[YPD]: $2 \\%$ glucose [Merck, Darmstadt, Germany], $1 \\%$ Bacto Peptone [Difco, "
+    "Allschwil, Switzerland], $2 \\%$ Bacto Yeast Extract [Difco], $1 0 ~ \\mathsf "
+    "{ \\ m M }$ 2- $N \\cdot$ -morpholino)ethanesulfonic acid [Sigma-Aldrich, "
+    "Steinheim, Germany], $4 0 ~ \\mathrm { \\ m g / m ! }$ l-tryptophan [Fluka, "
+    "Steinheim, Germany], uracil [Sigma-Aldrich], and adenine ([Sigma-Aldrich])"
+)
+# line 168: the measured cultures grew in that YPD, liquid, to early exponential phase.
+YPD_CULTURE_QUOTE = (
+    "cultures were grown to early exponential phase $( 1 - 2 \\mathsf { O D } _ "
+    "{ 6 0 0 }$ units/ml) in YPD at $3 0 ^ { \\circ } \\mathsf { C }$ ."
+)
+
+
+def _paper_sv(value: object, quote: str, note: str | None = None) -> SourcedValue:
+    """A SourcedValue pinned to the da Silveira mirror OCR (quote + sha256)."""
+    return SourcedValue(value=value, provenance=_PAPER, quote=quote, note=note)
+
+
+SOURCED_VALUES: dict[str, SourcedValue] = {
+    "glucose": _paper_sv("2% glucose", YPD_RECIPE_QUOTE, note="line 168"),
+    "peptone": _paper_sv("1% Bacto Peptone", YPD_RECIPE_QUOTE, note="line 168"),
+    "yeast_extract": _paper_sv(
+        "2% Bacto Yeast Extract",
+        YPD_RECIPE_QUOTE,
+        note="line 168; the library YPD has 1% yeast extract and 2% peptone, this "
+        "recipe the reverse, recorded as printed",
+    ),
+    "mes": _paper_sv("10 mM MES", YPD_RECIPE_QUOTE, note="line 168"),
+    "tryptophan": _paper_sv(
+        "L-tryptophan, printed as 40 mg/ml",
+        YPD_RECIPE_QUOTE,
+        note="line 168; the OCR's 'm g / m !' is the PDF text layer's '40 mg/ml'. NOT "
+        "stored as a concentration: 40 g/L is about a thousand times a usual "
+        "tryptophan supplement. Hypothesis (untested): a typo for 40 mg/l. Held as an "
+        "open gap for review rather than written into an FBA bound",
+    ),
+    "uracil": _paper_sv(
+        "uracil, amount not printed", YPD_RECIPE_QUOTE, note="line 168"
+    ),
+    "adenine": _paper_sv(
+        "adenine, amount not printed", YPD_RECIPE_QUOTE, note="line 168"
+    ),
+    "medium": _paper_sv(
+        "YPD (paper's recipe), liquid, early exponential phase",
+        YPD_CULTURE_QUOTE,
+        note="line 168; the lipid samples are these cultures",
+    ),
+}
+
+_PCT = ConcentrationUnit.percent_w_v
+_UNDEFINED = ComponentDefinition.intrinsically_undefined
+
+DA_SILVEIRA_YPD: Media = Media(
+    name="YPD, da Silveira 2014 recipe (2% glucose, 1% peptone, 2% yeast extract, "
+    "10 mM MES, + tryptophan, uracil, adenine), liquid",
+    state="liquid",
+    is_synthetic=False,
+    base_medium="YPD",
+    components=[
+        MediaComponent(
+            compound=resolved_compound("D-glucose"),
+            role=MediaComponentRole.carbon_source,
+            concentration=Concentration(value=2.0, unit=_PCT),
+            provenance=[SOURCED_VALUES["glucose"]],
+        ),
+        MediaComponent(
+            compound=Compound(name="peptone"),
+            role=MediaComponentRole.complex_ingredient,
+            definition=_UNDEFINED,
+            concentration=Concentration(value=1.0, unit=_PCT),
+            provenance=[SOURCED_VALUES["peptone"]],
+        ),
+        MediaComponent(
+            compound=Compound(name="yeast extract"),
+            role=MediaComponentRole.complex_ingredient,
+            definition=_UNDEFINED,
+            concentration=Concentration(value=2.0, unit=_PCT),
+            provenance=[SOURCED_VALUES["yeast_extract"]],
+        ),
+        MediaComponent(
+            compound=resolved_compound("2-(N-morpholino)ethanesulfonic acid"),
+            role=MediaComponentRole.buffer,
+            concentration=Concentration(value=10.0, unit=ConcentrationUnit.millimolar),
+            provenance=[SOURCED_VALUES["mes"]],
+        ),
+        MediaComponent(
+            compound=resolved_compound("L-tryptophan"),
+            role=MediaComponentRole.amino_acid,
+            provenance=[SOURCED_VALUES["tryptophan"]],
+            note="amount printed as 40 mg/ml and held for review; see the SourcedValue",
+        ),
+        MediaComponent(
+            compound=resolved_compound("uracil"),
+            role=MediaComponentRole.nucleobase,
+            provenance=[SOURCED_VALUES["uracil"]],
+        ),
+        MediaComponent(
+            compound=resolved_compound("adenine"),
+            role=MediaComponentRole.nucleobase,
+            provenance=[SOURCED_VALUES["adenine"]],
+        ),
+    ],
+    provenance=[SOURCED_VALUES["medium"]],
+)
+"""The paper's own supplemented, MES-buffered YPD, liquid. Grouped under
+``base_medium="YPD"`` because the paper calls it YPD, but its components are NOT the
+library YPD root's (the yeast extract and peptone amounts are swapped), so it does not
+share ``YPD_LIQUID``'s ``media_identity``."""
 
 # Biological-replicate count per lipid (sourced: "Two independent biological replicates").
 _N_BIOLOGICAL_REPLICATES = 2
@@ -363,8 +497,7 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
         )
         # YPD rich medium, early exponential phase, 30 C (Methods "Strains").
         environment = Environment(
-            media=Media(name="YPD", state="liquid", is_synthetic=False),
-            temperature=Temperature(value=30),
+            media=DA_SILVEIRA_YPD, temperature=Temperature(value=30)
         )
         level = row["level"]
         phenotype = MetabolitePhenotype(

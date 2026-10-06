@@ -70,7 +70,6 @@ from torchcell.datamodels.schema import (
     Environment,
     Genotype,
     KanMxDeletionPerturbation,
-    Media,
     MetaboliteExperiment,
     MetaboliteExperimentReference,
     MetabolitePhenotype,
@@ -153,10 +152,7 @@ def dataset(
     return m.OrganicAcidYoshida2012Dataset(root=str(_root(tmp_path)), genome=_genome())
 
 
-_ENVIRONMENT = Environment(
-    media=Media(name="YPD", state="liquid", is_synthetic=False),
-    temperature=Temperature(value=25),
-)
+_ENVIRONMENT = Environment(media=m.YOSHIDA_YPD, temperature=Temperature(value=25))
 _PUBLICATION = Publication(
     pubmed_id="22277779",
     pubmed_url="https://pubmed.ncbi.nlm.nih.gov/22277779/",

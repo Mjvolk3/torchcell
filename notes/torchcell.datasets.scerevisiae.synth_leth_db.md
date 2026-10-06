@@ -44,3 +44,16 @@ len(set([i['experiment']['pubmed_id'] for i in rescue_dataset]))
   - `ncbi_genomic.gff` is not in the genomes tier (`torchcell-genomes/sgd_S288C_R64-4-1_20230830` excludes it) and NCBI now serves R64-5-1 under GCF_000146045.2, so its retrieval cannot be reproduced; the sha256 pin is the only record. Depositing it as its own tier set with `provenance_complete=False` needs a go-ahead.
   - Row 5232 is dropped because its Entrez id is absent from the pinned GFF, although its name `YPR108W-A` is a current SGD ORF. Resolving it by name would be a fallback; reversing the drop is a decision for the user.
   - The self-pair drop assigns no meaning to a gene paired with itself; if SynLethDB documents one, the rule can be revisited.
+
+## 2026.10.02 - Sourced medium replaces the inline stub (issue #622)
+
+Issue #622: both datasets built `Media(name="YEPD", state="solid", is_synthetic=False)` at `Temperature(30)`. Neither value is stated anywhere the loader reads. SynLethDB aggregates SL pairs from many papers; its release paper (Wang 2022, mirror `wangSynLethDB20Webbased2022/paper.md` line 49, sha256 `acaee2c7...`) lists what an entry carries: "The species, references to PubMed, supporting evidence, cell lines and other relevant information about an SL entry are stored as properties of the edge". The released CSV header is `n1.name, n1.identifier, n2.name, n2.identifier, r.cell_line, r.pubmed_id, r.source, r.statistic_score`. No medium, no temperature.
+
+The fix records the absence instead of a default:
+
+- `SYNLETHDB_MEDIUM_NOT_CARRIED`: one `composition_deferred` component naming the record's primary study as the source of the medium, with the line-49 quote as provenance. A true typed gap on the medium is not expressible in the current schema (`Environment.media` is required, `Media` has no `provenance_gaps`), so this object is the in-schema stand-in. `state="solid"` and `is_synthetic=False` are schema-required and NOT sourced; they keep the old stub's values and say so in the SourcedValue note.
+- `SYNLETHDB_TEMPERATURE_GAP`: `temperature=None` with `ProvenanceGap(field="temperature", reason=not_carried_by_curation)`, looked-in the same paper. This goes beyond the medium named in the issue; it is the same unsourced default on the same environment.
+
+Measured by `experiments/036-dataset-fixes-before-kg-build/scripts/media_stubs_seven_loaders.py` (output `experiments/036-dataset-fixes-before-kg-build/results/media_stubs_seven_loaders.csv`): scratch builds hold 13,996 SL and 6,942 SR records (the #597 counts; the dev stores, built before #597, hold 14,000 and 6,948) and every environment carries the new medium and the temperature gap; the dev stores carry the `YEPD` stub on all 28,000 and 13,896 environments.
+
+Open: making the medium a real typed gap needs a schema decision (`Media.state` optional plus `ProvenanceGapMixin` on `Media`, or `Environment.media` optional), which touches every adapter that reads `media.state`.

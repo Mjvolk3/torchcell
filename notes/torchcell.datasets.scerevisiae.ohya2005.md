@@ -262,3 +262,11 @@ Left open: the publication is Ohya 2005 while the matrices are the Suzuki 2018 C
 
 - The duplicate-spelling refusal runs before the incomplete-row drop, so a strain listed twice with one incomplete row is now refused where the earlier loader kept one record. The pinned matrices have 0 such rows (0 duplicate spellings at all).
 - `data.csv` is written after every record is built, so a refused matrix leaves neither `preprocess/data.csv` nor `processed/lmdb`. On success the file bytes are unchanged (`test_side_files` asserts them exactly).
+
+## 2026.10.02 - Sourced medium replaces the inline stub (issue #622)
+
+Issue #622: the loader built `Media(name="YPD", state="liquid", is_synthetic=False)` inline, a stub with no components and no provenance.
+
+The paper (mirror `ohyaHighdimensionalLargescalePhenotyping2005/paper.md` line 23, sha256 `86bf457c...`) says only "Each strain was grown in yeast extract/ peptone/dextrose medium, and logarithmic-phase cells were fixed." The recipe is printed by the same lab in Ohnuki 2018 (line 179): YPD with 1% (w/v) yeast extract, 2% (w/v) peptone and 2% (w/v) glucose, "prepared as described previously [15]", and Ohnuki's ref 15 (line 339) is this paper. The loader now emits `OHYA_YPD = restated(YPD_LIQUID, ...)` with both quotes in `MEDIUM_SOURCED_VALUES`; the percentages equal the library `YPD_LIQUID`'s. `restated()` (new in `torchcell/datamodels/media.py`) returns the library object with the paper's SourcedValues appended to its provenance. `name` and `provenance` are not part of `media_identity`, so the record's medium node joins the library object exactly. The `liquid` state is read from "logarithmic-phase cells were fixed"; the paper does not use the word liquid.
+
+Measured by `experiments/036-dataset-fixes-before-kg-build/scripts/media_stubs_seven_loaders.py` (output `experiments/036-dataset-fixes-before-kg-build/results/media_stubs_seven_loaders.csv`): 3 components, 5 provenance entries, `media_identity` equal to `YPD_LIQUID`; the dev store (4,718 records) carries the stub on all 9,436 environments. Not built in-process (large); the dev rebuild runs under slurm. The environment now crosses the 512-byte interning threshold, so it is stored as an interned `$ref`; `test_the_interned_store_resolves_to_exactly_the_inline_records` is updated to expect two interned objects (reference and environment).

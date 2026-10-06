@@ -30,8 +30,8 @@ pinned in ``test_ozaydin2013_synthetic.py`` and not repeated here. Added:
   first row's strain used to win). On the pinned SI the per-ORF aggregate is
   identical before and after (4,975 ORFs);
 - an out-of-scale color (6) refuses the build with the schema's message;
-- the medium as a Finding: a free-text ``SC-URA`` stub with no components, not the
-  sourced ``media.SC_URA`` of ``MEDIA_LIBRARY``;
+- the medium (issue #622, 2026.10.02): the sourced ``OZAYDIN_SC_URA_AGAR`` plate (the
+  library ``SC_URA`` made solid, agar amount an open gap), no longer a free-text stub;
 - the YB/I/BTS1 cassette written out field by field in stored order (the sibling file
   compares against ``_carotenogenic_cassette()`` itself), with ``plasmid_contig_id``,
   ``locus_tag`` and ``integration_locus`` None as a Finding (no plasmid sequence store);
@@ -352,30 +352,32 @@ def test_out_of_scale_color_refuses_the_build(tmp_path: Path) -> None:
         m.CarotenoidOzaydin2013Dataset(root=str(_root(tmp_path, rows)))
 
 
-def test_medium_is_a_free_text_stub_not_the_library_sc_ura(
+def test_medium_is_the_sourced_sc_ura_agar_plate(
     dataset: m.CarotenoidOzaydin2013Dataset,
 ) -> None:
-    """Finding: the screen medium is built inline as ``Media(name="SC-URA",
-    state="solid", is_synthetic=True)`` (source line 361), a stub with no base medium,
-    components, dropouts or provenance, while ``MEDIA_LIBRARY`` holds a sourced
-    ``SC_URA`` (31 components, a uracil dropout). The stub's name matches no library
-    entry, so the record cannot be joined to it. Record and reference carry the same
-    stub at 30 C. Pinned until the loader uses a sourced SC-URA agar object.
+    """Issue #622: the screen medium was a free-text ``Media(name="SC-URA",
+    state="solid", is_synthetic=True)`` stub with no components or provenance. It is now
+    ``OZAYDIN_SC_URA_AGAR``: the library ``SC_URA`` (base ``SC``, uracil dropped) made
+    solid, plus an agar row with NO concentration (the paper prints no agar amount),
+    quoting Methods line 42. Record and reference carry the same medium at 30 C.
     """
-    stub = {
-        "name": "SC-URA",
-        "state": "solid",
-        "is_synthetic": True,
-        "base_medium": None,
-        "components": [],
-        "dropouts": [],
-        "provenance": [],
-    }
+    media = m.OZAYDIN_SC_URA_AGAR
     experiment_env = dataset[0]["experiment"]["environment"]
-    assert experiment_env["media"] == stub
-    assert dataset[0]["reference"]["environment_reference"]["media"] == stub
+    assert experiment_env["media"] == media.model_dump()
+    assert dataset[0]["reference"]["environment_reference"]["media"] == (
+        media.model_dump()
+    )
     assert experiment_env["temperature"]["value"] == 30.0
-    assert "SC-URA" not in {media.name for media in MEDIA_LIBRARY.values()}
+    assert (media.state, media.is_synthetic, media.base_medium) == ("solid", True, "SC")
+    assert [c.name for c in media.dropouts] == ["uracil"]
+    assert len(media.components) == len(MEDIA_LIBRARY["SC_URA"].components) + 1
+    agar = media.components[-1]
+    assert (agar.compound.name, agar.concentration) == ("agar", None)
+    assert "agar" in media.open_gaps
+    assert media.provenance[-1].quote == m.SCORING_PLATE_QUOTE
+    assert agar.provenance[0].quote == (
+        "spotted onto selective medium agar plates (SC-URA)"
+    )
 
 
 def test_cassette_is_three_episomal_additions_without_a_sequence_pointer(

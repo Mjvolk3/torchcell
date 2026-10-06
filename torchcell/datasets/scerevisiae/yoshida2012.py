@@ -61,6 +61,7 @@ from torchcell.data import (
     post_process,
     verify_raw_files,
 )
+from torchcell.datamodels.media import YPD_LIQUID, restated
 from torchcell.datamodels.schema import (
     Environment,
     Experiment,
@@ -78,9 +79,65 @@ from torchcell.datamodels.schema import (
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.scerevisiae.zelezniak2018 import build_metabolite_s_id_map
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
+from torchcell.verification.report import Provenance
+from torchcell.verification.sourced import SourcedValue
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+# --------------------------------------------------------------------------- #
+# Growth medium (issue #622). Quotes are verbatim substrings of the mirror OCR
+# ``paper.md`` (MinerU output, so LaTeX markup is kept as written); the line in each
+# note is that file's.
+# --------------------------------------------------------------------------- #
+MEDIUM_CITATION_KEY = "yoshidaIdentificationCharacterizationGenes2012"
+MEDIUM_PAPER_SHA256 = "e2c0b0b43dc8825504797efd52ff4bb2b13d96aa3fe3045eeae094888d06f657"
+YPD_RECIPE_QUOTE = (
+    "Strains were grown in YPD ( $1 \\%$ yeast extract, $2 \\%$ peptone, and $2 \\%$ "
+    "glucose)"
+)
+YPD_FERMENTATION_QUOTE = (
+    "in $3 0 0 \\mathrm { m l }$ of fresh YPD, and grown at $2 5 ^ { \\circ } "
+    "\\mathbb { C }$ for 4 days without shaking."
+)
+TABLE_3_MEDIUM_QUOTE = (
+    "Data show the results from 72-h incubation in YPD medium at "
+    "$2 5 ^ { \\circ } \\mathbb { C } .$"
+)
+
+
+def _medium_sv(value: object, quote: str, note: str) -> SourcedValue:
+    """A SourcedValue pinned to the Yoshida mirror OCR ``paper.md``."""
+    return SourcedValue(
+        value=value,
+        provenance=Provenance(
+            source_uri="paper.md",
+            citation_key=MEDIUM_CITATION_KEY,
+            sha256=MEDIUM_PAPER_SHA256,
+        ),
+        quote=quote,
+        note=note,
+    )
+
+
+MEDIUM_SOURCED_VALUES: dict[str, SourcedValue] = {
+    "recipe": _medium_sv(
+        "1% yeast extract, 2% peptone, 2% glucose",
+        YPD_RECIPE_QUOTE,
+        "line 25; the paper's own recipe, identical to the library YPD_LIQUID "
+        "percentages, so the record carries YPD_LIQUID's components",
+    ),
+    "state": _medium_sv(
+        "liquid, static",
+        YPD_FERMENTATION_QUOTE,
+        "line 39; the fermentation culture the HPLC supernatants come from",
+    ),
+    "table_3_medium": _medium_sv("YPD", TABLE_3_MEDIUM_QUOTE, "line 82; Table 3 note"),
+}
+
+YOSHIDA_YPD: Media = restated(YPD_LIQUID, *MEDIUM_SOURCED_VALUES.values())
+"""Static liquid YPD at the paper's own 1/2/2% recipe: library ``YPD_LIQUID`` plus the
+three Methods/Table 3 sentences. Same ``media_identity`` as ``YPD_LIQUID``."""
 
 MEASUREMENT_TYPE = "hplc_organic_acid_titer_mM"
 N_REPLICATES = 3
@@ -485,10 +542,7 @@ class OrganicAcidYoshida2012Dataset(ExperimentDataset):
             ]
         )
         # Static (no shaking) YPD liquid, 25 C, 72 h (Methods; Table 3 caption).
-        environment = Environment(
-            media=Media(name="YPD", state="liquid", is_synthetic=False),
-            temperature=Temperature(value=25),
-        )
+        environment = Environment(media=YOSHIDA_YPD, temperature=Temperature(value=25))
         phenotype = self._phenotype(row["analytes"])
         # Reference = measured WT (BY4742) row, restricted to the analytes this strain
         # measured (all six here); a measured baseline, never a population mean.

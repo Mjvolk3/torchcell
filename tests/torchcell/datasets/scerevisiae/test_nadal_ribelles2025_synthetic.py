@@ -55,7 +55,6 @@ from torchcell.datamodels.schema import (
     Environment,
     Genotype,
     MarkerDeletionPerturbation,
-    Media,
     PseudobulkExpressionExperiment,
     PseudobulkExpressionExperimentReference,
     PseudobulkExpressionPhenotype,
@@ -142,7 +141,7 @@ def dataset(
     )
 
 
-_YPD = Media(name="YPD", state="liquid", is_synthetic=False)
+_YPD = m.NADAL_RIBELLES_YPD
 _CONTROL = Environment(
     media=_YPD, temperature=Temperature(value=30.0), aerobicity="aerobic"
 )

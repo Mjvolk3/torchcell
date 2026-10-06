@@ -259,8 +259,8 @@ def check_figure_widths(srcs: dict[str, str]) -> list[tuple[str, str]]:
 # --- style ------------------------------------------------------------------
 # The prose rules from notes/writing-style-guide.md that are mechanically
 # checkable. A rule that only lives in a guide gets broken; a rule the build
-# checks does not. Everything here EXCLUDES verbatim quotes (``...'') and %%
-# comments, because a source quote keeps its own spelling and a comment is not
+# checks does not. Everything here EXCLUDES verbatim quotes (``...''),
+# \sourcetext{...} arguments and %% comments, because a source quote keeps its own spelling and a comment is not
 # prose -- Americanizing a quote would falsify it.
 
 # American spelling is the default EVERYWHERE, so this checks the CLASS rather
@@ -325,9 +325,22 @@ SELF_REF = [
 
 
 def _prose_only(t: str) -> str:
-    """Blank out %% comments and ``...'' quotes, preserving offsets."""
+    """Blank out %% comments, ``...'' quotes and \\sourcetext{} arguments, preserving offsets."""
     t = re.sub(r"(?m)^%%.*$", lambda m: " " * len(m.group(0)), t)
     t = re.sub(r"``.*?''", lambda m: " " * len(m.group(0)), t, flags=re.S)
+    # \sourcetext{...} marks text copied from a source record where quotation
+    # marks would be wrong: a bibliographic entry's authors, title and journal.
+    # "Storey" is a surname and "Mech Ageing Dev" a journal. The argument can
+    # hold braces (accent macros), so it is brace-matched rather than regexed.
+    marker = "\\sourcetext{"
+    pos = t.find(marker)
+    while pos != -1:
+        depth, end = 1, pos + len(marker)
+        while depth:
+            depth += {"{": 1, "}": -1}.get(t[end], 0)
+            end += 1
+        t = t[:pos] + " " * (end - pos) + t[end:]
+        pos = t.find(marker, end)
     return t
 
 

@@ -268,6 +268,9 @@
 \newcommand{\term}[1]{\textbf{#1}}          % first use of a jargon term
 \newcommand{\gene}[1]{\textit{#1}}          % gene names in italic, SGD style
 \newcommand{\org}[1]{\textit{#1}}           % organism names
+% Text copied from a source record (a citation's authors, title, journal). Sets
+% nothing; `make check` skips its argument so source spelling is left alone.
+\newcommand{\sourcetext}[1]{#1}
 
 %% A boxed "key result" callout -- the claim a section exists to establish.
 \RequirePackage[most]{tcolorbox}

@@ -1,0 +1,52 @@
+%% notes-tex/yeastract-publications/sections/1-file.tex
+%% [[experiments.037-yeastract.publications]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/yeastract-publications/sections/1-file.tex
+%% SOURCE: numbers and tables from
+%% experiments/037-yeastract/scripts/yeastract_publication_tables.py; prose hand-authored
+
+\section{What the file holds\secstatus{todo}}\label{sec:file}
+
+The source is the \org{S. cerevisiae} member of the YEASTRACT+ 2022 regulation
+archive, which holds one flat file for each of eleven yeast species:
+
+\begin{quote}\small
+archive: \file{YeastractPlus_2022_all_regs.zip}\\
+sha256: \texttt{2f2e9f8b3c905ae333814f04161d0ffd\allowbreak 2fabf00cc9878c1bd86a8f5e366ebb3e}\\
+member: \file{YeastractPlus_2022_Scerevisiae_regs_flatfile.tsv.gz}
+\end{quote}
+
+\noindent
+The member is a tab-separated table of \ytNRows{} rows and eleven columns with no header row,
+and no row is repeated. The column meanings used here are read off the values:
+the systematic and standard names of a transcription factor, the systematic and
+standard names of a target gene, a PMID, a sign (\texttt{Positive},
+\texttt{Negative} or \texttt{N/A}), an evidence label (\texttt{Direct},
+\texttt{Indirect} or \texttt{N/A}), an assay, a condition group, a condition
+subgroup and a free-text condition.
+
+A row is one piece of evidence, and one factor-target pair recurs once for each
+paper, assay and condition that reports it. The \ytNRows{} rows name \ytNTfs{}
+transcription factors and \ytNTargets{} targets in \ytNPairs{} distinct pairs.
+\ytNIndirectRows{} rows are labeled \texttt{Indirect}, \ytNDirectRows{} are
+labeled \texttt{Direct} and \ytNEvidenceNaRows{} carry no label
+(Table~\ref{tab:summary}).
+
+\input{tables/t1-summary}
+
+\subsection{Where each field comes from\secstatus{todo}}\label{sec:fields}
+
+The PMID is column 5 of the file, and the row, factor, pair, evidence and
+condition counts of a paper are taken over the rows that carry its PMID. The
+file gives no citation, so the authors, title, journal, DOI and PMC id come
+from the PubMed record for that PMID, retrieved through the NCBI E-utilities
+\texttt{esummary} endpoint and stored beside the manifest in
+\file{experiments/037-yeastract/results/yeastract_pubmed_esummary.json}.
+
+PubMed returns no record for \ytNNoPubmed{} of the \ytNPapers{} PMIDs, and that
+row is listed by its id alone. \ytNDoi{} records carry a DOI and \ytNNoDoi{} do
+not; those are linked by their PubMed record. \ytNPmc{} records carry a PMC id,
+which means PubMed Central holds a full text. Whether that copy is in the
+open-access subset served by the PMC OA API was not checked.
+
+For \ytNNoAssayPapers{} papers the most frequent value of the assay column is
+empty, and those papers show a dash in the assay column of Table~\ref{tab:all}.

@@ -16,3 +16,4 @@ created: 1791255603711
 - [x] `make check` skips `\sourcetext{}` so generated citations keep their source spelling [[notes-tex.common.check_doc]]
 - [ ] Assign the inclusion status (probabilistic genome representation, "not possible for now") per SPELL study and add the allele, imputation and provenance findings to the notes-tex document [[experiments.015-spell.publications]]
 - [ ] Verify the Costanzo strain table against the loader's copy on gilahyper and cover Kuzmin 2018 in the allele list [[experiments.015-spell.scripts.spell_allele_reuse]]
+- [x] YEASTRACT+ 2022 regulation file traced to its 1,671 source papers with DOIs, cross-checked against SPELL by PMID (84 shared; Reimand 2010 is a reanalysis of Hu 2007), and typeset so the papers worth tracing to source data can be chosen [[experiments.037-yeastract.publications]]

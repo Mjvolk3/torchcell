@@ -254,9 +254,14 @@ def _load_writer() -> ModuleType:
     finally:
         dotenv.load_dotenv = real_load_dotenv
         logging.basicConfig = real_basic_config
+        # Read each module's own namespace, never `getattr`: a lazy module (transformers'
+        # `_LazyModule`) answers an unknown attribute by importing submodules, which on a
+        # runner without torchvision raises ModuleNotFoundError (PR #662 CI; the same
+        # trap as PR #585 in `_run_mineru._patch_dpi`). `None` entries are blocked imports.
         for loaded in [*sys.modules.values(), module]:
-            if getattr(loaded, "load_dotenv", None) is no_dotenv:
-                vars(loaded)["load_dotenv"] = real_load_dotenv
+            namespace = getattr(loaded, "__dict__", None)
+            if namespace is not None and namespace.get("load_dotenv") is no_dotenv:
+                namespace["load_dotenv"] = real_load_dotenv
     return module
 
 
@@ -741,3 +746,33 @@ def test_writer_import_leaves_no_stubbed_load_dotenv(
     for module in [dcell, yeast_gem, sgd, kemmeren2014, sameith2015]:
         assert module.load_dotenv is dotenv.load_dotenv, module.__name__
     assert logging.basicConfig.__module__ == "logging"
+
+
+class _LazyReachesTorchvision(ModuleType):
+    """A `sys.modules` entry shaped like transformers' `_LazyModule` on a runner without
+    torchvision: any non-dunder attribute access raises ModuleNotFoundError.
+    """
+
+    def __getattr__(self, name: str) -> Any:
+        if name.startswith("__"):
+            raise AttributeError(name)
+        raise ModuleNotFoundError("No module named 'torchvision'")
+
+
+def test_writer_loader_never_probes_module_attributes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The stub restore reads each module's `__dict__`, so a lazy module that would import
+    torchvision on attribute access is never asked (PR #662 CI: a `getattr` scan errored
+    every test using `written` with `No module named 'torchvision'`). The loaded writer is
+    still the real script: `extract_full_masks` is defined in it.
+    """
+    lazy = _LazyReachesTorchvision("lazy_reaches_torchvision")
+    monkeypatch.setitem(sys.modules, "lazy_reaches_torchvision", lazy)
+    monkeypatch.setitem(sys.modules, "blocked_import", None)
+    with pytest.raises(ModuleNotFoundError, match="^No module named 'torchvision'$"):
+        lazy.load_dotenv  # noqa: B018  (the probe the loader must not make)
+    writer = _load_writer()
+    assert writer.extract_full_masks.__module__ == "_full_mask_writer"
+    assert writer.extract_full_masks.__code__.co_filename == str(WRITER)
+    assert vars(writer)["load_dotenv"] is dotenv.load_dotenv

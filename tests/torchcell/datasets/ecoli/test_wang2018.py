@@ -39,6 +39,7 @@ from __future__ import annotations
 import json
 import os
 import os.path as osp
+import pickle
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -1185,7 +1186,14 @@ def test_the_built_store_holds_the_measured_record_count() -> None:
     assert accounting.perturbations == m.EXPECTED_PERTURBATIONS
     assert accounting.distinct_genes == m.EXPECTED_GENES
     assert accounting.retired_targets_dropped == ["b4590", "b4629", "b4635", "b4700"]
-    assert [s.nc_sigma for s in accounting.screens] == [s.nc_sigma for s in m.SCREENS]
+    # The build's sigma is back-solved from the released bytes and the module's is the
+    # recorded pin, so they agree to the build's own SIGMA_RELATIVE_TOLERANCE, not bit
+    # for bit.
+    for built, pinned in zip(accounting.screens, m.SCREENS, strict=True):
+        assert built.screen_id == pinned.screen_id
+        assert built.nc_sigma == pytest.approx(
+            pinned.nc_sigma, rel=m.SIGMA_RELATIVE_TOLERANCE
+        )
 
 
 @pytest.mark.data
@@ -1215,6 +1223,54 @@ def test_every_member_bnumber_resolves_against_the_pinned_assembly() -> None:
     assert histogram["retired"] == 4
     assert accounting.reconciliation.remapped == 0
     assert accounting.reconciliation.outside_namespace == ()
+
+
+#: One row read off the released bytes by hand: the first data row of Supplementary Data
+#: 3 for this guide, and of Supplementary Data 6 to 10 for its five fitness values.
+HAND_CHECKED_GUIDE = "gspKb3332_817"
+HAND_CHECKED_SPACER = "CTTTTCACCTGAGCAACCAG"
+HAND_CHECKED_FITNESS: dict[str, float] = {
+    "essentiality": -0.678534122869,
+    "auxotrophy": -0.944735829468,
+    "trp_biosynthesis": -3.04918078714,
+    "furfural_tolerance": 2.61336100679,
+    "isobutanol_tolerance": 5.15061288135,
+}
+
+
+@pytest.mark.data
+@needs_store
+def test_a_hand_checked_guide_is_stored_verbatim_in_all_five_screens() -> None:
+    """``gspKb3332_817``: its spacer and its five fitness values, read off the xlsx."""
+    import lmdb
+
+    stored: dict[str, float] = {}
+    spacers: set[str] = set()
+    genes: set[tuple[str, str]] = set()
+    env = lmdb.open(str(STORE / "processed/lmdb"), readonly=True, lock=False)
+    with env.begin() as txn:
+        cursor = txn.cursor()
+        for _, payload in cursor:
+            record = pickle.loads(payload)
+            perturbations = record["experiment"]["genotype"]["perturbations"]
+            if perturbations[0]["crispr"]["guide_sequence"] != HAND_CHECKED_SPACER:
+                continue
+            phenotype = record["experiment"]["phenotype"]
+            stored[str(phenotype["screen_id"])] = float(
+                phenotype["environment_response"]
+            )
+            for perturbation in perturbations:
+                spacers.add(str(perturbation["crispr"]["guide_sequence"]))
+                genes.add(
+                    (
+                        str(perturbation["systematic_gene_name"]),
+                        str(perturbation["perturbed_gene_name"]),
+                    )
+                )
+    env.close()
+    assert stored == HAND_CHECKED_FITNESS
+    assert spacers == {HAND_CHECKED_SPACER}
+    assert genes == {("b3332", "gspK")}
 
 
 @pytest.mark.data

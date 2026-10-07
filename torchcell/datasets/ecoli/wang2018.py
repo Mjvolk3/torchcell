@@ -511,9 +511,9 @@ _Q_ANNOTATION = (
 )
 _Q_DCAS9_PLASMID = (
     "The dCas9 expression plasmid was constructed by replacing the promoter and "
-    "resistance marker region of Addgene plasmid $\\# 4 4 \\dot { 2 } 4 9 ^ { \\bar { 2 "
-    "} }$ with a constitutive promoter (wild-type promoter for Cas9 from Streptococcus "
-    "pyogenes)"
+    "resistance marker region of Addgene plasmid $\\# 4 4 \\dot { 2 } 4 9 ^ "
+    "{ \\bar { 2 } 4 }$ with a constitutive promoter (wild-type promoter for Cas9 from "
+    "Streptococcus pyogenes)"
 )
 _Q_LIBRARY_SIZE = (
     "we designed a genome-scale CRISPRi sgRNA library consisting of 55,671 sgRNAs "
@@ -571,8 +571,12 @@ _Q_ZSCORE = (
     "was then calculated by dividing the sgRNA fitness by the $\\sigma$ value (equation "
     "4)"
 )
-_Q_ANTIBIOTICS = "Antibiotic concentrations for kanamycin and ampicillin were 50 and"
-_Q_ANTIBIOTICS_TAIL = "$1 0 0 \\mathrm { m g / L }$ , respectively."
+#: The two antibiotic doses straddle a paragraph break in the OCR, so the quote that is
+#: verbatim in those bytes carries the break.
+_Q_ANTIBIOTICS = (
+    "Antibiotic concentrations for kanamycin and ampicillin were 50 and\n\n"
+    "$1 0 0 \\mathrm { m g / L }$ , respectively."
+)
 _Q_MOPS = (
     "MOPS medium was prepared according to standard laboratory techniques53 "
     "$\\scriptstyle ( 1 0 \\mathrm { g } / \\mathrm { L }$ glucose). All cultures were "
@@ -737,7 +741,7 @@ CARBON_SOURCE_G_PER_L = _paper(
 )
 KANAMYCIN_MG_PER_L = _paper(
     50.0,
-    f"{_Q_ANTIBIOTICS} {_Q_ANTIBIOTICS_TAIL}",
+    _Q_ANTIBIOTICS,
     page=_PAGE_METHODS_REAGENTS,
     note="stored as 50 ug/mL. The source prints mg/L, which is numerically identical to "
     "ug/mL (1 mg/L = 1 ug/mL exactly), and ConcentrationUnit.mg_per_l is a deliberately "
@@ -745,7 +749,7 @@ KANAMYCIN_MG_PER_L = _paper(
 )
 AMPICILLIN_MG_PER_L = _paper(
     100.0,
-    f"{_Q_ANTIBIOTICS} {_Q_ANTIBIOTICS_TAIL}",
+    _Q_ANTIBIOTICS,
     page=_PAGE_METHODS_REAGENTS,
     note="stored as 100 ug/mL, same unit identity as the kanamycin dose",
 )

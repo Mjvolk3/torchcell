@@ -42,6 +42,10 @@ from .kang2026 import (
     IsoprenylAcetateTiterKang2026Dataset as IsoprenylAcetateTiterKang2026Dataset,
 )
 from .lim2022 import PutidaPrecise321Lim2022Dataset as PutidaPrecise321Lim2022Dataset
+from .lim2025 import (
+    IsoprenolToleranceLim2025Dataset as IsoprenolToleranceLim2025Dataset,
+)
+from .lim2025 import ProteomeLim2025Dataset as ProteomeLim2025Dataset
 from .menasalvas2025 import (
     IsoprenolSelectionMenasalvas2025Dataset as IsoprenolSelectionMenasalvas2025Dataset,
 )

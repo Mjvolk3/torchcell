@@ -26,6 +26,7 @@ What this package holds:
   biosensor-coupled CRISPRi selection, one record per enriched knockdown target.
 """
 
+from .borchert2024 import RbTnseqBorchert2024Dataset as RbTnseqBorchert2024Dataset
 from .carruthers2025 import (
     IsoprenolTiterCarruthers2025Dataset as IsoprenolTiterCarruthers2025Dataset,
 )

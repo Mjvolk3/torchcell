@@ -18,9 +18,16 @@ ex23
     all 63 non-empty combinations of the six inhibitors, one concentration each (the
     ``C2`` column of ``inhibitors.xlsx``: FF 6, AA 4, HMF 2.522, FA 1, LVA 2, LA 40 g/L),
     three biological replicates, 200 wells.
-ex26
-    the furfural x acetic acid isobole: a 10 x 10 grid of concentrations, two plates
-    (``n2--plotting_isoboles.ipynb``: FF 0 to 3 g/L in rows, AA 0 to 3.6 g/L in columns).
+ex26, ex27, ex28
+    the isoboles furfural x acetic acid, formic acid x acetic acid and 5-HMF x acetic
+    acid: a 10 x 10 grid of concentrations, two plates each (the design sheet
+    ``BioscreenC_FF_AA_Isobole_exp.xlsx``: 0 to 9 steps of 10 uL of inhibitor stock in
+    200 uL, FF 0 to 3, FA 0 to 1.8, HMF 0 to 4.5, AA 0 to 3.6 g/L). Only ex26 was ever
+    processed by the Bioscreen software (``MV_ex26_..._Traits.txt``). For ex27 and ex28
+    the generation time is derived here from the raw OD curves (``generation_time``:
+    the steepest 3 h log-linear stretch of the baseline-subtracted curve), and the same
+    derivation is run on ex26's raw curves and compared with the software's traits so
+    the two isoboles are read on a checked footing.
 
 FITNESS, as ``process_bsc.py`` of the analysis repo defined it: the mean wild-type
 generation time divided by the well's generation time, so 1 is wild-type growth and
@@ -30,8 +37,8 @@ grow within the run, and every plot shows those wells as their own category.
 
 Writes, under ``results/``: ``ex23_conditions.csv`` (one row per combination: the order,
 the fitness mean and sd over replicates, whether it grew), ``ex21_titration.csv`` (one
-row per inhibitor, replicate and step) and ``ex26_isobole.csv`` (one row per grid cell);
-and the figures to ``$ASSET_IMAGES_DIR/039-inhibitor-combinations-wetlab/``.
+row per inhibitor, replicate and step) and ``ex26_isobole.csv`` (one row per grid cell, software traits), ``isoboles_from_raw.csv``
+(ex26, ex27, ex28 from the raw curves) and ``ex26_trait_check.csv``; and the figures to ``$ASSET_IMAGES_DIR/039-inhibitor-combinations-wetlab/``.
 """
 
 from __future__ import annotations
@@ -44,6 +51,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
+from matplotlib.colors import LinearSegmentedColormap, to_rgba
 from matplotlib.patches import Patch
 from matplotlib.ticker import MultipleLocator
 from pydantic import BaseModel
@@ -92,7 +100,27 @@ EX21_LABELS = {
 #: ex26: grid concentrations, g/L, from n2--plotting_isoboles.ipynb
 EX26_FF = [0, 0.33, 0.67, 1, 1.33, 1.67, 2, 2.33, 2.67, 3]
 EX26_AA = [0, 0.4, 0.8, 1.2, 1.6, 2, 2.4, 2.8, 3.2, 3.6]
+#: the three isoboles from their raw curves: run, first inhibitor, its well
+#: concentration per 10 uL step (g/L, the design sheet's "well conc" column), raw file
+ISOBOLES = {
+    "ex26": ("FF", 0.3333, "MV_ex26_inhibitor_isobole_FF_AA.csv"),
+    "ex27": ("FA", 0.2, "MV_ex27_inhibitor_isobole_FA_AA.csv"),
+    "ex28": ("HMF", 0.504, "MV_ex28_inhibitor_isobole_HMF_AA.csv"),
+}
+AA_STEP = 0.4
+#: a curve counts as growth when its baseline-subtracted OD rises by at least this much
+GROWTH_RISE = 0.3
+FIT_WINDOW_H = 3.0
 NO_GROWTH = "#E6E6E6"
+#: Fitness on the isobole and pair grids: white at wild-type growth down through the
+#: palette red, with the palette's dark red at 0. A well that did not grow is drawn AT
+#: 0 (dark red), the call being "no growth" and not "missing"; the black front traces the
+#: boundary between the wells that grew and those that did not, which is the detection
+#: limit of the run, so the two readings stay distinguishable.
+RED, DARK_RED = PLOT_PALETTE[1], PLOT_PALETTE[7]
+FITNESS_CMAP = LinearSegmentedColormap.from_list(
+    "fitness", [(0.0, DARK_RED), (0.55, RED), (1.0, "#FFFFFF")]
+)
 
 matplotlib.rcParams.update(
     {
@@ -127,6 +155,33 @@ def box(ax: plt.Axes) -> None:
     for side in ("top", "right", "bottom", "left"):
         ax.spines[side].set_visible(True)
         ax.spines[side].set_linewidth(0.5)
+
+
+def fitness_grid(values: np.ndarray, grew: np.ndarray) -> np.ndarray:
+    """Fitness with the wells that did not grow drawn at 0."""
+    return np.where(grew, values, 0.0)
+
+
+def draw_front(ax: plt.Axes, grew: np.ndarray) -> None:
+    """Outline the region of wells that grew: every edge between a grown cell and a cell
+    that did not grow, or the grid border, in black. Cells are drawn at integer centers.
+    """
+    n_rows, n_cols = grew.shape
+    for i in range(n_rows):
+        for j in range(n_cols):
+            if not grew[i, j]:
+                continue
+            for di, dj, x, y in (
+                (-1, 0, (j - 0.5, j + 0.5), (i - 0.5, i - 0.5)),
+                (1, 0, (j - 0.5, j + 0.5), (i + 0.5, i + 0.5)),
+                (0, -1, (j - 0.5, j - 0.5), (i - 0.5, i + 0.5)),
+                (0, 1, (j + 0.5, j + 0.5), (i - 0.5, i + 0.5)),
+            ):
+                ni, nj = i + di, j + dj
+                inside = 0 <= ni < n_rows and 0 <= nj < n_cols
+                if inside and grew[ni, nj]:
+                    continue
+                ax.plot(x, y, color="black", linewidth=1.0, solid_capstyle="projecting")
 
 
 def save(fig: plt.Figure, name: str) -> list[str]:
@@ -239,18 +294,25 @@ def plot_ex23_pairs(cond: pd.DataFrame) -> list[str]:
             m[i, j] = row["fitness_mean"]
             grew[i, j] = bool(row["grew"])
     fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(70)))
-    cmap = matplotlib.colormaps["Oranges_r"].copy()
-    cmap.set_bad(NO_GROWTH)
-    im = ax.imshow(np.ma.masked_invalid(m), cmap=cmap, vmin=0, vmax=1)
+    im = ax.imshow(fitness_grid(m, grew), cmap=FITNESS_CMAP, vmin=0, vmax=1)
     for i in range(6):
         for j in range(6):
-            text = f"{m[i, j]:.2f}" if grew[i, j] else "none"
-            ax.text(j, i, text, ha="center", va="center", fontsize=5)
+            text = f"{m[i, j]:.2f}" if grew[i, j] else "0\n(no growth)"
+            dark = (m[i, j] if grew[i, j] else 0.0) < 0.35
+            ax.text(
+                j,
+                i,
+                text,
+                ha="center",
+                va="center",
+                fontsize=5,
+                color="white" if dark else "black",
+            )
     ax.set_xticks(range(6))
     ax.set_yticks(range(6))
     ax.set_xticklabels([f"{k}\n{EX23_G_PER_L[k]:g} g/L" for k in INHIBITORS])
     ax.set_yticklabels([f"{k} {EX23_G_PER_L[k]:g} g/L" for k in INHIBITORS])
-    ax.set_title("ex23 singles (diagonal) and pairs; gray = no growth in 48 h")
+    ax.set_title("ex23 singles (diagonal) and pairs; no growth in 48 h drawn at 0")
     cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03)
     cbar.set_label("fitness (wild-type GT / GT)")
     cbar.outline.set_linewidth(0.5)
@@ -271,8 +333,17 @@ def plot_ex23_curves() -> list[str]:
     series = [("WT", "black")] + list(zip(INHIBITORS, PLOT_PALETTE, strict=False))
     for name, color in series:
         wells = pre.loc[pre["name"] == name, "well"].astype(int)
-        y = curves[[f"Well {w}" for w in wells]].mean(axis=1)
+        block = curves[[f"Well {w}" for w in wells]]
+        y = block.mean(axis=1)
         label = "no inhibitor" if name == "WT" else f"{name} {EX23_G_PER_L[name]:g} g/L"
+        # the band is the range over the wells (3 per inhibitor, 8 controls)
+        ax.fill_between(
+            curves["Time"],
+            block.min(axis=1),
+            block.max(axis=1),
+            facecolor=to_rgba(color, 0.25),
+            edgecolor="none",
+        )
         ax.plot(
             curves["Time"],
             y,
@@ -283,7 +354,7 @@ def plot_ex23_curves() -> list[str]:
         )
     ax.set_xlim(0, 48)
     ax.set_xlabel("time (h)")
-    ax.set_ylabel("OD600, blanked (mean over wells)")
+    ax.set_ylabel("OD600, blanked (mean over wells; band = range)")
     ax.set_title("ex23: the six single inhibitors at the combination concentration")
     ax.legend(frameon=False, loc="upper left", ncol=2)
     box(ax)
@@ -422,24 +493,169 @@ def plot_ex26(iso: pd.DataFrame) -> list[str]:
         .reindex(index=EX26_FF, columns=EX26_AA)
     )
     fig, ax = plt.subplots(figsize=(mm_to_in(PANEL_WIDTHS_MM["half"]), mm_to_in(70)))
-    cmap = matplotlib.colormaps["Oranges_r"].copy()
-    cmap.set_bad(NO_GROWTH)
-    im = ax.imshow(
-        np.ma.masked_invalid(mean.to_numpy()), cmap=cmap, vmin=0, vmax=1, origin="lower"
+    grew = (
+        iso.groupby(["furfural_g_per_l", "acetic_acid_g_per_l"])["grew"]
+        .any()
+        .unstack("acetic_acid_g_per_l")
+        .reindex(index=EX26_FF, columns=EX26_AA)
+        .to_numpy()
     )
+    im = ax.imshow(
+        fitness_grid(np.nan_to_num(mean.to_numpy()), grew),
+        cmap=FITNESS_CMAP,
+        vmin=0,
+        vmax=1,
+        origin="lower",
+    )
+    draw_front(ax, grew)
     ax.set_xticks(range(10))
     ax.set_yticks(range(10))
     ax.set_xticklabels([f"{v:g}" for v in EX26_AA])
     ax.set_yticklabels([f"{v:g}" for v in EX26_FF])
     ax.set_xlabel("acetic acid (g/L)")
     ax.set_ylabel("furfural (g/L)")
-    ax.set_title("ex26 isobole, mean of two plates; gray = no growth in 48 h")
+    ax.set_title(
+        "ex26 isobole (software traits), mean of two plates; front = last growth"
+    )
     cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03)
     cbar.set_label("fitness (wild-type GT / GT)")
     cbar.outline.set_linewidth(0.5)
     box(ax)
     fig.subplots_adjust(left=0.13, right=0.9, top=0.92, bottom=0.13)
     return save(fig, "ex26_isobole_furfural_acetic_acid")
+
+
+# ---- the isoboles from their raw curves ---------------------------------- #
+def read_raw(path: str) -> pd.DataFrame:
+    """A Bioscreen C export as hours x wells 1..200, OD600 as exported (UTF-16)."""
+    raw = pd.read_csv(path, skiprows=2, index_col=0, encoding="UTF-16LE")
+    hours = [
+        int(h) + int(m) / 60 + int(sec) / 3600
+        for h, m, sec in (t.split(":") for t in raw.index)
+    ]
+    out = raw.drop(columns=["Blank"]).astype(float)
+    out.columns = out.columns.astype(int)
+    out.index = pd.Index(hours, name="hours")
+    return out
+
+
+def generation_time(hours: np.ndarray, od: np.ndarray) -> float:
+    """Hours per doubling on the steepest ``FIT_WINDOW_H`` stretch; NaN without growth.
+
+    The curve is baseline-subtracted by the median of its first three readings; a well
+    whose subtracted OD never rises by ``GROWTH_RISE`` did not grow. The rate is the
+    largest slope of log2(OD) over any window of ``FIT_WINDOW_H`` whose readings are all
+    at least 0.05 above baseline, by least squares.
+    """
+    y = od - np.median(od[:3])
+    if y.max() < GROWTH_RISE:
+        return float("nan")
+    ok = y > 0.05
+    log_y = np.where(ok, np.log2(np.where(ok, y, 1.0)), np.nan)
+    best = 0.0
+    n = len(hours)
+    j = 0
+    for i in range(n):
+        while j < n and hours[j] - hours[i] < FIT_WINDOW_H:
+            j += 1
+        if j - i < 4 or j > n:
+            continue
+        window = slice(i, j)
+        if not ok[window].all():
+            continue
+        slope = np.polyfit(hours[window], log_y[window], 1)[0]
+        best = max(best, slope)
+    return 1.0 / best if best > 0 else float("nan")
+
+
+def isoboles_from_raw() -> pd.DataFrame:
+    rows = []
+    for run, (inhibitor, step, filename) in ISOBOLES.items():
+        raw = read_raw(osp.join(ARCHIVE, "01_bioscreenc_raw", filename))
+        hours = raw.index.to_numpy()
+        gt = {w: generation_time(hours, raw[w].to_numpy()) for w in raw.columns}
+        for plate, offset in ((1, 0), (2, 100)):
+            wt_gt = gt[offset + 1]
+            for well in range(1, 101):
+                col, row = divmod(well - 1, 10)
+                rows.append(
+                    {
+                        "run": run,
+                        "inhibitor": inhibitor,
+                        "plate": plate,
+                        "well": offset + well,
+                        "inhibitor_g_per_l": round(step * row, 3),
+                        "acetic_acid_g_per_l": round(AA_STEP * col, 3),
+                        "generation_time_h": gt[offset + well],
+                        "fitness": wt_gt / gt[offset + well],
+                        "grew": bool(np.isfinite(gt[offset + well])),
+                    }
+                )
+    return pd.DataFrame(rows)
+
+
+def check_ex26(iso: pd.DataFrame, from_raw: pd.DataFrame) -> pd.DataFrame:
+    """The software's ex26 generation times beside this script's, well by well."""
+    mine = from_raw[from_raw["run"] == "ex26"].set_index("well")
+    out = iso.set_index("well")[["generation_time_h", "grew"]].join(
+        mine[["generation_time_h", "grew"]], lsuffix="_software", rsuffix="_raw"
+    )
+    both = out["grew_software"] & out["grew_raw"]
+    agree = (out["grew_software"] == out["grew_raw"]).mean()
+    rho = (
+        out.loc[both, ["generation_time_h_software", "generation_time_h_raw"]]
+        .corr(method="spearman")
+        .iloc[0, 1]
+    )
+    print(
+        f"ex26 check: grew/no-grew agreement {agree:.3f} over {len(out)} wells; Spearman of "
+        f"generation time on the {int(both.sum())} wells both call grown {rho:.3f}"
+    )
+    return out.reset_index()
+
+
+def plot_isoboles(from_raw: pd.DataFrame) -> list[str]:
+    fig, axes = plt.subplots(
+        1, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(62))
+    )
+    for ax, (run, (inhibitor, step, _)) in zip(axes, ISOBOLES.items(), strict=True):
+        g = from_raw[from_raw["run"] == run]
+        grid = (
+            g.groupby(["inhibitor_g_per_l", "acetic_acid_g_per_l"])["fitness"]
+            .mean()
+            .unstack("acetic_acid_g_per_l")
+        )
+        grew = (
+            g.groupby(["inhibitor_g_per_l", "acetic_acid_g_per_l"])["grew"]
+            .any()
+            .unstack("acetic_acid_g_per_l")
+            .to_numpy()
+        )
+        im = ax.imshow(
+            fitness_grid(np.nan_to_num(grid.to_numpy()), grew),
+            cmap=FITNESS_CMAP,
+            vmin=0,
+            vmax=1,
+            origin="lower",
+        )
+        draw_front(ax, grew)
+        ax.set_xticks(range(10))
+        ax.set_yticks(range(10))
+        ax.set_xticklabels([f"{v:g}" for v in grid.columns], rotation=60, fontsize=5)
+        ax.set_yticklabels([f"{v:g}" for v in grid.index], fontsize=5)
+        ax.set_xlabel("acetic acid (g/L)")
+        ax.set_ylabel(f"{NAMES[inhibitor]} (g/L)")
+        ax.set_title(f"{run}: {NAMES[inhibitor]} x acetic acid", fontsize=6)
+        box(ax)
+    cbar = fig.colorbar(im, ax=axes, fraction=0.015, pad=0.02)
+    cbar.set_label("fitness (wild-type GT / GT), GT from the raw curve")
+    cbar.outline.set_linewidth(0.5)
+    fig.suptitle(
+        "isoboles from the raw curves, mean of two plates; no growth (OD rise < 0.3) drawn at 0, front = last growth",
+        fontsize=6,
+    )
+    fig.subplots_adjust(left=0.06, right=0.9, top=0.86, bottom=0.2, wspace=0.35)
+    return save(fig, "isoboles_from_raw")
 
 
 def main() -> None:
@@ -461,12 +677,21 @@ def main() -> None:
     iso = ex26_isobole()
     iso.to_csv(osp.join(RESULTS, "ex26_isobole.csv"), index=False)
     print(f"ex26 wells grown {int(iso['grew'].sum())} of {len(iso)}")
+    from_raw = isoboles_from_raw()
+    from_raw.to_csv(osp.join(RESULTS, "isoboles_from_raw.csv"), index=False)
+    check_ex26(iso, from_raw).to_csv(
+        osp.join(RESULTS, "ex26_trait_check.csv"), index=False
+    )
+    print(
+        from_raw.groupby("run")["grew"].sum().rename("wells grown of 200").to_string()
+    )
     written = (
         plot_ex23_conditions(cond)
         + plot_ex23_pairs(cond)
         + plot_ex23_curves()
         + plot_ex21(titration)
         + plot_ex26(iso)
+        + plot_isoboles(from_raw)
     )
     print("\n".join(written))
 

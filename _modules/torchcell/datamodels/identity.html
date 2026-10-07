@@ -181,6 +181,7 @@
     <span class="n">GenomicSpan</span><span class="p">,</span>
     <span class="n">Media</span><span class="p">,</span>
     <span class="n">MediaComponent</span><span class="p">,</span>
+    <span class="n">PhagePerturbation</span><span class="p">,</span>
     <span class="n">PreCulture</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
     <span class="n">Solvent</span><span class="p">,</span>
@@ -198,6 +199,7 @@
     <span class="s2">"ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"MEDIA_COMPONENT_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"MEDIA_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"PHAGE_PERTURBATION_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"PHYSICAL_PERTURBATION_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"PRE_CULTURE_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"SMALL_MOLECULE_IDENTITY_FIELDS"</span><span class="p">,</span>
@@ -259,6 +261,24 @@
     <span class="s2">"sequence"</span><span class="p">,</span>
     <span class="s2">"concentration"</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="n">PHAGE_PERTURBATION_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"perturbation_type"</span><span class="p">,</span>
+    <span class="s2">"name"</span><span class="p">,</span>
+    <span class="s2">"ncbi_taxid"</span><span class="p">,</span>
+    <span class="s2">"genome_accession"</span><span class="p">,</span>
+    <span class="s2">"multiplicity_of_infection"</span><span class="p">,</span>
+    <span class="s2">"titer_pfu_per_ml"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="sd">"""A phage challenge is the phage (normalized name, taxon, genome accession) at its dose</span>
+<span class="sd">(the multiplicity of infection, and the culture titer when stated).</span>
+
+<span class="sd">``family``, ``genome_type`` and ``host_of_propagation`` are deliberately absent: they</span>
+<span class="sd">describe the agent's classification and how its stock was grown, which two sources may</span>
+<span class="sd">state differently for one phage, so including them would split a node that should join.</span>
+<span class="sd">The dose IS identity, as it is on the other dosed leaves: two MOIs of one phage are two</span>
+<span class="sd">different edits to the environment, which is what keeps 68 challenges of 14 phages from</span>
+<span class="sd">collapsing onto one environment.</span>
+<span class="sd">"""</span>
 <span class="n">ENVIRONMENT_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"media"</span><span class="p">,</span>
     <span class="s2">"temperature"</span><span class="p">,</span>
@@ -413,9 +433,10 @@
 
 <span class="sd">    The discriminator plus the slots of the concrete leaf: compound key, dose and</span>
 <span class="sd">    vehicle for a small molecule; factor, magnitude and realizing agent for a</span>
-<span class="sd">    physical factor; agent class, name, accession, sequence and dose for a biologic.</span>
+<span class="sd">    physical factor; agent class, name, accession, sequence and dose for a biologic;</span>
+<span class="sd">    phage name, taxon, genome accession and the multiplicity of infection for a phage.</span>
 <span class="sd">    ``description`` is dropped (it is a per-dataset restatement of the leaf's own</span>
-<span class="sd">    default). The dose IS part of identity on both dosed leaves: two doses of one</span>
+<span class="sd">    default). The dose IS part of identity on every dosed leaf: two doses of one</span>
 <span class="sd">    compound are two different edits to the environment.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">SmallMoleculePerturbation</span><span class="p">):</span>
@@ -445,11 +466,20 @@
             <span class="s2">"sequence"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">sequence</span><span class="p">,</span>
             <span class="s2">"concentration"</span><span class="p">:</span> <span class="n">_concentration_identity</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">concentration</span><span class="p">),</span>
         <span class="p">}</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">PhagePerturbation</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"perturbation_type"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
+            <span class="s2">"name"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+            <span class="s2">"ncbi_taxid"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">ncbi_taxid</span><span class="p">,</span>
+            <span class="s2">"genome_accession"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">genome_accession</span><span class="p">,</span>
+            <span class="s2">"multiplicity_of_infection"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">multiplicity_of_infection</span><span class="p">,</span>
+            <span class="s2">"titer_pfu_per_ml"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">titer_pfu_per_ml</span><span class="p">,</span>
+        <span class="p">}</span>
     <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
         <span class="s2">"no identity projection for "</span>
         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">; an environment perturbation is one of "</span>
         <span class="s2">"SmallMoleculePerturbation, EnvironmentPhysicalPerturbation, "</span>
-        <span class="s2">"BiologicPerturbation"</span>
+        <span class="s2">"BiologicPerturbation, PhagePerturbation"</span>
     <span class="p">)</span></div>
 
 

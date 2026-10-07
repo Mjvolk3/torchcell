@@ -509,6 +509,92 @@
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="si">!r}</span><span class="s2"> is a </span><span class="si">{</span><span class="n">tag_namespace</span><span class="si">}</span><span class="s2"> tag but "</span>
             <span class="sa">f</span><span class="s2">"gene_namespace is </span><span class="si">{</span><span class="n">namespace</span><span class="si">!r}</span><span class="s2">"</span>
         <span class="p">)</span>
+    <span class="n">mapping</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"identifier_mapping"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mapping</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">mapping</span><span class="o">.</span><span class="n">source_identifier</span> <span class="o">==</span> <span class="n">model</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"identifier_mapping says </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="si">!r}</span><span class="s2"> was derived from "</span>
+            <span class="s2">"itself; a tag the source released verbatim carries no mapping"</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">mapping</span><span class="o">.</span><span class="n">route</span> <span class="o">==</span> <span class="s2">"eck_crosswalk"</span><span class="p">:</span>
+        <span class="n">source_namespace</span> <span class="o">=</span> <span class="n">_namespace_of_locus_tag</span><span class="p">(</span><span class="n">mapping</span><span class="o">.</span><span class="n">source_identifier</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">source_namespace</span> <span class="o">==</span> <span class="n">namespace</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"an eck_crosswalk crosses namespaces, but </span><span class="si">{</span><span class="n">mapping</span><span class="o">.</span><span class="n">source_identifier</span><span class="si">!r}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"is already a </span><span class="si">{</span><span class="n">namespace</span><span class="si">}</span><span class="s2"> tag"</span>
+            <span class="p">)</span>
+
+
+<span class="n">DerivedIdentifierRoute</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"eck_crosswalk"</span><span class="p">,</span> <span class="s2">"jw_synonym"</span><span class="p">,</span> <span class="s2">"gene_symbol"</span><span class="p">]</span>
+<span class="sd">"""How a bacterial record's stored locus tag was reached from the identifier its source</span>
+<span class="sd">released, when the two differ.</span>
+
+<span class="sd">- ``eck_crosswalk``: the source released a locus tag of ANOTHER strain's namespace (an</span>
+<span class="sd">  MG1655 b-number labeling a BW25113 strain), and the stored tag is the one locus of the</span>
+<span class="sd">  pinned strain carrying the same ``ECK`` accession as a ``/gene_synonym``</span>
+<span class="sd">  (``bacteria_common.eck_crosswalk``, the one-to-one ECK join; 4,423 pairs on the</span>
+<span class="sd">  deposited sets, 11 of them with disagreeing numbers, which is why no string surgery</span>
+<span class="sd">  relates the namespaces).</span>
+<span class="sd">- ``jw_synonym``: the source released a Keio ``JW`` id, which the pinned BW25113</span>
+<span class="sd">  annotation carries as a ``/gene_synonym`` of exactly one locus.</span>
+<span class="sd">- ``gene_symbol``: the source released a gene name (a current symbol or a symbol the</span>
+<span class="sd">  annotation lists as a synonym), resolved to exactly one locus by the genome's name</span>
+<span class="sd">  layers.</span>
+<span class="sd">"""</span>
+
+<span class="n">JW_IDENTIFIER_PATTERN</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"^JW[RS]?\d</span><span class="si">{4}</span><span class="s2">$"</span>
+<span class="sd">"""A Keio ``JW`` id as BW25113's GenBank annotation writes it, measured on</span>
+<span class="sd">``GCA_000750555.1_ASM75055v1_genomic.gbff.gz``: 4,181 ``JW`` plus four digits, 153</span>
+<span class="sd">``JWR`` (RNA genes) and one ``JWS``; nothing else."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DerivedIdentifierMapping</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A record's locus tag was DERIVED from the identifier its source released.</span>
+
+<span class="sd">    Plan section 4 ([[plan.bacteria-ontology-genome]]): a use of a crosswalk is "recorded</span>
+<span class="sd">    on the record as a derived mapping, never silently". ``source_identifier`` is what</span>
+<span class="sd">    the source released, verbatim; ``route`` names how the stored ``systematic_gene_name``</span>
+<span class="sd">    was reached from it. A record whose tag the source released as stored carries no</span>
+<span class="sd">    mapping (``None`` on the leaf), so every record built before this field existed</span>
+<span class="sd">    reads exactly as before.</span>
+<span class="sd">    """</span>
+
+    <span class="n">source_identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the identifier the source released, verbatim (e.g. the MG1655 "</span>
+        <span class="s2">"b-number behind a BW25113 tag, a Keio JW id, a gene symbol)"</span>
+    <span class="p">)</span>
+    <span class="n">route</span><span class="p">:</span> <span class="n">DerivedIdentifierRoute</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"how systematic_gene_name was reached from source_identifier"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_route</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"DerivedIdentifierMapping"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The released identifier has the form its route reads."""</span>
+        <span class="n">identifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_identifier</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">identifier</span> <span class="ow">or</span> <span class="n">identifier</span> <span class="o">!=</span> <span class="n">identifier</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"source_identifier must be a non-empty verbatim id, got </span><span class="si">{</span><span class="n">identifier</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">route</span> <span class="o">==</span> <span class="s2">"jw_synonym"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="n">JW_IDENTIFIER_PATTERN</span><span class="p">,</span> <span class="n">identifier</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"a jw_synonym route starts from a Keio JW id (</span><span class="si">{</span><span class="n">JW_IDENTIFIER_PATTERN</span><span class="si">}</span><span class="s2">), "</span>
+                <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="n">identifier</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">is_tag</span> <span class="o">=</span> <span class="n">_namespace_of_locus_tag</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">route</span> <span class="o">==</span> <span class="s2">"eck_crosswalk"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_tag</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"an eck_crosswalk route starts from another strain's locus tag, got "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">identifier</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">route</span> <span class="o">==</span> <span class="s2">"gene_symbol"</span> <span class="ow">and</span> <span class="n">is_tag</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">identifier</span><span class="si">!r}</span><span class="s2"> is a locus tag, not a gene symbol; a tag of another "</span>
+                <span class="s2">"strain is an eck_crosswalk"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
 
 
 <div class="viewcode-block" id="MatingType">
@@ -2463,6 +2549,11 @@
     <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"which host's locus-tag namespace systematic_gene_name is written in"</span>
     <span class="p">)</span>
+    <span class="n">identifier_mapping</span><span class="p">:</span> <span class="n">DerivedIdentifierMapping</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"how systematic_gene_name was derived from the identifier the "</span>
+        <span class="s2">"source released; None when the source released it as stored"</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">collection</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"the physical deletion collection the strain came from, verbatim "</span>
@@ -2518,6 +2609,11 @@
     <span class="n">provenance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"engineered"</span>
     <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"which host's locus-tag namespace systematic_gene_name is written in"</span>
+    <span class="p">)</span>
+    <span class="n">identifier_mapping</span><span class="p">:</span> <span class="n">DerivedIdentifierMapping</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"how systematic_gene_name was derived from the identifier the "</span>
+        <span class="s2">"source released; None when the source released it as stored"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -2592,6 +2688,11 @@
     <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"which host's locus-tag namespace systematic_gene_name is written in"</span>
     <span class="p">)</span>
+    <span class="n">identifier_mapping</span><span class="p">:</span> <span class="n">DerivedIdentifierMapping</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"how systematic_gene_name was derived from the identifier the "</span>
+        <span class="s2">"source released; None when the source released it as stored"</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
@@ -2629,6 +2730,11 @@
     <span class="n">mechanism_so_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"delins"</span>
     <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"which host's locus-tag namespace systematic_gene_name is written in"</span>
+    <span class="p">)</span>
+    <span class="n">identifier_mapping</span><span class="p">:</span> <span class="n">DerivedIdentifierMapping</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"how systematic_gene_name was derived from the identifier the "</span>
+        <span class="s2">"source released; None when the source released it as stored"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">promoter_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"identity of the promoter part installed, verbatim (e.g. 'Ptac', "</span>
@@ -2693,6 +2799,11 @@
     <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"the HOST genome the construct was built in (not the namespace of "</span>
         <span class="s2">"systematic_gene_name, which is usually a heterologous symbol)"</span>
+    <span class="p">)</span>
+    <span class="n">identifier_mapping</span><span class="p">:</span> <span class="n">DerivedIdentifierMapping</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"how systematic_gene_name was derived from the identifier the "</span>
+        <span class="s2">"source released; None when the source released it as stored"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">pathway_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"the pathway this gene is part of, verbatim (e.g. 'isoprenol via "</span>
@@ -3404,8 +3515,90 @@
 
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">PhagePerturbation</span><span class="p">(</span><span class="n">EnvironmentPerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A bacteriophage added to the culture, dosed as a multiplicity of infection.</span>
+
+<span class="sd">    A virion is none of the other three environment leaves: it has no InChIKey (so not a</span>
+<span class="sd">    ``SmallMoleculePerturbation``), it is not a scalar physical factor, and it is a</span>
+<span class="sd">    replicating nucleoprotein particle rather than a peptide, protein, antibody or toxin</span>
+<span class="sd">    (so not a ``BiologicPerturbation``, whose ``BiologicAgentClass`` would misstate it).</span>
+<span class="sd">    Its identity is the phage itself: ``name`` as the source writes it, plus the NCBI</span>
+<span class="sd">    taxon and the genome accession when the source states them.</span>
+
+<span class="sd">    The dose is NOT a ``Concentration``. A multiplicity of infection is a dimensionless</span>
+<span class="sd">    ratio of two counts (plaque-forming units per cell at the start of the assay), and a</span>
+<span class="sd">    ``ConcentrationUnit`` member for it would make a particle-to-cell ratio look like a</span>
+<span class="sd">    dose unit. ``multiplicity_of_infection`` carries that ratio in its own field and</span>
+<span class="sd">    ``titer_pfu_per_ml`` the phage concentration in the culture, each in the unit its</span>
+<span class="sd">    name states. A phage challenge always has a dose, so an unstated MOI is a typed</span>
+<span class="sd">    ``ProvenanceGap``, never a silent ``None``. Whether the strain resisted is an</span>
+<span class="sd">    ``EnvironmentResponsePhenotype`` property, never part of the edit (M1).</span>
+<span class="sd">    """</span>
+
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"phage"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"phage"</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Bacteriophage added to the culture"</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"phage name as the source gives it, verbatim (e.g. 'T4', "</span>
+        <span class="s2">"'lambda cI857')"</span>
+    <span class="p">)</span>
+    <span class="n">family</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"viral family as the source states it, verbatim (e.g. "</span>
+        <span class="s2">"'Myoviridae'); None when unstated"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">genome_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"nucleic-acid type of the phage genome as stated (e.g. 'dsDNA')"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ncbi_taxid</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"NCBI Taxonomy id of the phage, when the source names it"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">genome_accession</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"nucleotide accession of the phage genome, when the source names it"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">multiplicity_of_infection</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the dose, unit MOI: plaque-forming units per cell at the start of "</span>
+        <span class="s2">"the assay (dimensionless). None only with a ProvenanceGap"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">titer_pfu_per_ml</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"phage in the culture at the start of the assay, unit pfu/mL; None "</span>
+        <span class="s2">"when unstated"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">host_of_propagation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the strain the phage stock was propagated on, verbatim, when stated"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A phage name is a non-empty verbatim string."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span> <span class="ow">or</span> <span class="n">v</span> <span class="o">!=</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"phage name must be non-empty and verbatim, got </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_dose</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"PhagePerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The dose is stated or gapped; every stated count is positive and finite."""</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"multiplicity_of_infection"</span><span class="p">,))</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"multiplicity_of_infection"</span><span class="p">,</span> <span class="s2">"titer_pfu_per_ml"</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"PhagePerturbation.</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> must be &gt; 0, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncbi_taxid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncbi_taxid</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ncbi_taxid must be positive, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ncbi_taxid</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
 <span class="n">EnvironmentPerturbationType</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">SmallMoleculePerturbation</span> <span class="o">|</span> <span class="n">EnvironmentPhysicalPerturbation</span> <span class="o">|</span> <span class="n">BiologicPerturbation</span>
+    <span class="n">SmallMoleculePerturbation</span>
+    <span class="o">|</span> <span class="n">EnvironmentPhysicalPerturbation</span>
+    <span class="o">|</span> <span class="n">BiologicPerturbation</span>
+    <span class="o">|</span> <span class="n">PhagePerturbation</span>
 <span class="p">)</span>
 
 
@@ -5873,14 +6066,22 @@
 <span class="c1">#</span>
 <span class="c1"># The three new phenotypes come first, then the families whose phenotype is REUSED</span>
 <span class="c1"># unchanged and which exist only to carry the pin. ``environment`` stays the shared</span>
-<span class="c1"># ``Environment`` throughout, so the cross-dataset medium-level aggregate still</span>
-<span class="c1"># forms across hosts.</span>
+<span class="c1"># ``Environment`` everywhere except the product-titer pair, so the cross-dataset</span>
+<span class="c1"># medium-level aggregate still forms across hosts. The product-titer pair declares</span>
+<span class="c1"># ``CultureEnvironment`` (the same narrowing the chemogenomic family makes) because a</span>
+<span class="c1"># titer cannot be read without its vessel: the fermentation format is part of what was</span>
+<span class="c1"># measured, and a ``CultureEnvironment`` in an ``Environment``-typed slot dumps without</span>
+<span class="c1"># ``culture_format``. ``media`` is the same field holding the same ``Media``, and a</span>
+<span class="c1"># culture environment that states no protocol has the plain environment's identity, so</span>
+<span class="c1"># the aggregate is unchanged.</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ProductTiterExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Reference (parent-strain) context for a product-titer experiment."""</span>
 
     <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"product_titer"</span>
     <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="c1"># Narrowed: the control culture states its vessel, as the experiment does.</span>
+    <span class="n">environment_reference</span><span class="p">:</span> <span class="n">CultureEnvironment</span>
     <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">ProductTiterPhenotype</span>
 
 
@@ -5889,6 +6090,7 @@
 
     <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"product_titer"</span>
     <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">environment</span><span class="p">:</span> <span class="n">CultureEnvironment</span>  <span class="c1"># narrowed: a titer is read with its vessel</span>
     <span class="n">phenotype</span><span class="p">:</span> <span class="n">ProductTiterPhenotype</span>
 
 

@@ -224,6 +224,16 @@
     <span class="s2">"Media"</span><span class="p">:</span> <span class="s2">"environment"</span><span class="p">,</span>
     <span class="s2">"Temperature"</span><span class="p">:</span> <span class="s2">"environment"</span><span class="p">,</span>
     <span class="s2">"EnvironmentPerturbation"</span><span class="p">:</span> <span class="s2">"environment"</span><span class="p">,</span>
+    <span class="c1"># A phage challenge is the environment axis of a phage-resistance screen, so it</span>
+    <span class="c1"># takes the environment lane beside its sibling ``EnvironmentPerturbation``. Its</span>
+    <span class="c1"># Biolink parent is ``biotic exposure`` rather than ``environmental exposure``</span>
+    <span class="c1"># (Biolink defines that one as abiotic), which is why its lane cannot be read from</span>
+    <span class="c1"># the ``is_a`` the way a phenotype's is. ``BioticExposure`` is deliberately NOT in</span>
+    <span class="c1"># ANCESTOR_LABELS: that tuple is a measurement of the labels the SERVED store</span>
+    <span class="c1"># carries, and no phage dataset is served yet. A phage node still renders in its</span>
+    <span class="c1"># lane color, because the class rule is in the priority list and the unlisted</span>
+    <span class="c1"># ancestor label is not.</span>
+    <span class="s2">"PhagePerturbation"</span><span class="p">:</span> <span class="s2">"environment"</span><span class="p">,</span>
     <span class="s2">"Experiment"</span><span class="p">:</span> <span class="s2">"experiment"</span><span class="p">,</span>
     <span class="s2">"ExperimentReference"</span><span class="p">:</span> <span class="s2">"experiment"</span><span class="p">,</span>
     <span class="c1"># A content-addressed sub-object of an experiment record (interned_constant.py),</span>
@@ -246,6 +256,8 @@
     <span class="s2">"Media"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{name}</span><span class="s2">"</span><span class="p">,</span>
     <span class="s2">"Temperature"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{value}</span><span class="s2">"</span><span class="p">,</span>
     <span class="s2">"EnvironmentPerturbation"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{compound_name}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="c1"># the phage's own name, as its sibling shows the compound's</span>
+    <span class="s2">"PhagePerturbation"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{phage_name}</span><span class="s2">"</span><span class="p">,</span>
     <span class="s2">"Publication"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{pubmed_id}</span><span class="s2">"</span><span class="p">,</span>
     <span class="s2">"Genome"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{strain}</span><span class="s2">"</span><span class="p">,</span>
 <span class="p">}</span>

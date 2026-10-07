@@ -3244,6 +3244,138 @@
 <span class="p">)</span>
 <span class="sd">"""Lim 2025's P. putida isoprenol-TALE medium (row 16)."""</span>
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Lim 2022 (row 7) states the SAME five NREL salts as Lim 2025 and, uniquely among the</span>
+<span class="c1"># NREL-M9 papers, states its 2000x trace solution's full composition rather than</span>
+<span class="c1"># deferring it to Lim 2020 / Linger 2014. So its trace component is a sub-mix whose</span>
+<span class="c1"># recipe is QUOTED on the component, not a deferral; it is kept as one component rather</span>
+<span class="c1"># than expanded into ten, because six of the ten labels have no compound-identity row</span>
+<span class="c1"># (measured 2026-10-07: manganese chloride tetrahydrate, cobalt chloride hexahydrate,</span>
+<span class="c1"># copper sulfate dihydrate, sodium molybdate dihydrate, potassium iodide and disodium</span>
+<span class="c1"># EDTA are UNRESOLVED_PUBLIC, while zinc sulfate heptahydrate, calcium chloride</span>
+<span class="c1"># dihydrate, iron(II) sulfate heptahydrate and boric acid resolve). A partial expansion</span>
+<span class="c1"># would assert a partial recipe, so the component carries the whole stated one.</span>
+<span class="c1"># Two keys, because the compendium uses both: the medium as stated (4 g/L glucose) and</span>
+<span class="c1"># the aromatic project's version, whose carbon source replaces the glucose.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">_LIM2022</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">citation_key</span><span class="o">=</span><span class="s2">"limMachinelearningPseudomonasPutida2022"</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="o">=</span><span class="s2">"64e1df3103b221051fb52e9d62afb39582367e20996bedc46f4d6f23e73f4750"</span><span class="p">,</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"si/si1.docx"</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">"paragraph text of word/document.xml (docx_paragraphs)"</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Supplementary Method 1. Transcriptome sequencing (RNA-seq)"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">_Q_LIM22_M9</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Briefly, cells were cultured in either LB medium (10 g/L tryptone, 5 g/L yeast "</span>
+    <span class="s2">"extract, 10 g/L NaCl) or the modified minimal M9 medium. The minimal medium "</span>
+    <span class="s2">"contains 4 g/L glucose, 2 g/L (NH4)2SO4, 6.8 g/L Na2HPO4, 3 g/L KH2PO4, 0.5 g/L "</span>
+    <span class="s2">"NaCl, 2 mM MgSO4, 0.1 mM CaCl2, 500 μL/L 2000× trace element solution)."</span>
+<span class="p">)</span>
+<span class="n">_Q_LIM22_TRACE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"The composition of the trace element solution is 4.5 g/L ZnSO4·7H2O, 0.7 g/L "</span>
+    <span class="s2">"MnCl2·4H2O, 0.3 g/L CoCl2·6H2O, 0.2 g/L CuSO4·2H2O, 0.4 g/L "</span>
+    <span class="s2">"Na2MoO4·2H2O, 4.5 g/L CaCl2·2H2O, 3.0 g/L FeSO4·7H2O, 1.0 g/L "</span>
+    <span class="s2">"H3BO3, 0.1 g/L KI, 15 g/L disodium ethylenediaminetetraacetate."</span>
+<span class="p">)</span>
+<span class="n">_Q_LIM22_AROMATIC</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Cells were grown in the M9 medium with 2.5 g/L of either coumarate, ferulate, a "</span>
+    <span class="s2">"mixture of coumarate and ferulate, or glucose."</span>
+<span class="p">)</span>
+
+<span class="n">_LIM2022_TRACE_SOLUTION</span> <span class="o">=</span> <span class="n">_mixture</span><span class="p">(</span>
+    <span class="s2">"2000x trace element solution (Lim 2022)"</span><span class="p">,</span>
+    <span class="n">_TRACE</span><span class="p">,</span>
+    <span class="n">_DEFERRED</span><span class="p">,</span>
+    <span class="n">concentration</span><span class="o">=</span><span class="n">_c</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">_VV</span><span class="p">),</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_cite</span><span class="p">(</span><span class="n">_LIM2022</span><span class="p">,</span> <span class="s2">"500 uL/L: 0.05% v/v"</span><span class="p">,</span> <span class="n">_Q_LIM22_M9</span><span class="p">),</span>
+        <span class="n">_cite</span><span class="p">(</span>
+            <span class="n">_LIM2022</span><span class="p">,</span>
+            <span class="p">{</span>
+                <span class="s2">"ZnSO4.7H2O"</span><span class="p">:</span> <span class="s2">"4.5 g/L"</span><span class="p">,</span>
+                <span class="s2">"MnCl2.4H2O"</span><span class="p">:</span> <span class="s2">"0.7 g/L"</span><span class="p">,</span>
+                <span class="s2">"CoCl2.6H2O"</span><span class="p">:</span> <span class="s2">"0.3 g/L"</span><span class="p">,</span>
+                <span class="s2">"CuSO4.2H2O"</span><span class="p">:</span> <span class="s2">"0.2 g/L"</span><span class="p">,</span>
+                <span class="s2">"Na2MoO4.2H2O"</span><span class="p">:</span> <span class="s2">"0.4 g/L"</span><span class="p">,</span>
+                <span class="s2">"CaCl2.2H2O"</span><span class="p">:</span> <span class="s2">"4.5 g/L"</span><span class="p">,</span>
+                <span class="s2">"FeSO4.7H2O"</span><span class="p">:</span> <span class="s2">"3.0 g/L"</span><span class="p">,</span>
+                <span class="s2">"H3BO3"</span><span class="p">:</span> <span class="s2">"1.0 g/L"</span><span class="p">,</span>
+                <span class="s2">"KI"</span><span class="p">:</span> <span class="s2">"0.1 g/L"</span><span class="p">,</span>
+                <span class="s2">"disodium ethylenediaminetetraacetate"</span><span class="p">:</span> <span class="s2">"15 g/L"</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="n">_Q_LIM22_TRACE</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the 2000x stock in g/L; at 500 uL/L each is diluted 2000-fold"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the composition IS stated (the second quote) and is kept here rather than "</span>
+    <span class="s2">"expanded into ten components, because six of the ten labels have no "</span>
+    <span class="s2">"compound-identity row; a partial expansion would assert a partial recipe. This is "</span>
+    <span class="s2">"``composition_deferred`` for that reason, not for an unmirrored source"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_lim2022_salts</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">MediaComponent</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The five salts and the nitrogen salt Lim 2022's own sentence states."""</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="o">*</span><span class="n">_nrel_salts</span><span class="p">(</span>
+            <span class="n">_LIM2022</span><span class="p">,</span>
+            <span class="n">_Q_LIM22_M9</span><span class="p">,</span>
+            <span class="n">ammonium_sulfate</span><span class="o">=</span><span class="n">_c</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">_GL</span><span class="p">),</span>
+            <span class="n">ammonium_sulfate_read</span><span class="o">=</span><span class="s2">"2 g/L"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">_LIM2022_TRACE_SOLUTION</span><span class="p">,</span>
+    <span class="p">]</span>
+
+
+<span class="n">M9_NREL_LIM2022</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"M9 (NREL type: ammonium sulfate + 2000x trace elements, composition stated) "</span>
+    <span class="s2">"+ 4 g/L glucose (Lim 2022)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"M9"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="o">*</span><span class="n">_lim2022_salts</span><span class="p">(),</span>
+        <span class="n">_stated</span><span class="p">(</span><span class="s2">"D-glucose"</span><span class="p">,</span> <span class="n">_CSRC</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="n">_GL</span><span class="p">,</span> <span class="n">_cite</span><span class="p">(</span><span class="n">_LIM2022</span><span class="p">,</span> <span class="s2">"4 g/L"</span><span class="p">,</span> <span class="n">_Q_LIM22_M9</span><span class="p">)),</span>
+    <span class="p">],</span>
+    <span class="n">dropouts</span><span class="o">=</span><span class="p">[</span><span class="n">_M9_AMMONIUM_CHLORIDE</span><span class="p">],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_cite</span><span class="p">(</span>
+            <span class="n">_LIM2022</span><span class="p">,</span>
+            <span class="s2">"the modified minimal M9 medium"</span><span class="p">,</span>
+            <span class="n">_Q_LIM22_M9</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="n">_AMMONIUM_SULFATE_DROPOUT_NOTE</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Lim 2022's in-house minimal medium as stated, 4 g/L glucose (row 7)."""</span>
+
+<span class="n">M9_NREL_NOCARBON_LIM2022</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"M9 (NREL type: ammonium sulfate + 2000x trace elements, composition stated), "</span>
+    <span class="s2">"no carbon source (Lim 2022 aromatic project)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"M9"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="n">_lim2022_salts</span><span class="p">(),</span>
+    <span class="n">dropouts</span><span class="o">=</span><span class="p">[</span><span class="n">_M9_AMMONIUM_CHLORIDE</span><span class="p">],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_cite</span><span class="p">(</span>
+            <span class="n">_LIM2022</span><span class="p">,</span>
+            <span class="s2">"the modified minimal M9 medium"</span><span class="p">,</span>
+            <span class="n">_Q_LIM22_M9</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="n">_AMMONIUM_SULFATE_DROPOUT_NOTE</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">_cite</span><span class="p">(</span>
+            <span class="n">_LIM2022</span><span class="p">,</span>
+            <span class="s2">"the carbon source is the variable"</span><span class="p">,</span>
+            <span class="n">_Q_LIM22_AROMATIC</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the aromatic project replaces the base's 4 g/L glucose with 2.5 g/L "</span>
+            <span class="s2">"of p-coumarate, ferulate, both, or glucose, so the carbon source is an "</span>
+            <span class="s2">"EnvironmentPhysicalPerturbation(factor=carbon_source) and is left out here"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Lim 2022's minimal medium without its carbon source, the aromatic base (row 7)."""</span>
+
 <span class="n">_KANG_KH2PO4_NOTE</span> <span class="o">=</span> <span class="s2">"the OCR renders the '3 g/L' of KH2PO4 as '3 </span><span class="se">\\</span><span class="s2">gimel A'"</span>
 
 <span class="n">_KANG_NREL_SALTS</span> <span class="o">=</span> <span class="n">_nrel_salts</span><span class="p">(</span>
@@ -3883,6 +4015,14 @@
     <span class="s2">"M9_SCHMIDT2016"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"32 Schmidt 2016: the minimal-medium proteome conditions"</span><span class="p">,),</span>
     <span class="s2">"M9_NREL_DESIQUEIRA2025"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"14 de Siqueira 2025: tolerization and phenotyping"</span><span class="p">,),</span>
     <span class="s2">"M9_NREL_LIM2025"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"16 Lim 2025: growth and TALE cultures"</span><span class="p">,),</span>
+    <span class="s2">"M9_NREL_LIM2022"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"7 Lim 2022: the in-house RNA-seq cultures of putidaPRECISE321, as the SI "</span>
+        <span class="s2">"states them (4 g/L glucose)"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"M9_NREL_NOCARBON_LIM2022"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"7 Lim 2022: the aromatic project, whose 2.5 g/L carbon source replaces the "</span>
+        <span class="s2">"base's glucose"</span><span class="p">,</span>
+    <span class="p">),</span>
     <span class="s2">"M9_NREL_KANG2026"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"18 Kang 2026: 'M9'"</span><span class="p">,),</span>
     <span class="s2">"M9_NREL_HIGH_N_KANG2026"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"18 Kang 2026: 'modified M9'"</span><span class="p">,),</span>
     <span class="s2">"M9_MOPS_KANG2026"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"18 Kang 2026: 'M9-MOPS'"</span><span class="p">,),</span>
@@ -3957,6 +4097,8 @@
     <span class="s2">"M9_SCHMIDT2016"</span><span class="p">:</span> <span class="n">M9_SCHMIDT2016</span><span class="p">,</span>
     <span class="s2">"M9_NREL_DESIQUEIRA2025"</span><span class="p">:</span> <span class="n">M9_NREL_DESIQUEIRA2025</span><span class="p">,</span>
     <span class="s2">"M9_NREL_LIM2025"</span><span class="p">:</span> <span class="n">M9_NREL_LIM2025</span><span class="p">,</span>
+    <span class="s2">"M9_NREL_LIM2022"</span><span class="p">:</span> <span class="n">M9_NREL_LIM2022</span><span class="p">,</span>
+    <span class="s2">"M9_NREL_NOCARBON_LIM2022"</span><span class="p">:</span> <span class="n">M9_NREL_NOCARBON_LIM2022</span><span class="p">,</span>
     <span class="s2">"M9_NREL_KANG2026"</span><span class="p">:</span> <span class="n">M9_NREL_KANG2026</span><span class="p">,</span>
     <span class="s2">"M9_NREL_HIGH_N_KANG2026"</span><span class="p">:</span> <span class="n">M9_NREL_HIGH_N_KANG2026</span><span class="p">,</span>
     <span class="s2">"M9_MOPS_KANG2026"</span><span class="p">:</span> <span class="n">M9_MOPS_KANG2026</span><span class="p">,</span>
@@ -4001,6 +4143,8 @@
     <span class="s2">"M9_SCHMIDT2016"</span><span class="p">:</span> <span class="s2">"the carbon source is the variable across the eleven carbon-source "</span>
     <span class="s2">"conditions"</span><span class="p">,</span>
     <span class="s2">"M9_NREL_DESIQUEIRA2025"</span><span class="p">:</span> <span class="s2">"acetate or glucose, varied per condition"</span><span class="p">,</span>
+    <span class="s2">"M9_NREL_NOCARBON_LIM2022"</span><span class="p">:</span> <span class="s2">"the aromatic project varies the carbon source "</span>
+    <span class="s2">"(p-coumarate, ferulate, both, or glucose) at 2.5 g/L"</span><span class="p">,</span>
     <span class="s2">"M9_NREL_KANG2026"</span><span class="p">:</span> <span class="s2">"glucose alone or a glucose:xylose mixture, varied per condition"</span><span class="p">,</span>
     <span class="s2">"M9_NREL_HIGH_N_KANG2026"</span><span class="p">:</span> <span class="s2">"same sugar regimes as the Kang 2026 M9"</span><span class="p">,</span>
     <span class="s2">"M9_MOPS_KANG2026"</span><span class="p">:</span> <span class="s2">"same sugar regimes as the Kang 2026 M9"</span><span class="p">,</span>

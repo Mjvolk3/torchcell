@@ -229,11 +229,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">YPD_AGAR</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AssayType</span><span class="p">,</span>
-    <span class="n">BiologicPerturbation</span><span class="p">,</span>
     <span class="n">Concentration</span><span class="p">,</span>
     <span class="n">ConcentrationUnit</span><span class="p">,</span>
     <span class="n">Environment</span><span class="p">,</span>
-    <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">,</span>
+    <span class="n">EnvironmentPerturbationType</span><span class="p">,</span>
     <span class="n">EnvironmentResponseExperiment</span><span class="p">,</span>
     <span class="n">EnvironmentResponseExperimentReference</span><span class="p">,</span>
     <span class="n">EnvironmentResponsePhenotype</span><span class="p">,</span>
@@ -830,11 +829,10 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Aerobic solid-YPD plate carrying the edit (an added small molecule, or heat)."""</span>
-        <span class="n">perturbations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span>
-            <span class="n">SmallMoleculePerturbation</span>
-            <span class="o">|</span> <span class="n">EnvironmentPhysicalPerturbation</span>
-            <span class="o">|</span> <span class="n">BiologicPerturbation</span>
-        <span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># Annotated with the union itself (``list`` is invariant), so a leaf added to</span>
+        <span class="c1"># ``EnvironmentPerturbationType`` does not make this local too narrow for</span>
+        <span class="c1"># ``Environment.perturbations``.</span>
+        <span class="n">perturbations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EnvironmentPerturbationType</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="n">spec</span><span class="p">[</span><span class="s2">"kind"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"small_molecule"</span><span class="p">:</span>
             <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">SmallMoleculePerturbation</span><span class="p">(</span>

@@ -646,6 +646,11 @@
 <span class="sd">        not failed. The ``None`` sentinel of an allele-bearing perturbation is never a</span>
 <span class="sd">        spelling. A common name the resolver cannot place at all is reported as</span>
 <span class="sd">        unresolved; only a name that resolves to ANOTHER gene fails.</span>
+
+<span class="sd">        A stored systematic name that resolves to ITSELF as a ``non_gene_feature`` (a</span>
+<span class="sd">        pseudogene locus) passes and is counted: it is a real locus of the annotation and</span>
+<span class="sd">        a real deletion target. A name whose resolution is ``renamed``, ``retired`` or</span>
+<span class="sd">        ``ambiguous``, or that lands on another locus, still fails.</span>
 <span class="sd">        """</span>
         <span class="n">spellings</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="p">(</span><span class="n">systematic</span><span class="p">,</span> <span class="n">common</span><span class="p">),</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_records</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -683,19 +688,37 @@
             <span class="k">if</span> <span class="n">systematic</span> <span class="ow">in</span> <span class="n">split</span>
         <span class="p">)</span>
         <span class="n">not_current</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">self_resolving_non_gene</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">mismatched</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">unresolved</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_gene_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">systematic</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">spellings</span><span class="p">):</span>
                 <span class="n">resolution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolve_gene_name</span><span class="p">(</span><span class="n">systematic</span><span class="p">)</span>
-                <span class="k">if</span> <span class="p">(</span>
-                    <span class="nb">str</span><span class="p">(</span><span class="n">_enum_value</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="p">))</span> <span class="o">!=</span> <span class="s2">"current"</span>
-                    <span class="ow">or</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span> <span class="o">!=</span> <span class="n">systematic</span>
-                <span class="p">):</span>
-                    <span class="n">not_current</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">systematic</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">_enum_value</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
-                        <span class="sa">f</span><span class="s2">" -&gt; </span><span class="si">{</span><span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">_enum_value</span><span class="p">(</span><span class="n">resolution</span><span class="o">.</span><span class="n">status</span><span class="p">))</span>
+                <span class="n">resolves_to_itself</span> <span class="o">=</span> <span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span> <span class="o">==</span> <span class="n">systematic</span>
+                <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"current"</span> <span class="ow">and</span> <span class="n">resolves_to_itself</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="c1"># A PSEUDOGENE locus that resolves to ITSELF is a real locus of the</span>
+                <span class="c1"># annotation and a legitimate perturbation target: the Keio collection</span>
+                <span class="c1"># and the sRNA library deleted 108 BW25113 and 1 MG1655 pseudogene loci,</span>
+                <span class="c1"># and the annotation answers each with its own tag under</span>
+                <span class="c1"># ``non_gene_feature`` (its ``gene`` features exclude ``/pseudo`` loci by</span>
+                <span class="c1"># construction, so a pseudogene can never come back ``current``).</span>
+                <span class="c1"># Requiring ``current`` therefore failed records whose identifier is</span>
+                <span class="c1"># exactly right. It is reported and counted, not passed over silently;</span>
+                <span class="c1"># what still FAILS is a name that resolves to ANOTHER locus, or to none</span>
+                <span class="c1"># (retired / ambiguous), which is the defect this rule exists for.</span>
+                <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"non_gene_feature"</span> <span class="ow">and</span> <span class="n">resolves_to_itself</span><span class="p">:</span>
+                    <span class="c1"># ``feature_type`` is read defensively: the resolver contract</span>
+                    <span class="c1"># (``GeneNameResolution``) declares only status + systematic_name.</span>
+                    <span class="n">feature</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">resolution</span><span class="p">,</span> <span class="s2">"feature_type"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="n">self_resolving_non_gene</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">systematic</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">feature</span><span class="si">}</span><span class="s2">)"</span>
                     <span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="n">not_current</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">systematic</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">resolution</span><span class="o">.</span><span class="n">systematic_name</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="p">)</span>
             <span class="k">for</span> <span class="n">systematic</span><span class="p">,</span> <span class="n">common</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span>
                 <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_records</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="p">):</span>
@@ -727,6 +750,12 @@
                     <span class="k">if</span> <span class="n">unresolved</span>
                     <span class="k">else</span> <span class="s2">""</span>
                 <span class="p">)</span>
+                <span class="o">+</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">self_resolving_non_gene</span><span class="p">)</span><span class="si">}</span><span class="s2"> are pseudogene loci the genome "</span>
+                    <span class="s2">"resolves to themselves"</span>
+                    <span class="k">if</span> <span class="n">self_resolving_non_gene</span>
+                    <span class="k">else</span> <span class="s2">""</span>
+                <span class="p">)</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
@@ -747,6 +776,8 @@
                 <span class="s2">"n_records_with_split_spelling"</span><span class="p">:</span> <span class="n">split_records</span><span class="p">,</span>
                 <span class="s2">"merged_orf_aliases"</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">merged_aliases</span><span class="o">.</span><span class="n">items</span><span class="p">())[:</span><span class="mi">20</span><span class="p">]),</span>
                 <span class="s2">"not_current"</span><span class="p">:</span> <span class="n">not_current</span><span class="p">[:</span><span class="mi">20</span><span class="p">],</span>
+                <span class="s2">"n_self_resolving_non_gene_features"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">self_resolving_non_gene</span><span class="p">),</span>
+                <span class="s2">"self_resolving_non_gene_features"</span><span class="p">:</span> <span class="n">self_resolving_non_gene</span><span class="p">[:</span><span class="mi">20</span><span class="p">],</span>
                 <span class="s2">"common_name_mismatch"</span><span class="p">:</span> <span class="n">mismatched</span><span class="p">[:</span><span class="mi">20</span><span class="p">],</span>
                 <span class="s2">"unresolved_common_names"</span><span class="p">:</span> <span class="n">unresolved</span><span class="p">[:</span><span class="mi">20</span><span class="p">],</span>
             <span class="p">},</span>

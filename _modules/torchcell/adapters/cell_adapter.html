@@ -151,6 +151,7 @@
     <span class="n">BacterialCrisprInterferencePerturbation</span><span class="p">,</span>
     <span class="n">BacterialDeletionPerturbation</span><span class="p">,</span>
     <span class="n">HeterologousPathwayPerturbation</span><span class="p">,</span>
+    <span class="n">PhagePerturbation</span><span class="p">,</span>
     <span class="n">PromoterReplacementPerturbation</span><span class="p">,</span>
     <span class="n">TransposonInsertionPerturbation</span><span class="p">,</span>
 <span class="p">)</span>
@@ -330,6 +331,11 @@
             <span class="p">(</span>
                 <span class="s2">"environment perturbation reference"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_get_environment_perturbation_reference_nodes</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="p">(</span><span class="s2">"phage perturbation (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phage_perturbation_node</span><span class="p">),</span>
+            <span class="p">(</span>
+                <span class="s2">"phage perturbation reference"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_phage_perturbation_reference_nodes</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="p">(</span><span class="s2">"fitness phenotype (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fitness_phenotype_node</span><span class="p">),</span>
             <span class="p">(</span>
@@ -1298,6 +1304,64 @@
         <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">environment_reference</span><span class="o">.</span><span class="n">perturbations</span><span class="p">:</span>
                 <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">get_id</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_node_ids</span><span class="p">:</span>
+                    <span class="n">seen_node_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get_id</span><span class="p">())</span>
+                    <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nodes</span>
+
+    <span class="c1"># --- Phage challenges (the environment axis of a phage-resistance screen) ---</span>
+    <span class="c1"># A phage gets its OWN node class and method for the same reason `crispr construct`</span>
+    <span class="c1"># and `bacterial perturbation` do: `environment perturbation` is served, so giving it</span>
+    <span class="c1"># the MOI, the taxon and the accession as properties is a full rebuild, and the dose</span>
+    <span class="c1"># is not a concentration so it cannot ride the concentration columns. The served</span>
+    <span class="c1"># `_environment_perturbation_node` is NOT touched, which is what keeps this additive</span>
+    <span class="c1"># (it would emit a phage under the `environment perturbation` label, so a conf</span>
+    <span class="c1"># enables one class or the other and never both -- see the conf rule below).</span>
+    <span class="c1"># The id is the same composition projection the other environment-side nodes use, so</span>
+    <span class="c1"># `_environment_perturbation_to_environment_edges` addresses these nodes unchanged.</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_phage_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
+        <span class="n">perturbation_id</span> <span class="o">=</span> <span class="n">CellAdapter</span><span class="o">.</span><span class="n">_environment_perturbation_node_id</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
+            <span class="n">node_id</span><span class="o">=</span><span class="n">perturbation_id</span><span class="p">,</span>
+            <span class="n">preferred_id</span><span class="o">=</span><span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
+            <span class="n">node_label</span><span class="o">=</span><span class="s2">"phage perturbation"</span><span class="p">,</span>
+            <span class="n">properties</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"perturbation_type"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
+                <span class="s2">"description"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+                <span class="c1"># `phage_name`, not `name`: the sibling `environment perturbation` class</span>
+                <span class="c1"># names its agent column `compound_name` and the served `media` class</span>
+                <span class="c1"># uses `name` for a medium's label, so the agent's name is qualified by</span>
+                <span class="c1"># what it names. The pydantic field stays `name`.</span>
+                <span class="s2">"phage_name"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">"ncbi_taxid"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">ncbi_taxid</span><span class="p">,</span>
+                <span class="s2">"genome_accession"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">genome_accession</span><span class="p">,</span>
+                <span class="s2">"multiplicity_of_infection"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">multiplicity_of_infection</span><span class="p">,</span>
+                <span class="s2">"titer_pfu_per_ml"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">titer_pfu_per_ml</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="nd">@data_chunker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_phage_perturbation_node</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""One node per phage of the environment; none for any other perturbation."""</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_phage_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">perturbations</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">PhagePerturbation</span><span class="p">)</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_phage_perturbation_reference_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The phages of every reference environment, deduplicated by content id."""</span>
+        <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">seen_node_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">environment_reference</span><span class="o">.</span><span class="n">perturbations</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">PhagePerturbation</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phage_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">get_id</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_node_ids</span><span class="p">:</span>
                     <span class="n">seen_node_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get_id</span><span class="p">())</span>
                     <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>

@@ -123,7 +123,9 @@
 
 <span class="sd">1. L1 ``count`` -- exact record-count oracle.</span>
 <span class="sd">2. L1 ``pair_uniqueness`` -- one record per (screened STRAIN x environment) pair (the strain</span>
-<span class="sd">   is the full genotype signature, so an allelic series is distinct, not duplicate).</span>
+<span class="sd">   is the full genotype signature, so an allelic series is distinct, not duplicate; the</span>
+<span class="sd">   environment includes its typed EDITS, so one strain grown on thirty carbon sources is</span>
+<span class="sd">   thirty records, not one repeated thirty times).</span>
 <span class="sd">3. L2 ``value_fidelity`` -- fitness values are finite and non-negative (WT == 1, sick &lt; 1).</span>
 <span class="sd">4. L2 ``se_nonnegative`` -- reported fitness SEs are non-negative.</span>
 <span class="sd">5. L3 ``reference_one`` -- the reference (wild-type) fitness is 1.0 (the convention baseline).</span>
@@ -179,11 +181,56 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_environment_signature</span><span class="p">(</span><span class="n">experiment</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Canonical environment identity: temperature, media, and duration scalars."""</span>
+<span class="w">    </span><span class="sd">"""Canonical environment identity: the environment EDITS plus the scalars.</span>
+
+<span class="sd">    The edits come first because they are what distinguishes most conditions of a</span>
+<span class="sd">    fitness screen that varies its environment: Tong 2020 grows every deletion strain on</span>
+<span class="sd">    ONE medium (solid MOPS minimal) at one temperature for one duration and varies only</span>
+<span class="sd">    the carbon source, which rides on ``environment.perturbations``. Keyed on the</span>
+<span class="sd">    scalars alone, its 3,644 Keio strains each read as thirty duplicates of one record,</span>
+<span class="sd">    and L1 fails on a dataset that holds exactly one record per (strain, carbon source).</span>
+
+<span class="sd">    Each edit is keyed by ``(perturbation_type, compound or agent name, factor, dose</span>
+<span class="sd">    value, unit, basis)``, the same tuple :func:`environment_response._condition_signature`</span>
+<span class="sd">    uses, so the two verifiers agree on what makes two conditions different. Elements are</span>
+<span class="sd">    stringified for a total order (mixed None / str / float never breaks the sort).</span>
+
+<span class="sd">    A yeast fitness dataset carries no environment perturbations, so its key gains an</span>
+<span class="sd">    empty tuple and its (already unique) signatures are unchanged.</span>
+<span class="sd">    """</span>
     <span class="n">env</span> <span class="o">=</span> <span class="n">experiment</span><span class="p">[</span><span class="s2">"environment"</span><span class="p">]</span>
+    <span class="n">perturbations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbations"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]:</span>
+        <span class="n">compound</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"compound"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"compound"</span><span class="p">),</span> <span class="nb">dict</span><span class="p">)</span>
+            <span class="k">else</span> <span class="p">{}</span>
+        <span class="p">)</span>
+        <span class="n">agent</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"agent"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"agent"</span><span class="p">),</span> <span class="nb">dict</span><span class="p">)</span>
+            <span class="k">else</span> <span class="p">{}</span>
+        <span class="p">)</span>
+        <span class="n">dose</span> <span class="o">=</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"concentration"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"magnitude"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">dose</span> <span class="o">=</span> <span class="n">dose</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dose</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbation_type"</span><span class="p">),</span>
+            <span class="n">compound</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">agent</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">),</span>
+            <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"factor"</span><span class="p">),</span>
+            <span class="n">dose</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"value"</span><span class="p">),</span>
+            <span class="n">dose</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"unit"</span><span class="p">),</span>
+            <span class="n">dose</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"basis"</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">perturbations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="s2">""</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">))</span>
     <span class="n">temp</span> <span class="o">=</span> <span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"temperature"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"value"</span><span class="p">)</span>
     <span class="n">media</span> <span class="o">=</span> <span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"media"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"name"</span><span class="p">)</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">temp</span><span class="p">,</span> <span class="n">media</span><span class="p">,</span> <span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"duration_hours"</span><span class="p">),</span> <span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"duration_generations"</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">perturbations</span><span class="p">)),</span>
+        <span class="n">temp</span><span class="p">,</span>
+        <span class="n">media</span><span class="p">,</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"duration_hours"</span><span class="p">),</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"duration_generations"</span><span class="p">),</span>
+    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_l1_pair_uniqueness</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
@@ -203,7 +250,12 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">dups</span>
             <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dups</span><span class="p">)</span><span class="si">}</span><span class="s2"> (strain, environment) pairs appear in multiple records"</span>
         <span class="p">),</span>
-        <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_pairs"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">seen</span><span class="p">),</span> <span class="s2">"n_duplicated"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dups</span><span class="p">)},</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"n_pairs"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">seen</span><span class="p">),</span>
+            <span class="s2">"n_duplicated"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">dups</span><span class="p">),</span>
+            <span class="s2">"n_strains"</span><span class="p">:</span> <span class="nb">len</span><span class="p">({</span><span class="n">genotype</span> <span class="k">for</span> <span class="n">genotype</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">}),</span>
+            <span class="s2">"n_environments"</span><span class="p">:</span> <span class="nb">len</span><span class="p">({</span><span class="n">environment</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">environment</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">}),</span>
+        <span class="p">},</span>
     <span class="p">)</span>
 
 

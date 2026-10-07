@@ -93,6 +93,7 @@ import numpy as np
 import numpy.typing as npt
 import openpyxl
 import pandas as pd
+from dotenv import load_dotenv
 from pydantic import BaseModel, ConfigDict, Field
 from tqdm import tqdm
 
@@ -141,6 +142,7 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
+    LocusTagReconciliation,
     LocusTagResolutionError,
     assembly_reference,
     bacterial_genome,
@@ -665,8 +667,6 @@ def _data_root(data_root: str | None = None) -> str:
     """``data_root`` when given, else ``DATA_ROOT`` (the repo-root ``.env``)."""
     if data_root is not None:
         return data_root
-    from dotenv import load_dotenv
-
     load_dotenv()
     return os.environ["DATA_ROOT"]
 
@@ -1263,14 +1263,15 @@ def eck_route(
     return placed, tuple(unplaced)
 
 
-def gene_symbol(genome: EcoliK12Genome, tag: str) -> str:
+def gene_symbol(
+    symbol: str | None, tag: str, resolve: Callable[[str], GeneNameResolution]
+) -> str:
     """The locus's GenBank gene symbol when it resolves back to that locus, else the tag.
 
     The stored common name then always resolves to the stored locus tag.
     """
-    symbol = genome.genbank.loci[tag].symbol
     if symbol:
-        resolution = genome.resolve_gene_name(symbol)
+        resolution = resolve(symbol)
         if resolution.systematic_name == tag and resolution.status in (
             GeneNameStatus.CURRENT,
             GeneNameStatus.RENAMED,
@@ -1279,25 +1280,26 @@ def gene_symbol(genome: EcoliK12Genome, tag: str) -> str:
     return tag
 
 
-def map_genes(
+#: ``reconcile_locus_tags`` bound to a genome and a label: ECK ids in, tags out.
+Reconcile = Callable[[pd.Series], tuple[pd.Series, LocusTagReconciliation]]
+
+
+def assemble_mapping(
     b_numbers: Sequence[str],
-    mg1655: EcoliK12MG1655Genome,
-    bw25113: EcoliK12BW25113Genome,
+    crosswalk: EckCrosswalk,
+    mg1655_ecks: Mapping[str, tuple[str, ...]],
+    reconcile: Reconcile,
+    name_of: Callable[[str], str],
     *,
     label: str,
 ) -> tuple[dict[str, GeneMapping], IdentifierReport]:
-    """Place the release's b-numbers on BW25113 through the ECK crosswalk.
+    """Place the release's b-numbers on BW25113 locus tags and report how.
 
-    The ECK ids of the placed genes are also run through ``reconcile_locus_tags`` on
-    BW25113 (they resolve at its gene-synonym layer), which must return the crosswalk's
-    tag for every one; the route must place at least ``MIN_ECK_ROUTE_FRACTION`` of the
-    genes, else the build stops (checklist item 4) rather than dropping more.
+    ``reconcile`` runs the placed genes' ECK ids through ``reconcile_locus_tags`` on
+    BW25113 and must return the crosswalk's tag for every one; ``name_of`` gives a
+    tag's stored common name. The route must place at least ``MIN_ECK_ROUTE_FRACTION``
+    of the genes, else the build stops (checklist item 4) rather than dropping more.
     """
-    crosswalk = eck_crosswalk(mg1655, bw25113)
-    mg1655_ecks = {
-        tag: tuple(s for s in locus.synonyms if s.startswith("ECK"))
-        for tag, locus in mg1655.genbank.loci.items()
-    }
     placed, unplaced = eck_route(b_numbers, crosswalk, mg1655_ecks)
     fraction = len(placed) / len(b_numbers)
     if fraction < MIN_ECK_ROUTE_FRACTION:
@@ -1306,9 +1308,7 @@ def map_genes(
             f"({fraction:.4f}), below {MIN_ECK_ROUTE_FRACTION}"
         )
     order = [b for b in b_numbers if b in placed]
-    stored, reconciliation = reconcile_locus_tags(
-        bw25113, pd.Series([placed[b][0] for b in order]), label=f"{label} ECK ids"
-    )
+    stored, reconciliation = reconcile(pd.Series([placed[b][0] for b in order]))
     differing = [b for b, tag in zip(order, stored, strict=True) if tag != placed[b][1]]
     if differing:
         raise ValueError(f"{label}: reconciler and crosswalk disagree on {differing}")
@@ -1317,7 +1317,7 @@ def map_genes(
             b_number=b,
             eck=placed[b][0],
             locus_tag=placed[b][1],
-            perturbed_gene_name=gene_symbol(bw25113, placed[b][1]),
+            perturbed_gene_name=name_of(placed[b][1]),
             numerics_agree=(
                 b.removeprefix("b") == placed[b][1].removeprefix("BW25113_")
             ),
@@ -1345,6 +1345,33 @@ def map_genes(
         n_tag_names=len(mapping) - n_symbol,
     )
     return mapping, report
+
+
+def map_genes(
+    b_numbers: Sequence[str],
+    mg1655: EcoliK12MG1655Genome,
+    bw25113: EcoliK12BW25113Genome,
+    *,
+    label: str,
+) -> tuple[dict[str, GeneMapping], IdentifierReport]:
+    """:func:`assemble_mapping` on the deposited MG1655 and BW25113 annotations."""
+    mg1655_ecks = {
+        tag: tuple(s for s in locus.synonyms if s.startswith("ECK"))
+        for tag, locus in mg1655.genbank.loci.items()
+    }
+    loci = bw25113.genbank.loci
+
+    def reconcile(ecks: pd.Series) -> tuple[pd.Series, LocusTagReconciliation]:
+        return reconcile_locus_tags(bw25113, ecks, label=f"{label} ECK ids")
+
+    return assemble_mapping(
+        b_numbers,
+        eck_crosswalk(mg1655, bw25113),
+        mg1655_ecks,
+        reconcile,
+        lambda tag: gene_symbol(loci[tag].symbol, tag, bw25113.resolve_gene_name),
+        label=label,
+    )
 
 
 # --------------------------------------------------------------------------- #

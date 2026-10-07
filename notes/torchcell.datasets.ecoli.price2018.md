@@ -223,6 +223,17 @@ common names resolve to another gene. The verifier takes about 5.7 ms per record
 for the build), dominated by validating each record against the 27-member
 `ExperimentType` union.
 
+### Tests
+
+`tests/torchcell/datasets/ecoli/test_price2018.py`: 42 hermetic tests and 39 data-gated
+ones (81 with `--data`). The hermetic half builds the loader end to end under `tmp_path`
+on the shared synthetic K-12 assemblies (`tests/torchcell/sequence/genome/_bacterial_fixtures.py`):
+the ECK route meets every case there (a numeric disagreement, a pseudogene, an id that is
+not one-to-one, one BW25113 lacks, an unknown b-number), the build writes 8 records from
+a 7-gene x 4-sample release, and `verify`, `report` and the command line run on it.
+Hermetic diff coverage of the module is 98%. The data-gated half re-derives the build's
+numbers and audits every quote against the pinned mirrors.
+
 ### Gaps and open questions
 
 - **Compound identities** (above): 53 labels need the curator before KG admission.

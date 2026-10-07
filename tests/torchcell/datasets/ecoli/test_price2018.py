@@ -20,6 +20,7 @@ import os
 import os.path as osp
 import pickle
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import lmdb
@@ -30,6 +31,15 @@ import pytest
 
 import torchcell.datasets.ecoli.price2018 as p
 import torchcell.datasets.ecoli.wetmore2015 as w
+from tests.torchcell.sequence.genome._bacterial_fixtures import (
+    BW25113_LOCI,
+    MG1655_GAF,
+    MG1655_LOCI,
+    forbid_network,
+    serve_tier,
+    write_assembly,
+)
+from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
 from torchcell.datamodels.media import (
     LB_LENNOX,
     M9_NOCARBON_PRICE2018,
@@ -49,6 +59,8 @@ from torchcell.datamodels.schema import (
     UncertaintyType,
 )
 from torchcell.datasets.bacteria_common import (
+    LocusTagReconciliation,
+    LocusTagResolutionError,
     bacterial_genome,
     declared_reference_strain,
 )
@@ -56,6 +68,8 @@ from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.literature.manifest import Manifest
 from torchcell.sequence.genome.base import GeneNameResolution, GeneNameStatus
 from torchcell.sequence.genome.ecoli.k12 import (
+    BW25113_ASSEMBLY,
+    MG1655_ASSEMBLY,
     EckCrosswalk,
     EckPair,
     EcoliK12BW25113Genome,
@@ -726,6 +740,413 @@ def test_xlsx_text_joins_cells_and_rows(tmp_path: Path) -> None:
     assert p.xlsx_text(str(path)) == (
         "Strain | Transposon / Escherichia coli BW25113 | KEIO_ML9 | 12\nx"
     )
+
+
+# --------------------------------------------------------------------------- #
+# Mirror paths and the recorded retrieval
+# --------------------------------------------------------------------------- #
+def test_source_path_checks_each_mirror_through_its_own_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = _fake_raw(tmp_path, monkeypatch)
+    data_root = str(tmp_path / "root")
+    p.deposit_raw_mirror(source_dir=source, data_root=data_root)
+    pin = p.RAW_FILES["data/a.tab"].sha256
+    calls: list[tuple[str, ...]] = []
+
+    def wetmore_raw(relpath: str, root: str) -> Path:
+        calls.append(("wetmore", relpath, root))
+        return Path("/w") / relpath
+
+    def library(key: str, relpath: str, pin: str, root: str) -> Path:
+        calls.append(("library", key, relpath, pin, root))
+        return Path("/l") / relpath
+
+    monkeypatch.setattr(w, "raw_path", wetmore_raw)
+    monkeypatch.setattr(w, "library_path", library)
+    monkeypatch.setattr(
+        p,
+        "RAW_FILE_NAMES",
+        {
+            "a.tab": ("price", "data/a.tab", pin),
+            "w.tab": ("wetmore", "data/bigfit/w.tab", "0" * 64),
+            "s.xlsx": ("library", "si/s.xlsx", "1" * 64),
+            "stale.tab": ("price", "data/a.tab", "2" * 64),
+        },
+    )
+    assert p.source_path("a.tab", data_root) == (
+        Path(data_root) / p.RAW_DIR_REL / "data/a.tab"
+    )
+    assert p.source_path("w.tab", data_root) == Path("/w/data/bigfit/w.tab")
+    assert p.source_path("s.xlsx", data_root) == Path("/l/si/s.xlsx")
+    assert calls == [
+        ("wetmore", "data/bigfit/w.tab", data_root),
+        ("library", p.CITATION_KEY, "si/s.xlsx", "1" * 64, data_root),
+    ]
+    with pytest.raises(ManifestPinMismatchError):
+        p.source_path("stale.tab", data_root)
+    assert p.manifest_sha256(p.load_manifest(data_root), "data/a.tab") == pin
+    with pytest.raises(KeyError, match="data/z.tab is not in the"):
+        p.manifest_sha256(p.load_manifest(data_root), "data/z.tab")
+
+
+def test_the_recorded_retrieval_writes_only_pinned_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = _fake_raw(tmp_path, monkeypatch)
+    served = {raw.url: (source / rel).read_bytes() for rel, raw in p.RAW_FILES.items()}
+    monkeypatch.setattr(p, "direct_url", served.__getitem__)
+    dest = p.retrieve_raw_files(tmp_path / "fetched")
+    assert sorted(str(f.relative_to(dest)) for f in dest.rglob("*.tab")) == [
+        "data/a.tab",
+        "data/sub/b.tab",
+    ]
+    served[p.RAW_FILES["data/a.tab"].url] = b"upstream changed"
+    with pytest.raises(RawSha256MismatchError):
+        p.retrieve_raw_files(tmp_path / "again")
+
+
+def test_read_release_reads_the_four_linked_tables(tmp_path: Path) -> None:
+    for label, name in (
+        ("fitness", "fit_logratios_good.tab"),
+        ("se_obs", "fit_standard_error_obs.tab"),
+        ("se_naive", "fit_standard_error_naive.tab"),
+        ("t", "fit_t.tab"),
+    ):
+        _tables(FIT, OBS, NAIVE)[label].to_csv(tmp_path / name, sep="\t", index=False)
+    release = p.read_release(str(tmp_path), ["set1IT003", "set1IT004"])
+    assert release.b_numbers == ("b0001", "b0002", "b0003")
+    assert release.n_naive_larger == 2
+
+
+# --------------------------------------------------------------------------- #
+# The synthetic K-12 pair: the ECK route, the build, the verifier, the report
+# --------------------------------------------------------------------------- #
+@pytest.fixture
+def k12(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome]:
+    """Both synthetic K-12 genomes; the network refuses."""
+    files = write_assembly(tmp_path / "tier", MG1655_ASSEMBLY, MG1655_LOCI, MG1655_GAF)
+    files |= write_assembly(tmp_path / "tier", BW25113_ASSEMBLY, BW25113_LOCI)
+    forbid_network(monkeypatch)
+    serve_tier(monkeypatch, files)
+    return (
+        EcoliK12MG1655Genome(genome_root=str(tmp_path / "mg1655"), overwrite=True),
+        EcoliK12BW25113Genome(genome_root=str(tmp_path / "bw25113"), overwrite=True),
+    )
+
+
+#: The synthetic release's genes: four map (b0003 crosses numbers, b0004 is a
+#: pseudogene), b0005 is not one-to-one, b0006 is absent from BW25113, b0099 unknown.
+SYNTHETIC_GENES = ["b0001", "b0002", "b0003", "b0004", "b0005", "b0006", "b0099"]
+
+
+def test_map_genes_on_the_synthetic_k12_pair(
+    k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mg1655, bw25113 = k12
+    with pytest.raises(LocusTagResolutionError, match="places 4 of 7 genes"):
+        p.map_genes(SYNTHETIC_GENES, mg1655, bw25113, label="synthetic")
+    monkeypatch.setattr(p, "MIN_ECK_ROUTE_FRACTION", 0.5)
+    mapping, report = p.map_genes(SYNTHETIC_GENES, mg1655, bw25113, label="synthetic")
+    assert {b: (m.locus_tag, m.perturbed_gene_name) for b, m in mapping.items()} == {
+        "b0001": ("BW25113_0001", "thrL"),
+        "b0002": ("BW25113_0002", "thrA"),
+        "b0003": ("BW25113_4412", "hokC"),
+        "b0004": ("BW25113_0004", "BW25113_0004"),
+    }
+    assert report.numeric_disagreements == (("b0003", "BW25113_4412", "ECK0003"),)
+    assert [(u.b_number, u.reason, u.eck) for u in report.unmapped] == [
+        ("b0005", "eck_not_one_to_one", ("ECK0005",)),
+        ("b0006", "eck_absent_from_bw25113", ("ECK0006",)),
+        ("b0099", "b_number_not_in_mg1655_annotation", ()),
+    ]
+    assert report.reconcile_layer_histogram["gene synonym"] == 4
+    assert (report.n_symbol_names, report.n_tag_names) == (3, 1)
+
+
+def test_the_mapping_refuses_a_reconciler_that_disagrees_with_the_crosswalk() -> None:
+    def reconcile(ecks: pd.Series) -> tuple[pd.Series, LocusTagReconciliation]:
+        return (
+            pd.Series(["BW25113_0001", "BW25113_9999"]),
+            LocusTagReconciliation(
+                label="x",
+                assembly_set="ecoli_K12_BW25113_ASM75055v1",
+                gene_namespace="ecoli_k12_bw25113_locus_tag",
+                unique_names=2,
+                status_histogram={s: 0 for s in GeneNameStatus},
+                layer_histogram={},
+                remapped=2,
+                kept_on_collision=(),
+                retired_kept=(),
+                ambiguous_kept={},
+                case_insensitive=(),
+                outside_namespace=(),
+            ),
+        )
+
+    with pytest.raises(ValueError, match=r"disagree on \['b0002'\]"):
+        p.assemble_mapping(
+            ["b0001", "b0002"],
+            CROSSWALK,
+            MG1655_ECKS,
+            reconcile,
+            lambda tag: tag,
+            label="x",
+        )
+
+
+def test_gene_symbol_is_used_only_when_it_names_the_locus_back() -> None:
+    answers = {
+        "thrA": _resolution("thrA", GeneNameStatus.RENAMED, "BW25113_0002"),
+        "dup": _resolution("dup", GeneNameStatus.RENAMED, "BW25113_0003"),
+        "yaaP": _resolution("yaaP", GeneNameStatus.NON_GENE_FEATURE, "BW25113_0004"),
+    }
+    assert p.gene_symbol("thrA", "BW25113_0002", answers.__getitem__) == "thrA"
+    assert p.gene_symbol("dup", "BW25113_0002", answers.__getitem__) == "BW25113_0002"
+    assert p.gene_symbol("yaaP", "BW25113_0004", answers.__getitem__) == "BW25113_0004"
+    assert p.gene_symbol(None, "BW25113_0009", answers.__getitem__) == "BW25113_0009"
+
+
+def _release_frames(samples: list[str]) -> dict[str, pd.DataFrame]:
+    """A release over SYNTHETIC_GENES x ``samples`` whose t follows the rule exactly."""
+    n_genes = len(SYNTHETIC_GENES)
+    grid = np.arange(n_genes * len(samples), dtype=np.float64).reshape(n_genes, -1)
+    fit = grid / 8.0 - 2.0
+    obs = 0.1 + grid / 100.0
+    naive = 0.3 - grid / 200.0
+    t = fit / np.sqrt(0.1**2 + np.maximum(obs, naive) ** 2)
+    genes = {"locusId": list(range(100, 100 + n_genes)), "sysName": SYNTHETIC_GENES}
+    headers = [f"{s} condition" for s in samples]
+
+    def frame(values: np.ndarray[Any, Any]) -> pd.DataFrame:
+        return pd.DataFrame({**genes, **dict(zip(headers, values.T, strict=True))})
+
+    return {
+        "fit_logratios_good.tab": frame(fit),
+        "fit_standard_error_obs.tab": frame(obs),
+        "fit_standard_error_naive.tab": frame(naive),
+        "fit_t.tab": frame(t),
+    }
+
+
+#: set1IT003 (Wetmore, glucose), set2IT026 (Price, stress), set1IT007 (Wetmore,
+#: withdrawn), set6IT068 (Price, motility): two kept samples.
+SYNTHETIC_TABLE = pd.DataFrame([ROWS[0], ROWS[4], ROWS[1], ROWS[3]])
+SYNTHETIC_SAMPLES = ["set1IT003", "set2IT026", "set1IT007", "set6IT068"]
+
+
+def _pin() -> AssemblyReferenceGenome:
+    return AssemblyReferenceGenome(
+        species="Escherichia coli",
+        strain="BW25113",
+        assembly_set="ecoli_K12_BW25113_ASM75055v1",
+        assembly_accession="GCA_000750555.1",
+    )
+
+
+@pytest.fixture
+def mirrored(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
+) -> Path:
+    """A tmp ``DATA_ROOT`` whose mirrors hold the synthetic release; returns it."""
+    source = tmp_path / "source"
+    source.mkdir()
+    for name, frame in _release_frames(SYNTHETIC_SAMPLES).items():
+        frame.to_csv(source / name, sep="\t", index=False)
+    (source / "si3.xlsx").write_bytes(b"synthetic workbook")
+    monkeypatch.setattr(
+        p,
+        "RAW_FILE_NAMES",
+        {
+            name: (
+                "price",
+                f"data/{name}",
+                hashlib.sha256(path.read_bytes()).hexdigest(),
+            )
+            for name, path in ((n, source / n) for n in sorted(os.listdir(source)))
+        },
+    )
+    monkeypatch.setattr(p, "source_path", lambda name, data_root=None: source / name)
+    monkeypatch.setattr(w, "read_superset_experiments", lambda path: SYNTHETIC_TABLE)
+    monkeypatch.setattr(
+        w,
+        "subsumption_record",
+        lambda data_root=None: SimpleNamespace(
+            carried=("set1IT003", "set1IT007"), disregarded=("set1IT007",)
+        ),
+    )
+    genomes = dict(zip(("MG1655", "BW25113"), k12, strict=True))
+    monkeypatch.setattr(
+        p, "bacterial_genome", lambda host, strain, data_root=None: genomes[strain]
+    )
+    monkeypatch.setattr(p, "assembly_reference", lambda strain: _pin())
+    monkeypatch.setattr(p, "MIN_ECK_ROUTE_FRACTION", 0.5)
+    monkeypatch.setattr(p, "load_dotenv", lambda: None)
+    data_root = tmp_path / "data_root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    return data_root
+
+
+def _dataset_root(data_root: Path) -> Path:
+    return data_root / "data/torchcell/rbtnseq_price2018_ecoli"
+
+
+def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> None:
+    root = _dataset_root(mirrored)
+    dataset = p.RbTnseqPrice2018EcoliDataset(root=str(root))
+    assert len(dataset) == 8
+    assert sorted(dataset.gene_set) == [
+        "BW25113_0001",
+        "BW25113_0002",
+        "BW25113_0004",
+        "BW25113_4412",
+    ]
+    references = dataset.experiment_reference_index
+    assert references is not None
+    assert len(references) == 2
+    first = dataset[0]
+    phenotype = first["experiment"]["phenotype"]
+    assert phenotype["screen_id"] == "Keio:set1IT003"
+    assert phenotype["environment_response"] == -2.0
+    assert phenotype["environment_response_se"] == pytest.approx(0.3)
+    assert first["experiment"]["genotype"]["perturbations"][0][
+        "systematic_gene_name"
+    ] == ("BW25113_0001")
+    assert first["publication"]["doi"] == "10.1128/mBio.00306-15"
+    drops = json.loads((root / "preprocess" / "dropped_records.json").read_text())
+    assert (drops["source_records"], drops["kept_records"]) == (28, 8)
+    assert [(d["rule"], d["items"], d["n_records"]) for d in drops["drops"]] == [
+        (p.DROP_DISREGARDED, ["set1IT007"], 7),
+        (p.DROP_MEDIUM_NOT_IN_LIBRARY, [], 0),
+        (p.DROP_MOTILITY, ["set6IT068"], 7),
+        (p.DROP_NO_ECK_PAIR, ["b0005", "b0006", "b0099"], 6),
+    ]
+    identifiers = json.loads(
+        (root / "preprocess" / "identifier_mapping.json").read_text()
+    )
+    assert (identifiers["n_source_genes"], identifiers["n_mapped"]) == (7, 4)
+    standard_error = json.loads(
+        (root / "preprocess" / "standard_error.json").read_text()
+    )
+    assert standard_error["n_values"] == 28
+    assert (root / "preprocess" / "build_manifest.json").is_file()
+    assert sorted(os.listdir(root / "raw")) == sorted(p.RAW_FILE_NAMES)
+
+
+def test_the_build_refuses_a_withdrawal_set_other_than_wetmores(
+    mirrored: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        w,
+        "subsumption_record",
+        lambda data_root=None: SimpleNamespace(
+            carried=("set1IT003", "set1IT007"), disregarded=()
+        ),
+    )
+    with pytest.raises(ValueError, match=r"withdrawn samples \['set1IT007'\] != "):
+        p.RbTnseqPrice2018EcoliDataset(root=str(_dataset_root(mirrored)))
+
+
+def test_a_genome_of_the_wrong_strain_is_refused(
+    k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
+) -> None:
+    dataset = p.RbTnseqPrice2018EcoliDataset.__new__(p.RbTnseqPrice2018EcoliDataset)
+    dataset.ecoli_genome = k12[0]
+    with pytest.raises(TypeError, match="expected the BW25113 genome"):
+        dataset._bw25113()
+    dataset.ecoli_genome = k12[1]
+    assert dataset._bw25113() is k12[1]
+    with pytest.raises(NotImplementedError, match="builds its records in process"):
+        dataset.create_experiment()
+    frame = pd.DataFrame({"a": [1]})
+    assert dataset.preprocess_raw(frame) is frame
+
+
+def test_verify_runs_the_family_verifier_with_the_bacterial_universe(
+    mirrored: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    p.RbTnseqPrice2018EcoliDataset(root=str(_dataset_root(mirrored)))
+    monkeypatch.setattr(p, "EXPECTED_RECORDS", 8)
+    report = p.verify(str(mirrored))
+    results = {r.name: r.passed for r in report.results}
+    assert results["count"] is True
+    assert results["pair_uniqueness"] is True
+    assert results["gene_containment_sgd"] is True
+    assert results["compound_identity"] is True
+    # BW25113_0004 is a pseudogene: the shared row reports it, the supplementary passes
+    assert results["canonical_gene_names"] is False
+    assert results["stored_tags_are_loci_of_the_pinned_assembly"] is True
+    written = json.loads(
+        (
+            _dataset_root(mirrored) / "preprocess" / "verification_report.json"
+        ).read_text()
+    )
+    assert written["dataset_name"] == "RbTnseqPrice2018EcoliDataset"
+
+
+def test_report_recomputes_the_notes_numbers_from_the_mirrors(mirrored: Path) -> None:
+    out = p.report(str(mirrored))
+    assert out["inventory"]["kept_samples_by_source"] == {
+        p.SampleSource.wetmore2015.value: 1,
+        p.SampleSource.price2018.value: 1,
+    }
+    assert out["inventory"]["kept_records"] == 8
+    assert out["identifiers"]["n_mapped"] == 4
+    assert out["standard_error"]["n_values"] == 28
+    assert out["set_prefixes"] == ["set1", "set2", "set6"]
+
+
+def test_the_command_line_dispatches_each_command(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(p, "retrieve_raw_files", lambda dest: f"retrieved {dest}")
+    monkeypatch.setattr(
+        p, "deposit_raw_mirror", lambda source_dir: f"deposited {source_dir}"
+    )
+    monkeypatch.setattr(p, "report", lambda: {"records": 8})
+    monkeypatch.setattr(
+        p, "verify", lambda: SimpleNamespace(summary=lambda: "verified")
+    )
+    p.main(["retrieve", "--dest", "/d"])
+    p.main(["deposit", "--source-dir", "/s"])
+    p.main(["report"])
+    p.main(["verify"])
+    assert capsys.readouterr().out.split("\n") == [
+        "retrieved /d",
+        "deposited /s",
+        "{",
+        '  "records": 8',
+        "}",
+        "verified",
+        "",
+    ]
+
+
+def test_a_sample_whose_group_needs_a_condition_names_one() -> None:
+    specs = _specs()
+    carbon = specs["set1IT003"]
+    with pytest.raises(ValueError, match="a carbon source sample names no condition"):
+        p.build_environment(carbon.model_copy(update={"condition": None}))
+    with pytest.raises(ValueError, match="'D-Glucose' has no dose"):
+        p.build_environment(carbon.model_copy(update={"concentration": None}))
+
+
+def test_an_eck_that_is_neither_paired_absent_nor_shared_is_refused() -> None:
+    with pytest.raises(ValueError, match="b0042: ECK"):
+        p.eck_route(["b0042"], CROSSWALK, {"b0042": ("ECK0042",)})
+
+
+def test_a_table_missing_a_sample_is_refused() -> None:
+    tables = _tables(FIT, OBS, NAIVE)
+    tables["se_naive"] = tables["se_naive"].drop(columns=["set1IT004 D-Glucose (C)"])
+    with pytest.raises(ValueError, match=r"se_naive: samples absent \['set1IT004'\]"):
+        p.align_release(**tables, samples=["set1IT003", "set1IT004"], sigma=0.1)
 
 
 # --------------------------------------------------------------------------- #

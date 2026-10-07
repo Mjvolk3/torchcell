@@ -59,3 +59,7 @@ Phase 1 of the artifact-tier plan (decisions D1 to D3). A graph record points at
 ## 2026.10.07 - Figure: a query, then the off-graph bytes
 
 [[torchcell.artifacts.mermaid.query-resolve]] is the sequence diagram of one query: Neo4j answers with records whose perturbations carry `ArtifactRef` pointers, the gate checks each distinct ref against a manifest (local tier, else tc-data) without downloading, and `materialize` later fetches the bytes through the same resolver order with sha256 verification at every step. Rendered to `notes/assets/pdf-output/torchcell.artifacts.mermaid.query-resolve.{pdf,svg,png}`.
+
+## 2026.10.07 - Figure: the user's wiring
+
+[[torchcell.artifacts.mermaid.user-wiring]] is the one-glance version: you query Neo4j, it answers with records plus pointers, and touching a pointer makes the same library fetch the verified bytes from the sequence and transcriptome store. Rendered to `notes/assets/pdf-output/torchcell.artifacts.mermaid.user-wiring.{pdf,svg,png}`.

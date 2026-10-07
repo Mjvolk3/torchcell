@@ -21,11 +21,18 @@ RECORD = one (sgRNA x screen) ``BacterialEnvironmentResponseExperiment``:
   to a current locus through ``reconcile_locus_tags``; the symbol it came from is kept on
   ``identifier_mapping`` (``route="gene_symbol"``), never dropped.
 - ENVIRONMENT: the screen's own culture. The growth screen is LB plus 1 nM aTc for 17
-  generations; the three phage challenges and the transduction assay are LB plus 0.2%
-  maltose, 5 mM CaCl2 and 1 microM aTc at 37 C for 2 h, each phage challenge carrying one
-  ``PhagePerturbation`` at ``multiplicity_of_infection=1``. aTc is an added small
-  molecule, not an LB ingredient, so it is a ``SmallMoleculePerturbation`` in every
-  environment rather than a medium component.
+  generations with no environment perturbation; the three phage challenges and the
+  transduction assay are LB plus 1 microM aTc, 0.2% maltose and 5 mM CaCl2 at 37 C for
+  2 h, each carrying exactly one ``PhagePerturbation`` at
+  ``multiplicity_of_infection=1``. The aTc that induces dCas9 is a COMPONENT of the two
+  media, not an ``Environment.perturbation``: the paper puts it there ("diluted 100-fold
+  in LB containing 1 microM aTc, 0.2% Maltose and 5 mM CaCl2" lists it beside the two
+  components the phage medium already carries), it is constant across the dataset rather
+  than the varied condition, and its dose is what distinguishes the two media. That also
+  leaves the phage as the only environment perturbation any record carries, which is what
+  lets the adapter conf enable ``phage perturbation`` and not ``environment
+  perturbation``: the served ``_environment_perturbation_node`` does not filter phages
+  out, so a conf enabling both would emit each phage twice under two labels on one id.
 - PHENOTYPE: ``EnvironmentResponsePhenotype`` with ``measurement_type=log2_ratio``. The
   reference carries 0.0, which is what no change in guide abundance is.
 
@@ -116,10 +123,16 @@ SOURCED VALUES (module-level ``SourcedValue``s anchored to the sha256 of
   phages; no phage family, genome type, taxon or accession is stated, so those stay None.
 - ``titer_pfu_per_ml``: the stocks are 10^7 pfu/microL but the infected culture's volume
   at MOI 1 is not stated, so the in-culture titer is not computed.
-- ``Temperature(37.0)``, ``duration_hours = 2.0`` and the phage-screen medium from the
-  phage-screen paragraph; ``duration_generations = 17.0`` and the growth-screen medium
-  from Rousset plus the Cui 2018 deferral; ``aerobic`` from shaken flask cultures with no
-  gas control described.
+- ``Temperature(37.0)``, ``duration_hours = 2.0`` and the phage-screen medium (including
+  its 1 microM aTc) from the phage-screen paragraph; ``duration_generations = 17.0``, the
+  growth-screen medium and its 1 nM aTc from Rousset plus the Cui 2018 deferral;
+  ``aerobic`` from shaken flask cultures with no gas control described.
+
+The growth screen therefore carries NO environment perturbation, and the
+environment-response verifier's L3 ``environment_perturbed`` rule passes it on the rule's
+own base-medium clause: its 23,209 records sit on ``ROUSSET2018_LB`` while the modal
+medium over the dataset is the phage screens' ``ROUSSET2018_LB_MALTOSE_CACL2`` (68,400
+records), a 2.9x margin the release fixes.
 
 DATA SOURCE: S1, S4 and S6 Tables (``pgen.1007749.s011.csv``, ``.s014.csv``,
 ``.s016.csv``) from the PMC Article Datasets bucket (``pmc_cloud``, prefix
@@ -180,7 +193,6 @@ from torchcell.datamodels.schema import (
     PhagePerturbation,
     Publication,
     SampleUnit,
-    SmallMoleculePerturbation,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -647,24 +659,57 @@ def _lb_ingredients(provenance: SourcedValue) -> list[MediaComponent]:
     ]
 
 
+def _atc(
+    value: float, unit: ConcentrationUnit, provenance: SourcedValue
+) -> MediaComponent:
+    """The anhydrotetracycline that induces dCas9, as a component of the medium.
+
+    It is in the medium, not on ``Environment.perturbations``, because the paper puts it
+    there: "diluted 100-fold in LB containing 1 microM aTc, 0.2% Maltose and 5 mM CaCl2"
+    lists aTc beside the two components this medium already carries. It is also constant
+    across the dataset rather than the varied condition, so the environment axis would
+    hold a factor nothing in the dataset contrasts. The dose IS the discriminator between
+    the two media (1 nM in the growth screen, 1 microM in the phage screens), which is why
+    it is stored rather than noted.
+    """
+    return MediaComponent(
+        compound=resolved_compound("anhydrotetracycline"),
+        role=MediaComponentRole.other,
+        concentration=Concentration(value=value, unit=unit),
+        provenance=[provenance],
+        note="inducer of the chromosomal pTet-dcas9 cassette; it switches the "
+        "perturbation on rather than acting on the cell's metabolism, which is why its "
+        "role is 'other' rather than a nutrient role",
+    )
+
+
 ROUSSET2018_LB = Media(
-    name="LB, formulation not stated (Rousset 2018 growth-based screen), liquid",
+    name="LB with 1 nM aTc, formulation not stated "
+    "(Rousset 2018 growth-based screen), liquid",
     state="liquid",
     is_synthetic=False,
     base_medium="LB",
-    components=_lb_ingredients(GROWTH_MEDIUM),
-    provenance=[GROWTH_MEDIUM, GROWTH_SERIAL_DILUTION],
+    components=[
+        *_lb_ingredients(GROWTH_MEDIUM),
+        _atc(GROWTH_INDUCTION.value[0], ConcentrationUnit.nanomolar, GROWTH_INDUCTION),
+    ],
+    provenance=[GROWTH_MEDIUM, GROWTH_SERIAL_DILUTION, GROWTH_INDUCTION],
 )
-"""The growth screen's medium: LB, through the Cui 2018 deferral, with no amounts."""
+"""The growth screen's medium: LB plus 1 nM aTc, through the Cui 2018 deferral."""
 
 ROUSSET2018_LB_MALTOSE_CACL2 = Media(
-    name="LB with 0.2% maltose and 5 mM CaCl2, formulation not stated "
+    name="LB with 1 uM aTc, 0.2% maltose and 5 mM CaCl2, formulation not stated "
     "(Rousset 2018 phage screens), liquid",
     state="liquid",
     is_synthetic=False,
     base_medium="LB",
     components=[
         *_lb_ingredients(PHAGE_SCREEN_MEDIUM),
+        _atc(
+            PHAGE_SCREEN_INDUCTION.value[0],
+            ConcentrationUnit.micromolar,
+            PHAGE_SCREEN_INDUCTION,
+        ),
         MediaComponent(
             compound=resolved_compound("maltose"),
             role=MediaComponentRole.carbon_source,
@@ -681,9 +726,9 @@ ROUSSET2018_LB_MALTOSE_CACL2 = Media(
             note="required for phage adsorption",
         ),
     ],
-    provenance=[PHAGE_SCREEN_MEDIUM],
+    provenance=[PHAGE_SCREEN_MEDIUM, PHAGE_SCREEN_INDUCTION],
 )
-"""The phage screens' medium: LB plus the maltose and CaCl2 the infections need."""
+"""The phage screens' medium: LB plus the aTc, maltose and CaCl2 the paper lists."""
 
 LC_E75_BACKGROUND = BacterialStrainBackground(
     name="LC-E75",
@@ -808,22 +853,6 @@ TABLE_COLUMNS: dict[str, tuple[str, ...]] = {
 }
 
 
-def _atc_perturbation(
-    value: float, unit: ConcentrationUnit
-) -> SmallMoleculePerturbation:
-    """The aTc that induces dCas9, as the added small molecule it is.
-
-    aTc is not an LB ingredient: it is the inducer dosed on top of the medium, so it is
-    an environment perturbation rather than a medium component. Its dose differs between
-    the two screens (1 nM in the growth screen, 1 microM in the phage screens), which is
-    part of what makes those environments distinct.
-    """
-    return SmallMoleculePerturbation(
-        compound=resolved_compound("anhydrotetracycline"),
-        concentration=Concentration(value=value, unit=unit),
-    )
-
-
 def _growth_temperature_gap() -> ProvenanceGap:
     """Neither paper states the growth screen's incubation temperature."""
     return ProvenanceGap(
@@ -864,11 +893,7 @@ def environment(condition: ScreenCondition) -> Environment:
         return Environment(
             media=ROUSSET2018_LB,
             temperature=None,
-            perturbations=[
-                _atc_perturbation(
-                    GROWTH_INDUCTION.value[0], ConcentrationUnit.nanomolar
-                )
-            ],
+            perturbations=[],
             aerobicity="aerobic",
             duration_generations=GROWTH_SERIAL_DILUTION.value,
             provenance_gaps=[_growth_temperature_gap()],
@@ -876,12 +901,7 @@ def environment(condition: ScreenCondition) -> Environment:
     return Environment(
         media=ROUSSET2018_LB_MALTOSE_CACL2,
         temperature=Temperature(value=PHAGE_SCREEN_TEMPERATURE.value),
-        perturbations=[
-            _atc_perturbation(
-                PHAGE_SCREEN_INDUCTION.value[0], ConcentrationUnit.micromolar
-            ),
-            phage_perturbation(condition.phage),
-        ],
+        perturbations=[phage_perturbation(condition.phage)],
         aerobicity="aerobic",
         duration_hours=PHAGE_INFECTION.value[1],
     )

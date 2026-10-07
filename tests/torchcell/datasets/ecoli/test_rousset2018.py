@@ -58,7 +58,6 @@ from torchcell.datamodels.schema import (
     MediaComponentRole,
     PhagePerturbation,
     SampleUnit,
-    SmallMoleculePerturbation,
 )
 from torchcell.datasets.bacteria_common import (
     BacterialGenomeInjector,
@@ -200,19 +199,29 @@ def test_both_media_derive_from_lb_and_assert_no_lb_amounts() -> None:
     ] * 2
 
 
-def test_the_phage_medium_adds_maltose_and_calcium_chloride_at_their_stated_doses() -> (
-    None
-):
-    extra = r.ROUSSET2018_LB_MALTOSE_CACL2.components[3:]
-    assert [
+def _dosed(medium: Any) -> list[tuple[str, Any, float | None, Any]]:
+    """Every component of ``medium`` the paper gives an amount for."""
+    return [
         (
             c.compound.name,
             c.role,
             c.concentration.value if c.concentration else None,
             c.concentration.unit if c.concentration else None,
         )
-        for c in extra
-    ] == [
+        for c in medium.components
+        if c.concentration is not None
+    ]
+
+
+def test_the_phage_medium_adds_the_atc_maltose_and_calcium_the_paper_lists() -> None:
+    extra = r.ROUSSET2018_LB_MALTOSE_CACL2.components[3:]
+    assert _dosed(r.ROUSSET2018_LB_MALTOSE_CACL2) == [
+        (
+            "anhydrotetracycline",
+            MediaComponentRole.other,
+            1.0,
+            ConcentrationUnit.micromolar,
+        ),
         (
             "maltose",
             MediaComponentRole.carbon_source,
@@ -229,23 +238,39 @@ def test_the_phage_medium_adds_maltose_and_calcium_chloride_at_their_stated_dose
     assert all(c.compound.inchikey is not None for c in extra)
 
 
-def test_the_growth_environment_doses_atc_at_one_nanomolar_and_gaps_temperature() -> (
-    None
-):
+def test_the_atc_inducer_is_a_medium_component_at_its_per_screen_dose() -> None:
+    """ATc is in the medium, not on the environment axis, at two different doses.
+
+    The paper puts it there ("LB containing 1 microM aTc, 0.2% Maltose and 5 mM CaCl2"),
+    it is constant across the dataset rather than the varied condition, and leaving the
+    environment axis to the phage alone is what lets the adapter conf enable `phage
+    perturbation` without also enabling `environment perturbation`.
+    """
+    assert _dosed(r.ROUSSET2018_LB) == [
+        (
+            "anhydrotetracycline",
+            MediaComponentRole.other,
+            1.0,
+            ConcentrationUnit.nanomolar,
+        )
+    ]
+    assert r.ROUSSET2018_LB.name != r.ROUSSET2018_LB_MALTOSE_CACL2.name
+    for medium in (r.ROUSSET2018_LB, r.ROUSSET2018_LB_MALTOSE_CACL2):
+        (atc,) = [
+            c for c in medium.components if c.compound.name == "anhydrotetracycline"
+        ]
+        assert atc.compound.inchikey == "KTTKGQINVKPHLY-DOCRCCHOSA-N"
+        assert atc.provenance
+
+
+def test_the_growth_environment_carries_no_perturbation_and_gaps_temperature() -> None:
     environment = r.environment(r.CONDITIONS[0])
     assert environment.media is r.ROUSSET2018_LB
     assert environment.temperature is None
     assert environment.duration_generations == 17.0
     assert environment.duration_hours is None
     assert environment.aerobicity == "aerobic"
-    (atc,) = environment.perturbations
-    assert isinstance(atc, SmallMoleculePerturbation)
-    assert atc.compound.name == "anhydrotetracycline"
-    assert atc.compound.inchikey == "KTTKGQINVKPHLY-DOCRCCHOSA-N"
-    assert (atc.concentration.value, atc.concentration.unit) == (
-        1.0,
-        ConcentrationUnit.nanomolar,
-    )
+    assert environment.perturbations == []
     (gap,) = environment.provenance_gaps
     assert gap.field == "temperature"
     assert gap.reason is ProvenanceGapReason.not_reported_by_primary
@@ -253,9 +278,7 @@ def test_the_growth_environment_doses_atc_at_one_nanomolar_and_gaps_temperature(
     assert gap.looked_in.citation_key == r.CUI2018_KEY
 
 
-def test_a_phage_environment_doses_atc_at_one_micromolar_plus_its_phage_at_moi_one() -> (
-    None
-):
+def test_a_phage_environment_carries_exactly_its_phage_at_moi_one() -> None:
     environment = r.environment(r.CONDITIONS[2])
     assert environment.media is r.ROUSSET2018_LB_MALTOSE_CACL2
     assert environment.temperature is not None
@@ -263,12 +286,7 @@ def test_a_phage_environment_doses_atc_at_one_micromolar_plus_its_phage_at_moi_o
     assert environment.duration_hours == 2.0
     assert environment.duration_generations is None
     assert environment.provenance_gaps == []
-    atc, phage = environment.perturbations
-    assert isinstance(atc, SmallMoleculePerturbation)
-    assert (atc.concentration.value, atc.concentration.unit) == (
-        1.0,
-        ConcentrationUnit.micromolar,
-    )
+    (phage,) = environment.perturbations
     assert isinstance(phage, PhagePerturbation)
     assert phage.name == "T4"
     assert phage.multiplicity_of_infection == 1.0
@@ -290,8 +308,34 @@ def test_the_two_lambda_screens_share_an_environment_and_split_on_screen_id() ->
     assert r.phenotype(0.1, transduction).screen_id == "lambda_transduction"
 
 
-def test_every_screen_carries_an_environment_perturbation() -> None:
-    assert all(r.environment(c).perturbations for c in r.CONDITIONS)
+def test_a_phage_is_the_only_environment_perturbation_any_screen_carries() -> None:
+    """The conf rule the adapter depends on, stated as a property of the records.
+
+    Enabling `phage perturbation` and `environment perturbation` in one conf would emit
+    each phage twice under two labels on one content id, so the environment axis must
+    hold phages and nothing else.
+    """
+    for condition in r.CONDITIONS:
+        perturbations = r.environment(condition).perturbations
+        assert all(isinstance(p, PhagePerturbation) for p in perturbations)
+        assert len(perturbations) == (0 if condition.phage is None else 1)
+
+
+def test_the_growth_medium_is_not_the_dataset_modal_medium() -> None:
+    """Why L3 ``environment_perturbed`` passes the 23,209 perturbation-free records.
+
+    The rule accepts a record with no perturbation whose medium differs from the
+    dataset's modal medium. The growth screen is the minority arm by a margin the
+    release fixes, so the tie cannot drift.
+    """
+    counts = {"growth": 23209, "phage": 3 * 17100 + 17100}
+    assert counts["phage"] > counts["growth"]
+    assert r.EXPECTED_SCREEN_CENSUS["growth_17_generations"] == counts["growth"]
+    assert (
+        sum(r.EXPECTED_SCREEN_CENSUS.values())
+        - r.EXPECTED_SCREEN_CENSUS["growth_17_generations"]
+        == counts["phage"]
+    )
 
 
 def test_a_phenotype_is_a_signed_log2_ratio_over_three_biological_replicates() -> None:

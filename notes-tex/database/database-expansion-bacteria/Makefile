@@ -8,8 +8,10 @@
 # because the shared build rules list it as a prerequisite. Same arrangement as
 # notes-tex/database/database-expansion-100 and notes-tex/wet-lab/w019-strain-build-list.
 #
-# Regenerate the tables before rebuilding; never hand-edit anything under tables/:
+# Regenerate the tables before rebuilding; never hand-edit anything under tables/. The
+# queue script imports the curated one's ranked(), so either can run first:
 #   python experiments/database/scripts/build_bacteria_candidate_datasets_table.py
+#   python experiments/database/scripts/build_bacteria_discovery_queue.py
 
 PYTHON ?= /home/michaelvolk/miniconda3/envs/torchcell/bin/python
 

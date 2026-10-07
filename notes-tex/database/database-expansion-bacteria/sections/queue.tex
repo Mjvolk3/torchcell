@@ -1,0 +1,25 @@
+%% notes-tex/database/database-expansion-bacteria/sections/queue.tex
+%% [[experiments.database.expansion-bacteria]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-bacteria/sections/queue.tex
+%% SOURCE: queue-rows table from
+%% experiments/database/scripts/build_bacteria_discovery_queue.py;
+%% surrounding prose is hand-authored, and every number in it is printed by that
+%% script's "queue-rows:" lines
+
+\section{The discovery queue, less the fifty\secstatus{todo}}\label{sec:queue}
+
+The 300-publication discovery queue of Sec.~\ref{sec:sweep} is a list of leads rather
+than datasets: no row carries a verified instance count, because the source asserts
+none. Table~\ref{tab:bqueuerows} prints every queue row except the 19 that are already
+among the fifty recommended builds, matched on DOI, which leaves 281 publications, 191
+for \org{E. coli} and 90 for \org{P. putida}. Ten of those already sit in the ranked
+reserve of Table~\ref{tab:bfinal} and are marked; the rest have no curated row.
+
+The source sorts each row into one of three portfolio classes, defined in its own field
+guide. \term{Joint} is ``Direct production engineering combined with scalable CRISPR,
+screen, evolution, or omics measurements.'' \term{ME breadth} is ``Independent
+product-oriented metabolic-engineering campaign.'' \term{Scale anchor} is ``Large
+perturbation, phenotype, tolerance, or omics resource useful for model pretraining or
+host-feature learning.''
+
+\input{tables/queue-rows}

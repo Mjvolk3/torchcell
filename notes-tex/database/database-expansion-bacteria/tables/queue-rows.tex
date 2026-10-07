@@ -1,0 +1,587 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_bacteria_discovery_queue.py
+\begin{landscape}
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.1}
+\begin{longtable}{@{}r@{\hspace{4pt}} L{14mm} L{96mm} r L{18mm} L{45mm} L{14mm} L{38mm}@{}}
+\caption[]{The discovery queue less the fifty recommended builds: every row of the 300-publication sweep except the 19 whose DOI matches one of rows 1--50 of Table~\ref{tab:bfinal} (9 \org{E. coli}, 10 \org{P. putida}), leaving 281: 191 \org{E. coli} and 90 \org{P. putida}. The match is on the DOI, lowercased and without its resolver prefix. No row carries a verified instance count, because the source asserts none. \emph{Rank} is the source's rank within its host, and a superscript \textbf{R} marks the 10 rows already curated in the ranked reserve below the cut. \emph{Class} is the source's portfolio class (Sec.~\ref{sec:queue}) and \emph{Isoprenol} its isoprenol flag. \emph{Product or readout} is the source's field as given: 101 rows carry one of its two generic labels and 180 a phrase taken from the title, 44 of those cut mid-word. Where the source gives no DOI (1 row), the DOI column links the source record instead.}
+\label{tab:bqueuerows}\\
+\toprule
+\textbf{Rank} & \textbf{Host} & \textbf{Dataset or campaign} & \textbf{Year} & \textbf{Class} & \textbf{Product or readout} & \textbf{Isoprenol} & \textbf{DOI} \\
+\midrule
+\endfirsthead
+\multicolumn{8}{@{}l}{\footnotesize\emph{Table~\ref{tab:bqueuerows}, continued}}\\
+\toprule
+\textbf{Rank} & \textbf{Host} & \textbf{Dataset or campaign} & \textbf{Year} & \textbf{Class} & \textbf{Product or readout} & \textbf{Isoprenol} & \textbf{DOI} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+3 & \org{E. coli} & \sourcetext{Hybrid metabolic engineering enables xylose-driven co-production of polyhydroxybutyrate and violacein in Escherichia coli.} & 2026 & ME breadth & \sourcetext{polyhydroxybutyrate and violacein} & -- & \href{https://doi.org/10.1186/s13036-026-00653-w}{10.\allowbreak 1186/\allowbreak s13036-\allowbreak 026-\allowbreak 00653-\allowbreak w} \\
+\addlinespace[2pt]
+4 & \org{E. coli} & \sourcetext{Demonstration and technoeconomic analysis of dodecanol production from acetate using metabolically engineered Escherichia coli.} & 2026 & ME breadth & \sourcetext{Demonstration and technoeconomic analysis of dodecanol} & -- & \href{https://doi.org/10.1016/j.ymben.2025.10.007}{10.\allowbreak 1016/\allowbreak j.\allowbreak ymben.\allowbreak 2025.\allowbreak 10.\allowbreak 007} \\
+\addlinespace[2pt]
+5 & \org{E. coli} & \sourcetext{Biosynthesis of Limonene Using Acetate as the Carbon Source in Metabolically Engineered Escherichia coli.} & 2026 & ME breadth & \sourcetext{Limonene Using Acetate as the Carbon Source in Metabolically Engineered Escherichia coli} & -- & \href{https://doi.org/10.1021/acs.jafc.5c14638}{10.\allowbreak 1021/\allowbreak acs.\allowbreak jafc.\allowbreak 5c14638} \\
+\addlinespace[2pt]
+6 & \org{E. coli} & \sourcetext{Genome-wide screening of the Keio collection identifies genetic determinants of Escherichia coli sensitivity and tolerance to benzoic acid.} & 2026 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1007/s11274-026-05211-6}{10.\allowbreak 1007/\allowbreak s11274-\allowbreak 026-\allowbreak 05211-\allowbreak 6} \\
+\addlinespace[2pt]
+8 & \org{E. coli} & \sourcetext{Long-term experimental evolution decouples size and production costs in Escherichia coli.} & 2022 & Joint & \sourcetext{Long-term experimental evolution decouples size and} & -- & \href{https://doi.org/10.1073/pnas.2200713119}{10.\allowbreak 1073/\allowbreak pnas.\allowbreak 2200713119} \\
+\addlinespace[2pt]
+9 & \org{E. coli} & \sourcetext{Combining directed evolution of pathway enzymes and dynamic pathway regulation using a quorum-sensing circuit to improve the production of 4-hydroxyphenylacetic acid in Escherichia coli.} & 2019 & Joint & \sourcetext{4-hydroxyphenylacetic acid} & -- & \href{https://doi.org/10.1186/s13068-019-1438-3}{10.\allowbreak 1186/\allowbreak s13068-\allowbreak 019-\allowbreak 1438-\allowbreak 3} \\
+\addlinespace[2pt]
+10 & \org{E. coli} & \sourcetext{ATP and NADPH engineering of Escherichia coli to improve the production of 4-hydroxyphenylacetic acid using CRISPRi.} & 2021 & Joint & \sourcetext{4-hydroxyphenylacetic acid using CRISPRi} & -- & \href{https://doi.org/10.1186/s13068-021-01954-6}{10.\allowbreak 1186/\allowbreak s13068-\allowbreak 021-\allowbreak 01954-\allowbreak 6} \\
+\addlinespace[2pt]
+11 & \org{E. coli} & \sourcetext{Effect of adaptive laboratory evolution of engineered Escherichia coli in acetate on the biosynthesis of succinic acid from glucose in two-stage cultivation.} & 2024 & Joint & \sourcetext{succinic acid from glucose in two-stage cultivation} & -- & \href{https://doi.org/10.1186/s40643-024-00749-5}{10.\allowbreak 1186/\allowbreak s40643-\allowbreak 024-\allowbreak 00749-\allowbreak 5} \\
+\addlinespace[2pt]
+12 & \org{E. coli} & \sourcetext{Fine-Tuning of hemB Using CRISPRi for Increasing 5-Aminolevulinic Acid Production in Escherichia coli.} & 2019 & Joint & \sourcetext{g of hemB Using CRISPRi for Increasing 5-Aminolevulinic Acid} & -- & \href{https://doi.org/10.3389/fmicb.2019.01731}{10.\allowbreak 3389/\allowbreak fmicb.\allowbreak 2019.\allowbreak 01731} \\
+\addlinespace[2pt]
+13 & \org{E. coli} & \sourcetext{Adaptive laboratory evolution and shuffling of Escherichia coli to enhance its tolerance and production of astaxanthin.} & 2022 & Joint & \sourcetext{astaxanthin} & -- & \href{https://doi.org/10.1186/s13068-022-02118-w}{10.\allowbreak 1186/\allowbreak s13068-\allowbreak 022-\allowbreak 02118-\allowbreak w} \\
+\addlinespace[2pt]
+14 & \org{E. coli} & \sourcetext{Directed Evolution of Branched-Chain $\alpha$-Keto Acid Decarboxylase for 3-Hydroxypropionic Acid Production in Escherichia coli via Oxaloacetate.} & 2025 & Joint & \sourcetext{Chain $\alpha$-Keto Acid Decarboxylase for 3-Hydroxypropionic Acid} & -- & \href{https://doi.org/10.1021/acssynbio.5c00267}{10.\allowbreak 1021/\allowbreak acssynbio.\allowbreak 5c00267} \\
+\addlinespace[2pt]
+15 & \org{E. coli} & \sourcetext{Biosensor-driven evolution and metabolic engineering of an Escherichia coli cell factory for L-tryptophan production.} & 2026 & Joint & \sourcetext{neering of an Escherichia coli cell factory for L-tryptophan} & -- & \href{https://doi.org/10.1186/s12934-026-03028-4}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 026-\allowbreak 03028-\allowbreak 4} \\
+\addlinespace[2pt]
+16 & \org{E. coli} & \sourcetext{Enhancing the heat tolerance of homolactic Escherichia coli through reverse metabolic engineering.} & 2026 & Joint & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1007/s00253-025-13703-y}{10.\allowbreak 1007/\allowbreak s00253-\allowbreak 025-\allowbreak 13703-\allowbreak y} \\
+\addlinespace[2pt]
+17 & \org{E. coli} & \sourcetext{Metabolic engineering of Escherichia coli BW25113 for the production of Vitamin K2 based on CRISPR/Cas9 mediated gene knockout and metabolic pathway modification.} & 2026 & Joint & \sourcetext{Vitamin K2 based on CRISPR/Cas9 mediated gene knockout and metabolic pathway modification} & -- & \href{https://doi.org/10.1186/s13036-025-00614-9}{10.\allowbreak 1186/\allowbreak s13036-\allowbreak 025-\allowbreak 00614-\allowbreak 9} \\
+\addlinespace[2pt]
+18 & \org{E. coli} & \sourcetext{A CRISPRi mediated self-inducible system for dynamic regulation of TCA cycle and improvement of itaconic acid production in Escherichia coli.} & 2022 & Joint & \sourcetext{mic regulation of TCA cycle and improvement of itaconic acid} & -- & \href{https://doi.org/10.1016/j.synbio.2022.05.008}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2022.\allowbreak 05.\allowbreak 008} \\
+\addlinespace[2pt]
+19 & \org{E. coli} & \sourcetext{Integrated laboratory evolution and rational engineering of GalP/Glk-dependent Escherichia coli for higher yield and productivity of L-tryptophan biosynthesis.} & 2021 & Joint & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1016/j.mec.2021.e00167}{10.\allowbreak 1016/\allowbreak j.\allowbreak mec.\allowbreak 2021.\allowbreak e00167} \\
+\addlinespace[2pt]
+20 & \org{E. coli} & \sourcetext{Chromosomal evolution of Escherichia coli for the efficient production of lycopene.} & 2013 & Joint & \sourcetext{lycopene} & adjacent & \href{https://doi.org/10.1186/1472-6750-13-6}{10.\allowbreak 1186/\allowbreak 1472-\allowbreak 6750-\allowbreak 13-\allowbreak 6} \\
+\addlinespace[2pt]
+21 & \org{E. coli} & \sourcetext{Metabolic engineering of Escherichia coli BW25113 for the production of 5-Aminolevulinic Acid based on CRISPR/Cas9 mediated gene knockout and metabolic pathway modification.} & 2022 & Joint & \sourcetext{5-Aminolevulinic Acid based on CRISPR/Cas9 mediated gene knockout and metabolic pathway modification} & -- & \href{https://doi.org/10.1186/s13036-022-00307-7}{10.\allowbreak 1186/\allowbreak s13036-\allowbreak 022-\allowbreak 00307-\allowbreak 7} \\
+\addlinespace[2pt]
+23 & \org{E. coli} & \sourcetext{GREACE-assisted adaptive laboratory evolution in endpoint fermentation broth enhances lysine production by Escherichia coli.} & 2019 & Joint & \sourcetext{ory evolution in endpoint fermentation broth enhances lysine} & -- & \href{https://doi.org/10.1186/s12934-019-1153-6}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 019-\allowbreak 1153-\allowbreak 6} \\
+\addlinespace[2pt]
+24 & \org{E. coli} & \sourcetext{Deionococcus proteotlycius Genomic Library Exploration Enhances Oxidative Stress Resistance and Poly-3-hydroxybutyrate Production in Recombinant Escherichia coli.} & 2023 & Joint & \sourcetext{ances Oxidative Stress Resistance and Poly-3-hydroxybutyrate} & -- & \href{https://doi.org/10.3390/microorganisms11092135}{10.\allowbreak 3390/\allowbreak microorganisms11092135} \\
+\addlinespace[2pt]
+25 & \org{E. coli} & \sourcetext{Enhanced Production of Pterostilbene in Escherichia coli Through Directed Evolution and Host Strain Engineering.} & 2021 & Joint & \sourcetext{Pterostilbene} & -- & \href{https://doi.org/10.3389/fmicb.2021.710405}{10.\allowbreak 3389/\allowbreak fmicb.\allowbreak 2021.\allowbreak 710405} \\
+\addlinespace[2pt]
+26 & \org{E. coli} & \sourcetext{Novel Mode Engineering for $\beta$-Alanine Production in Escherichia coli with the Guide of Adaptive Laboratory Evolution.} & 2021 & Joint & \sourcetext{Novel Mode Engineering for $\beta$-Alanine} & -- & \href{https://doi.org/10.3390/microorganisms9030600}{10.\allowbreak 3390/\allowbreak microorganisms9030600} \\
+\addlinespace[2pt]
+27 & \org{E. coli} & \sourcetext{Enhancing the Production of Pinene in Escherichia coli by Using a Combination of Shotgun, Product-Tolerance and I-SceI Cleavage Systems.} & 2022 & Joint & \sourcetext{Pinene} & adjacent & \href{https://doi.org/10.3390/biology11101484}{10.\allowbreak 3390/\allowbreak biology11101484} \\
+\addlinespace[2pt]
+29 & \org{E. coli} & \sourcetext{Directed evolution of alditol oxidase for the production of optically pure D-glycerate from glycerol in the engineered Escherichia coli.} & 2021 & Joint & \sourcetext{optically pure D-glycerate from glycerol in the engineered Escherichia coli} & -- & \href{https://doi.org/10.1093/jimb/kuab041}{10.\allowbreak 1093/\allowbreak jimb/\allowbreak kuab041} \\
+\addlinespace[2pt]
+30 & \org{E. coli} & \sourcetext{Inhibitor tolerance and bioethanol fermentability of levoglucosan-utilizing Escherichia coli were enhanced by overexpression of stress-responsive gene ycfR: The proteomics-guided metabolic engineering.} & 2021 & Joint & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1016/j.synbio.2021.11.003}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2021.\allowbreak 11.\allowbreak 003} \\
+\addlinespace[2pt]
+31 & \org{E. coli} & \sourcetext{Improving phloroglucinol tolerance and production in Escherichia coli by GroESL overexpression.} & 2017 & Joint & \sourcetext{Improving phloroglucinol tolerance and} & -- & \href{https://doi.org/10.1186/s12934-017-0839-x}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 017-\allowbreak 0839-\allowbreak x} \\
+\addlinespace[2pt]
+32 & \org{E. coli} & \sourcetext{Restoration of biofuel production levels and increased tolerance under ionic liquid stress is enabled by a mutation in the essential Escherichia coli gene cydC.} & 2018 & Joint & \sourcetext{Restoration of biofuel} & -- & \href{https://doi.org/10.1186/s12934-018-1006-8}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 018-\allowbreak 1006-\allowbreak 8} \\
+\addlinespace[2pt]
+33 & \org{E. coli} & \sourcetext{Ferulic acid production by metabolically engineered Escherichia coli.} & 2021 & ME breadth & \sourcetext{Ferulic acid} & -- & \href{https://doi.org/10.1186/s40643-021-00423-0}{10.\allowbreak 1186/\allowbreak s40643-\allowbreak 021-\allowbreak 00423-\allowbreak 0} \\
+\addlinespace[2pt]
+34 & \org{E. coli} & \sourcetext{In silico identification of gene targets to enhance C12 fatty acid production in Escherichia coli.} & 2025 & ME breadth & \sourcetext{ico identification of gene targets to enhance C12 fatty acid} & -- & \href{https://doi.org/10.1007/s00253-025-13501-6}{10.\allowbreak 1007/\allowbreak s00253-\allowbreak 025-\allowbreak 13501-\allowbreak 6} \\
+\addlinespace[2pt]
+35 & \org{E. coli} & \sourcetext{Metabolic engineering enables Escherichia coli to grow on 1,3-propanediol.} & 2026 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1016/j.synbio.2025.11.009}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2025.\allowbreak 11.\allowbreak 009} \\
+\addlinespace[2pt]
+36 & \org{E. coli} & \sourcetext{Decoupling sucrose utilization from oxygen-responsive regulation for high-efficiency L-lactic acid production in Escherichia coli.} & 2025 & ME breadth & \sourcetext{ygen-responsive regulation for high-efficiency L-lactic acid} & -- & \href{https://doi.org/10.1186/s13068-025-02700-y}{10.\allowbreak 1186/\allowbreak s13068-\allowbreak 025-\allowbreak 02700-\allowbreak y} \\
+\addlinespace[2pt]
+37 & \org{E. coli} & \sourcetext{Heterologous Production of 2,2'-Dihydroxy Derivatives of Astaxanthin and Adonirubin in Escherichia coli and Evaluation of Their Antioxidant Activity.} & 2026 & ME breadth & \sourcetext{2} & -- & \href{https://doi.org/10.3390/antiox15030327}{10.\allowbreak 3390/\allowbreak antiox15030327} \\
+\addlinespace[2pt]
+38 & \org{E. coli} & \sourcetext{Automated high-throughput screening combined with model-assisted analysis enables quantitative identification of process drivers and trade-offs during extracellular Fab production in Escherichia coli.} & 2026 & ME breadth & \sourcetext{n of process drivers and trade-offs during extracellular Fab} & -- & \href{https://doi.org/10.1007/s00449-026-03379-7}{10.\allowbreak 1007/\allowbreak s00449-\allowbreak 026-\allowbreak 03379-\allowbreak 7} \\
+\addlinespace[2pt]
+39 & \org{E. coli} & \sourcetext{Enhancing genome-scale metabolic models with kinetic data: resolving growth and citramalate production trade-offs in Escherichia coli.} & 2025 & ME breadth & \sourcetext{resolving growth and citramalate} & -- & \href{https://doi.org/10.1093/bioadv/vbaf166}{10.\allowbreak 1093/\allowbreak bioadv/\allowbreak vbaf166} \\
+\addlinespace[2pt]
+40 & \org{E. coli} & \sourcetext{System metabolic engineering of Escherichia coli W for the production of 2-ketoisovalerate using unconventional feedstock.} & 2023 & ME breadth & \sourcetext{2-ketoisovalerate using unconventional feedstock} & -- & \href{https://doi.org/10.3389/fbioe.2023.1176445}{10.\allowbreak 3389/\allowbreak fbioe.\allowbreak 2023.\allowbreak 1176445} \\
+\addlinespace[2pt]
+41 & \org{E. coli} & \sourcetext{Evaluation of Various Escherichia coli Strains for Enhanced Lycopene Production.} & 2023 & ME breadth & \sourcetext{on of Various Escherichia coli Strains for Enhanced Lycopene} & adjacent & \href{https://doi.org/10.4014/jmb.2302.02003}{10.\allowbreak 4014/\allowbreak jmb.\allowbreak 2302.\allowbreak 02003} \\
+\addlinespace[2pt]
+42 & \org{E. coli} & \sourcetext{Rational engineering of Escherichia coli strain for stable and enhanced biosynthesis of pinene.} & 2024 & ME breadth & \sourcetext{pinene} & adjacent & \href{https://doi.org/10.3389/fmicb.2024.1527113}{10.\allowbreak 3389/\allowbreak fmicb.\allowbreak 2024.\allowbreak 1527113} \\
+\addlinespace[2pt]
+43 & \org{E. coli} & \sourcetext{Revalorisation of brewer's spent grain for biotechnological production of hydrogen with Escherichia coli.} & 2024 & ME breadth & \sourcetext{hydrogen} & -- & \href{https://doi.org/10.3389/fbioe.2024.1473704}{10.\allowbreak 3389/\allowbreak fbioe.\allowbreak 2024.\allowbreak 1473704} \\
+\addlinespace[2pt]
+44 & \org{E. coli} & \sourcetext{Engineering Escherichia coli for Isobutanol Production from Xylose or Glucose-Xylose Mixture.} & 2023 & ME breadth & \sourcetext{Engineering Escherichia coli for Isobutanol} & -- & \href{https://doi.org/10.3390/microorganisms11102573}{10.\allowbreak 3390/\allowbreak microorganisms11102573} \\
+\addlinespace[2pt]
+45 & \org{E. coli} & \sourcetext{Metabolic engineering of Escherichia coli for efficient production of L-alanyl-L-glutamine.} & 2020 & ME breadth & \sourcetext{L-alanyl-L-glutamine} & -- & \href{https://doi.org/10.1186/s12934-020-01369-2}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 020-\allowbreak 01369-\allowbreak 2} \\
+\addlinespace[2pt]
+46 & \org{E. coli} & \sourcetext{Efficient production of hydroxytyrosol by directed evolution of HpaB in Escherichia coli.} & 2023 & Joint & \sourcetext{hydroxytyrosol by directed evolution of HpaB} & -- & \href{https://doi.org/10.1016/j.bbrc.2023.04.024}{10.\allowbreak 1016/\allowbreak j.\allowbreak bbrc.\allowbreak 2023.\allowbreak 04.\allowbreak 024} \\
+\addlinespace[2pt]
+47 & \org{E. coli} & \sourcetext{Enhanced production of functional CRISPR-AsCas12a protein in Escherichia coli.} & 2025 & Joint & \sourcetext{functional CRISPR-AsCas12a protein} & -- & \href{https://doi.org/10.1016/j.pep.2025.106722}{10.\allowbreak 1016/\allowbreak j.\allowbreak pep.\allowbreak 2025.\allowbreak 106722} \\
+\addlinespace[2pt]
+48 & \org{E. coli} & \sourcetext{Increased production of L-serine in Escherichia coli through Adaptive Laboratory Evolution.} & 2017 & Joint & \sourcetext{L-serine} & -- & \href{https://doi.org/10.1016/j.ymben.2016.11.008}{10.\allowbreak 1016/\allowbreak j.\allowbreak ymben.\allowbreak 2016.\allowbreak 11.\allowbreak 008} \\
+\addlinespace[2pt]
+49 & \org{E. coli} & \sourcetext{Production of Rainbow Colorants by Metabolically Engineered Escherichia coli.} & 2021 & ME breadth & \sourcetext{Rainbow Colorants by Metabolically Engineered Escherichia coli} & -- & \href{https://doi.org/10.1002/advs.202100743}{10.\allowbreak 1002/\allowbreak advs.\allowbreak 202100743} \\
+\addlinespace[2pt]
+50 & \org{E. coli} & \sourcetext{Enhanced production of methylated resveratrol in engineered Escherichia coli and its anticancer activity.} & 2025 & ME breadth & \sourcetext{methylated resveratrol} & -- & \href{https://doi.org/10.1007/s13205-025-04449-5}{10.\allowbreak 1007/\allowbreak s13205-\allowbreak 025-\allowbreak 04449-\allowbreak 5} \\
+\addlinespace[2pt]
+51 & \org{E. coli} & \sourcetext{Multi-level metabolic engineering of Escherichia coli for high-titer biosynthesis of 2'-fucosyllactose and 3-fucosyllactose.} & 2022 & ME breadth & \sourcetext{2'-fucosyllactose and 3-fucosyllactose} & -- & \href{https://doi.org/10.1111/1751-7915.14152}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 14152} \\
+\addlinespace[2pt]
+52 & \org{E. coli} & \sourcetext{Metabolic engineering of Escherichia coli for optimized biosynthesis of nicotinamide mononucleotide, a noncanonical redox cofactor.} & 2020 & ME breadth & \sourcetext{nicotinamide mononucleotide} & -- & \href{https://doi.org/10.1186/s12934-020-01415-z}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 020-\allowbreak 01415-\allowbreak z} \\
+\addlinespace[2pt]
+53 & \org{E. coli} & \sourcetext{Synergetic engineering of Escherichia coli for efficient production of l-tyrosine.} & 2023 & ME breadth & \sourcetext{l-tyrosine} & -- & \href{https://doi.org/10.1016/j.synbio.2023.10.005}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2023.\allowbreak 10.\allowbreak 005} \\
+\addlinespace[2pt]
+54 & \org{E. coli} & \sourcetext{Metabolic engineering and pathway construction for O-acetyl-L-homoserine production in Escherichia coli.} & 2023 & ME breadth & \sourcetext{gineering and pathway construction for O-acetyl-L-homoserine} & -- & \href{https://doi.org/10.1007/s13205-023-03564-5}{10.\allowbreak 1007/\allowbreak s13205-\allowbreak 023-\allowbreak 03564-\allowbreak 5} \\
+\addlinespace[2pt]
+55 & \org{E. coli} & \sourcetext{Metabolic engineering of Escherichia\,coli for biosynthesis of $\beta$-nicotinamide mononucleotide from nicotinamide.} & 2021 & ME breadth & \sourcetext{$\beta$-nicotinamide mononucleotide from nicotinamide} & -- & \href{https://doi.org/10.1111/1751-7915.13901}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 13901} \\
+\addlinespace[2pt]
+56 & \org{E. coli} & \sourcetext{Systems metabolic engineering of Escherichia coli for hyper-production of 5-aminolevulinic acid.} & 2023 & ME breadth & \sourcetext{5-aminolevulinic acid} & -- & \href{https://doi.org/10.1186/s13068-023-02280-9}{10.\allowbreak 1186/\allowbreak s13068-\allowbreak 023-\allowbreak 02280-\allowbreak 9} \\
+\addlinespace[2pt]
+57 & \org{E. coli} & \sourcetext{Engineering Escherichia coli membrane phospholipid head distribution improves tolerance and production of biorenewables.} & 2017 & Joint & \sourcetext{biorenewables} & -- & \href{https://doi.org/10.1016/j.ymben.2017.08.006}{10.\allowbreak 1016/\allowbreak j.\allowbreak ymben.\allowbreak 2017.\allowbreak 08.\allowbreak 006} \\
+\addlinespace[2pt]
+58 & \org{E. coli} & \sourcetext{Activating the d-Tagatose Production Capacity of Escherichia coli with Structural Insights into C4 Epimerase Specificity.} & 2025 & ME breadth & \sourcetext{Activating the d-Tagatose} & -- & \href{https://doi.org/10.1021/acs.jafc.4c12842}{10.\allowbreak 1021/\allowbreak acs.\allowbreak jafc.\allowbreak 4c12842} \\
+\addlinespace[2pt]
+59 & \org{E. coli} & \sourcetext{Enhanced cyanophycin production by Escherichia coli overexpressing the heterologous cphA gene from a deep sea metagenomic library.} & 2017 & Joint & \sourcetext{Enhanced cyanophycin} & -- & \href{https://doi.org/10.1016/j.jbiosc.2016.08.008}{10.\allowbreak 1016/\allowbreak j.\allowbreak jbiosc.\allowbreak 2016.\allowbreak 08.\allowbreak 008} \\
+\addlinespace[2pt]
+60 & \org{E. coli} & \sourcetext{A robust platform streamlining aromatic noncanonical amino acid biosynthesis and genetic code expansion in Escherichia coli.} & 2025 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1038/s41467-025-63679-6}{10.\allowbreak 1038/\allowbreak s41467-\allowbreak 025-\allowbreak 63679-\allowbreak 6} \\
+\addlinespace[2pt]
+61 & \org{E. coli} & \sourcetext{Efficient production of 2'-fucosyllactose from fructose through metabolically engineered recombinant Escherichia coli.} & 2024 & ME breadth & \sourcetext{2'-fucosyllactose from fructose through metabolically engineered recombinant Escherichia coli} & -- & \href{https://doi.org/10.1186/s12934-024-02312-5}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 024-\allowbreak 02312-\allowbreak 5} \\
+\addlinespace[2pt]
+62 & \org{E. coli} & \sourcetext{Efficient Production of 3'-Sialyllactose Using Escherichia coli.} & 2024 & ME breadth & \sourcetext{3'-Sialyllactose} & -- & \href{https://doi.org/10.1021/acs.jafc.4c08703}{10.\allowbreak 1021/\allowbreak acs.\allowbreak jafc.\allowbreak 4c08703} \\
+\addlinespace[2pt]
+63 & \org{E. coli} & \sourcetext{Metabolic engineering strategies of de novo pathway for enhancing 2'-fucosyllactose synthesis in Escherichia coli.} & 2022 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1111/1751-7915.13977}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 13977} \\
+\addlinespace[2pt]
+64 & \org{E. coli} & \sourcetext{De Novo Biosynthesis of Antidepressant Psilocybin in Escherichia coli.} & 2025 & ME breadth & \sourcetext{Antidepressant Psilocybin} & -- & \href{https://doi.org/10.1111/1751-7915.70135}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 70135} \\
+\addlinespace[2pt]
+65 & \org{E. coli} & \sourcetext{Awakening the natural capability of psicose production in Escherichia coli.} & 2023 & ME breadth & \sourcetext{Awakening the natural capability of psicose} & -- & \href{https://doi.org/10.1038/s41538-023-00231-0}{10.\allowbreak 1038/\allowbreak s41538-\allowbreak 023-\allowbreak 00231-\allowbreak 0} \\
+\addlinespace[2pt]
+66 & \org{E. coli} & \sourcetext{Improved production of class I lanthipeptides in Escherichia coli.} & 2023 & ME breadth & \sourcetext{class I lanthipeptides} & -- & \href{https://doi.org/10.1039/d2sc06597e}{10.\allowbreak 1039/\allowbreak d2sc06597e} \\
+\addlinespace[2pt]
+67 & \org{E. coli} & \sourcetext{Metabolic engineering of Escherichia coli for efficient production of L-5-hydroxytryptophan from glucose.} & 2022 & ME breadth & \sourcetext{L-5-hydroxytryptophan from glucose} & -- & \href{https://doi.org/10.1186/s12934-022-01920-3}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 022-\allowbreak 01920-\allowbreak 3} \\
+\addlinespace[2pt]
+68 & \org{E. coli} & \sourcetext{Metabolic engineering of Escherichia coli for high-yield dopamine production via optimized fermentation strategies.} & 2025 & ME breadth & \sourcetext{olic engineering of Escherichia coli for high-yield dopamine} & -- & \href{https://doi.org/10.1128/aem.00159-25}{10.\allowbreak 1128/\allowbreak aem.\allowbreak 00159-\allowbreak 25} \\
+\addlinespace[2pt]
+69 & \org{E. coli} & \sourcetext{Engineering Electron Transfer Flux between Cytochrome P450 Enzyme and P450 Reductase to Enhance Serotonin Production in Escherichia Coli.} & 2025 & ME breadth & \sourcetext{tochrome P450 Enzyme and P450 Reductase to Enhance Serotonin} & -- & \href{https://doi.org/10.1002/advs.202414859}{10.\allowbreak 1002/\allowbreak advs.\allowbreak 202414859} \\
+\addlinespace[2pt]
+70 & \org{E. coli} & \sourcetext{A production platform for disulfide-bonded peptides in the periplasm of Escherichia coli.} & 2024 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1186/s12934-024-02446-6}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 024-\allowbreak 02446-\allowbreak 6} \\
+\addlinespace[2pt]
+71 & \org{E. coli} & \sourcetext{Increased distribution of carbon metabolic flux during de novo cytidine biosynthesis via attenuation of the acetic acid metabolism pathway in Escherichia coli.} & 2025 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1186/s12934-025-02657-5}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 025-\allowbreak 02657-\allowbreak 5} \\
+\addlinespace[2pt]
+72 & \org{E. coli} & \sourcetext{Efficient production of guanosine in Escherichia coli by combinatorial metabolic engineering.} & 2024 & ME breadth & \sourcetext{guanosine} & -- & \href{https://doi.org/10.1186/s12934-024-02452-8}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 024-\allowbreak 02452-\allowbreak 8} \\
+\addlinespace[2pt]
+73 & \org{E. coli} & \sourcetext{Step-by-step optimization of a heterologous pathway for de novo naringenin production in Escherichia coli.} & 2024 & ME breadth & \sourcetext{ptimization of a heterologous pathway for de novo naringenin} & -- & \href{https://doi.org/10.1007/s00253-024-13271-7}{10.\allowbreak 1007/\allowbreak s00253-\allowbreak 024-\allowbreak 13271-\allowbreak 7} \\
+\addlinespace[2pt]
+74 & \org{E. coli} & \sourcetext{Increased Mevalonate Production Using Engineered Citrate Synthase and Phosphofructokinase Variants of Escherichia coli.} & 2025 & ME breadth & \sourcetext{Increased Mevalonate} & adjacent & \href{https://doi.org/10.1002/bit.28902}{10.\allowbreak 1002/\allowbreak bit.\allowbreak 28902} \\
+\addlinespace[2pt]
+75 & \org{E. coli} & \sourcetext{Engineering an Escherichia coli strain for production of long single-stranded DNA.} & 2024 & ME breadth & \sourcetext{long single-stranded DNA} & -- & \href{https://doi.org/10.1093/nar/gkae189}{10.\allowbreak 1093/\allowbreak nar/\allowbreak gkae189} \\
+\addlinespace[2pt]
+76 & \org{E. coli} & \sourcetext{Creating Polyploid Escherichia Coli and Its Application in Efficient L-Threonine Production.} & 2023 & ME breadth & \sourcetext{scherichia Coli and Its Application in Efficient L-Threonine} & -- & \href{https://doi.org/10.1002/advs.202302417}{10.\allowbreak 1002/\allowbreak advs.\allowbreak 202302417} \\
+\addlinespace[2pt]
+77 & \org{E. coli} & \sourcetext{Synergetic Fermentation of Glucose and Glycerol for High-Yield N-Acetylglucosamine Production in Escherichia coli.} & 2022 & ME breadth & \sourcetext{n of Glucose and Glycerol for High-Yield N-Acetylglucosamine} & -- & \href{https://doi.org/10.3390/ijms23020773}{10.\allowbreak 3390/\allowbreak ijms23020773} \\
+\addlinespace[2pt]
+78 & \org{E. coli} & \sourcetext{High-level de novo biosynthesis of glycosylated zeaxanthin and astaxanthin in Escherichia coli.} & 2021 & ME breadth & \sourcetext{glycosylated zeaxanthin and astaxanthin} & -- & \href{https://doi.org/10.1186/s40643-021-00415-0}{10.\allowbreak 1186/\allowbreak s40643-\allowbreak 021-\allowbreak 00415-\allowbreak 0} \\
+\addlinespace[2pt]
+79 & \org{E. coli} & \sourcetext{Engineering Escherichia coli for malate production by integrating modular pathway characterization with CRISPRi-guided multiplexed metabolic tuning.} & 2018 & Joint & \sourcetext{Engineering Escherichia coli for malate} & -- & \href{https://doi.org/10.1002/bit.26486}{10.\allowbreak 1002/\allowbreak bit.\allowbreak 26486} \\
+\addlinespace[2pt]
+80 & \org{E. coli} & \sourcetext{Metabolic engineering of Escherichia coli for squalene overproduction.} & 2025 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1016/j.synbio.2025.06.003}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2025.\allowbreak 06.\allowbreak 003} \\
+\addlinespace[2pt]
+81 & \org{E. coli} & \sourcetext{Acetol biosynthesis enables NADPH balance during nitrogen limitation in engineered Escherichia coli.} & 2025 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1186/s12934-025-02687-z}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 025-\allowbreak 02687-\allowbreak z} \\
+\addlinespace[2pt]
+82 & \org{E. coli} & \sourcetext{pSIG plasmids, MoClo-compatible vectors for efficient production of chimeric double-stranded RNAs in Escherichia coli HT115 (DE3) strain.} & 2025 & ME breadth & \sourcetext{chimeric double-stranded RNAs} & -- & \href{https://doi.org/10.1186/s13007-025-01413-5}{10.\allowbreak 1186/\allowbreak s13007-\allowbreak 025-\allowbreak 01413-\allowbreak 5} \\
+\addlinespace[2pt]
+83 & \org{E. coli} & \sourcetext{A novel strategy for L-arginine production in engineered Escherichia coli.} & 2023 & ME breadth & \sourcetext{A novel strategy for L-arginine} & -- & \href{https://doi.org/10.1186/s12934-023-02145-8}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 023-\allowbreak 02145-\allowbreak 8} \\
+\addlinespace[2pt]
+84 & \org{E. coli} & \sourcetext{Efficient production of myo-inositol in Escherichia coli through metabolic engineering.} & 2020 & ME breadth & \sourcetext{myo-inositol} & -- & \href{https://doi.org/10.1186/s12934-020-01366-5}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 020-\allowbreak 01366-\allowbreak 5} \\
+\addlinespace[2pt]
+85 & \org{E. coli} & \sourcetext{Exploiting Mixed Waste Office Paper Containing Lignocellulosic Fibers for Alternatively Producing High-Value Succinic Acid by Metabolically Engineered Escherichia coli KJ122.} & 2025 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.3390/ijms26030982}{10.\allowbreak 3390/\allowbreak ijms26030982} \\
+\addlinespace[2pt]
+86 & \org{E. coli} & \sourcetext{Reconstitution of Methionine Cycle With ATP Regeneration for Whole-Cell Catalysis of Creatine Production in Engineered Escherichia coli.} & 2025 & ME breadth & \sourcetext{e With ATP Regeneration for Whole-Cell Catalysis of Creatine} & -- & \href{https://doi.org/10.1111/1751-7915.70145}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 70145} \\
+\addlinespace[2pt]
+87 & \org{E. coli} & \sourcetext{Efficient production of hydroxysalidroside in Escherichia coli via enhanced glycosylation and semi-rational design of UGT85A1.} & 2025 & ME breadth & \sourcetext{hydroxysalidroside} & -- & \href{https://doi.org/10.1016/j.synbio.2025.03.002}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2025.\allowbreak 03.\allowbreak 002} \\
+\addlinespace[2pt]
+88 & \org{E. coli} & \sourcetext{Enhanced Outer Membrane Vesicle Production in Escherichia coli: From Metabolic Network Model to Designed Strain Lipidomic Profile.} & 2025 & ME breadth & \sourcetext{Enhanced Outer Membrane Vesicle} & -- & \href{https://doi.org/10.3390/ijms26146714}{10.\allowbreak 3390/\allowbreak ijms26146714} \\
+\addlinespace[2pt]
+89 & \org{E. coli} & \sourcetext{The knowledge driven DBTL cycle provides mechanistic insights while optimising dopamine production in Escherichia coli.} & 2025 & ME breadth & \sourcetext{ycle provides mechanistic insights while optimising dopamine} & -- & \href{https://doi.org/10.1186/s12934-025-02729-6}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 025-\allowbreak 02729-\allowbreak 6} \\
+\addlinespace[2pt]
+90 & \org{E. coli} & \sourcetext{De novo biosynthesis of 4,6-dihydroxycoumarin in Escherichia coli.} & 2025 & ME breadth & \sourcetext{4} & -- & \href{https://doi.org/10.1039/d4gc05694a}{10.\allowbreak 1039/\allowbreak d4gc05694a} \\
+\addlinespace[2pt]
+91 & \org{E. coli} & \sourcetext{Systems engineering of Escherichia coli for high-level glutarate production from glucose.} & 2024 & ME breadth & \sourcetext{ems engineering of Escherichia coli for high-level glutarate} & -- & \href{https://doi.org/10.1038/s41467-024-45448-z}{10.\allowbreak 1038/\allowbreak s41467-\allowbreak 024-\allowbreak 45448-\allowbreak z} \\
+\addlinespace[2pt]
+92 & \org{E. coli} & \sourcetext{Metabolic Engineering of Escherichia coli for Ectoine Production With a Fermentation Strategy of Supplementing the Amino Donor.} & 2022 & ME breadth & \sourcetext{Metabolic Engineering of Escherichia coli for Ectoine} & -- & \href{https://doi.org/10.3389/fbioe.2022.824859}{10.\allowbreak 3389/\allowbreak fbioe.\allowbreak 2022.\allowbreak 824859} \\
+\addlinespace[2pt]
+93 & \org{E. coli} & \sourcetext{Systematic Metabolic Engineering and Model-Guided Optimization for High-Level Production of L-Theanine from Xylose in Escherichia coli.} & 2026 & ME breadth & \sourcetext{L-Theanine from Xylose} & -- & \href{https://doi.org/10.1002/advs.202521440}{10.\allowbreak 1002/\allowbreak advs.\allowbreak 202521440} \\
+\addlinespace[2pt]
+94 & \org{E. coli} & \sourcetext{Genome-scale Metabolic Modeling Guided Escherichia coli Engineering for De Novo Biosynthesis of Chrysanthemic Acid.} & 2026 & ME breadth & \sourcetext{Chrysanthemic Acid} & -- & \href{https://doi.org/10.1002/advs.202512736}{10.\allowbreak 1002/\allowbreak advs.\allowbreak 202512736} \\
+\addlinespace[2pt]
+95 & \org{E. coli} & \sourcetext{Engineering Escherichia coli for robust Co-utilization of glucose and xylose enables high-titer succinate production from lignocellulosic hydrolysates.} & 2026 & ME breadth & \sourcetext{ilization of glucose and xylose enables high-titer succinate} & -- & \href{https://doi.org/10.1016/j.synbio.2026.01.006}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2026.\allowbreak 01.\allowbreak 006} \\
+\addlinespace[2pt]
+96 & \org{E. coli} & \sourcetext{Heterologous Biosynthesis of Prenylflavonoids in Escherichia coli Based on Fungus Screening of Prenyltransferases.} & 2025 & ME breadth & \sourcetext{Prenylflavonoids} & -- & \href{https://doi.org/10.1021/acsomega.4c05007}{10.\allowbreak 1021/\allowbreak acsomega.\allowbreak 4c05007} \\
+\addlinespace[2pt]
+97 & \org{E. coli} & \sourcetext{Monitoring of the Single-Cell Behavior of an Escherichia coli Reporter Strain Producing L-phenylalanine in a Scale-Down Bioreactor by Automated Real-Time Flow Cytometry.} & 2025 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.3390/biotech14030054}{10.\allowbreak 3390/\allowbreak biotech14030054} \\
+\addlinespace[2pt]
+98 & \org{E. coli} & \sourcetext{Multivariate modular metabolic engineering for enhanced L-methionine biosynthesis in Escherichia coli.} & 2023 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1186/s13068-023-02347-7}{10.\allowbreak 1186/\allowbreak s13068-\allowbreak 023-\allowbreak 02347-\allowbreak 7} \\
+\addlinespace[2pt]
+99 & \org{E. coli} & \sourcetext{Metabolic engineering of Escherichia coli for high-level production of violaxanthin.} & 2023 & ME breadth & \sourcetext{violaxanthin} & -- & \href{https://doi.org/10.1186/s12934-023-02098-y}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 023-\allowbreak 02098-\allowbreak y} \\
+\addlinespace[2pt]
+100 & \org{E. coli} & \sourcetext{A Combinational Optimization Method for Efficient Production of Indigo by the Recombinant Escherichia coli with Expression of Monooxygenase and Malate Dehydrogenase.} & 2023 & ME breadth & \sourcetext{Indigo by the Recombinant Escherichia coli with Expression of Monooxygenase and Malate Dehydrogenase} & -- & \href{https://doi.org/10.3390/foods12030502}{10.\allowbreak 3390/\allowbreak foods12030502} \\
+\addlinespace[2pt]
+101 & \org{E. coli} & \sourcetext{Enhancing 5-aminolevulinic acid tolerance and production by engineering the antioxidant defense system of Escherichia coli.} & 2019 & Joint & \sourcetext{Enhancing 5-aminolevulinic acid tolerance and} & -- & \href{https://doi.org/10.1002/bit.26981}{10.\allowbreak 1002/\allowbreak bit.\allowbreak 26981} \\
+\addlinespace[2pt]
+102 & \org{E. coli} & \sourcetext{Metabolic engineering of endogenous MEP pathway for enhanced lycopene production in Escherichia coli.} & 2026 & ME breadth & \sourcetext{engineering of endogenous MEP pathway for enhanced lycopene} & adjacent & \href{https://doi.org/10.1016/j.synbio.2026.01.014}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2026.\allowbreak 01.\allowbreak 014} \\
+\addlinespace[2pt]
+103 & \org{E. coli} & \sourcetext{Biosynthesis and Export of Membrane-Enveloped Selenium Nanoparticles by Escherichia coli.} & 2026 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1021/acs.est.5c10008}{10.\allowbreak 1021/\allowbreak acs.\allowbreak est.\allowbreak 5c10008} \\
+\addlinespace[2pt]
+104 & \org{E. coli} & \sourcetext{Flavin Biosynthesis Enhances Extracellular Electron Transfer in Bioengineered Escherichia coli.} & 2026 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1002/advs.202412230}{10.\allowbreak 1002/\allowbreak advs.\allowbreak 202412230} \\
+\addlinespace[2pt]
+105 & \org{E. coli} & \sourcetext{High-level production of vitamin K2 in Escherichia coli via modular molecular engineering.} & 2026 & ME breadth & \sourcetext{vitamin K2} & -- & \href{https://doi.org/10.1016/j.synbio.2025.11.001}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2025.\allowbreak 11.\allowbreak 001} \\
+\addlinespace[2pt]
+106 & \org{E. coli} & \sourcetext{Combination of enzyme engineering and quorum sensing system for efficient de novo biosynthesis of $\beta$-arbutin in Escherichia coli.} & 2026 & ME breadth & \sourcetext{$\beta$-arbutin} & -- & \href{https://doi.org/10.1016/j.synbio.2025.08.010}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2025.\allowbreak 08.\allowbreak 010} \\
+\addlinespace[2pt]
+107 & \org{E. coli} & \sourcetext{Enhanced vitamin B6 production in engineered Escherichia coli via restricted mix-carbon feeding and pressure-controlled fermentation.} & 2026 & ME breadth & \sourcetext{Enhanced vitamin B6} & -- & \href{https://doi.org/10.1016/j.synbio.2025.09.004}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2025.\allowbreak 09.\allowbreak 004} \\
+\addlinespace[2pt]
+108 & \org{E. coli} & \sourcetext{De Novo Production of Xanthohumol by a Metabolically Engineered Escherichia coli.} & 2025 & ME breadth & \sourcetext{Xanthohumol by a Metabolically Engineered Escherichia coli} & -- & \href{https://doi.org/10.1021/acssynbio.5c00221}{10.\allowbreak 1021/\allowbreak acssynbio.\allowbreak 5c00221} \\
+\addlinespace[2pt]
+109 & \org{E. coli} & \sourcetext{Exploring single-cell biosynthetic noise and dynamics for enhanced betaxanthin production in Escherichia coli.} & 2025 & ME breadth & \sourcetext{ell biosynthetic noise and dynamics for enhanced betaxanthin} & -- & \href{https://doi.org/10.1038/s41467-025-67733-1}{10.\allowbreak 1038/\allowbreak s41467-\allowbreak 025-\allowbreak 67733-\allowbreak 1} \\
+\addlinespace[2pt]
+110 & \org{E. coli} & \sourcetext{Engineering Escherichia coli Biofilms for Curcumin Production.} & 2025 & ME breadth & \sourcetext{Engineering Escherichia coli Biofilms for Curcumin} & -- & \href{https://doi.org/10.3390/molecules30092031}{10.\allowbreak 3390/\allowbreak molecules30092031} \\
+\addlinespace[2pt]
+111 & \org{E. coli} & \sourcetext{Enhanced isoprenoid production in Escherichia coli cells harboring the archaeal mevalonate pathway.} & 2025 & ME breadth & \sourcetext{Enhanced isoprenoid} & adjacent & \href{https://doi.org/10.1016/j.bbrep.2025.102307}{10.\allowbreak 1016/\allowbreak j.\allowbreak bbrep.\allowbreak 2025.\allowbreak 102307} \\
+\addlinespace[2pt]
+112 & \org{E. coli} & \sourcetext{Synergistic Production of Lycopene and $\beta$-Alanine Through Engineered Redox Balancing in Escherichia coli.} & 2025 & ME breadth & \sourcetext{Lycopene and $\beta$-Alanine Through Engineered Redox Balancing} & adjacent & \href{https://doi.org/10.3390/ijms26146727}{10.\allowbreak 3390/\allowbreak ijms26146727} \\
+\addlinespace[2pt]
+113 & \org{E. coli} & \sourcetext{Scale up of fermentation of recombinant Escherichia coli for efficient production of spider drag silk protein MaSp1s and its dimers.} & 2025 & ME breadth & \sourcetext{spider drag silk protein MaSp1s and its dimers} & -- & \href{https://doi.org/10.1186/s12934-025-02734-9}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 025-\allowbreak 02734-\allowbreak 9} \\
+\addlinespace[2pt]
+114 & \org{E. coli} & \sourcetext{Efficient production of salicylic acid through CmeR-PcmeO biosensor-assisted multiplexing pathway optimization in Escherichia coli.} & 2025 & ME breadth & \sourcetext{salicylic acid through CmeR-PcmeO biosensor-assisted multiplexing pathway optimization} & -- & \href{https://doi.org/10.1186/s13068-025-02637-2}{10.\allowbreak 1186/\allowbreak s13068-\allowbreak 025-\allowbreak 02637-\allowbreak 2} \\
+\addlinespace[2pt]
+115 & \org{E. coli} & \sourcetext{Robust production of N-acetyl-glucosamine in engineered Escherichia coli from glycerol-glucose mixture.} & 2025 & ME breadth & \sourcetext{N-acetyl-glucosamine} & -- & \href{https://doi.org/10.1016/j.synbio.2025.05.003}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2025.\allowbreak 05.\allowbreak 003} \\
+\addlinespace[2pt]
+116 & \org{E. coli} & \sourcetext{Production of minicell-like structures by Escherichia coli biosynthesizing cadmium fluorescent nanoparticles: a novel response to heavy metal exposure.} & 2025 & ME breadth & \sourcetext{minicell-like structures} & -- & \href{https://doi.org/10.1186/s12951-025-03188-2}{10.\allowbreak 1186/\allowbreak s12951-\allowbreak 025-\allowbreak 03188-\allowbreak 2} \\
+\addlinespace[2pt]
+117 & \org{E. coli} & \sourcetext{Efficient production of phenyllactic acid in Escherichia coli via metabolic engineering and fermentation optimization strategies.} & 2024 & ME breadth & \sourcetext{phenyllactic acid} & -- & \href{https://doi.org/10.3389/fmicb.2024.1457628}{10.\allowbreak 3389/\allowbreak fmicb.\allowbreak 2024.\allowbreak 1457628} \\
+\addlinespace[2pt]
+118 & \org{E. coli} & \sourcetext{Optimizing Archaeal Lipid Biosynthesis in Escherichia coli.} & 2024 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1021/acssynbio.4c00235}{10.\allowbreak 1021/\allowbreak acssynbio.\allowbreak 4c00235} \\
+\addlinespace[2pt]
+119 & \org{E. coli} & \sourcetext{Systematic Engineering of Escherichia coli for Efficient Production of Cytidine 5'-Monophosphate.} & 2024 & ME breadth & \sourcetext{Cytidine 5'-Monophosphate} & -- & \href{https://doi.org/10.1021/acsomega.3c07713}{10.\allowbreak 1021/\allowbreak acsomega.\allowbreak 3c07713} \\
+\addlinespace[2pt]
+120 & \org{E. coli} & \sourcetext{Budding and explosive membrane vesicle production by hypervesiculating Escherichia coli strain $\Delta$rodZ.} & 2024 & ME breadth & \sourcetext{Budding and explosive membrane vesicle} & -- & \href{https://doi.org/10.3389/fmicb.2024.1400434}{10.\allowbreak 3389/\allowbreak fmicb.\allowbreak 2024.\allowbreak 1400434} \\
+\addlinespace[2pt]
+121 & \org{E. coli} & \sourcetext{Reprogramming Metabolic Flux in Escherichia Coli to Enhance Chondroitin Production.} & 2024 & ME breadth & \sourcetext{ng Metabolic Flux} & -- & \href{https://doi.org/10.1002/advs.202307351}{10.\allowbreak 1002/\allowbreak advs.\allowbreak 202307351} \\
+\addlinespace[2pt]
+122 & \org{E. coli} & \sourcetext{Systems metabolic engineering for hydroxytyrosol production in Escherichia coli.} & 2026 & ME breadth & \sourcetext{Systems metabolic engineering for hydroxytyrosol} & -- & \href{https://doi.org/10.1128/aem.02455-25}{10.\allowbreak 1128/\allowbreak aem.\allowbreak 02455-\allowbreak 25} \\
+\addlinespace[2pt]
+123 & \org{E. coli} & \sourcetext{Rare-codon-tuned fluorescent biosensor for high-throughput selection of Escherichia coli strain capable of L-arginine overproduction.} & 2026 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1186/s12866-026-05154-w}{10.\allowbreak 1186/\allowbreak s12866-\allowbreak 026-\allowbreak 05154-\allowbreak w} \\
+\addlinespace[2pt]
+124 & \org{E. coli} & \sourcetext{Systems metabolic engineering of dual pathways with stage-specific activation for high-level 5-aminolevulinic acid production in Escherichia coli.} & 2026 & ME breadth & \sourcetext{age-specific activation for high-level 5-aminolevulinic acid} & -- & \href{https://doi.org/10.1016/j.synbio.2025.09.007}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2025.\allowbreak 09.\allowbreak 007} \\
+\addlinespace[2pt]
+125 & \org{E. coli} & \sourcetext{Bioconversion of lignin and food waste into vanillin and biohydrogen by Escherichia coli MC3: a novel dual-functional bacteria.} & 2026 & ME breadth & \sourcetext{lignin and food waste into vanillin and biohydrogen} & -- & \href{https://doi.org/10.1186/s13068-025-02728-0}{10.\allowbreak 1186/\allowbreak s13068-\allowbreak 025-\allowbreak 02728-\allowbreak 0} \\
+\addlinespace[2pt]
+126 & \org{E. coli} & \sourcetext{Systematic engineering of Escherichia coli for biosynthesis of 3-hydroxypropionic acid from glucose and malonate.} & 2026 & ME breadth & \sourcetext{3-hydroxypropionic acid from glucose and malonate} & -- & \href{https://doi.org/10.1186/s12896-026-01140-2}{10.\allowbreak 1186/\allowbreak s12896-\allowbreak 026-\allowbreak 01140-\allowbreak 2} \\
+\addlinespace[2pt]
+127 & \org{E. coli} & \sourcetext{De novo synthesis of L-2-aminobutyric acid in Escherichia coli based on multi-layered metabolic engineering strategies.} & 2026 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1016/j.synbio.2026.01.004}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2026.\allowbreak 01.\allowbreak 004} \\
+\addlinespace[2pt]
+128 & \org{E. coli} & \sourcetext{Integrated amplification of NADPH-regenerating modules enhances cytidine biosynthesis in Escherichia coli.} & 2026 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1016/j.synbio.2025.12.009}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2025.\allowbreak 12.\allowbreak 009} \\
+\addlinespace[2pt]
+129 & \org{E. coli} & \sourcetext{De novo biosynthesis of putrescine from glucose using engineered Escherichia coli in a two-step process.} & 2026 & ME breadth & \sourcetext{putrescine from glucose} & -- & \href{https://doi.org/10.1016/j.synbio.2026.02.008}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2026.\allowbreak 02.\allowbreak 008} \\
+\addlinespace[2pt]
+130 & \org{E. coli} & \sourcetext{Combining computer-aided enzyme design and chromosomal integration for plasmid-free biosynthesis of 1,5-pentanediol in Escherichia coli.} & 2026 & ME breadth & \sourcetext{1} & -- & \href{https://doi.org/10.1186/s12934-026-02929-8}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 026-\allowbreak 02929-\allowbreak 8} \\
+\addlinespace[2pt]
+131 & \org{E. coli} & \sourcetext{Heterologous Production of Torularhodin, the Monocyclic Carotenoid with a Terminal Carboxyl Group, in Escherichia coli.} & 2026 & ME breadth & \sourcetext{Torularhodin} & adjacent & \href{https://doi.org/10.3390/biotech15010003}{10.\allowbreak 3390/\allowbreak biotech15010003} \\
+\addlinespace[2pt]
+132 & \org{E. coli} & \sourcetext{Insights into the Regulation of Indigo Production in an Engineered Escherichia coli Strain via Overexpression of Specific Transporter Genes and Proteomic Analyzes.} & 2026 & ME breadth & \sourcetext{Insights into the Regulation of Indigo} & -- & \href{https://doi.org/10.3390/foods15081385}{10.\allowbreak 3390/\allowbreak foods15081385} \\
+\addlinespace[2pt]
+133 & \org{E. coli} & \sourcetext{High-titer 2-phenylethanol production in Escherichia coli via decarboxylation-step optimization and a vegetable-oil overlay for biocompatible in situ recovery.} & 2026 & ME breadth & \sourcetext{High-titer 2-phenylethanol} & -- & \href{https://doi.org/10.1186/s13036-026-00667-4}{10.\allowbreak 1186/\allowbreak s13036-\allowbreak 026-\allowbreak 00667-\allowbreak 4} \\
+\addlinespace[2pt]
+134 & \org{E. coli} & \sourcetext{Development of a transcription factor-based biosensor strain for reporting $\alpha$-terpineol production via the alcohol-dependent hemiterpene pathway in Escherichia coli.} & 2026 & ME breadth & \sourcetext{tion factor-based biosensor strain for reporting $\alpha$-terpineol} & adjacent & \href{https://doi.org/10.1039/d5cb00310e}{10.\allowbreak 1039/\allowbreak d5cb00310e} \\
+\addlinespace[2pt]
+135 & \org{E. coli} & \sourcetext{Metabolic engineering of Escherichia coli for de novo production of lauryl glucoside.} & 2025 & ME breadth & \sourcetext{lauryl glucoside} & -- & \href{https://doi.org/10.1016/j.bidere.2025.100045}{10.\allowbreak 1016/\allowbreak j.\allowbreak bidere.\allowbreak 2025.\allowbreak 100045} \\
+\addlinespace[2pt]
+136 & \org{E. coli} & \sourcetext{Phase-driven rewiring in~Escherichia coli enhances coenzyme Q10 biosynthesis via temporal and energetic coordination.} & 2025 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1007/s00253-025-13619-7}{10.\allowbreak 1007/\allowbreak s00253-\allowbreak 025-\allowbreak 13619-\allowbreak 7} \\
+\addlinespace[2pt]
+137 & \org{E. coli} & \sourcetext{Engineering a Robust Escherichia coli W Platform for Scalable Production of Flavonoid-O-Glucosides.} & 2025 & ME breadth & \sourcetext{Flavonoid-O-Glucosides} & -- & \href{https://doi.org/10.1111/1751-7915.70226}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 70226} \\
+\addlinespace[2pt]
+138 & \org{E. coli} & \sourcetext{Enhancing Escherichia coli production of material proteins using circular mRNAs.} & 2025 & ME breadth & \sourcetext{material proteins using circular mRNAs} & -- & \href{https://doi.org/10.1128/aem.01579-25}{10.\allowbreak 1128/\allowbreak aem.\allowbreak 01579-\allowbreak 25} \\
+\addlinespace[2pt]
+139 & \org{E. coli} & \sourcetext{Development of Sucrose-Utilizing Escherichia coli Nissle 1917 for Efficient Heparosan Biosynthesis.} & 2025 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.3390/metabo15060410}{10.\allowbreak 3390/\allowbreak metabo15060410} \\
+\addlinespace[2pt]
+140 & \org{E. coli} & \sourcetext{Biosynthesis of Two Types of Exogenous Antigenic Polysaccharides in a Single Escherichia coli Chassis Cell.} & 2025 & ME breadth & \sourcetext{Two Types of Exogenous Antigenic Polysaccharides in a Single Escherichia coli Chassis Cell} & -- & \href{https://doi.org/10.3390/life15060858}{10.\allowbreak 3390/\allowbreak life15060858} \\
+\addlinespace[2pt]
+141 & \org{E. coli} & \sourcetext{Manipulating Intracellular Oxidative Conditions to Enhance Porphyrin Production in Escherichia coli.} & 2025 & ME breadth & \sourcetext{ting Intracellular Oxidative Conditions to Enhance Porphyrin} & -- & \href{https://doi.org/10.3390/bioengineering12010083}{10.\allowbreak 3390/\allowbreak bioengineering12010083} \\
+\addlinespace[2pt]
+142 & \org{E. coli} & \sourcetext{Improving sustainable isopropanol production in engineered Escherichia coli W via oxygen limitation.} & 2025 & ME breadth & \sourcetext{Improving sustainable isopropanol} & -- & \href{https://doi.org/10.1186/s12934-025-02720-1}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 025-\allowbreak 02720-\allowbreak 1} \\
+\addlinespace[2pt]
+143 & \org{E. coli} & \sourcetext{Extracellular peptide production in Escherichia coli by inducible downregulation of lipoprotein Lpp via MicL sRNA.} & 2025 & ME breadth & \sourcetext{Extracellular peptide} & -- & \href{https://doi.org/10.1007/s00253-025-13524-z}{10.\allowbreak 1007/\allowbreak s00253-\allowbreak 025-\allowbreak 13524-\allowbreak z} \\
+\addlinespace[2pt]
+144 & \org{E. coli} & \sourcetext{Exchange of the L-cysteine exporter after in-vivo metabolic control analysis improved the L-cysteine production process with engineered Escherichia coli.} & 2025 & ME breadth & \sourcetext{r in-vivo metabolic control analysis improved the L-cysteine} & -- & \href{https://doi.org/10.1186/s12934-025-02715-y}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 025-\allowbreak 02715-\allowbreak y} \\
+\addlinespace[2pt]
+145 & \org{E. coli} & \sourcetext{Modular pathway engineering for enhanced production of para-aminobenzoic acid and 4-amino-phenylalanine in Escherichia coli via glucose/xylose co-utilization.} & 2025 & ME breadth & \sourcetext{para-aminobenzoic acid and 4-amino-phenylalanine} & -- & \href{https://doi.org/10.1128/aem.02468-24}{10.\allowbreak 1128/\allowbreak aem.\allowbreak 02468-\allowbreak 24} \\
+\addlinespace[2pt]
+146 & \org{E. coli} & \sourcetext{Enhancing production and assessing IgE reactivity of dog allergen Can f 6 in Pichia pastoris and Escherichia coli.} & 2025 & ME breadth & \sourcetext{Enhancing} & -- & \href{https://doi.org/10.1007/s00253-025-13465-7}{10.\allowbreak 1007/\allowbreak s00253-\allowbreak 025-\allowbreak 13465-\allowbreak 7} \\
+\addlinespace[2pt]
+147 & \org{E. coli} & \sourcetext{Mutations in the riboflavin biosynthesis pathway confer resistance to furazolidone and abolish the synergistic interaction between furazolidone and vancomycin in Escherichia coli.} & 2025 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1099/mgen.0.001356}{10.\allowbreak 1099/\allowbreak mgen.\allowbreak 0.\allowbreak 001356} \\
+\addlinespace[2pt]
+148 & \org{E. coli} & \sourcetext{Glucoselipid Biosurfactant Biosynthesis Operon of Rouxiella badensis DSM 100043T: Screening, Identification, and Heterologous Expression in Escherichia coli.} & 2025 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.3390/microorganisms13071664}{10.\allowbreak 3390/\allowbreak microorganisms13071664} \\
+\addlinespace[2pt]
+149 & \org{E. coli} & \sourcetext{Deciphering Transcription-Translation-Folding (TX-TL-FD) for Enhancing Cutinase Production in T7 System and Genetic Chaperone-Equipped Escherichia coli Strains.} & 2025 & ME breadth & \sourcetext{iption-Translation-Folding (TX-TL-FD) for Enhancing Cutinase} & -- & \href{https://doi.org/10.1021/acssynbio.5c00245}{10.\allowbreak 1021/\allowbreak acssynbio.\allowbreak 5c00245} \\
+\addlinespace[2pt]
+150 & \org{E. coli} & \sourcetext{Multivariate modular metabolic engineering and medium optimization for vitamin B12 production by Escherichia coli.} & 2024 & ME breadth & \sourcetext{etabolic engineering and medium optimization for vitamin B12} & -- & \href{https://doi.org/10.1016/j.synbio.2024.03.017}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2024.\allowbreak 03.\allowbreak 017} \\
+\addlinespace[2pt]
+151 & \org{E. coli} & \sourcetext{Engineering a non-oxidative glycolysis pathway in escherichia coli for high-level citramalate production.} & 2024 & ME breadth & \sourcetext{lysis pathway} & -- & \href{https://doi.org/10.1186/s12934-024-02505-y}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 024-\allowbreak 02505-\allowbreak y} \\
+\addlinespace[2pt]
+153\,\textsuperscript{\textbf{R}} & \org{E. coli} & \sourcetext{Genomic library screens for genes involved in n-butanol tolerance in Escherichia coli.} & 2011 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1371/journal.pone.0017678}{10.\allowbreak 1371/\allowbreak journal.\allowbreak pone.\allowbreak 0017678} \\
+\addlinespace[2pt]
+154\,\textsuperscript{\textbf{R}} & \org{E. coli} & \sourcetext{Morphological and Transcriptional Responses to CRISPRi Knockdown of Essential Genes in Escherichia coli.} & 2021 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1128/mbio.02561-21}{10.\allowbreak 1128/\allowbreak mbio.\allowbreak 02561-\allowbreak 21} \\
+\addlinespace[2pt]
+156 & \org{E. coli} & \sourcetext{CRISPRi-mediated tunable control of gene expression level with engineered single-guide RNA in Escherichia coli.} & 2023 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1093/nar/gkad234}{10.\allowbreak 1093/\allowbreak nar/\allowbreak gkad234} \\
+\addlinespace[2pt]
+157 & \org{E. coli} & \sourcetext{Improving the Methanol Tolerance of an Escherichia coli Methylotroph via Adaptive Laboratory Evolution Enhances Synthetic Methanol Utilization.} & 2021 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.3389/fmicb.2021.638426}{10.\allowbreak 3389/\allowbreak fmicb.\allowbreak 2021.\allowbreak 638426} \\
+\addlinespace[2pt]
+158 & \org{E. coli} & \sourcetext{Adaptive evolution of genomically recoded Escherichia coli.} & 2018 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1073/pnas.1715530115}{10.\allowbreak 1073/\allowbreak pnas.\allowbreak 1715530115} \\
+\addlinespace[2pt]
+159 & \org{E. coli} & \sourcetext{A plasmid toolset for CRISPR-mediated genome editing and CRISPRi gene regulation in Escherichia coli.} & 2021 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1111/1751-7915.13780}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 13780} \\
+\addlinespace[2pt]
+160 & \org{E. coli} & \sourcetext{Laboratory Evolution Reveals Transcriptional Mechanisms Underlying Thermal Adaptation of Escherichia coli.} & 2025 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1093/gbe/evaf171}{10.\allowbreak 1093/\allowbreak gbe/\allowbreak evaf171} \\
+\addlinespace[2pt]
+161 & \org{E. coli} & \sourcetext{Modular and signal-responsive transcriptional regulation using CRISPRi-aided genetic switches in Escherichia coli.} & 2025 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1186/s13036-025-00526-8}{10.\allowbreak 1186/\allowbreak s13036-\allowbreak 025-\allowbreak 00526-\allowbreak 8} \\
+\addlinespace[2pt]
+162 & \org{E. coli} & \sourcetext{Non-native Pathway Engineering with CRISPRi for Carbon Dioxide Assimilation and Valued 5-Aminolevulinic Acid Synthesis in Escherichia coli Nissle.} & 2024 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1021/acssynbio.4c00318}{10.\allowbreak 1021/\allowbreak acssynbio.\allowbreak 4c00318} \\
+\addlinespace[2pt]
+163 & \org{E. coli} & \sourcetext{Genome-wide screen reveals cellular functions that counteract rifampicin lethality in Escherichia coli.} & 2024 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1128/spectrum.02895-23}{10.\allowbreak 1128/\allowbreak spectrum.\allowbreak 02895-\allowbreak 23} \\
+\addlinespace[2pt]
+165 & \org{E. coli} & \sourcetext{Genome-wide screen reveals a universal role of ATP in ciprofloxacin tolerance among genetically distinct Escherichia coli persisters.} & 2026 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1002/mlf2.70072}{10.\allowbreak 1002/\allowbreak mlf2.\allowbreak 70072} \\
+\addlinespace[2pt]
+166 & \org{E. coli} & \sourcetext{Using CRISPRi in Escherichia coli to emphasize experimental controls in a molecular microbiology laboratory.} & 2025 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1128/jmbe.00135-25}{10.\allowbreak 1128/\allowbreak jmbe.\allowbreak 00135-\allowbreak 25} \\
+\addlinespace[2pt]
+167 & \org{E. coli} & \sourcetext{Promoters Constrain Evolution of Expression Levels of Essential Genes in Escherichia coli.} & 2024 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1093/molbev/msae185}{10.\allowbreak 1093/\allowbreak molbev/\allowbreak msae185} \\
+\addlinespace[2pt]
+168 & \org{E. coli} & \sourcetext{Synthetic acid stress-tolerance modules improve growth robustness and lysine productivity of industrial Escherichia coli in fermentation at low pH.} & 2022 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1186/s12934-022-01795-4}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 022-\allowbreak 01795-\allowbreak 4} \\
+\addlinespace[2pt]
+169 & \org{E. coli} & \sourcetext{CRISPRi enables fast growth followed by stable aerobic pyruvate formation in Escherichia coli without auxotrophy.} & 2022 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1002/elsc.202100021}{10.\allowbreak 1002/\allowbreak elsc.\allowbreak 202100021} \\
+\addlinespace[2pt]
+170 & \org{E. coli} & \sourcetext{High-Throughput Screening of a Promoter Library Reveals New Persister Mechanisms in Escherichia Coli.} & 2022 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1128/spectrum.02253-21}{10.\allowbreak 1128/\allowbreak spectrum.\allowbreak 02253-\allowbreak 21} \\
+\addlinespace[2pt]
+171 & \org{E. coli} & \sourcetext{Inhibition of Plasmid Conjugation in Escherichia coli by Targeting rbsB Gene Using CRISPRi System.} & 2023 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.3390/ijms241310585}{10.\allowbreak 3390/\allowbreak ijms241310585} \\
+\addlinespace[2pt]
+172 & \org{E. coli} & \sourcetext{Improvement of sabinene tolerance of Escherichia coli using adaptive laboratory evolution and omics technologies.} & 2020 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1186/s13068-020-01715-x}{10.\allowbreak 1186/\allowbreak s13068-\allowbreak 020-\allowbreak 01715-\allowbreak x} \\
+\addlinespace[2pt]
+173 & \org{E. coli} & \sourcetext{Genome-wide screen of genetic determinants that govern Escherichia coli growth and persistence in lake water.} & 2024 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1093/ismejo/wrae096}{10.\allowbreak 1093/\allowbreak ismejo/\allowbreak wrae096} \\
+\addlinespace[2pt]
+174 & \org{E. coli} & \sourcetext{Involvement of catalase and superoxide dismutase in hydrophobic organic solvent tolerance of Escherichia coli.} & 2021 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1186/s13568-021-01258-w}{10.\allowbreak 1186/\allowbreak s13568-\allowbreak 021-\allowbreak 01258-\allowbreak w} \\
+\addlinespace[2pt]
+175 & \org{E. coli} & \sourcetext{Filamentation and restoration of normal growth in Escherichia coli using a combined CRISPRi sgRNA/antisense RNA approach.} & 2018 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1371/journal.pone.0198058}{10.\allowbreak 1371/\allowbreak journal.\allowbreak pone.\allowbreak 0198058} \\
+\addlinespace[2pt]
+176 & \org{E. coli} & \sourcetext{Engineering and adaptive laboratory evolution of Escherichia coli for improving methanol utilization based on a hybrid methanol assimilation pathway.} & 2022 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.3389/fbioe.2022.1089639}{10.\allowbreak 3389/\allowbreak fbioe.\allowbreak 2022.\allowbreak 1089639} \\
+\addlinespace[2pt]
+177 & \org{E. coli} & \sourcetext{Adaptive Laboratory Evolution of Flavin Functionality Identifies Dihydrolipoyl Dehydrogenase as One of the Critical Points for the Activity of 7,8-Didemethyl-Riboflavin as a Surrogate for Riboflavin in Escherichia coli.} & 2024 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.3390/molecules29245891}{10.\allowbreak 3390/\allowbreak molecules29245891} \\
+\addlinespace[2pt]
+178 & \org{E. coli} & \sourcetext{Conversion of Escherichia coli into Mixotrophic CO2 Assimilation with Malate and Hydrogen Based on Recombinant Expression of 2-Oxoglutarate:Ferredoxin Oxidoreductase Using Adaptive Laboratory Evolution.} & 2023 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.3390/microorganisms11020253}{10.\allowbreak 3390/\allowbreak microorganisms11020253} \\
+\addlinespace[2pt]
+179 & \org{E. coli} & \sourcetext{A genome-wide screen reveals the involvement of enterobactin-mediated iron acquisition in Escherichia coli survival during copper stress.} & 2021 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1093/mtomcs/mfab052}{10.\allowbreak 1093/\allowbreak mtomcs/\allowbreak mfab052} \\
+\addlinespace[2pt]
+180 & \org{E. coli} & \sourcetext{Inactivation of a Mismatch-Repair System Diversifies Genotypic Landscape of Escherichia coli During Adaptive Laboratory Evolution.} & 2019 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.3389/fmicb.2019.01845}{10.\allowbreak 3389/\allowbreak fmicb.\allowbreak 2019.\allowbreak 01845} \\
+\addlinespace[2pt]
+181 & \org{E. coli} & \sourcetext{Improved furfural tolerance in Escherichia coli mediated by heterologous NADH-dependent benzyl alcohol dehydrogenases.} & 2022 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1042/bcj20210811}{10.\allowbreak 1042/\allowbreak bcj20210811} \\
+\addlinespace[2pt]
+182 & \org{E. coli} & \sourcetext{Escherichia coli Data-Driven Strain Design Using Aggregated Adaptive Laboratory Evolution Mutational Data.} & 2021 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1021/acssynbio.1c00337}{10.\allowbreak 1021/\allowbreak acssynbio.\allowbreak 1c00337} \\
+\addlinespace[2pt]
+183 & \org{E. coli} & \sourcetext{Dysregulated NAD(H) homeostasis associated with ciprofloxacin tolerance in Escherichia coli investigated on a single-cell level with the Peredox [NADH:NAD+] biosensor.} & 2023 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.3389/fmicb.2023.1191968}{10.\allowbreak 3389/\allowbreak fmicb.\allowbreak 2023.\allowbreak 1191968} \\
+\addlinespace[2pt]
+184 & \org{E. coli} & \sourcetext{Functional Heterologous Expression of Mature Lipase LipA from Pseudomonas aeruginosa PSA01 in Escherichia coli SHuffle and BL21 (DE3): Effect of the Expression Host on Thermal Stability and Solvent Tolerance of the Enzyme Produced.} & 2020 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.3390/ijms21113925}{10.\allowbreak 3390/\allowbreak ijms21113925} \\
+\addlinespace[2pt]
+185 & \org{E. coli} & \sourcetext{Significantly improved solvent tolerance of Escherichia coli by global transcription machinery engineering.} & 2015 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1186/s12934-015-0368-4}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 015-\allowbreak 0368-\allowbreak 4} \\
+\addlinespace[2pt]
+186 & \org{E. coli} & \sourcetext{Enhancing butanol tolerance of Escherichia coli reveals hydrophobic interaction of multi-tasking chaperone SecB.} & 2019 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1186/s13068-019-1507-7}{10.\allowbreak 1186/\allowbreak s13068-\allowbreak 019-\allowbreak 1507-\allowbreak 7} \\
+\addlinespace[2pt]
+187 & \org{E. coli} & \sourcetext{Interplay between tolerance mechanisms to copper and acid stress in Escherichia coli.} & 2017 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1073/pnas.1620232114}{10.\allowbreak 1073/\allowbreak pnas.\allowbreak 1620232114} \\
+\addlinespace[2pt]
+188 & \org{E. coli} & \sourcetext{A Novel Butanol Tolerance-Promoting Function of the Transcription Factor Rob in Escherichia coli.} & 2020 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.3389/fbioe.2020.524198}{10.\allowbreak 3389/\allowbreak fbioe.\allowbreak 2020.\allowbreak 524198} \\
+\addlinespace[2pt]
+189 & \org{E. coli} & \sourcetext{Genome-wide mapping of furfural tolerance genes in Escherichia coli.} & 2014 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1371/journal.pone.0087540}{10.\allowbreak 1371/\allowbreak journal.\allowbreak pone.\allowbreak 0087540} \\
+\addlinespace[2pt]
+190 & \org{E. coli} & \sourcetext{An ultra-dense library resource for rapid deconvolution of mutations that cause phenotypes in Escherichia coli.} & 2016 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1093/nar/gkv1131}{10.\allowbreak 1093/\allowbreak nar/\allowbreak gkv1131} \\
+\addlinespace[2pt]
+191 & \org{E. coli} & \sourcetext{Expression of TolC and Organic Solvent Tolerance of Escherichia Coli Ciprofloxacin Resistant Mutants.} & 2017 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://pmc.ncbi.nlm.nih.gov/articles/PMC5610773/}{PMC5610773} \\
+\addlinespace[2pt]
+192 & \org{E. coli} & \sourcetext{Creation of a Dense Transposon Insertion Library Using Bacterial Conjugation in Enterobacterial Strains Such As Escherichia Coli or Shigella flexneri.} & 2017 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.3791/56216}{10.\allowbreak 3791/\allowbreak 56216} \\
+\addlinespace[2pt]
+193 & \org{E. coli} & \sourcetext{Adaptive laboratory evolution of Escherichia coli under acid stress.} & 2020 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1099/mic.0.000867}{10.\allowbreak 1099/\allowbreak mic.\allowbreak 0.\allowbreak 000867} \\
+\addlinespace[2pt]
+195 & \org{E. coli} & \sourcetext{A genome-wide screen in Escherichia coli reveals that ubiquinone is a key antioxidant for metabolism of long-chain fatty acids.} & 2017 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1074/jbc.m117.806240}{10.\allowbreak 1074/\allowbreak jbc.\allowbreak m117.\allowbreak 806240} \\
+\addlinespace[2pt]
+196 & \org{E. coli} & \sourcetext{Bioprospecting of Native Efflux Pumps To Enhance Furfural Tolerance in Ethanologenic Escherichia coli.} & 2019 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1128/aem.02985-18}{10.\allowbreak 1128/\allowbreak aem.\allowbreak 02985-\allowbreak 18} \\
+\addlinespace[2pt]
+197 & \org{E. coli} & \sourcetext{Benefits of a Recombination-Proficient Escherichia coli System for Adaptive Laboratory Evolution.} & 2016 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1128/aem.01850-16}{10.\allowbreak 1128/\allowbreak aem.\allowbreak 01850-\allowbreak 16} \\
+\addlinespace[2pt]
+198 & \org{E. coli} & \sourcetext{Visualizing evolution in real time to determine the molecular mechanisms of n-butanol tolerance in Escherichia coli.} & 2012 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1016/j.ymben.2012.05.002}{10.\allowbreak 1016/\allowbreak j.\allowbreak ymben.\allowbreak 2012.\allowbreak 05.\allowbreak 002} \\
+\addlinespace[2pt]
+199 & \org{E. coli} & \sourcetext{Adaptive laboratory evolution resolves energy depletion to maintain high aromatic metabolite phenotypes in Escherichia coli strains lacking the Phosphotransferase System.} & 2018 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1016/j.ymben.2018.06.005}{10.\allowbreak 1016/\allowbreak j.\allowbreak ymben.\allowbreak 2018.\allowbreak 06.\allowbreak 005} \\
+\addlinespace[2pt]
+200 & \org{E. coli} & \sourcetext{Adaptive laboratory evolution for improved tolerance of isobutyl acetate in Escherichia coli.} & 2022 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1016/j.ymben.2021.11.002}{10.\allowbreak 1016/\allowbreak j.\allowbreak ymben.\allowbreak 2021.\allowbreak 11.\allowbreak 002} \\
+\addlinespace[2pt]
+\midrule
+1\,\textsuperscript{\textbf{R}} & \org{P. putida} & \sourcetext{Muconic acid production from glucose and xylose in Pseudomonas putida via evolution and metabolic engineering.} & 2022 & Joint & \sourcetext{Muconic acid} & -- & \href{https://doi.org/10.1038/s41467-022-32296-y}{10.\allowbreak 1038/\allowbreak s41467-\allowbreak 022-\allowbreak 32296-\allowbreak y} \\
+\addlinespace[2pt]
+2\,\textsuperscript{\textbf{R}} & \org{P. putida} & \sourcetext{Tuning a high performing multiplexed-CRISPRi Pseudomonas putida strain to further enhance indigoidine production.} & 2022 & Joint & \sourcetext{PRi Pseudomonas putida strain to further enhance indigoidine} & -- & \href{https://doi.org/10.1016/j.mec.2022.e00206}{10.\allowbreak 1016/\allowbreak j.\allowbreak mec.\allowbreak 2022.\allowbreak e00206} \\
+\addlinespace[2pt]
+9 & \org{P. putida} & \sourcetext{Development of a CRISPR/Cas9n-based tool for metabolic engineering of Pseudomonas putida for ferulic acid-to-polyhydroxyalkanoate bioconversion.} & 2020 & Joint & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1038/s42003-020-0824-5}{10.\allowbreak 1038/\allowbreak s42003-\allowbreak 020-\allowbreak 0824-\allowbreak 5} \\
+\addlinespace[2pt]
+10 & \org{P. putida} & \sourcetext{Systems biology of electrogenic Pseudomonas putida - multi-omics insights and metabolic engineering for enhanced 2-ketogluconate production.} & 2024 & Joint & \sourcetext{ights and metabolic engineering for enhanced 2-ketogluconate} & -- & \href{https://doi.org/10.1186/s12934-024-02509-8}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 024-\allowbreak 02509-\allowbreak 8} \\
+\addlinespace[2pt]
+11 & \org{P. putida} & \sourcetext{Enhanced chaotrope tolerance and (S)-2-hydroxypropiophenone production by recombinant Pseudomonas putida engineered with Pprl from Deinococcus radiodurans.} & 2024 & Joint & \sourcetext{Enhanced chaotrope tolerance and (S)-2-hydroxypropiophenone} & -- & \href{https://doi.org/10.1111/1751-7915.14448}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 14448} \\
+\addlinespace[2pt]
+12 & \org{P. putida} & \sourcetext{Enhancement of polyhydroxyalkanoate production by co-feeding lignin derivatives with glycerol in Pseudomonas putida KT2440.} & 2021 & ME breadth & \sourcetext{Enhancement of polyhydroxyalkanoate} & -- & \href{https://doi.org/10.1186/s13068-020-01861-2}{10.\allowbreak 1186/\allowbreak s13068-\allowbreak 020-\allowbreak 01861-\allowbreak 2} \\
+\addlinespace[2pt]
+13 & \org{P. putida} & \sourcetext{Metabolic engineering of Pseudomonas putida for increased polyhydroxyalkanoate production from lignin.} & 2020 & ME breadth & \sourcetext{ing of Pseudomonas putida for increased polyhydroxyalkanoate} & -- & \href{https://doi.org/10.1111/1751-7915.13481}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 13481} \\
+\addlinespace[2pt]
+14\,\textsuperscript{\textbf{R}} & \org{P. putida} & \sourcetext{Engineering Pseudomonas putida for production of 3-hydroxyacids using hybrid type I polyketide synthases.} & 2025 & ME breadth & \sourcetext{3-hydroxyacids using hybrid type I polyketide synthases} & -- & \href{https://doi.org/10.1016/j.mec.2025.e00261}{10.\allowbreak 1016/\allowbreak j.\allowbreak mec.\allowbreak 2025.\allowbreak e00261} \\
+\addlinespace[2pt]
+16\,\textsuperscript{\textbf{R}} & \org{P. putida} & \sourcetext{Lignin conversion to $\beta$-ketoadipic acid by Pseudomonas putida via metabolic engineering and bioprocess development.} & 2023 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1126/sciadv.adj0053}{10.\allowbreak 1126/\allowbreak sciadv.\allowbreak adj0053} \\
+\addlinespace[2pt]
+17 & \org{P. putida} & \sourcetext{A reduction in growth rate of Pseudomonas putida KT2442 counteracts productivity advances in medium-chain-length polyhydroxyalkanoate production from gluconate.} & 2011 & ME breadth & \sourcetext{ctivity advances in medium-chain-length polyhydroxyalkanoate} & -- & \href{https://doi.org/10.1186/1475-2859-10-25}{10.\allowbreak 1186/\allowbreak 1475-\allowbreak 2859-\allowbreak 10-\allowbreak 25} \\
+\addlinespace[2pt]
+18 & \org{P. putida} & \sourcetext{Quantifying NAD(P)H production in the upper Entner-Doudoroff pathway from Pseudomonas putida KT2440.} & 2015 & ME breadth & \sourcetext{Quantifying NAD(P)H} & -- & \href{https://doi.org/10.1016/j.fob.2015.11.002}{10.\allowbreak 1016/\allowbreak j.\allowbreak fob.\allowbreak 2015.\allowbreak 11.\allowbreak 002} \\
+\addlinespace[2pt]
+19 & \org{P. putida} & \sourcetext{Integration of Genetic and Process Engineering for Optimized Rhamnolipid Production Using Pseudomonas putida.} & 2020 & ME breadth & \sourcetext{of Genetic and Process Engineering for Optimized Rhamnolipid} & -- & \href{https://doi.org/10.3389/fbioe.2020.00976}{10.\allowbreak 3389/\allowbreak fbioe.\allowbreak 2020.\allowbreak 00976} \\
+\addlinespace[2pt]
+20 & \org{P. putida} & \sourcetext{Leveraging host metabolism for bisdemethoxycurcumin production in Pseudomonas putida.} & 2020 & ME breadth & \sourcetext{Leveraging host metabolism for bisdemethoxycurcumin} & -- & \href{https://doi.org/10.1016/j.mec.2019.e00119}{10.\allowbreak 1016/\allowbreak j.\allowbreak mec.\allowbreak 2019.\allowbreak e00119} \\
+\addlinespace[2pt]
+21 & \org{P. putida} & \sourcetext{Production of medium chain length polyhydroxyalkanoate in metabolic flux optimized Pseudomonas putida.} & 2014 & ME breadth & \sourcetext{medium chain length polyhydroxyalkanoate in metabolic flux optimized Pseudomonas putida} & -- & \href{https://doi.org/10.1186/1475-2859-13-88}{10.\allowbreak 1186/\allowbreak 1475-\allowbreak 2859-\allowbreak 13-\allowbreak 88} \\
+\addlinespace[2pt]
+22 & \org{P. putida} & \sourcetext{Valorization of Polyethylene Terephthalate to Muconic Acid by Engineering Pseudomonas Putida.} & 2022 & ME breadth & \sourcetext{Polyethylene Terephthalate to Muconic Acid by Engineering Pseudomonas Putida} & -- & \href{https://doi.org/10.3390/ijms231910997}{10.\allowbreak 3390/\allowbreak ijms231910997} \\
+\addlinespace[2pt]
+23 & \org{P. putida} & \sourcetext{Large-scale kinetic metabolic models of Pseudomonas putida KT2440 for consistent design of metabolic engineering strategies.} & 2020 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1186/s13068-020-1665-7}{10.\allowbreak 1186/\allowbreak s13068-\allowbreak 020-\allowbreak 1665-\allowbreak 7} \\
+\addlinespace[2pt]
+24 & \org{P. putida} & \sourcetext{Machine learning-led semi-automated medium optimization reveals salt as key for flaviolin production in Pseudomonas putida.} & 2025 & ME breadth & \sourcetext{omated medium optimization reveals salt as key for flaviolin} & -- & \href{https://doi.org/10.1038/s42003-025-08039-2}{10.\allowbreak 1038/\allowbreak s42003-\allowbreak 025-\allowbreak 08039-\allowbreak 2} \\
+\addlinespace[2pt]
+25 & \org{P. putida} & \sourcetext{Anoxic metabolism and biochemical production in Pseudomonas putida F1 driven by a bioelectrochemical system.} & 2016 & ME breadth & \sourcetext{Anoxic metabolism and biochemical} & -- & \href{https://doi.org/10.1186/s13068-016-0452-y}{10.\allowbreak 1186/\allowbreak s13068-\allowbreak 016-\allowbreak 0452-\allowbreak y} \\
+\addlinespace[2pt]
+27 & \org{P. putida} & \sourcetext{Biocatalytic production of perillyl alcohol from limonene by using a novel Mycobacterium sp. cytochrome P450 alkane hydroxylase expressed in Pseudomonas putida.} & 2005 & ME breadth & \sourcetext{perillyl alcohol from limonene by using a novel Mycobacterium sp} & -- & \href{https://doi.org/10.1128/aem.71.4.1737-1744.2005}{10.\allowbreak 1128/\allowbreak aem.\allowbreak 71.\allowbreak 4.\allowbreak 1737-\allowbreak 1744.\allowbreak 2005} \\
+\addlinespace[2pt]
+28 & \org{P. putida} & \sourcetext{Fed-Batch mcl- Polyhydroxyalkanoates Production in Pseudomonas putida KT2440 and $\Delta$phaZ Mutant on Biodiesel-Derived Crude Glycerol.} & 2021 & ME breadth & \sourcetext{Fed-Batch mcl- Polyhydroxyalkanoates} & -- & \href{https://doi.org/10.3389/fbioe.2021.642023}{10.\allowbreak 3389/\allowbreak fbioe.\allowbreak 2021.\allowbreak 642023} \\
+\addlinespace[2pt]
+29 & \org{P. putida} & \sourcetext{Leveraging Engineered Pseudomonas putida Minicells for Bioconversion of Organic Acids into Short-Chain Methyl Ketones.} & 2025 & ME breadth & \sourcetext{Organic Acids into Short-Chain Methyl Ketones} & -- & \href{https://doi.org/10.1021/acssynbio.4c00700}{10.\allowbreak 1021/\allowbreak acssynbio.\allowbreak 4c00700} \\
+\addlinespace[2pt]
+30 & \org{P. putida} & \sourcetext{Production of selenium nanoparticles occurs through an interconnected pathway of sulphur metabolism and oxidative stress response in Pseudomonas putida KT2440.} & 2023 & ME breadth & \sourcetext{selenium nanoparticles occurs through an interconnected pathway of sulphur metabolism and oxidative} & -- & \href{https://doi.org/10.1111/1751-7915.14215}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 14215} \\
+\addlinespace[2pt]
+31 & \org{P. putida} & \sourcetext{Efficient recombinant production of prodigiosin in Pseudomonas putida.} & 2015 & ME breadth & \sourcetext{prodigiosin} & -- & \href{https://doi.org/10.3389/fmicb.2015.00972}{10.\allowbreak 3389/\allowbreak fmicb.\allowbreak 2015.\allowbreak 00972} \\
+\addlinespace[2pt]
+32 & \org{P. putida} & \sourcetext{De novo production of the monoterpenoid geranic acid by metabolically engineered Pseudomonas putida.} & 2014 & ME breadth & \sourcetext{the monoterpenoid geranic acid by metabolically engineered Pseudomonas putida} & adjacent & \href{https://doi.org/10.1186/s12934-014-0170-8}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 014-\allowbreak 0170-\allowbreak 8} \\
+\addlinespace[2pt]
+33 & \org{P. putida} & \sourcetext{Production of Vanillin From Ferulic Acid by Pseudomonas putida KT2440 Using Metabolic Engineering and In~Situ Product Recovery.} & 2025 & ME breadth & \sourcetext{Vanillin From Ferulic Acid} & -- & \href{https://doi.org/10.1111/1751-7915.70152}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 70152} \\
+\addlinespace[2pt]
+34 & \org{P. putida} & \sourcetext{Enhanced biosynthesis of poly(3-hydroxybutyrate) in engineered strains of Pseudomonas putida via increased malonyl-CoA availability.} & 2024 & ME breadth & \sourcetext{poly(3-hydroxybutyrate) in engineered strains of Pseudomonas putida via increased malonyl-CoA availa} & -- & \href{https://doi.org/10.1111/1751-7915.70044}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 70044} \\
+\addlinespace[2pt]
+35 & \org{P. putida} & \sourcetext{Microbial Valorization of Lignin to Bioplastic by Genome-Reduced Pseudomonas putida.} & 2022 & ME breadth & \sourcetext{Lignin to Bioplastic by Genome-Reduced Pseudomonas putida} & -- & \href{https://doi.org/10.3389/fmicb.2022.923664}{10.\allowbreak 3389/\allowbreak fmicb.\allowbreak 2022.\allowbreak 923664} \\
+\addlinespace[2pt]
+36 & \org{P. putida} & \sourcetext{Exploring engineered vesiculation by Pseudomonas putida KT2440 for natural product biosynthesis.} & 2024 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1111/1751-7915.14312}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 14312} \\
+\addlinespace[2pt]
+37\,\textsuperscript{\textbf{R}} & \org{P. putida} & \sourcetext{Metabolic Engineering of Pseudomonas putida KT2440 for the Production of para-Hydroxy Benzoic Acid.} & 2016 & ME breadth & \sourcetext{para-Hydroxy Benzoic Acid} & -- & \href{https://doi.org/10.3389/fbioe.2016.00090}{10.\allowbreak 3389/\allowbreak fbioe.\allowbreak 2016.\allowbreak 00090} \\
+\addlinespace[2pt]
+38 & \org{P. putida} & \sourcetext{Bioprocess exploitation of microaerobic auto-induction using the example of rhamnolipid biosynthesis in Pseudomonas putida KT2440.} & 2025 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1186/s13036-025-00478-z}{10.\allowbreak 1186/\allowbreak s13036-\allowbreak 025-\allowbreak 00478-\allowbreak z} \\
+\addlinespace[2pt]
+39 & \org{P. putida} & \sourcetext{Synthetic pathways for microbial biosynthesis of valuable pyrazine derivatives using genetically modified Pseudomonas putida KT2440.} & 2025 & ME breadth & \sourcetext{valuable pyrazine derivatives using genetically modified Pseudomonas putida KT2440} & -- & \href{https://doi.org/10.1016/j.mec.2025.e00258}{10.\allowbreak 1016/\allowbreak j.\allowbreak mec.\allowbreak 2025.\allowbreak e00258} \\
+\addlinespace[2pt]
+40 & \org{P. putida} & \sourcetext{Pseudomonas putida as a platform for medium-chain length $\alpha$,$\omega$-diol production: Opportunities and challenges.} & 2024 & ME breadth & \sourcetext{diol} & -- & \href{https://doi.org/10.1111/1751-7915.14423}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 14423} \\
+\addlinespace[2pt]
+41 & \org{P. putida} & \sourcetext{Portable bacterial CRISPR transcriptional activation enables metabolic engineering in Pseudomonas putida.} & 2021 & Joint & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1016/j.ymben.2021.04.002}{10.\allowbreak 1016/\allowbreak j.\allowbreak ymben.\allowbreak 2021.\allowbreak 04.\allowbreak 002} \\
+\addlinespace[2pt]
+42 & \org{P. putida} & \sourcetext{Biosynthesis of Novel Aromatic Copolyesters from Insoluble 11-Phenoxyundecanoic Acid by Pseudomonas putida BM01.} & 1996 & ME breadth & \sourcetext{Novel Aromatic Copolyesters from Insoluble 11-Phenoxyundecanoic Acid} & -- & \href{https://doi.org/10.1128/aem.62.2.536-544.1996}{10.\allowbreak 1128/\allowbreak aem.\allowbreak 62.\allowbreak 2.\allowbreak 536-\allowbreak 544.\allowbreak 1996} \\
+\addlinespace[2pt]
+43 & \org{P. putida} & \sourcetext{Engineered Membrane Vesicle Production via oprF or oprI Deletion Has Distinct Phenotypic Effects in Pseudomonas putida.} & 2025 & ME breadth & \sourcetext{Engineered Membrane Vesicle} & -- & \href{https://doi.org/10.1021/acssynbio.5c00171}{10.\allowbreak 1021/\allowbreak acssynbio.\allowbreak 5c00171} \\
+\addlinespace[2pt]
+44 & \org{P. putida} & \sourcetext{Metabolic Engineering of Pseudomonas putida KT2440 for $\beta$-Nicotinamide Mononucleotide Biosynthesis from Glucose and Aspartate.} & 2026 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.3390/microorganisms14091877}{10.\allowbreak 3390/\allowbreak microorganisms14091877} \\
+\addlinespace[2pt]
+45 & \org{P. putida} & \sourcetext{High-level prodigiosin production in Pseudomonas putida enabled by combinatorial metabolic engineering.} & 2026 & ME breadth & \sourcetext{High-level prodigiosin} & -- & \href{https://doi.org/10.1016/j.synbio.2026.01.015}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2026.\allowbreak 01.\allowbreak 015} \\
+\addlinespace[2pt]
+46 & \org{P. putida} & \sourcetext{Characterisation of metabolic burden in Pseudomonas putida reveals precursor limitation in heterologous lycopene production.} & 2026 & ME breadth & \sourcetext{putida reveals precursor limitation in heterologous lycopene} & adjacent & \href{https://doi.org/10.1186/s12934-026-03108-5}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 026-\allowbreak 03108-\allowbreak 5} \\
+\addlinespace[2pt]
+47 & \org{P. putida} & \sourcetext{Engineering Pseudomonas putida for the Production of 2,3-Butanediol Isomers and Acetoin.} & 2026 & ME breadth & \sourcetext{2} & -- & \href{https://doi.org/10.1021/acssynbio.6c00243}{10.\allowbreak 1021/\allowbreak acssynbio.\allowbreak 6c00243} \\
+\addlinespace[2pt]
+48 & \org{P. putida} & \sourcetext{Acetate as alternative carbon source for production of mono- and di-rhamnolipids in Pseudomonas putida KT2440.} & 2026 & ME breadth & \sourcetext{mono- and di-rhamnolipids} & -- & \href{https://doi.org/10.1186/s12934-026-03050-6}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 026-\allowbreak 03050-\allowbreak 6} \\
+\addlinespace[2pt]
+49 & \org{P. putida} & \sourcetext{Development of an ethanol-based microbial platform for 3-hydroxypropionic acid production using engineered Pseudomonas putida KT2440.} & 2025 & ME breadth & \sourcetext{ethanol-based microbial platform for 3-hydroxypropionic acid} & -- & \href{https://doi.org/10.1186/s13036-025-00595-9}{10.\allowbreak 1186/\allowbreak s13036-\allowbreak 025-\allowbreak 00595-\allowbreak 9} \\
+\addlinespace[2pt]
+50 & \org{P. putida} & \sourcetext{Combinatorial engineering pinpoints shikimate pathway bottlenecks in para-aminobenzoic acid production in Pseudomonas putida.} & 2025 & ME breadth & \sourcetext{ints shikimate pathway bottlenecks in para-aminobenzoic acid} & -- & \href{https://doi.org/10.1186/s13036-025-00553-5}{10.\allowbreak 1186/\allowbreak s13036-\allowbreak 025-\allowbreak 00553-\allowbreak 5} \\
+\addlinespace[2pt]
+51 & \org{P. putida} & \sourcetext{Citrate Synthase Overexpression of Pseudomonas putida Increases Succinate Production from Acetate in Microaerobic Cultivation.} & 2023 & ME breadth & \sourcetext{ase Overexpression of Pseudomonas putida Increases Succinate} & -- & \href{https://doi.org/10.1021/acsomega.3c02520}{10.\allowbreak 1021/\allowbreak acsomega.\allowbreak 3c02520} \\
+\addlinespace[2pt]
+52 & \org{P. putida} & \sourcetext{Biosynthesis of fragrance 2-phenylethanol from sugars by Pseudomonas putida.} & 2024 & ME breadth & \sourcetext{fragrance 2-phenylethanol from sugars} & -- & \href{https://doi.org/10.1186/s13068-024-02498-1}{10.\allowbreak 1186/\allowbreak s13068-\allowbreak 024-\allowbreak 02498-\allowbreak 1} \\
+\addlinespace[2pt]
+53\,\textsuperscript{\textbf{R}} & \org{P. putida} & \sourcetext{Engineering Pseudomonas putida KT2440 for chain length tailored free fatty acid and oleochemical production.} & 2022 & ME breadth & \sourcetext{0 for chain length tailored free fatty acid and oleochemical} & -- & \href{https://doi.org/10.1038/s42003-022-04336-2}{10.\allowbreak 1038/\allowbreak s42003-\allowbreak 022-\allowbreak 04336-\allowbreak 2} \\
+\addlinespace[2pt]
+54 & \org{P. putida} & \sourcetext{Metabolic engineering of Pseudomonas putida for production of vanillylamine from lignin-derived substrates.} & 2021 & ME breadth & \sourcetext{vanillylamine from lignin-derived substrates} & -- & \href{https://doi.org/10.1111/1751-7915.13764}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 13764} \\
+\addlinespace[2pt]
+55 & \org{P. putida} & \sourcetext{Engineering Pseudomonas putida for isoprenoid production by manipulating endogenous and shunt pathways supplying precursors.} & 2019 & ME breadth & \sourcetext{Engineering Pseudomonas putida for isoprenoid} & adjacent & \href{https://doi.org/10.1186/s12934-019-1204-z}{10.\allowbreak 1186/\allowbreak s12934-\allowbreak 019-\allowbreak 1204-\allowbreak z} \\
+\addlinespace[2pt]
+56 & \org{P. putida} & \sourcetext{Strategy for Optimizing Vitamin B12 Production in Pseudomonas putida KT2440 Using Metabolic Modeling.} & 2024 & ME breadth & \sourcetext{Strategy for Optimizing Vitamin B12} & -- & \href{https://doi.org/10.3390/metabo14110636}{10.\allowbreak 3390/\allowbreak metabo14110636} \\
+\addlinespace[2pt]
+57 & \org{P. putida} & \sourcetext{Bioconversion of L-Tyrosine into p-Coumaric Acid by Tyrosine Ammonia-Lyase Heterologue of Rhodobacter sphaeroides Produced in Pseudomonas putida KT2440.} & 2024 & ME breadth & \sourcetext{L-Tyrosine into p-Coumaric Acid by Tyrosine Ammonia-Lyase Heterologue of Rhodobacter sphaeroides Pro} & -- & \href{https://doi.org/10.3390/cimb46090603}{10.\allowbreak 3390/\allowbreak cimb46090603} \\
+\addlinespace[2pt]
+58 & \org{P. putida} & \sourcetext{Quantum modeling simulates nutrient effect of bioplastic polyhydroxyalkanoate (PHA) production in Pseudomonas putida.} & 2024 & ME breadth & \sourcetext{tes nutrient effect of bioplastic polyhydroxyalkanoate (PHA)} & -- & \href{https://doi.org/10.1038/s41598-024-68727-7}{10.\allowbreak 1038/\allowbreak s41598-\allowbreak 024-\allowbreak 68727-\allowbreak 7} \\
+\addlinespace[2pt]
+59 & \org{P. putida} & \sourcetext{Heterologous constitutive production of short-chain-length polyhydroxyalkanoates in Pseudomonas putida KT2440: the involvement of IbpA inclusion body protein.} & 2023 & ME breadth & \sourcetext{short-chain-length polyhydroxyalkanoates} & -- & \href{https://doi.org/10.3389/fbioe.2023.1275036}{10.\allowbreak 3389/\allowbreak fbioe.\allowbreak 2023.\allowbreak 1275036} \\
+\addlinespace[2pt]
+60 & \org{P. putida} & \sourcetext{Enhanced Protocatechuic Acid Production From Glucose Using Pseudomonas putida 3-Dehydroshikimate Dehydratase Expressed in a Phenylalanine-Overproducing Mutant of Escherichia coli.} & 2021 & ME breadth & \sourcetext{Enhanced Protocatechuic Acid} & -- & \href{https://doi.org/10.3389/fbioe.2021.695704}{10.\allowbreak 3389/\allowbreak fbioe.\allowbreak 2021.\allowbreak 695704} \\
+\addlinespace[2pt]
+61 & \org{P. putida} & \sourcetext{Channelling carbon flux through the meta-cleavage route for improved poly(3-hydroxyalkanoate) production from benzoate and lignin-based aromatics in Pseudomonas putida H.} & 2021 & ME breadth & \sourcetext{he meta-cleavage route for improved poly(3-hydroxyalkanoate)} & -- & \href{https://doi.org/10.1111/1751-7915.13705}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 13705} \\
+\addlinespace[2pt]
+62 & \org{P. putida} & \sourcetext{Vanillin Production in Pseudomonas: Whole-Genome Sequencing of Pseudomonas sp. Strain 9.1 and Reannotation of Pseudomonas putida CalA as a Vanillin Reductase.} & 2020 & ME breadth & \sourcetext{Vanillin} & -- & \href{https://doi.org/10.1128/aem.02442-19}{10.\allowbreak 1128/\allowbreak aem.\allowbreak 02442-\allowbreak 19} \\
+\addlinespace[2pt]
+63 & \org{P. putida} & \sourcetext{Engineering Pseudomonas putida KT2440 for the production of isobutanol.} & 2020 & ME breadth & \sourcetext{isobutanol} & -- & \href{https://doi.org/10.1002/elsc.201900151}{10.\allowbreak 1002/\allowbreak elsc.\allowbreak 201900151} \\
+\addlinespace[2pt]
+64 & \org{P. putida} & \sourcetext{Effect of pseudobactin 358 production by Pseudomonas putida WCS358 on suppression of fusarium wilt of carnations by nonpathogenic Fusarium oxysporum Fo47.} & 1992 & ME breadth & \sourcetext{Effect of pseudobactin 358} & -- & \href{https://doi.org/10.1128/aem.58.9.2978-2982.1992}{10.\allowbreak 1128/\allowbreak aem.\allowbreak 58.\allowbreak 9.\allowbreak 2978-\allowbreak 2982.\allowbreak 1992} \\
+\addlinespace[2pt]
+65 & \org{P. putida} & \sourcetext{Optimizing Systems for Robust Heterologous Production of Biosurfactants Rhamnolipid and Lyso-Ornithine Lipid in Pseudomonas putida KT2440.} & 2024 & ME breadth & \sourcetext{Biosurfactants Rhamnolipid and Lyso-Ornithine Lipid} & -- & \href{https://doi.org/10.3390/molecules29143288}{10.\allowbreak 3390/\allowbreak molecules29143288} \\
+\addlinespace[2pt]
+66 & \org{P. putida} & \sourcetext{Volatiles of Shiraia fruiting body-associated Pseudomonas putida No.24 stimulate fungal hypocrellin production.} & 2023 & ME breadth & \sourcetext{24 stimulate fungal hypocrellin} & -- & \href{https://doi.org/10.1016/j.synbio.2023.06.004}{10.\allowbreak 1016/\allowbreak j.\allowbreak synbio.\allowbreak 2023.\allowbreak 06.\allowbreak 004} \\
+\addlinespace[2pt]
+67 & \org{P. putida} & \sourcetext{Genomic Epidemiology of MBL-Producing Pseudomonas putida Group Isolates in Poland.} & 2022 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1007/s40121-022-00659-z}{10.\allowbreak 1007/\allowbreak s40121-\allowbreak 022-\allowbreak 00659-\allowbreak z} \\
+\addlinespace[2pt]
+68 & \org{P. putida} & \sourcetext{Micro-aerobic production of isobutanol with engineered Pseudomonas putida.} & 2021 & ME breadth & \sourcetext{isobutanol} & -- & \href{https://doi.org/10.1002/elsc.202000116}{10.\allowbreak 1002/\allowbreak elsc.\allowbreak 202000116} \\
+\addlinespace[2pt]
+69 & \org{P. putida} & \sourcetext{Metabolic Engineering of Pseudomonas putida KT2440 to Produce Anthranilate from Glucose.} & 2015 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.3389/fmicb.2015.01310}{10.\allowbreak 3389/\allowbreak fmicb.\allowbreak 2015.\allowbreak 01310} \\
+\addlinespace[2pt]
+70 & \org{P. putida} & \sourcetext{Metabolic engineering of Pseudomonas putida for increased polyhydroxyalkanoate production from lignin.} & 2020 & ME breadth & \sourcetext{ing of Pseudomonas putida for increased polyhydroxyalkanoate} & -- & \href{https://doi.org/10.1111/1751-7915.13547}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 13547} \\
+\addlinespace[2pt]
+71 & \org{P. putida} & \sourcetext{A novel programmable lysozyme-based lysis system in Pseudomonas putida for biopolymer production.} & 2017 & ME breadth & \sourcetext{zyme-based lysis system} & -- & \href{https://doi.org/10.1038/s41598-017-04741-2}{10.\allowbreak 1038/\allowbreak s41598-\allowbreak 017-\allowbreak 04741-\allowbreak 2} \\
+\addlinespace[2pt]
+72 & \org{P. putida} & \sourcetext{Metabolic engineering of Pseudomonas putida for production of the natural sweetener 5-ketofructose from fructose or sucrose by periplasmic oxidation with a heterologous fructose dehydrogenase.} & 2021 & ME breadth & \sourcetext{the natural sweetener 5-ketofructose from fructose or sucrose by periplasmic oxidation with a hetero} & -- & \href{https://doi.org/10.1111/1751-7915.13913}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 13913} \\
+\addlinespace[2pt]
+73 & \org{P. putida} & \sourcetext{Comparative one-factor-at-a-time, response surface (statistical) and bench-scale bioreactor level optimization of thermoalkaline protease production from a psychrotrophic Pseudomonas putida SKG-1 isolate.} & 2011 & ME breadth & \sourcetext{ale bioreactor level optimization of thermoalkaline protease} & -- & \href{https://doi.org/10.1186/1475-2859-10-114}{10.\allowbreak 1186/\allowbreak 1475-\allowbreak 2859-\allowbreak 10-\allowbreak 114} \\
+\addlinespace[2pt]
+74 & \org{P. putida} & \sourcetext{Fermentative Production of N-Methylglutamate From Glycerol by Recombinant Pseudomonas putida.} & 2018 & ME breadth & \sourcetext{N-Methylglutamate From Glycerol by Recombinant Pseudomonas putida} & -- & \href{https://doi.org/10.3389/fbioe.2018.00159}{10.\allowbreak 3389/\allowbreak fbioe.\allowbreak 2018.\allowbreak 00159} \\
+\addlinespace[2pt]
+75 & \org{P. putida} & \sourcetext{Comparison of mcl-Poly(3-hydroxyalkanoates) synthesis by different Pseudomonas putida strains from crude glycerol: citrate accumulates at high titer under PHA-producing conditions.} & 2014 & ME breadth & \sourcetext{Metabolic-engineering phenotype} & -- & \href{https://doi.org/10.1186/s12896-014-0110-z}{10.\allowbreak 1186/\allowbreak s12896-\allowbreak 014-\allowbreak 0110-\allowbreak z} \\
+\addlinespace[2pt]
+76 & \org{P. putida} & \sourcetext{Selective Biosynthesis of Furoic Acid From Furfural by Pseudomonas Putida and Identification of Molybdate Transporter Involvement in Furfural Oxidation.} & 2020 & ME breadth & \sourcetext{Furoic Acid From Furfural} & -- & \href{https://doi.org/10.3389/fchem.2020.587456}{10.\allowbreak 3389/\allowbreak fchem.\allowbreak 2020.\allowbreak 587456} \\
+\addlinespace[2pt]
+77\,\textsuperscript{\textbf{R}} & \org{P. putida} & \sourcetext{Adaptive laboratory evolution of Pseudomonas putida KT2440 improves p-coumaric and ferulic acid catabolism and tolerance.} & 2020 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1016/j.mec.2020.e00143}{10.\allowbreak 1016/\allowbreak j.\allowbreak mec.\allowbreak 2020.\allowbreak e00143} \\
+\addlinespace[2pt]
+78 & \org{P. putida} & \sourcetext{Development of a high efficiency integration system and promoter library for rapid modification of Pseudomonas putida KT2440.} & 2017 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1016/j.meteno.2017.04.001}{10.\allowbreak 1016/\allowbreak j.\allowbreak meteno.\allowbreak 2017.\allowbreak 04.\allowbreak 001} \\
+\addlinespace[2pt]
+80 & \org{P. putida} & \sourcetext{Integration of ARTP Mutation and Adaptive Laboratory Evolution to Reveal 1,4-Butanediol Degradation in Pseudomonas putida KT2440.} & 2023 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1128/spectrum.04988-22}{10.\allowbreak 1128/\allowbreak spectrum.\allowbreak 04988-\allowbreak 22} \\
+\addlinespace[2pt]
+81\,\textsuperscript{\textbf{R}} & \org{P. putida} & \sourcetext{Unraveling the mechanism of furfural tolerance in engineered Pseudomonas putida by genomics.} & 2022 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.3389/fmicb.2022.1035263}{10.\allowbreak 3389/\allowbreak fmicb.\allowbreak 2022.\allowbreak 1035263} \\
+\addlinespace[2pt]
+82 & \org{P. putida} & \sourcetext{Adaptive Laboratory Evolution Unlocks Membrane Permeability as a Key Limitation in Long-Chain Alcohol Metabolism by Pseudomonas putida KT2440.} & 2026 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1111/1751-7915.70399}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 70399} \\
+\addlinespace[2pt]
+83 & \org{P. putida} & \sourcetext{Cyclopropane fatty acids are involved in organic solvent tolerance but not in acid stress resistance in Pseudomonas putida DOT-T1E.} & 2009 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1111/j.1751-7915.2009.00084.x}{10.\allowbreak 1111/\allowbreak j.\allowbreak 1751-\allowbreak 7915.\allowbreak 2009.\allowbreak 00084.\allowbreak x} \\
+\addlinespace[2pt]
+84 & \org{P. putida} & \sourcetext{Adaptive Laboratory Evolution Restores Solvent Tolerance in Plasmid-Cured Pseudomonas putida S12: a Molecular Analysis.} & 2021 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1128/aem.00041-21}{10.\allowbreak 1128/\allowbreak aem.\allowbreak 00041-\allowbreak 21} \\
+\addlinespace[2pt]
+85 & \org{P. putida} & \sourcetext{Understanding butanol tolerance and assimilation in Pseudomonas putida BIRD-1: an integrated omics approach.} & 2016 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1111/1751-7915.12328}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 12328} \\
+\addlinespace[2pt]
+86 & \org{P. putida} & \sourcetext{Novel Toxin-Antitoxin Module SlvT-SlvA Regulates Megaplasmid Stability and Incites Solvent Tolerance in Pseudomonas putida S12.} & 2020 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1128/aem.00686-20}{10.\allowbreak 1128/\allowbreak aem.\allowbreak 00686-\allowbreak 20} \\
+\addlinespace[2pt]
+87 & \org{P. putida} & \sourcetext{Phospholipid biosynthesis and solvent tolerance in Pseudomonas putida strains.} & 1997 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1128/jb.179.13.4219-4226.1997}{10.\allowbreak 1128/\allowbreak jb.\allowbreak 179.\allowbreak 13.\allowbreak 4219-\allowbreak 4226.\allowbreak 1997} \\
+\addlinespace[2pt]
+88 & \org{P. putida} & \sourcetext{Engineering thermal stability and solvent tolerance of the soluble quinoprotein PedE from Pseudomonas putida KT2440 with a heterologous whole-cell screening approach.} & 2018 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1111/1751-7915.13036}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 13036} \\
+\addlinespace[2pt]
+89 & \org{P. putida} & \sourcetext{Regulation of solvent tolerance in Pseudomonas putida S12 mediated by mobile elements.} & 2017 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1111/1751-7915.12495}{10.\allowbreak 1111/\allowbreak 1751-\allowbreak 7915.\allowbreak 12495} \\
+\addlinespace[2pt]
+90 & \org{P. putida} & \sourcetext{Dynamic Response of Pseudomonas putida S12 to Sudden Addition of Toluene and the Potential Role of the Solvent Tolerance Gene trgI.} & 2015 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1371/journal.pone.0132416}{10.\allowbreak 1371/\allowbreak journal.\allowbreak pone.\allowbreak 0132416} \\
+\addlinespace[2pt]
+91 & \org{P. putida} & \sourcetext{Identification of conditionally essential genes for growth of Pseudomonas putida KT2440 on minimal medium through the screening of a genome-wide mutant library.} & 2010 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1111/j.1462-2920.2010.02166.x}{10.\allowbreak 1111/\allowbreak j.\allowbreak 1462-\allowbreak 2920.\allowbreak 2010.\allowbreak 02166.\allowbreak x} \\
+\addlinespace[2pt]
+92 & \org{P. putida} & \sourcetext{Proteomic analysis of Pseudomonas putida reveals an organic solvent tolerance-related gene mmsB.} & 2013 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1371/journal.pone.0055858}{10.\allowbreak 1371/\allowbreak journal.\allowbreak pone.\allowbreak 0055858} \\
+\addlinespace[2pt]
+93 & \org{P. putida} & \sourcetext{Transcriptional phase variation at the flhB gene of Pseudomonas putida DOT-T1E is involved in response to environmental changes and suggests the participation of the flagellar export system in solvent tolerance.} & 2004 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1128/jb.186.6.1905-1909.2004}{10.\allowbreak 1128/\allowbreak jb.\allowbreak 186.\allowbreak 6.\allowbreak 1905-\allowbreak 1909.\allowbreak 2004} \\
+\addlinespace[2pt]
+94 & \org{P. putida} & \sourcetext{An antirepressor, SrpR, is involved in transcriptional regulation of the SrpABC solvent tolerance efflux pump of Pseudomonas putida S12.} & 2011 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1128/jb.00149-11}{10.\allowbreak 1128/\allowbreak jb.\allowbreak 00149-\allowbreak 11} \\
+\addlinespace[2pt]
+95 & \org{P. putida} & \sourcetext{Adaptive laboratory evolution and genetic engineering improved terephthalate utilization in Pseudomonas putida KT2440.} & 2025 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1016/j.ymben.2024.12.006}{10.\allowbreak 1016/\allowbreak j.\allowbreak ymben.\allowbreak 2024.\allowbreak 12.\allowbreak 006} \\
+\addlinespace[2pt]
+97 & \org{P. putida} & \sourcetext{Adaptive laboratory evolution rewires  Pseudomonas putida  for resource-efficient acetate assimilation} & 2026 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.64898/2026.08.20.746122}{10.\allowbreak 64898/\allowbreak 2026.\allowbreak 08.\allowbreak 20.\allowbreak 746122} \\
+\addlinespace[2pt]
+98 & \org{P. putida} & \sourcetext{Automated mini-bioreactors reveal the temporal dynamics and multi-omics responses of CRISPRi knockdowns in  Pseudomonas putida} & 2026 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.64898/2026.03.06.709552}{10.\allowbreak 64898/\allowbreak 2026.\allowbreak 03.\allowbreak 06.\allowbreak 709552} \\
+\addlinespace[2pt]
+99 & \org{P. putida} & \sourcetext{Adaptive laboratory evolution unlocks membrane permeability as a key limitation in long-chain alcohol metabolism by  Pseudomonas putida  KT2440} & 2026 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.64898/2026.01.19.700371}{10.\allowbreak 64898/\allowbreak 2026.\allowbreak 01.\allowbreak 19.\allowbreak 700371} \\
+\addlinespace[2pt]
+100 & \org{P. putida} & \sourcetext{Functional analysis of the fatty acid and alcohol metabolism of  Pseudomonas putida  using RB-TnSeq} & 2020 & Scale anchor & \sourcetext{Genome-scale/omics phenotype} & -- & \href{https://doi.org/10.1101/2020.07.04.188060}{10.\allowbreak 1101/\allowbreak 2020.\allowbreak 07.\allowbreak 04.\allowbreak 188060} \\
+\addlinespace[2pt]
+\end{longtable}
+\endgroup
+\end{landscape}

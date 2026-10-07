@@ -229,10 +229,9 @@ def test_environment_carries_the_compound_and_a_typed_ph(built: Any) -> None:
     assert compound["concentration"]["value"] == 34.4
     assert compound["concentration"]["unit"] == "uM"
     assert compound["concentration"]["basis"] == "fixed"
+    # Table S1 says benomyl was not dissolved in DMSO: no vehicle, and no gap
     assert compound["solvent"] is None
-    assert [g["field"] for g in compound["provenance_gaps"]] == ["solvent"]
-    assert compound["provenance_gaps"][0]["reason"] == "deferred_pending_source_review"
-    assert compound["provenance_gaps"][0]["resolve_with"]["page"] == "Table S1"
+    assert compound["provenance_gaps"] == []
     ph = next(
         p for p in perturbations if p["perturbation_type"] == "environment_physical"
     )
@@ -302,8 +301,9 @@ def test_every_sourced_value_is_backed_by_a_verbatim_quote_in_the_mirror() -> No
         getattr(v, name)
         for name in dir(v)
         if isinstance(getattr(v, name), SourcedValue)
-    ]
-    assert len(values) >= 30
+    ] + list(v.TABLE_S1_DOSES.values())
+    assert len(values) >= 64
+    assert {d.provenance.source_uri for d in v.TABLE_S1_DOSES.values()} == {"si/si2.md"}
     citation_keys = {value.provenance.citation_key for value in values}
     assert citation_keys == {v.CITATION_KEY, v.PIOTROWSKI_KEY, v.OHNUKI_KEY}
     for value in values:
@@ -517,17 +517,119 @@ def test_culture_environment_states_the_protocol_and_gaps_the_rest() -> None:
     ]
 
 
-def test_dmso_condition_has_no_vehicle_gap_and_inhibitors_keep_theirs() -> None:
-    """#501 finding 3: DMSO is its own condition; an inhibitor's vehicle stays a gap."""
+def _dataset_shell() -> Any:
     dataset = v.EnvChemgenVanacloig2022Dataset.__new__(v.EnvChemgenVanacloig2022Dataset)
     dataset.name = "EnvChemgenVanacloig2022Dataset"
-    dmso = dataset._compound("DMSO")
+    return dataset
+
+
+def test_table_s1_covers_exactly_the_fig_1b_conditions() -> None:
+    assert set(v.TABLE_S1_DOSES) == v.FIG_1B_TOKENS
+    assert v.TABLE_S1_DOSES["Furfural"].quote == (
+        "<tr><td>Furfural</td><td>8 mM</td><td>No</td><td>98-01-1</td>"
+        "<td>Fisher Scientific</td><td>F94-500</td></tr>"
+    )
+    assert v.TABLE_S1_DOSES["Furfural"].value == v.TableS1Row(
+        chemical="Furfural", ic30="8 mM", dissolved_in_dmso=False
+    )
+    assert v.TABLE_S1.source_uri == "si/si2.md"
+    assert v.TABLE_S1.sha256 == v.SI2_MD_SHA256
+
+
+def test_dmso_dissolved_inhibitor_carries_the_one_percent_dmso_vehicle() -> None:
+    """Vanillin's Table S1 row says 'Dissolved in DMSO? Yes'."""
+    vanillin = _dataset_shell()._compound("Vanillin")
+    assert vanillin.solvent is not None
+    assert vanillin.solvent.name == "DMSO"
+    assert vanillin.solvent.percent == 1.0
+    assert vanillin.solvent.compound == resolved_compound("DMSO")
+    assert vanillin.solvent.compound.name == "dimethyl sulfoxide"
+    assert vanillin.provenance_gaps == []
+    assert (
+        vanillin.concentration.value,
+        vanillin.concentration.unit,
+        vanillin.concentration.basis,
+    ) == (5.0, ConcentrationUnit.millimolar, DoseBasis.IC30)
+
+
+def test_water_dissolved_inhibitor_has_no_vehicle_and_no_gap() -> None:
+    """Furfural's Table S1 row says 'Dissolved in DMSO? No'."""
+    furfural = _dataset_shell()._compound("Furfural")
+    assert furfural.solvent is None
+    assert furfural.provenance_gaps == []
+
+
+def test_furfural_is_dosed_at_8_mm_ic30() -> None:
+    concentration = _dataset_shell()._concentration("Furfural")
+    assert (concentration.value, concentration.unit, concentration.basis) == (
+        8.0,
+        ConcentrationUnit.millimolar,
+        DoseBasis.IC30,
+    )
+
+
+def test_percent_compounds_keep_no_value_under_their_basis() -> None:
+    dataset = _dataset_shell()
+    for token in ("EtOH", "MBO", "IBA", "GVL"):
+        concentration = dataset._concentration(token)
+        assert (concentration.value, concentration.unit, concentration.basis) == (
+            None,
+            None,
+            DoseBasis.IC30,
+        ), token
+    assert v.TABLE_S1_DOSES["EtOH"].value.ic30 == "4%"
+    assert "IC30 '4%'" in str(v.TABLE_S1_DOSES["EtOH"].note)
+    # the OCR left GVL's cell empty and put its 1.5% on the next row
+    assert v.TABLE_S1_DOSES["GVL"].value.ic30 == ""
+    assert v.GVL_TABLE_S1_DISPLACED.value == "1.5%"
+    mms = dataset._concentration("MMS")
+    assert (mms.value, mms.unit, mms.basis) == (None, None, DoseBasis.fixed)
+
+
+def test_dipyridyl_is_dosed_at_18_ug_per_ml() -> None:
+    concentration = _dataset_shell()._concentration("22Dipyridyl")
+    assert (concentration.value, concentration.unit, concentration.basis) == (
+        18.0,
+        ConcentrationUnit.ug_per_ml,
+        DoseBasis.IC30,
+    )
+
+
+def test_table_s1_dmso_and_benomyl_rows_are_recorded_without_changing_the_dose() -> (
+    None
+):
+    """DMSO's 2.50% conflicts with the 1% v/v vehicle sentence and is left for review."""
+    dmso_row = v.TABLE_S1_DOSES["DMSO"]
+    assert dmso_row.value.ic30 == "2.50%"
+    assert "conflicts" in str(dmso_row.note)
+    dmso = _dataset_shell()._compound("DMSO")
     assert dmso.compound.name == "dimethyl sulfoxide"
     assert dmso.compound.inchikey == "IAZDPXIOMUYVGZ-UHFFFAOYSA-N"
     assert dmso.solvent is None and dmso.provenance_gaps == []
-    furfural = dataset._compound("Furfural")
-    assert [g.field for g in furfural.provenance_gaps] == ["solvent"]
-    assert furfural.provenance_gaps[0].resolve_with == v.TABLE_S1
+    assert (
+        dmso.concentration.value,
+        dmso.concentration.unit,
+        dmso.concentration.basis,
+    ) == (1.0, ConcentrationUnit.percent_v_v, DoseBasis.fixed)
+    assert v.TABLE_S1_DOSES["Benomyl"].value.ic30 == "10 ug/mL"
+    benomyl = _dataset_shell()._concentration("Benomyl")
+    assert (benomyl.value, benomyl.unit, benomyl.basis) == (
+        34.4,
+        ConcentrationUnit.micromolar,
+        DoseBasis.fixed,
+    )
+
+
+def test_an_unreadable_table_s1_cell_refuses(monkeypatch: pytest.MonkeyPatch) -> None:
+    row = v.TABLE_S1_DOSES["Furfural"]
+    odd = row.model_copy(update={"value": row.value.model_copy(update={"ic30": "8"})})
+    monkeypatch.setitem(v.TABLE_S1_DOSES, "Furfural", odd)
+    with pytest.raises(
+        ValueError, match="^Furfural: unreadable Table S1 IC30 cell '8'$"
+    ):
+        v.table_s1_ic30("Furfural")
+    with pytest.raises(ValueError, match="not a Table S1 row"):
+        v._row("<tr><td>x</td></tr>")
 
 
 # --------------------------------------------------------------------------- #
@@ -734,8 +836,8 @@ def test_full_paired_record_equals_the_hand_built_experiment(geo_built: Any) -> 
     environment = experiment["environment"]
     furfural = environment["perturbations"][0]
     assert furfural["compound"] == resolved_compound("Furfural").model_dump()
-    assert furfural["concentration"] == {"value": None, "unit": None, "basis": "IC30"}
-    assert [g["field"] for g in furfural["provenance_gaps"]] == ["solvent"]
+    assert furfural["concentration"] == {"value": 8.0, "unit": "mM", "basis": "IC30"}
+    assert furfural["solvent"] is None and furfural["provenance_gaps"] == []
     assert environment["culture_format"]["working_volume_ul"] == 1500.0
     reference = record["reference"]
     assert reference["phenotype_reference"]["units"] == v._PAIRED_UNITS

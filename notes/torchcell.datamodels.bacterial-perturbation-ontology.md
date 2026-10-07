@@ -261,14 +261,39 @@ In `tests/torchcell/datamodels/`:
 
 ### The measurement that proves the step stayed additive
 
-`python -m torchcell.provenance.schema_impact --base <merge-base>`: **35 added symbols, 1
-modified, 4 impacted datasets, 0 breaking, exit 0.** The single modified symbol is
-`BackgroundAllele`, and the change is step 2's `SYSTEMATIC_GENE_PATTERN` to
-`SGD_SYSTEMATIC_GENE_PATTERN` rename inherited from `refactor/genome-organism-agnostic`,
-not anything authored here. The four impacted datasets are exactly the four that rename
-already reaches (Hillenmeyer HET and HOM, Hoepfner, Vanacloig, Wildenhain), all via
-`BackgroundAllele`. Every class added in this step impacts nothing.
+`python -m torchcell.provenance.schema_impact --base origin/main`:
 
-Verification runs, all green: `pytest tests/torchcell/datamodels -x` (1,145 passed, 2
-skipped, 8 xfailed) and `pytest tests/torchcell/sequence tests/torchcell/datamodels
-tests/torchcell/verification -x` (1,745 passed, 3 skipped, 8 xfailed).
+```
+Changed symbols (35):   every one (added)
+Impacted datasets: none (no built loader depends on the changed symbols).
+exit 0
+```
+
+**35 added symbols, 0 modified, 0 impacted datasets.** Step 4 reaches no served dataset
+at all.
+
+Measured twice, and the difference is worth recording. Before this branch was rebased,
+the base was the pre-step-2 commit and the report read *35 added, 1 modified, 4 impacted,
+0 breaking*: the modified symbol was `BackgroundAllele` and the four datasets
+(Hillenmeyer HET and HOM, Hoepfner, Vanacloig, Wildenhain) were the ones step 2's
+`SYSTEMATIC_GENE_PATTERN` to `SGD_SYSTEMATIC_GENE_PATTERN` rename reaches. That rename
+has since landed on `main`, so it is part of the base and the only remaining delta is
+this step's own additions. Either way the conclusion is the same and is the one the step
+was designed for: **nothing authored here moves a served dataset's closure.**
+
+Verification runs, all green on the rebased tree: `pytest tests/torchcell/datamodels -x`
+(1,177 passed with the figure tests, 2 skipped, 8 xfailed) and `pytest
+tests/torchcell/sequence tests/torchcell/datamodels tests/torchcell/verification -x`
+(1,750 passed, 3 skipped, 8 xfailed). The data-gated BW25113 test passes under
+`--data` with the real `DATA_ROOT`.
+
+### One figure consequence
+
+The schematic in `notes/assets/images/schema-ontology/` is regenerated from the schema by
+a pre-commit hook, and the eleven new experiment pairs pushed its EXPERIMENT box over its
+line budget for the first time. The generator's own overflow notice ("+N more lines --
+full list in the interactive map") was wider than the box whose overflow it announces, so
+`_truncate` clipped it mid-word. Shortened in `torchcell/paper/ontology_svg.py` to fit,
+with a test that measures the notice against the real box width rather than re-checking a
+render by eye; the figure footer already carries the explorer URL, so the notice does not
+need to repeat it.

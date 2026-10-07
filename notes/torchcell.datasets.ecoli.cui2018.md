@@ -351,3 +351,28 @@ are two contexts rather than a duplicate pair.
 status `current`, which a pseudogene locus never has. The `gene_containment_sgd` row's
 name is the shared rule's label; the universe passed to it is MG1655's own GenBank locus
 set, not S288C.
+
+### Relationship to Rousset 2018, the other Bikard-lab E. coli CRISPRi row
+
+Checklist item 7 (deduplicate against the supersets) resolves to "nothing to do here",
+but the reason is worth stating because the two rows are close. The repo's own candidate
+table (`experiments/database/scripts/build_bacteria_candidate_datasets_table.py`) records
+that Rousset 2018 (PLoS Genet, doi:10.1371/journal.pgen.1007749) "starts from a pool of
+about 92000 sgRNAs targeting random chromosomal positions and is filtered to about 59000
+guides", and its Wang 2018 entry says in as many words that "the 92000-guide figure
+belongs to the Bikard-lab libraries of Cui 2018 and Rousset 2018". So the two rows are
+built on the same kind of library from the same lab.
+
+Neither subsumes the other, because the MEASUREMENTS differ: Cui screens two dCas9
+expression levels in rich medium and nothing else, while Rousset screens essentiality plus
+infection by phages lambda, T4 and 186 at MOI 1. Four of Rousset's conditions are
+environments Cui never ran, and both of Cui's strains are dCas9-dose regimes Rousset never
+ran. So both are loaded, and the deduplication rule that promotes a superset and demotes
+its subsumed rows does not fire.
+
+**Hypothesis (untested):** the two libraries share a large fraction of their spacers, so
+the same 20-nt sequence will appear in both datasets' records. That is harmless for
+record identity -- `screen_id` and the strain background differ, and `pair_uniqueness` is
+computed per dataset -- but it would make the two datasets' guides joinable, which is
+worth knowing before anyone treats them as independent samples of guide space. The two
+guide sets have NOT been compared here; doing so needs Rousset's released guide list.

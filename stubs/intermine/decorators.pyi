@@ -1,3 +1,0 @@
-from intermine.errors import ServiceError as ServiceError
-
-def requires_version(required): ...

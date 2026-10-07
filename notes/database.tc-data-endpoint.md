@@ -28,14 +28,14 @@ Recipe for serving the artifact store and the raw mirror from the Radiant VM (`r
 
    ```bash
    mkdir -p ~/.config/torchcell && chmod 700 ~/.config/torchcell
-   docker compose -f docker-compose.tc-data.yml run --rm tc-data-endpoint \
+   docker compose --env-file tc-data.conf -f docker/docker-compose.tc-data.yml run --rm tc-data-endpoint \
      python -m torchcell.datasets.server --gen-key <collaborator>
    # paste the printed {"<collaborator>": "<sha256hex>"} into ~/.config/torchcell/tc_data_keys.json (mode 600)
    ```
 
    Several collaborators are several entries in that JSON; revoke one by deleting its entry and restarting.
 
-3. Run the container from the repo checkout on Radiant with a `.env` beside the compose file:
+3. Run the container from the repo checkout on Radiant with an env file passed by `--env-file` (Compose reads a bare `.env` only from the compose file's own directory, `docker/`, since the 2026-10-07 root cleanup moved the compose files there):
 
    ```
    TC_DATA_ROOT=/mnt/zhao5/mjvolk3/projects/torchcell/tc-data
@@ -46,12 +46,12 @@ Recipe for serving the artifact store and the raw mirror from the Radiant VM (`r
    ```
 
    ```bash
-   docker compose -f docker-compose.tc-data.yml up -d --build
+   docker compose --env-file tc-data.conf -f docker/docker-compose.tc-data.yml up -d --build
    curl http://127.0.0.1:8724/health
    curl -H "X-API-Key: $KEY" http://127.0.0.1:8724/datasets
    ```
 
-   The image (`Dockerfile.tc-data`) is `python:3.13-slim` plus fastapi, uvicorn, pydantic and python-dotenv; the container runs as `TC_DATA_UID` so the root-squashed mount is readable, and all three mounts are `:ro`. The compose `HEALTHCHECK` probes `/health` through stdlib urllib.
+   The image (`docker/Dockerfile.tc-data`) is `python:3.13-slim` plus fastapi, uvicorn, pydantic and python-dotenv; the container runs as `TC_DATA_UID` so the root-squashed mount is readable, and all three mounts are `:ro`. The compose `HEALTHCHECK` probes `/health` through stdlib urllib.
 
 4. Off-LAN access goes through an ssh tunnel until a reverse proxy with TLS is set up, the same stance as `tc-lit`:
 
@@ -84,7 +84,7 @@ Steps 1 to 3 of the recipe ran on 2026-09-30; the endpoint is live on the databa
 
 - **Location.** The store and the raw mirror sit under the Taiga torchcell data tree, as siblings of the experiment outputs: `/mnt/zhao5/mjvolk3/projects/torchcell/data/torchcell/tc-data` (3 archives, `sha256sum -c SHA256SUMS` OK on arrival) and `/mnt/zhao5/mjvolk3/projects/torchcell/data/torchcell/torchcell-raw` (19 keys, 7.4 GB rsynced from `$DATA_ROOT/torchcell-raw`), not the `tc-data` sibling of `kg-releases` the recipe proposed.
 - **uid.** `rocky` is uid 1000 on Radiant and writes to Taiga as `1000:555647` (`zhao5_nfs`, files mode 660 in a setgid group), so the container runs as `TC_DATA_UID=1000:555647`, not 67392. The compose file's comment now says so.
-- **Build context.** The Neo4j checkout at `~/projects/torchcell` is old (`f3181714`, with local modifications under `database/`) and the repo has no `.dockerignore`, so building from a checkout would ship a 10 GB context. The image builds from `~/projects/tc-data/` (12 MB: `git archive HEAD torchcell Dockerfile.tc-data docker-compose.tc-data.yml` piped over ssh), image `tc-data-endpoint:latest`, 177 MB. Redeploying a code change is the same archive pipe plus `docker compose --env-file tc-data.conf -f docker-compose.tc-data.yml up -d --build`.
+- **Build context.** The Neo4j checkout at `~/projects/torchcell` is old (`f3181714`, with local modifications under `database/`) and the repo has no `.dockerignore`, so building from a checkout would ship a 10 GB context. The image builds from `~/projects/tc-data/` (12 MB: `git archive HEAD torchcell Dockerfile.tc-data docker-compose.tc-data.yml` piped over ssh), image `tc-data-endpoint:latest`, 177 MB. Redeploying a code change is the same archive pipe plus `docker compose --env-file tc-data.conf -f docker-compose.tc-data.yml up -d --build`. Since the 2026-10-07 root cleanup the two files live under `docker/`, so the archive is `git archive HEAD torchcell docker` and the compose flag is `-f docker/docker-compose.tc-data.yml` (the build context is `..`, the archive root).
 - **Config file.** The compose variables live in `~/projects/tc-data/tc-data.conf` (mode 600) and are passed with `--env-file tc-data.conf`.
 - **Key mint.** `--gen-key` output through `docker compose run` starts with the network-creation lines, so the key is the fourth line of the captured output, not the second. One key, `mjvolk3`, is stored as a hash in `~/.config/torchcell/tc_data_keys.json`; the plaintext is in `~/.config/torchcell/tc_data_key.mjvolk3.txt` on Radiant (mode 600) and nowhere else.
 - **Port.** 8724 answers on the host but not from outside (`curl` from GilaHyper: no route); Radiant has no `firewalld` and no `openstack` CLI, so the port is opened in the OpenStack security group of the VM, by hand, as 7473 and 7687 were. Until then the collaborator path is the ssh tunnel of step 4, which the downloads guide now documents.

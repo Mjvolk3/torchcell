@@ -1,4 +1,4 @@
-# Dockerfile.tc-data
+# docker/Dockerfile.tc-data
 # Slim image for the keyed dataset endpoint (torchcell.datasets.server, "tc-data").
 # It serves the artifact store and the raw mirror read-only over HTTP; it is NOT the
 # torchcell ML env. The server imports only leaf modules (torchcell.api_keys,
@@ -11,8 +11,8 @@
 # torchcell/literature/__init__.py imports the Zotero client (pyzotero). The server
 # never uses either package's public namespace, only its leaf modules.
 #
-# Build (context = repo root):  docker build -f Dockerfile.tc-data -t tc-data-endpoint:latest .
-# Run is via docker-compose.tc-data.yml (bind-mounts the store, raw mirror and keys, all :ro).
+# Build (context = repo root):  docker build -f docker/Dockerfile.tc-data -t tc-data-endpoint:latest .
+# Run is via docker/docker-compose.tc-data.yml (bind-mounts the store, raw mirror and keys, all :ro).
 
 FROM python:3.13-slim
 

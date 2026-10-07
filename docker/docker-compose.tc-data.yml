@@ -1,30 +1,34 @@
-# docker-compose.tc-data.yml
+# docker/docker-compose.tc-data.yml
 # Standalone deployment for the keyed dataset endpoint (tc-data). Kept separate from
-# docker-compose.yml (the Neo4j pipeline) and docker-compose.tc-lit.yml (the
-# literature endpoint) so each starts and stops on its own. On Radiant the container
+# docker-compose.tc-lit.yml (the literature endpoint) so each starts and stops on its
+# own; the Neo4j store is built and served by database/. On Radiant the container
 # runs as the uid:gid that owns the Taiga trees (TC_DATA_UID; measured 2026-09-30 as
 # 1000:555647, rocky:zhao5_nfs, the files are mode 660 in a setgid group, so the gid is
 # what grants the read) so the root-squashed mount is readable; nothing is staged on the
 # 40 GB root disk because every served tree is a read-only bind mount.
 #
-# Requires (from a .env in this directory or the shell environment):
+# Requires (shell environment, or an env file passed with --env-file; Compose reads a
+# .env only from the directory of the compose file):
 #   TC_DATA_ROOT        host artifact store (index.json + <slug>/<archive>.tar.xz)
 #   TC_DATA_RAW_ROOT    host raw mirror (one dir per citation key with manifest.json)
 #   TC_DATA_KEYS_FILE   host path to the JSON keys file {name: sha256hex}
 #   TC_DATA_PORT        host port to expose (default 8724)
 #   TC_DATA_UID         uid or uid:gid to run as (Radiant: 1000:555647; default 67392)
 #
+# The build context is the repo root (context: ..), so run from a checkout root (or
+# from a `git archive HEAD torchcell docker` tree, as on Radiant).
+#
 # Mint a key first (writes nothing; prints the key + hash line):
-#   docker compose -f docker-compose.tc-data.yml run --rm tc-data-endpoint \
+#   docker compose --env-file tc-data.conf -f docker/docker-compose.tc-data.yml run --rm tc-data-endpoint \
 #     python -m torchcell.datasets.server --gen-key collaborator-name
 # Then:
-#   docker compose -f docker-compose.tc-data.yml up -d --build
+#   docker compose --env-file tc-data.conf -f docker/docker-compose.tc-data.yml up -d --build
 
 services:
   tc-data-endpoint:
     build:
-      context: .
-      dockerfile: Dockerfile.tc-data
+      context: ..
+      dockerfile: docker/Dockerfile.tc-data
     image: tc-data-endpoint:latest
     container_name: tc-data-endpoint
     user: "${TC_DATA_UID:-67392}"

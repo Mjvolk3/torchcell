@@ -42,7 +42,7 @@ Convert path separators to dots and drop the extension:
 | `torchcell/models/dcell.py`                      | `notes/torchcell.models.dcell.md`                       |
 | `torchcell/transforms/coo_regression.py`         | `notes/torchcell.transforms.coo_regression.md`          |
 | `experiments/010-kuzmin-tmi/scripts/query.py`    | `notes/experiments.010-kuzmin-tmi.scripts.query.md`     |
-| `scripts/build.sh`                               | `notes/scripts.build.md`                                |
+| `scripts/ops.sh`                                 | `notes/scripts.ops.md`                                  |
 | `notes/assets/scripts/add_frontmatter.py`        | `notes/notes.assets.scripts.add_frontmatter.md`         |
 
 **Rules:**
@@ -137,5 +137,5 @@ All module notes staged.
 
 - `/update-src-notes` -- auto-discover (staged then modified)
 - `/update-src-notes torchcell/models/dcell.py`
-- `/update-src-notes scripts/build.sh torchcell/timestamp.py`
+- `/update-src-notes scripts/ops.sh torchcell/timestamp.py`
 - "update source notes for changed files"

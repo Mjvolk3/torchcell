@@ -19,7 +19,7 @@ Thin meta-skill. It does **no weekly or source-note logic of its own** -- it run
 
 Optional file path arguments pass straight through to the source-notes step (Part 1):
 
-- **With arguments** (e.g. `/update-notes torchcell/models/dcell.py scripts/build.sh`): update only those files.
+- **With arguments** (e.g. `/update-notes torchcell/models/dcell.py scripts/ops.sh`): update only those files.
 - **No arguments**: source-notes step auto-discovers (staged first, then modified).
 
 ---

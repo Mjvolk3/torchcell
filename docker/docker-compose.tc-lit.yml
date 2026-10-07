@@ -1,24 +1,28 @@
-# docker-compose.tc-lit.yml
+# docker/docker-compose.tc-lit.yml
 # Standalone deployment for the keyed literature endpoint on GilaHyper. Kept
-# separate from docker-compose.yml (the Neo4j build/import/deploy pipeline) so it
-# starts/stops independently and does not entangle with that lifecycle.
+# separate from docker-compose.tc-data.yml (the dataset endpoint) so each starts and
+# stops on its own. The Neo4j store is built and served by database/ (its own
+# Dockerfiles under database/docker/), not by compose.
 #
-# Requires (from a .env in this directory or the shell environment):
+# Requires (shell environment, or an env file passed with --env-file):
 #   DATA_ROOT         host mirror root (contains torchcell-library/); already in the repo .env
 #   TC_LIT_KEYS_FILE  host path to the JSON keys file {name: sha256hex}
 #   TC_LIT_PORT       host port to expose (default 8723)
 #
+# Compose reads variables only from a .env beside the compose file, so from the repo
+# root pass the repo .env explicitly. The build context is the repo root (context: ..).
+#
 # Mint a key first (writes nothing; prints the key + hash line):
-#   docker compose -f docker-compose.tc-lit.yml run --rm tc-lit-endpoint \
+#   docker compose --env-file .env -f docker/docker-compose.tc-lit.yml run --rm tc-lit-endpoint \
 #     python -m torchcell.literature.server --gen-key mac-m1
 # Then:
-#   docker compose -f docker-compose.tc-lit.yml up -d --build
+#   docker compose --env-file .env -f docker/docker-compose.tc-lit.yml up -d --build
 
 services:
   tc-lit-endpoint:
     build:
-      context: .
-      dockerfile: Dockerfile.tc-lit
+      context: ..
+      dockerfile: docker/Dockerfile.tc-lit
     image: tc-lit-endpoint:latest
     container_name: tc-lit-endpoint
     ports:

@@ -2,7 +2,7 @@
     "folders": [
         {
             "name": "torchcell",
-            "path": "."
+            "path": "../.."
         },
         {
             "name": "🖼 screenshots (tmp)",
@@ -14,23 +14,23 @@
         },
         {
             "name": "sgatools (reference: gitter colony IA)",
-            "path": "../sgatools"
+            "path": "../../../sgatools"
         },
         {
             "name": "iBioFoundry-AI",
-            "path": "../iBioFoundry-AI"
+            "path": "../../../iBioFoundry-AI"
         },
         {
             "name": "Parameter_Estimation",
-            "path": "../Parameter_Estimation"
+            "path": "../../../Parameter_Estimation"
         },
         {
             "name": "Gene_Graph",
-            "path": "../Gene_Graph"
+            "path": "../../../Gene_Graph"
         },
         {
             "name": "MATH-490-Project",
-            "path": "../MATH-490-Project"
+            "path": "../../../MATH-490-Project"
         },
         {
             "name":"torchcell_hosted_data",
@@ -38,57 +38,57 @@
         },
         {
             "name": "______________",
-            "path": "../______________"
+            "path": "../../../______________"
         },
         {
             "name": "yeast-GEM",
-            "path": "../yeast-GEM"
+            "path": "../../../yeast-GEM"
         },
         {
             "name": "Gene_Graph",
-            "path": "../Gene_Graph"
+            "path": "../../../Gene_Graph"
         },
         {
             "name": "multi_knockout",
-            "path": "../multi_knockout"
+            "path": "../../../multi_knockout"
         },
         {
             "name": "torchgeo",
-            "path": "../torchgeo"
+            "path": "../../../torchgeo"
         },
         {
             "name": "GraphGym",
-            "path": "../GraphGym"
+            "path": "../../../GraphGym"
         },
         {
             "name": "pytorch_geometric",
-            "path": "../pytorch_geometric"
+            "path": "../../../pytorch_geometric"
         },
         {
             "name": "intermine-ws-python",
-            "path": "../intermine-ws-python"
+            "path": "../../../intermine-ws-python"
         },
         {
             "name": "SpeciesLM",
-            "path": "../SpeciesLM"
+            "path": "../../../SpeciesLM"
         },
         {   "name": "biocypher",
-            "path": "../biocypher"
+            "path": "../../../biocypher"
         },
         {   "name": "collectri",
-            "path": "../collectri"
+            "path": "../../../collectri"
         },
         {   "name": "Dist-Loss",
-            "path": "../Dist-Loss"
+            "path": "../../../Dist-Loss"
         },
         {   "name": "CausCell",
-            "path": "../CausCell"
+            "path": "../../../CausCell"
         },
         {   "name": "HyperNetX",
-            "path": "../HyperNetX"
+            "path": "../../../HyperNetX"
         },
         {   "name": "iBioFoundry-AI",
-            "path": "../iBioFoundry-AI"
+            "path": "../../../iBioFoundry-AI"
         }
     ],
     "settings": {

@@ -2,27 +2,27 @@
     "folders": [
         {
             "name": "torchcell",
-            "path": "."
+            "path": "../.."
         },
         {
             "name": "iBioFoundry-AI",
-            "path": "../iBioFoundry-AI"
+            "path": "../../../iBioFoundry-AI"
         },
         {
             "name": "torchcell-scratch",
-            "path": "./torchcell-scratch"
+            "path": "../../torchcell-scratch"
         },
         {
             "name": "Swanki",
-            "path": "../Swanki"
+            "path": "../../../Swanki"
         },
         {
             "name": "torchcell-overleaf",
-            "path": "../torchcell-overleaf"
+            "path": "../../../torchcell-overleaf"
         },
         {
             "name": "thesis",
-            "path": "../thesis"
+            "path": "../../../thesis"
         },
         {
             "name": "🪦 deprecated (scratch graveyard)",

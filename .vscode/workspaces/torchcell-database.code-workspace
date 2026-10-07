@@ -2,20 +2,16 @@
     "folders": [
         {
             "name": "torchcell",
-            "path": "."
-        },
-        {
-            "name": "~/scratch/torchcell",
-            "path": "/home/a-m/mjvolk3/scratch/torchcell"
+            "path": "../.."
         }
     ],
     "settings": {
-        // Workspace appearance - IGB specific color
+        // Workspace appearance - Database specific color
         "workbench.colorCustomizations": {
-            "titleBar.activeBackground": "#6d1400df"
+            "titleBar.activeBackground": "#ffa600e7"
         },
 
-        // Mypy - Note: uses M1 paths (possibly incorrect for IGB)
+        // Mypy - M1 specific paths
         "mypy.dmypyExecutable": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/dmypy",
         "mypy.enabled": true,
         "mypy.runUsingActiveInterpreter": false,

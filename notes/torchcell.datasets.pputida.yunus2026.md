@@ -254,13 +254,13 @@ silently lose a guide.
 
 ### Compound identity
 
-`isoprenol` (3-methyl-3-buten-1-ol) still has no row in
-`compound_identity_table.json`, so `resolved_compound("isoprenol")` returns the name with
-an `inchikey` gap. Its key, `CPJRRXSHAYUTGL-UHFFFAOYSA-N`, is pinned as
-`ISOPRENOL_INCHIKEY` and `check_isoprenol_identity()` stops the build if the table ever
-gains a row that disagrees. Curating that row is a human act and is raised in the PR, as
-it was for [[torchcell.datasets.ecoli.wang2015]] and
-[[torchcell.datasets.pputida.carruthers2025]].
+`isoprenol` (3-methyl-3-buten-1-ol) has a row in `compound_identity_table.json` since the
+bacterial schema follow-ups (PR #729), which landed while this branch was in flight, so
+`resolved_compound("isoprenol")` returns the curated identity. Its key,
+`CPJRRXSHAYUTGL-UHFFFAOYSA-N`, is pinned as `ISOPRENOL_INCHIKEY` and
+`check_isoprenol_identity()` stops the build if the row ever disagrees. No released titer
+means no record stores the compound; the same row serves
+[[torchcell.datasets.ecoli.wang2015]] and [[torchcell.datasets.pputida.carruthers2025]].
 
 ### Running it
 

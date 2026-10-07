@@ -278,10 +278,10 @@ MEASUREMENT_TYPE = "dia_nn_top3_relative_to_control_strain"
 #: The reference strain's value on that scale: the ratio's denominator, by definition.
 REFERENCE_RELATIVE_EXPRESSION = 1.0
 
-#: isoprenol (3-methyl-3-buten-1-ol), the campaign's product. It has no row in the
-#: committed ``compound_identity_table.json``, so no titer record could carry a sourced
-#: identity even if a titer were released; the key is pinned here and checked against
-#: any row the table gains. Curating that row is a human act (see the PR).
+#: isoprenol (3-methyl-3-buten-1-ol), the campaign's product. Its row in
+#: ``compound_identity_table.json`` landed with PR #729; the key is pinned here and checked
+#: against that row so a later curation cannot silently disagree with this module. No titer
+#: is released, so no record stores the compound.
 ISOPRENOL_INCHIKEY = "CPJRRXSHAYUTGL-UHFFFAOYSA-N"
 
 # --------------------------------------------------------------------------- #
@@ -1445,9 +1445,9 @@ def reference_phenotype(
 def check_isoprenol_identity() -> None:
     """Stop if the compound table gains an isoprenol row with another InChIKey.
 
-    The campaign's product has no row today, so a titer record could not carry a sourced
-    identity even if a titer were released. The pinned key is recorded so curating the
-    row cannot silently disagree with this module.
+    The campaign's titers are not released, so no record stores the compound; the pinned
+    key is checked against the table's row (landed in PR #729) so a later curation cannot
+    silently disagree with this module.
     """
     compound = resolved_compound("isoprenol")
     if compound.inchikey is not None and compound.inchikey != ISOPRENOL_INCHIKEY:

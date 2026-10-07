@@ -974,15 +974,14 @@ def test_publication_carries_the_doi_this_paper_has() -> None:
     assert pub.doi_url is not None and y26.PAPER_DOI in pub.doi_url
 
 
-def test_check_isoprenol_identity_passes_while_the_compound_has_no_row() -> None:
-    """Today the resolver returns the name with an inchikey gap, so the guard is quiet."""
+def test_check_isoprenol_identity_passes_on_the_committed_table_row() -> None:
+    """The table's isoprenol row carries the pinned key, so the guard is quiet."""
     from torchcell.datamodels.compound_identity import resolved_compound
 
     compound = resolved_compound("isoprenol")
     assert compound.name == "isoprenol"
-    assert compound.inchikey is None
-    assert compound.gapped_fields() == {"inchikey"}
-    assert y26.ISOPRENOL_INCHIKEY == "CPJRRXSHAYUTGL-UHFFFAOYSA-N"
+    assert compound.inchikey == y26.ISOPRENOL_INCHIKEY == "CPJRRXSHAYUTGL-UHFFFAOYSA-N"
+    assert compound.gapped_fields() == set()
     y26.check_isoprenol_identity()
 
 

@@ -9,6 +9,7 @@ from pydantic import SecretStr
 
 from torchcell.literature.backfill import library_root
 from torchcell.literature.sync import (
+    DEFAULT_COLLECTIONS,
     DEFAULT_PERSONAL_ROOTS,
     KeySyncResult,
     SyncMode,
@@ -401,3 +402,14 @@ def test_sync_collection_reports_unsupported_and_a_failed_capture(
     ]
     assert records[0].exc_info is not None
     assert str(records[0].exc_info[1]) == "upstream 503"
+
+
+def test_default_collections_reach_the_nested_bacterial_collections() -> None:
+    """The bacterial collections sit under ``database/`` and need their own pass."""
+    assert DEFAULT_COLLECTIONS == (
+        "database",
+        "paper",
+        "microbe-perturb-seq",
+        "Escherichia-coli",
+        "Pseudomonas-putida",
+    )

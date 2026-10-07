@@ -13,11 +13,20 @@ Retrieval-method reality (verified 2026.07): Springer ESM
 (``static-content.springer.com``) and the PMC OA API are scriptable; PMC file
 downloads (JS proof-of-work) and ``nature.com`` (auth redirect) are not -- those
 route through Zotero or, in future, the Radiant VM endpoint (issue #20).
+
+Measured 2026-10-07: the PMC OA web service (``oa.fcgi``) answers HTTP 404 for every
+id tried, so :func:`pmc_oa_api` no longer retrieves anything. Its successor is the PMC
+Article Datasets bucket on AWS (``pmc-oa-opendata``), read with
+:func:`pmc_cloud_object`. The supplementary-file retrievers used by
+``torchcell.literature.capture_si`` (:func:`pmc_cloud_object`,
+:func:`plos_supplementary`, :func:`elsevier_mmc`, plus :func:`springer_esm` and
+:func:`direct_url`) are each a plain GET of one URL built from their params.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable
+from urllib.parse import quote
 
 import httpx
 
@@ -25,6 +34,11 @@ _UA = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/120 Safari/537.36 torchcell-literature"
 )
+
+#: The PMC Article Datasets bucket: ``<PMCID>.<version>/<file>`` per article version.
+PMC_CLOUD_BUCKET = "https://pmc-oa-opendata.s3.amazonaws.com"
+#: Elsevier's asset CDN; supplementary files are ``1-s2.0-<PII>-mmc<N>.<ext>``.
+ELSEVIER_ARS = "https://ars.els-cdn.com/content/image"
 
 
 def _get(url: str, *, timeout: float = 120.0) -> bytes:
@@ -101,6 +115,57 @@ def pmc_oa_api(pmcid: str) -> bytes:
     return _get(href)
 
 
+def pmc_cloud_url(key: str) -> str:
+    """HTTPS URL of one object in the PMC Article Datasets bucket."""
+    return f"{PMC_CLOUD_BUCKET}/{quote(key, safe='/')}"
+
+
+def pmc_cloud_object(key: str) -> bytes:
+    """Retrieve one object of the PMC Article Datasets bucket (``pmc-oa-opendata``).
+
+    ``key`` is the bucket key, ``<PMCID>.<version>/<file>``, e.g.
+    ``PMC11176082.1/41588_2024_1769_MOESM3_ESM.xlsx``. The bucket holds the
+    open-access and author-manuscript subsets of PMC, one prefix per article version,
+    and is the scriptable successor of the retired OA package service.
+    """
+    return _get(pmc_cloud_url(key))
+
+
+def plos_supplementary_url(journal: str, object_doi: str) -> str:
+    """PLOS article-file URL of one supplementary object (``<doi>.s001`` ...)."""
+    return (
+        f"https://journals.plos.org/{journal}/article/file"
+        f"?id={object_doi}&type=supplementary"
+    )
+
+
+def plos_supplementary(journal: str, object_doi: str) -> bytes:
+    """Retrieve one PLOS supplementary file by its object DOI.
+
+    ``journal`` is the site slug (``plosgenetics``, ``plosone`` ...) and
+    ``object_doi`` the file's own DOI, e.g. ``10.1371/journal.pgen.1004120.s001``. The
+    URL redirects to a signed storage URL that changes per request; the article-file
+    URL is the stable one and is what the record keeps.
+    """
+    return _get(plos_supplementary_url(journal, object_doi))
+
+
+def elsevier_mmc_url(pii: str, filename: str) -> str:
+    """Elsevier CDN URL of a supplementary file (``filename`` like ``mmc2.xlsx``)."""
+    return f"{ELSEVIER_ARS}/1-s2.0-{pii}-{filename}"
+
+
+def elsevier_mmc(pii: str, filename: str) -> bytes:
+    """Retrieve one Elsevier / Cell Press supplementary file from ``ars.els-cdn.com``.
+
+    ``pii`` is the article's PII without punctuation (Crossref ``alternative-id``,
+    e.g. ``S2405471220303665``) and ``filename`` the multimedia component name
+    (``mmc1.pdf``). The CDN serves these directly although ScienceDirect and cell.com
+    article pages answer scripted clients with HTTP 403.
+    """
+    return _get(elsevier_mmc_url(pii, filename))
+
+
 # Registry: dotted path -> retriever. RetrievalRecord.retriever names a key here.
 # The ``radiant_endpoint`` RetrievalMethod slot (issue #20) is intentionally left
 # without a retriever here: it is reserved for the Radiant VM serving library-rebuild
@@ -112,4 +177,7 @@ RETRIEVERS: dict[str, Callable[..., bytes]] = {
     "torchcell.literature.retrieve.direct_url": direct_url,
     "torchcell.literature.retrieve.zip_member": zip_member,
     "torchcell.literature.retrieve.pmc_oa_api": pmc_oa_api,
+    "torchcell.literature.retrieve.pmc_cloud_object": pmc_cloud_object,
+    "torchcell.literature.retrieve.plos_supplementary": plos_supplementary,
+    "torchcell.literature.retrieve.elsevier_mmc": elsevier_mmc,
 }

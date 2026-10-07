@@ -476,3 +476,85 @@ is arm64-only, so `make` aborts before Tectonic starts. `arch -arm64 make` works
 passes clean, 0 errors and 0 warnings over 17 SOURCE comments, and the 61-page PDF was
 published to Zotero as `bc664c2d`, the third version in
 `torchcell / notes-tex / database-expansion-bacteria`.
+
+## 2026.10.07 - The queue table, and the stale output path
+
+### Both generators wrote to a directory that no longer exists
+
+Commit 1261b9c6a moved the document to `notes-tex/database/database-expansion-bacteria/`
+(the notes-tex group layer), but `build_bacteria_candidate_datasets_table.py` and
+`build_bacteria_discovery_queue.py` both still set
+`TEX_DIR = REPO / "notes-tex" / "database-expansion-bacteria" / "tables"`. A rerun would
+have recreated the old directory and left the built document reading the previous
+tables. Both `TEX_DIR`s and both docstring "Emits:" lists now name the group path.
+
+### The queue less the fifty: `tables/queue-rows.tex`
+
+A new section, `sections/queue.tex` (`sec:queue`), sits after the ranked list and before
+the analogs, and inputs a new generated table, `tab:bqueuerows`: every row of the
+300-publication discovery queue except the rows that are among the fifty recommended
+builds. Columns are the source's rank within its host, host, title, year, portfolio
+class, product or readout, isoprenol flag, and the DOI as a clickable link. The section
+also defines the source's three portfolio classes, quoting its own Field Guide sheet, so
+Joint, ME breadth and Scale anchor are defined in the document for the first time.
+
+The exclusion is matched on the DOI, lowercased and without its resolver prefix, against
+the first `TRANCHE_2` rows of `ranked()`. The queue script now imports the curated module
+and calls `ranked()` directly instead of reading `results/candidates/bacteria_candidate_datasets.json`.
+That JSON is untracked, and the fresh worktree had no `results/candidates/` directory at
+all; the old `curated_dois()` returned `{}` when the file was missing, so running the queue
+script first would have printed every Curated count as zero without an error. A curated
+row with no DOI in its `url` is now a hard failure. `QueueRow` gained `product` (the
+source's "Product / readout" column) and `curated_rank`.
+
+Counts, as printed by `python experiments/database/scripts/build_bacteria_discovery_queue.py`
+on 2026.10.07:
+
+- 300 queue rows, 200 *E. coli* and 100 *P. putida*; 29 match a row anywhere in the
+  89-row curated table (unchanged from the committed `tab:bqueue`).
+- **19 removed** as the fifty (9 *E. coli*, 10 *P. putida*), **281 kept** (191
+  *E. coli*, 90 *P. putida*).
+- 10 of the 281 are already curated in the ranked reserve (rows 51 to 89) and carry a
+  superscript R; the caption says so.
+- 1 kept row has no DOI in the source (*E. coli* rank 191, PMC5610773) and links its PMC
+  record instead.
+- The source's product field is a placeholder on most rows: 101 carry one of its two
+  generic labels and 180 a phrase taken from the title, 44 of those cut mid-word ("ing of
+  Pseudomonas putida for ..."). It is printed as given.
+
+The expectation going in was about 250 rows. It is 281 because only 19 of the fifty are
+in the queue at all; the other 31 have no DOI match in it.
+
+### Captions that claimed more rows than they print
+
+`render_sources` and `render_analogs` are passed `rows[:TRANCHE_2]`, but their captions
+read "Sources for Table~\ref{tab:bfinal}" and "What each bacterial row maps onto". Both
+now say they cover the fifty recommended builds, rows 1 to 50, and that the reserve is not
+listed. The same overclaim was in three more places and is fixed there too: the pointer at
+the end of the `tab:bfinal` caption, the abstract paragraph (which also now points to the
+queue table), and "for every row" in `sections/analogs.tex`. The 50-row slicing is
+unchanged.
+
+### Dropped glyphs, including in the published isoprenol table
+
+The first build logged 23 "Missing character" warnings: the Latin Modern text font has no
+alpha, beta, Delta or omega, and no non-breaking hyphen or thin space, so TeX silently
+dropped them ("beta-Alanine" printed as "-Alanine"). 21 were in the new table and 2 were in
+the already-committed `queue-iso.tex`, so the previously built PDF carried two titles with
+a missing letter. `UNICODE_TEX` in the queue script maps each to TeX after escaping, and
+both queue tables use it. The rebuilt log has zero.
+
+### Build state
+
+`make -C notes-tex/database/database-expansion-bacteria` builds 77 pages (61 before), with
+no missing characters and no overfull boxes. Tables number 1 to 11 in order with the queue
+rows as Table 7, and `make check` is clean: 0 errors, 0 warnings, 19 SOURCE comments,
+0 style violations. The PDF was not republished to Zotero from this branch.
+
+### The fifty are in Zotero
+
+Reported by the author, not checked from this branch: the 50 recommended papers were filed
+on 2026.10.07 in the group library, 35 in `database/Escherichia-coli` and 15 in
+`database/Pseudomonas-putida`, matched to the candidate rows by DOI. Those per-host counts
+agree with the generator's own split of the fifty after the pins, 35 *E. coli* and 15
+*P. putida*.

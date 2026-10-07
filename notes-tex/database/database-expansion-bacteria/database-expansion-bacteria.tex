@@ -45,11 +45,13 @@ namespace rejects every bacterial gene name, and the genomes tier has no bacteri
 assembly set. A third thing expected to block turns out not to, since the reference genome
 record already accepts either host unchanged.
 
-Table~\ref{tab:banalogs} is the column that answers whether these rows fit the record
-types already in use: for each one, the built yeast dataset it mirrors and what the
-loader would still need. Table~\ref{tab:bsources} gives each row's citation, link and
-data location; Table~\ref{tab:bexcluded} records what was considered and dropped;
-Sec.~\ref{sec:summary} closes with the summary statistics and the confidence split.
+For each of the fifty recommended builds, Table~\ref{tab:banalogs} answers whether the
+row fits the record types already in use, naming the built yeast dataset it mirrors and
+what the loader would still need, and Table~\ref{tab:bsources} gives its citation, link
+and data location. Table~\ref{tab:bqueuerows} lists the unverified discovery queue behind
+the list, less the fifty; Table~\ref{tab:bexcluded} records what was considered and
+dropped; Sec.~\ref{sec:summary} closes with the summary statistics and the confidence
+split.
 
 \vspace{0.5em}
 \tccontents
@@ -59,6 +61,7 @@ Sec.~\ref{sec:summary} closes with the summary statistics and the confidence spl
 \input{sections/isoprenol}
 \input{sections/schema}
 \input{sections/list}
+\input{sections/queue}
 \input{sections/analogs}
 \input{sections/caveats}
 \input{sections/summary}

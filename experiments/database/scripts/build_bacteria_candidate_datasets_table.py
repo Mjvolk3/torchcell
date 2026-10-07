@@ -37,19 +37,20 @@ mechanism because the alternative is a hand-tuned weight that would hide the sam
 decision inside a score.
 
 Emits, off the same records:
-  - notes-tex/database-expansion-bacteria/tables/final.tex       (the ranked list)
-  - notes-tex/database-expansion-bacteria/tables/sources.tex     (citation, link, data)
-  - notes-tex/database-expansion-bacteria/tables/counts.tex      (per-class, per-organism)
-  - notes-tex/database-expansion-bacteria/tables/summary.tex     (summary statistics)
-  - notes-tex/database-expansion-bacteria/tables/analogs.tex     (yeast analog per row)
-  - notes-tex/database-expansion-bacteria/tables/schema.tex      (what the schema needs)
-  - notes-tex/database-expansion-bacteria/tables/excluded.tex    (considered and dropped)
-  - notes-tex/database-expansion-bacteria/tables/pins.tex        (isoprenol rows lifted)
-  - <results>/candidates/bacteria_candidate_datasets.json        (machine-readable dump)
+  - notes-tex/database/database-expansion-bacteria/tables/final.tex     (the ranked list)
+  - notes-tex/database/database-expansion-bacteria/tables/sources.tex   (citation, link, data; the fifty)
+  - notes-tex/database/database-expansion-bacteria/tables/counts.tex    (per-class, per-organism)
+  - notes-tex/database/database-expansion-bacteria/tables/summary.tex   (summary statistics)
+  - notes-tex/database/database-expansion-bacteria/tables/analogs.tex   (yeast analog; the fifty)
+  - notes-tex/database/database-expansion-bacteria/tables/schema.tex    (what the schema needs)
+  - notes-tex/database/database-expansion-bacteria/tables/excluded.tex  (considered and dropped)
+  - notes-tex/database/database-expansion-bacteria/tables/pins.tex      (isoprenol rows lifted)
+  - <results>/candidates/bacteria_candidate_datasets.json                (machine-readable dump)
 
 The 300-publication sweep behind this list is a separate artifact with a separate
 script, ``build_bacteria_discovery_queue.py``: its rows carry no verified counts and
-must not be confused with these.
+must not be confused with these. That script imports ``ranked()`` from here, so the
+fifty it excludes from its row table are always the fifty this script prints.
 
 Run from the repo root:
   python experiments/database/scripts/build_bacteria_candidate_datasets_table.py
@@ -69,7 +70,7 @@ from pydantic import BaseModel, Field
 SCRIPT = Path(__file__).resolve()
 REPO = SCRIPT.parents[3]
 RESULTS = SCRIPT.parent.parent / "results"
-TEX_DIR = REPO / "notes-tex" / "database-expansion-bacteria" / "tables"
+TEX_DIR = REPO / "notes-tex" / "database" / "database-expansion-bacteria" / "tables"
 JSON_OUT = RESULTS / "candidates" / "bacteria_candidate_datasets.json"
 
 SOURCE_LINE = (
@@ -5459,9 +5460,11 @@ rather than a reported count and $\ddagger$ where it is an order-of-magnitude es
 \emph{Sequence basis} is the route to each strain's total genomic content; a row with no
 route is excluded (Table~\ref{tab:bexcluded}). Superscript \textbf{B} marks a row whose
 per-record values are not released, \textbf{A} a corpus that re-serves other papers and
-is not net new until split by source. Citations and data locations are in
-Table~\ref{tab:bsources}; the yeast dataset each row mirrors is in
-Table~\ref{tab:banalogs}.}
+is not net new until split by source. For the fifty recommended builds, rows 1--"""
+        + str(TRANCHE_2)
+        + r""", citations and data locations
+are in Table~\ref{tab:bsources} and the yeast dataset each row mirrors is in
+Table~\ref{tab:banalogs}; the reserve rows below the cut appear in neither.}
 \label{tab:bfinal}\\
 \toprule
 """
@@ -5553,9 +5556,12 @@ def render_sources(rows: list[Candidate]) -> str:
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.15}
 \begin{longtable}{@{}r@{\hspace{4pt}} L{86mm} L{74mm} L{78mm}@{}}
-\caption[]{Sources for Table~\ref{tab:bfinal}, in the same order. \emph{Data} is where
-the per-record values live; an entry marked unconfirmed was not fetched live and must be
-checked before a loader is written. Every link is clickable.}
+\caption[]{Sources for the fifty recommended builds, rows 1--"""
+        + str(TRANCHE_2)
+        + r""" of
+Table~\ref{tab:bfinal}, in the same order; the ranked reserve below the cut is not listed.
+\emph{Data} is where the per-record values live; an entry marked unconfirmed was not
+fetched live and must be checked before a loader is written. Every link is clickable.}
 \label{tab:bsources}\\
 \toprule
 """
@@ -5618,7 +5624,11 @@ def render_analogs(rows: list[Candidate]) -> str:
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.15}
 \begin{longtable}{@{}r@{\hspace{4pt}} L{40mm} L{40mm} L{74mm} L{74mm}@{}}
-\caption[]{What each bacterial row maps onto in the supported set. A named analog means
+\caption[]{What each of the fifty recommended builds, rows 1--"""
+        + str(TRANCHE_2)
+        + r""" of
+Table~\ref{tab:bfinal}, maps onto in the supported set; the ranked reserve below the cut is
+not listed. A named analog means
 the loader writes a record type the schema already holds, against a different reference
 genome, so the work is the retrieval and the provenance rather than a new phenotype
 class. \emph{What the schema still needs} is per-row and excludes the two blockers every

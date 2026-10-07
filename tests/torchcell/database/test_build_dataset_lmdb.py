@@ -21,6 +21,15 @@ build tree), the exact refusals for an unregistered class and an existing
 ``processed/lmdb``, and the genome and graph injection rule on recorder classes (built
 only when the loader's ``__init__`` names ``genome`` or ``scerevisiae_graph``, each
 passed only when named, the genome with ``overwrite=False``).
+
+2026.10.07 (bacterial loader skeleton): injection is by parameter NAME. A loader naming
+``ecoli_genome`` or ``pputida_genome`` receives the genome of its ``REFERENCE_STRAIN``
+from that strain's default cache root (``overwrite=False``) and no S288C genome is built;
+one naming ``genome`` still receives ``SCerevisiaeGenome`` and no bacterial genome is
+built; a bacterial loader naming ``genome`` is refused before anything is built. The
+genome classes are recording subclasses of the real ones
+(``tests/torchcell/datasets/_genome_injection_fakes.py``), so ``isinstance`` holds and
+nothing is constructed.
 """
 
 from __future__ import annotations
@@ -40,6 +49,14 @@ import torchcell.database.build_dataset_lmdb as m
 import torchcell.graph
 import torchcell.provenance.build_manifest as build_manifest
 import torchcell.sequence.genome.scerevisiae.s288c as s288c
+from tests.torchcell.datasets._genome_injection_fakes import (
+    BacterialLoaderNamingYeastGenome,
+    EcoliBW25113Loader,
+    FakeYeastGenome,
+    PputidaLoader,
+    YeastLoader,
+    install_bacterial_fakes,
+)
 from torchcell.data.experiment_dataset import ExperimentDataset, post_process
 from torchcell.database.build_dataset_lmdb import (
     build_dataset,
@@ -58,6 +75,9 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
 )
 from torchcell.datasets.dataset_registry import dataset_registry
+from torchcell.sequence.genome.ecoli.k12 import EcoliK12BW25113Genome, EcoliK12Genome
+from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 _ENVIRONMENT = Environment(media=Media(name="YPD", state="solid", is_synthetic=False))
 _PUBLICATION = Publication(pubmed_id="1", pubmed_url="u", doi="d", doi_url="du")
@@ -418,3 +438,72 @@ def test_a_loader_naming_neither_builds_no_genome(
     dataset = build_dataset(_PlainLoader, "/dr", io_workers=0)
     assert recorders == []
     assert dataset.kwargs == {"root": "/dr/data/torchcell/p", "io_workers": 0}
+
+
+# --------------------------------------------------------------------------- #
+# Host-aware injection: by parameter NAME, bacterial genomes built on request
+# --------------------------------------------------------------------------- #
+@pytest.fixture
+def genome_fakes(monkeypatch: pytest.MonkeyPatch) -> list[tuple[str, dict[str, Any]]]:
+    """Every genome class ``build_dataset`` reaches is a recording fake of the real one."""
+    monkeypatch.setattr(s288c, "SCerevisiaeGenome", FakeYeastGenome)
+    monkeypatch.setattr(torchcell.graph, "SCerevisiaeGraph", _Recorder([], "graph"))
+    return install_bacterial_fakes(monkeypatch)
+
+
+def test_a_loader_naming_ecoli_genome_gets_its_strain_s_genome_and_no_s288c(
+    genome_fakes: list[tuple[str, dict[str, Any]]],
+) -> None:
+    """``ecoli_genome`` receives an ``EcoliK12Genome`` of the loader's
+    ``REFERENCE_STRAIN`` (BW25113) on its default cache root, read-only; no S288C
+    genome is built.
+    """
+    dataset = build_dataset(EcoliBW25113Loader, "/dr", io_workers=2)
+    injected = dataset.kwargs["ecoli_genome"]
+    assert isinstance(injected, EcoliK12Genome)
+    assert isinstance(injected, EcoliK12BW25113Genome)
+    assert genome_fakes == [
+        (
+            "FakeBW25113Genome",
+            {"genome_root": "/dr/data/ecoli/bw25113/genome", "overwrite": False},
+        )
+    ]
+    assert dataset.kwargs == {
+        "root": "/dr/data/torchcell/ecoli_bw25113_toy",
+        "io_workers": 2,
+        "ecoli_genome": injected,
+    }
+
+
+def test_a_loader_naming_pputida_genome_gets_kt2440(
+    genome_fakes: list[tuple[str, dict[str, Any]]],
+) -> None:
+    dataset = build_dataset(PputidaLoader, "/dr", io_workers=0)
+    assert isinstance(dataset.kwargs["pputida_genome"], PPutidaKT2440Genome)
+    assert [name for name, _ in genome_fakes] == ["FakeKT2440Genome"]
+
+
+def test_a_loader_naming_genome_still_gets_s288c_and_no_bacterial_genome(
+    genome_fakes: list[tuple[str, dict[str, Any]]],
+) -> None:
+    """The yeast rule is unchanged, and a yeast build never builds a bacterial genome."""
+    dataset = build_dataset(YeastLoader, "/dr", io_workers=0)
+    assert isinstance(dataset.kwargs["genome"], SCerevisiaeGenome)
+    assert genome_fakes == [
+        (
+            "FakeYeastGenome",
+            {
+                "genome_root": "/dr/data/sgd/genome",
+                "go_root": "/dr/data/go",
+                "overwrite": False,
+            },
+        )
+    ]
+
+
+def test_a_bacterial_loader_naming_genome_is_refused_before_any_genome_is_built(
+    genome_fakes: list[tuple[str, dict[str, Any]]],
+) -> None:
+    with pytest.raises(TypeError, match="is a bacterial loader that names 'genome'"):
+        build_dataset(BacterialLoaderNamingYeastGenome, "/dr", io_workers=0)
+    assert genome_fakes == []

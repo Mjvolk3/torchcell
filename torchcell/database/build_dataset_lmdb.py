@@ -11,6 +11,13 @@ is the dev-tree half: it resolves a loader class from the dataset registry, inje
 genome / graph when the loader declares them (the same rule the KG builder uses), and runs the
 loader's ``process()`` by instantiating it.
 
+Genome injection is by parameter NAME: ``genome`` receives ``SCerevisiaeGenome`` and
+``scerevisiae_graph`` the graph on it; ``ecoli_genome`` / ``pputida_genome`` receive the
+bacterial genome of the loader's ``REFERENCE_STRAIN``
+(``torchcell.datasets.bacteria_common.BacterialGenomeInjector``). Each genome is built only
+when the loader names its parameter, so a yeast build never reads the bacterial tier and a
+bacterial build never resolves names against S288C.
+
 A stale LMDB is never silently reused. If ``processed/lmdb`` already exists the command
 refuses and points at ``scripts/deprecate.sh``; the dataset base class would otherwise skip
 ``process()`` and hand the knowledge graph an LMDB built against an older schema.
@@ -41,6 +48,8 @@ def dataset_default_root(dataset_class: type) -> str:
 
 def resolve_dataset_class(name: str) -> type:
     """Look a dataset class up by name in the registry (importing the loader package)."""
+    import torchcell.datasets.ecoli  # noqa: F401  # populates the registry
+    import torchcell.datasets.pputida  # noqa: F401  # populates the registry
     import torchcell.datasets.scerevisiae  # noqa: F401  # populates the registry
     from torchcell.datasets.dataset_registry import dataset_registry
 
@@ -51,7 +60,13 @@ def resolve_dataset_class(name: str) -> type:
 
 
 def build_dataset(dataset_class: type, data_root: str, io_workers: int) -> Any:
-    """Instantiate ``dataset_class`` under ``data_root`` so it builds its LMDB; return it."""
+    """Instantiate ``dataset_class`` under ``data_root`` so it builds its LMDB; return it.
+
+    The genomes the loader's ``__init__`` names are injected by name (module docstring);
+    a bacterial loader that also names the yeast ``genome`` is refused before any genome
+    is built.
+    """
+    from torchcell.datasets.bacteria_common import BacterialGenomeInjector
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
@@ -65,6 +80,7 @@ def build_dataset(dataset_class: type, data_root: str, io_workers: int) -> Any:
         )
     params = inspect.signature(dataset_class.__init__).parameters  # type: ignore[misc]
     kwargs: dict[str, Any] = {"root": root, "io_workers": io_workers}
+    kwargs.update(BacterialGenomeInjector(data_root).genome_kwargs(dataset_class))
     if "genome" in params or "scerevisiae_graph" in params:
         genome = SCerevisiaeGenome(
             genome_root=osp.join(data_root, "data/sgd/genome"),

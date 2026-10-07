@@ -1,4 +1,10 @@
-"""Build a S. cerevisiae BioCypher knowledge graph from configured datasets."""
+"""Build a BioCypher knowledge graph from configured datasets.
+
+Genomes are injected by loader parameter NAME: ``genome`` receives ``SCerevisiaeGenome``
+(and ``scerevisiae_graph`` the graph on it); ``ecoli_genome`` / ``pputida_genome``
+receive the bacterial genome of the loader's ``REFERENCE_STRAIN``, built on first request
+(``torchcell.datasets.bacteria_common.BacterialGenomeInjector``).
+"""
 
 import hashlib
 import inspect
@@ -21,6 +27,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from biocypher import BioCypher  # type: ignore[attr-defined]  # untyped re-export
 from torchcell.datasets import dataset_registry
+from torchcell.datasets.bacteria_common import BacterialGenomeInjector
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
@@ -96,6 +103,8 @@ def main(cfg: DictConfig) -> None:
 
     # Define dataset configurations
     dataset_configs: list[dict[str, Any]] = []
+    # Bacterial genomes by parameter name, each built only when a loader asks for it.
+    bacterial_genomes = BacterialGenomeInjector(DATA_ROOT)
     for dataset in wandb.config.datasets:
         # We need workers according to system but other kwargs
         # come from yaml, like subsetting, etc.
@@ -109,6 +118,7 @@ def main(cfg: DictConfig) -> None:
             kwargs = {"io_workers": num_workers}
 
         dataset_class = dataset_registry[dataset]
+        kwargs.update(bacterial_genomes.genome_kwargs(dataset_class))
 
         # Start special cases
         # Handle special cases...

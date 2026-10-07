@@ -17,6 +17,12 @@ Derived values with ``SLURM_CPUS_PER_TASK`` 6 and ratio 0.25: ``num_workers`` 6,
 not the io share). The wandb group is ``<SLURM_JOB_ID>_<sha256 of the sorted-key JSON of
 the config>``. ``time.time`` ticks 0, 1, 2, ... so each measured duration is 1.0. The
 output directory is ``<DATA_ROOT>/<BIOCYPHER_OUT_PATH>/2026-09-27_08-30-05``.
+
+Genome injection is by parameter NAME (2026.10.07): with every genome class replaced by a
+recording subclass of the real one (``tests/torchcell/datasets/_genome_injection_fakes.py``),
+a loader naming ``genome`` receives an ``SCerevisiaeGenome``, one naming ``ecoli_genome``
+an ``EcoliK12Genome`` of its ``REFERENCE_STRAIN``, and a yeast-only build constructs no
+bacterial genome.
 """
 
 from __future__ import annotations
@@ -34,6 +40,10 @@ from typing import Any
 import pytest
 from omegaconf import DictConfig, OmegaConf
 
+from tests.torchcell.datasets._genome_injection_fakes import (
+    FakeYeastGenome,
+    install_bacterial_fakes,
+)
 from tests.torchcell.knowledge_graphs._kg_build_fakes import (
     TIME_STR,
     FakeAdapter,
@@ -45,6 +55,8 @@ from tests.torchcell.knowledge_graphs._kg_build_fakes import (
     import_build_module,
     reset_instances,
 )
+from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12MG1655Genome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 create_kg = import_build_module("create_kg")
 
@@ -313,3 +325,79 @@ def test_group_falls_back_to_a_uuid_without_a_slurm_job(
     assert build.wandb.logged[0] == {"slurm_job_id": fixed}
     assert FakeBeta.instances == []
     assert FakeGenome.instances == []
+
+
+class FakeEcoli(FakeDataset):
+    """Two records; an MG1655 loader that names ``ecoli_genome``."""
+
+    REFERENCE_STRAIN = "MG1655"
+    n_records = 2
+    instances: list[FakeDataset] = []
+
+    def __init__(self, root: str, io_workers: int, ecoli_genome: Any) -> None:
+        """Record every kwarg the build script injects."""
+        super().__init__(root, io_workers=io_workers, ecoli_genome=ecoli_genome)
+
+
+class FakeAdapterE(FakeAdapter):
+    """Adapter for ``FakeEcoli``."""
+
+    instances: list[FakeAdapter] = []
+
+
+def test_genomes_are_injected_by_parameter_name(
+    build: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``beta`` names ``genome`` and still receives an ``SCerevisiaeGenome``; ``gamma``
+    names ``ecoli_genome`` and receives an ``EcoliK12Genome`` of its REFERENCE_STRAIN
+    (MG1655), built once on its default cache root with ``overwrite=False``.
+    """
+    reset_instances(FakeEcoli, FakeAdapterE)
+    log = install_bacterial_fakes(monkeypatch)
+    monkeypatch.setattr(create_kg, "SCerevisiaeGenome", FakeYeastGenome)
+    monkeypatch.setattr(
+        create_kg,
+        "dataset_registry",
+        {"alpha": FakeAlpha, "beta": FakeBeta, "gamma": FakeEcoli},
+    )
+    monkeypatch.setattr(
+        create_kg,
+        "dataset_adapter_map",
+        {FakeAlpha: FakeAdapterA, FakeBeta: FakeAdapterB, FakeEcoli: FakeAdapterE},
+    )
+    cfg = {
+        **CFG,
+        "datasets": {
+            **CFG["datasets"],
+            "gamma": {"path": "data/torchcell/gamma", "kwargs": None},
+        },
+    }
+    create_kg.main(_cfg(cfg))
+
+    (beta,) = FakeBeta.instances
+    (gamma,) = FakeEcoli.instances
+    assert isinstance(beta.kwargs["genome"], SCerevisiaeGenome)
+    assert isinstance(gamma.kwargs["ecoli_genome"], EcoliK12Genome)
+    assert isinstance(gamma.kwargs["ecoli_genome"], EcoliK12MG1655Genome)
+    assert gamma.kwargs == {
+        "io_workers": 6,
+        "ecoli_genome": gamma.kwargs["ecoli_genome"],
+    }
+    assert [entry for entry in log if entry[0] != "FakeYeastGenome"] == [
+        (
+            "FakeMG1655Genome",
+            {
+                "genome_root": osp.join(build.root, "data/ecoli/mg1655/genome"),
+                "overwrite": False,
+            },
+        )
+    ]
+
+
+def test_a_yeast_only_build_never_builds_a_bacterial_genome(
+    build: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    log = install_bacterial_fakes(monkeypatch)
+    create_kg.main(_cfg(CFG))
+    assert len(FakeBeta.instances) == 1
+    assert log == []

@@ -13,6 +13,13 @@ module constants (Ohya 4718, Ohnuki 2018 1112, Ohnuki 2022 1979) are monkeypatch
 the built record count where a pass is wanted. ``_genome`` and ``_sgd_gene_set`` are
 stubbed; nothing here loads the genome or reads the real data root.
 
+The bacterial gene universes (2026.10.07) read a gzipped synthetic feature table and
+protein FASTA through a stubbed ``resolve``; the per-reference selection is checked with
+recording subclasses of the real genome classes
+(``tests/torchcell/datasets/_genome_injection_fakes.py``), so a yeast reference gets an
+``SCerevisiaeGenome`` and an assembly-pinned one its own strain's genome, none built. The
+deposited-tier counts are data-gated.
+
 Derived expectations: LMDB iterates keys in byte order, so eleven records written under
 ``"0"``..``"10"`` come back as 0, 1, 10, 2, ..., 9. An expression L4 with reference universe
 {A, B, C} and other universe {A, B, C, D} has ``n_overlap`` 4 and one disagreement,
@@ -23,7 +30,9 @@ runners in a fixed order and evaluates every one before combining with ``and``.
 
 from __future__ import annotations
 
+import gzip
 import json
+import os
 import pickle
 from collections.abc import Callable, Iterable
 from pathlib import Path
@@ -32,9 +41,14 @@ from typing import Any
 import lmdb
 import pytest
 
+from tests.torchcell.datasets._genome_injection_fakes import (
+    FakeYeastGenome,
+    install_bacterial_fakes,
+)
 from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS, CALMORPH_STATISTICS
 from torchcell.datamodels.media import SC, YP_GALACTOSE
 from torchcell.datamodels.schema import (
+    AssemblyReferenceGenome,
     CalMorphExperiment,
     CalMorphExperimentReference,
     CalMorphPhenotype,
@@ -73,7 +87,16 @@ from torchcell.datamodels.schema import (
     VisualScoreExperimentReference,
     VisualScorePhenotype,
 )
-from torchcell.sequence.genome.registry import PETER2018_1011, SGD_S288C_R64
+from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
+from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
+from torchcell.sequence.genome.registry import (
+    ECOLI_K12_BW25113,
+    ECOLI_K12_MG1655,
+    PETER2018_1011,
+    PPUTIDA_KT2440,
+    SGD_S288C_R64,
+)
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.verification import runners
 from torchcell.verification.report import (
     Level,
@@ -692,6 +715,243 @@ def test_genome_constructs_the_s288c_genome_without_overwrite(
         "go_root": "/root/data/go",
         "overwrite": False,
     }
+
+
+# --------------------------------------------------------------------------- #
+# bacterial gene universes and the per-reference selection
+# --------------------------------------------------------------------------- #
+FEATURE_TABLE_HEADER = (
+    "# feature\tclass\tassembly\tassembly_unit\tseq_type\tchromosome\t"
+    "genomic_accession\tstart\tend\tstrand\tproduct_accession\tnon-redundant_refseq\t"
+    "related_accession\tname\tsymbol\tGeneID\tlocus_tag\tfeature_interval_length\t"
+    "product_length\tattributes\n"
+)
+
+
+def _feature_row(feature: str, cls: str, accession: str, locus_tag: str) -> str:
+    """One 20-column NCBI feature-table row; only the three read columns vary."""
+    cells = [feature, cls, "GCA_000005845.2", "Primary Assembly", "chromosome", ""]
+    cells += ["U00096.3", "1", "9", "+", accession, "", "", "", "", "", locus_tag]
+    return "\t".join([*cells, "9", "", ""]) + "\n"
+
+
+SYNTHETIC_TABLE = FEATURE_TABLE_HEADER + "".join(
+    [
+        _feature_row("gene", "protein_coding", "", "b0001"),
+        _feature_row("CDS", "with_protein", "AAC73112.1", "b0001"),
+        _feature_row("gene", "tRNA", "", "b0002"),
+        _feature_row("tRNA", "", "", "b0002"),
+        _feature_row("gene", "pseudogene", "", "b0003"),
+        _feature_row("CDS", "without_protein", "", "b0003"),
+    ]
+)
+
+
+def _serve_bacterial_members(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, table: str, proteins: str
+) -> list[tuple[str, str, str | None]]:
+    """Serve a gzipped feature table and protein FASTA through ``runners.resolve``."""
+    paths: dict[str, Path] = {}
+    for member, text in (
+        ("GCA_000005845.2_ASM584v2_feature_table.txt.gz", table),
+        ("GCA_000005845.2_ASM584v2_protein.faa.gz", proteins),
+    ):
+        paths[member] = tmp_path / member
+        with gzip.open(paths[member], "wt") as handle:
+            handle.write(text)
+    calls: list[tuple[str, str, str | None]] = []
+
+    def fake_resolve(
+        assembly_set: str, filename: str, *, data_root: str | None = None
+    ) -> str:
+        calls.append((assembly_set, filename, data_root))
+        return str(paths[filename])
+
+    monkeypatch.setattr(runners, "resolve", fake_resolve)
+    return calls
+
+
+def test_bacterial_gene_set_is_every_gene_row_with_the_proteins_cross_checked(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Protein-coding, tRNA and pseudogene rows are all loci; the one protein maps to
+    b0001 through its CDS row; both members come from the MG1655 set.
+    """
+    calls = _serve_bacterial_members(
+        monkeypatch, tmp_path, SYNTHETIC_TABLE, ">AAC73112.1 thr leader\nMK\n"
+    )
+    genes = runners._bacterial_gene_set(MG1655_ASSEMBLY, "/root")
+    assert genes == {"b0001", "b0002", "b0003"}
+    assert calls == [
+        (ECOLI_K12_MG1655, "GCA_000005845.2_ASM584v2_feature_table.txt.gz", "/root"),
+        (ECOLI_K12_MG1655, "GCA_000005845.2_ASM584v2_protein.faa.gz", "/root"),
+    ]
+
+
+@pytest.mark.parametrize(
+    "table,proteins,message",
+    [
+        (
+            SYNTHETIC_TABLE,
+            ">AAC73112.1 a\nMK\n>AAC99999.1 b\nMK\n",
+            "1 proteins have no CDS row in the feature table ['AAC99999.1']; 0 CDS locus "
+            "tags are no gene row []",
+        ),
+        (
+            SYNTHETIC_TABLE + _feature_row("CDS", "with_protein", "AAC5.1", "b0005"),
+            ">AAC73112.1 a\nMK\n>AAC5.1 b\nMK\n",
+            "0 proteins have no CDS row in the feature table []; 1 CDS locus tags are "
+            "no gene row ['b0005']",
+        ),
+    ],
+    ids=["protein-without-cds", "cds-without-gene"],
+)
+def test_bacterial_gene_set_refuses_members_that_disagree(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    table: str,
+    proteins: str,
+    message: str,
+) -> None:
+    _serve_bacterial_members(monkeypatch, tmp_path, table, proteins)
+    with pytest.raises(ValueError) as excinfo:
+        runners._bacterial_gene_set(MG1655_ASSEMBLY, "/root")
+    assert str(excinfo.value) == f"{ECOLI_K12_MG1655}: {message}"
+
+
+def test_each_host_gene_set_reads_its_own_assembly(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen: list[tuple[str, str]] = []
+
+    def fake(assembly: Any, data_root: str) -> set[str]:
+        seen.append((assembly.assembly_set, data_root))
+        return {assembly.genbank_assembly}
+
+    monkeypatch.setattr(runners, "_bacterial_gene_set", fake)
+    assert runners._ecoli_k12_gene_set("/r", "MG1655") == {"GCA_000005845.2_ASM584v2"}
+    assert runners._ecoli_k12_gene_set("/r", "BW25113") == {
+        "GCA_000750555.1_ASM75055v1"
+    }
+    assert runners._pputida_gene_set("/r") == {"GCA_000007565.2_ASM756v2"}
+    assert seen == [
+        (ECOLI_K12_MG1655, "/r"),
+        (ECOLI_K12_BW25113, "/r"),
+        (PPUTIDA_KT2440, "/r"),
+    ]
+
+
+def _assembly_reference(strain: Any, assembly_set: Any, accession: str) -> Record:
+    species = "Pseudomonas putida" if strain == "KT2440" else "Escherichia coli"
+    return AssemblyReferenceGenome(
+        species=species,
+        strain=strain,
+        assembly_set=assembly_set,
+        assembly_accession=accession,
+    ).model_dump()
+
+
+MG1655_REFERENCE = _assembly_reference(
+    "MG1655", "ecoli_K12_MG1655_ASM584v2", "GCA_000005845.2"
+)
+KT2440_REFERENCE = _assembly_reference(
+    "KT2440", "pputida_KT2440_ASM756v2", "GCA_000007565.2"
+)
+
+
+def test_reference_assembly_set_follows_the_record_s_own_reference() -> None:
+    """The stored dump names the set; a reference without one must be yeast."""
+    assert runners._reference_assembly_set(_reference_genome().model_dump()) == (
+        SGD_S288C_R64
+    )
+    assert runners._reference_assembly_set(MG1655_REFERENCE) == ECOLI_K12_MG1655
+    assert runners._reference_assembly_set(KT2440_REFERENCE) == PPUTIDA_KT2440
+    with pytest.raises(ValueError, match="must be 'Saccharomyces cerevisiae', got"):
+        runners._reference_assembly_set(
+            {"species": "Escherichia coli", "strain": "K-12"}
+        )
+    with pytest.raises(
+        ValueError, match="names assembly set 'peter2018_1011_assemblies'"
+    ):
+        runners._reference_assembly_set({"assembly_set": PETER2018_1011})
+
+
+def test_gene_set_for_reference_selects_the_universe_by_reference(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sgd_calls = _stub_sgd(monkeypatch, {"YAL001C"})
+    bacterial: list[str] = []
+
+    def fake(assembly: Any, data_root: str) -> set[str]:
+        bacterial.append(assembly.assembly_set)
+        return {"b0001"}
+
+    monkeypatch.setattr(runners, "_bacterial_gene_set", fake)
+    yeast = _reference_genome().model_dump()
+    assert runners._gene_set_for_reference(yeast, "/r") == {"YAL001C"}
+    assert runners._gene_set_for_reference(MG1655_REFERENCE, "/r") == {"b0001"}
+    assert (sgd_calls, bacterial) == (["/r"], [ECOLI_K12_MG1655])
+
+
+def test_genome_for_reference_hands_each_record_its_own_host_genome(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A yeast reference gets ``SCerevisiaeGenome``; MG1655 and KT2440 references get
+    their own genomes from the default cache roots, read-only; S288C is never built for
+    a bacterial reference.
+    """
+    log = install_bacterial_fakes(monkeypatch)
+    monkeypatch.setattr(
+        "torchcell.sequence.genome.scerevisiae.SCerevisiaeGenome", FakeYeastGenome
+    )
+    mg1655 = runners._genome_for_reference(MG1655_REFERENCE, "/root")
+    kt2440 = runners._genome_for_reference(KT2440_REFERENCE, "/root")
+    assert isinstance(mg1655, EcoliK12MG1655Genome)
+    assert isinstance(kt2440, PPutidaKT2440Genome)
+    yeast = runners._genome_for_reference(_reference_genome().model_dump(), "/root")
+    assert isinstance(yeast, SCerevisiaeGenome)
+    assert log == [
+        (
+            "FakeMG1655Genome",
+            {"genome_root": "/root/data/ecoli/mg1655/genome", "overwrite": False},
+        ),
+        (
+            "FakeKT2440Genome",
+            {"genome_root": "/root/data/pputida/kt2440/genome", "overwrite": False},
+        ),
+        (
+            "FakeYeastGenome",
+            {
+                "genome_root": "/root/data/sgd/genome",
+                "go_root": "/root/data/go",
+                "overwrite": False,
+            },
+        ),
+    ]
+
+
+BACTERIAL_TIER = all(
+    os.path.isfile(
+        os.path.join(
+            os.environ.get("DATA_ROOT", ""), "torchcell-genomes", s, "manifest.json"
+        )
+    )
+    for s in (ECOLI_K12_MG1655, ECOLI_K12_BW25113, PPUTIDA_KT2440)
+)
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not BACTERIAL_TIER, reason="requires the bacterial assembly sets")
+def test_bacterial_gene_sets_on_the_deposited_tier() -> None:
+    """Every GenBank gene feature: 4,651 MG1655, 4,490 BW25113, 5,786 KT2440 loci."""
+    data_root = os.environ["DATA_ROOT"]
+    mg1655 = runners._ecoli_k12_gene_set(data_root, "MG1655")
+    bw25113 = runners._ecoli_k12_gene_set(data_root, "BW25113")
+    kt2440 = runners._pputida_gene_set(data_root)
+    assert (len(mg1655), len(bw25113), len(kt2440)) == (4651, 4490, 5786)
+    assert {"b0001", "b4403"} <= mg1655 and "BW25113_0001" in bw25113
+    assert {"PP_0001", "PP_16SA", "PP_t01"} <= kt2440
+    assert runners._gene_set_for_reference(MG1655_REFERENCE, data_root) == mg1655
 
 
 # --------------------------------------------------------------------------- #

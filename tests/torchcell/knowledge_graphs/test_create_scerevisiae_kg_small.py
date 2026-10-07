@@ -21,6 +21,12 @@ prefilters ``FakeAlpha`` to singles: ``subset_dataset(alpha, 2, 42, [0, 2, 4])``
 ``sorted(random.Random(42).sample([0, 2, 4], 2))`` = [0, 4], so the alpha adapter
 emits 2 nodes and 2 edges, beta 3 and 3, totals 5 and 5. Durations are 1.0 (ticking
 clock); the output directory is ``<DATA_ROOT>/biocypher-out/2026-09-27_08-30-05``.
+
+Genome injection is by parameter NAME (2026.10.07): with every genome class replaced by a
+recording subclass of the real one (``tests/torchcell/datasets/_genome_injection_fakes.py``),
+a loader naming ``genome`` receives the shared ``SCerevisiaeGenome``, one naming
+``ecoli_genome`` an ``EcoliK12Genome`` of its ``REFERENCE_STRAIN``, and a yeast-only build
+constructs no bacterial genome.
 """
 
 from __future__ import annotations
@@ -36,6 +42,10 @@ from typing import Any
 import pytest
 from omegaconf import DictConfig, OmegaConf
 
+from tests.torchcell.datasets._genome_injection_fakes import (
+    FakeYeastGenome,
+    install_bacterial_fakes,
+)
 from tests.torchcell.knowledge_graphs._kg_build_fakes import (
     TIME_STR,
     FakeAdapter,
@@ -55,6 +65,8 @@ from torchcell.knowledge_graphs.head_ontology import (
 )
 from torchcell.knowledge_graphs.incremental_import import INCREMENTAL_CALL_FILENAME
 from torchcell.knowledge_graphs.subset import RecordFilter
+from torchcell.sequence.genome.ecoli.k12 import EcoliK12BW25113Genome, EcoliK12Genome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 ks = import_build_module("create_scerevisiae_kg_small")
 
@@ -700,3 +712,76 @@ def test_fast_writer_routes_every_write_through_the_sink_and_finishes_it_once(
             "total_edges": 205,
         },
     ]
+
+
+class FakeKeio(FakeDataset):
+    """Three records at ``data/torchcell/keio``; a BW25113 loader naming ``ecoli_genome``."""
+
+    REFERENCE_STRAIN = "BW25113"
+    n_records = 3
+    instances: list[FakeDataset] = []
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/keio",
+        io_workers: int = 1,
+        ecoli_genome: Any = None,
+    ) -> None:
+        """Record every kwarg the build script injects."""
+        super().__init__(root, io_workers=io_workers, ecoli_genome=ecoli_genome)
+
+
+class FakeAdapterK(FakeAdapter):
+    """Adapter for ``FakeKeio``."""
+
+    instances: list[FakeAdapter] = []
+
+
+def test_genomes_are_injected_by_parameter_name(
+    build: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``FakeBeta`` names ``genome`` and still receives the shared ``SCerevisiaeGenome``;
+    ``FakeKeio`` names ``ecoli_genome`` and receives an ``EcoliK12Genome`` of its
+    REFERENCE_STRAIN (BW25113) from its default cache root with ``overwrite=False``,
+    and no other loader is handed a bacterial genome.
+    """
+    reset_instances(FakeKeio, FakeAdapterK)
+    log = install_bacterial_fakes(monkeypatch)
+    monkeypatch.setattr(ks, "SCerevisiaeGenome", FakeYeastGenome)
+    monkeypatch.setattr(
+        ks,
+        "dataset_adapter_map",
+        {FakeAlpha: FakeAdapterA, FakeBeta: FakeAdapterB, FakeKeio: FakeAdapterK},
+    )
+    (
+        build.tmp_path / "root" / "data" / "torchcell" / "keio" / "processed" / "lmdb"
+    ).mkdir(parents=True)
+    ks.main(_cfg(FULL_CFG))
+
+    (alpha,) = FakeAlpha.instances
+    (beta,) = FakeBeta.instances
+    (keio,) = FakeKeio.instances
+    assert alpha.kwargs == {"io_workers": 8}
+    assert isinstance(beta.kwargs["genome"], SCerevisiaeGenome)
+    injected = keio.kwargs["ecoli_genome"]
+    assert isinstance(injected, EcoliK12Genome)
+    assert isinstance(injected, EcoliK12BW25113Genome)
+    assert keio.kwargs == {"io_workers": 8, "ecoli_genome": injected}
+    assert [entry for entry in log if entry[0] != "FakeYeastGenome"] == [
+        (
+            "FakeBW25113Genome",
+            {
+                "genome_root": osp.join(build.root, "data/ecoli/bw25113/genome"),
+                "overwrite": False,
+            },
+        )
+    ]
+
+
+def test_a_yeast_only_build_never_builds_a_bacterial_genome(
+    build: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    log = install_bacterial_fakes(monkeypatch)
+    ks.main(_cfg(FULL_CFG))
+    assert len(FakeBeta.instances) == 1
+    assert log == []

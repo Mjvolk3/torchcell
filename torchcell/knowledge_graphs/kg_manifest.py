@@ -756,6 +756,8 @@ def checkout_package_version(repo_root: Path) -> tuple[str, str | None]:
 
 
 def _dataset_class(name: str) -> type:
+    import torchcell.datasets.ecoli  # noqa: F401  # populates the registry
+    import torchcell.datasets.pputida  # noqa: F401  # populates the registry
     import torchcell.datasets.scerevisiae  # noqa: F401  # populates the registry
     from torchcell.datasets.dataset_registry import dataset_registry
 

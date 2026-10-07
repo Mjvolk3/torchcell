@@ -15,6 +15,12 @@ from .carruthers2025 import (
 from .carruthers2025 import (
     ProteomeCarruthers2025Dataset as ProteomeCarruthers2025Dataset,
 )
+from .desiqueira2025 import (
+    IsoprenolTiterDeSiqueira2025Dataset as IsoprenolTiterDeSiqueira2025Dataset,
+)
+from .desiqueira2025 import (
+    ProteomeDeSiqueira2025Dataset as ProteomeDeSiqueira2025Dataset,
+)
 from .lim2022 import PutidaPrecise321Lim2022Dataset as PutidaPrecise321Lim2022Dataset
 from .menasalvas2025 import (
     IsoprenolSelectionMenasalvas2025Dataset as IsoprenolSelectionMenasalvas2025Dataset,

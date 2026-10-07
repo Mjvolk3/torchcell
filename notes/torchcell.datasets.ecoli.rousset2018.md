@@ -66,10 +66,25 @@ signature, so the 6 guides of one gene are 6 strains and one gene.
 Environment: the three phage challenges and the transduction assay each carry one
 `PhagePerturbation` at `multiplicity_of_infection=1.0`, `host_of_propagation="MG1655"`.
 This is the first loader to use that leaf; `mutalik2020` is the module that recorded its
-absence. aTc is modeled as a `SmallMoleculePerturbation` rather than a medium component:
-it is the inducer dosed on top of LB, and its dose differs between the screens (1 nM in
-the growth screen, 1 microM in the phage screens), which is part of what makes the two
-environments distinct.
+absence. The growth screen carries no environment perturbation at all.
+
+**aTc is a COMPONENT of the two media, not an `Environment.perturbation`**, and this was
+a correction. The first version made it a `SmallMoleculePerturbation`, which the adapter
+layer then showed to be wrong twice over. The paper puts it in the medium ("diluted
+100-fold in LB containing 1 microM aTc, 0.2% Maltose and 5 mM CaCl2" lists aTc beside the
+two components the phage medium already carried), it is constant across the dataset rather
+than the varied condition, and the served `_environment_perturbation_node` does not filter
+phages out, so a conf enabling both `environment perturbation` and `phage perturbation`
+would emit each phage twice under two labels on one content id. Moving aTc into the media
+keeps both doses (1 nM growth, 1 microM phage, and the dose is what distinguishes the two
+media objects) and leaves the phage as the only environment perturbation any record
+carries. `role` is `other`, because aTc switches the perturbation on rather than feeding
+the cell.
+
+Because the growth screen then has no perturbation, L3 `environment_perturbed` passes it
+on that rule's own base-medium clause: its 23,209 records sit on `ROUSSET2018_LB` while
+the dataset's modal medium is the phage screens' `ROUSSET2018_LB_MALTOSE_CACL2` (68,400
+records). The 2.9x margin is fixed by the release, so the tie cannot drift.
 
 The lambda challenge and the lambda transduction assay have IDENTICAL cultures (the cells
 experienced lambda at MOI 1 for 2 h either way); only the readout differs. They are split
@@ -101,7 +116,7 @@ one against its mirror under `--data`.
 | growth replicate unit = biological | Cui 2018 | Methods, dCas9 knockdown assay | "The experiment was performed in triplicates starting from independent aliquots of the library generated from independent electroporation assays." |
 | phage screen: 3 replicates, 37 C | Rousset | Methods, High-throughput screens | "The phage screen was performed in triplicates as follows: FR-E01 was grown at 37 C ... into 500 mL LB." |
 | phage inducer 1 microM aTc | Rousset | Methods, High-throughput screens | "dCas9 expression was induced by addition of 1 microM aTc (Acros Organics) to trigger the silencing of the target genes." |
-| phage medium LB + 0.2% maltose + 5 mM CaCl2 | Rousset | Methods, High-throughput screens | "diluted 100-fold in LB containing 1 microM aTc, 0.2% Maltose and 5 mM CaCl2" |
+| phage medium LB + 1 microM aTc + 0.2% maltose + 5 mM CaCl2 | Rousset | Methods, High-throughput screens | "diluted 100-fold in LB containing 1 microM aTc, 0.2% Maltose and 5 mM CaCl2" |
 | MOI 1, 2 h | Rousset | Methods, High-throughput screens | "to reach a MOI of 1 ensuring a high infection rate while limiting double infections. After 2 h at 37 C, the cultures were harvested" |
 | phage names | Rousset | Results, phage host factors | "followed by infection with phage lambda, T4 or 186cIts at a multiplicity of infection (MOI) of 1" |
 | stocks propagated on MG1655 | Rousset | Methods, Phage strains and stocks | "All the liquid stocks were further propagated in MG1655 grown in LB supplemented with maltose 0.2% (Sigma) and CaCl2 5 mM (Sigma) at a multiplicity of infection (MOI) of 1." |
@@ -266,9 +281,9 @@ per-screen census. Report at
 | L2 | uncertainty_sanity | 0 labeled uncertainties; 91,609 records report n_samples >= 2 with no uncertainty |
 | L3 | measurement_type_consistent | single measurement_type `log2_ratio` |
 | L3 | reference_zero | numeric rule: reference response == 0 for all 91,609 |
-| L3 | environment_perturbed | all 91,609 carry an environmental edit |
-| L3 | compound_identity | 91,609 environment-edit compound references carry a structure identifier, 0 gaps |
-| L3 | media_compound_identity | 228,409 medium-component references carry a structure identifier, 0 gaps |
+| L3 | environment_perturbed | all 91,609 carry an environmental edit (68,400 a phage, 23,209 the non-modal medium; the rule's reported baseline is the phage medium) |
+| L3 | compound_identity | 0 environment-edit compound references (a phage has no compound), 0 gaps |
+| L3 | media_compound_identity | 320,018 medium-component references carry a structure identifier, 0 gaps |
 | L3 | media_membership | 91,609 records on a medium deriving from a MEDIA_LIBRARY key, 2 distinct media |
 | L4 | gene_containment | 1.000 of 3,896 measured genes are in the pinned assembly |
 | L4 | current_genome_genes | every one of the 3,896 names is a gene of the current genome |
@@ -282,3 +297,70 @@ S288C.
 The `uncertainty_sanity` row stating "91,609 records report n_samples >= 2 with no
 uncertainty" is the released state, not an omission: the triplicate design is sourced and
 no per-guide dispersion was released.
+
+## 2026.10.07 - Adapter, and the conf rule the phage leaf imposes
+
+The bacterial-adapter tranche landed on `main` while this branch was open
+(`FEAT(adapters): BioCypher adapters for the 20 E. coli and P. putida dataset classes`).
+Its completeness tests assert that every registered bacterial dataset is in
+`dataset_adapter_map` and in `kg_bacteria.yaml`, so a 21st loader without an adapter is a
+red branch by that tranche's design. This note's row therefore ships one.
+
+### What was added
+
+| file | what |
+|---|---|
+| `torchcell/adapters/rousset2018_adapter.py` | `CrispriScreenRousset2018Adapter` |
+| `torchcell/adapters/conf/ecoli_crispri_rousset2018_adapter.yaml` | the enable-list |
+| `torchcell/knowledge_graphs/dataset_adapter_map.py` | the dataset-to-adapter pair |
+| `torchcell/knowledge_graphs/conf/kg_bacteria.yaml` | the 21st rehearsal dataset |
+| `tests/torchcell/adapters/test_rousset2018_adapter.py` | the paired test |
+
+### The conf rule, and why it forced the aTc correction
+
+`phage perturbation` is its own graph node class with its own node method, added because
+`environment perturbation` is a SERVED class and giving it an MOI column would be a full
+rebuild. The served `_environment_perturbation_node` iterates every perturbation with no
+type filter, so it emits a phage under the `environment perturbation` label; and
+`_phage_perturbation_node` content-addresses a phage with the SAME projection
+(`_environment_perturbation_node_id`). A conf enabling both classes therefore writes each
+phage twice, once under each label, on one node id. The two classes are mutually
+exclusive per conf, which `cell_adapter` states in a comment and this conf is the first to
+have to obey.
+
+That is what settled aTc. With aTc on the environment axis the records carried a small
+molecule AND a phage, so neither single class sufficed: `environment perturbation` alone
+mislabels the phage, `phage perturbation` alone drops aTc (and the shared data-gated check
+`assert_dev_store_graph` fails a conf that leaves off a family the records carry). Moving
+aTc into the media, which is where the paper puts it, makes the phage the only
+environment perturbation and the conf legal. The alternative was editing a served adapter
+method to filter phages out, which the plan's section 5 says is NOT additive and forces a
+full rebuild of every dataset importing it; that is not this row's call to make.
+
+### Conf shape
+
+`bacterial perturbation` + `crispr construct` (the guide spacer), `phage perturbation`
+and NOT `environment perturbation`, `environment response phenotype`, and the usual
+environment, media, temperature, dataset and publication nodes. The phage nodes ride the
+existing `environment perturbation to environment` edges, whose graph class already
+declares `source: [environment perturbation, phage perturbation]`. Both phage node
+methods and both temperature node methods emit nothing for the growth screen's 23,209
+records (no phage, temperature a typed gap), which the data-gated graph check exercises.
+
+### Shared harness, extended additively
+
+`tests/torchcell/adapters/_adapter_init_harness.py` gained `Shape.phage`, the two phage
+node names in registration order, the phage alternatives on the two
+`environment perturbation to environment` edge endpoints and the phage node's entry in
+`NODE_LINK`. `_bacterial_adapter_cases.py` gained a `phage` flag on `_case`, and its
+blanket `assert "phage perturbation (chunked)" not in names` became per-case: a conf
+serves a phage exactly when its case says so, and never both environment-side classes.
+The three hardcoded counts (20 -> 21 in two tranche tests, 71 -> 72 in
+`test_build_time_projection.py`'s `dataset_adapter_map` pin) moved with it. No served
+adapter method was touched.
+
+### Not run
+
+No knowledge-graph build, no `kg_bacteria` rehearsal generation and no slurm job. The
+adapter is wired and its graph is checked against the dev store by
+`assert_dev_store_graph` under `--data`; generating CSVs is plan step 10's call.

@@ -55,8 +55,7 @@ KNOWN_BROKEN: dict[str, str] = {}
 # Machine-specific absolute paths in package source, with the line that carries each.
 # A new hit fails test_no_hard_coded_machine_paths; a fixed one must be removed here.
 HARD_CODED_PATH_ALLOWLIST: dict[str, int] = {
-    "torchcell/datasets/scerevisiae/spell.py": 23,
-    "torchcell/models/hetero_cell_bipartite_dango_diff_gi.py": 360,
+    "torchcell/datasets/scerevisiae/spell.py": 21
 }
 _HARD_CODED_PATH = re.compile(
     r"/Users/michaelvolk|/home/michaelvolk|~/Documents/projects"

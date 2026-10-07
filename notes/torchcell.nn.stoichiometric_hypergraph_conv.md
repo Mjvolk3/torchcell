@@ -220,7 +220,7 @@ def forward(
 
 This operator is especially useful for modeling reaction networks where **directionality** (sign) and **relative magnitude** (stoichiometric ratio) are critical.
 
-***
+---
 
 Refine ideas from here.
 
@@ -293,7 +293,7 @@ Key properties:
 
 Would you like me to explain any particular part of the mathematics in more detail?
 
-***
+---
 
 Let me prove that using stoichiometric weighting with gating preserves sign information while allowing learning using a small example.
 
@@ -343,11 +343,11 @@ This shows that the gating mechanism allows the network to learn while preservin
 
 Would you like me to expand on any part of this proof or provide a more complex example?
 
-***
+---
 
 Now also show me how if we don't do gating if/how we lose the ability to represent positive values. Also write the equation for the update of a single node.
 
-***
+---
 
 I'll prove how gating helps preserve stoichiometric sign information, contrasting with non-gated approaches.
 
@@ -432,7 +432,7 @@ For node $v_1$:
 
 Would you like me to elaborate on any part of this proof or provide additional examples?
 
-***
+---
 
 I'll prove how gating helps preserve stoichiometric sign information, contrasting with non-gated approaches.
 
@@ -517,7 +517,7 @@ For node $v_1$:
 
 Would you like me to elaborate on any part of this proof or provide additional examples?
 
-***
+---
 
 ```mermaid
 graph LR
@@ -540,7 +540,7 @@ graph LR
     style products fill:none,stroke:none
 ```
 
-***
+---
 
 Let me present a clear comparison of gated vs non-gated StoichHypergraphConvolution using concrete data.
 
@@ -622,7 +622,7 @@ Benefits:
 
 The gating mechanism provides critical functionality for reaction networks where both positive and negative coefficients carry important meaning. The additional computational cost is justified by the gained ability to properly represent reaction stoichiometry.
 
-***
+---
 
 Here are the revised visualizations with stoichiometric coefficients in brackets:
 
@@ -656,7 +656,7 @@ In these visualizations, I've made the stoichiometric coefficients more explicit
 
 Would you like me to elaborate on any of these representations or modify the visualization style further?
 
-***
+---
 
 You raise an important point about the ReLU activation nullifying the differences. Let me provide a clearer example using both positive and negative stoichiometry, and using tanh activation instead of ReLU to better show the differences:
 
@@ -707,7 +707,7 @@ The gating mechanism essentially provides a learned "volume control" that is ind
 
 Would you like me to explore additional activation functions or stoichiometric patterns to further illustrate the differences?
 
-***
+---
 
 Let me expand the analysis across ReLU and GELU activations to illustrate how gating affects the message passing under different nonlinearities.
 
@@ -785,7 +785,7 @@ Key Observations:
 
 This analysis suggests that combining GELU activation with gating might be optimal for reaction networks, as it provides both sign preservation and learnable magnitude control.
 
-***
+---
 
 Let me recreate the diagrams following the style from your reference, using a business-appropriate color scheme:
 
@@ -828,7 +828,7 @@ These diagrams now use a consistent style with:
 
 Would you like me to adjust any aspects of these visualizations?
 
-***
+---
 
 You raise an excellent point. Let me clarify the actual impact of gating in this example.
 
@@ -864,7 +864,7 @@ This highlights an important design consideration in the network architecture: t
 
 Would you like to explore alternative activation functions where gating might provide more meaningful benefits?
 
-***
+---
 
 You've identified a crucial insight. The loss of negative information in our network is fundamentally tied to our choice of activation function, not the gating mechanism itself.
 
@@ -882,11 +882,11 @@ For a reaction network where maintaining stoichiometric relationships is crucial
 
 Would you like to explore specific activation functions that would be most appropriate for preserving stoichiometric information in reaction networks?
 
-***
+---
 
 you said this "How much to scale messages independently of their stoichiometric coefficients"... can messages get scaled by their importance in the metabolic network? Tell me more of the expressive benefits of the gating mechanism. Just because scaling is consistent for one message doesn't mean it will be scaled similar for others right? it just guarantees some proportionality.?
 
-***
+---
 
 Yes, you've hit on something important. The gating mechanism provides message-specific scaling that can capture the relative importance of different metabolic reactions and relationships in the network.
 
@@ -905,7 +905,7 @@ You're also correct about proportionality. The gating mechanism guarantees consi
 
 Would you like to explore specific examples of how this flexible scaling might be beneficial for particular types of metabolic network analysis?
 
-***
+---
 
 Let me expand on how the gating mechanism's flexible scaling benefits metabolic network analysis through some concrete examples.
 Consider a complex metabolic network modeling E. coli central carbon metabolism. Different pathways and reactions have varying levels of importance depending on the cell's state and environmental conditions. The gating mechanism allows the network to learn these context-dependent importance patterns.
@@ -915,7 +915,7 @@ The gating mechanism can also capture substrate availability effects. Consider p
 This flexible scaling becomes particularly powerful when modeling metabolic adaptation. As cells shift between different nutrient conditions or growth states, the relative importance of different pathways changes dramatically. The gating mechanism provides a learned way to represent these shifts in metabolic priority without changing the underlying stoichiometric relationships that govern the reactions.
 Would you like me to provide more specific examples focused on particular metabolic subsystems or adaptation scenarios?
 
-***
+---
 
 This is a nuanced question that gets at the heart of the tradeoff between incorporating known mechanistic knowledge versus learning it from data.
 
@@ -933,7 +933,7 @@ I would suggest starting with kinetic parameters as training features, allowing 
 
 Would you like to explore specific approaches for incorporating kinetic parameters as training features in a way that maximizes their utility for the model?
 
-***
+---
 
 **1. With Gating Mechanism**
 
@@ -980,7 +980,7 @@ Problems arise when using common activation functions:
    - Squashes both positive and negative values
    - Harder to distinguish magnitudes
 
-***
+---
 
 **Concise Summary**  
 Below are two simple diagrams and brief equations illustrating how a gating mechanism in stoichiometric hypergraph message passing differs from a non-gated approach. The key point is that gating maintains the proportional relationships implied by stoichiometric coefficients while providing a learnable scaling factor, allowing sign (reactant/product) and relative magnitudes to be preserved and modulated.
@@ -1028,7 +1028,7 @@ flowchart LR
 - **Gated** approaches keep the stoichiometric sign intact and allow the model to tune each reaction’s impact through $g_{ij}$.  
 - This is especially useful for metabolic or reaction networks, where preserving negative/positive flows is critical and where different pathways need different learned scalings.
 
-***
+---
 
 ```python
 # Example 1: Basic Input Data Structure
@@ -1119,3 +1119,7 @@ g_AB = sigmoid(W_g @ x_B)        # = 0.8 (learned)
 m_AB = g_AB * sign(s_AB) * abs(s_AB) * x_B  # = [0.4, 0.8]
 h_A = GELU(m_AB)                # = [0.27, 0.66]   # Scaled positive preservation
 ```
+
+## 2026.10.06 - Demo main moved to torchcell/scratch/stoichiometric_hypergraph_conv_demo.py
+
+The `main` ran a small `StoichHypergraphConv` example on random toy tensors, with and without stoichiometric gating, and printed the output shapes and features. It now lives in `torchcell/scratch/stoichiometric_hypergraph_conv_demo.py` ([[torchcell.scratch.stoichiometric_hypergraph_conv_demo]]), moved verbatim, and runs from the repo root with `PYTHONPATH=$PWD python torchcell/scratch/stoichiometric_hypergraph_conv_demo.py`. It needs no `.env`, no data and no GPU. The older commented-out `main` sketch just above it stays in the module, since the move takes only live `main` functions. Executing `torchcell/nn/stoichiometric_hypergraph_conv.py` directly now exits with status 1 and a pointer to the demo. Reason: demo code is not library code, so it no longer counts in the coverage denominator (test campaign Phase 23).

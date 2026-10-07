@@ -535,3 +535,7 @@ DANGO is a powerful framework for predicting higher-order genetic interactions, 
 Tests: [[tests.torchcell.models.test_dango]].
 
 * Review follow-up: a negative set id is refused by the same named `ValueError` as one at or above `num_sets` (before, `bincount` raised a bare `RuntimeError`).
+
+## 2026.10.06 - Demo main moved to torchcell/scratch/dango_demo.py
+
+The hydra `main` of `torchcell/models/dango.py` tested the DANGO model by overfitting on a single sample batch from `torchcell.scratch.load_batch_005`, plotting losses and final results. It moved verbatim, decorator included, with its `if __name__ == "__main__":` block, to `torchcell/scratch/dango_demo.py`; run it from the repo root with `PYTHONPATH=$PWD python torchcell/scratch/dango_demo.py` (the hydra `config_path` resolves against `os.getcwd()`, so it reads the same `experiments/005-kuzmin2018-tmi/conf` as before; it needs `DATA_ROOT` in `.env`, the sample batch, and a GPU where available). Executing the module directly now exits with a pointer to the demo. Reason: demo code is not library code (test campaign Phase 23).

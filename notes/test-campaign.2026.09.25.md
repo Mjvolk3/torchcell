@@ -1494,3 +1494,48 @@ Reviewers: two independent read-only agents on Opus 5.5, one on the SPELL loader
 - Source review of `scripts/legacy_partition.py`: hard mode stays strict outside the new category; `tomllib` parsing handles dotted keys and skips foreign keys; the one masking gap the auditor named (a package-data `__init__` with real code) is closed by requiring an empty or docstring-only file; the dead-parent relabeling is documented as a known limit. The CI step is blocking, runs after install with `fetch-depth: 0`, and its comment adds no string reference to a legacy module.
 
 After the audit: 6854 passed.
+
+## 2026.10.06 - Phase 23: the demo mains leave the library (PR-23)
+
+Targets: after Phase 22 the live tree stood at 92.3% with 3,748 statements uncovered, and 3,365 of them sat inside `main()` demo functions in library modules (the per-module split is in the session scratch `nonmain_summary.py`; non-main uncovered: 383). The large ones are hydra-decorated training loops from the 005 and 006 experiments that read `experiments/<id>/conf`, load `DATA_ROOT`, pull a sample batch from `torchcell.scratch.load_batch_005`, train on a GPU and write plots; the rest are data explorations (`neo4j_cell.py` carries five of them) and toy forward passes. None has a checkable contract that a test can pin without a real store, and the campaign rule is that padding tests are not written for them (Phase 21 and 22 briefs: "`main()` demo functions: do NOT chase them"). The owner's direction was to move them, verbatim, into `torchcell/scratch/<module basename>_demo.py`, the repo's carve-out for one-off scripts: not a package (no `__init__.py`), so it leaves the coverage denominator; skipped by the import sweep, the hard-coded path scan, `gen_api_pages.py`, the legacy partition and mypy discovery.
+
+Rule applied (three Opus 5.5 writers in one worktree, one lane each; two Opus 5.5 auditors): only `main*` functions (decorator included) and module-level `if __name__ == "__main__":` blocks move; every helper, class and constant stays (the helpers the dependency map listed as main-only, `calculate_rolling_correlation`, `calculate_weight_l2_norm`, `compute_smoothness` and `_print_label_stats`, are imported by tests and stay); the module keeps a one-block pointer that exits with the demo's path when executed directly; ruff drops the imports that became unused; the demo imports the model and helpers from the source module and carries its own three-line header, a docstring with the origin, the run command and the needs (`DATA_ROOT`, the sample batch, a GPU where the original used one). The hydra `config_path` resolves against `os.getcwd()`, so each demo reads the same conf directory as before. Mains kept in the library on purpose: `dcell.py` and `hetero_cell_bipartite_dango_gi.py` (both exercised by their tests through a stubbed sample-batch loader), the dataset loader mains (build entry points, `experiments/database/datasets.sh` calls them), `sgd_gene_graph.py` (a build entry), and the argparse CLIs `browser_style.py` and `compound_identity_curate.py`.
+
+Moved (15 modules, 7,405 demo lines; original ranges at main `3e88685ff` in each demo's note): `models/hetero_cell_bipartite_dango_gi_lazy.py` (L1508 to 3306), `models/hetero_cell_bipartite_dango_diff_gi.py` (L360 to 1383, with the spawn start method and the allowlisted TODO comment, whose `HARD_CODED_PATH_ALLOWLIST` entry in `tests/torchcell/test_import_all.py` is removed), `models/hetero_cell_nsa_retry.py` (L423 to 655), `models/linear.py` (L45 to 79), `models/equivariant_cell_graph_transformer.py` (L3059 to 3723), `models/cell_graph_transformer.py` (L719 to 1346), `models/cell_graph_transformer_metabolism.py` (the worktree import bootstrap L60 to 78 and L592 to 742), `models/hetero_cell_bipartite_dango.py` (L686 to 912), `nn/stoichiometric_hypergraph_conv.py` (L231 to 341), `data/neo4j_cell.py` (five mains, L1326 to 2286, including the commented-out block indented under the first main), `data/neo4j_preprocessed_cell.py` (L450 to 547), `models/dango.py` (L607 to 1036), `models/dcell_opt.py` (L793 to 1155, with the spawn start method), `datasets/scerevisiae/sameith2015.py` (L1983 to 2087), `datasets/scerevisiae/spell.py` (L1082 to 1173; its allowlisted `ASSET_IMAGES_DIR` line moves from 23 to 21 as two import lines leave). Test edits that follow from the move: `tests/torchcell/data/test_neo4j_preprocessed_cell_full_masks.py` drops `sameith2015` from the `load_dotenv` identity check (the module no longer binds it). Config: `torchcell.models.hetero_cell_nsa_retry` joins the `ignore_errors` mypy override, because the diff-scoped CI mypy passes changed files explicitly and bypasses the discovery exclude (the auditor's one FAIL; the module's 12 pre-existing errors are unrelated to the move). Housekeeping: `docs/source/modules/knowledge_graphs.rst` regenerated (three entries from `8b0b13c61` were missing and `gen_api_pages.py --check` failed at the base commit).
+
+Findings: none in source (the phase changes no behavior). One test observation: at the base commit the full behavioral run failed `tests/torchcell/datasets/scerevisiae/test_caudal2024.py::test_a_stale_raw_matrix_is_refused_at_build_time` once (the mismatch was reported for the genomes-tier tar instead of the presence matrix, so a pin from another test's registry state leaked in); the test passes alone, with each preceding test directory paired with it, and in the full run on the worktree. Recorded as order-dependent and not reproduced; no issue filed without a reproduction.
+
+Runs: behavioral suite under the sentinel, PR-23 worktree on `3e88685ff` after the audit edits: 6861 passed, 125 skipped, 321 deselected, 9 xfailed, 7408 warnings in 453.90s (0:07:33); `test_import_all.py` 321 passed; ruff (32 files), mypy (CI form, 16 changed non-excluded files), `test_quality_check.py` (351 files clean), `check_paired_tests.py` (0 added modules), `docs/gen_api_pages.py --check` and `scripts/legacy_partition.py --check` (live 317, init-only 0, legacy 0, carve-out 34, package-data 2) pass; diff-cover 100% on the one changed source line; `/tmp/torchcell-test-data-root` absent afterwards. The denominator drops from 51,713 to 48,599 statements. Rows with a nonzero delta:
+
+Generated by: python scripts/coverage_gaps.py --before coverage-base.json --after coverage-p23.json --import-only coverage-import.json --all
+Live-critical: importer graph (scripts/legacy_partition.py) @ 3e88685ff
+
+| Module | Live-critical | Statements | before @ 3e88685ff | after @ 3e88685ff | import-only @ 3e88685ff | Delta |
+|---|---|---|---|---|---|---|
+| `torchcell/datasets/scerevisiae/sameith2015.py` | yes | 834 | 93.2% | 98.3% | 7.2% | +5.1 |
+| `torchcell/data/neo4j_cell.py` | yes | 611 | 64.2% | 99.1% | 10.0% | +34.9 |
+| `torchcell/models/equivariant_cell_graph_transformer.py` | yes | 809 | 73.2% | 99.5% | 5.3% | +26.3 |
+| `torchcell/datasets/scerevisiae/caudal2024.py` | yes | 418 | 99.8% | 100.0% | 26.8% | +0.2 |
+| `torchcell/models/cell_graph_transformer_metabolism.py` | yes | 153 | 78.6% | 100.0% | 10.7% | +21.4 |
+| `torchcell/models/linear.py` | yes | 17 | 61.5% | 100.0% | 17.9% | +38.5 |
+| `torchcell/nn/stoichiometric_hypergraph_conv.py` |  | 87 | 58.4% | 91.2% | 9.6% | +32.7 |
+| `torchcell/models/dcell_opt.py` |  | 347 | 67.0% | 94.3% | 6.9% | +27.3 |
+| `torchcell/models/hetero_cell_bipartite_dango_gi_lazy.py` |  | 543 | 43.9% | 95.7% | 3.6% | +51.9 |
+| `torchcell/data/neo4j_preprocessed_cell.py` |  | 191 | 86.2% | 97.3% | 14.2% | +11.1 |
+| `torchcell/models/hetero_cell_bipartite_dango_diff_gi.py` |  | 96 | 20.2% | 98.5% | 3.7% | +78.2 |
+| `torchcell/models/cell_graph_transformer.py` |  | 230 | 42.7% | 98.9% | 5.0% | +56.1 |
+| `torchcell/models/hetero_cell_nsa_retry.py` |  | 160 | 60.2% | 99.0% | 8.0% | +38.8 |
+| `torchcell/models/dango.py` |  | 176 | 47.0% | 99.0% | 7.9% | +52.1 |
+| `torchcell/datasets/scerevisiae/spell.py` |  | 400 | 90.2% | 99.7% | 4.1% | +9.5 |
+| `torchcell/models/hetero_cell_bipartite_dango.py` |  | 240 | 74.9% | 100.0% | 9.3% | +25.1 |
+| TOTAL (line+branch) |  | 48599 | 92.4% | 97.7% | 19.9% | +5.4 |
+| TOTAL (line only) | | 48599 | 92.5% | 98.3% | 25.2% | |
+
+### Quality audit
+
+Reviewers: two independent read-only agents on Opus 5.5, seven and eight modules each. For every module they extracted the moved ranges from `git show HEAD:` by AST position and diffed them line by line against the demo (15 of 15 exact, no ruff reflow), compared the `ast.dump` of every remaining top-level node before and after (identical), checked that each dropped import is unused in the edited module, imported every demo under the hermetic environment and verified each global the moved body uses resolves to the same binding (symtable check, 0 mismatches), ran the pointer (exit 1 with the real path), ran every test file that imports a moved module (436 + 191 + 641 passed across the three calls, plus the import sweep at 321), grepped the repo for live references to removed names (none; the only mentions are docstrings, note prose, a frozen 015 provenance string and the ruff per-file ignore), and read the notes (dendron frontmatter present, dated H2 only, no em-dashes).
+
+- Modules: 15 reviewed, 15 verbatim, 14 PASS, 1 FAIL on the mypy gate (`hetero_cell_nsa_retry.py`, closed by the override above); 0 live external references.
+- Two writer statements corrected: the allowlisted spell.py line is the `ASSET_IMAGES_DIR` join, not `DATA_ROOT`; `sameith2015` bound `load_dotenv` at module level and called it only in the main (the test docstring now says so). The unowned `knowledge_graphs.rst` regeneration was flagged and is kept as housekeeping.
+
+After the audit: 6861 passed.

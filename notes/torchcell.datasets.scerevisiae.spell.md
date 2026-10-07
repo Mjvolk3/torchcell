@@ -495,3 +495,7 @@ From Phase 1 analysis (~14,000 conditions):
 - [refine bio compendia](https://www.refine.bio/)
 - Contains 12,403 samples with 5,371 genes
 - Searching metadata I find no overlap with [[torchcell.datasets.scerevisiae.kemmeren2014]] or [[torchcell.datasets.scerevisiae.sameith2015]] when search json files with `GSE` number
+
+## 2026.10.06 - Demo main moved to torchcell/scratch/spell_demo.py
+
+The `main` of `torchcell/datasets/scerevisiae/spell.py` loaded SPELL expression data from all studies, exported and quality-checked the condition metadata, and plotted per-gene expression histograms. It moved verbatim, with its `if __name__ == "__main__":` block, to `torchcell/scratch/spell_demo.py`; run it from the repo root with `PYTHONPATH=$PWD python torchcell/scratch/spell_demo.py` (it needs the SPELL archive extracted under `DATA_ROOT/data/sgd/spell`, where `DATA_ROOT` and `ASSET_IMAGES_DIR` are the module constants, which the demo imports along with the four functions it calls). The module's `timestamp` import, used only by `main`, was dropped. Executing the module directly now exits with a pointer to the demo. Reason: demo code is not library code (test campaign Phase 23).

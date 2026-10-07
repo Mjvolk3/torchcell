@@ -123,6 +123,9 @@ namespace_packages = true
 # so it is the robust mechanism for changed-but-dead files.
 module = [
     "torchcell.scratch.*",
+    # Frozen model (see the exclude above); its demo main moved to torchcell/scratch on
+    # 2026-10-06, and CI passes changed files explicitly, which bypasses the exclude.
+    "torchcell.models.hetero_cell_nsa_retry",
 ]
 ignore_errors = true
 

@@ -732,18 +732,19 @@ def test_writer_import_leaves_no_stubbed_load_dotenv(
     written: list[dict[str, Any]],
 ) -> None:
     """After `_load_writer` runs, `dotenv.load_dotenv` and every module that bound it by
-    name during the import (dcell, yeast_GEM, sgd, kemmeren2014, sameith2015) hold the
-    real function again, and `logging.basicConfig` is the real one.
+    name during the import (dcell, yeast_GEM, sgd, kemmeren2014) hold the real function
+    again, and `logging.basicConfig` is the real one. (sameith2015 imported it at module
+    level and called it only in its demo main, which moved to
+    torchcell/scratch/sameith2015_demo.py on 2026-10-06, taking the import with it.)
     """
     import torchcell.datasets.scerevisiae.kemmeren2014 as kemmeren2014
-    import torchcell.datasets.scerevisiae.sameith2015 as sameith2015
     import torchcell.graph.sgd as sgd
     import torchcell.metabolism.yeast_GEM as yeast_gem
     import torchcell.models.dcell as dcell
 
     assert len(written) == 3
     assert dotenv.load_dotenv.__module__ == "dotenv.main"
-    for module in [dcell, yeast_gem, sgd, kemmeren2014, sameith2015]:
+    for module in [dcell, yeast_gem, sgd, kemmeren2014]:
         assert module.load_dotenv is dotenv.load_dotenv, module.__name__
     assert logging.basicConfig.__module__ == "logging"
 

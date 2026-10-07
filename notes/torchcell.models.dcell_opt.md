@@ -599,3 +599,7 @@ def _process_dimension_group(self, term_indices, inputs, ...):
 ## 2026.09.30 - Declared root key and required reduction (issues #554, #578)
 
 `forward` now declares `outputs["root_key"] = "GO:<root index>"`. Before, `DCellLoss` could not recognize the root: `predictions` and `GO:<root>` come from two separate indexing calls, so they are equal but distinct tensors, and the identity skip of the first PR #574 commit counted the root as a third auxiliary term (fixture value 0.8298076 against the paper value 0.6840844, [[tests.torchcell.models.test_dcell_opt]]). `main` passes `cfg.regression_task.dcell_loss.aux_reduction`. Auxiliary-on runs before 2026-09-30 are listed in [[torchcell.losses.dcell]] and issue #578.
+
+## 2026.10.06 - Demo main moved to torchcell/scratch/dcell_opt_demo.py
+
+The hydra `main` of `torchcell/models/dcell_opt.py` trained and evaluated the optimized DCell model on a sample batch from `torchcell.scratch.load_batch_005`, plotting training progress. It moved verbatim, decorator included, with its `if __name__ == "__main__":` block (which sets the `spawn` start method), to `torchcell/scratch/dcell_opt_demo.py`; run it from the repo root with `PYTHONPATH=$PWD python torchcell/scratch/dcell_opt_demo.py` (the hydra `config_path` resolves against `os.getcwd()`, so it reads the same `experiments/006-kuzmin-tmi/conf` as before; it needs `DATA_ROOT` in `.env`, the sample batch, and a GPU where available). Executing the module directly now exits with a pointer to the demo. Reason: demo code is not library code (test campaign Phase 23).

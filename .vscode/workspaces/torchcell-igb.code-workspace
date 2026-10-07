@@ -2,28 +2,20 @@
     "folders": [
         {
             "name": "torchcell",
-            "path": "."
+            "path": "../.."
         },
         {
-            "name": "/u/mjvolk3",
-            "path": "/u/mjvolk3"
-        },
-        {
-            "name": "/work/hdd/bbub/mjvolk3/torchcell/",
-            "path": "/work/hdd/bbub/mjvolk3/torchcell/"
-        },
-        {
-            "name": "/home/labs/zhao5_lab",
-            "path": "/home/labs/zhao5_lab"
+            "name": "~/scratch/torchcell",
+            "path": "/home/a-m/mjvolk3/scratch/torchcell"
         }
     ],
     "settings": {
-        // Workspace appearance - Delta specific color
+        // Workspace appearance - IGB specific color
         "workbench.colorCustomizations": {
-            "titleBar.activeBackground": "#be2401df"
+            "titleBar.activeBackground": "#6d1400df"
         },
 
-        // Mypy - Note: uses M1 paths (possibly incorrect for Delta)
+        // Mypy - Note: uses M1 paths (possibly incorrect for IGB)
         "mypy.dmypyExecutable": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/dmypy",
         "mypy.enabled": true,
         "mypy.runUsingActiveInterpreter": false,

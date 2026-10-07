@@ -69,7 +69,7 @@ Detected file blocks:
     tests/torchcell/transforms/test_coo_regression.py
     notes/torchcell.transforms.coo_regression.md
     notes/user.Mjvolk3.torchcell.tasks.weekly.2026.06.md  (weekly)
-[2] Scripts: scripts/build.sh, notes/scripts.build.md
+[2] Scripts: scripts/ops.sh, notes/scripts.ops.md
 [3] Standalone notes: notes/plan.coo-head.2026.06.04.md
 ```
 

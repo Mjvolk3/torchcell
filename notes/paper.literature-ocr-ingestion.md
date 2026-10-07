@@ -296,7 +296,7 @@ OCR completeness (most SI is still raw `xlsx`).
 
 The endpoint now ships as a **container**, matching how the Neo4j graph DB is served
 (`docker-compose.yml`) — auto-restart, pinned deps, clean start/stop — instead of a bare
-uvicorn process. Files: `Dockerfile.tc-lit` + `docker-compose.tc-lit.yml` (repo root).
+uvicorn process. Files: `Dockerfile.tc-lit` + `docker-compose.tc-lit.yml` (repo root at the time; under `docker/` since the 2026-10-07 root cleanup, which changes the commands below to `--env-file .env -f docker/docker-compose.tc-lit.yml` run from the repo root).
 
 **Slim by design.** `torchcell.literature` imports nothing heavy (verified: zero of
 torch/PyG/numpy/pandas load), so the image is `python:3.13-slim` + only the 7 real deps

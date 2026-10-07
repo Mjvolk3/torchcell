@@ -61,10 +61,6 @@ experiments/*/slurm/
 CHBE-symposium.docx
 CHBE-symposium-2023.docx
 
-# OWL
-ontology/TCO.owl
-ontology/TCO.properties
-
 # Dendron Not needed
 .dendron.port.cli
 

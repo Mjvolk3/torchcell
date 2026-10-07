@@ -564,7 +564,7 @@ We have the following, which helps we track work easily.
 
 ### Markdown Formatting
 
-All markdown files in `notes/` are automatically formatted on save using the markdownlint VSCode extension. Configuration is stored in `torchcell.code-workspace` (lines 79-98).
+All markdown files in `notes/` are automatically formatted on save using the markdownlint VSCode extension. Configuration is stored in `.vscode/workspaces/torchcell.code-workspace` (the `markdownlint.config` block). All five `.code-workspace` files live in `.vscode/workspaces/`, so their relative folder paths are rooted two levels up (`../..` is the repo).
 
 **Markdownlint Rules (from workspace config):**
 

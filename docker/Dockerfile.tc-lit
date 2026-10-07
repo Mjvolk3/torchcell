@@ -1,12 +1,12 @@
-# Dockerfile.tc-lit
+# docker/Dockerfile.tc-lit
 # Slim image for the keyed literature endpoint (torchcell.literature.server).
 # It serves the OCR mirror read-only over HTTP; it is NOT the torchcell ML env.
 # torchcell.literature imports nothing heavy (no torch/PyG/numpy), so we install
 # only its lightweight runtime deps and copy the package rather than `pip install .`
 # (which would pull the full env/requirements.txt ML stack for a file server).
 #
-# Build (context = repo root):  docker build -f Dockerfile.tc-lit -t tc-lit-endpoint:latest .
-# Run is via docker-compose.tc-lit.yml (bind-mounts the mirror + keys file, both :ro).
+# Build (context = repo root):  docker build -f docker/Dockerfile.tc-lit -t tc-lit-endpoint:latest .
+# Run is via docker/docker-compose.tc-lit.yml (bind-mounts the mirror + keys file, both :ro).
 
 FROM python:3.13-slim
 

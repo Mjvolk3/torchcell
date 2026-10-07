@@ -13,6 +13,8 @@ both: a row whose data another row's loader subsumes, or whose records the schem
 yet express, is a RECORD of that finding rather than nothing, and is imported for its
 sourcing layer.
 
+- ``cui2018`` -- ``CrispriKnockdownCui2018Dataset``: the genome-wide dCas9 knockdown
+  screen, one record per (guide, screened strain) over the two dCas9-dose regimes.
 - ``caglar2017`` -- ``ProteomeCaglar2017Dataset`` and ``RnaseqCaglar2017Dataset``: the
   REL606 multi-omic growth panel, which became loadable once the *E. coli* B assembly
   set joined the tier (this module began as the provenance record of that blocker).
@@ -40,6 +42,7 @@ sourcing layer.
 
 from .caglar2017 import ProteomeCaglar2017Dataset as ProteomeCaglar2017Dataset
 from .caglar2017 import RnaseqCaglar2017Dataset as RnaseqCaglar2017Dataset
+from .cui2018 import CrispriKnockdownCui2018Dataset as CrispriKnockdownCui2018Dataset
 from .fuhrer2017 import MetabolomeFuhrer2017Dataset as MetabolomeFuhrer2017Dataset
 from .goodall2018 import (
     GeneEssentialityGoodall2018Dataset as GeneEssentialityGoodall2018Dataset,

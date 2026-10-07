@@ -1487,8 +1487,17 @@ def test_the_genotype_records_that_the_locus_tag_was_derived() -> None:
     assert perturbation.insertion_position is None
 
 
-def test_the_reference_is_the_typical_gene_of_the_same_experiment() -> None:
-    """Gene fitness is normalized to 0, which is what the reference phenotype holds."""
+def test_the_reference_is_the_typical_gene_of_the_same_experiment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Gene fitness is normalized to 0, which is what the reference phenotype holds.
+
+    ``assembly_reference`` is patched out: it reads the deposited assembly report, so the
+    real one would make this test need the genomes tier. ``_assembly_pin`` builds the same
+    pin from the schema's own ``BACTERIAL_ASSEMBLY_SETS`` and ``ASSEMBLY_SET_ACCESSIONS``,
+    which is what keeps the assertions below about the pin honest.
+    """
+    monkeypatch.setattr(mut, "assembly_reference", _assembly_pin)
     reference = mut.build_reference(
         "PhageRbTnseqMutalik2020Dataset",
         mut.environment(_assay(), _released(), None),

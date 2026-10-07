@@ -8,7 +8,7 @@
 import math
 import re
 from enum import StrEnum
-from typing import Any, Literal
+from typing import Any, Literal, get_type_hints
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sortedcontainers import SortedDict
@@ -4095,6 +4095,27 @@ EXPERIMENT_TYPE_MAP = {
     "strain_environment_response": StrainEnvironmentResponseExperiment,
     "segregant_growth": SegregantGrowthExperiment,
 }
+
+
+def environment_class_for(experiment_type: str) -> type[Environment]:
+    """The ``Environment`` class the experiment class of ``experiment_type`` declares.
+
+    Every reader that rebuilds an environment from stored JSON (the aggregation key,
+    the single-pass raw stage, a flatten script) must construct the class the record's
+    experiment family declares, not the base ``Environment``: the base class forbids
+    extra fields, so a ``CultureEnvironment`` payload (the strain-resolved chemogenomic
+    family, #507) is rejected by it, and a looser base would drop the protocol fields
+    that are part of the environment's identity. Raises on an experiment class whose
+    annotation is not an ``Environment`` subclass rather than guessing.
+    """
+    annotation = get_type_hints(EXPERIMENT_TYPE_MAP[experiment_type])["environment"]
+    if not (isinstance(annotation, type) and issubclass(annotation, Environment)):
+        raise TypeError(
+            f"{experiment_type!r} declares environment: {annotation!r}, "
+            "not an Environment subclass"
+        )
+    return annotation
+
 
 EXPERIMENT_REFERENCE_TYPE_MAP = {
     "fitness": FitnessExperimentReference,

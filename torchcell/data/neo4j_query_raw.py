@@ -16,7 +16,7 @@ from collections import deque
 from collections.abc import Callable, Iterator, Sequence
 from concurrent.futures import Future, ProcessPoolExecutor
 from itertools import chain, product
-from typing import Any, Literal, Protocol, cast, get_type_hints, runtime_checkable
+from typing import Any, Literal, Protocol, cast, runtime_checkable
 
 import lmdb
 from attrs import define, field
@@ -35,30 +35,9 @@ from torchcell.datamodels.schema import (
     EXPERIMENT_REFERENCE_TYPE_MAP,
     EXPERIMENT_TYPE_MAP,
     Environment,
+    environment_class_for,
 )
 from torchcell.sequence import GeneSet
-
-
-def environment_class_for(experiment_type: str) -> type[Environment]:
-    """The ``Environment`` class the experiment class of ``experiment_type`` declares.
-
-    The single pass validates a record's environment once per distinct payload and
-    hands the cached MODEL to the experiment constructor. That model must be an
-    instance of the class the experiment's ``environment`` field declares, which is
-    ``Environment`` for most families and a subclass for those that state more (the
-    strain-resolved chemogenomic family declares ``CultureEnvironment``, whose extra
-    fields a plain ``Environment`` would drop and whose constructor would reject the
-    base-class instance). Raises on an experiment class whose annotation is not an
-    ``Environment`` subclass rather than guessing.
-    """
-    annotation = get_type_hints(EXPERIMENT_TYPE_MAP[experiment_type])["environment"]
-    if not (isinstance(annotation, type) and issubclass(annotation, Environment)):
-        raise TypeError(
-            f"{experiment_type!r} declares environment: {annotation!r}, "
-            "not an Environment subclass"
-        )
-    return annotation
-
 
 #: Environment class by name, over every experiment family: the cache key names the
 #: class so two families that both declare ``Environment`` share one cached model.

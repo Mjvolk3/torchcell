@@ -1,0 +1,75 @@
+%% notes-tex/033-post-query-analysis/sections/4-genotype.tex
+
+\section{The genotype axis and the ploidy arms\secstatus{todo}}
+\label{sec:genotype}
+
+The functional dose takes the two values the plan expected and no others
+(Table~\ref{tab:genotype}). 1{,}826{,}549 cells sit at zero, a full deletion, and
+4{,}216{,}222 at one half, a heterozygous deletion in a diploid. Seventy percent of the
+pool is therefore the perturbation kind the tensor layer cannot yet distinguish from a
+deletion.
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/store_against_plan.py ->
+%% results/store_axes.csv, rendered by notes_tex_post_query_tables.py. The plan column is
+%% 031 results/dose_axis_summary.csv.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Genotype and dose per source. The functional dose is copies present over copies
+in the reference. The dose basis is counted over cells that dose one compound. The molar
+share is the cells whose concentration converts to molar without a molecular weight; the
+plan's share is over records with a dosed compound, which is why Hillenmeyer's is higher.}
+\label{tab:genotype}
+\input{tables/t2-genotype-dose}
+\end{table}
+
+\notesec{The two arms never share an environment}
+Hoepfner is the only source with both arms, and the plan rests the learned scale factor
+$\gamma$ on its 648{,}977 pairs. The store confirms the count and adds a condition the plan
+did not state (Table~\ref{tab:ploidy}). Matched on the compound alone, 648{,}977 pairs are
+measured in both arms. Matched on compound and concentration, 1{,}140{,}517 cells are.
+Matched on the environment, none is. Every heterozygous cell ran for 20 generations with
+no duration in hours stated, and every homozygous cell ran for 5 generations over 16
+hours (Table~\ref{tab:physical}). Duration is part of an environment's identity, so the
+two arms are disjoint sets of environments, and in this source ploidy and duration are one
+variable.
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/store_against_plan.py ->
+%% results/ploidy_pairs.csv, rendered by notes_tex_post_query_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Hoepfner cells measured in both ploidy arms, at three levels of matching. The
+limit is the correlation two noisy measurements of one quantity would show, the square
+root of the product of the two arms' repeat reliabilities (Table~\ref{tab:reliability}).
+Per compound is the median Spearman over compounds with at least 100 paired genes. A hit
+is a paired cell in the bottom 5 percent of the homozygous arm, a shared hit is one that is
+also in the bottom 5 percent of the heterozygous arm, and the last column is the shared
+count expected if the two arms were independent.}
+\label{tab:ploidy}
+\input{tables/t8-ploidy}
+\end{table}
+
+\notesec{The arms agree weakly}
+On the 1{,}140{,}517 cells matched on compound and concentration, the two arms correlate
+at Pearson 0.127 and Spearman 0.101. The repeat reliabilities of the arms, 0.576 and
+0.639, put the limit for two measurements of the same quantity at 0.607, so the arms share
+0.21 of what noise alone would allow. Hits overlap more than the correlation suggests:
+8{,}000 of the 57{,}026 homozygous hits are also heterozygous hits, against 2{,}851
+expected by chance. Figure~\ref{fig:reliability}c shows the shape behind both numbers. The
+mass lies along the two axes, cells that respond in one arm and sit at zero in the other,
+with a thin lower-left quadrant where both respond.
+
+\notesec{What this does and does not say about $\gamma$}
+The plan's hypothesis is that a heterozygote attenuates the deletion response, which a
+scalar $\gamma$ multiplying the operator can express. The measurement bounds that reading
+and cannot test it. A pure attenuation would make the two arms proportional and would put
+their correlation at the limit, and it sits at a fifth of the limit. Three things other
+than ploidy could produce the gap, and the store cannot separate them. The arms differ in
+duration, 20 generations against 5. Each screen is normalized to its own pool, so a score
+is relative to the other strains of its arm. And the heterozygous pool contains the
+essential genes the homozygous pool cannot, which changes what a median strain is.
+\textit{Hypothesis (untested):} most of the gap is biology, because a heterozygous
+deletion exposes the drug's target by dosage while a homozygous deletion exposes the
+pathways that buffer it. If so, $\gamma$ as a scalar is the wrong form and the arm needs
+its own interaction with the compound.

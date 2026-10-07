@@ -1,0 +1,68 @@
+%% notes-tex/033-post-query-analysis/sections/8-next.tex
+
+\section{What the measurements change in the plan\secstatus{todo}}
+\label{sec:next}
+
+The plan's data claims survive the build. Its implementation order meets five facts of the
+store that it did not anticipate, and each is a decision to take before the first run. The
+recommendations below are proposals. None has been run.
+
+\notesec{1. Choose the label of a repeated cell}
+The label table's choice, the last measurement, follows from insertion order
+(Section~\ref{sec:label}). The alternatives are the mean of a cell's measurements, which
+is the lower-noise target, or one measurement drawn per epoch, which keeps the noise and
+shows it to the model. \textit{Recommendation:} the mean, with the measurement count kept
+as a column so a loss can weight by it. The change is in the label-table loop and in
+nothing else, and it touches 278{,}581 cells.
+
+\notesec{2. Decide what a vectorless cell is}
+80{,}332 Hillenmeyer cells have no complete compound vector (Section~\ref{sec:environment}),
+and the plan's processor raises on them. Two routes exist. The cells can be left out of
+the first round, which costs 1.3 percent of the pool and removes the ten medium and
+temperature conditions, which are outside the compound question, together with
+tunicamycin. Or the environment context
+can carry a learned vector for the absence of a compound, which keeps them and adds a
+parameter whose meaning is mixed. \textit{Recommendation:} leave them out of the first
+round by a read-time selection, and record the selection beside the run.
+
+\notesec{3. Give the token the arm, or give the model the duration}
+A token per source cannot carry a field that varies inside the source
+(Table~\ref{tab:physical}). For Hoepfner the variation is exactly the ploidy arm, so a
+token per source and arm, five tokens in all, carries it at no cost. For Hillenmeyer the
+medium and the temperature stop varying once the vectorless cells of decision 2 are left
+out, and the generation count remains. It is a number, so a scalar channel for the
+generation count is the direct encoding. \textit{Recommendation:} both, since the first
+is a vocabulary entry and the second is one masked scalar beside the dose.
+
+\notesec{4. Read the $\gamma$ arm as ploidy and duration together}
+The only data that can fit $\gamma$ changes duration with ploidy
+(Section~\ref{sec:genotype}), and the two arms correlate at a fifth of their noise limit.
+A learned scalar $\gamma$ fit on these cells is an estimate of the joint effect, and a
+small or unstable $\gamma$ would not show that heterozygosity is unimportant.
+\textit{Recommendation:} keep the fixed-identity arm as planned, and add to the learned arm
+a variant in which the compound rows of the operator are conditioned on the arm, so the
+round can tell a scale from an interaction. Hillenmeyer's heterozygous cells at 5 and 20
+generations, 86{,}078 and 2{,}407{,}497 of them, are the one place duration varies with
+ploidy held fixed, and they can be used to estimate the duration effect separately.
+
+\notesec{5. Decide whether the loss should follow the tails}
+Standardizing by the standard deviation leaves 41 to 80 percent of each source's squared
+error on 2 to 3 percent of its cells (Section~\ref{sec:target}). That may be what is
+wanted, since the hits are the phenotype. It is a choice either way, and it interacts with
+the scale: dividing by a robust scale instead raises the weight of the heavy-tailed sources
+by up to a factor of four in scale. \textit{Recommendation:} run the first round as planned
+on the squared error, log the per-source loss split into cells within and beyond three
+standard deviations, and hold a Huber loss as the second-round arm if the tail share of
+the loss tracks the raw share.
+
+\notesec{What needs no change}
+The record population, the orientation factors, the per-source standardization, the
+41-fold compound-cold evaluation with its ceilings, the choice of the feature-class
+fingerprint as the default encoder, and the expectation that pooling buys a gene prior and
+not more labels for the same task are all as the plan has them, now measured on the store.
+
+\notesec{What is still missing}
+The tensor layer reads only a gene name. The store carries the copy numbers, the ploidy,
+the compounds, the doses and the durations in every cell's record, and the cell table
+written here holds them as columns, so the processor changes of the plan's implementation
+order are read-side work and need no further build.

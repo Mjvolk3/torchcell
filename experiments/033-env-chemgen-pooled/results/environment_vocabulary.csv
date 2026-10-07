@@ -1,0 +1,5 @@
+dataset,environments,cells_per_environment_min,cells_per_environment_median,cells_per_environment_max,compounds,doses_per_compound_median,doses_per_compound_max,environments_per_compound_median,environments_per_compound_max,compounds_with_one_environment
+Vanacloig 2022,41,3388,3493.0,3514,41,1.0,1,1.0,1,41
+Hillenmeyer HET,455,5677,5677.0,5802,290,1.0,7,1.0,10,221
+Hoepfner 2014,563,4402,5697.0,5773,148,2.0,7,3.0,13,1
+Wildenhain 2015,5170,7,68.0,185,5170,1.0,1,1.0,1,5170

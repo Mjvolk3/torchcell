@@ -1,0 +1,75 @@
+%% notes-tex/033-post-query-analysis/sections/7-target.tex
+
+\section{The pooled target after the transform\secstatus{todo}}
+\label{sec:target}
+
+The plan orients each source so that negative is a defect and standardizes it by its own
+training-split statistics. Table~\ref{tab:target} applies that transform to the store,
+with whole-source statistics standing in for the training split, and measures what it
+fixes and what it leaves.
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/store_against_plan.py ->
+%% results/standardized_target.csv, rendered by notes_tex_post_query_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The pooled target per source. $o$ is the orientation factor. Raw squared error
+is the source's share of the pool's squared deviation from each source's own mean, before
+any standardizing. The $z$ columns are quantiles of the oriented, standardized response.
+Robust sd is 1.4826 times the median absolute deviation.}
+\label{tab:target}
+\input{tables/t7-target}
+\end{table}
+
+\notesec{What standardizing fixes}
+Without it the loss is Wildenhain's. That source is 7.1 percent of the cells and 74.9
+percent of the raw squared error, while Vanacloig, the application target, is 2.4 percent
+of the cells and 0.2 percent of the squared error (Figure~\ref{fig:target}b). The plan
+stated this qualitatively and the store gives it a size.
+
+\notesec{What standardizing leaves}
+Dividing by the standard deviation equalizes the second moment and nothing else, and the
+four distributions are far from a common shape (Figure~\ref{fig:target}a). The excess
+kurtosis runs from 15.5 to 61.2. The standard deviation is 1.6 to 6.7 times the robust
+standard deviation, so which scale is divided out changes the relative scale of the
+sources by up to a factor of four. And inside every source the squared error belongs to a small
+minority: between 1.7 and 3.1 percent of cells lie beyond three standard deviations, and
+they carry between 41 and 80 percent of their source's squared error
+(Figure~\ref{fig:target}c). The sick tail reaches 7 to 10 standard deviations at the
+0.1th percentile in all four sources, while the resistant tail reaches 5 in three of them
+and 1 in Wildenhain.
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/post_query_figures.py ->
+%% standardized_target.svg, from the cell table, the store's label table and
+%% results/standardized_target.csv; converted by `make plots`.
+\tcfig{figures/standardized_target.pdf}{\textbf{Standardizing removes the scale
+disagreement and leaves the shape disagreement.} \textbf{a}, Density of the oriented
+response in standard deviations of its own source, log scale, with a standard normal for
+reference. \textbf{b}, Each source's share of the pool's cells beside its share of the
+raw squared error. \textbf{c}, The share of each source's cells that lie beyond three
+standard deviations beside the share of that source's squared error they
+carry.}{fig:target}
+
+\textit{Hypothesis (untested):} under a squared-error loss on this target the model is fit
+mostly to the hits, and a per-compound correlation, which is how the evaluation scores,
+weights every gene of a fold equally. Whether the mismatch costs anything is a first-round
+question, and the measurement says where to look, not what will be found.
+
+\notesec{Cross-source agreement is unchanged}
+Table~\ref{tab:cross} repeats the plan's agreement test on the store's measurements for
+the six pairs of the four kept sources. Five pairs reproduce the plan's count and
+correlation exactly, and the sixth, Hillenmeyer against Hoepfner, differs by 66 pairs in
+170{,}903 and in the third decimal. The plan's conclusion stands on the store: every pair
+correlates positively once oriented, and none above 0.12.
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/store_against_plan.py ->
+%% results/cross_source_cells.csv, rendered by notes_tex_post_query_tables.py. Plan
+%% columns are 031 results/cross_dataset_pair_overlap.csv.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Agreement between sources on the (gene, compound) pairs both measure, Spearman
+as served and after orienting, beside the plan's values.}
+\label{tab:cross}
+\input{tables/t11-cross}
+\end{table}

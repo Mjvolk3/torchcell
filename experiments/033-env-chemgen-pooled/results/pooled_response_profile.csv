@@ -1,0 +1,5 @@
+dataset,cells,polarity,mean,sd,min,q01,median,q99,max,frac_negative
+Vanacloig 2022,143218,smaller is sicker,-0.1449,0.6994,-7.8896,-3.2481,-0.0446,1.1805,6.9371,0.5695
+Hillenmeyer HET,2591199,larger is sicker,0.0795,0.4406,-6.6002,-0.9223,0.0347,1.5305,6.515,0.4468
+Hoepfner 2014,2880165,smaller is sicker,-0.1116,1.6162,-61.4262,-6.0902,0.0,3.6754,31.0469,0.5
+Wildenhain 2015,428189,smaller is sicker,-2.1489,7.5018,-81.837,-44.0425,-0.2698,2.3039,23.7674,0.6012

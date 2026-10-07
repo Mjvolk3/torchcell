@@ -1,0 +1,75 @@
+%% notes-tex/033-post-query-analysis/sections/5-environment.tex
+
+\section{The environment: fields, dose and compound vectors\secstatus{todo}}
+\label{sec:environment}
+
+\notesec{Physical and medium fields}
+The plan gives the physical fields no channel, on the ground that each is constant inside
+a source and the dataset token can carry it. Table~\ref{tab:physical} reads the fields
+from the store. The ground holds for Vanacloig and Wildenhain, where every field takes one
+value. It does not hold for the other two. Hillenmeyer varies three fields: 28{,}828 cells
+are in SD or YP rather than YPD, 28{,}560 state a temperature of 20, 23 or 37~C, and
+183{,}702, which is 7.1 percent of the source, ran for a generation count other than 20.
+The first two are confined to the ten environments that dose no compound
+(Table~\ref{tab:vectorless}), where the medium or the temperature is itself the
+condition; every Hillenmeyer cell that doses a compound is in YPD with no temperature
+stated. The generation count varies among the dosed cells as well. Hoepfner varies
+duration, and the variation is the ploidy arm (Section~\ref{sec:genotype}). A token per
+source assigns one vector to all of these.
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/store_against_plan.py ->
+%% results/store_axes.csv, rendered by notes_tex_post_query_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Physical and medium fields of the store's cells, the distinct values per source
+ordered by cell count. The cell counts behind each value are in
+\texttt{results/store\_axes.csv}.}
+\label{tab:physical}
+\input{tables/t3-physical}
+\end{table}
+
+\notesec{Dose}
+The store confirms the three dose regimes (Table~\ref{tab:genotype}). 5{,}585{,}863 cells,
+92 percent of the pool, state a concentration that converts to molar. Vanacloig states
+none. The basis token is close to a second dataset token: every Hoepfner cell is on a
+target-inhibition basis, every Wildenhain cell states no basis, and Hillenmeyer states
+none on 2{,}380{,}154 of its single-compound cells and a fixed basis on 5{,}704. Only
+Vanacloig splits, with 136{,}237 cells dosed to a target inhibition and 6{,}981 at a fixed
+concentration, which are its two compounds benomyl and methyl methanesulfonate.
+
+\notesec{Cells a compound vector cannot describe}
+The plan's processor resolves each dosed compound against the embedding table and raises
+when a vector is missing. Table~\ref{tab:embedding} counts what that does on the store.
+Eleven encoders embed all 5{,}463 compounds, and under each of them 80{,}332 cells still
+have no complete vector. All are Hillenmeyer cells, in fourteen environments
+(Table~\ref{tab:vectorless}): 57{,}388 cells in ten environments dose no compound, and
+22{,}944 in four dose tunicamycin, a homologue mixture that carries no InChIKey. The
+147{,}953 cells that dose two compounds are covered, since both vectors exist and the
+representation pools a set. The three-dimensional encoder leaves 406{,}318 cells
+uncovered, 6.7 percent of the pool, because 21 compounds have no conformer.
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/store_against_plan.py ->
+%% results/embedding_coverage_store.csv, rendered by notes_tex_post_query_tables.py. The
+%% embedding tables are 031 results/embeddings/*.npz.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Compound vectors against the store, per encoder. Compounds are distinct
+InChIKeys in the pool. A cell is covered when every compound it doses has a vector; the
+four right-hand columns are the covered share of each source's cells, in percent.}
+\label{tab:embedding}
+\input{tables/t10-embedding}
+\end{table}
+
+%% SOURCE: experiments/033-env-chemgen-pooled/scripts/store_against_plan.py ->
+%% results/vectorless_environments.csv, rendered by notes_tex_post_query_tables.py.
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{The fourteen environments no compound vector can describe, all in Hillenmeyer
+HET. Ten dose no compound and differ from the source's standard condition in medium or in
+temperature; four dose tunicamycin.}
+\label{tab:vectorless}
+\input{tables/t13-vectorless}
+\end{table}

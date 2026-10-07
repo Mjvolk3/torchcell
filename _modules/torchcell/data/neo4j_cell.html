@@ -125,6 +125,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">auto</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">hypernetx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">hnx</span>
@@ -138,6 +139,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">sortedcontainers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SortedDict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">HeteroData</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.artifacts</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArtifactRef</span><span class="p">,</span> <span class="n">distinct_refs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.artifacts</span><span class="w"> </span><span class="kn">import</span> <span class="n">materialize</span> <span class="k">as</span> <span class="n">materialize_artifact</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.aggregate</span><span class="w"> </span><span class="kn">import</span> <span class="n">Aggregator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.cell_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_cell_data</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.deduplicate</span><span class="w"> </span><span class="kn">import</span> <span class="n">Deduplicator</span>
@@ -995,6 +998,42 @@
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">processed_graph</span></div>
+
+
+<div class="viewcode-block" id="Neo4jCellDataset.refs_of">
+<a class="viewcode-back" href="../../../generated/torchcell.data.Neo4jCellDataset.html#torchcell.data.Neo4jCellDataset.refs_of">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">refs_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactRef</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The distinct ``ArtifactRef``s of processed entry ``index``, fetching nothing.</span>
+
+<span class="sd">        Walks every record the entry aggregates (experiment and reference) and keeps</span>
+<span class="sd">        the first ref per ``(tier, key, path, sha256)``. Reads the processed LMDB only;</span>
+<span class="sd">        no artifact source is consulted. ``IndexError`` for a missing entry.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_lmdb_read</span><span class="p">()</span>
+        <span class="n">serialized_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_from_lmdb</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">serialized_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"no processed entry at index </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reconstruct_experiments</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_deserialize_json</span><span class="p">(</span><span class="n">serialized_data</span><span class="p">))</span>
+        <span class="n">models</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">model</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">data</span>
+            <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">],</span> <span class="n">item</span><span class="p">[</span><span class="s2">"experiment_reference"</span><span class="p">])</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">distinct_refs</span><span class="p">(</span><span class="n">models</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="Neo4jCellDataset.materialize">
+<a class="viewcode-back" href="../../../generated/torchcell.data.Neo4jCellDataset.html#torchcell.data.Neo4jCellDataset.materialize">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">materialize</span><span class="p">(</span><span class="n">ref</span><span class="p">:</span> <span class="n">ArtifactRef</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The verified local path of ``ref``'s file, fetched into the cache if needed.</span>
+
+<span class="sd">        ``torchcell.artifacts.materialize`` over the environment's ``DATA_ROOT`` and</span>
+<span class="sd">        tc-data (``TC_DATA_URL``), the same sources the raw stage's resolvability gate</span>
+<span class="sd">        checked the ref against at build time. Models call this when they need bytes.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">materialize_artifact</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_init_lmdb_read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">readahead</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

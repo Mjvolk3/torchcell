@@ -55,6 +55,7 @@ from tests.torchcell.adapters._adapter_init_harness import (
 from torchcell.adapters import (
     CarbonSourceTong2020Adapter,
     CrispriArrayYunus2026Adapter,
+    CrispriGuideFitnessWang2018Adapter,
     CrispriKnockdownCui2018Adapter,
     CrispriKnockdownYunus2026Adapter,
     EnvChemgenShiver2016Adapter,
@@ -96,6 +97,7 @@ from torchcell.datasets.ecoli.schmidt2016 import ProteomeSchmidt2016Dataset
 from torchcell.datasets.ecoli.shiver2016 import EnvChemgenShiver2016Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
 from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
+from torchcell.datasets.ecoli.wang2018 import CrispriGuideFitnessWang2018Dataset
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
 from torchcell.datasets.pputida.carruthers2025 import (
     IsoprenolTiterCarruthers2025Dataset,
@@ -175,9 +177,9 @@ TURNOVER = "protein turnover phenotype"
 # `build_environment` in the loader). Caglar 2017 is a wild-type panel with no
 # perturbation in any record, and so is Schmidt 2016, whose paper's three deletion
 # strains carry no abundance data and are not loaded; Fuhrer 2017 and Goodall 2018 carry
-# no environment perturbation; the CRISPRi leaves of Carruthers, Cui, Menasalvas and
-# Yunus carry a CrisprConstruct. Shiver 2016's three temperature-only conditions carry no
-# environment perturbation, but its other 54 do, so its pair is enabled.
+# no environment perturbation; the CRISPRi leaves of Carruthers, Cui, Menasalvas, Wang
+# 2018 and Yunus carry a CrisprConstruct. Shiver 2016's three temperature-only conditions
+# carry no environment perturbation, but its other 54 do, so its pair is enabled.
 BACTERIAL: list[Bacterial] = [
     _case(
         RnaseqCaglar2017Adapter,
@@ -276,6 +278,14 @@ BACTERIAL: list[Bacterial] = [
         "env_chemgen_wang2015",
         EnvChemgenWang2015Dataset,
         RESPONSE,
+    ),
+    _case(
+        CrispriGuideFitnessWang2018Adapter,
+        "wang2018",
+        "crispri_guide_fitness_wang2018",
+        CrispriGuideFitnessWang2018Dataset,
+        RESPONSE,
+        crispr=True,
     ),
     _case(
         RbTnseqBorchert2024Adapter,

@@ -69,6 +69,7 @@ datasets:
   - ProteomeSchmidt2016Dataset
   - CarbonSourceTong2020Dataset
   - EnvChemgenWang2015Dataset
+  - CrispriGuideFitnessWang2018Dataset
   # P. putida
   - RbTnseqBorchert2024Dataset
   - IsoprenolTiterCarruthers2025Dataset

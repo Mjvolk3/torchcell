@@ -150,6 +150,9 @@ from .vanacloig2022_adapter import (
     EnvChemgenVanacloig2022Adapter as EnvChemgenVanacloig2022Adapter,
 )
 from .wang2015_adapter import EnvChemgenWang2015Adapter as EnvChemgenWang2015Adapter
+from .wang2018_adapter import (
+    CrispriGuideFitnessWang2018Adapter as CrispriGuideFitnessWang2018Adapter,
+)
 from .wildenhain2015_adapter import (
     EnvChemgenWildenhain2015Adapter as EnvChemgenWildenhain2015Adapter,
 )
@@ -266,6 +269,7 @@ ecoli_adapters = [
     "ProteomeSchmidt2016Adapter",
     "CarbonSourceTong2020Adapter",
     "EnvChemgenWang2015Adapter",
+    "CrispriGuideFitnessWang2018Adapter",
 ]
 
 pputida_adapters = [

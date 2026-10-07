@@ -481,6 +481,7 @@ def test_dataset_sizes_cover_the_same_datasets_as_the_adapter_map() -> None:
 BACTERIAL_DATASETS = {
     "CarbonSourceTong2020Dataset",
     "CrispriArrayYunus2026Dataset",
+    "CrispriGuideFitnessWang2018Dataset",
     "CrispriKnockdownCui2018Dataset",
     "CrispriKnockdownYunus2026Dataset",
     "EnvChemgenShiver2016Dataset",
@@ -505,20 +506,19 @@ BACTERIAL_DATASETS = {
     "RnaseqCaglar2017Dataset",
     "RnaseqLamoureux2023Dataset",
 }
-"""The E. coli and P. putida datasets, the 20 of plan step 9 plus Shiver 2016.
-
-None of them is calibrated yet.
-"""
+"""The E. coli and P. putida datasets mapped in plan step 9 and after, none calibrated
+yet."""
 
 
 def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     """Every pair here is a (dataset, adapter) pair of ``dataset_adapter_map``.
 
-    Finding: the projection covers 33 of the 76 datasets in ``dataset_adapter_map``.
-    The 43 absent ones (``ADAPTER_TO_DATASET``, build_time_projection.py:81-115) include
+    Finding: the projection covers 33 of the 73 datasets in ``dataset_adapter_map``.
+    The 40 absent ones (``ADAPTER_TO_DATASET``, build_time_projection.py:81-115) include
     the six EnvChemgen chemogenomic sets, both Hillenmeyer 2008 sets, the Nadal-Ribelles
-    Perturb-seq set and the 25 bacterial datasets mapped in plan.bacteria-ontology-genome
-    step 9, so a projection of a build that serves them omits their generation time
+    Perturb-seq set and the 22 bacterial datasets mapped in plan.bacteria-ontology-genome
+    step 9 and after, so a projection of a build that serves them omits their
+    generation time
     entirely (``calibrate`` would raise ``KeyError`` on a timing file that lists them).
     Their record counts were not measured here. Pinned until those adapters are
     calibrated and added to the three tables.

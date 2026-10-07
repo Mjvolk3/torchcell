@@ -129,7 +129,7 @@ from torchcell.literature.manifest import (
 )
 from torchcell.sequence.genome.base import GeneNameStatus
 from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
-from torchcell.verification.report import Provenance
+from torchcell.verification.report import Provenance, VerificationReport
 from torchcell.verification.sourced import (
     ProvenanceGap,
     ProvenanceGapReason,
@@ -1822,6 +1822,57 @@ class RbTnseqBorchert2024Dataset(ExperimentDataset):
         raise NotImplementedError(
             "RbTnseqBorchert2024Dataset builds records in process()"
         )
+
+
+#: Records of the full build: 290 kept samples x 4,732 genes.
+EXPECTED_RECORDS = 290 * N_GENES
+
+
+def verify_build(
+    dataset_root: str,
+    *,
+    genome: PPutidaKT2440Genome | None = None,
+    data_root: str | None = None,
+    expected_count: int = EXPECTED_RECORDS,
+) -> VerificationReport:
+    """Run the environment-response L0-L4 verifier on a built tree and write its report.
+
+    The LMDB is streamed once (1.37M records are not materialized). Every record is
+    checked against the KT2440 genome its references pin: the resolver of the
+    canonical-name rule, and as the L4 universe every GenBank locus of the assembly
+    (5,786, pseudogenes and RNA tags included; the same set as the verification
+    runners' ``_pputida_gene_set``). The report is written to
+    ``preprocess/verification_report.json``.
+    """
+    from torchcell.verification.environment_response import (
+        verify_environment_response_dataset_streaming,
+    )
+    from torchcell.verification.runners import stream_records
+
+    if genome is None:
+        genome = bacterial_genome("pputida", "KT2440", data_root)
+    report = verify_environment_response_dataset_streaming(
+        stream_records(dataset_root),
+        dataset_name=osp.basename(osp.normpath(dataset_root)),
+        provenance=Provenance(
+            source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{DATA_RELPATH}",
+            citation_key=CITATION_KEY,
+            sha256=DATA_SHA256,
+            method="fModule_Metadata.xlsx (github.com/beckham-lab/fModule @ "
+            f"{DATA_COMMIT[:8]}): one BacterialEnvironmentResponseExperiment per (gene, "
+            "kept sample), log2_ratio gene fitness",
+            page="sheets metadata, fitness_measurements, T-like_statistics",
+            retrieved=RAW_RETRIEVED_AT,
+        ),
+        expected_count=expected_count,
+        sgd_genes=set(genome.genbank.loci),
+        resolve_gene_name=genome.resolve_gene_name,
+    )
+    preprocess = osp.join(dataset_root, "preprocess")
+    os.makedirs(preprocess, exist_ok=True)
+    with open(osp.join(preprocess, "verification_report.json"), "w") as handle:
+        handle.write(report.model_dump_json(indent=2))
+    return report
 
 
 def main() -> None:

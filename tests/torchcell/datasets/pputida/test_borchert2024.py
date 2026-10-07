@@ -647,6 +647,16 @@ def test_process_builds_one_record_per_gene_and_kept_sample(
     assert sum(uncertainty["record_counts"].values()) == len(dataset)
     assert uncertainty["record_counts"]["beckham"] == 2 * len(GENES)
     assert (preprocess / "build_manifest.json").exists()
+    dataset.close_lmdb()
+
+    report = bt.verify_build(
+        str(root),
+        genome=FakeGenome(),  # type: ignore[arg-type]
+        expected_count=len(GENES) * len(kept),
+    )
+    failed = [(r.level, r.name, r.message) for r in report.results if not r.passed]
+    assert failed == []
+    assert (preprocess / "verification_report.json").exists()
 
 
 # --------------------------------------------------------------------------- #

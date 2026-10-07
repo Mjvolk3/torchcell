@@ -1,7 +1,7 @@
 #!/bin/bash
 # scripts/backup_mirrors_to_bulk.sh
 #
-# Weekly, non-destructive copy of the three provenance tiers on /scratch into the /bulk
+# Weekly, non-destructive copy of the four provenance tiers on /scratch into the /bulk
 # archive tier, so a rebuild never depends on a live URL (sources have vanished before).
 #
 #   $DATA_ROOT/torchcell-library/   paper PDFs, OCR, SI and released data, per-key manifest.json
@@ -10,6 +10,9 @@
 #   $DATA_ROOT/torchcell-genomes/   reference assembly sets (S288C release, 1,011 isolate
 #                                   assemblies), one manifest.json per set, resolved through
 #                                   torchcell.sequence.genome.registry
+#   $DATA_ROOT/torchcell-objects/   derived objects (matrices, embeddings, indexed sequence
+#                                   stores) with one manifest.json per key, deposited by
+#                                   torchcell.artifacts.deposit and pointed at by ArtifactRef
 #
 # rsync -a without --delete: a file removed on /scratch stays in /bulk (the archive is a
 # backstop, never a mirror of deletions). Files that changed on /scratch overwrite the copy;
@@ -25,7 +28,7 @@ set -euo pipefail
 
 SCRATCH_ROOT="${SCRATCH_ROOT:-/scratch/projects/torchcell-scratch}"
 BULK_ROOT="${BULK_ROOT:-/bulk}"
-MIRRORS=(torchcell-library torchcell-raw torchcell-genomes)
+MIRRORS=(torchcell-library torchcell-raw torchcell-genomes torchcell-objects)
 
 dry=()
 if [[ "${1:-}" == "--dry-run" ]]; then

@@ -36,3 +36,26 @@ before this) still loads with `torchcell_version` None.
   build), and the compatibility page prints it as `commit`.
 - Tests: `tests/torchcell/knowledge_graphs/test_kg_manifest.py` (round trip, the
   pre-spine manifest, the git helpers on a throwaway repo).
+
+## 2026.10.07 - `drift`: the shared-surface checks with no dataset named
+
+`admit` needs a dataset, and every mapped dataset is already served, so judging a change
+to a surface all datasets share (a new graph class, a new `CellAdapter` method) meant
+either a live-store superset proof or an ad hoc script. `drift` runs checks 2 to 4 of
+`check_admission` alone and prints a `ServedSurfaceDrift`:
+
+- `graph_schema_changed` / `graph_schema_added`, from `graph_schema_drift` (now also what
+  `check_admission` calls for its step 2);
+- `graph_schema_widened`: served edge classes that gained source or target labels, with
+  the labels gained (additive under `served_nodes_unchanged_by`, named so a reviewer sees
+  which served edge types new classes join);
+- adapter drift touching served datasets and the ADDED methods (`adapter_drift_against`);
+- the value surface.
+
+Exit 1 when any served surface changed (`changes_served`), 0 when everything is additive;
+`--report` writes the JSON. Per-dataset schema closures stay with
+`torchcell.provenance.schema_impact`. First use, the bacterial graph classes measured as
+ADDED-only: [[torchcell.adapters.bacterial-graph-classes]]. Tests:
+`test_cli_drift_names_added_classes_widened_edges_and_new_methods`,
+`test_an_edge_that_loses_a_source_is_changed_not_widened`
+(`tests/torchcell/knowledge_graphs/test_kg_manifest_admission.py`).

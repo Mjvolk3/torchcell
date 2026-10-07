@@ -1302,6 +1302,86 @@ def test_cli_admit_batch_blocks_and_record_single(
     assert saved.events[-1].kind == "incremental_admission"
 
 
+def test_cli_drift_names_added_classes_widened_edges_and_new_methods(
+    toy: _Toy, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``drift`` needs no dataset: it runs the graph, adapter and value checks alone.
+
+    Unchanged tree: ADDITIVE, exit 0. A new node class that joins ``phenotype member of``
+    plus a new ``CellAdapter`` method: still ADDITIVE, exit 0, and the class, the widened
+    edge and the method are each named. A served class whose property set moved: CHANGES
+    SERVED, exit 1.
+    """
+    path = tmp_path / "kg_manifest.json"
+    km.save_manifest(_bootstrap(toy), path)
+    assert _cli(toy, path, "drift") == 0
+    assert capsys.readouterr().out == (
+        "Served-surface drift  ->  ADDITIVE\n"
+        f"  working tree {COMMIT} (dirty=False); served store built at {COMMIT}\n"
+        "  graph schema CHANGED: -\n"
+        "  graph schema ADDED: -\n"
+        "  served edge classes widened (additive): -\n"
+        "  adapter drift touching served datasets: none\n"
+        "  adapter methods ADDED: -\n"
+        "  value surface: unchanged; ADDED: -\n"
+    )
+
+    toy.write(
+        km.SCHEMA_CONFIG_RELPATH,
+        SCHEMA_YAML.replace(
+            "    source: [fitness phenotype]\n",
+            "    source: [fitness phenotype, flux phenotype]\n",
+        )
+        + "\nflux phenotype:\n    represented_as: node\n    properties:\n"
+        "        net_flux: str\n",
+    )
+    toy.write(
+        km.CELL_ADAPTER_RELPATH,
+        CELL_ADAPTER_PY + "\n    def _flux_phenotype_node(self, data, method_name):\n"
+        "        return data\n",
+    )
+    report_path = tmp_path / "drift.json"
+    assert _cli(toy, path, "drift", "--report", str(report_path)) == 0
+    out = capsys.readouterr().out
+    assert out.startswith("Served-surface drift  ->  ADDITIVE\n")
+    assert "  graph schema CHANGED: -\n" in out
+    assert "  graph schema ADDED: flux phenotype\n" in out
+    assert (
+        "  served edge classes widened (additive): phenotype member of: +flux phenotype\n"
+        in out
+    )
+    assert "  adapter methods ADDED: _flux_phenotype_node\n" in out
+    report = km.ServedSurfaceDrift.model_validate_json(
+        report_path.read_text(encoding="utf-8")
+    )
+    assert report.graph_schema_added == ["flux phenotype"]
+    assert report.graph_schema_widened == {"phenotype member of": ["flux phenotype"]}
+    assert report.adapter_methods_added == ["_flux_phenotype_node"]
+    assert report.adapter_drift.is_empty
+    assert not report.changes_served
+
+    toy.replace(
+        km.SCHEMA_CONFIG_RELPATH,
+        "        fitness: float\n",
+        "        fitness: float\n        fitness_se: float\n",
+    )
+    assert _cli(toy, path, "drift") == 1
+    out = capsys.readouterr().out
+    assert out.startswith("Served-surface drift  ->  CHANGES SERVED\n")
+    assert "  graph schema CHANGED: fitness phenotype\n" in out
+
+
+def test_an_edge_that_loses_a_source_is_changed_not_widened(toy: _Toy) -> None:
+    manifest = _bootstrap(toy)
+    toy.replace(
+        km.SCHEMA_CONFIG_RELPATH,
+        "    source: [fitness phenotype]\n",
+        "    source: [calmorph phenotype]\n",
+    )
+    assert km.graph_schema_drift(manifest, toy.repo) == (["phenotype member of"], [])
+    assert km.graph_schema_widened(manifest, toy.repo) == {}
+
+
 # ------------------------------------------------------------------ parsing guards
 
 

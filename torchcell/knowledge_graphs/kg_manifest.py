@@ -62,6 +62,11 @@ what the store holds for it, so nothing a member ADDS (a schema symbol, a graph 
 an adapter method, a record) can block another member, and a symbol two members both
 introduce is additive and only reported.
 
+``drift`` runs the three checks that need no dataset (graph schema, adapter code, value
+surface) on their own, so a change to a surface every dataset shares (a new graph class, a
+new ``CellAdapter`` method) can be shown ADDED-only against the served manifest before any
+dataset that uses it exists.
+
 The manifest lives beside the store (a machine-local file under the build tree), never
 in git: it describes one physical database.
 """
@@ -112,6 +117,7 @@ __all__ = [
     "SupersetLineage",
     "AdmissionReport",
     "BatchAdmissionReport",
+    "ServedSurfaceDrift",
     "experiment_node_id",
     "dev_experiment_ids",
     "live_experiment_ids",
@@ -125,6 +131,10 @@ __all__ = [
     "value_surface_in_worktree",
     "value_surface_at_ref",
     "value_surface_drift",
+    "graph_schema_drift",
+    "graph_schema_widened",
+    "served_surface_drift",
+    "format_surface_drift",
     "cell_adapter_surface",
     "adapter_file_relpaths",
     "loader_relpath",
@@ -392,6 +402,38 @@ class BatchAdmissionReport(BaseModel):
     members: list[AdmissionReport]
     co_introduced_symbols: dict[str, list[str]]  # symbol -> members introducing it
     changed_symbol_importers: dict[str, list[str]]  # symbol -> served datasets
+
+
+class ServedSurfaceDrift(BaseModel):
+    """The shared served surfaces against a manifest, with no dataset named.
+
+    These are checks 2 to 4 of ``check_admission``: the graph schema, the adapter code
+    and the shared value files. Each splits into what CHANGED for the served store (a
+    blocker) and what was ADDED beside it (additive). The per-dataset schema closures
+    (check 1) are not here; ``torchcell.provenance.schema_impact`` measures those.
+    """
+
+    checked_at: str
+    torchcell_commit: str | None
+    torchcell_dirty: bool | None
+    served_commit: str | None
+    graph_schema_changed: list[str]
+    graph_schema_added: list[str]
+    # served edge classes that GAINED source/target labels (additive): edge -> gained
+    graph_schema_widened: dict[str, list[str]]
+    adapter_drift: AdapterDrift
+    adapter_methods_added: list[str]
+    value_surface_changed: list[str]
+    value_surface_added: list[str]
+
+    @property
+    def changes_served(self) -> bool:
+        """True when any surface the served store was built from changed."""
+        return bool(
+            self.graph_schema_changed
+            or not self.adapter_drift.is_empty
+            or self.value_surface_changed
+        )
 
 
 # --------------------------------------------------------------------------- helpers
@@ -951,6 +993,79 @@ def adapter_drift_against(
     )
 
 
+def graph_schema_drift(
+    manifest: KgBuildManifest, repo_root: Path
+) -> tuple[list[str], list[str]]:
+    """``(changed, added)`` graph classes of the working tree against the served schema.
+
+    CHANGED is a class present in the store that ``served_nodes_unchanged_by`` rejects (a
+    node class whose property set moved, an edge class that lost a source or target).
+    ADDED is a class the store has never held.
+    """
+    current = graph_schema_from_yaml(
+        (repo_root / SCHEMA_CONFIG_RELPATH).read_text(encoding="utf-8")
+    )
+    changed = sorted(
+        name
+        for name, entry in manifest.graph_schema.items()
+        if not entry.served_nodes_unchanged_by(current.get(name))
+    )
+    added = sorted(set(current) - set(manifest.graph_schema))
+    return changed, added
+
+
+def graph_schema_widened(
+    manifest: KgBuildManifest, repo_root: Path
+) -> dict[str, list[str]]:
+    """Served edge classes that gained endpoint labels, with the labels each gained.
+
+    Additive under ``served_nodes_unchanged_by`` (a served edge keeps its type and its
+    endpoints), and named so a reviewer sees which served edge types new classes now
+    join, e.g. ``phenotype member of: +flux phenotype``.
+    """
+    current = graph_schema_from_yaml(
+        (repo_root / SCHEMA_CONFIG_RELPATH).read_text(encoding="utf-8")
+    )
+    widened: dict[str, list[str]] = {}
+    for name, entry in sorted(manifest.graph_schema.items()):
+        now = current.get(name)
+        if entry.kind != "edge" or not entry.served_nodes_unchanged_by(now):
+            continue
+        assert now is not None
+        gained = sorted(
+            (set(now.source) - set(entry.source))
+            | (set(now.target) - set(entry.target))
+        )
+        if gained:
+            widened[name] = gained
+    return widened
+
+
+def served_surface_drift(
+    manifest: KgBuildManifest, repo_root: Path
+) -> ServedSurfaceDrift:
+    """Graph schema, adapter and value-surface drift, the checks no dataset is needed for."""
+    commit, dirty = _git_info(repo_root)
+    graph_changed, graph_added = graph_schema_drift(manifest, repo_root)
+    drift, methods_added = adapter_drift_against(manifest, repo_root)
+    value_changed, value_added = value_surface_drift(
+        manifest.value_surface, value_surface_in_worktree(repo_root)
+    )
+    return ServedSurfaceDrift(
+        checked_at=_now(),
+        torchcell_commit=commit,
+        torchcell_dirty=dirty,
+        served_commit=manifest.torchcell_commit,
+        graph_schema_changed=graph_changed,
+        graph_schema_added=graph_added,
+        graph_schema_widened=graph_schema_widened(manifest, repo_root),
+        adapter_drift=drift,
+        adapter_methods_added=methods_added,
+        value_surface_changed=value_changed,
+        value_surface_added=value_added,
+    )
+
+
 def check_admission(
     manifest: KgBuildManifest,
     repo_root: Path,
@@ -1003,12 +1118,7 @@ def check_admission(
     current_schema = graph_schema_from_yaml(
         (repo_root / SCHEMA_CONFIG_RELPATH).read_text(encoding="utf-8")
     )
-    graph_schema_changed = sorted(
-        name
-        for name, entry in manifest.graph_schema.items()
-        if not entry.served_nodes_unchanged_by(current_schema.get(name))
-    )
-    graph_schema_added = sorted(set(current_schema) - set(manifest.graph_schema))
+    graph_schema_changed, graph_schema_added = graph_schema_drift(manifest, repo_root)
     if graph_schema_changed:
         reasons.append(
             "graph schema classes present in the served store changed "
@@ -1517,6 +1627,38 @@ def _format_served(report: AdmissionReport) -> str:
     )
 
 
+def format_surface_drift(report: ServedSurfaceDrift) -> str:
+    """The shared-surface comparison, every class and method named."""
+    verdict = "CHANGES SERVED" if report.changes_served else "ADDITIVE"
+    value = (
+        f"CHANGED: {', '.join(report.value_surface_changed)}"
+        if report.value_surface_changed
+        else "unchanged"
+    )
+    return "\n".join(
+        [
+            f"Served-surface drift  ->  {verdict}",
+            f"  working tree {report.torchcell_commit} (dirty={report.torchcell_dirty}); "
+            f"served store built at {report.served_commit}",
+            f"  graph schema CHANGED: {', '.join(report.graph_schema_changed) or '-'}",
+            f"  graph schema ADDED: {', '.join(report.graph_schema_added) or '-'}",
+            "  served edge classes widened (additive): "
+            + (
+                "; ".join(
+                    f"{edge}: +{', +'.join(gained)}"
+                    for edge, gained in report.graph_schema_widened.items()
+                )
+                or "-"
+            ),
+            "  adapter drift touching served datasets: "
+            f"{report.adapter_drift.describe() or 'none'}",
+            f"  adapter methods ADDED: {', '.join(report.adapter_methods_added) or '-'}",
+            f"  value surface: {value}; ADDED: "
+            f"{', '.join(report.value_surface_added) or '-'}",
+        ]
+    )
+
+
 def format_batch_report(report: BatchAdmissionReport) -> str:
     """The batch verdict, every member's report, and the two cross-member views."""
     lines = [
@@ -1674,6 +1816,13 @@ def main(argv: list[str] | None = None) -> int:
         "repeated, one per member, for a batch report",
     )
 
+    p_drift = sub.add_parser(
+        "drift",
+        help="graph schema, adapter and value-surface drift against the manifest, with "
+        "no dataset named (per-dataset closures: torchcell.provenance.schema_impact)",
+    )
+    p_drift.add_argument("--report", default=None, help="write the JSON report here")
+
     sub.add_parser("show", help="print the manifest summary")
     args = parser.parse_args(argv)
 
@@ -1705,6 +1854,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     manifest = load_manifest(manifest_path)
+    if args.command == "drift":
+        surface_drift = served_surface_drift(manifest, repo_root)
+        print(format_surface_drift(surface_drift))
+        if args.report:
+            Path(args.report).write_text(
+                surface_drift.model_dump_json(indent=2), encoding="utf-8"
+            )
+        return 1 if surface_drift.changes_served else 0
     if args.command == "show":
         print(
             f"{manifest.database} on {manifest.store_host}: neo4j {manifest.neo4j_version}, "

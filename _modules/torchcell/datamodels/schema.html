@@ -251,9 +251,12 @@
 <span class="c1"># its loader opts in (``StrainEnvironmentResponseExperiment``).</span>
 <span class="c1"># Design + worked examples: ``[[torchcell.datamodels.strain-background]]``.</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
-<span class="n">SYSTEMATIC_GENE_PATTERN</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"^(Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?|Q\d</span><span class="si">{4}</span><span class="s2">|YNC[A-Q]\d</span><span class="si">{4}</span><span class="s2">[WC])$"</span>
-<span class="sd">"""A nuclear ORF / ncRNA / mitochondrial systematic name (the ``GenePerturbation``</span>
-<span class="sd">pattern, restated so the background classes do not reach into that validator)."""</span>
+<span class="n">SGD_SYSTEMATIC_GENE_PATTERN</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="sa">r</span><span class="s2">"^(Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?|Q\d</span><span class="si">{4}</span><span class="s2">|YNC[A-Q]\d</span><span class="si">{4}</span><span class="s2">[WC])$"</span>
+<span class="p">)</span>
+<span class="sd">"""An SGD (S. cerevisiae) nuclear ORF / ncRNA / mitochondrial systematic name (the</span>
+<span class="sd">``GenePerturbation`` pattern, restated so the background classes do not reach into that</span>
+<span class="sd">validator)."""</span>
 
 
 <div class="viewcode-block" id="MatingType">
@@ -397,7 +400,7 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_validate_systematic</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The allele sits in a real R64 feature (systematic-name pattern)."""</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">SYSTEMATIC_GENE_PATTERN</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">SGD_SYSTEMATIC_GENE_PATTERN</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid systematic gene name </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span>
 

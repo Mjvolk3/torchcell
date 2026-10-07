@@ -58,6 +58,27 @@ DEFAULT_TIMEOUT = 120.0
 FileTierName = Literal["raw", "genomes", "objects"]
 
 
+class EndpointError(RuntimeError):
+    """tc-data answered with an HTTP status the client cannot use.
+
+    Raised instead of httpx's own exception so callers (and tests) match one type
+    regardless of which HTTP library the transport is built on; ``status_code`` carries
+    the status and ``expected`` the status the request needed, when one was specific.
+    """
+
+    def __init__(self, url: str, status_code: int, expected: int | None = None) -> None:
+        """Record the url, the status received and, when specific, the status needed."""
+        self.url = url
+        self.status_code = status_code
+        self.expected = expected
+        detail = (
+            f"expected HTTP {expected}, got {status_code}"
+            if expected is not None
+            else f"HTTP {status_code}"
+        )
+        super().__init__(f"{url}: {detail}")
+
+
 class ArtifactIntegrityError(RuntimeError):
     """Downloaded bytes, or the server's hash header, disagree with the recorded sha256."""
 
@@ -97,8 +118,10 @@ class DatasetClient:
         return cls(os.environ[URL_VAR], os.environ[API_KEY_VAR], http=http)
 
     def _get(self, path: str) -> Any:
-        response = self._http.get(f"{self.url}{path}", headers=self._headers)
-        response.raise_for_status()
+        url = f"{self.url}{path}"
+        response = self._http.get(url, headers=self._headers)
+        if response.status_code >= 400:
+            raise EndpointError(url, response.status_code)
         return response
 
     def index(self) -> ArtifactIndex:
@@ -257,12 +280,7 @@ class DatasetClient:
         url = f"{self.url}{path}"
         with self._http.stream("GET", url, headers=headers) as response:
             if response.status_code != expected_status:
-                raise httpx.HTTPStatusError(
-                    f"{url}: expected HTTP {expected_status}, got "
-                    f"{response.status_code}",
-                    request=response.request,
-                    response=response,
-                )
+                raise EndpointError(url, response.status_code, expected_status)
             served = response.headers.get("X-Artifact-SHA256")
             if served != expected_sha256:
                 raise ArtifactIntegrityError(

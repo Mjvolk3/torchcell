@@ -26,6 +26,9 @@ sourcing layer.
   NCM3722 growth conditions, the first consumer of ``ProteinTurnoverPhenotype``.
 - ``lamoureux2023`` -- ``RnaseqLamoureux2023Dataset``: PRECISE-1K, one record per MG1655
   RNA-seq library of the samples whose genotype and environment the release states.
+- ``shiver2016`` -- ``EnvChemgenShiver2016Dataset``: the neglected-antibiotic
+  chemical-genomic screen, KEIO deletion fitness-scores across the 57 conditions of
+  its own batches in the integrated S1 Dataset matrix.
 - ``tong2020`` -- ``CarbonSourceTong2020Dataset``: Keio and sRNA-library deletion growth
   on thirty carbon sources, against two assembly pins.
 - ``wang2015`` -- ``EnvChemgenWang2015Dataset``: Keio transporter deletions scored for
@@ -56,5 +59,6 @@ from .lamoureux2023 import RnaseqLamoureux2023Dataset as RnaseqLamoureux2023Data
 from .price2018 import RbTnseqPrice2018EcoliDataset as RbTnseqPrice2018EcoliDataset
 from .rapp2026 import MetabolomeRapp2026Dataset as MetabolomeRapp2026Dataset
 from .schmidt2016 import ProteomeSchmidt2016Dataset as ProteomeSchmidt2016Dataset
+from .shiver2016 import EnvChemgenShiver2016Dataset as EnvChemgenShiver2016Dataset
 from .tong2020 import CarbonSourceTong2020Dataset as CarbonSourceTong2020Dataset
 from .wang2015 import EnvChemgenWang2015Dataset as EnvChemgenWang2015Dataset

@@ -588,3 +588,47 @@ assemblies from `tests/torchcell/sequence/genome/_bacterial_fixtures.py`, so the
 build -- download, extraction, ECK route, records, LMDB, reports -- runs on a CI runner
 with no `$DATA_ROOT` and no network. Diff coverage of the changed lines under
 `torchcell/`: **92%** (`diff-cover --compare-branch=origin/main`), against the 80% gate.
+
+### Verification result: 20 of 21 rows pass, and the one failure is the control arm
+
+Run on the built store 2026-10-07 (about 30 min; the streaming verifier makes three passes
+and validates every record against the full `ExperimentType` union).
+`preprocess/verification_report.json`.
+
+Passing: L0 `structural` (286,344 records validated), L1 `count` (observed 286,344 =
+expected), L1 `pair_uniqueness` (286,344 unique (study, strain, condition) records, one
+each), L1 `provenance_gaps`, L1 `canonical_gene_names` (3,697 systematic names, one
+canonical spelling each, each current; the 132 common names the resolver cannot place are
+the 132 pseudogene loci it resolves to themselves), L2 `value_fidelity`, L2
+`se_nonnegative`, L2 `uncertainty_sanity` (286,344 labeled uncertainties, none a zero
+dispersion), L3 `measurement_type_consistent` (single `log2_ratio`), L3 `reference_zero`
+(reference response 0 for all 286,344), L3 `compound_identity`, L3
+`media_compound_identity`, L3 `media_membership` (286,344 records on a medium deriving
+from a `MEDIA_LIBRARY` base, 3 distinct media), L4 `gene_containment` (1.000 of 3,697) and
+L4 `current_genome_genes` (every one of the 3,697 is a gene of the current genome). All
+five SUPPLEMENTARY rows pass: the three censuses, `stored_tags_are_loci_of_the_pinned_
+assembly` (3,697 tags, 3,565 current and 132 non_gene_feature, none resolving elsewhere)
+and `gene_set_size`.
+
+**The one failure is L3 `environment_perturbed`: 29,392 records flagged as having no
+environmental edit.** That rule flags a record with NO perturbation that also sits at the
+dataset's modal temperature AND its modal medium. The flagged records are exactly the
+no-phage control arms on the modal medium: 6 controls in `set16_set19` x 3,667 mapped
+genes plus 2 in `set28_set29` x 3,695 = **29,392**, which closes exactly. The other two
+controls are not flagged only because their media are not modal (one plain `LB`, one
+`LB_agar`).
+
+**This is a verifier-versus-dataset mismatch, not a defect in the records, and it is not
+"fixed" here.** A no-phage control genuinely HAS no environmental edit; that is what makes
+it the control. The rule is written for a chemogenomic dataset in which every record is a
+perturbed condition, and a dataset that carries its own control arm AS RECORDS necessarily
+trips it. The two ways to make the row green are both worse than the red: dropping the
+controls throws away 36,732 real measurements and the honest reference arm, and giving a
+control a zero-MOI phage asserts a challenge that did not happen. So the controls stay and
+the row stays red, with the arithmetic above as the explanation.
+
+What would actually resolve it is a change to the shared rule, not to this dataset: it
+needs a notion of a dataset whose own unperturbed arm is part of the release (the same
+place the condition-signature limitation noted above belongs). Neither is changed from
+here, because `torchcell/verification/environment_response.py` is shared by every
+chemogenomic dataset and `runners.py` is being changed on `feat/titer-verification-runners`.

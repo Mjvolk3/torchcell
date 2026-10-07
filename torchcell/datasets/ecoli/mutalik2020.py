@@ -1243,7 +1243,7 @@ def _moi_gap(exp_name: str) -> ProvenanceGap:
             retrieved=RETRIEVED_AT,
         ),
         note="a phage challenge always has a dose, so an unstated MOI is this typed gap "
-        "and never a value borrowed from a neighbouring assay of the same phage",
+        "and never a value borrowed from a neighboring assay of the same phage",
     )
 
 

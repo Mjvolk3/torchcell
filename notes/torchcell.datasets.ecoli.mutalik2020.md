@@ -417,10 +417,10 @@ authority the Methods designate) and **1 from the experiment's own released desc
 Where a source states no MOI the perturbation carries a typed
 `ProvenanceGap(field="multiplicity_of_infection",
 reason=not_reported_by_primary)` whose `looked_in` names the S13 sheet and the experiment,
-and whose note says the dose is never borrowed from a neighbouring assay of the same
+and whose note says the dose is never borrowed from a neighboring assay of the same
 phage. **No released challenge needs that gap** (68 of 68 have a dose), so the path is
 covered by a test rather than by the build; it is the refusal that keeps a future assay
-from being given its neighbour's dose.
+from being given its neighbor's dose.
 
 The other typed slots, each sourced or gapped:
 

@@ -306,11 +306,11 @@ Fig. 3A states no duration for a maximum-growth-rate readout, and the proteome c
 were harvested at a growth STATE ("Cultures at the exponential growth phase were
 harvested").
 
-`isoprenol` still has no row in `compound_identity_table.json`, so `resolved_compound`
-returns the name with an `inchikey` gap. Its identity, `ISOPRENOL_INCHIKEY` =
-`CPJRRXSHAYUTGL-UHFFFAOYSA-N` (SMILES `C=C(C)CCO`, PubChem CID 12988) is recorded in the
-module and checked against any row the table gains; curating that row is a separate,
-human change. This is the same object the Carruthers 2025 and Wang 2015 loaders store.
+`isoprenol` resolves through `compound_identity_table.json`; the row landed with the
+bacterial schema follow-ups (PR #729) while this branch was in flight, and the dev store was
+rebuilt against it. `ISOPRENOL_INCHIKEY` = `CPJRRXSHAYUTGL-UHFFFAOYSA-N` (SMILES
+`C=C(C)CCO`, PubChem CID 12988) pins the identity in the module and the build stops if the
+row ever disagrees. This is the same object the Carruthers 2025 and Wang 2015 loaders store.
 
 ### Raw mirror
 

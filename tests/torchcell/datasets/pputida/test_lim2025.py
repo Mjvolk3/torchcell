@@ -165,13 +165,13 @@ def test_the_thompson_deferral_is_a_separate_citation_key() -> None:
     }
 
 
-def test_the_isoprenol_identity_is_recorded_until_the_table_gains_a_row() -> None:
-    """The compound resolves with a typed ``inchikey`` gap, not a guessed key."""
+def test_the_isoprenol_identity_comes_from_the_table_and_matches_the_pin() -> None:
+    """The committed table row resolves to the pinned InChIKey with no gap."""
     compound = l25.isoprenol_compound()
     assert compound.name == l25.ISOPRENOL_LABEL
-    assert compound.inchikey is None
-    assert [gap.field for gap in compound.provenance_gaps] == ["inchikey"]
-    assert l25.ISOPRENOL_INCHIKEY == "CPJRRXSHAYUTGL-UHFFFAOYSA-N"
+    assert compound.inchikey == l25.ISOPRENOL_INCHIKEY == "CPJRRXSHAYUTGL-UHFFFAOYSA-N"
+    assert compound.provenance_gaps == []
+    assert compound.smiles is not None
 
 
 def test_a_conflicting_compound_row_stops_the_build(

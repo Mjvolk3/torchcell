@@ -168,10 +168,10 @@ serves every loaded record. The three pIY670 production-culture proteome arms (1
 value-surface file this branch does not touch, so those three arms are NOT loaded and the
 needed addition is in the PR body.
 
-COMPOUND. ``isoprenol`` still has no row in ``compound_identity_table.json``, so
-``resolved_compound`` returns the name with an ``inchikey`` gap. Its identity,
-:data:`ISOPRENOL_INCHIKEY` = ``CPJRRXSHAYUTGL-UHFFFAOYSA-N``, is recorded here and checked
-against any row the table gains; curating that row is a separate, human change.
+COMPOUND. ``isoprenol`` resolves through ``compound_identity_table.json``; its row landed
+with the bacterial schema follow-ups (PR #729). :data:`ISOPRENOL_INCHIKEY` =
+``CPJRRXSHAYUTGL-UHFFFAOYSA-N`` pins the identity this module was written against, and the
+build stops if the table's row ever disagrees with it.
 
 DATA. Both consumed files are the publisher's Elsevier supplements, deposited under
 ``$DATA_ROOT/torchcell-raw/limEvolutionguidedToleranceEngineering2025/data/``:
@@ -321,7 +321,7 @@ GEO_SERIES = "GSE281392"
 PRIDE_ACCESSION = "PXD054609"
 ALEDB_PROJECT = "Pputida_isoprenol_TALE"
 
-#: Identity of the stressor, recorded until ``compound_identity_table.json`` gains a row.
+#: Identity of the stressor, pinned and checked against the ``compound_identity_table.json`` row.
 ISOPRENOL_LABEL = "isoprenol"
 ISOPRENOL_INCHIKEY = "CPJRRXSHAYUTGL-UHFFFAOYSA-N"
 ISOPRENOL_SMILES = "C=C(C)CCO"
@@ -1771,8 +1771,8 @@ ASSAY_TYPE = AssayType.liquid_od_growth
 def isoprenol_compound() -> Compound:
     """Isoprenol through the shared compound-identity layer.
 
-    With no table row the resolver returns the name with an ``inchikey`` gap; once a row
-    exists, its InChIKey must be :data:`ISOPRENOL_INCHIKEY` or the build stops.
+    The table's row (landed in PR #729) must carry :data:`ISOPRENOL_INCHIKEY` or the build
+    stops; a table without the row would return the name with an ``inchikey`` gap.
     """
     compound = resolved_compound(ISOPRENOL_LABEL)
     if compound.inchikey is not None and compound.inchikey != ISOPRENOL_INCHIKEY:

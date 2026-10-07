@@ -53,9 +53,11 @@ would erase that signal, and no other `MeasurementType` member describes a log2 
 ratio. The reference carries 0.0, which is also what the environment-response verifier's
 numeric L3 rule requires.
 
-(The data test asserts 0.9249 and -11.95 instead, because it measures the growth screen's
-RELEASED coding-strand in-gene rows, 23,372 of them, before the 163 unstorable-symbol
-records are dropped. Two sets, two numbers, both stated.)
+A second data test, `test_the_release_has_the_measured_shape_and_sign_distribution`,
+asserts 0.9249 and -11.95 for the growth screen instead. It is not a contradiction: that
+test measures the RELEASED coding-strand in-gene rows, 23,372 of them, before the 163
+unstorable-symbol records are dropped, while the table above measures the 23,209 stored.
+Two sets, two numbers, both pinned.
 
 Genotype: one `BacterialCrisprInterferencePerturbation` per record, keyed by the target
 gene's MG1655 b-number, with the 20-nt spacer on the shared `crispr` construct

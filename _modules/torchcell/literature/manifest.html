@@ -179,6 +179,14 @@
     <span class="n">zotero_md5</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"MD5 reported by Zotero for the synced attachment."</span>
     <span class="p">)</span>
+    <span class="n">original_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude_if</span><span class="o">=</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"The file's name at its source when it is stored under another "</span>
+        <span class="s2">"name (``capture_si`` writes ``si/si&lt;N&gt;.&lt;ext&gt;`` and keeps the publisher's "</span>
+        <span class="s2">"name here). Omitted from the JSON when unset, so manifests written before "</span>
+        <span class="s2">"the field existed serialize byte-identically."</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">RetrievalMethod</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
@@ -186,12 +194,15 @@
 <span class="sd">    #20) for un-scriptable sources served from the Radiant VM. ``manual_browser``</span>
 <span class="sd">    is a manual-once retrieval (a publisher behind a browser challenge): the record</span>
 <span class="sd">    carries the human recipe as its command and the deposited bytes are what every</span>
-<span class="sd">    rebuild reads; re-checking the source is not scriptable for it.</span>
+<span class="sd">    rebuild reads; re-checking the source is not scriptable for it. ``pmc_cloud`` is</span>
+<span class="sd">    one object of the PMC Article Datasets bucket on AWS, which replaced the retired</span>
+<span class="sd">    ``pmc_oa_api`` package service.</span>
 <span class="sd">    """</span>
 
     <span class="n">springer_esm</span> <span class="o">=</span> <span class="s2">"springer_esm"</span>
     <span class="n">zotero_attachment</span> <span class="o">=</span> <span class="s2">"zotero_attachment"</span>
     <span class="n">pmc_oa_api</span> <span class="o">=</span> <span class="s2">"pmc_oa_api"</span>
+    <span class="n">pmc_cloud</span> <span class="o">=</span> <span class="s2">"pmc_cloud"</span>
     <span class="n">direct_url</span> <span class="o">=</span> <span class="s2">"direct_url"</span>
     <span class="n">zenodo</span> <span class="o">=</span> <span class="s2">"zenodo"</span>
     <span class="n">radiant_endpoint</span> <span class="o">=</span> <span class="s2">"radiant_endpoint"</span>

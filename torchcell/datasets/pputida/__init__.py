@@ -17,6 +17,8 @@ What this package holds:
 - ``lim2022`` -- ``PutidaPrecise321Lim2022Dataset``: putidaPRECISE321, the KT2440
   transcriptome compendium as one record per sample (180 of 321), each naming the study
   its profile was first published in.
+- ``menasalvas2025`` -- ``IsoprenolSelectionMenasalvas2025Dataset``: the
+  biosensor-coupled CRISPRi selection, one record per enriched knockdown target.
 """
 
 from .carruthers2025 import (

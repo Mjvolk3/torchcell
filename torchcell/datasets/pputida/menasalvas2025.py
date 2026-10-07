@@ -255,12 +255,12 @@ PAPER_MD_SHA256 = "d14536948af5ba67d52362ae71fb804a2fac03a1f7ab152817a01df3aa92d
 
 SI_RETRIEVED_AT = "2026-10-07"
 
-#: Isoprenol's InChIKey, recorded for the curation step rather than used here. The
-#: compound-identity table has no isoprenol row, so ``resolved_compound("isoprenol")``
-#: returns the canonical name with a typed gap on ``inchikey``. THIS loader never calls
-#: it -- a categorical biosensor call names no product -- but a future titer loader for
-#: this paper would, and the gap is carried in the note and the PR either way. Adding
-#: the row is a human PubChem act against ``compound_identity_inputs/`` plus a re-pin.
+#: Isoprenol's InChIKey, recorded for the curation step rather than used here. That step
+#: has since happened (the table's isoprenol row, PubChem CID 12988), so
+#: ``resolved_compound("isoprenol")`` now returns the full identity rather than a typed
+#: gap on ``inchikey``; this constant stays as the cross-check that the row is the
+#: molecule this paper means. THIS loader never calls the resolver -- a categorical
+#: biosensor call names no product -- but a future titer loader for this paper would.
 ISOPRENOL_INCHIKEY = "CPJRRXSHAYUTGL-UHFFFAOYSA-N"
 
 #: The two data deposits the paper names, neither holding a titer table.

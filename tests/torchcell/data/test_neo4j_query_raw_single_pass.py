@@ -316,19 +316,21 @@ def test_cached_environment_is_safe_to_pass_unvalidated() -> None:
     the class the field declares (``environment_class_for``), no experiment-level
     validator reads or rewrites the environment, and instances are not revalidated.
 
-    The declared classes are pinned exactly: ``CultureEnvironment`` for
-    ``strain_environment_response`` (#507, the one family that states its culture
-    protocol), ``Environment`` for every other family. A new family or environment
-    subclass must be added here deliberately.
+    The declared classes are pinned exactly, and a new family or environment subclass
+    must be added here deliberately. Two families declare ``CultureEnvironment``:
+    ``strain_environment_response`` (#507, the chemogenomic family that states its
+    culture protocol) and ``product_titer`` (a titer is read with its vessel, so the
+    fermentation format is part of what was measured). Every other family declares
+    ``Environment``.
     """
+    culture = {"strain_environment_response", "product_titer"}
     assert {
         kind: nqr.environment_class_for(kind) for kind in s.EXPERIMENT_TYPE_MAP
     } == {
-        kind: s.CultureEnvironment
-        if kind == "strain_environment_response"
-        else s.Environment
+        kind: s.CultureEnvironment if kind in culture else s.Environment
         for kind in s.EXPERIMENT_TYPE_MAP
     }
+    assert culture <= set(s.EXPERIMENT_TYPE_MAP)
     assert nqr.ENVIRONMENT_CLASSES == {
         "Environment": s.Environment,
         "CultureEnvironment": s.CultureEnvironment,

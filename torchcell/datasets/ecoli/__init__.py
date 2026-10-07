@@ -13,6 +13,9 @@ both: a row whose data another row's loader subsumes, or whose records the schem
 yet express, is a RECORD of that finding rather than nothing, and is imported for its
 sourcing layer.
 
+- ``caglar2017`` -- ``ProteomeCaglar2017Dataset`` and ``RnaseqCaglar2017Dataset``: the
+  REL606 multi-omic growth panel, which became loadable once the *E. coli* B assembly
+  set joined the tier (this module began as the provenance record of that blocker).
 - ``fuhrer2017`` -- ``MetabolomeFuhrer2017Dataset``: the Keio deletion metabolome,
   FIA-TOF-MS ion z-scores per BW25113 strain (BioStudies S-BSST5).
 - ``goodall2018`` -- ``GeneEssentialityGoodall2018Dataset``: BW25113 gene-level TraDIS
@@ -23,8 +26,6 @@ sourcing layer.
   on thirty carbon sources, against two assembly pins.
 - ``wang2015`` -- ``EnvChemgenWang2015Dataset``: Keio transporter deletions scored for
   isoprenol tolerance.
-- ``caglar2017`` -- a provenance record and no loader: REL606 is *E. coli* B, and its
-  assembly set joined the tier after this record was written.
 - ``mutalik2020`` -- the phage-resistance RB-TnSeq raw mirror and sourcing layer; the
   dataset class waits on a loader using the ``PhagePerturbation`` environment leaf.
 - ``wetmore2015`` -- a subsumption record: its *E. coli* experiments are carried by the

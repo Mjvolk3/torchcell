@@ -110,6 +110,16 @@ LANE_OF_LABEL: dict[str, str] = {
     "Media": "environment",
     "Temperature": "environment",
     "EnvironmentPerturbation": "environment",
+    # A phage challenge is the environment axis of a phage-resistance screen, so it
+    # takes the environment lane beside its sibling ``EnvironmentPerturbation``. Its
+    # Biolink parent is ``biotic exposure`` rather than ``environmental exposure``
+    # (Biolink defines that one as abiotic), which is why its lane cannot be read from
+    # the ``is_a`` the way a phenotype's is. ``BioticExposure`` is deliberately NOT in
+    # ANCESTOR_LABELS: that tuple is a measurement of the labels the SERVED store
+    # carries, and no phage dataset is served yet. A phage node still renders in its
+    # lane color, because the class rule is in the priority list and the unlisted
+    # ancestor label is not.
+    "PhagePerturbation": "environment",
     "Experiment": "experiment",
     "ExperimentReference": "experiment",
     # A content-addressed sub-object of an experiment record (interned_constant.py),
@@ -132,6 +142,8 @@ CAPTION_OF_LABEL: dict[str, str] = {
     "Media": "{name}",
     "Temperature": "{value}",
     "EnvironmentPerturbation": "{compound_name}",
+    # the phage's own name, as its sibling shows the compound's
+    "PhagePerturbation": "{phage_name}",
     "Publication": "{pubmed_id}",
     "Genome": "{strain}",
 }

@@ -301,6 +301,15 @@ node.Perturbation {
   caption: "{perturbed_gene_name}";
 }
 
+node.PhagePerturbation {
+  color: #F8CECC;
+  border-color: #B85450;
+  border-width: 2px;
+  text-color-internal: #000000;
+  diameter: 50px;
+  caption: "{phage_name}";
+}
+
 node.ProductTiterPhenotype {
   color: #E1D5E7;
   border-color: #9673A6;

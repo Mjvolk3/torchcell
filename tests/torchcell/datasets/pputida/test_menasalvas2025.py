@@ -561,12 +561,19 @@ def test_a_mirror_file_with_a_different_digest_is_never_overwritten(
         )
 
 
-def test_the_isoprenol_inchikey_is_recorded_for_the_curation_step() -> None:
-    """No record names a product here, but the key the table still lacks is pinned."""
+def test_the_isoprenol_inchikey_is_recorded_and_agrees_with_the_table() -> None:
+    """No record names a product here, but the recorded key is the table's own.
+
+    The curation step this constant was recorded for has happened (the table's isoprenol
+    row, PubChem CID 12988), so ``resolved_compound`` no longer gaps ``inchikey``; the
+    constant is kept as the cross-check that the row is the molecule this paper means.
+    """
     assert mv.ISOPRENOL_INCHIKEY == "CPJRRXSHAYUTGL-UHFFFAOYSA-N"
     from torchcell.datamodels.compound_identity import resolved_compound
 
-    assert resolved_compound("isoprenol").gapped_fields() == {"inchikey"}
+    isoprenol = resolved_compound("isoprenol")
+    assert isoprenol.inchikey == mv.ISOPRENOL_INCHIKEY
+    assert isoprenol.gapped_fields() == set()
 
 
 def test_raw_mirror_dir_falls_back_to_the_environment(

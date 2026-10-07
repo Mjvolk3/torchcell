@@ -38,7 +38,7 @@ from torchcell.artifacts import (
     materialize,
     resolve,
 )
-from torchcell.artifacts.resolve import RemoteMissError, cache_path
+from torchcell.artifacts.resolve import RemoteEndpointError, RemoteMissError, cache_path
 from torchcell.datasets.artifact import ArtifactIndex
 from torchcell.datasets.server import DataKeys, DataServerConfig, create_app
 from torchcell.sequence.genome.registry import GenomeManifest
@@ -414,9 +414,9 @@ def test_tc_data_source_turns_404s_into_misses(tmp_path: Path) -> None:
 def test_tc_data_source_raises_on_a_server_error(tmp_path: Path) -> None:
     source = _tc_data(tmp_path)
     source._headers = {"X-API-Key": "wrong"}
-    with pytest.raises(httpx.HTTPStatusError):
+    with pytest.raises(RemoteEndpointError):
         source.manifest("raw", "kemmeren2014")
-    with pytest.raises(httpx.HTTPStatusError, match="expected HTTP 200, got 401"):
+    with pytest.raises(RemoteEndpointError, match="expected HTTP 200, got 401"):
         source.download("raw", "kemmeren2014", "data/expr.tsv", tmp_path / "x")
 
 

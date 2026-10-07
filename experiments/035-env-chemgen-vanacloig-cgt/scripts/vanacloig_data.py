@@ -24,8 +24,6 @@ its reliability index, is carried beside its score.
 
 from __future__ import annotations
 
-import os
-
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
@@ -33,37 +31,8 @@ from pydantic import BaseModel, ConfigDict
 from scipy.stats import pearsonr, spearmanr
 
 VANACLOIG = "EnvChemgenVanacloig2022Dataset"
-#: Which build of the 033 pooled store the experiment reads, ``TC035_BUILD``. Build 001
-#: is the table of the 2026.09.21 store, which every result up to round 17 stands on.
-#: Build 002 is the table of the 2026.10.06 store after the dataset fixes of #500 (the
-#: strain background moves from the genotype to the reference, so a strain carries ONE
-#: perturbation), #501 (TMM in place of CPM; the nine unreported tokens dropped; DMSO
-#: and MBO served as conditions) and #504 to #506. Results of a build other than 001 go
-#: under ``results/build<NNN>/`` and ``predictions_<NNN>/`` so the two records never mix.
-BUILD = os.environ.get("TC035_BUILD", "001")
-assert BUILD in {"001", "002"}, f"unknown 033 build {BUILD!r}"
-RESULTS_SUBDIR = "" if BUILD == "001" else f"build{BUILD}"
-CELL_TABLE = (
-    "/scratch/projects/torchcell-scratch/experiments/033-env-chemgen-pooled/"
-    + ("cell_table" if BUILD == "001" else f"cell_table_{BUILD}")
-    + "/cell_table.parquet"
-)
-#: The three efflux-regulator deletions of the sensitized host (PDR1, PDR3, SNQ2). In
-#: build 001 they are three of a strain's four genotype perturbations; in build 002 they
-#: are on the reference's StrainReferenceGenome and the genotype is the screened deletion
-#: alone. The cell is the same either way: ``strain_indices`` keeps all four.
+#: The three efflux-regulator deletions of the sensitized host (PDR1, PDR3, SNQ2).
 HOST_GENES: tuple[str, str, str] = ("YGL013C", "YBL005W", "YDR011W")
-#: Build 002 conditions left out of the compound panel, each for a stated reason. DMSO is
-#: the vehicle at 1% v/v, served as its own condition by #501: a control, not an
-#: inhibitor, and the panel of build 001 never held it. MBO (2-methyl-3-buten-2-ol) is
-#: an inhibitor the paper reports but has no row in any of the twelve 031 embedding
-#: tables (it was dropped by the loader when those were built), so it cannot be scored
-#: inductively until it is embedded. With both out, the build 002 panel is exactly the
-#: 32 published compounds of build 001, which is what makes the two builds comparable.
-EXCLUDED_CONDITIONS: dict[str, frozenset[str]] = {
-    "001": frozenset(),
-    "002": frozenset({"dimethyl sulfoxide", "2-methyl-3-buten-2-ol"}),
-}
 #: Served compounds the paper never reports. Its Figure 1B and text count 34 inhibitors,
 #: which are 32 of the served 41 plus DMSO and MBO (both dropped by the loader); these nine
 #: are in the GEO matrix only, and their replicate reliability is near or below zero
@@ -137,21 +106,9 @@ def load_cells(cell_table: str, embedding_npz: str) -> VanacloigCells:
     ).reset_index(drop=True)
     assert (table["n_measurements"] == 1).all(), "a Vanacloig cell folds measurements"
     assert (table["n_compounds"] == 1).all(), "a Vanacloig cell doses several compounds"
-    excluded = EXCLUDED_CONDITIONS[BUILD]
-    assert excluded <= set(table["compound_names"]) or BUILD == "001", (
-        f"an excluded condition is not in the table: {excluded}"
-    )
-    table = table[~table["compound_names"].isin(excluded)].reset_index(drop=True)
     host = ";".join(sorted(HOST_GENES))
-    if BUILD == "001":
-        expected = table["query_gene"].map(lambda q: ";".join(sorted((q, *HOST_GENES))))
-        assert (table["genes"] == expected).all(), (
-            f"a strain is not the query plus {host}"
-        )
-    else:
-        assert (table["genes"] == table["query_gene"]).all(), (
-            "a build 002 strain carries more than its screened deletion"
-        )
+    expected = table["query_gene"].map(lambda q: ";".join(sorted((q, *HOST_GENES))))
+    assert (table["genes"] == expected).all(), f"a strain is not the query plus {host}"
 
     genes = sorted(table["query_gene"].unique())
     pairs = table[["compound_names", "inchikeys"]].drop_duplicates()

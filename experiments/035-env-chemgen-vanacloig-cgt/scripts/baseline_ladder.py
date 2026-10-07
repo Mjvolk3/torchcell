@@ -59,9 +59,6 @@ from scipy.stats import rankdata
 
 sys.path.insert(0, osp.dirname(__file__))
 from vanacloig_data import (  # noqa: E402
-    BUILD,
-    CELL_TABLE,
-    RESULTS_SUBDIR,
     VanacloigCells,
     load_cells,
     make_folds,
@@ -75,17 +72,13 @@ warnings.filterwarnings("ignore", message="invalid value encountered in scalar d
 load_dotenv()
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 RESULTS_DIR = osp.join(
-    EXPERIMENT_ROOT,
-    "035-env-chemgen-vanacloig-cgt",
-    "results",
-    RESULTS_SUBDIR,
-    "ladder",
+    EXPERIMENT_ROOT, "035-env-chemgen-vanacloig-cgt", "results", "ladder"
 )
 PREDICTIONS = osp.join(
     os.environ["DATA_ROOT"],
     "experiments",
     "035-env-chemgen-vanacloig-cgt",
-    "predictions" if BUILD == "001" else f"predictions_{BUILD}",
+    "predictions",
 )
 EMBEDDING_DIR = (
     "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/"
@@ -382,7 +375,7 @@ def run_fold(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cell-table", default=CELL_TABLE)
+    parser.add_argument("--cell-table", required=True)
     parser.add_argument("--fold-seeds", type=int, nargs="+", default=[0])
     parser.add_argument("--n-folds", type=int, default=5)
     parser.add_argument("--workers", type=int, default=8)

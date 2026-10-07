@@ -706,10 +706,27 @@ def test_dango_refuses_a_gene_listed_twice_in_one_genotype() -> None:
         "[(1, 1)] appear more than once"
     )
     scores, _ = model(_cell_graph(), _batch([0, 1, 2], [0, 1, 3]))
-    assert scores.tolist() == [0.014928971417248249, 0.013594761490821838]
+    # Issue #724: the two pinned scores are a float32 forward pass, so their low bits
+    # carry the reduction order of whichever CPU kernel set the running machine
+    # dispatches to, and they were captured on one machine. Forcing a different dispatch
+    # here -- ATEN_CPU_CAPABILITY=default, MKL_CBWR=COMPATIBLE, and the two together --
+    # moves them by up to 15 ULP, 1.0e-6 relative or 8.6 float32 epsilons, and a GitHub
+    # runner produced the same class of shift (0.014928962104022503 and
+    # 0.013594749383628368, 10 and 13 ULP away, in run 37678075502). The bound is ten
+    # times the largest shift measured -- a 160-ULP window against a 15-ULP shift -- and
+    # still far tighter than any change to the architecture, the weight init or the
+    # attention mask: seeding the model 1 or 2 instead of 0, or widening it to 16
+    # channels, moves these two scores by a factor of 3 to 21, not by their ninth digit.
+    assert scores.tolist() == pytest.approx(
+        [0.014928971417248249, 0.013594761490821838], rel=1e-5
+    )
     alone = torch.cat(
         [model(_cell_graph(), _batch(g))[0] for g in ([0, 1, 2], [0, 1, 3])]
     )
+    # Batching must not change a genotype's score. This one is a within-run comparison,
+    # so the only difference between the two sides is the GEMM shape; the largest gap
+    # measured across the four dispatch settings above was 1.9e-9 (2 ULP), so the 1e-8
+    # bound (10.7 ULP at this magnitude) keeps five times that gap in reserve.
     torch.testing.assert_close(scores, alone, atol=1e-8, rtol=0.0)
 
 

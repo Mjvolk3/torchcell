@@ -466,6 +466,34 @@ BEFORE_METRICS = {
     "Pearson": 0.3456900715827942,
     "RMSE": 0.13448500633239746,
 }
+# Issue #724: the two dicts above are compared with a relative tolerance, not ``==``.
+# They were captured on one machine, and a float32 forward pass accumulates in the order
+# of whichever CPU kernel set the running machine dispatches to. Forcing a different
+# dispatch here (ATEN_CPU_CAPABILITY=default, MKL_CBWR=COMPATIBLE, and the two together)
+# moves the step's three predictions by up to 15 ULP, 1.0e-6 relative, and a GitHub
+# runner reproduced the same shift. What that does to each pinned number was measured by
+# perturbing the predictions by +/- 15 ULP over all eight sign combinations:
+#
+# * every entry of ``BEFORE_LUU_E4`` was bit-identical under all three dispatches -- the
+#   losses are means over a 4x4 adjacency and a three-term log-cosh, so a last-bits
+#   prediction change falls below their own rounding -- and 1e-5 is ten times the
+#   relative spread of the predictions that feed them;
+# * MSE moves 2.1e-7 and RMSE 1.1e-7 relative, because the targets 0.1, -0.2 and 0.05
+#   dominate both, so 1e-5 holds them to fifty times the measured shift;
+# * Pearson divides a three-point covariance by the predictions' own spread (7e-3 about
+#   a mean of 1.7e-2), which amplifies a prediction perturbation about tenfold: 15 ULP
+#   moves it 9.4e-6 relative, and the runner's value sat 2.6e-7 away. It gets 1e-4.
+#
+# None of this touches the one-forward-versus-two-forward claim: that is asserted with
+# ``==`` and ``torch.equal`` against a reference computed in the same process below.
+PINNED_REL = {"Pearson": 1e-4}
+
+
+def _pinned(reference: dict[str, float]) -> dict[str, Any]:
+    """``reference`` with each value wrapped in ``pytest.approx`` at its tolerance."""
+    return {
+        k: pytest.approx(v, rel=PINNED_REL.get(k, 1e-5)) for k, v in reference.items()
+    }
 
 
 @pytest.mark.parametrize(
@@ -482,15 +510,19 @@ def test_one_forward_step_equals_the_two_forward_protocol_bit_for_bit(
     """Issue #616 item 1: removing the second forward changes no value. The real seeded
     ``Dango`` (G 4, H 8, two heads) is stepped once with ``DangoLoss``; the old protocol
     is replayed beside it on an identically seeded model (predictions from call 1,
-    reconstructions from call 2). The loss and every logged component are EQUAL
-    (``==`` on float32), and so are all six epoch metrics. ``Dango`` has no dropout, so
-    the second call's reconstructions were bit-identical to the first's.
+    reconstructions from call 2). The step's predictions are bit-identical to the
+    protocol's (``torch.equal``), and the loss, every logged component and the epoch MSE
+    are EQUAL (``==`` on float32). ``Dango`` has no dropout, so the second call's
+    reconstructions were bit-identical to the first's.
 
     Pinned pre-fix values (``LinearUntilUniform(10)`` at epoch 4, captured from the
     two-forward code, ``BEFORE_LUU_E4``): loss 0.17869192361831665
     (``0x1.6df608p-3``) = 0.8 * recon 0.22111916542053223 + 0.2 * log-cosh
     0.008982975035905838; MSE 0.01808621548116207, Pearson 0.3456900715827942. Under
-    ``PreThenPost(10)`` at epoch 12 the loss is the log-cosh term alone.
+    ``PreThenPost(10)`` at epoch 12 the loss is the log-cosh term alone. Those pinned
+    numbers are a cross-check against one machine's capture and are compared at the
+    tolerances ``PINNED_REL`` documents (issue #724), never ``==``; the one-forward
+    versus two-forward equality above is what this test guarantees exactly.
 
     Gradients are equal up to float32 summation order only: with both terms active the
     shared GNN now accumulates both upstream gradients before backpropagating once,
@@ -509,7 +541,7 @@ def test_one_forward_step_equals_the_two_forward_protocol_bit_for_bit(
     task.model = _real_dango()
     task.cell_graph = graph
     _attach(task, tmp_path, epoch)
-    loss, _, _ = task._shared_step(batch, 0, "train")
+    loss, predictions, _ = task._shared_step(batch, 0, "train")
 
     reference = _real_dango()
     first, _ = reference(graph, batch)
@@ -524,6 +556,14 @@ def test_one_forward_step_equals_the_two_forward_protocol_bit_for_bit(
     )
     norm = second["integrated_embeddings"].norm(p=2, dim=-1).mean()
 
+    # The bit-for-bit property this test is named for, stated on the quantity it starts
+    # from: the single forward's predictions are the same float32 bits as the protocol's
+    # first call. Every number derived from them downstream -- loss, logged components,
+    # all six epoch metrics -- therefore agrees by construction, whatever reduction order
+    # the running machine's kernels use. (``_shared_step`` returns None for the
+    # predictions only in dataloader-profiling mode, which this step is not in.)
+    assert predictions is not None
+    assert torch.equal(predictions, first.view(-1, 1))
     assert loss.item() == ref_loss.item()
     expected = {f"train/{k}": float(v) for k, v in ref_parts.items()}
     expected["train/loss"] = ref_loss.item()
@@ -544,12 +584,14 @@ def test_one_forward_step_equals_the_two_forward_protocol_bit_for_bit(
             ).items()
         }
         assert computed["MSE"] == ref_mse
-        assert computed == BEFORE_METRICS
+        assert computed == _pinned(BEFORE_METRICS)
 
     if epoch == 4:
-        assert log.values == BEFORE_LUU_E4
+        assert log.values == _pinned(BEFORE_LUU_E4)
     else:
-        assert log.values["train/loss"] == BEFORE_LUU_E4["train/interaction_loss"]
+        assert log.values["train/loss"] == pytest.approx(
+            BEFORE_LUU_E4["train/interaction_loss"], rel=1e-5
+        )
 
     loss.backward()
     ref_loss.backward()

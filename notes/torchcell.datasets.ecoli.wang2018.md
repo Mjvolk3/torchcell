@@ -299,6 +299,59 @@ rows: every screen at its measured record count, every knockdown carrying its 20
 spacer under the dCas9 effector, and one assembly pin
 (`ecoli_K12_MG1655_ASM584v2`, `GCA_000005845.2`, no background).
 
+Run against the built store on 2026.10.07: **`crispri_guide_fitness_wang2018: PASS`,
+19 of 19 rows, 0 failures**, 1,823 s wall (L0 revalidates all 240,481 records through
+`TypeAdapter(ExperimentType)`, which is the whole cost; peak RSS 2.3 GB). The rows worth
+quoting:
+
+```
+PASS L0 structural :: 240481 records validated
+PASS L1 count :: observed 240481, expected 240481
+PASS L1 pair_uniqueness :: 240481 unique (study, strain, condition) records, one each
+PASS L1 canonical_gene_names :: 4218 systematic names, one canonical spelling each, each current in the genome
+PASS L2 value_fidelity :: 240481 values checked
+PASS L3 measurement_type_consistent :: single measurement_type: 'log2_ratio'
+PASS L3 reference_zero :: numeric rule: reference response == 0 for all 240481 records
+PASS L3 environment_perturbed :: all 240481 experiments carry an environmental edit
+PASS L3 media_membership :: 240481 records on a shared MEDIA_LIBRARY medium, 0 deriving (3 distinct media)
+PASS L4 gene_containment_sgd :: 1.000 of 4218 measured genes are reference genes
+PASS L4 current_genome_genes :: every one of the 4218 measured systematic names is a gene of the current genome
+PASS L1 every_screen_at_its_measured_record_count :: 5 screens, records {auxotrophy: 46207, essentiality: 52245, furfural_tolerance: 47911, isobutanol_tolerance: 47911, trp_biosynthesis: 46207}
+PASS L1 every_knockdown_carries_its_20mer_spacer :: 242294 knockdowns, 0 without a 20-mer spacer; effectors {dCas9: 242294}
+PASS L3 assembly_pin_is_mg1655_genbank_with_no_asserted_background :: 1 distinct assembly pin
+```
+
+Two rows are informational and read as expected rather than as a problem.
+`L2 uncertainty_sanity` reports "0 labeled uncertainties, none a zero dispersion;
+240481 records report n_samples >= 2 with no uncertainty", which is the typed absence
+above: the release publishes no per-guide dispersion. And `L1 provenance_gaps` counts
+1,109,991 documented gaps over all 240,481 records, which is the three uncertainty gaps
+per record plus the environment's own duration and solvent gaps and the compound
+layer's `inchikey` deferral. `L4 gene_containment_sgd` keeps the shared rule's name but
+ran against the MG1655 locus universe this loader passes it (4,651 tags), not S288C.
+
+### The adapter, which the step-9 set test makes part of the loader
+
+`tests/torchcell/adapters/test_bacterial_adapters.py` (landed in `a80e404f`) asserts
+that `dataset_adapter_map` holds exactly the registered bacterial dataset classes and
+that `kg_bacteria.yaml` names exactly those, so registering this loader without an
+adapter fails two tests rather than deferring step 9.
+`CrispriGuideFitnessWang2018Adapter` is therefore here: the Menasalvas shape exactly
+(`Shape(RESPONSE, crispr=True, bacterial=True)`), with a conf enable-list byte-identical
+to the Menasalvas one below its header comment. The one behavioral difference is that
+every Wang record states 37 C, so the temperature methods emit for every record rather
+than for none. Three pins move with it: the two set tests from 20 to 21 adapters, and
+`test_build_time_projection`'s `dataset_adapter_map` size from 71 to 72 with the new
+class in its uncalibrated list. No knowledge-graph build was run.
+
+### Hand-checked row
+
+`gspKb3332_817` is the first data row of Supplementary Data 3 and of 6 to 10. Read off
+the xlsx with openpyxl and asserted against the store by a data-gated test: spacer
+`CTTTTCACCTGAGCAACCAG`, stored as `b3332` / `gspK`, with fitness -0.678534122869
+(essentiality), -0.944735829468 (auxotrophy), -3.04918078714 (L-Trp), 2.61336100679
+(furfural) and 5.15061288135 (isobutanol), each verbatim.
+
 ### Tests
 
 `tests/torchcell/datasets/ecoli/test_wang2018.py`. The hermetic block builds a synthetic

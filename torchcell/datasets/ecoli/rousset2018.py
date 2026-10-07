@@ -153,7 +153,7 @@ import logging
 import os
 import os.path as osp
 from collections import Counter
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar, Literal
@@ -1622,12 +1622,14 @@ EXPECTED_RECORDS = sum(EXPECTED_SCREEN_CENSUS.values())
 EXPECTED_GENES = 3896
 
 
-def screen_census(records: Sequence[Mapping[str, Any]]) -> LevelResult:
+def screen_census(records: Iterable[Mapping[str, Any]]) -> LevelResult:
     """SUPPLEMENTARY L1: the record count of each of the five screens.
 
     The shared ``count`` row checks the dataset total, which one screen's rows could
     cover for another's. This row pins the per-``screen_id`` split, so a column read from
-    the wrong table shows up as a changed census rather than as the same total.
+    the wrong table shows up as a changed census rather than as the same total. It takes
+    an ITERABLE so it can run over a second streaming pass rather than a materialized
+    list.
     """
     census = Counter(
         str(record["experiment"]["phenotype"]["screen_id"]) for record in records
@@ -1656,6 +1658,11 @@ def verify_build(
 ) -> VerificationReport:
     """Run the environment-response L0-L4 verifier on a built tree and write its report.
 
+    The LMDB is STREAMED, twice: once for the verifier and once for the census row. The
+    91,609 records are never materialized, which is the choice Price 2018 and Borchert
+    2024 make for the two other large bacterial stores (an eager ``load_records`` of this
+    store takes tens of minutes; two streaming passes take a fraction of that).
+
     Every record is checked against the MG1655 genome its references pin: the resolver of
     the canonical-name rule, and as the L4 universe every GenBank locus of the assembly
     (4,651, pseudogenes and RNA tags included; the same set as the verification runners'
@@ -1663,18 +1670,17 @@ def verify_build(
     The report is written to ``preprocess/verification_report.json``.
     """
     from torchcell.verification.environment_response import (
-        verify_environment_response_dataset,
+        verify_environment_response_dataset_streaming,
     )
-    from torchcell.verification.runners import load_records
+    from torchcell.verification.runners import stream_records
 
     if genome is None:
         opened = bacterial_genome("ecoli", REFERENCE_STRAIN_NAME, data_root)
         if not isinstance(opened, EcoliK12MG1655Genome):
             raise TypeError(f"expected the MG1655 genome, got {type(opened).__name__}")
         genome = opened
-    records = load_records(dataset_root)
-    report = verify_environment_response_dataset(
-        records,
+    report = verify_environment_response_dataset_streaming(
+        stream_records(dataset_root),
         dataset_name=osp.basename(osp.normpath(dataset_root)),
         provenance=Provenance(
             source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/data/",
@@ -1698,7 +1704,7 @@ def verify_build(
         resolve_gene_name=genome.resolve_gene_name,
         sgd_genes=set(genome.genbank.loci),
     )
-    report.add(screen_census(records))
+    report.add(screen_census(stream_records(dataset_root)))
     preprocess = osp.join(dataset_root, "preprocess")
     os.makedirs(preprocess, exist_ok=True)
     with open(osp.join(preprocess, "verification_report.json"), "w") as handle:

@@ -274,7 +274,14 @@ loci, pseudogenes and RNA tags included) and appends one SUPPLEMENTARY row, the
 per-screen census. Report at
 `$DATA_ROOT/data/torchcell/ecoli_crispri_rousset2018/preprocess/verification_report.json`.
 
-`ecoli_crispri_rousset2018: PASS`, 18 rows, every one ok:
+It uses the STREAMING verifier and streams the LMDB twice, once for the verifier and once
+for the census, so the 91,609 records are never materialized. That is the choice Price
+2018 and Borchert 2024 make for the other two large bacterial stores, and the difference
+is measured, not assumed: an eager `load_records` run of this store took about 25 minutes
+against 8 min 48 s for two streaming passes, on identical data and with an identical
+verdict.
+
+`ecoli_crispri_rousset2018: PASS`, 17 rows, every one ok:
 
 | level | rule | result |
 |---|---|---|

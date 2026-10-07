@@ -197,3 +197,9 @@ clean replacement ORF. Dropping YLR312C-B costs its 13/52 top-constructible trip
 - [[Inference Dataset 2|experiments.010-kuzmin-tmi.inference-dataset-2]] — the restrictive predecessor
 - [[experiments.010-kuzmin-tmi.scripts.12_panel_inference_2_queried_data_tables]]
 - [[Gene interaction|phenotype.gene_interaction]]
+
+## 2026.10.07 - Moved to cold storage on /bulk
+
+`inference_3` (1,936,548,118,935 bytes on /scratch, the query-built store the 010 CGT scored for the third inference list) was archived by slurm job 3367 to `/bulk/experiments/010-kuzmin-tmi/inference_3.tar.zst` (128,087,395,839 bytes, 15.1x; `tar | zstd -T32 -3`, 1 h 17 min), `zstd -t` passed, sha256 `1dacf355ff10a18993d368a3bf536ec62f4d876ea0cf59b1ac1811c0e68c0f8a` beside it, and the original was deprecated and purged the same day. A `README.md` next to the archive carries the restore command. `inference_4` superseded it for the positive-panel work.
+
+Regenerable: the store is the output of the 010 inference query and the `Neo4jCellDataset` stages against the served graph, so the recipe is the query and config in `experiments/010-kuzmin-tmi/`, not the bytes; the archive only skips the multi-day re-query. Retention rule: when a later inference list supersedes `inference_3`, the archive can be removed outright.

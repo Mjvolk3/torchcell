@@ -3,7 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/__init__.py
 # Test file: tests/torchcell/datasets/test___init__.py
 
-"""Dataset registry for embedding and S. cerevisiae organism datasets."""
+"""Dataset registry: embedding datasets and the yeast and bacterial organism datasets."""
 
 
 # TODO when we import this we get all sorts of import error
@@ -11,6 +11,10 @@
 
 # scerevisiae datasets
 # other datasets
+# bacterial loader packages, imported so their @register_dataset loaders populate
+# dataset_registry (empty until the first loaders land)
+from . import ecoli as ecoli
+from . import pputida as pputida
 from .codon_frequency import CodonFrequencyDataset as CodonFrequencyDataset
 from .codon_language_model import CalmDataset as CalmDataset
 from .dataset_registry import dataset_registry as dataset_registry

@@ -15,18 +15,35 @@ Run everything::
     ~/miniconda3/envs/torchcell/bin/python -m torchcell.verification.runners
 
 Or import and call :func:`run_expression`, :func:`run_morphology`, or :func:`run_all`.
+
+The L4 gene universe and the canonical-name resolver belong to the host a record is
+written against. The yeast runners use S288C (:func:`_sgd_gene_set`, :func:`_genome`);
+a bacterial runner selects both from each record's own ``genome_reference``
+(:func:`_gene_set_for_reference`, :func:`_genome_for_reference`), whose
+``assembly_set`` names the strain: :func:`_ecoli_k12_gene_set` for MG1655 or BW25113,
+:func:`_pputida_gene_set` for KT2440.
 """
 
 from __future__ import annotations
 
+import gzip
 import os
 import os.path as osp
 import pickle
+from collections.abc import Mapping
 from typing import Any
 
 import lmdb
 
 from torchcell.data.experiment_dataset import resolve_interned
+from torchcell.datamodels.schema import BACTERIAL_ASSEMBLY_SETS
+from torchcell.sequence.genome.bacterial import BacterialAssembly
+from torchcell.sequence.genome.ecoli.k12 import (
+    BW25113_ASSEMBLY,
+    MG1655_ASSEMBLY,
+    EcoliK12StrainName,
+)
+from torchcell.sequence.genome.pputida.kt2440 import KT2440_ASSEMBLY
 from torchcell.sequence.genome.registry import PETER2018_1011, SGD_S288C_R64, resolve
 from torchcell.verification.environment_response import (
     verify_environment_response_dataset,
@@ -781,6 +798,140 @@ def _genome(data_root: str) -> Any:
         go_root=osp.join(data_root, "data/go"),
         overwrite=False,
     )
+
+
+# --------------------------------------------------------------------------- #
+# Bacterial gene universes, and selecting a record's universe by its own reference
+# --------------------------------------------------------------------------- #
+#: The GenBank assembly each bacterial strain set's locus-tag universe is read from.
+BACTERIAL_GENE_ASSEMBLIES: dict[str, BacterialAssembly] = {
+    assembly.assembly_set: assembly
+    for assembly in (MG1655_ASSEMBLY, BW25113_ASSEMBLY, KT2440_ASSEMBLY)
+}
+#: The species a reference without an ``assembly_set`` must name (a yeast record).
+YEAST_SPECIES = "Saccharomyces cerevisiae"
+
+
+def _bacterial_gene_set(assembly: BacterialAssembly, data_root: str) -> set[str]:
+    """The locus-tag universe of one bacterial GenBank assembly, for L4 containment.
+
+    The bacterial sibling of :func:`_sgd_gene_set`: the locus tag of every ``gene`` row of
+    the set's ``_feature_table.txt.gz`` (protein-coding, RNA and pseudogene loci alike,
+    since a pseudogene tag is a locus a record may carry), cross-checked against the
+    ``_protein.faa.gz``: every protein accession must be the product of a ``CDS`` row
+    whose locus tag is one of those genes. A disagreement between the two members is
+    refused, never unioned. Both members are resolved (sha256-verified) from the tier.
+    """
+    table = resolve(
+        assembly.assembly_set,
+        f"{assembly.genbank_assembly}_feature_table.txt.gz",
+        data_root=data_root,
+    )
+    genes: set[str] = set()
+    cds_locus: dict[str, str] = {}
+    with gzip.open(table, "rt") as handle:
+        columns = handle.readline().removeprefix("# ").rstrip("\n").split("\t")
+        feature, accession, locus_tag = (
+            columns.index(name)
+            for name in ("feature", "product_accession", "locus_tag")
+        )
+        for line in handle:
+            row = line.rstrip("\n").split("\t")
+            if row[feature] == "gene":
+                genes.add(row[locus_tag])
+            elif row[feature] == "CDS" and row[accession]:
+                cds_locus[row[accession]] = row[locus_tag]
+    proteins: set[str] = set()
+    fasta = resolve(
+        assembly.assembly_set, assembly.protein_fasta_member, data_root=data_root
+    )
+    with gzip.open(fasta, "rt") as handle:
+        for line in handle:
+            if line.startswith(">"):
+                proteins.add(line[1:].split()[0])
+    no_cds = sorted(proteins - set(cds_locus))
+    off_gene = sorted({cds_locus[p] for p in proteins if p in cds_locus} - genes)
+    if no_cds or off_gene:
+        raise ValueError(
+            f"{assembly.assembly_set}: {len(no_cds)} proteins have no CDS row in the "
+            f"feature table {no_cds[:10]}; {len(off_gene)} CDS locus tags are no gene "
+            f"row {off_gene[:10]}"
+        )
+    return genes
+
+
+def _ecoli_k12_gene_set(data_root: str, strain: EcoliK12StrainName) -> set[str]:
+    """The E. coli K-12 locus-tag universe of ``strain``: MG1655 b-numbers or BW25113
+    ``BW25113_`` tags (never one standing in for the other).
+    """
+    return _bacterial_gene_set(
+        BACTERIAL_GENE_ASSEMBLIES[BACTERIAL_ASSEMBLY_SETS[strain]], data_root
+    )
+
+
+def _pputida_gene_set(data_root: str) -> set[str]:
+    """The P. putida KT2440 locus-tag universe (``PP_`` tags, RNA tags included)."""
+    return _bacterial_gene_set(KT2440_ASSEMBLY, data_root)
+
+
+def _reference_assembly_set(genome_reference: Mapping[str, Any]) -> str:
+    """The assembly set a record's own stored ``genome_reference`` is written against.
+
+    An ``AssemblyReferenceGenome`` names its bacterial set. A reference without
+    ``assembly_set`` is a yeast record: it must name Saccharomyces cerevisiae, whose set
+    is the SGD R64 release. Anything else is refused, so a record's gene universe and
+    resolver are never borrowed from another host.
+    """
+    if "assembly_set" in genome_reference:
+        assembly_set = str(genome_reference["assembly_set"])
+        if assembly_set not in BACTERIAL_GENE_ASSEMBLIES:
+            raise ValueError(
+                f"genome reference names assembly set {assembly_set!r}; known: "
+                f"{sorted(BACTERIAL_GENE_ASSEMBLIES)}"
+            )
+        return assembly_set
+    if genome_reference["species"] != YEAST_SPECIES:
+        raise ValueError(
+            f"a genome reference without assembly_set must be {YEAST_SPECIES!r}, got "
+            f"{genome_reference['species']!r}"
+        )
+    return SGD_S288C_R64
+
+
+def _gene_set_for_reference(
+    genome_reference: Mapping[str, Any], data_root: str
+) -> set[str]:
+    """The L4 gene universe of the genome a record's own reference names: the S288C
+    ORF + RNA set for a yeast reference, the strain's locus-tag set for an
+    assembly-pinned bacterial one. Call once per distinct reference of a dataset.
+    """
+    assembly_set = _reference_assembly_set(genome_reference)
+    if assembly_set == SGD_S288C_R64:
+        return _sgd_gene_set(data_root)
+    return _bacterial_gene_set(BACTERIAL_GENE_ASSEMBLIES[assembly_set], data_root)
+
+
+def _genome_for_reference(genome_reference: Mapping[str, Any], data_root: str) -> Any:
+    """The genome whose ``resolve_gene_name`` the canonical-name rule applies to a record.
+
+    S288C (:func:`_genome`) for a yeast reference; for an assembly-pinned bacterial one,
+    the strain's genome from its default cache root with ``overwrite=False``
+    (``bacteria_common.bacterial_genome``), so bacterial names are never resolved
+    against S288C. Call once per distinct reference: construction reads the tier.
+    """
+    assembly_set = _reference_assembly_set(genome_reference)
+    if assembly_set == SGD_S288C_R64:
+        return _genome(data_root)
+    # Imported here, not at the top: this module must not import loaders, and the
+    # bacteria_common import runs the torchcell.datasets package (every loader).
+    from torchcell.datasets.bacteria_common import (
+        bacterial_genome,
+        host_of_strain,
+        strain_of_assembly_set,
+    )
+
+    strain = strain_of_assembly_set(assembly_set)
+    return bacterial_genome(host_of_strain(strain), strain, data_root)
 
 
 def _l4_rnaseq_gene_containment(sgd_genes: set[str], measured: set[str]) -> LevelResult:

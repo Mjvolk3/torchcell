@@ -27,6 +27,7 @@ from omegaconf import DictConfig, OmegaConf
 import torchcell
 from biocypher import BioCypher  # type: ignore[attr-defined]  # untyped re-export
 from torchcell.build_telemetry import BuildPhase, ResourceSampler
+from torchcell.datasets.bacteria_common import BacterialGenomeInjector
 from torchcell.fast_csv import FastCsvSink, build_row_specs
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
@@ -208,6 +209,9 @@ def main(cfg: DictConfig) -> None:
         tflink_root=osp.join(DATA_ROOT, "data/tflink"),
         genome=genome,
     )
+    # Bacterial genomes by parameter name (ecoli_genome / pputida_genome), each built
+    # only when a loader asks for it, so a yeast-only build never reads that tier.
+    bacterial_genomes = BacterialGenomeInjector(DATA_ROOT)
 
     # Subsetting: cap every dataset to a small random subset for a fast TEST build.
     # `subset.size: null` => full dataset -- the real KG build runs this same script
@@ -279,9 +283,11 @@ def main(cfg: DictConfig) -> None:
 
     # Build every selected dataset (subset), each paired with its adapter.
     # A dataset's root is its loader's default; genome/graph are injected when the
-    # loader declares them. Datasets whose dev-tree LMDB is absent are skipped LOUDLY
-    # so a test build reports coverage instead of aborting on the first missing one --
-    # except in incremental mode, where the one dataset asked for must be present.
+    # loader declares them, by parameter name (genome / scerevisiae_graph for yeast,
+    # ecoli_genome / pputida_genome for bacteria). Datasets whose dev-tree LMDB is
+    # absent are skipped LOUDLY so a test build reports coverage instead of aborting on
+    # the first missing one -- except in incremental mode, where the one dataset asked
+    # for must be present.
     adapters = []
     skipped: list[str] = []
     for dataset_class, adapter_class in build_items:
@@ -299,6 +305,7 @@ def main(cfg: DictConfig) -> None:
             skipped.append(dataset_class.__name__)
             continue
         kwargs: dict[str, Any] = {"io_workers": num_workers}
+        kwargs.update(bacterial_genomes.genome_kwargs(dataset_class))
         if "genome" in params:
             kwargs["genome"] = genome
         if "scerevisiae_graph" in params:

@@ -484,44 +484,41 @@ matters because CILogon approves registrations by hand.
 
 ### Runbook, and how far it has run
 
-Done 2026-10-07 as rocky, no container started:
+Done 2026-10-07 (steps 4 and 6 on the project owner's go):
 
-1. Directories: `/home/rocky/srv/tc-site/{staging,acme}`, `~/.local/state/tc-proxy/logs`,
-   and on Taiga `data/torchcell/tc-bench/staging/{datasets,submissions}` with the
+1. Directories: `/home/rocky/srv/tc-site/{staging,acme}` and on Taiga
+   `data/torchcell/tc-bench/staging/{datasets,submissions}` with the
    `gene-essentiality-sgd` bundle copied from the development stack.
 2. Secrets under `~/.config/tc-bench/staging/secrets/` (mode 600): `db_password` and
-   `jwt_secret` generated, `admin_keys.json` as `{}`, `cilogon_client_secret` a
-   placeholder line until the registration is approved.
+   `jwt_secret` generated, `cilogon_client_secret` a placeholder line until the
+   registration is approved, `admin_keys.json` holding the hash of the `rocky-staging`
+   admin key; the raw key is beside it in `admin_key_rocky-staging` (600).
 3. Staging site built and published: `TC_SITE_BUILD_DIR=<scratch website-preview/src>
-   bash scripts/tc_site_publish.sh staging`, 5.5 MB in `/home/rocky/srv/tc-site/staging`,
-   links under `/staging/`, `noindex` present.
+   bash scripts/tc_site_publish.sh staging`, 5.5 MB, links under `/staging/`, `noindex`
+   present. First attempt answered 403 on every page: rsync had preserved the scratch
+   tree's 660 file mode, which the proxy (root with every capability dropped) cannot
+   read; the script now copies with `--chmod=D755,F644`.
+4. Proxy up: `docker compose -f docker-compose.tc-proxy.yml up -d` from the worktree.
+   First attempt crash-looped on opening its access log under a bind mount (same
+   capability reason); the log now goes to stdout with Docker rotation (5 x 20 MB).
+   Verified from the public name: `/staging/` 200 with the staging bar, `/` 302 to the
+   Pages site, `http://` 301 to https, TLS with the existing certificate.
+6. Staging API: `bash scripts/tc_bench_redeploy.sh` on commit `59bba4783` (image
+   309 MB, `postgres:17-alpine` 297 MB, `caddy:2-alpine` 66 MB; root disk 89%, 4.4 GB
+   free afterwards), `--init-db`, `--gen-admin-key rocky-staging`, API restarted.
+   `https://torchcell-database.ncsa.illinois.edu/staging/api/v1/health` reports
+   `tier=staging build=59bba4783 n_datasets=1`; `/staging/api/v1/datasets` 200.
 
 Remaining, in order:
 
-4. Proxy, from the branch's checkout (the Caddyfile is bind-mounted by relative path, so
-   `up` again from the primary checkout after the branch lands):
-
-   ```bash
-   docker compose -f docker-compose.tc-proxy.yml up -d
-   curl -sI https://torchcell-database.ncsa.illinois.edu/staging/ | head -1   # 200
-   ```
-
-   Then `https://torchcell-database.ncsa.illinois.edu/staging/` works from any browser,
-   with the staging bar. This is the tunnel-free view; it works before the API.
-5. Certificate renewal to webroot, with sudo, after the proxy is up (the dry run inside
-   `reconfigure` needs port 80 answering) and before the next real renewal:
+5. Certificate renewal to webroot, with sudo, before the next real renewal (the dry run
+   inside `reconfigure` needs port 80 answering, which it now does):
 
    ```bash
    sudo certbot reconfigure --cert-name torchcell-database.ncsa.illinois.edu \
         --authenticator webroot --webroot-path /home/rocky/srv/tc-site/acme
    ```
 
-6. Staging API: `bash scripts/tc_bench_redeploy.sh` (builds the image, starts PostgreSQL
-   and the API, asserts `/health` says `tier=staging`), then the two one-time commands in
-   `docker-compose.tc-bench.yml`'s header (`--gen-admin-key`, `--init-db`). Check
-   `https://torchcell-database.ncsa.illinois.edu/staging/api/v1/health` from the browser.
-   The redeploy script refuses a dirty tree without `FORCE=1`; the branch's changes must
-   be committed first.
 7. CILogon: register at <https://cilogon.org/oauth2/register> with both callbacks
    (`https://torchcell-database.ncsa.illinois.edu/staging/api/v1/auth/callback` and
    `https://torchcell-database.ncsa.illinois.edu/api/v1/auth/callback`) and the four
@@ -530,10 +527,11 @@ Remaining, in order:
 8. Production: land the branch, point the website workflow at Pages with the
    `site.prod.env.example` values, start the production tier with
    `bash scripts/tc_bench_promote_prod.sh` (`CONFIRM=1`) once staging has run the
-   landed image.
+   landed image. After landing, `up -d` the proxy again from the primary checkout, since
+   the Caddyfile is bind-mounted from the worktree today.
 9. Day to day: edit in the worktree, `bash scripts/tc_site_publish.sh staging` for site
    changes, `bash scripts/tc_bench_redeploy.sh` for API changes, refresh the browser.
    The loopback preview on port 3000 and its tunnel are no longer needed.
 
-Not run: steps 4 to 9. The Caddyfile has not been validated by Caddy itself (that needs
-the image pulled).
+Open: an unknown `/staging/<path>` answers the 404 page with status 200 (Caddy's
+`try_files` fallback); a `handle_errors` block would make it a real 404.

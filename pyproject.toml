@@ -46,6 +46,8 @@ tcdb = "torchcell.database.tcdb:main"
 tc-lit-server = "torchcell.literature.server:main"
 tc-lit-backfill = "torchcell.literature.backfill:main"
 tc-data-server = "torchcell.datasets.server:main"
+tc-bench-server = "torchcell.benchmark.app:main"
+tc-bench = "torchcell.benchmark.client:main"
 
 [tool.pyright]
 include = ["torchcell", "experiments"]
@@ -143,6 +145,7 @@ disallow_untyped_decorators = false
 module = [
     "GEOparse", "GEOparse.*",
     "adjustText", "adjustText.*",
+    "authlib", "authlib.*",
     "bibtexparser", "bibtexparser.*",
     "biocypher", "biocypher.*",
     "calm", "calm.*",

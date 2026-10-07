@@ -1,0 +1,68 @@
+# docker/tc-bench/Caddyfile.example
+# TLS reverse proxy for the website and the benchmark API, on one origin so the browser
+# needs no cross-origin requests:
+#
+#   https://<host>/            the built website (static files)
+#   https://<host>/api/v1/...  the benchmark API on the host's loopback port
+#
+# With this layout TC_BENCH_PUBLIC_URL is https://<host>, and the callback URL to
+# register with CILogon is https://<host>/api/v1/auth/callback.
+#
+# This is the ONLY public entry point. It needs TCP 443 (and 80 for the ACME challenge
+# and the redirect) opened in the VM's OpenStack security group; nothing here opens
+# them. On torchcell-database.ncsa.illinois.edu a Let's Encrypt certificate already
+# exists for Neo4j (database/scripts/letsencrypt-deploy-hook.sh); either let Caddy obtain
+# its own, or point `tls` at that certificate and key.
+#
+# Two tiers, two sites: production and staging are separate hosts with separate site
+# directories and separate API ports (9725 and 8725), so nothing a visitor does on
+# staging reaches production. The `(tc_bench)` snippet holds what the two share.
+#
+# Replace the two host names and the site roots before use.
+
+(tc_bench) {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		# SAMEORIGIN, not DENY: the ontology explorer is framed by the site itself.
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	handle /api/* {
+		# One submission is at most 16 MiB of predictions plus metadata; refuse larger
+		# bodies here, before they reach the API.
+		request_body {
+			max_size 17MB
+		}
+		reverse_proxy 127.0.0.1:{args[0]}
+	}
+
+	handle {
+		root * {args[1]}
+		try_files {path} {path}/index.html /404.html
+		file_server
+	}
+
+	log {
+		output file /var/log/caddy/{args[2]}.log {
+			roll_size 20MiB
+			roll_keep 5
+		}
+	}
+}
+
+# Production: the public board.
+example.org {
+	import tc_bench 9725 /srv/torchcell-site/production tc-bench-production
+}
+
+# Staging: test accounts and test submissions; its site is built with SITE_ENV=staging,
+# which adds the staging bar and a noindex tag. Keep it out of search results here too.
+staging.example.org {
+	header X-Robots-Tag "noindex, nofollow"
+	import tc_bench 8725 /srv/torchcell-site/staging tc-bench-staging
+}

@@ -1,0 +1,26 @@
+---
+title: Account
+sidebar_label: Account
+description: Sign in through CILogon and review your own benchmark submissions.
+hide_table_of_contents: true
+---
+
+import AccountApp from '@site/src/components/bench/AccountApp';
+
+Submitting requires an account. There is no password to create: sign in through
+[CILogon](https://www.cilogon.org/) with your university or institute, or with ORCID,
+GitHub, Google or Microsoft, and the first sign-in opens the account. One person holds
+one account, and an email address belongs to one account whichever provider released
+it.
+
+The benchmark stores what CILogon reports about the sign-in: your name, your email
+address, and the identity provider you chose. The display name, the affiliation and
+the provider's name are public and appear with your submissions; the email address is
+not shown on any board. The session is kept for the browser tab and ends when the tab
+closes or the access token expires.
+
+A script does not hold a browser session. It sends an API token, which is created and
+revoked on this page once you are signed in; the [submit page](./submit.mdx) describes
+how to use one. Reading the datasets and the boards needs no account.
+
+<AccountApp />

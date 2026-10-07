@@ -1,0 +1,283 @@
+{
+  "user": {
+    "user_id": "mock-user-b",
+    "display_name": "Mock User B",
+    "affiliation": null,
+    "identity_provider": "Mock University",
+    "created_at": "2000-01-01T12:00:00Z"
+  },
+  "submissions": [
+    {
+      "submission_id": "mock-single-target-004",
+      "user_id": "mock-user-b",
+      "display_name": "Mock User B",
+      "affiliation": null,
+      "method_name": "mock-method-b",
+      "model_family": "mock-family-y",
+      "encoding": "mock-encoding-1",
+      "code_url": null,
+      "status": "provisional",
+      "submitted_at": "2000-01-07T12:00:00Z",
+      "is_baseline": false,
+      "val": {
+        "n_records": 10,
+        "macro": {
+          "pearson": 0.457,
+          "spearman": 0.454,
+          "mse": 0.8007,
+          "mae": 0.7116,
+          "r2": 0.1845
+        },
+        "per_target": {
+          "mock_target": {
+            "pearson": 0.457,
+            "spearman": 0.454,
+            "mse": 0.8007,
+            "mae": 0.7116,
+            "r2": 0.1845
+          }
+        }
+      },
+      "test": {
+        "n_records": 10,
+        "macro": {
+          "pearson": 0.444,
+          "spearman": 0.4298,
+          "mse": 0.8259,
+          "mae": 0.7168,
+          "r2": 0.1682
+        },
+        "per_target": {
+          "mock_target": {
+            "pearson": 0.444,
+            "spearman": 0.4298,
+            "mse": 0.8259,
+            "mae": 0.7168,
+            "r2": 0.1682
+          }
+        }
+      },
+      "flags": [],
+      "dataset_slug": "mock-single-target"
+    },
+    {
+      "submission_id": "mock-single-target-006",
+      "user_id": "mock-user-b",
+      "display_name": "Mock User B",
+      "affiliation": null,
+      "method_name": "mock-method-d",
+      "model_family": "mock-family-z",
+      "encoding": "mock-encoding-2",
+      "code_url": null,
+      "status": "provisional",
+      "submitted_at": "2000-01-16T12:00:00Z",
+      "is_baseline": false,
+      "val": {
+        "n_records": 10,
+        "macro": {
+          "pearson": 0.4211,
+          "spearman": 0.4205,
+          "mse": 0.8572,
+          "mae": 0.7256,
+          "r2": 0.1563
+        },
+        "per_target": {
+          "mock_target": {
+            "pearson": 0.4211,
+            "spearman": 0.4205,
+            "mse": 0.8572,
+            "mae": 0.7256,
+            "r2": 0.1563
+          }
+        }
+      },
+      "test": {
+        "n_records": 10,
+        "macro": {
+          "pearson": 0.5422,
+          "spearman": 0.5282,
+          "mse": 0.7099,
+          "mae": 0.6722,
+          "r2": 0.2695
+        },
+        "per_target": {
+          "mock_target": {
+            "pearson": 0.5422,
+            "spearman": 0.5282,
+            "mse": 0.7099,
+            "mae": 0.6722,
+            "r2": 0.2695
+          }
+        }
+      },
+      "flags": [
+        "mock-flag-test-exceeds-validation"
+      ],
+      "dataset_slug": "mock-single-target"
+    },
+    {
+      "submission_id": "mock-multi-target-004",
+      "user_id": "mock-user-b",
+      "display_name": "Mock User B",
+      "affiliation": null,
+      "method_name": "mock-method-b",
+      "model_family": "mock-family-y",
+      "encoding": "mock-encoding-1",
+      "code_url": null,
+      "status": "provisional",
+      "submitted_at": "2000-01-07T12:00:00Z",
+      "is_baseline": false,
+      "val": {
+        "n_records": 10,
+        "macro": {
+          "pearson": 0.4715,
+          "spearman": 0.4583,
+          "mse": 0.8096,
+          "mae": 0.7054,
+          "r2": 0.2131
+        },
+        "per_target": {
+          "mock_target_1": {
+            "pearson": 0.4542,
+            "spearman": 0.4489,
+            "mse": 0.8103,
+            "mae": 0.7127,
+            "r2": 0.1999
+          },
+          "mock_target_2": {
+            "pearson": 0.4848,
+            "spearman": 0.4691,
+            "mse": 0.81,
+            "mae": 0.6997,
+            "r2": 0.2251
+          },
+          "mock_target_3": {
+            "pearson": 0.4754,
+            "spearman": 0.4569,
+            "mse": 0.8085,
+            "mae": 0.7038,
+            "r2": 0.2142
+          }
+        }
+      },
+      "test": {
+        "n_records": 10,
+        "macro": {
+          "pearson": 0.4356,
+          "spearman": 0.4243,
+          "mse": 0.8493,
+          "mae": 0.72,
+          "r2": 0.176
+        },
+        "per_target": {
+          "mock_target_1": {
+            "pearson": 0.4433,
+            "spearman": 0.4282,
+            "mse": 0.8527,
+            "mae": 0.7171,
+            "r2": 0.181
+          },
+          "mock_target_2": {
+            "pearson": 0.4482,
+            "spearman": 0.4472,
+            "mse": 0.8301,
+            "mae": 0.7151,
+            "r2": 0.1792
+          },
+          "mock_target_3": {
+            "pearson": 0.4152,
+            "spearman": 0.3976,
+            "mse": 0.8652,
+            "mae": 0.7278,
+            "r2": 0.1679
+          }
+        }
+      },
+      "flags": [],
+      "dataset_slug": "mock-multi-target"
+    },
+    {
+      "submission_id": "mock-multi-target-006",
+      "user_id": "mock-user-b",
+      "display_name": "Mock User B",
+      "affiliation": null,
+      "method_name": "mock-method-d",
+      "model_family": "mock-family-z",
+      "encoding": "mock-encoding-2",
+      "code_url": null,
+      "status": "provisional",
+      "submitted_at": "2000-01-16T12:00:00Z",
+      "is_baseline": false,
+      "val": {
+        "n_records": 10,
+        "macro": {
+          "pearson": 0.4492,
+          "spearman": 0.4447,
+          "mse": 0.8291,
+          "mae": 0.7147,
+          "r2": 0.1887
+        },
+        "per_target": {
+          "mock_target_1": {
+            "pearson": 0.4506,
+            "spearman": 0.4424,
+            "mse": 0.8271,
+            "mae": 0.7142,
+            "r2": 0.1825
+          },
+          "mock_target_2": {
+            "pearson": 0.4595,
+            "spearman": 0.4574,
+            "mse": 0.8252,
+            "mae": 0.7106,
+            "r2": 0.2046
+          },
+          "mock_target_3": {
+            "pearson": 0.4376,
+            "spearman": 0.4342,
+            "mse": 0.8349,
+            "mae": 0.7193,
+            "r2": 0.179
+          }
+        }
+      },
+      "test": {
+        "n_records": 10,
+        "macro": {
+          "pearson": 0.5214,
+          "spearman": 0.5104,
+          "mse": 0.7465,
+          "mae": 0.6826,
+          "r2": 0.2595
+        },
+        "per_target": {
+          "mock_target_1": {
+            "pearson": 0.5252,
+            "spearman": 0.5222,
+            "mse": 0.7431,
+            "mae": 0.6808,
+            "r2": 0.2678
+          },
+          "mock_target_2": {
+            "pearson": 0.5255,
+            "spearman": 0.5115,
+            "mse": 0.7567,
+            "mae": 0.6806,
+            "r2": 0.2705
+          },
+          "mock_target_3": {
+            "pearson": 0.5134,
+            "spearman": 0.4976,
+            "mse": 0.7397,
+            "mae": 0.6865,
+            "r2": 0.2403
+          }
+        }
+      },
+      "flags": [
+        "mock-flag-test-exceeds-validation"
+      ],
+      "dataset_slug": "mock-multi-target"
+    }
+  ]
+}

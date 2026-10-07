@@ -1,0 +1,65 @@
+[
+  {
+    "submission_id": "mock-single-target-007",
+    "dataset_slug": "mock-single-target",
+    "status": "provisional",
+    "submitted_at": "2000-01-21T12:00:00Z",
+    "method_name": "mock-method-e",
+    "rejection_reasons": [],
+    "val": {
+      "n_records": 10,
+      "macro": {
+        "pearson": 0.576,
+        "spearman": 0.5733,
+        "mse": 0.6712,
+        "mae": 0.6539,
+        "r2": 0.3149
+      },
+      "per_target": {
+        "mock_target": {
+          "pearson": 0.576,
+          "spearman": 0.5733,
+          "mse": 0.6712,
+          "mae": 0.6539,
+          "r2": 0.3149
+        }
+      }
+    },
+    "test": {
+      "n_records": 10,
+      "macro": {
+        "pearson": 0.5442,
+        "spearman": 0.5334,
+        "mse": 0.7168,
+        "mae": 0.6712,
+        "r2": 0.2807
+      },
+      "per_target": {
+        "mock_target": {
+          "pearson": 0.5442,
+          "spearman": 0.5334,
+          "mse": 0.7168,
+          "mae": 0.6712,
+          "r2": 0.2807
+        }
+      }
+    },
+    "flags": [],
+    "archive_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  {
+    "submission_id": "mock-rejected-001",
+    "dataset_slug": "mock-single-target",
+    "status": "rejected",
+    "submitted_at": "2000-01-19T12:00:00Z",
+    "method_name": "mock-method-rejected",
+    "rejection_reasons": [
+      "mock reason: 3 test records have no prediction row",
+      "mock reason: column \"prediction\" holds a non-numeric value on line 12"
+    ],
+    "val": null,
+    "test": null,
+    "flags": [],
+    "archive_sha256": null
+  }
+]

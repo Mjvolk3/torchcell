@@ -21,3 +21,12 @@ openssl x509 -in "$CERT_DIR/public.crt" -noout -dates
 echo ""
 echo "Restarting Neo4j..."
 docker restart tc-neo4j
+
+# The reverse proxy (docker-compose.tc-proxy.yml) serves the same certificate straight
+# from /etc/letsencrypt and loads it at start, so it must restart too or it keeps
+# serving the expired one. Skipped on a host without the proxy.
+if docker ps --format '{{.Names}}' | grep -qx tc-proxy; then
+    echo ""
+    echo "Restarting the reverse proxy..."
+    docker restart tc-proxy
+fi

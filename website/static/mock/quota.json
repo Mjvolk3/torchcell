@@ -1,0 +1,8 @@
+{
+  "max_per_window": 3,
+  "window_hours": 24,
+  "min_gap_minutes": 60,
+  "used_in_window": 1,
+  "remaining": 2,
+  "next_allowed_at": null
+}

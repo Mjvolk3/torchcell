@@ -1,0 +1,158 @@
+# docker-compose.tc-bench.yml
+# Standalone deployment of the benchmark service (tc-bench): a PostgreSQL database and
+# the API. Kept separate from docker-compose.yml (Neo4j), docker-compose.tc-lit.yml and
+# docker-compose.tc-data.yml so each starts and stops on its own.
+#
+# Two tiers, one branch. This file is the base of two compose PROJECTS that share
+# nothing at run time:
+#
+#   staging     -p tc-bench-staging     --env-file .env.tc-bench.staging
+#               -f docker-compose.tc-bench.yml -f docker-compose.tc-bench.staging.yml
+#   production  -p tc-bench-production  --env-file .env.tc-bench.prod
+#               -f docker-compose.tc-bench.yml -f docker-compose.tc-bench.prod.yml
+#
+# The project name prefixes every container, network and volume, so each tier has its
+# own database volume; each env file names its own secrets directory, bundle and archive
+# directories, host port and public URLs. Staging is rebuilt from the current tree and
+# production runs the exact image that ran on staging: `make bench-redeploy`, then
+# `make bench-promote-prod CONFIRM=1` (scripts/tc_bench_deploy.sh is the primitive both
+# wrap). Do not start a tier with a bare `docker compose up`: it skips the tier's
+# override file and the checks.
+#
+# What is exposed, and to whom:
+#   - PostgreSQL publishes NO port. It sits on an internal network that only the API
+#     container joins, so nothing on the host or the internet can connect to it.
+#   - The API publishes 8725 on the host's LOOPBACK only (127.0.0.1). It becomes public
+#     only through a TLS reverse proxy on 443 (docker/tc-bench/Caddyfile.example), and
+#     only after 443 is opened in the VM's OpenStack security group. Nothing in this file
+#     opens a public port.
+#
+# Good-neighbor limits: both containers carry CPU and memory caps so a burst of uploads
+# cannot starve Neo4j on the same host.
+#
+# Storage: the database is a named Docker volume on the local disk (PostgreSQL must not
+# run on the Taiga NFS mount, for the same reason Neo4j must not). It is small: three
+# narrow tables. The submission archives are plain zip files and go on Taiga.
+#
+# Requires (from docker/tc-bench/tc-bench.<tier>.env.example copied to
+# .env.tc-bench.<tier>, or the shell):
+#   TC_BENCH_SECRETS_DIR      host dir holding db_password, jwt_secret,
+#                             cilogon_client_secret and admin_keys.json, readable by
+#                             TC_BENCH_UID (mode 640 or 600)
+#   TC_BENCH_DATASETS_ROOT    host dir of benchmark bundles (mounted read-only)
+#   TC_BENCH_SUBMISSIONS_ROOT host dir for submission archives (the one writable mount)
+#   TC_BENCH_UID              uid:gid the API runs as (Radiant: 1000:555647)
+#   TC_BENCH_ACCOUNT_URL      public URL of the website's account page
+#   TC_BENCH_PUBLIC_URL       public base URL of this API as a browser reaches it; the
+#                             callback registered with CILogon is this URL plus
+#                             /api/v1/auth/callback
+#   TC_BENCH_CILOGON_CLIENT_ID  the client registered at https://cilogon.org/oauth2/register
+#   TC_BENCH_CORS_ORIGINS     comma-separated origins of the website
+#   TC_BENCH_PORT             host loopback port of this tier's API
+#   TC_BENCH_IMAGE_TAG        set by scripts/tc_bench_deploy.sh, not by hand
+#
+# First run of a tier (COMPOSE = the tier's full command above):
+#   scripts/tc_bench_deploy.sh staging            # builds the image, starts both services
+#   $COMPOSE run --rm tc-bench-api python -m torchcell.benchmark.app --gen-admin-key <name>
+#   $COMPOSE run --rm tc-bench-api python -m torchcell.benchmark.app --init-db
+
+services:
+  tc-bench-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: tcbench
+      POSTGRES_USER: tcbench
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - tc-bench-pgdata:/var/lib/postgresql/data
+    networks:
+      - tc-bench-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tcbench -d tcbench"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    cpus: 1.0
+    mem_limit: 512m
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  tc-bench-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.tc-bench
+      args:
+        TC_BENCH_BUILD_COMMIT: "${TC_BENCH_IMAGE_TAG:-}"
+    # One image name for both tiers: production runs the tag staging ran.
+    image: "tc-bench-api:${TC_BENCH_IMAGE_TAG:-latest}"
+    user: "${TC_BENCH_UID}"
+    depends_on:
+      tc-bench-db:
+        condition: service_healthy
+    ports:
+      # Loopback only. The reverse proxy on the host is the public entry point.
+      - "127.0.0.1:${TC_BENCH_PORT:-8725}:8725"
+    networks:
+      - tc-bench-internal
+      - tc-bench-egress
+    secrets:
+      - db_password
+      - jwt_secret
+      - cilogon_client_secret
+      - admin_keys
+    volumes:
+      - "${TC_BENCH_DATASETS_ROOT}:/data/datasets:ro"
+      - "${TC_BENCH_SUBMISSIONS_ROOT}:/data/submissions"
+    environment:
+      TC_BENCH_DB_HOST: tc-bench-db
+      TC_BENCH_DB_NAME: tcbench
+      TC_BENCH_DB_USER: tcbench
+      TC_BENCH_DB_PASSWORD_FILE: /run/secrets/db_password
+      TC_BENCH_DATASETS_ROOT: /data/datasets
+      TC_BENCH_SUBMISSIONS_ROOT: /data/submissions
+      TC_BENCH_JWT_SECRET_FILE: /run/secrets/jwt_secret
+      TC_BENCH_ADMIN_KEYS_FILE: /run/secrets/admin_keys
+      TC_BENCH_ACCOUNT_URL: "${TC_BENCH_ACCOUNT_URL}"
+      TC_BENCH_CORS_ORIGINS: "${TC_BENCH_CORS_ORIGINS}"
+      TC_BENCH_PUBLIC_URL: "${TC_BENCH_PUBLIC_URL}"
+      TC_BENCH_CILOGON_CLIENT_ID: "${TC_BENCH_CILOGON_CLIENT_ID}"
+      TC_BENCH_CILOGON_CLIENT_SECRET_FILE: /run/secrets/cilogon_client_secret
+      # Behind the reverse proxy the client address is the last X-Forwarded-For entry.
+      TC_BENCH_TRUST_PROXY: "1"
+      TC_BENCH_REQUIRE_APPROVAL: "${TC_BENCH_REQUIRE_APPROVAL:-0}"
+      TC_BENCH_HOST: 0.0.0.0
+      TC_BENCH_PORT: 8725
+    # The root filesystem is read-only; uploads spool to this in-memory /tmp, capped.
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    cpus: 2.0
+    mem_limit: 1g
+    restart: unless-stopped
+
+secrets:
+  db_password:
+    file: "${TC_BENCH_SECRETS_DIR}/db_password"
+  jwt_secret:
+    file: "${TC_BENCH_SECRETS_DIR}/jwt_secret"
+  cilogon_client_secret:
+    file: "${TC_BENCH_SECRETS_DIR}/cilogon_client_secret"
+  admin_keys:
+    file: "${TC_BENCH_SECRETS_DIR}/admin_keys.json"
+
+volumes:
+  tc-bench-pgdata:
+
+networks:
+  # No route out and no published ports: the database is reachable by the API only.
+  tc-bench-internal:
+    internal: true
+  # The API's way out, to reach CILogon (discovery, signing keys, token endpoint).
+  tc-bench-egress:

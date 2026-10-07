@@ -35,6 +35,7 @@ import argparse
 import json
 import os
 import os.path as osp
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -46,6 +47,7 @@ from torchcell.paper.ontology_graph import (
     build_ontology_graph,
 )
 from torchcell.paper.ontology_svg import build_layout, render_schematic_svg, render_svg
+from torchcell.paper.ontology_usage import OntologyUsage, build_ontology_usage
 from torchcell.utils import MAX_HEIGHT_MM, PANEL_WIDTHS_MM, PLOT_PALETTE
 
 TITLE = "The torchcell experiment ontology"
@@ -57,6 +59,26 @@ SUBTITLE = (
 # where the docs workflow publishes the explorer (see ``--explorer-only`` below and
 # .github/workflows/docs.yaml), so the printed URL and the deployed page cannot drift.
 EXPLORE_URL = "https://mjvolk3.github.io/torchcell/ontology/"
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _dataset_index(usage: OntologyUsage) -> list[dict[str, object]]:
+    """Per-dataset payload: size, the schema classes it uses, and its two docs links.
+
+    The explorer inverts ``classes`` in the browser to answer "which datasets use this
+    class", so the class list is sent once per dataset, not once per class.
+    """
+    return [
+        {
+            "name": d.name,
+            "n": d.n_experiments,
+            "classes": d.classes,
+            "api": d.api_url,
+            "page": d.page_url,
+            "title": d.page_title,
+        }
+        for d in usage.datasets
+    ]
 
 
 def _rendered_height_mm(svg: str) -> float:
@@ -97,7 +119,9 @@ def _class_index(graph: OntologyGraph) -> list[dict[str, object]]:
     return index
 
 
-def _explorer_html(svg: str, graph: OntologyGraph, standalone: bool = True) -> str:
+def _explorer_html(
+    svg: str, graph: OntologyGraph, usage: OntologyUsage, standalone: bool = True
+) -> str:
     """Wrap the SVG in a self-contained pan/zoom/search shell.
 
     Level of detail is the whole trick: below a zoom threshold the field rows are
@@ -105,12 +129,19 @@ def _explorer_html(svg: str, graph: OntologyGraph, standalone: bool = True) -> s
     fields fade in. That is what lets one artifact serve both "the zoomed-out
     figure" and "the thing you explore".
 
+    ``usage`` connects the schema to the data stored in it. A class's drawer lists the
+    served datasets whose records can hold it; a dataset (picked there or in the bar)
+    lights up the classes it uses on the map and links to its dataset page and its API
+    reference page on the documentation site.
+
     ``standalone=True`` emits a complete HTML document (for the repo file and for the
     page the docs workflow publishes at ``EXPLORE_URL``). ``standalone=False`` emits
     only the page body, which is what the claude.ai Artifact host expects -- it
     supplies its own ``<!doctype>``/``<head>``/``<body>`` skeleton.
     """
     payload = json.dumps(_class_index(graph), separators=(",", ":"))
+    datasets = json.dumps(_dataset_index(usage), separators=(",", ":"))
+    release = json.dumps(usage.release)
     lanes = json.dumps(
         {
             k: {"title": LANE_TITLES[k], "color": PLOT_PALETTE[LANE_PALETTE_INDEX[k]]}
@@ -171,7 +202,7 @@ def _explorer_html(svg: str, graph: OntologyGraph, standalone: bool = True) -> s
     display:flex; align-items:center; gap:14px; padding:0 16px;
     background:var(--panel); border-bottom:1px solid var(--line);
   }}
-  .brand {{ display:flex; align-items:baseline; gap:8px; }}
+  .brand {{ display:flex; align-items:baseline; gap:8px; white-space:nowrap; }}
   .brand b {{ font-size:14px; font-weight:700; letter-spacing:.02em; }}
   .brand em {{
     font-family:{mono}; font-style:normal; font-size:11px; color:var(--muted);
@@ -179,11 +210,19 @@ def _explorer_html(svg: str, graph: OntologyGraph, standalone: bool = True) -> s
   }}
   .hourglass {{ width:16px; height:16px; flex:0 0 auto; }}
   #q {{
-    flex:0 1 300px; padding:7px 11px; border:1px solid var(--line);
+    flex:0 1 260px; min-width:0; padding:7px 11px; border:1px solid var(--line);
     border-radius:7px; background:var(--bg); color:var(--fg);
     font:12px/1 {mono}; letter-spacing:.02em;
   }}
   #q:focus {{ outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent); }}
+  /* Dataset picker: lights up the classes one served dataset uses. */
+  #ds {{
+    flex:0 1 250px; min-width:0; padding:6px 8px; border:1px solid var(--line);
+    border-radius:7px; background:var(--bg); color:var(--fg);
+    font:12px/1.2 {mono}; letter-spacing:.02em; cursor:pointer;
+  }}
+  #ds:focus {{ outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent); }}
+  #ds.on {{ border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }}
   .tools {{ display:flex; gap:6px; margin-left:auto; }}
   button {{
     padding:7px 11px; border:1px solid var(--line); border-radius:7px;
@@ -191,7 +230,10 @@ def _explorer_html(svg: str, graph: OntologyGraph, standalone: bool = True) -> s
   }}
   button:hover {{ border-color:var(--muted); }}
   button:focus-visible {{ outline:2px solid var(--accent); outline-offset:1px; }}
-  #count {{ font-family:{mono}; font-size:11px; color:var(--muted); align-self:center; }}
+  #count {{
+    font-family:{mono}; font-size:11px; color:var(--muted); align-self:center;
+    white-space:nowrap;
+  }}
 
   /* Lane rail: legend and filter in one. Each chip = one domain of the schema. */
   #rail {{
@@ -217,15 +259,28 @@ def _explorer_html(svg: str, graph: OntologyGraph, standalone: bool = True) -> s
                      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
     background-size:26px 26px;
   }}
+  #stage {{ touch-action:none; }}
   #stage.drag {{ cursor:grabbing; }}
   /* Concrete px size comes from the viewBox at runtime; see the script below. */
   #map {{ position:absolute; top:0; left:0; transform-origin:0 0; }}
+  /* Programmatic moves (fit, jump to a class) glide; dragging and wheel do not. */
+  #map.glide {{ transition:transform .32s cubic-bezier(.2,.7,.2,1); }}
   #map .lod-detail {{ transition:opacity .12s linear; }}
   #stage.coarse #map .lod-detail {{ opacity:0; }}
   #stage.coarse #map .compose:not(.backbone) {{ opacity:0; }}
-  .node {{ cursor:pointer; }}
+  .node {{ cursor:pointer; transition:opacity .16s linear; }}
+  .node .card {{ transition:stroke-width .1s linear; }}
+  .node:hover .card {{ stroke-width:2.6; }}
   .node.dim {{ opacity:.1; }}
+  .node.dim:hover {{ opacity:.45; }}
   .node.hit .card {{ stroke-width:3.4; }}
+  /* With a dataset picked, the classes it uses stand out against the dimmed rest. */
+  #stage.ds .node:not(.dim) .card {{ stroke-width:3.2; }}
+  .node.sel .card {{ stroke-width:4.2; }}
+  .node.sel {{ filter:drop-shadow(0 0 7px var(--accent)); }}
+  @media (prefers-reduced-motion: reduce) {{
+    #map.glide, .node, .node .card, #panel {{ transition:none; }}
+  }}
 
   #panel {{
     position:fixed; top:54px; right:0; bottom:0; width:360px; z-index:7;
@@ -236,7 +291,7 @@ def _explorer_html(svg: str, graph: OntologyGraph, standalone: bool = True) -> s
   #panel.open {{ transform:none; }}
   #panel .kicker {{
     font-family:{mono}; font-size:10.5px; text-transform:uppercase;
-    letter-spacing:.11em; font-weight:600;
+    letter-spacing:.11em; font-weight:600; padding-right:62px;
   }}
   #panel h2 {{ font:600 20px/1.2 {mono}; margin:5px 0 0; word-break:break-word; }}
   #panel .doc {{ color:var(--muted); margin:11px 0 4px; font-size:12.5px; }}
@@ -263,6 +318,23 @@ def _explorer_html(svg: str, graph: OntologyGraph, standalone: bool = True) -> s
   }}
   .chip .dot {{ width:7px; height:7px; border-radius:50%; }}
   .chip:hover {{ border-color:var(--muted); }}
+  .chip.page {{ border-color:var(--accent); }}
+  .chip .mark {{ color:var(--accent); font-weight:700; }}
+  #panel .note {{ color:var(--muted); font-size:11.5px; margin:2px 0 8px; }}
+  #panel .links {{ display:flex; flex-direction:column; gap:7px; margin:14px 0 2px; }}
+  #panel a.doclink {{
+    display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+    padding:9px 12px; border:1px solid var(--line); border-radius:8px;
+    background:var(--bg); color:var(--fg); text-decoration:none; font-size:12.5px;
+  }}
+  #panel a.doclink:hover {{ border-color:var(--accent); }}
+  #panel a.doclink:focus-visible {{ outline:2px solid var(--accent); outline-offset:1px; }}
+  #panel a.doclink.primary {{ border-color:var(--accent); font-weight:600; }}
+  #panel a.doclink small {{ color:var(--muted); font-family:{mono}; font-size:10.5px; }}
+  #panel .clear {{ margin-top:14px; }}
+  #panel details summary {{
+    cursor:pointer; color:var(--muted); font:11.5px/1.4 {mono}; margin:3px 0 7px;
+  }}
   #close {{
     position:absolute; top:14px; right:16px; padding:4px 9px; font-family:{mono};
   }}
@@ -271,8 +343,10 @@ def _explorer_html(svg: str, graph: OntologyGraph, standalone: bool = True) -> s
     color:var(--muted); background:var(--panel); border:1px solid var(--line);
     border-radius:7px; padding:7px 11px; font-family:{mono};
   }}
+  @media (max-width:1180px) {{ .brand em {{ display:none; }} }}
   @media (max-width:760px) {{
-    #panel {{ width:100%; }} .brand em {{ display:none; }}
+    #panel {{ width:100%; }} .brand b {{ display:none; }} #bar {{ gap:8px; padding:0 10px; }}
+    #hint {{ display:none; }}
   }}
 </style>"""
     hourglass = (
@@ -288,6 +362,7 @@ def _explorer_html(svg: str, graph: OntologyGraph, standalone: bool = True) -> s
     <em>genotype × environment → phenotype</em></span>
   <input id="q" type="search" placeholder="search classes, fields, values…"
          aria-label="search" />
+  <select id="ds" aria-label="highlight the classes a dataset uses"></select>
   <span id="count"></span>
   <span class="tools">
     <button id="fit">Fit</button>
@@ -300,86 +375,206 @@ def _explorer_html(svg: str, graph: OntologyGraph, standalone: bool = True) -> s
 <aside id="panel" aria-live="polite">
   <button id="close">close</button><div id="body"></div>
 </aside>
-<div id="hint">drag to pan &middot; scroll to zoom &middot; click a class</div>
+<div id="hint">drag to pan &middot; scroll to zoom &middot; click a class &middot; pick a dataset</div>
 
 <script>"""
 
     js = f"""
 const CLASSES = {payload};
 const LANES = {lanes};
+const DATASETS = {datasets};
+const RELEASE = {release};
 const byName = new Map(CLASSES.map(c => [c.name, c]));
+const dsByName = new Map(DATASETS.map(d => [d.name, d]));
+// Invert dataset -> classes once: the served datasets whose records can hold each class.
+const usedBy = new Map(CLASSES.map(c => [c.name, []]));
+for (const d of DATASETS)
+  for (const n of d.classes) if (usedBy.has(n)) usedBy.get(n).push(d.name);
 const map = document.getElementById('map');
 const stage = document.getElementById('stage');
+const bar = document.getElementById('bar');
+const rail = document.getElementById('rail');
 const vb = map.getAttribute('viewBox').split(/\\s+/).map(Number);
 const W = vb[2], H = vb[3];
 map.style.width = W + 'px';
 map.style.height = H + 'px';
-const esc = s => String(s).replace(/[&<>]/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;'}})[c]);
+const esc = s => String(s).replace(/[&<>"]/g,
+  c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}})[c]);
 const laneColor = k => (LANES[k] || {{}}).color || '#888';
+const laneName = l => l.title.split(' — ')[0];
+const fmt = n => n.toLocaleString('en-US');
 
 // --- pan / zoom -------------------------------------------------------------
-let z = 1, tx = 0, ty = 0;
-function apply() {{
+// `moved` records that the reader has taken over the view; until then a resize
+// (a window change, or the page embedding this map changing width) re-fits it.
+let z = 1, tx = 0, ty = 0, moved = false;
+const clampZ = v => Math.min(9, Math.max(0.04, v));
+function apply(glide) {{
+  map.classList.toggle('glide', !!glide);
   map.style.transform = `translate(${{tx}}px,${{ty}}px) scale(${{z}})`;
   stage.classList.toggle('coarse', z < 0.34);
 }}
-function fit() {{
+// The part of the stage the drawer does not cover (on a wide screen an open drawer
+// sits over the right edge), so the map fits and centers in what is visible.
+function freeSize() {{
   const r = stage.getBoundingClientRect();
-  z = Math.min(r.width / W, r.height / H) * 0.96;
-  tx = (r.width - W * z) / 2; ty = (r.height - H * z) / 2;
-  apply();
+  const covered = window.innerWidth > 760 && panel.classList.contains('open');
+  return [covered ? r.width - panel.offsetWidth : r.width, r.height];
+}}
+function fit(glide) {{
+  const [w, h] = freeSize();
+  z = Math.min(w / W, h / H) * 0.96;
+  tx = (w - W * z) / 2; ty = (h - H * z) / 2;
+  moved = false;
+  apply(glide);
+}}
+function zoomAbout(mx, my, nz, glide) {{
+  nz = clampZ(nz);
+  tx = mx - (mx - tx) * (nz / z); ty = my - (my - ty) * (nz / z);
+  z = nz; moved = true; apply(glide);
 }}
 function zoomTo(name, scale) {{
   const el = document.getElementById('node-' + name);
   if (!el) return;
-  const b = el.getBBox(), r = stage.getBoundingClientRect();
+  const b = el.getBBox(), [w, h] = freeSize();
   z = scale || 1.5;
-  tx = r.width / 2 - (b.x + b.width / 2) * z;
-  ty = r.height / 2 - (b.y + b.height / 2) * z;
-  apply();
+  tx = w / 2 - (b.x + b.width / 2) * z;
+  ty = h / 2 - (b.y + b.height / 2) * z;
+  moved = true;
+  apply(true);
+}}
+function center() {{
+  const [w, h] = freeSize();
+  return [w / 2, h / 2];
 }}
 stage.addEventListener('wheel', e => {{
   e.preventDefault();
   const r = stage.getBoundingClientRect();
-  const mx = e.clientX - r.left, my = e.clientY - r.top;
-  const f = Math.exp(-e.deltaY * 0.0016);
-  const nz = Math.min(9, Math.max(0.04, z * f));
-  tx = mx - (mx - tx) * (nz / z); ty = my - (my - ty) * (nz / z);
-  z = nz; apply();
+  zoomAbout(e.clientX - r.left, e.clientY - r.top, z * Math.exp(-e.deltaY * 0.0016), false);
 }}, {{ passive: false }});
-let drag = null;
+
+// One pointer pans, two pinch. A press that never travels is a click on whatever
+// class card is under it; the hit test runs here because the stage captures the
+// pointer, so the browser would report the stage, not the card, as the click target.
+const pointers = new Map();
+let drag = null, pinch = null;
+function pinchState() {{
+  const [a, b] = [...pointers.values()];
+  const r = stage.getBoundingClientRect();
+  return {{
+    d: Math.hypot(a.x - b.x, a.y - b.y) || 1,
+    mx: (a.x + b.x) / 2 - r.left, my: (a.y + b.y) / 2 - r.top,
+  }};
+}}
 stage.addEventListener('pointerdown', e => {{
+  pointers.set(e.pointerId, {{ x: e.clientX, y: e.clientY }});
+  stage.setPointerCapture(e.pointerId);
+  if (pointers.size === 2) {{ pinch = pinchState(); drag = null; return; }}
   drag = {{ x: e.clientX, y: e.clientY, tx, ty, moved: false }};
-  stage.setPointerCapture(e.pointerId); stage.classList.add('drag');
+  stage.classList.add('drag');
 }});
 stage.addEventListener('pointermove', e => {{
+  if (!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, {{ x: e.clientX, y: e.clientY }});
+  if (pinch && pointers.size === 2) {{
+    const now = pinchState();
+    zoomAbout(now.mx, now.my, z * (now.d / pinch.d), false);
+    pinch = now;
+    return;
+  }}
   if (!drag) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-  if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
-  tx = drag.tx + dx; ty = drag.ty + dy; apply();
+  if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
+  if (!drag.moved) return;
+  tx = drag.tx + dx; ty = drag.ty + dy; moved = true; apply(false);
 }});
-stage.addEventListener('pointerup', () => {{ drag = null; stage.classList.remove('drag'); }});
-document.getElementById('fit').onclick = fit;
-document.getElementById('zin').onclick = () => {{ z = Math.min(9, z * 1.4); apply(); }};
-document.getElementById('zout').onclick = () => {{ z = Math.max(0.04, z / 1.4); apply(); }};
+function release(e) {{
+  const wasDrag = drag, wasPinch = pinch;
+  pointers.delete(e.pointerId);
+  pinch = null; drag = null;
+  stage.classList.remove('drag');
+  if (e.type !== 'pointerup' || wasPinch || !wasDrag || wasDrag.moved) return;
+  const hit = document.elementFromPoint(e.clientX, e.clientY);
+  const node = hit && hit.closest ? hit.closest('.node') : null;
+  if (node) show(node.dataset.name);
+}}
+stage.addEventListener('pointerup', release);
+stage.addEventListener('pointercancel', release);
+document.getElementById('fit').onclick = () => fit(true);
+document.getElementById('zin').onclick = () => zoomAbout(...center(), z * 1.4, true);
+document.getElementById('zout').onclick = () => zoomAbout(...center(), z / 1.4, true);
 
 // --- detail drawer ----------------------------------------------------------
 const panel = document.getElementById('panel'), body = document.getElementById('body');
-document.getElementById('close').onclick = () => panel.classList.remove('open');
+let selected = null;
+function select(name) {{
+  const mark = (nm, on) => {{
+    const el = nm && document.getElementById('node-' + nm);
+    if (el) el.classList.toggle('sel', on);
+  }};
+  mark(selected, false);
+  selected = name;
+  mark(selected, true);
+}}
+function openPanel() {{
+  panel.scrollTop = 0;
+  panel.classList.add('open');
+  if (!moved) fit(true);
+}}
+function closePanel() {{
+  panel.classList.remove('open');
+  select(null);
+  if (!moved) fit(true);
+}}
+document.getElementById('close').onclick = closePanel;
+document.addEventListener('keydown', e => {{ if (e.key === 'Escape') closePanel(); }});
 const chip = nm => {{
   const c = byName.get(nm);
   const col = c ? laneColor(c.lane) : '#888';
-  return `<span class="chip" data-go="${{nm}}"><span class="dot" style="background:${{col}}"></span>${{esc(nm)}}</span>`;
+  return `<span class="chip" data-go="${{esc(nm)}}"><span class="dot" style="background:${{col}}"></span>${{esc(nm)}}</span>`;
 }};
+const dsChip = nm => {{
+  const d = dsByName.get(nm);
+  return `<span class="chip${{d.page ? ' page' : ''}}" data-ds="${{esc(nm)}}" ` +
+         `title="${{fmt(d.n)}} experiments">` +
+         `${{d.page ? '<span class="mark">◆</span>' : ''}}${{esc(nm)}}</span>`;
+}};
+function wire() {{
+  body.querySelectorAll('[data-go]').forEach(el =>
+    el.onclick = () => {{ show(el.dataset.go); zoomTo(el.dataset.go, Math.max(z, 1.1)); }});
+  body.querySelectorAll('[data-ds]').forEach(el =>
+    el.onclick = () => showDataset(el.dataset.ds));
+  body.querySelectorAll('[data-clear]').forEach(el =>
+    el.onclick = () => {{ setDataset(null); closePanel(); }});
+}}
+// The datasets that use a class: the ones with a full dataset page first, then the
+// rest by name, folded when the list is long (a base class is used by every dataset).
+const FOLD_AT = 12;
+function usedByMarkup(name) {{
+  const users = usedBy.get(name) || [];
+  let h = `<h3>used by ${{users.length}} of ${{DATASETS.length}} served datasets</h3>`;
+  if (!users.length)
+    return h + `<div class="note">No dataset served in release ${{esc(RELEASE)}} uses this class.</div>`;
+  const paged = users.filter(n => dsByName.get(n).page);
+  const order = paged.concat(users.filter(n => !dsByName.get(n).page));
+  h += `<div class="note">Datasets whose records can hold this class, in release ` +
+       `${{esc(RELEASE)}}.${{paged.length ? ' ◆ has a full dataset page.' : ''}} ` +
+       `Click a dataset for its documentation.</div>`;
+  if (order.length <= FOLD_AT) return h + order.map(dsChip).join('');
+  const head = order.slice(0, Math.max(paged.length, FOLD_AT - 4));
+  const tail = order.slice(head.length);
+  return h + head.map(dsChip).join('') +
+    `<details><summary>${{tail.length}} more</summary>${{tail.map(dsChip).join('')}}</details>`;
+}}
 function show(name) {{
   const c = byName.get(name);
   if (!c) return;
   const lane = LANES[c.lane] || {{ title: c.lane, color: '#888' }};
-  const head = lane.title.split(' \\u2014 ')[0];
-  let h = `<div class="kicker" style="color:${{lane.color}}">${{esc(head)}}` +
-          `${{c.abstract ? ' \\u00b7 abstract base' : ''}}</div>`;
+  let h = `<div class="kicker" style="color:${{lane.color}}">${{esc(laneName(lane))}}` +
+          `${{c.abstract ? ' · abstract base' : ''}}</div>`;
   h += `<h2>${{esc(c.name)}}</h2>`;
   if (c.doc) h += `<div class="doc">${{esc(c.doc)}}</div>`;
+  h += usedByMarkup(name);
   if (c.parent) h += `<h3>inherits from</h3>${{chip(c.parent)}}`;
   if (c.children.length)
     h += `<h3>specialised by (${{c.children.length}})</h3>` + c.children.map(chip).join('');
@@ -400,16 +595,64 @@ function show(name) {{
     if (refs.length) h += `<h3>holds</h3>` + refs.map(chip).join('');
   }}
   body.innerHTML = h;
-  panel.classList.add('open');
+  openPanel();
+  select(name);
   history.replaceState(null, '', '#' + name);
-  body.querySelectorAll('[data-go]').forEach(el =>
-    el.onclick = () => {{ show(el.dataset.go); zoomTo(el.dataset.go, Math.max(z, 1.1)); }});
+  wire();
 }}
-map.querySelectorAll('.node').forEach(n => {{
-  n.addEventListener('click', () => {{ if (!drag || !drag.moved) show(n.dataset.name); }});
-}});
 
-// --- combined lane-filter + search visibility -------------------------------
+// --- dataset view: the classes one served dataset uses, and where it is documented
+const dsSel = document.getElementById('ds');
+let activeDs = null;
+function setDataset(name) {{
+  activeDs = name ? new Set(dsByName.get(name).classes) : null;
+  dsSel.value = name || '';
+  dsSel.classList.toggle('on', !!name);
+  stage.classList.toggle('ds', !!name);
+  history.replaceState(null, '',
+    name ? '#dataset=' + name : location.pathname + location.search);
+  refresh();
+}}
+function showDataset(name) {{
+  const d = dsByName.get(name);
+  if (!d) return;
+  const known = d.classes.filter(n => byName.has(n));
+  let h = `<div class="kicker" style="color:var(--accent)">served dataset · ` +
+          `release ${{esc(RELEASE)}}</div>`;
+  h += `<h2>${{esc(d.name)}}</h2>`;
+  h += `<div class="doc">${{fmt(d.n)}} experiments. Its records can hold ${{known.length}} of ` +
+       `the ${{CLASSES.length}} schema classes, which stay lit on the map.</div>`;
+  h += '<div class="links">';
+  if (d.page)
+    h += `<a class="doclink primary" href="${{esc(d.page)}}" target="_blank" rel="noopener">` +
+         `<span>Dataset page: ${{esc(d.title)}}</span><small>docs ↗</small></a>`;
+  h += `<a class="doclink" href="${{esc(d.api)}}" target="_blank" rel="noopener">` +
+       `<span>Loader API reference</span><small>docs ↗</small></a>`;
+  h += '</div>';
+  if (!d.page)
+    h += `<div class="note">No full dataset page exists for this dataset yet; the API ` +
+         `reference documents its loader.</div>`;
+  for (const [k, l] of Object.entries(LANES)) {{
+    const members = known.filter(n => byName.get(n).lane === k);
+    if (members.length)
+      h += `<h3>${{esc(laneName(l))}} (${{members.length}})</h3>` + members.map(chip).join('');
+  }}
+  h += `<div><button class="clear" data-clear>clear highlight</button></div>`;
+  body.innerHTML = h;
+  openPanel();
+  select(null);
+  setDataset(name);
+  wire();
+}}
+dsSel.innerHTML = '<option value="">highlight a dataset…</option>' +
+  DATASETS.map(d => `<option value="${{esc(d.name)}}">${{d.page ? '◆ ' : ''}}` +
+                    `${{esc(d.name)}}</option>`).join('');
+dsSel.onchange = () => {{
+  if (dsSel.value) showDataset(dsSel.value);
+  else {{ setDataset(null); closePanel(); }}
+}};
+
+// --- combined lane-filter + search + dataset visibility ---------------------
 const activeLanes = new Set(Object.keys(LANES));
 let term = '';
 const q = document.getElementById('q'), count = document.getElementById('count');
@@ -421,16 +664,19 @@ function hitsTerm(c) {{
     (c.members || []).some(m => m.toLowerCase().includes(term));
 }}
 function refresh() {{
-  let n = 0;
+  let n = 0, lit = 0;
   map.querySelectorAll('.node').forEach(node => {{
     const c = byName.get(node.dataset.name);
     const laneOn = c && activeLanes.has(c.lane);
     const hit = c && hitsTerm(c);
+    const inDs = !activeDs || activeDs.has(node.dataset.name);
     node.classList.toggle('hit', !!hit);
-    node.classList.toggle('dim', !laneOn || (term && !hit));
+    node.classList.toggle('dim', !laneOn || (term && !hit) || !inDs);
     if (hit) n++;
+    if (activeDs && inDs) lit++;
   }});
-  count.textContent = term ? (n + ' match' + (n === 1 ? '' : 'es')) : '';
+  count.textContent = term ? (n + ' match' + (n === 1 ? '' : 'es'))
+    : (activeDs ? lit + ' classes lit' : '');
 }}
 q.addEventListener('input', () => {{ term = q.value.trim().toLowerCase(); refresh(); }});
 q.addEventListener('keydown', e => {{
@@ -440,13 +686,12 @@ q.addEventListener('keydown', e => {{
 }});
 
 // --- lane rail (legend + filter) --------------------------------------------
-const rail = document.getElementById('rail');
 for (const [k, l] of Object.entries(LANES)) {{
   const n = CLASSES.filter(c => c.lane === k).length;
   const b = document.createElement('button');
   b.className = 'lchip'; b.setAttribute('aria-pressed', 'true');
   b.innerHTML = `<span class="dot" style="background:${{l.color}}"></span>` +
-                `${{esc(l.title.split(' \\u2014 ')[0])}} <span class="n">${{n}}</span>`;
+                `${{esc(laneName(l))}} <span class="n">${{n}}</span>`;
   b.onclick = () => {{
     if (activeLanes.has(k)) activeLanes.delete(k); else activeLanes.add(k);
     b.setAttribute('aria-pressed', activeLanes.has(k) ? 'true' : 'false');
@@ -455,10 +700,21 @@ for (const [k, l] of Object.entries(LANES)) {{
   rail.appendChild(b);
 }}
 
-fit();
-if (location.hash.length > 1) {{
-  const n = decodeURIComponent(location.hash.slice(1));
-  if (byName.has(n)) {{ show(n); zoomTo(n, 1.5); }}
+// --- layout: the stage starts below the bar and the rail, however the rail wraps,
+// and the map re-fits on resize until the reader has moved it.
+function layout() {{
+  stage.style.top = (bar.offsetHeight + rail.offsetHeight) + 'px';
+  if (!moved) fit(false);
+}}
+new ResizeObserver(layout).observe(rail);
+window.addEventListener('resize', layout);
+layout();
+
+const start = decodeURIComponent(location.hash.slice(1));
+if (start.startsWith('dataset=') && dsByName.has(start.slice(8))) {{
+  showDataset(start.slice(8));
+}} else if (byName.has(start)) {{
+  show(start); zoomTo(start, 1.5);
 }}
 """
 
@@ -483,6 +739,7 @@ def _write_explorer_only(dest: str) -> None:
     ``ASSET_IMAGES_DIR``; the docs build only needs the one page it serves.
     """
     graph = build_ontology_graph()
+    usage = build_ontology_usage(REPO_ROOT)
     layout = build_layout(graph, compact=False)
     svg = render_svg(
         graph,
@@ -494,12 +751,14 @@ def _write_explorer_only(dest: str) -> None:
     )
     os.makedirs(osp.dirname(dest), exist_ok=True)
     with open(dest, "w", encoding="utf-8") as fh:
-        fh.write(_explorer_html(svg, graph))
+        fh.write(_explorer_html(svg, graph, usage))
     n_models = sum(1 for c in graph.classes.values() if c.kind == "model")
     n_enums = sum(1 for c in graph.classes.values() if c.kind == "enum")
+    n_pages = sum(1 for d in usage.datasets if d.page_url)
     print(
         f"explorer: {dest} ({osp.getsize(dest) / 1024:.0f} kB, "
-        f"{n_models} models + {n_enums} enums)"
+        f"{n_models} models + {n_enums} enums, {len(usage.datasets)} datasets of "
+        f"release {usage.release}, {n_pages} with a dataset page)"
     )
 
 

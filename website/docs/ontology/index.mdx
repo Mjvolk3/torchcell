@@ -1,0 +1,25 @@
+---
+title: Ontology
+sidebar_label: Ontology
+description: The schema of TorchCell experiment records and where to explore it.
+---
+
+The TorchCell ontology is the schema of the typed experiment: the classes a
+`genotype x environment -> phenotype` record is built from, and how they relate. The
+same classes define what the knowledge graph stores, so the ontology is the shared
+vocabulary of the library and the database.
+
+The explorer connects the schema to the data stored in it. Each class lists the served
+datasets whose records can hold it, and each dataset links to its page in the docs.
+
+<LinkGrid>
+  <LinkCard title="Schema explorer" href="/ontology/explorer">
+    The interactive map: classes, their fields, and the datasets that use them.
+  </LinkCard>
+  <LinkCard title="Explorer in its own window" href="https://mjvolk3.github.io/torchcell/ontology/">
+    The same explorer, hosted with the Sphinx docs.
+  </LinkCard>
+  <LinkCard title="Relation to Learn" href="/ontology/learn">
+    How the dataset cards reuse the ontology's terms.
+  </LinkCard>
+</LinkGrid>

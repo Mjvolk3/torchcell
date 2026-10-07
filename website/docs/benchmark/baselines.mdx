@@ -1,0 +1,26 @@
+---
+title: Standard baselines
+sidebar_label: Baselines
+description: The kNN and linear regression baselines run over every dataset.
+---
+
+<StatusBadge status="planned" label="planned: baseline runs" />
+
+A **baseline** is a simple, standard model whose score gives every other row on a
+board something to be compared with. The same baseline procedure is run over every
+dataset:
+
+- **kNN**: k-nearest-neighbors regression over a gene encoding.
+- **Linear regression** over a gene encoding.
+
+A **gene encoding** is a fixed numeric vector per gene; the encodings used are listed
+under [Encodings](./encodings.mdx).
+
+Baseline rows are marked with a "baseline" chip and a tinted background on the
+[leaderboard](./leaderboard.mdx), and they are drawn as open gray markers in the
+charts.
+
+The baseline runs are planned, and so are the details of the procedure: which
+hyperparameters are searched and how the encodings are combined with each model.
+Baselines are meant to follow the same [training protocol](./training-protocol.mdx)
+as any submission. Until they are uploaded, a board has no baseline rows.

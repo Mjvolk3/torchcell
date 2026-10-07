@@ -1,0 +1,102 @@
+.card {
+  border: 1px solid var(--tc-border);
+  border-radius: var(--ifm-global-radius);
+  background: var(--tc-surface);
+  overflow: hidden;
+  margin: 1.25rem 0 2rem;
+}
+
+.header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--tc-border);
+  background: var(--tc-surface-raised);
+}
+
+.title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 650;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.88rem;
+  color: var(--tc-ink-muted);
+}
+
+.meta li {
+  margin: 0;
+}
+
+.metaLabel {
+  font-weight: 600;
+  margin-right: 0.35em;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 0;
+}
+
+.section {
+  padding: 1rem 1.25rem;
+  min-width: 0;
+}
+
+.section + .section {
+  border-left: 1px solid var(--tc-border);
+}
+
+.wide {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--tc-border);
+  border-left: none !important;
+}
+
+.sectionLabel {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tc-ink-muted);
+}
+
+.section > :last-child {
+  margin-bottom: 0;
+}
+
+.diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.diagramEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  padding: 1rem;
+  border: 1px dashed var(--tc-ink-muted);
+  border-radius: 6px;
+  color: var(--tc-ink-muted);
+  font-size: 0.88rem;
+  text-align: center;
+}
+
+@media (max-width: 800px) {
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .section + .section {
+    border-left: none;
+    border-top: 1px solid var(--tc-border);
+  }
+}

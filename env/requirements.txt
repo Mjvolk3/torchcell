@@ -147,3 +147,17 @@
     fastapi>=0.115
     uvicorn[standard]>=0.30
     unidecode>=1.3.0
+
+    # Benchmark service (torchcell.benchmark, "tc-bench"): accounts, submissions and
+    # the leaderboard. SQLAlchemy + psycopg talk to PostgreSQL; multipart is the upload
+    # parser FastAPI needs; email-validator backs pydantic's EmailStr. Sign-in is
+    # CILogon (OpenID Connect) through Authlib, which makes its HTTP calls with httpx2;
+    # itsdangerous signs the short-lived sign-in state cookie (Starlette sessions).
+    sqlalchemy>=2.0.30
+    psycopg[binary]>=3.2
+    python-multipart>=0.0.9
+    pyjwt>=2.9
+    authlib>=1.8
+    httpx2>=2.13
+    itsdangerous>=2.2
+    email-validator>=2.1

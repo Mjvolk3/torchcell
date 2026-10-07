@@ -1,0 +1,14 @@
+---
+title: "8. Analysis before conversion, or modeling with a dataset token"
+sidebar_label: "8. Analysis before conversion"
+description: "Planned tutorial: inspecting raw query results, then converting, or modeling without conversion."
+---
+
+<StatusBadge status="planned" />
+
+Planned scope: two routes from the same query result. In the first, the records are
+analyzed before any processing, then deduplicated, converted, and aggregated as in
+tutorial 7, with the analysis repeated after each step to show what the step changed.
+In the second, the records are not converted: each keeps its own experiment type, and
+the model is given a dataset token, an identifier of the dataset a record came from,
+so that it can treat the datasets differently.

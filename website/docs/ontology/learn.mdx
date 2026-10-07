@@ -1,0 +1,23 @@
+---
+title: Relation to Learn
+sidebar_label: Relation to Learn
+description: How the ontology and the dataset cards share one vocabulary.
+---
+
+The ontology and the [Learn tab](/learn/) describe the same thing at two
+levels:
+
+- The **ontology** is the machine-readable form: the classes of the typed experiment,
+  as the library and the database store them.
+- A **dataset card** is the human-readable form: a diagram, a short blurb, and a few
+  lines in the [unified notation](/learn/notation) that say what one dataset's
+  experiment did.
+
+The notation uses one symbol for each top-level part of the record, genotype,
+environment, and phenotype, so a card can be read against the ontology term by term.
+
+The two are linked in both directions. Every card has a **Schema classes it uses**
+link, which opens the [explorer](/ontology/explorer) on that dataset with its classes
+lit. In the explorer, every class lists the datasets that use it, and each dataset
+links to its page in the docs. Linking each symbol on a card to its own class in the
+explorer is planned.

@@ -1,0 +1,20 @@
+---
+title: Query
+sidebar_label: Query
+description: Planned simplified ways to query the TorchCell database.
+---
+
+<StatusBadge status="planned" />
+
+Planned: simplified ways to query the database, for questions that are easy to ask
+and awkward to write as Cypher. Each mode takes a starting point, finds what is
+similar to it, and returns the experiments that involve the matches.
+
+| Mode | Starting point | State |
+| :-- | :-- | :-- |
+| [Chemical similarity](./chemical-similarity.mdx) | A compound | <StatusBadge status="planned" /> |
+| [Gene similarity](./gene-similarity.mdx) | A gene | <StatusBadge status="planned" /> |
+| [Homologs of yeast genes](./homologs.mdx) | A gene from another organism | <StatusBadge status="planned" /> |
+
+More modes may follow. Until these exist, the database is queried with Cypher through
+[Neo4j Browser](/database/browser) or the [Bolt URI](/database/bolt).

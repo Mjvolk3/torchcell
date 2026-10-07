@@ -1,0 +1,54 @@
+---
+title: Betaxanthin production, Cachera 2023
+sidebar_label: Cachera 2023 betaxanthin
+description: Dataset card for betaxanthin-cachera2023.
+---
+
+<DatasetCard
+  title="Betaxanthin production"
+  slug="betaxanthin-cachera2023"
+  citation="Cachera 2023"
+  loaderClass="BetaxanthinCachera2023Dataset"
+  nRecords={4719}
+  docsUrl="https://mjvolk3.github.io/torchcell/datasets/scerevisiae/amino-acid-betaxanthin.html"
+>
+
+<CardBlurb>
+
+Each record is one yeast strain with the betaxanthin production measured for it. The
+dataset holds 4,719 records.
+
+</CardBlurb>
+
+<CardNotation>
+
+$$
+g = \{p_1, \dots, p_k\}
+\qquad\qquad
+(g, e) \mapsto y = b \in \mathbb{R}
+$$
+
+The genotype holds the perturbations of the strain. The phenotype is the betaxanthin
+production readout $b$, one number per record, so $T = 1$. The type of the
+perturbations, their number $k$ per strain, and the definition of $b$: <Todo />
+
+</CardNotation>
+
+<CardDetails>
+
+| Detail | Value |
+| :-- | :-- |
+| Reference strain | <Todo /> |
+| Perturbation types | <Todo /> |
+| Medium | <Todo /> |
+| Temperature | <Todo /> |
+| Measurement method | <Todo /> |
+| Replicates | <Todo /> |
+| Unit of $b$ | <Todo /> |
+| Uncertainty reported | <Todo /> |
+
+</CardDetails>
+
+</DatasetCard>
+
+This dataset is one of the three provisional [benchmark datasets](/benchmark/datasets).

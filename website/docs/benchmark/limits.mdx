@@ -1,0 +1,39 @@
+---
+title: Submission limits
+sidebar_label: Limits
+description: Account requirement and rate limits for benchmark submissions.
+---
+
+| Rule | Value |
+| :-- | :-- |
+| Account | Required; sign in through CILogon with an institutional or other supported identity |
+| Submissions per account | At most 3 in any rolling 24 hours |
+| Gap between two submissions | At least 1 hour |
+| Rejected attempts | Count toward both limits |
+| Predictions file | At most 16 MiB |
+
+The limits apply per account, over all datasets together, whether an attempt comes from
+the form or from a script with an API token. A request refused with
+`429` is not an attempt and does not count. The [submit page](./submit.mdx)
+shows the current quota: how many submissions were used in the window, how many
+remain, and the earliest time the next one is allowed. A submission sent before that
+time is refused with HTTP status `429`.
+
+## API tokens
+
+| Rule | Value |
+| :-- | :-- |
+| Lifetime | Chosen when the token is created: 30, 90, 180 or 365 days; 90 by default |
+| Tokens per account | At most 5 that have not expired |
+| Renewal | None; create a new token and revoke the old one |
+| Revoked and expired tokens | Deleted; nothing about them is kept |
+
+Tokens are a convenience for scripts and add no submissions: every token of an account
+draws on that account's quota. The cap and the expiry keep a forgotten token from
+working indefinitely and bound what the benchmark stores per account. A person who
+needs a sixth token revokes one on the [account page](./account.mdx).
+
+## Why the limits exist
+
+The limits bound how often one account can observe a test score, and every scored
+submission stays in the account's public history.

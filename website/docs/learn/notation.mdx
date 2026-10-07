@@ -1,0 +1,47 @@
+---
+title: Unified notation
+sidebar_label: Unified notation
+description: The symbols every dataset card uses.
+---
+
+Every dataset card describes its experiment with the same symbols. They follow the
+typed experiment, `genotype x environment -> phenotype`.
+
+## One record
+
+One experiment record maps a genotype and an environment to a phenotype:
+
+$$
+(g, e) \mapsto y
+$$
+
+It is stored with the reference it is measured against, written with the subscript
+$\mathrm{ref}$:
+
+$$
+(g_{\mathrm{ref}}, e_{\mathrm{ref}}) \mapsto y_{\mathrm{ref}}
+$$
+
+## Symbols
+
+| Symbol | Name | Meaning |
+| :-- | :-- | :-- |
+| $\Delta i$ | deletion | The perturbation that deletes gene $i$ |
+| $e$ | environment | What the strain was grown in |
+| $g$ | genotype | The set of perturbations that distinguishes the strain from the reference, $g = \{p_1, \dots, p_k\}$ |
+| $\mathcal{G}$ | gene set | The genes of the reference genome |
+| $i, j$ | gene | One gene, $i \in \mathcal{G}$ |
+| $k$ | perturbation count | The number of perturbations in a genotype, $k = \lvert g \rvert$ |
+| $n$ | record count | The number of records in the dataset |
+| $p_i$ | perturbation | One change to gene $i$, of any type |
+| $T$ | target count | The number of measured quantities per record |
+| $y$ | phenotype | What was measured: a number, $y \in \mathbb{R}$, or one number per target, $y \in \mathbb{R}^{T}$ |
+| $y_{\mathrm{ref}}$ | reference phenotype | The phenotype of the reference strain in the reference environment |
+
+## Conventions
+
+- A genotype is a set, so $g = \{p_i\}$ is a single mutant and $g = \{p_i, p_j\}$ a
+  double mutant.
+- A card states the type of each perturbation in words when it is not a deletion.
+- A card names what $y$ is and gives its unit. A unit that has not been sourced is
+  marked <Todo />.

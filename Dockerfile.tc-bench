@@ -1,0 +1,51 @@
+# Dockerfile.tc-bench
+# Slim image for the benchmark service (torchcell.benchmark.app, "tc-bench"): accounts,
+# submissions, grading and the leaderboard. Like Dockerfile.tc-data it is NOT the
+# torchcell ML env: the service imports only torchcell.api_keys and torchcell.benchmark,
+# neither of which needs torch, PyG or a dataset loader, so only those files are copied.
+#
+# Build and run go through scripts/tc_bench_deploy.sh (docker-compose.tc-bench.yml,
+# PostgreSQL beside it, secrets as files), which tags the image with the commit.
+
+FROM python:3.13-slim
+
+RUN pip install --no-cache-dir \
+    "fastapi>=0.115" \
+    "uvicorn[standard]>=0.30" \
+    "pydantic[email]>=2.8" \
+    "python-dotenv>=1.0" \
+    "python-multipart>=0.0.9" \
+    "sqlalchemy>=2.0.30" \
+    "psycopg[binary]>=3.2" \
+    "pyjwt>=2.9" \
+    "authlib>=1.8" \
+    "httpx2>=2.13" \
+    "itsdangerous>=2.2" \
+    "numpy>=2.0"
+
+WORKDIR /app
+COPY torchcell/__init__.py torchcell/__version__.py torchcell/api_keys.py /app/torchcell/
+COPY torchcell/benchmark/ /app/torchcell/benchmark/
+
+# Inside the container the server listens on every interface; the compose file is what
+# restricts the published port to the host's loopback.
+ENV PYTHONPATH=/app \
+    PYTHONDONTWRITEBYTECODE=1 \
+    TC_BENCH_HOST=0.0.0.0 \
+    TC_BENCH_PORT=8725
+
+EXPOSE 8725
+
+# /api/v1/health needs no auth; curl is absent from slim, so probe via stdlib urllib.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD python -c "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8725/api/v1/health').status==200 else 1)"
+
+# The commit this image was built from; /api/v1/health reports it, which is how a deploy
+# checks that the running image is the intended one. Last, so it never busts the cache
+# of the layers above.
+ARG TC_BENCH_BUILD_COMMIT=""
+ENV TC_BENCH_BUILD_COMMIT=${TC_BENCH_BUILD_COMMIT}
+
+# Config is 100% env-driven (TC_BENCH_*, see torchcell/benchmark/app.py); every secret
+# is a mounted file.
+CMD ["python", "-m", "torchcell.benchmark.app"]

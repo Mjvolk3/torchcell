@@ -1,0 +1,59 @@
+---
+title: Integrity
+sidebar_label: Integrity
+description: Why cheating is possible on public test labels and what the benchmark does about it.
+---
+
+The test labels of published datasets are not secret. Anyone can download a dataset,
+look up the test records, and tune a model on them or copy the labels into a
+predictions file. The benchmark cannot prevent this, so it makes it visible instead.
+Four mechanisms work together.
+
+## Validation and test, always together
+
+Every board shows the validation score beside the test score. A method selected on
+validation has no reason, beyond chance, to score better on test than on validation.
+A test score well above the validation score is the pattern the first flag looks for.
+
+## Flags
+
+A **flag** is an automatic mark on a submission that asks for a closer look. A flag is
+not an accusation and does not remove a submission. Two flags are defined:
+
+- **Test exceeds validation** (`test_exceeds_val`). On the dataset's primary metric,
+  the test score is better than the validation score by more than 0.02.
+- **Diverging history** (`val_test_divergence`). Across a user's last three scored
+  submissions on a dataset, the test score rose at every step while the validation
+  score did not rise.
+
+Both thresholds are starting values that have not been calibrated against real
+submissions. Flags appear in the table of the board and on the user's history page.
+
+## Public submission history
+
+Every scored submission of every user is public. Each user name on a board links to
+that user's [history page](./user.mdx), which lists their scored submissions and plots
+validation and test over time per dataset. Many near-identical submissions with a
+climbing test score are visible there.
+
+## One person, one account
+
+Accounts are opened by signing in through [CILogon](https://www.cilogon.org/), so
+each one is tied to an identity that a university, an institute or another provider
+vouches for. There are no passwords and no self-declared email addresses. An email
+address belongs to one account whichever provider released it, the number of new
+accounts from one network per day is capped, and each user's history page names the
+provider the account signs in through. Maintainers can hold new accounts for approval
+and can restrict sign-in to listed providers.
+
+## Verification
+
+A [verified](./status.mdx) score has been reproduced from the submitter's code, which
+shows that the predictions come from the described method. The verified-only toggle
+on the board restricts the view to those scores.
+
+## Limits
+
+[Submission limits](./limits.mdx) bound how often one account can probe the test
+split, and the [training protocol](./training-protocol.mdx) states what an honest run
+looks like.

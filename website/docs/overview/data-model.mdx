@@ -1,0 +1,35 @@
+---
+title: Typed experiment and provenance
+sidebar_label: Typed experiment
+description: The genotype x environment -> phenotype record and the provenance stored with it.
+---
+
+## The typed experiment
+
+Every measurement in TorchCell is one **typed experiment**: a pydantic object that
+pairs a genotype and an environment with the phenotype observed for them.
+
+```text
+genotype x environment -> phenotype
+```
+
+- **Genotype**: what was changed in the strain.
+- **Environment**: what the strain was grown in.
+- **Phenotype**: what was measured.
+
+Because every dataset is converted into this one record type, experiments from
+different publications can be stored in the same knowledge graph and queried together.
+The classes are documented on the
+[data model page of the guide](https://mjvolk3.github.io/torchcell/guide/data-model.html),
+and the [Ontology tab](/ontology/) shows them as an interactive map.
+
+## Provenance
+
+Provenance is part of the data model:
+
+- **Source files** are pinned by sha256.
+- **Extracted values** carry the verbatim quote from the source they were taken from.
+- **Built datasets** are checked at verification levels L0 to L4.
+
+The [data model page of the guide](https://mjvolk3.github.io/torchcell/guide/data-model.html)
+defines the five verification levels.

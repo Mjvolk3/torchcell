@@ -1,0 +1,335 @@
+/**
+ * Site-wide styles. Loaded after Infima and KaTeX.
+ *
+ * Brand palette (green-free, from the project's figure palette, in series order):
+ * orange #D79B00, red #B85450, purple #9673A6, yellow #D6B656, blue #6C8EBF,
+ * gray #666666. The primary accent is the purple, darkened in the light theme and
+ * lightened in the dark theme so link text keeps at least 4.5:1 contrast.
+ */
+
+:root {
+  --tc-orange: #d79b00;
+  --tc-red: #b85450;
+  --tc-purple: #9673a6;
+  --tc-yellow: #d6b656;
+  --tc-blue: #6c8ebf;
+  --tc-gray: #666666;
+  --tc-gradient: linear-gradient(92deg, #9673a6 0%, #b85450 100%);
+
+  --ifm-color-primary: #7b5a8c;
+  --ifm-color-primary-dark: #6f517e;
+  --ifm-color-primary-darker: #694c77;
+  --ifm-color-primary-darkest: #563f62;
+  --ifm-color-primary-light: #87649a;
+  --ifm-color-primary-lighter: #8d6a9f;
+  --ifm-color-primary-lightest: #a185b0;
+
+  --ifm-font-family-base: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  --ifm-heading-font-weight: 650;
+  --ifm-code-font-size: 92%;
+  --ifm-navbar-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+  --ifm-global-radius: 8px;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.08);
+
+  --tc-surface: #ffffff;
+  --tc-surface-raised: #faf9fb;
+  --tc-border: #e4e1e8;
+  --tc-ink-muted: #5c5c66;
+  --tc-chip-planned-bg: #f3f1f5;
+  --tc-chip-planned-ink: #4f4f58;
+  --tc-chip-warn-bg: #fbf1d6;
+  --tc-chip-warn-ink: #6b4d00;
+  --tc-chip-bad-bg: #f8e3e2;
+  --tc-chip-bad-ink: #8a2f2b;
+  --tc-chip-ok-bg: #7b5a8c;
+  --tc-chip-ok-ink: #ffffff;
+  --tc-baseline-row: #f5f4f2;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #b9a0c6;
+  --ifm-color-primary-dark: #aa8cba;
+  --ifm-color-primary-darker: #a382b4;
+  --ifm-color-primary-darkest: #8c65a2;
+  --ifm-color-primary-light: #c8b4d2;
+  --ifm-color-primary-lighter: #cfbed8;
+  --ifm-color-primary-lightest: #e5dcea;
+  --ifm-navbar-shadow: 0 1px 0 rgba(255, 255, 255, 0.08);
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.12);
+
+  --tc-gradient: linear-gradient(92deg, #b9a0c6 0%, #d98a86 100%);
+  --tc-surface: #1b1b1d;
+  --tc-surface-raised: #232326;
+  --tc-border: #3a3a40;
+  --tc-ink-muted: #b0b0ba;
+  --tc-chip-planned-bg: #2e2e33;
+  --tc-chip-planned-ink: #d0d0d8;
+  --tc-chip-warn-bg: #43360f;
+  --tc-chip-warn-ink: #f0d58a;
+  --tc-chip-bad-bg: #4a2422;
+  --tc-chip-bad-ink: #f2b8b5;
+  --tc-chip-ok-bg: #b9a0c6;
+  --tc-chip-ok-ink: #1b1b1d;
+  --tc-baseline-row: #26262a;
+}
+
+/* Nine tabs plus Announcements: tighten the navbar between the mobile breakpoint and
+ * wide screens, in two steps, so the logo and the first tab never collide. In the
+ * narrower step the GitHub link leaves the bar; it stays in the footer. */
+@media (min-width: 997px) and (max-width: 1400px) {
+  .navbar__item {
+    padding-left: 0.45rem;
+    padding-right: 0.45rem;
+    font-size: 0.9rem;
+  }
+  .navbar__logo {
+    height: 1.6rem;
+  }
+}
+@media (min-width: 997px) and (max-width: 1240px) {
+  .navbar__item {
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+    font-size: 0.82rem;
+  }
+  .navbar__brand {
+    margin-right: 0.4rem;
+  }
+  .navbar__logo {
+    height: 1.4rem;
+  }
+  .tc-navbar-github {
+    display: none;
+  }
+}
+
+.navbar__link--active {
+  box-shadow: inset 0 -2px 0 var(--ifm-color-primary);
+}
+
+/* Sidebar hierarchy, the same on every tab: the landing page first and bold, then
+ * groups. A group is a heading over its pages, always open, not a dropdown, so every
+ * clickable entry in the sidebar opens a page. */
+.theme-doc-sidebar-menu > .theme-doc-sidebar-item-link-level-1:first-child > .menu__link {
+  font-weight: 650;
+}
+
+.theme-doc-sidebar-item-category-level-1 {
+  margin-top: 0.9rem;
+}
+
+.theme-doc-sidebar-item-category-level-1 > .menu__list-item-collapsible {
+  pointer-events: none;
+  background: none;
+}
+
+.theme-doc-sidebar-item-category-level-1 > .menu__list-item-collapsible > .menu__link {
+  padding-top: 0.15rem;
+  padding-bottom: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ifm-color-emphasis-700);
+  background: none;
+}
+
+/* Two steps of indent, 0.8rem each: everything below the landing page sits inside it,
+ * and pages sit inside their group heading. */
+.theme-doc-sidebar-menu > .theme-doc-sidebar-item-category-level-1,
+.theme-doc-sidebar-menu > .theme-doc-sidebar-item-link-level-1:not(:first-child) {
+  padding-left: 0.8rem;
+}
+
+.theme-doc-sidebar-item-category-level-1 > .menu__list {
+  padding-left: 0.8rem;
+}
+
+/* Page width. The default is the theme's reading width: a capped container, and on a
+ * doc page an article column beside the on-page table of contents. The navbar toggle
+ * (src/components/WidthToggle.tsx) sets data-layout="wide" on <html>, which removes
+ * the cap and gives the article the table of contents' column too, so on any desktop
+ * screen the content spans everything right of the sidebar. */
+html[data-layout='wide'] {
+  --ifm-container-width: 100%;
+  --ifm-container-width-xl: 100%;
+}
+html[data-layout='wide'] .main-wrapper .container {
+  max-width: 100%;
+}
+html[data-layout='wide'] .col.col--3:has(.theme-doc-toc-desktop) {
+  display: none;
+}
+html[data-layout='wide'] [class*='docItemCol'] {
+  max-width: 100% !important;
+}
+.tc-width-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  color: var(--ifm-navbar-link-color);
+  transition: background var(--ifm-transition-fast);
+}
+.tc-width-toggle:hover {
+  background: var(--ifm-color-emphasis-200);
+}
+.tc-width-toggle:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}
+.tc-width-toggle[aria-pressed='true'] {
+  color: var(--ifm-color-primary);
+}
+/* Below the desktop breakpoint the content already spans the screen. */
+@media (max-width: 996px) {
+  .tc-width-toggle {
+    display: none;
+  }
+}
+
+/* The embedded schema explorer fills the window below the navbar and the page title. */
+.tc-explorer__bar {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+.tc-explorer__frame {
+  display: block;
+  width: 100%;
+  height: calc(100vh - 15rem);
+  min-height: 520px;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--ifm-global-radius);
+  background: var(--tc-surface-raised);
+}
+
+/* The landing-page title carries the purple-to-red accent gradient, as the Sphinx
+ * site's h1 does. */
+.tc-gradient-text {
+  background: var(--tc-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Status chips. The text label always carries the meaning; color is secondary. */
+.tc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0.1em 0.6em;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.tc-chip--planned {
+  background: var(--tc-chip-planned-bg);
+  color: var(--tc-chip-planned-ink);
+  border: 1px dashed var(--tc-ink-muted);
+}
+.tc-chip--provisional {
+  background: transparent;
+  color: var(--ifm-font-color-base);
+  border: 1px solid var(--tc-ink-muted);
+}
+.tc-chip--verified {
+  background: var(--tc-chip-ok-bg);
+  color: var(--tc-chip-ok-ink);
+}
+.tc-chip--rejected {
+  background: var(--tc-chip-bad-bg);
+  color: var(--tc-chip-bad-ink);
+}
+.tc-chip--withdrawn {
+  background: var(--tc-chip-planned-bg);
+  color: var(--tc-chip-planned-ink);
+  text-decoration: line-through;
+}
+.tc-chip--baseline {
+  background: var(--tc-chip-planned-bg);
+  color: var(--tc-chip-planned-ink);
+  border: 1px solid var(--tc-border);
+}
+.tc-chip--flag {
+  background: var(--tc-chip-warn-bg);
+  color: var(--tc-chip-warn-ink);
+}
+.tc-chip--todo {
+  background: var(--tc-chip-warn-bg);
+  color: var(--tc-chip-warn-ink);
+  border: 1px dashed currentColor;
+  border-radius: 4px;
+  font-family: var(--ifm-font-family-monospace);
+  font-weight: 500;
+}
+
+/* Fixed bar shown on every /benchmark/ page when the site is built with BENCH_API_MOCK=1. */
+.tc-mock-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 400;
+  padding: 0.5rem 1rem;
+  background: #b85450;
+  color: #ffffff;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+/* The same bar on every page of a SITE_ENV=staging build, in the palette's orange so it
+ * is not mistaken for the mock bar. */
+.tc-staging-bar {
+  background: #d79b00;
+  color: #1c1e21;
+}
+
+/* Outbound link cards used on the link pages. */
+.tc-linkgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+.tc-linkcard {
+  display: block;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--tc-border);
+  border-radius: var(--ifm-global-radius);
+  background: var(--tc-surface-raised);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+.tc-linkcard:hover {
+  border-color: var(--ifm-color-primary);
+  color: inherit;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+.tc-linkcard__title {
+  display: block;
+  font-weight: 650;
+  color: var(--ifm-color-primary);
+}
+.tc-linkcard__body {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+  color: var(--tc-ink-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-linkcard {
+    transition: none;
+  }
+}

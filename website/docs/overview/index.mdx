@@ -1,0 +1,38 @@
+---
+title: TorchCell overview
+sidebar_label: TorchCell overview
+description: A Python library and Neo4j knowledge graph for yeast genotype, environment, and phenotype data.
+---
+
+TorchCell is a Python library and a Neo4j knowledge graph for yeast genotype,
+environment, and phenotype data. It records each published measurement as a typed
+experiment: a pydantic `genotype x environment -> phenotype` object. The library needs
+Python 3.13 or later.
+
+The served knowledge graph holds 51 datasets and 52.7 million experiments at release
+2026.09.21.
+
+## Where to start
+
+<LinkGrid>
+  <LinkCard title="Typed experiment and provenance" href="/overview/data-model">
+    The record every dataset is converted into.
+  </LinkCard>
+  <LinkCard title="Browse the database" href="/database/">
+    Neo4j Browser over the served knowledge graph.
+  </LinkCard>
+  <LinkCard title="Benchmark" href="/benchmark/">
+    Fixed splits, standard baselines, one board per dataset.
+  </LinkCard>
+  <LinkCard title="Sphinx documentation" href="https://mjvolk3.github.io/torchcell/">
+    Guide, dataset pages, and API reference.
+  </LinkCard>
+</LinkGrid>
+
+## Installation and first steps
+
+Installation, a quickstart, and the dataset download instructions are maintained in two
+places and are not repeated here:
+
+- the [README on GitHub](https://github.com/Mjvolk3/torchcell#readme)
+- the [guide in the Sphinx documentation](https://mjvolk3.github.io/torchcell/guide/index.html)

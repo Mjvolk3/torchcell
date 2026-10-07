@@ -1,0 +1,46 @@
+---
+title: Training protocol
+sidebar_label: Training protocol
+description: A template for training and selecting a model without using the test split.
+---
+
+The protocol has one rule: **select on validation only, and touch test once.**
+
+The test labels of published datasets can be downloaded by anyone, so nothing
+technical prevents a method from being tuned on them. A score is only meaningful as an
+estimate of performance on unseen records if the test split played no part in any
+decision. This template keeps it that way.
+
+## Template
+
+1. **Fix the split.** Download the split file for the dataset and use it unchanged. Do
+   not re-split, and do not move records between splits.
+2. **Fit on train.** Model parameters are fit on training records only. This includes
+   any preprocessing that learns from data, such as feature scaling or imputation.
+3. **Select on validation.** Every choice is made by validation score: model family,
+   encoding, hyperparameters, early stopping epoch, checkpoint, ensemble members, and
+   random seed.
+4. **Freeze.** Record the final configuration and commit the code before test
+   predictions exist.
+5. **Predict test once.** Run the frozen model on the validation and test records and write
+   the predictions file. Do not compute test metrics locally.
+6. **Submit once.** Upload the file. The server reports validation and test together.
+7. **Do not iterate on the test score.** If the test score is disappointing, the
+   honest options are to stop or to continue selecting on validation. A change made
+   because of a test score makes the next test score an optimistic estimate.
+
+## What counts as touching test
+
+- Computing any metric on test records before the final submission.
+- Choosing between two models, seeds, or checkpoints by their test scores.
+- Stopping training by the test score.
+- Refitting on training, validation, and test records together.
+- Submitting several variants and reporting the one with the best test score. Every
+  submission stays in the public history, so this is visible.
+
+## What to report
+
+Put the code at a fixed commit in `code_url`, list the selected hyperparameters in
+the metadata, and declare any data beyond the training split in
+`uses_external_data`. A submission can only be [verified](./status.mdx) if its code
+reproduces the uploaded predictions.

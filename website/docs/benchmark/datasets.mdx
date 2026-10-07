@@ -1,0 +1,74 @@
+---
+title: Benchmark datasets
+sidebar_label: Datasets
+description: The seed benchmark datasets and their split files.
+---
+
+Every dataset in TorchCell is planned to get a board. The first board is gene
+essentiality; three regression datasets are planned to follow.
+
+## Gene essentiality
+
+| Slug | Task | Records | Label 1 | Label 0 |
+| :-- | :-- | --: | --: | --: |
+| `gene-essentiality-sgd` | binary, target `is_essential` | 5,697 genes | 1,140 | 4,557 |
+
+- **Essential (1):** the gene has a null-mutant record that SGD annotates as inviable
+  (`GeneEssentialitySgdDataset`).
+- **Non-essential (0):** the gene is not in that set and has a KanMX or NatMX deletion
+  strain with a measured fitness in the Costanzo 2016 screens
+  (`SmfCostanzo2016Dataset`), so its deletion mutant grew.
+- **Excluded:** genes in neither group. 24 genes are in both and are labeled essential.
+- **Split:** within each class, 80% train, 10% validation, 10% test, drawn with a fixed
+  seed: 4,557 train, 570 validation, 570 test records, each 20% essential.
+- **Record id:** the systematic gene name, for example `YAL001C`.
+
+:::caution[Provisional rule, public labels]
+
+The rule for label 0 is provisional. The labels of this dataset are also public
+knowledge: SGD publishes which genes are inviable. The test split measures a method
+only when it was not trained on the test genes' labels, which the
+[training protocol](./training-protocol.mdx) requires and verification checks.
+
+:::
+
+## Planned regression datasets
+
+:::caution[Provisional choice]
+
+The three datasets below are a provisional choice. The project owner has not
+confirmed them, and the list may change before the benchmark opens.
+
+:::
+
+| Slug | What it measures | Source | Loader | Records |
+| :-- | :-- | :-- | :-- | --: |
+| `smf-costanzo2016` | Single-mutant fitness | Costanzo 2016 | `SmfCostanzo2016Dataset` | 20,484 |
+| `amino-acid-mulleder2016` | Amino acid levels across the deletion collection | Mulleder 2016 | `AminoAcidMulleder2016Dataset` | 4,678 |
+| `betaxanthin-cachera2023` | Betaxanthin production | Cachera 2023 | `BetaxanthinCachera2023Dataset` | 4,719 |
+
+The datasets are described in the Sphinx docs:
+
+- [Gene essentiality and single-mutant fitness](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/essentiality-smf.html)
+- [Amino acids and betaxanthin](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/amino-acid-betaxanthin.html)
+
+Each one also has a [dataset card](/learn/) under the Learn tab.
+
+## Split files
+
+A **split file** is a CSV with the columns `record_id,split`. It assigns every record
+of a dataset to one split, train, validation, or test, and every submission to that
+dataset is scored on the same validation and test records. The split file and an empty predictions template are downloadable from the
+dataset panel on the [leaderboard](./leaderboard.mdx), and from the API:
+
+| File | Route | Columns |
+| :-- | :-- | :-- |
+| Split file | `GET /datasets/{slug}/splits.csv` | `record_id,split` |
+| Predictions template | `GET /datasets/{slug}/template.csv` | `record_id,split,target,prediction`, with `prediction` empty |
+
+## Targets
+
+A **target** is one predicted quantity. A dataset with one measured value per record
+has one target. A dataset with several measured values per record, such as a set of
+amino acid levels, has one target per value, and its scores are averaged over targets
+as described under [Metrics](./metrics.mdx).

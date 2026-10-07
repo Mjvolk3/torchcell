@@ -1,0 +1,56 @@
+---
+title: Amino acid levels, Mulleder 2016
+sidebar_label: Mulleder 2016 amino acids
+description: Dataset card for amino-acid-mulleder2016.
+---
+
+<DatasetCard
+  title="Amino acid levels across the deletion collection"
+  slug="amino-acid-mulleder2016"
+  citation="Mulleder 2016"
+  loaderClass="AminoAcidMulleder2016Dataset"
+  nRecords={4678}
+  docsUrl="https://mjvolk3.github.io/torchcell/datasets/scerevisiae/amino-acid-betaxanthin.html"
+>
+
+<CardBlurb>
+
+Each record is one strain of the yeast deletion collection, in which a single gene is
+deleted, with the levels of a set of amino acids measured in that strain. The dataset
+holds 4,678 records.
+
+</CardBlurb>
+
+<CardNotation>
+
+$$
+g = \{\Delta i\}, \quad i \in \mathcal{G}
+\qquad\qquad
+(g, e) \mapsto y = (a_1, \dots, a_T) \in \mathbb{R}^{T}
+$$
+
+The genotype holds the deletion $\Delta i$ of one gene $i$. The phenotype is a vector
+with one entry per amino acid, where $a_t$ is the level of amino acid $t$. The number
+of amino acids $T$ and which ones they are: <Todo />
+
+</CardNotation>
+
+<CardDetails>
+
+| Detail | Value |
+| :-- | :-- |
+| Reference strain | <Todo /> |
+| Medium | <Todo /> |
+| Temperature | <Todo /> |
+| Measurement method | <Todo /> |
+| Replicates | <Todo /> |
+| Unit of $a_t$ | <Todo /> |
+| Uncertainty reported | <Todo /> |
+
+</CardDetails>
+
+</DatasetCard>
+
+This dataset is one of the three provisional [benchmark datasets](/benchmark/datasets).
+Because $T > 1$, its benchmark scores are macro averages over the amino acids; see
+[Metrics](/benchmark/metrics).

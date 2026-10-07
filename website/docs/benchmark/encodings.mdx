@@ -1,0 +1,28 @@
+---
+title: Gene encodings
+sidebar_label: Encodings
+description: The gene encodings the standard baselines are run over.
+---
+
+<StatusBadge status="planned" label="planned: descriptions" />
+
+A **gene encoding** maps each gene to a fixed numeric vector. The standard baselines
+are run once per encoding in this list. The list names the encodings; a description of
+how each one is computed, its dimension, and its source model is planned for each row.
+
+| Encoding | Class in `torchcell.datasets` | Description |
+| :-- | :-- | :-- |
+| One-hot gene | `OneHotGeneDataset` | planned |
+| Codon frequency | `CodonFrequencyDataset` | planned |
+| CaLM | `CalmDataset` | planned |
+| FUDT upstream | `FungalUpDownTransformerDataset` | planned |
+| FUDT downstream | `FungalUpDownTransformerDataset` | planned |
+| Nucleotide Transformer windows | `NucleotideTransformerDataset` | planned |
+| ProtT5 | `ProtT5Dataset` | planned |
+| ESM2 | `Esm2Dataset` | planned |
+| Random controls | `RandomEmbeddingDataset` | planned |
+
+FUDT is the fungal upstream and downstream sequence transformer.
+
+The random controls are encodings that carry no biological information, so they set
+the level a learned encoding has to exceed.

@@ -1,0 +1,131 @@
+---
+title: Submit predictions
+sidebar_label: Submit
+description: Submit predictions for grading through the API, the tc-bench command, or the form.
+---
+
+import SubmitApp from '@site/src/components/bench/SubmitApp';
+import BenchCode from '@site/src/components/bench/BenchCode';
+
+A submission is a predictions CSV and a metadata record, sent to one endpoint,
+`POST /submissions`. A script, the `tc-bench` command and the form at the bottom of
+this page all send the same request. The file format is described under
+[Submission format](./submission-format.mdx), the rate limits under
+[Limits](./limits.mdx), and the expected procedure under
+[Training protocol](./training-protocol.mdx).
+
+## What needs an account
+
+| Action | Account |
+| :-- | :-- |
+| List the datasets, download splits and templates | Not needed |
+| Read the boards and any account's public history | Not needed |
+| Validate a predictions file | Not needed |
+| Read your quota, submit, list your own attempts | Needed |
+
+## Set up API access
+
+1. [Sign in](./account.mdx) through CILogon. The first sign-in opens the account.
+2. On the account page, under **API tokens**, create a token and copy it. It is shown
+   once.
+3. Install TorchCell (`pip install torchcell`, Python 3.13 or later) and set two
+   variables, in the shell or in a `.env` file in the working directory:
+
+<BenchCode language="bash">{`
+export TC_BENCH_URL={API}
+export TC_BENCH_TOKEN=tcb_...   # the token from the account page
+`}</BenchCode>
+
+A token is sent as `Authorization: Bearer <token>`. It reads the account and submits
+for it; it cannot edit the profile or create other tokens. It stops working when it
+expires (90 days after creation unless another lifetime was chosen, at most a year) or
+when it is revoked on the account page. Keep it out of repositories and notebooks.
+
+## Submit with the `tc-bench` command
+
+```bash
+tc-bench datasets                                  # slugs, targets, split sizes
+tc-bench template <dataset> --out template.csv     # every row to predict
+tc-bench quota                                     # attempts left, next allowed time
+tc-bench submit --dataset <dataset> \
+    --metadata metadata.json --predictions predictions.csv
+tc-bench mine                                      # every attempt of the account
+```
+
+`tc-bench submit` validates the file against the dataset's template before it uploads.
+A file that fails is reported and not sent, so it does not spend an attempt. Each
+command prints JSON. `submit` exits with status 0 when the submission was scored, 1
+when it was rejected or failed validation, and 2 when the quota refused it.
+
+`metadata.json` holds the fields listed under
+[Submission format](./submission-format.mdx#metadata):
+
+```json title="metadata.json"
+{
+  "method_name": "ridge on one-hot",
+  "description": "Ridge regression on a one-hot gene encoding.",
+  "model_family": "ridge",
+  "encoding": "one-hot gene",
+  "code_url": "https://github.com/<you>/<repository>/tree/<commit>",
+  "uses_external_data": false,
+  "hyperparameters": {"alpha": 1.0}
+}
+```
+
+## Submit from Python
+
+```python
+from pathlib import Path
+
+from torchcell.benchmark.client import BenchClient
+from torchcell.benchmark.submission import SubmissionMetadata
+
+client = BenchClient.from_env()  # reads TC_BENCH_URL and TC_BENCH_TOKEN
+metadata = SubmissionMetadata(
+    method_name="ridge on one-hot",
+    description="Ridge regression on a one-hot gene encoding.",
+    model_family="ridge",
+    encoding="one-hot gene",
+    uses_external_data=False,
+    hyperparameters={"alpha": 1.0},
+)
+result = client.submit("<dataset>", metadata, Path("predictions.csv"))
+print(result.status, result.rejection_reasons)
+print(result.val.macro, result.test.macro)  # the dataset's metrics, per split
+```
+
+`submit` raises `InvalidPredictions` when the file fails local validation and
+`QuotaExceeded`, with `next_allowed_at`, when the quota refuses the upload. A
+rejection by the server is returned, with `status` equal to `rejected` and the
+reasons in `rejection_reasons`.
+
+## Submit with any HTTP client
+
+<BenchCode language="bash">{`
+curl -X POST {API}/submissions \\
+  -H "Authorization: Bearer $TC_BENCH_TOKEN" \\
+  -F dataset=<dataset> \\
+  -F "metadata=<metadata.json" \\
+  -F "predictions=@predictions.csv;type=text/csv"
+`}</BenchCode>
+
+| Field | Content |
+| :-- | :-- |
+| `dataset` | The dataset slug, from `GET /datasets` |
+| `metadata` | The metadata record, as a JSON string |
+| `predictions` | The predictions CSV, as a file |
+
+| Status | Meaning |
+| :-- | :-- |
+| `201` | Scored. The body holds the validation and test scores |
+| `401` | The token is missing, revoked or not valid |
+| `422` | Rejected. `detail.rejection_reasons` lists why; the attempt is counted |
+| `429` | The quota refused the upload. `detail.next_allowed_at` is the earliest next time; not counted |
+
+## Submit with the form
+
+The form sends the same request for the account signed in to this browser. Each label
+shows the name its field has in the request, and "This form as an API request" under
+the form shows the current values as `metadata.json` and a `curl` command.
+
+<SubmitApp />

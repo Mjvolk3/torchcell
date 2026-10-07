@@ -1,0 +1,86 @@
+name: Benchmark verification request
+description: Ask for a provisional benchmark submission to be reproduced and marked verified.
+title: "Verify benchmark submission <submission id>"
+labels: ["benchmark-verification"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A submission is **provisional** once it is graded and **verified** once its
+        predictions have been reproduced from public code. Fill in every field: the
+        reproduction is run from exactly what this form says, with no follow-up
+        questions, so anything missing here is a reason the request is closed.
+  - type: input
+    id: submission_id
+    attributes:
+      label: Submission id
+      description: The 32-character id shown on your account page.
+    validations:
+      required: true
+  - type: input
+    id: dataset
+    attributes:
+      label: Benchmark dataset
+      description: The dataset slug, as it appears on the leaderboard.
+    validations:
+      required: true
+  - type: input
+    id: code_url
+    attributes:
+      label: Code repository
+      description: A public repository URL.
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Commit
+      description: The full commit hash that produced the submitted predictions.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: How to build the environment (a lock file path, a Dockerfile path, or exact install commands).
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command
+      description: The exact command that trains the model and writes the predictions CSV, and the path the CSV is written to.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: resources
+    attributes:
+      label: Hardware and run time
+      description: For example "1 GPU with 24 GB, 3 hours" or "8 CPU cores, 10 minutes".
+    validations:
+      required: true
+  - type: input
+    id: seed
+    attributes:
+      label: Random seed
+      description: The seed used, or how the command fixes it.
+    validations:
+      required: true
+  - type: textarea
+    id: external_data
+    attributes:
+      label: External data
+      description: Anything trained on beyond the dataset's train split, with where to get it. Write "none" if there is none.
+    validations:
+      required: true
+  - type: checkboxes
+    id: protocol
+    attributes:
+      label: Protocol
+      options:
+        - label: Model selection and every hyperparameter choice used the validation split only.
+          required: true
+        - label: The test split was predicted once, with the selected model.
+          required: true

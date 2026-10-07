@@ -1,0 +1,12 @@
+// Not used by "docusaurus build". It drives "npm run typecheck" and editor tooling.
+{
+  "extends": "@docusaurus/tsconfig",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "strict": true,
+    "noEmit": true,
+    "types": ["node", "@docusaurus/module-type-aliases", "@docusaurus/theme-classic"]
+  },
+  "exclude": [".docusaurus", "build", "node_modules", "scripts"]
+}

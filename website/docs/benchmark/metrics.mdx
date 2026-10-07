@@ -1,0 +1,58 @@
+---
+title: Metrics
+sidebar_label: Metrics
+description: The regression and binary metrics and how multi-target datasets are averaged.
+---
+
+Each dataset has a task, and the task fixes its metrics. The grader computes them on
+the validation split and on the test split.
+
+## Regression
+
+A regression dataset has real-valued labels and five metrics. The table gives the standard definition of
+each; the grader's implementation is the reference. With true values $y_i$, predictions
+$\hat{y}_i$, their means $\bar{y}$ and $\bar{\hat{y}}$, and $n$ records:
+
+| Metric | Definition | Better |
+| :-- | :-- | :-- |
+| Pearson | $r = \dfrac{\sum_i (y_i - \bar{y})(\hat{y}_i - \bar{\hat{y}})}{\sqrt{\sum_i (y_i - \bar{y})^2}\,\sqrt{\sum_i (\hat{y}_i - \bar{\hat{y}})^2}}$ | higher |
+| Spearman | Pearson correlation of the ranks of $y$ and $\hat{y}$, tied values sharing their mean rank | higher |
+| MSE | $\dfrac{1}{n}\sum_i (y_i - \hat{y}_i)^2$ | lower |
+| MAE | $\dfrac{1}{n}\sum_i \lvert y_i - \hat{y}_i \rvert$ | lower |
+| R2 | $1 - \dfrac{\sum_i (y_i - \hat{y}_i)^2}{\sum_i (y_i - \bar{y})^2}$ | higher |
+
+## Binary
+
+A binary dataset has labels 0 and 1, for example whether a gene is essential. A
+prediction is a score, and a larger score means more likely 1. Both metrics depend
+only on the order of the scores, so probabilities, logits and ranks of the same model
+score the same. With $P$ records labeled 1 and $N$ labeled 0:
+
+| Metric | Definition | Better |
+| :-- | :-- | :-- |
+| AUROC | The fraction of the $P \cdot N$ pairs of a 1 and a 0 in which the 1 has the larger score, a tie counting one half | higher |
+| AUPRC | Average precision: $\sum_k (R_k - R_{k-1})\,P_k$ over the distinct scores from the highest down, with $R_k$ the recall and $P_k$ the precision among records scoring at least the $k$-th | higher |
+
+AUROC is 0.5 for a random order. AUPRC for a random order is near the fraction of
+records labeled 1, so it is read against that fraction, which the
+[datasets page](./datasets.mdx) lists.
+
+## Multi-target datasets
+
+For a dataset with several targets, each metric is computed per target and the board
+shows the **macro average**: the unweighted mean of the per-target values,
+
+$$
+m_{\text{macro}} = \frac{1}{T} \sum_{t=1}^{T} m_t ,
+$$
+
+where $T$ is the number of targets and $m_t$ is the metric on target $t$. The
+per-target values stay available: the [leaderboard](./leaderboard.mdx) has a target
+selector for multi-target datasets, and the result of a submission lists every target.
+
+## Ranking
+
+A board ranks by the selected metric on the test split, best first: highest for
+Pearson, Spearman, R2, AUROC and AUPRC, lowest for MSE and MAE. The dataset's primary
+metric is the default selection.
+The validation value is always shown beside the test value.

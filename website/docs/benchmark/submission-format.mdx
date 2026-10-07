@@ -1,0 +1,99 @@
+---
+title: Submission format
+sidebar_label: Submission format
+description: The predictions CSV and the metadata record a submission consists of.
+---
+
+A submission is two things: a predictions file and a metadata record. Submitters
+upload predictions, never scores. The server computes every score.
+
+## Predictions file
+
+A CSV in long format, one row per record and target, with this header:
+
+```csv
+record_id,split,target,prediction
+```
+
+| Column | Content |
+| :-- | :-- |
+| `record_id` | The record id, exactly as it appears in the template |
+| `split` | The split of the record: the literal `val` or `test` |
+| `target` | The target name, as listed for the dataset |
+| `prediction` | The predicted value: a finite number, at most `1e12` in size |
+
+The template from `GET /datasets/{slug}/template.csv` contains every required row with
+`prediction` left empty, so filling that column produces a complete file. A record
+whose target was not measured has no row for that target, so the template, not the
+product of records and targets, is the list of required rows.
+
+A file is accepted when all of these hold:
+
+- It is UTF-8 text and its header is exactly the four columns above, in that order.
+- Every row of the template appears exactly once, with the template's split.
+- No other row appears: no training records, unknown records, or unknown targets.
+- For each target, the predictions on a split are not all the same value, because a
+  correlation with a constant is undefined.
+- The file is at most 16 MiB.
+
+## Validate before submitting
+
+The validator needs only the template, so the server's verdict is available locally
+before an attempt is spent:
+
+```bash
+python -m torchcell.benchmark.validation predictions.csv --template template.csv
+```
+
+Downloading the template and validating need no account. `tc-bench submit` runs the
+same check before it uploads.
+
+It prints the same report the server would return and exits with status 1 when the
+file would be rejected.
+
+## Metadata
+
+The metadata record describes the method. On the [submit page](./submit.mdx) it is a
+form; over the API it is a JSON string in the multipart field `metadata`.
+
+| Field | Type | Content |
+| :-- | :-- | :-- |
+| `method_name` | string | Short name shown on the board |
+| `description` | string | What the method does |
+| `model_family` | string | For example kNN, linear, GNN, transformer |
+| `encoding` | string | The gene encoding the model reads |
+| `code_url` | string or null | Public code, needed for verification |
+| `uses_external_data` | boolean | Whether data beyond the training split was used |
+| `external_data_description` | string or null | What that data was |
+| `hyperparameters` | object | Flat map of names to strings, numbers, or booleans |
+
+## Grading
+
+The grader validates the rows and the metadata against pydantic models. The JSON
+Schema of both models is served at `GET /submission-schema`.
+
+- If the format is wrong, the submission is **rejected** and the response lists the
+  reasons, each naming its line, for example
+  `line 5: v4 is in the val split, not test`. At most 20 reasons are listed and the
+  rest are counted. A rejected submission has no score.
+- If the format is right, the grader scores the validation and test splits and the
+  board updates immediately. The score is [provisional](./status.mdx).
+
+Rejected attempts count toward the [submission limits](./limits.mdx).
+
+## Over the API
+
+```text
+POST /submissions
+Authorization: Bearer <API token>
+Content-Type: multipart/form-data
+
+dataset      the dataset slug
+metadata     the metadata record, as a JSON string
+predictions  the CSV file
+```
+
+The response is `201` with the scores when the submission was graded, `422` with the
+rejection reasons when it was rejected, and `429` when a limit applies. The
+[submit page](./submit.mdx) covers the token, the `tc-bench` command and the Python
+client.

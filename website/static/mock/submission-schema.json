@@ -1,0 +1,4 @@
+{
+  "mock": true,
+  "note": "Mock fixture. The real JSON Schema is served by GET /submission-schema."
+}

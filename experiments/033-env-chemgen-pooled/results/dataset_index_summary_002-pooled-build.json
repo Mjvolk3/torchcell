@@ -1,0 +1,37 @@
+{
+  "length": 5961753,
+  "phenotype_label_index": {
+    "environment_response": 5961753
+  },
+  "perturbation_count_index": {
+    "1": 5961753
+  },
+  "dataset_name_index": {
+    "EnvChemgenVanacloig2022Dataset": 118662,
+    "HetHillenmeyer2008Dataset": 2574135,
+    "EnvChemgenHoepfner2014Dataset": 2840089,
+    "EnvChemgenWildenhain2015Dataset": 428867
+  },
+  "experiments_per_dataset": {
+    "EnvChemgenVanacloig2022Dataset": 118662,
+    "HetHillenmeyer2008Dataset": 2712677,
+    "EnvChemgenHoepfner2014Dataset": 3083827,
+    "EnvChemgenWildenhain2015Dataset": 428884
+  },
+  "served_per_dataset": {
+    "EnvChemgenVanacloig2022Dataset": 118662,
+    "HetHillenmeyer2008Dataset": 2712677,
+    "EnvChemgenHoepfner2014Dataset": 3083827,
+    "EnvChemgenWildenhain2015Dataset": 430820
+  },
+  "measurements_per_entry": {
+    "1": 5655412,
+    "2": 263610,
+    "3": 30433,
+    "4": 1970,
+    "5": 33,
+    "6": 10244,
+    "10": 1,
+    "12": 50
+  }
+}

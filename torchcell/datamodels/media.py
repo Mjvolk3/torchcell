@@ -1874,6 +1874,11 @@ _TONG2020 = Provenance(
     sha256="daea2b924f553b75c3bfc626b2dbd10147e4a23c4272dd4b03b703242ac1623a",
     source_uri="paper.md",
 )
+_WANG2018 = Provenance(
+    citation_key="wangPooledCRISPRInterference2018",
+    sha256="9980415d606835ab1ae3a1ad92a64784c822aad1ca01b514662d2fb21d1a3a55",
+    source_uri="paper.md",
+)
 #: Wetmore 2015 Data Set S1 ("The defined medium formulations used for each experiment
 #: are contained in Data Set S1"), sheets ``Media`` and ``Expts_Keio``.
 _WETMORE2015_DS1 = Provenance(
@@ -3852,6 +3857,52 @@ MOPS_MINIMAL = Media(
 """Neidhardt's MOPS minimal medium without a carbon source: Tong 2020's minimal medium by
 its own citation, and Price 2018's 'MOPS minimal media_noCarbon' (rows 4 and 21)."""
 
+_Q_WANG18_MOPS = (
+    "MOPS medium was prepared according to standard laboratory techniques53 "
+    "$\\scriptstyle ( 1 0 \\mathrm { g } / \\mathrm { L }$ glucose). All cultures were "
+    "carried out at $3 7 ^ { \\circ } \\mathrm { C }$"
+)
+_Q_WANG18_CASAMINO = (
+    "we performed another screening with MOPS medium supplemented with "
+    "$0 . 5 \\mathrm { g } / \\mathrm { L }$ casamino acid, which is composed of all "
+    "amino acids except for tryptophan"
+)
+
+MOPS_CASAMINO_WANG2018 = Media(
+    name="MOPS minimal medium with 0.5 g/L casamino acids, no carbon source "
+    "(Wang 2018; Neidhardt 1974 formulation as tabulated by Price 2018)",
+    state="liquid",
+    is_synthetic=False,
+    base_medium="MOPS_MINIMAL",
+    components=[
+        *MOPS_MINIMAL.components,
+        _mixture(
+            "casamino acids",
+            _COMPLEX,
+            _UNDEFINED,
+            concentration=_c(0.5, _GL),
+            provenance=[_cite(_WANG2018, "0.5 g/L", _Q_WANG18_CASAMINO)],
+            note="an acid hydrolysate of casein, so there is no structure to resolve; "
+            "the source states its one compositional fact, that tryptophan is absent, "
+            "which is why this medium is the L-Trp-biosynthesis selective condition",
+        ),
+    ],
+    provenance=[
+        _cite(
+            _WANG2018,
+            "MOPS medium supplemented with 0.5 g/L casamino acid",
+            _Q_WANG18_CASAMINO,
+            note="is_synthetic is False because casamino acids is an undefined "
+            "hydrolysate; the MOPS base is Neidhardt 1974, which Wang 2018 cites as "
+            f"its reference 53 ('{_Q_WANG18_MOPS}'), and the stated 10 g/L glucose is "
+            "carried by the loader as an EnvironmentPhysicalPerturbation(factor="
+            "carbon_source), so this entry stays carbon-free like its base",
+        )
+    ],
+)
+"""Wang 2018's L-Trp-biosynthesis selective medium: MOPS minimal plus 0.5 g/L casamino
+acids, the amino-acid mixture that carries every amino acid except tryptophan (row 25)."""
+
 
 #: Which of the fifty bacterial rows (rank in [[plan.bacteria-ontology-genome]]'s table,
 #: first author, year) use each bacterial entry, and how the paper states it. "names" means
@@ -3867,6 +3918,9 @@ BACTERIAL_MEDIA_USES: dict[str, tuple[str, ...]] = {
         "2024: name LB Miller",
         "32 Schmidt 2016: the LB condition of the proteome map",
         "42 Babu 2014: SI states the Miller amounts",
+        "25 Wang 2018: names LB broth; the essentiality screen's selective and control "
+        "cultures, the auxotrophy and L-Trp control cultures, and the initial library "
+        "the two chemical-tolerance screens are scored against",
     ),
     "LB_AGAR": (
         "20 Menasalvas 2025: LB Miller + 2% agar",
@@ -3916,6 +3970,13 @@ BACTERIAL_MEDIA_USES: dict[str, tuple[str, ...]] = {
     "MOPS_MINIMAL": (
         "4 Tong 2020: names Teknova MOPS minimal, cites Neidhardt 1974",
         "21 Price 2018: Table S18 (2 Keio experiments)",
+        "25 Wang 2018: the auxotrophy, furfural and isobutanol selective conditions; "
+        "cites Neidhardt 1974 and states 10 g/L glucose, carried as a carbon-source "
+        "factor",
+    ),
+    "MOPS_CASAMINO_WANG2018": (
+        "25 Wang 2018: the L-Trp-biosynthesis selective condition (0.5 g/L casamino "
+        "acid in MOPS)",
     ),
 }
 """Use map for the bacterial entries; the keys are exactly the bacterial media."""
@@ -3990,6 +4051,7 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "DAVIS_MINIMAL": DAVIS_MINIMAL,
     "DM500": DM500,
     "MOPS_MINIMAL": MOPS_MINIMAL,
+    "MOPS_CASAMINO_WANG2018": MOPS_CASAMINO_WANG2018,
 } | {
     _hm_key(compound, partial): HILLENMEYER_DROPOUT_MEDIA[label]
     for label, compound, partial in _HILLENMEYER_DROPOUTS
@@ -4032,6 +4094,9 @@ CARBON_FREE_MEDIA: dict[str, str] = {
     "DAVIS_MINIMAL": "base; the carbon source is the variable of Caglar 2017's carbon arm",
     "MOPS_MINIMAL": "base; the carbon source is the variable (Tong 2020) and Price 2018 "
     "tabulates it without one",
+    "MOPS_CASAMINO_WANG2018": "same as its MOPS base; Wang 2018's stated 10 g/L glucose "
+    "is carried as a carbon-source factor so all four of its MOPS conditions share one "
+    "base object",
 }
 
 

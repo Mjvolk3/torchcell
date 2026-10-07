@@ -3,22 +3,24 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/data/test_neo4j_query_raw_artifacts.py
 """The raw stage's resolvability gate and ``Neo4jQueryRaw.materialize``. No Neo4j.
 
-No schema class on main carries an ``ArtifactRef`` yet (phase 3 adds them), so the
-records use a test experiment family, ``"artifact fitness"``, whose phenotype carries an
-optional ref and a list of refs, registered in the module's ``EXPERIMENT_TYPE_MAP`` for
-the test. Their references are plain ``FitnessExperimentReference``s, because the stored
-reference index validates references against the fixed schema union, which a test
-subclass is not in; the walk of a REFERENCE is pinned on rendered rows instead. Five
-records, ``PROCESS_BATCH`` 2 (batches [0, 1], [2, 3], [4]):
+Records are real schema records: ``FitnessExperiment``s whose genotype holds
+``SequenceVariantPerturbation``s with ``sequence_ref`` set (one perturbation per ref,
+in list order), beside plain references. No schema class is subclassed here: the
+ontology tree tests walk the live class hierarchy in the same process. Five records,
+``PROCESS_BATCH`` 2 (batches [0, 1], [2, 3], [4]):
 
-* 0: phenotype ref A.
-* 1: a plain ``FitnessExperiment`` with no ref.
-* 2: phenotype ref A2 (A's file, another member) and refs [B].
-* 3: refs [B, A].
-* 4: refs [C].
+* 0: one variant with ref A.
+* 1: a plain ``FitnessExperiment`` (one deletion), no ref.
+* 2: variants with refs A2 (A's file, another member) and B.
+* 3: variants with refs B and A.
+* 4: one variant with ref C.
 
 Distinct ``(tier, key, path, sha256)``: A, B, C, met in records 0, 2, 4, so the resolver
 is called exactly [A, B, C] across the three batches.
+
+No reference-side schema class can hold an ``ArtifactRef`` after phase 3 (the refs live
+on perturbations, the CRISPR construct and ``SegregantParent``, all on the experiment
+side), so the reference half of the walk is not exercised by a stored record here.
 """
 
 from __future__ import annotations
@@ -57,33 +59,6 @@ B = ref_for("objects", "set-a", "b.npy", b"beta")
 C = ref_for("objects", "set-c", "c.npy", b"gamma")
 
 
-class RefPhenotype(s.FitnessPhenotype):
-    """A fitness phenotype that also points at off-graph bytes.
-
-    ``Phenotype.validate_label_fields`` checks the label fields against the concrete
-    class's own annotations, so the two are redeclared here.
-    """
-
-    fitness: float
-    fitness_se: float | None = None
-    ref: ArtifactRef | None = None
-    refs: list[ArtifactRef] = []
-
-
-class RefFitnessExperiment(s.FitnessExperiment):
-    """The test family: a fitness experiment whose phenotype may carry refs."""
-
-    experiment_type: str = "artifact fitness"
-    phenotype: RefPhenotype
-
-
-class RefFitnessReference(s.FitnessExperimentReference):
-    """The test family's reference, whose phenotype may carry refs too."""
-
-    experiment_reference_type: str = "artifact fitness"
-    phenotype_reference: RefPhenotype
-
-
 ENVIRONMENT = s.Environment(
     media=s.Media(name="YPD", state="solid", is_synthetic=False)
 )
@@ -100,15 +75,26 @@ def _genotype(gene: str) -> s.Genotype:
     )
 
 
-def _ref_record(
-    gene: str, ref: ArtifactRef | None = None, refs: list[ArtifactRef] | None = None
-) -> dict[str, Any]:
+def _variant(gene: str, ref: ArtifactRef) -> s.SequenceVariantPerturbation:
+    return s.SequenceVariantPerturbation(
+        systematic_gene_name=gene,
+        perturbed_gene_name=gene,
+        strain_id="AAB",
+        sequence_source="test2026",
+        sequence_ref=ref,
+    )
+
+
+def _ref_record(variants: list[tuple[str, ArtifactRef]]) -> dict[str, Any]:
+    """A fitness record whose genotype is one sequence variant per ``(gene, ref)``."""
     return {
-        "experiment": RefFitnessExperiment(
+        "experiment": s.FitnessExperiment(
             dataset_name="toy_art",
-            genotype=_genotype(gene),
+            genotype=s.Genotype(
+                perturbations=[_variant(gene, ref) for gene, ref in variants]
+            ),
             environment=ENVIRONMENT,
-            phenotype=RefPhenotype(fitness=0.8, ref=ref, refs=refs or []),
+            phenotype=s.FitnessPhenotype(fitness=0.8),
         ),
         "experiment_reference": s.FitnessExperimentReference(
             dataset_name="toy_art",
@@ -137,11 +123,11 @@ def _plain_record(gene: str) -> dict[str, Any]:
 
 
 RECORDS = [
-    _ref_record("YAL001C", ref=A),
+    _ref_record([("YAL001C", A)]),
     _plain_record("YAL002W"),
-    _ref_record("YAL003W", ref=A2, refs=[B]),
-    _ref_record("YAL004W", refs=[B, A]),
-    _ref_record("YAL005W", refs=[C]),
+    _ref_record([("YAL003W", A2), ("YAL004W", B)]),
+    _ref_record([("YAL005W", B), ("YAL007C", A)]),
+    _ref_record([("YAL008W", C)]),
 ]
 
 
@@ -199,18 +185,8 @@ class _FakeResolver:
 
 
 @pytest.fixture(autouse=True)
-def _artifact_family(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Register the test family and render in batches of 2."""
-    monkeypatch.setattr(
-        nqr,
-        "EXPERIMENT_TYPE_MAP",
-        {**s.EXPERIMENT_TYPE_MAP, "artifact fitness": RefFitnessExperiment},
-    )
-    monkeypatch.setattr(
-        nqr,
-        "EXPERIMENT_REFERENCE_TYPE_MAP",
-        {**s.EXPERIMENT_REFERENCE_TYPE_MAP, "artifact fitness": RefFitnessReference},
-    )
+def _batches_of_two(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Render in batches of 2."""
     monkeypatch.setattr(nqr, "PROCESS_BATCH", 2)
 
 
@@ -262,7 +238,7 @@ def test_gate_resolves_each_distinct_ref_once_across_batches(tmp_path: Path) -> 
     assert raw._checked_artifacts == {ref_key(A), ref_key(B), ref_key(C)}
     assert _stored(raw) == [_serialize(r) for r in RECORDS]
     assert raw[3] == RECORDS[3]
-    assert raw[4]["experiment"].phenotype.refs == [C]
+    assert raw[4]["experiment"].genotype.perturbations[0].sequence_ref == C
     raw.close_lmdb()
 
 
@@ -302,29 +278,20 @@ def test_partitioned_build_with_a_dangling_ref_leaves_no_store(tmp_path: Path) -
 
 def test_rows_carry_the_distinct_refs_of_their_record(tmp_path: Path) -> None:
     """Rendered row refs: (A,), (), (A2, B), (B, A), (C,): distinct per record, the
-    first per key kept, the plain record empty. A sixth record whose REFERENCE carries
-    B (experiment ref A) renders (A, B): the reference is walked after the experiment.
+    first per key kept, the plain record empty. (A reference-side ref is not pinned:
+    no reference-side schema class holds one, see the module docstring.)
     """
     raw = _build(tmp_path, artifact_check=False)
-    with_reference_ref = {
-        "experiment": RECORDS[0]["experiment"],
-        "experiment_reference": RefFitnessReference(
-            dataset_name="toy_art",
-            genome_reference=GENOME,
-            environment_reference=ENVIRONMENT,
-            phenotype_reference=RefPhenotype(fitness=1.0, ref=B),
-        ),
-    }
     batch = [
         (
             i,
             json.loads(json.dumps(r["experiment"].model_dump())),
             json.dumps(r["experiment_reference"].model_dump()),
         )
-        for i, r in enumerate([*RECORDS, with_reference_ref])
+        for i, r in enumerate(RECORDS)
     ]
     rows = raw._render_batch(batch, {}, "record")
-    assert [row[4] for row in rows] == [(A,), (), (A2, B), (B, A), (C,), (A, B)]
+    assert [row[4] for row in rows] == [(A,), (), (A2, B), (B, A), (C,)]
 
 
 def test_records_without_refs_are_never_walked_or_checked(

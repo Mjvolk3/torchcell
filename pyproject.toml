@@ -239,6 +239,7 @@ paths = [
 "torchcell/artifacts/tiers.py" = "tests/torchcell/artifacts/test_artifact_tiers.py"
 "torchcell/artifacts/resolve.py" = "tests/torchcell/artifacts/test_artifact_resolve.py"
 "torchcell/artifacts/deposit.py" = "tests/torchcell/artifacts/test_artifact_deposit.py"
+"torchcell/artifacts/walk.py" = "tests/torchcell/artifacts/test_artifact_walk.py"
 "torchcell/viz/fitness.py" = "tests/torchcell/viz/test_viz_fitness.py"
 "torchcell/datasets/server.py" = "tests/torchcell/datasets/test_datasets_server.py"
 "torchcell/data/data.py" = "tests/torchcell/data/test_data_data.py"

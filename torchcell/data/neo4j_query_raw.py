@@ -16,6 +16,7 @@ from collections import deque
 from collections.abc import Callable, Iterator, Sequence
 from concurrent.futures import Future, ProcessPoolExecutor
 from itertools import chain, product
+from pathlib import Path
 from typing import Any, Literal, Protocol, cast, get_type_hints, runtime_checkable
 
 import lmdb
@@ -23,6 +24,16 @@ from attrs import define, field
 from neo4j import GraphDatabase
 from tqdm import tqdm
 
+from torchcell.artifacts import (
+    ArtifactRef,
+    ArtifactUnresolvableError,
+    RemoteSource,
+    ResolvedArtifact,
+    distinct_refs,
+)
+from torchcell.artifacts import materialize as materialize_artifact
+from torchcell.artifacts import resolve as resolve_artifact
+from torchcell.artifacts.walk import RefKey, ref_key
 from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
 from torchcell.datamodels.interned_constant import (
     INTERNED_CONSTANT_NEO4J_LABEL,
@@ -81,6 +92,56 @@ class StaleStagingStoreError(RuntimeError):
     behind. It may hold any prefix of the query, so it is never reused or silently
     replaced: the caller inspects it and removes it before the query runs again.
     """
+
+
+class UnresolvableArtifactError(RuntimeError):
+    """A record carries an ``ArtifactRef`` that no artifact source resolves.
+
+    Raised by ``Neo4jQueryRaw.process`` (the resolvability gate), naming the record key,
+    the ref string and the resolver's message; the build then leaves no store at
+    ``raw/lmdb``, the same rule as a missing interned constant.
+    """
+
+
+class ArtifactResolver(Protocol):
+    """The gate's seam: answer whether ``ref`` resolves, downloading nothing.
+
+    Returns on success; raises ``ArtifactUnresolvableError`` (whose message the gate
+    quotes) when no source holds the ref, and ``ArtifactIntegrityError`` on a sha256
+    disagreement, which the gate lets propagate as is.
+    """
+
+    def __call__(
+        self,
+        ref: ArtifactRef,
+        *,
+        data_root: str | Path | None,
+        client: RemoteSource | None,
+    ) -> object:
+        """Resolve ``ref`` without materializing it."""
+        ...
+
+
+def require_resolvable(
+    ref: ArtifactRef, *, data_root: str | Path | None, client: RemoteSource | None
+) -> ResolvedArtifact:
+    """The default ``ArtifactResolver``: ``resolve(ref, materialize=False)``.
+
+    ``torchcell.artifacts.check`` answers the same question as a bool, which drops the
+    resolver's account of every source it tried; the gate needs that message.
+    """
+    return resolve_artifact(ref, materialize=False, data_root=data_root, client=client)
+
+
+ARTIFACT_REF_MARKER = '"tier": '
+"""Present in the JSON of every record that holds an ``ArtifactRef``.
+
+``ArtifactRef.tier`` is a required field, so its dump always writes this key, and
+``json.dumps`` escapes a quote inside a string value, so the marker cannot be forged by
+text. A record whose JSON lacks it holds no ref and is not walked: the walk measured
+0.256 ms per record on a 9.8 kB fitness record against 0.0014 ms for this test, against
+a raw stage of about 0.3 ms per record (``iter_refs`` over
+tests/torchcell/data/test_neo4j_query_raw_single_pass.py's record 3, 2026.10.07)."""
 
 
 class EmptyQueryResultError(ValueError):
@@ -242,10 +303,12 @@ size this bounds what the partitioned raw stage holds in memory at once."""
 
 _HEX = "0123456789abcdef"
 
-_Row = tuple[str, str, tuple[str, ...], Any]
+_Row = tuple[str, str, tuple[str, ...], Any, tuple[ArtifactRef, ...]]
 """One rendered record: the LMDB value, its reference-index hash, its perturbed
-genes, and its observer payload (the record dict, or each observer's ``prepare``
-result, or ``None`` with no observers)."""
+genes, its observer payload (the record dict, or each observer's ``prepare``
+result, or ``None`` with no observers), and the distinct ``ArtifactRef``s it holds
+(empty for a record with none). The refs travel with the row so the resolvability gate
+runs in the writing process on both paths, once per distinct ref per build."""
 
 
 def single_session_query(query: str) -> str:
@@ -405,7 +468,22 @@ class Neo4jQueryRaw:
     # 256. In-flight memory is about PARTITIONS_IN_FLIGHT_PER_WORKER * fetch_workers
     # partitions of rendered records, so a multi-million-record block wants 2.
     partition_prefix_length: int = 1
+    # The resolvability gate: ``process`` resolves (without downloading) every distinct
+    # ``ArtifactRef`` its records carry, once each, before the store is moved into
+    # place; one that resolves nowhere raises ``UnresolvableArtifactError``. False
+    # switches the gate off (tests, or a build that deliberately admits dangling refs).
+    artifact_check: bool = True
+    # The resolver's ``data_root``: None reads ``DATA_ROOT`` after ``load_dotenv()``,
+    # as ``torchcell.artifacts.tiers.resolve_data_root`` does.
+    artifact_data_root: str | None = None
+    # The resolver's remote source: None builds tc-data from ``TC_DATA_URL`` /
+    # ``TC_DATA_API_KEY`` when the local tier misses.
+    artifact_client: RemoteSource | None = None
+    # The gate's seam (``ArtifactResolver``); tests inject a fake.
+    resolver: ArtifactResolver = require_resolvable
     _stream: _StreamState = field(init=False, factory=_StreamState, repr=False)
+    # ``ref_key``s the gate resolved in this ``process`` run.
+    _checked_artifacts: set[RefKey] = field(init=False, factory=set, repr=False)
 
     def __attrs_post_init__(self) -> None:
         """Set up raw/LMDB paths, run the query on first use, and open the LMDB env."""
@@ -753,6 +831,11 @@ class Neo4jQueryRaw:
                 + "}"
             )
             genes = tuple(self.extract_systematic_gene_names(dump["genotype"]))
+            refs_in_record: tuple[ArtifactRef, ...] = (
+                tuple(distinct_refs([experiment, reference.model]).values())
+                if ARTIFACT_REF_MARKER in data_json
+                else ()
+            )
             payload: Any = None
             if observers:
                 # json.loads of the concatenation is the composition of the parts'
@@ -773,7 +856,9 @@ class Neo4jQueryRaw:
                         cast(SplitRecordObserver, o).prepare(record) for o in observers
                     )
                 )
-            rows.append((data_json, reference.index_hash, genes, payload))
+            rows.append(
+                (data_json, reference.index_hash, genes, payload, refs_in_record)
+            )
         return rows
 
     def _commit_rows(
@@ -782,12 +867,16 @@ class Neo4jQueryRaw:
         """Write rendered rows from ``data_<first_index>`` on, in record order.
 
         Each row is also folded into the reference index, the gene set and the
-        observers.
+        observers. The resolvability gate runs over the rows' refs first, so an
+        unresolvable ref aborts before the batch is written.
         """
+        if self.artifact_check:
+            for offset, row in enumerate(rows):
+                self._check_artifacts(f"data_{first_index + offset}", row[4])
         stream = self._stream
         observers = self.record_observers
         with self.env.begin(write=True) as txn:
-            for offset, (data_json, index_hash, genes, payload) in enumerate(rows):
+            for offset, (data_json, index_hash, genes, payload, _) in enumerate(rows):
                 i = first_index + offset
                 txn.put(f"data_{i}".encode(), data_json.encode())
                 stream.reference_members.setdefault(index_hash, []).append(i)
@@ -801,6 +890,36 @@ class Neo4jQueryRaw:
                 else:
                     for observer, prepared in zip(observers, payload, strict=True):
                         cast(SplitRecordObserver, observer).accept(i, prepared)
+
+    def _check_artifacts(self, record_key: str, refs: tuple[ArtifactRef, ...]) -> None:
+        """Resolve each ref not yet checked in this run; raise on one that misses.
+
+        ``ArtifactIntegrityError`` from the resolver propagates unchanged.
+        """
+        for ref in refs:
+            key = ref_key(ref)
+            if key in self._checked_artifacts:
+                continue
+            try:
+                self.resolver(
+                    ref, data_root=self.artifact_data_root, client=self.artifact_client
+                )
+            except ArtifactUnresolvableError as miss:
+                raise UnresolvableArtifactError(
+                    f"record {record_key} carries {ref} (sha256 {ref.sha256}), which "
+                    f"does not resolve: {miss}"
+                ) from miss
+            self._checked_artifacts.add(key)
+
+    def materialize(self, ref: ArtifactRef) -> Path:
+        """The verified local path of ``ref``'s file, fetched into the cache if needed.
+
+        ``torchcell.artifacts.materialize`` with this view's ``artifact_data_root`` and
+        ``artifact_client``.
+        """
+        return materialize_artifact(
+            ref, data_root=self.artifact_data_root, client=self.artifact_client
+        )
 
     def _write_batch(
         self, batch: list[tuple[int, dict[str, Any], str]], constants: dict[str, Any]
@@ -936,6 +1055,13 @@ class Neo4jQueryRaw:
         the ids it has not seen, verifies them, and splices them back before the
         record is written, so the LMDB holds the same inlined records it always did.
 
+        Records may carry ``ArtifactRef`` pointers to bytes kept off the graph. With
+        ``artifact_check`` (the default) each distinct ``(tier, key, path, sha256)`` is
+        resolved once per run through ``resolver`` (manifests only, nothing
+        downloaded) before its batch is written; a ref that resolves nowhere raises
+        ``UnresolvableArtifactError`` and, like any failure while writing, leaves no
+        store at ``raw/lmdb``.
+
         The reference index and gene set are computed while streaming and written to
         the files their properties read, so neither property re-reads the LMDB. Both
         files are the ones the two streaming passes wrote before
@@ -949,6 +1075,7 @@ class Neo4jQueryRaw:
             )
         log.info("Processing data...")
         self._stream = _StreamState()
+        self._checked_artifacts = set()
         records: Iterator[Any] | None = None
         if self.fetch_workers == 0:
             # One session: the first record decides whether a store is written at all.
@@ -985,6 +1112,7 @@ class Neo4jQueryRaw:
             self.lmdb_dir = final_dir
         os.replace(staging_dir, final_dir)
         log.info(f"Total records processed: {n_records}")
+        log.info(f"Artifact refs resolved: {len(self._checked_artifacts)}")
 
         # Order the groups as the streaming property's cursor walk meets them: keys
         # are data_<i>, so cursor order is lexicographic in str(i).

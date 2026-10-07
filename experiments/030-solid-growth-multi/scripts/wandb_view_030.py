@@ -232,15 +232,24 @@ SECTIONS: list[tuple[str, list[tuple[list[str], str]]]] = [
 
 
 def _arm_of(run: wandb.apis.public.Run) -> str | None:
+    """The arm label. No epoch-budget suffix: a seed trained in pieces (the 100-epoch
+    job, then checkpoint continuations with larger budgets) is ONE curve, and the
+    grouped view draws it as one line only if every piece carries the same arm.
+    """
     cfg = [t for t in run.tags if t in ARMS]
     if not cfg:
         return None
-    max_epochs = (run.config.get("trainer") or {})["max_epochs"]
-    return f"{ARMS[cfg[0]]}_{max_epochs}ep"
+    return ARMS[cfg[0]]
 
 
 def label_runs(api: wandb.Api) -> int:
-    """Name and group every kept campaign run; write the keys the view groups on."""
+    """Name and group every kept campaign run; write the keys the view groups on.
+
+    Within an (arm, seed) the rank-0 runs (those carrying ``val/``) are ordered by
+    creation time: the first is ``<arm>_seed<k>``, later ones are its continuations
+    ``<arm>_seed<k>_cont<j>`` (each resumed from the previous piece's last checkpoint).
+    Other ranks are ``_rank<i>`` in creation order; they log no validation metrics.
+    """
     runs = list(api.runs(f"{ENTITY}/{PROJECT}"))
     by_arm_seed: dict[tuple[str, int], list] = {}
     for run in runs:
@@ -252,21 +261,30 @@ def label_runs(api: wandb.Api) -> int:
         by_arm_seed.setdefault((arm, int(run.config.get("seed", 42))), []).append(run)
     n = 0
     for (arm, seed), seed_runs in by_arm_seed.items():
-        ranked = sorted(
-            seed_runs,
-            key=lambda r: (
-                0 if "val/gene_interaction/Pearson" in r.summary else 1,
-                r.id,
-            ),
+        rank0_runs = sorted(
+            (r for r in seed_runs if "val/gene_interaction/Pearson" in r.summary),
+            key=lambda r: r.created_at,
         )
-        for i, run in enumerate(ranked):
+        other_runs = sorted(
+            (r for r in seed_runs if "val/gene_interaction/Pearson" not in r.summary),
+            key=lambda r: (r.created_at, r.id),
+        )
+        names = {}
+        for j, run in enumerate(rank0_runs):
+            names[run.id] = f"{arm}_seed{seed}" + ("" if j == 0 else f"_cont{j}")
+        for i, run in enumerate(other_runs, start=1):
+            names[run.id] = f"{arm}_seed{seed}_rank{i}"
+        for run in seed_runs:
             rank0 = "val/gene_interaction/Pearson" in run.summary
-            run.name = f"{arm}_seed{seed}" + ("" if rank0 else f"_rank{i}")
+            run.name = names[run.id]
             run.group = arm
             run.config["arm"] = arm
             run.config["seed_"] = seed
             run.config["split"] = "R"
             run.config["rank0"] = rank0
+            run.config["continuation"] = (
+                rank0_runs.index(run) if rank0 else None
+            )
             run.update()
             n += 1
     return n

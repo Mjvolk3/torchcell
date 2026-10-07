@@ -502,6 +502,7 @@ def verify_environment_response_dataset(
     background_genes: frozenset[str] = frozenset(),
     resolve_gene_name: GeneNameResolver | None = None,
     sgd_genes: set[str] | None = None,
+    gene_universe_label: str = "reference",
     min_containment: float = 0.90,
 ) -> VerificationReport:
     """Run the L0-L4 record-level gate for an environment-response dataset.
@@ -509,9 +510,11 @@ def verify_environment_response_dataset(
     ``background_genes`` are the systematic names of the constant drug-sensitized
     background (e.g. Vanacloig 3DeltaAlpha = PDR1/PDR3/SNQ2), excluded from the
     (ORF, compound) uniqueness and gene-set keys. ``sgd_genes`` turns on the L4 gene rules
-    (aggregate containment + per-record genome membership); ``resolve_gene_name`` turns on
-    the annotation half of the canonical-gene-name rule. Both are optional so this verifier
-    still runs where no genome is mounted.
+    (aggregate containment + per-record genome membership) and
+    ``gene_universe_label`` is what the containment row calls that universe, since it is
+    the host's and not always S288C's; ``resolve_gene_name`` turns on the annotation half
+    of the canonical-gene-name rule. Both are optional so this verifier still runs where
+    no genome is mounted.
     """
     from pydantic import TypeAdapter
 
@@ -528,6 +531,7 @@ def verify_environment_response_dataset(
         background_genes=background_genes,
         resolve_gene_name=resolve_gene_name,
         sgd_genes=sgd_genes,
+        gene_universe_label=gene_universe_label,
         min_containment=min_containment,
     )
     shared.add_all(records)
@@ -589,6 +593,7 @@ def verify_environment_response_dataset_streaming(
     expected_count: int,
     sgd_genes: set[str],
     background_genes: frozenset[str] = frozenset(),
+    gene_universe_label: str = "reference",
     min_containment: float = 0.90,
     resolve_gene_name: GeneNameResolver | None = None,
 ) -> VerificationReport:
@@ -633,6 +638,7 @@ def verify_environment_response_dataset_streaming(
         background_genes=background_genes,
         resolve_gene_name=resolve_gene_name,
         sgd_genes=sgd_genes,
+        gene_universe_label=gene_universe_label,
         min_containment=min_containment,
     )
 

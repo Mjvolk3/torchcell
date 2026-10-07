@@ -279,3 +279,56 @@ proteome_caglar2017: PASS
 - **A missing store is a loud `lmdb` error, not a skip.** Every one of the seven stores is
   built under the dev `DATA_ROOT`, and no skip branch was added: that is the convention the
   other eleven runners follow, and `run_all` is a data-gated human entry point, never CI.
+
+## 2026.10.07 - run_environment_response is host-aware, and the L4 containment row names the universe it was given
+
+`run_environment_response` built `_sgd_gene_set` and the S288C resolver ONCE at the top and
+handed both to every registered dataset, unlike `run_fitness` and `run_rnaseq`, which
+already select per host. A bacterial dataset could therefore not be registered at all: its
+locus tags would have been resolved against S288C and would have failed containment and
+genome membership for the wrong reason. That gap is why at least five landed bacterial
+loaders (Tong 2020, Wang 2015, Menasalvas 2025, Borchert 2024, and Cui 2018 on PR #745)
+carry their own `verify_build()` instead of a registry entry.
+
+### What changed
+
+- `_host_for_dataset(name, assembly_sets, reference, data_root, cache)` returns a `_Host`
+  of `(universe, resolve_gene_name, label)` for the host a dataset's own records name,
+  built once per assembly set and cached. `run_fitness` now uses it too, so the selection
+  exists once rather than twice; its `len(assembly_sets) > 1` refusal moved in with it.
+- `_gene_universe_for_assembly_sets(assembly_sets, data_root)` is the universe build split
+  out of `_dataset_gene_universe`, so the STREAMING path can reach it without records.
+- `_first_genome_reference(abs_root)` reads the FIRST record of a streamed store. A
+  streamed dataset's verifier consumes the records once and needs the universe and
+  resolver before that pass starts, so the host cannot be read off every record. A second
+  host in the same store is then caught by the per-record `current_genome_genes` rule,
+  which fails every record whose systematic names are not loci of the universe it was
+  given. The streaming branch still reads `spec["expected_count"]` BEFORE opening the
+  store, so a registry spec missing its oracle still fails without touching the LMDB.
+
+### The mislabelled claim this surfaced, and the fix
+
+`SharedRecordRules._gene_containment_results` hardcoded the message "N of M measured genes
+are **S288C reference** genes". Four landed bacterial loaders already pass their strain's
+locus universe into that rule (`price2018`, `tong2020`, `menasalvas2025`, `borchert2024`,
+each `sgd_genes=set(genome.genbank.loci)`), so four published reports asserted that an
+`ECB_`, `b`-number or `PP_` tag is an S288C reference gene, which nothing checked.
+
+The rule now takes `gene_universe_label` and names what it was handed. The runners pass
+`S288C reference` for a yeast host and the pinned sets for a bacterial one. The DEFAULT is
+the host-free word `reference`, which is what removes the false claim from those four
+loaders without touching them: a caller that does not name its universe now makes no claim
+about one, and its row reads "N of M measured genes are reference genes". Naming each
+strain's own universe there is a one-line addition per loader and is left for a change that
+owns those four releases' report content.
+
+The result NAME is still `gene_containment_sgd` for every host. Renaming it changes a key
+every report and about eight test assertions read, so it is its own change; it is recorded
+here as the remaining half of the finding.
+
+### Verbatim output, environment response
+
+Every one of the thirteen registered datasets is YEAST (measured: each store's first
+record has `species="Saccharomyces cerevisiae"` and no `assembly_set`), so this changes no
+row today. That is the honest result: what changed is that a bacterial dataset can now be
+registered here and be verified against its own genome, not that any record moved.

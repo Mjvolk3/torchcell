@@ -737,8 +737,10 @@ def test_gene_containment_and_off_genome_records() -> None:
     containment = results["gene_containment_sgd"]
     assert containment.level == Level.L4
     assert containment.passed is True
+    # No ``gene_universe_label``, so the row names no reference: this rule serves every
+    # host and the caller is the only one that knows which universe it handed over.
     assert containment.message == (
-        "0.667 of 3 measured genes are S288C reference genes (>= 0.6)"
+        "0.667 of 3 measured genes are reference genes (>= 0.6)"
     )
     assert containment.details["missing_examples"] == ["YC"]
     off = results["current_genome_genes"]
@@ -749,6 +751,19 @@ def test_gene_containment_and_off_genome_records() -> None:
     assert off.details["missing_records"] == {"YC": 2}
 
 
+def test_a_named_gene_universe_is_what_the_containment_row_claims() -> None:
+    """The label is the row's claim, so a bacterial universe never reads as S288C's."""
+    results = _run(
+        _gene_records(),
+        background_genes=frozenset({"YBG"}),
+        sgd_genes={"YA", "YB", "YC"},
+        gene_universe_label="pputida_KT2440_ASM756v2 locus",
+    )
+    assert results["gene_containment_sgd"].message == (
+        "1.000 of 3 measured genes are pputida_KT2440_ASM756v2 locus genes (>= 0.9)"
+    )
+
+
 def test_gene_containment_passes_when_every_gene_is_on_the_genome() -> None:
     results = _run(
         _gene_records(),
@@ -756,7 +771,7 @@ def test_gene_containment_passes_when_every_gene_is_on_the_genome() -> None:
         sgd_genes={"YA", "YB", "YC"},
     )
     assert results["gene_containment_sgd"].message == (
-        "1.000 of 3 measured genes are S288C reference genes (>= 0.9)"
+        "1.000 of 3 measured genes are reference genes (>= 0.9)"
     )
     off = results["current_genome_genes"]
     assert off.passed is True

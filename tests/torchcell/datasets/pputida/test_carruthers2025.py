@@ -1555,6 +1555,36 @@ def test_both_loaders_pass_their_full_level_batteries_on_the_synthetic_build(
         assert written.results == report.results
 
 
+def test_the_titer_l4_refuses_an_oracle_overlap_that_is_not_the_pinned_one(
+    built_titer: Any, synthetic_mirror: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The join is pinned, so a target that stops joining stops the report."""
+    from torchcell.verification.runners import load_records
+
+    monkeypatch.setattr(c25, "SI_TARGET_OVERLAP", len(SINGLE_GUIDE_TARGETS) + 2)
+    with pytest.raises(AssertionError, match="targets join a single-guide record"):
+        c25._l4_titer_vs_supplementary_data_1(
+            load_records(built_titer.root), str(synthetic_mirror)
+        )
+
+
+def test_the_proteome_l4_refuses_a_stored_protein_the_sheet_does_not_carry(
+    built_proteome: Any,
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A store that drifted from its source is caught per protein, never averaged over."""
+    from torchcell.verification.runners import load_records
+
+    monkeypatch.setattr(c25, "bacterial_genome", lambda *a, **k: synthetic_kt2440)
+    records = load_records(built_proteome.root)
+    for record in records:
+        record["experiment"]["phenotype"]["protein_abundance"]["PP_9999"] = 1.0
+    with pytest.raises(AssertionError, match="are not in the released sheet"):
+        c25._l4_proteome_vs_released_sheet(records, str(synthetic_mirror))
+
+
 def test_the_titer_battery_fails_a_store_whose_se_is_not_sd_over_sqrt_n(
     built_titer: Any, synthetic_mirror: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

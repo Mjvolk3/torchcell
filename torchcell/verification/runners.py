@@ -33,11 +33,12 @@ a bacterial runner selects both from each record's own ``genome_reference``
 from __future__ import annotations
 
 import gzip
+import itertools
 import os
 import os.path as osp
 import pickle
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any
+from typing import Any, NamedTuple
 
 import lmdb
 
@@ -1084,6 +1085,38 @@ def _dataset_assembly_sets(records: Sequence[Mapping[str, Any]]) -> tuple[str, .
     )
 
 
+def _gene_universe_for_assembly_sets(
+    assembly_sets: tuple[str, ...], data_root: str
+) -> set[str]:
+    """The union of the L4 gene universes of the named assembly sets.
+
+    Takes the sets rather than the records, so a STREAMED dataset -- whose records are
+    consumed once by its verifier and cannot be walked again to collect references --
+    reaches the same universe from the host its first record names.
+    """
+    universe: set[str] = set()
+    for assembly_set in assembly_sets:
+        if assembly_set == SGD_S288C_R64:
+            universe |= _sgd_gene_set(data_root)
+        else:
+            universe |= _bacterial_gene_set(
+                BACTERIAL_GENE_ASSEMBLIES[assembly_set], data_root
+            )
+    return universe
+
+
+def _gene_universe_label(assembly_sets: tuple[str, ...]) -> str:
+    """What the L4 containment row should CALL the universe it was handed.
+
+    The row's message is a claim about which reference a measured name belongs to, so it
+    has to name that reference: "are S288C reference genes" over a ``PP_`` tag is a claim
+    nothing checked.
+    """
+    if assembly_sets == (SGD_S288C_R64,):
+        return "S288C reference"
+    return " / ".join(assembly_sets) + " locus"
+
+
 def _dataset_gene_universe(
     records: Sequence[Mapping[str, Any]], data_root: str
 ) -> tuple[set[str], tuple[str, ...]]:
@@ -1094,16 +1127,64 @@ def _dataset_gene_universe(
     behavior we want per host and nonsense across hosts. Returns the universe and the
     assembly sets it came from, so the report can name them.
     """
-    universe: set[str] = set()
     assembly_sets = _dataset_assembly_sets(records)
-    for assembly_set in assembly_sets:
-        if assembly_set == SGD_S288C_R64:
-            universe |= _sgd_gene_set(data_root)
-        else:
-            universe |= _bacterial_gene_set(
-                BACTERIAL_GENE_ASSEMBLIES[assembly_set], data_root
+    return _gene_universe_for_assembly_sets(assembly_sets, data_root), assembly_sets
+
+
+def _first_genome_reference(abs_root: str) -> Mapping[str, Any]:
+    """The ``genome_reference`` of the first record of a store.
+
+    The streaming path's only way to pick a host: its verifier consumes the records once
+    and needs the universe and the resolver before that pass starts, so the host cannot
+    be read off every record. A SECOND host in the same store is then caught by the
+    per-record genome-membership rule, which fails every record whose systematic names
+    are not loci of the universe it was given, rather than silently accepting them.
+    """
+    references: list[Mapping[str, Any]] = [
+        record["reference"]["genome_reference"]
+        for record in itertools.islice(stream_records(abs_root), 1)
+    ]
+    if not references:
+        raise ValueError(f"{abs_root} holds no records, so its host cannot be read")
+    return references[0]
+
+
+class _Host(NamedTuple):
+    """One host's L4 gene universe, its canonical-name resolver, and the universe's name."""
+
+    universe: set[str]
+    resolve_gene_name: Any
+    label: str
+
+
+def _host_for_dataset(
+    name: str,
+    assembly_sets: tuple[str, ...],
+    reference: Mapping[str, Any],
+    data_root: str,
+    cache: dict[tuple[str, ...], _Host],
+) -> _Host:
+    """The gene universe, resolver and label of the host a dataset's own records name.
+
+    Built once per assembly set and reused, since each construction reads the tier. A
+    dataset pinned to TWO assemblies (Tong 2020's Keio plus its sRNA library) cannot
+    share one resolver, so it is refused here and runs its own per-background
+    verification in its loader module.
+    """
+    if assembly_sets not in cache:
+        if len(assembly_sets) > 1:
+            raise ValueError(
+                f"{name}: records name {len(assembly_sets)} assembly sets "
+                f"{assembly_sets}; one resolver cannot serve two hosts"
             )
-    return universe, assembly_sets
+        cache[assembly_sets] = _Host(
+            universe=_gene_universe_for_assembly_sets(assembly_sets, data_root),
+            resolve_gene_name=_genome_for_reference(
+                reference, data_root
+            ).resolve_gene_name,
+            label=_gene_universe_label(assembly_sets),
+        )
+    return cache[assembly_sets]
 
 
 def _l4_assembly_gene_containment(
@@ -1849,35 +1930,64 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
 
 
 def run_environment_response(data_root: str) -> bool:
-    """Verify environment-response datasets (L0-L4) and write reports. True if all pass."""
-    sgd_genes = _sgd_gene_set(data_root)
-    resolve_gene_name = _genome(data_root).resolve_gene_name
+    """Verify environment-response datasets (L0-L4) and write reports. True if all pass.
+
+    The gene universe, the canonical-name resolver and the name the L4 containment row
+    gives that universe all belong to the HOST a dataset's own records are written
+    against, selected the way :func:`run_fitness` and :func:`run_rnaseq` select theirs.
+    Before this, every registered dataset was handed the S288C universe and the S288C
+    resolver, so a bacterial dataset could not be registered here at all: its locus tags
+    would have been resolved against yeast and failed containment for the wrong reason.
+    Every dataset registered today is yeast, so no row changes; what changes is that a
+    bacterial one can now be added.
+
+    The streamed datasets pick their host from their first record (see
+    :func:`_first_genome_reference`); the materialized ones from all of theirs.
+    """
+    hosts: dict[tuple[str, ...], _Host] = {}
     all_passed = True
     for name, spec in ENVIRONMENT_RESPONSE_DATASETS.items():
         abs_root = osp.join(data_root, spec["root"])
         background = spec.get("background_genes", frozenset())
         if spec.get("stream"):
             # Large dataset: single-pass, memory-bounded verification (never materialized).
+            # The count oracle is read BEFORE the store is opened, as it was when this
+            # branch passed the spec straight through: a streaming spec with no
+            # expected_count is a registry error and says so without touching the LMDB.
+            expected_count = spec["expected_count"]
+            reference = _first_genome_reference(abs_root)
+            host = _host_for_dataset(
+                name, (_reference_assembly_set(reference),), reference, data_root, hosts
+            )
             report = verify_environment_response_dataset_streaming(
                 stream_records(abs_root),
                 dataset_name=name,
                 provenance=spec["provenance"],
-                expected_count=spec["expected_count"],
-                sgd_genes=sgd_genes,
+                expected_count=expected_count,
+                sgd_genes=host.universe,
                 background_genes=background,
+                gene_universe_label=host.label,
                 min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
-                resolve_gene_name=resolve_gene_name,
+                resolve_gene_name=host.resolve_gene_name,
             )
         else:
             records = load_records(abs_root)
+            host = _host_for_dataset(
+                name,
+                _dataset_assembly_sets(records),
+                records[0]["reference"]["genome_reference"],
+                data_root,
+                hosts,
+            )
             report = verify_environment_response_dataset(
                 records,
                 dataset_name=name,
                 provenance=spec["provenance"],
                 expected_count=spec.get("expected_count", len(records)),
                 background_genes=background,
-                resolve_gene_name=resolve_gene_name,
-                sgd_genes=sgd_genes,
+                resolve_gene_name=host.resolve_gene_name,
+                sgd_genes=host.universe,
+                gene_universe_label=host.label,
                 min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
             )
         out = _write_report(report, osp.join(abs_root, "preprocess"))
@@ -1950,34 +2060,26 @@ def run_fitness(data_root: str) -> bool:
     locus tags resolved against S288C would fail every record for the wrong reason. Both
     are built once per assembly set and reused, since each construction reads the tier.
     """
-    universes: dict[tuple[str, ...], set[str]] = {}
-    resolvers: dict[tuple[str, ...], Any] = {}
+    hosts: dict[tuple[str, ...], _Host] = {}
     all_passed = True
     for name, spec in FITNESS_DATASETS.items():
         abs_root = osp.join(data_root, spec["root"])
         records = load_records(abs_root)
-        assembly_sets = _dataset_assembly_sets(records)
-        if assembly_sets not in universes:
-            universes[assembly_sets] = _dataset_gene_universe(records, data_root)[0]
-            # One resolver per dataset's host. A dataset pinned to TWO assemblies
-            # (Tong 2020's Keio plus sRNA library) cannot share one resolver, so it
-            # runs its own per-background verification in its loader module and is not
-            # registered here until that is settled.
-            if len(assembly_sets) > 1:
-                raise ValueError(
-                    f"{name}: records name {len(assembly_sets)} assembly sets "
-                    f"{assembly_sets}; one resolver cannot serve two hosts"
-                )
-            resolvers[assembly_sets] = _genome_for_reference(
-                records[0]["reference"]["genome_reference"], data_root
-            ).resolve_gene_name
+        host = _host_for_dataset(
+            name,
+            _dataset_assembly_sets(records),
+            records[0]["reference"]["genome_reference"],
+            data_root,
+            hosts,
+        )
         report = verify_fitness_dataset(
             records,
             dataset_name=name,
             provenance=spec["provenance"],
             expected_count=spec.get("expected_count", len(records)),
-            resolve_gene_name=resolvers[assembly_sets],
-            sgd_genes=universes[assembly_sets],
+            resolve_gene_name=host.resolve_gene_name,
+            sgd_genes=host.universe,
+            gene_universe_label=host.label,
             min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
         )
         out = _write_report(report, osp.join(abs_root, "preprocess"))

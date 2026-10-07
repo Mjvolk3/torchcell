@@ -177,13 +177,16 @@ def verify_fitness_dataset(
     expected_count: int,
     resolve_gene_name: GeneNameResolver | None = None,
     sgd_genes: set[str] | None = None,
+    gene_universe_label: str = "reference",
     min_containment: float = 0.90,
 ) -> VerificationReport:
     """Run the L0-L4 record-level gate for a single-mutant fitness dataset.
 
     ``sgd_genes`` turns on the L4 gene rules (aggregate containment + per-record genome
-    membership) and ``resolve_gene_name`` the annotation half of the canonical-name rule;
-    without them the caller owns L4 (:func:`fitness_gene_set` is the overlap key).
+    membership), ``gene_universe_label`` is what the containment row calls that universe
+    (the host's, not always S288C's), and ``resolve_gene_name`` the annotation half of the
+    canonical-name rule; without them the caller owns L4 (:func:`fitness_gene_set` is the
+    overlap key).
     """
     from pydantic import TypeAdapter
 
@@ -225,6 +228,7 @@ def verify_fitness_dataset(
     shared = SharedRecordRules(
         resolve_gene_name=resolve_gene_name,
         sgd_genes=sgd_genes,
+        gene_universe_label=gene_universe_label,
         min_containment=min_containment,
     )
     shared.add_all(records)

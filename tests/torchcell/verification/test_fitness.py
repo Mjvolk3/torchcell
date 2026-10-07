@@ -227,6 +227,13 @@ def test_sgd_genes_add_l4_results_and_min_containment_is_forwarded() -> None:
     assert containment.passed is False
     assert containment.details["overlap"] == pytest.approx(2 / 3)
     assert containment.message == (
+        "0.667 of 3 measured genes are reference genes (>= 0.9)"
+    )
+    named = _result(
+        _verify(_good_records(), sgd_genes=sgd, gene_universe_label="S288C reference"),
+        "gene_containment_sgd",
+    )
+    assert named.message == (
         "0.667 of 3 measured genes are S288C reference genes (>= 0.9)"
     )
     off_genome = _result(strict, "current_genome_genes")

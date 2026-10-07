@@ -222,7 +222,12 @@ print_health() {
     fi
     if wants_host radiant; then
         echo "== health (radiant) =="
-        probe_http "radiant https" "$RADIANT_HTTPS/" -k
+        # -4: measure the service, not this host's resolver. glibc sends the A and AAAA
+        # queries in parallel and the GilaHyper nameserver (the router at 192.168.1.1)
+        # drops one, so every off-host lookup stalls for glibc's 5 s timeout before the
+        # sequential retry succeeds; `dig` answers both records in 50 ms. Under the 5 s
+        # curl budget that stall alone reads as 000 while the server is up (2026-10-07).
+        probe_http "radiant https" "$RADIANT_HTTPS/" -k -4
     fi
 }
 

@@ -240,7 +240,7 @@ gene-level summaries) and ENA BioProject PRJEB28256 (the raw reads).
 
 ```
 BUILT CrispriScreenRousset2018Dataset: 91609 records at
-/scratch/projects/torchcell-scratch/data/torchcell/ecoli_crispri_rousset2018 in 48s;
+/scratch/projects/torchcell-scratch/data/torchcell/ecoli_crispri_rousset2018 in 50s;
 gene_set size 3896; references 5
 ```
 
@@ -248,6 +248,13 @@ Five experiment references: one per screen, each pinning the host strain's backg
 (`LC-E75` for the growth screen, `FR-E01` for the four phage-derived screens) on the one
 MG1655 assembly. `python -m torchcell.provenance.build_manifest` reads
 `ecoli_crispri_rousset2018` as `fresh` with no drift.
+
+The store was built three times and the first two were retired through
+`scripts/deprecate.sh` rather than deleted: once on the original aTc-as-perturbation
+model, once on the corrected model from a tree that still had uncommitted edits
+(`build_manifest` recorded `torchcell_dirty: true`), and finally on the clean commit, so
+the served manifest pins a committed tree. Record count, gene set and reference count are
+identical across the second and third builds; only the manifest's commit pin differs.
 
 ### Follow-up worth recording
 

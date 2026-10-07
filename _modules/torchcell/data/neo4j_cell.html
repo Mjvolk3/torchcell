@@ -139,8 +139,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">sortedcontainers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SortedDict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">HeteroData</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.artifacts</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArtifactRef</span><span class="p">,</span> <span class="n">distinct_refs</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.artifacts</span><span class="w"> </span><span class="kn">import</span> <span class="n">materialize</span> <span class="k">as</span> <span class="n">materialize_artifact</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.artifacts.ref</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArtifactRef</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.artifacts.resolve</span><span class="w"> </span><span class="kn">import</span> <span class="n">materialize</span> <span class="k">as</span> <span class="n">materialize_artifact</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.artifacts.walk</span><span class="w"> </span><span class="kn">import</span> <span class="n">distinct_refs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.aggregate</span><span class="w"> </span><span class="kn">import</span> <span class="n">Aggregator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.cell_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_cell_data</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.deduplicate</span><span class="w"> </span><span class="kn">import</span> <span class="n">Deduplicator</span>

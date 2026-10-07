@@ -283,3 +283,26 @@ passing with `--data`. The hermetic build runs the real `EcoliK12MG1655Genome` o
 synthetic MG1655 assembly derived from `_bacterial_fixtures.MG1655_LOCI` with `b0099`
 added as a `gene_synonym` of `b0005`, so both drop rules are exercised on a six-strain
 screen. Hermetic line+branch coverage of the loader is 94%.
+
+### BioCypher adapter
+
+`MetabolomeRapp2026Adapter` (`torchcell/adapters/rapp2026_adapter.py`) with
+`torchcell/adapters/conf/metabolome_rapp2026_adapter.yaml`, registered in
+`dataset_adapter_map` (71 entries to 72) and in the bacteria-only rehearsal config
+`torchcell/knowledge_graphs/conf/kg_bacteria.yaml` (20 datasets to 21). Required, not
+optional: `test_bacterial_adapters.py` asserts that every registered bacterial dataset is
+mapped to its adapter and that `kg_bacteria.yaml` names exactly those classes, so a
+loader without an adapter turns `main` red.
+
+The conf differs from Fuhrer 2017's in two enabled pairs, both measured on the built
+store by the data-gated graph check:
+
+- `crispr construct (chunked)` plus `crispr construct to perturbation (chunked)`: the
+  perturbation leaf carries a `CrisprConstruct` (the effector, the guide spacer and
+  `n_guides`), which Fuhrer's deletion leaf does not.
+- `environment perturbation (chunked)` / `environment perturbation reference` plus their
+  two linking edges: every record carries the 200 nM anhydrotetracycline inducer, where
+  no Fuhrer record carries an environment perturbation.
+
+The perturbation nodes are the `bacterial perturbation` class, never the served yeast
+`perturbation` class. No KG build was run.

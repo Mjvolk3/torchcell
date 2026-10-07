@@ -40,6 +40,7 @@ from torchcell.adapters import (
     MetaboliteDaSilveira2014Adapter,
     MetaboliteZelezniak2018Adapter,
     MetabolomeFuhrer2017Adapter,
+    MetabolomeRapp2026Adapter,
     MicroarrayKemmeren2014Adapter,
     Mormino2022Adapter,
     NadalRibellesPerturbSeq2025Adapter,
@@ -83,6 +84,7 @@ from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Data
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
+from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
 from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
@@ -243,6 +245,7 @@ dataset_adapter_map = {
     ProteinTurnoverGupta2024Dataset: ProteinTurnoverGupta2024Adapter,
     RnaseqLamoureux2023Dataset: RnaseqLamoureux2023Adapter,
     RbTnseqPrice2018EcoliDataset: RbTnseqPrice2018EcoliAdapter,
+    MetabolomeRapp2026Dataset: MetabolomeRapp2026Adapter,
     CarbonSourceTong2020Dataset: CarbonSourceTong2020Adapter,
     EnvChemgenWang2015Dataset: EnvChemgenWang2015Adapter,
     RbTnseqBorchert2024Dataset: RbTnseqBorchert2024Adapter,

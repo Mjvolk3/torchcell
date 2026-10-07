@@ -63,6 +63,7 @@ datasets:
   - ProteinTurnoverGupta2024Dataset
   - RnaseqLamoureux2023Dataset
   - RbTnseqPrice2018EcoliDataset
+  - MetabolomeRapp2026Dataset
   - CarbonSourceTong2020Dataset
   - EnvChemgenWang2015Dataset
   # P. putida

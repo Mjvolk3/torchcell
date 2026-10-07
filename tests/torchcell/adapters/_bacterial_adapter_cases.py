@@ -64,6 +64,7 @@ from torchcell.adapters import (
     IsoprenolToleranceLim2025Adapter,
     IsoprenylAcetateTiterKang2026Adapter,
     MetabolomeFuhrer2017Adapter,
+    MetabolomeRapp2026Adapter,
     ProteinTurnoverGupta2024Adapter,
     ProteomeCaglar2017Adapter,
     ProteomeCarruthers2025Adapter,
@@ -86,6 +87,7 @@ from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Data
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
+from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
 from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
@@ -221,6 +223,14 @@ BACTERIAL: list[Bacterial] = [
         "rbtnseq_price2018_ecoli",
         RbTnseqPrice2018EcoliDataset,
         RESPONSE,
+    ),
+    _case(
+        MetabolomeRapp2026Adapter,
+        "rapp2026",
+        "metabolome_rapp2026",
+        MetabolomeRapp2026Dataset,
+        "metabolite phenotype",
+        crispr=True,
     ),
     _case(
         CarbonSourceTong2020Adapter,

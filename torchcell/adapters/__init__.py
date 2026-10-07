@@ -120,6 +120,7 @@ from .ozaydin2013_adapter import (
 from .price2018_ecoli_adapter import (
     RbTnseqPrice2018EcoliAdapter as RbTnseqPrice2018EcoliAdapter,
 )
+from .rapp2026_adapter import MetabolomeRapp2026Adapter as MetabolomeRapp2026Adapter
 from .sameith2015_adapter import (
     DmMicroarraySameith2015Adapter as DmMicroarraySameith2015Adapter,
 )
@@ -250,6 +251,7 @@ ecoli_adapters = [
     "ProteinTurnoverGupta2024Adapter",
     "RnaseqLamoureux2023Adapter",
     "RbTnseqPrice2018EcoliAdapter",
+    "MetabolomeRapp2026Adapter",
     "CarbonSourceTong2020Adapter",
     "EnvChemgenWang2015Adapter",
 ]

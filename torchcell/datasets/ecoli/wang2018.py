@@ -40,10 +40,17 @@ program to categorize genes with highly similar sequences into clusters (Supplem
 Data 2) and designed sgRNAs to target all members of a cluster. Hence, genes in one
 cluster are regarded as functionally identical." Supplementary Data 2 names 4,205
 clusters (4,090 protein-coding, 115 ncRNA) over 4,317 member genes; 39 clusters hold
-more than one member and the largest holds ten (the eight 5S rRNA genes of ``rrfH``).
-One record is one (guide, screen) row and carries one
-``BacterialCrisprInterferencePerturbation`` per member of its guide's cluster, so the
-build writes 242,294 knockdown perturbations over 240,481 records.
+more than one member and the largest holds ten (the ``insH1`` IS5 transposase copies,
+ahead of the eight 5S rRNA genes of ``rrfH``). One record is one (guide, screen) row and
+carries one ``BacterialCrisprInterferencePerturbation`` per member of its guide's
+cluster, so the build writes 242,294 knockdown perturbations over 240,481 records.
+
+A SPACER CAN ALSO BE SHARED BETWEEN TWO CLUSTERS, which is why the stored strain identity
+is (gene, spacer) and not the spacer alone. Measured on Supplementary Data 3: 25 spacers
+appear twice and none more than twice, and every one of the 25 sits on two DIFFERENT
+clusters over six pairs (``esrE``/``ubiJ``, ``hcaR``/``iroK``, ``hokB``/``mokB``,
+``hokC``/``mokC``, ``rzoQ``/``rzpQ``, ``sgrS``/``sgrT``: overlapping or nested genes). No
+pair falls inside one cluster, so no two records collide on (gene, spacer).
 
 IDENTIFIERS COME OUT OF THE SOURCE'S OWN TOKENS. Every library id is
 ``<symbol><bNNNN>_<position>`` (``rsmE_9`` in the Methods is the tiling library's older

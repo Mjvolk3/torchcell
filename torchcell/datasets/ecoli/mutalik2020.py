@@ -2,7 +2,7 @@
 # [[torchcell.datasets.ecoli.mutalik2020]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/ecoli/mutalik2020
 # Test file: tests/torchcell/datasets/ecoli/test_mutalik2020.py
-"""Mutalik 2020 phage-resistance RB-TnSeq screen: raw mirror, sourcing, experiment axis.
+"""Mutalik 2020 phage-resistance RB-TnSeq screen: raw mirror, sourcing, loader.
 
 Mutalik et al. 2020 (PLoS Biology, doi:10.1371/journal.pbio.3000877) challenged the
 *E. coli* K-12 BW25113 RB-TnSeq library (Wetmore 2015's KEIO_ML9) with 14 double-stranded
@@ -10,22 +10,16 @@ DNA phages at a range of multiplicities of infection, in planktonic and solid-ag
 competitive-growth assays, and read strain abundance out by Bar-seq. The gene-level
 readout is "the normalized log2 change in the abundance of mutants in that gene".
 
-**This module is the provenance and sourcing layer, NOT a dataset loader.** It pins and
-deposits the raw artifacts, binds every statistical value to a verbatim quote in a
-sha256-pinned mirror, and parses the experiment (environment) axis. No
-``ExperimentDataset`` subclass is registered, because the record cannot be written
-honestly yet: the environment of every record IS a phage challenge, and the schema has no
-typed environment perturbation for a phage. ``EnvironmentPerturbationType`` is
-``SmallMoleculePerturbation | EnvironmentPhysicalPerturbation | BiologicPerturbation``,
-whose leaves are an InChIKey-identified small molecule, a scalar physical factor
-(``PhysicalFactor`` has no viral member) and a proteinaceous agent
-(``BiologicAgentClass`` is peptide / protein / antibody / toxin). A virion is none of the
-three, and the dose is a multiplicity of infection, which ``ConcentrationUnit`` and
-``DoseBasis`` cannot express. Filing a phage under any existing leaf would mislabel the
-agent, and leaving the phage out of the environment would collapse 68 phage challenges
-onto one environment identity. The needed addition is stated in the PR body and in
-[[torchcell.datasets.ecoli.mutalik2020]]; the dataset class lands on top of this module
-once it exists.
+The module carries three layers. It pins and deposits the raw artifacts, binds every
+statistical value to a verbatim quote in a sha256-pinned mirror, parses the experiment
+(environment) axis, and registers :class:`PhageRbTnseqMutalik2020Dataset`, one
+``BacterialEnvironmentResponseExperiment`` per (gene, experiment). The dataset class
+waited on ``PhagePerturbation``, the typed environment leaf for a bacteriophage: a virion
+is none of the other three leaves (no InChIKey, not a scalar physical factor, not a
+peptide / protein / antibody / toxin), and the dose is a multiplicity of infection, which
+``ConcentrationUnit`` and ``DoseBasis`` cannot express. That leaf now exists, so every
+record's environment names its phage and its dose and the 68 challenges keep 68
+environment identities.
 
 SUPERSET DECISION (plan checklist item 7). These experiments are NOT in the Fitness
 Browser compendium, so the row is loaded on its own experiments and nothing is
@@ -39,14 +33,41 @@ experiment name against the 162 successful ``Keio`` samples of the Price 2018 co
 is empty. The library is shared with Wetmore 2015 and Price 2018 (one pool, KEIO_ML9)
 while the experiments are disjoint, which is exactly the case the superset rule is for.
 
-WHAT THE RECORDS WILL BE. One record per (gene, experiment): 3,716 genes across the 68
-phage assays and 10 no-phage controls of the released tables, 250,960 (gene, experiment)
-cells in the S1 Table alone. The phenotype is ``EnvironmentResponsePhenotype``
-(``measurement_type=log2_ratio``, ``assay_type=pooled_competitive_growth_barcode``) under
+WHAT THE RECORDS ARE. One record per (gene, experiment) over the 68 phage assays and 10
+no-phage controls the paper's own ``Keio_exps_used.tab`` names: **286,344 records over
+3,697 genes and 78 experiments** (measured, see ``EXPECTED_RECORDS``). The phenotype is
+``EnvironmentResponsePhenotype`` (``measurement_type=log2_ratio``,
+``assay_type=pooled_competitive_growth_barcode``) under
 ``BacterialEnvironmentResponseExperiment``, NOT ``FitnessPhenotype``: the value is a
-signed log2 ratio, and 106,536 of the 250,960 released cells (42.45%) are negative, which
-``FitnessPhenotype.validate_fitness`` would clamp to 0.0. The genotype is one
-``TransposonInsertionPerturbation`` per gene.
+signed log2 ratio, and 106,536 of the 250,960 released S1 Table cells (42.45%) are
+negative, which ``FitnessPhenotype.validate_fitness`` would clamp to 0.0. The genotype is
+one ``TransposonInsertionPerturbation`` per gene, and the environment of a challenge
+carries exactly one ``PhagePerturbation``.
+
+WHAT IS NOT STORED. The release carries a t-like statistic per (gene, experiment)
+(``fit_t.tab``) beside the fitness and the estimated standard error, and the paper's hit
+filter uses it ("fit >= 5; t >= 5; standard error = fit/t <= 2"). It is neither the
+measurement nor an uncertainty, and ``EnvironmentResponsePhenotype`` has no slot for a
+test statistic, so the file is not among the members the loader extracts. The release's
+own per-experiment usability flag ``u`` is FALSE for 68 of the 78 kept experiments, which
+is not a quality finding about this build: the paper states that under the strong
+positive selection of a phage assay "our standard quality metrics reported earlier [64]
+were not suitable", which is why the selection rule is the paper's own
+``Keio_exps_used.tab`` and not ``u``. The flag is reported in ``assay_ledger.json``.
+
+THE ASSAY FORMAT IS PART OF THE ENVIRONMENT, in three places a plain ``Environment`` can
+hold (``BacterialEnvironmentResponseExperiment.environment`` is ``Environment``, not
+``CultureEnvironment``, so a vessel cannot be stored):
+
+1. the ``Media`` object and its ``state`` -- ``MUTALIK2020_LB_SM_BUFFER`` (liquid) for the
+   58 planktonic challenges and the 8 liquid controls, ``MUTALIK2020_LB_AGAR_KAN``
+   (solid) for the 10 solid-agar challenges and the 1 solid control, ``MUTALIK2020_LB``
+   (liquid) for the one plain-LB control;
+2. ``duration_hours`` -- 8.0 for the planktonic format ("for 8 hr"), a typed
+   ``ProvenanceGap`` for the solid format, whose incubation the Methods state only as
+   "overnight";
+3. the phenotype's ``units`` and ``screen_id`` (``Keio:<expName>``), which name the format
+   and keep two assays of the same phage at the same MOI in different formats distinct.
 
 IDENTIFIER FINDING (plan checklist items 3 and 4). The assayed strain is BW25113 and the
 released identifiers are MG1655 b-numbers on a 4,639,675 bp single-scaffold reference
@@ -61,8 +82,11 @@ and is reported rather than applied silently (plan D9). ``audit_identifiers`` sc
 three routes: the ECK join resolves 3,697 of the 3,716 genes that carry a value
 (0.9949), the b-numbers resolve against the deposited MG1655 annotation at 0.998 (a
 route that would misstate the strain) and the FEBA gene symbols resolve against BW25113
-at 0.961 (the weakest). The leaf has no slot for a derived mapping, so the field the
-record needs to say so is named in the PR body.
+at 0.961 (the weakest). Every record says so on its own perturbation:
+``identifier_mapping=DerivedIdentifierMapping(source_identifier=<b-number>,
+route="eck_crosswalk")``. A gene with no one-to-one ECK pair has no storable BW25113
+identifier, so it is DROPPED and counted (``DROP_NO_ECK_PAIR``, 19 genes / 1,471 cells),
+the same rule the Price 2018 loader applies to the same release.
 """
 
 from __future__ import annotations
@@ -70,25 +94,66 @@ from __future__ import annotations
 import csv
 import hashlib
 import io
+import json
 import logging
 import os
+import os.path as osp
 import re
 import shutil
 import tarfile
-from collections.abc import Iterable, Mapping
+from collections import Counter
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 import openpyxl
 from pydantic import BaseModel, ConfigDict, Field
+from tqdm import tqdm
 
-from torchcell.datamodels.schema import BacterialReferenceStrain
+from torchcell.data import (
+    ExperimentDataset,
+    check_manifest_pin,
+    link_verified,
+    post_process,
+    verify_raw_files,
+)
+from torchcell.datamodels.compound_identity import resolved_compound
+from torchcell.datamodels.schema import (
+    AssayType,
+    BacterialEnvironmentResponseExperiment,
+    BacterialEnvironmentResponseExperimentReference,
+    BacterialReferenceStrain,
+    ComponentDefinition,
+    Compound,
+    Concentration,
+    ConcentrationUnit,
+    DerivedIdentifierMapping,
+    Environment,
+    EnvironmentPerturbationType,
+    EnvironmentResponsePhenotype,
+    Experiment,
+    ExperimentReference,
+    Genotype,
+    MeasurementType,
+    Media,
+    MediaComponent,
+    MediaComponentRole,
+    PhagePerturbation,
+    Publication,
+    Temperature,
+    TransposonInsertionPerturbation,
+    UncertaintyType,
+)
 from torchcell.datasets.bacteria_common import (
+    STRAIN_GENE_NAMESPACES,
     LocusTagReconciliation,
+    assembly_reference,
+    bacterial_genome,
     eck_crosswalk,
     reconcile_locus_tags,
 )
+from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
     ArtifactRecord,
@@ -97,13 +162,25 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
 )
 from torchcell.literature.retrieve import pmc_cloud_url
+from torchcell.sequence.genome.base import GeneNameStatus
 from torchcell.sequence.genome.ecoli.k12 import (
     EckPair,
     EcoliK12BW25113Genome,
+    EcoliK12Genome,
     EcoliK12MG1655Genome,
+    EcoliK12StrainName,
 )
-from torchcell.verification.report import Provenance
-from torchcell.verification.sourced import SourcedValue
+from torchcell.verification.report import (
+    Level,
+    LevelResult,
+    Provenance,
+    VerificationReport,
+)
+from torchcell.verification.sourced import (
+    ProvenanceGap,
+    ProvenanceGapReason,
+    SourcedValue,
+)
 
 log = logging.getLogger(__name__)
 
@@ -116,6 +193,13 @@ PAPER_TITLE = "High-throughput mapping of the phage resistance landscape in E. c
 PMC_PREFIX = "PMC7553319.1"
 PAPER_MD = "paper.md"
 PAPER_MD_SHA256 = "c7aab1a1c4384a37f1f75f6ecafe2f538fc6ff22c7c39aceeebe988aba2e6cb5"
+
+#: S12 Table in the literature mirror: the strain and phage inventory, which is where the
+#: per-phage genome accession is released. It is NOT a raw-mirror artifact: the loader
+#: reads no value out of it at build time, the eleven accessions are constants in
+#: :data:`PHAGE_S12_ROWS`, each bound to its own row of these pinned bytes.
+S12_TABLE_MD = "si/si20.xlsx"
+S12_TABLE_SHA256 = "f3e9a7977dbfbfbfba23e1adb13f75c440a4c58ae531aeedc975ab71e29cce8a"
 
 #: The method paper the RB-TnSeq fitness statistic defers to (mirrored, rank 2 of the
 #: fifty), from which the replicate structure of a gene fitness value is sourced.
@@ -667,7 +751,7 @@ class MoiRow(BaseModel):
     moi: float
 
 
-def read_moi_table(data_root: str | None = None) -> dict[str, MoiRow]:
+def read_moi_workbook(path: str | Path) -> dict[str, MoiRow]:
     """The S13 Table MOI of every RB-TnSeq BW25113 experiment, keyed by experiment name.
 
     The sheet releases the MOI as a formula over its own inputs rather than as a number,
@@ -676,7 +760,6 @@ def read_moi_table(data_root: str | None = None) -> dict[str, MoiRow]:
     cell that references the row above is resolved through the chain. A formula of any
     other shape raises, so a changed sheet is detected instead of mis-evaluated.
     """
-    path = raw_mirror_dir(data_root) / S13_TABLE_REL
     workbook = openpyxl.load_workbook(path, read_only=True)
     sheet = workbook["MOI_used_runs"]
     rows = sheet.iter_rows(values_only=True)
@@ -735,6 +818,11 @@ def read_moi_table(data_root: str | None = None) -> dict[str, MoiRow]:
             moi=moi,
         )
     return table
+
+
+def read_moi_table(data_root: str | None = None) -> dict[str, MoiRow]:
+    """:func:`read_moi_workbook` on the S13 Table of the deposited raw mirror."""
+    return read_moi_workbook(raw_mirror_dir(data_root) / S13_TABLE_REL)
 
 
 class Assay(BaseModel):
@@ -816,7 +904,9 @@ def _phage_and_moi_from_description(description: str) -> tuple[str, float]:
     return groups["p2"], 10.0 ** -int(groups["p2_exp"])
 
 
-def read_experiment_axis(data_root: str | None = None) -> ExperimentAxis:
+def parse_experiment_axis(
+    path: str | Path, moi_table: Mapping[str, MoiRow]
+) -> ExperimentAxis:
     """Parse the released experiment list into the row's environment axis.
 
     The dose of a challenge comes from the S13 Table, which the Methods designate; an
@@ -825,8 +915,6 @@ def read_experiment_axis(data_root: str | None = None) -> ExperimentAxis:
     because the descriptions spell the same phage several ways (``CI1857``,
     ``lambda1857``, ``I86``).
     """
-    path = raw_mirror_dir(data_root) / EXPS_USED_REL
-    moi_table = read_moi_table(data_root)
     assays: list[Assay] = []
     with open(path, newline="") as handle:
         for row in csv.DictReader(handle, delimiter="\t"):
@@ -863,6 +951,13 @@ def read_experiment_axis(data_root: str | None = None) -> ExperimentAxis:
                 )
             )
     return ExperimentAxis(assays=tuple(assays))
+
+
+def read_experiment_axis(data_root: str | None = None) -> ExperimentAxis:
+    """:func:`parse_experiment_axis` on the experiment list of the deposited raw mirror."""
+    return parse_experiment_axis(
+        raw_mirror_dir(data_root) / EXPS_USED_REL, read_moi_table(data_root)
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -1003,3 +1098,1570 @@ def audit_identifiers(
             list(b_numbers) if measured is None else measured,
         ),
     )
+
+
+# --------------------------------------------------------------------------- #
+# Per-phage identity: what the Methods and the S12 Table state about each phage
+# --------------------------------------------------------------------------- #
+_S12_PAGE = "S12 Table, 'Strains_Supp Table 12' (phage block)"
+_PHAGE_METHODS = "Methods, 'Bacteriophages and propagation'"
+
+
+def _s12(value: Any, quote: str, *, note: str | None = None) -> SourcedValue:
+    """Bind a value to one row of the sha256-pinned S12 Table in the paper mirror.
+
+    The quote is the row as the xlsx row rendering writes it (cells joined by ``" | "``,
+    empty cells skipped), which is how every other xlsx-sourced value in the tier is cut.
+    """
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=S12_TABLE_MD,
+            citation_key=CITATION_KEY,
+            sha256=S12_TABLE_SHA256,
+            method="row rendering of the publisher xlsx (torchcell-library mirror)",
+            page=_S12_PAGE,
+        ),
+    )
+
+
+PHAGE_GENOME_TYPE = _paper(
+    "dsDNA",
+    "We sourced 14 diverse E. coli phages with dsDNA genomes, belonging to Myoviridae, "
+    "Podoviridae, and Siphoviridae families (within the order Caudovirales)",
+    page="Results, 'RB-TnSeq identifies known receptors'",
+    note="stated for the panel as a whole, so every PhagePerturbation of this row "
+    "carries genome_type='dsDNA'. The same sentence names the three families "
+    "COLLECTIVELY and neither the paper nor the S12 Table assigns one to a phage, "
+    "which is why `family` is a typed gap rather than a guess",
+)
+
+PHAGE_PROPAGATION = _paper(
+    {"default": "E. coli BW25113", "P2": "E. coli C", "N4": "E. coli W3350"},
+    "All phages except P2 phage and N4 phage were propagated on E. coli BW25113 strain. "
+    "To propagate P2 phage and N4 phage, we used E. coli C and E. coli W3350 strains, "
+    "respectively.",
+    page=_PHAGE_METHODS,
+)
+
+#: The strain each phage stock was propagated on, verbatim, from ``PHAGE_PROPAGATION``.
+DEFAULT_PROPAGATION_HOST = "E. coli BW25113"
+PHAGE_PROPAGATION_HOSTS: dict[str, str] = {"P2": "E. coli C", "N4": "E. coli W3350"}
+
+#: Each phage's genome accession, keyed by the name the S13 Table gives it (which is the
+#: name ``read_experiment_axis`` stores). ``value`` is ``None`` for the three the S12
+#: Table itself calls "Not determined", so the absence is the source's own statement.
+#: Two names differ between the two tables and the mapping is recorded in the note: S13's
+#: ``P1`` is S12's ``P1vir`` (the paper: "a strictly virulent strain of P1 phage (P1vir)")
+#: and S13's ``lambda cI857`` is S12's ``lambda c1857``.
+PHAGE_S12_ROWS: dict[str, SourcedValue] = {
+    "T2": _s12("MH751506.1", "T2 | Calendar Lab stock, UC Berkeley | MH751506.1"),
+    "T3": _s12("NC_003298.1", "T3 | Arkin Lab stock, UC Berkeley | NC_003298.1"),
+    "T4": _s12(
+        "AF158101.6",
+        "T4 | Elizabeth Kutter Lab, The evergreen state College, Olympia | AF158101.6",
+    ),
+    "T5": _s12(
+        "NC_005859.1", "T5 | E coli Genetic Stock center, CGSC#: 12144 | NC_005859.1"
+    ),
+    "T6": _s12("MH550421.1", "T6 | ATCC 11303-B6 | MH550421.1"),
+    "T7": _s12(
+        "NC_001604.1", "T7 | E coli Genetic Stock center, CGSC#: 12146 | NC_001604.1"
+    ),
+    "N4": _s12("EF056009.1", "N4 | Lucia B. Rothman-Denes, Univ Chicago | EF056009.1"),
+    "CEV1": _s12(
+        None,
+        "CEV1 | Elizabeth Kutter Lab, The evergreen state College, Olympia | "
+        "Not determined",
+        note="the sheet states the genome was not determined, so genome_accession is "
+        "None because the source says so, not because we did not look",
+    ),
+    "CEV2": _s12(
+        None,
+        "CEV2 | Elizabeth Kutter Lab, The evergreen state College, Olympia | "
+        "Not determined",
+        note="as CEV1",
+    ),
+    "LZ4": _s12(
+        None,
+        "LZ4 | Elizabeth Kutter Lab, The evergreen state College, Olympia | "
+        "Not determined",
+        note="as CEV1",
+    ),
+    "P1": _s12(
+        "NC_005856.1",
+        "P1vir | Jason Gill Lab Texas A&M University | NC_005856.1",
+        note="S13 writes the phage 'P1'; S12 writes the stock 'P1vir', which the "
+        "Methods name as the phage used ('a strictly virulent strain of P1 phage "
+        "(P1vir)'), so this row is that phage",
+    ),
+    "P2": _s12("AF063097.1", "P2 | Calendar Lab stock, UC Berkeley | AF063097.1"),
+    "186": _s12("NC_001317.1", "186 | Calendar Lab stock, UC Berkeley | NC_001317.1"),
+    "lambda cI857": _s12(
+        "NC_001416.1",
+        "lambda c1857 | Calendar Lab stock, UC Berkeley | NC_001416.1",
+        note="S13 and the paper write the allele 'cI857' (capital I); the S12 Table "
+        "writes 'c1857' (digit one) for the same stock, so the row is matched on the "
+        "phage rather than on the string",
+    ),
+}
+
+
+def _family_gap() -> ProvenanceGap:
+    """No source assigns a viral family to an individual phage of the panel."""
+    return ProvenanceGap(
+        field="family",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        looked_in=Provenance(
+            source_uri=PAPER_MD,
+            citation_key=CITATION_KEY,
+            sha256=PAPER_MD_SHA256,
+            method="MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            page="Results, 'RB-TnSeq identifies known receptors'; Fig 1 caption; "
+            "S12 Table",
+        ),
+        note="the paper names Myoviridae, Podoviridae and Siphoviridae for the panel of "
+        "14 collectively and never per phage, and the S12 Table releases only the "
+        "source and the genome accession, so no family is written on a phage",
+    )
+
+
+def _moi_gap(exp_name: str) -> ProvenanceGap:
+    """A challenge the two released dose sources both leave without an MOI."""
+    return ProvenanceGap(
+        field="multiplicity_of_infection",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        looked_in=Provenance(
+            source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{S13_TABLE_REL}",
+            citation_key=CITATION_KEY,
+            sha256=artifact(S13_TABLE_REL).sha256,
+            method="S13 Table sheet 'MOI_used_runs', the dose authority the Methods "
+            "designate, plus the experiment's own released description",
+            page=f"no row for {exp_name} and no MOI in its description",
+            retrieved=RETRIEVED_AT,
+        ),
+        note="a phage challenge always has a dose, so an unstated MOI is this typed gap "
+        "and never a value borrowed from a neighbouring assay of the same phage",
+    )
+
+
+def phage_perturbation(
+    assay: Assay, *, titer_pfu_per_ml: float | None
+) -> PhagePerturbation:
+    """The phage of one challenge, at the dose the released sources state.
+
+    ``name`` is the S13 Table's spelling (the experiment descriptions spell the same
+    phage several ways), ``genome_type`` is the panel-wide ``dsDNA``,
+    ``genome_accession`` comes from this phage's S12 Table row and is ``None`` for the
+    three the sheet calls "Not determined", and ``host_of_propagation`` is the strain the
+    Methods name for it. ``family`` and ``ncbi_taxid`` are not stated per phage: the
+    family is a typed gap (:func:`_family_gap`), and no source names a taxon id at all.
+    An assay with no stated MOI carries :func:`_moi_gap` instead of a borrowed dose.
+    """
+    if assay.phage is None:
+        raise ValueError(f"{assay.exp_name} is a {assay.kind}, not a phage challenge")
+    gaps = [_family_gap()]
+    if assay.moi is None:
+        gaps.append(_moi_gap(assay.exp_name))
+    accession = (
+        PHAGE_S12_ROWS[assay.phage].value if assay.phage in PHAGE_S12_ROWS else None
+    )
+    return PhagePerturbation(
+        name=assay.phage,
+        genome_type=str(PHAGE_GENOME_TYPE.value),
+        genome_accession=accession,
+        host_of_propagation=PHAGE_PROPAGATION_HOSTS.get(
+            assay.phage, DEFAULT_PROPAGATION_HOST
+        ),
+        multiplicity_of_infection=assay.moi,
+        titer_pfu_per_ml=titer_pfu_per_ml,
+        provenance_gaps=gaps,
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Media: the three the release names, each an LB-based object with no invented amounts
+# --------------------------------------------------------------------------- #
+_CULTURE_PAGE = "Methods, 'Competitive growth experiments with RB-TnSeq library'"
+
+LB_RECIPE_DEFERRAL = _paper(
+    "LB",
+    "we recovered a frozen aliquot of the E. coli K-12 RB-TnSeq library in lysogeny "
+    "broth (LB [96]) to mid-log phase",
+    page="Results, 'RB-TnSeq identifies known receptors'",
+    note="the recipe is deferred to the paper's reference 96 (Bertani), which is not "
+    "mirrored, so the LB lines below carry NO amounts. Borrowing MEDIA_LIBRARY's LB "
+    "(Miller, 10 g/L NaCl) or LB_LENNOX (5 g/L, which is what Wetmore 2015 and Price "
+    "2018 state in their OWN media tables) would assert a formulation Mutalik never "
+    "gave; base_medium='LB' is the library key these objects join on",
+)
+
+SM_BUFFER = _paper(
+    "SM buffer (Teknova), supplemented with 10 mM calcium chloride and magnesium "
+    "sulphate",
+    "SM buffer was supplemented with $1 0 \\mathrm { m M }$ calcium chloride and "
+    "magnesium sulphate (Sigma).",
+    page=_PHAGE_METHODS,
+    note="the vendor buffer's own composition is not stated, so it is one "
+    "composition_deferred line; the two supplements are named with their buffer "
+    "concentration, which the assay then dilutes (see CULTURE_DILUTION)",
+)
+
+SM_BUFFER_VENDOR = _paper(
+    "Teknova",
+    "a 10-fold serial dilution of each phage in SM buffer (Teknova)",
+    page=_PHAGE_METHODS,
+    note="the buffer the phages are diluted in is the same commercial preparation the "
+    "titering step uses",
+)
+
+PLANKTONIC_DURATION = _paper(
+    8.0,
+    "We grew the microplates in Tecan Infinite F200 readers with orbital shaking and "
+    "OD600 readings every $1 5 \\mathrm { { m i n } }$ for $8 \\mathrm { { h r } }$ .",
+    page=_CULTURE_PAGE,
+    note="the planktonic format's exposure time, in hours",
+)
+
+SOLID_INCUBATION = _paper(
+    "overnight",
+    "then plated the mixture on LB agar supplemented with kanamycin plates and "
+    "incubated at $3 7 ~ ^ { \\circ } \\mathrm { C }$ overnight",
+    page=_CULTURE_PAGE,
+    note="the solid format's exposure is stated as a word, not a number of hours, which "
+    "is why Environment.duration_hours is a typed gap for the solid assays",
+)
+
+#: The analysis set whose released per-experiment metadata the plate dose is cut from.
+_SOLID_SET = "Keio_ML9_set30"
+
+SOLID_KANAMYCIN_DOSE = SourcedValue(
+    value={"value": 50.0, "unit": "ug/ml"},
+    quote="Kan\t50\tug/ml",
+    note="the plate dose. The Methods sentence that names the plates says only "
+    "'supplemented with kanamycin'; the 50 ug/ml for the ASSAY plates is the released "
+    "per-experiment metadata's own Condition_2 / Concentration_2 / Units_2 columns, "
+    "which process() checks on every solid assay it keeps. The Methods' 50 ug/ml "
+    "(sourced_values()['kanamycin']) is the library RECOVERY culture, a different step, "
+    "so it is not the citation for this value",
+    provenance=Provenance(
+        source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{TARBALL_REL}:html/{_SOLID_SET}/exps",
+        citation_key=CITATION_KEY,
+        sha256=TARBALL_MEMBERS[f"html/{_SOLID_SET}/exps"],
+        method="tab-delimited per-experiment metadata of the deposited figshare "
+        "RB-TnSeq release, read through read_tarball_member",
+        page=f"html/{_SOLID_SET}/exps, the solid-plate rows",
+        retrieved=RETRIEVED_AT,
+    ),
+)
+
+ASSAY_MIXTURE = _paper(
+    {"library_ul": 350.0, "phage_ul": 350.0, "well_ul": 700.0},
+    "The mutant library experiments were grown in the wells of a 48-well microplate "
+    "${ 7 0 0 \\mu \\mathrm { l } }$ per well)",
+    page=_CULTURE_PAGE,
+    note="with the preceding sentence's 350 uL of 2X library and 350 uL of diluted "
+    "phage, this is what makes the planktonic culture's phage titer computable from "
+    "the S13 Table's stock titer and dilution (see titer_in_culture)",
+)
+
+
+def _lb_lines(provenance: SourcedValue) -> list[MediaComponent]:
+    """The three LB ingredients, named with no amounts (the recipe is deferred)."""
+    return [
+        MediaComponent(
+            compound=resolved_compound("tryptone"),
+            role=MediaComponentRole.complex_ingredient,
+            concentration=None,
+            definition=ComponentDefinition.intrinsically_undefined,
+            provenance=[provenance],
+            note="LB ingredient; Mutalik states no amount and defers the recipe",
+        ),
+        MediaComponent(
+            compound=resolved_compound("yeast extract"),
+            role=MediaComponentRole.complex_ingredient,
+            concentration=None,
+            definition=ComponentDefinition.intrinsically_undefined,
+            provenance=[provenance],
+            note="LB ingredient; Mutalik states no amount and defers the recipe",
+        ),
+        MediaComponent(
+            compound=resolved_compound("sodium chloride"),
+            role=MediaComponentRole.bulk_salt,
+            concentration=None,
+            provenance=[provenance],
+            note="LB ingredient; Mutalik states no amount, and the Miller and Lennox "
+            "formulations differ in exactly this component",
+        ),
+    ]
+
+
+MUTALIK2020_LB = Media(
+    name="LB, formulation not stated (Mutalik 2020), liquid",
+    state="liquid",
+    is_synthetic=False,
+    base_medium="LB",
+    components=_lb_lines(LB_RECIPE_DEFERRAL),
+    provenance=[LB_RECIPE_DEFERRAL],
+)
+"""Plain liquid LB: the one no-phage control the release runs without SM buffer."""
+
+MUTALIK2020_LB_SM_BUFFER = Media(
+    name="LB with SM buffer (Teknova) plus 10 mM CaCl2 and MgSO4, formulation not "
+    "stated (Mutalik 2020), liquid",
+    state="liquid",
+    is_synthetic=False,
+    base_medium="LB",
+    components=[
+        *_lb_lines(LB_RECIPE_DEFERRAL),
+        MediaComponent(
+            compound=Compound(name="SM buffer (Teknova)"),
+            role=MediaComponentRole.buffer,
+            concentration=None,
+            definition=ComponentDefinition.composition_deferred,
+            provenance=[SM_BUFFER_VENDOR, SM_BUFFER],
+            note="the phage dilution buffer. A commercial preparation whose composition "
+            "neither the paper nor a mirrored protocol states, so it stays one deferred "
+            "line rather than being expanded into guessed salts",
+        ),
+        MediaComponent(
+            compound=resolved_compound("calcium chloride"),
+            role=MediaComponentRole.bulk_salt,
+            concentration=None,
+            provenance=[SM_BUFFER],
+            note="required for phage adsorption. The source states 10 mM in the BUFFER; "
+            "the assay mixes an equal volume of buffer-diluted phage into 2X LB, so the "
+            "concentration in the culture is not what the source states and no value is "
+            "written here",
+        ),
+        MediaComponent(
+            compound=resolved_compound("magnesium sulfate"),
+            role=MediaComponentRole.bulk_salt,
+            concentration=None,
+            provenance=[SM_BUFFER],
+            note="as calcium chloride: 10 mM in the buffer, diluted into the culture by "
+            "an amount the source does not state for the final medium",
+        ),
+    ],
+    provenance=[LB_RECIPE_DEFERRAL, SM_BUFFER, ASSAY_MIXTURE],
+)
+"""The planktonic assay medium, which the release's own metadata calls ``LB_plus_SM_buffer``."""
+
+MUTALIK2020_LB_AGAR_KAN = Media(
+    name="LB agar with kanamycin 50 ug/mL, formulation not stated (Mutalik 2020), solid",
+    state="solid",
+    is_synthetic=False,
+    base_medium="LB",
+    components=[
+        *_lb_lines(LB_RECIPE_DEFERRAL),
+        MediaComponent(
+            compound=resolved_compound("agar"),
+            role=MediaComponentRole.gelling_agent,
+            concentration=None,
+            provenance=[SOLID_INCUBATION],
+            note="the plates are named 'LB agar' with no percentage; the 0.7% figure the "
+            "paper gives is the top-agar overlay of the titering step, a different "
+            "preparation, so it is not copied here",
+        ),
+        MediaComponent(
+            compound=resolved_compound("kanamycin"),
+            role=MediaComponentRole.selection_agent,
+            concentration=Concentration(value=50.0, unit=ConcentrationUnit.ug_per_ml),
+            provenance=[SOLID_INCUBATION, SOLID_KANAMYCIN_DOSE],
+            note="the plates are 'LB agar supplemented with kanamycin' and the dose is "
+            "the released metadata's own Condition_2, which process() checks on every "
+            "solid assay it keeps",
+        ),
+    ],
+    provenance=[LB_RECIPE_DEFERRAL, SOLID_INCUBATION],
+)
+"""The solid-agar assay medium, which the release's own metadata calls ``LB_agar``."""
+
+#: The released per-experiment ``Media`` label to the object a record stores. A label
+#: outside this map has no MEDIA_LIBRARY base to join on, so its assay is DROPPED and
+#: counted (``DROP_MEDIUM_NOT_IN_LIBRARY``) rather than given an invented medium.
+MEDIA_BY_LABEL: dict[str, Media] = {
+    "LB": MUTALIK2020_LB,
+    "LB_plus_SM_buffer": MUTALIK2020_LB_SM_BUFFER,
+    "LB_agar": MUTALIK2020_LB_AGAR_KAN,
+}
+
+#: The kanamycin dose the solid plates carry, as the release's metadata writes it.
+SOLID_KANAMYCIN = (50.0, "ug/ml")
+
+
+# --------------------------------------------------------------------------- #
+# The released per-experiment metadata (the `exps` member of each analysis set)
+# --------------------------------------------------------------------------- #
+#: The release's ``Aerobic_v_Anaerobic`` values to the schema's oxygen regimes. A value
+#: outside this is refused, never defaulted to aerobic.
+AEROBICITY_BY_LABEL: dict[str, str] = {
+    "Aerobic": "aerobic",
+    "Anaerobic": "anaerobic",
+    "Microaerobic": "microaerobic",
+}
+
+#: The release's ``Liquid v. solid`` values to the ``Media.state`` they must agree with.
+STATE_BY_LABEL: dict[str, str] = {"Liquid": "liquid", "Solid": "solid"}
+
+
+class ReleasedAssay(BaseModel):
+    """One row of an analysis set's ``exps`` member: what the culture actually was.
+
+    The environment of a record is built from THIS, not from the paper's prose: the
+    release states the medium, the format, the oxygen regime, the temperature and the
+    second condition per experiment, and the prose states them for the two formats in
+    general. Where the two can disagree, the per-experiment row is the one that names
+    this experiment.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    exp_name: str
+    set_name: str
+    media_label: str
+    state: str = Field(description="'liquid' or 'solid', from 'Liquid v. solid'")
+    growth_method: str
+    shaking: str
+    aerobicity: str
+    group: str
+    mutant_library: str
+    temperature_c: float
+    condition_2: str | None
+    concentration_2: float | None
+    units_2: str | None
+    dropped_by_release: bool = Field(
+        description="the release's own ``Drop`` flag on this experiment"
+    )
+
+
+def read_released_assays(paths: Mapping[str, str | Path]) -> dict[str, ReleasedAssay]:
+    """Every experiment's released metadata, keyed by the ``setNNITNNN`` experiment name.
+
+    ``paths`` maps an analysis-set name to its ``exps`` file. The experiment name is the
+    set's ``setNN`` suffix plus the row's ``Index``, which is how the fitness tables name
+    their columns and how ``Keio_exps_used.tab`` names its rows; a name two sets both
+    claim is refused rather than silently overwritten.
+    """
+    assays: dict[str, ReleasedAssay] = {}
+    for analysis_set, path in paths.items():
+        with open(path, newline="") as handle:
+            for row in csv.DictReader(handle, delimiter="\t"):
+                set_name = str(row["SetName"])
+                exp_name = f"{set_name.removeprefix('Keio_ML9_')}{row['Index']}"
+                if exp_name in assays:
+                    raise ValueError(f"{exp_name} is released by two analysis sets")
+                state = STATE_BY_LABEL.get(str(row["Liquid v. solid"]))
+                if state is None:
+                    raise ValueError(
+                        f"{exp_name}: unreadable format {row['Liquid v. solid']!r}"
+                    )
+                aerobicity = AEROBICITY_BY_LABEL.get(str(row["Aerobic_v_Anaerobic"]))
+                if aerobicity is None:
+                    raise ValueError(
+                        f"{exp_name}: unreadable oxygen regime "
+                        f"{row['Aerobic_v_Anaerobic']!r}"
+                    )
+                if not str(row["Temperature"]).strip():
+                    raise ValueError(f"{exp_name}: the release states no temperature")
+                condition_2 = str(row["Condition_2"]).strip() or None
+                assays[exp_name] = ReleasedAssay(
+                    exp_name=exp_name,
+                    set_name=analysis_set,
+                    media_label=str(row["Media"]).strip(),
+                    state=state,
+                    growth_method=str(row["Growth Method"]).strip(),
+                    shaking=str(row["Shaking"]).strip(),
+                    aerobicity=aerobicity,
+                    group=str(row["Group"]).strip(),
+                    mutant_library=str(row["Mutant Library"]).strip(),
+                    temperature_c=float(row["Temperature"]),
+                    condition_2=condition_2,
+                    concentration_2=(
+                        float(row["Concentration_2"])
+                        if str(row["Concentration_2"]).strip()
+                        else None
+                    ),
+                    units_2=str(row["Units_2"]).strip() or None,
+                    dropped_by_release=str(row["Drop"]).strip().upper() == "TRUE",
+                )
+    return assays
+
+
+# --------------------------------------------------------------------------- #
+# Environment
+# --------------------------------------------------------------------------- #
+def titer_in_culture(row: MoiRow | None, state: str) -> float | None:
+    """The phage titer of a planktonic culture at the start of the assay, in pfu/mL.
+
+    The S13 Table releases the STOCK titer and the dilution; the Methods state that
+    350 uL of the diluted phage goes into 350 uL of 2X library for 700 uL per well
+    (``ASSAY_MIXTURE``), so the culture carries ``pfu/ml * dilution / 2``. This is the
+    same arithmetic over the same cells that ``read_moi_workbook`` evaluates for the MOI.
+
+    Returns ``None`` for the SOLID format, whose final volume the Methods never state
+    (the planktonic paragraph gives the two 350 uL volumes; the solid paragraph says only
+    "the mixture"), and ``None`` for a challenge with no S13 row.
+    """
+    if row is None or state != "liquid":
+        return None
+    return row.pfu_per_ml * row.dilution / 2.0
+
+
+def _solid_duration_gap() -> ProvenanceGap:
+    """The solid format's exposure is stated as "overnight", not as a number of hours."""
+    return ProvenanceGap(
+        field="duration_hours",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        looked_in=Provenance(
+            source_uri=PAPER_MD,
+            citation_key=CITATION_KEY,
+            sha256=PAPER_MD_SHA256,
+            method="MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            page=_CULTURE_PAGE,
+        ),
+        note=f"the plates were 'incubated at 37 C {SOLID_INCUBATION.value}'; the "
+        "planktonic format's 8 hr is stated as a number and is carried on "
+        "duration_hours, so the two formats differ in this field as well as in the "
+        "medium, which is part of what keeps them distinct environments",
+    )
+
+
+def environment(
+    assay: Assay, released: ReleasedAssay, moi_row: MoiRow | None
+) -> Environment:
+    """The culture one experiment was run in, from its own released metadata.
+
+    The medium comes from the released ``Media`` label through :data:`MEDIA_BY_LABEL`;
+    the temperature, the oxygen regime and the format come from the released row; the
+    exposure is the planktonic 8 hr or a typed gap for the solid plates. A challenge
+    carries exactly one ``PhagePerturbation`` and a no-phage control carries NONE: the
+    controls replaced the phage with plain dilution buffer ("We also set up control
+    'no-phage' competitive mutant fitness assays wherein we replaced phages with simply
+    the phage dilution buffer"), so a zero-MOI phage would assert a challenge that did
+    not happen. The buffer itself is in the medium, which is what makes a control's
+    environment the honest reference for the challenges run beside it.
+    """
+    media = MEDIA_BY_LABEL[released.media_label]
+    if media.state != released.state:
+        raise ValueError(
+            f"{assay.exp_name}: the release calls the medium {released.media_label!r} "
+            f"and the format {released.state!r}, but {media.name!r} is "
+            f"{media.state!r}"
+        )
+    if media is MUTALIK2020_LB_AGAR_KAN:
+        dose = (released.concentration_2, released.units_2)
+        if released.condition_2 != "Kan" or dose != SOLID_KANAMYCIN:
+            raise ValueError(
+                f"{assay.exp_name}: {media.name!r} carries kanamycin at "
+                f"{SOLID_KANAMYCIN}, but the release states "
+                f"{released.condition_2!r} at {dose}"
+            )
+    elif released.condition_2 is not None:
+        raise ValueError(
+            f"{assay.exp_name}: the release adds {released.condition_2!r} to "
+            f"{released.media_label!r}, which {media.name!r} does not carry"
+        )
+    perturbations: list[EnvironmentPerturbationType] = (
+        [
+            phage_perturbation(
+                assay, titer_pfu_per_ml=titer_in_culture(moi_row, media.state)
+            )
+        ]
+        if assay.kind == "phage"
+        else []
+    )
+    return Environment(
+        media=media,
+        temperature=Temperature(value=released.temperature_c),
+        perturbations=perturbations,
+        aerobicity=released.aerobicity,
+        duration_hours=(
+            float(PLANKTONIC_DURATION.value) if media.state == "liquid" else None
+        ),
+        provenance_gaps=[] if media.state == "liquid" else [_solid_duration_gap()],
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Genes: the ECK route from the released b-numbers to BW25113 locus tags
+# --------------------------------------------------------------------------- #
+#: The route must place at least this share of the measured genes; it places 3,697 of
+#: 3,716 (0.9949) on the deposited annotations. Below it the build stops rather than
+#: dropping more genes quietly.
+MIN_ECK_ROUTE_FRACTION = 0.99
+
+#: The library's transposon, from the method paper this row's statistic defers to.
+TRANSPOSON = _wetmore(
+    "Tn5 transpososome",
+    "<td>Transposon</td><td>Tn5 transpososome</td>",
+    page="Table 1, row 'Transposon'",
+    note="Mutalik states no transposon and defers the library to reference 64 "
+    "(Wetmore 2015), whose Table 1 names it for KEIO_ML9",
+)
+
+#: The sub-pool the release's own per-experiment metadata names, verbatim. Wetmore calls
+#: the pool KEIO_ML9; every experiment of this row is run on ``Keio_ML9a``, which is what
+#: the strain identity carries (a pooled measurement is pool-relative).
+MUTANT_LIBRARY = "Keio_ML9a"
+
+PERTURBATION_DESCRIPTION = (
+    "Tn5 transposon insertion disrupting a gene; gene-level call over the gene's "
+    "insertion strains (no per-strain barcode or mapped site released). Locus tag "
+    "DERIVED: the release names an MG1655 b-number, mapped to this BW25113 locus "
+    "through its one-to-one ECK pair (eck_crosswalk)"
+)
+
+
+class GeneMapping(BaseModel):
+    """One released b-number placed on its BW25113 locus through a one-to-one ECK pair."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    b_number: str
+    eck: str
+    locus_tag: str
+    perturbed_gene_name: str
+    numerics_agree: bool
+
+
+class MappingReport(BaseModel):
+    """The ECK route over the measured genes, with the reconciler's histograms."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    n_measured_genes: int
+    n_mapped: int
+    mapped_fraction: float
+    min_fraction: float
+    unmapped: tuple[str, ...]
+    numeric_disagreements: tuple[tuple[str, str, str], ...] = Field(
+        description="(b-number, BW25113 tag, ECK) of mapped pairs whose numbers differ"
+    )
+    n_symbol_names: int = Field(
+        description="records whose perturbed_gene_name is the BW25113 gene symbol"
+    )
+    n_tag_names: int = Field(
+        description="records whose perturbed_gene_name falls back to the locus tag"
+    )
+    reconcile_status_histogram: dict[str, int]
+    reconcile_layer_histogram: dict[str, int]
+
+
+def stored_gene_name(
+    symbol: str | None, tag: str, resolve: Callable[[str], Any]
+) -> str:
+    """The locus's gene symbol when it resolves back to that locus, else the tag.
+
+    The stored common name then always resolves to the stored locus tag, which is what
+    the verifier's canonical-gene-name rule checks.
+    """
+    if symbol:
+        resolution = resolve(symbol)
+        if resolution.systematic_name == tag and resolution.status in (
+            GeneNameStatus.CURRENT,
+            GeneNameStatus.RENAMED,
+        ):
+            return symbol
+    return tag
+
+
+def map_measured_genes(
+    b_numbers: Sequence[str],
+    mg1655: EcoliK12MG1655Genome,
+    bw25113: EcoliK12BW25113Genome,
+    *,
+    label: str,
+) -> tuple[dict[str, GeneMapping], MappingReport]:
+    """Place the measured b-numbers on BW25113 locus tags and report what happened.
+
+    The route is the one-to-one ECK synonym join the two deposited GenBank annotations
+    share (:func:`eck_mapping`). A b-number the join does not place has no storable
+    BW25113 identifier, so it is left out and named in the report; the build stops if the
+    route places less than :data:`MIN_ECK_ROUTE_FRACTION` of the genes. The placed genes'
+    ECK ids are then run through ``reconcile_locus_tags`` on BW25113, which must return
+    the crosswalk's tag for every one.
+    """
+    by_b = eck_mapping(mg1655, bw25113)
+    requested = sorted(set(b_numbers))
+    placed = [name for name in requested if name in by_b]
+    fraction = len(placed) / len(requested)
+    if fraction < MIN_ECK_ROUTE_FRACTION:
+        raise ValueError(
+            f"{label}: the ECK route places {len(placed)} of {len(requested)} measured "
+            f"genes ({fraction:.4f}), below {MIN_ECK_ROUTE_FRACTION}"
+        )
+    import pandas as pd
+
+    stored, reconciliation = reconcile_locus_tags(
+        bw25113,
+        pd.Series([by_b[name].eck for name in placed]),
+        label=f"{label} ECK ids",
+    )
+    differing = [
+        name
+        for name, tag in zip(placed, stored, strict=True)
+        if tag != by_b[name].bw25113
+    ]
+    if differing:
+        raise ValueError(f"{label}: reconciler and crosswalk disagree on {differing}")
+    loci = bw25113.genbank.loci
+    mapping = {
+        name: GeneMapping(
+            b_number=name,
+            eck=by_b[name].eck,
+            locus_tag=by_b[name].bw25113,
+            perturbed_gene_name=stored_gene_name(
+                loci[by_b[name].bw25113].symbol,
+                by_b[name].bw25113,
+                bw25113.resolve_gene_name,
+            ),
+            numerics_agree=by_b[name].numerics_agree,
+        )
+        for name in placed
+    }
+    n_symbol = sum(1 for m in mapping.values() if m.perturbed_gene_name != m.locus_tag)
+    report = MappingReport(
+        n_measured_genes=len(requested),
+        n_mapped=len(mapping),
+        mapped_fraction=fraction,
+        min_fraction=MIN_ECK_ROUTE_FRACTION,
+        unmapped=tuple(name for name in requested if name not in by_b),
+        numeric_disagreements=tuple(
+            (m.b_number, m.locus_tag, m.eck)
+            for m in mapping.values()
+            if not m.numerics_agree
+        ),
+        n_symbol_names=n_symbol,
+        n_tag_names=len(mapping) - n_symbol,
+        reconcile_status_histogram={
+            status.value: n for status, n in reconciliation.status_histogram.items()
+        },
+        reconcile_layer_histogram=dict(reconciliation.layer_histogram),
+    )
+    return mapping, report
+
+
+# --------------------------------------------------------------------------- #
+# Records
+# --------------------------------------------------------------------------- #
+N_SAMPLES_GAP = ProvenanceGap(
+    field="n_samples",
+    reason=ProvenanceGapReason.deferred_pending_source_review,
+    looked_in=Provenance(
+        source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{TARBALL_REL}:html/<set>/fit_logratios.tab",
+        citation_key=CITATION_KEY,
+        sha256=artifact(TARBALL_REL).sha256,
+        method="the per-gene tables of the deposited figshare RB-TnSeq release carry no "
+        "strain-count column",
+        page="html/<analysis set>/fit_logratios.tab and fit_standard_error_obs.tab",
+        retrieved=RETRIEVED_AT,
+    ),
+    resolve_with=Provenance(
+        source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{TARBALL_REL}:html/<set>/strain_fit.tab",
+        citation_key=CITATION_KEY,
+        method="the per-strain table of the same release, which names each strain's gene",
+        page="html/<analysis set>/strain_fit.tab with g/Keio/pool",
+    ),
+    note="a gene fitness value is 'the weighted average of the fitness of its strains', "
+    f"so one sample is an independent insertion strain. The library MEDIAN is {MEDIAN_STRAINS_PER_GENE} "
+    "(Wetmore 2015 Table 1 for KEIO_ML9, sourced_values()['n_samples']) and a median "
+    "over genes is not a per-record count, so it is NOT stored as n_samples. The stored "
+    "uncertainty is already an SE of the estimate, so no n is needed to derive it",
+)
+SAMPLE_UNIT_GAP = ProvenanceGap(
+    field="sample_unit",
+    reason=ProvenanceGapReason.deferred_pending_source_review,
+    looked_in=N_SAMPLES_GAP.looked_in,
+    resolve_with=N_SAMPLES_GAP.resolve_with,
+    note="travels with n_samples: one unit would be an independent insertion strain in "
+    "a pooled library, which is none of SampleUnit's members (colony, screen, "
+    "biological_replicate, technical_replicate, pooled)",
+)
+#: ``screen_id`` prefix: FEBA experiment names are unique only within an organism, so the
+#: organism id joins them, exactly as the Price 2018 loader does for the same release.
+ORG_ID = "Keio"
+
+_UNITS_STEM = (
+    "normalized log2(gene mutant barcode abundance at the end of the assay / abundance "
+    "in the time-zero start sample), the weighted average over the gene's insertion "
+    "strains"
+)
+UNITS_PLANKTONIC = (
+    f"{_UNITS_STEM}; 8 h planktonic 48-well culture in LB plus phage dilution buffer, "
+    "a typical gene = 0"
+)
+UNITS_SOLID = (
+    f"{_UNITS_STEM}; overnight solid-agar plate assay, colonies scraped after plating "
+    "the adsorbed mixture, a typical gene = 0"
+)
+UNITS_REFERENCE = (
+    "the typical gene of this experiment (gene fitness is normalized to 0)"
+)
+
+
+def build_genotype(mapping: GeneMapping) -> Genotype:
+    """A Tn5 insertion in one gene of ``Keio_ML9a``, with its derived mapping typed."""
+    return Genotype(
+        perturbations=[
+            TransposonInsertionPerturbation(
+                systematic_gene_name=mapping.locus_tag,
+                perturbed_gene_name=mapping.perturbed_gene_name,
+                gene_namespace=STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN],
+                identifier_mapping=DerivedIdentifierMapping(
+                    source_identifier=mapping.b_number, route="eck_crosswalk"
+                ),
+                description=PERTURBATION_DESCRIPTION,
+                transposon=str(TRANSPOSON.value),
+                library_pool=MUTANT_LIBRARY,
+            )
+        ]
+    )
+
+
+def units_for(state: str) -> str:
+    """The readout's human-readable definition, which names the assay format."""
+    return UNITS_PLANKTONIC if state == "liquid" else UNITS_SOLID
+
+
+def screen_id(exp_name: str) -> str:
+    """``Keio:<expName>``: the released experiment, which is the screening run."""
+    return f"{ORG_ID}:{exp_name}"
+
+
+def build_phenotype(
+    fitness: float, standard_error: float, *, exp_name: str, state: str
+) -> EnvironmentResponsePhenotype:
+    """One released (gene, experiment) cell with the release's own standard error."""
+    return EnvironmentResponsePhenotype(
+        measurement_type=MeasurementType.log2_ratio,
+        assay_type=AssayType.pooled_competitive_growth_barcode,
+        environment_response=fitness,
+        environment_response_uncertainty=standard_error,
+        environment_response_uncertainty_type=UncertaintyType.standard_error,
+        units=units_for(state),
+        screen_id=screen_id(exp_name),
+        provenance_gaps=[N_SAMPLES_GAP, SAMPLE_UNIT_GAP],
+    )
+
+
+def build_reference(
+    dataset_name: str, assay_environment: Environment, *, exp_name: str, state: str
+) -> BacterialEnvironmentResponseExperimentReference:
+    """The typical gene of the same experiment: fitness 0 by the normalization."""
+    return BacterialEnvironmentResponseExperimentReference(
+        dataset_name=dataset_name,
+        genome_reference=assembly_reference(REFERENCE_STRAIN),
+        environment_reference=assay_environment,
+        phenotype_reference=EnvironmentResponsePhenotype(
+            measurement_type=MeasurementType.log2_ratio,
+            assay_type=AssayType.pooled_competitive_growth_barcode,
+            environment_response=0.0,
+            units=UNITS_REFERENCE,
+            screen_id=screen_id(exp_name),
+        ),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Retention: every rule, with its arithmetic
+# --------------------------------------------------------------------------- #
+DROP_MEDIUM_NOT_IN_LIBRARY = "medium_has_no_media_library_base"
+DROP_NO_ECK_PAIR = "no_one_to_one_eck_pair"
+
+DROP_RULES: dict[str, str] = {
+    DROP_MEDIUM_NOT_IN_LIBRARY: "the released per-experiment Media label is not in "
+    "MEDIA_BY_LABEL, so the assay's medium has no MEDIA_LIBRARY base to join on and a "
+    "free-text medium joins nothing. The release names exactly LB, LB_plus_SM_buffer "
+    "and LB_agar, so this rule drops nothing today; it is the refusal that keeps a new "
+    "label from being given an invented recipe",
+    DROP_NO_ECK_PAIR: "the release's MG1655 b-number has no one-to-one ECK pair with a "
+    "BW25113 locus, so the record has no storable identifier in the namespace its "
+    "assembly pin declares. Per gene in identifier_mapping.json",
+}
+
+
+class DropRule(BaseModel):
+    """One retention rule and the records it removed."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    rule: str
+    scope: Literal["gene", "experiment"]
+    description: str
+    n_records: int
+    items: tuple[str, ...] = ()
+
+
+class DropLog(BaseModel):
+    """The record-level arithmetic of a build: source, kept, and every rule."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    dataset: str
+    source_records: int
+    kept_records: int
+    dropped_records: int
+    rules: tuple[DropRule, ...]
+
+
+class AssayLedger(BaseModel):
+    """The experiment-level accounting, which record counts alone cannot show.
+
+    The 21 start samples carry no fitness column by construction, so they are not source
+    records at all; the release also carries far more fitness columns than the paper's
+    analysis used. Both are selection, not record drops, and they are reported here
+    rather than inside :class:`DropLog`, whose arithmetic is over cells.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    used_experiments: int
+    time_zero: int
+    record_bearing: int
+    dropped_for_medium: tuple[str, ...]
+    released_columns: int
+    kind_census: dict[str, int]
+    format_census: dict[str, int]
+    media_census: dict[str, int]
+    phage_census: dict[str, int]
+    moi_source_census: dict[str, int]
+    release_quality_flag: dict[str, int] = Field(
+        description="the release's own per-experiment `u` usability flag over the kept "
+        "experiments; the paper states its standard metrics are unsuitable here"
+    )
+
+
+# --------------------------------------------------------------------------- #
+# raw/: the mirror files the build reads
+# --------------------------------------------------------------------------- #
+S13_NAME = "S13_Table_MOI.xlsx"
+EXPS_USED_NAME = "Keio_exps_used.tab"
+
+#: Mirror artifacts linked into ``raw/`` under these names.
+LINKED_ARTIFACTS: dict[str, str] = {
+    S13_NAME: S13_TABLE_REL,
+    EXPS_USED_NAME: EXPS_USED_REL,
+}
+
+#: The per-analysis-set tables the build reads, as ``raw/`` path -> tarball member. A
+#: ``.tar.gz`` has no random access, so these are extracted in ONE streaming pass at
+#: download time instead of re-streaming 915 MB per member at build time.
+RAW_MEMBERS: dict[str, str] = {
+    f"{analysis_set}/{leaf}": f"html/{analysis_set}/{leaf}"
+    for analysis_set in sorted(set(ANALYSIS_SETS.values()))
+    for leaf in (
+        "exps",
+        "fit_logratios.tab",
+        "fit_standard_error_obs.tab",
+        "fit_quality.tab",
+    )
+}
+
+
+def raw_pins() -> dict[str, str]:
+    """``{raw/ path: sha256}`` for every file the build reads, from the module's pins."""
+    pins = {name: artifact(rel).sha256 for name, rel in LINKED_ARTIFACTS.items()}
+    pins.update(
+        {raw_rel: TARBALL_MEMBERS[member] for raw_rel, member in RAW_MEMBERS.items()}
+    )
+    return pins
+
+
+def extract_tarball_members(
+    members: Mapping[str, str], dest_dir: str | Path, data_root: str | None = None
+) -> None:
+    """Extract pinned members of the deposited tarball in ONE pass, verifying each.
+
+    ``members`` maps a destination path (relative to ``dest_dir``) to the tarball member
+    it comes from. Each member's bytes are hashed against :data:`TARBALL_MEMBERS` before
+    anything is written, and a member the archive does not carry raises, so a re-packed
+    archive is detected rather than silently followed.
+    """
+    from torchcell.data import write_verified
+
+    wanted = {member: rel for rel, member in members.items()}
+    if len(wanted) != len(members):
+        raise ValueError("two destinations claim the same tarball member")
+    path = raw_mirror_dir(data_root) / TARBALL_REL
+    found: set[str] = set()
+    with tarfile.open(path, mode="r:gz") as archive:
+        for info in archive:
+            if info.name not in wanted:
+                continue
+            handle = archive.extractfile(info)
+            if handle is None:
+                raise RuntimeError(f"{info.name} is not a file in {path}")
+            payload = handle.read()
+            expected = TARBALL_MEMBERS[info.name]
+            dest = Path(dest_dir) / wanted[info.name]
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            write_verified(payload, dest, expected, f"{path}:{info.name}")
+            found.add(info.name)
+    missing = sorted(set(wanted) - found)
+    if missing:
+        raise RuntimeError(f"{path} does not carry {missing}")
+
+
+def fitness_columns(columns: Iterable[str]) -> dict[str, str]:
+    """``{experiment name: column label}`` for a released fitness table.
+
+    The release labels a column ``"<expName> <expDescription>"``, and the first three
+    columns (``locusId``, ``sysName``, ``desc``) are the gene key.
+    """
+    return {
+        str(label).split(" ", 1)[0]: str(label)
+        for label in columns
+        if str(label) not in ("locusId", "sysName", "desc")
+    }
+
+
+# --------------------------------------------------------------------------- #
+# The dataset
+# --------------------------------------------------------------------------- #
+@register_dataset
+class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
+    """Mutalik 2020 per-(gene, experiment) phage-challenge RB-TnSeq gene fitness."""
+
+    #: The library is BW25113's KEIO_ML9; the released b-numbers are MG1655's and are
+    #: remapped through the ECK join (see the module docstring's identifier finding).
+    REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "BW25113"
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/phage_rbtnseq_mutalik2020",
+        io_workers: int = 0,
+        ecoli_genome: EcoliK12Genome | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize; ``ecoli_genome`` is the BW25113 genome the entry points inject."""
+        self.ecoli_genome = ecoli_genome
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return BacterialEnvironmentResponseExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return BacterialEnvironmentResponseExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """The two linked mirror files and the twelve extracted tarball members."""
+        return [*LINKED_ARTIFACTS, *RAW_MEMBERS]
+
+    def download(self) -> None:
+        """Link the mirror files into ``raw/`` and extract the pinned tarball members.
+
+        The mirror plus the pins is canonical; the PMC and figshare URLs are retrieval
+        metadata ``deposit_raw_mirror`` records, never a live build dependency. Every
+        artifact is checked against the manifest and found on disk BEFORE ``raw/`` is
+        created, so an incomplete mirror leaves no half-populated raw directory behind.
+        """
+        data_root = _data_root()
+        manifest = load_manifest(data_root)
+        mirror = raw_mirror_dir(data_root)
+        for rel in (*LINKED_ARTIFACTS.values(), TARBALL_REL):
+            pin = artifact(rel).sha256
+            check_manifest_pin(rel, manifest_sha256(manifest, rel), pin)
+            if not (mirror / rel).exists():
+                raise RuntimeError(
+                    f"required raw artifact missing from mirror: {mirror / rel}"
+                )
+        os.makedirs(self.raw_dir, exist_ok=True)
+        for name, rel in LINKED_ARTIFACTS.items():
+            link_verified(
+                mirror / rel, osp.join(self.raw_dir, name), artifact(rel).sha256
+            )
+        extract_tarball_members(RAW_MEMBERS, self.raw_dir, data_root)
+        log.info(
+            "Mutalik 2020: %d mirror files linked and %d tarball members extracted "
+            "into %s (sha256 verified)",
+            len(LINKED_ARTIFACTS),
+            len(RAW_MEMBERS),
+            self.raw_dir,
+        )
+
+    def _bw25113(self) -> EcoliK12BW25113Genome:
+        """The BW25113 genome: injected by the build entry points, or opened here."""
+        if self.ecoli_genome is None:  # a direct run; the entry points inject it
+            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
+        genome = self.ecoli_genome
+        if not isinstance(genome, EcoliK12BW25113Genome):
+            raise TypeError(
+                f"{type(self).__name__} needs the BW25113 genome, got "
+                f"{type(genome).__name__}"
+            )
+        return genome
+
+    def _kept_assays(
+        self, axis: ExperimentAxis, released: Mapping[str, ReleasedAssay]
+    ) -> tuple[list[Assay], list[str]]:
+        """The record-bearing assays whose medium has a library base, and those dropped.
+
+        The 21 start samples are excluded first: a time-zero sample is the denominator of
+        every log ratio and the release gives it no fitness column.
+        """
+        kept: list[Assay] = []
+        dropped: list[str] = []
+        for assay in axis.assays:
+            if assay.kind == "time_zero":
+                continue
+            if released[assay.exp_name].media_label not in MEDIA_BY_LABEL:
+                dropped.append(assay.exp_name)
+                continue
+            kept.append(assay)
+        return kept, dropped
+
+    @post_process
+    def process(self) -> None:
+        """Build one record per (gene, kept experiment) and write the LMDB."""
+        import pandas as pd
+
+        verify_raw_files(self.raw_dir, raw_pins())
+        moi_table = read_moi_workbook(osp.join(self.raw_dir, S13_NAME))
+        axis = parse_experiment_axis(osp.join(self.raw_dir, EXPS_USED_NAME), moi_table)
+        analysis_sets = sorted(set(ANALYSIS_SETS.values()))
+        released = read_released_assays(
+            {
+                analysis_set: osp.join(self.raw_dir, analysis_set, "exps")
+                for analysis_set in analysis_sets
+            }
+        )
+        kept, dropped_for_medium = self._kept_assays(axis, released)
+        by_set: dict[str, list[Assay]] = {name: [] for name in analysis_sets}
+        for assay in kept:
+            by_set[assay.analysis_set].append(assay)
+
+        tables: dict[str, tuple[pd.DataFrame, pd.DataFrame]] = {}
+        for analysis_set in analysis_sets:
+            fitness = pd.read_csv(
+                osp.join(self.raw_dir, analysis_set, "fit_logratios.tab"),
+                sep="\t",
+                dtype={"sysName": str},
+            )
+            errors = pd.read_csv(
+                osp.join(self.raw_dir, analysis_set, "fit_standard_error_obs.tab"),
+                sep="\t",
+                dtype={"sysName": str},
+            )
+            if list(fitness["sysName"]) != list(errors["sysName"]):
+                raise ValueError(
+                    f"{analysis_set}: the fitness and standard-error tables do not "
+                    "carry the same genes in the same order"
+                )
+            tables[analysis_set] = (fitness, errors)
+
+        measured = sorted(
+            {str(name) for fitness, _ in tables.values() for name in fitness["sysName"]}
+        )
+        bw25113 = self._bw25113()
+        mg1655 = bacterial_genome("ecoli", "MG1655", _data_root())
+        if not isinstance(mg1655, EcoliK12MG1655Genome):
+            raise TypeError(f"expected the MG1655 genome, got {type(mg1655).__name__}")
+        mapping, identifiers = map_measured_genes(
+            measured, mg1655, bw25113, label=self.name
+        )
+        genotypes = {
+            b_number: build_genotype(gene) for b_number, gene in mapping.items()
+        }
+
+        environments = {
+            assay.exp_name: environment(
+                assay, released[assay.exp_name], moi_table.get(assay.exp_name)
+            )
+            for assay in kept
+        }
+        references = {
+            assay.exp_name: build_reference(
+                self.name,
+                environments[assay.exp_name],
+                exp_name=assay.exp_name,
+                state=released[assay.exp_name].state,
+            )
+            for assay in kept
+        }
+        publication = Publication(doi=PAPER_DOI, doi_url=f"https://doi.org/{PAPER_DOI}")
+
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
+        idx = 0
+        dropped_by_gene: Counter[str] = Counter()
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for analysis_set in analysis_sets:
+                fitness, errors = tables[analysis_set]
+                fit_columns = fitness_columns(fitness.columns)
+                se_columns = fitness_columns(errors.columns)
+                genes = [str(name) for name in fitness["sysName"]]
+                for assay in tqdm(by_set[analysis_set], desc=analysis_set):
+                    state = released[assay.exp_name].state
+                    assay_environment = environments[assay.exp_name]
+                    reference = references[assay.exp_name]
+                    values = fitness[fit_columns[assay.exp_name]].to_numpy()
+                    standard_errors = errors[se_columns[assay.exp_name]].to_numpy()
+                    for b_number, value, standard_error in zip(
+                        genes, values, standard_errors, strict=True
+                    ):
+                        genotype = genotypes.get(b_number)
+                        if genotype is None:
+                            dropped_by_gene[b_number] += 1
+                            continue
+                        experiment = BacterialEnvironmentResponseExperiment(
+                            dataset_name=self.name,
+                            genotype=genotype,
+                            environment=assay_environment,
+                            phenotype=build_phenotype(
+                                float(value),
+                                float(standard_error),
+                                exp_name=assay.exp_name,
+                                state=state,
+                            ),
+                        )
+                        txn.put(
+                            f"{idx}".encode(),
+                            self._intern_record(
+                                experiment, reference, publication, itxn
+                            ),
+                        )
+                        idx += 1
+        env.close()
+        interned_env.close()
+
+        self._write_reports(
+            axis=axis,
+            released=released,
+            kept=kept,
+            dropped_for_medium=dropped_for_medium,
+            tables=tables,
+            identifiers=identifiers,
+            dropped_by_gene=dropped_by_gene,
+            kept_records=idx,
+        )
+        log.info(
+            "Mutalik2020: wrote %d records over %d genes and %d experiments",
+            idx,
+            len(mapping),
+            len(kept),
+        )
+
+    def _write_reports(
+        self,
+        *,
+        axis: ExperimentAxis,
+        released: Mapping[str, ReleasedAssay],
+        kept: Sequence[Assay],
+        dropped_for_medium: Sequence[str],
+        tables: Mapping[str, tuple[Any, Any]],
+        identifiers: MappingReport,
+        dropped_by_gene: Mapping[str, int],
+        kept_records: int,
+    ) -> None:
+        """Write the retention ledger, the assay ledger and the identifier report."""
+        import pandas as pd
+
+        #: Source records are the cells of every record-bearing used experiment, the
+        #: ones dropped for their medium INCLUDED, so the arithmetic below closes over
+        #: both rules. The 21 start samples are not source records at all: the release
+        #: gives a time-zero sample no fitness column (see :class:`AssayLedger`).
+        def cells(exp_name: str) -> int:
+            return len(tables[released[exp_name].set_name][0])
+
+        source_records = sum(cells(a.exp_name) for a in kept) + sum(
+            cells(name) for name in dropped_for_medium
+        )
+        rules = (
+            DropRule(
+                rule=DROP_MEDIUM_NOT_IN_LIBRARY,
+                scope="experiment",
+                description=DROP_RULES[DROP_MEDIUM_NOT_IN_LIBRARY],
+                n_records=sum(cells(name) for name in dropped_for_medium),
+                items=tuple(dropped_for_medium),
+            ),
+            DropRule(
+                rule=DROP_NO_ECK_PAIR,
+                scope="gene",
+                description=DROP_RULES[DROP_NO_ECK_PAIR],
+                n_records=sum(dropped_by_gene.values()),
+                items=tuple(sorted(dropped_by_gene)),
+            ),
+        )
+        drop_log = DropLog(
+            dataset=self.name,
+            source_records=source_records,
+            kept_records=kept_records,
+            dropped_records=source_records - kept_records,
+            rules=rules,
+        )
+        accounted = sum(rule.n_records for rule in rules)
+        if accounted != drop_log.dropped_records:
+            raise RuntimeError(
+                f"drop accounting mismatch: rules total {accounted}, "
+                f"{drop_log.dropped_records} records missing from the build"
+            )
+        with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as handle:
+            handle.write(drop_log.model_dump_json(indent=2))
+
+        quality: Counter[str] = Counter()
+        for analysis_set in sorted(tables):
+            frame = pd.read_csv(
+                osp.join(self.raw_dir, analysis_set, "fit_quality.tab"), sep="\t"
+            )
+            flags = frame.set_index("name")["u"]
+            for assay in kept:
+                if assay.analysis_set == analysis_set:
+                    quality[str(flags[assay.exp_name])] += 1
+        ledger = AssayLedger(
+            used_experiments=len(axis.assays),
+            time_zero=len(axis.time_zero),
+            record_bearing=len(kept),
+            dropped_for_medium=tuple(dropped_for_medium),
+            released_columns=sum(
+                len(fitness_columns(tables[name][0].columns)) for name in tables
+            ),
+            kind_census=dict(Counter(a.kind for a in kept)),
+            format_census=dict(Counter(released[a.exp_name].state for a in kept)),
+            media_census=dict(Counter(released[a.exp_name].media_label for a in kept)),
+            phage_census=dict(
+                Counter(str(a.phage) for a in kept if a.phage is not None)
+            ),
+            moi_source_census=dict(
+                Counter(str(a.moi_source) for a in kept if a.kind == "phage")
+            ),
+            release_quality_flag=dict(quality),
+        )
+        with open(osp.join(self.preprocess_dir, "assay_ledger.json"), "w") as handle:
+            handle.write(ledger.model_dump_json(indent=2))
+        with open(
+            osp.join(self.preprocess_dir, "identifier_mapping.json"), "w"
+        ) as handle:
+            handle.write(identifiers.model_dump_json(indent=2))
+
+    def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled inline in process() for this dataset."""
+        raise NotImplementedError
+
+
+# --------------------------------------------------------------------------- #
+# Verification (L0-L4) of a built tree
+# --------------------------------------------------------------------------- #
+#: The frozen record-count oracle, measured 2026-10-07 on the deposited release: the
+#: mapped genes of each analysis set times its record-bearing used experiments.
+EXPECTED_SET_CENSUS: dict[str, int] = {
+    "Keio_ML9_set16_set19": 212686,
+    "Keio_ML9_set28_set29": 33255,
+    "Keio_ML9_set30": 40403,
+}
+EXPECTED_RECORDS = sum(EXPECTED_SET_CENSUS.values())
+
+#: The frozen gene-set oracle: distinct BW25113 locus tags over the kept records.
+EXPECTED_GENES = 3697
+
+#: Records per kind of experiment: 68 phage challenges and 10 no-phage controls.
+EXPECTED_KIND_CENSUS: dict[str, int] = {"phage": 249612, "no_phage_control": 36732}
+
+#: Records per assay format, the split the 68 challenges must not collapse across.
+EXPECTED_FORMAT_CENSUS: dict[str, int] = {"liquid": 245941, "solid": 40403}
+
+VERIFY_PROVENANCE = Provenance(
+    source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{TARBALL_REL}",
+    citation_key=CITATION_KEY,
+    sha256=artifact(TARBALL_REL).sha256,
+    method=(
+        "the deposited figshare RB-TnSeq release (10.6084/m9.figshare.11413128): one "
+        "BacterialEnvironmentResponseExperiment per (gene, experiment), the normalized "
+        "log2 change in the abundance of a gene's insertion mutants with the release's "
+        "own estimated standard error; experiments selected by the paper's "
+        "Keio_exps_used.tab, doses by the S13 Table"
+    ),
+    page="html/<analysis set>/fit_logratios.tab + fit_standard_error_obs.tab + exps",
+    retrieved=RETRIEVED_AT,
+)
+
+
+def experiment_census(records: Iterable[Mapping[str, Any]]) -> list[LevelResult]:
+    """SUPPLEMENTARY L1: the record census by analysis set, kind and assay format.
+
+    The shared ``count`` row checks the dataset total, which one experiment's rows could
+    cover for another's. These rows pin the three splits the selection and the
+    environment identity turn on: a column read from the wrong analysis set, a control
+    read as a challenge, and the planktonic / solid-agar split that must stay two
+    environments rather than one.
+    """
+    by_set: Counter[str] = Counter()
+    by_kind: Counter[str] = Counter()
+    by_format: Counter[str] = Counter()
+    for record in records:
+        phenotype = record["experiment"]["phenotype"]
+        exp_name = str(phenotype["screen_id"]).removeprefix(f"{ORG_ID}:")
+        set_match = re.match(r"(set\d+)", exp_name)
+        if set_match is None:
+            raise ValueError(f"unreadable screen_id {phenotype['screen_id']!r}")
+        by_set[ANALYSIS_SETS[set_match.group(1)]] += 1
+        perturbations = record["experiment"]["environment"]["perturbations"]
+        by_kind["phage" if perturbations else "no_phage_control"] += 1
+        by_format[str(record["experiment"]["environment"]["media"]["state"])] += 1
+    rows = []
+    for name, observed, expected in (
+        ("analysis_set_census", dict(by_set), EXPECTED_SET_CENSUS),
+        ("experiment_kind_census", dict(by_kind), EXPECTED_KIND_CENSUS),
+        ("assay_format_census", dict(by_format), EXPECTED_FORMAT_CENSUS),
+    ):
+        passed = observed == expected
+        rows.append(
+            LevelResult(
+                level=Level.L1,
+                name=name,
+                passed=passed,
+                message=(
+                    f"SUPPLEMENTARY: {observed}"
+                    if passed
+                    else f"SUPPLEMENTARY: {observed} is not {expected}"
+                ),
+                details={"observed": observed, "expected": expected},
+            )
+        )
+    return rows
+
+
+def stored_tags_are_loci(
+    tags: Iterable[str], resolve: Callable[[str], Any]
+) -> LevelResult:
+    """SUPPLEMENTARY L1: every stored tag resolves to itself as a locus of the assembly.
+
+    The shared ``canonical_gene_names`` rule requires status ``current``, which a
+    pseudogene locus never has (the bacterial resolver returns ``non_gene_feature``,
+    naming the same tag). This row accepts a gene or a pseudogene locus that resolves to
+    itself and counts the statuses; it is added beside the shared row, never in its place.
+    """
+    statuses: Counter[str] = Counter()
+    elsewhere: list[str] = []
+    ordered = sorted(set(tags))
+    for tag in ordered:
+        resolution = resolve(tag)
+        statuses[str(resolution.status.value)] += 1
+        if resolution.systematic_name != tag or resolution.status not in (
+            GeneNameStatus.CURRENT,
+            GeneNameStatus.NON_GENE_FEATURE,
+        ):
+            elsewhere.append(tag)
+    return LevelResult(
+        level=Level.L1,
+        name="stored_tags_are_loci_of_the_pinned_assembly",
+        passed=not elsewhere,
+        message=(
+            f"SUPPLEMENTARY: {len(ordered)} stored tags, statuses {dict(statuses)}; "
+            f"{len(elsewhere)} do not resolve to themselves"
+        ),
+        details={
+            "n_tags": len(ordered),
+            "statuses": dict(statuses),
+            "elsewhere": elsewhere[:20],
+        },
+    )
+
+
+def verify_build(
+    dataset_root: str,
+    *,
+    data_root: str | None = None,
+    expected_count: int = EXPECTED_RECORDS,
+) -> VerificationReport:
+    """Run the environment-response L0-L4 verifier on a built tree and write its report.
+
+    The gene universe and the resolver are BW25113's (every GenBank locus, pseudogenes
+    included), which is the assembly every record pins. The verifier is the STREAMING
+    one: 286,344 records with a component-level medium on each environment are not
+    materialized. Four SUPPLEMENTARY rows are appended -- the three censuses of
+    :func:`experiment_census` and :func:`stored_tags_are_loci` -- and the shared
+    ``pair_uniqueness`` and ``canonical_gene_names`` rows keep their own verdicts.
+
+    This is the loader's own entry point rather than
+    ``torchcell.verification.runners.run_environment_response``, which is yeast-only
+    today (the same reason tong2020, borchert2024 and menasalvas2025 carry their own).
+    The report is written to ``preprocess/verification_report.json``.
+    """
+    from torchcell.verification.environment_response import (
+        verify_environment_response_dataset_streaming,
+    )
+    from torchcell.verification.runners import stream_records
+
+    genome = bacterial_genome("ecoli", REFERENCE_STRAIN, data_root)
+    if not isinstance(genome, EcoliK12BW25113Genome):
+        raise TypeError(f"expected the BW25113 genome, got {type(genome).__name__}")
+    report = verify_environment_response_dataset_streaming(
+        stream_records(dataset_root),
+        dataset_name=PhageRbTnseqMutalik2020Dataset.__name__,
+        provenance=VERIFY_PROVENANCE,
+        expected_count=expected_count,
+        sgd_genes=set(genome.genbank.loci),
+        min_containment=1.0,
+        resolve_gene_name=genome.resolve_gene_name,
+    )
+    for row in experiment_census(stream_records(dataset_root)):
+        report.add(row)
+    tags = {
+        str(perturbation["systematic_gene_name"])
+        for record in stream_records(dataset_root)
+        for perturbation in record["experiment"]["genotype"]["perturbations"]
+    }
+    report.add(stored_tags_are_loci(tags, genome.resolve_gene_name))
+    if len(tags) != EXPECTED_GENES:
+        report.add(
+            LevelResult(
+                level=Level.L1,
+                name="gene_set_size",
+                passed=False,
+                message=f"SUPPLEMENTARY: {len(tags)} genes, not {EXPECTED_GENES}",
+                details={"observed": len(tags), "expected": EXPECTED_GENES},
+            )
+        )
+    else:
+        report.add(
+            LevelResult(
+                level=Level.L1,
+                name="gene_set_size",
+                passed=True,
+                message=f"SUPPLEMENTARY: {EXPECTED_GENES} distinct BW25113 locus tags",
+                details={"observed": len(tags), "expected": EXPECTED_GENES},
+            )
+        )
+    preprocess = osp.join(dataset_root, "preprocess")
+    os.makedirs(preprocess, exist_ok=True)
+    with open(osp.join(preprocess, "verification_report.json"), "w") as handle:
+        handle.write(report.model_dump_json(indent=2))
+    return report
+
+
+def main() -> None:
+    """Build the dataset and verify it, for interactive debugging."""
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    data_root = _data_root()
+    root = osp.join(data_root, "data/torchcell/phage_rbtnseq_mutalik2020")
+    dataset = PhageRbTnseqMutalik2020Dataset(root=root)
+    print(f"len = {len(dataset)}")
+    print(dataset[0])
+    for name in ("dropped_records.json", "assay_ledger.json"):
+        print(
+            json.dumps(
+                json.loads(Path(root, "preprocess", name).read_text()), indent=2
+            )[:3000]
+        )
+    print(verify_build(root, data_root=data_root).summary())
+
+
+if __name__ == "__main__":
+    main()

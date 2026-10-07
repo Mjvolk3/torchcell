@@ -65,8 +65,10 @@ sourcing layer.
   ``MEDIA_LIBRARY`` states. Its values are an independent measurement of Schmidt 2016's
   quantity, not a re-release: zero of the 1,812 proteins their nearest conditions share
   agree to 1e-6, at Pearson r 0.796 on log10 mass fraction.
-- ``mutalik2020`` -- the phage-resistance RB-TnSeq raw mirror and sourcing layer; the
-  dataset class waits on a loader using the ``PhagePerturbation`` environment leaf.
+- ``mutalik2020`` -- ``PhageRbTnseqMutalik2020Dataset``: the phage-resistance RB-TnSeq
+  screen, one record per (gene, experiment) over 68 phage challenges and 10 no-phage
+  controls, each challenge's environment carrying a ``PhagePerturbation`` at the MOI
+  the S13 Table states.
 - ``wetmore2015`` -- a subsumption record: its *E. coli* experiments are carried by the
   Price 2018 compendium above, which is the loader that serves them.
 """
@@ -85,6 +87,9 @@ from .gupta2024 import (
 )
 from .lamoureux2023 import RnaseqLamoureux2023Dataset as RnaseqLamoureux2023Dataset
 from .mori2021 import ProteomeMori2021Dataset as ProteomeMori2021Dataset
+from .mutalik2020 import (
+    PhageRbTnseqMutalik2020Dataset as PhageRbTnseqMutalik2020Dataset,
+)
 from .price2018 import RbTnseqPrice2018EcoliDataset as RbTnseqPrice2018EcoliDataset
 from .rapp2026 import MetabolomeRapp2026Dataset as MetabolomeRapp2026Dataset
 from .rousset2018 import (

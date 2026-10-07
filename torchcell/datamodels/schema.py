@@ -125,9 +125,12 @@ def _require_value_or_gap(model: ProvenanceGapMixin, fields: tuple[str, ...]) ->
 # its loader opts in (``StrainEnvironmentResponseExperiment``).
 # Design + worked examples: ``[[torchcell.datamodels.strain-background]]``.
 # --------------------------------------------------------------------------- #
-SYSTEMATIC_GENE_PATTERN = r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$"
-"""A nuclear ORF / ncRNA / mitochondrial systematic name (the ``GenePerturbation``
-pattern, restated so the background classes do not reach into that validator)."""
+SGD_SYSTEMATIC_GENE_PATTERN = (
+    r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$"
+)
+"""An SGD (S. cerevisiae) nuclear ORF / ncRNA / mitochondrial systematic name (the
+``GenePerturbation`` pattern, restated so the background classes do not reach into that
+validator)."""
 
 
 class MatingType(StrEnum):
@@ -257,7 +260,7 @@ class BackgroundAllele(ProvenanceGapMixin):
     @classmethod
     def _validate_systematic(cls, v: str) -> str:
         """The allele sits in a real R64 feature (systematic-name pattern)."""
-        if not re.match(SYSTEMATIC_GENE_PATTERN, v):
+        if not re.match(SGD_SYSTEMATIC_GENE_PATTERN, v):
             raise ValueError(f"Invalid systematic gene name {v!r}")
         return v
 

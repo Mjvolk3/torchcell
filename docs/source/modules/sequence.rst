@@ -5,7 +5,7 @@ torchcell.sequence
 
 .. currentmodule:: torchcell.sequence
 
-Genome and sequence data structures. :class:`~torchcell.sequence.Genome` is the abstract genome interface (lazy gene-set and sequence access), :class:`~torchcell.sequence.Gene` a gene within it, and :class:`~torchcell.sequence.DnaWindowResult` and :class:`~torchcell.sequence.DnaSelectionResult` the sequence windows the embedding datasets consume. The *S. cerevisiae* S288C implementation lives in ``torchcell.sequence.genome.scerevisiae``, and ``torchcell.sequence.genome.registry`` resolves the sha256-pinned reference genome files.
+Genome and sequence data structures. :class:`~torchcell.sequence.Genome` is the abstract genome interface (lazy gene-set and sequence access), :class:`~torchcell.sequence.Gene` a gene within it, and :class:`~torchcell.sequence.DnaWindowResult` and :class:`~torchcell.sequence.DnaSelectionResult` the sequence windows the embedding datasets consume. ``torchcell.sequence.genome.base`` holds the organism-agnostic ``AnnotatedGenome`` (the recorded ``data.db`` cache, GO, gene-name resolution) that each host subclasses; the *S. cerevisiae* S288C implementation lives in ``torchcell.sequence.genome.scerevisiae``, and ``torchcell.sequence.genome.registry`` resolves the sha256-pinned reference genome files.
 
 .. contents:: Contents
     :local:

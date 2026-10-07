@@ -55,3 +55,7 @@ Phase 1 of the artifact-tier plan (decisions D1 to D3). A graph record points at
 - `Neo4jQueryRaw.process` resolves every distinct ref of its records once per run (manifests only) and fails the build with `UnresolvableArtifactError` on one that resolves nowhere; `Neo4jQueryRaw.materialize(ref)` fetches lazily. Details in [[torchcell.data.neo4j_query_raw]].
 - `Neo4jCellDataset.refs_of(index)` lists the distinct refs of one processed entry (every aggregated record, experiment then reference) by reading the processed LMDB only. `Neo4jCellDataset.materialize(ref)` is `torchcell.artifacts.materialize(ref)` over the environment's `DATA_ROOT` and `TC_DATA_URL`, the sources the raw stage's gate used by default. Models call these when they need bytes.
 - Tests: `tests/torchcell/artifacts/test_artifact_walk.py` (6), `tests/torchcell/data/test_neo4j_query_raw_artifacts.py` (12), `tests/torchcell/data/test_neo4j_cell_artifacts.py` (3).
+
+## 2026.10.07 - Figure: a query, then the off-graph bytes
+
+[[torchcell.artifacts.mermaid.query-resolve]] is the sequence diagram of one query: Neo4j answers with records whose perturbations carry `ArtifactRef` pointers, the gate checks each distinct ref against a manifest (local tier, else tc-data) without downloading, and `materialize` later fetches the bytes through the same resolver order with sha256 verification at every step. Rendered to `notes/assets/pdf-output/torchcell.artifacts.mermaid.query-resolve.{pdf,svg,png}`.

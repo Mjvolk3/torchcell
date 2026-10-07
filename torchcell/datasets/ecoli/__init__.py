@@ -7,6 +7,28 @@ Each loader is ``<firstauthor><year>.py``, decorated with ``@register_dataset`` 
 subclassing ``ExperimentDataset``; importing it here populates ``dataset_registry``.
 The shared skeleton (genome, locus-tag reconciliation, assembly pin, injection rule)
 is ``torchcell.datasets.bacteria_common``.
+
+What this package holds. A module may carry a dataset class, a provenance record, or
+both: a row whose data another row's loader subsumes, or whose records the schema cannot
+yet express, is a RECORD of that finding rather than nothing, and is imported for its
+sourcing layer.
+
+- ``fuhrer2017`` -- ``MetabolomeFuhrer2017Dataset``: the Keio deletion metabolome,
+  FIA-TOF-MS ion z-scores per BW25113 strain (BioStudies S-BSST5).
+- ``goodall2018`` -- ``GeneEssentialityGoodall2018Dataset``: BW25113 gene-level TraDIS
+  essentiality calls.
+- ``lamoureux2023`` -- ``RnaseqLamoureux2023Dataset``: PRECISE-1K, one record per MG1655
+  RNA-seq library of the samples whose genotype and environment the release states.
+- ``tong2020`` -- ``CarbonSourceTong2020Dataset``: Keio and sRNA-library deletion growth
+  on thirty carbon sources, against two assembly pins.
+- ``wang2015`` -- ``EnvChemgenWang2015Dataset``: Keio transporter deletions scored for
+  isoprenol tolerance.
+- ``caglar2017`` -- a provenance record and no loader: REL606 is *E. coli* B, and its
+  assembly set joined the tier after this record was written.
+- ``mutalik2020`` -- the phage-resistance RB-TnSeq raw mirror and sourcing layer; the
+  dataset class waits on a loader using the ``PhagePerturbation`` environment leaf.
+- ``wetmore2015`` -- a subsumption record: its *E. coli* experiments are carried by the
+  Price 2018 compendium, which is the loader that will serve them.
 """
 
 from .caglar2017 import ProteomeCaglar2017Dataset as ProteomeCaglar2017Dataset

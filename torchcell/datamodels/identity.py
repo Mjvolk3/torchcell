@@ -67,6 +67,7 @@ from torchcell.datamodels.schema import (
     GenomicSpan,
     Media,
     MediaComponent,
+    PhagePerturbation,
     PreCulture,
     SmallMoleculePerturbation,
     Solvent,
@@ -84,6 +85,7 @@ __all__ = [
     "ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS",
     "MEDIA_COMPONENT_IDENTITY_FIELDS",
     "MEDIA_IDENTITY_FIELDS",
+    "PHAGE_PERTURBATION_IDENTITY_FIELDS",
     "PHYSICAL_PERTURBATION_IDENTITY_FIELDS",
     "PRE_CULTURE_IDENTITY_FIELDS",
     "SMALL_MOLECULE_IDENTITY_FIELDS",
@@ -145,6 +147,24 @@ BIOLOGIC_PERTURBATION_IDENTITY_FIELDS: tuple[str, ...] = (
     "sequence",
     "concentration",
 )
+PHAGE_PERTURBATION_IDENTITY_FIELDS: tuple[str, ...] = (
+    "perturbation_type",
+    "name",
+    "ncbi_taxid",
+    "genome_accession",
+    "multiplicity_of_infection",
+    "titer_pfu_per_ml",
+)
+"""A phage challenge is the phage (normalized name, taxon, genome accession) at its dose
+(the multiplicity of infection, and the culture titer when stated).
+
+``family``, ``genome_type`` and ``host_of_propagation`` are deliberately absent: they
+describe the agent's classification and how its stock was grown, which two sources may
+state differently for one phage, so including them would split a node that should join.
+The dose IS identity, as it is on the other dosed leaves: two MOIs of one phage are two
+different edits to the environment, which is what keeps 68 challenges of 14 phages from
+collapsing onto one environment.
+"""
 ENVIRONMENT_IDENTITY_FIELDS: tuple[str, ...] = (
     "media",
     "temperature",
@@ -288,9 +308,10 @@ def environment_perturbation_identity(perturbation: Any) -> dict[str, Any]:
 
     The discriminator plus the slots of the concrete leaf: compound key, dose and
     vehicle for a small molecule; factor, magnitude and realizing agent for a
-    physical factor; agent class, name, accession, sequence and dose for a biologic.
+    physical factor; agent class, name, accession, sequence and dose for a biologic;
+    phage name, taxon, genome accession and the multiplicity of infection for a phage.
     ``description`` is dropped (it is a per-dataset restatement of the leaf's own
-    default). The dose IS part of identity on both dosed leaves: two doses of one
+    default). The dose IS part of identity on every dosed leaf: two doses of one
     compound are two different edits to the environment.
     """
     if isinstance(perturbation, SmallMoleculePerturbation):
@@ -320,11 +341,20 @@ def environment_perturbation_identity(perturbation: Any) -> dict[str, Any]:
             "sequence": perturbation.sequence,
             "concentration": _concentration_identity(perturbation.concentration),
         }
+    if isinstance(perturbation, PhagePerturbation):
+        return {
+            "perturbation_type": perturbation.perturbation_type,
+            "name": perturbation.name.strip().lower(),
+            "ncbi_taxid": perturbation.ncbi_taxid,
+            "genome_accession": perturbation.genome_accession,
+            "multiplicity_of_infection": perturbation.multiplicity_of_infection,
+            "titer_pfu_per_ml": perturbation.titer_pfu_per_ml,
+        }
     raise TypeError(
         "no identity projection for "
         f"{type(perturbation).__name__}; an environment perturbation is one of "
         "SmallMoleculePerturbation, EnvironmentPhysicalPerturbation, "
-        "BiologicPerturbation"
+        "BiologicPerturbation, PhagePerturbation"
     )
 
 

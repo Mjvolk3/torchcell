@@ -58,6 +58,11 @@ LANE_ROOTS: dict[str, tuple[str, ...]] = {
         "GenomicSpan",
         "StrainConstruction",
         "ConstructedOrf",
+        # How a bacterial record's stored locus tag was reached from the identifier its
+        # source released. It belongs on the genotype lane because it qualifies a
+        # perturbation's gene identity, not because it is provenance of the record as a
+        # whole: a crosswalk use is a property of the edit that names the gene.
+        "DerivedIdentifierMapping",
     ),
     "environment": (
         "Environment",

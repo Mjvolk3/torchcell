@@ -449,17 +449,20 @@ def test_main_writes_both_orientations_then_reports_no_changes(
 
 
 def test_real_schema_diagram(md: ModuleType) -> None:
-    """The real config (read-only): 31 nodes (4 auto-mapped: dataset, genome, genotype,
-    publication; 27 inherited), 5 Biolink classes, 13 edges expanding to 48 data lines.
+    """The real config (read-only): 32 nodes (4 auto-mapped: dataset, genome, genotype,
+    publication; 28 inherited), 6 Biolink classes, 13 edges expanding to 49 data lines.
     ``interned constant`` (tcdb-002) is a third ``information content entity`` beside
     experiment and experiment reference; the bacterial program added four inherited
     nodes (``bacterial perturbation`` under genotype, and the product titer, protein
     turnover and flux phenotypes) and eight data lines (one more ``perturbation member
     of`` source, one more ``crispr construct member of`` target, and three phenotype
-    sources times the two ``phenotype member of`` targets).
-    Line count 139 = 1 header + (2 + 5) + (2 + 4) + (2 + 27) + (2 + 27 is_a lines)
-    + (2 + 48) + 9 legend + 5 styling + 3 class lines. ``Genotype`` is declared on
-    lines 5 and 13 (Biolink class and auto-mapped node, the duplicate Finding), and
+    sources times the two ``phenotype member of`` targets). Its follow-up added
+    ``phage perturbation`` under a SIXTH Biolink class, ``biotic exposure`` (Biolink
+    defines ``environmental exposure`` as abiotic, so a virion does not belong there),
+    and one data line (a second ``environment perturbation member of`` source).
+    Line count 143 = 1 header + (2 + 6) + (2 + 4) + (2 + 28) + (2 + 28 is_a lines)
+    + (2 + 49) + 9 legend + 5 styling + 3 class lines. ``Genotype`` is declared on
+    lines 5 and 14 (Biolink class and auto-mapped node, the duplicate Finding), and
     the list-valued ``source`` of ``genotype member of`` expands to two lines.
     """
     gen = md.MermaidDiagramGenerator(str(REAL_SCHEMA))
@@ -474,17 +477,18 @@ def test_real_schema_diagram(md: ModuleType) -> None:
             n_data_lines += (1 if isinstance(src, str) else len(src)) * (
                 1 if isinstance(tgt, str) else len(tgt)
             )
-    assert (len(gen.nodes), n_edges, n_data_lines) == (31, 13, 48)
-    assert len(lines) == 139
-    assert lines[2:8] == [
+    assert (len(gen.nodes), n_edges, n_data_lines) == (32, 13, 49)
+    assert len(lines) == 143
+    assert lines[2:9] == [
         "    %% Biolink Classes (Parent Entity Types)",
+        '    BioticExposure["biotic exposure"]',
         '    EnvironmentalExposure["environmental exposure"]',
         '    Genotype["genotype"]',
         '    InformationContentEntity["information content entity"]',
         '    NucleicAcidEntity["nucleic acid entity"]',
         '    PhenotypicFeature["phenotypic feature"]',
     ]
-    assert lines[9:14] == [
+    assert lines[10:15] == [
         "    %% Direct Biolink Usage (No Inheritance)",
         '    Dataset["dataset"]',
         '    Genome["genome"]',
@@ -498,6 +502,9 @@ def test_real_schema_diagram(md: ModuleType) -> None:
     ]
     assert "    Genotype -->|is_a| SegregantGenotype" in lines
     assert "    Genotype -->|is_a| BacterialPerturbation" in lines
+    # the phage sits under biotic exposure, NOT under environmental exposure
+    assert "    BioticExposure -->|is_a| PhagePerturbation" in lines
+    assert "    EnvironmentalExposure -->|is_a| PhagePerturbation" not in lines
     assert (
         '    BacterialPerturbation -.->|"perturbation member of<br/>(is_a: genetically associated with)"| Genotype'
         in lines

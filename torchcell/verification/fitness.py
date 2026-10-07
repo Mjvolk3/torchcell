@@ -9,7 +9,9 @@ invariant (subsumed by L0); this verifier adds:
 
 1. L1 ``count`` -- exact record-count oracle.
 2. L1 ``pair_uniqueness`` -- one record per (screened STRAIN x environment) pair (the strain
-   is the full genotype signature, so an allelic series is distinct, not duplicate).
+   is the full genotype signature, so an allelic series is distinct, not duplicate; the
+   environment includes its typed EDITS, so one strain grown on thirty carbon sources is
+   thirty records, not one repeated thirty times).
 3. L2 ``value_fidelity`` -- fitness values are finite and non-negative (WT == 1, sick < 1).
 4. L2 ``se_nonnegative`` -- reported fitness SEs are non-negative.
 5. L3 ``reference_one`` -- the reference (wild-type) fitness is 1.0 (the convention baseline).
@@ -65,11 +67,56 @@ def _genotype_signature(
 
 
 def _environment_signature(experiment: dict[str, Any]) -> tuple[Any, ...]:
-    """Canonical environment identity: temperature, media, and duration scalars."""
+    """Canonical environment identity: the environment EDITS plus the scalars.
+
+    The edits come first because they are what distinguishes most conditions of a
+    fitness screen that varies its environment: Tong 2020 grows every deletion strain on
+    ONE medium (solid MOPS minimal) at one temperature for one duration and varies only
+    the carbon source, which rides on ``environment.perturbations``. Keyed on the
+    scalars alone, its 3,644 Keio strains each read as thirty duplicates of one record,
+    and L1 fails on a dataset that holds exactly one record per (strain, carbon source).
+
+    Each edit is keyed by ``(perturbation_type, compound or agent name, factor, dose
+    value, unit, basis)``, the same tuple :func:`environment_response._condition_signature`
+    uses, so the two verifiers agree on what makes two conditions different. Elements are
+    stringified for a total order (mixed None / str / float never breaks the sort).
+
+    A yeast fitness dataset carries no environment perturbations, so its key gains an
+    empty tuple and its (already unique) signatures are unchanged.
+    """
     env = experiment["environment"]
+    perturbations: list[tuple[str, ...]] = []
+    for perturbation in env.get("perturbations") or []:
+        compound = (
+            perturbation.get("compound")
+            if isinstance(perturbation.get("compound"), dict)
+            else {}
+        )
+        agent = (
+            perturbation.get("agent")
+            if isinstance(perturbation.get("agent"), dict)
+            else {}
+        )
+        dose = perturbation.get("concentration") or perturbation.get("magnitude") or {}
+        dose = dose if isinstance(dose, dict) else {}
+        fields = (
+            perturbation.get("perturbation_type"),
+            compound.get("name") or agent.get("name"),
+            perturbation.get("factor"),
+            dose.get("value"),
+            dose.get("unit"),
+            dose.get("basis"),
+        )
+        perturbations.append(tuple("" if v is None else str(v) for v in fields))
     temp = (env.get("temperature") or {}).get("value")
     media = (env.get("media") or {}).get("name")
-    return (temp, media, env.get("duration_hours"), env.get("duration_generations"))
+    return (
+        tuple(sorted(perturbations)),
+        temp,
+        media,
+        env.get("duration_hours"),
+        env.get("duration_generations"),
+    )
 
 
 def _l1_pair_uniqueness(records: Sequence[Record]) -> LevelResult:
@@ -89,7 +136,12 @@ def _l1_pair_uniqueness(records: Sequence[Record]) -> LevelResult:
             if not dups
             else f"{len(dups)} (strain, environment) pairs appear in multiple records"
         ),
-        details={"n_pairs": len(seen), "n_duplicated": len(dups)},
+        details={
+            "n_pairs": len(seen),
+            "n_duplicated": len(dups),
+            "n_strains": len({genotype for genotype, _ in seen}),
+            "n_environments": len({environment for _, environment in seen}),
+        },
     )
 
 

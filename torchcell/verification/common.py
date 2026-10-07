@@ -515,6 +515,11 @@ class SharedRecordRules:
         not failed. The ``None`` sentinel of an allele-bearing perturbation is never a
         spelling. A common name the resolver cannot place at all is reported as
         unresolved; only a name that resolves to ANOTHER gene fails.
+
+        A stored systematic name that resolves to ITSELF as a ``non_gene_feature`` (a
+        pseudogene locus) passes and is counted: it is a real locus of the annotation and
+        a real deletion target. A name whose resolution is ``renamed``, ``retired`` or
+        ``ambiguous``, or that lands on another locus, still fails.
         """
         spellings: dict[str, set[str]] = {}
         for (systematic, common), _ in self._name_records.items():
@@ -552,19 +557,37 @@ class SharedRecordRules:
             if systematic in split
         )
         not_current: list[str] = []
+        self_resolving_non_gene: list[str] = []
         mismatched: list[str] = []
         unresolved: list[str] = []
         if self.resolve_gene_name is not None:
             for systematic in sorted(spellings):
                 resolution = self.resolve_gene_name(systematic)
-                if (
-                    str(_enum_value(resolution.status)) != "current"
-                    or resolution.systematic_name != systematic
-                ):
-                    not_current.append(
-                        f"{systematic} ({_enum_value(resolution.status)}"
-                        f" -> {resolution.systematic_name})"
+                status = str(_enum_value(resolution.status))
+                resolves_to_itself = resolution.systematic_name == systematic
+                if status == "current" and resolves_to_itself:
+                    continue
+                # A PSEUDOGENE locus that resolves to ITSELF is a real locus of the
+                # annotation and a legitimate perturbation target: the Keio collection
+                # and the sRNA library deleted 108 BW25113 and 1 MG1655 pseudogene loci,
+                # and the annotation answers each with its own tag under
+                # ``non_gene_feature`` (its ``gene`` features exclude ``/pseudo`` loci by
+                # construction, so a pseudogene can never come back ``current``).
+                # Requiring ``current`` therefore failed records whose identifier is
+                # exactly right. It is reported and counted, not passed over silently;
+                # what still FAILS is a name that resolves to ANOTHER locus, or to none
+                # (retired / ambiguous), which is the defect this rule exists for.
+                if status == "non_gene_feature" and resolves_to_itself:
+                    # ``feature_type`` is read defensively: the resolver contract
+                    # (``GeneNameResolution``) declares only status + systematic_name.
+                    feature = getattr(resolution, "feature_type", None)
+                    self_resolving_non_gene.append(
+                        f"{systematic} ({status}, {feature})"
                     )
+                    continue
+                not_current.append(
+                    f"{systematic} ({status} -> {resolution.systematic_name})"
+                )
             for systematic, common in sorted(
                 (s, c) for s, c in self._name_records if c is not None
             ):
@@ -596,6 +619,12 @@ class SharedRecordRules:
                     if unresolved
                     else ""
                 )
+                + (
+                    f"; {len(self_resolving_non_gene)} are pseudogene loci the genome "
+                    "resolves to themselves"
+                    if self_resolving_non_gene
+                    else ""
+                )
             )
         else:
             message = (
@@ -616,6 +645,8 @@ class SharedRecordRules:
                 "n_records_with_split_spelling": split_records,
                 "merged_orf_aliases": dict(sorted(merged_aliases.items())[:20]),
                 "not_current": not_current[:20],
+                "n_self_resolving_non_gene_features": len(self_resolving_non_gene),
+                "self_resolving_non_gene_features": self_resolving_non_gene[:20],
                 "common_name_mismatch": mismatched[:20],
                 "unresolved_common_names": unresolved[:20],
             },

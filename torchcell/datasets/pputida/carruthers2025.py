@@ -171,7 +171,9 @@ from torchcell.datamodels.schema import (
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
-    Environment,
+    CultureEnvironment,
+    CultureFormat,
+    EndpointRule,
     Experiment,
     ExperimentReference,
     GenomicSpan,
@@ -528,9 +530,9 @@ CULTURE_FORMAT = _paper(
     _Q_CULTURE,
     page=_METHODS_CULTURE,
     note="the vessel, 1.5 mL working volume, 1000 RPM shaking and 48 h endpoint are "
-    "CultureEnvironment fields, but ProductTiterExperiment.environment is annotated "
-    "Environment, so pydantic would dump them away; they are recorded here and in the "
-    "note until that slot is narrowed",
+    "CultureEnvironment fields, and ProductTiterExperiment.environment is now annotated "
+    "CultureEnvironment, so production_environment() carries them on the record; the "
+    "proteome family's slot is still Environment, which drops them on dump",
 )
 AEROBICITY = _paper(
     "aerobic",
@@ -951,25 +953,39 @@ def crispri_perturbation(
     )
 
 
-def production_environment() -> Environment:
-    """M9-NREL at 24 C for 48 h, with the 2 g/L L-arabinose pathway inducer.
+def production_environment() -> CultureEnvironment:
+    """M9-NREL at 24 C for 48 h in the flower plate, with the L-arabinose inducer.
 
-    A plain ``Environment``, not a ``CultureEnvironment``: ``Experiment.environment`` is
-    annotated ``Environment`` and pydantic serializes by the DECLARED type, so the
-    vessel / volume / shaking slots would be dumped away without an error. They are
-    carried in :data:`CULTURE_FORMAT` instead. The production culture's kanamycin and
-    gentamicin levels are stated only for the LB and passaging steps, so they are not
-    recorded as doses here; that is said in the note rather than typed, because a
-    ``ProvenanceGap`` must name a field that is ``None`` and ``perturbations`` is set.
+    A ``CultureEnvironment``, since ``ProductTiterExperiment.environment`` is now
+    annotated as one: a titer is read with its vessel, and the slot's narrowing is what
+    makes :data:`CULTURE_FORMAT`'s vessel, working volume and shaking survive the dump
+    (pydantic serializes by the DECLARED type, so the same object in an
+    ``Environment``-typed slot loses them silently -- which is what the proteome family
+    still does, and a test pins both halves).
+
+    The production culture's kanamycin and gentamicin levels are stated only for the LB
+    and passaging steps, so they are not recorded as doses here; that is said in the
+    note rather than typed, because a ``ProvenanceGap`` must name a field that is
+    ``None`` and ``perturbations`` is set.
     """
     if str(MEDIUM.value) not in M9_NREL_CARRUTHERS2025.name.replace(" ", "-"):
         raise RuntimeError(
             f"the served medium {M9_NREL_CARRUTHERS2025.name!r} is not the "
             f"{MEDIUM.value!r} the Methods name"
         )
-    return Environment(
+    culture = CULTURE_FORMAT.value
+    if not isinstance(culture, dict):
+        raise RuntimeError(f"CULTURE_FORMAT.value is not a mapping: {culture!r}")
+    return CultureEnvironment(
         media=M9_NREL_CARRUTHERS2025,
         temperature=Temperature(value=float(TEMPERATURE_C.value)),
+        culture_format=CultureFormat(
+            vessel=str(culture["vessel"]),
+            working_volume_ul=float(culture["working_volume_ul"]),
+            shaking_rpm=float(culture["shaking_rpm"]),
+            endpoint=EndpointRule.fixed_duration,
+            provenance=[CULTURE_FORMAT],
+        ),
         perturbations=[
             SmallMoleculePerturbation(
                 compound=resolved_compound("L-arabinose"),

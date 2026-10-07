@@ -250,7 +250,7 @@ def test_m9_is_the_four_salts_and_every_m9_formulation_derives_from_it() -> None
     m9_family = [
         key for key in BACTERIAL_KEYS if MEDIA_LIBRARY[key].base_medium == "M9"
     ]
-    assert len(m9_family) == 15
+    assert len(m9_family) == 17
     assert oc.media_derivation_issues() == []
 
 
@@ -343,16 +343,35 @@ def _xlsx_text(path: Path) -> str:
     return "\n".join(sheets)
 
 
+@functools.cache
+def _docx_text(path: Path) -> str:
+    """Every paragraph of a docx, one per line, as ``docx_paragraphs`` renders it.
+
+    The rendering a docx quote in ``media.py`` is cut from. The renderer is the Lim 2022
+    loader's, reused rather than reimplemented: two renderings of one file that disagree
+    would make this audit lie in either direction.
+    """
+    from torchcell.datasets.pputida.lim2022 import docx_paragraphs
+
+    return "\n".join(docx_paragraphs(path))
+
+
 @pytest.mark.data
 @pytest.mark.parametrize("key", BACTERIAL_KEYS)
 def test_every_quote_is_verbatim_in_the_mirrored_file(key: str) -> None:
-    """sha256 matches the pin and the quote is a substring of the pinned file."""
+    """sha256 matches the pin and the quote is a substring of the pinned file.
+
+    Three source shapes: a Markdown OCR is read as text (``audit_sourced_value``), an
+    xlsx as its row rendering, and a docx as its paragraph rendering. The two binary
+    shapes re-hash the file first, so a quote is trusted only against the pinned bytes.
+    """
     root = Path(os.environ["DATA_ROOT"]) / "torchcell-library"
     for sv in _sourced(MEDIA_LIBRARY[key]):
         path = sv.source_path(root)
-        if path.suffix == ".xlsx":
+        if path.suffix in {".xlsx", ".docx"}:
             assert sha256_file(path) == sv.provenance.sha256, f"{key}: {path}"
-            assert sv.quote in _xlsx_text(path), f"{key}: {sv.quote[:60]!r}"
+            rendered = _xlsx_text(path) if path.suffix == ".xlsx" else _docx_text(path)
+            assert sv.quote in rendered, f"{key}: {sv.quote[:60]!r}"
             continue
         result = audit_sourced_value(sv, root)
         assert result.passed, f"{key}: {result.message}"

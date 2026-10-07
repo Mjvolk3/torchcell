@@ -55754,6 +55754,21 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:62898",
+      "inchikey": "CPJRRXSHAYUTGL-UHFFFAOYSA-N",
+      "name": "isoprenol",
+      "pubchem_cid": 12988,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "CC(=C)CCO",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/isoprenol/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "3-methyl-3-buten-1-ol"
+      ],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:6043",
       "inchikey": "JTPUMZTWMWIVPA-UHFFFAOYSA-O",
       "name": "isopropamide",
@@ -56511,6 +56526,19 @@
       "retrieved_at": "2026-09-12",
       "smiles": "CC(C(=O)O)N",
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/L-alanine/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": null,
+      "inchikey": "SRBFZHDQGSBBOR-HWQSCIPKSA-N",
+      "name": "L-arabinose",
+      "pubchem_cid": 439195,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "C1C(C(C(C(O1)O)O)O)O",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/L-arabinose/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [],
       "unresolved_reason": null
     },

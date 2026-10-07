@@ -411,3 +411,98 @@ three and blocks until `--ack-value-drift` is given. The honest reason, now chec
 at `bb31eabbe` and on this branch, identical) and no pre-existing table row changed (the
 table diff is additions only). A served medium or compound node id therefore does not
 move, which is what makes the acknowledgment honest rather than a bypass.
+
+## 2026.10.07 - Follow-ups from the first loaders
+
+Source: `torchcell/datamodels/media.py` (the two Lim 2022 keys),
+`torchcell/datamodels/compound_identity_inputs/bioproduction.txt`,
+`torchcell/datamodels/compound_identity_table.json`.
+Tests: `tests/torchcell/datamodels/test_media_bacterial.py`.
+Branch: `feat/bacterial-schema-followups`; the needs are stated in
+[[torchcell.datasets.pputida.lim2022]], [[torchcell.datasets.ecoli.lamoureux2023]] and
+[[torchcell.datasets.pputida.carruthers2025]].
+
+### Two keys added (81 total, from 79)
+
+| key | base | carbon | source | rows |
+|---|---|---|---|---|
+| `M9_NREL_LIM2022` | M9 | 4 g/L glucose | Lim 2022 `si/si1.docx` (sha256 `64e1df31...`), Supplementary Method 1 | 7 |
+| `M9_NREL_NOCARBON_LIM2022` | M9 | varied (the aromatic project) | same | 7 |
+
+Both state the five NREL salts at the amounts Lim 2022's own sentence gives (2 g/L
+ammonium sulfate, 6.8 g/L Na2HPO4, 3 g/L KH2PO4, 0.5 g/L NaCl, 2 mM MgSO4, 0.1 mM
+CaCl2) and drop the `M9` base's ammonium chloride, which the ammonium sulfate replaces.
+They are distinct objects from `M9_NREL_LIM2025` although the salt amounts agree,
+because each paper's recipe is its own object and their trace components differ (below).
+The loader's own `LIM2022_M9_NO_CARBON` stays where it is; it predates these keys and
+the medium it builds is the same composition, so the two land on one `media_identity`
+node.
+
+**The quote is a docx paragraph, which is a third source shape.** Lim 2022's
+Supplementary Information is a `.docx`, so `audit_sourced_value` (which reads the file
+as text) cannot find the quote in the zip container even though the sha256 matches. The
+media test now renders a docx through the Lim 2022 loader's own `docx_paragraphs` --
+reused, not reimplemented, because two renderings of one file that disagree would make
+the audit lie in either direction -- and re-hashes the file first, exactly as the xlsx
+branch does. 201 passed with `--data`.
+
+**The trace solution: a stated composition kept as ONE component.** Lim 2022 is the only
+NREL-M9 paper that states its 2000x trace solution in full (the other papers defer to
+Lim 2020 / Linger 2014, which are not mirrored), so the full recipe is a `SourcedValue`
+on the component rather than a deferral to an unmirrored paper. It is still
+`composition_deferred` and not expanded into ten components, for a measured reason: six
+of the ten labels have no compound-identity row (2026-10-07: `manganese chloride
+tetrahydrate`, `cobalt chloride hexahydrate`, `copper sulfate dihydrate`, `sodium
+molybdate dihydrate`, `potassium iodide`, `disodium ethylenediaminetetraacetate` are
+`UNRESOLVED_PUBLIC`; `zinc sulfate heptahydrate`, `calcium chloride dihydrate`,
+`iron(II) sulfate heptahydrate` and `boric acid` resolve). A partial expansion would
+assert a partial recipe. Curating those six rows and expanding the component is a named
+follow-up, and the quote carries the whole recipe meanwhile.
+
+### PRECISE-1K: no entry, and the measurement that says why
+
+The Lamoureux note asks for seven base media (`CAMHB`, `RPMI+10%LB`, `TMA`, `W2`,
+`Medium C`, `01xLB`, `M9P`; 53 samples). **None is addable**: searched the pinned
+`paper.md` and `si/si1.md` for each name and for a recipe of any medium -- every one of
+the seven returns ZERO matches, as do `trace element`, `Sauer`, `tryptone`, `yeast
+extract` and the strings `g/L` and `g l -1`. The paper names its control condition "M9
+minimal media with glucose" and prints no amount anywhere. So the row stays in the
+"Still unsourced" list above, and the loader's per-sample `derived:M9` / `derived:LB`
+placeholders remain the honest encoding. Writing a recipe would mean inventing one.
+
+### Compound table: two rows added (5,532 total, from 5,530)
+
+`compound_identity_inputs/bioproduction.txt` lists three labels; the curator was run on
+that list alone (PubChem PUG REST, 2026-10-07) and its two rows were merged into
+`compound_identity_table.json` additively -- the merge asserted that no existing name,
+synonym, CID or InChIKey was already claimed and that every pre-existing row survives
+byte-identical, and the diff is 28 added lines and nothing else. `_TABLE_SHA256` re-pinned
+to `1bc35b17...`.
+
+| canonical name | CID | InChIKey | ChEBI | synonyms |
+|---|---|---|---|---|
+| `isoprenol` | 12988 | `CPJRRXSHAYUTGL-UHFFFAOYSA-N` | CHEBI:62898 | `3-methyl-3-buten-1-ol` |
+| `L-arabinose` | 439195 | `SRBFZHDQGSBBOR-HWQSCIPKSA-N` | -- | -- |
+
+Both labels are curated spellings (`canonical`): the bioproduction literature and this
+repository's notes say isoprenol and L-arabinose, while PubChem's Titles are
+"3-Methyl-3-buten-1-ol" and "L-Arabinose". The systematic spelling is listed on its own
+line so it resolves to the same CID and collapses into the isoprenol row as a synonym,
+which is what makes either spelling reach one compound node.
+
+Why these two: `ProductTiterPhenotype.product` is a typed `Compound`, so Carruthers
+2025's titer joins the same entity a tolerance screen dosing isoprenol would use;
+without a row the product carried only a name and a typed gap on `inchikey`, and the
+join was a string match. L-arabinose is the inducer of the same campaign's
+`ParaBAD`-driven pathway and was in the same position.
+
+### Admission consequence
+
+Unchanged in kind from the previous round: `media.py`, `compound_identity.py` and
+`compound_identity_table.json` are all in `VALUE_SURFACE_RELPATHS`, so the next
+`kg_manifest admit` reports value drift on all three and blocks until
+`--ack-value-drift`. The reason is again checkable rather than asserted: 2 `MEDIA_LIBRARY`
+keys and 2 table rows ADDED, no pre-existing key's `media_identity` digest moved
+(`test_media_bacterial.py` pins all 54 pre-serve-50 keys, and every library key is either
+pinned there or declared in `BACTERIAL_MEDIA_USES`) and no pre-existing table row changed.
+A served medium or compound node id therefore does not move.

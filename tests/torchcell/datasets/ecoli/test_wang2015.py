@@ -380,8 +380,10 @@ def test_isoprenol_goes_through_the_identity_layer_and_is_checked(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     compound = m.isoprenol_compound()
-    assert compound.inchikey is None
-    assert compound.gapped_fields() == {"inchikey"}
+    # the table now carries the isoprenol row, and the loader's guard agrees with it
+    assert compound.inchikey == m.ISOPRENOL_INCHIKEY
+    assert compound.pubchem_cid == m.ISOPRENOL_PUBCHEM_CID
+    assert compound.gapped_fields() == set()
 
     def row(inchikey: str) -> Any:
         return lambda label: Compound(name="3-methylbut-3-en-1-ol", inchikey=inchikey)

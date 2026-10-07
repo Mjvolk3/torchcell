@@ -1,0 +1,16 @@
+# compound_identity_inputs/bioproduction.txt
+# Source: the follow-ups the first bacterial loaders asked for
+# ([[torchcell.datamodels.bacterial-perturbation-ontology]], 2026.10.07): the molecules a
+# production record NAMES rather than doses. `ProductTiterPhenotype.product` is a typed
+# `Compound`, so a titer joins the same compound entity a tolerance screen dosing that
+# molecule uses; without a row the product carries only a name and a typed gap on
+# `inchikey`, and the join is a string match.
+#
+# Both labels are `canonical`: the bioproduction literature and this repository's notes
+# say "isoprenol" and "L-arabinose", while PubChem's Titles are "3-Methyl-3-buten-1-ol"
+# and "L-Arabinose". `3-methyl-3-buten-1-ol` is listed on its own line so the systematic
+# spelling resolves to the same CID (12988) and collapses into the isoprenol row as a
+# synonym, which is what makes either spelling reach one compound node.
+isoprenol | canonical
+3-methyl-3-buten-1-ol
+L-arabinose | canonical

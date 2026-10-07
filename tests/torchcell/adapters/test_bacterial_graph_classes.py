@@ -163,7 +163,9 @@ def _product_titer_record(phenotype: s.ProductTiterPhenotype) -> dict[str, Any]:
         "experiment": s.ProductTiterExperiment(
             dataset_name="BacterialToy",
             genotype=s.Genotype(perturbations=_bacterial_leaves()),
-            environment=s.Environment(media=_lb()),
+            # The product-titer family declares CultureEnvironment: a titer is read with
+            # its vessel, and an Environment in that slot is refused.
+            environment=s.CultureEnvironment(media=_lb()),
             phenotype=phenotype,
         )
     }
@@ -667,3 +669,159 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
         "protein turnover phenotype",
         "flux phenotype",
     ]
+
+
+# --------------------------------------------------------------------------- #
+# phage perturbation: the environment axis of a phage-resistance screen
+# --------------------------------------------------------------------------- #
+def _phage(**kw: Any) -> s.PhagePerturbation:
+    fields: dict[str, Any] = dict(
+        name="lambda cI857",
+        family="Siphoviridae",
+        genome_type="dsDNA",
+        ncbi_taxid=10710,
+        genome_accession="J02459.1",
+        multiplicity_of_infection=484.375,
+        titer_pfu_per_ml=1.24e10,
+        host_of_propagation="E. coli K-12",
+    )
+    fields.update(kw)
+    return s.PhagePerturbation(**fields)
+
+
+def _phage_challenge_record(*perturbations: Any) -> dict[str, Any]:
+    """A bacterial environment-response record whose environment carries ``perturbations``."""
+    return {
+        "experiment": s.BacterialEnvironmentResponseExperiment(
+            dataset_name="BacterialToy",
+            genotype=s.Genotype(
+                perturbations=[
+                    s.TransposonInsertionPerturbation(
+                        systematic_gene_name="BW25113_0002",
+                        perturbed_gene_name="thrA",
+                        gene_namespace="ecoli_k12_bw25113_locus_tag",
+                        barcode="ACGTACGTACGTACGTACGT",
+                    )
+                ]
+            ),
+            environment=s.Environment(media=_lb(), perturbations=list(perturbations)),
+            phenotype=s.EnvironmentResponsePhenotype(
+                measurement_type=s.MeasurementType.log2_ratio,
+                assay_type=s.AssayType.pooled_competitive_growth_barcode,
+                environment_response=-3.2,
+                units="log2(treatment/control)",
+            ),
+        )
+    }
+
+
+def test_a_phage_node_projects_the_phage_and_its_dose() -> None:
+    """The class exists so the MOI, the taxon and the accession are columns.
+
+    They could not be properties of the served ``environment perturbation`` class
+    without a full rebuild, and the dose is not a concentration, so it cannot ride that
+    class's ``concentration_value`` / ``concentration_unit`` columns.
+    """
+    from torchcell.datamodels.identity import (
+        environment_perturbation_identity,
+        identity_sha256,
+    )
+
+    phage = _phage()
+    record = _phage_challenge_record(phage)
+    nodes = _run("phage perturbation (chunked)", record)
+    assert [n.get_label() for n in nodes] == ["phage perturbation"]
+    node = nodes[0]
+    assert node.get_preferred_id() == "phage"
+    # the id is the composition projection every environment-side node uses, so the
+    # served `environment perturbation member of` edge addresses it unchanged
+    assert node.get_id() == identity_sha256(environment_perturbation_identity(phage))
+    assert node.get_properties() == {
+        "id": node.get_id(),
+        "preferred_id": "phage",
+        "perturbation_type": "phage",
+        "description": "Bacteriophage added to the culture",
+        "phage_name": "lambda cI857",
+        "ncbi_taxid": 10710,
+        "genome_accession": "J02459.1",
+        "multiplicity_of_infection": 484.375,
+        "titer_pfu_per_ml": 1.24e10,
+    }
+    assert set(node.get_properties()) - NODE_BOOKKEEPING == set(
+        SCHEMA["phage perturbation"]["properties"]
+    )
+
+
+def test_two_doses_of_one_phage_are_two_nodes_and_two_phages_are_two_nodes() -> None:
+    """The dose is identity, which is what keeps 68 challenges from collapsing to one."""
+    low = _phage(multiplicity_of_infection=0.01875)
+    high = _phage(multiplicity_of_infection=1.875)
+    other = _phage(name="T4", ncbi_taxid=10665, genome_accession="AF158101.6")
+    ids = {
+        _run("phage perturbation (chunked)", _phage_challenge_record(p))[0].get_id()
+        for p in (low, high, other)
+    }
+    assert len(ids) == 3
+
+
+def test_the_phage_method_emits_nothing_for_any_other_perturbation() -> None:
+    """A small molecule or a physical factor is the served class's, not this one's."""
+    record = _phage_challenge_record(
+        s.SmallMoleculePerturbation(
+            compound=s.Compound(name="kanamycin"),
+            concentration=s.Concentration(
+                value=50.0, unit=s.ConcentrationUnit.ug_per_ml
+            ),
+        ),
+        s.EnvironmentPhysicalPerturbation(factor=s.PhysicalFactor.ph),
+    )
+    assert _run("phage perturbation (chunked)", record) == []
+    # and the served method still emits both of them, unchanged
+    served = _run("environment perturbation (chunked)", record)
+    assert [n.get_label() for n in served] == ["environment perturbation"] * 2
+
+
+def test_the_phage_reference_collector_deduplicates_by_content_id() -> None:
+    """One node per distinct phage challenge across the reference index."""
+    phage = _phage()
+    reference = s.BacterialEnvironmentResponseExperimentReference(
+        dataset_name="BacterialToy",
+        genome_reference=s.AssemblyReferenceGenome(
+            species="Escherichia coli",
+            strain="BW25113",
+            assembly_set="ecoli_K12_BW25113_ASM75055v1",
+            assembly_accession="GCA_000750555.1",
+        ),
+        environment_reference=s.Environment(media=_lb(), perturbations=[phage]),
+        phenotype_reference=s.EnvironmentResponsePhenotype(
+            measurement_type=s.MeasurementType.log2_ratio,
+            assay_type=s.AssayType.pooled_competitive_growth_barcode,
+            environment_response=0.0,
+            units="log2(treatment/control)",
+        ),
+    )
+    no_phage = reference.model_copy(
+        update={"environment_reference": s.Environment(media=_lb())}
+    )
+    adapter = _adapter()
+    adapter.dataset = cast(
+        Any,
+        SimpleNamespace(
+            experiment_reference_index=[
+                SimpleNamespace(reference=reference),
+                SimpleNamespace(reference=reference),
+                SimpleNamespace(reference=no_phage),
+            ]
+        ),
+    )
+    nodes = CellAdapter._get_phage_perturbation_reference_nodes(adapter)
+    assert [n.get_label() for n in nodes] == ["phage perturbation"]
+    assert nodes[0].get_properties()["phage_name"] == "lambda cI857"
+
+
+def test_the_phage_method_is_registered_under_its_conf_name() -> None:
+    table = _table()
+    assert table["phage perturbation (chunked)"] == "_phage_perturbation_node"
+    assert table["phage perturbation reference"] == (
+        "_get_phage_perturbation_reference_nodes"
+    )

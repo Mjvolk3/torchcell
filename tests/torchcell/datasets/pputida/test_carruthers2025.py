@@ -45,13 +45,14 @@ from torchcell.datamodels.media import M9_NREL_CARRUTHERS2025
 from torchcell.datamodels.schema import (
     AlleleEdit,
     BacterialDeletionPerturbation,
+    BacterialProteinAbundanceExperiment,
     ConcentrationUnit,
     CultureEnvironment,
-    CultureFormat,
-    Environment,
+    EndpointRule,
     Genotype,
     ProductTiterExperiment,
     ProductTiterExperimentReference,
+    ProteinAbundancePhenotype,
     SampleUnit,
     SmallMoleculePerturbation,
     UncertaintyType,
@@ -138,12 +139,19 @@ def test_titer_phenotype_refuses_a_single_replicate() -> None:
         c25.titer_phenotype([100.0], is_reference=False)
 
 
-def test_the_product_is_the_compound_layers_isoprenol_with_its_identity_gap() -> None:
-    """The product goes through the shared resolver, which has no isoprenol row yet."""
+def test_the_product_is_the_compound_layers_isoprenol_with_its_identity() -> None:
+    """The product goes through the shared resolver, whose table now carries isoprenol.
+
+    The row (PubChem CID 12988, curated on
+    ``compound_identity_inputs/bioproduction.txt``) is what makes this titer and a
+    tolerance screen dosing the same molecule one compound node, rather than two
+    joinable only by name. Before it, the product carried a typed gap on ``inchikey``.
+    """
     product = c25.isoprenol_product()
     assert product.name == "isoprenol"
-    assert product.inchikey is None
-    assert product.gapped_fields() == {"inchikey"}
+    assert product.inchikey == "CPJRRXSHAYUTGL-UHFFFAOYSA-N"
+    assert (product.pubchem_cid, product.chebi_id) == (12988, "CHEBI:62898")
+    assert product.gapped_fields() == set()
 
 
 # --------------------------------------------------------------------------- #
@@ -221,9 +229,21 @@ def test_a_crispri_perturbation_refuses_a_yeast_systematic_name() -> None:
 def test_the_production_environment_is_the_sourced_medium_temperature_and_duration() -> (
     None
 ):
-    """M9-NREL at 24 C for 48 h, aerobic, with the 2 g/L L-arabinose inducer."""
+    """M9-NREL at 24 C for 48 h, aerobic, with the 2 g/L L-arabinose inducer.
+
+    A ``CultureEnvironment`` since the titer slot was narrowed, so the vessel it was
+    grown in travels on the record instead of only in ``CULTURE_FORMAT``.
+    """
     env = c25.production_environment()
-    assert type(env) is Environment
+    assert type(env) is CultureEnvironment
+    assert env.culture_format is not None
+    assert env.culture_format.vessel == "48-well BioLector flower plate"
+    assert env.culture_format.working_volume_ul == pytest.approx(1500.0)
+    assert env.culture_format.shaking_rpm == pytest.approx(1000.0)
+    assert env.culture_format.endpoint is EndpointRule.fixed_duration
+    assert [sv.quote for sv in env.culture_format.provenance] == [
+        c25.CULTURE_FORMAT.quote
+    ]
     assert env.media is M9_NREL_CARRUTHERS2025
     assert env.temperature is not None
     assert env.temperature.value == pytest.approx(24.0)
@@ -236,33 +256,42 @@ def test_the_production_environment_is_the_sourced_medium_temperature_and_durati
     assert inducer.concentration.unit is ConcentrationUnit.g_per_l
 
 
-def test_a_culture_environment_loses_its_protocol_inside_a_product_titer_experiment() -> (
+def test_the_titer_slot_keeps_the_protocol_and_the_proteome_slot_still_drops_it() -> (
     None
 ):
-    """The measured reason the loader stores a plain ``Environment``.
+    """Both halves of the serialization rule, on the loader's own environment.
 
-    ``Experiment.environment`` is annotated ``Environment`` and pydantic serializes by
-    the declared type, so the vessel, volume and shaking of a ``CultureEnvironment``
-    are dropped on dump with no error. When ``ProductTiterExperiment`` narrows that
-    slot, this test is what says so.
+    pydantic serializes a field by its DECLARED type.
+    ``ProductTiterExperiment.environment`` is now ``CultureEnvironment``, so the vessel,
+    volume and shaking are dumped; ``BacterialProteinAbundanceExperiment.environment``
+    is still ``Environment``, so the same object there keeps them as python attributes
+    and dumps without them, silently. That is why the narrowing had to be per family.
     """
-    env = CultureEnvironment(
-        media=M9_NREL_CARRUTHERS2025,
-        culture_format=CultureFormat(
-            vessel="48-well BioLector flower plate",
-            working_volume_ul=1500.0,
-            shaking_rpm=1000.0,
-        ),
-    )
+    env = c25.production_environment()
     perturbations: list[Any] = list(c25.pathway_perturbations())
-    experiment = ProductTiterExperiment(
+    titer = ProductTiterExperiment(
         dataset_name="probe",
         genotype=Genotype(perturbations=perturbations),
         environment=env,
         phenotype=c25.titer_phenotype([1.0, 2.0, 3.0], is_reference=False),
     )
+    culture = titer.model_dump()["environment"]["culture_format"]
+    assert culture["vessel"] == "48-well BioLector flower plate"
+    assert culture["working_volume_ul"] == pytest.approx(1500.0)
+    assert ProductTiterExperiment.model_validate(titer.model_dump()) == titer
+
+    proteome = BacterialProteinAbundanceExperiment(
+        dataset_name="probe",
+        genotype=Genotype(perturbations=perturbations),
+        environment=env,
+        phenotype=ProteinAbundancePhenotype(
+            protein_abundance={"PP_0001": 1.0},
+            n_replicates={"PP_0001": 3},
+            measurement_type="dia_top3_peptide_counts_mean",
+        ),
+    )
     assert env.culture_format is not None
-    assert "culture_format" not in experiment.model_dump()["environment"]
+    assert "culture_format" not in proteome.model_dump()["environment"]
 
 
 # --------------------------------------------------------------------------- #

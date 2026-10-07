@@ -1798,7 +1798,14 @@ def test_a_product_titer_record_round_trips_through_the_type_maps() -> None:
                 )
             ]
         ),
-        environment=Environment(media=_lb()),
+        environment=s.CultureEnvironment(
+            media=_lb(),
+            culture_format=s.CultureFormat(
+                vessel="48-well BioLector flower plate",
+                working_volume_ul=1500.0,
+                shaking_rpm=1000.0,
+            ),
+        ),
         phenotype=_titer(),
     )
     reference = s.ProductTiterExperimentReference(
@@ -1808,7 +1815,7 @@ def test_a_product_titer_record_round_trips_through_the_type_maps() -> None:
             assembly_set="pputida_KT2440_ASM756v2",
             accession="GCA_000007565.2",
         ),
-        environment_reference=Environment(media=_lb()),
+        environment_reference=s.CultureEnvironment(media=_lb()),
         phenotype_reference=_titer(titer=0.0),
     )
     kind = experiment.experiment_type
@@ -1872,7 +1879,7 @@ def test_a_new_phenotype_family_is_discriminated_by_its_own_fields() -> None:
     experiment = s.ProductTiterExperiment(
         dataset_name="Toy",
         genotype=Genotype(perturbations=[s.BacterialDeletionPerturbation(**_MG1655)]),
-        environment=Environment(media=_lb()),
+        environment=s.CultureEnvironment(media=_lb()),
         phenotype=_titer(),
     )
     titer_adapter: TypeAdapter[Any] = TypeAdapter(ExperimentType)
@@ -1909,5 +1916,246 @@ def test_every_new_family_is_in_both_maps_and_both_unions(kind: str) -> None:
         experiment_cls.model_fields["phenotype"].annotation
         is reference_cls.model_fields["phenotype_reference"].annotation
     )
-    # the medium stays the shared Environment, so the cross-host medium join still forms
-    assert experiment_cls.model_fields["environment"].annotation is Environment
+    # The medium stays the shared Environment, so the cross-host medium join still
+    # forms. The product-titer family is the one narrowing: a titer is read with its
+    # vessel, so it declares CultureEnvironment (a subclass of Environment, holding the
+    # same `media` field, so the medium-level join is unchanged).
+    annotation = experiment_cls.model_fields["environment"].annotation
+    if kind == "product_titer":
+        assert annotation is s.CultureEnvironment
+    else:
+        assert annotation is Environment
+    assert annotation is not None and issubclass(annotation, Environment)
+    assert annotation.model_fields["media"].annotation is s.Media
+
+
+# --------------------------------------------------------------------------- #
+# 7. The follow-ups the first bacterial loaders asked for
+# --------------------------------------------------------------------------- #
+def test_a_phage_is_an_environment_perturbation_of_its_own_leaf() -> None:
+    """A virion is none of the other three leaves, so it has its own.
+
+    A small molecule is keyed by InChIKey (a virion has none), ``PhysicalFactor`` is a
+    scalar variable, and ``BiologicAgentClass`` is peptide / protein / antibody / toxin.
+    The dose is a dimensionless particle-to-cell ratio in its own field, never a
+    ``Concentration``.
+    """
+    phage = s.PhagePerturbation(
+        name="T4",
+        family="Myoviridae",
+        genome_type="dsDNA",
+        ncbi_taxid=10665,
+        genome_accession="AF158101.6",
+        multiplicity_of_infection=0.01875,
+        titer_pfu_per_ml=1.2e9,
+        host_of_propagation="E. coli K-12 BW25113",
+    )
+    assert phage.perturbation_type == "phage"
+    assert s.PhagePerturbation in typing.get_args(s.EnvironmentPerturbationType)
+    assert isinstance(phage, s.EnvironmentPerturbation)
+    # the dose is not a Concentration and carries no ConcentrationUnit
+    assert "concentration" not in s.PhagePerturbation.model_fields
+    assert (
+        s.PhagePerturbation.model_fields["multiplicity_of_infection"].annotation
+        == float | None
+    )
+    # it round-trips inside an environment, through the union
+    environment = Environment(media=_lb(), perturbations=[phage])
+    adapter: TypeAdapter[Any] = TypeAdapter(Environment)
+    back = adapter.validate_python(environment.model_dump())
+    assert back.perturbations[0] == phage
+
+
+def test_a_phage_dose_is_stated_or_gapped_and_never_zero() -> None:
+    """A phage challenge always has a dose, so an unstated MOI is a typed gap."""
+    with _refuses(
+        "PhagePerturbation.multiplicity_of_infection is unset and carries no "
+        "ProvenanceGap (an unsourced element must be a typed gap, never a silent None)"
+    ):
+        s.PhagePerturbation(name="T4")
+    gapped = s.PhagePerturbation(
+        name="T4",
+        provenance_gaps=[
+            ProvenanceGap(
+                field="multiplicity_of_infection",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+            )
+        ],
+    )
+    assert gapped.multiplicity_of_infection is None
+    with _refuses("PhagePerturbation.multiplicity_of_infection must be > 0, got 0.0"):
+        s.PhagePerturbation(name="T4", multiplicity_of_infection=0.0)
+    with _refuses("PhagePerturbation.titer_pfu_per_ml must be > 0, got -1.0"):
+        s.PhagePerturbation(
+            name="T4", multiplicity_of_infection=1.0, titer_pfu_per_ml=-1.0
+        )
+    with _refuses("ncbi_taxid must be positive, got 0"):
+        s.PhagePerturbation(name="T4", multiplicity_of_infection=1.0, ncbi_taxid=0)
+    with _refuses("phage name must be non-empty and verbatim, got ' T4'"):
+        s.PhagePerturbation(name=" T4", multiplicity_of_infection=1.0)
+
+
+def test_a_derived_identifier_mapping_records_the_route_it_was_reached_by() -> None:
+    """A crosswalked tag says so on the record, and the route matches the identifier."""
+    mapping = s.DerivedIdentifierMapping(
+        source_identifier="b0002", route="eck_crosswalk"
+    )
+    deletion = s.BacterialDeletionPerturbation(
+        systematic_gene_name="BW25113_0002",
+        perturbed_gene_name="thrA",
+        gene_namespace="ecoli_k12_bw25113_locus_tag",
+        identifier_mapping=mapping,
+    )
+    assert deletion.identifier_mapping == mapping
+    dumped = deletion.model_dump()
+    assert dumped["identifier_mapping"] == {
+        "source_identifier": "b0002",
+        "route": "eck_crosswalk",
+    }
+    assert s.BacterialDeletionPerturbation.model_validate(dumped) == deletion
+
+    # every bacterial leaf carries the field, and it defaults to None
+    for cls, fields in _BACTERIAL_LEAF_CASES:
+        assert "identifier_mapping" in cls.model_fields
+        assert cls(**fields).model_dump()["identifier_mapping"] is None
+
+
+def test_a_mapping_route_must_match_the_identifier_it_starts_from() -> None:
+    with _refuses(
+        "an eck_crosswalk route starts from another strain's locus tag, got 'thrA'"
+    ):
+        s.DerivedIdentifierMapping(source_identifier="thrA", route="eck_crosswalk")
+    with _refuses(
+        "a jw_synonym route starts from a Keio JW id (^JW[RS]?\\d{4}$), got 'b0002'"
+    ):
+        s.DerivedIdentifierMapping(source_identifier="b0002", route="jw_synonym")
+    with _refuses(
+        "'b0002' is a locus tag, not a gene symbol; a tag of another strain is an "
+        "eck_crosswalk"
+    ):
+        s.DerivedIdentifierMapping(source_identifier="b0002", route="gene_symbol")
+    with _refuses("source_identifier must be a non-empty verbatim id, got ' b0002'"):
+        s.DerivedIdentifierMapping(source_identifier=" b0002", route="eck_crosswalk")
+    # the JW forms the BW25113 annotation actually carries, measured on its GenBank file
+    for jw in ("JW0001", "JWR0257", "JWS0001"):
+        assert (
+            s.DerivedIdentifierMapping(
+                source_identifier=jw, route="jw_synonym"
+            ).source_identifier
+            == jw
+        )
+
+
+def test_a_mapping_cannot_claim_a_tag_was_derived_from_itself() -> None:
+    """A tag the source released as stored carries no mapping, and an eck_crosswalk
+    crosses namespaces by definition.
+    """
+    with _refuses(
+        "identifier_mapping says 'BW25113_0002' was derived from itself; a tag the "
+        "source released verbatim carries no mapping"
+    ):
+        s.BacterialDeletionPerturbation(
+            systematic_gene_name="BW25113_0002",
+            perturbed_gene_name="thrA",
+            gene_namespace="ecoli_k12_bw25113_locus_tag",
+            identifier_mapping=s.DerivedIdentifierMapping(
+                source_identifier="BW25113_0002", route="eck_crosswalk"
+            ),
+        )
+    with _refuses(
+        "an eck_crosswalk crosses namespaces, but 'BW25113_0003' is already a "
+        "ecoli_k12_bw25113_locus_tag tag"
+    ):
+        s.BacterialDeletionPerturbation(
+            systematic_gene_name="BW25113_0002",
+            perturbed_gene_name="thrA",
+            gene_namespace="ecoli_k12_bw25113_locus_tag",
+            identifier_mapping=s.DerivedIdentifierMapping(
+                source_identifier="BW25113_0003", route="eck_crosswalk"
+            ),
+        )
+    # a gene-symbol route is fine on the same namespace: it is not a cross-strain join
+    symbol = s.BacterialDeletionPerturbation(
+        systematic_gene_name="BW25113_0002",
+        perturbed_gene_name="thrA",
+        gene_namespace="ecoli_k12_bw25113_locus_tag",
+        identifier_mapping=s.DerivedIdentifierMapping(
+            source_identifier="thrA", route="gene_symbol"
+        ),
+    )
+    assert symbol.identifier_mapping is not None
+
+
+def test_a_culture_environment_survives_the_product_titer_slot() -> None:
+    """The narrowing's whole point: the vessel is dumped, not silently dropped.
+
+    pydantic v2 serializes a field by its DECLARED type, so a ``CultureEnvironment`` in
+    an ``Environment``-typed slot keeps its protocol as a python attribute and dumps
+    WITHOUT it. Both halves are pinned: the narrowed slot keeps the vessel, the base
+    slot loses it.
+    """
+    culture = s.CultureEnvironment(
+        media=_lb(),
+        culture_format=s.CultureFormat(
+            vessel="48-well BioLector flower plate",
+            working_volume_ul=1500.0,
+            shaking_rpm=1000.0,
+        ),
+    )
+    titer = s.ProductTiterExperiment(
+        dataset_name="Toy",
+        genotype=Genotype(perturbations=[s.BacterialDeletionPerturbation(**_MG1655)]),
+        environment=culture,
+        phenotype=_titer(),
+    )
+    dumped = titer.model_dump()
+    assert dumped["environment"]["culture_format"]["vessel"] == (
+        "48-well BioLector flower plate"
+    )
+    assert dumped["environment"]["culture_format"]["working_volume_ul"] == 1500.0
+    back = s.ProductTiterExperiment.model_validate(dumped)
+    assert isinstance(back.environment, s.CultureEnvironment)
+    assert back == titer
+
+    # the same culture in a base-typed slot (the bacterial fitness family) loses it
+    fitness = s.BacterialFitnessExperiment(
+        dataset_name="Toy",
+        genotype=Genotype(perturbations=[s.BacterialDeletionPerturbation(**_MG1655)]),
+        environment=culture,
+        phenotype=FitnessPhenotype(fitness=0.9),
+    )
+    assert "culture_format" not in fitness.model_dump()["environment"]
+
+    # and a plain Environment is refused by the narrowed slot rather than silently kept
+    with pytest.raises(ValidationError, match="valid dictionary or instance of"):
+        s.ProductTiterExperiment(
+            dataset_name="Toy",
+            genotype=Genotype(
+                perturbations=[s.BacterialDeletionPerturbation(**_MG1655)]
+            ),
+            # the refusal under test: mypy sees it too, which is the point
+            environment=Environment(media=_lb()),  # type: ignore[arg-type]
+            phenotype=_titer(),
+        )
+
+
+def test_the_product_titer_reference_narrows_its_environment_too() -> None:
+    """A control culture states its vessel, or it is not the same experiment."""
+    reference = s.ProductTiterExperimentReference(
+        dataset_name="Toy",
+        genome_reference=s.AssemblyReferenceGenome(
+            species="Pseudomonas putida",
+            strain="KT2440",
+            assembly_set="pputida_KT2440_ASM756v2",
+            assembly_accession="GCA_000007565.2",
+        ),
+        environment_reference=s.CultureEnvironment(
+            media=_lb(), culture_format=s.CultureFormat(vessel="48-well plate")
+        ),
+        phenotype_reference=_titer(titer=0.0),
+    )
+    dumped = reference.model_dump()
+    assert dumped["environment_reference"]["culture_format"]["vessel"] == (
+        "48-well plate"
+    )
+    assert s.ProductTiterExperimentReference.model_validate(dumped) == reference

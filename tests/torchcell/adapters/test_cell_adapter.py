@@ -372,6 +372,8 @@ NODE_METHODS = [
     "temperature reference",
     "environment perturbation (chunked)",
     "environment perturbation reference",
+    "phage perturbation (chunked)",
+    "phage perturbation reference",
     "fitness phenotype (chunked)",
     "gene interaction phenotype (chunked)",
     "gene essentiality phenotype (chunked)",
@@ -430,7 +432,7 @@ EDGE_METHODS = [
 def test_supported_method_names_are_the_registration_tables_in_order(
     recorder: _WandbRecorder,
 ) -> None:
-    """50 node methods and 16 edge methods, in the order ``__init__`` registers them;
+    """52 node methods and 16 edge methods, in the order ``__init__`` registers them;
     every "(chunked)" name maps to a decorated handler and every other name to a
     ``_get_`` collector, which is how ``get_nodes`` routes them.
     """

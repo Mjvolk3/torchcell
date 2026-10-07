@@ -101,6 +101,15 @@ def test_every_node_method_property_is_declared() -> None:
             "concentration_value",
             "concentration_unit",
         },
+        "phage perturbation": {
+            "perturbation_type",
+            "description",
+            "phage_name",
+            "ncbi_taxid",
+            "genome_accession",
+            "multiplicity_of_infection",
+            "titer_pfu_per_ml",
+        },
     }
     for label, properties in emitted.items():
         assert set(schema[label].properties) == properties, label
@@ -126,6 +135,32 @@ def test_no_conf_enables_both_perturbation_classes() -> None:
         dataset_class.__name__
         for dataset_class in dataset_adapter_map
         if {"perturbation (chunked)", "bacterial perturbation (chunked)"}
+        <= set(dataset_conf_methods(dataset_class, REPO_ROOT))
+    )
+    assert both == []
+
+
+def test_no_conf_enables_both_environment_perturbation_classes() -> None:
+    """A conf enables ``phage perturbation (chunked)`` INSTEAD of
+    ``environment perturbation (chunked)``, for the same reason as the gene axis.
+
+    The served ``environment perturbation`` method emits EVERY perturbation of an
+    environment, a phage included, under the ``environment perturbation`` label, and the
+    phage method emits the same leaf under the same content id (both ids are the
+    composition projection) with the ``phage perturbation`` label. Enabling both writes
+    one id under two classes and the import keeps whichever row it reads first.
+
+    The consequence for the first phage dataset, stated rather than discovered later: its
+    other environment perturbations (the kanamycin of a Bar-seq assay, a physical factor)
+    would go unwritten under the phage-only conf. Resolving that needs either a filter in
+    the served method -- adapter drift on the served datasets, so a full rebuild -- or a
+    separate id space for the phage node. No conf is in that position yet, since no phage
+    dataset class exists.
+    """
+    both = sorted(
+        dataset_class.__name__
+        for dataset_class in dataset_adapter_map
+        if {"environment perturbation (chunked)", "phage perturbation (chunked)"}
         <= set(dataset_conf_methods(dataset_class, REPO_ROOT))
     )
     assert both == []

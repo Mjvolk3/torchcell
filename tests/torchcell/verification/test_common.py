@@ -391,6 +391,61 @@ def test_gene_names_retired_systematic_name_fails_as_not_current() -> None:
     assert result.details["not_current"] == ["YOLD (renamed -> YNEW)"]
 
 
+def test_gene_names_a_self_resolving_pseudogene_locus_passes_and_is_counted() -> None:
+    """A pseudogene locus the genome answers with its OWN tag is a real deletion target.
+
+    A bacterial annotation's ``gene`` features exclude ``/pseudo`` loci by construction,
+    so a pseudogene can never come back ``current``; the Keio collection and the sRNA
+    library nonetheless deleted 108 BW25113 and 1 MG1655 pseudogene loci, whose stored
+    identifier is exactly right. The rule reports them rather than passing over them.
+    """
+    records = [
+        _record(perturbations=[_deletion("BW25113_0021", "insB1")]),
+        _record(perturbations=[_deletion("BW25113_0022", "insA1")]),
+    ]
+    resolver = _resolver(
+        {
+            "BW25113_0021": ("non_gene_feature", "BW25113_0021"),
+            "BW25113_0022": ("non_gene_feature", "BW25113_0022"),
+            "insB1": ("current", "BW25113_0021"),
+            "insA1": ("current", "BW25113_0022"),
+        }
+    )
+    result = _run(records, resolve_gene_name=resolver)["canonical_gene_names"]
+    assert result.passed is True
+    assert result.message == (
+        "2 systematic names, one canonical spelling each, each current in the genome; "
+        "2 are pseudogene loci the genome resolves to themselves"
+    )
+    assert result.details["not_current"] == []
+    assert result.details["n_self_resolving_non_gene_features"] == 2
+    assert result.details["self_resolving_non_gene_features"] == [
+        "BW25113_0021 (non_gene_feature, None)",
+        "BW25113_0022 (non_gene_feature, None)",
+    ]
+
+
+def test_gene_names_a_non_gene_feature_resolving_elsewhere_still_fails() -> None:
+    """The acceptance is only for a SELF-resolving locus; a redirect is still a defect.
+
+    This is the case the rule exists for: the stored tag names one locus and the
+    annotation says the biology is at another, so the record's identifier is wrong.
+    """
+    records = [_record(perturbations=[_deletion("BW25113_0021", "insB1")])]
+    resolver = _resolver(
+        {
+            "BW25113_0021": ("non_gene_feature", "BW25113_4496"),
+            "insB1": ("current", "BW25113_0021"),
+        }
+    )
+    result = _run(records, resolve_gene_name=resolver)["canonical_gene_names"]
+    assert result.passed is False
+    assert result.details["not_current"] == [
+        "BW25113_0021 (non_gene_feature -> BW25113_4496)"
+    ]
+    assert result.details["n_self_resolving_non_gene_features"] == 0
+
+
 def test_gene_names_unplaceable_common_name_is_reported_not_failed() -> None:
     """A name the resolver cannot place passes, with the count appended to the message."""
     records = [_record(perturbations=[_deletion("YSYS", "MYST1")])]

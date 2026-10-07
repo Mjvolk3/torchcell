@@ -12,6 +12,8 @@ typed compositional slot, including a slot that is absent).
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 from pydantic import BaseModel
 
@@ -23,6 +25,7 @@ from torchcell.datamodels.identity import (
     ENVIRONMENT_IDENTITY_FIELDS,
     MEDIA_COMPONENT_IDENTITY_FIELDS,
     MEDIA_IDENTITY_FIELDS,
+    PHAGE_PERTURBATION_IDENTITY_FIELDS,
     PHYSICAL_PERTURBATION_IDENTITY_FIELDS,
     SMALL_MOLECULE_IDENTITY_FIELDS,
     SOLVENT_IDENTITY_FIELDS,
@@ -491,3 +494,75 @@ def test_the_titer_itself_is_not_part_of_any_identity_projection() -> None:
     high = _titer(s.Compound(name="isoprenol", inchikey=_ISOPRENOL_KEY), titer=9.9)
     assert low.titer != high.titer
     assert compound_identity_key(low.product) == compound_identity_key(high.product)
+
+
+# --------------------------------------------------------------------------- #
+# A phage challenge joins the environment-perturbation layer
+# --------------------------------------------------------------------------- #
+def _phage(**kw: Any) -> s.PhagePerturbation:
+    fields: dict[str, Any] = dict(name="T4", multiplicity_of_infection=0.01875)
+    fields.update(kw)
+    return s.PhagePerturbation(**fields)
+
+
+def test_a_phage_keys_on_the_phage_and_its_dose() -> None:
+    phage = _phage(ncbi_taxid=10665, genome_accession="AF158101.6")
+    identity = environment_perturbation_identity(phage)
+    assert identity == {
+        "perturbation_type": "phage",
+        "name": "t4",
+        "ncbi_taxid": 10665,
+        "genome_accession": "AF158101.6",
+        "multiplicity_of_infection": 0.01875,
+        "titer_pfu_per_ml": None,
+    }
+    assert set(identity) == set(PHAGE_PERTURBATION_IDENTITY_FIELDS)
+    # the dose is identity: 68 challenges of 14 phages are not one environment
+    louder = phage.model_copy(update={"multiplicity_of_infection": 1.875})
+    assert identity_sha256(identity) != identity_sha256(
+        environment_perturbation_identity(louder)
+    )
+
+
+def test_two_spellings_of_one_phage_are_one_node_but_two_phages_are_two() -> None:
+    """The name is folded to lower case, as the biologic leaf's is."""
+    assert identity_sha256(
+        environment_perturbation_identity(_phage(name="T4"))
+    ) == identity_sha256(environment_perturbation_identity(_phage(name="t4")))
+    assert identity_sha256(
+        environment_perturbation_identity(_phage(name="T4"))
+    ) != identity_sha256(environment_perturbation_identity(_phage(name="T7")))
+
+
+def test_how_a_phage_stock_was_grown_is_not_part_of_its_identity() -> None:
+    """``family``, ``genome_type`` and ``host_of_propagation`` are deliberately absent.
+
+    Two sources may classify or propagate one phage differently, and including those
+    would split a node that should join. The taxon and the accession, which name the
+    phage itself, ARE identity.
+    """
+    base = _phage()
+    described = base.model_copy(
+        update={
+            "family": "Myoviridae",
+            "genome_type": "dsDNA",
+            "host_of_propagation": "E. coli K-12 BW25113",
+        }
+    )
+    assert identity_sha256(environment_perturbation_identity(base)) == identity_sha256(
+        environment_perturbation_identity(described)
+    )
+    typed = base.model_copy(update={"ncbi_taxid": 10665})
+    assert identity_sha256(environment_perturbation_identity(base)) != identity_sha256(
+        environment_perturbation_identity(typed)
+    )
+
+
+def test_a_phage_environment_is_not_the_unperturbed_one() -> None:
+    """The no-phage control of a challenge screen is its own environment node."""
+    media = _plate("LB", "mutalik2020", "2% agar", 2.0)
+    control = s.Environment(media=media, temperature=s.Temperature(value=37.0))
+    challenged = control.model_copy(update={"perturbations": [_phage()]})
+    assert identity_sha256(environment_identity(control)) != identity_sha256(
+        environment_identity(challenged)
+    )

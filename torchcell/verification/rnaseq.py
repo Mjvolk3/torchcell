@@ -9,7 +9,11 @@ own genome. The schema validator already enforces non-empty, non-negative, key-m
 maps, so L0 subsumes those. This verifier adds:
 
 1. L1 ``strain_uniqueness`` -- one record per isolate (each isolate's perturbations all
-   carry one ``strain_id``; that id is unique across records).
+   carry one ``strain_id``; that id is unique across records). A compendium whose rows are
+   sequenced LIBRARIES rather than isolates passes ``replicate_aware=True`` and gets
+   ``replicate_groups`` instead: replicates of one condition share a genotype and an
+   environment and carry no strain id, so the strain rule cannot be satisfied there and
+   the group structure is what is checked.
 2. L2 ``tpm_value_fidelity`` -- every TPM is finite and >= 0.
 3. L2 ``count_value_fidelity`` -- every raw count is a non-negative integer.
 4. L3 ``measurement_type_consistent`` -- one shared measurement_type (no cross-assay mix).
@@ -24,6 +28,7 @@ from __future__ import annotations
 
 import json
 import math
+from collections import Counter
 from collections.abc import Callable, Sequence
 from typing import Any
 
@@ -103,6 +108,75 @@ def _l1_strain_uniqueness(records: Sequence[Record]) -> LevelResult:
     )
 
 
+def _l1_replicate_groups(records: Sequence[Record]) -> LevelResult:
+    """L1 for a REPLICATE-level compendium: one record per sequenced library.
+
+    ``strain_uniqueness`` is the wrong rule for these datasets and cannot be satisfied by
+    construction, so this is its replacement rather than a relaxation of it. Two reasons,
+    both structural: a compendium releases one row per library, so the replicates of a
+    condition share BOTH their genotype and their environment; and a wild-type record
+    carries no perturbation at all, while the bacterial perturbation leaves carry no
+    ``strain_id``, so there is no strain id to key on.
+
+    What is checked instead is what replicate-level records can get wrong:
+
+    1. **No library is counted twice.** Two records with the same expression profile are
+       the same library read twice (the per-sample rule Lim 2022's own verifier uses).
+       A genuine replicate differs in every gene's value, so an exact tie is a defect.
+    2. **A replicate group measures one gene set.** Records sharing a (genotype,
+       environment) are claimed to be replicates of one condition, so they must report
+       the same genes; a group whose members measure different genes is two conditions
+       pooled onto one environment identity.
+
+    The group sizes are reported, since that is the structure a reader wants to see.
+    """
+    profiles: Counter[str] = Counter()
+    groups: dict[str, set[str]] = {}
+    for rec in records:
+        exp = rec["experiment"]
+        expr, _ = _expr_map(exp["phenotype"])
+        profiles[json.dumps(expr, sort_keys=True)] += 1
+        key = json.dumps(
+            [exp["genotype"], exp["environment"]], sort_keys=True, default=str
+        )
+        groups.setdefault(key, set()).add(json.dumps(sorted(expr), sort_keys=True))
+    n_repeated = sum(count for count in profiles.values() if count > 1)
+    mixed = {key for key, gene_sets in groups.items() if len(gene_sets) > 1}
+    sizes = Counter(
+        sum(
+            1
+            for rec in records
+            if json.dumps(
+                [rec["experiment"]["genotype"], rec["experiment"]["environment"]],
+                sort_keys=True,
+                default=str,
+            )
+            == key
+        )
+        for key in groups
+    )
+    passed = n_repeated == 0 and not mixed
+    return LevelResult(
+        level=Level.L1,
+        name="replicate_groups",
+        passed=passed,
+        message=(
+            f"{len(records)} records with distinct profiles over {len(groups)} "
+            "(genotype, environment) groups, each measuring one gene set"
+            if passed
+            else f"{n_repeated} records share an expression profile; {len(mixed)} "
+            "groups pool records measuring different genes"
+        ),
+        details={
+            "n_records": len(records),
+            "n_groups": len(groups),
+            "n_in_repeated_profiles": n_repeated,
+            "n_groups_with_mixed_gene_sets": len(mixed),
+            "group_size_histogram": {str(k): v for k, v in sorted(sizes.items())},
+        },
+    )
+
+
 def _l3_measurement_type_consistent(records: Sequence[Record]) -> LevelResult:
     """L3: all records share a single measurement_type (no silent cross-assay mixing)."""
     types = {rec["experiment"]["phenotype"]["measurement_type"] for rec in records}
@@ -149,10 +223,19 @@ def verify_rnaseq_dataset(
     dataset_name: str,
     provenance: Provenance,
     expected_count: int,
+    replicate_aware: bool = False,
 ) -> VerificationReport:
     """Run the L0-L3 record-level gate for an RNA-seq expression dataset.
 
-    L4 (gene containment vs the S288C reference gene set) is asserted by the caller.
+    ``replicate_aware`` (default False) selects the L1 rule. False keys one record per
+    (strain, condition) -- a one-record-per-isolate survey (Caudal) or a pseudobulk
+    genotype x condition grid (Nadal-Ribelles). True is for a compendium that releases
+    one row per sequenced LIBRARY (PRECISE-1K, putidaPRECISE321), where the replicates of
+    a condition legitimately share a genotype and an environment and carry no strain id;
+    the group rule (:func:`_l1_replicate_groups`) is what those records can get wrong.
+
+    L4 (containment in the gene universe of the genome a record is written against) is
+    asserted by the caller.
     """
     from pydantic import TypeAdapter
 
@@ -163,7 +246,11 @@ def verify_rnaseq_dataset(
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     report.add(l0_structural((rec["experiment"] for rec in records), validate))
     report.add(l1_count(len(records), expected_count))
-    report.add(_l1_strain_uniqueness(records))
+    report.add(
+        _l1_replicate_groups(records)
+        if replicate_aware
+        else _l1_strain_uniqueness(records)
+    )
 
     kind = _expr_map(records[0]["experiment"]["phenotype"])[1] if records else "tpm"
     expr_values = [

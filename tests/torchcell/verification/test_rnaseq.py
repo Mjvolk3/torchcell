@@ -390,3 +390,138 @@ def test_rnaseq_gene_set_unions_measured_genes_of_both_families() -> None:
     assert rnaseq_gene_set(tpm) == {"YAL001C", "YBR001W", "YCR001W"}
     assert rnaseq_gene_set(_log2_records()) == set(GENES)
     assert rnaseq_gene_set([]) == set()
+
+
+# --------------------------------------------------------------------------- #
+# replicate_aware=True: a compendium whose rows are sequenced libraries
+# --------------------------------------------------------------------------- #
+REPLICATE_NAMES = [
+    "structural",
+    "count",
+    "replicate_groups",
+    "tpm_value_fidelity",
+    "count_value_fidelity",
+    "measurement_type_consistent",
+    "reference_finite",
+]
+
+
+def _verify_replicate_aware(
+    records: list[dict[str, Any]], expected: int | None = None
+) -> Any:
+    return verify_rnaseq_dataset(
+        records,
+        dataset_name="rna",
+        provenance=PROV,
+        expected_count=len(records) if expected is None else expected,
+        replicate_aware=True,
+    )
+
+
+def _library(tpm: dict[str, float], count: dict[str, int]) -> dict[str, Any]:
+    """One library of a wild-type condition: no perturbation, so no strain id anywhere."""
+    env = _environment()
+    experiment = RNASeqExpressionExperiment(
+        dataset_name="test",
+        genotype=Genotype(perturbations=[]),
+        environment=env,
+        phenotype=RNASeqExpressionPhenotype(expression_tpm=tpm, expression_count=count),
+    )
+    reference = RNASeqExpressionExperimentReference(
+        dataset_name="test",
+        genome_reference=ReferenceGenome(
+            species="Escherichia coli", strain="MG1655", ploidy="haploid"
+        ),
+        environment_reference=env.model_copy(),
+        phenotype_reference=RNASeqExpressionPhenotype(
+            expression_tpm={g: 1.0 for g in tpm}, expression_count={g: 10 for g in tpm}
+        ),
+    )
+    return {"experiment": experiment.model_dump(), "reference": reference.model_dump()}
+
+
+def test_replicate_aware_swaps_the_l1_rule_for_the_group_rule() -> None:
+    """Two libraries of ONE condition pass, where ``strain_uniqueness`` cannot.
+
+    The records carry no perturbation at all, so the strain rule reports two records
+    without a strain and fails; that is exactly the PRECISE-1K / putidaPRECISE321 shape.
+    """
+    records = [
+        _library({"b0001": 2.0, "b0002": 4.0}, {"b0001": 15, "b0002": 20}),
+        _library({"b0001": 2.1, "b0002": 3.9}, {"b0001": 16, "b0002": 19}),
+    ]
+    report = _verify_replicate_aware(records)
+    assert [r.name for r in report.results] == REPLICATE_NAMES
+    assert report.passed is True
+    groups = _result(report, "replicate_groups")
+    assert groups.level is Level.L1
+    assert groups.message == (
+        "2 records with distinct profiles over 1 (genotype, environment) groups, "
+        "each measuring one gene set"
+    )
+    assert groups.details == {
+        "n_records": 2,
+        "n_groups": 1,
+        "n_in_repeated_profiles": 0,
+        "n_groups_with_mixed_gene_sets": 0,
+        "group_size_histogram": {"2": 1},
+    }
+
+    # the same records under the default rule fail, which is why the swap exists
+    strain_rule = _result(
+        verify_rnaseq_dataset(
+            records, dataset_name="rna", provenance=PROV, expected_count=2
+        ),
+        "strain_uniqueness",
+    )
+    assert strain_rule.passed is False
+    assert strain_rule.details["n_missing"] == 2
+
+
+def test_replicate_groups_fails_a_library_counted_twice() -> None:
+    """Two records with an identical profile are one library read twice."""
+    profile = ({"b0001": 2.0, "b0002": 4.0}, {"b0001": 15, "b0002": 20})
+    report = _verify_replicate_aware([_library(*profile), _library(*profile)])
+    groups = _result(report, "replicate_groups")
+    assert groups.passed is False
+    assert groups.message == (
+        "2 records share an expression profile; 0 groups pool records measuring "
+        "different genes"
+    )
+    assert groups.details["n_in_repeated_profiles"] == 2
+
+
+def test_replicate_groups_fails_a_group_whose_members_measure_different_genes() -> None:
+    """A group pooling two gene sets is two conditions on one environment identity."""
+    report = _verify_replicate_aware(
+        [
+            _library({"b0001": 2.0, "b0002": 4.0}, {"b0001": 15, "b0002": 20}),
+            _library({"b0001": 2.1, "b0003": 3.9}, {"b0001": 16, "b0003": 19}),
+        ]
+    )
+    groups = _result(report, "replicate_groups")
+    assert groups.passed is False
+    assert groups.details == {
+        "n_records": 2,
+        "n_groups": 1,
+        "n_in_repeated_profiles": 0,
+        "n_groups_with_mixed_gene_sets": 1,
+        "group_size_histogram": {"2": 1},
+    }
+
+
+def test_replicate_groups_separates_conditions_and_reports_the_sizes() -> None:
+    """Group identity is (genotype, environment), and the sizes are the structure."""
+    records = [
+        _library({"b0001": 2.0}, {"b0001": 15}),
+        _library({"b0001": 2.1}, {"b0001": 16}),
+        _library({"b0001": 2.2}, {"b0001": 17}),
+    ]
+    # a third condition at another temperature: a different environment, its own group
+    other = _library({"b0001": 9.0}, {"b0001": 90})
+    other["experiment"]["environment"]["temperature"]["value"] = 42.0
+    report = _verify_replicate_aware([*records, other])
+    groups = _result(report, "replicate_groups")
+    assert groups.passed is True
+    assert groups.details["n_groups"] == 2
+    assert groups.details["group_size_histogram"] == {"1": 1, "3": 1}

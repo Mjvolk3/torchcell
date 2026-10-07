@@ -115,11 +115,10 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import YPD_AGAR
 from torchcell.datamodels.schema import (
     AssayType,
-    BiologicPerturbation,
     Concentration,
     ConcentrationUnit,
     Environment,
-    EnvironmentPhysicalPerturbation,
+    EnvironmentPerturbationType,
     EnvironmentResponseExperiment,
     EnvironmentResponseExperimentReference,
     EnvironmentResponsePhenotype,
@@ -711,11 +710,10 @@ class EnvChemgenAuesukaree2009Dataset(ExperimentDataset):
 
     def _environment(self, spec: dict[str, Any]) -> Environment:
         """Aerobic solid-YPD plate carrying the edit (an added small molecule, or heat)."""
-        perturbations: list[
-            SmallMoleculePerturbation
-            | EnvironmentPhysicalPerturbation
-            | BiologicPerturbation
-        ] = []
+        # Annotated with the union itself (``list`` is invariant), so a leaf added to
+        # ``EnvironmentPerturbationType`` does not make this local too narrow for
+        # ``Environment.perturbations``.
+        perturbations: list[EnvironmentPerturbationType] = []
         if spec["kind"] == "small_molecule":
             perturbations.append(
                 SmallMoleculePerturbation(

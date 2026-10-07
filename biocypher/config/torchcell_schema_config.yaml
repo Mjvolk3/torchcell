@@ -177,6 +177,33 @@ environment perturbation:
         concentration_value: float
         concentration_unit: str
 
+# A bacteriophage challenge (PhagePerturbation): the environment axis of a phage-
+# resistance screen, content-addressed like the other environment perturbations. It is
+# its OWN class rather than a row of `environment perturbation`, for two reasons. The
+# served class would need new properties (the MOI, the phage's taxon and accession) and
+# `environment perturbation` is served, so that is a full rebuild; and the dose is not a
+# concentration, so it cannot ride the `concentration_value` / `concentration_unit`
+# columns without making a particle-to-cell ratio look like a dose.
+# is_a: Biolink defines `environmental exposure` as abiotic ("factor relating to abiotic
+# processes in the environment"), while `biotic exposure` is "an intake of (sometimes
+# pathological) biological organisms (including viruses)" and carries `viral exposure` as
+# an altLabel. The two are SIBLINGS under `exposure event`, so a phage node does not
+# carry the `EnvironmentalExposure` label and no served query over that label changes.
+# Same id rule as `environment perturbation` (the composition projection in
+# torchcell.datamodels.identity), so `environment perturbation member of` addresses these
+# nodes unchanged.
+phage perturbation:
+    is_a: biotic exposure
+    represented_as: node
+    properties:
+        perturbation_type: str
+        description: str
+        phage_name: str
+        ncbi_taxid: int
+        genome_accession: str
+        multiplicity_of_infection: float
+        titer_pfu_per_ml: float
+
 # TODO expand out to include different phenotypes.
 # PHENOTYPES START
 # fitness and gene interaction phenotypes project screen_id, the screen a measurement
@@ -473,10 +500,15 @@ temperature member of:
     source: temperature
     target: environment
 
+# Two sources since `phage perturbation` joined, so input_label is required (with a list
+# source and no input_label, OntologyMapping._horizontal_inheritance_source zips a list
+# against a string and builds one leaf per CHARACTER). The adapter's relationship label
+# is unchanged, so the written type stays EnvironmentPerturbationMemberOf.
 environment perturbation member of:
     is_a: part of
     represented_as: edge
-    source: environment perturbation
+    input_label: environment perturbation member of
+    source: [environment perturbation, phage perturbation]
     target: environment
 
 genome member of:

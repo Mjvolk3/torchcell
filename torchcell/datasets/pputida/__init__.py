@@ -7,6 +7,16 @@ Each loader is ``<firstauthor><year>.py``, decorated with ``@register_dataset`` 
 subclassing ``ExperimentDataset``; importing it here populates ``dataset_registry``.
 The shared skeleton (genome, locus-tag reconciliation, assembly pin, injection rule)
 is ``torchcell.datasets.bacteria_common``.
+
+What this package holds:
+
+- ``carruthers2025`` -- ``IsoprenolTiterCarruthers2025Dataset`` and
+  ``ProteomeCarruthers2025Dataset``: the CRISPRi isoprenol production campaign, 465
+  product-titer strains on the IY1449b chassis plus the released 19-sample Top3 proteome
+  panel.
+- ``lim2022`` -- ``PutidaPrecise321Lim2022Dataset``: putidaPRECISE321, the KT2440
+  transcriptome compendium as one record per sample (180 of 321), each naming the study
+  its profile was first published in.
 """
 
 from .carruthers2025 import (

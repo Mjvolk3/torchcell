@@ -143,6 +143,19 @@ EXAMPLES: dict[str, dict[str, Any]] = {
             {"field": "provenance", "reason": "deferred_pending_source_review"}
         ],
     },
+    # A phage challenge always has a dose, so the builder's bare `name` is refused: the
+    # MOI is stated or it is a typed gap.
+    "torchcell.datamodels.schema.PhagePerturbation": {
+        "name": "T4",
+        "multiplicity_of_infection": 0.01875,
+        "ncbi_taxid": 10665,
+    },
+    # The generic builder fills `source_identifier` with a placeholder, which the route
+    # validator refuses (an eck_crosswalk starts from another strain's locus tag).
+    "torchcell.datamodels.schema.DerivedIdentifierMapping": {
+        "source_identifier": "b0002",
+        "route": "eck_crosswalk",
+    },
     "torchcell.datamodels.schema.BacterialDeletionPerturbation": {
         "systematic_gene_name": "b0002",
         "perturbed_gene_name": "thrA",

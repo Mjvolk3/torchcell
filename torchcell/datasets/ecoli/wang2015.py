@@ -75,7 +75,8 @@ ratio's SD therefore cannot be derived without assuming the four cultures indepe
 COMPOUND. ``isoprenol`` has no row in ``compound_identity_table.json`` yet, so
 ``resolved_compound`` returns the name with an ``inchikey`` gap (the same object the
 Carruthers 2025 loader stores). Its identity, ``ISOPRENOL_INCHIKEY``, is recorded here and
-checked against any row the table gains; adding that row is a separate change.
+checked against the table's row, which now exists (PubChem CID 12988); a row disagreeing
+with the recorded key stops the build.
 
 NOT LOADED, because the paper releases them only as figures or as another readout:
 the Fig. 2 time courses; the transporter overexpression strains on pTrc99A (Fig. 3C,
@@ -500,7 +501,7 @@ IDENTITY_EVIDENCE: dict[str, tuple[str, ...]] = {
 ISOPRENOL_LABEL = "isoprenol"
 #: RDKit InChIKey of ``ISOPRENOL_SMILES``; PubChem CID 12988 (3-methyl-3-buten-1-ol)
 #: returns the same key. Not written onto the record: the compound-identity table is the
-#: one authority, and its isoprenol row is a separate change.
+#: one authority, and it now carries that row, which this constant is checked against.
 ISOPRENOL_INCHIKEY = "CPJRRXSHAYUTGL-UHFFFAOYSA-N"
 ISOPRENOL_SMILES = "C=C(C)CCO"
 ISOPRENOL_PUBCHEM_CID = 12988
@@ -1116,8 +1117,9 @@ def response_phenotype(value: float) -> EnvironmentResponsePhenotype:
 def isoprenol_compound() -> Compound:
     """Isoprenol through the shared compound-identity layer.
 
-    With no table row the resolver returns the name with an ``inchikey`` gap; once a row
-    exists, its InChIKey must be ``ISOPRENOL_INCHIKEY`` or the build stops.
+    The table's row (PubChem CID 12988) must carry ``ISOPRENOL_INCHIKEY`` or the build
+    stops; before that row existed the resolver returned the name with an ``inchikey``
+    gap, which this guard also admits.
     """
     compound = resolved_compound(ISOPRENOL_LABEL)
     if compound.inchikey is not None and compound.inchikey != ISOPRENOL_INCHIKEY:

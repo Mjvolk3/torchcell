@@ -383,6 +383,92 @@ def _check_gene_namespace(model: "GenePerturbation") -> None:
             f"{model.systematic_gene_name!r} is a {tag_namespace} tag but "
             f"gene_namespace is {namespace!r}"
         )
+    mapping = getattr(model, "identifier_mapping")
+    if mapping is None:
+        return
+    if mapping.source_identifier == model.systematic_gene_name:
+        raise ValueError(
+            f"identifier_mapping says {model.systematic_gene_name!r} was derived from "
+            "itself; a tag the source released verbatim carries no mapping"
+        )
+    if mapping.route == "eck_crosswalk":
+        source_namespace = _namespace_of_locus_tag(mapping.source_identifier)
+        if source_namespace == namespace:
+            raise ValueError(
+                f"an eck_crosswalk crosses namespaces, but {mapping.source_identifier!r} "
+                f"is already a {namespace} tag"
+            )
+
+
+DerivedIdentifierRoute = Literal["eck_crosswalk", "jw_synonym", "gene_symbol"]
+"""How a bacterial record's stored locus tag was reached from the identifier its source
+released, when the two differ.
+
+- ``eck_crosswalk``: the source released a locus tag of ANOTHER strain's namespace (an
+  MG1655 b-number labeling a BW25113 strain), and the stored tag is the one locus of the
+  pinned strain carrying the same ``ECK`` accession as a ``/gene_synonym``
+  (``bacteria_common.eck_crosswalk``, the one-to-one ECK join; 4,423 pairs on the
+  deposited sets, 11 of them with disagreeing numbers, which is why no string surgery
+  relates the namespaces).
+- ``jw_synonym``: the source released a Keio ``JW`` id, which the pinned BW25113
+  annotation carries as a ``/gene_synonym`` of exactly one locus.
+- ``gene_symbol``: the source released a gene name (a current symbol or a symbol the
+  annotation lists as a synonym), resolved to exactly one locus by the genome's name
+  layers.
+"""
+
+JW_IDENTIFIER_PATTERN = r"^JW[RS]?\d{4}$"
+"""A Keio ``JW`` id as BW25113's GenBank annotation writes it, measured on
+``GCA_000750555.1_ASM75055v1_genomic.gbff.gz``: 4,181 ``JW`` plus four digits, 153
+``JWR`` (RNA genes) and one ``JWS``; nothing else."""
+
+
+class DerivedIdentifierMapping(ModelStrict):
+    """A record's locus tag was DERIVED from the identifier its source released.
+
+    Plan section 4 ([[plan.bacteria-ontology-genome]]): a use of a crosswalk is "recorded
+    on the record as a derived mapping, never silently". ``source_identifier`` is what
+    the source released, verbatim; ``route`` names how the stored ``systematic_gene_name``
+    was reached from it. A record whose tag the source released as stored carries no
+    mapping (``None`` on the leaf), so every record built before this field existed
+    reads exactly as before.
+    """
+
+    source_identifier: str = Field(
+        description="the identifier the source released, verbatim (e.g. the MG1655 "
+        "b-number behind a BW25113 tag, a Keio JW id, a gene symbol)"
+    )
+    route: DerivedIdentifierRoute = Field(
+        description="how systematic_gene_name was reached from source_identifier"
+    )
+
+    @model_validator(mode="after")
+    def _check_route(self) -> "DerivedIdentifierMapping":
+        """The released identifier has the form its route reads."""
+        identifier = self.source_identifier
+        if not identifier or identifier != identifier.strip():
+            raise ValueError(
+                f"source_identifier must be a non-empty verbatim id, got {identifier!r}"
+            )
+        if self.route == "jw_synonym" and not re.match(
+            JW_IDENTIFIER_PATTERN, identifier
+        ):
+            raise ValueError(
+                f"a jw_synonym route starts from a Keio JW id ({JW_IDENTIFIER_PATTERN}), "
+                f"got {identifier!r}"
+            )
+        is_tag = _namespace_of_locus_tag(identifier) is not None
+        if self.route == "eck_crosswalk" and not is_tag:
+            raise ValueError(
+                "an eck_crosswalk route starts from another strain's locus tag, got "
+                f"{identifier!r}"
+            )
+        if self.route == "gene_symbol" and is_tag:
+            raise ValueError(
+                f"{identifier!r} is a locus tag, not a gene symbol; a tag of another "
+                "strain is an eck_crosswalk"
+            )
+        return self
 
 
 class MatingType(StrEnum):
@@ -2139,6 +2225,11 @@ class BacterialDeletionPerturbation(DeletionPerturbation, ModelStrict):
     gene_namespace: BacterialGeneNamespace = Field(
         description="which host's locus-tag namespace systematic_gene_name is written in"
     )
+    identifier_mapping: DerivedIdentifierMapping | None = Field(
+        default=None,
+        description="how systematic_gene_name was derived from the identifier the "
+        "source released; None when the source released it as stored",
+    )
     collection: str | None = Field(
         default=None,
         description="the physical deletion collection the strain came from, verbatim "
@@ -2194,6 +2285,11 @@ class TransposonInsertionPerturbation(PresenceAbsencePerturbation, ModelStrict):
     provenance: str = "engineered"
     gene_namespace: BacterialGeneNamespace = Field(
         description="which host's locus-tag namespace systematic_gene_name is written in"
+    )
+    identifier_mapping: DerivedIdentifierMapping | None = Field(
+        default=None,
+        description="how systematic_gene_name was derived from the identifier the "
+        "source released; None when the source released it as stored",
     )
     barcode: str | None = Field(
         default=None,
@@ -2268,6 +2364,11 @@ class BacterialCrisprInterferencePerturbation(
     gene_namespace: BacterialGeneNamespace = Field(
         description="which host's locus-tag namespace systematic_gene_name is written in"
     )
+    identifier_mapping: DerivedIdentifierMapping | None = Field(
+        default=None,
+        description="how systematic_gene_name was derived from the identifier the "
+        "source released; None when the source released it as stored",
+    )
 
     @field_validator("systematic_gene_name", mode="after")
     @classmethod
@@ -2305,6 +2406,11 @@ class PromoterReplacementPerturbation(ExpressionModulationPerturbation, ModelStr
     mechanism_so_name: str = "delins"
     gene_namespace: BacterialGeneNamespace = Field(
         description="which host's locus-tag namespace systematic_gene_name is written in"
+    )
+    identifier_mapping: DerivedIdentifierMapping | None = Field(
+        default=None,
+        description="how systematic_gene_name was derived from the identifier the "
+        "source released; None when the source released it as stored",
     )
     promoter_name: str = Field(
         description="identity of the promoter part installed, verbatim (e.g. 'Ptac', "
@@ -2369,6 +2475,11 @@ class HeterologousPathwayPerturbation(GeneAdditionPerturbation, ModelStrict):
     gene_namespace: BacterialGeneNamespace = Field(
         description="the HOST genome the construct was built in (not the namespace of "
         "systematic_gene_name, which is usually a heterologous symbol)"
+    )
+    identifier_mapping: DerivedIdentifierMapping | None = Field(
+        default=None,
+        description="how systematic_gene_name was derived from the identifier the "
+        "source released; None when the source released it as stored",
     )
     pathway_name: str = Field(
         description="the pathway this gene is part of, verbatim (e.g. 'isoprenol via "
@@ -3014,8 +3125,90 @@ class BiologicPerturbation(EnvironmentPerturbation, ModelStrict):
     )
 
 
+class PhagePerturbation(EnvironmentPerturbation, ModelStrict):
+    """A bacteriophage added to the culture, dosed as a multiplicity of infection.
+
+    A virion is none of the other three environment leaves: it has no InChIKey (so not a
+    ``SmallMoleculePerturbation``), it is not a scalar physical factor, and it is a
+    replicating nucleoprotein particle rather than a peptide, protein, antibody or toxin
+    (so not a ``BiologicPerturbation``, whose ``BiologicAgentClass`` would misstate it).
+    Its identity is the phage itself: ``name`` as the source writes it, plus the NCBI
+    taxon and the genome accession when the source states them.
+
+    The dose is NOT a ``Concentration``. A multiplicity of infection is a dimensionless
+    ratio of two counts (plaque-forming units per cell at the start of the assay), and a
+    ``ConcentrationUnit`` member for it would make a particle-to-cell ratio look like a
+    dose unit. ``multiplicity_of_infection`` carries that ratio in its own field and
+    ``titer_pfu_per_ml`` the phage concentration in the culture, each in the unit its
+    name states. A phage challenge always has a dose, so an unstated MOI is a typed
+    ``ProvenanceGap``, never a silent ``None``. Whether the strain resisted is an
+    ``EnvironmentResponsePhenotype`` property, never part of the edit (M1).
+    """
+
+    perturbation_type: Literal["phage"] = "phage"
+    description: str = "Bacteriophage added to the culture"
+    name: str = Field(
+        description="phage name as the source gives it, verbatim (e.g. 'T4', "
+        "'lambda cI857')"
+    )
+    family: str | None = Field(
+        default=None,
+        description="viral family as the source states it, verbatim (e.g. "
+        "'Myoviridae'); None when unstated",
+    )
+    genome_type: str | None = Field(
+        default=None,
+        description="nucleic-acid type of the phage genome as stated (e.g. 'dsDNA')",
+    )
+    ncbi_taxid: int | None = Field(
+        default=None,
+        description="NCBI Taxonomy id of the phage, when the source names it",
+    )
+    genome_accession: str | None = Field(
+        default=None,
+        description="nucleotide accession of the phage genome, when the source names it",
+    )
+    multiplicity_of_infection: float | None = Field(
+        default=None,
+        description="the dose, unit MOI: plaque-forming units per cell at the start of "
+        "the assay (dimensionless). None only with a ProvenanceGap",
+    )
+    titer_pfu_per_ml: float | None = Field(
+        default=None,
+        description="phage in the culture at the start of the assay, unit pfu/mL; None "
+        "when unstated",
+    )
+    host_of_propagation: str | None = Field(
+        default=None,
+        description="the strain the phage stock was propagated on, verbatim, when stated",
+    )
+
+    @field_validator("name", mode="after")
+    @classmethod
+    def _validate_name(cls, v: str) -> str:
+        """A phage name is a non-empty verbatim string."""
+        if not v or v != v.strip():
+            raise ValueError(f"phage name must be non-empty and verbatim, got {v!r}")
+        return v
+
+    @model_validator(mode="after")
+    def _check_dose(self) -> "PhagePerturbation":
+        """The dose is stated or gapped; every stated count is positive and finite."""
+        _require_value_or_gap(self, ("multiplicity_of_infection",))
+        for field in ("multiplicity_of_infection", "titer_pfu_per_ml"):
+            value = getattr(self, field)
+            if value is not None and not (math.isfinite(value) and value > 0):
+                raise ValueError(f"PhagePerturbation.{field} must be > 0, got {value}")
+        if self.ncbi_taxid is not None and self.ncbi_taxid < 1:
+            raise ValueError(f"ncbi_taxid must be positive, got {self.ncbi_taxid}")
+        return self
+
+
 EnvironmentPerturbationType = (
-    SmallMoleculePerturbation | EnvironmentPhysicalPerturbation | BiologicPerturbation
+    SmallMoleculePerturbation
+    | EnvironmentPhysicalPerturbation
+    | BiologicPerturbation
+    | PhagePerturbation
 )
 
 
@@ -5219,14 +5412,22 @@ class FluxPhenotype(Phenotype, ModelStrict):
 #
 # The three new phenotypes come first, then the families whose phenotype is REUSED
 # unchanged and which exist only to carry the pin. ``environment`` stays the shared
-# ``Environment`` throughout, so the cross-dataset medium-level aggregate still
-# forms across hosts.
+# ``Environment`` everywhere except the product-titer pair, so the cross-dataset
+# medium-level aggregate still forms across hosts. The product-titer pair declares
+# ``CultureEnvironment`` (the same narrowing the chemogenomic family makes) because a
+# titer cannot be read without its vessel: the fermentation format is part of what was
+# measured, and a ``CultureEnvironment`` in an ``Environment``-typed slot dumps without
+# ``culture_format``. ``media`` is the same field holding the same ``Media``, and a
+# culture environment that states no protocol has the plain environment's identity, so
+# the aggregate is unchanged.
 # --------------------------------------------------------------------------- #
 class ProductTiterExperimentReference(ExperimentReference, ModelStrict):
     """Reference (parent-strain) context for a product-titer experiment."""
 
     experiment_reference_type: str = "product_titer"
     genome_reference: AssemblyReferenceGenome
+    # Narrowed: the control culture states its vessel, as the experiment does.
+    environment_reference: CultureEnvironment
     phenotype_reference: ProductTiterPhenotype
 
 
@@ -5235,6 +5436,7 @@ class ProductTiterExperiment(Experiment, ModelStrict):
 
     experiment_type: str = "product_titer"
     genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    environment: CultureEnvironment  # narrowed: a titer is read with its vessel
     phenotype: ProductTiterPhenotype
 
 

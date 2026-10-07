@@ -3124,6 +3124,138 @@ M9_NREL_LIM2025 = Media(
 )
 """Lim 2025's P. putida isoprenol-TALE medium (row 16)."""
 
+# --------------------------------------------------------------------------- #
+# Lim 2022 (row 7) states the SAME five NREL salts as Lim 2025 and, uniquely among the
+# NREL-M9 papers, states its 2000x trace solution's full composition rather than
+# deferring it to Lim 2020 / Linger 2014. So its trace component is a sub-mix whose
+# recipe is QUOTED on the component, not a deferral; it is kept as one component rather
+# than expanded into ten, because six of the ten labels have no compound-identity row
+# (measured 2026-10-07: manganese chloride tetrahydrate, cobalt chloride hexahydrate,
+# copper sulfate dihydrate, sodium molybdate dihydrate, potassium iodide and disodium
+# EDTA are UNRESOLVED_PUBLIC, while zinc sulfate heptahydrate, calcium chloride
+# dihydrate, iron(II) sulfate heptahydrate and boric acid resolve). A partial expansion
+# would assert a partial recipe, so the component carries the whole stated one.
+# Two keys, because the compendium uses both: the medium as stated (4 g/L glucose) and
+# the aromatic project's version, whose carbon source replaces the glucose.
+# --------------------------------------------------------------------------- #
+_LIM2022 = Provenance(
+    citation_key="limMachinelearningPseudomonasPutida2022",
+    sha256="64e1df3103b221051fb52e9d62afb39582367e20996bedc46f4d6f23e73f4750",
+    source_uri="si/si1.docx",
+    method="paragraph text of word/document.xml (docx_paragraphs)",
+    page="Supplementary Method 1. Transcriptome sequencing (RNA-seq)",
+)
+_Q_LIM22_M9 = (
+    "Briefly, cells were cultured in either LB medium (10 g/L tryptone, 5 g/L yeast "
+    "extract, 10 g/L NaCl) or the modified minimal M9 medium. The minimal medium "
+    "contains 4 g/L glucose, 2 g/L (NH4)2SO4, 6.8 g/L Na2HPO4, 3 g/L KH2PO4, 0.5 g/L "
+    "NaCl, 2 mM MgSO4, 0.1 mM CaCl2, 500 μL/L 2000× trace element solution)."
+)
+_Q_LIM22_TRACE = (
+    "The composition of the trace element solution is 4.5 g/L ZnSO4·7H2O, 0.7 g/L "
+    "MnCl2·4H2O, 0.3 g/L CoCl2·6H2O, 0.2 g/L CuSO4·2H2O, 0.4 g/L "
+    "Na2MoO4·2H2O, 4.5 g/L CaCl2·2H2O, 3.0 g/L FeSO4·7H2O, 1.0 g/L "
+    "H3BO3, 0.1 g/L KI, 15 g/L disodium ethylenediaminetetraacetate."
+)
+_Q_LIM22_AROMATIC = (
+    "Cells were grown in the M9 medium with 2.5 g/L of either coumarate, ferulate, a "
+    "mixture of coumarate and ferulate, or glucose."
+)
+
+_LIM2022_TRACE_SOLUTION = _mixture(
+    "2000x trace element solution (Lim 2022)",
+    _TRACE,
+    _DEFERRED,
+    concentration=_c(0.05, _VV),
+    provenance=[
+        _cite(_LIM2022, "500 uL/L: 0.05% v/v", _Q_LIM22_M9),
+        _cite(
+            _LIM2022,
+            {
+                "ZnSO4.7H2O": "4.5 g/L",
+                "MnCl2.4H2O": "0.7 g/L",
+                "CoCl2.6H2O": "0.3 g/L",
+                "CuSO4.2H2O": "0.2 g/L",
+                "Na2MoO4.2H2O": "0.4 g/L",
+                "CaCl2.2H2O": "4.5 g/L",
+                "FeSO4.7H2O": "3.0 g/L",
+                "H3BO3": "1.0 g/L",
+                "KI": "0.1 g/L",
+                "disodium ethylenediaminetetraacetate": "15 g/L",
+            },
+            _Q_LIM22_TRACE,
+            note="the 2000x stock in g/L; at 500 uL/L each is diluted 2000-fold",
+        ),
+    ],
+    note="the composition IS stated (the second quote) and is kept here rather than "
+    "expanded into ten components, because six of the ten labels have no "
+    "compound-identity row; a partial expansion would assert a partial recipe. This is "
+    "``composition_deferred`` for that reason, not for an unmirrored source",
+)
+
+
+def _lim2022_salts() -> list[MediaComponent]:
+    """The five salts and the nitrogen salt Lim 2022's own sentence states."""
+    return [
+        *_nrel_salts(
+            _LIM2022,
+            _Q_LIM22_M9,
+            ammonium_sulfate=_c(2.0, _GL),
+            ammonium_sulfate_read="2 g/L",
+        ),
+        _LIM2022_TRACE_SOLUTION,
+    ]
+
+
+M9_NREL_LIM2022 = Media(
+    name="M9 (NREL type: ammonium sulfate + 2000x trace elements, composition stated) "
+    "+ 4 g/L glucose (Lim 2022)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=[
+        *_lim2022_salts(),
+        _stated("D-glucose", _CSRC, 4.0, _GL, _cite(_LIM2022, "4 g/L", _Q_LIM22_M9)),
+    ],
+    dropouts=[_M9_AMMONIUM_CHLORIDE],
+    provenance=[
+        _cite(
+            _LIM2022,
+            "the modified minimal M9 medium",
+            _Q_LIM22_M9,
+            note=_AMMONIUM_SULFATE_DROPOUT_NOTE,
+        )
+    ],
+)
+"""Lim 2022's in-house minimal medium as stated, 4 g/L glucose (row 7)."""
+
+M9_NREL_NOCARBON_LIM2022 = Media(
+    name="M9 (NREL type: ammonium sulfate + 2000x trace elements, composition stated), "
+    "no carbon source (Lim 2022 aromatic project)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=_lim2022_salts(),
+    dropouts=[_M9_AMMONIUM_CHLORIDE],
+    provenance=[
+        _cite(
+            _LIM2022,
+            "the modified minimal M9 medium",
+            _Q_LIM22_M9,
+            note=_AMMONIUM_SULFATE_DROPOUT_NOTE,
+        ),
+        _cite(
+            _LIM2022,
+            "the carbon source is the variable",
+            _Q_LIM22_AROMATIC,
+            note="the aromatic project replaces the base's 4 g/L glucose with 2.5 g/L "
+            "of p-coumarate, ferulate, both, or glucose, so the carbon source is an "
+            "EnvironmentPhysicalPerturbation(factor=carbon_source) and is left out here",
+        ),
+    ],
+)
+"""Lim 2022's minimal medium without its carbon source, the aromatic base (row 7)."""
+
 _KANG_KH2PO4_NOTE = "the OCR renders the '3 g/L' of KH2PO4 as '3 \\gimel A'"
 
 _KANG_NREL_SALTS = _nrel_salts(
@@ -3763,6 +3895,14 @@ BACTERIAL_MEDIA_USES: dict[str, tuple[str, ...]] = {
     "M9_SCHMIDT2016": ("32 Schmidt 2016: the minimal-medium proteome conditions",),
     "M9_NREL_DESIQUEIRA2025": ("14 de Siqueira 2025: tolerization and phenotyping",),
     "M9_NREL_LIM2025": ("16 Lim 2025: growth and TALE cultures",),
+    "M9_NREL_LIM2022": (
+        "7 Lim 2022: the in-house RNA-seq cultures of putidaPRECISE321, as the SI "
+        "states them (4 g/L glucose)",
+    ),
+    "M9_NREL_NOCARBON_LIM2022": (
+        "7 Lim 2022: the aromatic project, whose 2.5 g/L carbon source replaces the "
+        "base's glucose",
+    ),
     "M9_NREL_KANG2026": ("18 Kang 2026: 'M9'",),
     "M9_NREL_HIGH_N_KANG2026": ("18 Kang 2026: 'modified M9'",),
     "M9_MOPS_KANG2026": ("18 Kang 2026: 'M9-MOPS'",),
@@ -3837,6 +3977,8 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "M9_SCHMIDT2016": M9_SCHMIDT2016,
     "M9_NREL_DESIQUEIRA2025": M9_NREL_DESIQUEIRA2025,
     "M9_NREL_LIM2025": M9_NREL_LIM2025,
+    "M9_NREL_LIM2022": M9_NREL_LIM2022,
+    "M9_NREL_NOCARBON_LIM2022": M9_NREL_NOCARBON_LIM2022,
     "M9_NREL_KANG2026": M9_NREL_KANG2026,
     "M9_NREL_HIGH_N_KANG2026": M9_NREL_HIGH_N_KANG2026,
     "M9_MOPS_KANG2026": M9_MOPS_KANG2026,
@@ -3881,6 +4023,8 @@ CARBON_FREE_MEDIA: dict[str, str] = {
     "M9_SCHMIDT2016": "the carbon source is the variable across the eleven carbon-source "
     "conditions",
     "M9_NREL_DESIQUEIRA2025": "acetate or glucose, varied per condition",
+    "M9_NREL_NOCARBON_LIM2022": "the aromatic project varies the carbon source "
+    "(p-coumarate, ferulate, both, or glucose) at 2.5 g/L",
     "M9_NREL_KANG2026": "glucose alone or a glucose:xylose mixture, varied per condition",
     "M9_NREL_HIGH_N_KANG2026": "same sugar regimes as the Kang 2026 M9",
     "M9_MOPS_KANG2026": "same sugar regimes as the Kang 2026 M9",

@@ -838,9 +838,14 @@ def test_verify_build_reports_each_background_with_the_supplementary_rows(
     for strain in ("BW25113", "MG1655"):
         rows = verdicts[strain]
         assert rows["structural"] and rows["count"]
-        # the fitness verifier's environment key ignores the carbon-source perturbation
-        assert rows["pair_uniqueness"] is False
+        # The fitness verifier's environment key now includes the carbon-source
+        # perturbation, so the family rule and this dataset's supplementary rule agree:
+        # one record per (strain, carbon source), not thirty duplicates per strain.
+        assert rows["pair_uniqueness"] is True
         assert rows["pair_uniqueness_with_environment_perturbations"] is True
+        # the pseudogene loci the two collections deleted resolve to themselves, which
+        # the shared canonical-name rule now accepts
+        assert rows["canonical_gene_names"] is True
         assert rows["stored_tags_are_loci_of_the_pinned_assembly"] is True
         assert rows["reference_one"] and rows["current_genome_genes"]
         assert (root / "preprocess" / f"verification_report_{strain}.json").is_file()

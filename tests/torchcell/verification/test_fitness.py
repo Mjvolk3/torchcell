@@ -29,12 +29,18 @@ import pytest
 
 from torchcell.datamodels.media import SC
 from torchcell.datamodels.schema import (
+    Compound,
+    Concentration,
+    ConcentrationUnit,
     Environment,
+    EnvironmentPerturbationType,
+    EnvironmentPhysicalPerturbation,
     FitnessExperiment,
     FitnessExperimentReference,
     FitnessPhenotype,
     Genotype,
     KanMxDeletionPerturbation,
+    PhysicalFactor,
     ReferenceGenome,
     SampleUnit,
     SgaKanMxDeletionPerturbation,
@@ -73,6 +79,8 @@ def _record(
     strain_id: str | None = None,
     temperature: float = 30.0,
     ref_fitness: float = 1.0,
+    carbon_source: str | None = None,
+    carbon_g_per_l: float = 2.0,
 ) -> dict[str, Any]:
     """One ``{experiment, reference}`` record for a (multi-)deletion strain."""
     perturbations: list[Any] = [
@@ -87,7 +95,24 @@ def _record(
         )
         for g in genes
     ]
-    environment = Environment(media=SC, temperature=Temperature(value=temperature))
+    perturbed_environment: list[EnvironmentPerturbationType] = (
+        []
+        if carbon_source is None
+        else [
+            EnvironmentPhysicalPerturbation(
+                factor=PhysicalFactor.carbon_source,
+                agent=Compound(name=carbon_source),
+                magnitude=Concentration(
+                    value=carbon_g_per_l, unit=ConcentrationUnit.g_per_l
+                ),
+            )
+        ]
+    )
+    environment = Environment(
+        media=SC,
+        temperature=Temperature(value=temperature),
+        perturbations=perturbed_environment,
+    )
     experiment = FitnessExperiment(
         dataset_name="test",
         genotype=Genotype(perturbations=perturbations),
@@ -164,6 +189,8 @@ def test_good_dataset_emits_twelve_results_in_order_and_passes() -> None:
     assert _result(report, "pair_uniqueness").details == {
         "n_pairs": 3,
         "n_duplicated": 0,
+        "n_strains": 3,
+        "n_environments": 1,
     }
     assert _result(report, "value_fidelity").details == {
         "n_values": 3,
@@ -285,7 +312,12 @@ def test_pair_uniqueness_keys_on_strain_id_and_environment() -> None:
     duplicated = _verify([_record(["YAL001C"], 0.8), _record(["YAL001C"], 0.9)])
     dup = _result(duplicated, "pair_uniqueness")
     assert dup.passed is False
-    assert dup.details == {"n_pairs": 1, "n_duplicated": 1}
+    assert dup.details == {
+        "n_pairs": 1,
+        "n_duplicated": 1,
+        "n_strains": 1,
+        "n_environments": 1,
+    }
     assert dup.message == "1 (strain, environment) pairs appear in multiple records"
 
     allelic = _verify(
@@ -297,6 +329,8 @@ def test_pair_uniqueness_keys_on_strain_id_and_environment() -> None:
     assert _result(allelic, "pair_uniqueness").details == {
         "n_pairs": 2,
         "n_duplicated": 0,
+        "n_strains": 2,
+        "n_environments": 1,
     }
 
     two_temps = _verify(
@@ -308,6 +342,58 @@ def test_pair_uniqueness_keys_on_strain_id_and_environment() -> None:
     assert _result(two_temps, "pair_uniqueness").message == (
         "2 unique (strain, environment) records, one each"
     )
+
+
+def test_pair_uniqueness_counts_an_environment_perturbation_as_a_condition() -> None:
+    """One strain on two carbon sources is two records, not one repeated twice.
+
+    The Tong 2020 case: every strain is grown on one medium at one temperature for one
+    duration, and the thirty conditions differ only in an
+    ``EnvironmentPhysicalPerturbation(factor=carbon_source)``. Keyed on the scalars
+    alone, each strain read as thirty duplicates and L1 failed on a dataset holding
+    exactly one record per (strain, carbon source).
+    """
+    varied = _verify(
+        [
+            _record(["YAL001C"], 0.8, carbon_source="D-glucose"),
+            _record(["YAL001C"], 0.4, carbon_source="D-xylose"),
+        ]
+    )
+    result = _result(varied, "pair_uniqueness")
+    assert result.passed is True
+    assert result.details == {
+        "n_pairs": 2,
+        "n_duplicated": 0,
+        "n_strains": 1,
+        "n_environments": 2,
+    }
+
+    # the DOSE is part of the condition, as it is in the environment-response verifier
+    two_doses = _verify(
+        [
+            _record(["YAL001C"], 0.8, carbon_source="D-glucose", carbon_g_per_l=2.0),
+            _record(["YAL001C"], 0.5, carbon_source="D-glucose", carbon_g_per_l=0.2),
+        ]
+    )
+    assert _result(two_doses, "pair_uniqueness").passed is True
+
+    # and a genuine double-count is still caught: same strain, same source, same dose
+    repeated = _verify(
+        [
+            _record(["YAL001C"], 0.8, carbon_source="D-glucose"),
+            _record(["YAL001C"], 0.5, carbon_source="D-glucose"),
+        ]
+    )
+    assert _result(repeated, "pair_uniqueness").passed is False
+
+    # an unperturbed environment is unchanged: the key gains an empty tuple
+    plain = _verify([_record(["YAL001C"], 0.8), _record(["YBR085W"], 0.9)])
+    assert _result(plain, "pair_uniqueness").details == {
+        "n_pairs": 2,
+        "n_duplicated": 0,
+        "n_strains": 2,
+        "n_environments": 1,
+    }
 
 
 def test_value_fidelity_skips_none_then_indexes_negative_and_nan() -> None:

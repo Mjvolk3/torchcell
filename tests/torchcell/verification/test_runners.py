@@ -49,6 +49,11 @@ from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS, CALMORPH_STATI
 from torchcell.datamodels.media import SC, YP_GALACTOSE
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
+    BacterialDeletionPerturbation,
+    BacterialMetaboliteExperiment,
+    BacterialMetaboliteExperimentReference,
+    BacterialRNASeqExpressionExperiment,
+    BacterialRNASeqExpressionExperimentReference,
     CalMorphExperiment,
     CalMorphExperimentReference,
     CalMorphPhenotype,
@@ -1624,12 +1629,20 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "isobutanol_screen_lopez2024": 4554,
         "isobutanol_validated_lopez2024": 224,
         "ffa_xue2025": 176,
+        "metabolome_fuhrer2017": 3735,
     }
     assert {
         name
         for name, spec in runners.METABOLITE_DATASETS.items()
         if spec.get("reference_centered", True)
     } == {"betaxanthin_cachera2023"}
+    # Fuhrer 2017 is the one bacterial metabolome: its L4 universe comes from its own
+    # assembly pin, not from the Ohya yeast deletion collection.
+    assert {
+        name
+        for name, spec in runners.METABOLITE_DATASETS.items()
+        if name.startswith("metabolome_fuhrer")
+    } == {"metabolome_fuhrer2017"}
     # Issue #595: only Zelezniak releases several protocols, verified per protocol.
     assert {
         name
@@ -1646,7 +1659,21 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     assert _oracles(runners.RNASEQ_DATASETS) == {
         "caudal_pantranscriptome2024": 943,
         "nadal_ribelles_perturbseq2025": 6188,
+        "rnaseq_lamoureux2023": 241,
+        "putida_precise321_lim2022": 180,
     }
+    # The two bacterial compendia release one row per LIBRARY, so their L1 is the
+    # replicate-group rule; the yeast rows keep one record per (strain, condition).
+    assert {
+        name
+        for name, spec in runners.RNASEQ_DATASETS.items()
+        if spec.get("replicate_aware")
+    } == {"rnaseq_lamoureux2023", "putida_precise321_lim2022"}
+    assert {
+        name: spec["min_containment"]
+        for name, spec in runners.RNASEQ_DATASETS.items()
+        if "min_containment" in spec
+    } == {"rnaseq_lamoureux2023": 0.99, "putida_precise321_lim2022": 1.0}
     assert _oracles(runners.ENVIRONMENT_RESPONSE_DATASETS) == {
         "yeastphenome": 296777,
         "env_chemgen_vanacloig2022": 118662,
@@ -1708,7 +1735,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         name: spec["root"] for registry in registries for name, spec in registry.items()
     }
     assert roots == {name: f"data/torchcell/{name}" for name in roots}
-    assert len(roots) == 33  # 3 + 1 + 9 + 2 + 2 + 13 + 2 + 1
+    assert len(roots) == 36  # 3 + 1 + 10 + 2 + 4 + 13 + 2 + 1
     assert all(
         isinstance(spec["provenance"], Provenance)
         for registry in registries
@@ -1720,3 +1747,260 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
     )
     assert runners.OHNUKI_SOURCE_ROOT == "data/torchcell/scmd_ohnuki2018"
     assert runners.OHNUKI2022_SOURCE_ROOT == "data/torchcell/scmd_ohnuki2022"
+
+
+# --------------------------------------------------------------------------- #
+# Host-aware L4 and the replicate-aware RNA-seq dispatch
+# --------------------------------------------------------------------------- #
+BW25113_REFERENCE = _assembly_reference(
+    "BW25113", "ecoli_K12_BW25113_ASM75055v1", "GCA_000750555.1"
+)
+
+
+def _bacterial_rnaseq_record(tpm: dict[str, float], reference: Record) -> Record:
+    """One library of a bacterial compendium: no perturbation, so no strain id."""
+    env = Environment(
+        media=Media(name="M9", state="liquid", is_synthetic=True),
+        temperature=Temperature(value=37),
+    )
+    count = {gene: 10 + index for index, gene in enumerate(sorted(tpm))}
+    experiment = BacterialRNASeqExpressionExperiment(
+        dataset_name="test",
+        genotype=Genotype(perturbations=[]),
+        environment=env,
+        phenotype=RNASeqExpressionPhenotype(expression_tpm=tpm, expression_count=count),
+    )
+    ref = BacterialRNASeqExpressionExperimentReference(
+        dataset_name="test",
+        genome_reference=AssemblyReferenceGenome.model_validate(reference),
+        environment_reference=env.model_copy(),
+        phenotype_reference=RNASeqExpressionPhenotype(
+            expression_tpm={gene: 1.0 for gene in tpm},
+            expression_count={gene: 5 for gene in tpm},
+        ),
+    )
+    return {"experiment": experiment.model_dump(), "reference": ref.model_dump()}
+
+
+def _bacterial_metabolite_record(locus: str, level: float) -> Record:
+    env = Environment(
+        media=Media(name="M9", state="liquid", is_synthetic=True),
+        temperature=Temperature(value=37),
+    )
+
+    def phenotype(value: float) -> MetabolitePhenotype:
+        return MetabolitePhenotype(
+            metabolite_level={"neg_0001": value},
+            n_replicates={"neg_0001": 2},
+            measurement_type="fia_tof_ms_ion_modified_z_score",
+        )
+
+    experiment = BacterialMetaboliteExperiment(
+        dataset_name="test",
+        genotype=Genotype(
+            perturbations=[
+                BacterialDeletionPerturbation(
+                    systematic_gene_name=locus,
+                    perturbed_gene_name="thrA",
+                    gene_namespace="ecoli_k12_bw25113_locus_tag",
+                )
+            ]
+        ),
+        environment=env,
+        phenotype=phenotype(level),
+    )
+    reference = BacterialMetaboliteExperimentReference(
+        dataset_name="test",
+        genome_reference=AssemblyReferenceGenome.model_validate(BW25113_REFERENCE),
+        environment_reference=env.model_copy(),
+        phenotype_reference=phenotype(0.5),
+    )
+    return {"experiment": experiment.model_dump(), "reference": reference.model_dump()}
+
+
+def test_dataset_assembly_sets_is_the_union_of_the_records_own_pins() -> None:
+    """A dataset pinned to two strains (Tong's Keio + sRNA library) names both, sorted."""
+    mg1655 = _bacterial_rnaseq_record({"b0001": 2.0}, MG1655_REFERENCE)
+    bw25113 = _bacterial_rnaseq_record({"BW25113_0001": 2.0}, BW25113_REFERENCE)
+    assert runners._dataset_assembly_sets([mg1655]) == (ECOLI_K12_MG1655,)
+    assert runners._dataset_assembly_sets([bw25113, mg1655]) == (
+        ECOLI_K12_BW25113,
+        ECOLI_K12_MG1655,
+    )
+    yeast = _rnaseq_record("AAA", ["YAL001C"])
+    assert runners._dataset_assembly_sets([yeast]) == (SGD_S288C_R64,)
+
+
+def test_dataset_gene_universe_unions_both_pins_and_reads_neither_twice(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    reads: list[str] = []
+
+    def fake(assembly: Any, data_root: str) -> set[str]:
+        reads.append(assembly.assembly_set)
+        return {"b0001"} if assembly.assembly_set == ECOLI_K12_MG1655 else {"BW25113_1"}
+
+    monkeypatch.setattr(runners, "_bacterial_gene_set", fake)
+    records = [
+        _bacterial_rnaseq_record({"b0001": 2.0}, MG1655_REFERENCE),
+        _bacterial_rnaseq_record({"b0001": 2.1}, MG1655_REFERENCE),
+        _bacterial_rnaseq_record({"BW25113_1": 2.0}, BW25113_REFERENCE),
+    ]
+    universe, assembly_sets = runners._dataset_gene_universe(records, "/root")
+    assert universe == {"b0001", "BW25113_1"}
+    assert assembly_sets == (ECOLI_K12_BW25113, ECOLI_K12_MG1655)
+    assert reads == [ECOLI_K12_BW25113, ECOLI_K12_MG1655]
+
+
+def test_l4_assembly_gene_containment_closed_forms() -> None:
+    universe = {"b0001", "b0002"}
+    partial = runners._l4_assembly_gene_containment(
+        universe, (ECOLI_K12_MG1655,), {"b0001", "b0002", "b9999"}
+    )
+    assert partial.level is Level.L4
+    assert partial.name == "gene_containment_assembly"
+    assert partial.passed is False
+    assert partial.message == (
+        "0.667 of 3 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 0.9)"
+    )
+    assert partial.details == {
+        "assembly_sets": [ECOLI_K12_MG1655],
+        "n_measured": 3,
+        "n_in_universe": 2,
+        "n_universe": 2,
+        "overlap": pytest.approx(2 / 3),
+        "missing_examples": ["b9999"],
+    }
+
+    # a floor of 1.0 is what a dataset states when every id must be a locus of the pin
+    strict = runners._l4_assembly_gene_containment(
+        universe, (ECOLI_K12_MG1655,), {"b0001", "b9999"}, min_containment=1.0
+    )
+    assert strict.passed is False
+    assert "(>= 1.0)" in strict.message
+
+    both = runners._l4_assembly_gene_containment(
+        {"b0001", "BW25113_1"},
+        (ECOLI_K12_BW25113, ECOLI_K12_MG1655),
+        {"b0001", "BW25113_1"},
+    )
+    assert both.passed is True
+    assert both.details["assembly_sets"] == [ECOLI_K12_BW25113, ECOLI_K12_MG1655]
+
+    # an empty measured set fails, as it does in the two sibling rules
+    empty = runners._l4_assembly_gene_containment(universe, (ECOLI_K12_MG1655,), set())
+    assert empty.passed is False
+    assert empty.message == (
+        "no measured genes, so containment in ecoli_K12_MG1655_ASM584v2 has nothing "
+        "to check"
+    )
+    assert empty.details["n_measured"] == 0
+
+
+def test_run_rnaseq_uses_the_replicate_rule_and_the_assembly_universe(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A bacterial compendium gets ``replicate_groups`` + the pin's universe, and the
+    S288C gene set is never read for it.
+    """
+    records = [
+        _bacterial_rnaseq_record({"b0001": 2.0, "b0002": 4.0}, MG1655_REFERENCE),
+        _bacterial_rnaseq_record({"b0001": 2.1, "b0002": 3.9}, MG1655_REFERENCE),
+    ]
+    _write_lmdb(_root(tmp_path, "rna_bact"), records)
+    sgd_calls = _stub_sgd(monkeypatch, {"YAL001C"})
+    monkeypatch.setattr(runners, "_bacterial_gene_set", lambda a, r: {"b0001", "b0002"})
+    monkeypatch.setattr(
+        runners,
+        "RNASEQ_DATASETS",
+        {
+            "rna_bact": _spec(
+                "rna_bact", expected_count=2, replicate_aware=True, min_containment=1.0
+            )
+        },
+    )
+
+    assert runners.run_rnaseq(str(tmp_path)) is True
+    assert sgd_calls == []  # no yeast dataset in the registry, so no SGD read
+    report = _read_report(_root(tmp_path, "rna_bact"))
+    assert _names(report) == [
+        "structural",
+        "count",
+        "replicate_groups",
+        "tpm_value_fidelity",
+        "count_value_fidelity",
+        "measurement_type_consistent",
+        "reference_finite",
+        "gene_containment_assembly",
+    ]
+    l4 = _result(report, "gene_containment_assembly")
+    assert l4["details"]["assembly_sets"] == [ECOLI_K12_MG1655]
+    assert l4["details"]["n_measured"] == 2
+    assert _result(report, "replicate_groups")["details"]["n_groups"] == 1
+
+
+def test_run_metabolite_swaps_the_ohya_rule_for_the_assembly_rule(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A bacterial metabolome is checked against its own strain, not against Ohya.
+
+    Ohya is built here, so the yeast rule WOULD have been added; the dataset's own pin
+    is what selects the other rule.
+    """
+    _write_lmdb(tmp_path / runners.OHYA_SOURCE_ROOT, [_morphology_record("YAL001C")])
+    _write_lmdb(
+        _root(tmp_path, "met_bact"),
+        [
+            _bacterial_metabolite_record("BW25113_0002", 1.5),
+            _bacterial_metabolite_record("BW25113_0003", -0.5),
+        ],
+    )
+    monkeypatch.setattr(
+        runners, "_bacterial_gene_set", lambda a, r: {"BW25113_0002", "BW25113_0003"}
+    )
+    monkeypatch.setattr(
+        runners,
+        "METABOLITE_DATASETS",
+        {"met_bact": _spec("met_bact", expected_count=2, reference_centered=False)},
+    )
+
+    assert runners.run_metabolite(str(tmp_path)) is True
+    report = _read_report(_root(tmp_path, "met_bact"))
+    assert "gene_containment_scmd_ohya2005" not in _names(report)
+    l4 = _result(report, "gene_containment_assembly")
+    assert l4["passed"] is True
+    assert l4["details"]["assembly_sets"] == [ECOLI_K12_BW25113]
+    assert l4["details"]["overlap"] == 1.0
+
+
+def test_run_fitness_refuses_a_dataset_pinned_to_two_hosts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """One resolver cannot serve two hosts, so a two-pin dataset stops rather than
+    resolving half its names against the wrong annotation.
+    """
+    _write_lmdb(
+        _root(tmp_path, "fit_two"),
+        [
+            {
+                **_fitness_record("YAL001C", 0.9),
+                "reference": {
+                    **_fitness_record("YAL001C", 0.9)["reference"],
+                    "genome_reference": MG1655_REFERENCE,
+                },
+            },
+            {
+                **_fitness_record("YBR085W", 0.8),
+                "reference": {
+                    **_fitness_record("YBR085W", 0.8)["reference"],
+                    "genome_reference": BW25113_REFERENCE,
+                },
+            },
+        ],
+    )
+    monkeypatch.setattr(runners, "_bacterial_gene_set", lambda a, r: {"b0001"})
+    monkeypatch.setattr(
+        runners, "FITNESS_DATASETS", {"fit_two": _spec("fit_two", expected_count=2)}
+    )
+    with pytest.raises(ValueError, match="records name 2 assembly sets"):
+        runners.run_fitness(str(tmp_path))

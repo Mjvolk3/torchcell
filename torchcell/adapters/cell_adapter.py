@@ -37,6 +37,7 @@ from torchcell.datamodels.schema import (
     BacterialCrisprInterferencePerturbation,
     BacterialDeletionPerturbation,
     HeterologousPathwayPerturbation,
+    PhagePerturbation,
     PromoterReplacementPerturbation,
     TransposonInsertionPerturbation,
 )
@@ -214,6 +215,11 @@ class CellAdapter:
             (
                 "environment perturbation reference",
                 self._get_environment_perturbation_reference_nodes,
+            ),
+            ("phage perturbation (chunked)", self._phage_perturbation_node),
+            (
+                "phage perturbation reference",
+                self._get_phage_perturbation_reference_nodes,
             ),
             ("fitness phenotype (chunked)", self._fitness_phenotype_node),
             (
@@ -1164,6 +1170,64 @@ class CellAdapter:
         for data in tqdm(self.dataset.experiment_reference_index):
             for perturbation in data.reference.environment_reference.perturbations:
                 node = self._environment_perturbation_node_from(perturbation)
+                if node.get_id() not in seen_node_ids:
+                    seen_node_ids.add(node.get_id())
+                    nodes.append(node)
+        return nodes
+
+    # --- Phage challenges (the environment axis of a phage-resistance screen) ---
+    # A phage gets its OWN node class and method for the same reason `crispr construct`
+    # and `bacterial perturbation` do: `environment perturbation` is served, so giving it
+    # the MOI, the taxon and the accession as properties is a full rebuild, and the dose
+    # is not a concentration so it cannot ride the concentration columns. The served
+    # `_environment_perturbation_node` is NOT touched, which is what keeps this additive
+    # (it would emit a phage under the `environment perturbation` label, so a conf
+    # enables one class or the other and never both -- see the conf rule below).
+    # The id is the same composition projection the other environment-side nodes use, so
+    # `_environment_perturbation_to_environment_edges` addresses these nodes unchanged.
+
+    @staticmethod
+    def _phage_perturbation_node_from(perturbation: Any) -> BioCypherNode:
+        perturbation_id = CellAdapter._environment_perturbation_node_id(perturbation)
+        return BioCypherNode(
+            node_id=perturbation_id,
+            preferred_id=perturbation.perturbation_type,
+            node_label="phage perturbation",
+            properties={
+                "perturbation_type": perturbation.perturbation_type,
+                "description": perturbation.description,
+                # `phage_name`, not `name`: the sibling `environment perturbation` class
+                # names its agent column `compound_name` and the served `media` class
+                # uses `name` for a medium's label, so the agent's name is qualified by
+                # what it names. The pydantic field stays `name`.
+                "phage_name": perturbation.name,
+                "ncbi_taxid": perturbation.ncbi_taxid,
+                "genome_accession": perturbation.genome_accession,
+                "multiplicity_of_infection": perturbation.multiplicity_of_infection,
+                "titer_pfu_per_ml": perturbation.titer_pfu_per_ml,
+            },
+        )
+
+    @data_chunker
+    def _phage_perturbation_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> list[BioCypherNode]:
+        """One node per phage of the environment; none for any other perturbation."""
+        return [
+            self._phage_perturbation_node_from(perturbation)
+            for perturbation in data["experiment"].environment.perturbations
+            if isinstance(perturbation, PhagePerturbation)
+        ]
+
+    def _get_phage_perturbation_reference_nodes(self) -> list[BioCypherNode]:
+        """The phages of every reference environment, deduplicated by content id."""
+        nodes: list[BioCypherNode] = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            for perturbation in data.reference.environment_reference.perturbations:
+                if not isinstance(perturbation, PhagePerturbation):
+                    continue
+                node = self._phage_perturbation_node_from(perturbation)
                 if node.get_id() not in seen_node_ids:
                     seen_node_ids.add(node.get_id())
                     nodes.append(node)

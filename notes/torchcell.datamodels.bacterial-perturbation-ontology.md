@@ -297,3 +297,238 @@ full list in the interactive map") was wider than the box whose overflow it anno
 with a test that measures the notice against the real box width rather than re-checking a
 render by eye; the figure footer already carries the explorer URL, so the notice does not
 need to repeat it.
+
+## 2026.10.07 - Follow-ups from the first loaders
+
+Source: `torchcell/datamodels/schema.py`, `torchcell/datamodels/identity.py`,
+`biocypher/config/torchcell_schema_config.yaml`, `torchcell/adapters/cell_adapter.py`,
+`torchcell/verification/{common,fitness,rnaseq,runners}.py`,
+`torchcell/literature/retrieve.py`.
+Branch: `feat/bacterial-schema-followups`. The needs are the ones the seven landed
+loaders stated: [[torchcell.datasets.ecoli.mutalik2020]] (a typed phage),
+[[torchcell.datasets.pputida.carruthers2025]] (the titer's vessel and its product's
+identity), [[torchcell.datasets.ecoli.tong2020]] (two verifier rules),
+[[torchcell.datasets.ecoli.fuhrer2017]] and [[torchcell.datasets.ecoli.wetmore2015]] (a
+derived-mapping field), [[torchcell.datasets.ecoli.lamoureux2023]] and
+[[torchcell.datasets.pputida.lim2022]] (a replicate-aware RNA-seq verifier, the Zenodo
+User-Agent).
+
+### `PhagePerturbation`, the fourth environment leaf
+
+`EnvironmentPerturbationType` gains `PhagePerturbation`. A virion is none of the other
+three: a small molecule is keyed by InChIKey, `PhysicalFactor` is a scalar variable
+(pH, osmolarity, carbon source, nitrogen source, ionic strength, nutrient dropout,
+radiation), and `BiologicAgentClass` is peptide / protein / antibody / toxin, which
+would call a replicating nucleoprotein particle a proteinaceous agent. Identity is the
+phage itself: `name` verbatim, plus `ncbi_taxid` and `genome_accession` when stated.
+
+**The dose is not a `Concentration`, and that is the load-bearing decision.** A
+multiplicity of infection is a dimensionless ratio of two counts, so
+`multiplicity_of_infection` is a float field of its own and `titer_pfu_per_ml` carries
+the culture concentration; adding an `moi` member to `ConcentrationUnit` would make a
+particle-to-cell ratio look like a dose unit (and would move every served closure, see
+the measurement below). A phage challenge always has a dose, so an unstated MOI is a
+typed `ProvenanceGap`, never a silent `None` (`_require_value_or_gap`, the strain-
+background contract's rule).
+
+The identity projection (`PHAGE_PERTURBATION_IDENTITY_FIELDS`) is the discriminator, the
+folded name, the taxon, the accession and the two dose numbers. `family`, `genome_type`
+and `host_of_propagation` are deliberately OUT: two sources may classify or propagate
+one phage differently, and including them would split a node that should join. The dose
+IS in, which is what keeps Mutalik's 68 challenges of 14 phages from collapsing onto one
+environment identity.
+
+### The graph side: a sibling of `environment perturbation`, under `biotic exposure`
+
+`phage perturbation` is additive and is NOT a child of `environment perturbation` (a
+child would carry that served label, so every served `MATCH (:EnvironmentPerturbation)`
+would start returning phage nodes). Its `is_a` is Biolink's `biotic exposure`, whose own
+definition names viruses -- "An external biotic exposure is an intake of (sometimes
+pathological) biological organisms (including viruses)", altLabel `viral exposure` --
+while `environmental exposure` is defined as ABIOTIC ("a factor relating to abiotic
+processes in the environment"). The two are siblings under `exposure event`, so
+`MATCH (:ExposureEvent)` still reaches both. Measured in-process on the pinned Biolink
+3.2.1 mirror: `phage perturbation -> biotic exposure -> attribute -> named thing ->
+entity`, and no path to `environment perturbation` in either direction.
+
+`environment perturbation member of` gains `phage perturbation` as a second source, so
+it needs `input_label` (with a list source and no `input_label`,
+`OntologyMapping._horizontal_inheritance_source` zips the list against a string and
+builds one virtual leaf per CHARACTER -- the same trap `perturbation member of`
+documented). The adapter's relationship label is unchanged, so the written type stays
+`EnvironmentPerturbationMemberOf`.
+
+`CellAdapter._phage_perturbation_node` emits only `PhagePerturbation` leaves, with the
+same composition-projection id every environment-side node uses, so
+`_environment_perturbation_to_environment_edges` addresses it unchanged. The served
+`_environment_perturbation_node` is NOT touched, which is what keeps the step additive.
+
+**The consequence to settle before the first phage dataset is served**, stated rather
+than discovered later: the served method emits EVERY perturbation of an environment, a
+phage included, under the `environment perturbation` label, so a conf that enables both
+classes writes one content id under two classes and the import keeps whichever row it
+reads first. `test_no_conf_enables_both_environment_perturbation_classes` fails such a
+conf. The cost is that a phage-only conf would not write the assay's other environment
+perturbations (a Bar-seq kanamycin, a physical factor). Resolving that needs either a
+filter in the served method (adapter drift on served datasets, so a full rebuild) or a
+separate id space for the phage node. No conf is in that position yet: Mutalik's loader
+has no dataset class.
+
+### `DerivedIdentifierMapping` on the five perturbation leaves
+
+Plan section 4 requires a crosswalk use to be "recorded on the record as a derived
+mapping, never silently", and three landed loaders had nowhere to put it: Fuhrer dropped
+17 rescuable JW ids for the lack of it, Wetmore's subsumption record names the ECK route
+as the one its compendium loader will take, and Tong crosswalked 3,644 Keio b-numbers to
+BW25113 tags with the map only in `preprocess/identifier_reconciliation.json`.
+
+The field is `identifier_mapping: DerivedIdentifierMapping | None = None` on all five
+leaves (`source_identifier` verbatim plus a `route` of `eck_crosswalk | jw_synonym |
+gene_symbol`), so every record built before it existed reads exactly as before. Three
+refusals keep it honest:
+
+- a route must match the identifier it starts from (an `eck_crosswalk` starts from
+  another strain's locus tag, a `jw_synonym` from a Keio `JW` id, a `gene_symbol` from
+  something that is not a locus tag at all);
+- a tag cannot be derived from itself;
+- an `eck_crosswalk` cannot start from a tag of the record's OWN namespace, since the
+  join exists to cross namespaces.
+
+`JW_IDENTIFIER_PATTERN` is `^JW[RS]?\d{4}$`, measured on
+`GCA_000750555.1_ASM75055v1_genomic.gbff.gz`: 4,181 `JW` plus four digits, 153 `JWR`
+(RNA genes) and one `JWS`, nothing else. A `JW\d{4}`-only pattern would have refused the
+154 structural-RNA synonyms.
+
+### `ProductTiterExperiment` narrows its environment to `CultureEnvironment`
+
+A titer cannot be read without its vessel: a 1.5 mL flower plate at 1000 RPM and a
+shake flask are different fermentations. `ProductTiterExperiment.environment` and
+`ProductTiterExperimentReference.environment_reference` are therefore
+`CultureEnvironment`, which is the same narrowing the chemogenomic family already makes
+and the only way the fields survive -- pydantic v2 serializes by the DECLARED type, so a
+`CultureEnvironment` in an `Environment`-typed slot keeps `culture_format` as a python
+attribute and dumps without it, with no error anywhere. Both halves are pinned
+(`test_a_culture_environment_survives_the_product_titer_slot`). The medium-level
+cross-dataset aggregate is unchanged: `media` is the same field holding the same `Media`,
+and a culture environment stating no protocol has the plain environment's identity.
+
+This is the one BREAKING symbol change on the branch, and it reaches no served dataset:
+`ProductTiterExperiment` is imported by no landed loader (Carruthers 2025 is PR #720,
+still open).
+
+### The two enum additions, measured and DEFERRED
+
+Both were asked for; both were measured to move served closures, so neither landed.
+
+| addition | impacted datasets | why it is deferred |
+|---|---|---|
+| `ConcentrationUnit.mg_per_l` | **41** (39 served yeast loaders plus the three bacterial dev builds) | `ConcentrationUnit` is in every served dataset's closure through `Concentration` and `Media`. Carruthers stores the identical `ug/mL` meanwhile (1 mg/L IS 1 ug/mL exactly), so nothing is lost. |
+| `MeasurementType.normalized_colony_size` | **13 served** environment-response loaders | same shape. Tong 2020 uses `FitnessPhenotype` meanwhile, which its own PR argues for independently (each carbon source is normalized on its own plates, so the baseline is 1 by construction). |
+
+Added-member changes classify as `stale`, not `breaking`: no stored record becomes
+invalid, but every affected dataset's build manifest reads stale, which is the
+rebuild signal. They belong in the next deliberate full rebuild, together.
+
+### The measurement
+
+`python -m torchcell.provenance.schema_impact --base origin/main`:
+
+```text
+Changed symbols (9):
+  [stale]    BacterialCrisprInterferencePerturbation  added optional field 'identifier_mapping'
+  [stale]    BacterialDeletionPerturbation            added optional field 'identifier_mapping'
+  [stale]    DerivedIdentifierMapping                 new symbol
+  [stale]    HeterologousPathwayPerturbation          added optional field 'identifier_mapping'
+  [stale]    PhagePerturbation                        new symbol
+  [BREAKING] ProductTiterExperiment                   added required field 'environment'
+  [BREAKING] ProductTiterExperimentReference          added required field 'environment_reference'
+  [stale]    PromoterReplacementPerturbation          added optional field 'identifier_mapping'
+  [stale]    TransposonInsertionPerturbation          added optional field 'identifier_mapping'
+
+Impacted datasets (3; 0 breaking) -> rebuild:
+  [stale] MetabolomeFuhrer2017Dataset     via BacterialDeletionPerturbation, DerivedIdentifierMapping
+  [stale] RnaseqLamoureux2023Dataset      via BacterialDeletionPerturbation, DerivedIdentifierMapping
+  [stale] PutidaPrecise321Lim2022Dataset  via BacterialDeletionPerturbation, DerivedIdentifierMapping
+```
+
+**Zero SERVED loaders are impacted.** The three are the bacterial dev builds, none of
+which is in the served store (51 yeast datasets, KG 2.0, built at `4b293d34`); each
+reads stale under `torchcell.provenance.build_manifest` until its dev LMDB is rebuilt,
+which the KG build's freshness gate requires before the next full build. That rebuild is
+not run here.
+
+`kg_manifest drift`, against a scratch copy of the served manifest
+(`/scratch/projects/torchcell/database/kg_manifest.json`, sha256 `662eaab2...05cd480`,
+unchanged after the run):
+
+```text
+  graph schema CHANGED: crispr construct
+  graph schema ADDED: bacterial perturbation, flux phenotype, phage perturbation, product titer phenotype, protein turnover phenotype
+  served edge classes widened (additive): crispr construct member of: +bacterial perturbation; environment perturbation member of: +phage perturbation; perturbation member of: +bacterial perturbation; phenotype member of: +flux phenotype, +product titer phenotype, +protein turnover phenotype
+  adapter drift touching served datasets: plumbing: _crispr_construct_node_from
+  adapter methods ADDED: ... _get_phage_perturbation_reference_nodes, _phage_perturbation_node, _phage_perturbation_node_from ...
+  value surface: CHANGED: compound_identity.py, compound_identity_table.json, media.py
+```
+
+The delta against the previous round is `phage perturbation`, its edge widening and its
+three methods. The one CHANGED class and the one plumbing drift are pre-existing (main
+`caaf2295f`'s `crispr construct` property rename). The value-surface entries are the
+compound row and the media keys below.
+
+### Verification follow-ups (plan section 5 item 8)
+
+Four changes, each named by a loader note, plus the registry entries:
+
+- **`verify_rnaseq_dataset(replicate_aware=True)`** swaps `strain_uniqueness` for
+  `replicate_groups`. The strain rule cannot be satisfied by a compendium whose rows are
+  sequenced LIBRARIES: replicates of one condition share both genotype and environment,
+  and a wild-type record has no perturbation to hold a `strain_id`. The replacement
+  checks what such records can get wrong -- no two records share an expression profile
+  (a library counted twice) and every (genotype, environment) group measures one gene set
+  -- and reports the group-size histogram.
+- **`fitness._environment_signature` now includes the environment's typed EDITS**, keyed
+  by the same `(perturbation_type, compound or agent name, factor, dose value, unit,
+  basis)` tuple the environment-response verifier uses. Tong 2020 grows every strain on
+  one medium at one temperature and varies only the carbon source, so each of its 3,644
+  Keio strains read as thirty duplicates. A yeast fitness dataset carries no environment
+  perturbations, so its key gains an empty tuple and is unchanged.
+- **`common._gene_name_result` accepts a pseudogene locus that resolves to ITSELF**
+  (`non_gene_feature` with `systematic_name == systematic`), counted and reported in the
+  result's details. A bacterial annotation's `gene` features exclude `/pseudo` loci by
+  construction, so a pseudogene can never come back `current`, yet the Keio collection
+  and the sRNA library deleted 108 BW25113 and 1 MG1655 pseudogene loci whose stored
+  identifier is exactly right. A name that resolves to ANOTHER locus, or to none, still
+  fails.
+- **`run_metabolite`, `run_rnaseq` and `run_fitness` select the L4 universe (and the
+  resolver) from each dataset's OWN records**, through `_dataset_assembly_sets` /
+  `_dataset_gene_universe` and the new `_l4_assembly_gene_containment`. A bacterial
+  dataset's genes are neither Ohya deletion-collection ORFs nor S288C genes, so the
+  yeast rules would have failed it by construction while saying nothing about its
+  identifiers. `run_fitness` refuses a dataset pinned to TWO assemblies, since one
+  resolver cannot serve two hosts: that is Tong 2020, which runs its own per-background
+  verification in its loader module.
+
+Registered and run against the dev LMDBs under `$DATA_ROOT/data/torchcell/` (read-only;
+the reports are written to each dataset's own writable `preprocess/`):
+
+| dataset | runner | records | verdict |
+|---|---|---|---|
+| `metabolome_fuhrer2017` | `run_metabolite` | 3,735 | **PASS** L0-L4; L4 1.000 of 3,735 deleted loci are `ecoli_K12_BW25113_ASM75055v1` genes |
+| `rnaseq_lamoureux2023` | `run_rnaseq` (replicate-aware) | 241 | **PASS** L0-L4; L1 241 distinct profiles over 114 groups; L4 0.999 of 4,257 measured genes are ASM584v2 loci (floor 0.99; the three retired b-numbers) |
+| `putida_precise321_lim2022` | `run_rnaseq` (replicate-aware) | 180 | **PASS** L0-L4; L1 180 distinct profiles over 65 groups; L4 1.000 of 5,564 measured genes are ASM756v2 loci |
+
+Tong 2020 is NOT registered: its class is PR #719, still open, and a registry row for a
+dataset whose loader is not on `main` is a row nobody can rebuild. The two rules it
+asked for are the two above, so its entry is one line when it lands.
+
+### The Zenodo User-Agent
+
+`retrieve._get` now picks the agent by host. Zenodo answers the shared Chrome 120 string
+with HTTP **403** and a non-browser agent with 200/206 (measured 2026-10-07 by the
+Lamoureux round: `torchcell-literature`, `python-httpx/0.27.0` and
+`Mozilla/5.0 torchcell-literature` all 206), so PRECISE-1K's recorded `zip_member`
+retrieval did not re-run. `PLAIN_UA_HOSTS = {"zenodo.org"}` now gets
+`torchcell-literature (+https://github.com/Mjvolk3/torchcell)`, matched on a dotted
+boundary (so `sandbox.zenodo.org` is covered and `notzenodo.org` is not). The browser
+string stays the default, because the publisher CDNs the other retrievers use were
+chosen against it.

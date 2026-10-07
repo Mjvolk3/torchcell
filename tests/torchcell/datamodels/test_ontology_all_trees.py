@@ -226,6 +226,9 @@ _ENV_FACTORY: dict[type[EnvironmentPerturbation], dict[str, Any]] = {
         name="nisin",
         concentration=Concentration(value=1.0, unit=ConcentrationUnit.millimolar),
     ),
+    s.PhagePerturbation: dict(
+        name="T4", ncbi_taxid=10665, multiplicity_of_infection=0.01875
+    ),
 }
 _ENV_ADAPTER: TypeAdapter[EnvironmentPerturbation] = TypeAdapter(
     EnvironmentPerturbationType

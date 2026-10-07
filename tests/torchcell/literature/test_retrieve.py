@@ -29,6 +29,7 @@ _UA = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/120 Safari/537.36 torchcell-literature"
 )
+_PLAIN_UA = "torchcell-literature (+https://github.com/Mjvolk3/torchcell)"
 
 
 class _Server:
@@ -223,3 +224,67 @@ def test_pmc_oa_api_refuses_a_record_without_a_tgz_link(
     ):
         retrieve.pmc_oa_api("PMC5")
     assert len(srv.seen) == 1
+
+
+# --------------------------------------------------------------------------- #
+# Per-host User-Agent: Zenodo refuses the browser string
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("https://zenodo.org/api/records/8284223/files/x.zip/content", _PLAIN_UA),
+        ("https://ZENODO.ORG/records/8284223", _PLAIN_UA),
+        ("https://sandbox.zenodo.org/records/1", _PLAIN_UA),
+        ("https://notzenodo.org/x", _UA),
+        ("https://ars.els-cdn.com/content/image/1-s2.0-X-mmc2.xlsx", _UA),
+        ("https://static-content.springer.com/esm/x_ESM.pdf", _UA),
+    ],
+)
+def test_the_user_agent_is_chosen_by_host(url: str, expected: str) -> None:
+    """Zenodo and its subdomains get the plain agent; every other host the browser one.
+
+    The subdomain match is on a dotted boundary, so ``sandbox.zenodo.org`` is covered and
+    ``notzenodo.org`` is not.
+    """
+    assert retrieve.user_agent_for(url) == expected
+
+
+def test_the_plain_agent_names_the_project_and_is_not_a_browser_string() -> None:
+    assert _PLAIN_UA == "torchcell-literature (+https://github.com/Mjvolk3/torchcell)"
+    assert "Mozilla" not in _PLAIN_UA and "Chrome" not in _PLAIN_UA
+    assert retrieve.PLAIN_UA_HOSTS == frozenset({"zenodo.org"})
+
+
+def test_a_zenodo_get_sends_the_plain_agent(server: Any) -> None:
+    """The fix: the recorded retrieval of a Zenodo archive goes out non-browser."""
+    url = "https://zenodo.org/api/records/8284223/files/SBRG/precise1k-v1.0.zip/content"
+    srv = server({url: httpx.Response(200, content=b"PK\x03\x04")})
+    assert retrieve.direct_url(url) == b"PK\x03\x04"
+    assert srv.seen == [(url, _PLAIN_UA)]
+    assert srv.client_kwargs == [
+        {
+            "follow_redirects": True,
+            "timeout": 120.0,
+            "headers": {"User-Agent": _PLAIN_UA},
+        }
+    ]
+
+
+def test_a_zenodo_zip_member_read_sends_the_plain_agent(server: Any) -> None:
+    """``zip_member`` is the retriever the PRECISE-1K provenance records."""
+    container = _zip({"data/precise1k/metadata_qc.csv": b"sample,x\np1k_00001,1\n"})
+    url = "https://zenodo.org/records/8284223/files/precise1k-v1.0.zip/content"
+    srv = server({url: httpx.Response(200, content=container)})
+    sha = hashlib.sha256(container).hexdigest()
+    assert retrieve.zip_member(url, "data/precise1k/metadata_qc.csv", sha) == (
+        b"sample,x\np1k_00001,1\n"
+    )
+    assert srv.seen == [(url, _PLAIN_UA)]
+
+
+def test_a_browser_agent_host_is_unchanged_by_the_zenodo_route(server: Any) -> None:
+    """Regression guard: adding the Zenodo route left every other host on ``_UA``."""
+    url = "https://h.org/some.zip"
+    srv = server({url: httpx.Response(200, content=b"x")})
+    assert retrieve.direct_url(url) == b"x"
+    assert srv.seen == [(url, _UA)]

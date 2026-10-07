@@ -26,7 +26,7 @@ Article Datasets bucket on AWS (``pmc-oa-opendata``), read with
 from __future__ import annotations
 
 from collections.abc import Callable
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 import httpx
 
@@ -35,16 +35,52 @@ _UA = (
     "Chrome/120 Safari/537.36 torchcell-literature"
 )
 
+_PLAIN_UA = "torchcell-literature (+https://github.com/Mjvolk3/torchcell)"
+"""The non-browser User-Agent, for hosts that refuse a browser string.
+
+Zenodo answers :data:`_UA` with HTTP **403** and a non-browser agent with 200/206
+(measured 2026-10-07 with curl: ``torchcell-literature``, ``python-httpx/0.27.0`` and
+``Mozilla/5.0 torchcell-literature`` all 206, the Chrome 120 string 403), so a recorded
+``zip_member`` retrieval of the PRECISE-1K archive did not re-run. The browser string is
+kept as the default because the publisher CDNs the other retrievers use were chosen
+against it; only the hosts in :data:`PLAIN_UA_HOSTS` get this one.
+"""
+
+PLAIN_UA_HOSTS: frozenset[str] = frozenset({"zenodo.org"})
+"""Hosts served :data:`_PLAIN_UA` instead of the browser string.
+
+Matched on the URL's host, exactly or as a subdomain of a listed host: ``zenodo.org``
+covers ``sandbox.zenodo.org`` (the same software), and the match is on a dotted boundary,
+so a host that merely ends in the same letters (``notzenodo.org``) is not covered. A host
+is added here only after its refusal is measured, with the measurement recorded.
+"""
+
 #: The PMC Article Datasets bucket: ``<PMCID>.<version>/<file>`` per article version.
 PMC_CLOUD_BUCKET = "https://pmc-oa-opendata.s3.amazonaws.com"
 #: Elsevier's asset CDN; supplementary files are ``1-s2.0-<PII>-mmc<N>.<ext>``.
 ELSEVIER_ARS = "https://ars.els-cdn.com/content/image"
 
 
+def user_agent_for(url: str) -> str:
+    """The User-Agent this URL's host is served.
+
+    :data:`_PLAIN_UA` for a host in :data:`PLAIN_UA_HOSTS` (or a subdomain of one),
+    :data:`_UA` otherwise. Case-insensitive, since a host name is.
+    """
+    host = (urlsplit(url).hostname or "").lower()
+    return (
+        _PLAIN_UA
+        if any(host == plain or host.endswith(f".{plain}") for plain in PLAIN_UA_HOSTS)
+        else _UA
+    )
+
+
 def _get(url: str, *, timeout: float = 120.0) -> bytes:
     """GET a URL following redirects; raise on non-2xx (no silent partials)."""
     with httpx.Client(
-        follow_redirects=True, timeout=timeout, headers={"User-Agent": _UA}
+        follow_redirects=True,
+        timeout=timeout,
+        headers={"User-Agent": user_agent_for(url)},
     ) as client:
         resp = client.get(url)
         resp.raise_for_status()
@@ -62,7 +98,11 @@ def springer_esm(url: str) -> bytes:
 
 
 def direct_url(url: str) -> bytes:
-    """Retrieve any directly-downloadable URL (Dryad, GEO, lab servers, Zenodo)."""
+    """Retrieve any directly-downloadable URL (Dryad, GEO, lab servers, Zenodo).
+
+    A Zenodo URL is sent the non-browser User-Agent (:data:`PLAIN_UA_HOSTS`), which is
+    what it answers; the browser string gets 403 there.
+    """
     return _get(url)
 
 

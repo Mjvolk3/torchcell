@@ -143,12 +143,14 @@ def _lines(out: str) -> list[str]:
 def test_real_schema_compact_table(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """The committed ``torchcell_schema_config.yaml``: 31 nodes (27 under five Biolink
-    parents, 4 auto-mapped by name), 13 edges under five relations, 10 concepts in all.
+    """The committed ``torchcell_schema_config.yaml``: 32 nodes (28 under six Biolink
+    parents, 4 auto-mapped by name), 13 edges under five relations, 11 concepts in all.
     ``interned constant`` (tcdb-002) is a third ``information content entity`` beside
     experiment and experiment reference; ``bacterial perturbation`` joins genotype and
-    the product titer, protein turnover and flux phenotypes join phenotypic feature, so
-    the concept count is unchanged.
+    the product titer, protein turnover and flux phenotypes join phenotypic feature.
+    ``phage perturbation`` adds the SIXTH parent, ``biotic exposure``: Biolink defines
+    ``environmental exposure`` as abiotic, and the two are siblings under
+    ``exposure event``, so a phage node carries neither the other's label.
     Changing the schema changes this table, which is the point: the ``tc-onto`` view is
     what the knowledge graph's classes map to.
     """
@@ -159,6 +161,7 @@ def test_real_schema_compact_table(
     lines = _lines(capsys.readouterr().out)
     rows = [line for line in lines if "→" in line and not line.startswith("TORCH")]
     assert rows == [
+        f"{'biotic exposure':25} → phage perturbation",
         f"{'environmental exposure':25} → environment, environment perturbation, "
         "media, temperature",
         f"{'genotype':25} → bacterial perturbation, perturbation, segregant genotype",
@@ -182,9 +185,9 @@ def test_real_schema_compact_table(
         f"{'participates in':25} → environment member of, genome member of, "
         "genotype member of, phenotype member of",
     ]
-    assert "Nodes:    27/31 explicit + 4 auto-mapped = 31/31 total" in lines
+    assert "Nodes:    28/32 explicit + 4 auto-mapped = 32/32 total" in lines
     assert "Edges:    13/13 mapped to 5 Biolink concepts" in lines
-    assert "Total:    10 unique Biolink concepts used" in lines
+    assert "Total:    11 unique Biolink concepts used" in lines
     assert "✓ 4 nodes auto-mapped by name matching" in lines
     assert not any("Warning" in line for line in lines)
 
@@ -193,8 +196,9 @@ def test_compact_headers_count_the_schema(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The compact headers print ``len(nodes)`` and ``len(edges)`` (issue #532; they were
-    the literals 16 and 11): the committed schema has 31 nodes (``interned constant``
-    joined in tcdb-002, the four bacterial-program classes after it) and 13 edges, the
+    the literals 16 and 11): the committed schema has 32 nodes (``interned constant``
+    joined in tcdb-002, then the four bacterial-program classes and ``phage
+    perturbation``) and 13 edges, the
     small
     test schema 3 nodes and 2 edges (its stray string entry is neither).
     """
@@ -203,7 +207,7 @@ def test_compact_headers_count_the_schema(
 
     small = tmp_path / "schema.yaml"
     small.write_text(yaml.safe_dump(SCHEMA))
-    for path, n_nodes, n_edges in ((REAL_SCHEMA, 31, 13), (small, 3, 2)):
+    for path, n_nodes, n_edges in ((REAL_SCHEMA, 32, 13), (small, 3, 2)):
         print_schema_mappings(str(path), compact=True)
         lines = _lines(capsys.readouterr().out)
         assert f"📦 NODES ({n_nodes} total)" in lines

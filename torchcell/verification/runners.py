@@ -30,7 +30,7 @@ import gzip
 import os
 import os.path as osp
 import pickle
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 import lmdb
@@ -634,11 +634,42 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    # The first bacterial metabolome. L4 is the BW25113 locus universe, not the Ohya
+    # yeast deletion collection (selected from the records' own assembly pin), and the
+    # reference is the deposit's measured `wt` profile on the z-score scale, so it is
+    # not centered on 0.
+    "metabolome_fuhrer2017": {
+        "root": "data/torchcell/metabolome_fuhrer2017",
+        # 3,807 deposit columns - 25 pooled Keio names - 46 JW ids off a BW25113 locus
+        # - the `wt` reference = 3,735 kept records.
+        "expected_count": 3735,
+        "reference_centered": False,
+        "provenance": Provenance(
+            source_uri="https://www.ebi.ac.uk/biostudies/studies/S-BSST5",
+            citation_key="fuhrerGenomewideLandscapeGene2017",
+            method=(
+                "FIA-TOF-MS modified ion z-scores per Keio deletion strain (7,534 ions, "
+                "negative and positive mode), two biological replicates per strain; "
+                "reference = the deposit's measured `wt` profile on the same scale. "
+                "Deposit column names are gene NAMES, joined to Table EV1A and stored "
+                "under the strain's BW25113 locus tag through its Keio JW synonym"
+            ),
+            page="Mol Syst Biol 13:907; S-BSST5 zscore_neg.tsv, zscore_pos.tsv",
+        ),
+    },
 }
 
 
 def run_metabolite(data_root: str) -> bool:
-    """Verify metabolite datasets (L0-L4) and write reports. True if all pass."""
+    """Verify metabolite datasets (L0-L4) and write reports. True if all pass.
+
+    L4 is selected by the HOST a dataset's own records name. A yeast dataset's deleted
+    genes are checked against the Ohya deletion collection, as before. An
+    assembly-pinned dataset (Fuhrer 2017's Keio metabolome) is checked against its own
+    strain's locus universe instead: its b-numbers and ``BW25113_`` tags are not yeast
+    ORFs, so the Ohya rule would fail it by construction and would say nothing about its
+    identifiers.
+    """
     ohya_abs = osp.join(data_root, OHYA_SOURCE_ROOT)
     ohya_genes: set[str] = set()
     if osp.exists(osp.join(ohya_abs, "processed", "lmdb")):
@@ -656,7 +687,18 @@ def run_metabolite(data_root: str) -> bool:
             reference_centered=spec.get("reference_centered", True),
             protocol_measurement_types=spec.get("protocol_measurement_types"),
         )
-        if ohya_genes:
+        assembly_sets = _dataset_assembly_sets(records)
+        if assembly_sets != (SGD_S288C_R64,):
+            universe, _ = _dataset_gene_universe(records, data_root)
+            report.add(
+                _l4_assembly_gene_containment(
+                    universe,
+                    assembly_sets,
+                    metabolite_gene_set(records),
+                    min_containment=1.0,
+                )
+            )
+        elif ohya_genes:
             report.add(
                 _l4_gene_containment(
                     ohya_genes, "scmd_ohya2005", metabolite_gene_set(records)
@@ -761,6 +803,53 @@ RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
                 "+ ptb_summary.Rdata read with the pure-Python rdata reader"
             ),
             page="Nat. Commun. 16 (2025), doi:10.1038/s41467-025-57600-4; FC_genotype.Rdata",
+        ),
+    },
+    # The two bacterial compendia. Both release one row per sequenced LIBRARY, so L1 is
+    # `replicate_groups` (`replicate_aware`), and L4 is the pinned strain's locus-tag
+    # universe. `min_containment` is 1.0 where every measured id must be a locus of the
+    # pin, and PRECISE-1K's floor is the 0.99 its own loader states, since three
+    # released b-numbers (b3036, b4223, b4590) are not in ASM584v2 and are kept as given.
+    "rnaseq_lamoureux2023": {
+        "root": "data/torchcell/rnaseq_lamoureux2023",
+        # 1,035 released samples - 794 dropped by the genotype and environment rules.
+        "expected_count": 241,
+        "replicate_aware": True,
+        "min_containment": 0.99,
+        "provenance": Provenance(
+            source_uri="https://doi.org/10.5281/zenodo.8284223",
+            citation_key="lamoureuxMultiscaleExpressionRegulation2023",
+            sha256="7c7008f2c8bcd66aebecbdb97b8c1a0314637e3873ec09e12c26d0ccaaa35172",
+            method=(
+                "PRECISE-1K: one record per biological-replicate RNA-seq library of "
+                "E. coli K-12 MG1655 (wild type or whole-gene deletions), "
+                "log_tpm_qc.csv back-transformed to TPM as 2**x - 1 (the pseudocount "
+                "back-solved from the release) with featureCounts counts.csv beside it"
+            ),
+            page=(
+                "Nucleic Acids Res. 51:10184; Zenodo SBRG/precise1k-v1.0.zip, "
+                "data/precise1k/{log_tpm_qc,counts,metadata_qc}.csv"
+            ),
+        ),
+    },
+    "putida_precise321_lim2022": {
+        "root": "data/torchcell/putida_precise321_lim2022",
+        # 321 compendium samples - 141 dropped (engineered, evolved, plasmid-bearing,
+        # unresolved deletion symbols) = 180 on the KT2440 reference strain.
+        "expected_count": 180,
+        "replicate_aware": True,
+        "min_containment": 1.0,
+        "provenance": Provenance(
+            source_uri="https://doi.org/10.1016/j.ymben.2022.04.004",
+            citation_key="limMachinelearningPseudomonasPutida2022",
+            sha256="10e81a18fdfd08b9e27581f877dd0ae2a169946508b1ed5dabbe444210420970",
+            method=(
+                "putidaPRECISE321: one record per compendium sample whose genotype can "
+                "be written against KT2440, Supplementary Data X matrix "
+                "(log2(TPM + 1)) back-transformed to TPM, counts paired from "
+                "SBRG/modulome_ppu@f63a0df counts.csv by reproducing the released value"
+            ),
+            page="Metab. Eng. 72:297; si/si2.xlsx sheets 1-Sample_list and X",
         ),
     },
 }
@@ -947,6 +1036,86 @@ def _genome_for_reference(genome_reference: Mapping[str, Any], data_root: str) -
     return bacterial_genome(host_of_strain(strain), strain, data_root)
 
 
+def _dataset_assembly_sets(records: Sequence[Mapping[str, Any]]) -> tuple[str, ...]:
+    """The assembly sets a dataset's own records are written against, sorted.
+
+    One dataset may hold several: Tong 2020 pins its Keio strains to BW25113 and its
+    sRNA-library strains to MG1655, so the L4 universe is the union of both. A yeast
+    dataset yields the SGD release id, since that is what
+    :func:`_reference_assembly_set` calls its universe.
+    """
+    return tuple(
+        sorted(
+            {
+                _reference_assembly_set(record["reference"]["genome_reference"])
+                for record in records
+            }
+        )
+    )
+
+
+def _dataset_gene_universe(
+    records: Sequence[Mapping[str, Any]], data_root: str
+) -> tuple[set[str], tuple[str, ...]]:
+    """The union of the L4 gene universes of the genomes a dataset's records name.
+
+    Selected from each record's OWN ``genome_reference``, never from the runner's host:
+    the L4 rule fails a record keyed to a name its genome does not carry, which is the
+    behavior we want per host and nonsense across hosts. Returns the universe and the
+    assembly sets it came from, so the report can name them.
+    """
+    universe: set[str] = set()
+    assembly_sets = _dataset_assembly_sets(records)
+    for assembly_set in assembly_sets:
+        if assembly_set == SGD_S288C_R64:
+            universe |= _sgd_gene_set(data_root)
+        else:
+            universe |= _bacterial_gene_set(
+                BACTERIAL_GENE_ASSEMBLIES[assembly_set], data_root
+            )
+    return universe, assembly_sets
+
+
+def _l4_assembly_gene_containment(
+    universe: set[str],
+    assembly_sets: tuple[str, ...],
+    measured: set[str],
+    *,
+    min_containment: float = MIN_RNASEQ_GENE_CONTAINMENT,
+) -> LevelResult:
+    """L4: the measured genes are loci of the assemblies the records themselves pin.
+
+    The host-aware sibling of :func:`_l4_rnaseq_gene_containment` and of the Ohya
+    deletion-set containment: a bacterial dataset's genes are not in the yeast deletion
+    collection and are not S288C ORFs, so those two rules would fail it by construction
+    while saying nothing about its identifiers.
+    """
+    overlap = len(measured & universe) / len(measured) if measured else 0.0
+    pins = ", ".join(assembly_sets)
+    return LevelResult(
+        level=Level.L4,
+        name="gene_containment_assembly",
+        # An empty measured set FAILS, as it does in the two sibling rules: every family
+        # this serves measures genes, so an empty set is a broken build, not a vacuous
+        # pass. The message says that rather than reporting a fabricated 0.000 overlap.
+        passed=bool(measured) and overlap >= min_containment,
+        message=(
+            f"{overlap:.3f} of {len(measured)} measured genes are loci of {pins} "
+            f"(>= {min_containment})"
+            if measured
+            else f"no measured genes, so containment in {pins} has nothing to check"
+        ),
+        details={
+            "assembly_sets": list(assembly_sets),
+            "n_measured": len(measured),
+            "n_in_universe": len(measured & universe),
+            "n_universe": len(universe),
+            "overlap": overlap,
+            "missing_examples": sorted(measured - universe)[:20],
+        },
+    )
+
+
 def _l4_rnaseq_gene_containment(sgd_genes: set[str], measured: set[str]) -> LevelResult:
     """L4: the measured expression gene universe is contained in the SGD gene set."""
     overlap = len(measured & sgd_genes) / len(measured) if measured else 0.0
@@ -968,8 +1137,15 @@ def _l4_rnaseq_gene_containment(sgd_genes: set[str], measured: set[str]) -> Leve
 
 
 def run_rnaseq(data_root: str) -> bool:
-    """Verify RNA-seq pan-transcriptome datasets (L0-L4) and write reports. True if pass."""
-    sgd_genes = _sgd_gene_set(data_root)
+    """Verify RNA-seq expression datasets (L0-L4) and write reports. True if pass.
+
+    Two per-dataset selections, both read off the records rather than configured twice:
+    ``replicate_aware`` picks the L1 rule (one record per library, for the bacterial
+    compendia), and the L4 universe is the genome a dataset's own records name -- the
+    S288C ORF + RNA set for a yeast dataset, the pinned strain's locus-tag set for an
+    assembly-pinned one. The yeast gene set is read only if a yeast dataset is present.
+    """
+    sgd_genes: set[str] | None = None
     all_passed = True
     for name, spec in RNASEQ_DATASETS.items():
         abs_root = osp.join(data_root, spec["root"])
@@ -979,8 +1155,25 @@ def run_rnaseq(data_root: str) -> bool:
             dataset_name=name,
             provenance=spec["provenance"],
             expected_count=spec.get("expected_count", len(records)),
+            replicate_aware=spec.get("replicate_aware", False),
         )
-        report.add(_l4_rnaseq_gene_containment(sgd_genes, rnaseq_gene_set(records)))
+        assembly_sets = _dataset_assembly_sets(records)
+        if assembly_sets != (SGD_S288C_R64,):
+            universe, _ = _dataset_gene_universe(records, data_root)
+            report.add(
+                _l4_assembly_gene_containment(
+                    universe,
+                    assembly_sets,
+                    rnaseq_gene_set(records),
+                    min_containment=spec.get(
+                        "min_containment", MIN_RNASEQ_GENE_CONTAINMENT
+                    ),
+                )
+            )
+        else:
+            if sgd_genes is None:
+                sgd_genes = _sgd_gene_set(data_root)
+            report.add(_l4_rnaseq_gene_containment(sgd_genes, rnaseq_gene_set(records)))
         out = _write_report(report, osp.join(abs_root, "preprocess"))
         print(report.summary())
         print(f"  -> wrote {out}\n")
@@ -1720,20 +1913,41 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
 
 
 def run_fitness(data_root: str) -> bool:
-    """Verify single-mutant fitness datasets (L0-L4) and write reports. True if all pass."""
-    sgd_genes = _sgd_gene_set(data_root)
-    resolve_gene_name = _genome(data_root).resolve_gene_name
+    """Verify single-mutant fitness datasets (L0-L4) and write reports. True if all pass.
+
+    The gene universe and the canonical-name resolver belong to the HOST a dataset's own
+    records are written against (plan section 5 item 8): a bacterial fitness dataset's
+    locus tags resolved against S288C would fail every record for the wrong reason. Both
+    are built once per assembly set and reused, since each construction reads the tier.
+    """
+    universes: dict[tuple[str, ...], set[str]] = {}
+    resolvers: dict[tuple[str, ...], Any] = {}
     all_passed = True
     for name, spec in FITNESS_DATASETS.items():
         abs_root = osp.join(data_root, spec["root"])
         records = load_records(abs_root)
+        assembly_sets = _dataset_assembly_sets(records)
+        if assembly_sets not in universes:
+            universes[assembly_sets] = _dataset_gene_universe(records, data_root)[0]
+            # One resolver per dataset's host. A dataset pinned to TWO assemblies
+            # (Tong 2020's Keio plus sRNA library) cannot share one resolver, so it
+            # runs its own per-background verification in its loader module and is not
+            # registered here until that is settled.
+            if len(assembly_sets) > 1:
+                raise ValueError(
+                    f"{name}: records name {len(assembly_sets)} assembly sets "
+                    f"{assembly_sets}; one resolver cannot serve two hosts"
+                )
+            resolvers[assembly_sets] = _genome_for_reference(
+                records[0]["reference"]["genome_reference"], data_root
+            ).resolve_gene_name
         report = verify_fitness_dataset(
             records,
             dataset_name=name,
             provenance=spec["provenance"],
             expected_count=spec.get("expected_count", len(records)),
-            resolve_gene_name=resolve_gene_name,
-            sgd_genes=sgd_genes,
+            resolve_gene_name=resolvers[assembly_sets],
+            sgd_genes=universes[assembly_sets],
             min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
         )
         out = _write_report(report, osp.join(abs_root, "preprocess"))

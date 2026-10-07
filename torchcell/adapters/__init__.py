@@ -32,6 +32,9 @@ from .caudal2024_adapter import (
     CaudalPanTranscriptome2024Adapter as CaudalPanTranscriptome2024Adapter,
 )
 from .cell_adapter import CellAdapter as CellAdapter
+from .choe2025_adapter import (
+    CrispriChemgenChoe2025Adapter as CrispriChemgenChoe2025Adapter,
+)
 from .cooper2010_adapter import AminoAcidCooper2010Adapter as AminoAcidCooper2010Adapter
 from .costanzo2016_adapter import DmfCostanzo2016Adapter as DmfCostanzo2016Adapter
 from .costanzo2016_adapter import DmiCostanzo2016Adapter as DmiCostanzo2016Adapter
@@ -274,8 +277,9 @@ baryshnikova_adapters = ["SmfBaryshnikova2010Adapter"]
 ecoli_adapters = [
     "RnaseqCaglar2017Adapter",
     "ProteomeCaglar2017Adapter",
-    "GrowthRateCampos2018Adapter",
+    "CrispriChemgenChoe2025Adapter",
     "CrispriKnockdownCui2018Adapter",
+    "GrowthRateCampos2018Adapter",
     "MetabolomeFuhrer2017Adapter",
     "EnvChemgenGirgis2009Adapter",
     "GeneEssentialityGoodall2018Adapter",

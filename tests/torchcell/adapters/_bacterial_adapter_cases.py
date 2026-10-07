@@ -59,6 +59,7 @@ from tests.torchcell.adapters._adapter_init_harness import (
 from torchcell.adapters import (
     CarbonSourceTong2020Adapter,
     CrispriArrayYunus2026Adapter,
+    CrispriChemgenChoe2025Adapter,
     CrispriGuideFitnessWang2018Adapter,
     CrispriKnockdownCui2018Adapter,
     CrispriKnockdownYunus2026Adapter,
@@ -98,6 +99,7 @@ from torchcell.datasets.ecoli.caglar2017 import (
     RnaseqCaglar2017Dataset,
 )
 from torchcell.datasets.ecoli.campos2018 import GrowthRateCampos2018Dataset
+from torchcell.datasets.ecoli.choe2025 import CrispriChemgenChoe2025Dataset
 from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
@@ -199,7 +201,7 @@ TURNOVER = "protein turnover phenotype"
 # NCM3722 derivatives are all in samples dropped on their medium; Fuhrer 2017 and
 # Goodall 2018 carry no environment perturbation, and neither do Campos 2018, whose
 # screen is one medium at one temperature, nor Schastnaya 2021, whose carbon source is
-# part of the medium; the CRISPRi leaves of Carruthers, Cui, Menasalvas, Wang 2018 and
+# part of the medium; the CRISPRi leaves of Carruthers, Choe, Cui, Menasalvas, Wang 2018 and
 # Yunus carry a CrisprConstruct. Shiver 2016's three temperature-only conditions
 # carry no environment perturbation, but its other 54 do, so its pair is enabled.
 BACTERIAL: list[Bacterial] = [
@@ -226,6 +228,14 @@ BACTERIAL: list[Bacterial] = [
         GrowthRateCampos2018Dataset,
         "fitness phenotype",
         env_perturbation=False,
+    ),
+    _case(
+        CrispriChemgenChoe2025Adapter,
+        "choe2025",
+        "crispri_chemgen_choe2025",
+        CrispriChemgenChoe2025Dataset,
+        RESPONSE,
+        crispr=True,
     ),
     _case(
         CrispriKnockdownCui2018Adapter,

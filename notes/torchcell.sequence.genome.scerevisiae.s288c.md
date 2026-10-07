@@ -938,3 +938,14 @@ Known limits added to the class docstring (main behaves the same where stated):
 - The rebuild WARNING in the kept-as-is case says the old file was kept with its journal and then that the journal was removed.
 
 The paired file passed 6 of 6 consecutive runs at this tree (262 tests each; one inside the whole `tests/torchcell/sequence/genome` run, five of the file alone).
+
+## 2026.10.07 - Reduced to the SGD specifics
+
+Step 2 of [[plan.bacteria-ontology-genome]]: everything organism-agnostic moved to [[torchcell.sequence.genome.base]] (`AnnotatedGenome`, `AnnotatedGene`), and this module went from 2,322 to 522 lines (about 110 of them the re-export imports). What stays here:
+
+- `CHROMOSOMES` (roman numerals, `chrmt` at 0) and `SGD_LOCUS_FEATURE_TYPES`, renamed from `_LOCUS_FEATURE_TYPES` (D3). The `_LOCUS_FEATURE_TYPES` mentions in the sections above are historical.
+- `SCerevisiaeGene(AnnotatedGene)`: `GO_ATTRIBUTE = "Ontology_term"`, `seqid_to_chromosome` (roman, `chrmt` -> 0), `coding_feature` (the five-prime-UTR-intron CDS selection with its `orf_classification` choice, verbatim), and `annotate` adding `ontology_term`, `display`, `dbxref`, `orf_classification`. `@define(repr=False)` keeps the inherited `DnaSelectionResult(...)` repr that a synthetic test pins (attrs would otherwise generate one).
+- `SCerevisiaeGenome(AnnotatedGenome[SCerevisiaeGene])`: the class constants, `ANNOTATION_NAME = "R64"` and `ANNOTATION_RELEASE = "R64-4-1"` (so the resolver notes are byte-identical), the `genome_root` / `go_root` / `overwrite` fields with the `data/sgd/genome` and `data/go` defaults, `release_files`, `fasta_chromosome` (`get_chr_from_description`), `_prepare_go_obo` (the `go.obo` download), and `drop_chrmt`.
+- `genome_database_untrusted_reason(genome_root)` delegates to `SCerevisiaeGenome.database_untrusted_reason`; `_restore_genome(cls, genome_root, go_root, private_db_path)` stays as the unpickling target older pickles name; `main()` is unchanged.
+
+Every name the module defined before is still importable from it: the moved names are re-exported, and the module's type mirrors a rebinding of a shared name into `base`, which is what keeps `test_s288c_synthetic.py` (it patches `s288c.write_genome_database`, `s288c.filecmp`, `s288c.resolve` and a dozen more) passing unchanged. A fresh `data.db` built before and after the refactor has the same `database_content_digest` (`9fae73b7...e8c1f4`), 6,607 genes and 4,686 GO terms; the measurement and the full hook table are in [[torchcell.sequence.genome.base]].

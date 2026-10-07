@@ -289,8 +289,13 @@ cd ~/Documents/projects/torchcell && set -a && source .env && set +a
 PYTHONPATH=$PWD python -m pytest tests/torchcell/datasets/ecoli/test_mutalik2020.py -q --data --slow
 ```
 
-39 passed on 2026-10-07 (22 hermetic, 12 mirror-gated, 5 tarball-gated, 2 of them
-also needing the two deposited K-12 assembly sets). The identifier
+54 passed on 2026-10-07 (37 hermetic, 12 mirror-gated, 5 tarball-gated, 2 of them
+also needing the two deposited K-12 assembly sets). The hermetic tier builds a synthetic
+mirror in `tmp_path` (a five-file stand-in deposit, a real small `.tar.gz`, an S13
+workbook written with the sheet's own formula strings), re-pins `RAW_ARTIFACTS` and
+`TARBALL_MEMBERS` to it by monkeypatch, and patches the ECK crosswalk and the resolver,
+so every reader and every refusal runs on the CI runner with no `$DATA_ROOT`; it alone
+covers 100% of the module's changed lines under `diff-cover`. The identifier
 histograms and the ECK route come from `audit_identifiers(mg1655, bw25113,
 measured=measured_gene_ids())`, the axis counts from `read_experiment_axis()`, the doses
 from `read_moi_table()`.

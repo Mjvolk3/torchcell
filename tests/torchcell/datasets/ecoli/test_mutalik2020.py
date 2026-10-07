@@ -447,3 +447,486 @@ class TestIdentifierRoute:
             0.96123, abs=1e-5
         )
         assert audit.eck_route.fraction > audit.symbols_vs_bw25113.resolved_fraction
+
+
+# --------------------------------------------------------------------------- #
+# A synthetic mirror (hermetic): every reader driven end to end on tiny fixtures
+# --------------------------------------------------------------------------- #
+S13_HEADER = [
+    "Library/assay",
+    "expName",
+    "Phage",
+    "expDescription",
+    "Batch",
+    "pfu/ml",
+    "phage count for 350 ul",
+    "1 OD cfu/ml",
+    "Cell count at od 0.04, for 350 ul",
+    "phage dilution",
+    "MOI",
+]
+
+
+def _s13_row(
+    row: int,
+    library: str,
+    exp_name: str,
+    phage: str,
+    description: str,
+    pfu: float | None,
+    dilution: float | str | None,
+    *,
+    one_od: str = "=8*10^8",
+    moi: str | None = None,
+) -> list[object]:
+    """One S13 Table row in the sheet's own formula shapes."""
+    return [
+        library,
+        exp_name,
+        phage,
+        description,
+        1,
+        pfu,
+        f"=F{row}*0.35",
+        one_od,
+        "=0.04*0.35*8*10^8",
+        dilution,
+        moi if moi is not None else f"=G{row}*J{row}/I{row}",
+    ]
+
+
+def _write_s13(path: Path, rows: list[list[object]]) -> None:
+    """Write a one-sheet ``MOI_used_runs`` workbook (formulas stay formula strings)."""
+    import openpyxl
+
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    assert sheet is not None
+    sheet.title = "MOI_used_runs"
+    sheet.append(S13_HEADER)
+    for values in rows:
+        sheet.append(values)
+    workbook.save(path)
+
+
+GOOD_S13_ROWS: list[list[object]] = [
+    # 6e10 pfu/ml at a 0.1 dilution: 6e10 * 0.35 * 0.1 / (0.04 * 0.35 * 8e8) = 187.5
+    _s13_row(
+        2,
+        "RBTnSeq-BW25113",
+        "set16IT008",
+        "T2",
+        "LB_plus_SM_buffer with T2_phage 187.5 MOI",
+        6e10,
+        0.1,
+    ),
+    # a dilution chained off the row above: 0.1 * 0.1 -> 18.75
+    _s13_row(
+        3,
+        "RBTnSeq-BW25113",
+        "set16IT009",
+        "T2",
+        "LB_plus_SM_buffer with T2_phage 18.75 MOI",
+        6e10,
+        "=J2*0.1",
+    ),
+    # another library's row is skipped even though it is well formed
+    _s13_row(4, "Dub-seq BW25113 ", "IT047", "T2", "IT047_T2_Phage", 6e10, 0.1),
+    # 6.2e11 pfu/ml at 0.1: 1937.5
+    _s13_row(
+        5, "RBTnSeq-BW25113", "set30IT064", "N4", "N4_phage_1937.5_MOI", 6.2e11, 0.1
+    ),
+    # a control row: no dose, no dilution
+    _s13_row(6, "RBTnSeq-BW25113", "set28IT004", "", "LB_plus_SM_buffer", None, None),
+]
+
+EXPS_USED = (
+    "expName\texpDescription\tt0set\tgMean\tmaxFit\n"
+    "set16IT001\tTime0\t22-Nov-16 Keio_ML9_set16\t557.2\t1.37\n"
+    "set16IT007\tLB_plus_SM_buffer\t22-Nov-16 Keio_ML9_set16\t633.4\t3.30\n"
+    "set16IT008\tLB_plus_SM_buffer with T2_phage 187.5 MOI\t22-Nov-16 Keio_ML9_set16"
+    "\t659.5\t16.75\n"
+    "set16IT019\tLB_plus_SM_buffer with T2_phage 0.01875 MOI\t22-Nov-16 Keio_ML9_set16"
+    "\t640.2\t14.70\n"
+    "set19IT073\tP2 dilution 10-1\t13-Dec-16 Keio_ML9_set19\t500.0\t9.00\n"
+    "set28IT004\tLB_plus_SM_buffer\t16-Nov-18 Keio_ML9_set28\t610.0\t2.10\n"
+    "set30IT064\tN4_phage_1937.5_MOI\t28-Jan-19 Keio_ML9_set30\t720.0\t12.30\n"
+)
+
+GENES_TAB = (
+    "locusId\tsysName\ttype\tscaffoldId\tbegin\tend\tstrand\tname\tdesc\n"
+    "14146\tb0001\t1\t7023\t190\t255\t+\tthrL\tthr operon leader peptide\n"
+    "14147\tb0002\t1\t7023\t337\t2799\t+\tthrA\taspartokinase\n"
+    "14148\tb0003\t1\t7023\t2801\t3733\t+\t\tno symbol released\n"
+    "14163\tb0018\t1\t7023\t17489\t17665\t+\tmokC\tregulatory peptide\n"
+)
+
+
+def _fitness_table(genes: list[str]) -> str:
+    """A two-experiment ``fit_logratios.tab`` over ``genes``."""
+    lines = ["locusId\tsysName\tdesc\tsetXIT001 A\tsetXIT002 B"]
+    lines += [f"1\t{g}\td\t0.5\t-1.25" for g in genes]
+    return "\n".join(lines) + "\n"
+
+
+SYNTHETIC_MEMBERS: dict[str, str] = {
+    "g/Keio/genes.tab": GENES_TAB,
+    "html/Keio_ML9_set16_set19/fit_logratios.tab": _fitness_table(["b0001", "b0002"]),
+    "html/Keio_ML9_set28_set29/fit_logratios.tab": _fitness_table(["b0002", "b0003"]),
+    "html/Keio_ML9_set30/fit_logratios.tab": _fitness_table(["b0003", "b0018"]),
+}
+
+
+def _sha(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
+
+
+@pytest.fixture
+def synthetic_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> str:
+    """Build tiny stand-ins for all five artifacts, re-pin them, and deposit them.
+
+    ``RAW_ARTIFACTS`` and ``TARBALL_MEMBERS`` are monkeypatched to the synthetic bytes'
+    hashes, so the real deposit, manifest and reader code paths run unchanged. Returns
+    the ``data_root`` the mirror was deposited under.
+    """
+    import tarfile
+
+    src = tmp_path / "src"
+    src.mkdir()
+    payloads: dict[str, bytes] = {
+        mut.S1_TABLE_REL: b"synthetic S1 table",
+        mut.EXPS_USED_REL: EXPS_USED.encode(),
+        mut.FIGSHARE_README_REL: b"synthetic README",
+    }
+    s13 = src / "s13.xlsx"
+    _write_s13(s13, GOOD_S13_ROWS)
+    payloads[mut.S13_TABLE_REL] = s13.read_bytes()
+
+    tarball = src / "RBTnSeq.tar.gz"
+    with tarfile.open(tarball, mode="w:gz") as archive:
+        directory = tarfile.TarInfo("g/Keio")
+        directory.type = tarfile.DIRTYPE
+        archive.addfile(directory)
+        for member, text in SYNTHETIC_MEMBERS.items():
+            data = text.encode()
+            info = tarfile.TarInfo(member)
+            info.size = len(data)
+            archive.addfile(info, io.BytesIO(data))
+    payloads[mut.TARBALL_REL] = tarball.read_bytes()
+
+    sources: dict[str, str | Path] = {}
+    artifacts = []
+    for record in mut.RAW_ARTIFACTS:
+        path = src / Path(record.rel).name
+        path.write_bytes(payloads[record.rel])
+        sources[record.rel] = path
+        artifacts.append(
+            record.model_copy(
+                update={
+                    "sha256": _sha(payloads[record.rel]),
+                    "bytes": len(payloads[record.rel]),
+                }
+            )
+        )
+    monkeypatch.setattr(mut, "RAW_ARTIFACTS", tuple(artifacts))
+    pins = {m: _sha(t.encode()) for m, t in SYNTHETIC_MEMBERS.items()}
+    pins["g/Keio"] = "0" * 64  # a directory member, to reach the not-a-file refusal
+    monkeypatch.setattr(mut, "TARBALL_MEMBERS", pins)
+
+    data_root = str(tmp_path / "root")
+    mut.deposit_raw_mirror(
+        sources=sources, retrieved_at="2026-10-07", data_root=data_root
+    )
+    return data_root
+
+
+def test_raw_mirror_dir_reads_data_root_from_the_environment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With no explicit root, the mirror lives under ``$DATA_ROOT``."""
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    assert mut.raw_mirror_dir() == tmp_path / mut.RAW_DIR_REL
+
+
+class TestSyntheticMirror:
+    """The deposit, manifest and every reader, on a mirror built in ``tmp_path``."""
+
+    def test_deposit_writes_every_file_and_a_manifest_naming_its_retrieval(
+        self, synthetic_mirror: str
+    ) -> None:
+        """Five files land at their pinned paths; the manifest records how to re-get them."""
+        root = mut.raw_mirror_dir(synthetic_mirror)
+        manifest = mut.load_manifest(synthetic_mirror)
+        assert manifest.citation_key == mut.CITATION_KEY
+        assert manifest.doi == mut.PAPER_DOI
+        assert [f.path for f in manifest.files] == [r.rel for r in mut.RAW_ARTIFACTS]
+        for record in mut.RAW_ARTIFACTS:
+            assert mut._sha256(root / record.rel) == record.sha256
+            stored = next(f for f in manifest.files if f.path == record.rel)
+            assert stored.role == "raw_data"
+            assert stored.bytes == record.bytes
+            assert stored.retrieval is not None
+            assert stored.retrieval.method == record.method
+            assert stored.retrieval.params == record.params
+            assert stored.retrieval.retrieved_at == "2026-10-07"
+        assert len(manifest.si_expected) == 4
+        assert any("Dub-seq" in line for line in manifest.si_expected)
+
+    def test_redeposit_is_a_no_op_and_a_drifted_file_is_refused(
+        self, synthetic_mirror: str
+    ) -> None:
+        """Matching bytes are left alone; differing bytes are never overwritten."""
+        root = mut.raw_mirror_dir(synthetic_mirror)
+        sources: dict[str, str | Path] = {
+            r.rel: root / r.rel for r in mut.RAW_ARTIFACTS
+        }
+        target = root / mut.FIGSHARE_README_REL
+        stamp = target.stat().st_mtime_ns
+        mut.deposit_raw_mirror(sources=sources, data_root=synthetic_mirror)
+        assert target.stat().st_mtime_ns == stamp
+
+        clean = root.parent / "clean-readme"
+        clean.write_bytes(target.read_bytes())
+        target.write_bytes(b"drifted")
+        sources[mut.FIGSHARE_README_REL] = clean
+        with pytest.raises(RuntimeError, match="exists with a different sha256"):
+            mut.deposit_raw_mirror(sources=sources, data_root=synthetic_mirror)
+
+    def test_a_tarball_member_is_read_and_verified(self, synthetic_mirror: str) -> None:
+        """The pinned member comes back byte for byte."""
+        payload = mut.read_tarball_member("g/Keio/genes.tab", synthetic_mirror)
+        assert payload == GENES_TAB.encode()
+
+    def test_a_moved_member_and_a_directory_member_are_refused(
+        self, synthetic_mirror: str, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A member whose bytes moved, or one that is not a file, raises."""
+        with pytest.raises(RuntimeError, match="is not a file"):
+            mut.read_tarball_member("g/Keio", synthetic_mirror)
+        moved = dict(mut.TARBALL_MEMBERS)
+        moved["g/Keio/genes.tab"] = "f" * 64
+        monkeypatch.setattr(mut, "TARBALL_MEMBERS", moved)
+        with pytest.raises(RuntimeError, match="sha256 mismatch"):
+            mut.read_tarball_member("g/Keio/genes.tab", synthetic_mirror)
+
+    def test_the_gene_table_and_the_measured_genes(self, synthetic_mirror: str) -> None:
+        """Blank symbols stay blank strings; measured genes are the union of the sets."""
+        genes = mut.read_feba_gene_table(synthetic_mirror)
+        assert [g["sysName"] for g in genes] == ["b0001", "b0002", "b0003", "b0018"]
+        assert genes[2]["name"] == ""
+        assert mut.measured_gene_ids(synthetic_mirror) == {
+            "b0001",
+            "b0002",
+            "b0003",
+            "b0018",
+        }
+
+    def test_the_moi_table_evaluates_the_sheet_s_own_formulas(
+        self, synthetic_mirror: str
+    ) -> None:
+        """RB-TnSeq rows with a dose are evaluated, chains resolved, the rest skipped."""
+        table = mut.read_moi_table(synthetic_mirror)
+        assert sorted(table) == ["set16IT008", "set16IT009", "set30IT064"]
+        assert table["set16IT008"].moi == pytest.approx(187.5, rel=1e-12)
+        assert table["set16IT009"].dilution == pytest.approx(0.01, rel=1e-12)
+        assert table["set16IT009"].moi == pytest.approx(18.75, rel=1e-12)
+        assert table["set30IT064"].phage == "N4"
+        assert table["set30IT064"].moi == pytest.approx(1937.5, rel=1e-12)
+        assert table["set16IT008"].library == "RBTnSeq-BW25113"
+
+    def test_the_experiment_axis_classifies_and_doses_every_experiment(
+        self, synthetic_mirror: str
+    ) -> None:
+        """Starts, controls and challenges; S13 doses first, descriptions second."""
+        axis = mut.read_experiment_axis(synthetic_mirror)
+        assert axis.counts == {
+            "time_zero": 1,
+            "no_phage_control": 2,
+            "phage": 4,
+            "phages": 3,
+        }
+        assert axis.phages == ("N4", "P2", "T2")
+        assert [a.exp_name for a in axis.time_zero] == ["set16IT001"]
+        assert [a.exp_name for a in axis.controls] == ["set16IT007", "set28IT004"]
+        by_name = {a.exp_name: a for a in axis.challenges}
+        assert by_name["set16IT008"].moi_source == "s13_table"
+        assert by_name["set16IT008"].moi == pytest.approx(187.5, rel=1e-12)
+        assert by_name["set16IT019"].moi_source == "experiment_description"
+        assert by_name["set16IT019"].moi == pytest.approx(0.01875, rel=1e-12)
+        assert (by_name["set19IT073"].phage, by_name["set19IT073"].moi) == ("P2", 0.1)
+        assert by_name["set30IT064"].analysis_set == "Keio_ML9_set30"
+        assert by_name["set16IT008"].time_zero_set == "22-Nov-16 Keio_ML9_set16"
+        assert by_name["set16IT008"].g_mean == pytest.approx(659.5)
+        assert by_name["set16IT008"].max_fit == pytest.approx(16.75)
+
+    def test_an_unreadable_experiment_name_stops_the_parse(
+        self, synthetic_mirror: str
+    ) -> None:
+        """A row whose name has no ``setNN`` prefix is refused, not guessed."""
+        path = mut.raw_mirror_dir(synthetic_mirror) / mut.EXPS_USED_REL
+        path.write_text(EXPS_USED + "badname\tTime0\tx\t1.0\t1.0\n")
+        with pytest.raises(ValueError, match="unreadable experiment name"):
+            mut.read_experiment_axis(synthetic_mirror)
+
+
+@pytest.mark.parametrize(
+    "rows,message",
+    [
+        (
+            [_s13_row(2, "RBTnSeq-BW25113", "set16IT008", "T2", "d", 6e10, "=K2+1")],
+            "unreadable dilution",
+        ),
+        (
+            [
+                _s13_row(2, "RBTnSeq-BW25113", "set16IT007", "", "c", None, None),
+                _s13_row(
+                    3, "RBTnSeq-BW25113", "set16IT008", "T2", "d", 6e10, "=J2*0.1"
+                ),
+            ],
+            "dilution chain starts from a blank cell",
+        ),
+        (
+            [
+                _s13_row(
+                    2,
+                    "RBTnSeq-BW25113",
+                    "set16IT008",
+                    "T2",
+                    "d",
+                    6e10,
+                    0.1,
+                    one_od="=9*10^8",
+                )
+            ],
+            "1 OD cfu/ml is",
+        ),
+        (
+            [
+                _s13_row(
+                    2,
+                    "RBTnSeq-BW25113",
+                    "set16IT008",
+                    "T2",
+                    "d",
+                    6e10,
+                    0.1,
+                    moi="=G2*J2",
+                )
+            ],
+            "not =G\\*J/I",
+        ),
+    ],
+)
+def test_an_s13_formula_of_any_other_shape_is_refused(
+    tmp_path: Path, rows: list[list[object]], message: str
+) -> None:
+    """A changed sheet is detected instead of mis-evaluated."""
+    path = mut.raw_mirror_dir(str(tmp_path)) / mut.S13_TABLE_REL
+    path.parent.mkdir(parents=True)
+    _write_s13(path, rows)
+    with pytest.raises(ValueError, match=message):
+        mut.read_moi_table(str(tmp_path))
+
+
+# --------------------------------------------------------------------------- #
+# The identifier routes on stand-in genomes (hermetic)
+# --------------------------------------------------------------------------- #
+def _stand_in_genomes() -> tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome]:
+    """Uninitialized genome instances: the crosswalk and resolver are patched out."""
+    return (
+        EcoliK12MG1655Genome.__new__(EcoliK12MG1655Genome),
+        EcoliK12BW25113Genome.__new__(EcoliK12BW25113Genome),
+    )
+
+
+def _fake_crosswalk(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Three one-to-one ECK pairs, one of them with disagreeing numbers."""
+    from types import SimpleNamespace
+
+    from torchcell.sequence.genome.ecoli.k12 import EckPair
+
+    pairs = (
+        EckPair(eck="ECK0001", mg1655="b0001", bw25113="BW25113_0001"),
+        EckPair(eck="ECK0002", mg1655="b0002", bw25113="BW25113_0002"),
+        EckPair(eck="ECK0018", mg1655="b0018", bw25113="BW25113_4412"),
+    )
+    crosswalk = SimpleNamespace(pairs=pairs, numeric_disagreements=(pairs[2],))
+    monkeypatch.setattr(mut, "eck_crosswalk", lambda mg1655, bw25113: crosswalk)
+
+
+def test_the_eck_route_counts_maps_and_flags_disagreeing_numbers(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Duplicates collapse, the unmapped are named, the disagreeing pair is listed."""
+    _fake_crosswalk(monkeypatch)
+    mg1655, bw25113 = _stand_in_genomes()
+    route = mut.eck_route(
+        mg1655, bw25113, ["b0001", "b0002", "b0003", "b0018", "b0001"]
+    )
+    assert (route.pairs, route.numeric_disagreements) == (3, 1)
+    assert (route.requested, route.mapped) == (4, 3)
+    assert route.unmapped == ("b0003",)
+    assert route.disagreeing == (("b0018", "BW25113_4412"),)
+    assert route.fraction == pytest.approx(0.75)
+    mapping = mut.eck_mapping(mg1655, bw25113)
+    assert {b: pair.bw25113 for b, pair in mapping.items()} == {
+        "b0001": "BW25113_0001",
+        "b0002": "BW25113_0002",
+        "b0018": "BW25113_4412",
+    }
+
+
+def test_the_audit_sends_each_route_the_right_genome_and_names(
+    synthetic_mirror: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """b-numbers go to MG1655, symbols (b-number when blank) to BW25113, ECK scored."""
+    import pandas as pd
+
+    from torchcell.datasets.bacteria_common import LocusTagReconciliation
+    from torchcell.sequence.genome.base import GeneNameStatus
+
+    _fake_crosswalk(monkeypatch)
+    mg1655, bw25113 = _stand_in_genomes()
+    calls: list[tuple[object, list[str], str]] = []
+
+    def fake_reconcile(
+        genome: object, names: pd.Series, *, label: str
+    ) -> tuple[pd.Series, LocusTagReconciliation]:
+        calls.append((genome, list(names), label))
+        unique = len(set(names))
+        report = LocusTagReconciliation(
+            label=label,
+            assembly_set="ecoli_K12_MG1655_ASM584v2",
+            gene_namespace="ecoli_k12_mg1655_bnumber",
+            unique_names=unique,
+            status_histogram={
+                status: unique if status is GeneNameStatus.CURRENT else 0
+                for status in GeneNameStatus
+            },
+            layer_histogram={"locus tag": unique},
+            remapped=0,
+            kept_on_collision=(),
+            retired_kept=(),
+            ambiguous_kept={},
+            case_insensitive=(),
+            outside_namespace=(),
+        )
+        return names.copy(), report
+
+    monkeypatch.setattr(mut, "reconcile_locus_tags", fake_reconcile)
+    audit = mut.audit_identifiers(mg1655, bw25113, synthetic_mirror)
+    assert audit.genes == 4
+    assert calls[0][0] is mg1655
+    assert calls[0][1] == ["b0001", "b0002", "b0003", "b0018"]
+    assert calls[0][2].endswith("b-numbers-vs-MG1655")
+    assert calls[1][0] is bw25113
+    assert calls[1][1] == ["thrL", "thrA", "b0003", "mokC"]
+    assert calls[1][2].endswith("symbols-vs-BW25113")
+    assert audit.b_numbers_vs_mg1655.unique_names == 4
+    assert (audit.eck_route.requested, audit.eck_route.mapped) == (4, 3)
+
+    scored = mut.audit_identifiers(
+        mg1655, bw25113, synthetic_mirror, measured=["b0001", "b0018"]
+    )
+    assert (scored.eck_route.requested, scored.eck_route.mapped) == (2, 2)
+    assert scored.eck_route.fraction == pytest.approx(1.0)

@@ -50,6 +50,8 @@ from torchcell.datamodels.media import M9_NREL_CARRUTHERS2025, SC, YP_GALACTOSE
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialDeletionPerturbation,
+    BacterialEnvironmentResponseExperiment,
+    BacterialEnvironmentResponseExperimentReference,
     BacterialMetaboliteExperiment,
     BacterialMetaboliteExperimentReference,
     BacterialProteinAbundanceExperiment,
@@ -1427,6 +1429,182 @@ def test_run_environment_response_dispatches_eager_and_streaming(
             "3 systematic names, one canonical spelling each, each current in the genome"
         )
         assert all(r["passed"] for r in report["results"])
+
+
+def _bacterial_env_record(locus: str, value: float) -> Record:
+    """One KT2440 environment-response record: a locus-tag deletion under an inhibitor."""
+    phenotype = EnvironmentResponsePhenotype(
+        measurement_type=MeasurementType.log2_ratio,
+        environment_response=value,
+        units="log2(treatment/control)",
+    )
+    env = Environment(
+        media=M9_NREL_CARRUTHERS2025,
+        temperature=Temperature(value=30),
+        perturbations=[
+            SmallMoleculePerturbation(
+                compound=Compound(name="hydroquinone", inchikey=HYDROQUINONE),
+                concentration=Concentration(basis=DoseBasis.IC30),
+            )
+        ],
+    )
+    return {
+        "experiment": BacterialEnvironmentResponseExperiment(
+            dataset_name="env_bacterial",
+            genotype=Genotype(
+                perturbations=[
+                    BacterialDeletionPerturbation(
+                        systematic_gene_name=locus,
+                        perturbed_gene_name=locus,
+                        gene_namespace=KT2440_NAMESPACE,
+                    )
+                ]
+            ),
+            environment=env,
+            phenotype=phenotype,
+        ).model_dump(),
+        "reference": BacterialEnvironmentResponseExperimentReference(
+            dataset_name="env_bacterial",
+            genome_reference=KT2440_REFERENCE_MODEL,
+            environment_reference=env.model_copy(),
+            phenotype_reference=EnvironmentResponsePhenotype(
+                measurement_type=MeasurementType.log2_ratio,
+                environment_response=0.0,
+                units="log2(treatment/control)",
+            ),
+        ).model_dump(),
+    }
+
+
+KT2440_LOCI = ["PP_0001", "PP_0002", "PP_0003"]
+
+
+def _stub_genome_for_reference(
+    monkeypatch: pytest.MonkeyPatch,
+) -> list[tuple[Any, str]]:
+    """Record the (assembly set, data root) every resolver was built from.
+
+    The recording genome fakes subclass the real classes and record kwargs only, so
+    their ``resolve_gene_name`` is the real method over no index; what this test needs
+    is a resolver, plus proof that the one each dataset got was built from ITS OWN
+    reference. ``_genome_for_reference`` has its own tests for the selection itself.
+    """
+    seen: list[tuple[Any, str]] = []
+
+    def fake(reference: Any, data_root: str) -> _FakeGenome:
+        seen.append((reference.get("assembly_set"), data_root))
+        return _FakeGenome()
+
+    monkeypatch.setattr(runners, "_genome_for_reference", fake)
+    return seen
+
+
+def test_run_environment_response_selects_the_universe_and_resolver_per_host(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A bacterial dataset gets the KT2440 locus universe, the KT2440 genome and a
+    containment row that names KT2440; the yeast dataset beside it still gets S288C.
+
+    Before this, every registered dataset was handed ``_sgd_gene_set`` and the S288C
+    resolver, so these three ``PP_`` tags would have been off the universe and off the
+    genome: containment 0.000 and three off-genome records, all for the wrong reason.
+    """
+    _write_lmdb(
+        _root(tmp_path, "env_yeast"),
+        [_env_record(g, v) for g, v in zip(GENES, [-1.2, 0.8, -0.3])],
+    )
+    _write_lmdb(
+        _root(tmp_path, "env_bact"),
+        [_bacterial_env_record(t, v) for t, v in zip(KT2440_LOCI, [-1.0, 0.5, -0.2])],
+    )
+    sgd_calls = _stub_sgd(monkeypatch, set(GENES))
+    bacterial = _stub_bacterial_universe(monkeypatch, set(KT2440_LOCI))
+    resolvers = _stub_genome_for_reference(monkeypatch)
+    monkeypatch.setattr(
+        runners,
+        "ENVIRONMENT_RESPONSE_DATASETS",
+        {
+            "env_yeast": _spec("env_yeast", expected_count=3),
+            "env_bact": _spec("env_bact", expected_count=3),
+        },
+    )
+    assert runners.run_environment_response(str(tmp_path)) is True
+    assert (sgd_calls, bacterial) == ([str(tmp_path)], [PPUTIDA_KT2440])
+    assert resolvers == [(None, str(tmp_path)), (PPUTIDA_KT2440, str(tmp_path))]
+    yeast = _result(_read_report(_root(tmp_path, "env_yeast")), "gene_containment_sgd")
+    assert yeast["message"] == (
+        "1.000 of 3 measured genes are S288C reference genes (>= 0.9)"
+    )
+    bact = _result(_read_report(_root(tmp_path, "env_bact")), "gene_containment_sgd")
+    assert bact["message"] == (
+        "1.000 of 3 measured genes are pputida_KT2440_ASM756v2 locus genes (>= 0.9)"
+    )
+    assert (
+        _result(_read_report(_root(tmp_path, "env_bact")), "current_genome_genes")[
+            "passed"
+        ]
+        is True
+    )
+
+
+def test_run_environment_response_reads_a_streamed_datasets_host_from_one_record(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The streaming branch cannot walk the records twice, so it peeks the first one."""
+    _write_lmdb(
+        _root(tmp_path, "env_bact"),
+        [_bacterial_env_record(t, v) for t, v in zip(KT2440_LOCI, [-1.0, 0.5, -0.2])],
+    )
+    sgd_calls = _stub_sgd(monkeypatch, set(GENES))
+    bacterial = _stub_bacterial_universe(monkeypatch, set(KT2440_LOCI))
+    resolvers = _stub_genome_for_reference(monkeypatch)
+    monkeypatch.setattr(
+        runners,
+        "ENVIRONMENT_RESPONSE_DATASETS",
+        {"env_bact": _spec("env_bact", expected_count=3, stream=True)},
+    )
+    assert runners.run_environment_response(str(tmp_path)) is True
+    assert (sgd_calls, bacterial) == ([], [PPUTIDA_KT2440])
+    assert resolvers == [(PPUTIDA_KT2440, str(tmp_path))]
+    assert _result(_read_report(_root(tmp_path, "env_bact")), "gene_containment_sgd")[
+        "message"
+    ] == ("1.000 of 3 measured genes are pputida_KT2440_ASM756v2 locus genes (>= 0.9)")
+
+
+def test_first_genome_reference_refuses_an_empty_store(tmp_path: Path) -> None:
+    """A store with no records names no host, and the runner says so."""
+    _write_lmdb(_root(tmp_path, "env_empty"), [])
+    with pytest.raises(
+        ValueError, match="holds no records, so its host cannot be read"
+    ):
+        runners._first_genome_reference(str(_root(tmp_path, "env_empty")))
+
+
+def test_host_for_dataset_refuses_two_assembly_sets_in_one_dataset(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One resolver cannot serve two hosts, so a mixed-pin dataset is refused."""
+    _stub_bacterial_universe(monkeypatch, {"b0001"})
+    _stub_genome_for_reference(monkeypatch)
+    with pytest.raises(ValueError, match="one resolver cannot serve two hosts"):
+        runners._host_for_dataset(
+            "mixed",
+            (ECOLI_K12_BW25113, ECOLI_K12_MG1655),
+            MG1655_REFERENCE,
+            "/root",
+            {},
+        )
+
+
+def test_gene_universe_label_names_the_host_it_was_built_from() -> None:
+    """The containment row's claim: S288C for a yeast universe, the pins for a bacterial."""
+    assert runners._gene_universe_label((SGD_S288C_R64,)) == "S288C reference"
+    assert runners._gene_universe_label((PPUTIDA_KT2440,)) == (
+        "pputida_KT2440_ASM756v2 locus"
+    )
+    assert runners._gene_universe_label((ECOLI_K12_BW25113, ECOLI_K12_MG1655)) == (
+        "ecoli_K12_BW25113_ASM75055v1 / ecoli_K12_MG1655_ASM584v2 locus"
+    )
 
 
 def test_run_environment_response_streaming_spec_requires_an_expected_count(

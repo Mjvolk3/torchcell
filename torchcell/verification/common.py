@@ -247,6 +247,7 @@ class SharedRecordRules:
         background_genes: frozenset[str] = frozenset(),
         resolve_gene_name: GeneNameResolver | None = None,
         sgd_genes: set[str] | None = None,
+        gene_universe_label: str = "reference",
         min_containment: float = 0.90,
     ) -> None:
         """Start an empty accumulation for one dataset."""
@@ -257,6 +258,7 @@ class SharedRecordRules:
         self.background_genes = background_genes
         self.resolve_gene_name = resolve_gene_name
         self.sgd_genes = sgd_genes
+        self.gene_universe_label = gene_universe_label
         self.min_containment = min_containment
 
         self._census = CarrierGapCensus(n_records=0, n_records_with_gaps=0, n_gaps=0)
@@ -777,9 +779,14 @@ class SharedRecordRules:
 
         An empty measured set (no record carries a gene perturbation) passes both
         results vacuously, each saying the set is empty, and adds a FAILING
-        ``measured_genes_present`` result ahead of them: a dataset verified against the
-        SGD gene set that measures no gene fails for that stated reason, not for a
+        ``measured_genes_present`` result ahead of them: a dataset verified against a
+        gene universe that measures no gene fails for that stated reason, not for a
         fabricated 0.000 overlap.
+
+        The message names the universe it was GIVEN (``gene_universe_label``), because
+        this rule serves every host: four landed bacterial loaders pass their strain's
+        locus universe here, and a row reading "are S288C reference genes" over a
+        ``PP_`` tag is a claim that was never checked.
         """
         measured = set(self._gene_records)
         missing = sorted(measured - sgd_genes)
@@ -789,8 +796,8 @@ class SharedRecordRules:
             name="gene_containment_sgd",
             passed=overlap >= self.min_containment,
             message=(
-                f"{overlap:.3f} of {len(measured)} measured genes are S288C reference "
-                f"genes (>= {self.min_containment})"
+                f"{overlap:.3f} of {len(measured)} measured genes are "
+                f"{self.gene_universe_label} genes (>= {self.min_containment})"
                 if measured
                 else "no measured genes (the measured gene set is empty); containment "
                 "holds vacuously"
@@ -867,6 +874,7 @@ def shared_rule_results(
     background_genes: frozenset[str] = frozenset(),
     resolve_gene_name: GeneNameResolver | None = None,
     sgd_genes: set[str] | None = None,
+    gene_universe_label: str = "reference",
     min_containment: float = 0.90,
 ) -> list[LevelResult]:
     """Run every shared rule over a materialized record sequence."""
@@ -874,6 +882,7 @@ def shared_rule_results(
         background_genes=background_genes,
         resolve_gene_name=resolve_gene_name,
         sgd_genes=sgd_genes,
+        gene_universe_label=gene_universe_label,
         min_containment=min_containment,
     )
     rules.add_all(records)

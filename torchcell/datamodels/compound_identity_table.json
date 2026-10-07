@@ -21700,6 +21700,21 @@
     },
     {
       "chebi_id": null,
+      "inchikey": "DVLFYONBTKHTER-UHFFFAOYSA-N",
+      "name": "3-(N-morpholino)propanesulfonic acid",
+      "pubchem_cid": 70807,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "C1COCCN1CCCS(=O)(=O)O",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/3-%28N-morpholino%29propanesulfonic%20acid/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "MOPS"
+      ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": null,
       "inchikey": "NMHKTASGTFXJPL-UHFFFAOYSA-N",
       "name": "3-(n-n-octadecylcarbamoyloxy)-2-methoxypropyl-2-thiazolinium ethyl phosphate",
       "pubchem_cid": 107681,
@@ -38194,6 +38209,47 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:31206",
+      "inchikey": "NLXLAEXVIDQMFP-UHFFFAOYSA-N",
+      "name": "ammonium chloride",
+      "pubchem_cid": 25517,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "[NH4+].[Cl-]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/ammonium%20chloride/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:91249",
+      "inchikey": "JYJVMQULBZTBKM-UHFFFAOYSA-T",
+      "name": "ammonium heptamolybdate",
+      "pubchem_cid": 485454,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "[NH4+].[NH4+].[NH4+].[NH4+].[NH4+].[NH4+].O.O.O.O.[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[O-2].[Mo].[Mo].[Mo].[Mo].[Mo].[Mo].[Mo]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/hexaammonium%20heptamolybdate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "ammonium molybdate"
+      ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": null,
+      "inchikey": "FIXLYHHVMHXSCP-UHFFFAOYSA-H",
+      "name": "ammonium heptamolybdate tetrahydrate",
+      "pubchem_cid": 16211167,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "N.N.N.N.N.N.O.O.O.O.O[Mo](=O)(=O)O.O[Mo](=O)(=O)O.O[Mo](=O)(=O)O.O=[Mo](=O)=O.O=[Mo](=O)=O.O=[Mo](=O)=O.O=[Mo](=O)=O",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/ammonium%20paramolybdate%20tetrahydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:62946",
       "inchikey": "BFNBIHQBYMNNAN-UHFFFAOYSA-N",
       "name": "ammonium sulfate",
@@ -40882,6 +40938,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:33118",
+      "inchikey": "KGBXLFKZBHKPEV-UHFFFAOYSA-N",
+      "name": "boric acid",
+      "pubchem_cid": 7628,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "B(O)(O)O",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/boric%20acid/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:28093",
       "inchikey": "DTGKSKDOIYIVQL-UHFFFAOYSA-N",
       "name": "borneol",
@@ -41730,6 +41799,32 @@
       "synonyms": [
         "CID 11957499"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:3312",
+      "inchikey": "UXVMQQNJUSDDNG-UHFFFAOYSA-L",
+      "name": "calcium chloride",
+      "pubchem_cid": 5284359,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "[Cl-].[Cl-].[Ca+2]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/calcium%20chloride/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:86158",
+      "inchikey": "LLSDKQJKOVVTOJ-UHFFFAOYSA-L",
+      "name": "calcium chloride dihydrate",
+      "pubchem_cid": 6093260,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "O.O.[Cl-].[Cl-].[Ca+2]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/calcium%20chloride%20dihydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {
@@ -44732,6 +44827,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:53503",
+      "inchikey": "GFHNAMRJFCEERV-UHFFFAOYSA-L",
+      "name": "cobalt(II) chloride hexahydrate",
+      "pubchem_cid": 24643,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "O.O.O.O.O.O.[Cl-].[Cl-].[Co+2]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/cobalt%20chloride%20hexahydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:183909",
       "inchikey": "PRGILOMAMBLWNG-HNNXBMFYSA-N",
       "name": "colchiceine",
@@ -44800,6 +44908,45 @@
       "synonyms": [
         "CuSO4"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:49553",
+      "inchikey": "ORTQZVOHEJQUHG-UHFFFAOYSA-L",
+      "name": "copper(II) chloride",
+      "pubchem_cid": 24014,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "Cl[Cu]Cl",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/cupric%20chloride/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:86318",
+      "inchikey": "MPTQRFCYZCXJFQ-UHFFFAOYSA-L",
+      "name": "copper(II) chloride dihydrate",
+      "pubchem_cid": 61482,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "O.O.Cl[Cu]Cl",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/cupric%20chloride%20dihydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:31440",
+      "inchikey": "JZCCFEFSEZPSOG-UHFFFAOYSA-L",
+      "name": "copper(II) sulfate pentahydrate",
+      "pubchem_cid": 24463,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "O.O.O.O.O.[O-]S(=O)(=O)[O-].[Cu+2]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/cupric%20sulfate%20pentahydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {
@@ -47901,6 +48048,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:131527",
+      "inchikey": "ZPWVASYFFYYZEW-UHFFFAOYSA-L",
+      "name": "dipotassium hydrogen phosphate",
+      "pubchem_cid": 24450,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "OP(=O)([O-])[O-].[K+].[K+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/dipotassium%20hydrogen%20phosphate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:4728",
       "inchikey": "KSCFJBIXMNOVSH-UHFFFAOYSA-N",
       "name": "diprophylline",
@@ -48003,6 +48163,45 @@
       "synonyms": [
         "cantharidin disodium"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:34683",
+      "inchikey": "BNIILDVGGAEEIG-UHFFFAOYSA-L",
+      "name": "disodium hydrogen phosphate",
+      "pubchem_cid": 24203,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "OP(=O)([O-])[O-].[Na+].[Na+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/disodium%20hydrogen%20phosphate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:91258",
+      "inchikey": "KDQPSPMLNJTZAL-UHFFFAOYSA-L",
+      "name": "disodium hydrogen phosphate dihydrate",
+      "pubchem_cid": 6451167,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "O.O.OP(=O)([O-])[O-].[Na+].[Na+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/disodium%20hydrogen%20phosphate%20dihydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": null,
+      "inchikey": "PYLIXCKOHOHGKQ-UHFFFAOYSA-L",
+      "name": "disodium hydrogen phosphate heptahydrate",
+      "pubchem_cid": 6096963,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "O.O.O.O.O.O.O.OP(=O)([O-])[O-].[Na+].[Na+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/sodium%20phosphate%20dibasic%20heptahydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {
@@ -55263,6 +55462,58 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:75832",
+      "inchikey": "BAUYGSIQEAFULO-UHFFFAOYSA-L",
+      "name": "iron(II) sulfate",
+      "pubchem_cid": 24393,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "[O-]S(=O)(=O)[O-].[Fe+2]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/ferrous%20sulfate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:75836",
+      "inchikey": "SURQXAFEQWPFPV-UHFFFAOYSA-L",
+      "name": "iron(II) sulfate heptahydrate",
+      "pubchem_cid": 62662,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "O.O.O.O.O.O.O.[O-]S(=O)(=O)[O-].[Fe+2]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/ferrous%20sulfate%20heptahydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:30808",
+      "inchikey": "RBTARNINKXHZNM-UHFFFAOYSA-K",
+      "name": "iron(III) chloride",
+      "pubchem_cid": 24380,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "Cl[Fe](Cl)Cl",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/ferric%20chloride/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:86254",
+      "inchikey": "NQXWGWZJXJUMQB-UHFFFAOYSA-K",
+      "name": "iron(III) chloride hexahydrate",
+      "pubchem_cid": 6093258,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "O.O.O.O.O.O.[Cl-].[Cl-].[Cl-].[Fe+3]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/ferric%20chloride%20hexahydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": null,
       "inchikey": "QGSCXAWTTISKLF-UHFFFAOYSA-N",
       "name": "iso-h 7",
@@ -57928,6 +58179,45 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:86345",
+      "inchikey": "DHRRIBDTHFBPNG-UHFFFAOYSA-L",
+      "name": "magnesium chloride hexahydrate",
+      "pubchem_cid": 24644,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "O.O.O.O.O.O.[Mg+2].[Cl-].[Cl-]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/magnesium%20chloride%20hexahydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:32599",
+      "inchikey": "CSNNHWWHGAXBCP-UHFFFAOYSA-L",
+      "name": "magnesium sulfate",
+      "pubchem_cid": 24083,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "[O-]S(=O)(=O)[O-].[Mg+2]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/magnesium%20sulfate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:31795",
+      "inchikey": "WRUGWIBCXHJTDG-UHFFFAOYSA-L",
+      "name": "magnesium sulfate heptahydrate",
+      "pubchem_cid": 24843,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "O.O.O.O.O.O.O.[O-]S(=O)(=O)[O-].[Mg+2]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/magnesium%20sulfate%20heptahydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": null,
       "inchikey": "JXSJBGJIGXNWCI-UHFFFAOYSA-N",
       "name": "malathion",
@@ -57995,6 +58285,32 @@
       "retrieved_at": "2026-09-12",
       "smiles": "[O-]S(=O)(=O)[O-].[Mn+2]",
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/manganese%20sulfate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:86368",
+      "inchikey": "CNFDGXZLMLFIJV-UHFFFAOYSA-L",
+      "name": "manganese(II) chloride tetrahydrate",
+      "pubchem_cid": 643989,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "O.O.O.O.Cl[Mn]Cl",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/manganese%20chloride%20tetrahydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:86364",
+      "inchikey": "ISPYRSDWRDQNSW-UHFFFAOYSA-L",
+      "name": "manganese(II) sulfate monohydrate",
+      "pubchem_cid": 177577,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "O.[O-]S(=O)(=O)[O-].[Mn+2]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/manganese%20sulfate%20monohydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [],
       "unresolved_reason": null
     },
@@ -71772,6 +72088,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:63036",
+      "inchikey": "GNSKLFRGEWLPPA-UHFFFAOYSA-M",
+      "name": "potassium dihydrogen phosphate",
+      "pubchem_cid": 516951,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "OP(=O)(O)[O-].[K+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/potassium%20dihydrogen%20phosphate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": null,
       "inchikey": "RWPGFSMJFRPDDP-UHFFFAOYSA-L",
       "name": "potassium metabisulfite",
@@ -71784,6 +72113,19 @@
       "synonyms": [
         "potassium disulfite"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:32036",
+      "inchikey": "OTYBMLCTZGSZBG-UHFFFAOYSA-L",
+      "name": "potassium sulfate",
+      "pubchem_cid": 24507,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "[O-]S(=O)(=O)[O-].[K+].[K+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/potassium%20sulfate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {
@@ -76725,6 +77067,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:53258",
+      "inchikey": "HRXKRNGNAMMEHJ-UHFFFAOYSA-K",
+      "name": "sodium citrate",
+      "pubchem_cid": 6224,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "C(C(=O)[O-])C(CC(=O)[O-])(C(=O)[O-])O.[Na+].[Na+].[Na+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/sodium%20citrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:8984",
       "inchikey": "DBMJMQXJHONAFJ-UHFFFAOYSA-M",
       "name": "sodium dodecyl sulfate",
@@ -78820,6 +79175,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": null,
+      "inchikey": "JZRWCGZRTZMZEH-UHFFFAOYSA-N",
+      "name": "thiamine",
+      "pubchem_cid": 1130,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "CC1=C(SC=[N+]1CC2=CN=C(N=C2N)C)CCO",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/thiamine/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:49105",
       "inchikey": "DPJRMOMPQZCRJU-UHFFFAOYSA-M",
       "name": "thiamine hydrochloride",
@@ -80024,6 +80392,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": null,
+      "inchikey": "SEQKRHFRPICQDD-UHFFFAOYSA-N",
+      "name": "tricine",
+      "pubchem_cid": 79784,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "C(C(=O)O)NC(CO)(CO)CO",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/tricine/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:94759",
       "inchikey": "NQPDXQQQCQDHHW-UHFFFAOYSA-N",
       "name": "triclabendazole",
@@ -80559,6 +80940,19 @@
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/tryptanthrin/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [],
       "unresolved_reason": null
+    },
+    {
+      "chebi_id": null,
+      "inchikey": null,
+      "name": "tryptone",
+      "pubchem_cid": null,
+      "resolution_status": "UNDEFINED_MIXTURE",
+      "retrieval_method": null,
+      "retrieved_at": "2026-10-07",
+      "smiles": null,
+      "source_url": null,
+      "synonyms": [],
+      "unresolved_reason": "a pancreatic digest of casein; intrinsically undefined, no structure exists"
     },
     {
       "chebi_id": "CHEBI:91480",
@@ -81897,6 +82291,32 @@
       "synonyms": [
         "ZnCl2"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:35176",
+      "inchikey": "NWONKYPBYAMBJT-UHFFFAOYSA-L",
+      "name": "zinc sulfate",
+      "pubchem_cid": 24424,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "[O-]S(=O)(=O)[O-].[Zn+2]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/zinc%20sulfate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:32312",
+      "inchikey": "RZLVQBNCHSJZPX-UHFFFAOYSA-L",
+      "name": "zinc sulfate heptahydrate",
+      "pubchem_cid": 62640,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-07",
+      "smiles": "O.O.O.O.O.O.O.[O-]S(=O)(=O)[O-].[Zn+2]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/zinc%20sulfate%20heptahydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {

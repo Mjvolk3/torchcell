@@ -29,6 +29,7 @@ import cobra
 import pytest
 
 from torchcell.datamodels.media import (
+    BACTERIAL_MEDIA_USES,
     CARBON_FREE_MEDIA,
     MEDIA_LIBRARY,
     SGA_TM_SELECTION,
@@ -238,7 +239,15 @@ def test_every_library_medium_states_a_carbon_source(key: str) -> None:
     )
 
 
-@pytest.mark.parametrize("key", sorted(MEDIA_LIBRARY))
+#: The bacterial media (2026.10.07) are out of this test's scope: the toy model carries the
+#: yeast recipes' species, and the resolver's dissociation table covers the yeast salts.
+#: M9 phosphates, ammonium chloride, MOPS, tricine, borate, molybdate and cobalt have no
+#: exchange here, so mapping a bacterial medium onto a bacterial GEM is the bacterial FBA
+#: work, not a library property. The carbon-source test above still covers every key.
+_YEAST_MEDIA_KEYS = sorted(set(MEDIA_LIBRARY) - set(BACTERIAL_MEDIA_USES))
+
+
+@pytest.mark.parametrize("key", _YEAST_MEDIA_KEYS)
 def test_every_library_medium_resolves_or_says_why_not(
     key: str, model: cobra.Model, index: ExchangeIndex
 ) -> None:

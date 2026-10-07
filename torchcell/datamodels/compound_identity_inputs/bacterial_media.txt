@@ -1,0 +1,55 @@
+# compound_identity_inputs/bacterial_media.txt
+# Source: [[plan.bacteria-ontology-genome]] Step 5 (feat/bacterial-media-library, 2026.10.07)
+# -- every single-substance component of the bacterial MEDIA_LIBRARY entries in
+# torchcell/datamodels/media.py whose label the pinned table did not already resolve. The
+# recipes are quoted from the mirrored Methods/SI of the first-tranche papers (Fuhrer 2017,
+# Wetmore 2015, Price 2018, Caglar 2017, Foo 2014, Carruthers 2025, de Siqueira 2025, Lim
+# 2025, Kang 2026, Menasalvas 2025, Choe 2019, Schmidt 2016). Labels that already had a row
+# (sodium chloride, ammonium sulfate, cobalt chloride, copper sulfate, manganese sulfate,
+# thiamine hydrochloride, D-glucose, agar, yeast extract) are not repeated here. Anhydrous
+# MnCl2 (Kang 2026 by formula; Foo 2014 as "manganese chloride") is the existing
+# `manganese (ii) chloride` row (CID 24480, synonym `MnCl2`), so media.py passes `MnCl2`;
+# PubChem's name index answers "manganese chloride" with CID 26003, whose structure carries
+# four waters, which is why that spelling is not looked up by name.
+#
+# Every label is `canonical` (media.py owns the bench spelling) except `MOPS`, which
+# resolves to the same CID as the full name and so collapses into that row as a synonym.
+# `ammonium molybdate` (Foo 2014) is left to PubChem's name index, which answers with the
+# heptamolybdate record (CID 485454), the same record `ammonium heptamolybdate` (Kang 2026,
+# written (NH4)6Mo7O24) resolves to, so the two collapse into one row.
+# Hydrates are separate rows on purpose: the weighed reagent is part of the recipe (7.52 g of
+# Na2HPO4.2H2O is not 7.52 g of Na2HPO4), and PubChem gives each hydrate its own InChIKey.
+disodium hydrogen phosphate | canonical
+disodium hydrogen phosphate dihydrate | canonical
+disodium hydrogen phosphate heptahydrate | canonical | query=sodium phosphate dibasic heptahydrate
+potassium dihydrogen phosphate | canonical
+dipotassium hydrogen phosphate | canonical
+ammonium chloride | canonical
+magnesium sulfate | canonical
+magnesium sulfate heptahydrate | canonical
+calcium chloride | canonical
+calcium chloride dihydrate | canonical
+magnesium chloride hexahydrate | canonical
+potassium sulfate | canonical
+iron(II) sulfate | canonical | query=ferrous sulfate
+iron(II) sulfate heptahydrate | canonical | query=ferrous sulfate heptahydrate
+iron(III) chloride | canonical | query=ferric chloride
+iron(III) chloride hexahydrate | canonical | query=ferric chloride hexahydrate
+zinc sulfate | canonical
+zinc sulfate heptahydrate | canonical
+copper(II) chloride | canonical | query=cupric chloride
+copper(II) chloride dihydrate | canonical | query=cupric chloride dihydrate
+copper(II) sulfate pentahydrate | canonical | query=cupric sulfate pentahydrate
+manganese(II) sulfate monohydrate | canonical | query=manganese sulfate monohydrate
+manganese(II) chloride tetrahydrate | canonical | query=manganese chloride tetrahydrate
+cobalt(II) chloride hexahydrate | canonical | query=cobalt chloride hexahydrate
+boric acid | canonical
+ammonium heptamolybdate | canonical | query=hexaammonium heptamolybdate
+ammonium molybdate
+ammonium heptamolybdate tetrahydrate | canonical | query=ammonium paramolybdate tetrahydrate
+3-(N-morpholino)propanesulfonic acid | canonical
+MOPS | query=3-(N-morpholino)propanesulfonic acid
+tricine | canonical
+sodium citrate | canonical
+thiamine | canonical
+tryptone | canonical | undefined=a pancreatic digest of casein; intrinsically undefined, no structure exists

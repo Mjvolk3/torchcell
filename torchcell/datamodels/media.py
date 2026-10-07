@@ -45,6 +45,11 @@ Sourcing:
   output, so a quote carries the source's LaTeX math markup verbatim rather than a
   cleaned-up rendering of it; the plain reading goes in ``SourcedValue.value`` and the
   quote stays a literal substring of the pinned bytes.
+- The bacterial media (Step 5 of ``[[plan.bacteria-ontology-genome]]``) quote the
+  mirrored Methods or SI of the fifty bacterial rows; the comment above them states the
+  conventions (paper-suffixed keys for per-paper formulations, a replaced base salt as a
+  dropout, a hydrate as its own compound, row-rendered quotes for xlsx sources), and
+  ``BACTERIAL_MEDIA_USES`` records which rows use each entry.
 
 Follow-ups (documented gaps, fillable later):
 - Concentrations are still absent for the YNB vitamins and the SC amino acids: the
@@ -1757,6 +1762,2025 @@ medium and the Mulleder/Messner SM were indistinguishable strings. They are stil
 joined on composition here, and that is the honest state until Mulleder 2012 is mirrored.
 """
 
+# =========================================================================== #
+# BACTERIAL MEDIA ([[plan.bacteria-ontology-genome]] section 3d, Step 5).
+#
+# Every entry quotes the mirrored Methods or SI of a paper among the fifty bacterial rows,
+# with the sha256 of the quoted file from that key's ``manifest.json``. Three rules carry
+# over from the yeast half and two are new:
+#
+# - A recipe that one paper states is that paper's object. "M9" names at least six
+#   different formulations across the fifty (ammonium chloride or ammonium sulfate as the
+#   nitrogen salt, anhydrous or hydrated phosphate, with or without trace metals), so the
+#   per-paper variants carry the paper in the key and derive from the ``M9`` salts base.
+# - A replaced base component is a dropout. The ammonium-sulfate formulations drop the
+#   base's ammonium chloride; a medium that weighs the phosphate as a hydrate drops the
+#   anhydrous salt. That is the SynBase convention (ammonium sulfate replaced by MSG).
+# - A hydrate is its own compound: the weighed reagent is part of the recipe, and PubChem
+#   gives each hydrate its own InChIKey.
+# - When a paper varies the carbon (or nitrogen) source across conditions, the medium
+#   leaves it out and is listed in ``CARBON_FREE_MEDIA``; the loader carries the variable
+#   as ``EnvironmentPhysicalPerturbation(factor=carbon_source | nitrogen_source)``.
+# - The xlsx sources (Wetmore 2015 Data Set S1, Price 2018 Supplementary Table 18) are
+#   binary, so their quotes are row renderings: a row's non-empty cells joined by " | ",
+#   consecutive rows of one sheet joined by " / ". The audit re-reads the sheet.
+# =========================================================================== #
+
+
+def _cite(
+    source: Provenance, value: object, quote: str, *, note: str | None = None
+) -> SourcedValue:
+    """A ``SourcedValue`` quoting the pinned artifact ``source`` names."""
+    return SourcedValue(value=value, provenance=source, quote=quote, note=note)
+
+
+_MENASALVAS2025 = Provenance(
+    citation_key="menasalvasBiosensordrivenStrainEngineering2025",
+    sha256="d14536948af5ba67d52362ae71fb804a2fac03a1f7ab152817a01df3aa92d080",
+    source_uri="paper.md",
+)
+_SCHMIDT2016 = Provenance(
+    citation_key="schmidtQuantitativeConditiondependentEscherichia2016",
+    sha256="67bedae8f934421086c23b7fa9582b0950a07206bffe7c4ffdd11e4d003a8710",
+    source_uri="paper.md",
+)
+_KANG2026 = Provenance(
+    citation_key="kangMultilayeredMetabolicRemodeling2026",
+    sha256="894aee24472194d22c33ecc0a31994660b19bde41e4aadee2cb0080f0c016c63",
+    source_uri="paper.md",
+)
+_BORCHERT2024 = Provenance(
+    citation_key="borchertMachineLearningAnalysis2024",
+    sha256="9de6b0772124fb77795764ce2f44187ec95737de7dcefb7335941543e75ce2f4",
+    source_uri="paper.md",
+)
+_CHOE2019 = Provenance(
+    citation_key="choeAdaptiveLaboratoryEvolution2019",
+    sha256="11a042209df0f0518197d594340ed4ab573d90ddc2574a37139451ae697f7713",
+    source_uri="paper.md",
+)
+_SCHASTNAYA2021 = Provenance(
+    citation_key="schastnayaExtensiveRegulationEnzyme2021",
+    sha256="f299eee75a1f022e08ba7f1bc444922db357f220be94f19466a36881214546c3",
+    source_uri="paper.md",
+)
+_FUHRER2017 = Provenance(
+    citation_key="fuhrerGenomewideLandscapeGene2017",
+    sha256="ec87736bda4d30fa4c5eafa49a5d033bfff4f1ee3d641bbeb4c7f9e5d55f055b",
+    source_uri="paper.md",
+)
+_CAGLAR2017 = Provenance(
+    citation_key="caglarColiMolecularPhenotype2017",
+    sha256="0878d5e7d49bcea4570aa2db225318a8469f4755645f1ddf73563effe7b3109b",
+    source_uri="paper.md",
+)
+_FOO2014 = Provenance(
+    citation_key="fooImprovingMicrobialBiogasoline2014",
+    sha256="b24baad46bdf488cf93a7e59c51eceb2af9ba4ad565459130897a6201cd62407",
+    source_uri="paper.md",
+)
+_CARRUTHERS2025 = Provenance(
+    citation_key="carruthersAutomationMachineLearning2025",
+    sha256="ca9a8a2593d2ae3ab3bacfb767e797ece2bdaa0228a4f798f1c38e1af73ef88d",
+    source_uri="paper.md",
+)
+_DESIQUEIRA2025 = Provenance(
+    citation_key="desiqueiraAlternateRoutesAcetate2025",
+    sha256="a3ea14adcbe77144f02fb92ae6b344e4dec637a4211c702aa29fa121eda2de9c",
+    source_uri="paper.md",
+)
+_LIM2025 = Provenance(
+    citation_key="limEvolutionguidedToleranceEngineering2025",
+    sha256="26b88d819d429f49cad4ebe85047cfd7354d532d84d584b0f00b222355772642",
+    source_uri="paper.md",
+)
+_GOODALL2018 = Provenance(
+    citation_key="goodallEssentialGenomeEscherichia2018",
+    sha256="facfe1fac8ab6dab5cd0ecb88876b33616cc00de7c1fe68b60590f7a1883b429",
+    source_uri="paper.md",
+)
+_BABU2014_SI13 = Provenance(
+    citation_key="babuQuantitativeGenomeWideGenetic2014",
+    sha256="c6cb4faf231286ae313c78f0ba5b2972f4c5259381dfec43ff7cc2019941e2c9",
+    source_uri="si/si13.md",
+)
+_WANG2015 = Provenance(
+    citation_key="wangDynamicInterplayMultidrug2015",
+    sha256="9cd90f00599871689fa8e62849b4220fa0801a502160b575bca4d04067fc3cd2",
+    source_uri="paper.md",
+)
+_TONG2020 = Provenance(
+    citation_key="tongGeneDispensabilityEscherichia2020",
+    sha256="daea2b924f553b75c3bfc626b2dbd10147e4a23c4272dd4b03b703242ac1623a",
+    source_uri="paper.md",
+)
+#: Wetmore 2015 Data Set S1 ("The defined medium formulations used for each experiment
+#: are contained in Data Set S1"), sheets ``Media`` and ``Expts_Keio``.
+_WETMORE2015_DS1 = Provenance(
+    citation_key="wetmoreRapidQuantificationMutant2015",
+    sha256="428a06cae37867c8d21541f64d80da082e67743e1b1def9238a14e7726bc7150",
+    source_uri="si/si1.xlsx",
+)
+#: Price 2018 Supplementary Tables (``si3.xlsx``), sheet ``TableS18_Medias``.
+_PRICE2018_S3 = Provenance(
+    citation_key="priceMutantPhenotypesThousands2018",
+    sha256="e5dbf3d5c97cfc12f49d7fd83f84bc95c16cbe963309a561fff20f442788b879",
+    source_uri="si/si3.xlsx",
+)
+
+#: Deferral targets that are NOT mirrored, keyed the way the library keys a paper.
+_NEIDHARDT1974 = "neidhardtCultureMediumEnterobacteria1974"
+_LENSKI1991 = "lenskiLongtermExperimentalEvolution1991"
+_LIM2020 = "limGenerationIonicLiquid2020"
+_LINGER2014 = "lingerLigninValorizationIntegrated2014"
+
+_M = ConcentrationUnit.molar
+_MM = ConcentrationUnit.millimolar
+_UM = ConcentrationUnit.micromolar
+_NM = ConcentrationUnit.nanomolar
+_VV = ConcentrationUnit.percent_v_v
+
+_SALT = MediaComponentRole.bulk_salt
+_NSRC = MediaComponentRole.nitrogen_source
+_CSRC = MediaComponentRole.carbon_source
+_TRACE = MediaComponentRole.trace_element
+_BUFFER = MediaComponentRole.buffer
+_VITAMIN = MediaComponentRole.vitamin
+_COMPLEX = MediaComponentRole.complex_ingredient
+
+
+def _stated(
+    name: str,
+    role: MediaComponentRole,
+    value: float,
+    unit: ConcentrationUnit,
+    *provenance: SourcedValue,
+    note: str | None = None,
+    defers_to: list[str] | None = None,
+) -> MediaComponent:
+    """A single-substance component at the amount its source(s) state."""
+    return _defined(
+        name,
+        role,
+        concentration=_c(value, unit),
+        provenance=list(provenance),
+        note=note,
+        defers_to=defers_to,
+    )
+
+
+#: The anhydrous phosphate of the ``M9`` salts, dropped by a medium that weighs it as a
+#: hydrate, and the ammonium chloride an ammonium-sulfate formulation does not contain.
+_M9_ANHYDROUS_PHOSPHATE = resolved_compound("disodium hydrogen phosphate")
+_M9_AMMONIUM_CHLORIDE = resolved_compound("ammonium chloride")
+_HYDRATE_DROPOUT_NOTE = (
+    "the phosphate is weighed as a hydrate, a different reagent with its own InChIKey, so "
+    "the base's anhydrous disodium hydrogen phosphate is recorded as replaced (a dropout)"
+)
+_AMMONIUM_SULFATE_DROPOUT_NOTE = (
+    "the nitrogen salt is ammonium sulfate, so the base's ammonium chloride is recorded "
+    "as replaced (a dropout), the SynBase convention"
+)
+
+# Verbatim quotes, cut from the pinned files (paper.md OCR keeps its LaTeX markup; the
+# xlsx quotes are row renderings, see the section comment above).
+_Q_MENASALVAS_LB = (
+    "The LB Miller (Luria-Bertani) medium [tryptone $( 1 0 \\mathrm { g / }$ "
+    "liter), yeast extract $( 5 ~ \\mathrm { g / l i t e r } )$ , and NaCl (10 "
+    "g/liter)] was purchased from Becton Dickinson (BD Difco, product no. "
+    "244620)."
+)
+_Q_MENASALVAS_AGAR = (
+    "When cells were cultured on petri dishes, LB medium was supplemented with $2 "
+    "\\%$ $\\scriptstyle \\left( \\mathbf { w } / \\mathbf { v } \\right)$ solid agar "
+    "(Becton Dickinson, Bacto Agar)"
+)
+_Q_MENASALVAS_M9 = (
+    "At the 1X working concentration, M9 medium contains 47.9 mM ${ \\mathrm { N a "
+    "} } _ { 2 } { \\mathrm { H P O } } _ { 4 } ,$ 22 mM ${ \\mathrm { K H } } _ { "
+    "2 } { \\mathrm { P O } } _ { 4 }$ 8.56 mM NaCl, 2 mM $\\mathrm { M g S O _ { 4 "
+    "} , }$ $1 0 0 ~ \\mu \\mathrm { M } \\mathrm { \\ C a C l } _ { 2 }$ with 1X "
+    "trace metal solution (catalog no. T1001, Teknova Inc., Hollister, CA), $2 "
+    "\\%$ glucose, $7 0 ~ \\mathrm { m M }$ $\\mathrm { ( N H _ { 4 } ) _ { 2 } S O "
+    "_ { 4 } } ,$ and $3 0 \\mathrm { m M }$ Mops (Sigma-Aldrich, catalog no. "
+    "M1254) adjusted to a $\\mathrm { p H }$ of 7.0."
+)
+_Q_MENASALVAS_NREL = (
+    "This formulation of M9 used for $P .$ putida is sometimes referred to as "
+    '"NREL ${ \\bf M 9 ^ { \\mathrm { * } } }$ or "Modified ${ \\bf M 9 ^ { \\mathrm '
+    "{ * } } }$ (71, 72)."
+)
+_Q_SCHMIDT16_LB = (
+    "Lysogeny broth (LB) medium was prepared as follows. Five grams of yeast "
+    "extract (BD), $_ { 1 0 \\mathrm { ~ g ~ } }$ Tryptone (BD) and $1 0 \\ \\mathrm "
+    "{ g \\ N a C l }$ were dissolved in one liter of water and the mixture "
+    "sterilized by autoclaving."
+)
+_Q_SCHMIDT16_AGAR = (
+    "LB plates were produced by adding $2 0 \\mathrm { g }$ agar (BD) to the LB "
+    "medium mixture before autoclaving."
+)
+_Q_SCHMIDT16_SALTS = (
+    "$2 0 0 ~ \\mathrm { m l }$ f $5 \\times$ base salt solution (211 mM ${ \\mathrm "
+    "{ N a } } _ { 2 } { \\mathrm { H P O } } _ { 4 } ,$ $1 1 0 \\mathrm { m M }$ "
+    "${ \\mathrm { K H } } _ { 2 } { \\mathrm { P O } } _ { 4 } ,$ 42.8 mM NaCl, $5 "
+    "6 . 7 \\mathrm { m M }$ $\\mathrm { ( N H _ { 4 } ) _ { 2 } S O _ { 4 } , }$ "
+    "in $\\mathrm { H } _ { 2 } \\mathrm { O } ,$ autoclaved)"
+)
+_Q_SCHMIDT16_TRACE = (
+    "$1 0 ~ \\mathrm { m l }$ of te elemen $\\mathrm { 0 . 6 3 \\ m M }$ $\\mathrm { "
+    "Z n S O _ { 4 } }$ . $0 . 7 \\ \\mathrm { m M } \\ \\mathrm { C u C l } _ { 2 }$ "
+    ", $0 . 7 1 \\mathrm { \\ m M } \\mathrm { M n } \\mathrm { S O } _ { 4 }$ $0 . 7 "
+    "6 \\mathrm { m M C o C l } _ { 2 } ,$ in $\\mathrm { H } _ { 2 } \\mathrm { O } "
+    ",$ autoclaved)"
+)
+_Q_SCHMIDT16_CACL2 = (
+    "$1 \\mathrm { m l } 0 . 1 \\mathrm { M C a C l } _ { 2 }$ solution"
+)
+_Q_SCHMIDT16_MGSO4 = "$1 \\mathrm { m l } 1$ M $\\mathrm { M g S O _ { 4 } }$ solution"
+_Q_SCHMIDT16_THIAMINE = (
+    "$2 \\mathrm { m l }$ of $5 0 0 \\times$ thiamine solution $\\mathrm { . 4 . m M }$"
+)
+_Q_SCHMIDT16_FECL3 = (
+    "$0 . 6 \\ \\mathrm { m l } \\ 0 . 1 \\ \\mathrm { M } \\ \\mathrm { F e C l } _ { 3 "
+    "}$ solution"
+)
+_Q_SCHMIDT16_CARBON = (
+    "M9 minimal medium was complemented with carbon source by mixing appropriate "
+    "amounts of carbon source free M9 minimal medium and carbon source stock "
+    "solutions."
+)
+_Q_SCHMIDT16_GLUCOSE = (
+    "The following carbon sources and concentrations were used: acetate (sodium "
+    "acetate, $3 . 5 \\mathrm { g } / \\mathrm { L }$ ), fumarate (disodium "
+    "fumarate, $2 . 8 \\mathrm { g } / \\mathrm { L }$ , galactose $( 2 . 3 \\mathrm "
+    "{ g } / \\mathrm { L } )$ , glucose $( 5 \\mathrm { g } / \\mathrm { L } )$ , "
+    "glucosamine $( 2 . 1 \\mathrm { g } / \\mathrm { L } )$ , glycerol $( 2 . 2 "
+    "\\mathrm { g } / \\mathrm { L } )$ , pyruvate (sodium pyruvate, $3 . 3 \\mathrm "
+    "{ g / L }$ ), sucnate (disodium succinate hexahydrate, $5 . 7 \\mathrm { g / "
+    "L }$ , fructose $( 5 \\mathrm { g } / \\mathrm { L } )$ , mannose $( 5 \\mathrm "
+    "{ g } / \\mathrm { L } ) \\mathrm { g }$ and xylose $( 5 \\mathrm { g } / "
+    "\\mathrm { L } )$ ."
+)
+_Q_KANG_M9 = (
+    "M9 medium was prepared with the following components: $2 \\ g / \\mathrm { L "
+    "}$ $\\mathrm { ( N H _ { 4 } ) _ { 2 } S O _ { 4 } } ,$ $6 . 8 ~ \\ g / "
+    "\\mathrm { L }$ ${ \\mathrm { N a } } _ { 2 } { \\mathrm { H P O } } _ { 4 }$ , "
+    "$3 \\ \\gimel A$ ${ \\mathrm { K H } } _ { 2 } { \\mathrm { P O } } _ { 4 }$ , "
+    "$0 . 5 ~ \\ g / \\mathrm { L }$ NaCl, $1 \\ \\mathrm { m L } / \\mathrm { L }$ "
+    "trace element solution (Teknova, Hollister, CA), $0 . 1 ~ \\mathrm { m M }$ "
+    "$\\mathrm { C a C l } _ { 2 }$ , and $2 \\mathrm { \\ m M \\ M g { S O _ { 4 } } "
+    "}$ ."
+)
+_Q_KANG_MODIFIED = (
+    "For experiments requiring modified nitrogen levels, the concentration of "
+    "$\\mathrm { ( N H } _ { 4 } \\mathrm { ) } _ { 2 } S 0 _ { 4 }$ was increased "
+    "to $4 0 ~ \\mathrm { m M }$ and is referred to as modified M9."
+)
+_Q_KANG_MOPS = (
+    "M9-MOPS was prepared with the following components: M9 salts $( 6 . 7 8 \\ g "
+    "/ \\mathrm { L }$ ${ \\mathrm { N a } } _ { 2 } { \\mathrm { H P O } } _ { 4 }$ "
+    ", $_ { 3 } \\ g / \\mathrm { L }$ $\\mathrm { K H _ { 2 } P O _ { 4 } }$ , $^ "
+    "\\textrm { \\scriptsize 1 g / L }$ $\\mathrm { N H } _ { 4 } \\mathrm { C l } ,$ "
+    "and $0 . 5 ~ \\mathrm { \\ g / L }$ NaCl), $7 5 ~ \\mathrm { \\ m M }$ "
+    "3-morpholinopropane-1-sulfonic acid (MOPS), $1 \\ \\mathrm { m g } / \\mathrm { "
+    "L }$ thiamine, $1 0 \\ \\mathrm { n M \\ F e S O _ { 4 } }$ , micronutrients $( "
+    "3 ^ { * } 1 0 ^ { - 8 } \\mathrm { ~ M ~ }$ $\\mathrm { ( N H _ { 4 } ) _ { 6 "
+    "} M o _ { 7 } O _ { 2 4 } }$ , $4 ^ { * } 1 0 ^ { - 6 }$ M boric acid, $3 ^ "
+    "{ * } 1 0 ^ { - 7 }$ M $\\mathrm { C o C l } _ { 2 }$ , $1 . 5 ^ { * } 1 0 ^ "
+    "{ - 7 }$ M $\\mathrm { C u S O } _ { 4 }$ , $8 ^ { * } 1 0 ^ { - 7 } \\mathrm "
+    "{ \\ : M \\ : M n C l _ { 2 } } ,$ , and $1 ^ { * } 1 0 ^ { - 7 } \\mathrm { M "
+    "} \\mathrm { Z n } \\mathrm { S O } _ { 4 } )$ , $2 \\mathrm { m M } \\mathrm { "
+    "M g } S 0 _ { 4 }$ , and 0.1 $\\mathbf { m } \\mathbf { M } \\mathbf { C a C l "
+    "} _ { 2 }$ ."
+)
+_Q_KANG_SALTS = (
+    "M9 salts $( 6 . 7 8 \\ g / \\mathrm { L }$ ${ \\mathrm { N a } } _ { 2 } { "
+    "\\mathrm { H P O } } _ { 4 }$ , $_ { 3 } \\ g / \\mathrm { L }$ $\\mathrm { K H "
+    "_ { 2 } P O _ { 4 } }$ , $^ \\textrm { \\scriptsize 1 g / L }$ $\\mathrm { N H "
+    "} _ { 4 } \\mathrm { C l } ,$ and $0 . 5 ~ \\mathrm { \\ g / L }$ NaCl)"
+)
+_Q_KANG_SUGAR = (
+    "Unless otherwise noted, cultures contained $2 0 ~ \\ g / \\mathrm { L }$ total "
+    "sugar (either glucose alone or a 2:1 glucose:xylose mixture)"
+)
+_Q_BORCHERT24_M9 = (
+    "$1 \\times 1 \\mathsf { M } 9$ medium $( 6 . 7 8 ~ \\mathrm { g / L ~ N a _ { 2 "
+    "} H P O _ { 4 } , 3 ~ \\mathrm { g / L ~ K H _ { 2 } P O _ { 4 } , 0 . 5 ~ "
+    "\\mathrm { g / L ~ N a C l } , } }$ 1 g/L $\\mathsf { N H } _ { 4 } \\mathsf { "
+    "C l }$"
+)
+_Q_CHOE19_M9 = (
+    "Cells were grown in M9 glucose medium (47.75 $\\mathrm { m M }$ of ${ \\mathrm "
+    "{ N a } } _ { 2 } { \\mathrm { H P O } } _ { 4 } ,$ , $2 2 . 0 4 \\mathrm { m "
+    "M }$ of ${ \\mathrm { K H } } _ { 2 } { \\mathrm { P O } } _ { 4 }$ , $8 . 5 6 "
+    "\\mathrm { m M }$ of NaCl, $1 8 . 7 0 \\mathrm { m M }$ of $\\mathrm { N H _ { "
+    "4 } C l , }$ 2 mM of $\\mathrm { M g S O _ { 4 } }$ , $0 . 1 \\mathrm { m M }$ "
+    "of $\\mathrm { C a C l } _ { 2 }$ , and $2 { \\bf g } 1 ^ { - 1 }$ of glucose)"
+)
+_Q_SCHASTNAYA_LENNOX = (
+    "in LB-Lennox medium $\\mathrm { { \\Delta } _ { 1 0 } g / L }$ tryptone, $5 "
+    "\\mathrm { g / L }$ yeast extract, $5 \\mathrm { g / L }$ NaCl)"
+)
+_Q_FUHRER_M9 = (
+    "were grown on glucose minimal medium supplemented with casein hydrolysate "
+    "containing (per liter): $_ \\textrm { 4 g }$ glucose, $_ { 2 \\mathrm { ~ g ~ "
+    "} }$ N-Z Case Plus, $7 . 5 2 \\ \\mathrm { g }$ $\\mathrm { N a } _ { 2 } "
+    "\\mathrm { H P O } _ { 4 } { \\cdot } 2 \\mathrm { H } _ { 2 } \\mathrm { O }$ , "
+    "$3 \\textrm { g K H } _ { 2 } \\mathrm { P O } _ { 4 }$ , $0 . 5 \\mathrm { ~ g "
+    "~ N a C l }$ , $2 . 5 \\ \\mathrm { g }$ $\\mathrm { \\Omega _ { 5 } } \\left( "
+    "\\mathrm { N H _ { 4 } } \\right) _ { 2 } \\mathrm { S O _ { 4 } }$ , $1 4 . 7 "
+    "~ \\mathrm { m g }$ $\\mathrm { C a C l } _ { 2 } { \\cdot } 2 \\mathrm { H } _ "
+    "{ 2 } 0$ , $2 4 6 . 5 ~ \\mathrm { m g }$ $\\mathrm { M g S O } _ { 4 } { "
+    "\\cdot } 7 \\mathrm { H } _ { 2 } \\mathrm { O }$ , $1 6 . 2 ~ \\mathrm { m g }$ "
+    "$\\mathrm { F e C l } _ { 3 } { \\cdot } 6 \\mathrm { H } _ { 2 } 0$ , $1 8 0 ~ "
+    "\\mu \\ g$ $\\mathrm { Z n S O } _ { 4 } { \\cdot } 7 \\mathrm { H } _ { 2 } "
+    "\\mathrm { O }$ , $1 2 0 ~ \\mu \\ g$ $\\mathrm { C u C l } _ { 2 } { \\cdot } 2 "
+    "\\mathrm { H } _ { 2 } 0$ , $1 2 0 ~ \\mu \\ g$ $\\mathrm { M n S O } _ { 4 } { "
+    "\\cdot } \\mathrm { H } _ { 2 } \\mathrm { O }$ , $1 8 0 ~ \\mu \\ g$ $\\mathrm { "
+    "C o C l } _ { 2 } { \\cdot } 6 \\mathrm { H } _ { 2 } 0$ , $1 ~ \\mathrm { m g "
+    "}$ thiamine HCl."
+)
+_Q_CAGLAR_DM = (
+    "Davis Minimal medium supplemented with $2 \\mu \\mathrm { g } / 1$ thiamine $( "
+    "\\mathrm { D M } ) ^ { 3 6 }$ and limiting glucose at $5 0 0 \\mathrm { m g / "
+    "l }$ (DM500)"
+)
+_Q_CAGLAR_MG = (
+    "concentrations were varied by changing the amount of $\\mathrm { M g S O _ { "
+    "4 } }$ added to DM media from the concentration of $0 . 8 3 \\mathrm { m M }$ "
+    "that is normally present."
+)
+_Q_CAGLAR_NA = (
+    "The base recipe for DM already contains ${ \\sim } 5 \\mathrm { m M N a ^ { + "
+    "} }$ due to the inclusion of sodium citrate"
+)
+_Q_CAGLAR_CARBON = (
+    "For tests of different carbon sources, the Davis Minimal (DM) medium used "
+    "was supplemented with $0 . 5 { \\mathrm { g } } / { \\mathrm { L } }$ of the "
+    "specified compound (glycerol, lactate, or gluconate) instead of glucose."
+)
+_Q_CAGLAR_REF36 = (
+    "36. Lenski, R. E., Rose, M. R., Simpson, S. C. & Tadler, S. C. Long-Term "
+    "Experimental Evolution in Escherichia coli. I. Adaptation and Divergence "
+    "During 2,000 Generations. Am. Nat. 138, 1315–1341 (1991)."
+)
+_Q_FOO_M9 = (
+    "Growth assays were performed in M9 minimal medium, which consisted of $1 "
+    "\\times$ M9 salt (Difco), 2 mM $\\mathrm { M g S O _ { 4 } }$ , $1 0 0 \\mu "
+    "\\mathrm { M C a C l } _ { 2 }$ , 0.5 mg liter-1 thiamine, and $0 . 4 \\%$ "
+    "glucose."
+)
+_Q_FOO_MM9 = (
+    "Isopentenol production strains were grown in a modified M9 "
+    "3-morpholinopropane-1-sulfonic acid (MOPS) minimal medium (MM9), which "
+    "consisted of $1 \\times$ M9 salt (Difco), $7 5 \\mathrm { m M }$ MOPS $\\mathrm "
+    "{ \\Phi _ { \\mathrm { p H } } } 7 . 4 0$ , $2 \\mathrm { m M }$ $\\mathrm { M g "
+    "S O _ { 4 } , }$ $1 0 ~ \\mu \\mathrm { M }$ $\\mathrm { C a C l } _ { 2 }$ , "
+    "$1 0 ~ \\mu \\mathrm { M }$ $\\mathrm { F e S O _ { 4 } } ,$ , $1 \\times$ "
+    "micronutrient, and $1 \\%$ glucose. The $1 \\times$ micronutrient was composed "
+    "of $4 \\mu \\mathrm { M }$ boric acid, $0 . 8 \\mu \\mathrm { M }$ manganese "
+    "chloride, $0 . 3 ~ \\mu \\mathrm { M }$ cobalt chloride, $0 . 1 5 ~ \\mu "
+    "\\mathrm { M }$ cupric sulfate, $0 . 1 \\mu \\mathrm { M }$ zinc sulfate, and "
+    "$0 . 0 3 \\mu \\mathrm { M }$ ammonium molybdate."
+)
+_Q_CARRUTHERS_M9 = (
+    "Briefly, the medium composition included $2 0 \\mathrm { g / L }$ glucose, "
+    "$\\mathbf { 0 . 5 8 } / \\mathbf { L }$ NaCl, ${ 6 . 8 } \\mathrm { g } / "
+    "\\mathrm { L }$ ${ \\sf N a } _ { 2 } { \\sf H P O } _ { 4 }$ , $_ { 3 \\mathrm "
+    "{ g } / \\mathrm { L } }$ ${ \\mathrm { K H } } _ { 2 } { \\mathsf { P O } } _ "
+    "{ 4 }$ $1 0 0 \\mu \\mathrm { M }$ $\\mathbf { C a C l } _ { 2 }$ , 2 mM $\\bf { "
+    "M g S O _ { 4 } }$ , $1 0 \\mathrm { m M }$ $( \\mathsf { N H } _ { 4 } ) _ { "
+    "2 } \\mathsf { S O } _ { 4 }$ , and ${ 5 0 0 } \\mu \\mathrm { L }$ of a trace "
+    "metal solution (Teknova Cat no. T1001; Teknova, Hollister, CA)."
+)
+_Q_CARRUTHERS_NREL = (
+    "M9-NREL medium was selected owing to its prevalence as a baseline $P .$ . "
+    "putida production medium."
+)
+_Q_DESIQUEIRA_M9 = (
+    "P. putida tolerization and the subsequent phenotypic characterization "
+    "experiments were performed using minimal salt (M9) medium composed of $1 "
+    "\\times 1 \\mathsf { M } 9$ salts $( 2 ~ { \\mathfrak { g } } / { \\mathsf { L } "
+    "} ~ ( { \\mathsf { N H } } _ { 4 } ) _ { 2 } { \\mathsf { S O } } _ { 4 } ,$ "
+    "$6 . 8 \\ \\mathsf { g } / \\mathsf { L N a } _ { 2 } \\mathsf { H P O } _ { 4 } "
+    ",$ 3 g/L $\\mathsf { K H } _ { 2 } \\mathsf { P O } _ { 4 } , \\mathsf { 0 } . "
+    "5 \\mathsf { \\mathsf { g } } / \\mathsf { L } \\mathsf { N }$ aCl), 2 mM MgSO4, "
+    "$0 . 1 \\mathrm { ~ m M ~ C a C l } _ { 2 } ,$ and trace metal solution $5 0 "
+    "0 ~ \\mu \\iota$ per 1L medium; Product No. 1001, Tekova Inc, Hollister, CA)."
+)
+_Q_DESIQUEIRA_CARBON = (
+    "For all experiments, except when noted, acetate $5 0 ~ \\mathsf { m M }$ ${ "
+    "\\it \\simeq } 0 . 3 \\%$ wt/vol) or glucose $1 \\%$ (wt/vol) was used as the "
+    "single sole carbon source in M9 medium."
+)
+_Q_LIM25_M9 = (
+    "The M9 medium contained $2 \\ g / \\mathrm { L }$ $( \\mathrm { N H } _ { 4 } ) "
+    "_ { 2 } S 0 _ { 4 }$ , $6 . 8 ~ \\ g / \\mathrm { L }$ ${ \\mathrm { N a } } _ "
+    "{ 2 } { \\mathrm { H P O } } _ { 4 }$ , $3 \\ \\mathrm { g / L }$ ${ \\mathrm { "
+    "K H } } _ { 2 } { \\mathrm { P O } } _ { 4 }$ , $0 . 5 ~ { \\ g / \\mathrm { L "
+    "} }$ NaCl, $2 \\ \\mathrm { m M }$ $\\mathrm { M g } { \\bf S } 0 _ { 4 } ,$ 0.1 "
+    "mM $\\mathrm { C a C l } _ { 2 }$ , $5 0 0 ~ \\mu \\mathrm { L } / \\mathrm { L "
+    "}$ $2 0 0 0 \\times$ trace element solution (Lim et al., 2020; Linger et al., "
+    "2014)."
+)
+_Q_LIM25_GLUCOSE = (
+    "As a carbon source, $4 \\ g / \\mathrm { L }$ glucose was added to the minimal "
+    "medium unless otherwise stated."
+)
+_Q_GOODALL_LB = (
+    "Luria broth (LB) $. 1 0 ~ 9$ tryptone, 5 g yeast extract, $1 0 \\ 9 \\ { "
+    "\\mathsf { N a C l } } )$"
+)
+_Q_BABU_LB = (
+    "E. coli cells were grown in LB ( $1 0 ~ \\mathrm { g / L }$ Bacto-tryptone, "
+    "$5 \\ \\mathrm { g / L }$ Yeast extract, and $1 0 ~ \\mathrm { g / L } \\mathrm "
+    "{ N a C l ) }$"
+)
+_Q_WANG15_2YT = (
+    "in 2YT medium (Bacto-tryptone $1 6 { \\mathrm { g } } ,$ Bacto-yeast extract "
+    "$1 0 { \\mathrm { g } } { \\mathrm { . } }$ and sodium chloride $5 \\mathrm { g "
+    "}$ per liter, adjusted to $\\mathrm { p H } 7 . 0 $ )"
+)
+_Q_TONG_MOPS = (
+    "Using a chemically defined minimal medium (morpholinepropanesulfonic acid "
+    "[MOPS]) and changing only the carbon source (34)"
+)
+_Q_TONG_TEKNOVA = "MOPS minimal media (Teknova) was used for all work in minimal media."
+_Q_TONG_REF34 = (
+    "34. Neidhardt FC, Bloch PL, Smith DF. 1974. Culture medium for "
+    "enterobacteria. J Bacteriol 119:736 –747."
+)
+_Q_WETMORE_LB = (
+    "LB / defined | False / desc | Luria-Bertani broth / minimal | False / "
+    "Controlled vocabulary | Concentration | Units / Tryptone | 10 | g/L / Yeast "
+    "Extract | 5 | g/L / Sodium Chloride | 5 | g/L"
+)
+_Q_WETMORE_M9 = (
+    "M9 minimal media_noCarbon / defined | True / desc | E. coli defined media "
+    "with no carbon source / minimal | True / Controlled vocabulary | "
+    "Concentration | Units / Sodium phosphate dibasic heptahydrate | 13 | g/L / "
+    "Potassium phosphate monobasic | 3 | g/L / Sodium Chloride | 0.5 | g/L / "
+    "Ammonium chloride | 1 | g/L / Magnesium sulfate | 2 | mM / CaCl2  | 0.1 | mM"
+)
+_Q_WETMORE_MOPS_K2SO4 = (
+    "MOPS Rich Defined media_noCarbon / defined | True / desc | E. coli MOPS "
+    "defined rich media with no carbon source / minimal | False / Controlled "
+    "vocabulary | Concentration | Units / MOPS | 40 | mM / Tricine | 4 | mM / "
+    "Iron Sulfate Stock | 0.01 | mM / Ammonium Chloride | 9.5 | mM / Potassium "
+    "Sulfate | 0.276 | mM"
+)
+_Q_WETMORE_GLUCOSE_EXPT = (
+    "Keio_ML9_set1 | Keio_ML9 | D-Glucose carbon source | IT003 | BarSeq98 | M9 "
+    "minimal media_noCarbon | tube | carbon source | 37 | Liquid | Aerobic | 200 "
+    "rpm | D-Glucose | 20 | mM | 0.02 | 1.85 | 6.529820947 | 3 | set1IT003 | "
+    "D-Glucose (C)"
+)
+_Q_WETMORE_M9_NON = (
+    "M9 minimal media_noNitrogen / defined | True / desc | E. coli defined media "
+    "with no nitrogen source; glucose carbon source / minimal | True / Controlled "
+    "vocabulary | Concentration | Units / D-Glucose | 4 | g/L / Sodium phosphate "
+    "dibasic heptahydrate | 13 | g/L / Potassium phosphate monobasic | 3 | g/L / "
+    "Sodium Chloride | 0.5 | g/L / Magnesium sulfate | 2 | mM / CaCl2  | 0.1 | mM"
+)
+_Q_PRICE_M9_NON = (
+    "Media | M9 minimal media_noNitrogen / Description | E. coli defined media no "
+    "nitrogen / Minimal | =TRUE() / Controlled vocabulary | Concentration | Units "
+    "/ D-Glucose | 4 | g/L / Magnesium sulfate | 2 | mM / Calcium chloride | 0.1 "
+    "| mM / Sodium phosphate dibasic heptahydrate | 12.8 | g/L / Potassium "
+    "phosphate monobasic | 3 | g/L / Sodium Chloride | 0.5 | g/L"
+)
+_Q_WETMORE_NITROGEN_EXPT = (
+    "Keio_ML9_set1 | Keio_ML9 | L-Arginine nitrogen source | IT071 | BarSeq98 | "
+    "M9 minimal media_noNitrogen | tube | nitrogen source | 37 | Liquid | Aerobic "
+    "| 200 rpm | L-Arginine | 10 | mM | 0.02 | 0.67 | 5.06608919 | 71 | set1IT071 "
+    "| L-Arginine (N)"
+)
+_Q_PRICE_LB = (
+    "Media | LB / Description | Luria-Bertani broth / Minimal | =FALSE() / "
+    "Controlled vocabulary | Concentration | Units / Tryptone | 10 | g/L / Yeast "
+    "Extract | 5 | g/L / Sodium Chloride | 5 | g/L"
+)
+_Q_PRICE_M9 = (
+    "Media | M9 minimal media_noCarbon / Description | E. coli defined media no "
+    "carbon / Minimal | =TRUE() / Controlled vocabulary | Concentration | Units / "
+    "Magnesium sulfate | 2 | mM / Calcium chloride | 0.1 | mM / Sodium phosphate "
+    "dibasic heptahydrate | 12.8 | g/L / Potassium phosphate monobasic | 3 | g/L "
+    "/ Sodium Chloride | 0.5 | g/L / Ammonium chloride | 1 | g/L"
+)
+_Q_PRICE_MOPS = (
+    "Media | MOPS minimal media_noCarbon / Description | MOPS minimal media with "
+    "no carbon source / Minimal | =TRUE() / Controlled vocabulary | Concentration "
+    "| Units / 3-(N-morpholino)propanesulfonic acid | 40 | mM / Tricine | 4 | mM "
+    "/ K2HPO4 | 1.32 | mM / Iron (II) sulfate heptahydrate | 0.01 | mM / Ammonium "
+    "chloride | 9.5 | mM / Aluminum potassium sulfate dodecahydrate | 0.276 | mM "
+    "/ Calcium chloride | 0.0005 | mM / Magnesium chloride hexahydrate | 0.525 | "
+    "mM / Sodium Chloride | 50 | mM / Ammonium heptamolybdate tetrahydrate | "
+    "3e-09 | M / Boric Acid | 4e-07 | M / Cobalt chloride hexahydrate | 3e-08 | M "
+    "/ Copper (II) sulfate pentahydrate | 1e-08 | M / Manganese (II) chloride "
+    "tetrahydrate | 8e-08 | M / Zinc sulfate heptahydrate | 1e-08 | M"
+)
+
+# --------------------------------------------------------------------------- #
+# LB family -- complex (NOT chemically defined): tryptone and yeast extract are
+# intrinsically undefined digests. ``LB`` is the Miller formulation (10 g/L NaCl), which
+# Menasalvas 2025 names and states and Schmidt 2016 states per liter; ``LB_LENNOX`` is the
+# 5 g/L NaCl formulation. Both derive from ``LB`` because they share every ingredient by
+# name and role and differ only in the NaCl amount.
+# --------------------------------------------------------------------------- #
+_LB_TRYPTONE = _mixture(
+    "tryptone",
+    _COMPLEX,
+    _UNDEFINED,
+    concentration=_c(10.0, _GL),
+    provenance=[
+        _cite(_MENASALVAS2025, "10 g/L", _Q_MENASALVAS_LB),
+        _cite(_SCHMIDT2016, "10 g per liter", _Q_SCHMIDT16_LB),
+    ],
+)
+_LB_YEAST_EXTRACT = _mixture(
+    "yeast extract",
+    _COMPLEX,
+    _UNDEFINED,
+    concentration=_c(5.0, _GL),
+    provenance=[
+        _cite(_MENASALVAS2025, "5 g/L", _Q_MENASALVAS_LB),
+        _cite(_SCHMIDT2016, "five grams per liter", _Q_SCHMIDT16_LB),
+    ],
+)
+_LB_MILLER_NACL = _stated(
+    "sodium chloride",
+    _SALT,
+    10.0,
+    _GL,
+    _cite(_MENASALVAS2025, "10 g/L", _Q_MENASALVAS_LB),
+    _cite(_SCHMIDT2016, "10 g per liter", _Q_SCHMIDT16_LB),
+)
+
+LB = Media(
+    name="LB, Miller (10 g/L tryptone, 5 g/L yeast extract, 10 g/L NaCl), liquid",
+    state="liquid",
+    is_synthetic=False,
+    base_medium="LB",
+    components=[_LB_TRYPTONE, _LB_YEAST_EXTRACT, _LB_MILLER_NACL],
+    provenance=[
+        _cite(
+            _MENASALVAS2025,
+            "LB Miller",
+            _Q_MENASALVAS_LB,
+            note="the source names the formulation",
+        ),
+        _cite(
+            _SCHMIDT2016,
+            "lysogeny broth at the Miller amounts, per liter",
+            _Q_SCHMIDT16_LB,
+            note="Schmidt 2016's LB growth condition is this medium",
+        ),
+        _cite(
+            _GOODALL2018,
+            "10 g tryptone, 5 g yeast extract, 10 g NaCl",
+            _Q_GOODALL_LB,
+            note="the same three amounts with no per-volume basis printed, so this "
+            "corroborates the Miller ratio rather than the per-liter reading; the OCR "
+            "renders 'g' as '9'",
+        ),
+        _cite(
+            _BABU2014_SI13,
+            "10 g/L tryptone, 5 g/L yeast extract, 10 g/L NaCl",
+            _Q_BABU_LB,
+        ),
+    ],
+)
+"""LB Miller, liquid: the formulation most of the fifty name or state.
+
+Goodall 2018's TraDIS cultures (LB1, LB2), Schmidt 2016's LB condition and Menasalvas
+2025's revival cultures state these amounts; several more rows name "LB Miller" without
+amounts (``BACTERIAL_MEDIA_USES``). Wetmore 2015 and Price 2018 do NOT use this object:
+their "LB" carries 5 g/L NaCl in their own media tables, which is ``LB_LENNOX``.
+"""
+
+LB_AGAR = Media(
+    name="LB, Miller, solid (2% agar)",
+    state="solid",
+    is_synthetic=False,
+    base_medium="LB",
+    components=[
+        *LB.components,
+        _defined(
+            "agar",
+            MediaComponentRole.gelling_agent,
+            concentration=_c(2.0, _PCT),
+            provenance=[
+                _cite(_MENASALVAS2025, "2% (w/v)", _Q_MENASALVAS_AGAR),
+                _cite(
+                    _SCHMIDT2016,
+                    "20 g per liter of LB, which is 2% w/v",
+                    _Q_SCHMIDT16_AGAR,
+                    note="the agar is added to the one-liter LB mixture the preceding "
+                    "sentence prepares",
+                ),
+            ],
+        ),
+    ],
+    provenance=[
+        _cite(_MENASALVAS2025, "LB Miller agar plates", _Q_MENASALVAS_AGAR),
+        _cite(_SCHMIDT2016, "LB plates", _Q_SCHMIDT16_AGAR),
+    ],
+)
+"""LB Miller plates: liquid ``LB`` plus 2% agar, stated independently by two papers."""
+
+LB_LENNOX = Media(
+    name="LB, Lennox (10 g/L tryptone, 5 g/L yeast extract, 5 g/L NaCl), liquid",
+    state="liquid",
+    is_synthetic=False,
+    base_medium="LB",
+    components=[
+        _mixture(
+            "tryptone",
+            _COMPLEX,
+            _UNDEFINED,
+            concentration=_c(10.0, _GL),
+            provenance=[
+                _cite(_SCHASTNAYA2021, "10 g/L", _Q_SCHASTNAYA_LENNOX),
+                _cite(_WETMORE2015_DS1, "10 g/L", _Q_WETMORE_LB),
+                _cite(_PRICE2018_S3, "10 g/L", _Q_PRICE_LB),
+            ],
+        ),
+        _mixture(
+            "yeast extract",
+            _COMPLEX,
+            _UNDEFINED,
+            concentration=_c(5.0, _GL),
+            provenance=[
+                _cite(_SCHASTNAYA2021, "5 g/L", _Q_SCHASTNAYA_LENNOX),
+                _cite(_WETMORE2015_DS1, "5 g/L", _Q_WETMORE_LB),
+                _cite(_PRICE2018_S3, "5 g/L", _Q_PRICE_LB),
+            ],
+        ),
+        _stated(
+            "sodium chloride",
+            _SALT,
+            5.0,
+            _GL,
+            _cite(_SCHASTNAYA2021, "5 g/L", _Q_SCHASTNAYA_LENNOX),
+            _cite(_WETMORE2015_DS1, "5 g/L", _Q_WETMORE_LB),
+            _cite(_PRICE2018_S3, "5 g/L", _Q_PRICE_LB),
+        ),
+    ],
+    provenance=[
+        _cite(
+            _SCHASTNAYA2021,
+            "LB-Lennox",
+            _Q_SCHASTNAYA_LENNOX,
+            note="the source names the formulation; the OCR renders the opening "
+            "'(10' as a Delta subscript",
+        ),
+        _cite(
+            _WETMORE2015_DS1,
+            "the release's 'LB' is the Lennox formulation",
+            _Q_WETMORE_LB,
+            note="Data Set S1 names the medium 'LB' / 'Luria-Bertani broth' and gives "
+            "5 g/L sodium chloride, the Lennox amount",
+        ),
+        _cite(
+            _PRICE2018_S3,
+            "the release's 'LB' is the Lennox formulation",
+            _Q_PRICE_LB,
+            note="Supplementary Table 18 repeats Wetmore 2015's LB row",
+        ),
+    ],
+)
+"""LB Lennox, liquid: the RB-TnSeq rows' "LB" (Wetmore 2015, Price 2018) and Schastnaya 2021.
+
+The two RB-TnSeq papers call it "LB" in prose; their own media tables state 5 g/L NaCl,
+so their loaders take this object, not ``LB``.
+"""
+
+YT_2X = Media(
+    name="2YT (16 g/L tryptone, 10 g/L yeast extract, 5 g/L NaCl), liquid",
+    state="liquid",
+    is_synthetic=False,
+    base_medium="YT_2X",
+    components=[
+        _mixture(
+            "tryptone",
+            _COMPLEX,
+            _UNDEFINED,
+            concentration=_c(16.0, _GL),
+            provenance=[_cite(_WANG2015, "16 g per liter", _Q_WANG15_2YT)],
+        ),
+        _mixture(
+            "yeast extract",
+            _COMPLEX,
+            _UNDEFINED,
+            concentration=_c(10.0, _GL),
+            provenance=[_cite(_WANG2015, "10 g per liter", _Q_WANG15_2YT)],
+        ),
+        _stated(
+            "sodium chloride",
+            _SALT,
+            5.0,
+            _GL,
+            _cite(_WANG2015, "5 g per liter", _Q_WANG15_2YT),
+        ),
+    ],
+    provenance=[
+        _cite(
+            _WANG2015,
+            "2YT recipe",
+            _Q_WANG15_2YT,
+            note="the pH 7.0 the same sentence states is not a Media field; it rides as "
+            "EnvironmentPhysicalPerturbation(factor=ph)",
+        )
+    ],
+)
+"""Wang 2015's 2YT, the medium of its isoprenol-tolerance growth assays."""
+
+# --------------------------------------------------------------------------- #
+# M9 family -- chemically defined. ``M9`` is the four salts, as Kang 2026 names them
+# ("M9 salts") and Borchert 2024 states them at the same amounts; it names no carbon
+# source, and every M9 formulation below derives from it.
+# --------------------------------------------------------------------------- #
+M9 = Media(
+    name="M9 salts (6.78 g/L Na2HPO4, 3 g/L KH2PO4, 1 g/L NH4Cl, 0.5 g/L NaCl)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=[
+        _stated(
+            "disodium hydrogen phosphate",
+            _SALT,
+            6.78,
+            _GL,
+            _cite(_KANG2026, "6.78 g/L", _Q_KANG_SALTS),
+            _cite(_BORCHERT2024, "6.78 g/L", _Q_BORCHERT24_M9),
+        ),
+        _stated(
+            "potassium dihydrogen phosphate",
+            _SALT,
+            3.0,
+            _GL,
+            _cite(_KANG2026, "3 g/L", _Q_KANG_SALTS),
+            _cite(_BORCHERT2024, "3 g/L", _Q_BORCHERT24_M9),
+        ),
+        _stated(
+            "ammonium chloride",
+            _NSRC,
+            1.0,
+            _GL,
+            _cite(_KANG2026, "1 g/L", _Q_KANG_SALTS),
+            _cite(_BORCHERT2024, "1 g/L", _Q_BORCHERT24_M9),
+        ),
+        _stated(
+            "sodium chloride",
+            _SALT,
+            0.5,
+            _GL,
+            _cite(_KANG2026, "0.5 g/L", _Q_KANG_SALTS),
+            _cite(_BORCHERT2024, "0.5 g/L", _Q_BORCHERT24_M9),
+        ),
+    ],
+    provenance=[
+        _cite(
+            _KANG2026, "M9 salts", _Q_KANG_SALTS, note="the source names the four salts"
+        ),
+        _cite(
+            _BORCHERT2024,
+            "the same four salts at the same four amounts",
+            _Q_BORCHERT24_M9,
+            note="Borchert 2024's 1x M9 also carries 2 mM MgSO4, 100 uM CaCl2 and 18 uM "
+            "FeSO4; those belong to that paper's growth medium, not to the salts",
+        ),
+    ],
+)
+"""The M9 salts: the base every M9 formulation in the library derives from."""
+
+M9_GLUCOSE = Media(
+    name="M9 glucose (M9 salts + 2 mM MgSO4 + 0.1 mM CaCl2 + 2 g/L glucose; Choe 2019)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=[
+        _stated(
+            "disodium hydrogen phosphate",
+            _SALT,
+            47.75,
+            _MM,
+            _cite(_CHOE2019, "47.75 mM", _Q_CHOE19_M9),
+        ),
+        _stated(
+            "potassium dihydrogen phosphate",
+            _SALT,
+            22.04,
+            _MM,
+            _cite(_CHOE2019, "22.04 mM", _Q_CHOE19_M9),
+        ),
+        _stated(
+            "sodium chloride",
+            _SALT,
+            8.56,
+            _MM,
+            _cite(_CHOE2019, "8.56 mM", _Q_CHOE19_M9),
+        ),
+        _stated(
+            "ammonium chloride",
+            _NSRC,
+            18.70,
+            _MM,
+            _cite(_CHOE2019, "18.70 mM", _Q_CHOE19_M9),
+        ),
+        _stated(
+            "magnesium sulfate", _SALT, 2.0, _MM, _cite(_CHOE2019, "2 mM", _Q_CHOE19_M9)
+        ),
+        _stated(
+            "calcium chloride",
+            _SALT,
+            0.1,
+            _MM,
+            _cite(_CHOE2019, "0.1 mM", _Q_CHOE19_M9),
+        ),
+        _stated(
+            "D-glucose",
+            _CSRC,
+            2.0,
+            _GL,
+            _cite(
+                _CHOE2019,
+                "2 g/L",
+                _Q_CHOE19_M9,
+                note="the OCR renders 'g l^-1' as 'g 1^-1'",
+            ),
+        ),
+    ],
+    provenance=[
+        _cite(
+            _CHOE2019,
+            "M9 glucose medium",
+            _Q_CHOE19_M9,
+            note="the four salt amounts are the M9 salts' 6.78 / 3 / 0.5 / 1 g/L in molar "
+            "units (arithmetic by molar mass, not a sourced conversion); they are "
+            "recorded in the units the paper prints, so this medium and ``M9`` do not "
+            "share a concentration identity",
+        )
+    ],
+)
+"""Choe 2019's M9 glucose: the complete classic recipe, salts plus Mg, Ca and glucose."""
+
+
+def _rbtnseq_m9(
+    source: Provenance, block: str, heptahydrate_g_per_l: float, *, nitrogen: bool
+) -> list[MediaComponent]:
+    """The RB-TnSeq E. coli M9 rows of one release's media table (Wetmore or Price).
+
+    ``nitrogen=False`` is the release's ``M9 minimal media_noNitrogen``: ammonium chloride
+    absent and 4 g/L D-glucose fixed, because the nitrogen source is the variable.
+    """
+    components = [
+        _stated(
+            "disodium hydrogen phosphate heptahydrate",
+            _SALT,
+            heptahydrate_g_per_l,
+            _GL,
+            _cite(source, f"{heptahydrate_g_per_l:g} g/L", block),
+        ),
+        _stated(
+            "potassium dihydrogen phosphate",
+            _SALT,
+            3.0,
+            _GL,
+            _cite(source, "3 g/L", block),
+        ),
+        _stated("sodium chloride", _SALT, 0.5, _GL, _cite(source, "0.5 g/L", block)),
+        _stated("magnesium sulfate", _SALT, 2.0, _MM, _cite(source, "2 mM", block)),
+        _stated("calcium chloride", _SALT, 0.1, _MM, _cite(source, "0.1 mM", block)),
+    ]
+    if nitrogen:
+        return [
+            *components,
+            _stated(
+                "ammonium chloride", _NSRC, 1.0, _GL, _cite(source, "1 g/L", block)
+            ),
+        ]
+    return [
+        *components,
+        _stated("D-glucose", _CSRC, 4.0, _GL, _cite(source, "4 g/L", block)),
+    ]
+
+
+M9_NOCARBON_WETMORE2015 = Media(
+    name="M9 minimal medium, no carbon source (Wetmore 2015 'M9 minimal media_noCarbon')",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=_rbtnseq_m9(_WETMORE2015_DS1, _Q_WETMORE_M9, 13.0, nitrogen=True),
+    dropouts=[_M9_ANHYDROUS_PHOSPHATE],
+    provenance=[
+        _cite(
+            _WETMORE2015_DS1,
+            "M9 minimal media_noCarbon",
+            _Q_WETMORE_M9,
+            note=_HYDRATE_DROPOUT_NOTE,
+        ),
+        _cite(
+            _WETMORE2015_DS1,
+            "the carbon source is the variable",
+            _Q_WETMORE_GLUCOSE_EXPT,
+            note="each carbon-source experiment names this medium and states its carbon "
+            "source and dose in Condition_1 (here D-Glucose, 20 mM); the loader carries "
+            "it as EnvironmentPhysicalPerturbation(factor=carbon_source)",
+        ),
+    ],
+)
+"""Wetmore 2015's E. coli RB-TnSeq carbon-source base (64 Keio experiments)."""
+
+M9_NONITROGEN_WETMORE2015 = Media(
+    name="M9 minimal medium, no nitrogen source, 4 g/L glucose (Wetmore 2015 "
+    "'M9 minimal media_noNitrogen')",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=_rbtnseq_m9(_WETMORE2015_DS1, _Q_WETMORE_M9_NON, 13.0, nitrogen=False),
+    dropouts=[_M9_ANHYDROUS_PHOSPHATE, _M9_AMMONIUM_CHLORIDE],
+    provenance=[
+        _cite(
+            _WETMORE2015_DS1,
+            "M9 minimal media_noNitrogen",
+            _Q_WETMORE_M9_NON,
+            note=_HYDRATE_DROPOUT_NOTE,
+        ),
+        _cite(
+            _WETMORE2015_DS1,
+            "the nitrogen source is the variable",
+            _Q_WETMORE_NITROGEN_EXPT,
+            note="each nitrogen-source experiment names this medium and states its "
+            "nitrogen source in Condition_1 (here L-Arginine, 10 mM); the loader carries "
+            "it as EnvironmentPhysicalPerturbation(factor=nitrogen_source), and the "
+            "ammonium chloride dropout is the medium's own 'no nitrogen' statement",
+        ),
+    ],
+)
+"""Wetmore 2015's E. coli RB-TnSeq nitrogen-source base (26 Keio experiments)."""
+
+M9_NOCARBON_PRICE2018 = Media(
+    name="M9 minimal medium, no carbon source (Price 2018 'M9 minimal media_noCarbon')",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=_rbtnseq_m9(_PRICE2018_S3, _Q_PRICE_M9, 12.8, nitrogen=True),
+    dropouts=[_M9_ANHYDROUS_PHOSPHATE],
+    provenance=[
+        _cite(
+            _PRICE2018_S3,
+            "M9 minimal media_noCarbon",
+            _Q_PRICE_M9,
+            note="the same medium name as Wetmore 2015's Data Set S1 with 12.8 g/L of the "
+            "heptahydrate where Wetmore prints 13, so the two papers' objects stay "
+            "distinct. " + _HYDRATE_DROPOUT_NOTE,
+        )
+    ],
+)
+"""Price 2018's E. coli carbon-source base (60 Keio experiments in Table S5)."""
+
+M9_NONITROGEN_PRICE2018 = Media(
+    name="M9 minimal medium, no nitrogen source, 4 g/L glucose (Price 2018 "
+    "'M9 minimal media_noNitrogen')",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=_rbtnseq_m9(_PRICE2018_S3, _Q_PRICE_M9_NON, 12.8, nitrogen=False),
+    dropouts=[_M9_ANHYDROUS_PHOSPHATE, _M9_AMMONIUM_CHLORIDE],
+    provenance=[
+        _cite(
+            _PRICE2018_S3,
+            "M9 minimal media_noNitrogen",
+            _Q_PRICE_M9_NON,
+            note="the nitrogen source is the variable (EnvironmentPhysicalPerturbation"
+            "(factor=nitrogen_source)). " + _HYDRATE_DROPOUT_NOTE,
+        )
+    ],
+)
+"""Price 2018's E. coli nitrogen-source base (32 Keio experiments in Table S5)."""
+
+
+def _fuhrer(
+    name: str,
+    role: MediaComponentRole,
+    value: float,
+    unit: ConcentrationUnit,
+    read: str,
+) -> MediaComponent:
+    return _stated(name, role, value, unit, _cite(_FUHRER2017, read, _Q_FUHRER_M9))
+
+
+M9_GLUCOSE_CASEIN_FUHRER2017 = Media(
+    name="glucose M9 minimal medium with casein hydrolysate (Fuhrer 2017; ammonium "
+    "sulfate, trace elements, thiamine)",
+    state="liquid",
+    is_synthetic=False,
+    base_medium="M9",
+    components=[
+        _fuhrer("D-glucose", _CSRC, 4.0, _GL, "4 g per liter"),
+        _mixture(
+            "casein hydrolysate (N-Z Case Plus)",
+            _COMPLEX,
+            _UNDEFINED,
+            concentration=_c(2.0, _GL),
+            provenance=[_cite(_FUHRER2017, "2 g per liter", _Q_FUHRER_M9)],
+        ),
+        _fuhrer(
+            "disodium hydrogen phosphate dihydrate",
+            _SALT,
+            7.52,
+            _GL,
+            "7.52 g per liter",
+        ),
+        _fuhrer("potassium dihydrogen phosphate", _SALT, 3.0, _GL, "3 g per liter"),
+        _fuhrer("sodium chloride", _SALT, 0.5, _GL, "0.5 g per liter"),
+        _fuhrer("ammonium sulfate", _NSRC, 2.5, _GL, "2.5 g per liter"),
+        _fuhrer("calcium chloride dihydrate", _SALT, 14.7, _UGML, "14.7 mg per liter"),
+        _fuhrer(
+            "magnesium sulfate heptahydrate", _SALT, 246.5, _UGML, "246.5 mg per liter"
+        ),
+        _fuhrer(
+            "iron(III) chloride hexahydrate", _TRACE, 16.2, _UGML, "16.2 mg per liter"
+        ),
+        _fuhrer("zinc sulfate heptahydrate", _TRACE, 0.18, _UGML, "180 ug per liter"),
+        _fuhrer(
+            "copper(II) chloride dihydrate", _TRACE, 0.12, _UGML, "120 ug per liter"
+        ),
+        _fuhrer(
+            "manganese(II) sulfate monohydrate", _TRACE, 0.12, _UGML, "120 ug per liter"
+        ),
+        _fuhrer(
+            "cobalt(II) chloride hexahydrate", _TRACE, 0.18, _UGML, "180 ug per liter"
+        ),
+        _fuhrer("thiamine hydrochloride", _VITAMIN, 1.0, _UGML, "1 mg per liter"),
+    ],
+    dropouts=[_M9_ANHYDROUS_PHOSPHATE, _M9_AMMONIUM_CHLORIDE],
+    provenance=[
+        _cite(
+            _FUHRER2017,
+            "glucose minimal medium supplemented with casein hydrolysate",
+            _Q_FUHRER_M9,
+            note="is_synthetic is False because N-Z Case Plus is an undefined digest. "
+            + _HYDRATE_DROPOUT_NOTE
+            + "; "
+            + _AMMONIUM_SULFATE_DROPOUT_NOTE,
+        )
+    ],
+)
+"""Fuhrer 2017's metabolome medium: every Keio mutant was grown on it (row 1)."""
+
+M9_SCHMIDT2016 = Media(
+    name="M9 minimal medium, no carbon source (Schmidt 2016; ammonium sulfate, trace "
+    "elements, thiamine, FeCl3)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=[
+        _stated(
+            "disodium hydrogen phosphate",
+            _SALT,
+            42.2,
+            _MM,
+            _cite(
+                _SCHMIDT2016,
+                "211 mM in the 5x stock, 200 mL per liter: 42.2 mM",
+                _Q_SCHMIDT16_SALTS,
+            ),
+        ),
+        _stated(
+            "potassium dihydrogen phosphate",
+            _SALT,
+            22.0,
+            _MM,
+            _cite(
+                _SCHMIDT2016,
+                "110 mM in the 5x stock, 200 mL per liter: 22 mM",
+                _Q_SCHMIDT16_SALTS,
+            ),
+        ),
+        _stated(
+            "sodium chloride",
+            _SALT,
+            8.56,
+            _MM,
+            _cite(
+                _SCHMIDT2016,
+                "42.8 mM in the 5x stock, 200 mL per liter: 8.56 mM",
+                _Q_SCHMIDT16_SALTS,
+            ),
+        ),
+        _stated(
+            "ammonium sulfate",
+            _NSRC,
+            11.34,
+            _MM,
+            _cite(
+                _SCHMIDT2016,
+                "56.7 mM in the 5x stock, 200 mL per liter: 11.34 mM",
+                _Q_SCHMIDT16_SALTS,
+            ),
+        ),
+        _stated(
+            "zinc sulfate",
+            _TRACE,
+            6.3,
+            _UM,
+            _cite(
+                _SCHMIDT2016,
+                "0.63 mM in the trace stock, 10 mL per liter: 6.3 uM",
+                _Q_SCHMIDT16_TRACE,
+            ),
+        ),
+        _stated(
+            "copper(II) chloride",
+            _TRACE,
+            7.0,
+            _UM,
+            _cite(
+                _SCHMIDT2016,
+                "0.7 mM in the trace stock, 10 mL per liter: 7 uM",
+                _Q_SCHMIDT16_TRACE,
+            ),
+        ),
+        _stated(
+            "manganese sulfate",
+            _TRACE,
+            7.1,
+            _UM,
+            _cite(
+                _SCHMIDT2016,
+                "0.71 mM in the trace stock, 10 mL per liter: 7.1 uM",
+                _Q_SCHMIDT16_TRACE,
+            ),
+        ),
+        _stated(
+            "cobalt chloride",
+            _TRACE,
+            7.6,
+            _UM,
+            _cite(
+                _SCHMIDT2016,
+                "0.76 mM in the trace stock, 10 mL per liter: 7.6 uM",
+                _Q_SCHMIDT16_TRACE,
+            ),
+        ),
+        _stated(
+            "calcium chloride",
+            _SALT,
+            0.1,
+            _MM,
+            _cite(_SCHMIDT2016, "1 mL of 0.1 M per liter: 0.1 mM", _Q_SCHMIDT16_CACL2),
+        ),
+        _stated(
+            "magnesium sulfate",
+            _SALT,
+            1.0,
+            _MM,
+            _cite(_SCHMIDT2016, "1 mL of 1 M per liter: 1 mM", _Q_SCHMIDT16_MGSO4),
+        ),
+        _defined(
+            "thiamine",
+            _VITAMIN,
+            provenance=[
+                _cite(
+                    _SCHMIDT2016,
+                    "2 mL of a 500x stock per liter; stock concentration lost in the OCR",
+                    _Q_SCHMIDT16_THIAMINE,
+                )
+            ],
+            note="the amount is an OPEN GAP on purpose: the pinned paper.md lost the "
+            "stock concentration (it reads '.4.m M'). The PDF text layer of the same key "
+            "reads '(1.4 mM, in H2O, filter sterilized)', which at 2 mL per liter is "
+            "2.8 uM, but no pinned quote carries that number, so it is not recorded "
+            "until the OCR is redone",
+        ),
+        _stated(
+            "iron(III) chloride",
+            _TRACE,
+            60.0,
+            _UM,
+            _cite(_SCHMIDT2016, "0.6 mL of 0.1 M per liter: 60 uM", _Q_SCHMIDT16_FECL3),
+        ),
+    ],
+    dropouts=[_M9_AMMONIUM_CHLORIDE],
+    provenance=[
+        _cite(
+            _SCHMIDT2016,
+            "carbon-source-free M9 minimal medium",
+            _Q_SCHMIDT16_CARBON,
+            note="every amount is the stated stock diluted by the stated volume into one "
+            "liter (200 mL of the 5x salts, 10 mL of trace elements, 1 mL of each "
+            "salt stock, 0.6 mL of FeCl3); the OCR garbles 'trace elements' to 'te "
+            "elemen' and 'of' to 'f'. " + _AMMONIUM_SULFATE_DROPOUT_NOTE,
+        ),
+        _cite(
+            _SCHMIDT2016,
+            "the carbon source is the variable",
+            _Q_SCHMIDT16_GLUCOSE,
+            note="eleven carbon sources at stated concentrations (glucose 5 g/L); the "
+            "loader carries each as EnvironmentPhysicalPerturbation(factor=carbon_source)",
+        ),
+    ],
+)
+"""Schmidt 2016's M9 base for the proteome map's minimal-medium conditions (row 32)."""
+
+
+# --------------------------------------------------------------------------- #
+# The P. putida "M9" of the JBEI / NREL isoprenol campaigns: ammonium sulfate as the
+# nitrogen salt and a commercial trace-metal solution. Menasalvas 2025 names it ("NREL M9"
+# or "Modified M9"); each paper states a different nitrogen level, trace-metal volume or
+# extra buffer, so each paper has its own object.
+# --------------------------------------------------------------------------- #
+_TEKNOVA_T1001 = "trace metal solution (Teknova T1001)"
+
+
+def _nrel_salts(
+    source: Provenance,
+    quote: str,
+    *,
+    ammonium_sulfate: Concentration,
+    ammonium_sulfate_read: str,
+    phosphate_read: str = "6.8 g/L",
+    dihydrogen_read: str = "3 g/L",
+    dihydrogen_note: str | None = None,
+) -> list[MediaComponent]:
+    """The five salts every NREL-M9 paper states at 6.8 / 3 / 0.5 g/L, 2 mM, 0.1 mM."""
+    return [
+        _defined(
+            "ammonium sulfate",
+            _NSRC,
+            concentration=ammonium_sulfate,
+            provenance=[_cite(source, ammonium_sulfate_read, quote)],
+        ),
+        _stated(
+            "disodium hydrogen phosphate",
+            _SALT,
+            6.8,
+            _GL,
+            _cite(source, phosphate_read, quote),
+        ),
+        _stated(
+            "potassium dihydrogen phosphate",
+            _SALT,
+            3.0,
+            _GL,
+            _cite(source, dihydrogen_read, quote),
+            note=dihydrogen_note,
+        ),
+        _stated("sodium chloride", _SALT, 0.5, _GL, _cite(source, "0.5 g/L", quote)),
+        _stated("magnesium sulfate", _SALT, 2.0, _MM, _cite(source, "2 mM", quote)),
+        _stated("calcium chloride", _SALT, 0.1, _MM, _cite(source, "0.1 mM", quote)),
+    ]
+
+
+M9_NREL_DESIQUEIRA2025 = Media(
+    name="M9 (NREL type: ammonium sulfate + Teknova trace metals), no carbon source "
+    "(de Siqueira 2025)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=[
+        *_nrel_salts(
+            _DESIQUEIRA2025,
+            _Q_DESIQUEIRA_M9,
+            ammonium_sulfate=_c(2.0, _GL),
+            ammonium_sulfate_read="2 g/L",
+        ),
+        _mixture(
+            _TEKNOVA_T1001,
+            _TRACE,
+            _DEFERRED,
+            concentration=_c(0.05, _VV),
+            provenance=[
+                _cite(_DESIQUEIRA2025, "500 uL per 1 L: 0.05% v/v", _Q_DESIQUEIRA_M9)
+            ],
+            note="a vendor solution; the source writes 'Product No. 1001, Tekova Inc', "
+            "the Teknova T1001 the other NREL-M9 papers name",
+        ),
+    ],
+    dropouts=[_M9_AMMONIUM_CHLORIDE],
+    provenance=[
+        _cite(_DESIQUEIRA2025, "minimal salt (M9) medium", _Q_DESIQUEIRA_M9),
+        _cite(
+            _DESIQUEIRA2025,
+            "the carbon source is the variable",
+            _Q_DESIQUEIRA_CARBON,
+            note="acetate (50 mM) or glucose (1% w/v) as the sole carbon source; the "
+            "loader carries it as EnvironmentPhysicalPerturbation(factor=carbon_source). "
+            + _AMMONIUM_SULFATE_DROPOUT_NOTE,
+        ),
+    ],
+)
+"""de Siqueira 2025's P. putida tolerization medium (row 14)."""
+
+M9_NREL_LIM2025 = Media(
+    name="M9 (NREL type: ammonium sulfate + 2000x trace elements) + 4 g/L glucose "
+    "(Lim 2025)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=[
+        *_nrel_salts(
+            _LIM2025,
+            _Q_LIM25_M9,
+            ammonium_sulfate=_c(2.0, _GL),
+            ammonium_sulfate_read="2 g/L",
+        ),
+        _mixture(
+            "2000x trace element solution (Lim 2020; Linger 2014)",
+            _TRACE,
+            _DEFERRED,
+            concentration=_c(0.05, _VV),
+            provenance=[_cite(_LIM2025, "500 uL/L: 0.05% v/v", _Q_LIM25_M9)],
+            note="the composition is deferred to the two papers the source cites for it, "
+            "neither of which is mirrored",
+            defers_to=[_LIM2020, _LINGER2014],
+        ),
+        _stated(
+            "D-glucose",
+            _CSRC,
+            4.0,
+            _GL,
+            _cite(
+                _LIM2025,
+                "4 g/L unless otherwise stated",
+                _Q_LIM25_GLUCOSE,
+                note="the default carbon source; a condition stating another carbon "
+                "source is a different medium",
+            ),
+        ),
+    ],
+    dropouts=[_M9_AMMONIUM_CHLORIDE],
+    provenance=[
+        _cite(
+            _LIM2025,
+            "modified M9 minimal medium",
+            _Q_LIM25_M9,
+            note=_AMMONIUM_SULFATE_DROPOUT_NOTE,
+        )
+    ],
+)
+"""Lim 2025's P. putida isoprenol-TALE medium (row 16)."""
+
+_KANG_KH2PO4_NOTE = "the OCR renders the '3 g/L' of KH2PO4 as '3 \\gimel A'"
+
+_KANG_NREL_SALTS = _nrel_salts(
+    _KANG2026,
+    _Q_KANG_M9,
+    ammonium_sulfate=_c(2.0, _GL),
+    ammonium_sulfate_read="2 g/L",
+    dihydrogen_note=_KANG_KH2PO4_NOTE,
+)
+_KANG_TRACE = _mixture(
+    "trace element solution (Teknova)",
+    _TRACE,
+    _DEFERRED,
+    concentration=_c(0.1, _VV),
+    provenance=[_cite(_KANG2026, "1 mL/L: 0.1% v/v", _Q_KANG_M9)],
+    note="a vendor solution; the source names Teknova but no catalog number",
+)
+
+M9_NREL_KANG2026 = Media(
+    name="M9 (NREL type: 2 g/L ammonium sulfate + Teknova trace elements), no carbon "
+    "source (Kang 2026)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=[*_KANG_NREL_SALTS, _KANG_TRACE],
+    dropouts=[_M9_AMMONIUM_CHLORIDE],
+    provenance=[
+        _cite(_KANG2026, "M9 medium", _Q_KANG_M9),
+        _cite(
+            _KANG2026,
+            "the carbon source is the variable",
+            _Q_KANG_SUGAR,
+            note="20 g/L total sugar, glucose alone or 2:1 glucose:xylose, so the sugar "
+            "is carried as EnvironmentPhysicalPerturbation(factor=carbon_source). "
+            + _AMMONIUM_SULFATE_DROPOUT_NOTE,
+        ),
+    ],
+)
+"""Kang 2026's P. putida M9 (row 18)."""
+
+M9_NREL_HIGH_N_KANG2026 = Media(
+    name="modified M9 (NREL type, 40 mM ammonium sulfate), no carbon source (Kang 2026)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=[
+        _stated(
+            "ammonium sulfate",
+            _NSRC,
+            40.0,
+            _MM,
+            _cite(_KANG2026, "increased to 40 mM", _Q_KANG_MODIFIED),
+        ),
+        *_KANG_NREL_SALTS[1:],
+        _KANG_TRACE,
+    ],
+    dropouts=[_M9_AMMONIUM_CHLORIDE],
+    provenance=[
+        _cite(_KANG2026, "modified M9", _Q_KANG_MODIFIED),
+        _cite(
+            _KANG2026,
+            "the carbon source is the variable",
+            _Q_KANG_SUGAR,
+            note=_AMMONIUM_SULFATE_DROPOUT_NOTE,
+        ),
+    ],
+)
+"""Kang 2026's "modified M9": the M9 above with the ammonium sulfate raised to 40 mM."""
+
+
+def _kang_mops(
+    name: str,
+    role: MediaComponentRole,
+    value: float,
+    unit: ConcentrationUnit,
+    read: str,
+) -> MediaComponent:
+    return _stated(name, role, value, unit, _cite(_KANG2026, read, _Q_KANG_MOPS))
+
+
+M9_MOPS_KANG2026 = Media(
+    name="M9-MOPS (M9 salts + 75 mM MOPS + thiamine + FeSO4 + micronutrients), no "
+    "carbon source (Kang 2026)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=[
+        _kang_mops("disodium hydrogen phosphate", _SALT, 6.78, _GL, "6.78 g/L"),
+        _kang_mops("potassium dihydrogen phosphate", _SALT, 3.0, _GL, "3 g/L"),
+        _kang_mops("ammonium chloride", _NSRC, 1.0, _GL, "1 g/L"),
+        _kang_mops("sodium chloride", _SALT, 0.5, _GL, "0.5 g/L"),
+        _kang_mops("3-(N-morpholino)propanesulfonic acid", _BUFFER, 75.0, _MM, "75 mM"),
+        _kang_mops("thiamine", _VITAMIN, 1.0, _UGML, "1 mg/L"),
+        _kang_mops("iron(II) sulfate", _TRACE, 10.0, _NM, "10 nM"),
+        _kang_mops("ammonium heptamolybdate", _TRACE, 3e-08, _M, "3*10^-8 M"),
+        _kang_mops("boric acid", _TRACE, 4e-06, _M, "4*10^-6 M"),
+        _kang_mops("cobalt chloride", _TRACE, 3e-07, _M, "3*10^-7 M"),
+        _kang_mops("copper sulfate", _TRACE, 1.5e-07, _M, "1.5*10^-7 M"),
+        _kang_mops("MnCl2", _TRACE, 8e-07, _M, "8*10^-7 M"),
+        _kang_mops("zinc sulfate", _TRACE, 1e-07, _M, "1*10^-7 M"),
+        _kang_mops("magnesium sulfate", _SALT, 2.0, _MM, "2 mM"),
+        _kang_mops("calcium chloride", _SALT, 0.1, _MM, "0.1 mM"),
+    ],
+    provenance=[
+        _cite(
+            _KANG2026,
+            "M9-MOPS",
+            _Q_KANG_MOPS,
+            note="the optional 1 or 5 g/L yeast extract the next sentence allows is a "
+            "per-condition addition, not part of this medium",
+        ),
+        _cite(_KANG2026, "the carbon source is the variable", _Q_KANG_SUGAR),
+    ],
+)
+"""Kang 2026's M9-MOPS: the classic M9 salts with the Neidhardt micronutrients (row 18)."""
+
+M9_NREL_CARRUTHERS2025 = Media(
+    name="M9-NREL + 20 g/L glucose (10 mM ammonium sulfate + Teknova T1001; "
+    "Carruthers 2025)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=[
+        _stated(
+            "D-glucose",
+            _CSRC,
+            20.0,
+            _GL,
+            _cite(_CARRUTHERS2025, "20 g/L", _Q_CARRUTHERS_M9),
+        ),
+        _stated(
+            "sodium chloride",
+            _SALT,
+            0.5,
+            _GL,
+            _cite(_CARRUTHERS2025, "0.5 g/L", _Q_CARRUTHERS_M9),
+            note="the OCR renders '0.5 g/L' as '0.58/L'; the PDF text layer reads 0.5 g/L",
+        ),
+        _stated(
+            "disodium hydrogen phosphate",
+            _SALT,
+            6.8,
+            _GL,
+            _cite(_CARRUTHERS2025, "6.8 g/L", _Q_CARRUTHERS_M9),
+        ),
+        _stated(
+            "potassium dihydrogen phosphate",
+            _SALT,
+            3.0,
+            _GL,
+            _cite(_CARRUTHERS2025, "3 g/L", _Q_CARRUTHERS_M9),
+        ),
+        _stated(
+            "calcium chloride",
+            _SALT,
+            100.0,
+            _UM,
+            _cite(_CARRUTHERS2025, "100 uM", _Q_CARRUTHERS_M9),
+        ),
+        _stated(
+            "magnesium sulfate",
+            _SALT,
+            2.0,
+            _MM,
+            _cite(_CARRUTHERS2025, "2 mM", _Q_CARRUTHERS_M9),
+        ),
+        _stated(
+            "ammonium sulfate",
+            _NSRC,
+            10.0,
+            _MM,
+            _cite(_CARRUTHERS2025, "10 mM", _Q_CARRUTHERS_M9),
+        ),
+        _mixture(
+            _TEKNOVA_T1001,
+            _TRACE,
+            _DEFERRED,
+            provenance=[
+                _cite(
+                    _CARRUTHERS2025, "500 uL; volume basis not stated", _Q_CARRUTHERS_M9
+                )
+            ],
+            note="the amount is an OPEN GAP: the source states 500 uL of the solution "
+            "without the medium volume it goes into, so no concentration is recorded",
+        ),
+    ],
+    dropouts=[_M9_AMMONIUM_CHLORIDE],
+    provenance=[
+        _cite(_CARRUTHERS2025, "M9-NREL medium", _Q_CARRUTHERS_M9),
+        _cite(
+            _CARRUTHERS2025,
+            "M9-NREL",
+            _Q_CARRUTHERS_NREL,
+            note="the plasmid-maintenance antibiotics and the 2 g/L L-arabinose inducer "
+            "are per-strain, per-condition additions, not part of the medium. "
+            + _AMMONIUM_SULFATE_DROPOUT_NOTE,
+        ),
+    ],
+)
+"""Carruthers 2025's P. putida isoprenol production medium (row 6)."""
+
+M9_NREL_MOPS_MENASALVAS2025 = Media(
+    name="NREL M9 + 30 mM MOPS + 2% glucose (70 mM ammonium sulfate + 1X Teknova "
+    "T1001; Menasalvas 2025)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9",
+    components=[
+        _stated(
+            "disodium hydrogen phosphate",
+            _SALT,
+            47.9,
+            _MM,
+            _cite(_MENASALVAS2025, "47.9 mM", _Q_MENASALVAS_M9),
+        ),
+        _stated(
+            "potassium dihydrogen phosphate",
+            _SALT,
+            22.0,
+            _MM,
+            _cite(_MENASALVAS2025, "22 mM", _Q_MENASALVAS_M9),
+        ),
+        _stated(
+            "sodium chloride",
+            _SALT,
+            8.56,
+            _MM,
+            _cite(_MENASALVAS2025, "8.56 mM", _Q_MENASALVAS_M9),
+        ),
+        _stated(
+            "magnesium sulfate",
+            _SALT,
+            2.0,
+            _MM,
+            _cite(_MENASALVAS2025, "2 mM", _Q_MENASALVAS_M9),
+        ),
+        _stated(
+            "calcium chloride",
+            _SALT,
+            100.0,
+            _UM,
+            _cite(_MENASALVAS2025, "100 uM", _Q_MENASALVAS_M9),
+        ),
+        _mixture(
+            _TEKNOVA_T1001,
+            _TRACE,
+            _DEFERRED,
+            provenance=[
+                _cite(_MENASALVAS2025, "1X working strength", _Q_MENASALVAS_M9)
+            ],
+            note="the amount is an OPEN GAP: '1X' is a working strength of a vendor "
+            "stock whose fold the source does not state, and the library has no 'X' unit",
+        ),
+        _stated(
+            "D-glucose",
+            _CSRC,
+            2.0,
+            _PCT,
+            _cite(_MENASALVAS2025, "2%", _Q_MENASALVAS_M9),
+        ),
+        _stated(
+            "ammonium sulfate",
+            _NSRC,
+            70.0,
+            _MM,
+            _cite(
+                _MENASALVAS2025,
+                "70 mM",
+                _Q_MENASALVAS_M9,
+                note="read twice, from the OCR and the PDF text layer, because 70 mM is "
+                "far above the 10 to 15 mM the other NREL-M9 papers state",
+            ),
+        ),
+        _stated(
+            "3-(N-morpholino)propanesulfonic acid",
+            _BUFFER,
+            30.0,
+            _MM,
+            _cite(_MENASALVAS2025, "30 mM", _Q_MENASALVAS_M9),
+        ),
+    ],
+    dropouts=[_M9_AMMONIUM_CHLORIDE],
+    provenance=[
+        _cite(
+            _MENASALVAS2025,
+            "M9 medium at the 1X working concentration",
+            _Q_MENASALVAS_M9,
+            note="the pH 7.0 the sentence states is not a Media field; it rides as "
+            "EnvironmentPhysicalPerturbation(factor=ph). "
+            + _AMMONIUM_SULFATE_DROPOUT_NOTE,
+        ),
+        _cite(_MENASALVAS2025, "NREL M9", _Q_MENASALVAS_NREL),
+    ],
+)
+"""Menasalvas 2025's P. putida isoprenol medium, NREL M9 with MOPS (row 20)."""
+
+
+# --------------------------------------------------------------------------- #
+# Foo 2014 (E. coli DH1): "1x M9 salt (Difco)" is a commercial salts powder whose
+# composition the paper does not print, so the two Foo media derive from their own
+# ``M9_DIFCO`` base rather than from the stated ``M9`` salts.
+# --------------------------------------------------------------------------- #
+M9_DIFCO = Media(
+    name="M9 salts, Difco (1x; composition not stated)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9_DIFCO",
+    components=[
+        _mixture(
+            "M9 salts (Difco)",
+            _SALT,
+            _DEFERRED,
+            provenance=[_cite(_FOO2014, "1x M9 salt (Difco)", _Q_FOO_M9)],
+            note="a vendor salts powder at its 1x working strength; the source prints no "
+            "per-salt composition, and the vendor sheet is not a mirrored source",
+        )
+    ],
+    provenance=[_cite(_FOO2014, "1x M9 salt (Difco)", _Q_FOO_M9)],
+)
+"""The Difco M9 salts powder, composition deferred to the vendor: the Foo 2014 base."""
+
+M9_DIFCO_GLUCOSE_FOO2014 = Media(
+    name="M9 minimal medium (Difco M9 salts + MgSO4 + CaCl2 + thiamine + 0.4% glucose; "
+    "Foo 2014)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9_DIFCO",
+    components=[
+        *M9_DIFCO.components,
+        _stated(
+            "magnesium sulfate", _SALT, 2.0, _MM, _cite(_FOO2014, "2 mM", _Q_FOO_M9)
+        ),
+        _stated(
+            "calcium chloride", _SALT, 100.0, _UM, _cite(_FOO2014, "100 uM", _Q_FOO_M9)
+        ),
+        _stated(
+            "thiamine", _VITAMIN, 0.5, _UGML, _cite(_FOO2014, "0.5 mg/L", _Q_FOO_M9)
+        ),
+        _stated("D-glucose", _CSRC, 0.4, _PCT, _cite(_FOO2014, "0.4%", _Q_FOO_M9)),
+    ],
+    provenance=[_cite(_FOO2014, "M9 minimal medium for the growth assays", _Q_FOO_M9)],
+)
+"""Foo 2014's growth-assay medium (row 12)."""
+
+
+def _foo_mm9(
+    name: str,
+    role: MediaComponentRole,
+    value: float,
+    unit: ConcentrationUnit,
+    read: str,
+) -> MediaComponent:
+    return _stated(name, role, value, unit, _cite(_FOO2014, read, _Q_FOO_MM9))
+
+
+MM9_FOO2014 = Media(
+    name="MM9 (Difco M9 salts + 75 mM MOPS + micronutrients + 1% glucose; Foo 2014)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9_DIFCO",
+    components=[
+        *M9_DIFCO.components,
+        _foo_mm9("3-(N-morpholino)propanesulfonic acid", _BUFFER, 75.0, _MM, "75 mM"),
+        _foo_mm9("magnesium sulfate", _SALT, 2.0, _MM, "2 mM"),
+        _foo_mm9("calcium chloride", _SALT, 10.0, _UM, "10 uM"),
+        _foo_mm9("iron(II) sulfate", _TRACE, 10.0, _UM, "10 uM"),
+        _foo_mm9("boric acid", _TRACE, 4.0, _UM, "4 uM"),
+        _stated(
+            "MnCl2",
+            _TRACE,
+            0.8,
+            _UM,
+            _cite(_FOO2014, "0.8 uM", _Q_FOO_MM9),
+            note="the source writes 'manganese chloride'; with no hydrate named it is the "
+            "anhydrous MnCl2 row (PubChem's name index answers that spelling with a "
+            "four-water record)",
+        ),
+        _foo_mm9("cobalt chloride", _TRACE, 0.3, _UM, "0.3 uM"),
+        _stated(
+            "copper sulfate",
+            _TRACE,
+            0.15,
+            _UM,
+            _cite(_FOO2014, "0.15 uM", _Q_FOO_MM9),
+            note="the source writes 'cupric sulfate', the copper(II) sulfate row",
+        ),
+        _foo_mm9("zinc sulfate", _TRACE, 0.1, _UM, "0.1 uM"),
+        _stated(
+            "ammonium molybdate",
+            _TRACE,
+            0.03,
+            _UM,
+            _cite(_FOO2014, "0.03 uM", _Q_FOO_MM9),
+            note="PubChem's name index resolves 'ammonium molybdate' to the "
+            "heptamolybdate record, the same compound Kang 2026 writes as (NH4)6Mo7O24",
+        ),
+        _foo_mm9("D-glucose", _CSRC, 1.0, _PCT, "1%"),
+    ],
+    provenance=[
+        _cite(
+            _FOO2014,
+            "MM9",
+            _Q_FOO_MM9,
+            note="the MOPS pH 7.40 is not a Media field; it rides as "
+            "EnvironmentPhysicalPerturbation(factor=ph)",
+        )
+    ],
+)
+"""Foo 2014's isopentenol production medium (row 12)."""
+
+
+# --------------------------------------------------------------------------- #
+# Davis Minimal (Caglar 2017, E. coli B REL606). The paper names the medium and defers its
+# recipe to Lenski 1991 (ref 36, not mirrored); it states only the parts it varies or
+# supplements: thiamine, the magnesium sulfate it titrates, and the sodium citrate behind
+# the baseline sodium. Everything else stays inside one deferred line.
+# --------------------------------------------------------------------------- #
+DAVIS_MINIMAL = Media(
+    name="Davis Minimal (DM) medium with thiamine, no carbon source (recipe deferred to "
+    "Lenski 1991)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="DAVIS_MINIMAL",
+    components=[
+        _mixture(
+            "Davis Minimal medium salts (Lenski 1991 formulation)",
+            _SALT,
+            _DEFERRED,
+            provenance=[
+                _cite(_CAGLAR2017, "recipe deferred to ref 36", _Q_CAGLAR_DM),
+                _cite(_CAGLAR2017, "ref 36 is Lenski 1991", _Q_CAGLAR_REF36),
+            ],
+            note="every DM ingredient Caglar 2017 does not itself state (the phosphate "
+            "and ammonium salts of the Lenski formulation); not mirrored, so not "
+            "expanded",
+            defers_to=[_LENSKI1991],
+        ),
+        _stated(
+            "magnesium sulfate",
+            _SALT,
+            0.83,
+            _MM,
+            _cite(_CAGLAR2017, "0.83 mM, normally present", _Q_CAGLAR_MG),
+            note="the paper's Mg2+ conditions change this amount; a changed amount is an "
+            "environment edit on this medium",
+        ),
+        _defined(
+            "sodium citrate",
+            MediaComponentRole.other,
+            provenance=[
+                _cite(
+                    _CAGLAR2017,
+                    "present; amount not stated",
+                    _Q_CAGLAR_NA,
+                    note="the ~5 mM is the medium's total sodium, not a citrate amount, "
+                    "so the citrate is recorded as an identity without a number",
+                )
+            ],
+        ),
+        _stated(
+            "thiamine",
+            _VITAMIN,
+            0.002,
+            _UGML,
+            _cite(
+                _CAGLAR2017,
+                "2 ug/L",
+                _Q_CAGLAR_DM,
+                note="2 ug/L is 0.002 ug/mL; the OCR renders 'ug/l' as 'ug/1'",
+            ),
+        ),
+    ],
+    provenance=[
+        _cite(
+            _CAGLAR2017,
+            "Davis Minimal medium supplemented with thiamine (DM)",
+            _Q_CAGLAR_DM,
+        ),
+        _cite(
+            _CAGLAR2017,
+            "the carbon source is the variable",
+            _Q_CAGLAR_CARBON,
+            note="glycerol, lactate or gluconate at 0.5 g/L instead of glucose; the "
+            "loader carries each as EnvironmentPhysicalPerturbation(factor=carbon_source)",
+        ),
+    ],
+)
+"""Caglar 2017's DM base, composition deferred to the unmirrored Lenski 1991 (row 9)."""
+
+DM500 = Media(
+    name="DM500 (Davis Minimal + 500 mg/L glucose; Caglar 2017)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="DAVIS_MINIMAL",
+    components=[
+        *DAVIS_MINIMAL.components,
+        _stated(
+            "D-glucose", _CSRC, 0.5, _GL, _cite(_CAGLAR2017, "500 mg/L", _Q_CAGLAR_DM)
+        ),
+    ],
+    provenance=[_cite(_CAGLAR2017, "DM500", _Q_CAGLAR_DM)],
+)
+"""Caglar 2017's reference medium: the glucose condition and the base of the Na+ and
+Mg2+ arms (row 9)."""
+
+
+# --------------------------------------------------------------------------- #
+# MOPS minimal (Neidhardt 1974). The originating paper is not mirrored; Tong 2020 cites it
+# for the medium (ref 34) and buys it from Teknova, and Price 2018's Supplementary Table 18
+# tabulates it in full. One row of that table conflicts with the same lab's earlier table:
+# Price lists 0.276 mM "Aluminum potassium sulfate dodecahydrate" where Wetmore 2015's Data
+# Set S1 lists 0.276 mM "Potassium Sulfate" in its MOPS formulation. ADJUDICATED to
+# potassium sulfate (rule: the same amount under the same lab's earlier, independent
+# tabulation, and the two other mirrored MOPS recipes, Schmidt 2022 and Thompson 2020, also
+# name K2SO4; an alum in a MOPS base is a single-source outlier). Both rows are quoted.
+# --------------------------------------------------------------------------- #
+def _mops(
+    name: str,
+    role: MediaComponentRole,
+    value: float,
+    unit: ConcentrationUnit,
+    read: str,
+    *,
+    note: str | None = None,
+) -> MediaComponent:
+    return _stated(
+        name,
+        role,
+        value,
+        unit,
+        _cite(_PRICE2018_S3, read, _Q_PRICE_MOPS),
+        note=note,
+        defers_to=[_NEIDHARDT1974],
+    )
+
+
+MOPS_MINIMAL = Media(
+    name="MOPS minimal medium, no carbon source (Neidhardt 1974 formulation as tabulated "
+    "by Price 2018)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="MOPS_MINIMAL",
+    components=[
+        _mops("3-(N-morpholino)propanesulfonic acid", _BUFFER, 40.0, _MM, "40 mM"),
+        _mops("tricine", _BUFFER, 4.0, _MM, "4 mM"),
+        _mops("dipotassium hydrogen phosphate", _SALT, 1.32, _MM, "1.32 mM"),
+        _mops("iron(II) sulfate heptahydrate", _TRACE, 0.01, _MM, "0.01 mM"),
+        _mops("ammonium chloride", _NSRC, 9.5, _MM, "9.5 mM"),
+        _stated(
+            "potassium sulfate",
+            _SALT,
+            0.276,
+            _MM,
+            _cite(
+                _PRICE2018_S3,
+                "0.276 mM (the row names 'Aluminum potassium sulfate dodecahydrate')",
+                _Q_PRICE_MOPS,
+            ),
+            _cite(
+                _WETMORE2015_DS1,
+                "0.276 mM potassium sulfate",
+                _Q_WETMORE_MOPS_K2SO4,
+                note="the same lab's MOPS formulation names potassium sulfate at the same "
+                "amount; the adjudication rule is in the comment above MOPS_MINIMAL",
+            ),
+            note="ADJUDICATED: Price 2018's row names an alum, Wetmore 2015's names "
+            "potassium sulfate at the same 0.276 mM; recorded as potassium sulfate",
+            defers_to=[_NEIDHARDT1974],
+        ),
+        _mops("calcium chloride", _SALT, 0.0005, _MM, "0.0005 mM"),
+        _mops("magnesium chloride hexahydrate", _SALT, 0.525, _MM, "0.525 mM"),
+        _mops("sodium chloride", _SALT, 50.0, _MM, "50 mM"),
+        _mops("ammonium heptamolybdate tetrahydrate", _TRACE, 3e-09, _M, "3e-09 M"),
+        _mops("boric acid", _TRACE, 4e-07, _M, "4e-07 M"),
+        _mops("cobalt(II) chloride hexahydrate", _TRACE, 3e-08, _M, "3e-08 M"),
+        _mops("copper(II) sulfate pentahydrate", _TRACE, 1e-08, _M, "1e-08 M"),
+        _mops("manganese(II) chloride tetrahydrate", _TRACE, 8e-08, _M, "8e-08 M"),
+        _mops("zinc sulfate heptahydrate", _TRACE, 1e-08, _M, "1e-08 M"),
+    ],
+    provenance=[
+        _cite(_PRICE2018_S3, "MOPS minimal media_noCarbon", _Q_PRICE_MOPS),
+        _cite(
+            _TONG2020,
+            "MOPS minimal medium, carbon source varied",
+            _Q_TONG_MOPS,
+            note="Tong 2020 defines its minimal medium by citation and varies only the "
+            "carbon source, carried as EnvironmentPhysicalPerturbation(factor="
+            "carbon_source)",
+        ),
+        _cite(_TONG2020, "ref 34 is Neidhardt 1974", _Q_TONG_REF34),
+        _cite(_TONG2020, "bought from Teknova", _Q_TONG_TEKNOVA),
+    ],
+)
+"""Neidhardt's MOPS minimal medium without a carbon source: Tong 2020's minimal medium by
+its own citation, and Price 2018's 'MOPS minimal media_noCarbon' (rows 4 and 21)."""
+
+
+#: Which of the fifty bacterial rows (rank in [[plan.bacteria-ontology-genome]]'s table,
+#: first author, year) use each bacterial entry, and how the paper states it. "names" means
+#: the paper names the formulation without printing amounts; every other use is a stated
+#: recipe the entry quotes. These keys are also the set of bacterial media.
+BACTERIAL_MEDIA_USES: dict[str, tuple[str, ...]] = {
+    "LB": (
+        "6 Carruthers 2025: precultures; its transformation plates state the Miller "
+        "amounts",
+        "11 Goodall 2018: the LB1/LB2 TraDIS cultures state the Miller amounts",
+        "20 Menasalvas 2025: revival plates, names and states LB Miller",
+        "22 Choe 2025, 23 Rapp 2026, 24 Schmidt 2022, 28 Thompson 2020, 40 Rachwalski "
+        "2024: name LB Miller",
+        "32 Schmidt 2016: the LB condition of the proteome map",
+        "42 Babu 2014: SI states the Miller amounts",
+    ),
+    "LB_AGAR": (
+        "20 Menasalvas 2025: LB Miller + 2% agar",
+        "32 Schmidt 2016: LB + 20 g/L agar plates",
+    ),
+    "LB_LENNOX": (
+        "2 Wetmore 2015: Data Set S1 'LB' (Time0 recovery and LB conditions)",
+        "21 Price 2018: Table S18 'LB' (64 Keio experiments)",
+        "30 Schastnaya 2021: states LB-Lennox",
+        "46 Hawkins 2020: names LB Lennox",
+    ),
+    "YT_2X": ("15 Wang 2015: the isoprenol-tolerance growth medium",),
+    "M9": (
+        "18 Kang 2026: names and states the M9 salts (inside M9-MOPS)",
+        "8 Borchert 2024: states the salts (its growth medium adds Mg, Ca, FeSO4)",
+        "base of every M9 entry",
+    ),
+    "M9_GLUCOSE": ("45 Choe 2019: the ALE and growth medium",),
+    "M9_NOCARBON_WETMORE2015": ("2 Wetmore 2015: 64 Keio carbon-source experiments",),
+    "M9_NONITROGEN_WETMORE2015": (
+        "2 Wetmore 2015: 26 Keio nitrogen-source experiments",
+    ),
+    "M9_NOCARBON_PRICE2018": ("21 Price 2018: 60 Keio carbon-source experiments",),
+    "M9_NONITROGEN_PRICE2018": ("21 Price 2018: 32 Keio nitrogen-source experiments",),
+    "M9_GLUCOSE_CASEIN_FUHRER2017": ("1 Fuhrer 2017: the metabolome screen",),
+    "M9_SCHMIDT2016": ("32 Schmidt 2016: the minimal-medium proteome conditions",),
+    "M9_NREL_DESIQUEIRA2025": ("14 de Siqueira 2025: tolerization and phenotyping",),
+    "M9_NREL_LIM2025": ("16 Lim 2025: growth and TALE cultures",),
+    "M9_NREL_KANG2026": ("18 Kang 2026: 'M9'",),
+    "M9_NREL_HIGH_N_KANG2026": ("18 Kang 2026: 'modified M9'",),
+    "M9_MOPS_KANG2026": ("18 Kang 2026: 'M9-MOPS'",),
+    "M9_NREL_CARRUTHERS2025": ("6 Carruthers 2025: isoprenol production",),
+    "M9_NREL_MOPS_MENASALVAS2025": ("20 Menasalvas 2025: isoprenol production",),
+    "M9_DIFCO": ("12 Foo 2014: base of both Foo media",),
+    "M9_DIFCO_GLUCOSE_FOO2014": ("12 Foo 2014: growth and tolerance assays",),
+    "MM9_FOO2014": ("12 Foo 2014: isopentenol production and microarray cultures",),
+    "DAVIS_MINIMAL": ("9 Caglar 2017: the carbon-source arm",),
+    "DM500": ("9 Caglar 2017: the glucose reference and the Na+ / Mg2+ arms",),
+    "MOPS_MINIMAL": (
+        "4 Tong 2020: names Teknova MOPS minimal, cites Neidhardt 1974",
+        "21 Price 2018: Table S18 (2 Keio experiments)",
+    ),
+}
+"""Use map for the bacterial entries; the keys are exactly the bacterial media."""
+
+
 # Registry of the canonical media (name -> object), for discovery/migration.
 MEDIA_LIBRARY: dict[str, Media] = {
     "SD_MSG": SD_MSG,
@@ -1798,6 +3822,32 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "SM": SM,
     "SM_AGAR": SM_AGAR,
     "SM_DEFERRED": SM_DEFERRED,
+    # bacterial media ([[plan.bacteria-ontology-genome]] Step 5; uses in BACTERIAL_MEDIA_USES)
+    "LB": LB,
+    "LB_AGAR": LB_AGAR,
+    "LB_LENNOX": LB_LENNOX,
+    "YT_2X": YT_2X,
+    "M9": M9,
+    "M9_GLUCOSE": M9_GLUCOSE,
+    "M9_NOCARBON_WETMORE2015": M9_NOCARBON_WETMORE2015,
+    "M9_NONITROGEN_WETMORE2015": M9_NONITROGEN_WETMORE2015,
+    "M9_NOCARBON_PRICE2018": M9_NOCARBON_PRICE2018,
+    "M9_NONITROGEN_PRICE2018": M9_NONITROGEN_PRICE2018,
+    "M9_GLUCOSE_CASEIN_FUHRER2017": M9_GLUCOSE_CASEIN_FUHRER2017,
+    "M9_SCHMIDT2016": M9_SCHMIDT2016,
+    "M9_NREL_DESIQUEIRA2025": M9_NREL_DESIQUEIRA2025,
+    "M9_NREL_LIM2025": M9_NREL_LIM2025,
+    "M9_NREL_KANG2026": M9_NREL_KANG2026,
+    "M9_NREL_HIGH_N_KANG2026": M9_NREL_HIGH_N_KANG2026,
+    "M9_MOPS_KANG2026": M9_MOPS_KANG2026,
+    "M9_NREL_CARRUTHERS2025": M9_NREL_CARRUTHERS2025,
+    "M9_NREL_MOPS_MENASALVAS2025": M9_NREL_MOPS_MENASALVAS2025,
+    "M9_DIFCO": M9_DIFCO,
+    "M9_DIFCO_GLUCOSE_FOO2014": M9_DIFCO_GLUCOSE_FOO2014,
+    "MM9_FOO2014": MM9_FOO2014,
+    "DAVIS_MINIMAL": DAVIS_MINIMAL,
+    "DM500": DM500,
+    "MOPS_MINIMAL": MOPS_MINIMAL,
 } | {
     _hm_key(compound, partial): HILLENMEYER_DROPOUT_MEDIA[label]
     for label, compound, partial in _HILLENMEYER_DROPOUTS
@@ -1818,6 +3868,26 @@ CARBON_FREE_MEDIA: dict[str, str] = {
     "SYNBASE": "same deferral as its SynH3- base",
     "SM_DEFERRED": "Zelezniak 2018 states no recipe, so the carbon source sits inside "
     "a composition deferred to Mulleder 2012, which is not mirrored",
+    "LB": "complex; the carbon is in the undefined tryptone and yeast extract, and no "
+    "carbon source is added",
+    "LB_AGAR": "complex; the carbon is in the undefined tryptone and yeast extract",
+    "LB_LENNOX": "complex; the carbon is in the undefined tryptone and yeast extract",
+    "YT_2X": "complex; the carbon is in the undefined tryptone and yeast extract",
+    "M9": "base; the M9 salts carry no carbon source by definition",
+    "M9_NOCARBON_WETMORE2015": "the carbon source is the variable of the RB-TnSeq "
+    "carbon-source experiments",
+    "M9_NOCARBON_PRICE2018": "the carbon source is the variable of the RB-TnSeq "
+    "carbon-source experiments",
+    "M9_SCHMIDT2016": "the carbon source is the variable across the eleven carbon-source "
+    "conditions",
+    "M9_NREL_DESIQUEIRA2025": "acetate or glucose, varied per condition",
+    "M9_NREL_KANG2026": "glucose alone or a glucose:xylose mixture, varied per condition",
+    "M9_NREL_HIGH_N_KANG2026": "same sugar regimes as the Kang 2026 M9",
+    "M9_MOPS_KANG2026": "same sugar regimes as the Kang 2026 M9",
+    "M9_DIFCO": "base; the Difco salts powder",
+    "DAVIS_MINIMAL": "base; the carbon source is the variable of Caglar 2017's carbon arm",
+    "MOPS_MINIMAL": "base; the carbon source is the variable (Tong 2020) and Price 2018 "
+    "tabulates it without one",
 }
 
 

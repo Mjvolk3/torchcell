@@ -379,7 +379,11 @@ def _tc_data(tmp_path: Path) -> TcDataSource:
     store.mkdir()
     ArtifactIndex(generated_at="t0", artifacts=[]).save(store / "index.json")
     config = DataServerConfig(
-        store_root=store, raw_root=raw_root, keys=DataKeys.from_pairs(f"t:{KEY}")
+        store_root=store,
+        raw_root=raw_root,
+        genomes_root=tmp_path / "served-genomes",
+        objects_root=tmp_path / "served-objects",
+        keys=DataKeys.from_pairs(f"t:{KEY}"),
     )
     return TcDataSource("http://testserver/", KEY, http=TestClient(create_app(config)))
 

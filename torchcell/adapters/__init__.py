@@ -134,6 +134,9 @@ from .schmidt2016_adapter import (
     ProteomeSchmidt2016Adapter as ProteomeSchmidt2016Adapter,
 )
 from .sgd_adapter import GeneEssentialitySgdAdapter as GeneEssentialitySgdAdapter
+from .shiver2016_adapter import (
+    EnvChemgenShiver2016Adapter as EnvChemgenShiver2016Adapter,
+)
 from .smith2006_adapter import Smith2006Adapter as Smith2006Adapter
 from .smith2016_adapter import Smith2016Adapter as Smith2016Adapter
 from .synth_leth_db_adapter import (
@@ -259,6 +262,7 @@ ecoli_adapters = [
     "RnaseqLamoureux2023Adapter",
     "RbTnseqPrice2018EcoliAdapter",
     "MetabolomeRapp2026Adapter",
+    "EnvChemgenShiver2016Adapter",
     "ProteomeSchmidt2016Adapter",
     "CarbonSourceTong2020Adapter",
     "EnvChemgenWang2015Adapter",

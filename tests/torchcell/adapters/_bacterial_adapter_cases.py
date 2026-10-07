@@ -57,6 +57,7 @@ from torchcell.adapters import (
     CrispriArrayYunus2026Adapter,
     CrispriKnockdownCui2018Adapter,
     CrispriKnockdownYunus2026Adapter,
+    EnvChemgenShiver2016Adapter,
     EnvChemgenWang2015Adapter,
     GeneEssentialityGoodall2018Adapter,
     IsoprenolSelectionMenasalvas2025Adapter,
@@ -92,6 +93,7 @@ from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
 from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
 from torchcell.datasets.ecoli.schmidt2016 import ProteomeSchmidt2016Dataset
+from torchcell.datasets.ecoli.shiver2016 import EnvChemgenShiver2016Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
 from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
@@ -174,8 +176,8 @@ TURNOVER = "protein turnover phenotype"
 # perturbation in any record, and so is Schmidt 2016, whose paper's three deletion
 # strains carry no abundance data and are not loaded; Fuhrer 2017 and Goodall 2018 carry
 # no environment perturbation; the CRISPRi leaves of Carruthers, Cui, Menasalvas and
-# Yunus
-# carry a CrisprConstruct.
+# Yunus carry a CrisprConstruct. Shiver 2016's three temperature-only conditions carry no
+# environment perturbation, but its other 54 do, so its pair is enabled.
 BACTERIAL: list[Bacterial] = [
     _case(
         RnaseqCaglar2017Adapter,
@@ -245,6 +247,11 @@ BACTERIAL: list[Bacterial] = [
         MetabolomeRapp2026Dataset,
         "metabolite phenotype",
         crispr=True,
+        EnvChemgenShiver2016Adapter,
+        "shiver2016",
+        "ecoli_env_chemgen_shiver2016",
+        EnvChemgenShiver2016Dataset,
+        RESPONSE,
     ),
     _case(
         ProteomeSchmidt2016Adapter,

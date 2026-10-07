@@ -22,6 +22,7 @@ from torchcell.adapters import (
     EnvChemgenCostanzo2021Adapter,
     EnvChemgenHoepfner2014Adapter,
     EnvChemgenMota2024Adapter,
+    EnvChemgenShiver2016Adapter,
     EnvChemgenVanacloig2022Adapter,
     EnvChemgenWang2015Adapter,
     EnvChemgenWildenhain2015Adapter,
@@ -89,6 +90,7 @@ from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
 from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
 from torchcell.datasets.ecoli.schmidt2016 import ProteomeSchmidt2016Dataset
+from torchcell.datasets.ecoli.shiver2016 import EnvChemgenShiver2016Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
 from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
@@ -251,6 +253,7 @@ dataset_adapter_map = {
     RnaseqLamoureux2023Dataset: RnaseqLamoureux2023Adapter,
     RbTnseqPrice2018EcoliDataset: RbTnseqPrice2018EcoliAdapter,
     MetabolomeRapp2026Dataset: MetabolomeRapp2026Adapter,
+    EnvChemgenShiver2016Dataset: EnvChemgenShiver2016Adapter,
     ProteomeSchmidt2016Dataset: ProteomeSchmidt2016Adapter,
     CarbonSourceTong2020Dataset: CarbonSourceTong2020Adapter,
     EnvChemgenWang2015Dataset: EnvChemgenWang2015Adapter,

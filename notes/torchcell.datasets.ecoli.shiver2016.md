@@ -368,3 +368,67 @@ handed; here it is the BW25113 GenBank loci, which is what `verify_build` passes
 - `ruff check`, `ruff format --check` and `python -m mypy` clean on the loader, the test
   and the package `__init__`.
 - `pytest tests/torchcell/datasets/test_dataset_registry.py tests/torchcell/database/test_build_dataset_lmdb.py tests/torchcell/datasets/ecoli`: 564 passed, 196 skipped (before the new guard tests were added).
+
+## 2026.10.07 - BioCypher adapter and its enable-list
+
+`torchcell/adapters/shiver2016_adapter.py`, class `EnvChemgenShiver2016Adapter`, conf
+`torchcell/adapters/conf/ecoli_env_chemgen_shiver2016_adapter.yaml`. The loader registered
+its dataset class with no adapter, so the two set-level gate tests in
+`tests/torchcell/adapters/test_bacterial_adapters.py` failed: every registered E. coli and
+P. putida class must be in `dataset_adapter_map` and must be named in `kg_bacteria.yaml`.
+The adapter closes both. Wired in `torchcell/adapters/__init__.py`,
+`torchcell/knowledge_graphs/dataset_adapter_map.py` (now 72 pairs, the pin in
+`tests/torchcell/knowledge_graphs/test_build_time_projection.py` bumped to match) and
+`torchcell/knowledge_graphs/conf/kg_bacteria.yaml` (now 21 datasets).
+
+The module follows the landed bacterial pattern: one dataset class per module, and the
+conf named after the loader's root slug, which is what `kg_manifest.dataset_adapter_files`
+regexes out of the module source (issue #743) and what
+`test_each_conf_is_named_after_the_dataset_root_slug` checks.
+
+### Enable-list, one line of why per family
+
+| family | enabled | why |
+|---|---|---|
+| experiment, genotype, dataset, publication, genome | yes | the record spine of every `ExperimentDataset`: one `BacterialEnvironmentResponseExperiment` per (strain, condition), its `Genotype`, the `AssemblyReferenceGenome` of BW25113 on the reference, and the one `Publication` |
+| `bacterial perturbation` | yes | each record's single leaf is a `BacterialDeletionPerturbation`, which is a bacterial leaf, so it is served under `bacterial perturbation` and never under the yeast `perturbation` class |
+| `environment`, `media`, `temperature` (and their references) | yes | both loader-local plates appear (46 references on LB Lennox agar, 11 on M9 minimal agar) and every condition carries a `Temperature`: 53 references at 37 C, two at 10 C, one at 25 C and one at 4 C |
+| `environment perturbation` (and its reference) | yes | measured over the 57 references: 48 `SmallMoleculePerturbation` plus 14 `EnvironmentPhysicalPerturbation` (11 `carbon_source`, 3 `radiation`). One method pair serves both families, since `_environment_perturbation_node_from` projects compound/concentration and agent/magnitude onto the same columns |
+| `environment response phenotype` (and its reference) | yes | the phenotype class of `BacterialEnvironmentResponseExperiment`; `_adapter_init_harness.PHENOTYPE_METHOD` derives the required method from the loader's `experiment_class`, so no other phenotype method is legal here |
+| `crispr construct` | no | no record carries one: the arrayed library is deletions, and the adapter's left-off-family check confirms the method emits nothing over the store |
+| `phage perturbation` | no | the screen has no phage challenge, and `phage perturbation` is a separate served class, so enabling it would write nothing |
+
+The three temperature-only conditions (`10C [-] {4}`, `25C [-] {4}`,
+`4C survival [5 wk] {4}`) carry no environment perturbation at all: temperature is a slot
+on `Environment`, not an edit, and the temperature pair already serves it. That is why the
+env-perturbation pair is enabled on the strength of the other 54 conditions rather than
+all 57.
+
+### Tests and checks
+
+Paired test `tests/torchcell/adapters/test_shiver2016_adapter.py`, five tests over the
+shared bacterial harness: the exact conf the constructor loads and the base-adapter
+wiring, the refusal naming the exact conf path before `wandb.init`, every conf method
+registered on `CellAdapter` with every node class it can emit declared in
+`torchcell_schema_config.yaml`, the gate resolving the dataset to its own module and conf,
+and a `--data` test running every enabled method over the dev store.
+
+- `pytest tests/torchcell/adapters tests/torchcell/knowledge_graphs -q`:
+  `699 passed, 21 skipped, 305 warnings in 58.99s`.
+- `DATA_ROOT=/scratch/projects/torchcell-scratch pytest tests/torchcell/adapters/test_shiver2016_adapter.py --data -k dev_store`: 1 passed. The emitted
+  graph over the first 200 records plus all 57 references is closed (no dangling edge
+  endpoint), every label and property is declared, and the two left-off families emit
+  nothing.
+- `ruff check`, `ruff format --check` and `python -m mypy` clean on the adapter, its test
+  and every wiring file.
+- Admission check, no `--neo4j-uri` (the dataset is not served, so the store is never
+  read): `EnvChemgenShiver2016Dataset -> BLOCKED`, with `dev LMDB: fresh` and
+  `served: no (new dataset)`, and only the four store-wide blockers already recorded for
+  the 20 landed bacterial adapters in
+  [[plan.bacteria-ontology-genome]]: 11 served datasets whose schema closure changed, the
+  served `crispr construct` class changed, plumbing drift on `_crispr_construct_node_from`,
+  and the value surface (`compound_identity.py`, `compound_identity_table.json`,
+  `media.py`). None of those files is touched here, so this row enters the same full
+  rebuild as the other 20.
+
+The loader's three schema findings are issue #749 and are not addressed here.

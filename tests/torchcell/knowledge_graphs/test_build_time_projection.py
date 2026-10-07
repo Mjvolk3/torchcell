@@ -483,6 +483,7 @@ BACTERIAL_DATASETS = {
     "CrispriArrayYunus2026Dataset",
     "CrispriKnockdownCui2018Dataset",
     "CrispriKnockdownYunus2026Dataset",
+    "EnvChemgenShiver2016Dataset",
     "EnvChemgenWang2015Dataset",
     "GeneEssentialityGoodall2018Dataset",
     "IsoprenolSelectionMenasalvas2025Dataset",
@@ -504,7 +505,10 @@ BACTERIAL_DATASETS = {
     "RnaseqCaglar2017Dataset",
     "RnaseqLamoureux2023Dataset",
 }
-"""The E. coli and P. putida datasets mapped in plan step 9, none calibrated yet."""
+"""The E. coli and P. putida datasets, the 20 of plan step 9 plus Shiver 2016.
+
+None of them is calibrated yet.
+"""
 
 
 def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:

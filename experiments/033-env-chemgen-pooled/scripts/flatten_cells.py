@@ -18,9 +18,15 @@ environment columns are the content address the aggregator keyed on
 and the physical and medium fields. The phenotype columns keep EVERY measurement of the
 cell as a list, because which one a trainer reads is a read-time label policy.
 
-A record whose perturbation is neither a deletion nor a copy-number variant raises; so
-does a concentration unit outside the ones listed in ``MOLAR_FACTOR`` and
-``NOT_MOLAR_UNITS``. Nothing is defaulted.
+The functional dose is copies present over copies in the reference: zero for a deletion,
+``copy_number / reference_copy_number`` for an engineered copy-number variant, one for a
+conditional allele of an essential gene (the gene is present; the allele's class is on
+``perturbation_type`` and in the store), and for a heterozygous deletion (build 002: the
+HIP and HET collections, #506) the functional copies the schema derives from the strain
+background divided by two, which is None where the record does not determine it (a
+BY4743 locus that is itself heterozygous with ``replaced_allele`` unset). Any other
+perturbation shape raises; so does a concentration unit outside the ones listed in
+``MOLAR_FACTOR`` and ``NOT_MOLAR_UNITS``. Nothing is defaulted.
 
 Run under slurm (``gh_flatten_cells.slurm``): the full pass parses 106 GB of JSON.
 """
@@ -41,7 +47,12 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 
 from torchcell.datamodels.identity import environment_identity, identity_sha256
-from torchcell.datamodels.schema import environment_class_for
+from torchcell.datamodels.schema import (
+    HeterozygousDeletionPerturbation,
+    StrainReferenceGenome,
+    environment_class_for,
+    heterozygous_deletion_functional_copies,
+)
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
@@ -84,7 +95,7 @@ class CellRow(BaseModel):
     perturbation_type: str
     copy_number: float | None
     reference_copy_number: float | None
-    functional_dose: float
+    functional_dose: float | None
     ploidy: str
     strain: str
     # environment
@@ -114,16 +125,34 @@ class CellRow(BaseModel):
     screen_ids: list[str | None]
 
 
-def functional_dose(perturbation: dict[str, Any]) -> float:
-    """Copies present over copies in the reference; zero for a deletion."""
+def copies(
+    perturbation: dict[str, Any], genome: dict[str, Any]
+) -> tuple[float | None, float | None, float | None]:
+    """(copies present, copies in the reference, functional dose) of one perturbation.
+
+    A deletion is 0 of the reference ploidy's copies; an engineered copy-number variant
+    states both counts; a conditional allele keeps its one copy; a heterozygous deletion
+    is resolved against the strain background, where it can be undetermined (None).
+    """
+    kind = perturbation["perturbation_type"]
     if "copy_number" in perturbation:
-        return float(perturbation["copy_number"]) / float(
-            perturbation["reference_copy_number"]
+        present = float(perturbation["copy_number"])
+        reference = float(perturbation["reference_copy_number"])
+        return present, reference, present / reference
+    if kind == "heterozygous_deletion":
+        left = heterozygous_deletion_functional_copies(
+            StrainReferenceGenome(**genome).background,
+            HeterozygousDeletionPerturbation(**perturbation),
         )
+        return (None, 2.0, None) if left is None else (float(left), 2.0, left / 2.0)
+    if kind == "conditional_allele":
+        return 1.0, 1.0, 1.0
     assert perturbation["state"] == "absent", (
-        f"perturbation is neither a copy-number variant nor a deletion: {perturbation}"
+        f"perturbation is neither a deletion, a copy-number variant, a conditional "
+        f"allele nor a heterozygous deletion: {perturbation}"
     )
-    return 0.0
+    reference = 1.0 if genome["ploidy"] == "haploid" else 2.0
+    return 0.0, reference, 0.0
 
 
 def log10_molar(concentration: dict[str, Any] | None) -> float | None:
@@ -163,6 +192,7 @@ def flatten(index: int, entry: list[dict[str, Any]]) -> CellRow:
         query = perturbations
     assert len(query) == 1, f"entry {index} has {len(query)} queried genes"
     q = query[0]
+    present, reference, dose = copies(q, genome)
 
     small = [
         p
@@ -187,9 +217,9 @@ def flatten(index: int, entry: list[dict[str, Any]]) -> CellRow:
         n_perturbations=len(perturbations),
         query_gene=q["systematic_gene_name"],
         perturbation_type=q["perturbation_type"],
-        copy_number=q.get("copy_number"),
-        reference_copy_number=q.get("reference_copy_number"),
-        functional_dose=functional_dose(q),
+        copy_number=present,
+        reference_copy_number=reference,
+        functional_dose=dose,
         ploidy=genome["ploidy"],
         strain=genome["strain"],
         environment_id=identity_sha256(

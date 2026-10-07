@@ -58,6 +58,7 @@ from torchcell.adapters import (
     CrispriGuideFitnessWang2018Adapter,
     CrispriKnockdownCui2018Adapter,
     CrispriKnockdownYunus2026Adapter,
+    CrispriScreenRousset2018Adapter,
     EnvChemgenShiver2016Adapter,
     EnvChemgenWang2015Adapter,
     GeneEssentialityGoodall2018Adapter,
@@ -93,6 +94,7 @@ from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
 from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
+from torchcell.datasets.ecoli.rousset2018 import CrispriScreenRousset2018Dataset
 from torchcell.datasets.ecoli.schmidt2016 import ProteomeSchmidt2016Dataset
 from torchcell.datasets.ecoli.shiver2016 import EnvChemgenShiver2016Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
@@ -152,12 +154,14 @@ def _case(
     perturbation: bool = True,
     crispr: bool = False,
     env_perturbation: bool = True,
+    phage: bool = False,
 ) -> Bacterial:
     shape = Shape(
         phenotype,
         perturbation=perturbation,
         crispr=crispr,
         env_perturbation=env_perturbation,
+        phage=phage,
         bacterial=True,
     )
     return Bacterial(
@@ -249,6 +253,16 @@ BACTERIAL: list[Bacterial] = [
         MetabolomeRapp2026Dataset,
         "metabolite phenotype",
         crispr=True,
+    ),
+    _case(
+        CrispriScreenRousset2018Adapter,
+        "rousset2018",
+        "ecoli_crispri_rousset2018",
+        CrispriScreenRousset2018Dataset,
+        RESPONSE,
+        crispr=True,
+        env_perturbation=False,
+        phage=True,
     ),
     _case(
         EnvChemgenShiver2016Adapter,
@@ -437,10 +451,15 @@ def assert_conf_registered_and_declared(bacterial: Bacterial) -> None:
         f"{phenotype} (chunked)"
     }
     # a bacterial leaf is never written under the served yeast class, and no conf here
-    # serves a segregant genotype or a phage
+    # serves a segregant genotype
     assert "perturbation (chunked)" not in names
     assert "segregant genotype (chunked)" not in names
-    assert "phage perturbation (chunked)" not in names
+    # The two environment-side node classes are mutually exclusive: the served
+    # `_environment_perturbation_node` does not filter phages out, so a conf enabling
+    # both would emit each phage twice under two labels on one content id.
+    served_phage = "phage perturbation (chunked)" in names
+    assert served_phage == bacterial.case.shape.phage
+    assert not (served_phage and "environment perturbation (chunked)" in names)
 
 
 def assert_gate_resolves_own_files(bacterial: Bacterial) -> None:

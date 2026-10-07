@@ -18,7 +18,10 @@ checks here are:
   are the bacterial class, and the memory-reduction factor written on chunked
   methods) plus whether the genotype is a segregant, which is
   DERIVED from the paired dataset's ``experiment_class`` genotype type hint
-  (``SegregantGenotype``) rather than written per case. The method order is the
+  (``SegregantGenotype``) rather than written per case. ``phage`` is the second,
+  mutually exclusive, environment-side node class: it adds the ``phage perturbation``
+  node pair and rides the same two ``environment perturbation to environment`` edges,
+  whose graph class declares both node classes as sources. The method order is the
   ``CellAdapter`` registration-table order restricted to the enabled set, written out
   by hand below;
 * the conf order is the order the adapter will run the methods in:
@@ -127,12 +130,15 @@ EDGE_ENDPOINTS: dict[str, list[tuple[str, ...]]] = {
         ("temperature (chunked)",),
         ("environment (chunked)",),
     ],
+    # `phage perturbation` is content-addressed by the same projection as `environment
+    # perturbation` and its graph class declares both as sources, so these two edge
+    # methods address either node class (cell_adapter, "Phage challenges").
     "environment perturbation to environment (chunked)": [
-        ("environment perturbation (chunked)",),
+        ("environment perturbation (chunked)", "phage perturbation (chunked)"),
         ("environment (chunked)",),
     ],
     "environment perturbation to environment reference": [
-        ("environment perturbation reference",),
+        ("environment perturbation reference", "phage perturbation reference"),
         ("environment reference",),
     ],
     "genome to experiment reference": [("genome",), ("experiment reference",)],
@@ -158,6 +164,9 @@ NODE_LINK: dict[str, str] = {
     "environment perturbation (chunked)": (
         "environment perturbation to environment (chunked)"
     ),
+    "phage perturbation (chunked)": (
+        "environment perturbation to environment (chunked)"
+    ),
     PHENOTYPE_CHUNKED: "phenotype to experiment (chunked)",
     "publication (chunked)": "publication to experiment (chunked)",
 }
@@ -170,6 +179,11 @@ class Shape(NamedTuple):
     perturbation: bool = True
     crispr: bool = False
     env_perturbation: bool = False
+    # A phage challenge is its own node class, and a conf enables `phage perturbation`
+    # or `environment perturbation` and never both: the served
+    # `_environment_perturbation_node` does not filter phages out, so enabling both
+    # would emit each phage twice under two labels on one content id.
+    phage: bool = False
     mrf: float | None = 1.0
     # A bacterial genotype's leaves are served as `bacterial perturbation`, never as the
     # yeast `perturbation` class (cell_adapter.BACTERIAL_PERTURBATION_LEAVES).
@@ -213,6 +227,8 @@ def expected_methods(shape: Shape, segregant: bool) -> tuple[list[str], list[str
             "environment perturbation (chunked)",
             "environment perturbation reference",
         ]
+    if shape.phage:
+        nodes += ["phage perturbation (chunked)", "phage perturbation reference"]
     nodes += [
         f"{shape.phenotype} (chunked)",
         f"{shape.phenotype} reference",
@@ -236,7 +252,7 @@ def expected_methods(shape: Shape, segregant: bool) -> tuple[list[str], list[str
         "media to environment (chunked)",
         "temperature to environment (chunked)",
     ]
-    if shape.env_perturbation:
+    if shape.env_perturbation or shape.phage:
         edges += [
             "environment perturbation to environment (chunked)",
             "environment perturbation to environment reference",

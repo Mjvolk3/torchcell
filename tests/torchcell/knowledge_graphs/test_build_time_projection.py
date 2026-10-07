@@ -484,6 +484,7 @@ BACTERIAL_DATASETS = {
     "CrispriGuideFitnessWang2018Dataset",
     "CrispriKnockdownCui2018Dataset",
     "CrispriKnockdownYunus2026Dataset",
+    "CrispriScreenRousset2018Dataset",
     "EnvChemgenShiver2016Dataset",
     "EnvChemgenWang2015Dataset",
     "GeneEssentialityGoodall2018Dataset",

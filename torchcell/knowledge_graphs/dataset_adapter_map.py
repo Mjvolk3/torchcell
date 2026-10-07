@@ -12,6 +12,7 @@ from torchcell.adapters import (
     CrispriGuideFitnessWang2018Adapter,
     CrispriKnockdownCui2018Adapter,
     CrispriKnockdownYunus2026Adapter,
+    CrispriScreenRousset2018Adapter,
     DmfCostanzo2016Adapter,
     DmfKuzmin2018Adapter,
     DmfKuzmin2020Adapter,
@@ -90,6 +91,7 @@ from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
 from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
+from torchcell.datasets.ecoli.rousset2018 import CrispriScreenRousset2018Dataset
 from torchcell.datasets.ecoli.schmidt2016 import ProteomeSchmidt2016Dataset
 from torchcell.datasets.ecoli.shiver2016 import EnvChemgenShiver2016Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
@@ -255,6 +257,7 @@ dataset_adapter_map = {
     RnaseqLamoureux2023Dataset: RnaseqLamoureux2023Adapter,
     RbTnseqPrice2018EcoliDataset: RbTnseqPrice2018EcoliAdapter,
     MetabolomeRapp2026Dataset: MetabolomeRapp2026Adapter,
+    CrispriScreenRousset2018Dataset: CrispriScreenRousset2018Adapter,
     EnvChemgenShiver2016Dataset: EnvChemgenShiver2016Adapter,
     ProteomeSchmidt2016Dataset: ProteomeSchmidt2016Adapter,
     CarbonSourceTong2020Dataset: CarbonSourceTong2020Adapter,

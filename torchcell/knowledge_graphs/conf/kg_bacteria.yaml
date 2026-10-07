@@ -65,6 +65,7 @@ datasets:
   - RnaseqLamoureux2023Dataset
   - RbTnseqPrice2018EcoliDataset
   - MetabolomeRapp2026Dataset
+  - CrispriScreenRousset2018Dataset
   - EnvChemgenShiver2016Dataset
   - ProteomeSchmidt2016Dataset
   - CarbonSourceTong2020Dataset

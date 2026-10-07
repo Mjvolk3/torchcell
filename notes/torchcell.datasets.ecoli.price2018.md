@@ -253,3 +253,29 @@ numbers and audits every quote against the pinned mirrors.
   `verify()` (bacterial gene universe and resolver) until the runner selects by the
   record's assembly pin.
 - **Adapter map:** no `dataset_adapter_map` entry yet (KG admission is out of scope here).
+
+## 2026.10.07 - Rebased onto the REL606 schema: the staleness gate does not see a widened namespace Literal
+
+Rebased past the REL606 genome tier, Wang 2015, Goodall 2018 and the Caglar 2017 loaders.
+Main's REL606 commit widened two module-level aliases in `schema.py`:
+`BacterialGeneNamespace` gained `ecoli_b_rel606_locus_tag` and
+`BACTERIAL_LOCUS_TAG_PATTERNS` gained its `^ECB_[rt]?\d{5}$` pattern.
+
+**Measured:** the build manifest of the existing dev LMDB still reads `is_stale=False`
+with an empty drift list, and 2,000 stored records re-validate against the rebased
+schema. So no rebuild was needed.
+
+**Why the gate is silent, and the question it raises.** The manifest's closure holds 40
+symbols, and the two bacterial ones are the CLASSES `TransposonInsertionPerturbation` and
+`BacterialStrainBackground`; the module-level `Literal` aliases their fields are annotated
+with are not closure members. A widened namespace vocabulary therefore moves no
+fingerprint. For this dataset that is harmless, since its records store
+`ecoli_k12_bw25113_locus_tag` and that member's pattern is untouched. The general case is
+worth the owner's attention: a namespace REMOVED from the Literal, or a changed pattern
+for a namespace a served dataset uses, would be equally invisible to the staleness gate
+while changing what those records are allowed to say.
+
+One CI-only type error was fixed in the same round: `lmdb`'s `txn.get` is `bytes | None`
+where CI resolves its stubs and `Any` locally (no stubs in the env), so the dev-build
+test now binds the payload to an annotated local and asserts it is not None before
+`pickle.loads` (narrowed, never cast).

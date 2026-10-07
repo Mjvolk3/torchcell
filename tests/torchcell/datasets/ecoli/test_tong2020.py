@@ -21,11 +21,14 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
 import os
 import os.path as osp
 import zipfile
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from types import SimpleNamespace
+from typing import Any, cast
 
 import pandas as pd
 import pytest
@@ -45,6 +48,9 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 )
 from torchcell.datamodels.media import MEDIA_LIBRARY, MOPS_MINIMAL
 from torchcell.datamodels.schema import (
+    ASSEMBLY_SET_ACCESSIONS,
+    BACTERIAL_ASSEMBLY_SETS,
+    AssemblyReferenceGenome,
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
     BacterialGeneNamespace,
@@ -55,15 +61,20 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.bacteria_common import (
     BacterialGenomeInjector,
+    LocusTagReconciliation,
     LocusTagResolutionError,
+    reconcile_locus_tags,
 )
 from torchcell.datasets.dataset_registry import dataset_registry
+from torchcell.literature.manifest import Manifest
+from torchcell.sequence.genome.bacterial import BacterialGenome
 from torchcell.sequence.genome.base import GeneNameStatus
 from torchcell.sequence.genome.ecoli.k12 import (
     BW25113_ASSEMBLY,
     MG1655_ASSEMBLY,
     EcoliK12BW25113Genome,
     EcoliK12MG1655Genome,
+    EcoliK12StrainName,
 )
 from torchcell.verification.sourced import (
     ProvenanceGapReason,
@@ -571,3 +582,265 @@ def test_stored_tags_accept_a_pseudogene_locus_and_refuse_a_foreign_tag(
     foreign = t.stored_tags_are_loci([_record("b0099", namespace, "Glucose")], mg1655)
     assert not foreign.passed
     assert foreign.details == {"statuses": {"retired": 1}, "not_a_locus": ["b0099"]}
+
+
+# --------------------------------------------------------------------------- #
+# Small guards
+# --------------------------------------------------------------------------- #
+def test_manifest_sha256_refuses_a_path_the_manifest_does_not_record() -> None:
+    manifest = Manifest(citation_key=t.CITATION_KEY)
+    with pytest.raises(KeyError, match="is not in the raw-mirror manifest"):
+        t.manifest_sha256(manifest, t.XLSX_REL)
+
+
+class _Locus:
+    def __init__(self, symbol: str | None) -> None:
+        self.symbol = symbol
+
+
+class _Resolution:
+    def __init__(self, systematic_name: str | None) -> None:
+        self.systematic_name = systematic_name
+
+
+class _SymbolGenome:
+    """The two attributes ``canonical_symbol`` reads, with a symbol shared by two loci."""
+
+    def __init__(self) -> None:
+        self.genbank = SimpleNamespace(
+            loci={"b0010": _Locus(None), "b0011": _Locus("dup"), "b0012": _Locus("dup")}
+        )
+
+    def resolve_gene_name(self, name: str) -> _Resolution:
+        return _Resolution("b0012" if name == "dup" else None)
+
+
+def test_canonical_symbol_falls_back_to_the_tag_when_the_symbol_is_absent_or_elsewhere() -> (
+    None
+):
+    genome = cast(BacterialGenome[Any], _SymbolGenome())
+    assert t.canonical_symbol(genome, "b0010") == "b0010"  # no /gene symbol
+    assert t.canonical_symbol(genome, "b0011") == "b0011"  # 'dup' resolves to b0012
+    assert t.canonical_symbol(genome, "b0012") == "dup"
+
+
+def test_resolve_strains_refuses_a_table_without_its_positional_index(
+    k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
+) -> None:
+    mg1655, bw25113 = k12
+    endpoint = pd.DataFrame({t.ID_COL: ["b0001", "b0006"]}, index=[5, 6])
+    with pytest.raises(ValueError, match="positional RangeIndex"):
+        t.resolve_strains(endpoint, frozenset({"b0001"}), mg1655, bw25113, label="idx")
+
+
+def _wrap_bw25113_reconciliation(
+    monkeypatch: pytest.MonkeyPatch,
+    alter: Callable[[pd.Series, LocusTagReconciliation], tuple[pd.Series, Any]],
+) -> None:
+    """Route the BW25113 reconciliation through ``alter``; MG1655 calls pass through."""
+    real = reconcile_locus_tags
+
+    def wrapped(
+        genome: Any, names: pd.Series, *, label: str
+    ) -> tuple[pd.Series, LocusTagReconciliation]:
+        stored, report = real(genome, names, label=label)
+        if label.endswith("vs BW25113"):
+            return alter(stored, report)
+        return stored, report
+
+    monkeypatch.setattr(t, "reconcile_locus_tags", wrapped)
+
+
+def test_a_crosswalked_tag_the_bw25113_annotation_remaps_stops_the_build(
+    k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mg1655, bw25113 = k12
+    _wrap_bw25113_reconciliation(
+        monkeypatch, lambda s, r: (s, r.model_copy(update={"remapped": 1}))
+    )
+    with pytest.raises(RuntimeError, match=r"not distinct locus tags.*remapped 1"):
+        t.resolve_strains(
+            _ids(["b0001", "b0006"]), frozenset({"b0001"}), mg1655, bw25113, label="r"
+        )
+
+
+def test_a_crosswalked_tag_changed_by_reconciliation_stops_the_build(
+    k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mg1655, bw25113 = k12
+    _wrap_bw25113_reconciliation(
+        monkeypatch, lambda s, r: (s.map(lambda _: "BW25113_0002"), r)
+    )
+    with pytest.raises(RuntimeError, match="changed a crosswalked tag"):
+        t.resolve_strains(
+            _ids(["b0001", "b0006"]), frozenset({"b0001"}), mg1655, bw25113, label="c"
+        )
+
+
+# --------------------------------------------------------------------------- #
+# The whole loader, hermetic: a synthetic Table S1 in a tmp raw mirror, the synthetic
+# K-12 genomes, a stubbed assembly pin. Derived expectations for the frame below:
+# Keio = b0001, b0003, b0002, thrA1, b0005, b0099, PRO2 (5 of 7 resolve on MG1655);
+# library = b0006, b0098 (1 of 2). Kept: b0001 -> BW25113_0001, b0003 -> BW25113_4412,
+# b0002 -> BW25113_0002, b0006 (library). Dropped strains: thrA1 (fragment of b0002),
+# b0005 (no one-to-one ECK partner), b0099 and b0098 (not in MG1655), PRO2 (ambiguous).
+# One blank cell (b0001 on Xylose). 9 x 30 = 270 cells, 4 x 30 - 1 = 119 records.
+# --------------------------------------------------------------------------- #
+_FRAME = [
+    "b0001",
+    "b0003",
+    "b0002",
+    "thrA1",
+    "b0005",
+    "b0099",
+    "PRO2",
+    "b0006",
+    "b0098",
+]
+_KEIO = ["b0001", "b0003", "b0002", "thrA1", "b0005", "b0099", "PRO2"]
+
+
+def _pin(strain: EcoliK12StrainName) -> AssemblyReferenceGenome:
+    assembly_set = BACTERIAL_ASSEMBLY_SETS[strain]
+    return AssemblyReferenceGenome(
+        species="Escherichia coli",
+        strain=strain,
+        assembly_set=cast(Any, assembly_set),
+        assembly_accession=ASSEMBLY_SET_ACCESSIONS[assembly_set][0],
+    )
+
+
+@pytest.fixture
+def mirrored(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
+) -> Path:
+    """A tmp ``DATA_ROOT`` whose raw mirror holds a synthetic Table S1; returns it."""
+    mg1655, bw25113 = k12
+    endpoint = _endpoint(_FRAME, _FRAME)
+    endpoint.loc[0, "Xylose"] = float("nan")
+    source = _write_table(tmp_path, monkeypatch, endpoint, _comparison(_KEIO))
+    monkeypatch.setattr(
+        t, "XLSX_SHA256", hashlib.sha256(source.read_bytes()).hexdigest()
+    )
+    data_root = tmp_path / "data_root"
+    t.deposit_raw_mirror(xlsx_path=source, data_root=str(data_root))
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    monkeypatch.setattr(t, "MIN_RESOLVED_FRACTION", 0.5)
+    genomes = {"MG1655": mg1655, "BW25113": bw25113}
+    monkeypatch.setattr(
+        t, "bacterial_genome", lambda host, strain, data_root=None: genomes[strain]
+    )
+    monkeypatch.setattr(t, "assembly_reference", _pin)
+    return data_root
+
+
+def test_the_loader_builds_the_synthetic_release_end_to_end(
+    tmp_path: Path, mirrored: Path
+) -> None:
+    root = tmp_path / "dataset"
+    dataset = t.CarbonSourceTong2020Dataset(root=str(root))
+    assert len(dataset) == 119
+    assert sorted(dataset.gene_set) == [
+        "BW25113_0001",
+        "BW25113_0002",
+        "BW25113_4412",
+        "b0006",
+    ]
+    references = dataset.experiment_reference_index
+    assert references is not None
+    assert len(references) == 60
+    first = dataset[0]["experiment"]
+    assert first["genotype"]["perturbations"][0]["systematic_gene_name"] == (
+        "BW25113_0001"
+    )
+    assert first["environment"]["perturbations"][0]["agent"]["name"] == "galactose"
+    assert first["phenotype"]["fitness"] == 0.5
+    assert first["phenotype"]["n_samples"] == 2
+
+    drops = json.loads((root / "preprocess" / "dropped_records.json").read_text())
+    assert (drops["source_records"], drops["kept_records"]) == (270, 119)
+    assert {r["rule"]: (r["n_records"], r["items"]) for r in drops["rules"]} == {
+        "b_number_is_a_fragment_of_a_merged_mg1655_locus": (30, ["thrA1"]),
+        "b_number_is_not_in_the_mg1655_annotation": (60, ["b0098", "b0099"]),
+        "b_number_is_ambiguous_in_mg1655": (30, ["PRO2"]),
+        "mg1655_locus_has_no_one_to_one_eck_partner_in_bw25113": (30, ["b0005"]),
+        "carbon_source_cell_is_blank": (1, []),
+    }
+    report = json.loads(
+        (root / "preprocess" / "identifier_reconciliation.json").read_text()
+    )
+    assert report["collections"] == {"keio": 3, "srna": 1}
+    assert (report["keio_comparison_rows"], report["keio_comparison_b_numbers"]) == (
+        7,
+        7,
+    )
+    assert [u["reported"] for u in report["crosswalk_numeric_disagreements_used"]] == [
+        "b0003"
+    ]
+    assert (root / "preprocess" / "build_manifest.json").is_file()
+    assert (root / "raw" / t.XLSX_FILENAME).is_file()
+
+
+def test_a_direct_run_opens_the_bw25113_genome_itself(
+    tmp_path: Path, mirrored: Path
+) -> None:
+    dataset = t.CarbonSourceTong2020Dataset.__new__(t.CarbonSourceTong2020Dataset)
+    dataset.ecoli_genome = None
+    dataset.name = "CarbonSourceTong2020Dataset"
+    mg1655, bw25113 = dataset._genomes()
+    assert isinstance(mg1655, EcoliK12MG1655Genome)
+    assert dataset.ecoli_genome is bw25113
+
+
+def test_the_loader_refuses_a_genome_of_the_wrong_strain(
+    k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mg1655, bw25113 = k12
+    dataset = t.CarbonSourceTong2020Dataset.__new__(t.CarbonSourceTong2020Dataset)
+    dataset.name = "CarbonSourceTong2020Dataset"
+    dataset.ecoli_genome = mg1655
+    with pytest.raises(TypeError, match="needs the BW25113 genome"):
+        dataset._genomes()
+    dataset.ecoli_genome = bw25113
+    monkeypatch.setattr(
+        t, "bacterial_genome", lambda host, strain, data_root=None: bw25113
+    )
+    with pytest.raises(TypeError, match="expected the MG1655 genome"):
+        dataset._genomes()
+
+
+def test_download_refuses_a_mirror_whose_file_is_gone(
+    tmp_path: Path, mirrored: Path
+) -> None:
+    (mirrored / t.RAW_DIR_REL / t.XLSX_REL).unlink()
+    dataset = t.CarbonSourceTong2020Dataset.__new__(t.CarbonSourceTong2020Dataset)
+    with pytest.raises(RuntimeError, match="required raw artifact missing"):
+        dataset.download()
+
+
+def test_verify_build_reports_each_background_with_the_supplementary_rows(
+    tmp_path: Path, mirrored: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "dataset"
+    t.CarbonSourceTong2020Dataset(root=str(root))
+    monkeypatch.setattr(t, "EXPECTED_RECORDS", {"BW25113": 89, "MG1655": 30})
+    reports = t.verify_build(str(root), str(mirrored))
+    verdicts = {
+        strain: {r.name: r.passed for r in report.results}
+        for strain, report in reports.items()
+    }
+    for strain in ("BW25113", "MG1655"):
+        rows = verdicts[strain]
+        assert rows["structural"] and rows["count"]
+        # the fitness verifier's environment key ignores the carbon-source perturbation
+        assert rows["pair_uniqueness"] is False
+        assert rows["pair_uniqueness_with_environment_perturbations"] is True
+        assert rows["stored_tags_are_loci_of_the_pinned_assembly"] is True
+        assert rows["reference_one"] and rows["current_genome_genes"]
+        assert (root / "preprocess" / f"verification_report_{strain}.json").is_file()

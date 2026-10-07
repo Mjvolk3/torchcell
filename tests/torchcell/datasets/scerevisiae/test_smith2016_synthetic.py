@@ -755,3 +755,32 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     assert list((staged.root / "processed").iterdir()) == []
     assert not (staged.root / "preprocess").exists()
     assert _sha256(raw) == staged.observed
+
+
+# Phase 24: the drop-accounting guard
+
+
+def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``DropLog`` is patched to report one more dropped record than the build lost.
+
+    The rules total 5 (1 vendor code + 2 no A/var(A) + 1 unresolved + 1 no spacer, as
+    in ``test_drop_log_accounts_for_every_rule_in_application_order``) while the log
+    says 6: the exact mismatch message, and the tampered 6 already on disk.
+    """
+    real = s.DropLog
+
+    def inflated(**kwargs: Any) -> Any:
+        kwargs["dropped_records"] += 1
+        return real(**kwargs)
+
+    monkeypatch.setattr(s, "DropLog", inflated)
+    root = _root(tmp_path)
+    with pytest.raises(RuntimeError) as err:
+        s.CrispriChemgenSmith2016Dataset(root=str(root), genome=_genome())
+    assert str(err.value) == (
+        "drop accounting mismatch: rules total 5, 6 records missing from the build"
+    )
+    log = json.loads((root / "preprocess" / "dropped_records.json").read_text())
+    assert log["dropped_records"] == 6

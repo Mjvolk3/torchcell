@@ -37,6 +37,7 @@ from numpy.testing import assert_allclose, assert_array_equal
 from numpy.typing import NDArray
 from PIL import Image
 
+import torchcell.sga.cellpose_seg as cs
 from torchcell.sga.cellpose_seg import (
     _CATEGORY_COLOR,
     _INSTANCE_COLORS,
@@ -824,3 +825,262 @@ def test_recover_colony_refuses_a_fragmented_core(grow_px: int) -> None:
     core = g[rr <= 0.28 * 60]
     assert (core.size, int((core == 190.0).sum())) == (885, 349)
     assert _recover_colony(g, 100, 100, 60.0, True, 12.0, grow_px) is None
+
+
+# --- 2026.10.07 (Phase 24): homography refusals, empty Otsu splits, contrast, recovery --
+
+
+PROJECTIVE_H = np.array([[30.0, 3.0, 100.0], [0.0, 30.0, 100.0], [0.0, 0.0, 1.0]])
+
+
+def _projective_grid() -> tuple[NDArray[Any], NDArray[Any]]:
+    """The 4x4 sheared lattice of ``test_homography_lattice_reproduces_a_projective_grid``:
+    the even 30 px start grid and the 16 colony centroids (y, x) it should snap to.
+    """
+    ii, jj = np.meshgrid(np.arange(4.0), np.arange(4.0), indexing="ij")
+    nodes = np.stack([100 + 30 * ii, 100 + 30 * jj], -1)
+    px = _apply_homography(PROJECTIVE_H, np.stack([jj.ravel(), ii.ravel()], 1))
+    return nodes, np.stack([px[:, 1], px[:, 0]], 1)
+
+
+def test_homography_lattice_returns_the_grid_when_every_sample_is_singular(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Every RANSAC sample's fit raising ``LinAlgError`` is skipped, so no hypothesis is
+    ever scored, ``best_h`` stays None and the input grid object itself is returned on
+    the first iteration: all 200 samples were attempted and nothing was refit.
+    """
+    nodes, cents = _projective_grid()
+    calls: list[int] = []
+
+    def singular(src: NDArray[Any], dst: NDArray[Any]) -> NDArray[Any]:
+        calls.append(len(src))
+        raise np.linalg.LinAlgError("Singular matrix")
+
+    monkeypatch.setattr(cs, "_fit_homography", singular)
+    out = _homography_lattice(nodes, cents, 4, 4, 30.0)
+    assert out is nodes
+    assert calls == [4] * 200
+
+
+def test_homography_lattice_skips_a_singular_sample_and_still_fits(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Only the first sample's fit raises; the next 199 hypotheses are scored as usual,
+    all 16 colonies are inliers of the exact map, and the refit lands every node on its
+    colony to 1e-9 (the same result as the unpatched test).
+    """
+    nodes, cents = _projective_grid()
+    real = cs._fit_homography
+    calls: list[int] = []
+
+    def first_singular(src: NDArray[Any], dst: NDArray[Any]) -> NDArray[Any]:
+        calls.append(len(src))
+        if len(calls) == 1:
+            raise np.linalg.LinAlgError("Singular matrix")
+        out: NDArray[Any] = real(src, dst)
+        return out
+
+    monkeypatch.setattr(cs, "_fit_homography", first_singular)
+    out = _homography_lattice(nodes, cents, 4, 4, 30.0, iters=1)
+    assert_allclose(out.reshape(-1, 2), cents, atol=1e-9)
+    # 200 RANSAC samples of 4 points, then the inlier refit on all 16
+    assert calls == [4] * 200 + [16]
+
+
+def _threshold_below(
+    monkeypatch: pytest.MonkeyPatch, value: float
+) -> list[NDArray[Any]]:
+    """Make ``skimage.filters.threshold_otsu`` return ``value`` and record each call's
+    sample. Otsu on real data always returns a bin center strictly inside the value
+    range, so a threshold below every value is the only way to an empty colony split.
+    """
+    import skimage.filters
+
+    seen: list[NDArray[Any]] = []
+
+    def fake(vals: NDArray[Any]) -> float:
+        seen.append(np.asarray(vals).copy())
+        return value
+
+    monkeypatch.setattr(skimage.filters, "threshold_otsu", fake)
+    return seen
+
+
+def test_tighten_instance_keeps_the_mask_when_the_split_is_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The 11x11 instance of ``test_tighten_instance_keeps_the_dark_core`` with its
+    corner pixel (3, 3) removed (120 px) and a threshold of 50, below both levels
+    (100 core, 200 halo): ``g <= 50`` selects no pixel, ``label`` finds 0 components,
+    and the instance's own 120 px area is returned with the mask untouched. Otsu saw
+    the 120 instance values. ``grow_px=0`` matters: without the ``n == 0`` guard the
+    bounding box (``lab == 0``, 121 px) would be returned instead, and a grown
+    instance is clipped back to the mask so both paths would give 120.
+    """
+    seen = _threshold_below(monkeypatch, 50.0)
+    masks = np.zeros((20, 20), np.int32)
+    masks[3:14, 3:14] = 1
+    masks[3, 3] = 0
+    g = np.full((20, 20), 200.0)
+    g[5:12, 5:12] = 100.0
+    m = masks.copy()
+    assert _tighten_instance(m, 1, g, True, 0.2, 0) == 120
+    assert_array_equal(m, masks)
+    assert [v.size for v in seen] == [120]
+
+
+def test_recover_colony_refuses_when_the_split_is_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The radius-15 disk of ``test_recover_colony_finds_a_filled_well`` (depth 23 > 12,
+    so the probe reaches the threshold) with a threshold of 100, below both 190 and
+    213: no window pixel is colony, ``label`` finds 0 components, and the well is not
+    recovered. Otsu saw the 0.46-pitch window, the 2393 pixels with r <= 27.6, of
+    which the 709 disk pixels (r <= 15) read 190 and the other 1684 read 213.
+    """
+    seen = _threshold_below(monkeypatch, 100.0)
+    g = _agar_with_disk(15)
+    assert _recover_colony(g, 100, 100, 60.0, True, 12.0, 0) is None
+    rr = np.hypot(*np.mgrid[-46:47, -46:47])
+    (vals,) = seen
+    assert vals.size == int((rr <= 0.46 * 60).sum()) == 2393
+    assert (int((vals == 190).sum()), int((vals == 213).sum())) == (709, 1684)
+
+
+def test_quantify_cellpose_enhances_contrast_before_the_model(
+    backlit_plate_path: str, plate_masks: NDArray[Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``contrast="clahe"`` routes the RGB image through ``_contrast_enhance(img,
+    "clahe", clahe_clip)`` once, and the model receives exactly the enhanced array it
+    returns (the same object); the lattice is still fit on the original image, so the
+    table equals the unenhanced run.
+    """
+    enhanced = np.zeros((300, 400, 3), np.uint8)
+    enhance_calls: list[tuple[tuple[int, ...], str, float]] = []
+    seen: list[NDArray[Any]] = []
+
+    def fake_enhance(img: NDArray[Any], method: str, clip: float) -> NDArray[Any]:
+        enhance_calls.append((img.shape, method, clip))
+        return enhanced
+
+    class FakeModel:
+        def eval(self, img: NDArray[Any], **kw: Any) -> tuple[NDArray[Any], None, None]:
+            seen.append(img)
+            return plate_masks.copy(), None, None
+
+    monkeypatch.setattr(cs, "_contrast_enhance", fake_enhance)
+    cfg = CellposeSegConfig(n_rows=3, n_cols=4, contrast="clahe", clahe_clip=0.03)
+    res = quantify_plate_image_cellpose(backlit_plate_path, FakeModel(), cfg=cfg)
+    assert enhance_calls == [((300, 400, 3), "clahe", 0.03)]
+    assert len(seen) == 1 and seen[0] is enhanced
+    assert res.table["size"].tolist() == EXPECTED_SIZES
+    assert res.table["flags"].tolist() == EXPECTED_FLAGS
+
+
+def test_quantify_cellpose_does_not_probe_an_off_gel_empty_well(
+    backlit_plate_path: str, plate_masks: NDArray[Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``edge_margin_frac=0.05`` narrows the gate to 3 px. The bottom-corner nodes sit
+    4.24 px outside the chamfer (module docstring), so their colonies fail the
+    ``sd >= -3`` acceptance and the two wells join the empty list; recovery then skips
+    both before probing, and only the truly empty (2, 3) node is probed, at the rounded
+    (150, 230). With the default 30 px margin the corners are accepted (flag E) and the
+    probe list is the same single node.
+    """
+    probes: list[tuple[int, int]] = []
+
+    def recorder(g: NDArray[Any], ny: int, nx: int, *args: Any) -> None:
+        probes.append((ny, nx))
+
+    monkeypatch.setattr(cs, "_recover_colony", recorder)
+    narrow = CellposeSegConfig(n_rows=3, n_cols=4, edge_margin_frac=0.05)
+    res = quantify_plate_image_cellpose(
+        backlit_plate_path, None, cfg=narrow, precomputed_masks=plate_masks.copy()
+    )
+    assert probes == [(150, 230)]
+    assert res.table["size"].tolist() == [49, 49, 49, 81, 49, 195, 0, 49, 0, 49, 49, 0]
+    assert res.table["flags"].tolist() == [
+        "",
+        "",
+        "",
+        "M",
+        "",
+        "C",
+        "",
+        "N",
+        "",
+        "",
+        "",
+        "",
+    ]
+    assert res.table["detector"].tolist()[8::3] == ["", ""]
+    probes.clear()
+    quantify_plate_image_cellpose(
+        backlit_plate_path, None, cfg=CFG, precomputed_masks=plate_masks.copy()
+    )
+    assert probes == [(150, 230)]
+
+
+@pytest.mark.parametrize(
+    ("block", "y0", "x0", "recovered"),
+    [
+        # 5x5 at the image corner: gel_sd there is -86.6 to -92.2 < -30, nothing in gel
+        ((5, 5), 0, 0, False),
+        # 3x3 on the node: 9 in-gel pixels < MIN_COLONY_AREA 20
+        ((3, 3), 149, 229, False),
+        # 7x7 centered (150, 270): 40 px from the node > 0.55 * 60 = 33
+        ((7, 7), 147, 267, False),
+        # 7x7 centered on the node: accepted as a 49 px recovered colony
+        ((7, 7), 147, 227, True),
+    ],
+)
+def test_quantify_cellpose_validates_the_recovered_region(
+    backlit_plate_path: str,
+    plate_masks: NDArray[Any],
+    monkeypatch: pytest.MonkeyPatch,
+    block: tuple[int, int],
+    y0: int,
+    x0: int,
+    recovered: bool,
+) -> None:
+    """``_recover_colony`` is replaced by a fake returning a solid block at a chosen
+    place for the empty (2, 3) well (node (150, 230)). The region is trimmed to in-gel
+    pixels and must stay colony-sized and centered: a block wholly off the gel, a 9 px
+    block, and a block 40 px off-node are each refused (the well stays size 0 with no
+    detector, the masks are unchanged and no id 13 is colored); the on-node 7x7 is
+    written as id 13 with 49 px at its centroid (230, 150), colored R. The corner case
+    pins "refused", not which gate refuses: without the in-gel trim the same block
+    would still fail the off-center gate, and without the empty-trim check it would
+    fall through to size 0 below ``MIN_COLONY_AREA``.
+    """
+    cc = np.ones(block, bool)
+
+    def fake(*args: Any) -> tuple[int, float, NDArray[Any], int, int]:
+        return int(cc.sum()), 1.0, cc, y0, x0
+
+    monkeypatch.setattr(cs, "_recover_colony", fake)
+    res = quantify_plate_image_cellpose(
+        backlit_plate_path,
+        None,
+        cfg=CFG,
+        precomputed_masks=plate_masks.copy(),
+        return_masks=True,
+    )
+    row = res.table.iloc[6].to_dict()
+    assert res.masks is not None
+    if recovered:
+        assert (row["size"], row["circularity"], row["detector"]) == (
+            49,
+            1.0,
+            "recovered",
+        )
+        assert (row["cx"], row["cy"]) == (230.0, 150.0)
+        assert int((res.masks == 13).sum()) == 49
+        assert res.masks[147:154, 227:234].tolist() == [[13] * 7] * 7
+        assert res.kept_color[13] == "R"
+    else:
+        assert (row["size"], row["detector"]) == (0, "")
+        assert np.isnan(row["circularity"])
+        assert_array_equal(res.masks, plate_masks)
+        assert 13 not in res.kept_color

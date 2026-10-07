@@ -981,3 +981,91 @@ def test_categorical_measurement_types_are_exactly_categorical_and_ordinal() -> 
     assert s.CATEGORICAL_MEASUREMENT_TYPES == frozenset(
         {s.MeasurementType.categorical, s.MeasurementType.ordinal}
     )
+
+
+# Phase 24: strain-background, genomic-span and pre-culture validator messages
+
+
+def _bg_allele(
+    functional: bool, zygosity: s.Zygosity, allele_name: str
+) -> s.BackgroundAllele:
+    """A LYS2 allele sourced by a declared gap (no quote needed)."""
+    return s.BackgroundAllele(
+        systematic_gene_name="YBR115C",
+        gene_name="LYS2",
+        allele_name=allele_name,
+        edit=s.AlleleEdit.full_deletion,
+        functional=functional,
+        zygosity=zygosity,
+        provenance=None,
+        provenance_gaps=[_gap("provenance")],
+    )
+
+
+def test_gapped_empty_list_is_refused_by_the_mixin_before_the_empty_list_check() -> (
+    None
+):
+    """Finding: ``_require_value_or_gap``'s "is an empty list" branch is unreachable.
+
+    It needs a gapped field holding ``[]``, but ``ProvenanceGapMixin``'s validator runs
+    first and refuses ANY gapped field that is not None, so its message is what a caller
+    sees.
+    """
+    with _refuses(
+        "field 'provenance' has a ProvenanceGap but is not None (cannot both store a "
+        "value and declare it missing)"
+    ):
+        s.BackgroundAllele(
+            systematic_gene_name="YBR115C",
+            gene_name="LYS2",
+            allele_name="lys2Δ0",
+            edit=s.AlleleEdit.full_deletion,
+            functional=False,
+            zygosity=s.Zygosity.haploid,
+            provenance=[],
+            provenance_gaps=[_gap("provenance")],
+        )
+
+
+def test_genomic_span_needs_a_chromosome_name() -> None:
+    with _refuses("GenomicSpan needs a chromosome and an assembly name"):
+        s.GenomicSpan(chromosome=" ", start=1, end=1, assembly="R64")
+
+
+def test_strain_background_name_cannot_be_blank() -> None:
+    with _refuses("StrainBackground.name cannot be empty"):
+        s.StrainBackground(
+            name=" ",
+            mating_type=s.MatingType.a,
+            ploidy="haploid",
+            provenance=None,
+            provenance_gaps=[_gap("provenance")],
+        )
+
+
+def test_functional_copies_skips_a_functional_allele_of_a_compound_heterozygote() -> (
+    None
+):
+    """Diploid: 2 copies, minus 1 for the heterozygous null; the functional entry at
+    the same locus subtracts nothing, so the count is 1 (it would be 0 if it counted).
+    """
+    background = s.StrainBackground(
+        name="toy",
+        mating_type=s.MatingType.a_alpha,
+        ploidy="diploid",
+        alleles=[
+            _bg_allele(True, s.Zygosity.heterozygous, "LYS2"),
+            _bg_allele(False, s.Zygosity.heterozygous, "lys2Δ0"),
+        ],
+        provenance=None,
+        provenance_gaps=[_gap("provenance")],
+    )
+    assert background.functional_copies("YBR115C") == 1
+
+
+@pytest.mark.parametrize(
+    "field", ["generations", "duration_hours", "od600_at_transfer"]
+)
+def test_pre_culture_quantities_must_be_non_negative(field: str) -> None:
+    with _refuses(f"PreCulture.{field} must be non-negative"):
+        s.PreCulture.model_validate({"source": "log_phase_culture", field: -0.5})

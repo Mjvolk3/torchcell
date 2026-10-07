@@ -1706,3 +1706,182 @@ def test_init_resets_batch_norm_and_leaves_gatv2_untouched() -> None:
         ["gat.lin_l.weight", "gat.lin_r.weight", "gat.att_src", "gat.att_dst"], replay
     ):
         assert torch.equal(state[key], expected), key
+
+
+# ---------------------------------------------------------------------------
+# 2026.10.07 - Phase 24: the fallback sum, edge stores given as plain dicts, the
+# perturbed-stage guards, the 1-D unsqueezes, and the three late guards an infinite
+# (not NaN) prediction reaches. Each guard is reached by replacing the ONE submodule
+# that produces the tensor it checks; the lazy guards test ``isnan``, so +inf passes
+# them and only inf - inf or inf * 0 trips one.
+# ---------------------------------------------------------------------------
+
+from types import SimpleNamespace  # noqa: E402
+
+from tests.torchcell.models.test_hetero_cell_bipartite_dango_gi import (  # noqa: E402
+    _Fill,
+    _Squeeze,
+)
+
+INF = float("inf")
+
+
+def test_hetero_conv_fallback_sum_when_the_method_has_no_aggregator() -> None:
+    """Built as "sum" then rewritten to "cross_attention" (no aggregator was built), the
+    final ``else`` (lines 370-373) sums the convs 2x + 3x = 5x, stores a None weight,
+    and so returns no attention weights at all.
+    """
+    convs: dict[Any, nn.Module] = {PHYS: _MaskedScale(2.0), REG: _MaskedScale(3.0)}
+    layer = HeteroConvAggregator(convs, 2, "sum")
+    layer.aggregation_method = "cross_attention"
+    assert layer.aggregator is None
+    x = {"gene": torch.arange(6.0).reshape(3, 2)}
+    edges = {PHYS: _edge_index([(0, 1)]), REG: _edge_index([(1, 2)])}
+    out, attn = layer(x, edges)
+    assert torch.equal(out["gene"], 5 * x["gene"])
+    assert attn is None
+
+
+class _DictStores:
+    """A graph whose edge stores are plain dicts (``"edge_index" in store`` works,
+    ``hasattr(store, "edge_index")`` does not) and whose gene store is a namespace.
+    """
+
+    def __init__(self, n: int, stores: dict[tuple[str, str, str], dict[str, Any]]):
+        self.gene = SimpleNamespace(num_nodes=n)
+        self.stores = stores
+
+    @property
+    def edge_types(self) -> list[tuple[str, str, str]]:
+        return list(self.stores)
+
+    def __getitem__(self, key: Any) -> Any:
+        return self.gene if key == "gene" else self.stores[key]
+
+
+def test_forward_single_reads_dict_edge_stores_by_key() -> None:
+    """Edge index and mask under dict KEYS (lines 1176-1177 and 1187-1188): physical with
+    mask [T, F, T, T], regulatory with no mask (all-True fallback). The embeddings equal
+    those of the same graph as a HeteroData with the mask as an attribute, and differ
+    from the unmasked graph's, so the dict mask is applied.
+    """
+    model = _lazy().eval()
+    phys_mask = torch.tensor([True, False, True, True])
+    fake = _DictStores(
+        N,
+        {
+            PHYS: {"edge_index": _edge_index(EDGES["physical"]), "mask": phys_mask},
+            REG: {"edge_index": _edge_index(EDGES["regulatory"])},
+        },
+    )
+    hetero = _cell_graph()
+    hetero[PHYS].mask = phys_mask
+    with torch.no_grad():
+        from_dict = model.forward_single(fake)  # type: ignore[arg-type, unused-ignore]
+        from_attrs = model.forward_single(hetero)
+        unmasked = model.forward_single(_cell_graph())
+    assert torch.equal(from_dict, from_attrs)
+    assert not torch.equal(from_dict, unmasked)
+
+
+class _NthNaN(nn.Module):
+    """Wraps a stage; its ``k``-th call (1-based) returns NaN everywhere."""
+
+    def __init__(self, inner: Any, k: int) -> None:
+        super().__init__()
+        self.inner = inner
+        self.k = k
+        self.calls = 0
+
+    def forward(self, *args: Any, **kwargs: Any) -> torch.Tensor:
+        self.calls += 1
+        out: torch.Tensor = self.inner(*args, **kwargs)
+        return torch.full_like(out, float("nan")) if self.calls == self.k else out
+
+
+def test_perturbed_stage_guards_name_their_stage(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``forward_single``'s 2nd call (the batch) returning NaN: "perturbed embeddings
+    (z_i)" (line 1256); the global aggregator's 2nd call (the batch pool) returning
+    NaN: "global perturbed embeddings (z_i_global)" (line 1275). The first calls (the
+    wildtype) pass, so each message names the batch stage.
+    """
+    model = _lazy().eval()
+    wrapped = _NthNaN(model.forward_single, 2)
+    object.__setattr__(model, "forward_single", wrapped)
+    with pytest.raises(
+        RuntimeError, match=r"^NaN detected in perturbed embeddings \(z_i\)$"
+    ):
+        model(_cell_graph(), _collate(GENOTYPES, FOLLOW_LIVE))
+    assert wrapped.calls == 2
+
+    model = _lazy().eval()
+    monkeypatch.setattr(model, "global_aggregator", _NthNaN(model.global_aggregator, 2))
+    with pytest.raises(
+        RuntimeError,
+        match=r"^NaN detected in global perturbed embeddings \(z_i_global\)$",
+    ):
+        model(_cell_graph(), _collate(GENOTYPES, FOLLOW_LIVE))
+
+
+@pytest.mark.parametrize("which", ["global", "local"])
+def test_a_one_dimensional_interaction_is_unsqueezed_to_a_column(
+    monkeypatch: pytest.MonkeyPatch, which: str
+) -> None:
+    """The global (line 1366) or local (line 1368) predictor wrapped to return [3]
+    instead of [3, 1]: the forward unsqueezes it back, so the predictions are
+    bit-identical to the unwrapped model's, [3, 1].
+    """
+    batch = _collate(GENOTYPES, FOLLOW_LIVE)
+    with torch.no_grad():
+        expected, _ = _lazy().eval()(_cell_graph(), batch)
+        model = _lazy().eval()
+        name = (
+            "global_interaction_predictor"
+            if which == "global"
+            else "gene_interaction_predictor"
+        )
+        monkeypatch.setattr(model, name, _Squeeze(getattr(model, name)))
+        pred, _ = model(_cell_graph(), batch)
+    assert pred.shape == (3, 1)
+    assert torch.equal(pred, expected)
+
+
+@pytest.mark.parametrize(
+    ("config", "local", "gate", "message"),
+    [
+        # a zero gate on the infinite global prediction: inf * 0 = NaN
+        (None, 1.0, [-200.0, 0.0], "NaN detected in weighted predictions"),
+        # concat: 0.5 * inf + 0.5 * (-inf) = NaN
+        (CONCAT, -INF, None, "NaN detected in concatenated gene interaction"),
+        # gating with equal gates: inf * 0.5 + (-inf) * 0.5 = NaN in the sum only
+        (None, -INF, [0.0, 0.0], "NaN detected in final gene interaction output"),
+    ],
+)
+def test_an_infinite_prediction_trips_the_guard_where_it_first_becomes_nan(
+    monkeypatch: pytest.MonkeyPatch,
+    config: dict[str, Any] | None,
+    local: float,
+    gate: list[float] | None,
+    message: str,
+) -> None:
+    """The global predictor returns +inf (``isnan`` lets it through every earlier
+    guard), the local predictor ``local``, the gate MLP fixed logits:
+
+    * logits [-200, 0]: softmax weights [exp(-200) = 0 in float32, 1], so the weighted
+      global entry is inf * 0 = NaN (line 1398);
+    * concat mode, local -inf: 0.5 inf + 0.5 (-inf) = NaN (line 1414);
+    * logits [0, 0]: weights [0.5, 0.5], weighted entries +inf and -inf (no NaN), whose
+      sum inf - inf is NaN, caught by the final check (line 1423).
+    """
+    overrides: dict[str, Any] = (
+        {} if config is None else {"local_predictor_config": config}
+    )
+    model = _lazy(**overrides).eval()
+    monkeypatch.setattr(model, "global_interaction_predictor", _Fill(INF))
+    monkeypatch.setattr(model, "gene_interaction_predictor", _Fill(local, local=True))
+    if gate is not None:
+        monkeypatch.setattr(model, "gate_mlp", _Fill(gate))
+    with pytest.raises(RuntimeError, match=f"^{re.escape(message)}$"):
+        model(_cell_graph(), _collate(GENOTYPES, FOLLOW_LIVE))

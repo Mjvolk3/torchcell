@@ -148,3 +148,21 @@ def test_main_builds_one_figure_and_shows_it(
     gis.main()
     assert shown == [1]
     assert plt.gca().get_xlabel() == "Predicted genetic interaction"
+
+
+# Phase 24: linregress ValueError on constant predictions
+
+
+def test_box_plot_constant_predictions_report_r_squared_not_available() -> None:
+    """Three identical predictions make ``linregress`` raise ``ValueError`` (all x values
+    identical, scipy 1.16); the helper turns that into NaN, shown as ``N/A``. The
+    ``spearmanr`` ``except ValueError`` branch is unreachable: scipy raises only on unequal
+    lengths, which the shared NaN mask rules out. All three predictions (0.1) land in
+    bin 7, ``[0.08, 0.16)``, whose median is the middle measured value 0.0.
+    """
+    fig = gis.box_plot(np.array([-0.1, 0.0, 0.1]), np.array([0.1, 0.1, 0.1]))
+    assert fig.axes[0].get_title() == "Pearson: N/A, Spearman: N/A, R²: N/A"
+    medians = [float(np.asarray(m.get_ydata())[0]) for m in _medians(fig)]
+    assert medians[7] == 0.0
+    assert np.isnan(medians[:7] + medians[8:]).all()
+    plt.close(fig)

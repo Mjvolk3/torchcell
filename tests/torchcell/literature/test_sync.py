@@ -1,5 +1,6 @@
 """Tests for torchcell.literature.sync (Zotero collection diff)."""
 
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +10,7 @@ from pydantic import SecretStr
 from torchcell.literature.backfill import library_root
 from torchcell.literature.sync import (
     DEFAULT_PERSONAL_ROOTS,
+    KeySyncResult,
     SyncMode,
     parse_root_list,
     plan_collection_sync,
@@ -356,3 +358,46 @@ def test_collection_tree_names_available_roots_when_missing() -> None:
     lib = _tree_lib(_TREE, {})
     with pytest.raises(ValueError, match="thesis"):
         lib.collection_tree("thesis")
+
+
+# Phase 24: sync_collection's unsupported and failed-capture outcomes
+
+
+def test_sync_collection_reports_unsupported_and_a_failed_capture(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """K1 has a DOI but no PDF attachment -> UNSUPPORTED, capture never called. K2 is
+    eligible but its capture raises -> FAILED carrying the exception text, logged with
+    ``log.exception`` (ERROR, with the traceback), and the batch continues.
+    """
+    (tmp_path / "torchcell-library").mkdir()
+    items = [_item("K1", "10.1/nopdf", "noPdf2021"), _item("K2", "10.2/x", "boom2021")]
+    lib = _FakeLib(items, has_pdf={"K2"})
+    calls: list[str] = []
+
+    def failing_capture(_lib: Any, doi: str, *, do_ocr: bool, data_root: Any) -> Path:
+        calls.append(doi)
+        raise RuntimeError("upstream 503")
+
+    monkeypatch.setattr("torchcell.literature.sync.capture_by_doi", failing_capture)
+    with caplog.at_level(logging.ERROR, logger="torchcell.literature.sync"):
+        report = sync_collection(lib, "paper", data_root=tmp_path)  # type: ignore[arg-type]
+
+    assert calls == ["10.2/x"]
+    assert report.results == [
+        KeySyncResult(
+            citation_key="noPdf2021", mode=SyncMode.UNSUPPORTED, doi="10.1/nopdf"
+        ),
+        KeySyncResult(
+            citation_key="boom2021",
+            mode=SyncMode.FAILED,
+            doi="10.2/x",
+            error="upstream 503",
+        ),
+    ]
+    records = [r for r in caplog.records if r.name == "torchcell.literature.sync"]
+    assert [(r.levelname, r.getMessage()) for r in records] == [
+        ("ERROR", "sync: capture failed for boom2021 (10.2/x)")
+    ]
+    assert records[0].exc_info is not None
+    assert str(records[0].exc_info[1]) == "upstream 503"

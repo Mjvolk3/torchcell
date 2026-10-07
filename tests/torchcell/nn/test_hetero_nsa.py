@@ -1336,3 +1336,80 @@ def test_encoder_refuses_an_unknown_aggregation() -> None:
         ),
     ):
         HeteroNSA(4, {"gene"}, {GG}, ["S"], aggregation="max")  # type: ignore[arg-type, unused-ignore]
+
+
+# ---------------------------------------------------------------------------
+# Phase 24: a relation whose masked block was removed, and the encoder's residual
+# rank repair (hetero_nsa.py:125 and 401-405).
+# ---------------------------------------------------------------------------
+
+
+def test_relation_without_a_masked_block_is_skipped() -> None:
+    """With the gene-gene block deleted from ``masked_blocks`` after construction, the
+    relation is still in ``edge_types`` and in the data but has no module, so the loop
+    skips it (line 125): no NodeSelfAttention runs, genes keep their input object and
+    the untouched reaction type too.
+    """
+    block = _block("M", {GG})
+    del block.masked_blocks["__".join(GG)]
+    data = HeteroData()
+    data[GG].adj_mask = GG_MASK
+    x = _x()
+    out = block(x, data)
+    assert sorted(out) == ["gene", "reaction"]
+    assert out["gene"] is x["gene"]
+    assert out["reaction"] is x["reaction"]
+
+
+class _RankChange(nn.Module):
+    """Stands in for one HeteroNSA layer: returns ``fixed`` for genes, whatever came in."""
+
+    def __init__(self, fixed: torch.Tensor) -> None:
+        super().__init__()
+        self.fixed = fixed
+        self.seen: list[torch.Tensor] = []
+
+    def forward(
+        self, x_dict: dict[str, torch.Tensor], data: HeteroData, batch_idx: Any
+    ) -> dict[str, torch.Tensor]:
+        self.seen.append(x_dict["gene"])
+        return {"gene": self.fixed}
+
+
+@pytest.mark.parametrize("direction", ["3d_to_2d"])
+def test_encoder_repairs_the_residual_rank_before_the_layer_norm(
+    direction: str,
+) -> None:
+    """A layer that returns a lower rank than it received gets a residual of its own
+    rank: 3-D h0 [1, 3, 4] (input x [1, 3, 2]) against a 2-D output F [3, 4] gives
+    LayerNorm_0(F + h0[0]) (line 405); without the squeeze the sum is [1, 3, 4] and
+    the pin fails. The other direction (line 403, ``h0[None]`` against a 3-D F) is
+    not pinned: broadcasting gives the same tensor with or without the unsqueeze,
+    so no assertion can observe it. F is the fixed arange(12) / 10 reshaped;
+    h0 = input_projections.gene(x).
+    """
+    enc = _encoder(["S"], {"gene"})
+    torch.manual_seed(9)
+    x2 = torch.randn(3, 2)
+    fixed2 = torch.arange(12.0).reshape(3, 4) / 10
+    data = HeteroData()
+    if direction == "2d_to_3d":
+        data["gene"].x = x2
+        fixed = fixed2[None]
+    else:
+        data["gene"].x = x2[None]
+        fixed = fixed2
+    fake = _RankChange(fixed)
+    enc.nsa_layers[0] = fake
+    norms = enc.layer_norms["gene"]
+    assert isinstance(norms, nn.ModuleList)
+    with torch.no_grad():
+        nodes, _ = enc(data)
+        h0 = enc.input_projections["gene"](data["gene"].x)
+        if direction == "2d_to_3d":
+            expected = norms[0](fixed + h0[None])
+        else:
+            expected = norms[0](fixed + h0[0])
+    assert torch.equal(fake.seen[0], h0)
+    assert nodes["gene"].shape == fixed.shape
+    assert torch.equal(nodes["gene"], expected)

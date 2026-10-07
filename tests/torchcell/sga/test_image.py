@@ -39,6 +39,7 @@ from numpy.testing import assert_allclose, assert_array_equal
 from numpy.typing import NDArray
 from PIL import Image
 
+import torchcell.sga.image as image_mod
 from torchcell.sga.image import (
     MAX_ASPECT,
     MIN_COLONY_AREA,
@@ -853,3 +854,188 @@ def test_segment_watershed_bright_branch_mirrors_the_dark_branch() -> None:
     bright = _segment_watershed(255.0 - cell, False, PITCH)
     assert_array_equal(bright, dark)
     assert int(bright.sum()) == 77
+
+
+# --- 2026.10.07 (Phase 24): gapped labels, the empty lattice fit, off-image and off-gel
+# nodes, the off-center blob ------------------------------------------------------------
+
+TRUE_LINES = {
+    3: np.array([90.0, 150.0, 210.0]),
+    4: np.array([110.0, 170.0, 230.0, 290.0]),
+}
+
+
+def _gapped_label(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Make ``ndimage.label`` number its components 2, 4, 6, ... (the same components
+    with every odd id unused), so ``find_objects`` returns None at each odd position.
+    ``torchcell.sga.image`` calls it as ``ndimage.label``, so the patch goes on the
+    scipy module and is undone at teardown.
+    """
+    from scipy import ndimage
+
+    real = ndimage.label
+
+    def gapped(mask: NDArray[Any], *args: Any, **kwargs: Any) -> tuple[Any, int]:
+        lab, n = real(mask, *args, **kwargs)
+        return lab * 2, n
+
+    monkeypatch.setattr(ndimage, "label", gapped)
+
+
+def test_detect_blobs_skips_the_missing_label_ids(
+    dark_plate_path: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With component ids 2, 4, ..., 24, every odd ``find_objects`` slot is None; each
+    even id still selects its own component, so the 12 centroids and the 60 px pitch
+    equal the consecutive-label result. Finding: the ``sl is None`` guard is redundant
+    here, because ``lab[None] == i`` has area 0, below ``lo``, so the slot would be
+    dropped by the area gate anyway; what this pins is that gapped ids map to the right
+    components.
+    """
+    g = _grayscale(dark_plate_path)
+    roi = _plate_roi(g)
+    _gapped_label(monkeypatch)
+    cents, pitch = _detect_blobs(g, np.zeros_like(g), roi, False, 4)
+    assert pitch == 60.0
+    assert_allclose(sorted(map(tuple, cents.tolist())), EXPECTED_CENTS, atol=1e-9)
+
+
+def test_detect_blobs_backlit_skips_the_missing_label_ids(
+    backlit_plate_path: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The backlit detector under the same gapped labels: the same 12 centroids, pitch
+    60 and ROI (48, 252, 68, 350) as ``test_detect_blobs_backlit_centroids_pitch_and_roi``.
+    Finding: as in the dark detector, the ``sl is None`` guard is redundant (area 0 is
+    not above 20), so the pin is the component mapping, not the skip.
+    """
+    g = _grayscale(backlit_plate_path)
+    _gapped_label(monkeypatch)
+    cents, pitch, roi = _detect_blobs_backlit(g, 4)
+    assert (pitch, roi) == (60.0, (48, 252, 68, 350))
+    assert_allclose(sorted(map(tuple, cents.tolist())), EXPECTED_CENTS, atol=1e-9)
+
+
+def test_fit_lines_with_no_spread_finds_no_candidate() -> None:
+    """One coordinate gives lo = hi = 5, so the ideal pitch is 0 and every candidate
+    pitch is 0: ``(coords - x0) / 0`` is NaN, no index is in bounds (0 < 0.6 * 1), every
+    candidate is skipped and the fit asserts with its message.
+    """
+    with (
+        np.errstate(invalid="ignore"),
+        pytest.raises(
+            AssertionError, match=re.escape("lattice fit found no candidate line set")
+        ),
+    ):
+        _fit_lines(np.array([5.0]), 2)
+
+
+def test_quantify_records_an_off_image_cell_as_a_spill(
+    dark_plate_path: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The lattice lines are fixed at the true columns and rows y = 90, 150, 1000. The
+    third row's 54x54 window starts at y = 973, past the 300 px image, so the cell is
+    empty and each of its wells is recorded as ``(3, col, 0, NaN, "S", x, 1000.0)``
+    without segmenting; rows 1 and 2 keep the dark-field values of
+    ``test_quantify_dark_field_table``.
+    """
+    lines = {3: np.array([90.0, 150.0, 1000.0]), 4: TRUE_LINES[4]}
+    monkeypatch.setattr(image_mod, "_fit_lines", lambda c, n: lines[n].copy())
+    df = quantify_plate_image(dark_plate_path, 3, 4, grid_mode="roi")
+    assert df["size"].tolist() == [45, 45, 45, 77, 45, 189, 0, 45, 0, 0, 0, 0]
+    assert df["flags"].tolist() == [
+        "",
+        "",
+        "",
+        "M",
+        "",
+        "C",
+        "",
+        "",
+        "S",
+        "S",
+        "S",
+        "S",
+    ]
+    tail = df.iloc[8:]
+    assert tail[["row", "col", "cx", "cy"]].values.tolist() == [
+        [3, 1, 110.0, 1000.0],
+        [3, 2, 170.0, 1000.0],
+        [3, 3, 230.0, 1000.0],
+        [3, 4, 290.0, 1000.0],
+    ]
+    assert np.isnan(tail["circularity"].to_numpy()).all()
+
+
+@pytest.mark.parametrize(
+    ("gel_rows", "expected_row_3"),
+    [
+        # node sd = -(230 - 194) = -36 < -30: the node gate empties the well
+        (195, [(0, ""), (0, ""), (0, ""), (0, "")]),
+        # node sd = -26 >= -30: segmented; colony centroid sd = -6 is in the E band
+        (205, [(37, "E"), (37, "E"), (37, "E"), (37, "E")]),
+    ],
+)
+def test_quantify_backlit_gel_gate_skips_an_off_gel_node(
+    backlit_plate_path: str,
+    monkeypatch: pytest.MonkeyPatch,
+    gel_rows: int,
+    expected_row_3: list[tuple[int, str]],
+) -> None:
+    """Lines fixed at the true columns and rows y = 90, 150, 230, so the third-row
+    nodes sit 20 px below their colonies (y = 210, still inside the 27 px half window
+    and the 33 px node tolerance). ``_gel_polygon`` is replaced by a gel covering image
+    rows ``[0, gel_rows)``. With ``gel_rows=195`` each third-row node is 36 px outside,
+    beyond the 0.5 * 60 = 30 px edge band, so the well is recorded empty at its node
+    before segmentation, even though its colony (sd -16) would pass the acceptance
+    gate; with ``gel_rows=205`` the node is 26 px outside, the colony is segmented
+    (37 px) and flagged E. Rows 1 and 2 are unaffected either way.
+    """
+    lines = {3: np.array([90.0, 150.0, 230.0]), 4: TRUE_LINES[4]}
+    monkeypatch.setattr(image_mod, "_fit_lines", lambda c, n: lines[n].copy())
+
+    def gel(g: NDArray[Any], *args: Any, **kwargs: Any) -> tuple[Any, Any]:
+        mask = np.zeros(g.shape, bool)
+        mask[:gel_rows] = True
+        return np.array([[0.0, 0.0]]), mask
+
+    monkeypatch.setattr(image_mod, "_gel_polygon", gel)
+    df = quantify_plate_image(backlit_plate_path, 3, 4, grid_mode="lattice")
+    assert df["size"].tolist()[:8] == [37, 37, 37, 69, 37, 193, 0, 37]
+    assert df["flags"].tolist()[:8] == ["", "", "", "M", "", "C", "", ""]
+    assert list(zip(df["size"].tolist()[8:], df["flags"].tolist()[8:])) == (
+        expected_row_3
+    )
+    expected_cy = 230.0 if gel_rows == 195 else 210.0
+    assert df["cy"].tolist()[8:] == [expected_cy] * 4
+    assert df["cx"].tolist()[8:] == [110.0, 170.0, 230.0, 290.0]
+
+
+def test_quantify_backlit_rejects_a_blob_off_its_node(
+    backlit_plate_array: NDArray[Any],
+    save_plate: Callable[[str, NDArray[Any]], str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A 7x7 colony centered at (150, 250) in the empty (2, 3) cell (node (150, 230),
+    window x 203..256): 20 px off the node. At the default ``node_tol`` 0.55 (33 px) it
+    is central and accepted (30 px, centroid x 249.5). At ``node_tol=0.3`` (18 px) no
+    blob is central, so the nearest one is taken and then fails the same distance
+    gate: the well is recorded empty at its node. Finding: the ``argmin`` fallback can
+    never produce an accepted colony, because it runs only when every blob is farther
+    than ``node_tol * pitch`` and the node gate measures that same distance.
+    """
+    monkeypatch.setattr(image_mod, "_fit_lines", lambda c, n: TRUE_LINES[n].copy())
+    g = backlit_plate_array
+    g[147:154, 247:254] = 190
+    path = save_plate("off_node.png", g)
+    loose = quantify_plate_image(path, 3, 4, grid_mode="lattice").iloc[6].to_dict()
+    assert (loose["size"], loose["flags"], loose["cx"], loose["cy"]) == (
+        30,
+        "",
+        249.5,
+        150.0,
+    )
+    tight = quantify_plate_image(path, 3, 4, grid_mode="lattice", node_tol=0.3)
+    rec = tight.iloc[6].to_dict()
+    assert (rec["size"], rec["flags"], rec["cx"], rec["cy"]) == (0, "", 230.0, 150.0)
+    assert np.isnan(rec["circularity"])
+    assert tight["size"].tolist() == [37, 37, 37, 69, 37, 193, 0, 37, 37, 37, 37, 37]

@@ -876,3 +876,74 @@ def test_loss_gradient_skips_norm3_and_is_exactly_zero_on_the_query_path() -> No
     )
     unused = sum(p.numel() for n, p in shipped.named_parameters() if ".norm3." in n)
     assert (frozen, unused) == (16896, 256)
+
+
+# ------------------------------------------------------------------ Phase 24: eps loss
+
+
+class _NoisePredictor:
+    """Stands in for ``denoise``: returns ``0.5 * x_t`` and records its arguments."""
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[torch.Tensor, torch.Tensor, bool]] = []
+
+    def __call__(
+        self,
+        x_t: torch.Tensor,
+        context: torch.Tensor,
+        t: torch.Tensor,
+        predict_x0: bool,
+    ) -> torch.Tensor:
+        self.calls.append((x_t, t, predict_x0))
+        return 0.5 * x_t
+
+
+def test_eps_loss_scores_the_prediction_against_the_added_noise() -> None:
+    """With ``denoise`` replaced (it raises for "eps", see the Finding above), the eps
+    branch of ``loss`` (diffusion_decoder.py:504-508) runs: t_mode "full", seed 4 draws
+    t = randint(0, 10, (3,)) = [0, 4, 1] then eps = randn(3, 1); x_t is the closed-form
+    q-sample (the t = 0 row keeps x_0 and gets zero noise), the stand-in predicts
+    0.5 x_t, and the loss is mean((0.5 x_t - noise)^2) with that zeroed noise, so
+    scoring against the raw eps instead of ``actual_noise`` would fail on row 0.
+    ``predict_x0=False`` reaches the stand-in unchanged.
+    """
+    dec = _decoder(parameterization="eps").eval()
+    fake = _NoisePredictor()
+    object.__setattr__(dec, "denoise", fake)
+    x0 = torch.tensor([[1.0], [-0.5], [2.0]])
+    ctx = torch.zeros(3, 4)
+    torch.manual_seed(4)
+    loss = dec.loss(x0, ctx, predict_x0=False, t_mode="full")
+    torch.manual_seed(4)
+    t = torch.randint(0, 10, (3,))
+    assert t.tolist() == [0, 4, 1]
+    eps = torch.randn(3, 1)
+    assert not torch.equal(((0.5 * x0[:1] - 0.0) ** 2), ((0.5 * x0[:1] - eps[:1]) ** 2))
+    ab = torch.tensor(LINEAR_ABAR_T10, dtype=torch.float32)[t].view(-1, 1)
+    zero = (t == 0).view(-1, 1)
+    x_t = torch.where(zero, x0, ab.sqrt() * x0 + (1 - ab).sqrt() * eps)
+    noise = torch.where(zero, torch.zeros_like(eps), eps)
+    expected = ((0.5 * x_t - noise) ** 2).mean()
+    torch.testing.assert_close(loss, expected, atol=1e-6, rtol=0.0)
+    ((seen_x_t, seen_t, seen_flag),) = fake.calls
+    assert torch.equal(seen_t, t)
+    torch.testing.assert_close(seen_x_t, x_t, atol=1e-6, rtol=0.0)
+    assert seen_flag is False
+
+
+def test_eps_loss_refuses_predict_x0_and_an_unknown_parameterization_is_named() -> None:
+    """Under "eps", ``predict_x0=True`` (the default) fails the assertion after the
+    forward; a parameterization rewritten after construction to "v" (the constructor
+    refuses it) reaches the final ``else`` and raises ValueError naming it.
+    """
+    dec = _decoder(parameterization="eps").eval()
+    object.__setattr__(dec, "denoise", _NoisePredictor())
+    x0, ctx = torch.zeros(2, 1), torch.zeros(2, 4)
+    with pytest.raises(
+        AssertionError,
+        match=re.escape("eps parameterization requires predict_x0=False"),
+    ):
+        dec.loss(x0, ctx)
+    dec.parameterization = "v"
+    with pytest.raises(ValueError, match=re.escape("Unknown parameterization: v")):
+        dec.loss(x0, ctx, predict_x0=False)

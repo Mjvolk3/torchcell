@@ -167,3 +167,19 @@ def test_missing_store_branch_names_a_method_that_does_not_exist(
     assert calls == []
     assert (tmp_path / "processed" / "one_hot_gene.pt").is_file()
     assert torch.equal(ds[1].embeddings["one_hot_gene"], torch.eye(3)[1:2])
+
+
+# Phase 24: parse_genome(None)
+
+
+def test_parse_genome_none_and_a_genome_give_none_and_its_gene_set(
+    embedding_genome: Any,
+) -> None:
+    """``parse_genome(None)`` is None (the merged-dataset case) and a genome gives a
+    ``ParsedGenome`` holding exactly its gene set. (``initialize_model`` is a bare
+    ``return None`` with nothing to pin.)
+    """
+    assert OneHotGeneDataset.parse_genome(None) is None
+    assert OneHotGeneDataset.parse_genome(embedding_genome) == ParsedGenome(
+        gene_set=embedding_genome.gene_set
+    )

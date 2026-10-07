@@ -101,3 +101,36 @@ def test_weights_turn_the_mean_into_a_weighted_sum() -> None:
     total, per_dim = weighted(*_clouds(1.0))
     torch.testing.assert_close(per_dim, torch.tensor([0.5, 0.5]), atol=1e-5, rtol=0)
     assert total.item() == pytest.approx(2.0, abs=1e-5)
+
+
+# Phase 24: a full SupCR buffer hands back the whole buffers (mle_wasserstein.py:370-371)
+
+
+def test_full_supcr_buffer_returns_the_buffer_tensors_themselves() -> None:
+    """Buffer of 2 rows, fed 3 rows ([[1, 0], [0, 1], [2, 2]], labels [1, 2, 3]): the
+    pointer wraps, total_samples caps at 2 and buffer_full is set, so
+    ``get_buffer_samples`` returns the registered buffers themselves (the same tensor
+    objects, not slices): embeddings [[2, 2], [0, 1]] (row 0 overwritten by the third
+    row) and labels [[3], [2]]. A buffer fed one row is not full and returns the first
+    row only.
+    """
+    from torchcell.losses.mle_wasserstein import (
+        BufferedWeightedSupCRCell,  # noqa: PLC0415
+    )
+
+    loss = BufferedWeightedSupCRCell(buffer_size=2, embedding_dim=2, min_samples=1)
+    loss.update_buffer(
+        torch.tensor([[1.0, 0.0], [0.0, 1.0], [2.0, 2.0]]),
+        torch.tensor([[1.0], [2.0], [3.0]]),
+    )
+    assert bool(loss.buffer_full) is True
+    embeddings, labels = loss.get_buffer_samples()
+    assert embeddings is loss.embedding_buffer
+    assert labels is loss.label_buffer
+    assert embeddings.tolist() == [[2.0, 2.0], [0.0, 1.0]]
+    assert labels.tolist() == [[3.0], [2.0]]
+
+    partial = BufferedWeightedSupCRCell(buffer_size=2, embedding_dim=2, min_samples=1)
+    partial.update_buffer(torch.tensor([[5.0, 6.0]]), torch.tensor([[7.0]]))
+    emb, lab = partial.get_buffer_samples()
+    assert (emb.tolist(), lab.tolist()) == ([[5.0, 6.0]], [[7.0]])

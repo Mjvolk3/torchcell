@@ -272,3 +272,49 @@ def test_gelu_activation_cases():
     # Verify partial negative preservation
     assert torch.any(out_normal_neg < 0)
     assert torch.any(out_gated_neg < 0)
+
+
+# Phase 24: the bias shapes and the head mean of concat=False (lines 74-79, 170-173)
+
+
+def test_bias_shape_follows_concat_and_bias_false_registers_none() -> None:
+    """With attention and 2 heads of 3 channels: concat=True gives a bias of
+    heads * out = 6 zeros, concat=False a bias of out = 3 zeros, and bias=False
+    registers ``bias`` as None (so it is not a parameter).
+    """
+    concat = StoichHypergraphConv(3, 3, use_attention=True, heads=2, concat=True)
+    mean = StoichHypergraphConv(3, 3, use_attention=True, heads=2, concat=False)
+    none = StoichHypergraphConv(
+        3, 3, use_attention=True, heads=2, concat=False, bias=False
+    )
+    assert torch.equal(concat.bias, torch.zeros(6))
+    assert torch.equal(mean.bias, torch.zeros(3))
+    assert none.bias is None
+    assert "bias" not in dict(none.named_parameters())
+    assert sorted(dict(none.named_parameters())) == ["att", "lin.weight"]
+
+
+def test_concat_false_is_the_head_mean_of_the_concat_output_plus_its_bias(
+    complex_data: tuple[torch.Tensor, torch.Tensor, torch.Tensor],
+) -> None:
+    """Same ``lin`` and ``att`` weights, 2 heads of 2 channels, hyperedge feature
+    [[0.5, -1, 2]]: the concat=False output equals the concat=True output [4, 4]
+    viewed as [4, 2 heads, 2] and averaged over the heads, then plus the [2] bias
+    (set to [1, -2] here; both biases start at zero).
+    """
+    x, edge_index, stoich = complex_data
+    hyperedge_attr = torch.tensor([[0.5, -1.0, 2.0]])
+    torch.manual_seed(0)
+    concat = StoichHypergraphConv(3, 2, use_attention=True, heads=2, concat=True)
+    mean = StoichHypergraphConv(3, 2, use_attention=True, heads=2, concat=False)
+    with torch.no_grad():
+        mean.lin.weight.copy_(concat.lin.weight)
+        mean.att.copy_(concat.att)
+        mean.bias.copy_(torch.tensor([1.0, -2.0]))
+        wide = concat(x, edge_index, stoich, hyperedge_attr)
+        narrow = mean(x, edge_index, stoich, hyperedge_attr)
+    assert wide.shape == (4, 4)
+    expected = wide.view(4, 2, 2).mean(dim=1) + torch.tensor([1.0, -2.0])
+    torch.testing.assert_close(narrow, expected, rtol=0.0, atol=1e-7)
+    # node D (index 3) is in no hyperedge, so it receives only the bias
+    assert narrow[3].tolist() == [1.0, -2.0]

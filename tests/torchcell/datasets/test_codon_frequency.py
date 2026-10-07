@@ -19,12 +19,13 @@ import logging
 from itertools import product
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 import torch
 
 from torchcell.datasets.codon_frequency import CodonFrequencyDataset
-from torchcell.sequence import GeneSet
+from torchcell.sequence import GeneSet, ParsedGenome
 
 
 @pytest.fixture(autouse=True)
@@ -97,3 +98,41 @@ def test_no_refused_gene_logs_no_warning(
         r for r in caplog.records if r.name == "torchcell.datasets.codon_frequency"
     ] == []
     assert [dataset[i].id for i in range(len(dataset))] == ["YAA001W"]
+
+
+# Phase 24: parse_genome(None), initialize_model and pre_transform
+
+
+def test_parse_genome_none_and_a_stub_genome_give_none_and_its_gene_set() -> None:
+    """``parse_genome(None)`` is None and a stub genome gives a ``ParsedGenome`` holding
+    exactly its gene set. (``initialize_model`` is a bare ``return None`` with nothing
+    to pin.)
+    """
+    genome = _StubGenome({"YAA001W": "ATGAAATAA"})
+    assert CodonFrequencyDataset.parse_genome(None) is None
+    assert CodonFrequencyDataset.parse_genome(genome) == ParsedGenome(  # type: ignore[arg-type]
+        gene_set=GeneSet(["YAA001W"])
+    )
+
+
+def test_pre_transform_is_applied_before_the_store_is_written(tmp_path: Path) -> None:
+    """A pre-transform that stamps ``tag = id + '!'`` and scales the vector by 2: every
+    stored record carries the stamp, and ``ATGATG`` (ATG = 1) is stored as 2.0.
+    """
+
+    def stamp(data: Any) -> Any:
+        data.tag = data.id + "!"
+        data.embeddings = {k: 2 * v for k, v in data.embeddings.items()}
+        return data
+
+    genome = _StubGenome({"YAA001W": "ATGAAATAA", "YAA003W": "ATGATG"})
+    dataset = CodonFrequencyDataset(
+        root=str(tmp_path),
+        genome=genome,  # type: ignore[arg-type]
+        pre_transform=stamp,
+    )
+    assert [dataset[i].tag for i in range(2)] == ["YAA001W!", "YAA003W!"]
+    torch.testing.assert_close(
+        dataset["YAA003W"].embeddings["cds_codon_frequency"],
+        torch.tensor([_vector({"ATG": 2.0})]),
+    )

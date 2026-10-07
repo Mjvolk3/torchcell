@@ -254,3 +254,108 @@ def test_weight_initialization():
 # (torchcell/losses/mle_dist_supcr.py), which maintains a circular pred/target
 # buffer; that wrapper is the correct home for any future cross-batch-statistics
 # test, not WeightedDistLoss.
+
+
+# ---------------------------------------------------------------------------
+# Phase 24: the single-value label buffer, the default task weights of the two
+# combined CE losses, and the empty tightness term (multi_dim_nan_tolerant.py:1002-1003,
+# 1229, 1399, 1574).
+# ---------------------------------------------------------------------------
+
+import math  # noqa: E402
+import re  # noqa: E402
+from typing import Any  # noqa: E402
+
+import numpy as np  # noqa: E402
+
+from torchcell.losses.multi_dim_nan_tolerant import (  # noqa: E402
+    CategoricalEntropyRegLoss,
+    CombinedCELoss,
+    CombinedOrdinalCELoss,
+)
+
+
+def test_equal_labels_widen_the_range_by_half_a_unit_then_the_kde_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Finding: labels [3, 3] have min == max, so the range is widened to
+    [2.5, 3.5] (lines 1001-1003) before ``_get_label_distribution`` is called; but that
+    widening does not help the KDE, which is fitted on the labels themselves:
+    ``scipy.stats.gaussian_kde`` on two identical points has a singular covariance and
+    raises ``LinAlgError``. So a dimension whose valid labels are all equal (any batch
+    size above one) crashes the loss instead of scoring it. Pinned until a constant
+    dimension is skipped or given a fixed-width kernel.
+    """
+    loss = WeightedDistLoss()
+    seen: list[tuple[float, float]] = []
+    original = loss._get_label_distribution
+
+    def spy(
+        labels: torch.Tensor, min_label: float, max_label: float, step: float = 1.0
+    ) -> Any:
+        seen.append((min_label, max_label))
+        return original(labels, min_label, max_label, step)
+
+    monkeypatch.setattr(loss, "_get_label_distribution", spy)
+    with pytest.raises(
+        np.linalg.LinAlgError,
+        match=re.escape("The data appears to lie in a lower-dimensional subspace"),
+    ):
+        loss(torch.tensor([[1.0], [2.0]]), torch.tensor([[3.0], [3.0]]))
+    assert seen == [(2.5, 3.5)]
+
+
+def test_combined_ce_default_weights_are_uniform_over_the_tasks() -> None:
+    """``CombinedCELoss(2 classes, 4 tasks)`` with no weights registers [1/4] * 4. With
+    zero logits every class has log-probability log(1/2), so each one-hot task loss is
+    log 2; task 2 is all NaN, so its dim loss is 0 and it leaves the denominator:
+    dim losses [log 2 / 4, log 2 / 4, 0, log 2 / 4] and total (3 log 2 / 4) / (3 / 4)
+    = log 2 = 0.6931472.
+    """
+    nan = float("nan")
+    loss = CombinedCELoss(num_classes=2, num_tasks=4)
+    assert torch.equal(loss.get_buffer("weights"), torch.full((4,), 0.25))
+    targets = torch.tensor(
+        [
+            [1.0, 0.0, 0.0, 1.0, nan, nan, 1.0, 0.0],
+            [0.0, 1.0, 1.0, 0.0, nan, nan, 0.0, 1.0],
+        ]
+    )
+    total, dims = loss(torch.zeros(2, 8), targets)
+    q = math.log(2) / 4
+    torch.testing.assert_close(dims, torch.tensor([q, q, 0.0, q]))
+    assert total.item() == pytest.approx(math.log(2), abs=1e-6)
+
+
+def test_combined_ordinal_default_weights_are_uniform_over_the_tasks() -> None:
+    """``CombinedOrdinalCELoss(3 classes, 3 tasks)`` with no weights registers [1/3] * 3.
+    Logits equal to the learned thresholds make every sigmoid 1/2, so every binary
+    cross entropy is log 2 and each valid task loss is log 2; task 1 is all NaN and is
+    dropped: dim losses [log 2 / 3, 0, log 2 / 3], total log 2.
+    """
+    nan = float("nan")
+    loss = CombinedOrdinalCELoss(num_classes=3, num_tasks=3)
+    assert torch.equal(loss.get_buffer("weights"), torch.full((3,), 1 / 3))
+    logits = loss.loss_fn.thresholds.detach().reshape(1, -1).repeat(2, 1)
+    targets = torch.tensor(
+        [
+            [1.0, 0.0, 0.0, nan, nan, nan, 0.0, 0.0, 1.0],
+            [0.0, 1.0, 0.0, nan, nan, nan, 0.0, 1.0, 0.0],
+        ]
+    )
+    total, dims = loss(logits, targets)
+    third = math.log(2) / 3
+    torch.testing.assert_close(dims.detach(), torch.tensor([third, 0.0, third]))
+    assert total.item() == pytest.approx(math.log(2), abs=1e-6)
+
+
+def test_entropy_regularizer_with_no_valid_sample_returns_three_zeros() -> None:
+    """An all-False mask leaves no valid sample: the diversity term takes the
+    fewer-than-two branch (0), no class has a center and no sample a distance, so the
+    tightness term is the 0.0 fallback (line 1574); total 0.1 * 0 + 0.1 * 0 = 0.
+    """
+    reg = CategoricalEntropyRegLoss(lambda_d=0.1, lambda_t=0.1, num_classes=2)
+    total, diversity, tightness = reg(
+        torch.ones(3, 2), torch.full((3, 4), 0.5), torch.zeros(3, dtype=torch.bool)
+    )
+    assert (total.item(), diversity.item(), tightness.item()) == (0.0, 0.0, 0.0)

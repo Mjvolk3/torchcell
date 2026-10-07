@@ -1118,3 +1118,21 @@ def test_a_raw_file_off_the_manifest_pin_is_refused_at_build_time(
     assert list((staged.root / "processed").iterdir()) == []
     assert not (staged.root / "preprocess").exists()
     assert _sha256(raw) == staged.observed
+
+
+# Phase 24: the per-segregant block round-trip guard
+
+
+def test_a_block_round_trip_mismatch_names_the_cross_and_segregant(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``expand_blocks`` is patched to return every call flipped (``3 - x``), so the
+    first segregant streamed, ``375_seg1`` of the first cross ``375``, fails the
+    encode/expand round trip and the build raises naming both.
+    """
+    real = m.expand_blocks
+    monkeypatch.setattr(
+        m, "expand_blocks", lambda blocks, markers: 3 - real(blocks, markers)
+    )
+    with pytest.raises(ValueError, match="^375/375_seg1: block round trip failed$"):
+        _build(tmp_path, monkeypatch)

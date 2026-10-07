@@ -1507,3 +1507,58 @@ def test_inverse_transform_on_a_single_genotype_returns_one_by_one(
     metrics = task._metrics("test_metrics")
     mse = metrics["test/gene_interaction/MSE"]
     assert float(mse.compute()) == pytest.approx(0.25)
+
+
+# --- 2026.10.07 (phase 24): the original-scale target reshapes and a 2-D inverse
+# result (int_dango.py:262, 267, 407) ------------------------------------------------ #
+def test_original_targets_are_reshaped_like_the_transformed_ones(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``phenotype_values_original`` gets the same reshapes as the targets: a 0-dim 4.0
+    becomes [[4.0]] (line 262) and a [2, 2] original [[4, 9], [10, 9]] keeps its first
+    column [[4], [10]] (line 267). The returned targets are the original-scale ones.
+    """
+    task, _ = _task(
+        monkeypatch,
+        model=_Scripted(torch.tensor(1.5), None, with_recon=False),
+        loss_func=_PlainLoss(),
+    )
+    batch = HeteroData()
+    batch["gene"].perturbation_indices = torch.tensor([0])
+    batch["gene"].phenotype_values = torch.tensor(1.0)
+    batch["gene"].phenotype_values_original = torch.tensor(4.0)
+    _, _, targets = task._shared_step(batch, 0, "train")
+    assert targets is not None and targets.tolist() == [[4.0]]
+
+    task2, _ = _task(
+        monkeypatch,
+        model=_Scripted(torch.tensor(PRED), None, with_recon=False),
+        loss_func=_PlainLoss(),
+    )
+    wide = _batch(TARGET)
+    wide["gene"].phenotype_values_original = torch.tensor([[4.0, 9.0], [10.0, 9.0]])
+    _, _, targets2 = task2._shared_step(wide, 0, "train")
+    assert targets2 is not None and targets2.tolist() == [[4.0], [10.0]]
+
+
+class _Affine2D(_Affine):
+    """``_Affine`` whose output is already [B, 1]: 2 x + 1 as a column."""
+
+    def forward(self, data: HeteroData) -> HeteroData:
+        out = super().forward(data)
+        out["gene"].gene_interaction = out["gene"].gene_interaction.unsqueeze(1)
+        return out
+
+
+def test_a_two_dimensional_inverse_result_is_used_as_is(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A [2, 1] inverse result [[3], [7]] is kept unchanged (line 407): the
+    original-unit metrics compare [3, 7] with [4, 10], MSE (1 + 9) / 2 = 5, the same
+    numbers as the 1-D inverse test above.
+    """
+    task, _ = _task(monkeypatch, loss_func=_PlainLoss(), inverse_transform=_Affine2D())
+    task._shared_step(_batch(TARGET, [4.0, 10.0]), 0, "train")
+    original = _computed(task._metrics("train_metrics"))
+    assert original["train/gene_interaction/MSE"] == pytest.approx(5.0)
+    assert original["train/gene_interaction/RMSE"] == pytest.approx(math.sqrt(5.0))

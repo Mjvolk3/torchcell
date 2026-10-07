@@ -192,3 +192,19 @@ def test_unknown_model_name_is_refused_with_the_valid_list(
     assert str(excinfo.value) == "Invalid model_name 'calm2'. Valid options are: calm"
     assert _FakeCaLM.inits == 0
     assert not root.exists()
+
+
+# Phase 24: parse_genome on a merged dataset's None genome
+
+
+def test_parse_genome_maps_none_to_none_and_a_genome_to_its_gene_set(
+    embedding_genome: Any,
+) -> None:
+    """A dataset merged with ``+`` carries ``genome=None``, and the static parser
+    returns None for it; a real genome becomes a ``ParsedGenome`` holding exactly its
+    three gene ids.
+    """
+    assert CalmDataset.parse_genome(None) is None
+    parsed = CalmDataset.parse_genome(embedding_genome)
+    assert isinstance(parsed, ParsedGenome)
+    assert list(parsed.gene_set) == GENE_IDS

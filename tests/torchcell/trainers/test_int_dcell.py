@@ -1540,3 +1540,76 @@ def test_plot_samples_subsamples_latents_with_the_same_rows(
     assert logged[0]["val_sample/oversmoothing_subsystem"] == pytest.approx(
         expected, abs=1e-6
     )
+
+
+# ---------------------------------------------------------------------------
+# 2026.10.07 (phase 24): a batch whose gene store IS an attribute, and sample dicts
+# without "latents" (int_dcell.py:134, 314, 332, 352, 369).
+# ---------------------------------------------------------------------------
+
+
+class _AttributeBatch:
+    """A batch whose ``gene`` store is an attribute (``hasattr`` True, unlike HeteroData)
+    and which records every ``to`` call; it has no ``device`` attribute.
+    """
+
+    def __init__(self) -> None:
+        self.gene = HeteroData()["gene"]
+        self.gene.perturbation_indices = torch.tensor([0])
+        self.moves: list[torch.device] = []
+
+    def __getitem__(self, key: str) -> Any:
+        assert key == "gene"
+        return self.gene
+
+    def to(self, device: torch.device) -> "_AttributeBatch":
+        self.moves.append(device)
+        return self
+
+
+def test_forward_reads_the_batch_device_from_perturbation_indices() -> None:
+    """With ``batch.gene`` reachable as an attribute, the device probe reads
+    ``gene.perturbation_indices.device`` (cpu, line 134), which equals the model's, so
+    the batch is NOT moved and the model receives the very object passed in (contrast
+    the HeteroData finding above, where the probe never fires and every call moves).
+    """
+    model = _Recorder()
+    task = _task(model=model)
+    batch = _AttributeBatch()
+    task(batch)  # type: ignore[arg-type, unused-ignore]
+    assert batch.moves == []
+    assert model.calls[-1][1] is batch
+
+
+@pytest.mark.parametrize(
+    ("stage", "ceiling", "rows"),
+    [
+        ("train", 1, 1),  # line 314: the ceiling subsamples one row
+        ("train", 1000, 3),  # line 332: the whole batch fits
+        ("val", 1000, 3),  # line 352
+        ("test", 1000, 3),  # line 369
+    ],
+)
+def test_a_sample_dict_without_latents_gets_one_for_the_subsystem_outputs(
+    monkeypatch: pytest.MonkeyPatch, stage: str, ceiling: int, rows: int
+) -> None:
+    """A stage sample dict without "latents" is given one before the root subsystem
+    output is appended: all three ``_WithLatents.LATENT`` rows, or under ceiling 1 the
+    single row ``randperm(3)[:1]`` picks (the oracle replays the draw).
+    """
+    task = _task(
+        model=_WithLatents(), plot_every_n_epochs=1, plot_sample_ceiling=ceiling
+    )
+    _recorded(monkeypatch, task)
+    samples: dict[str, Any] = {"true_values": [], "predictions": []}
+    setattr(task, f"{stage}_samples", samples)
+    with torch.random.fork_rng():
+        torch.manual_seed(0)
+        idx = torch.randperm(3)[:1].tolist()
+        torch.manual_seed(0)
+        task._shared_step(_batch(), 0, stage)
+    expected = (
+        [_WithLatents.LATENT[i] for i in idx] if rows == 1 else _WithLatents.LATENT
+    )
+    assert sorted(samples) == ["latents", "predictions", "true_values"]
+    assert [t.tolist() for t in samples["latents"]["subsystem_outputs"]] == [expected]

@@ -9,6 +9,9 @@ import hashlib
 import json
 import math
 import re
+from pathlib import Path
+
+import pytest
 
 from torchcell.database.browser_style import (
     ANCESTOR_LABELS,
@@ -18,7 +21,10 @@ from torchcell.database.browser_style import (
     LANE_OF_LABEL,
     SEED_SHA_STORAGE_KEY,
     STYLING_STORAGE_KEY,
+    Caption,
+    _caption,
     lane_of,
+    main,
     node_rules,
     persisted_value,
     render,
@@ -134,3 +140,87 @@ def test_committed_seed_is_current() -> None:
         "run python -m torchcell.database.browser_style"
     )
     assert DEFAULT_SEED_OUTPUT.read_text(encoding="utf-8") == render_seed_js()
+
+
+# Phase 24: main() writes and checks, lane_of and _caption guards
+
+
+def test_main_writes_both_renders_and_names_the_rule_count(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``main`` writes ``render()`` and ``render_seed_js()`` verbatim, creating parents."""
+    out = tmp_path / "conf" / "torchcell.grass"
+    seed = tmp_path / "browser" / "seed.js"
+    code = main(["--output", str(out), "--seed-output", str(seed)])
+    assert code == 0
+    assert out.read_text(encoding="utf-8") == render()
+    assert seed.read_text(encoding="utf-8") == render_seed_js()
+    assert capsys.readouterr().out == (
+        f"wrote {out} ({len(node_rules())} node rules) and {seed}\n"
+    )
+
+
+def test_main_check_reports_current_files(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``--check`` on freshly written files returns 0 and prints the current line."""
+    out = tmp_path / "torchcell.grass"
+    seed = tmp_path / "seed.js"
+    out.write_text(render(), encoding="utf-8")
+    seed.write_text(render_seed_js(), encoding="utf-8")
+    code = main(["--check", "--output", str(out), "--seed-output", str(seed)])
+    assert code == 0
+    assert capsys.readouterr().out == f"{out} and {seed} are current\n"
+
+
+def test_main_check_lists_a_missing_and_an_edited_file(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """One altered seed and one missing stylesheet: both are stale, in output order."""
+    out = tmp_path / "missing.grass"
+    seed = tmp_path / "seed.js"
+    seed.write_text(render_seed_js() + "\n", encoding="utf-8")
+    code = main(["--check", "--output", str(out), "--seed-output", str(seed)])
+    assert code == 1
+    assert capsys.readouterr().out == (
+        f"{out} is stale; run python -m torchcell.database.browser_style\n"
+        f"{seed} is stale; run python -m torchcell.database.browser_style\n"
+    )
+    assert not out.exists()
+
+
+def test_main_check_with_one_current_file_lists_one_stale_path(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A current stylesheet beside an edited seed prints only the seed path."""
+    out = tmp_path / "torchcell.grass"
+    seed = tmp_path / "seed.js"
+    out.write_text(render(), encoding="utf-8")
+    seed.write_text("edited", encoding="utf-8")
+    assert main(["--check", "--output", str(out), "--seed-output", str(seed)]) == 1
+    assert capsys.readouterr().out == (
+        f"{seed} is stale; run python -m torchcell.database.browser_style\n"
+    )
+
+
+def test_lane_of_unknown_label_raises_the_exact_key_error() -> None:
+    with pytest.raises(KeyError) as exc:
+        lane_of("Foo", None)
+    assert exc.value.args[0] == (
+        "'Foo' (is_a None) has no ontology lane: add it to LANE_OF_LABEL in "
+        "torchcell.database.browser_style or give it a phenotypic feature parent "
+        "in the schema config"
+    )
+
+
+def test_caption_id_and_type_and_property_forms() -> None:
+    assert _caption("<id>") == Caption(type="id")
+    assert _caption("<type>") == Caption(type="type")
+    assert _caption("{name}") == Caption(type="property", captionKey="name")
+
+
+def test_caption_rejects_a_bare_word() -> None:
+    with pytest.raises(
+        ValueError, match=re.escape("caption 'id' is not one the Browser imports")
+    ):
+        _caption("id")

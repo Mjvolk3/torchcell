@@ -452,3 +452,65 @@ def test_integration_with_other_modules():
     for name, param in model.named_parameters():
         assert param.grad is not None, f"Parameter {name} has no gradient"
         assert not torch.isnan(param.grad).any(), f"Parameter {name} has NaN gradients"
+
+
+# Phase 24: the CPU NaN repair of the attention weights (self_attention_block.py:121-124)
+
+
+class _FixedSoftmax:
+    """Stands in for the module's ``F``: ``softmax`` returns ``weights`` broadcast to
+    the score shape [batch, heads, seq, seq] and records each call's score shape.
+    """
+
+    def __init__(self, weights: torch.Tensor) -> None:
+        self.weights = weights
+        self.shapes: list[tuple[int, ...]] = []
+
+    def softmax(self, scores: torch.Tensor, dim: int) -> torch.Tensor:
+        assert dim == -1
+        self.shapes.append(tuple(scores.shape))
+        return self.weights.expand_as(scores).clone()
+
+
+def test_nan_attention_weights_are_zeroed_and_each_row_renormalized(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Weights [[nan, 2], [nan, nan], [0.5, 0.5]] over a 3-token sequence (the last key
+    column is padded with 0 so each row has 3 entries) become, after ``nan_to_num`` and
+    division by the row sum clamped at 1e-6: row 0 [0, 2, 0] / 2 = [0, 1, 0]; row 1 all
+    zero / 1e-6 = [0, 0, 0]; row 2 [0.5, 0.5, 0] / 1 unchanged. The block's output with
+    the NaN weights therefore equals, bit for bit, its output with those repaired
+    weights handed in directly (no NaN, so the repair branch does not run). Dropout 0,
+    eval mode, seeded weights; both calls see the same scores shape [1, 2, 3, 3].
+    """
+    import torchcell.nn.self_attention_block as sab_module  # noqa: PLC0415
+
+    nan = float("nan")
+    raw = torch.tensor([[nan, 2.0, 0.0], [nan, nan, 0.0], [0.5, 0.5, 0.0]])
+    repaired = torch.tensor([[0.0, 1.0, 0.0], [0.0, 0.0, 0.0], [0.5, 0.5, 0.0]])
+    with torch.random.fork_rng():
+        torch.manual_seed(0)
+        block = SelfAttentionBlock(hidden_dim=4, num_heads=2, dropout=0.0).eval()
+        x = torch.randn(1, 3, 4)
+    fake_raw = _FixedSoftmax(raw)
+    monkeypatch.setattr(sab_module, "F", fake_raw)
+    with torch.no_grad():
+        out_raw = block(x)
+    fake_clean = _FixedSoftmax(repaired)
+    monkeypatch.setattr(sab_module, "F", fake_clean)
+    with torch.no_grad():
+        out_clean = block(x)
+    assert fake_raw.shapes == [(1, 2, 3, 3)] and fake_clean.shapes == [(1, 2, 3, 3)]
+    assert torch.equal(out_raw, out_clean)
+    # and the repair is not the identity: unrepaired weights 2 on row 0 move the output
+    monkeypatch.setattr(
+        sab_module,
+        "F",
+        _FixedSoftmax(
+            torch.tensor([[0.0, 2.0, 0.0], [0.0, 0.0, 0.0], [0.5, 0.5, 0.0]])
+        ),
+    )
+    with torch.no_grad():
+        out_unnormalized = block(x)
+    assert not torch.equal(out_unnormalized[0, 0], out_clean[0, 0])
+    assert torch.equal(out_unnormalized[0, 1:], out_clean[0, 1:])

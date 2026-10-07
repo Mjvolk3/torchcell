@@ -1137,3 +1137,37 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     assert list((staged.root / "processed").iterdir()) == []
     assert not (staged.root / "preprocess").exists()
     assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
+
+
+# Phase 24: a kept dose outside the IC30 band is listed in the ledger
+
+
+def test_a_kept_dose_outside_the_ic30_band_is_listed_with_its_ratio(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``IC30_RATIO_RANGE`` is narrowed to (2.0, 4.0), so amitriptyline's 50 uM against
+    its Table S1 IC30 of 50 uM (ratio 1.0, in range under the real (0.5, 2.0)) falls
+    outside. Every kept CMB 3 column is listed, in assay then column order: HIP
+    study 0077, HIP study 0091, HOP study 0077. CMB 777 has no IC30 row (it is only in
+    the structures sheet), so it is never checked; Boromycin's columns are not kept.
+    """
+    monkeypatch.setattr(m, "IC30_RATIO_RANGE", (2.0, 4.0))
+    data_root = tmp_path / "data_root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    _write_genomes_tier(data_root)
+    root = tmp_path / "env_chemgen_hoepfner2014"
+    _write_raw(root / "raw")
+    m.EnvChemgenHoepfner2014Dataset(root=str(root), genome=_StubGenome())
+    report = json.loads((root / "dropped_records.json").read_text())
+    assert report["dose_outside_ic30_range"] == [
+        {
+            "assay": assay,
+            "cmb_id": "3",
+            "compound": "amitriptyline",
+            "study": study,
+            "concentration_um": 50.0,
+            "ic30_um": 50.0,
+            "ratio": 1.0,
+        }
+        for assay, study in (("HIP", "0077"), ("HIP", "0091"), ("HOP", "0077"))
+    ]

@@ -2160,3 +2160,30 @@ def test_batch_size_and_device_are_accepted_but_neither_saved_nor_read(
     task._shared_step(_coo(), 0, "val")
     assert set(log.batch_sizes.values()) == {3}
     assert task._cell_graph_device == torch.device("cpu")
+
+
+# ------------------------------------- 2026.10.07, Phase 24: the batch device probe order
+
+
+@pytest.mark.parametrize("cls", TASKS)
+def test_batch_device_falls_back_from_x_to_indices_to_values_to_the_model(
+    cls: Any,
+) -> None:
+    """``_batch_device`` reads, in order, ``gene.x``, ``gene.perturbation_indices``,
+    ``gene.phenotype_values``, then the model's first parameter. The ``meta`` device
+    marks which tensor was read (no CUDA needed): phenotype_values alone on meta gives
+    meta (line 277); perturbation_indices on cpu then wins over meta values; x on meta
+    wins over both; an empty gene store gives the model's cpu.
+    """
+    task = _task(cls)
+    meta, cpu = torch.device("meta"), torch.device("cpu")
+    batch = HeteroData()
+    batch["gene"].phenotype_values = torch.zeros(2, device=meta)
+    assert task._batch_device(batch) == meta
+    batch["gene"].perturbation_indices = torch.tensor([0, 1])
+    assert task._batch_device(batch) == cpu
+    batch["gene"].x = torch.zeros(2, 1, device=meta)
+    assert task._batch_device(batch) == meta
+    empty = HeteroData()
+    empty["gene"].num_nodes = 2
+    assert task._batch_device(empty) == cpu

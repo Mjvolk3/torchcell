@@ -1015,3 +1015,90 @@ def test_effective_batch_multiplies_the_world_size_only_for_a_strategy_named_ddp
             assert recorder.values["effective_batch_size"] == expected
             assert recorder.values["learning_rate"] == 0.5
             assert optimizer.events == []  # batch 0 of 2 accumulates, no step yet
+
+
+# --- 2026.10.07 (phase 24): accumulators missing the degree fields, sample dicts
+# missing "latents" ------------------------------------------------------------------ #
+def _accumulator_without_degree_fields(task: RegressionTask) -> dict[str, Any]:
+    """An edge-recovery record as an older writer left it: no degree fields."""
+    return {
+        "sum_recall_deg": 0.0,
+        "count_nodes_deg": 0,
+        "sum_prec": {k: 0.0 for k in task.edge_recovery_ks},
+        "count_nodes_prec": {k: 0 for k in task.edge_recovery_ks},
+        "sum_edge_mass": 0.0,
+        "count_batches": 0,
+        "graph_name": "g",
+        "layer": 0,
+        "head": 0,
+    }
+
+
+def test_edge_recovery_adds_zero_degree_fields_to_an_existing_record(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A record for g_L0_H0 without the degree fields gains degree_correlation_sum 0.0
+    and degree_corr_count 0 (lines 343-347), and the same dict object is then filled
+    with the module-docstring numbers: recall@degree (1 + 0) = 1 over 2 nodes, each
+    precision@k 1/4 per node so 0.5 over 2 nodes, edge mass 0.2 in 1 batch.
+    """
+    task, _ = _task(monkeypatch)
+    _scripted(task).regularized_head_config = {"g": {"layer": 0, "head": 0}}
+    _scripted(task).adjacency_matrices = {"g": ADJACENCY}
+    record = _accumulator_without_degree_fields(task)
+    task.edge_recovery_accumulators["g_L0_H0"] = record
+    task._accumulate_edge_recovery_metrics([ATTENTION.view(1, 1, 4, 4)], 0)
+    assert task.edge_recovery_accumulators["g_L0_H0"] is record
+    assert (record["degree_correlation_sum"], record["degree_corr_count"]) == (0.0, 0)
+    assert (record["sum_recall_deg"], record["count_nodes_deg"]) == (1.0, 2)
+    assert record["sum_prec"] == {8: 0.5, 32: 0.5, 128: 0.5, 320: 0.5}
+    assert record["count_batches"] == 1
+    assert record["sum_edge_mass"] == pytest.approx(0.2, abs=1e-7)
+
+
+def test_degree_bias_adds_its_fields_to_a_record_made_by_edge_recovery(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The degree-bias path on a record without the degree fields initializes them
+    (lines 575-578) and then adds one Spearman value, 4 / sqrt(20) = 0.8944272, leaving
+    the edge-recovery fields as they were.
+    """
+    task, _ = _task(monkeypatch)
+    _scripted(task).regularized_head_config = {"g": {"layer": 0, "head": 0}}
+    _scripted(task).adjacency_matrices = {"g": ADJACENCY}
+    record = _accumulator_without_degree_fields(task)
+    record["count_batches"] = 3
+    task.edge_recovery_accumulators["g_L0_H0"] = record
+    task._accumulate_degree_bias(ATTENTION.view(1, 1, 4, 4), "g", 0, 0)
+    assert record["degree_corr_count"] == 1
+    assert record["degree_correlation_sum"] == pytest.approx(4 / math.sqrt(20))
+    assert record["count_batches"] == 3
+
+
+@pytest.mark.parametrize(
+    ("stage", "ceiling", "expected_rows"),
+    [
+        ("train", 1, 1),  # line 1054: the ceiling subsamples
+        ("train", 1000, 2),  # line 1079: the whole batch fits
+        ("val", 1, 1),  # line 1112
+        ("val", 1000, 2),  # line 1137
+        ("test", 1000, 2),  # line 1161
+    ],
+)
+def test_a_sample_dict_without_latents_gets_one_on_its_first_batch(
+    monkeypatch: pytest.MonkeyPatch, stage: str, ceiling: int, expected_rows: int
+) -> None:
+    """A stage sample dict reset without the "latents" key is given one before the pooled
+    latents are appended: H_pooled of every kept genotype is [2.2, 2.4] (module
+    docstring, the same row for both genotypes), one row under ceiling 1, two rows
+    otherwise.
+    """
+    torch.manual_seed(0)
+    task, _ = _task(monkeypatch, plot_every_n_epochs=1, plot_sample_ceiling=ceiling)
+    samples: dict[str, Any] = {"true_values": [], "predictions": []}
+    setattr(task, f"{stage}_samples", samples)
+    task._shared_step(_batch([2.0, 5.0]), 0, stage)
+    assert sorted(samples) == ["latents", "predictions", "true_values"]
+    assert list(samples["latents"]) == ["H_pooled"]
+    (pooled,) = samples["latents"]["H_pooled"]
+    torch.testing.assert_close(pooled, torch.tensor([[2.2, 2.4]] * expected_rows))

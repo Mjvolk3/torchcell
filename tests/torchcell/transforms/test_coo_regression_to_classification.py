@@ -32,6 +32,7 @@ two-line Python run.
   sorted sample order.
 """
 
+import re
 from types import SimpleNamespace
 from typing import Any
 
@@ -1437,3 +1438,63 @@ def test_inverse_compose_rejects_bad_inputs() -> None:
         ValueError, match=r"^Transform Compose does not implement inverse method$"
     ):
         COOInverseCompose([Compose([])])
+
+
+# ---------------------------------------------------------------------------------------
+# Phase 24: a strategy rewritten after construction, a configured label absent from the
+# data, and a 0-d value under the inverse (coo_regression_to_classification.py:121, 141,
+# 572, 664).
+# ---------------------------------------------------------------------------------------
+
+
+def test_a_strategy_rewritten_after_construction_is_refused_both_ways() -> None:
+    """The constructor validates the strategy, so only a mutated ``stats`` entry reaches
+    the final ``else`` of ``normalize`` and ``denormalize``; both name it.
+    """
+    t = _robust()
+    t.stats["fitness"]["strategy"] = "bogus"
+    values = torch.tensor([1.0])
+    with pytest.raises(
+        ValueError, match=re.escape("Unknown normalization strategy: bogus")
+    ):
+        t.normalize(values, "fitness")
+    with pytest.raises(
+        ValueError, match=re.escape("Unknown normalization strategy: bogus")
+    ):
+        t.denormalize(values, "fitness")
+
+
+def test_binning_skips_a_configured_label_the_data_does_not_carry() -> None:
+    """Two configured labels, data with gene_interaction only: fitness is skipped
+    (line 572) and gene_interaction 2.5 is one-hot encoded in bin 2 of edges
+    [0, 1, 2, 3, 4], under the types gene_interaction_bin_0..3.
+    """
+    df = pd.DataFrame(
+        {
+            "gene_interaction": [0.0, 1.0, 2.0, 3.0, 4.0],
+            "fitness": [0.0, 0.25, 0.5, 0.75, 1.0],
+        }
+    )
+    config = {
+        label: {"strategy": "equal_width", "num_bins": 4, "label_type": "categorical"}
+        for label in ["fitness", "gene_interaction"]
+    }
+    t = COOLabelBinningTransform(_dataset(df), config)
+    out = t(_coo([2.5], [0], [0], ["gene_interaction"]))["gene"]
+    torch.testing.assert_close(out.phenotype_values, torch.tensor([0.0, 0.0, 1.0, 0.0]))
+    assert out.phenotype_types == [f"gene_interaction_bin_{j}" for j in range(4)]
+    assert "fitness_continuous" not in out.keys()
+
+
+def test_inverse_treats_a_0d_value_as_one_entry() -> None:
+    """A 0-d 1.0 with type index [2] (bin 2 of 4), sample 0: unsqueezed to one entry
+    (line 664), the other bins are filled with 0, the argmax is bin 2, and the seed-42
+    draw gives 2 + 0.8822693.
+    """
+    t = _bins("categorical")
+    data = _coo(1.0, [2], [0], [f"gene_interaction_bin_{j}" for j in range(4)])
+    assert data["gene"].phenotype_values.dim() == 0
+    out = t.inverse(data)["gene"]
+    torch.testing.assert_close(out.phenotype_values, torch.tensor([2.0 + SEED42_U0]))
+    assert out.phenotype_sample_indices.tolist() == [0]
+    assert out.phenotype_types == ["gene_interaction"]

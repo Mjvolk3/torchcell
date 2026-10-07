@@ -340,6 +340,7 @@ _DOSAGE_LEAVES = [
     CopyNumberVariantPerturbation,
     EngineeredCopyNumberPerturbation,
     s.NaturalGenePresencePerturbation,
+    s.HeterologousPathwayPerturbation,
 ]
 
 
@@ -351,6 +352,17 @@ def test_m2_copy_number_must_be_positive(cls: type[GenePerturbation]) -> None:
     )
     if cls is EngineeredCopyNumberPerturbation:
         base |= dict(reference_copy_number=2.0)
+    elif cls is s.HeterologousPathwayPerturbation:
+        # an ADDED pathway gene: heterologous, so no isolate id and no pangenome ORF
+        base |= dict(
+            systematic_gene_name="Efa:mvaE",
+            perturbed_gene_name="mvaE",
+            gene_namespace="pputida_kt2440_locus_tag",
+            source_organism="Enterococcus faecalis",
+            is_heterologous=True,
+            localization="chromosomal_integration",
+            pathway_name="isoprenol via mevalonate",
+        )
     else:  # natural CNV / accessory-presence leaves are pangenome-keyed
         base |= dict(
             systematic_gene_name="pangenome1011:orf1",
@@ -434,6 +446,16 @@ SO_ALLOWED: dict[str, str] = {
     "SO:0001483": "SNV",
     "SO:0001019": "copy_number_variation",
     "SO:0001998": "sgRNA",
+    # Bacterial mechanisms. Both id/name pairs were read from the Sequence Ontology
+    # release of 2026-08-07 (so.obo, sha256 22a8f3ec2b49125dbb6cee8456f0bca8
+    # 6dd8c98f433165ffa4b554da4f155204), not recalled: SO:0001218 transgenic_insertion
+    # "An insertion that derives from another organism, via the use of recombinant DNA
+    # technology" (is_a SO:0000667 insertion) is the transposon-insertion mechanism, and
+    # SO:1000032 delins "A sequence alteration which included an insertion and a
+    # deletion, affecting 2 or more bases" is a promoter replacement: the native part
+    # removed and the new one put in its place.
+    "SO:0001218": "transgenic_insertion",
+    "SO:1000032": "delins",
 }
 
 

@@ -28,6 +28,8 @@ from torchcell.datamodels import schema
 from torchcell.datamodels.schema import (
     AllelePerturbation,
     ArtifactRef,
+    BacterialCrisprInterferencePerturbation,
+    BacterialDeletionPerturbation,
     BarcodedKanMxDeletionPerturbation,
     ConditionalAllelePerturbation,
     CopyNumberVariantPerturbation,
@@ -42,6 +44,7 @@ from torchcell.datamodels.schema import (
     GeneAdditionPerturbation,
     GenePerturbation,
     GenePerturbationType,
+    HeterologousPathwayPerturbation,
     HeterozygousDeletionPerturbation,
     KanMxDeletionPerturbation,
     MarkerDeletionPerturbation,
@@ -50,6 +53,7 @@ from torchcell.datamodels.schema import (
     NaturalGeneAbsencePerturbation,
     NaturalGenePresencePerturbation,
     PresenceAbsencePerturbation,
+    PromoterReplacementPerturbation,
     SequencePerturbation,
     SequenceVariantPerturbation,
     SgaAllelePerturbation,
@@ -59,15 +63,25 @@ from torchcell.datamodels.schema import (
     SgaSuppressorAllelePerturbation,
     SgaTsAllelePerturbation,
     SuppressorAllelePerturbation,
+    TransposonInsertionPerturbation,
     TsAllelePerturbation,
 )
 
 SO_ID_RE = re.compile(r"^SO:\d{7}$")
 
-# A CURIE ``prefix:local`` or a bare S288C systematic gene name.
+# A CURIE ``prefix:local``, a bare S288C systematic gene name, or a bacterial locus
+# tag of one of the three deposited namespaces. The bacterial forms are the patterns
+# ``schema.BACTERIAL_LOCUS_TAG_PATTERNS`` validates against, restated here so this
+# module checks the identity rule independently of the validator that enforces it --
+# a leaf whose identifier matched neither family would fail here even if its own
+# validator let it through.
 _CURIE_RE = re.compile(r"^[A-Za-z0-9_.]+:[A-Za-z0-9_.\-]+$")
 _SYSTEMATIC_RE = re.compile(
     r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$"
+)
+_BACTERIAL_TAG_RE = re.compile(
+    r"^(b\d{4}|BW25113_\d{4}"
+    r"|PP_(?:\d{4}|(?:5|16|23)S[A-G]|t\d{2}|tm\d{2}|mr\d{2}|r\d{2}))$"
 )
 
 
@@ -136,6 +150,11 @@ _UNION_SORTED: list[type[GenePerturbation]] = sorted(UNION_MEMBERS, key=_by_name
 # ArtifactRef so the sequence-pointer invariant is actually exercised.
 # --------------------------------------------------------------------------- #
 _SYS = dict(systematic_gene_name="YAL001C", perturbed_gene_name="TFC3")
+_BNUM = dict(
+    systematic_gene_name="b0002",
+    perturbed_gene_name="thrA",
+    gene_namespace="ecoli_k12_mg1655_bnumber",
+)
 _URI = dict(
     sequence_ref=ArtifactRef(
         tier="genomes",
@@ -214,6 +233,47 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
             effector="dSpCas9-RD1152", guide_sequence="CGTACTACCAGATAACCTAA"
         ),
     },
+    # Bacterial leaves: the identity is a locus tag of the namespace the record
+    # declares, so each one names a REAL tag of its host (measured from that host's
+    # deposited GenBank file), never a placeholder.
+    BacterialDeletionPerturbation: {
+        **_BNUM,
+        "collection": "Keio collection",
+        "cassette": "FRT-kan-FRT",
+    },
+    TransposonInsertionPerturbation: {
+        "systematic_gene_name": "PP_0002",
+        "perturbed_gene_name": "PP_0002",
+        "gene_namespace": "pputida_kt2440_locus_tag",
+        "barcode": "ACGTACGTACGTACGTACGT",
+        "insertion_position": 12345,
+        "insertion_strand": "+",
+        "transposon": "mariner Himar1",
+    },
+    BacterialCrisprInterferencePerturbation: {
+        "systematic_gene_name": "BW25113_0344",
+        "perturbed_gene_name": "lacZ",
+        "gene_namespace": "ecoli_k12_bw25113_locus_tag",
+        "crispr": CrisprConstruct(
+            effector="dCas9-Mxi1", guide_sequence="CGTACTACCAGATAACCTAA"
+        ),
+    },
+    PromoterReplacementPerturbation: {
+        **_BNUM,
+        "expression_direction": "increased",
+        "promoter_name": "Ptac",
+        "is_inducible": True,
+    },
+    HeterologousPathwayPerturbation: dict(
+        systematic_gene_name="Efa:mvaE",
+        perturbed_gene_name="mvaE",
+        gene_namespace="pputida_kt2440_locus_tag",
+        source_organism="Enterococcus faecalis",
+        is_heterologous=True,
+        localization="chromosomal_integration",
+        pathway_name="isoprenol via mevalonate",
+        copy_number=2.0,
+    ),
 }
 
 _ADAPTER: TypeAdapter[GenePerturbation] = TypeAdapter(GenePerturbationType)
@@ -385,7 +445,28 @@ def test_provenance_is_declared(cls: type[GenePerturbation]) -> None:
 @pytest.mark.parametrize("cls", _LEAVES_SORTED)
 def test_identity_is_curie_or_systematic(cls: type[GenePerturbation]) -> None:
     name = _instance(cls).systematic_gene_name
-    assert _SYSTEMATIC_RE.match(name) or _CURIE_RE.match(name), name
+    assert (
+        _SYSTEMATIC_RE.match(name)
+        or _BACTERIAL_TAG_RE.match(name)
+        or _CURIE_RE.match(name)
+    ), name
+
+
+def test_the_three_identity_families_do_not_overlap() -> None:
+    """A yeast name, a bacterial tag and a CURIE are three disjoint identifier spaces.
+
+    This is what makes the namespace field load-bearing rather than decorative:
+    ``Genotype`` content identity is the sorted systematic names, so if a b-number
+    could also read as a yeast ORF name the two hosts' records would share an id
+    space. Checked on the real forms rather than asserted.
+    """
+    yeast = ["YAL001C", "YAL001C-A", "Q0010", "YNCA0001W"]
+    bacterial = ["b0002", "BW25113_0002", "PP_0002", "PP_16SA", "PP_t01", "PP_mr01"]
+    for name in yeast:
+        assert _SYSTEMATIC_RE.match(name) and not _BACTERIAL_TAG_RE.match(name), name
+    for name in bacterial:
+        assert _BACTERIAL_TAG_RE.match(name) and not _SYSTEMATIC_RE.match(name), name
+        assert not _CURIE_RE.match(name), name
 
 
 @pytest.mark.parametrize("cls", _LEAVES_SORTED)

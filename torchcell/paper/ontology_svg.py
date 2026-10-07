@@ -692,9 +692,11 @@ def _lane_body_lines(
     if len(lines) > max_lines:
         dropped = len(lines) - max_lines + 1
         lines = lines[: max_lines - 1]
-        lines.append(
-            (0.0, f"…  +{dropped} more lines — full list in the interactive map")
-        )
+        # Short enough to FIT the narrowest lane box: the long form overflowed and was
+        # clipped mid-word by ``_truncate`` the first time a lane went over (the
+        # bacterial experiment families, 2026-10-07). The figure's footer already
+        # carries the explorer URL, so the notice does not repeat it.
+        lines.append((0.0, f"…  +{dropped} more lines; see the map below"))
     return lines
 
 

@@ -18,3 +18,7 @@ files only. First run with the tier, by hand on 2026-09-14: 17 files, 4,284,249,
 exit status 0, tarball sha256 verified on the copy. The cron line runs from the primary
 checkout on `main`, so the new tier is covered by cron from the first Sunday after this
 change lands.
+
+## 2026.10.07 - The objects tier joins the weekly copy
+
+`torchcell-objects` (derived objects deposited by `torchcell.artifacts.deposit`, one `manifest.json` per key) is the fourth tier in `MIRRORS`. The directory was created empty on 2026-10-07 so the script's MISSING check passes before the first deposit. Shipping the tiers to Taiga is `scripts/ship_artifact_tiers.sh` ([[scripts.ship_artifact_tiers]]).

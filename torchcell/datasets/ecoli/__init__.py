@@ -10,6 +10,9 @@ is ``torchcell.datasets.bacteria_common``.
 """
 
 from .fuhrer2017 import MetabolomeFuhrer2017Dataset as MetabolomeFuhrer2017Dataset
+from .goodall2018 import (
+    GeneEssentialityGoodall2018Dataset as GeneEssentialityGoodall2018Dataset,
+)
 from .lamoureux2023 import RnaseqLamoureux2023Dataset as RnaseqLamoureux2023Dataset
 from .tong2020 import CarbonSourceTong2020Dataset as CarbonSourceTong2020Dataset
 from .wang2015 import EnvChemgenWang2015Dataset as EnvChemgenWang2015Dataset

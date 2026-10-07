@@ -323,3 +323,31 @@ design consequence worth naming: `_genotype_signature` folds `crispr.guide_seque
 the strain key, so the ~19 guides of one gene are 19 strains rather than 19 duplicates,
 and `_study_key` folds `screen_id` in, so the LC-E18 and LC-E75 measurements of one guide
 are two contexts rather than a duplicate pair.
+
+**Result on the built store: `CrispriKnockdownCui2018Dataset: PASS`**, all 17 rows, in
+800 s wall. The rows worth quoting:
+
+| row | message |
+|---|---|
+| L0 `structural` | 141542 records validated |
+| L1 `count` | observed 141542, expected 141542 |
+| L1 `pair_uniqueness` | 141542 unique (study, strain, condition) records, one each |
+| L1 `canonical_gene_names` | 4263 systematic names, one canonical spelling each, each current in the genome; 48 are pseudogene loci the genome resolves to themselves |
+| L1 `provenance_gaps` | 424626 documented provenance gaps over 141542/141542 records; 0 deferred fields |
+| L2 `value_fidelity` | 141542 values checked |
+| L2 `uncertainty_sanity` | 0 labeled uncertainties, none a zero dispersion; 141542 records report n_samples >= 2 with no uncertainty |
+| L3 `measurement_type_consistent` | single measurement_type: `log2_ratio` |
+| L3 `reference_zero` | reference response == 0 for all 141542 records |
+| L3 `environment_perturbed` | all 141542 experiments carry an environmental edit |
+| L3 `media_membership` | 141542 records on a shared MEDIA_LIBRARY medium (1 distinct medium) |
+| L4 `gene_containment_sgd` | 1.000 of 4263 measured genes are reference genes (>= 0.9) |
+| L4 `current_genome_genes` | every one of the 4263 measured systematic names is a gene of the current genome |
+| L1 `stored_targets_are_loci_of_the_pinned_assembly` | SUPPLEMENTARY: 4263 stored knockdown targets; 0 do not resolve to themselves |
+| L2 `guide_spacers_are_twenty_nt_acgt` | SUPPLEMENTARY: 70771 distinct spacers; 0 malformed |
+| L3 `both_screens_are_balanced_and_strain_pinned` | SUPPLEMENTARY: records per screen `{'LC-E18': 70771, 'LC-E75': 70771}`; 2 distinct (screen, assembly, background) pins |
+
+`L1 canonical_gene_names` counting 48 pseudogene loci is why the supplementary
+`stored_targets_are_loci_of_the_pinned_assembly` row exists: the shared rule wants
+status `current`, which a pseudogene locus never has. The `gene_containment_sgd` row's
+name is the shared rule's label; the universe passed to it is MG1655's own GenBank locus
+set, not S288C.

@@ -64,5 +64,6 @@ The loader reads the two variables from the process environment and does not rea
 itself. With `TC_DATA_URL` unset it builds from the publisher's files instead.
 
 The full collection served by the knowledge graph (51 datasets, 52.7 million
-experiments at release 2026.09.21) is listed on the
+experiment records at release 2026.09.21; an interaction record derived from a fitness
+measurement counts separately from that measurement) is listed on the
 [Datasets](https://mjvolk3.github.io/torchcell/datasets/index.html) page.

@@ -16,5 +16,5 @@ The command installs the newest release on PyPI. Release notes for every version
 the [GitHub Releases page](https://github.com/Mjvolk3/torchcell/releases).
 
 The served knowledge graph is at release 2026.09.21, with 51 datasets and 52.7 million
-experiments. Which package versions read which database release is listed on the
+experiment records. Which package versions read which database release is listed on the
 [releases and compatibility page](https://mjvolk3.github.io/torchcell/database/compatibility.html).

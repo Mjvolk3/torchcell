@@ -1404,6 +1404,22 @@ def test_the_real_annotation_agrees_with_table1s_own_locus_tags() -> None:
 @pytest.mark.data
 @requires_genome
 @requires_library
+def test_the_real_chassis_carries_seventy_typed_alleles() -> None:
+    """6 named individually plus 64 carrying the Δ86kb span, 1 of them a truncation."""
+    from torchcell.datasets.bacteria_common import bacterial_genome
+
+    genome = bacterial_genome("pputida", "KT2440", DATA_ROOT)
+    background, _ = kang.chassis_background(genome)
+    assert len(background.alleles) == 70
+    with_span = [a for a in background.alleles if a.deleted_span is not None]
+    assert len(with_span) == 64
+    assert sum(1 for a in with_span if a.edit is AlleleEdit.partial_deletion) == 1
+    assert background.is_fully_sourced
+
+
+@pytest.mark.data
+@requires_genome
+@requires_library
 def test_the_real_span_report_is_the_measurement_the_note_states() -> None:
     """67 loci inside the span, 63 typed, PP_4023 truncated, four span-only."""
     from torchcell.datasets.bacteria_common import bacterial_genome

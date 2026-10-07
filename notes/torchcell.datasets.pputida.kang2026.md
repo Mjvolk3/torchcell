@@ -98,7 +98,8 @@ locus tag per gene: "P. putida KT2440 ΔphaABC (PP_5003-5005) ΔmvaB (PP_3540) �
 (PP_3073) ∆ldhA (PP_1649) ∆86kb (4,536,1844,627,926; PP_4023-PP_4092)" (the OCR loses the
 hyphen in the coordinate range, which is why Table S2 is the source for the span).
 
-Typed alleles: 69 in all.
+Typed alleles: 70 in all, 6 named individually and 64 carrying the Δ86kb
+`deleted_span` (63 full deletions plus one truncation).
 
 | locus | symbol | designation | edit | how the locus was established |
 |---|---|---|---|---|

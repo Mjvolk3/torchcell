@@ -45,3 +45,7 @@ from .lim2022 import PutidaPrecise321Lim2022Dataset as PutidaPrecise321Lim2022Da
 from .menasalvas2025 import (
     IsoprenolSelectionMenasalvas2025Dataset as IsoprenolSelectionMenasalvas2025Dataset,
 )
+from .yunus2026 import CrispriArrayYunus2026Dataset as CrispriArrayYunus2026Dataset
+from .yunus2026 import (
+    CrispriKnockdownYunus2026Dataset as CrispriKnockdownYunus2026Dataset,
+)

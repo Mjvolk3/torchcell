@@ -94,6 +94,7 @@ class RetrievalMethod(StrEnum):
     radiant_endpoint = "radiant_endpoint"
     pubchem_api = "pubchem_api"
     manual_browser = "manual_browser"
+    globus = "globus"
 
 
 class SourceCheck(BaseModel):

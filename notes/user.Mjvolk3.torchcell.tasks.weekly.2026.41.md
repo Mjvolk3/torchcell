@@ -17,3 +17,5 @@ created: 1791256185172
 
 - [x] `chore/notes-tex-groups` worktree: a group layer for `notes-tex/` and its Zotero tree, with the existing collections moved under their groups [[user.Mjvolk3.torchcell.tasks.weekly.2026.41.notes-tex-groups]]
 - [x] `feat/bacteria-queue-table` worktree: the bacterial expansion document gains the 281-row discovery queue less the fifty recommended builds (whose papers are now filed in Zotero), and both generators write to the moved `notes-tex/database/` path again [[experiments.database.expansion-bacteria]]
+- [x] `feat/genslm-embedding-dataset` worktree: GenSLM codon language model wrapper and embedding dataset for any genome with a CDS (KT2440, the three E. coli sets, S288C), vendored tokenizer and configs with provenance, Globus fetch script; the paper `zvyaginGenSLMsGenomescaleLanguage2023` captured into the mirror from `torchcell-in` [[torchcell.models.genslm]] [[torchcell.datasets.genslm]] [[scripts.genslm_fetch_weights]]
+- [ ] Globus login + Connect Personal setup on GilaHyper (by hand), then fetch the 25M and 250M GenSLM checkpoints and build the KT2440 store [[scripts.genslm_fetch_weights]]

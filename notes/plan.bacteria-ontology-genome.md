@@ -975,3 +975,95 @@ becomes mandatory rather than chosen.
 4. **Section 5 item 2** -- are `assembly_set` and `assembly_accession` wanted as queryable
    `genome` node properties now (forcing the full rebuild) or left inside the serialized
    record for now?
+
+## 2026.10.07 - Step 9 adapters
+
+Branch `feat/bacterial-adapters-tranche-1`. Section 5 items 1, 3, 7 and 8 were already on
+`main` and were built on, not redone (item 2 stays deferred).
+
+### What landed
+
+- **20 adapters, one per registered bacterial dataset class** (8 *E. coli*, 12
+  *P. putida*), each `torchcell/adapters/<citation>[_<family>]_adapter.py` in the
+  `vanacloig2022_adapter.py` shape, with a conf `torchcell/adapters/conf/<root slug>_adapter.yaml`.
+  Borchert 2024 (`RbTnseqBorchert2024Dataset`) was already on `main` and is included.
+- **Enable-lists come from the record types measured on each dev-tree LMDB** (a full scan
+  of every completed store on 2026-10-07; Tong 2020 sampled evenly, 5,065 of 111,420; Price
+  2018 and Borchert 2024 read off `build_genotype` / `build_environment` while their stores
+  rebuilt, then confirmed by the data-gated test once they finished):
+  - every conf enables the core (experiment, reference, genome, genotype, environment,
+    media, temperature, the phenotype pair, dataset, publication), as every yeast conf does;
+    the temperature methods emit nothing for a record that gaps temperature (Goodall 2018
+    plated records, Lim 2022, Lim 2025, Menasalvas 2025);
+  - `bacterial perturbation (chunked)` + `perturbation to genotype`, never the served yeast
+    `perturbation (chunked)`, for every dataset except Caglar 2017 (both classes are
+    wild-type REL606 panels, 0 perturbations in 257 of 257 records);
+  - the crispr-construct pair for Carruthers 2025 (both), Menasalvas 2025 and Yunus 2026
+    (both), whose `BacterialCrisprInterferencePerturbation` leaves carry a `CrisprConstruct`;
+  - the environment-perturbation pair for every dataset except Fuhrer 2017 and Goodall
+    2018, which carry no environment perturbation in any record;
+  - phenotype: `product titer phenotype` (Carruthers, de Siqueira and Kang titers), `protein
+    abundance phenotype` (the five proteome classes and both Yunus panels), `rnaseq
+    expression phenotype` (Caglar RNA-seq, PRECISE-1K, putidaPRECISE321), `environment
+    response phenotype` (Price, Wang, Borchert, Lim tolerance, Menasalvas), `metabolite
+    phenotype` (Fuhrer), `gene essentiality phenotype` (Goodall), `fitness phenotype` (Tong).
+- `dataset_adapter_map` gains the 20 pairs (71 in all); `torchcell.adapters` re-exports
+  them as `ecoli_adapters` and `pputida_adapters`.
+- `torchcell/knowledge_graphs/conf/kg_bacteria.yaml`: the 20 classes as an explicit
+  `datasets` list, every record, the live-rebuild adapter settings, generation only.
+- Tests: one paired `tests/torchcell/adapters/test_<module>.py` per adapter (constructor,
+  missing conf, conf registered and declared through the gate's `dataset_conf_methods`,
+  gate file resolution, and a `--data` check over the first 200 records of the dev store
+  that the emitted graph is closed, every label and property is declared, and every
+  sub-object family the conf leaves off is absent from the records), the shared cases in
+  `_bacterial_adapter_cases.py`, and set-level checks in `test_bacterial_adapters.py`. The
+  `--data` run passed for all 20 against the dev tree on 2026-10-07.
+
+### Deviations from section 5 items 4 to 6
+
+1. **Item 4: one module per dataset CLASS, not per paper.** `kg_manifest.dataset_adapter_files`
+   reads the first `"*_adapter.yaml"` string in an adapter MODULE, so a module holding two
+   adapter classes resolves both datasets to the first class's conf. Measured on `main`:
+   `DmfCostanzo2016Dataset` resolves to `smf_costanzo2016_adapter.yaml` and
+   `IsobutanolValidatedLopez2024Dataset` to `isobutanol_screen_lopez2024_adapter.yaml`. For
+   a served second class, a change to its own conf is invisible to the adapter-file drift
+   check and its conf methods are read from the sibling's conf. The five papers with two
+   classes (Caglar, Carruthers, de Siqueira, Lim 2025, Yunus) therefore get two modules
+   each, and a test pins that the gate resolves every bacterial dataset to its own files.
+   The gap itself, on the served yeast multi-class modules, is not fixed here.
+2. **Item 6: `kg_uncapped.yaml` is unchanged.** It has no `datasets` key, and
+   `create_scerevisiae_kg_small` reads a missing or null `datasets` as every class in
+   `dataset_adapter_map`, so the map entries are what put the 20 into the live rebuild.
+   Appending them would mean replacing the null with an explicit 71-entry list, which
+   changes how the yeast membership is decided. Consequence, stated: the live rebuild's
+   preflight now requires all 20 bacterial dev stores to read fresh (all 20 did on
+   2026-10-07).
+3. **`kg_bacteria.yaml` must not go through `gilahyper_first_build-slurm_docker.slurm` or
+   `gilahyper_uncapped_build-slurm_docker.slurm`.** Both drop the served `torchcell`
+   database after generating and import what was generated. The rehearsal needs a
+   generation-only submission, which belongs to step 10.
+
+### Admission check output (rebuild checklist item 2, recorded, not acted on)
+
+`python -m torchcell.knowledge_graphs.kg_manifest --manifest /scratch/projects/torchcell/database/kg_manifest.json admit --dataset <Class> --data-root /scratch/projects/torchcell-scratch`,
+no `--neo4j-uri` (none of the 20 is served, so the store is never read), at commit
+`c97961789` (reported `dirty=True` only because of the untracked `.wt-in-progress`
+worktree marker). Every one of the 20 is BLOCKED, and only by the same four store-wide reasons:
+11 served datasets whose schema closure changed since the served build (Bloom, Caudal,
+Lian, Smith 2016, Mormino, Auesukaree, Hoepfner, Vanacloig, Wildenhain, Het/Hom
+Hillenmeyer), the served `crispr construct` graph class changed, plumbing drift on
+`_crispr_construct_node_from`, and the value surface (`compound_identity.py`,
+`compound_identity_table.json`, `media.py`). None of those files is touched by this
+branch. Every dataset-specific check passes: dev LMDB `fresh`, in `dataset_adapter_map`,
+zero undeclared phenotype methods, not served. So the incremental path is closed by drift
+that predates step 9, and the rebuild these datasets enter is the full one.
+
+### Not done here
+
+- The per-dataset verifiers (L0 to L4) were not run against the dev LMDBs: the runners
+  write `verification_report.json` into each store, and the stores belong to the driver.
+- Wetmore 2015 and Mutalik 2020 have no dataset class (Wetmore is subsumed by the Price
+  2018 compendium; Mutalik waits on a loader using `PhagePerturbation`), so they have no
+  adapter. When Mutalik lands, its conf meets the open question recorded in
+  `test_no_conf_enables_both_environment_perturbation_classes`: a phage-only conf leaves
+  the screen's other environment perturbations unwritten.

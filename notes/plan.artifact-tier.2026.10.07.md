@@ -121,3 +121,7 @@ not). The sequence:
    a new object, only for a new pointer in a record.
 
 Phase 6 lands as `notes/database.tc-data-endpoint.md` measurements plus the ship script.
+
+## 2026.10.07 - Status after phases 1 to 4 and the first end-to-end run
+
+Landed on main: phase 1 (PR #695, `torchcell/artifacts`), phase 2 (PR #694, tc-data genomes and objects endpoints), phase 3 (PR #703, `ArtifactRef` in the schema, Caudal and Bloom refs); phase 4 (PR #702, the query gate) and the ship script (PR #700) are queued. The genomes tier is on Taiga and verified. The first end-to-end run is recorded in [[experiments.036-dataset-fixes-before-kg-build.scripts.artifact_tier_e2e]]: a Caudal member ref resolves locally and, with the local tier hidden, through a tc-data socket into the verified cache. Dev stores for the five datasets whose closure changed are rebuilding under slurm (jobs 3375 to 3379). Remaining: the Radiant redeploy with the two roots, the deposits of phase 5, the `REL` cut and KG 4.0 build.

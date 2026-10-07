@@ -317,7 +317,7 @@ no per-guide dispersion was released.
 The bacterial-adapter tranche landed on `main` while this branch was open
 (`FEAT(adapters): BioCypher adapters for the 20 E. coli and P. putida dataset classes`).
 Its completeness tests assert that every registered bacterial dataset is in
-`dataset_adapter_map` and in `kg_bacteria.yaml`, so a 21st loader without an adapter is a
+`dataset_adapter_map` and in `kg_bacteria.yaml`, so a new loader without an adapter is a
 red branch by that tranche's design. This note's row therefore ships one.
 
 ### What was added
@@ -327,7 +327,7 @@ red branch by that tranche's design. This note's row therefore ships one.
 | `torchcell/adapters/rousset2018_adapter.py` | `CrispriScreenRousset2018Adapter` |
 | `torchcell/adapters/conf/ecoli_crispri_rousset2018_adapter.yaml` | the enable-list |
 | `torchcell/knowledge_graphs/dataset_adapter_map.py` | the dataset-to-adapter pair |
-| `torchcell/knowledge_graphs/conf/kg_bacteria.yaml` | the 21st rehearsal dataset |
+| `torchcell/knowledge_graphs/conf/kg_bacteria.yaml` | one more rehearsal dataset |
 | `tests/torchcell/adapters/test_rousset2018_adapter.py` | the paired test |
 
 ### The conf rule, and why it forced the aTc correction
@@ -369,8 +369,11 @@ node names in registration order, the phage alternatives on the two
 `NODE_LINK`. `_bacterial_adapter_cases.py` gained a `phage` flag on `_case`, and its
 blanket `assert "phage perturbation (chunked)" not in names` became per-case: a conf
 serves a phage exactly when its case says so, and never both environment-side classes.
-The three hardcoded counts (20 -> 21 in two tranche tests, 71 -> 72 in
-`test_build_time_projection.py`'s `dataset_adapter_map` pin) moved with it. No served
+The hardcoded counts moved with it: the three bacterial-dataset pins in
+`test_bacterial_adapters.py` and `test_build_time_projection.py`'s `dataset_adapter_map`
+pin. Those pins collided twice in one session as other branches landed their own bacterial
+rows (first the tranche itself, then the Gupta 2024 protein-turnover row), which is what
+they are for; the final values are 22 bacterial datasets and 73 mapped datasets. No served
 adapter method was touched.
 
 ### Not run

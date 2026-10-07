@@ -657,6 +657,30 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             page="Mol Syst Biol 13:907; S-BSST5 zscore_neg.tsv, zscore_pos.tsv",
         ),
     },
+    # The CRISPRi metabolome. L4 is the MG1655 locus universe (the records' own
+    # assembly pin), and the reference is the measured profile of the 15 empty-sgRNA
+    # control strains on the per-batch-median scale, so it is not centered on 0.
+    "metabolome_rapp2026": {
+        "root": "data/torchcell/metabolome_rapp2026",
+        # 1,513 Table S4 strain tokens - 15 control strains (the reference) - 1 strain
+        # with no assigned target (argR) - 1 b-number the annotation remaps (phnE
+        # b4104) = 1,496 kept records.
+        "expected_count": 1496,
+        "reference_centered": False,
+        "provenance": Provenance(
+            source_uri=("torchcell-raw/rappMetabolomeColiCRISPRi2026/data/si5.xlsx"),
+            citation_key="rappMetabolomeColiCRISPRi2026",
+            sha256=("fdc5ac2c759ad82d5cfb5ee1bb3c59fea427a88279e1178ad8e894e072498b84"),
+            method=(
+                "FI-MS fold changes of 1,321 annotated iML1515 m/z features relative "
+                "to the per-batch median, the mean of each strain's two independent "
+                "plates (exactly the paper's own Table S5 Mean_FC); reference = the 15 "
+                "empty-sgRNA control strains on the same scale. Strains are stored "
+                "under the iML1515 b-number Table S3 releases"
+            ),
+            page="Cell Syst 2026 Table S4 (mmc5.xlsx, sheet Table_S4)",
+        ),
+    },
 }
 
 

@@ -28,6 +28,8 @@ sourcing layer.
   on thirty carbon sources, against two assembly pins.
 - ``wang2015`` -- ``EnvChemgenWang2015Dataset``: Keio transporter deletions scored for
   isoprenol tolerance.
+- ``rapp2026`` -- ``MetabolomeRapp2026Dataset``: the metabolome of a CRISPRi library
+  covering every iML1515 gene, FI-MS feature fold changes per MG1655 b-number.
 - ``price2018`` -- ``RbTnseqPrice2018EcoliDataset``: the RB-TnSeq fitness compendium,
   the loader that serves the experiments Wetmore 2015 first reported.
 - ``mutalik2020`` -- the phage-resistance RB-TnSeq raw mirror and sourcing layer; the
@@ -47,5 +49,6 @@ from .gupta2024 import (
 )
 from .lamoureux2023 import RnaseqLamoureux2023Dataset as RnaseqLamoureux2023Dataset
 from .price2018 import RbTnseqPrice2018EcoliDataset as RbTnseqPrice2018EcoliDataset
+from .rapp2026 import MetabolomeRapp2026Dataset as MetabolomeRapp2026Dataset
 from .tong2020 import CarbonSourceTong2020Dataset as CarbonSourceTong2020Dataset
 from .wang2015 import EnvChemgenWang2015Dataset as EnvChemgenWang2015Dataset

@@ -64,6 +64,9 @@ from torch.nn.attention import SDPBackend, sdpa_kernel
 
 sys.path.insert(0, osp.dirname(__file__))
 from vanacloig_data import (  # noqa: E402
+    BUILD,
+    CELL_TABLE,
+    RESULTS_SUBDIR,
     Fold,
     VanacloigCells,
     load_cells,
@@ -77,10 +80,6 @@ DATA_ROOT = os.environ["DATA_ROOT"]
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 WANDB_MODE = os.getenv("WANDB_MODE")
 EXPERIMENT = osp.join(EXPERIMENT_ROOT, "035-env-chemgen-vanacloig-cgt")
-CELL_TABLE = (
-    "/scratch/projects/torchcell-scratch/experiments/033-env-chemgen-pooled/"
-    "cell_table/cell_table.parquet"
-)
 EMBEDDING_DIR = (
     "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/"
     "031-env-chemgen-vanacloig-hillenmeyer/experiments/"
@@ -88,7 +87,10 @@ EMBEDDING_DIR = (
 )
 COUNT_FINGERPRINTS = ("fcfp4_count", "ecfp4_count")
 PREDICTIONS = osp.join(
-    DATA_ROOT, "experiments", "035-env-chemgen-vanacloig-cgt", "predictions"
+    DATA_ROOT,
+    "experiments",
+    "035-env-chemgen-vanacloig-cgt",
+    "predictions" if BUILD == "001" else f"predictions_{BUILD}",
 )
 
 
@@ -809,7 +811,7 @@ def run(cfg: FactorizedConfig, sweep: str, device: torch.device) -> pd.DataFrame
         ctx.strain = strain_indices(per_gene, node_ids)
         ctx.cell_graph = cell_graph.to(device)
 
-    out_dir = osp.join(EXPERIMENT, "results", "factorized", sweep)
+    out_dir = osp.join(EXPERIMENT, "results", RESULTS_SUBDIR, "factorized", sweep)
     os.makedirs(out_dir, exist_ok=True)
     # the seed-ensemble prediction for every gene and compound, for stacking offline
     pred_dir = osp.join(PREDICTIONS, sweep)
@@ -819,7 +821,7 @@ def run(cfg: FactorizedConfig, sweep: str, device: torch.device) -> pd.DataFrame
         project="torchcell_035-env-chemgen-vanacloig-cgt",
         group=f"{sweep}/{cfg.name}",
         name=cfg.name,
-        tags=["factorized", sweep],
+        tags=["factorized", sweep, f"build{BUILD}"],
         config=cfg.model_dump(),
         dir=osp.join(DATA_ROOT, "wandb-experiments", "035-env-chemgen-vanacloig-cgt"),
         reinit=True,
@@ -892,7 +894,12 @@ def main() -> None:
         if args.only and cfg.name not in args.only:
             continue
         done = osp.join(
-            EXPERIMENT, "results", "factorized", sweep, f"{cfg.name}_scores.csv"
+            EXPERIMENT,
+            "results",
+            RESULTS_SUBDIR,
+            "factorized",
+            sweep,
+            f"{cfg.name}_scores.csv",
         )
         if osp.exists(done):
             print(f"{cfg.name}: already scored, skipped", flush=True)

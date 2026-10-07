@@ -49,11 +49,13 @@ import pandas as pd
 from dotenv import load_dotenv
 
 sys.path.insert(0, osp.dirname(__file__))
-from vanacloig_data import UNREPORTED_COMPOUNDS  # noqa: E402
+from vanacloig_data import RESULTS_SUBDIR, UNREPORTED_COMPOUNDS  # noqa: E402
 
 load_dotenv()
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
-RESULTS = osp.join(EXPERIMENT_ROOT, "035-env-chemgen-vanacloig-cgt", "results")
+RESULTS = osp.join(
+    EXPERIMENT_ROOT, "035-env-chemgen-vanacloig-cgt", "results", RESULTS_SUBDIR
+)
 KEY = ["fold_seed", "compound", "target"]
 N_BOOT = 2000
 COLUMNS = [

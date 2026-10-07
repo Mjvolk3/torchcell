@@ -24,6 +24,6 @@ export PYTHONPATH="$PROJECT_ROOT"
 export OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2
 # shellcheck disable=SC2086
 $PYTHON experiments/035-env-chemgen-vanacloig-cgt/scripts/baseline_ladder.py \
-  --cell-table /scratch/projects/torchcell-scratch/experiments/033-env-chemgen-pooled/cell_table/cell_table.parquet \
+  --cell-table "${CELL_TABLE:-/scratch/projects/torchcell-scratch/experiments/033-env-chemgen-pooled/cell_table/cell_table.parquet}" \
   --workers 8 $ARGS
 echo "finished at $(date -Is)"

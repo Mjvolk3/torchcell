@@ -501,6 +501,23 @@ case "$STAGE" in
   #       --time=<1.3x the canary-scaled wall time> --array=0-11 \
   #       --export=ALL,W5_STAGE=conditioned,TORCHCELL_SOURCE_GIT_HASH=$H,\
   #   TORCHCELL_SOURCE_DIFF_SHA256=$D experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm
+  # ------------------------------------- v22 BATCH-128 CANDIDATE DEFAULT, MORE SEEDS (2026.10.07)
+  # The v22 fast round on GilaHyper read batch 128 at the unscaled rate 3e-4 as +0.013 over
+  # the batch-32 reference on split seeds 0 to 2 (3 of 3 above). This stage runs the same arm
+  # on split seeds 4 to 11 so the contrast pairs with the relaunched v21 S_ref runs on Delta
+  # (same config, same store, same split seeds, batch 32). Three runs per A40 (12.2 GB each),
+  # splits held in memory, W&B project torchcell_019_expr_v22, tags as the v22 launcher.
+  #
+  #   H=$(git rev-parse HEAD); D=$(git diff HEAD | sha256sum | cut -d" " -f1)
+  #   sbatch -J 019-v22w1-b128seeds -p gpu --gres=gpu:1 --cpus-per-task=8 --mem=80g \
+  #       --time=14:00:00 --array=0-2 --export=ALL,W5_STAGE=v22_b128_seeds,\
+  #   TORCHCELL_SOURCE_GIT_HASH=$H,TORCHCELL_SOURCE_DIFF_SHA256=$D \
+  #       experiments/019-simb-multimodal/scripts/igb_expr_wave5.slurm
+  v22_b128_seeds) JOBS=()
+          for s in 4 5 6 7 8 9 10 11; do JOBS+=("S_ref_s${s}:0"); done
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=3; STAGE_CONFIG=cgt_expr_v21_small
+          EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_expr_v22" ;;
   conditioned) JOBS=()
           for s in 0 1 2 3 4 5 6 7 8 9 10 11; do
             JOBS+=("C_expr_s${s}:0" "C_exprperm_s${s}:0" "C_prot_s${s}:0" "C_protperm_s${s}:0")
@@ -703,6 +720,11 @@ for k in $(seq 0 $((RUNS_PER_GPU - 1))); do
   # Per-RUN overrides. Only resume_many has any: its checkpoint differs between the two runs
   # sharing this GPU, so it cannot travel in the stage-wide EXTRA_OV.
   RUN_OV=""
+  # The v22 readout keys runs by the tags [v22,<arm>,split<N>]; the arm script's own tag
+  # list comes earlier on the command line, so this one wins.
+  if [[ "$STAGE" == "v22_b128_seeds" ]]; then
+    RUN_OV=" wandb.tags=[v22,F_b128lr1,igb,split${ARM##*_s}]"
+  fi
   if [[ "$STAGE" == "resume_many" ]]; then
     RUN_OV=" trainer.resume_ckpt_path=${RESUME_CKPTS[$IDX]}"
     [[ -n "${RESUME_FROM[$IDX]}" ]] && RUN_OV="$RUN_OV +wandb.resumed_from=${RESUME_FROM[$IDX]}"

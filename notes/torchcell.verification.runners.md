@@ -328,7 +328,50 @@ here as the remaining half of the finding.
 
 ### Verbatim output, environment response
 
-Every one of the thirteen registered datasets is YEAST (measured: each store's first
-record has `species="Saccharomyces cerevisiae"` and no `assembly_set`), so this changes no
-row today. That is the honest result: what changed is that a bacterial dataset can now be
-registered here and be verified against its own genome, not that any record moved.
+Every one of the thirteen registered datasets is YEAST (measured read-only: each store's
+first record has `species="Saccharomyces cerevisiae"` and no `assembly_set`), so the
+host-aware selection picks the same universe, the same resolver and the same
+`S288C reference` label the old code hardcoded. That is the honest result: what changed is
+that a bacterial dataset can now be registered here and verified against its own genome,
+not that any record moved.
+
+`run_environment_response` was then run over the real dev stores. It takes hours (about
+8M records over the thirteen datasets, five of them streamed at 0.3M to 3.1M records), so
+what is recorded here is what had completed, verbatim; the rest was still running.
+
+```
+yeastphenome: FAIL
+  [ok] L0 structural: 296777 records validated
+  [ok] L1 count: observed 296777, expected 296777
+  [ok] L1 pair_uniqueness: 296777 unique (study, strain, condition) records, one each
+  [ok] L1 canonical_gene_names: 5011 systematic names, one canonical spelling each, each current in the genome
+  [ok] L2 value_fidelity: 296777 values checked
+  [ok] L3 measurement_type_consistent: single measurement_type: 'z_score'
+  [ok] L3 reference_zero: numeric rule: reference response == 0 for all 296777 records
+  [XX] L3 compound_identity: environment edits: 67 compounds are name-only (no identifier, no gap) over 296777 references: hydrogen peroxide (perturbation.compound) x13340, paraquat (perturbation.compound) x13276, ...
+  [XX] L3 media_membership: 4 free-text media over 296777 records join nothing: YPD (base_medium=None) x202782, SC (base_medium=None) x79887, SD (base_medium=None) x13680, CSM (base_medium=None) x428
+  [ok] L4 gene_containment_sgd: 1.000 of 5011 measured genes are S288C reference genes (>= 0.9)
+  [ok] L4 current_genome_genes: every one of the 5011 measured systematic names is a gene of the current genome
+
+env_chemgen_vanacloig2022: PASS
+  [ok] L4 gene_containment_sgd: 1.000 of 3587 measured genes are S288C reference genes (>= 0.9)
+  [ok] L4 current_genome_genes: every one of the 3587 measured systematic names is a gene of the current genome
+
+env_chemgen_mota2024: PASS
+  [ok] L4 gene_containment_sgd: 1.000 of 600 measured genes are S288C reference genes (>= 0.9)
+  [ok] L4 current_genome_genes: every one of the 600 measured systematic names is a gene of the current genome
+```
+
+(The three reports' other rows all pass and are in the written
+`preprocess/verification_report.json` of each store; only yeastphenome's two failures and
+every dataset's L4 rows are reproduced above.)
+
+**yeastphenome FAILs, on two rules this change does not touch.** The failures are
+`compound_identity` (67 curated compounds carry a name and neither an identifier nor a
+typed gap) and `media_membership` (four free-text media, `YPD` / `SC` / `SD` / `CSM`, that
+join nothing in `MEDIA_LIBRARY`) -- both the honest consequence of consuming a secondary
+curation layer, and both rules landed with the shared record rules long before this. Its
+two L4 gene rows, the ones a host selection decides, pass. I did not re-run yeastphenome
+under `origin/main` to measure the before state (another 18-minute materialization per
+pass), so "it failed these two before" is an inference from the diff -- neither rule's code
+nor its inputs are in it -- and not a measurement.

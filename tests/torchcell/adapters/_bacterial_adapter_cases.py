@@ -247,6 +247,8 @@ BACTERIAL: list[Bacterial] = [
         MetabolomeRapp2026Dataset,
         "metabolite phenotype",
         crispr=True,
+    ),
+    _case(
         EnvChemgenShiver2016Adapter,
         "shiver2016",
         "ecoli_env_chemgen_shiver2016",

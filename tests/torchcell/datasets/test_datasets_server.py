@@ -25,6 +25,16 @@ host and port unless overridden, and ``--port 0`` is passed through as 0.
 citation key. ``/raw`` does not list it and every ``/raw/{key}/...`` route answers it 404
 ``unknown citation key``, the same as an absent key, even when the directory holds a
 valid manifest and the file it lists (the literature server's ``_key_dir`` rule).
+
+2026.10.07 (artifact tier, phase 2): the genomes tier (``GenomeManifest`` per assembly
+set) and the objects tier (literature ``Manifest`` per object key) are served beside
+``/raw`` through the same manifest-gated file path. The fixture genomes tier holds one
+manifested set with a 5,120-byte container and an unlisted file, one set with no
+manifest, and one ``_`` service directory; the objects tier one manifested key with a
+nested ``emb/vectors.npy`` of 64 bytes. Unlike ``/raw``, the two new listings name only
+keys that carry a ``manifest.json``. A root absent on disk lists ``[]`` and answers
+every other route of its tier 404 ``unknown assembly set`` / ``unknown object key``;
+``from_env`` does not require either root to exist.
 """
 
 import argparse
@@ -44,6 +54,7 @@ from torchcell.datasets import server
 from torchcell.datasets.artifact import ArtifactIndex, DatasetArtifact, archive_name
 from torchcell.datasets.server import APP_TITLE, DataKeys, DataServerConfig, create_app
 from torchcell.literature.manifest import ArtifactRecord, Manifest
+from torchcell.sequence.genome.registry import GenomeManifest
 
 GOOD_KEY = "data-secret-key-123"
 HEADERS = {"X-API-Key": GOOD_KEY}
@@ -52,6 +63,12 @@ PAYLOAD_SHA = hashlib.sha256(PAYLOAD).hexdigest()
 RAW_CSV = b"gene,fitness\nYAL001C,0.9\n"
 RAW_CSV_SHA = hashlib.sha256(RAW_CSV).hexdigest()
 ARCHIVE = archive_name("smf_fake", "1.2.1", PAYLOAD_SHA)
+GENOME_SET = "fakeSet2018"
+GENOME_FILE = "allReferenceGenesWithSNPsAndIndels.tar.gz"
+OBJECT_KEY = "fakeObjects2024"
+OBJECT_FILE = "emb/vectors.npy"
+OBJECT_BYTES = bytes(range(64))
+OBJECT_SHA = hashlib.sha256(OBJECT_BYTES).hexdigest()
 
 
 def _artifact() -> DatasetArtifact:
@@ -106,11 +123,72 @@ def build_raw(root: Path) -> Path:
     return raw
 
 
+def _genome_manifest(files: list[ArtifactRecord]) -> GenomeManifest:
+    return GenomeManifest(
+        assembly_set=GENOME_SET,
+        organism="Saccharomyces cerevisiae",
+        strain_or_population="1,011 isolates",
+        source="Peter et al. 2018",
+        release="2018",
+        citation_key="peterGenomeEvolution10112018",
+        files=files,
+        provenance_complete=True,
+        created_at="2026-10-07T00:00:00+00:00",
+    )
+
+
+def build_genomes(root: Path) -> Path:
+    """A genomes tier: one manifested set, one set without a manifest, one service dir."""
+    genomes = root / "genomes"
+    key = genomes / GENOME_SET
+    key.mkdir(parents=True)
+    (key / GENOME_FILE).write_bytes(PAYLOAD)
+    (key / "unlisted.fasta").write_bytes(b">x\nACGT\n")
+    manifest = _genome_manifest(
+        [
+            ArtifactRecord(
+                path=GENOME_FILE,
+                role="container",
+                bytes=len(PAYLOAD),
+                sha256=PAYLOAD_SHA,
+            )
+        ]
+    )
+    (key / "manifest.json").write_text(manifest.model_dump_json(indent=2))
+    (genomes / "bareSet2020").mkdir()
+    (genomes / "_staging").mkdir()
+    return genomes
+
+
+def build_objects(root: Path) -> Path:
+    """An objects tier: one manifested key with a nested file, one bare key."""
+    objects = root / "objects"
+    key = objects / OBJECT_KEY
+    (key / "emb").mkdir(parents=True)
+    (key / OBJECT_FILE).write_bytes(OBJECT_BYTES)
+    manifest = Manifest(
+        citation_key=OBJECT_KEY,
+        files=[
+            ArtifactRecord(
+                path=OBJECT_FILE,
+                role="embedding",
+                bytes=len(OBJECT_BYTES),
+                sha256=OBJECT_SHA,
+            )
+        ],
+    )
+    (key / "manifest.json").write_text(manifest.model_dump_json(indent=2))
+    (objects / "bareObjects2025").mkdir()
+    return objects
+
+
 @pytest.fixture
 def client(tmp_path: Path) -> TestClient:
     config = DataServerConfig(
         store_root=build_store(tmp_path),
         raw_root=build_raw(tmp_path),
+        genomes_root=build_genomes(tmp_path),
+        objects_root=build_objects(tmp_path),
         keys=DataKeys.from_pairs(f"mac:{GOOD_KEY}"),
     )
     return TestClient(create_app(config))
@@ -125,13 +203,29 @@ def test_health_needs_no_auth_and_counts_store_and_raw(
         "status": "ok",
         "n_artifacts": 1,
         "n_raw_keys": 2,
+        "n_genome_sets": 1,
+        "n_object_keys": 1,
         "store_root": str(tmp_path / "store"),
         "raw_root": str(tmp_path / "raw"),
+        "genomes_root": str(tmp_path / "genomes"),
+        "objects_root": str(tmp_path / "objects"),
     }
 
 
 @pytest.mark.parametrize(
-    "path", ["/datasets", "/datasets/smf_fake", f"/datasets/smf_fake/{ARCHIVE}", "/raw"]
+    "path",
+    [
+        "/datasets",
+        "/datasets/smf_fake",
+        f"/datasets/smf_fake/{ARCHIVE}",
+        "/raw",
+        "/genomes",
+        f"/genomes/{GENOME_SET}/manifest",
+        f"/genomes/{GENOME_SET}/artifact/{GENOME_FILE}",
+        "/objects",
+        f"/objects/{OBJECT_KEY}/files",
+        f"/objects/{OBJECT_KEY}/artifact/{OBJECT_FILE}",
+    ],
 )
 def test_missing_or_bad_key_is_401(client: TestClient, path: str) -> None:
     assert client.get(path).status_code == 401
@@ -196,11 +290,7 @@ def test_unlisted_archive_and_traversal_are_404(client: TestClient) -> None:
 def test_index_missing_is_404_with_the_packager_hint(tmp_path: Path) -> None:
     store = tmp_path / "empty-store"
     store.mkdir()
-    config = DataServerConfig(
-        store_root=store,
-        raw_root=build_raw(tmp_path),
-        keys=DataKeys.from_pairs(f"mac:{GOOD_KEY}"),
-    )
+    config = _config(store, build_raw(tmp_path), tmp_path)
     empty = TestClient(create_app(config))
     assert empty.get("/health").json()["n_artifacts"] == 0
     resp = empty.get("/datasets", headers=HEADERS)
@@ -224,12 +314,7 @@ def test_underscore_directory_is_an_unknown_key_even_with_a_manifest(
     (hidden / "manifest.json").write_text(
         (raw / "fakeKey2020" / "manifest.json").read_text()
     )
-    config = DataServerConfig(
-        store_root=build_store(tmp_path),
-        raw_root=raw,
-        keys=DataKeys.from_pairs(f"mac:{GOOD_KEY}"),
-    )
-    http = TestClient(create_app(config))
+    http = TestClient(create_app(_config(build_store(tmp_path), raw, tmp_path)))
 
     assert http.get("/raw", headers=HEADERS).json() == {
         "citation_keys": ["bareKey2021", "fakeKey2020"],
@@ -295,6 +380,14 @@ def test_openapi_lists_every_route_and_docs_is_served(client: TestClient) -> Non
         "/raw/{citation_key}/manifest",
         "/raw/{citation_key}/files",
         "/raw/{citation_key}/artifact/{rel_path}",
+        "/genomes",
+        "/genomes/{assembly_set}/manifest",
+        "/genomes/{assembly_set}/files",
+        "/genomes/{assembly_set}/artifact/{rel_path}",
+        "/objects",
+        "/objects/{object_key}/manifest",
+        "/objects/{object_key}/files",
+        "/objects/{object_key}/artifact/{rel_path}",
     }
     docs = client.get("/docs")
     assert docs.status_code == 200
@@ -306,13 +399,23 @@ def test_config_from_env_reads_tc_data_variables(
 ) -> None:
     store = build_store(tmp_path)
     raw = build_raw(tmp_path)
+    genomes = build_genomes(tmp_path)
+    objects = build_objects(tmp_path)
     monkeypatch.setenv("TC_DATA_ROOT", str(store))
     monkeypatch.setenv("TC_DATA_RAW_ROOT", str(raw))
+    monkeypatch.setenv("TC_DATA_GENOMES_ROOT", str(genomes))
+    monkeypatch.setenv("TC_DATA_OBJECTS_ROOT", str(objects))
     monkeypatch.setenv("TC_DATA_API_KEYS", f"mac:{GOOD_KEY}")
     monkeypatch.setenv("TC_DATA_PORT", "9001")
     monkeypatch.delenv("TC_DATA_KEYS_FILE", raising=False)
     config = DataServerConfig.from_env()
-    assert (config.store_root, config.raw_root, config.port) == (store, raw, 9001)
+    assert (
+        config.store_root,
+        config.raw_root,
+        config.genomes_root,
+        config.objects_root,
+        config.port,
+    ) == (store, raw, genomes, objects, 9001)
     assert config.keys.verify(GOOD_KEY) == "mac"
 
 
@@ -322,11 +425,19 @@ def test_config_from_env_defaults_raw_root_under_data_root(
     store = build_store(tmp_path)
     (tmp_path / "torchcell-raw").mkdir()
     monkeypatch.setenv("TC_DATA_ROOT", str(store))
-    monkeypatch.delenv("TC_DATA_RAW_ROOT", raising=False)
+    for var in ("TC_DATA_RAW_ROOT", "TC_DATA_GENOMES_ROOT", "TC_DATA_OBJECTS_ROOT"):
+        monkeypatch.delenv(var, raising=False)
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     monkeypatch.setenv("TC_DATA_API_KEYS", f"mac:{GOOD_KEY}")
     monkeypatch.delenv("TC_DATA_KEYS_FILE", raising=False)
-    assert DataServerConfig.from_env().raw_root == tmp_path / "torchcell-raw"
+    config = DataServerConfig.from_env()
+    assert config.raw_root == tmp_path / "torchcell-raw"
+    # The genomes and objects roots default under DATA_ROOT and need not exist.
+    assert (config.genomes_root, config.objects_root) == (
+        tmp_path / "torchcell-genomes",
+        tmp_path / "torchcell-objects",
+    )
+    assert not config.genomes_root.exists() and not config.objects_root.exists()
     monkeypatch.setenv("TC_DATA_ROOT", str(tmp_path / "missing"))
     with pytest.raises(FileNotFoundError, match="artifact store does not exist"):
         DataServerConfig.from_env()
@@ -338,9 +449,14 @@ def test_data_keys_error_names_the_tc_data_variable() -> None:
 
 
 # --- 2026.09.30 (Phase 15): the remaining refusals, the header source, the CLI ------ #
-def _config(store: Path, raw: Path) -> DataServerConfig:
+def _config(store: Path, raw: Path, tmp_path: Path) -> DataServerConfig:
+    """Store and raw mirror as given; genomes and objects roots that do not exist."""
     return DataServerConfig(
-        store_root=store, raw_root=raw, keys=DataKeys.from_pairs(f"mac:{GOOD_KEY}")
+        store_root=store,
+        raw_root=raw,
+        genomes_root=tmp_path / "no-genomes",
+        objects_root=tmp_path / "no-objects",
+        keys=DataKeys.from_pairs(f"mac:{GOOD_KEY}"),
     )
 
 
@@ -351,6 +467,8 @@ def _clear_data_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "TC_DATA_HOST",
         "TC_DATA_PORT",
         "TC_DATA_RAW_ROOT",
+        "TC_DATA_GENOMES_ROOT",
+        "TC_DATA_OBJECTS_ROOT",
     ):
         monkeypatch.delenv(var, raising=False)
 
@@ -412,7 +530,7 @@ def test_sha_headers_come_from_the_index_and_manifest_not_from_the_bytes(
             )
         ],
     )
-    http = TestClient(create_app(_config(store, raw)))
+    http = TestClient(create_app(_config(store, raw, tmp_path)))
     archive = http.get(f"/datasets/smf_fake/{ARCHIVE}", headers=HEADERS)
     assert (archive.content, archive.headers["X-Artifact-SHA256"]) == (
         PAYLOAD,
@@ -430,7 +548,7 @@ def test_indexed_or_manifested_file_missing_from_disk_is_404_file_not_found(
     (store / "smf_fake" / ARCHIVE).unlink()
     raw = build_raw(tmp_path)
     (raw / "fakeKey2020" / "data" / "table.csv").unlink()
-    http = TestClient(create_app(_config(store, raw)))
+    http = TestClient(create_app(_config(store, raw, tmp_path)))
     for path in (
         f"/datasets/smf_fake/{ARCHIVE}",
         "/raw/fakeKey2020/artifact/data/table.csv",
@@ -458,7 +576,7 @@ def test_manifest_entry_escaping_its_key_directory_is_400(tmp_path: Path) -> Non
             )
         ],
     )
-    http = TestClient(create_app(_config(build_store(tmp_path), raw)))
+    http = TestClient(create_app(_config(build_store(tmp_path), raw, tmp_path)))
     resp = http.get(
         "/raw/fakeKey2020/artifact/%2e%2e/otherKey2019/secret.csv", headers=HEADERS
     )
@@ -488,7 +606,9 @@ def test_corrupt_manifest_is_500_while_a_missing_one_is_404(tmp_path: Path) -> N
     store = build_store(tmp_path)
     raw = build_raw(tmp_path)
     (raw / "fakeKey2020" / "manifest.json").write_text("{not json")
-    http = TestClient(create_app(_config(store, raw)), raise_server_exceptions=False)
+    http = TestClient(
+        create_app(_config(store, raw, tmp_path)), raise_server_exceptions=False
+    )
     for route in ("manifest", "files", "artifact/data/table.csv"):
         assert http.get(f"/raw/fakeKey2020/{route}", headers=HEADERS).status_code == 500
     bare = http.get("/raw/bareKey2021/manifest", headers=HEADERS)
@@ -524,6 +644,7 @@ def test_create_app_from_env_binds_the_env_config(
     _clear_data_env(monkeypatch)
     loads: list[bool] = []
     monkeypatch.setattr(server, "load_dotenv", lambda: loads.append(True))
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     monkeypatch.setenv("TC_DATA_ROOT", str(build_store(tmp_path)))
     monkeypatch.setenv("TC_DATA_RAW_ROOT", str(build_raw(tmp_path)))
     monkeypatch.setenv("TC_DATA_API_KEYS", f"mac:{GOOD_KEY}")
@@ -578,6 +699,7 @@ def test_main_runs_uvicorn_with_config_or_override_host_and_port(
     monkeypatch.setenv("TC_DATA_RAW_ROOT", str(raw))
     monkeypatch.setenv("TC_DATA_API_KEYS", f"mac:{GOOD_KEY}")
     monkeypatch.setenv("TC_DATA_PORT", "9100")
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     monkeypatch.setattr(server, "load_dotenv", lambda: None)
     calls: list[tuple[Any, str, int]] = []
 
@@ -610,8 +732,190 @@ def test_main_runs_uvicorn_with_config_or_override_host_and_port(
         ("0.0.0.0", 0),
     ]
     assert calls[0][0].state.config.store_root == store
+    tiers = (
+        f"genomes {tmp_path / 'torchcell-genomes'}, "
+        f"objects {tmp_path / 'torchcell-objects'}"
+    )
     assert [r.getMessage() for r in caplog.records] == [
-        f"dataset endpoint: store {store}, raw {raw} on 0.0.0.0:9100",
-        f"dataset endpoint: store {store}, raw {raw} on 127.0.0.1:9200",
-        f"dataset endpoint: store {store}, raw {raw} on 0.0.0.0:0",
+        f"dataset endpoint: store {store}, raw {raw}, {tiers} on 0.0.0.0:9100",
+        f"dataset endpoint: store {store}, raw {raw}, {tiers} on 127.0.0.1:9200",
+        f"dataset endpoint: store {store}, raw {raw}, {tiers} on 0.0.0.0:0",
     ]
+
+
+# --- 2026.10.07 (artifact tier, phase 2): the genomes and objects tiers ------------- #
+def test_genome_and_object_listings_name_only_manifested_keys(
+    client: TestClient,
+) -> None:
+    """``bareSet2020`` / ``bareObjects2025`` have no manifest and ``_staging`` is a
+    service directory: neither listing names them (``/raw`` still lists bare keys).
+    """
+    genomes = client.get("/genomes", headers=HEADERS)
+    assert (genomes.status_code, genomes.json()) == (
+        200,
+        {"assembly_sets": [GENOME_SET], "count": 1},
+    )
+    objects = client.get("/objects", headers=HEADERS)
+    assert (objects.status_code, objects.json()) == (
+        200,
+        {"object_keys": [OBJECT_KEY], "count": 1},
+    )
+
+
+def test_absent_tier_roots_list_nothing_and_404_everything_else(tmp_path: Path) -> None:
+    """Roots that do not exist on disk: ``[]`` listings, zero health counts, and 404
+    ``unknown <noun>`` on every per-key route; nothing is created on disk.
+    """
+    config = _config(build_store(tmp_path), build_raw(tmp_path), tmp_path)
+    http = TestClient(create_app(config))
+    assert http.get("/genomes", headers=HEADERS).json() == {
+        "assembly_sets": [],
+        "count": 0,
+    }
+    assert http.get("/objects", headers=HEADERS).json() == {
+        "object_keys": [],
+        "count": 0,
+    }
+    health = http.get("/health").json()
+    assert (health["n_genome_sets"], health["n_object_keys"]) == (0, 0)
+    for prefix, noun, key, rel in (
+        ("genomes", "assembly set", GENOME_SET, GENOME_FILE),
+        ("objects", "object key", OBJECT_KEY, OBJECT_FILE),
+    ):
+        for route in ("manifest", "files", f"artifact/{rel}"):
+            resp = http.get(f"/{prefix}/{key}/{route}", headers=HEADERS)
+            assert (resp.status_code, resp.json()) == (
+                404,
+                {"detail": f"unknown {noun}"},
+            )
+    assert not (tmp_path / "no-genomes").exists()
+    assert not (tmp_path / "no-objects").exists()
+
+
+def test_genome_manifest_round_trips_as_a_genome_manifest(
+    client: TestClient, tmp_path: Path
+) -> None:
+    resp = client.get(f"/genomes/{GENOME_SET}/manifest", headers=HEADERS)
+    assert resp.status_code == 200
+    on_disk = GenomeManifest.model_validate_json(
+        (tmp_path / "genomes" / GENOME_SET / "manifest.json").read_text()
+    )
+    assert GenomeManifest.model_validate(resp.json()) == on_disk
+    assert resp.json()["organism"] == "Saccharomyces cerevisiae"
+
+
+def test_object_manifest_round_trips_as_a_literature_manifest(
+    client: TestClient, tmp_path: Path
+) -> None:
+    resp = client.get(f"/objects/{OBJECT_KEY}/manifest", headers=HEADERS)
+    assert resp.status_code == 200
+    on_disk = Manifest.model_validate_json(
+        (tmp_path / "objects" / OBJECT_KEY / "manifest.json").read_text()
+    )
+    assert Manifest.model_validate(resp.json()) == on_disk
+
+
+def test_tier_files_routes_list_the_manifest_rows(client: TestClient) -> None:
+    genome_files = client.get(f"/genomes/{GENOME_SET}/files", headers=HEADERS)
+    assert genome_files.json() == [
+        {
+            "path": GENOME_FILE,
+            "role": "container",
+            "bytes": len(PAYLOAD),
+            "sha256": PAYLOAD_SHA,
+        }
+    ]
+    object_files = client.get(f"/objects/{OBJECT_KEY}/files", headers=HEADERS)
+    assert object_files.json() == [
+        {
+            "path": OBJECT_FILE,
+            "role": "embedding",
+            "bytes": len(OBJECT_BYTES),
+            "sha256": OBJECT_SHA,
+        }
+    ]
+    for path, noun in (
+        ("/genomes/bareSet2020/files", "assembly set"),
+        ("/objects/bareObjects2025/files", "object key"),
+    ):
+        resp = client.get(path, headers=HEADERS)
+        assert (resp.status_code, resp.json()) == (
+            404,
+            {"detail": f"no manifest.json for this {noun}"},
+        )
+
+
+@pytest.mark.parametrize(
+    ("url", "body", "sha"),
+    [
+        ("/raw/fakeKey2020/artifact/data/table.csv", RAW_CSV, RAW_CSV_SHA),
+        (f"/genomes/{GENOME_SET}/artifact/{GENOME_FILE}", PAYLOAD, PAYLOAD_SHA),
+        (f"/objects/{OBJECT_KEY}/artifact/{OBJECT_FILE}", OBJECT_BYTES, OBJECT_SHA),
+    ],
+)
+def test_every_tier_streams_a_listed_file_the_same_way(
+    client: TestClient, url: str, body: bytes, sha: str
+) -> None:
+    """Raw, genomes and objects go through one serving path: same media type, same
+    header source, same ``Accept-Ranges``, and a ``bytes=5-10`` range is a 206 slice
+    carrying the whole-file hash.
+    """
+    resp = client.get(url, headers=HEADERS)
+    assert resp.status_code == 200
+    assert resp.content == body
+    assert resp.headers["X-Artifact-SHA256"] == sha
+    assert resp.headers["content-type"] == "application/octet-stream"
+    assert resp.headers["accept-ranges"] == "bytes"
+    assert resp.headers["content-length"] == str(len(body))
+    part = client.get(url, headers={**HEADERS, "Range": "bytes=5-10"})
+    assert part.status_code == 206
+    assert part.content == body[5:11]
+    assert part.headers["content-range"] == f"bytes 5-10/{len(body)}"
+    assert part.headers["X-Artifact-SHA256"] == sha
+
+
+def test_tier_unlisted_file_service_dir_and_traversal_are_refused(
+    client: TestClient, tmp_path: Path
+) -> None:
+    """An unlisted file is 404 ``file not in the manifest`` even though it is on disk;
+    ``_staging`` answers like an absent set even with a valid manifest in it; a ``..``
+    path never reaches bytes outside the set.
+    """
+    unlisted = client.get(
+        f"/genomes/{GENOME_SET}/artifact/unlisted.fasta", headers=HEADERS
+    )
+    assert (unlisted.status_code, unlisted.json()) == (
+        404,
+        {"detail": "file not in the manifest"},
+    )
+    staging = tmp_path / "genomes" / "_staging"
+    (staging / GENOME_FILE).write_bytes(PAYLOAD)
+    (staging / "manifest.json").write_text(
+        (tmp_path / "genomes" / GENOME_SET / "manifest.json").read_text()
+    )
+    hidden = client.get(f"/genomes/_staging/artifact/{GENOME_FILE}", headers=HEADERS)
+    assert (hidden.status_code, hidden.json()) == (
+        404,
+        {"detail": "unknown assembly set"},
+    )
+    traversal = client.get(
+        f"/objects/{OBJECT_KEY}/artifact/../../raw/fakeKey2020/data/table.csv",
+        headers=HEADERS,
+    )
+    assert traversal.status_code == 404
+    assert RAW_CSV not in traversal.content
+
+
+def test_genome_manifest_naming_another_set_is_a_500(tmp_path: Path) -> None:
+    """``registry.load_genome_manifest``'s rule on the server: a set directory whose
+    manifest names a different ``assembly_set`` is an integrity error, never served.
+    """
+    genomes = build_genomes(tmp_path)
+    renamed = genomes / "renamedSet2019"
+    (genomes / GENOME_SET).rename(renamed)
+    config = _config(build_store(tmp_path), build_raw(tmp_path), tmp_path)
+    config = config.model_copy(update={"genomes_root": genomes})
+    http = TestClient(create_app(config), raise_server_exceptions=False)
+    for route in ("manifest", "files", f"artifact/{GENOME_FILE}"):
+        resp = http.get(f"/genomes/renamedSet2019/{route}", headers=HEADERS)
+        assert resp.status_code == 500

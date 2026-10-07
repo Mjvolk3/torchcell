@@ -121,3 +121,36 @@ Checked with a throwaway project directory holding a `.env` with dummy values (p
 torchcell reads the two variables from the process environment (`experiment_dataset.py` `_download`, `DatasetClient.from_env`) and no module on the loader import path calls `load_dotenv()`. The README and the downloads guide now say: export the two variables, or put them in `.env` and call `load_dotenv()` before constructing a loader.
 
 Keys are minted, one per person or group: `python -m torchcell.datasets.server --gen-key <name>` on the endpoint host prints the plaintext (given to the user once) and the `{name: sha256hex}` entry for `TC_DATA_KEYS_FILE`. The server builds its key table at startup (`DataServerConfig.from_env`), so a new key is accepted only after a restart; deleting an entry and restarting revokes it. One key exists today (`mjvolk3`). The downloads guide gained a Keys section saying this.
+
+## 2026.10.07 - Genomes and objects tiers (artifact tier, phase 2)
+
+Decision D6 of the artifact-tier plan: tc-data serves the genomes tier and the new objects tier beside `/raw`, so an `ArtifactRef` (`tier`, `key`, `path`, `sha256`) resolves over HTTP on a machine without the local tier. Branch `feat/tc-data-tier-endpoints`; not deployed anywhere yet.
+
+**Roots.** Two server variables, read by `DataServerConfig.from_env`:
+
+| Variable | Default | Keyed by | Manifest |
+|---|---|---|---|
+| `TC_DATA_GENOMES_ROOT` | `$DATA_ROOT/torchcell-genomes` | assembly set | `GenomeManifest` (`torchcell.sequence.genome.registry`) |
+| `TC_DATA_OBJECTS_ROOT` | `$DATA_ROOT/torchcell-objects` | citation key or named derived set | literature `Manifest` |
+
+Unlike the store and the raw mirror, neither root has to exist at startup: an absent root lists `[]` and answers every other route of its tier 404 (`unknown assembly set`, `unknown object key`). `/health` gains `n_genome_sets`, `n_object_keys`, `genomes_root`, `objects_root`.
+
+**Endpoints.** `GET /genomes`, `/genomes/{assembly_set}/manifest`, `/genomes/{assembly_set}/files`, `/genomes/{assembly_set}/artifact/{rel_path}`; `GET /objects`, `/objects/{object_key}/manifest`, `/objects/{object_key}/files`, `/objects/{object_key}/artifact/{rel_path}`. All need the key. Raw, genomes and objects now share one serving function (`_serve_listed_file`): a file is served only when its key's manifest lists it, `X-Artifact-SHA256` is the manifest hash (never recomputed), `Accept-Ranges: bytes` with 206 on `Range`, the media type is `application/octet-stream`, `_`-prefixed directories answer as absent keys, and a listed path escaping the key directory is 400. Two differences from `/raw`, both deliberate: the new listings name only keys that carry a `manifest.json` (`/raw` keeps listing bare keys, its tested contract), and a genome manifest whose `assembly_set` differs from its directory name is a 500 (`GenomeIntegrityError`, the rule `registry.load_genome_manifest` applies locally).
+
+**Client.** `DatasetClient.genomes()`, `genome_manifest(set)`, `genome_files(set)`, `download_genome_file(set, rel_path, dest)` and the `objects` equivalents. A download reads the key's `/files` row first (an unlisted path raises `KeyError` before any request), resumes `<dest>.part` with `Range`, requires the served `X-Artifact-SHA256` to equal the row, and hashes the completed bytes against it; a mismatch removes the partial file and raises `ArtifactIntegrityError`. The archive `download` now runs through the same `_stream_into` / `_verify_part` pair. The raw mirror has the same three methods on the same path (`raw_manifest(key)`, `raw_files(key)`, `download_raw_file(key, rel_path, dest)`), so the D2 resolver can reach the `raw` tier over HTTP too.
+
+**Tests.** `tests/torchcell/datasets/test_datasets_server.py` and `test_client.py` (plus the config fixture in `tests/torchcell/data/test_experiment_dataset_download.py`): 115 passed with `test_artifact.py`, `test_experiment_dataset.py` and `test_experiment_dataset_download.py` in the same run, 2026-10-07.
+
+**Deployment delta for Radiant** (Phase 6 step 3 of the plan; not run):
+
+1. The slim image now imports `torchcell.sequence.genome.registry`, so `docker/Dockerfile.tc-data` also blanks `torchcell/sequence/__init__.py` (it imports pandas, gffutils and numpy through `sequence/data.py`). Checked 2026-10-07 on GilaHyper by importing `torchcell.datasets.server` from a scratch copy of the tree: with `datasets/` and `literature/` blanked only, pandas, numpy and gffutils were loaded; with `sequence/` blanked too, none of pandas, numpy, gffutils, torch, torch_geometric, pyzotero, httpx was.
+2. Create the two tier directories on Taiga before the first `up`, as `rocky`, so Docker never creates a bind source itself: `mkdir -p /mnt/zhao5/mjvolk3/projects/torchcell/data/torchcell/{torchcell-genomes,torchcell-objects}` (siblings of `tc-data` and `torchcell-raw`). Empty directories are valid: both listings return `[]`.
+3. Add to `~/projects/tc-data/tc-data.conf`:
+
+   ```
+   TC_DATA_GENOMES_ROOT=/mnt/zhao5/mjvolk3/projects/torchcell/data/torchcell/torchcell-genomes
+   TC_DATA_OBJECTS_ROOT=/mnt/zhao5/mjvolk3/projects/torchcell/data/torchcell/torchcell-objects
+   ```
+
+   `docker/docker-compose.tc-data.yml` mounts them read-only at `/data/torchcell-genomes` and `/data/torchcell-objects` and refuses to start (`${VAR:?...}`) when either is unset, rather than mounting an empty string.
+4. Redeploy as before: `git archive HEAD torchcell docker` piped to `~/projects/tc-data/`, then `docker compose --env-file tc-data.conf -f docker/docker-compose.tc-data.yml up -d --build`. Acceptance: `/health` shows the two roots, `/genomes` and `/objects` answer 200 with the key, and once a set is shipped (Phase 6 step 2), one `download_genome_file` from a client with no local tier verifies.

@@ -116,7 +116,11 @@ def _serve(root: Path, dataset_dir: Path) -> TestClient:
     raw = root / "raw"
     raw.mkdir()
     config = DataServerConfig(
-        store_root=store, raw_root=raw, keys=DataKeys.from_pairs(f"t:{KEY}")
+        store_root=store,
+        raw_root=raw,
+        genomes_root=root / "genomes",
+        objects_root=root / "objects",
+        keys=DataKeys.from_pairs(f"t:{KEY}"),
     )
     return TestClient(create_app(config))
 

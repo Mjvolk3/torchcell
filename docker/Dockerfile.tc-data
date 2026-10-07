@@ -1,18 +1,24 @@
 # docker/Dockerfile.tc-data
 # Slim image for the keyed dataset endpoint (torchcell.datasets.server, "tc-data").
-# It serves the artifact store and the raw mirror read-only over HTTP; it is NOT the
-# torchcell ML env. The server imports only leaf modules (torchcell.api_keys,
-# torchcell.datasets.artifact, torchcell.provenance.build_manifest,
-# torchcell.literature.manifest), none of which need torch, PyG, numpy or pyzotero, so
-# the image is python:3.13-slim plus the four HTTP/pydantic deps, like Dockerfile.tc-lit.
+# It serves the artifact store, the raw mirror, the genomes tier and the objects tier
+# read-only over HTTP; it is NOT the torchcell ML env. The server imports only leaf
+# modules (torchcell.api_keys, torchcell.datasets.artifact,
+# torchcell.provenance.build_manifest, torchcell.literature.manifest,
+# torchcell.sequence.genome.registry), none of which need torch, PyG, numpy or pyzotero,
+# so the image is python:3.13-slim plus the four HTTP/pydantic deps, like Dockerfile.tc-lit.
 #
-# The two package __init__ files that would drag the ML stack in are blanked after the
-# copy: torchcell/datasets/__init__.py eagerly imports every loader (torch, PyG) and
-# torchcell/literature/__init__.py imports the Zotero client (pyzotero). The server
-# never uses either package's public namespace, only its leaf modules.
+# The three package __init__ files that would drag the ML stack in are blanked after the
+# copy: torchcell/datasets/__init__.py eagerly imports every loader (torch, PyG),
+# torchcell/literature/__init__.py imports the Zotero client (pyzotero), and
+# torchcell/sequence/__init__.py imports the genome data classes (pandas, gffutils,
+# numpy). The server never uses any of these packages' public namespaces, only leaf
+# modules. Checked 2026-10-07 by importing torchcell.datasets.server from a copy of the
+# tree with the three files blanked: none of pandas, numpy, gffutils, torch, PyG,
+# pyzotero, httpx was loaded; with only the first two blanked, pandas, numpy and
+# gffutils were.
 #
 # Build (context = repo root):  docker build -f docker/Dockerfile.tc-data -t tc-data-endpoint:latest .
-# Run is via docker/docker-compose.tc-data.yml (bind-mounts the store, raw mirror and keys, all :ro).
+# Run is via docker/docker-compose.tc-data.yml (bind-mounts the store, the three tiers and keys, all :ro).
 
 FROM python:3.13-slim
 
@@ -25,7 +31,8 @@ RUN pip install --no-cache-dir \
 WORKDIR /app
 COPY torchcell/ /app/torchcell/
 RUN : > /app/torchcell/datasets/__init__.py \
-    && : > /app/torchcell/literature/__init__.py
+    && : > /app/torchcell/literature/__init__.py \
+    && : > /app/torchcell/sequence/__init__.py
 
 ENV PYTHONPATH=/app \
     TC_DATA_HOST=0.0.0.0 \
@@ -38,5 +45,6 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8724/health').status==200 else 1)"
 
 # Config is 100% env-driven: TC_DATA_ROOT (store mount), TC_DATA_RAW_ROOT (raw mirror
-# mount), TC_DATA_KEYS_FILE (keys mount).
+# mount), TC_DATA_GENOMES_ROOT and TC_DATA_OBJECTS_ROOT (tier mounts), TC_DATA_KEYS_FILE
+# (keys mount).
 CMD ["python", "-m", "torchcell.datasets.server"]

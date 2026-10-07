@@ -39,6 +39,9 @@ sourcing layer.
   covering every iML1515 gene, FI-MS feature fold changes per MG1655 b-number.
 - ``price2018`` -- ``RbTnseqPrice2018EcoliDataset``: the RB-TnSeq fitness compendium,
   the loader that serves the experiments Wetmore 2015 first reported.
+- ``rousset2018`` -- ``CrispriScreenRousset2018Dataset``: per-sgRNA dCas9 knockdown
+  log2FC from five screens in two MG1655 derivatives, growth over 17 generations plus
+  three phage challenges and a lambda transduction assay.
 - ``schmidt2016`` -- ``ProteomeSchmidt2016Dataset``: the condition-dependent BW25113
   proteome, one record per loaded growth condition in absolute protein copies per cell.
 - ``mutalik2020`` -- the phage-resistance RB-TnSeq raw mirror and sourcing layer; the
@@ -60,6 +63,9 @@ from .gupta2024 import (
 from .lamoureux2023 import RnaseqLamoureux2023Dataset as RnaseqLamoureux2023Dataset
 from .price2018 import RbTnseqPrice2018EcoliDataset as RbTnseqPrice2018EcoliDataset
 from .rapp2026 import MetabolomeRapp2026Dataset as MetabolomeRapp2026Dataset
+from .rousset2018 import (
+    CrispriScreenRousset2018Dataset as CrispriScreenRousset2018Dataset,
+)
 from .schmidt2016 import ProteomeSchmidt2016Dataset as ProteomeSchmidt2016Dataset
 from .shiver2016 import EnvChemgenShiver2016Dataset as EnvChemgenShiver2016Dataset
 from .tong2020 import CarbonSourceTong2020Dataset as CarbonSourceTong2020Dataset

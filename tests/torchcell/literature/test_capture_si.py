@@ -748,3 +748,130 @@ def test_wiley_route_parses_download_supplement_links(server: Any) -> None:
     assert [(c.original_filename, c.source_url) for c in route.candidates] == [
         ("emi70095-sup-0001-Table.xlsx", url)
     ]
+
+
+def _zipped_key(root: Path) -> tuple[Path, bytes, bytes]:
+    """A key whose ``si/si1.zip`` (two members) is recorded with a pmc_cloud retrieval.
+
+    Returns the key dir, the zip bytes and the ``Table_S1.pdf`` member bytes.
+    """
+    import io
+    import zipfile
+
+    member = b"%PDF table s1"
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as archive:
+        archive.writestr("Dataset1.xlsx", b"PK xlsx")
+        archive.writestr("Table_S1.pdf", member)
+    zip_bytes = buf.getvalue()
+    url = f"{S3}/PMC1.1/supp.zip"
+    record = ArtifactRecord(
+        path="si/si1.zip",
+        role="si_data",
+        bytes=len(zip_bytes),
+        sha256=_sha(zip_bytes),
+        source=url,
+        original_filename="supp.zip",
+        retrieval=RetrievalRecord(
+            method=RetrievalMethod.pmc_cloud,
+            source_url=url,
+            retriever=cs.R_PMC_CLOUD,
+            params={"key": "PMC1.1/supp.zip"},
+            sha256=_sha(zip_bytes),
+            retrieved_at=NOW,
+        ),
+    )
+    key_dir = _key(root, "smith2020", "10.1000/abc", extra=[record])
+    (key_dir / "si").mkdir()
+    (key_dir / "si" / "si1.zip").write_bytes(zip_bytes)
+    return key_dir, zip_bytes, member
+
+
+def test_store_zip_member_writes_next_si_file_with_a_zip_member_retrieval(
+    tmp_path: Path,
+) -> None:
+    key_dir, zip_bytes, member = _zipped_key(tmp_path)
+    manifest = Manifest.model_validate_json((key_dir / "manifest.json").read_text())
+    si = cs.store_zip_member(key_dir, manifest, "si/si1.zip", "Table_S1.pdf", now=NOW)
+    assert (si.path, si.sha256, si.bytes) == ("si/si2.pdf", _sha(member), len(member))
+    assert (key_dir / "si" / "si2.pdf").read_bytes() == member
+    reloaded = Manifest.model_validate_json((key_dir / "manifest.json").read_text())
+    record = next(r for r in reloaded.files if r.path == "si/si2.pdf")
+    assert record.role == "si_pdf"
+    assert record.original_filename == "Table_S1.pdf"
+    assert record.retrieval is not None
+    assert record.retrieval.model_dump() == {
+        "method": RetrievalMethod.pmc_cloud,
+        "source_url": f"{S3}/PMC1.1/supp.zip",
+        "retriever": "torchcell.literature.retrieve.zip_member",
+        "params": {
+            "url": f"{S3}/PMC1.1/supp.zip",
+            "member": "Table_S1.pdf",
+            "container_sha256": _sha(zip_bytes),
+        },
+        "sha256": _sha(member),
+        "retrieved_at": NOW,
+        "last_check": None,
+    }
+    assert reloaded.si_data_sources == [f"{S3}/PMC1.1/supp.zip"]
+    # a second call is a no-op returning the recorded file
+    again = cs.store_zip_member(
+        key_dir, reloaded, "si/si1.zip", "Table_S1.pdf", now="2027-01-01"
+    )
+    assert (again.path, again.sha256) == ("si/si2.pdf", _sha(member))
+    assert sorted(p.name for p in (key_dir / "si").iterdir()) == ["si1.zip", "si2.pdf"]
+    assert RETRIEVERS[cs.R_ZIP_MEMBER].__name__ == "zip_member"
+
+
+def test_store_zip_member_refuses_a_changed_zip_and_an_unrecorded_one(
+    tmp_path: Path,
+) -> None:
+    key_dir, _, _ = _zipped_key(tmp_path)
+    manifest = Manifest.model_validate_json((key_dir / "manifest.json").read_text())
+    with pytest.raises(KeyError, match="si/si9.zip is not recorded"):
+        cs.store_zip_member(key_dir, manifest, "si/si9.zip", "Table_S1.pdf", now=NOW)
+    (key_dir / "si" / "si1.zip").write_bytes(b"PK swapped")
+    with pytest.raises(ValueError, match="does not match its record"):
+        cs.store_zip_member(key_dir, manifest, "si/si1.zip", "Table_S1.pdf", now=NOW)
+    assert not (key_dir / "si" / "si2.pdf").exists()
+
+
+def test_main_zip_member_stores_and_ocrs_the_member(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    key_dir, _, member = _zipped_key(tmp_path)
+    calls: list[str] = []
+
+    def fake_ocr(pdf: Path) -> Path:
+        calls.append(pdf.name)
+        md = pdf.with_suffix(".md")
+        md.write_text("| Furfural | 8 mM |\n")
+        return md
+
+    monkeypatch.setattr(cs, "ocr_pdf", fake_ocr)
+    code = cs.main(
+        [
+            "smith2020",
+            "--zip-member",
+            "si/si1.zip:Table_S1.pdf",
+            "--ocr",
+            "--mirror-root",
+            str(tmp_path),
+        ]
+    )
+    assert code == 0
+    assert calls == ["si2.pdf"]
+    out = capsys.readouterr().out
+    assert f"stored si/si2.pdf <- Table_S1.pdf sha256={_sha(member)}" in out
+    md_sha = _sha(b"| Furfural | 8 mM |\n")
+    assert f"ocr si/si2.md sha256={md_sha}" in out
+    manifest = Manifest.model_validate_json((key_dir / "manifest.json").read_text())
+    md = next(r for r in manifest.files if r.path == "si/si2.md")
+    assert (md.role, md.source, md.sha256) == ("si_ocr", "mineru-ocr", md_sha)
+
+
+def test_main_zip_member_needs_exactly_one_key(tmp_path: Path) -> None:
+    with pytest.raises(SystemExit):
+        cs.main(["a", "b", "--zip-member", "si/si1.zip:x.pdf"])
+    with pytest.raises(SystemExit):
+        cs.main(["a", "--zip-member", "si/si1.zip"])

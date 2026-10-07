@@ -54,16 +54,24 @@ Idempotent: a file whose retriever and params are already recorded in the manife
 never downloaded again, and the manifest is rewritten after every file so an
 interrupted run leaves no unrecorded file behind. ``scripts/lit_capture_si.py`` is the
 command-line wrapper.
+
+A supplement shipped inside a recorded archive is promoted to a file of its own with
+:func:`store_zip_member` (``--zip-member si/si1.zip:Table_S1.pdf``): the member becomes
+the next ``si/si<N>`` file with a ``zip_member`` retrieval over the archive's recorded
+URL and sha256, so a loader can quote its OCR text.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
+import io
 import logging
 import os
 import re
 import xml.etree.ElementTree as ET
+import zipfile
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -118,6 +126,7 @@ R_SPRINGER = "torchcell.literature.retrieve.springer_esm"
 R_PLOS = "torchcell.literature.retrieve.plos_supplementary"
 R_ELSEVIER = "torchcell.literature.retrieve.elsevier_mmc"
 R_DIRECT = "torchcell.literature.retrieve.direct_url"
+R_ZIP_MEMBER = "torchcell.literature.retrieve.zip_member"
 
 MEMBER_SPRINGER = "297"
 MEMBER_PLOS = "340"
@@ -937,6 +946,99 @@ def _record_ocr_outputs(key_dir: Path, manifest: Manifest, stems: list[str]) -> 
             manifest.files.append(record)
 
 
+def store_zip_member(
+    key_dir: Path, manifest: Manifest, zip_rel: str, member: str, *, now: str
+) -> SiFile:
+    """Store one member of a recorded SI zip as the key's next ``si/si<N>.<ext>``.
+
+    A publisher often ships every supplement in one archive (``si/si1.zip``), while a
+    loader's quote audit needs the one document it quotes as a file of its own, with
+    an OCR text beside it. The member is read out of the key's own stored zip, whose
+    bytes are first checked against the sha256 the manifest records for it, so a
+    corrupted or swapped archive raises instead of yielding a different member.
+
+    The new record's retrieval re-runs from source: retriever
+    ``torchcell.literature.retrieve.zip_member`` with the zip's recorded
+    ``source_url`` and sha256 as ``url`` and ``container_sha256``, and the zip's own
+    retrieval ``method`` (the method names the host the bytes come from; the zip is
+    the container, not a different host). ``original_filename`` is the member name.
+
+    Idempotent: when a record with the same retriever and params exists, it is
+    returned and nothing is written.
+
+    Args:
+        key_dir: The mirror key directory.
+        manifest: The key's manifest, rewritten in place on a store.
+        zip_rel: Key-relative path of the recorded zip (``si/si1.zip``).
+        member: Member name inside the zip (``Table_S1.pdf``).
+        now: ISO timestamp recorded as ``retrieved_at``.
+
+    Raises:
+        KeyError: ``zip_rel`` is not recorded in the manifest, or ``member`` is not in
+            the zip.
+        ValueError: The zip record has no retrieval, or the stored zip's sha256 does
+            not match its record.
+    """
+    container = next((r for r in manifest.files if r.path == zip_rel), None)
+    if container is None:
+        raise KeyError(f"{zip_rel} is not recorded in {key_dir / MANIFEST_FILENAME}")
+    if container.retrieval is None or container.retrieval.source_url is None:
+        raise ValueError(f"{zip_rel} has no recorded retrieval source_url")
+    zip_bytes = (key_dir / zip_rel).read_bytes()
+    got = hashlib.sha256(zip_bytes).hexdigest()
+    if got != container.sha256:
+        raise ValueError(
+            f"{key_dir / zip_rel} sha256 {got} does not match its record "
+            f"{container.sha256}"
+        )
+    url = container.retrieval.source_url
+    cand = SiCandidate(
+        original_filename=member,
+        source_url=url,
+        method=container.retrieval.method,
+        retriever=R_ZIP_MEMBER,
+        params={"url": url, "member": member, "container_sha256": container.sha256},
+    )
+    existing = next(
+        (
+            r
+            for r in manifest.files
+            if r.retrieval is not None
+            and r.retrieval.retriever == cand.retriever
+            and r.retrieval.params == cand.params
+        ),
+        None,
+    )
+    if existing is not None:
+        return SiFile(
+            path=existing.path,
+            original_filename=member,
+            source_url=url,
+            retriever=cand.retriever,
+            bytes=existing.bytes,
+            sha256=existing.sha256,
+        )
+    with zipfile.ZipFile(io.BytesIO(zip_bytes)) as archive:
+        data = archive.read(member)
+    rel = f"si/si{next_si_index(key_dir, manifest)}{_extension(member)}"
+    return _store(key_dir, manifest, cand, rel, data, now)
+
+
+def ocr_stored_pdfs(
+    key_dir: Path, manifest: Manifest, rels: Sequence[str]
+) -> list[str]:
+    """OCR stored ``si/*.pdf`` files with :func:`ocr_pdf` and record the outputs.
+
+    The device follows :func:`ocr_pdf` (``$MINERU_DEVICE_MODE``). Returns the
+    key-relative markdown paths, in ``rels`` order.
+    """
+    pdfs = [key_dir / rel for rel in rels]
+    written = [str(ocr_pdf(pdf).relative_to(key_dir)) for pdf in pdfs]
+    _record_ocr_outputs(key_dir, manifest, [p.stem for p in pdfs])
+    write_manifest(key_dir, manifest)
+    return written
+
+
 def capture_key(
     client: httpx.Client,
     root: Path,
@@ -1057,10 +1159,13 @@ def capture_key(
             if rel.endswith(".pdf"):
                 captured_pdfs.append(key_dir / rel)
         if do_ocr and captured_pdfs:
-            for pdf in captured_pdfs:
-                result.ocr.append(str(ocr_pdf(pdf).relative_to(key_dir)))
-            _record_ocr_outputs(key_dir, manifest, [p.stem for p in captured_pdfs])
-            write_manifest(key_dir, manifest)
+            result.ocr.extend(
+                ocr_stored_pdfs(
+                    key_dir,
+                    manifest,
+                    [str(p.relative_to(key_dir)) for p in captured_pdfs],
+                )
+            )
     except Exception as exc:  # noqa: BLE001 -- report the key, keep the batch going
         log.exception("capture_si: capturing %s (%s) failed", key, doi)
         result.error = f"{type(exc).__name__}: {exc}"
@@ -1196,10 +1301,43 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help=f"Where the JSON report goes (default: <mirror-root>/{REPORTS_SUBDIR}).",
     )
+    parser.add_argument(
+        "--zip-member",
+        action="append",
+        default=[],
+        metavar="ZIP:MEMBER",
+        help="Store MEMBER of the key's recorded zip (e.g. si/si1.zip:Table_S1.pdf) "
+        "as the next si/si<N> file; repeatable; needs exactly one citation key and "
+        "no publisher resolution runs. With --ocr, stored PDFs are OCR'd (device "
+        "from $MINERU_DEVICE_MODE).",
+    )
     args = parser.parse_args(argv)
     if not (args.keys or args.collection or args.doi):
         parser.error("give citation keys, --collection or --doi")
     root = args.mirror_root or library_root(os.environ["DATA_ROOT"])
+    if args.zip_member:
+        if len(args.keys) != 1 or args.collection or args.doi or args.dry_run:
+            parser.error("--zip-member takes exactly one citation key and no other")
+        specs = [spec.partition(":") for spec in args.zip_member]
+        for spec, (zip_rel, sep, member) in zip(args.zip_member, specs, strict=True):
+            if not (zip_rel and sep and member):
+                parser.error(f"--zip-member {spec!r} is not ZIP:MEMBER")
+        key_dir = root / args.keys[0]
+        manifest = Manifest.model_validate_json(
+            (key_dir / MANIFEST_FILENAME).read_text()
+        )
+        stamp = datetime.now(UTC).isoformat()
+        stored = [
+            store_zip_member(key_dir, manifest, zip_rel, member, now=stamp)
+            for zip_rel, _, member in specs
+        ]
+        for si in stored:
+            print(f"stored {si.path} <- {si.original_filename} sha256={si.sha256}")
+        if args.ocr:
+            pdfs = [si.path for si in stored if si.path.endswith(".pdf")]
+            for md in ocr_stored_pdfs(key_dir, manifest, pdfs):
+                print(f"ocr {md} sha256={sha256_file(key_dir / md)}")
+        return 0
     requests = [KeyRequest(citation_key=k) for k in args.keys]
     for collection in args.collection:
         requests.extend(requests_for_collection(collection))

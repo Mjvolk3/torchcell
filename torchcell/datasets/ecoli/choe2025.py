@@ -1498,17 +1498,32 @@ def select_guides(
     dropped_spacer: list[str] = []
     zero_control = 0
     zero_cells = 0
-    control = s1[[f"{CONTROL_LABEL}_1", f"{CONTROL_LABEL}_2"]].mean(axis=1)
-    means = {
-        condition.s1_label: s1[
-            [f"{condition.s1_label}_1", f"{condition.s1_label}_2"]
-        ].mean(axis=1)
+    # Read every column out as a typed Python list once. A per-cell ``.iat`` read is
+    # typed as the whole pandas scalar union, which strict mypy refuses to hand to
+    # ``int`` or ``float``, and 39,580 x 14 of them is the slow way besides.
+    genes: list[str] = [str(value) for value in s1["Gene"].tolist()]
+    starts: list[int] = [int(value) for value in s1["Start"].tolist()]
+    ends: list[int] = [int(value) for value in s1["End"].tolist()]
+    strands: list[str] = [str(value) for value in s1["Strand"].tolist()]
+    control: list[float] = [
+        float(value)
+        for value in s1[[f"{CONTROL_LABEL}_1", f"{CONTROL_LABEL}_2"]]
+        .mean(axis=1)
+        .tolist()
+    ]
+    means: dict[str, list[float]] = {
+        condition.s1_label: [
+            float(value)
+            for value in s1[[f"{condition.s1_label}_1", f"{condition.s1_label}_2"]]
+            .mean(axis=1)
+            .tolist()
+        ]
         for condition in CONDITIONS
     }
     for row in range(len(s1)):
-        gene = str(s1["Gene"].iat[row])
-        start = int(s1["Start"].iat[row])
-        end = int(s1["End"].iat[row])
+        gene = genes[row]
+        start = starts[row]
+        end = ends[row]
         item = _guide_label(gene, start, end)
         if gene in unresolved_set or gene not in identities:
             dropped_unresolved.append(item)
@@ -1517,19 +1532,19 @@ def select_guides(
         if start > identity.end or end < identity.start:
             dropped_outside.append(item)
             continue
-        if str(s1["Strand"].iat[row]) != identity.strand:
+        if strands[row] != identity.strand:
             dropped_strand.append(item)
             continue
         spacer = spacers.get((start, end))
         if spacer is None:
             dropped_spacer.append(item)
             continue
-        if control.iat[row] == 0.0:
+        if control[row] == 0.0:
             zero_control += 1
             continue
         abundance: dict[str, float] = {}
         for condition in CONDITIONS:
-            value = float(means[condition.s1_label].iat[row])
+            value = means[condition.s1_label][row]
             if value == 0.0:
                 zero_cells += 1
                 continue
@@ -1541,7 +1556,7 @@ def select_guides(
                 symbol=identity.symbol,
                 spacer=str(spacer),
                 n_guides=counts[gene],
-                control_abundance=float(control.iat[row]),
+                control_abundance=control[row],
                 antibiotic_abundance=abundance,
             )
         )

@@ -44,6 +44,7 @@ from torchcell.adapters import (
     Mormino2022Adapter,
     NadalRibellesPerturbSeq2025Adapter,
     OrganicAcidYoshida2012Adapter,
+    ProteinTurnoverGupta2024Adapter,
     ProteomeCaglar2017Adapter,
     ProteomeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Adapter,
@@ -79,6 +80,7 @@ from torchcell.datasets.ecoli.caglar2017 import (
 )
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
+from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
@@ -238,6 +240,7 @@ dataset_adapter_map = {
     ProteomeCaglar2017Dataset: ProteomeCaglar2017Adapter,
     MetabolomeFuhrer2017Dataset: MetabolomeFuhrer2017Adapter,
     GeneEssentialityGoodall2018Dataset: GeneEssentialityGoodall2018Adapter,
+    ProteinTurnoverGupta2024Dataset: ProteinTurnoverGupta2024Adapter,
     RnaseqLamoureux2023Dataset: RnaseqLamoureux2023Adapter,
     RbTnseqPrice2018EcoliDataset: RbTnseqPrice2018EcoliAdapter,
     CarbonSourceTong2020Dataset: CarbonSourceTong2020Adapter,

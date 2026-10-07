@@ -6,7 +6,7 @@
 Every E. coli and P. putida dataset class (plan.bacteria-ontology-genome step 9) has
 its own adapter module, its own conf and its own paired test file,
 ``test_<module>.py``; each of those runs the checks here for its one dataset, and
-``test_bacterial_adapters.py`` holds the checks across all twenty. The checks:
+``test_bacterial_adapters.py`` holds the checks across the whole set. The checks:
 
 * ``assert_construction`` / ``assert_missing_conf`` (``_adapter_init_harness``): the
   constructor loads exactly the conf its graph shape implies and refuses a missing conf
@@ -64,6 +64,7 @@ from torchcell.adapters import (
     IsoprenolToleranceLim2025Adapter,
     IsoprenylAcetateTiterKang2026Adapter,
     MetabolomeFuhrer2017Adapter,
+    ProteinTurnoverGupta2024Adapter,
     ProteomeCaglar2017Adapter,
     ProteomeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Adapter,
@@ -82,6 +83,7 @@ from torchcell.datasets.ecoli.caglar2017 import (
 )
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
+from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
@@ -158,6 +160,7 @@ RNASEQ = "rnaseq expression phenotype"
 PROTEOME = "protein abundance phenotype"
 TITER = "product titer phenotype"
 RESPONSE = "environment response phenotype"
+TURNOVER = "protein turnover phenotype"
 
 # The shape of each dataset's records, measured on its dev-tree LMDB on 2026-10-07 (and,
 # for the two RB-TnSeq stores rebuilding at the time, read off `build_genotype` /
@@ -197,6 +200,13 @@ BACTERIAL: list[Bacterial] = [
         GeneEssentialityGoodall2018Dataset,
         "gene essentiality phenotype",
         env_perturbation=False,
+    ),
+    _case(
+        ProteinTurnoverGupta2024Adapter,
+        "gupta2024",
+        "protein_turnover_gupta2024",
+        ProteinTurnoverGupta2024Dataset,
+        TURNOVER,
     ),
     _case(
         RnaseqLamoureux2023Adapter,

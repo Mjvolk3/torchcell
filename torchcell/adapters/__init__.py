@@ -51,6 +51,9 @@ from .fuhrer2017_adapter import (
 from .goodall2018_adapter import (
     GeneEssentialityGoodall2018Adapter as GeneEssentialityGoodall2018Adapter,
 )
+from .gupta2024_adapter import (
+    ProteinTurnoverGupta2024Adapter as ProteinTurnoverGupta2024Adapter,
+)
 from .hillenmeyer2008_adapter import (
     HetHillenmeyer2008Adapter as HetHillenmeyer2008Adapter,
 )
@@ -244,6 +247,7 @@ ecoli_adapters = [
     "ProteomeCaglar2017Adapter",
     "MetabolomeFuhrer2017Adapter",
     "GeneEssentialityGoodall2018Adapter",
+    "ProteinTurnoverGupta2024Adapter",
     "RnaseqLamoureux2023Adapter",
     "RbTnseqPrice2018EcoliAdapter",
     "CarbonSourceTong2020Adapter",

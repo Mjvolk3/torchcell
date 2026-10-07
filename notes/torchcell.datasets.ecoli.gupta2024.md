@@ -310,3 +310,20 @@ raised rather than worked around (the schema was not touched):
 
 A third, outside this class: `Environment` cannot express a chemostat dilution rate, which
 every continuous-culture dataset will want.
+
+### Adapter
+
+The bacterial adapter tranche added two gates that every registered E. coli or P. putida
+dataset class must satisfy: `dataset_adapter_map` must pair it with an adapter, and
+`kg_bacteria.yaml` must name it. So this change also ships
+`torchcell/adapters/gupta2024_adapter.py` (`ProteinTurnoverGupta2024Adapter`) with
+`torchcell/adapters/conf/protein_turnover_gupta2024_adapter.yaml`, the map and
+`kg_bacteria.yaml` entries, and
+`tests/torchcell/adapters/test_gupta2024_adapter.py`. The conf enables
+`bacterial perturbation` and `perturbation to genotype` (five of the 13 genotypes carry
+deletions) and the environment-perturbation pair (the 12 chemostat conditions carry the
+controlled-pH factor). The data-gated
+`test_dev_store_emits_a_closed_declared_graph` passes under `--data` on the dev store:
+every emitted edge endpoint is an emitted node and every label and property is declared.
+No KG build was run and no admission check was run; the
+`kg_manifest --dataset ProteinTurnoverGupta2024Dataset admit` step is the follow-up.

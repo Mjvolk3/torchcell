@@ -60,6 +60,7 @@ datasets:
   - ProteomeCaglar2017Dataset
   - MetabolomeFuhrer2017Dataset
   - GeneEssentialityGoodall2018Dataset
+  - ProteinTurnoverGupta2024Dataset
   - RnaseqLamoureux2023Dataset
   - RbTnseqPrice2018EcoliDataset
   - CarbonSourceTong2020Dataset

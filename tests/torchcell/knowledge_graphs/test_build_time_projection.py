@@ -513,10 +513,10 @@ yet."""
 def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     """Every pair here is a (dataset, adapter) pair of ``dataset_adapter_map``.
 
-    Finding: the projection covers 33 of the 73 datasets in ``dataset_adapter_map``.
-    The 40 absent ones (``ADAPTER_TO_DATASET``, build_time_projection.py:81-115) include
+    Finding: the projection covers 33 of the 74 datasets in ``dataset_adapter_map``.
+    The 41 absent ones (``ADAPTER_TO_DATASET``, build_time_projection.py:81-115) include
     the six EnvChemgen chemogenomic sets, both Hillenmeyer 2008 sets, the Nadal-Ribelles
-    Perturb-seq set and the 22 bacterial datasets mapped in plan.bacteria-ontology-genome
+    Perturb-seq set and the 23 bacterial datasets mapped in plan.bacteria-ontology-genome
     step 9 and after, so a projection of a build that serves them omits their
     generation time
     entirely (``calibrate`` would raise ``KeyError`` on a timing file that lists them).

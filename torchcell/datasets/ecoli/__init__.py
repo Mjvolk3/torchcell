@@ -6,8 +6,9 @@
 Each loader is ``<firstauthor><year>.py``, decorated with ``@register_dataset`` and
 subclassing ``ExperimentDataset``; importing it here populates ``dataset_registry``.
 The shared skeleton (genome, locus-tag reconciliation, assembly pin, injection rule)
-is ``torchcell.datasets.bacteria_common``. No loader has landed yet.
+is ``torchcell.datasets.bacteria_common``.
 """
 
 from .fuhrer2017 import MetabolomeFuhrer2017Dataset as MetabolomeFuhrer2017Dataset
 from .lamoureux2023 import RnaseqLamoureux2023Dataset as RnaseqLamoureux2023Dataset
+from .tong2020 import CarbonSourceTong2020Dataset as CarbonSourceTong2020Dataset

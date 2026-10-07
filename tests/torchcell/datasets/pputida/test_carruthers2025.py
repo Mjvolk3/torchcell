@@ -25,10 +25,13 @@ abundance map.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
 import os.path as osp
+import shutil
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -41,6 +44,7 @@ import torchcell.datasets.pputida.carruthers2025 as c25
 from torchcell.datamodels.media import M9_NREL_CARRUTHERS2025
 from torchcell.datamodels.schema import (
     AlleleEdit,
+    BacterialDeletionPerturbation,
     ConcentrationUnit,
     CultureEnvironment,
     CultureFormat,
@@ -52,7 +56,8 @@ from torchcell.datamodels.schema import (
     SmallMoleculePerturbation,
     UncertaintyType,
 )
-from torchcell.literature.manifest import Manifest
+from torchcell.datasets.bacteria_common import LocusTagResolutionError
+from torchcell.literature.manifest import ROLE_SI_DATA, Manifest, RetrievalMethod
 from torchcell.verification.levels import (
     l0_structural,
     l1_count,
@@ -910,3 +915,1040 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+# --------------------------------------------------------------------------- #
+# Hermetic end to end: a synthetic KT2440 assembly, a synthetic raw mirror, and
+# both loaders built under tmp_path. No network, no $DATA_ROOT.
+#
+# The real tier cannot be used on a CI runner, so the real KT2440 class is built
+# over a 600 nt synthetic replicon carrying the eighteen loci these two loaders
+# need: the eight chassis symbols the background types, the guide targets, and a
+# locus whose symbol is ``apha`` so the merged-key drop has something to resolve.
+# ``phaC`` is deliberately absent, which is what the chassis builder asserts.
+# --------------------------------------------------------------------------- #
+LOCUS_SPECS: tuple[tuple[str, str | None], ...] = (
+    ("PP_3073", "hbdH"),
+    ("PP_1649", "ldhA"),
+    ("PP_3540", "mvaB"),
+    ("PP_4042", "zwfB"),
+    ("PP_4043", "gntZ"),
+    ("PP_4066", "liuC"),
+    ("PP_5003", "phaA"),
+    ("PP_5004", "phaB"),
+    ("PP_0368", None),
+    ("PP_0378", None),
+    ("PP_0812", None),
+    ("PP_0815", None),
+    ("PP_0977", None),
+    ("PP_1593", None),
+    ("PP_2664", None),
+    ("PP_3379", None),
+    ("PP_5313", None),
+    ("PP_5424", "apha"),
+)
+#: The seventeen keys the synthetic proteome sheet uses as locus tags; ``PP_5424``
+#: is reached only through the symbol ``Apha``, so the two never collide.
+PROTEOME_TAGS: tuple[str, ...] = tuple(
+    tag for tag, _ in LOCUS_SPECS if tag != "PP_5424"
+)
+#: One key no layer resolves and one the sheet files under two accessions.
+PROTEOME_UNRESOLVED = "Krt1"
+PROTEOME_MERGED = "Apha"
+#: Single-guide DBTL0 constructs, which the two per-target oracles join against.
+SINGLE_GUIDE_TARGETS: tuple[str, ...] = (
+    "PP_0368",
+    "PP_0378",
+    "PP_0812",
+    "PP_0815",
+    "PP_0977",
+)
+#: The DBTL0 construct with six replicates rather than three.
+SIX_REPLICATE_CONSTRUCT = "PP_4042"
+#: The DBTL0 construct carrying a non-targeting filler guide.
+FILLER_CONSTRUCT = "PP_3073_NT1"
+#: Multi-guide constructs, one per later cycle.
+COMBINATION_CONSTRUCTS: dict[int, tuple[str, ...]] = {
+    1: ("PP_0815_PP_0812", "PP_0368_PP_0815"),
+    2: ("PP_0378_PP_0815",),
+    3: ("PP_0812_PP_0977",),
+    4: ("PP_0368_PP_0378_PP_0815",),
+    5: ("PP_1593_PP_2664",),
+    6: ("PP_3379_PP_5313_PP_0815",),
+}
+#: The proteome samples the synthetic sheet carries: the reference, the positive
+#: control, and two off-target samples (one with a plate suffix).
+PROTEOME_SAMPLES: tuple[str, ...] = (
+    c25.PROTEOME_REFERENCE_SAMPLE,
+    c25.PROTEOME_TARGET_SAMPLE,
+    "JBEI_OTS_PP_0378_48hr",
+    "JBEI_OTS_PP_0977_1_P4_48hr",
+)
+
+ASSEMBLY_REPORT = """# Assembly name:  ASM756v2
+# Organism name:  Pseudomonas putida KT2440 (g-proteobacteria)
+# Infraspecific name:  strain=KT2440
+# Taxid:          160488
+# GenBank assembly accession: GCA_000007565.2
+# RefSeq assembly accession: GCF_000007565.2
+# RefSeq assembly and GenBank assemblies identical: yes
+#
+## Assembly-Units:
+AE015451.2\tassembled-molecule\tna\tChromosome\tAE015451.2\t=\tNC_002947.4
+"""
+ASSEMBLY_REPORT_MEMBER = "GCA_000007565.2_ASM756v2_assembly_report.txt"
+
+
+def _synthetic_loci() -> list[Any]:
+    """One :class:`SyntheticLocus` per :data:`LOCUS_SPECS` entry, laid end to end."""
+    from tests.torchcell.sequence.genome._bacterial_fixtures import SyntheticLocus
+
+    loci = []
+    cursor = 1
+    for index, (tag, symbol) in enumerate(LOCUS_SPECS):
+        start, end = cursor, cursor + 11
+        cursor = end + 3
+        loci.append(
+            SyntheticLocus(
+                tag=tag,
+                parts=((start, end),),
+                strand="+" if index % 2 == 0 else "-",
+                symbol=symbol,
+                product=f"synthetic product {tag}",
+                protein_id=f"AAN{index:05d}.1",
+                protein="MKV",
+            )
+        )
+    return loci
+
+
+@pytest.fixture
+def synthetic_kt2440(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
+    """The real KT2440 class over a synthetic assembly, with the network refused."""
+    import tests.torchcell.sequence.genome._bacterial_fixtures as fixtures
+    from torchcell.sequence.genome.pputida.kt2440 import (
+        KT2440_ASSEMBLY,
+        PPutidaKT2440Genome,
+    )
+
+    monkeypatch.setattr(fixtures, "SEQUENCE", fixtures.SEQUENCE * 6)
+    files = fixtures.write_assembly(
+        tmp_path / "tier",
+        KT2440_ASSEMBLY,
+        _synthetic_loci(),
+        [fixtures.gaf_row("hbdH", f"hbdH|{PROTEOME_TAGS[0]}", "GO:0000001")],
+    )
+    fixtures.forbid_network(monkeypatch)
+    fixtures.serve_tier(monkeypatch, files)
+    report = tmp_path / "tier" / ASSEMBLY_REPORT_MEMBER
+    report.write_text(ASSEMBLY_REPORT)
+
+    def serve_report(assembly_set: str, filename: str, **_: Any) -> str:
+        if filename != ASSEMBLY_REPORT_MEMBER:
+            raise FileNotFoundError(f"{assembly_set}/{filename} is not in the fixture")
+        return str(report)
+
+    import torchcell.datasets.bacteria_common as bacteria_common
+
+    monkeypatch.setattr(bacteria_common, "resolve", serve_report)
+    root = tmp_path / "kt2440"
+    root.mkdir()
+    return PPutidaKT2440Genome(genome_root=str(root), overwrite=False)
+
+
+def _titer_rows() -> list[tuple[str, int, str, float, str]]:
+    """The synthetic ``Figure 4b`` rows: 90 controls plus the strains above."""
+    rows: list[tuple[str, int, str, float, str]] = []
+    base = 150.0
+    for cycle in range(7):
+        n = 18 if cycle == 0 else 12
+        for replicate in range(1, n + 1):
+            rows.append(
+                (
+                    f"Control-R{replicate}",
+                    cycle,
+                    "True",
+                    base + cycle + replicate * 0.25,
+                    "True",
+                )
+            )
+    offset = 200.0
+    for index, tag in enumerate(SINGLE_GUIDE_TARGETS):
+        for replicate in (1, 2, 3):
+            rows.append(
+                (
+                    f"{tag}-R{replicate}",
+                    0,
+                    "False",
+                    offset + index * 10 + replicate * 1.5,
+                    "True" if index % 2 == 0 else "False",
+                )
+            )
+    for replicate in range(1, 7):
+        rows.append(
+            (
+                f"{SIX_REPLICATE_CONSTRUCT}-R{replicate}",
+                0,
+                "False",
+                300.0 + replicate,
+                "True",
+            )
+        )
+    for replicate in (1, 2, 3):
+        rows.append(
+            (f"{FILLER_CONSTRUCT}-R{replicate}", 0, "False", 255.0 + replicate, "False")
+        )
+    value = 400.0
+    for cycle, constructs in COMBINATION_CONSTRUCTS.items():
+        for construct in constructs:
+            for replicate in (1, 2, 3):
+                value += 1.25
+                rows.append(
+                    (f"{construct}-R{replicate}", cycle, "False", value, "True")
+                )
+    return rows
+
+
+def _target_means(rows: list[tuple[str, int, str, float, str]]) -> dict[str, float]:
+    """Per DBTL0 construct, the mean over its replicates (the oracles' own number)."""
+    groups: dict[str, list[float]] = {}
+    for line, cycle, is_control, titer, _ in rows:
+        if cycle != 0 or is_control == "True":
+            continue
+        base = c25.REPLICATE_RE.match(line)
+        assert base is not None
+        groups.setdefault(base.group("base"), []).append(titer)
+    return {name: sum(v) / len(v) for name, v in groups.items()}
+
+
+def _write_source_data(path: Path) -> None:
+    """A Source Data workbook in the released shape, small enough to read by eye."""
+    rows = _titer_rows()
+    means = _target_means(rows)
+    book = openpyxl.Workbook()
+
+    titer = book.active
+    titer.title = c25.SHEET_TITER
+    titer.append(
+        ["Line Name", "cycle", "is_control", "isoprenoli titer (mg/L)", "pass filter?"]
+    )
+    alt = book.create_sheet(c25.SHEET_TITER_ALT)
+    alt.append(["Line Name", "cycle", "is_control", "isoprenol (mg/L)", "category"])
+    for line, cycle, is_control, value, passed in rows:
+        titer.append([line, cycle, is_control, value, passed])
+        alt.append(
+            [
+                line,
+                cycle,
+                is_control,
+                value,
+                "control" if is_control == "True" else "other",
+            ]
+        )
+
+    figure3a = book.create_sheet(c25.SHEET_TARGET_MEANS)
+    figure3a.append(
+        ["Strain", "Target", "cog_base_function", "Isoprenol mean", "Target:Control"]
+    )
+    for name, mean in sorted(means.items()):
+        figure3a.append([f"IY{name}", name, "Energy production", mean, 0.5])
+
+    controls = book.create_sheet(c25.SHEET_CONTROLS)
+    controls.append(["Line Name", "Cycle", "Titer"])
+    for line, cycle, is_control, value, _ in rows:
+        if is_control == "True":
+            controls.append([line, f"DBTL-{cycle}", value])
+
+    proteome = book.create_sheet(c25.SHEET_PROTEOME)
+    proteome.append(
+        [
+            "Protein.Group",
+            "Protein.Names",
+            "Protein",
+            "Protein.Description",
+            "Sample",
+            "Replicate",
+            "Top_3pep_counts_mean",
+            "%_of protein_abundance_Top3-method",
+            "log10_%_abundance",
+        ]
+    )
+    keys: list[tuple[str, tuple[str, ...]]] = [
+        (tag, (f"Q{tag}",)) for tag in PROTEOME_TAGS
+    ]
+    keys.append((PROTEOME_UNRESOLVED, ("P04264",)))
+    keys.append((PROTEOME_MERGED, ("P0AE22", "Q88C43")))
+    for sample_index, sample in enumerate(PROTEOME_SAMPLES):
+        for key_index, (key, accessions) in enumerate(keys):
+            for accession in accessions:
+                for replicate_index, replicate in enumerate(("R1", "R2", "R3")):
+                    signal = (
+                        0.0
+                        if key_index == 0
+                        else 1000.0 * (sample_index + 1)
+                        + key_index * 10
+                        + replicate_index
+                    )
+                    proteome.append(
+                        [
+                            accession,
+                            f"{accession}_PSEPK",
+                            key,
+                            f"synthetic {key}",
+                            sample,
+                            replicate,
+                            signal,
+                            1e-05,
+                            -5,
+                        ]
+                    )
+    book.save(path)
+
+
+def _write_targets(path: Path, means: dict[str, float]) -> None:
+    """A Supplementary Data 1 workbook: two preamble rows, then the header."""
+    book = openpyxl.Workbook()
+    sheet = book.active
+    sheet.append(["Supplementary Table 1: List of gene targets from this study"])
+    sheet.append([None])
+    sheet.append(
+        [
+            "Locus number",
+            "Protein name",
+            "Source (Flux-RETAP or Heuristic) 1",
+            "RbTn-Seq Data?",
+            "Mean isoprenol titer (mg/L)",
+            "dCas9/control",
+            "POI/control",
+            "Passed DBTL0 filter?",
+            "Used after DBTL2/3?",
+        ]
+    )
+    for name, mean in sorted(means.items()):
+        sheet.append(
+            [
+                name,
+                f"synthetic {name}",
+                "FR",
+                "N",
+                round(mean, 2),
+                0.2,
+                0.3,
+                "True",
+                "False",
+            ]
+        )
+    book.save(path)
+
+
+def _sha256_bytes(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+@pytest.fixture
+def synthetic_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A raw mirror under ``tmp_path`` built by the module's own deposit function.
+
+    The two workbooks are written here, their real digests are monkeypatched over the
+    module's pins, and `deposit_raw_mirror` writes the mirror and its manifest. That
+    exercises the deposit, the manifest round trip and both loaders' `download`
+    without a network call or a read of the real ``$DATA_ROOT``.
+    """
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    source_data = staging / c25.SOURCE_DATA_FILENAME
+    targets = staging / c25.TARGETS_FILENAME
+    _write_source_data(source_data)
+    _write_targets(targets, _target_means(_titer_rows()))
+    monkeypatch.setattr(c25, "SOURCE_DATA_SHA256", _sha256_bytes(source_data))
+    monkeypatch.setattr(c25, "TARGETS_SHA256", _sha256_bytes(targets))
+    data_root = tmp_path / "data_root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    root = c25.deposit_raw_mirror(
+        source_data_path=source_data, targets_path=targets, data_root=str(data_root)
+    )
+    assert root == c25.raw_mirror_dir(str(data_root))
+    return data_root
+
+
+# --- the deposit itself ---------------------------------------------------- #
+def test_the_deposit_writes_both_files_and_a_manifest_that_pins_them(
+    synthetic_mirror: Path,
+) -> None:
+    """Two `si_data` records, each with a re-runnable `pmc_cloud` retrieval."""
+    manifest = c25.load_manifest(str(synthetic_mirror))
+    assert manifest.citation_key == c25.CITATION_KEY
+    assert manifest.doi == c25.DOI
+    assert manifest.title == c25.TITLE
+    assert [record.path for record in manifest.files] == [
+        c25.SOURCE_DATA_REL,
+        c25.TARGETS_REL,
+    ]
+    for record in manifest.files:
+        assert record.role == ROLE_SI_DATA
+        assert record.retrieval is not None
+        assert record.retrieval.method is RetrievalMethod.pmc_cloud
+        assert record.retrieval.retriever == (
+            "torchcell.literature.retrieve.pmc_cloud_object"
+        )
+        assert record.retrieval.params["key"].startswith("PMC12748988.1/")
+        assert record.retrieval.sha256 == record.sha256
+    assert c25.manifest_sha256(manifest, c25.SOURCE_DATA_REL) == c25.SOURCE_DATA_SHA256
+    assert len(manifest.si_data_sources) == 10
+    assert manifest.provenance_complete is True
+
+
+def test_the_deposit_is_idempotent_by_sha256(
+    synthetic_mirror: Path, tmp_path: Path
+) -> None:
+    """Re-depositing the same bytes leaves the mirror alone."""
+    deposited = c25.raw_mirror_dir(str(synthetic_mirror)) / c25.SOURCE_DATA_REL
+    before = deposited.stat().st_mtime_ns
+    c25.deposit_raw_mirror(
+        source_data_path=tmp_path / "staging" / c25.SOURCE_DATA_FILENAME,
+        targets_path=tmp_path / "staging" / c25.TARGETS_FILENAME,
+        data_root=str(synthetic_mirror),
+    )
+    assert deposited.stat().st_mtime_ns == before
+
+
+def test_the_deposit_refuses_a_mirror_file_whose_bytes_differ(
+    synthetic_mirror: Path, tmp_path: Path
+) -> None:
+    """A differing mirror file raises rather than being overwritten."""
+    deposited = c25.raw_mirror_dir(str(synthetic_mirror)) / c25.SOURCE_DATA_REL
+    deposited.write_bytes(b"not the workbook")
+    with pytest.raises(RuntimeError, match="exists with a different sha256; refusing"):
+        c25.deposit_raw_mirror(
+            source_data_path=tmp_path / "staging" / c25.SOURCE_DATA_FILENAME,
+            targets_path=tmp_path / "staging" / c25.TARGETS_FILENAME,
+            data_root=str(synthetic_mirror),
+        )
+
+
+def test_the_deposit_refuses_a_source_file_off_its_pin(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Both files are verified BEFORE anything is written, so nothing is deposited."""
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    source_data = staging / c25.SOURCE_DATA_FILENAME
+    targets = staging / c25.TARGETS_FILENAME
+    _write_source_data(source_data)
+    _write_targets(targets, _target_means(_titer_rows()))
+    monkeypatch.setattr(c25, "SOURCE_DATA_SHA256", "0" * 64)
+    monkeypatch.setattr(c25, "TARGETS_SHA256", _sha256_bytes(targets))
+    data_root = tmp_path / "data_root"
+    with pytest.raises(Exception, match="sha256"):
+        c25.deposit_raw_mirror(
+            source_data_path=source_data, targets_path=targets, data_root=str(data_root)
+        )
+    assert not (data_root / c25.RAW_DIR_REL / c25.SOURCE_DATA_REL).exists()
+
+
+def test_raw_mirror_dir_reads_data_root_from_the_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The mirror path is derived, never configured per call."""
+    monkeypatch.setenv("DATA_ROOT", "/from_env")
+    assert c25.raw_mirror_dir() == Path("/from_env") / c25.RAW_DIR_REL
+
+
+# --- the readers' refusals ------------------------------------------------- #
+def test_each_oracle_reader_refuses_a_changed_header(tmp_path: Path) -> None:
+    """A renamed column means the pinned workbook is not the one these readers read."""
+    path = tmp_path / "source.xlsx"
+    _write_source_data(path)
+    book = openpyxl.load_workbook(path)
+    book[c25.SHEET_TARGET_MEANS]["B1"] = "Gene"
+    book[c25.SHEET_CONTROLS]["C1"] = "Isoprenol"
+    book[c25.SHEET_PROTEOME]["G1"] = "Signal"
+    book.save(path)
+    with pytest.raises(RuntimeError, match=f"{c25.SHEET_TARGET_MEANS} header changed"):
+        c25.read_target_means(str(path))
+    with pytest.raises(RuntimeError, match=f"{c25.SHEET_CONTROLS} header changed"):
+        c25.read_control_titers(str(path))
+    with pytest.raises(RuntimeError, match=f"{c25.SHEET_PROTEOME} header changed"):
+        c25.read_proteome_rows(str(path))
+
+
+def test_read_control_titers_refuses_a_cycle_label_that_is_not_dbtl(
+    tmp_path: Path,
+) -> None:
+    """The cycle column is `DBTL-<n>`; anything else cannot be assigned to a cycle."""
+    path = tmp_path / "source.xlsx"
+    _write_source_data(path)
+    book = openpyxl.load_workbook(path)
+    book[c25.SHEET_CONTROLS]["B2"] = "round zero"
+    book.save(path)
+    with pytest.raises(RuntimeError, match="is not DBTL-<n>"):
+        c25.read_control_titers(str(path))
+
+
+def test_read_si_target_means_refuses_a_changed_header(tmp_path: Path) -> None:
+    """Supplementary Data 1's two preamble rows and its header are both load bearing."""
+    path = tmp_path / "targets.xlsx"
+    _write_targets(path, {"PP_0815": 1.0})
+    book = openpyxl.load_workbook(path)
+    book.worksheets[0]["A3"] = "Gene"
+    book.save(path)
+    with pytest.raises(RuntimeError, match="Supplementary Data 1 header changed"):
+        c25.read_si_target_means(str(path))
+
+
+def test_read_proteome_rows_types_every_released_cell(tmp_path: Path) -> None:
+    """Accession, entry name, symbol, description, sample, replicate and signal."""
+    path = tmp_path / "source.xlsx"
+    _write_source_data(path)
+    rows = c25.read_proteome_rows(str(path))
+    expected = len(PROTEOME_SAMPLES) * 3 * (len(PROTEOME_TAGS) + 1 + 2)
+    assert len(rows) == expected
+    first = rows[0]
+    assert first.sample == c25.PROTEOME_REFERENCE_SAMPLE
+    assert first.replicate == "R1"
+    assert first.entry_name.endswith("_PSEPK")
+    assert first.top3_signal == 0.0
+
+
+def test_the_aggregation_refuses_a_protein_with_no_replicate_values() -> None:
+    """An empty cell list has no mean, so it is refused rather than imputed."""
+    with pytest.raises(RuntimeError, match="no replicate values"):
+        c25.ProteomeCarruthers2025Dataset._aggregate({"PP_0001": []}, "sample")
+
+
+# --- the chassis builder over the synthetic annotation --------------------- #
+def test_the_chassis_background_resolves_every_symbol_it_types(
+    synthetic_kt2440: Any,
+) -> None:
+    """Eight alleles, three carrying the stated span, all sourced."""
+    background = c25.chassis_background(synthetic_kt2440)
+    assert background.name == c25.CHASSIS_STRAIN
+    assert background.parents == ["KT2440"]
+    assert background.genotype_statement == c25._Q_SI_TABLE2
+    assert len(background.provenance or []) == 4
+    assert {a.gene_name: a.systematic_gene_name for a in background.alleles} == {
+        "phaA": "PP_5003",
+        "phaB": "PP_5004",
+        "mvaB": "PP_3540",
+        "hbdH": "PP_3073",
+        "ldhA": "PP_1649",
+        "zwfB": "PP_4042",
+        "gntZ": "PP_4043",
+        "liuC": "PP_4066",
+    }
+    spanned = {a.gene_name for a in background.alleles if a.deleted_span is not None}
+    assert spanned == {"zwfB", "gntZ", "liuC"}
+    for allele in background.alleles:
+        assert allele.edit is AlleleEdit.full_deletion
+        assert allele.functional is False
+        assert allele.gene_namespace == "pputida_kt2440_locus_tag"
+    assert background.functional_copies("PP_4042") == 0
+    assert background.functional_copies("PP_0815") == 1
+
+
+def test_the_chassis_builder_stops_when_a_symbol_it_types_stops_resolving(
+    synthetic_kt2440: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A symbol the annotation drops cannot be given a locus, so the build stops."""
+    monkeypatch.setattr(
+        c25,
+        "CHASSIS_ALLELES",
+        (
+            *c25.CHASSIS_ALLELES,
+            {
+                "symbol": "nope",
+                "allele": "Δnope",
+                "in_span": False,
+                "both_sources": True,
+            },
+        ),
+    )
+    with pytest.raises(RuntimeError, match="'nope' does not resolve to a"):
+        c25.chassis_background(synthetic_kt2440)
+
+
+def test_the_chassis_builder_stops_when_a_documented_gap_starts_resolving(
+    synthetic_kt2440: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """If `phaC` ever gains a locus, the note's gap is wrong and the build says so."""
+    monkeypatch.setattr(c25, "CHASSIS_UNMAPPED_SYMBOLS", ("hbdH",))
+    with pytest.raises(RuntimeError, match="it is documented as carrying no locus"):
+        c25.chassis_background(synthetic_kt2440)
+
+
+def test_the_reference_is_built_from_the_served_assembly_report(
+    synthetic_kt2440: Any,
+) -> None:
+    """Species, strain and the GenBank accession, read from the deposited report."""
+    reference = c25.chassis_reference(synthetic_kt2440)
+    assert reference.species == "Pseudomonas putida"
+    assert reference.strain == c25.CHASSIS_STRAIN
+    assert reference.assembly_set == c25.KT2440_ASSEMBLY_SET
+    assert reference.assembly_accession == "GCA_000007565.2"
+    assert reference.background is not None
+
+
+def test_standard_names_prefers_the_annotations_symbol_and_falls_back_to_the_tag(
+    synthetic_kt2440: Any,
+) -> None:
+    """One gene carries one spelling; a symbol-free locus keeps its tag."""
+    names = c25._standard_names(synthetic_kt2440, ["PP_3073", "PP_0815"])
+    assert names == {"PP_3073": "hbdH", "PP_0815": "PP_0815"}
+
+
+# --- both loaders, built end to end under tmp_path ------------------------- #
+@pytest.fixture
+def built_titer(synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path) -> Any:
+    """The titer loader built over the synthetic mirror and annotation."""
+    return c25.IsoprenolTiterCarruthers2025Dataset(
+        root=str(tmp_path / "build" / "titer"), pputida_genome=synthetic_kt2440
+    )
+
+
+@pytest.fixture
+def built_proteome(
+    synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path
+) -> Any:
+    """The proteome loader built over the synthetic mirror and annotation."""
+    return c25.ProteomeCarruthers2025Dataset(
+        root=str(tmp_path / "build" / "proteome"), pputida_genome=synthetic_kt2440
+    )
+
+
+def test_the_titer_loader_writes_one_record_per_construct_and_cycle(
+    built_titer: Any,
+) -> None:
+    """Strains, not cultures: the 465-shaped arithmetic on a small fixture."""
+    expected = (
+        len(SINGLE_GUIDE_TARGETS)
+        + 2
+        + sum(len(v) for v in COMBINATION_CONSTRUCTS.values())
+    )
+    assert len(built_titer) == expected
+    assert built_titer.experiment_class is ProductTiterExperiment
+    assert built_titer.reference_class is ProductTiterExperimentReference
+    assert built_titer.raw_file_names == [
+        c25.SOURCE_DATA_FILENAME,
+        c25.TARGETS_FILENAME,
+    ]
+    record = built_titer[0]
+    experiment = record["experiment"]
+    dumped = experiment if isinstance(experiment, dict) else experiment.model_dump()
+    kinds = {pert["perturbation_type"] for pert in dumped["genotype"]["perturbations"]}
+    assert kinds == {"heterologous_pathway", "bacterial_crispr_interference"}
+    assert dumped["phenotype"]["titer_unit"] == ConcentrationUnit.ug_per_ml.value
+    assert dumped["phenotype"]["sample_unit"] == SampleUnit.biological_replicate.value
+
+
+def test_the_titer_loader_writes_its_accounting_the_controls_and_the_filter(
+    built_titer: Any,
+) -> None:
+    """Zero drops, one reference per cycle, and the two side tables."""
+    accounting = c25.BuildAccounting.model_validate_json(
+        Path(osp.join(built_titer.root, "preprocess/build_accounting.json")).read_text()
+    )
+    accounting.check()
+    assert accounting.source_rows == len(_titer_rows())
+    assert accounting.control_rows == 90
+    assert accounting.dropped_records == 0
+    assert accounting.kept_records == len(built_titer)
+    assert accounting.reconciliation is not None
+    assert accounting.reconciliation.resolved_fraction == 1.0
+    assert len(accounting.notes) == 3
+
+    controls = pd.read_csv(osp.join(built_titer.root, "preprocess/cycle_controls.csv"))
+    assert controls["cycle"].tolist() == list(range(7))
+    assert controls["n_control_cultures"].tolist() == [18] + [12] * 6
+    assert (controls["cv_percent"] > 0).all()
+
+    passes = pd.read_csv(osp.join(built_titer.root, "preprocess/pass_filter.csv"))
+    assert len(passes) == len(built_titer)
+    assert passes["n_replicates"].max() == 6
+    filler = passes.loc[passes["construct"] == FILLER_CONSTRUCT].iloc[0]
+    assert filler["non_targeting_tokens"] == "NT1"
+    assert filler["n_targets"] == 1
+
+
+def test_the_titer_loader_keeps_a_six_replicate_strain_as_one_record(
+    built_titer: Any,
+) -> None:
+    """The replicate count stored is the one the strain has, not the paper's 3."""
+    records = [built_titer[i] for i in range(len(built_titer))]
+    samples = sorted(
+        (
+            record["experiment"]
+            if isinstance(record["experiment"], dict)
+            else record["experiment"].model_dump()
+        )["phenotype"]["n_samples"]
+        for record in records
+    )
+    assert samples.count(6) == 1
+    assert samples.count(3) == len(records) - 1
+
+
+def test_the_titer_loader_builds_one_reference_per_cycle(built_titer: Any) -> None:
+    """Seven cycles, seven control phenotypes, each with its own replicate count."""
+    index = json.loads(
+        Path(
+            osp.join(built_titer.root, "preprocess/experiment_reference_index.json")
+        ).read_text()
+    )
+    assert len(index) == 7
+    counts = sorted(
+        entry["reference"]["phenotype_reference"]["n_samples"] for entry in index
+    )
+    assert counts == [12] * 6 + [18]
+
+
+def test_the_proteome_loader_writes_one_record_per_sample_and_drops_two_keys(
+    built_proteome: Any,
+) -> None:
+    """Three records (the non-targeting control is the reference) over 17 keys."""
+    assert len(built_proteome) == len(PROTEOME_SAMPLES) - 1
+    assert built_proteome.raw_file_names == [c25.SOURCE_DATA_FILENAME]
+    record = built_proteome[0]
+    experiment = record["experiment"]
+    dumped = experiment if isinstance(experiment, dict) else experiment.model_dump()
+    abundance = dumped["phenotype"]["protein_abundance"]
+    assert set(abundance) == set(PROTEOME_TAGS)
+    assert dumped["phenotype"]["measurement_type"] == c25.PROTEOME_MEASUREMENT_TYPE
+    assert set(dumped["phenotype"]["n_replicates"].values()) == {3}
+    kinds = Counter(
+        pert["perturbation_type"] for pert in dumped["genotype"]["perturbations"]
+    )
+    assert kinds["heterologous_pathway"] == 5
+    assert kinds["bacterial_deletion"] == 1
+    assert kinds["bacterial_crispr_interference"] == 1
+
+    dropped = pd.read_csv(
+        osp.join(built_proteome.root, "preprocess/dropped_protein_keys.csv")
+    )
+    assert set(dropped["protein_key"]) == {PROTEOME_UNRESOLVED, PROTEOME_MERGED}
+    merged = dropped.loc[dropped["protein_key"] == PROTEOME_MERGED].iloc[0]
+    assert merged["reason"] == "merged_accessions"
+    assert merged["accessions"] == "P0AE22;Q88C43"
+    unresolved = dropped.loc[dropped["protein_key"] == PROTEOME_UNRESOLVED].iloc[0]
+    assert unresolved["reason"] == "not_a_locus_of_the_pinned_assembly"
+
+
+def test_the_proteome_loader_records_the_target_control_and_the_off_target_samples(
+    built_proteome: Any,
+) -> None:
+    """The PP_0815 guide for the positive control, each sample's own tag otherwise."""
+    targets: list[str] = []
+    for index in range(len(built_proteome)):
+        experiment = built_proteome[index]["experiment"]
+        dumped = experiment if isinstance(experiment, dict) else experiment.model_dump()
+        targets.extend(
+            pert["systematic_gene_name"]
+            for pert in dumped["genotype"]["perturbations"]
+            if pert["perturbation_type"] == "bacterial_crispr_interference"
+        )
+    assert sorted(targets) == ["PP_0378", "PP_0815", "PP_0977"]
+    samples = pd.read_csv(osp.join(built_proteome.root, "preprocess/samples.csv"))
+    assert sorted(samples["sample"]) == sorted(PROTEOME_SAMPLES[1:])
+    assert set(samples["n_proteins"]) == {len(PROTEOME_TAGS)}
+
+
+def test_the_proteome_loaders_accounting_names_both_drop_rules(
+    built_proteome: Any,
+) -> None:
+    """No sample is dropped, and each key rule lists the keys it removed."""
+    accounting = c25.BuildAccounting.model_validate_json(
+        Path(
+            osp.join(built_proteome.root, "preprocess/build_accounting.json")
+        ).read_text()
+    )
+    accounting.check()
+    assert accounting.dropped_records == 0
+    by_rule = {rule.rule: rule for rule in accounting.rules}
+    assert by_rule["protein_key_is_not_a_locus_of_the_pinned_assembly"].items == [
+        PROTEOME_UNRESOLVED
+    ]
+    assert by_rule["protein_key_merges_two_accessions"].items == [PROTEOME_MERGED]
+    assert accounting.reconciliation is not None
+    assert accounting.reconciliation.resolved_fraction >= 0.94
+    assert len(accounting.notes) == 4
+
+
+def test_both_loaders_pass_their_level_batteries_on_the_synthetic_build(
+    built_titer: Any, built_proteome: Any
+) -> None:
+    """L0 to L3 hold on the fixture too; the L4s need the real mirror, so are skipped."""
+    from torchcell.verification.runners import load_records
+
+    titer = _titer_levels_without_l4(load_records(built_titer.root), len(built_titer))
+    proteome = _proteome_levels_without_l4(
+        load_records(built_proteome.root), len(built_proteome), len(PROTEOME_TAGS)
+    )
+    for result in (*titer, *proteome):
+        assert result.passed, (result.level, result.name, result.message)
+
+
+# --- the build-time refusals, each driven by a doctored workbook ----------- #
+def _doctor(data_root: Path, mutate: Any) -> None:
+    """Rewrite the deposited Source Data workbook through ``mutate``, re-pinning it."""
+    path = c25.raw_mirror_dir(str(data_root)) / c25.SOURCE_DATA_REL
+    book = openpyxl.load_workbook(path)
+    mutate(book)
+    book.save(path)
+    digest = _sha256_bytes(path)
+    manifest = c25.load_manifest(str(data_root))
+    for record in manifest.files:
+        if record.path == c25.SOURCE_DATA_REL:
+            record.sha256 = digest
+            assert record.retrieval is not None
+            record.retrieval.sha256 = digest
+    (c25.raw_mirror_dir(str(data_root)) / "manifest.json").write_text(
+        manifest.model_dump_json(indent=2)
+    )
+
+
+@pytest.mark.parametrize(
+    "mutate,message",
+    [
+        (
+            lambda book: book[c25.SHEET_CONTROLS].delete_rows(2),
+            "control cultures in Figure 4b",
+        ),
+        (
+            lambda book: book[c25.SHEET_TITER].cell(row=2, column=2, value=3),
+            "control cultures; the Fig. 2 caption states",
+        ),
+        (
+            lambda book: book[c25.SHEET_CONTROLS].cell(row=2, column=3, value=1.0),
+            "control titers disagree by",
+        ),
+        (
+            lambda book: book[c25.SHEET_TARGET_MEANS].cell(row=2, column=4, value=1.0),
+            "per-target means disagree",
+        ),
+    ],
+    ids=[
+        "control-row-count",
+        "control-count-vs-caption",
+        "control-value",
+        "target-mean",
+    ],
+)
+def test_the_build_refuses_a_workbook_whose_cross_source_checks_fail(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mutate: Any,
+    message: str,
+) -> None:
+    """Each assertion in `process` is reachable and names what disagreed."""
+    _doctor(synthetic_mirror, mutate)
+    monkeypatch.setattr(
+        c25,
+        "SOURCE_DATA_SHA256",
+        _sha256_bytes(c25.raw_mirror_dir(str(synthetic_mirror)) / c25.SOURCE_DATA_REL),
+    )
+    with pytest.raises(RuntimeError, match=message):
+        c25.IsoprenolTiterCarruthers2025Dataset(
+            root=str(tmp_path / "refused"), pputida_genome=synthetic_kt2440
+        )
+
+
+def test_the_build_refuses_a_guide_target_that_does_not_resolve(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The stated 1.0 threshold stops the build; no record is dropped to pass it.
+
+    The renamed construct is a LATER-cycle one, so the DBTL0 per-target oracles still
+    join and the reconciliation threshold is the check that fires.
+    """
+    doomed = COMBINATION_CONSTRUCTS[5][0]
+    renamed = doomed.replace("PP_1593", "PP_9999")
+
+    def rename(book: Any) -> None:
+        sheet = book[c25.SHEET_TITER]
+        alt = book[c25.SHEET_TITER_ALT]
+        for row in range(2, sheet.max_row + 1):
+            value = str(sheet.cell(row=row, column=1).value)
+            if value.startswith(f"{doomed}-R"):
+                swapped = value.replace(doomed, renamed)
+                sheet.cell(row=row, column=1, value=swapped)
+                alt.cell(row=row, column=1, value=swapped)
+
+    _doctor(synthetic_mirror, rename)
+    monkeypatch.setattr(
+        c25,
+        "SOURCE_DATA_SHA256",
+        _sha256_bytes(c25.raw_mirror_dir(str(synthetic_mirror)) / c25.SOURCE_DATA_REL),
+    )
+    with pytest.raises(LocusTagResolutionError, match="resolve to pputida_KT2440"):
+        c25.IsoprenolTiterCarruthers2025Dataset(
+            root=str(tmp_path / "refused"), pputida_genome=synthetic_kt2440
+        )
+
+
+def test_the_build_refuses_a_missing_mirror_file(
+    synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path
+) -> None:
+    """A mirror the manifest pins but the disk lacks is named, not skipped."""
+    path = c25.raw_mirror_dir(str(synthetic_mirror)) / c25.TARGETS_REL
+    path.rename(path.with_suffix(".moved"))
+    with pytest.raises(RuntimeError, match="required raw artifact missing from mirror"):
+        c25.IsoprenolTiterCarruthers2025Dataset(
+            root=str(tmp_path / "refused"), pputida_genome=synthetic_kt2440
+        )
+
+
+def test_the_proteome_build_refuses_a_sheet_with_no_non_targeting_reference(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Without the control sample there is no reference profile to key records to."""
+
+    def drop_reference(book: Any) -> None:
+        sheet = book[c25.SHEET_PROTEOME]
+        for row in range(sheet.max_row, 1, -1):
+            if sheet.cell(row=row, column=5).value == c25.PROTEOME_REFERENCE_SAMPLE:
+                sheet.delete_rows(row)
+
+    _doctor(synthetic_mirror, drop_reference)
+    monkeypatch.setattr(
+        c25,
+        "SOURCE_DATA_SHA256",
+        _sha256_bytes(c25.raw_mirror_dir(str(synthetic_mirror)) / c25.SOURCE_DATA_REL),
+    )
+    with pytest.raises(RuntimeError, match="is not in the released matrix"):
+        c25.ProteomeCarruthers2025Dataset(
+            root=str(tmp_path / "refused"), pputida_genome=synthetic_kt2440
+        )
+
+
+def test_the_proteome_genotype_refuses_a_sample_name_of_no_known_form() -> None:
+    """A sample the released naming does not cover cannot be keyed to a genotype."""
+    dataset = c25.ProteomeCarruthers2025Dataset.__new__(
+        c25.ProteomeCarruthers2025Dataset
+    )
+    deletion = BacterialDeletionPerturbation(
+        systematic_gene_name="PP_0815",
+        perturbed_gene_name="PP_0815",
+        gene_namespace="pputida_kt2440_locus_tag",
+    )
+    with pytest.raises(RuntimeError, match="is neither the non-targeting control"):
+        dataset._genotype(
+            "JBEI_mystery_48hr", c25.pathway_perturbations(), deletion, {}
+        )
+
+
+def test_a_loader_opens_the_genome_itself_when_nothing_injects_one(
+    synthetic_kt2440: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A direct run falls back to `bacterial_genome`; the build entry points inject."""
+    calls: list[tuple[str, str]] = []
+
+    def fake(host: str, strain: str, *args: Any, **kwargs: Any) -> Any:
+        calls.append((host, strain))
+        return synthetic_kt2440
+
+    monkeypatch.setattr(c25, "bacterial_genome", fake)
+    dataset = c25.IsoprenolTiterCarruthers2025Dataset.__new__(
+        c25.IsoprenolTiterCarruthers2025Dataset
+    )
+    dataset.pputida_genome = None
+    assert dataset._genome() is synthetic_kt2440
+    assert calls == [("pputida", "KT2440")]
+    assert dataset._genome() is synthetic_kt2440
+    assert len(calls) == 1
+
+
+def test_both_loaders_refuse_the_interface_they_do_not_implement(
+    synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path
+) -> None:
+    """`create_experiment` is inline in `process`, and `preprocess_raw` is a no-op."""
+    dataset = c25.IsoprenolTiterCarruthers2025Dataset(
+        root=str(tmp_path / "iface"), pputida_genome=synthetic_kt2440
+    )
+    frame = pd.DataFrame({"a": [1]})
+    assert dataset.preprocess_raw(frame) is frame
+    with pytest.raises(NotImplementedError):
+        dataset.create_experiment()
+    proteome = c25.ProteomeCarruthers2025Dataset(
+        root=str(tmp_path / "iface_proteome"), pputida_genome=synthetic_kt2440
+    )
+    assert proteome.preprocess_raw(frame) is frame
+    with pytest.raises(NotImplementedError):
+        proteome.create_experiment()
+
+
+def test_main_builds_both_families_and_prints_their_accounting(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The module's interactive entry point, over the synthetic mirror."""
+    monkeypatch.setattr(c25, "bacterial_genome", lambda *a, **k: synthetic_kt2440)
+    monkeypatch.setattr(c25, "load_dotenv", lambda *a, **k: None, raising=False)
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path / "main_root"))
+    (tmp_path / "main_root").mkdir()
+    for relative in (c25.RAW_DIR_REL,):
+        shutil.copytree(
+            c25.raw_mirror_dir(str(synthetic_mirror)), tmp_path / "main_root" / relative
+        )
+    c25.main()
+    out = capsys.readouterr().out
+    assert "IsoprenolTiterCarruthers2025Dataset: len =" in out
+    assert "ProteomeCarruthers2025Dataset: len =" in out
+    assert '"dropped_records": 0' in out
+
+
+def _titer_levels_without_l4(records: list[dict[str, Any]], expected: int) -> list[Any]:
+    """The titer battery minus the L4, which needs the real Supplementary Data 1."""
+    return [
+        l0_structural(
+            [record["experiment"] for record in records],
+            ProductTiterExperiment.model_validate,
+        ),
+        l1_count(len(records), expected),
+        l2_value_fidelity(
+            [record["experiment"]["phenotype"]["titer"] for record in records],
+            minimum=0.0,
+        ),
+        l3_convention(
+            "titer_unit_is_the_sources_mg_per_l_as_ug_per_ml",
+            all(
+                record["experiment"]["phenotype"]["titer_unit"]
+                == ConcentrationUnit.ug_per_ml.value
+                for record in records
+            ),
+        ),
+    ]
+
+
+def _proteome_levels_without_l4(
+    records: list[dict[str, Any]], expected: int, keys: int
+) -> list[Any]:
+    """The proteome battery minus the L4, which needs the real released sheet."""
+    from torchcell.datamodels.schema import BacterialProteinAbundanceExperiment
+
+    experiments = [record["experiment"] for record in records]
+    return [
+        l0_structural(experiments, BacterialProteinAbundanceExperiment.model_validate),
+        l1_count(len(records), expected),
+        l2_cross_method(
+            [len(exp["phenotype"]["protein_abundance"]) for exp in experiments],
+            [keys] * len(experiments),
+            tol=0.0,
+        ),
+        l3_convention(
+            "every_protein_key_is_a_kt2440_locus_tag",
+            all(
+                key.startswith("PP_")
+                for exp in experiments
+                for key in exp["phenotype"]["protein_abundance"]
+            ),
+        ),
+    ]

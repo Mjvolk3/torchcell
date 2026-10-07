@@ -9,4 +9,5 @@ The shared skeleton (genome, locus-tag reconciliation, assembly pin, injection r
 is ``torchcell.datasets.bacteria_common``. No loader has landed yet.
 """
 
+from .fuhrer2017 import MetabolomeFuhrer2017Dataset as MetabolomeFuhrer2017Dataset
 from .lamoureux2023 import RnaseqLamoureux2023Dataset as RnaseqLamoureux2023Dataset

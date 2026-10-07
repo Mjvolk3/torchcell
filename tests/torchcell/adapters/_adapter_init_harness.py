@@ -14,8 +14,9 @@ checks here are:
   states the class it expects that pairing to be;
 * the EXACT conf content, rebuilt by ``expected_conf`` from a short description of
   the dataset's graph shape (phenotype kind, whether per-perturbation nodes, CRISPR
-  constructs or environment perturbations are served, and the memory-reduction factor
-  written on chunked methods) plus whether the genotype is a segregant, which is
+  constructs or environment perturbations are served, whether the perturbation nodes
+  are the bacterial class, and the memory-reduction factor written on chunked
+  methods) plus whether the genotype is a segregant, which is
   DERIVED from the paired dataset's ``experiment_class`` genotype type hint
   (``SegregantGenotype``) rather than written per case. The method order is the
   ``CellAdapter`` registration-table order restricted to the enabled set, written out
@@ -80,6 +81,9 @@ PHENOTYPE_METHOD: dict[type[Any], str] = {
     s.MetabolitePhenotype: "metabolite phenotype",
     s.ProteinAbundancePhenotype: "protein abundance phenotype",
     s.EnvironmentResponsePhenotype: "environment response phenotype",
+    s.ProductTiterPhenotype: "product titer phenotype",
+    s.ProteinTurnoverPhenotype: "protein turnover phenotype",
+    s.FluxPhenotype: "flux phenotype",
 }
 
 PHENOTYPE_CHUNKED = "<phenotype> (chunked)"
@@ -96,12 +100,12 @@ EDGE_ENDPOINTS: dict[str, list[tuple[str, ...]]] = {
         ("experiment (chunked)",),
     ],
     "perturbation to genotype (chunked)": [
-        ("perturbation (chunked)",),
+        ("perturbation (chunked)", "bacterial perturbation (chunked)"),
         ("genotype (chunked)",),
     ],
     "crispr construct to perturbation (chunked)": [
         ("crispr construct (chunked)",),
-        ("perturbation (chunked)",),
+        ("perturbation (chunked)", "bacterial perturbation (chunked)"),
     ],
     "environment to experiment (chunked)": [
         ("environment (chunked)",),
@@ -146,6 +150,7 @@ NODE_LINK: dict[str, str] = {
     "genotype (chunked)": "genotype to experiment (chunked)",
     "segregant genotype (chunked)": "genotype to experiment (chunked)",
     "perturbation (chunked)": "perturbation to genotype (chunked)",
+    "bacterial perturbation (chunked)": "perturbation to genotype (chunked)",
     "crispr construct (chunked)": "crispr construct to perturbation (chunked)",
     "environment (chunked)": "environment to experiment (chunked)",
     "media (chunked)": "media to environment (chunked)",
@@ -166,6 +171,9 @@ class Shape(NamedTuple):
     crispr: bool = False
     env_perturbation: bool = False
     mrf: float | None = 1.0
+    # A bacterial genotype's leaves are served as `bacterial perturbation`, never as the
+    # yeast `perturbation` class (cell_adapter.BACTERIAL_PERTURBATION_LEAVES).
+    bacterial: bool = False
 
 
 class AdapterCase(NamedTuple):
@@ -185,7 +193,11 @@ def expected_methods(shape: Shape, segregant: bool) -> tuple[list[str], list[str
     nodes = ["experiment reference", "genome", "experiment (chunked)"]
     nodes.append("segregant genotype (chunked)" if segregant else "genotype (chunked)")
     if shape.perturbation:
-        nodes.append("perturbation (chunked)")
+        nodes.append(
+            "bacterial perturbation (chunked)"
+            if shape.bacterial
+            else "perturbation (chunked)"
+        )
     if shape.crispr:
         nodes.append("crispr construct (chunked)")
     nodes += [

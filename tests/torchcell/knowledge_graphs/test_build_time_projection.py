@@ -478,24 +478,50 @@ def test_dataset_sizes_cover_the_same_datasets_as_the_adapter_map() -> None:
     )
 
 
+BACTERIAL_DATASETS = {
+    "CarbonSourceTong2020Dataset",
+    "CrispriArrayYunus2026Dataset",
+    "CrispriKnockdownYunus2026Dataset",
+    "EnvChemgenWang2015Dataset",
+    "GeneEssentialityGoodall2018Dataset",
+    "IsoprenolSelectionMenasalvas2025Dataset",
+    "IsoprenolTiterCarruthers2025Dataset",
+    "IsoprenolTiterDeSiqueira2025Dataset",
+    "IsoprenolToleranceLim2025Dataset",
+    "IsoprenylAcetateTiterKang2026Dataset",
+    "MetabolomeFuhrer2017Dataset",
+    "ProteomeCaglar2017Dataset",
+    "ProteomeCarruthers2025Dataset",
+    "ProteomeDeSiqueira2025Dataset",
+    "ProteomeLim2025Dataset",
+    "PutidaPrecise321Lim2022Dataset",
+    "RbTnseqBorchert2024Dataset",
+    "RbTnseqPrice2018EcoliDataset",
+    "RnaseqCaglar2017Dataset",
+    "RnaseqLamoureux2023Dataset",
+}
+"""The E. coli and P. putida datasets mapped in plan step 9, none calibrated yet."""
+
+
 def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     """Every pair here is a (dataset, adapter) pair of ``dataset_adapter_map``.
 
-    Finding: the projection covers 33 of the 51 datasets in ``dataset_adapter_map``.
-    The 18 absent ones (``ADAPTER_TO_DATASET``, build_time_projection.py:81-115) include
-    the six EnvChemgen chemogenomic sets, both Hillenmeyer 2008 sets and the Nadal-Ribelles
-    Perturb-seq set, so a projection of a build that serves them omits their generation
-    time entirely (``calibrate`` would raise ``KeyError`` on a timing file that lists
-    them). Their record counts were not measured here. Pinned until those adapters are
+    Finding: the projection covers 33 of the 71 datasets in ``dataset_adapter_map``.
+    The 38 absent ones (``ADAPTER_TO_DATASET``, build_time_projection.py:81-115) include
+    the six EnvChemgen chemogenomic sets, both Hillenmeyer 2008 sets, the Nadal-Ribelles
+    Perturb-seq set and the 20 bacterial datasets mapped in plan.bacteria-ontology-genome
+    step 9, so a projection of a build that serves them omits their generation time
+    entirely (``calibrate`` would raise ``KeyError`` on a timing file that lists them).
+    Their record counts were not measured here. Pinned until those adapters are
     calibrated and added to the three tables.
     """
     from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
 
     inverse = {a.__name__: d.__name__ for d, a in dataset_adapter_map.items()}
     assert {a: inverse[a] for a in ADAPTER_TO_DATASET} == ADAPTER_TO_DATASET
-    assert len(dataset_adapter_map) == 51
+    assert len(dataset_adapter_map) == 71
     served = {d.__name__ for d in dataset_adapter_map}
-    assert served - set(ADAPTER_TO_DATASET.values()) == {
+    assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {
         "AminoAcidCooper2010Dataset",
         "Bloom2019Dataset",
         "CrisprMagicLian2019Dataset",

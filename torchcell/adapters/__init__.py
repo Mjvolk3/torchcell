@@ -7,8 +7,23 @@ from .baryshnikova2010_adapter import (
     SmfBaryshnikova2010Adapter as SmfBaryshnikova2010Adapter,
 )
 from .bloom2019_adapter import Bloom2019Adapter as Bloom2019Adapter
+from .borchert2024_adapter import (
+    RbTnseqBorchert2024Adapter as RbTnseqBorchert2024Adapter,
+)
 from .cachera2023_adapter import (
     BetaxanthinCachera2023Adapter as BetaxanthinCachera2023Adapter,
+)
+from .caglar2017_proteome_adapter import (
+    ProteomeCaglar2017Adapter as ProteomeCaglar2017Adapter,
+)
+from .caglar2017_rnaseq_adapter import (
+    RnaseqCaglar2017Adapter as RnaseqCaglar2017Adapter,
+)
+from .carruthers2025_proteome_adapter import (
+    ProteomeCarruthers2025Adapter as ProteomeCarruthers2025Adapter,
+)
+from .carruthers2025_titer_adapter import (
+    IsoprenolTiterCarruthers2025Adapter as IsoprenolTiterCarruthers2025Adapter,
 )
 from .caudal2024_adapter import (
     CaudalPanTranscriptome2024Adapter as CaudalPanTranscriptome2024Adapter,
@@ -24,6 +39,18 @@ from .costanzo2021_adapter import (
 from .dasilveira2014_adapter import (
     MetaboliteDaSilveira2014Adapter as MetaboliteDaSilveira2014Adapter,
 )
+from .desiqueira2025_proteome_adapter import (
+    ProteomeDeSiqueira2025Adapter as ProteomeDeSiqueira2025Adapter,
+)
+from .desiqueira2025_titer_adapter import (
+    IsoprenolTiterDeSiqueira2025Adapter as IsoprenolTiterDeSiqueira2025Adapter,
+)
+from .fuhrer2017_adapter import (
+    MetabolomeFuhrer2017Adapter as MetabolomeFuhrer2017Adapter,
+)
+from .goodall2018_adapter import (
+    GeneEssentialityGoodall2018Adapter as GeneEssentialityGoodall2018Adapter,
+)
 from .hillenmeyer2008_adapter import (
     HetHillenmeyer2008Adapter as HetHillenmeyer2008Adapter,
 )
@@ -32,6 +59,9 @@ from .hillenmeyer2008_adapter import (
 )
 from .hoepfner2014_adapter import (
     EnvChemgenHoepfner2014Adapter as EnvChemgenHoepfner2014Adapter,
+)
+from .kang2026_adapter import (
+    IsoprenylAcetateTiterKang2026Adapter as IsoprenylAcetateTiterKang2026Adapter,
 )
 from .kemmeren2014_adapter import (
     MicroarrayKemmeren2014Adapter as MicroarrayKemmeren2014Adapter,
@@ -46,12 +76,25 @@ from .kuzmin2020_adapter import DmiKuzmin2020Adapter as DmiKuzmin2020Adapter
 from .kuzmin2020_adapter import SmfKuzmin2020Adapter as SmfKuzmin2020Adapter
 from .kuzmin2020_adapter import TmfKuzmin2020Adapter as TmfKuzmin2020Adapter
 from .kuzmin2020_adapter import TmiKuzmin2020Adapter as TmiKuzmin2020Adapter
+from .lamoureux2023_adapter import (
+    RnaseqLamoureux2023Adapter as RnaseqLamoureux2023Adapter,
+)
 from .lian2019_adapter import Lian2019Adapter as Lian2019Adapter
+from .lim2022_adapter import (
+    PutidaPrecise321Lim2022Adapter as PutidaPrecise321Lim2022Adapter,
+)
+from .lim2025_proteome_adapter import ProteomeLim2025Adapter as ProteomeLim2025Adapter
+from .lim2025_tolerance_adapter import (
+    IsoprenolToleranceLim2025Adapter as IsoprenolToleranceLim2025Adapter,
+)
 from .lopez2024_adapter import (
     IsobutanolScreenLopez2024Adapter as IsobutanolScreenLopez2024Adapter,
 )
 from .lopez2024_adapter import (
     IsobutanolValidatedLopez2024Adapter as IsobutanolValidatedLopez2024Adapter,
+)
+from .menasalvas2025_adapter import (
+    IsoprenolSelectionMenasalvas2025Adapter as IsoprenolSelectionMenasalvas2025Adapter,
 )
 from .messner2023_adapter import (
     ProteomeMessner2023Adapter as ProteomeMessner2023Adapter,
@@ -71,6 +114,9 @@ from .ohya2005_adapter import ScmdOhya2005Adapter as ScmdOhya2005Adapter
 from .ozaydin2013_adapter import (
     CarotenoidOzaydin2013Adapter as CarotenoidOzaydin2013Adapter,
 )
+from .price2018_ecoli_adapter import (
+    RbTnseqPrice2018EcoliAdapter as RbTnseqPrice2018EcoliAdapter,
+)
 from .sameith2015_adapter import (
     DmMicroarraySameith2015Adapter as DmMicroarraySameith2015Adapter,
 )
@@ -86,15 +132,23 @@ from .synth_leth_db_adapter import (
 from .synth_leth_db_adapter import (
     SynthRescueYeastSynthLethDbAdapter as SynthRescueYeastSynthLethDbAdapter,
 )
+from .tong2020_adapter import CarbonSourceTong2020Adapter as CarbonSourceTong2020Adapter
 from .vanacloig2022_adapter import (
     EnvChemgenVanacloig2022Adapter as EnvChemgenVanacloig2022Adapter,
 )
+from .wang2015_adapter import EnvChemgenWang2015Adapter as EnvChemgenWang2015Adapter
 from .wildenhain2015_adapter import (
     EnvChemgenWildenhain2015Adapter as EnvChemgenWildenhain2015Adapter,
 )
 from .xue2025_adapter import FattyAcidXue2025Adapter as FattyAcidXue2025Adapter
 from .yoshida2012_adapter import (
     OrganicAcidYoshida2012Adapter as OrganicAcidYoshida2012Adapter,
+)
+from .yunus2026_array_adapter import (
+    CrispriArrayYunus2026Adapter as CrispriArrayYunus2026Adapter,
+)
+from .yunus2026_knockdown_adapter import (
+    CrispriKnockdownYunus2026Adapter as CrispriKnockdownYunus2026Adapter,
 )
 from .zelezniak2018_adapter import (
     MetaboliteZelezniak2018Adapter as MetaboliteZelezniak2018Adapter,
@@ -185,6 +239,32 @@ environment_adapters = [
 
 baryshnikova_adapters = ["SmfBaryshnikova2010Adapter"]
 
+ecoli_adapters = [
+    "RnaseqCaglar2017Adapter",
+    "ProteomeCaglar2017Adapter",
+    "MetabolomeFuhrer2017Adapter",
+    "GeneEssentialityGoodall2018Adapter",
+    "RnaseqLamoureux2023Adapter",
+    "RbTnseqPrice2018EcoliAdapter",
+    "CarbonSourceTong2020Adapter",
+    "EnvChemgenWang2015Adapter",
+]
+
+pputida_adapters = [
+    "RbTnseqBorchert2024Adapter",
+    "IsoprenolTiterCarruthers2025Adapter",
+    "ProteomeCarruthers2025Adapter",
+    "ProteomeDeSiqueira2025Adapter",
+    "IsoprenolTiterDeSiqueira2025Adapter",
+    "IsoprenylAcetateTiterKang2026Adapter",
+    "PutidaPrecise321Lim2022Adapter",
+    "IsoprenolToleranceLim2025Adapter",
+    "ProteomeLim2025Adapter",
+    "IsoprenolSelectionMenasalvas2025Adapter",
+    "CrispriArrayYunus2026Adapter",
+    "CrispriKnockdownYunus2026Adapter",
+]
+
 
 __all__ = (
     cell_adapters
@@ -202,4 +282,6 @@ __all__ = (
     + segregant_adapters
     + environment_adapters
     + baryshnikova_adapters
+    + ecoli_adapters
+    + pputida_adapters
 )

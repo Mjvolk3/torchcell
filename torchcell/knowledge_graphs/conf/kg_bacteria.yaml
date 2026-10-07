@@ -1,0 +1,79 @@
+# torchcell/knowledge_graphs/conf/kg_bacteria.yaml
+# [[torchcell.knowledge_graphs.conf.kg_bacteria.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/kg_bacteria.yaml
+# Test file: tests/torchcell/adapters/test_bacterial_adapters.py
+#
+# Bacteria-only REHEARSAL generation: every E. coli and P. putida dataset in
+# dataset_adapter_map, each in full, and nothing else. It exists to surface BioCypher
+# ontology failures and undeclared-class drops for the bacterial node classes before the
+# multi-hour full build (plan.bacteria-ontology-genome, section 5, rebuild checklist item
+# 5). The generation step writes CSVs and the import call into a fresh biocypher-out
+# directory and does not touch the served store:
+#
+#   python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small --config-name kg_bacteria
+#
+# Run that generation as its own slurm job (plan step 10 owns the submission). Do NOT
+# hand this config to gilahyper_first_build-slurm_docker.slurm or
+# gilahyper_uncapped_build-slurm_docker.slurm: after generating, both DROP the served
+# `torchcell` database and import what was generated. `pool_memory_fraction` below needs
+# a cgroup memory limit, which a slurm allocation or the container provides.
+#
+# Membership is the explicit `datasets` list below, NOT `datasets: null`: null means every
+# mapped dataset (yeast included), which is what kg_uncapped.yaml does for the live
+# rebuild. A dataset whose dev-tree LMDB is absent is skipped loudly by the build, so the
+# run reports coverage rather than aborting.
+
+defaults:
+  - default
+  - _self_ # append to end for overriding duplicate configs in default
+
+wandb:
+  mode: online # disabled, offline, online
+  project: tcdb
+
+# The live-rebuild settings (kg_uncapped.yaml), so the rehearsal exercises the same
+# single-pass, fast-writer path the full build will.
+adapters:
+  io_to_total_worker_ratio: 0.02
+  chunk_size: 1e5
+  loader_batch_size: 1e3
+  inprocess_max_records: 25000
+  inprocess_max_mb: 256
+  single_pass: true
+  fast_writer: true
+  single_pass_chunk_budget_mb: 128
+  chunks_per_worker: 64
+  pool_memory_fraction: 0.8
+  completion_order: true
+
+subset:
+  size: null # null => every record, so every record shape reaches BioCypher
+  seed: 42
+  per_dataset: {}
+  prefilter: {}
+
+import_mode: full
+
+datasets:
+  # E. coli
+  - RnaseqCaglar2017Dataset
+  - ProteomeCaglar2017Dataset
+  - MetabolomeFuhrer2017Dataset
+  - GeneEssentialityGoodall2018Dataset
+  - RnaseqLamoureux2023Dataset
+  - RbTnseqPrice2018EcoliDataset
+  - CarbonSourceTong2020Dataset
+  - EnvChemgenWang2015Dataset
+  # P. putida
+  - RbTnseqBorchert2024Dataset
+  - IsoprenolTiterCarruthers2025Dataset
+  - ProteomeCarruthers2025Dataset
+  - ProteomeDeSiqueira2025Dataset
+  - IsoprenolTiterDeSiqueira2025Dataset
+  - IsoprenylAcetateTiterKang2026Dataset
+  - PutidaPrecise321Lim2022Dataset
+  - IsoprenolToleranceLim2025Dataset
+  - ProteomeLim2025Dataset
+  - IsoprenolSelectionMenasalvas2025Dataset
+  - CrispriArrayYunus2026Dataset
+  - CrispriKnockdownYunus2026Dataset

@@ -1,12 +1,15 @@
-"""Mapping from S. cerevisiae dataset classes to their BioCypher adapters."""
+"""Mapping from yeast and bacterial dataset classes to their BioCypher adapters."""
 
 from torchcell.adapters import (
     AminoAcidCooper2010Adapter,
     AminoAcidMulleder2016Adapter,
     BetaxanthinCachera2023Adapter,
     Bloom2019Adapter,
+    CarbonSourceTong2020Adapter,
     CarotenoidOzaydin2013Adapter,
     CaudalPanTranscriptome2024Adapter,
+    CrispriArrayYunus2026Adapter,
+    CrispriKnockdownYunus2026Adapter,
     DmfCostanzo2016Adapter,
     DmfKuzmin2018Adapter,
     DmfKuzmin2020Adapter,
@@ -19,22 +22,39 @@ from torchcell.adapters import (
     EnvChemgenHoepfner2014Adapter,
     EnvChemgenMota2024Adapter,
     EnvChemgenVanacloig2022Adapter,
+    EnvChemgenWang2015Adapter,
     EnvChemgenWildenhain2015Adapter,
     FattyAcidXue2025Adapter,
+    GeneEssentialityGoodall2018Adapter,
     GeneEssentialitySgdAdapter,
     HetHillenmeyer2008Adapter,
     HomHillenmeyer2008Adapter,
     IsobutanolScreenLopez2024Adapter,
     IsobutanolValidatedLopez2024Adapter,
+    IsoprenolSelectionMenasalvas2025Adapter,
+    IsoprenolTiterCarruthers2025Adapter,
+    IsoprenolTiterDeSiqueira2025Adapter,
+    IsoprenolToleranceLim2025Adapter,
+    IsoprenylAcetateTiterKang2026Adapter,
     Lian2019Adapter,
     MetaboliteDaSilveira2014Adapter,
     MetaboliteZelezniak2018Adapter,
+    MetabolomeFuhrer2017Adapter,
     MicroarrayKemmeren2014Adapter,
     Mormino2022Adapter,
     NadalRibellesPerturbSeq2025Adapter,
     OrganicAcidYoshida2012Adapter,
+    ProteomeCaglar2017Adapter,
+    ProteomeCarruthers2025Adapter,
+    ProteomeDeSiqueira2025Adapter,
+    ProteomeLim2025Adapter,
     ProteomeMessner2023Adapter,
     ProteomeZelezniak2018Adapter,
+    PutidaPrecise321Lim2022Adapter,
+    RbTnseqBorchert2024Adapter,
+    RbTnseqPrice2018EcoliAdapter,
+    RnaseqCaglar2017Adapter,
+    RnaseqLamoureux2023Adapter,
     ScmdOhnuki2018Adapter,
     ScmdOhnuki2022Adapter,
     SmfBaryshnikova2010Adapter,
@@ -53,6 +73,38 @@ from torchcell.adapters import (
     TmiKuzmin2020Adapter,
 )
 from torchcell.adapters.ohya2005_adapter import ScmdOhya2005Adapter
+from torchcell.datasets.ecoli.caglar2017 import (
+    ProteomeCaglar2017Dataset,
+    RnaseqCaglar2017Dataset,
+)
+from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
+from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
+from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
+from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
+from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
+from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
+from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
+from torchcell.datasets.pputida.carruthers2025 import (
+    IsoprenolTiterCarruthers2025Dataset,
+    ProteomeCarruthers2025Dataset,
+)
+from torchcell.datasets.pputida.desiqueira2025 import (
+    IsoprenolTiterDeSiqueira2025Dataset,
+    ProteomeDeSiqueira2025Dataset,
+)
+from torchcell.datasets.pputida.kang2026 import IsoprenylAcetateTiterKang2026Dataset
+from torchcell.datasets.pputida.lim2022 import PutidaPrecise321Lim2022Dataset
+from torchcell.datasets.pputida.lim2025 import (
+    IsoprenolToleranceLim2025Dataset,
+    ProteomeLim2025Dataset,
+)
+from torchcell.datasets.pputida.menasalvas2025 import (
+    IsoprenolSelectionMenasalvas2025Dataset,
+)
+from torchcell.datasets.pputida.yunus2026 import (
+    CrispriArrayYunus2026Dataset,
+    CrispriKnockdownYunus2026Dataset,
+)
 from torchcell.datasets.scerevisiae.auesukaree2009 import (
     EnvChemgenAuesukaree2009Dataset,
 )
@@ -181,4 +233,25 @@ dataset_adapter_map = {
     EnvChemgenHoepfner2014Dataset: EnvChemgenHoepfner2014Adapter,
     HetHillenmeyer2008Dataset: HetHillenmeyer2008Adapter,
     HomHillenmeyer2008Dataset: HomHillenmeyer2008Adapter,
+    # Bacteria (plan.bacteria-ontology-genome step 9): E. coli, then P. putida.
+    RnaseqCaglar2017Dataset: RnaseqCaglar2017Adapter,
+    ProteomeCaglar2017Dataset: ProteomeCaglar2017Adapter,
+    MetabolomeFuhrer2017Dataset: MetabolomeFuhrer2017Adapter,
+    GeneEssentialityGoodall2018Dataset: GeneEssentialityGoodall2018Adapter,
+    RnaseqLamoureux2023Dataset: RnaseqLamoureux2023Adapter,
+    RbTnseqPrice2018EcoliDataset: RbTnseqPrice2018EcoliAdapter,
+    CarbonSourceTong2020Dataset: CarbonSourceTong2020Adapter,
+    EnvChemgenWang2015Dataset: EnvChemgenWang2015Adapter,
+    RbTnseqBorchert2024Dataset: RbTnseqBorchert2024Adapter,
+    IsoprenolTiterCarruthers2025Dataset: IsoprenolTiterCarruthers2025Adapter,
+    ProteomeCarruthers2025Dataset: ProteomeCarruthers2025Adapter,
+    ProteomeDeSiqueira2025Dataset: ProteomeDeSiqueira2025Adapter,
+    IsoprenolTiterDeSiqueira2025Dataset: IsoprenolTiterDeSiqueira2025Adapter,
+    IsoprenylAcetateTiterKang2026Dataset: IsoprenylAcetateTiterKang2026Adapter,
+    PutidaPrecise321Lim2022Dataset: PutidaPrecise321Lim2022Adapter,
+    IsoprenolToleranceLim2025Dataset: IsoprenolToleranceLim2025Adapter,
+    ProteomeLim2025Dataset: ProteomeLim2025Adapter,
+    IsoprenolSelectionMenasalvas2025Dataset: IsoprenolSelectionMenasalvas2025Adapter,
+    CrispriArrayYunus2026Dataset: CrispriArrayYunus2026Adapter,
+    CrispriKnockdownYunus2026Dataset: CrispriKnockdownYunus2026Adapter,
 }

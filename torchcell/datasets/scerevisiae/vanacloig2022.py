@@ -15,8 +15,8 @@ READOUT PROVENANCE / RIGOR. The paper's published values are edgeR glmQLFit PAIR
 logFCs on TMM-normalized counts ("using TMM normalization and glmQLFit comparing paired
 treatment to control samples"). GEO GSE186866 releases only the raw barcode-count matrix,
 which IS scriptable and sha256-pinned; the per-compound logFC table (Dataset2_mclust_cdt)
-and Table S1 sit behind academic.oup.com, which is not scriptable. This loader recomputes
-the paper's normalized ratio from the canonical counts:
+is not used. This loader recomputes the paper's normalized ratio from the canonical
+counts:
 
 - TMM scaling factors (``tmm_factors``: edgeR 3.26.8 ``calcNormFactors(method="TMM")``
   with its defaults, ``logratioTrim=0.3``, ``sumTrim=0.05``, ``doWeighting=TRUE``,
@@ -38,9 +38,16 @@ CONTROL PAIRING. Each replicate is paired with the control columns of its OWN ``
 batch, because the paper's design is paired and its comparison is "to the paired SynBase
 medium control"; MMS is the one served condition the paper analyzed UNPAIRED, so its
 control is the mean of all 16 control columns (its ``units`` string records that). DMSO
-is served as a condition (1% v/v) paired the same way; which inhibitors were themselves
-delivered in DMSO is in the unmirrored Table S1, so each inhibitor's ``solvent`` is a
-typed gap.
+is served as a condition (1% v/v) paired the same way.
+
+DOSES AND VEHICLES (Table S1). Table S1 is the ``Table_S1.pdf`` member of the OUP
+supplement zip (PMC Article Datasets copy, ``si/si1.zip`` of the paper's mirror key),
+stored as ``si/si2.pdf`` and OCR'd to ``si/si2.md``. Each served condition's row is a
+``SourcedValue`` in ``TABLE_S1_DOSES``: a mM / uM / ug/mL IC30 is stored as the
+``Concentration`` value; a percent IC30 (MBO, EtOH, IBA, GVL) keeps ``value=None`` under
+the IC30 basis because the table writes no v/v or w/v; Benomyl, MMS and DMSO keep their
+fixed doses. The "Dissolved in DMSO?" column sets ``solvent``: "Yes" is DMSO at the
+paper's final 1% v/v, "No" is ``None`` (dissolved directly).
 
 STRAIN BACKGROUND (#500). The screened strains are the MATa meiotic progeny of the SGA
 cross of query Y13206 (MATalpha pdr1::natMX pdr3::KlURA3 snq2::KlLEU2 can1::STE2pr-
@@ -111,6 +118,7 @@ from torchcell.datamodels.schema import (
     Publication,
     SampleUnit,
     SmallMoleculePerturbation,
+    Solvent,
     StrainBackground,
     StrainEnvironmentResponseExperiment,
     StrainEnvironmentResponseExperimentReference,
@@ -175,6 +183,14 @@ PIOTROWSKI_SHA256 = "9314a0dd932c1b20b4dc4297de4ce9452b09f314bf100f05f2fe718fb34
 OHNUKI_KEY = "ohnukiHighthroughputPlatformYeast2022"
 OHNUKI_SHA256 = "de2cad9b33c5e0f7e9ce7b7d56feb17a10dbb83de34f65330d6e35846b757ee1"
 
+#: Table S1: the ``Table_S1.pdf`` member of ``si/si1.zip`` (the OUP supplement zip, PMC
+#: Article Datasets object PMC9508847.1/foac036_supplemental_files.zip, sha256 707e3ede...)
+#: stored as ``si/si2.pdf`` by ``capture_si.store_zip_member`` and OCR'd by MinerU 2.7.6
+#: (pipeline backend, cpu, 200 dpi) to ``si/si2.md``.
+TABLE_S1_MD = "si/si2.md"
+SI2_PDF_SHA256 = "2712cfdb92569c014a933307973353ec8da0218ba00326d165999f8c0ef96d85"
+SI2_MD_SHA256 = "bad5b060bda2f50470e6a72c4005d48a9ecad8a9fa837a5bd2008307cc35e5d2"
+
 #: A float64 count / library-size array.
 FloatArray = npt.NDArray[np.float64]
 
@@ -207,6 +223,22 @@ def _paper(
             page=page,
         ),
     )
+
+
+#: The Table S1 OCR text every ``_table_s1`` value is quoted from.
+TABLE_S1 = Provenance(
+    source_uri=TABLE_S1_MD,
+    citation_key=CITATION_KEY,
+    sha256=SI2_MD_SHA256,
+    method="MinerU OCR of the Table S1 PDF member (Table_S1.pdf) of si/si1.zip, "
+    "stored as si/si2.pdf (torchcell-library mirror)",
+    page="Table S1",
+)
+
+
+def _table_s1(value: Any, quote: str, *, note: str | None = None) -> SourcedValue:
+    """Bind a value to a verbatim row of the sha256-pinned Table S1 OCR (si/si2.md)."""
+    return SourcedValue(value=value, quote=quote, note=note, provenance=TABLE_S1)
 
 
 def _piotrowski(
@@ -307,9 +339,9 @@ IC30_BASIS = _paper(
     "${ \\sim } 3 0 \\%$ of growth $\\left( \\mathrm { I C } _ { 3 0 } \\right)$ in "
     "SynBase medium with the inhibitor relative to growth in SynBase medium lacking the "
     "inhibitor (Table S1, Supporting Information).",
-    note="the per-compound molar values live in Table S1, which academic.oup.com does "
-    "not serve to a script and which is therefore not mirrored; Concentration.value "
-    "stays None and the IC30 basis carries the dose provenance",
+    note="the per-compound IC30 values are Table S1's rows (TABLE_S1_DOSES, quoted from "
+    "si/si2.md); a percent IC30 states no v/v or w/v, so those compounds keep "
+    "Concentration.value None and the IC30 basis carries the dose",
 )
 BENOMYL_MMS_DOSE = _paper(
     {"benomyl_ug_per_ml": 10.0, "mms_percent": 0.01},
@@ -317,8 +349,9 @@ BENOMYL_MMS_DOSE = _paper(
     "2017), $1 0 ~ \\mathrm { u g / m L }$ and $0 . 0 1 \\%$ , respectively.",
     note="both doses were taken from Piotrowski 2017 rather than set to an IC30, so "
     "their basis is 'fixed'. Piotrowski 2017 (mirrored) states benomyl as 34.4 uM "
-    "(BENOMYL_MOLAR), which is the stored value. The MMS percent is stored as a basis "
-    "only: neither paper writes v/v or w/v for this 0.01% (Piotrowski 2017 names no "
+    "(BENOMYL_MOLAR), which is the stored value; Table S1 confirms the 10 ug/mL "
+    "(TABLE_S1_DOSES['Benomyl']). The MMS percent is stored as a basis only: neither "
+    "paper nor Table S1 writes v/v or w/v for this 0.01% (Piotrowski 2017 names no "
     "MMS dose), so the unit would be a guess",
 )
 BENOMYL_MOLAR = _piotrowski(
@@ -375,9 +408,9 @@ VEHICLE_CONTROL = _paper(
     "Chemical compounds insoluble in water were dissolved in DMSO at 100X concentration "
     "so that the final concentration of DMSO in SynBase medium was $1 \\%$ $( \\mathrm "
     "{ v / v } )$ .",
-    note="which compounds DMSO delivered is in the unmirrored Table S1, so no "
-    "per-compound Solvent can be asserted; DMSO itself is served as a condition "
-    "(DMSO_DOSE)",
+    note="Table S1's 'Dissolved in DMSO?' column names the compounds this covers "
+    "(TABLE_S1_DOSES); each 'Yes' compound carries Solvent(DMSO, 1% v/v) from this "
+    "sentence, and DMSO itself is served as a condition (DMSO_DOSE)",
 )
 DMSO_DOSE = _paper(
     1.0,
@@ -455,21 +488,13 @@ MBO_IDENTITY_RULE = (
     "'2-methyl-3-buten-2-ol (MBO)' among the 'biofuel endproducts' (line 103) and is "
     "called one of 'the two other biofuels included in our screen' (line 131); the "
     "glossary's '2-Methyl-3-butyn-2-ol' (line 31) is the single contrary statement. "
-    "Hypothesis (no mirrored source checks it): the glossary line is a typo, since "
+    "Hypothesis (no mirrored source states it): the glossary line is a typo, since "
     "2-methyl-3-buten-2-ol is the hemiterpene alcohol produced as a biofuel and the "
-    "butyn alkynol is not. Table S1 (not mirrored) would settle it. The adjudication "
+    "butyn alkynol is not. Table S1 (si/si2.md) lists the screened chemical as "
+    "'2-Methyl-3-buten-2-ol (MBO)' (TABLE_S1_DOSES['MBO']), agreeing with the Results "
+    "definition, so the glossary line is the single outlier. The adjudication "
     "is recorded on the identity row's input line "
     "(compound_identity_inputs/vanacloig2022.txt)."
-)
-
-#: The one unmirrored artifact that would close this dataset's recoverable gaps: the OUP
-#: supplement holding the per-compound IC30 molar values AND which compounds were
-#: delivered in DMSO. academic.oup.com returns 403 to a script, so it is not mirrored.
-TABLE_S1 = Provenance(
-    source_uri="https://doi.org/10.1093/femsyr/foac036 (Table S1, Supporting Information)",
-    citation_key=CITATION_KEY,
-    method="publisher supplementary table; academic.oup.com is not scriptable",
-    page="Table S1",
 )
 
 #: The protocol Vanacloig's chemical-genomic method defers to ("as previously described
@@ -507,28 +532,6 @@ PSEUDOCOUNT_GAP = ProvenanceGap(
     "(CPM_PRIOR) to both sides, a loader choice, so a cell whose control mean is near "
     "1 CPM has a pseudocount-dominated denominator and a large replicate SD",
 )
-
-
-def _solvent_gap() -> ProvenanceGap:
-    """The typed absence of a per-compound vehicle.
-
-    The vehicle is the field that is ACTUALLY ``None`` on the perturbation: the primary
-    says water-insoluble compounds went in at 1% v/v DMSO but names them only in Table
-    S1, so for any one compound it is unknown whether a vehicle was used at all. The
-    DOSE is not a second gap: ``concentration`` is never None (an IC30 or fixed basis is
-    always known), and ``Concentration`` is not itself a gap carrier, so the missing
-    molar value is carried by ``basis`` -- the mechanism the schema documents for exactly
-    this case.
-    """
-    return ProvenanceGap(
-        field="solvent",
-        reason=ProvenanceGapReason.deferred_pending_source_review,
-        resolve_with=TABLE_S1,
-        note=VEHICLE_CONTROL.quote
-        + " Which compounds that covers is in Table S1, which is not mirrored, so the "
-        "vehicle of any one compound is unknown rather than absent. The vehicle's own "
-        "effect is served as the DMSO condition (dimethyl sulfoxide, 1% v/v).",
-    )
 
 
 # --------------------------------------------------------------------------- #
@@ -691,6 +694,230 @@ UNPAIRED_COMPOUND_TOKENS = frozenset({"MMS"})
 
 #: The vehicle served as its own condition (1% v/v, DMSO_DOSE).
 DMSO_TOKEN = "DMSO"
+
+
+# --------------------------------------------------------------------------- #
+# Table S1: per-compound IC30 dose and vehicle (si/si2.md)
+# --------------------------------------------------------------------------- #
+TABLE_S1_COLUMNS = _table_s1(
+    ("Chemical Additive", "IC30 Concentration", "Dissolved in DMSO?"),
+    "<tr><td>Chemical Additive</td><td>IC30 Concentration</td><td>Dissolved in "
+    "DMSO?</td><td>CAS Number or reference</td><td>Vendor/Source</td><td>Catalog "
+    "#</td></tr>",
+    note="the header row under the caption 'Table S1. Chemicals and concentrations "
+    "used in chemical genomic studies'; the second column is the IC30 dose, the third "
+    "whether the compound was delivered in DMSO",
+)
+
+
+class TableS1Row(BaseModel):
+    """The three Table S1 cells the loader consumes, parsed from the row's quote."""
+
+    chemical: str
+    ic30: str
+    dissolved_in_dmso: bool
+
+
+_TABLE_S1_ROW = re.compile(
+    r"<tr><td>(?P<chemical>[^<]*)</td><td>(?P<ic30>[^<]*)</td>"
+    r"<td>(?P<dmso>Yes|No)</td>"
+)
+_TABLE_S1_AMOUNT = re.compile(r"(?P<number>\d+(?:\.\d+)?) (?P<unit>mM|uM|ug/mL)")
+_TABLE_S1_PERCENT = re.compile(r"\d+(?:\.\d+)?%")
+_TABLE_S1_UNITS = {
+    "mM": ConcentrationUnit.millimolar,
+    "uM": ConcentrationUnit.micromolar,
+    "ug/mL": ConcentrationUnit.ug_per_ml,
+}
+
+_PERCENT_NOTE = (
+    "Table S1 writes this IC30 as a bare percent with no v/v or w/v, and the schema has "
+    "no basis-free percent unit, so Concentration.value stays None under the IC30 basis"
+)
+_OCR_CL_NOTE = "the OCR reads the chloride 'Cl' as 'CI'"
+
+
+def _row(quote: str, *, note: str | None = None) -> SourcedValue:
+    """One Table S1 row, its three consumed cells parsed from the verbatim quote."""
+    match = _TABLE_S1_ROW.match(quote)
+    if match is None:
+        raise ValueError(f"not a Table S1 row: {quote!r}")
+    row = TableS1Row(
+        chemical=match["chemical"],
+        ic30=match["ic30"],
+        dissolved_in_dmso=match["dmso"] == "Yes",
+    )
+    return _table_s1(row, quote, note=note)
+
+
+#: Each served condition's Table S1 row, keyed by matrix token (FIG_1B_TOKENS). The
+#: quotes are the rows exactly as MinerU wrote them into si/si2.md; the dose and the
+#: "Dissolved in DMSO?" flag are parsed from those quotes, never typed separately.
+TABLE_S1_DOSES: dict[str, SourcedValue] = {
+    "EMIMCl": _row(
+        "<tr><td>EMIM-CI / [C2C1im]CI</td><td>50 mM</td><td>No</td><td>65039-09-0</td><td>Sigma-Aldrich</td><td>272841</td></tr>",
+        note=_OCR_CL_NOTE,
+    ),
+    "BMIMCl": _row(
+        "<tr><td>BMIM-CI / [C4C1im]CI</td><td>8 mM</td><td>No</td><td>79917-90-1</td><td>Sigma-Aldrich</td><td>94128</td></tr>",
+        note=_OCR_CL_NOTE,
+    ),
+    "CV": _row(
+        "<tr><td>Crystal Violet (CV)</td><td>15 uM</td><td>No</td><td>548-62-9</td><td>Fisher Scientific</td><td>C8126</td></tr>"
+    ),
+    "NAO": _row(
+        "<tr><td>Nonyl-acridine orange (NAO)</td><td>5 uM</td><td>No</td><td>75168-11-5</td><td>Sigma-Aldrich</td><td>A7847</td></tr>"
+    ),
+    "MBO": _row(
+        "<tr><td>2-Methyl-3-buten-2-ol (MBO)</td><td>1.50%</td><td>No</td><td>115-18-4</td><td>Sigma-Aldrich</td><td>136816</td></tr>",
+        note="IC30 '1.50%'. " + _PERCENT_NOTE + ". The chemical name also settles the "
+        "MBO identity in favor of the Results definition (MBO_IDENTITY_RULE)",
+    ),
+    "EtOH": _row(
+        "<tr><td>Ethanol</td><td>4%</td><td>No</td><td>64-17-5</td><td>Various</td><td></td></tr>",
+        note="IC30 '4%'. " + _PERCENT_NOTE,
+    ),
+    "IBA": _row(
+        "<tr><td>Isobutanol (IBA)</td><td>0.75%</td><td>No</td><td>78-83-1</td><td>Acros Organics</td><td>41265</td></tr>",
+        note="IC30 '0.75%'. " + _PERCENT_NOTE,
+    ),
+    "5HMF": _row(
+        "<tr><td>5-OH Methylfurfural (5-HMF)</td><td>3.3 mM</td><td>No</td><td>67-47-0</td><td>Acros Organics</td><td>121460050</td></tr>"
+    ),
+    "Furfural": _row(
+        "<tr><td>Furfural</td><td>8 mM</td><td>No</td><td>98-01-1</td><td>Fisher Scientific</td><td>F94-500</td></tr>"
+    ),
+    "4OHAcetophenone": _row(
+        "<tr><td>4-OH Acetophenone</td><td>5 mM</td><td>Yes</td><td>99-93-4</td><td>Sigma-Aldrich</td><td>278564</td></tr>"
+    ),
+    "4OHBenzaldehyde": _row(
+        "<tr><td>4-OH Benzaldehyde</td><td>4 mM</td><td>Yes</td><td>123-08-0</td><td>Sigma-Aldrich</td><td>144088</td></tr>"
+    ),
+    "4OHBenzoicAcid": _row(
+        "<tr><td>4-OH Benzoic Acid</td><td>6 mM</td><td>Yes</td><td>99-96-7</td><td>Sigma-Aldrich</td><td>240141</td></tr>"
+    ),
+    "Acetosyringone": _row(
+        "<tr><td>Acetosyringone</td><td>5 mM</td><td>Yes</td><td>2478-38-8</td><td>Sigma-Aldrich</td><td>D134406</td></tr>"
+    ),
+    "Acetovanillone": _row(
+        "<tr><td>Acetovanillone</td><td>3 mM</td><td>Yes</td><td>498-02-2</td><td>Sigma-Aldrich</td><td>W508454</td></tr>"
+    ),
+    "BenzoicAcid": _row(
+        "<tr><td>Benzoic Acid</td><td>0.12 mM</td><td>Yes</td><td>65-85-0</td><td>Sigma-Aldrich</td><td>242381</td></tr>"
+    ),
+    "CinnamicAcid": _row(
+        "<tr><td>Cinnamic Acid</td><td>0.38 mM</td><td>Yes</td><td>140-10-3</td><td>Sigma-Aldrich</td><td>C80857</td></tr>"
+    ),
+    "CoumaroylAmide": _row(
+        "<tr><td>Coumaroyl Amide</td><td>3 mM</td><td>Yes</td><td>Keating et al., 2014</td><td>Y. Zhang</td><td></td></tr>"
+    ),
+    "FerulicAcid": _row(
+        "<tr><td>Ferulic Acid</td><td>0.94 mM</td><td>Yes</td><td>537-98-4</td><td>Sigma-Aldrich</td><td>W518301</td></tr>"
+    ),
+    "FeruloylAmide": _row(
+        "<tr><td>Feruloyl Amide</td><td>2 mM</td><td>Yes</td><td>Keating et al., 2014</td><td>Y. Zhang</td><td></td></tr>"
+    ),
+    "CoumaricAcid": _row(
+        "<tr><td>p-Coumaric Acid</td><td>3.3 mM</td><td>Yes</td><td>501-98-4</td><td>Sigma-Aldrich</td><td>C9008</td></tr>"
+    ),
+    "SinapicAcid": _row(
+        "<tr><td>Sinapic Acid</td><td>1.5 mM</td><td>Yes</td><td>530-59-6</td><td>Sigma-Aldrich</td><td>D7927</td></tr>"
+    ),
+    "Syringaldehyde": _row(
+        "<tr><td>Syringaldehyde</td><td>2.2 mM</td><td>Yes</td><td>134-96-3</td><td>Sigma-Aldrich</td><td>S1602</td></tr>"
+    ),
+    "SyringicAcid": _row(
+        "<tr><td>Syringic Acid</td><td>15 mM</td><td>Yes</td><td>530-57-4</td><td>Sigma-Aldrich</td><td>S6881</td></tr>"
+    ),
+    "VanillicAcid": _row(
+        "<tr><td>Vanillic Acid</td><td>6.7 mM</td><td>Yes</td><td>121-34-6</td><td>Sigma-Aldrich</td><td>H36001</td></tr>"
+    ),
+    "Vanillin": _row(
+        "<tr><td>Vanillin</td><td>5 mM</td><td>Yes</td><td>121-33-5</td><td>Sigma-Aldrich</td><td>V1104</td></tr>"
+    ),
+    "DMSO": _row(
+        "<tr><td>DMSO</td><td>2.50%</td><td>No</td><td>67-68-5</td><td>Sigma-Aldrich</td><td>D-8779</td></tr>",
+        note="Table S1 lists DMSO at 2.50% under the IC30 column, which conflicts with "
+        "the paper's vehicle sentence (VEHICLE_CONTROL: final DMSO 1% v/v) that the "
+        "served DMSO_DOSE quotes. Left for review; the served DMSO record stays 1.0 "
+        "percent_v/v, fixed",
+    ),
+    "GVL": _row(
+        "<tr><td>Gamma valerolactone (GVL)</td><td></td><td>No</td><td>108-29-2</td><td>Acros Organics</td><td></td></tr>",
+        note="the OCR leaves GVL's IC30 cell empty; the '1.5%' (and the catalog number "
+        "140795000) landed on the next row, the 'OTHER COMPOUNDS' section header "
+        "(GVL_TABLE_S1_DISPLACED). A percent either way: " + _PERCENT_NOTE,
+    ),
+    "AzelaicAcid": _row(
+        "<tr><td>Azelaic Acid</td><td>10 mM</td><td>Yes</td><td>123-99-9</td><td>Sigma-Aldrich</td><td>246379</td></tr>"
+    ),
+    "22Dipyridyl": _row(
+        "<tr><td>2,2'-Dipyridyl</td><td>18 ug/mL</td><td>No</td><td>366-18-7</td><td>Acros Organics</td><td>117500100</td></tr>"
+    ),
+    "Benomyl": _row(
+        "<tr><td>Benomyl</td><td>10 ug/mL</td><td>No</td><td>17804-35-2</td><td>NA</td><td>NA</td></tr>",
+        note="confirms the Methods' 10 ug/mL (BENOMYL_MMS_DOSE); the served dose stays "
+        "Piotrowski 2017's 34.4 uM (BENOMYL_MOLAR) under the fixed basis",
+    ),
+    "MMS": _row(
+        "<tr><td>Methylmethane sulphonate (MMS)</td><td>0.01%</td><td>No</td><td>66-27-3</td><td>Sigma-Aldrich</td><td>129925</td></tr>",
+        note="IC30 column '0.01%', the published fixed dose (BENOMYL_MMS_DOSE); no v/v or "
+        "w/v, so value None under the fixed basis",
+    ),
+    "Acetamide": _row(
+        "<tr><td>Acetamide</td><td>250 mM</td><td>No</td><td>60-35-5</td><td>Sigma-Aldrich</td><td>00160</td></tr>"
+    ),
+    "Methylglyoxal": _row(
+        "<tr><td>MethyIglyoxal</td><td>7.5 mM</td><td>No</td><td>78-98-8</td><td>MP Biomedicals</td><td>1558</td></tr>",
+        note="the OCR reads the 'l' of Methylglyoxal as 'I'",
+    ),
+    "26Dimethylpyrazine": _row(
+        "<tr><td>2,6-Dimethylpyrazine</td><td>38 mM</td><td>No</td><td>108-50-9</td><td>Sigma-Aldrich</td><td>W327301</td></tr>"
+    ),
+}
+GVL_TABLE_S1_DISPLACED = _table_s1(
+    "1.5%",
+    "<tr><td>OTHER COMPOUNDS</td><td>1.5%</td><td></td><td></td><td></td><td>140795000</td></tr>",
+    note="the row after GVL's: a section header carrying an IC30 and a catalog number, "
+    "which the OCR displaced from the GVL row above it (TABLE_S1_DOSES['GVL']); "
+    "recorded so the GVL percent is quoted, not typed",
+)
+
+
+def table_s1_ic30(token: str) -> Concentration:
+    """The IC30 dose Table S1 states for ``token``, as a typed ``Concentration``.
+
+    A mM / uM / ug/mL cell is the value and unit; a percent cell (or GVL's cell, which
+    the OCR left empty) is the IC30 basis alone (``_PERCENT_NOTE``). Any other cell
+    text raises: it is a row the loader has not been taught to read.
+    """
+    row: TableS1Row = TABLE_S1_DOSES[token].value
+    amount = _TABLE_S1_AMOUNT.fullmatch(row.ic30)
+    if amount is not None:
+        return Concentration(
+            value=float(amount["number"]),
+            unit=_TABLE_S1_UNITS[amount["unit"]],
+            basis=DoseBasis.IC30,
+        )
+    if row.ic30 == "" or _TABLE_S1_PERCENT.fullmatch(row.ic30):
+        return Concentration(basis=IC30_BASIS.value)
+    raise ValueError(f"{token}: unreadable Table S1 IC30 cell {row.ic30!r}")
+
+
+def table_s1_solvent(token: str) -> Solvent | None:
+    """The vehicle Table S1's "Dissolved in DMSO?" column states for ``token``.
+
+    "Yes" is DMSO at the final 1% v/v of the paper's vehicle sentence (DMSO_DOSE,
+    quoting VEHICLE_CONTROL); "No" is ``None``, which the schema defines as dissolved
+    directly.
+    """
+    row: TableS1Row = TABLE_S1_DOSES[token].value
+    if not row.dissolved_in_dmso:
+        return None
+    return Solvent(
+        name=DMSO_TOKEN, percent=DMSO_DOSE.value, compound=resolved_compound(DMSO_TOKEN)
+    )
+
 
 _PAIRED_UNITS = (
     "log2((TMM-normalized CPM of the inhibitor replicate + 1) / (mean TMM-normalized "
@@ -1128,7 +1355,7 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                 unit=ConcentrationUnit.percent_v_v,
                 basis=DoseBasis.fixed,
             )
-        return Concentration(basis=IC30_BASIS.value)
+        return table_s1_ic30(compound)
 
     def _culture_format(self) -> CultureFormat:
         """Static 1.5 mL 24-well cultures inoculated at OD600 0.1, read at fixed times."""
@@ -1183,16 +1410,11 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         )
 
     def _compound(self, compound: str) -> SmallMoleculePerturbation:
-        """The dosed condition: an inhibitor with a typed solvent gap, or DMSO itself."""
-        if compound == DMSO_TOKEN:
-            return SmallMoleculePerturbation(
-                compound=resolved_compound(compound),
-                concentration=self._concentration(compound),
-            )
+        """The dosed condition at its dose, in the vehicle Table S1 names (or none)."""
         return SmallMoleculePerturbation(
             compound=resolved_compound(compound),
             concentration=self._concentration(compound),
-            provenance_gaps=[_solvent_gap()],
+            solvent=table_s1_solvent(compound),
         )
 
     def _environment(self, compound: str) -> CultureEnvironment:

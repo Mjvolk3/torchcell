@@ -123,7 +123,8 @@ def test_environment_perturbation_nodes_carry_the_compound_and_the_ph() -> None:
     props = compound_node.get_properties()
     assert props["compound_name"] == "furfural"
     assert props["inchikey"] == "HYBBIBNJHNGZAN-UHFFFAOYSA-N"
-    assert props["concentration_value"] is None  # IC30 with no released molar value
+    # Table S1's IC30 for furfural, 8 mM
+    assert (props["concentration_value"], props["concentration_unit"]) == (8.0, "mM")
     ph_node = CellAdapter._environment_perturbation_node_from(
         environment.perturbations[1]
     )
@@ -140,18 +141,13 @@ def test_environment_perturbation_nodes_carry_the_compound_and_the_ph() -> None:
     assert ph_node.get_id() != compound_node.get_id()
 
 
-def test_dosed_perturbation_carries_its_typed_solvent_gap() -> None:
+def test_dosed_perturbation_states_its_vehicle_without_a_gap() -> None:
+    """Table S1 says furfural was not dissolved in DMSO: solvent None, no gap."""
     perturbation = _environment().perturbations[0]
     assert isinstance(perturbation, SmallMoleculePerturbation)
-    gaps = perturbation.provenance_gaps
-    assert [gap.field for gap in gaps] == ["solvent"]
-    assert gaps[0].reason.value == "deferred_pending_source_review"
-    assert gaps[0].resolve_with is not None
-    # the gapped field is None and the dose is NOT gapped: an IC30 basis is known
+    assert perturbation.provenance_gaps == []
     assert perturbation.solvent is None
     assert perturbation.concentration.basis is DoseBasis.IC30
-    # the gap travels in the Experiment blob (inside its environment), not the node
-    assert perturbation.model_dump()["provenance_gaps"]
     node = CellAdapter._environment_perturbation_node_from(perturbation)
     assert "serialized_data" not in node.get_properties()
 

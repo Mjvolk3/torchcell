@@ -533,5 +533,20 @@ Remaining, in order:
    changes, `bash scripts/tc_bench_redeploy.sh` for API changes, refresh the browser.
    The loopback preview on port 3000 and its tunnel are no longer needed.
 
-Open: an unknown `/staging/<path>` answers the 404 page with status 200 (Caddy's
-`try_files` fallback); a `handle_errors` block would make it a real 404.
+Also done 2026-10-07, after the launch:
+
+- A missing `/staging/<path>` is a real 404 with the site's 404 page (`handle_errors` in
+  the Caddyfile; verified on a page and an image path).
+- `website.yaml` now deploys `website/build` to the gh-pages branch's `site/` directory on
+  pushes to `main`, built with the production settings; `docs.yaml` keeps files it did
+  not write, so the Sphinx publish no longer wipes `site/`. Production therefore goes
+  live at `https://mjvolk3.github.io/torchcell/site/` when this branch lands, calling an
+  API that answers 502 until the production tier is started (step 8), so land and
+  promote close together.
+- Public checks over the proxy: `/staging/api/v1/datasets`, `/datasets/gene-essentiality-sgd`,
+  `/leaderboard/gene-essentiality-sgd` and `template.csv` answer 200.
+
+Not verified: the staging pages in a browser against the live API. The scratch
+Playwright headless shell cannot start on this VM (13 missing system libraries, no
+sudo), so the leaderboard, account and submit pages were checked only as served HTML
+and API responses; open them in a browser.

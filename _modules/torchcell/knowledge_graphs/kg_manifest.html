@@ -176,6 +176,11 @@
 <span class="sd">an adapter method, a record) can block another member, and a symbol two members both</span>
 <span class="sd">introduce is additive and only reported.</span>
 
+<span class="sd">``drift`` runs the three checks that need no dataset (graph schema, adapter code, value</span>
+<span class="sd">surface) on their own, so a change to a surface every dataset shares (a new graph class, a</span>
+<span class="sd">new ``CellAdapter`` method) can be shown ADDED-only against the served manifest before any</span>
+<span class="sd">dataset that uses it exists.</span>
+
 <span class="sd">The manifest lives beside the store (a machine-local file under the build tree), never</span>
 <span class="sd">in git: it describes one physical database.</span>
 <span class="sd">"""</span>
@@ -226,6 +231,7 @@
     <span class="s2">"SupersetLineage"</span><span class="p">,</span>
     <span class="s2">"AdmissionReport"</span><span class="p">,</span>
     <span class="s2">"BatchAdmissionReport"</span><span class="p">,</span>
+    <span class="s2">"ServedSurfaceDrift"</span><span class="p">,</span>
     <span class="s2">"experiment_node_id"</span><span class="p">,</span>
     <span class="s2">"dev_experiment_ids"</span><span class="p">,</span>
     <span class="s2">"live_experiment_ids"</span><span class="p">,</span>
@@ -239,6 +245,10 @@
     <span class="s2">"value_surface_in_worktree"</span><span class="p">,</span>
     <span class="s2">"value_surface_at_ref"</span><span class="p">,</span>
     <span class="s2">"value_surface_drift"</span><span class="p">,</span>
+    <span class="s2">"graph_schema_drift"</span><span class="p">,</span>
+    <span class="s2">"graph_schema_widened"</span><span class="p">,</span>
+    <span class="s2">"served_surface_drift"</span><span class="p">,</span>
+    <span class="s2">"format_surface_drift"</span><span class="p">,</span>
     <span class="s2">"cell_adapter_surface"</span><span class="p">,</span>
     <span class="s2">"adapter_file_relpaths"</span><span class="p">,</span>
     <span class="s2">"loader_relpath"</span><span class="p">,</span>
@@ -542,6 +552,38 @@
     <span class="n">co_introduced_symbols</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>  <span class="c1"># symbol -&gt; members introducing it</span>
     <span class="n">changed_symbol_importers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>  <span class="c1"># symbol -&gt; served datasets</span></div>
 
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ServedSurfaceDrift</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The shared served surfaces against a manifest, with no dataset named.</span>
+
+<span class="sd">    These are checks 2 to 4 of ``check_admission``: the graph schema, the adapter code</span>
+<span class="sd">    and the shared value files. Each splits into what CHANGED for the served store (a</span>
+<span class="sd">    blocker) and what was ADDED beside it (additive). The per-dataset schema closures</span>
+<span class="sd">    (check 1) are not here; ``torchcell.provenance.schema_impact`` measures those.</span>
+<span class="sd">    """</span>
+
+    <span class="n">checked_at</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">torchcell_commit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">torchcell_dirty</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">served_commit</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">graph_schema_changed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">graph_schema_added</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="c1"># served edge classes that GAINED source/target labels (additive): edge -&gt; gained</span>
+    <span class="n">graph_schema_widened</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+    <span class="n">adapter_drift</span><span class="p">:</span> <span class="n">AdapterDrift</span>
+    <span class="n">adapter_methods_added</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">value_surface_changed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">value_surface_added</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">changes_served</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True when any surface the served store was built from changed."""</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">graph_schema_changed</span>
+            <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">adapter_drift</span><span class="o">.</span><span class="n">is_empty</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_surface_changed</span>
+        <span class="p">)</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------- helpers</span>
@@ -1179,6 +1221,79 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">graph_schema_drift</span><span class="p">(</span>
+    <span class="n">manifest</span><span class="p">:</span> <span class="n">KgBuildManifest</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""``(changed, added)`` graph classes of the working tree against the served schema.</span>
+
+<span class="sd">    CHANGED is a class present in the store that ``served_nodes_unchanged_by`` rejects (a</span>
+<span class="sd">    node class whose property set moved, an edge class that lost a source or target).</span>
+<span class="sd">    ADDED is a class the store has never held.</span>
+<span class="sd">    """</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">graph_schema_from_yaml</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">repo_root</span> <span class="o">/</span> <span class="n">SCHEMA_CONFIG_RELPATH</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">changed</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">name</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">graph_schema</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">served_nodes_unchanged_by</span><span class="p">(</span><span class="n">current</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="p">)</span>
+    <span class="n">added</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">current</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">graph_schema</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">changed</span><span class="p">,</span> <span class="n">added</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">graph_schema_widened</span><span class="p">(</span>
+    <span class="n">manifest</span><span class="p">:</span> <span class="n">KgBuildManifest</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">"""Served edge classes that gained endpoint labels, with the labels each gained.</span>
+
+<span class="sd">    Additive under ``served_nodes_unchanged_by`` (a served edge keeps its type and its</span>
+<span class="sd">    endpoints), and named so a reviewer sees which served edge types new classes now</span>
+<span class="sd">    join, e.g. ``phenotype member of: +flux phenotype``.</span>
+<span class="sd">    """</span>
+    <span class="n">current</span> <span class="o">=</span> <span class="n">graph_schema_from_yaml</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">repo_root</span> <span class="o">/</span> <span class="n">SCHEMA_CONFIG_RELPATH</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">widened</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">graph_schema</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">current</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="s2">"edge"</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">served_nodes_unchanged_by</span><span class="p">(</span><span class="n">now</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">assert</span> <span class="n">now</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">gained</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">now</span><span class="o">.</span><span class="n">source</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">source</span><span class="p">))</span>
+            <span class="o">|</span> <span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">now</span><span class="o">.</span><span class="n">target</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">target</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">gained</span><span class="p">:</span>
+            <span class="n">widened</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">gained</span>
+    <span class="k">return</span> <span class="n">widened</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">served_surface_drift</span><span class="p">(</span>
+    <span class="n">manifest</span><span class="p">:</span> <span class="n">KgBuildManifest</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ServedSurfaceDrift</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Graph schema, adapter and value-surface drift, the checks no dataset is needed for."""</span>
+    <span class="n">commit</span><span class="p">,</span> <span class="n">dirty</span> <span class="o">=</span> <span class="n">_git_info</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)</span>
+    <span class="n">graph_changed</span><span class="p">,</span> <span class="n">graph_added</span> <span class="o">=</span> <span class="n">graph_schema_drift</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">)</span>
+    <span class="n">drift</span><span class="p">,</span> <span class="n">methods_added</span> <span class="o">=</span> <span class="n">adapter_drift_against</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">)</span>
+    <span class="n">value_changed</span><span class="p">,</span> <span class="n">value_added</span> <span class="o">=</span> <span class="n">value_surface_drift</span><span class="p">(</span>
+        <span class="n">manifest</span><span class="o">.</span><span class="n">value_surface</span><span class="p">,</span> <span class="n">value_surface_in_worktree</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ServedSurfaceDrift</span><span class="p">(</span>
+        <span class="n">checked_at</span><span class="o">=</span><span class="n">_now</span><span class="p">(),</span>
+        <span class="n">torchcell_commit</span><span class="o">=</span><span class="n">commit</span><span class="p">,</span>
+        <span class="n">torchcell_dirty</span><span class="o">=</span><span class="n">dirty</span><span class="p">,</span>
+        <span class="n">served_commit</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_commit</span><span class="p">,</span>
+        <span class="n">graph_schema_changed</span><span class="o">=</span><span class="n">graph_changed</span><span class="p">,</span>
+        <span class="n">graph_schema_added</span><span class="o">=</span><span class="n">graph_added</span><span class="p">,</span>
+        <span class="n">graph_schema_widened</span><span class="o">=</span><span class="n">graph_schema_widened</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">),</span>
+        <span class="n">adapter_drift</span><span class="o">=</span><span class="n">drift</span><span class="p">,</span>
+        <span class="n">adapter_methods_added</span><span class="o">=</span><span class="n">methods_added</span><span class="p">,</span>
+        <span class="n">value_surface_changed</span><span class="o">=</span><span class="n">value_changed</span><span class="p">,</span>
+        <span class="n">value_surface_added</span><span class="o">=</span><span class="n">value_added</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
 <div class="viewcode-block" id="check_admission">
 <a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.kg_manifest.check_admission.html#torchcell.knowledge_graphs.kg_manifest.check_admission">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">check_admission</span><span class="p">(</span>
@@ -1233,12 +1348,7 @@
     <span class="n">current_schema</span> <span class="o">=</span> <span class="n">graph_schema_from_yaml</span><span class="p">(</span>
         <span class="p">(</span><span class="n">repo_root</span> <span class="o">/</span> <span class="n">SCHEMA_CONFIG_RELPATH</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
     <span class="p">)</span>
-    <span class="n">graph_schema_changed</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
-        <span class="n">name</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">graph_schema</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">served_nodes_unchanged_by</span><span class="p">(</span><span class="n">current_schema</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
-    <span class="p">)</span>
-    <span class="n">graph_schema_added</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">current_schema</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">graph_schema</span><span class="p">))</span>
+    <span class="n">graph_schema_changed</span><span class="p">,</span> <span class="n">graph_schema_added</span> <span class="o">=</span> <span class="n">graph_schema_drift</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">graph_schema_changed</span><span class="p">:</span>
         <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="s2">"graph schema classes present in the served store changed "</span>
@@ -1769,6 +1879,38 @@
     <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">format_surface_drift</span><span class="p">(</span><span class="n">report</span><span class="p">:</span> <span class="n">ServedSurfaceDrift</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The shared-surface comparison, every class and method named."""</span>
+    <span class="n">verdict</span> <span class="o">=</span> <span class="s2">"CHANGES SERVED"</span> <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">changes_served</span> <span class="k">else</span> <span class="s2">"ADDITIVE"</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"CHANGED: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">value_surface_changed</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">value_surface_changed</span>
+        <span class="k">else</span> <span class="s2">"unchanged"</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">"Served-surface drift  -&gt;  </span><span class="si">{</span><span class="n">verdict</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"  working tree </span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">torchcell_commit</span><span class="si">}</span><span class="s2"> (dirty=</span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">torchcell_dirty</span><span class="si">}</span><span class="s2">); "</span>
+            <span class="sa">f</span><span class="s2">"served store built at </span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">served_commit</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"  graph schema CHANGED: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">graph_schema_changed</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'-'</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"  graph schema ADDED: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">graph_schema_added</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'-'</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="s2">"  served edge classes widened (additive): "</span>
+            <span class="o">+</span> <span class="p">(</span>
+                <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">edge</span><span class="si">}</span><span class="s2">: +</span><span class="si">{</span><span class="s1">', +'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gained</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="k">for</span> <span class="n">edge</span><span class="p">,</span> <span class="n">gained</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">graph_schema_widened</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="p">)</span>
+                <span class="ow">or</span> <span class="s2">"-"</span>
+            <span class="p">),</span>
+            <span class="s2">"  adapter drift touching served datasets: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">adapter_drift</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'none'</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"  adapter methods ADDED: </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">adapter_methods_added</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'-'</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">"  value surface: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">; ADDED: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">value_surface_added</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'-'</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+
+
 <div class="viewcode-block" id="format_batch_report">
 <a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.kg_manifest.format_batch_report.html#torchcell.knowledge_graphs.kg_manifest.format_batch_report">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">format_batch_report</span><span class="p">(</span><span class="n">report</span><span class="p">:</span> <span class="n">BatchAdmissionReport</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1938,6 +2080,13 @@
         <span class="s2">"repeated, one per member, for a batch report"</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="n">p_drift</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"drift"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"graph schema, adapter and value-surface drift against the manifest, with "</span>
+        <span class="s2">"no dataset named (per-dataset closures: torchcell.provenance.schema_impact)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_drift</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--report"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"write the JSON report here"</span><span class="p">)</span>
+
     <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"show"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"print the manifest summary"</span><span class="p">)</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
 
@@ -1969,6 +2118,14 @@
         <span class="k">return</span> <span class="mi">0</span>
 
     <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"drift"</span><span class="p">:</span>
+        <span class="n">surface_drift</span> <span class="o">=</span> <span class="n">served_surface_drift</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">format_surface_drift</span><span class="p">(</span><span class="n">surface_drift</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">report</span><span class="p">:</span>
+            <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">report</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+                <span class="n">surface_drift</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">surface_drift</span><span class="o">.</span><span class="n">changes_served</span> <span class="k">else</span> <span class="mi">0</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"show"</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">manifest</span><span class="o">.</span><span class="n">database</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="n">manifest</span><span class="o">.</span><span class="n">store_host</span><span class="si">}</span><span class="s2">: neo4j </span><span class="si">{</span><span class="n">manifest</span><span class="o">.</span><span class="n">neo4j_version</span><span class="si">}</span><span class="s2">, "</span>

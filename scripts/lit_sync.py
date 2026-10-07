@@ -9,7 +9,9 @@ Covers two sources, matching the union the bibliography is built from
 (``scripts/lit_bib.py``) so a citable ``@key`` and its OCR markdown stay in step:
 
 1. named **group** collections (default ``database`` + ``paper`` +
-   ``microbe-perturb-seq``), and
+   ``microbe-perturb-seq`` + ``Escherichia-coli`` + ``Pseudomonas-putida``; the two
+   bacterial collections sit under ``database/`` and are listed by name because a
+   collection pass sees only its direct members), and
 2. the **personal** collection trees, each walked recursively: ``torchcell``
    (where new reading is filed first) and ``thesis`` (the dissertation's
    primary-sources, biofoundry-ai and publications collections). The list is

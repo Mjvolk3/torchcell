@@ -65,6 +65,14 @@ class FileRecord(BaseModel):
     zotero_md5: str | None = Field(
         default=None, description="MD5 reported by Zotero for the synced attachment."
     )
+    original_filename: str | None = Field(
+        default=None,
+        exclude_if=lambda v: v is None,
+        description="The file's name at its source when it is stored under another "
+        "name (``capture_si`` writes ``si/si<N>.<ext>`` and keeps the publisher's "
+        "name here). Omitted from the JSON when unset, so manifests written before "
+        "the field existed serialize byte-identically.",
+    )
 
 
 class RetrievalMethod(StrEnum):
@@ -72,12 +80,15 @@ class RetrievalMethod(StrEnum):
     #20) for un-scriptable sources served from the Radiant VM. ``manual_browser``
     is a manual-once retrieval (a publisher behind a browser challenge): the record
     carries the human recipe as its command and the deposited bytes are what every
-    rebuild reads; re-checking the source is not scriptable for it.
+    rebuild reads; re-checking the source is not scriptable for it. ``pmc_cloud`` is
+    one object of the PMC Article Datasets bucket on AWS, which replaced the retired
+    ``pmc_oa_api`` package service.
     """
 
     springer_esm = "springer_esm"
     zotero_attachment = "zotero_attachment"
     pmc_oa_api = "pmc_oa_api"
+    pmc_cloud = "pmc_cloud"
     direct_url = "direct_url"
     zenodo = "zenodo"
     radiant_endpoint = "radiant_endpoint"

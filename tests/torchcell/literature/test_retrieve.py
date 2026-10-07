@@ -72,7 +72,40 @@ def test_registry_maps_dotted_paths_to_the_functions() -> None:
         "torchcell.literature.retrieve.direct_url": retrieve.direct_url,
         "torchcell.literature.retrieve.zip_member": retrieve.zip_member,
         "torchcell.literature.retrieve.pmc_oa_api": retrieve.pmc_oa_api,
+        "torchcell.literature.retrieve.pmc_cloud_object": retrieve.pmc_cloud_object,
+        "torchcell.literature.retrieve.plos_supplementary": retrieve.plos_supplementary,
+        "torchcell.literature.retrieve.elsevier_mmc": retrieve.elsevier_mmc,
     }
+
+
+@pytest.mark.parametrize(
+    ("fn", "params", "url"),
+    [
+        (
+            retrieve.pmc_cloud_object,
+            {"key": "PMC9.1/Table S1.xlsx"},
+            "https://pmc-oa-opendata.s3.amazonaws.com/PMC9.1/Table%20S1.xlsx",
+        ),
+        (
+            retrieve.plos_supplementary,
+            {"journal": "plosgenetics", "object_doi": "10.1371/journal.pgen.1.s001"},
+            "https://journals.plos.org/plosgenetics/article/file"
+            "?id=10.1371/journal.pgen.1.s001&type=supplementary",
+        ),
+        (
+            retrieve.elsevier_mmc,
+            {"pii": "S2405471220303665", "filename": "mmc2.xlsx"},
+            "https://ars.els-cdn.com/content/image/1-s2.0-S2405471220303665-mmc2.xlsx",
+        ),
+    ],
+)
+def test_supplementary_retrievers_get_one_built_url(
+    server: Any, fn: Any, params: dict[str, str], url: str
+) -> None:
+    """Each SI retriever is one GET of the URL its params spell (space -> %20)."""
+    srv = server({url: httpx.Response(200, content=b"PK si")})
+    assert fn(**params) == b"PK si"
+    assert srv.seen == [(url, _UA)]
 
 
 @pytest.mark.parametrize("fn", [retrieve.springer_esm, retrieve.direct_url])

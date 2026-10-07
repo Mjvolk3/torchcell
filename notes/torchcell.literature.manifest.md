@@ -33,3 +33,7 @@ Review of PR #573. The moved rules were substring matches (`"images/" in rel_pat
 ## 2026.10.01 - Root PDF figure directories
 
 PR #585 review. A non-paper PDF at the key root (`SOM.pdf`, `References_Cited_SOM.pdf`, `thesis.pdf`) writes `images/<stem>/<file>`; that path is now `ocr_image` (was `other`). A read-only scan of the live mirror found 0 files at that depth today, so no recorded role changes.
+
+## 2026.10.07 - `original_filename` and `RetrievalMethod.pmc_cloud`
+
+`FileRecord.original_filename` keeps the publisher's file name when the bytes are stored under another name ([[torchcell.literature.capture_si]] writes `si/si<N>.<ext>`). It is declared with `exclude_if=lambda v: v is None`, so a record without it serializes exactly as before and the full-dump manifest tests stay byte-identical. `capture_si` also reads it as its own marker: an SI record without it came from another path. `RetrievalMethod.pmc_cloud` names a fetch from the PMC Article Datasets bucket.

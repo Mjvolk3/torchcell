@@ -34,6 +34,7 @@ from torchcell.datasets.artifact import (
 from torchcell.datasets.client import (
     ArtifactIntegrityError,
     DatasetClient,
+    EndpointError,
     unpack_artifact,
 )
 from torchcell.datasets.server import DataKeys, DataServerConfig, create_app
@@ -226,7 +227,7 @@ def test_download_without_verify_keeps_the_bytes_as_served(tmp_path: Path) -> No
 
 def test_download_raises_on_an_http_error(tmp_path: Path) -> None:
     client = _client(tmp_path, _artifact())
-    with pytest.raises(httpx.HTTPStatusError, match="expected HTTP 200, got 404"):
+    with pytest.raises(EndpointError, match="expected HTTP 200, got 404"):
         client.download(
             _artifact().model_copy(update={"archive": "missing.tar.xz"}),
             tmp_path / "out" / "missing.tar.xz",
@@ -449,9 +450,9 @@ def test_tier_download_of_an_unlisted_path_raises_before_any_request(
 
 def test_tier_methods_raise_on_an_unknown_key(tmp_path: Path) -> None:
     client = _client(tmp_path, _artifact())
-    with pytest.raises(httpx.HTTPStatusError, match="404"):
+    with pytest.raises(EndpointError, match="HTTP 404"):
         client.genome_manifest("noSuchSet")
-    with pytest.raises(httpx.HTTPStatusError, match="404"):
+    with pytest.raises(EndpointError, match="HTTP 404"):
         client.object_files("noSuchKey")
 
 

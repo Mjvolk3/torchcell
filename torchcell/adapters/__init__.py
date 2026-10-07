@@ -117,6 +117,9 @@ from .mota2024_adapter import EnvChemgenMota2024Adapter as EnvChemgenMota2024Ada
 from .mulleder2016_adapter import (
     AminoAcidMulleder2016Adapter as AminoAcidMulleder2016Adapter,
 )
+from .mutalik2020_adapter import (
+    PhageRbTnseqMutalik2020Adapter as PhageRbTnseqMutalik2020Adapter,
+)
 from .nadal_ribelles2025_adapter import (
     NadalRibellesPerturbSeq2025Adapter as NadalRibellesPerturbSeq2025Adapter,
 )
@@ -279,6 +282,7 @@ ecoli_adapters = [
     "ProteinTurnoverGupta2024Adapter",
     "RnaseqLamoureux2023Adapter",
     "ProteomeMori2021Adapter",
+    "PhageRbTnseqMutalik2020Adapter",
     "RbTnseqPrice2018EcoliAdapter",
     "MetabolomeRapp2026Adapter",
     "CrispriScreenRousset2018Adapter",

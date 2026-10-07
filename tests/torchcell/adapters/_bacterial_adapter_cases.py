@@ -72,6 +72,7 @@ from torchcell.adapters import (
     MetabolomeFuhrer2017Adapter,
     MetabolomeRapp2026Adapter,
     MetabolomeSchastnaya2021Adapter,
+    PhageRbTnseqMutalik2020Adapter,
     ProteinTurnoverGupta2024Adapter,
     ProteomeCaglar2017Adapter,
     ProteomeCarruthers2025Adapter,
@@ -99,6 +100,7 @@ from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Data
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
 from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
+from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
 from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
 from torchcell.datasets.ecoli.rousset2018 import CrispriScreenRousset2018Dataset
@@ -272,6 +274,15 @@ BACTERIAL: list[Bacterial] = [
         ProteomeMori2021Dataset,
         PROTEOME,
         perturbation=False,
+    ),
+    _case(
+        PhageRbTnseqMutalik2020Adapter,
+        "mutalik2020",
+        "phage_rbtnseq_mutalik2020",
+        PhageRbTnseqMutalik2020Dataset,
+        RESPONSE,
+        env_perturbation=False,
+        phage=True,
     ),
     _case(
         RbTnseqPrice2018EcoliAdapter,
@@ -496,12 +507,16 @@ def assert_conf_registered_and_declared(bacterial: Bacterial) -> None:
     # serves a segregant genotype
     assert "perturbation (chunked)" not in names
     assert "segregant genotype (chunked)" not in names
-    # The two environment-side node classes are mutually exclusive: the served
-    # `_environment_perturbation_node` does not filter phages out, so a conf enabling
-    # both would emit each phage twice under two labels on one content id.
-    served_phage = "phage perturbation (chunked)" in names
-    assert served_phage == bacterial.case.shape.phage
-    assert not (served_phage and "environment perturbation (chunked)" in names)
+    # a phage challenge is served as `phage perturbation` and NEVER beside
+    # `environment perturbation`: the served `_environment_perturbation_node` does not
+    # filter phages out, so a conf enabling both writes every phage twice under two
+    # labels on one content id (cell_adapter.py, above `_phage_perturbation_node_from`).
+    phage = bacterial.case.shape.phage
+    assert ("phage perturbation (chunked)" in names) is phage
+    assert ("environment perturbation (chunked)" in names) is (
+        bacterial.case.shape.env_perturbation
+    )
+    assert not (phage and bacterial.case.shape.env_perturbation)
 
 
 def assert_gate_resolves_own_files(bacterial: Bacterial) -> None:
@@ -606,14 +621,18 @@ def assert_dev_store_graph(
     assert ("bacterial perturbation" in labels) is shape.perturbation
     assert ("crispr construct" in labels) is shape.crispr
     assert ("environment perturbation" in labels) is shape.env_perturbation
+    assert ("phage perturbation" in labels) is shape.phage
 
     # The converse: a sub-object family the conf leaves OFF is absent from the records,
-    # so the enable-list drops nothing they carry. A conf serving a phage is the one
-    # exception: `environment perturbation` is left off because `phage perturbation`
-    # already serves the SAME objects, which is asserted by id below rather than by
-    # absence.
+    # so the enable-list drops nothing they carry. `environment perturbation (chunked)`
+    # is exempt for a phage conf, and only there: that method does NOT filter phages
+    # out, so running it would re-emit the records' phages under the served label --
+    # which is the documented reason a conf enables one of the two classes and never
+    # both, not evidence that the phage conf drops anything. The positive check two
+    # lines up is what proves the phages ARE served, under `phage perturbation`.
     enabled = {m["method_name"] for m in adapter.config.cell_adapter.node_methods}
-    overlapping = {ENV_PERTURBATION_NODE} if bacterial.case.shape.phage else set()
+    if shape.phage:
+        enabled = enabled | {"environment perturbation (chunked)"}
     left_off = [
         (name, method)
         for name, method in adapter.node_methods

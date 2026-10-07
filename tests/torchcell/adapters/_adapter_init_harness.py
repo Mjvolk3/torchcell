@@ -179,10 +179,11 @@ class Shape(NamedTuple):
     perturbation: bool = True
     crispr: bool = False
     env_perturbation: bool = False
-    # A phage challenge is its own node class, and a conf enables `phage perturbation`
-    # or `environment perturbation` and never both: the served
-    # `_environment_perturbation_node` does not filter phages out, so enabling both
-    # would emit each phage twice under two labels on one content id.
+    # A bacteriophage challenge is served as `phage perturbation`, its OWN node class,
+    # and NEVER beside `environment perturbation`: the served
+    # `_environment_perturbation_node` does not filter phages out, so a conf enabling
+    # both would write every phage twice under two labels on one content id
+    # (cell_adapter.py, above `_phage_perturbation_node_from`).
     phage: bool = False
     mrf: float | None = 1.0
     # A bacterial genotype's leaves are served as `bacterial perturbation`, never as the
@@ -222,6 +223,11 @@ def expected_methods(shape: Shape, segregant: bool) -> tuple[list[str], list[str
         "temperature (chunked)",
         "temperature reference",
     ]
+    if shape.env_perturbation and shape.phage:
+        raise ValueError(
+            "a conf enables `environment perturbation` or `phage perturbation`, never "
+            "both: the served environment-perturbation method does not filter phages out"
+        )
     if shape.env_perturbation:
         nodes += [
             "environment perturbation (chunked)",

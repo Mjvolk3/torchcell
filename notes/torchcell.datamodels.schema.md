@@ -323,3 +323,18 @@ follow-up; plan [[plan.env-schema-assay-compound-biologic.2026.07.20]]):
 Follow-ups: UI-2 = compound-identity resolver + gap ENFORCEMENT on `Compound` + reconcile
 `Compound` gaps vs `Media.open_gaps`. UI-3 = `assay_type` population across loaders + the L1
 uniqueness-key decision + the full DB rebuild the schema-impact gate flags as breaking.
+
+## 2026.10.07 - ArtifactRef replaces the off-graph pointer string pairs
+
+Phase 3 of the artifact tier ([[plan.artifact-tier.2026.10.07]], decision D4). `ArtifactRef` (tier, key, path, member, sha256, bytes, media_type; string form `tc://<tier>/<key>/<path>[#<member>]`) is now DEFINED in `schema.py`, so its contract is fingerprinted with the record classes that carry it; `torchcell.artifacts.ref` re-exports it. It could not live in `torchcell/artifacts/ref.py` and be imported here: `ref.py` imports `torchcell.datamodels.pydant`, which runs `torchcell/datamodels/__init__.py`, which imports `schema`, a cycle, and `ref.py` sat outside the fingerprinted surface (`schema.py` + `pydant.py`).
+
+Field changes:
+
+- `SequenceVariantPerturbation`, `NaturalGenePresencePerturbation`, `NaturalGeneAbsencePerturbation` and `CopyNumberVariantPerturbation`: `sequence_uri` + `sequence_sha256` removed, `sequence_ref: ArtifactRef | None = None` added, `sequence_source` kept. `CopyNumberVariantPerturbation` was not named in D4; it carried the same pair, and no loader fills it, so it moved with the others to keep one pointer form.
+- `CrisprConstruct`: `effector_plasmid_uri` + `effector_plasmid_sha256` and the `validate_plasmid_pointer` validator removed, `effector_plasmid_ref: ArtifactRef | None = None` added (a ref cannot exist without its sha256). The `crispr construct` graph node projects it flat as `effector_plasmid_ref` (the tc:// string) and `effector_plasmid_sha256` (from the ref); `biocypher/config/torchcell_schema_config.yaml` renames the property. The perturbation node never projected `sequence_uri`, so `sequence_ref` stays inside the experiment's `serialized_data`.
+- `SegregantParent` (Bloom): `assembly_member: str` + `assembly_sha256: str` removed, `assembly_ref: ArtifactRef` (required) added. A Peter parent points at `1011Assemblies.tar.gz` with its member path; BY points at the SGD R64-4-1 `S288C_reference_sequence_R64-4-1_20230830.fsa` instead of the former free-text sentinel.
+- `paper/ontology_graph.py` places `ArtifactRef` in the provenance lane.
+
+Rebuild consequence: a BREAKING schema change, so a full KG rebuild at the next build (`TORCHCELL_SCHEMA_ACK=1` at commit). `scripts/schema_impact_check.py --base HEAD` (run 2026.10.07 in the worktree) reports 5 breaking datasets: `Bloom2019Dataset` (via ArtifactRef, SegregantParent), `CaudalPanTranscriptome2024Dataset` (via ArtifactRef and the three natural-variation leaves), `CrisprMagicLian2019Dataset`, `CrispriMormino2022Dataset` and `CrispriChemgenSmith2016Dataset` (via ArtifactRef, CrisprConstruct). The three CRISPR datasets change only in the serialized key name (`effector_plasmid_uri: null` becomes `effector_plasmid_ref: null`) and the node property rename.
+
+Loader slice (no rebuild): `experiments/036-dataset-fixes-before-kg-build/scripts/artifact_ref_loader_slice.py` writes `experiments/036-dataset-fixes-before-kg-build/results/artifact_ref_loader_slice.json`; the refs built for Caudal isolates AAA (4,557 variants) and AAB (4,913) and for the Bloom A and 375 parents all parse back from their tc:// string and resolve against the local genomes tier.

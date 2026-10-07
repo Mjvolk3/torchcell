@@ -49,7 +49,11 @@ import pytest
 
 import torchcell.verification.report as report_module
 from torchcell.datamodels import media as media_module
-from torchcell.datamodels.schema import SegregantGenotype, SegregantGrowthExperiment
+from torchcell.datamodels.schema import (
+    ArtifactRef,
+    SegregantGenotype,
+    SegregantGrowthExperiment,
+)
 from torchcell.datasets.scerevisiae import bloom2019 as b
 from torchcell.verification.report import Level, Provenance
 from torchcell.verification.segregant_growth import (
@@ -175,14 +179,28 @@ def _records(setup: dict[str, Any]) -> list[dict[str, Any]]:
     ds = b.Bloom2019Dataset.__new__(b.Bloom2019Dataset)
     ds.conditions = setup["conditions"]
     ds.name = "Bloom2019Dataset"
-    index = b.read_assembly_index(setup["index"])
+    assemblies = b.ParentAssemblyRefs(
+        index=b.read_assembly_index(setup["index"]),
+        tarball=ArtifactRef(
+            tier="genomes",
+            key="peter2018_1011_assemblies",
+            path=b.ASSEMBLY_TAR,
+            sha256="5" * 64,
+        ),
+        s288c=ArtifactRef(
+            tier="genomes",
+            key="sgd_S288C_R64-4-1_20230830",
+            path=b.S288C_ASSEMBLY_FSA,
+            sha256="d" * 64,
+        ),
+    )
     out: list[dict[str, Any]] = []
     header = b.read_marker_names(osp.join(setup["raw"], "genotype_A.tsv.gz"))
     markers = b.sorted_markers(header)
     for cross in b.CROSSES:
         frame = b.read_marker_matrix(osp.join(setup["raw"], f"genotype_{cross}.tsv.gz"))
-        p1 = b.build_parent(*_pair(setup, cross)[0], index)
-        p2 = b.build_parent(*_pair(setup, cross)[1], index)
+        p1 = b.build_parent(*_pair(setup, cross)[0], assemblies)
+        p2 = b.build_parent(*_pair(setup, cross)[1], assemblies)
         for rid, calls in zip(frame.index.astype(str), frame.to_numpy(dtype=np.int8)):
             genotype = SegregantGenotype(
                 cross=cross, segregant_id=rid, parent_1=p1, parent_2=p2,

@@ -14,7 +14,7 @@ The eight invariants (mirroring ``plan.torchcell-perturbation-ontology``):
 5. Round-trip / serialization fidelity through the union.
 6. SO-annotation well-formedness.
 7. Provenance completeness.
-8. Identity well-formedness (CURIE-or-systematic; sequence_uri implies sha256).
+8. Identity well-formedness (CURIE-or-systematic; a sequence_ref round-trips as tc://).
 """
 
 import re
@@ -27,6 +27,7 @@ from pydantic import BaseModel, TypeAdapter
 from torchcell.datamodels import schema
 from torchcell.datamodels.schema import (
     AllelePerturbation,
+    ArtifactRef,
     BarcodedKanMxDeletionPerturbation,
     ConditionalAllelePerturbation,
     CopyNumberVariantPerturbation,
@@ -131,11 +132,19 @@ _UNION_SORTED: list[type[GenePerturbation]] = sorted(UNION_MEMBERS, key=_by_name
 # --------------------------------------------------------------------------- #
 # Minimal valid instance for every concrete leaf. Placeholder-but-valid values
 # for required fields (strain_id, source_organism, ...); identities are CURIE or
-# systematic so the identity invariant holds, and sequence types carry a matched
-# uri+sha256 so the sequence-pointer invariant is actually exercised.
+# systematic so the identity invariant holds, and sequence types carry a sha256-pinned
+# ArtifactRef so the sequence-pointer invariant is actually exercised.
 # --------------------------------------------------------------------------- #
 _SYS = dict(systematic_gene_name="YAL001C", perturbed_gene_name="TFC3")
-_URI = dict(sequence_uri="YAL001C.fasta#AAB", sequence_sha256="a" * 64)
+_URI = dict(
+    sequence_ref=ArtifactRef(
+        tier="genomes",
+        key="peter2018_1011_assemblies",
+        path="allReferenceGenesWithSNPsAndIndelsInferred.tar.gz",
+        member="YAL001C.fasta#AAB",
+        sha256="a" * 64,
+    )
+)
 
 FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
     KanMxDeletionPerturbation: {**_SYS},
@@ -380,10 +389,33 @@ def test_identity_is_curie_or_systematic(cls: type[GenePerturbation]) -> None:
 
 
 @pytest.mark.parametrize("cls", _LEAVES_SORTED)
-def test_sequence_uri_implies_sha256(cls: type[GenePerturbation]) -> None:
-    inst = _instance(cls)
-    if getattr(inst, "sequence_uri", None) is not None:
-        assert getattr(inst, "sequence_sha256", None) is not None
+def test_sequence_ref_round_trips_through_its_string_form(
+    cls: type[GenePerturbation],
+) -> None:
+    """A set ``sequence_ref`` is an ArtifactRef whose tc:// string parses back to it."""
+    ref = getattr(_instance(cls), "sequence_ref", None)
+    if ref is not None:
+        assert isinstance(ref, ArtifactRef)
+        assert ArtifactRef.parse(str(ref), sha256=ref.sha256, bytes=ref.bytes) == ref
+
+
+@pytest.mark.parametrize(
+    "cls",
+    [
+        CopyNumberVariantPerturbation,
+        NaturalGeneAbsencePerturbation,
+        NaturalGenePresencePerturbation,
+        SequenceVariantPerturbation,
+    ],
+)
+def test_sequence_pointer_is_one_ref_field(cls: type[GenePerturbation]) -> None:
+    """The natural-variation leaves point at sequence by ``sequence_ref`` alone."""
+    fields = cls.model_fields
+    assert "sequence_ref" in fields
+    assert fields["sequence_ref"].default is None
+    assert "sequence_source" in fields
+    assert "sequence_uri" not in fields
+    assert "sequence_sha256" not in fields
 
 
 # --------------------------------------------------------------------------- #
@@ -564,18 +596,28 @@ def test_crispr_construct_guide_is_optional_for_defer() -> None:
     assert c.n_guides == 3
 
 
-def test_crispr_construct_plasmid_uri_implies_sha256() -> None:
-    """A plasmid pointer must be content-addressed (mirror the ORF sequence-pointer rule)."""
+def test_crispr_construct_plasmid_pointer_is_a_content_addressed_ref() -> None:
+    """A plasmid pointer is an ArtifactRef, so it cannot exist without its sha256."""
+    assert "effector_plasmid_uri" not in CrisprConstruct.model_fields
+    assert "effector_plasmid_sha256" not in CrisprConstruct.model_fields
+    assert CrisprConstruct(effector="dSpCas9-RD1152").effector_plasmid_ref is None
     with pytest.raises(ValueError):
-        CrisprConstruct(
-            effector="dSpCas9-RD1152", effector_plasmid_uri="plasmid.gb#pMAGIC"
+        CrisprConstruct.model_validate(
+            {
+                "effector": "dSpCas9-RD1152",
+                "effector_plasmid_ref": {
+                    "tier": "objects",
+                    "key": "k",
+                    "path": "plasmid.gb",
+                },
+            }
         )
-    ok = CrisprConstruct(
-        effector="dSpCas9-RD1152",
-        effector_plasmid_uri="plasmid.gb#pMAGIC",
-        effector_plasmid_sha256="a" * 64,
+    ref = ArtifactRef(
+        tier="objects", key="k", path="plasmid.gb", member="pMAGIC", sha256="a" * 64
     )
-    assert ok.effector_plasmid_sha256 == "a" * 64
+    ok = CrisprConstruct(effector="dSpCas9-RD1152", effector_plasmid_ref=ref)
+    assert ok.effector_plasmid_ref == ref
+    assert CrisprConstruct.model_validate(ok.model_dump()) == ok
 
 
 def test_crispr_leaves_round_trip_through_genotype() -> None:

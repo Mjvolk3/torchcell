@@ -58,6 +58,7 @@ from torchcell.data import RawSha256MismatchError
 from torchcell.data.experiment_dataset import verify_raw_files
 from torchcell.datamodels.media import YNB_GLUCOSE_SOLID, YP_GALACTOSE, YPD
 from torchcell.datamodels.schema import (
+    ArtifactRef,
     AssayType,
     Compound,
     Concentration,
@@ -87,6 +88,9 @@ from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 _CITATION_KEY = "bloomRareVariantsContribute2019"
 _DOI = "10.7554/eLife.49212"
 _TAR_SHA = "53540d095958ae8c32509c04485f0d2d0948069c7647f828698d611899a9b4da"
+_S288C_SHA = "dbf065ffc3f5bbaa7554ef53c6861399eecc597fe058df5f81ba557944e3f86b"
+_TAR_BYTES = 1
+_S288C_BYTES = 2
 _BY_GENOTYPE = "BY MATa his3d1 leu2d0 ura3d0 ho::KanMX"
 _M22_GENOTYPE = "M22 MATalpha ho::HygMX"
 _RM_GENOTYPE = "RM MATalpha ho::HygMX"
@@ -256,7 +260,10 @@ def _write_genomes_tier(
         release="2018",
         files=[
             ArtifactRecord(
-                path="1011Assemblies.tar.gz", role="container", bytes=1, sha256=tar_sha
+                path="1011Assemblies.tar.gz",
+                role="container",
+                bytes=_TAR_BYTES,
+                sha256=tar_sha,
             ),
             ArtifactRecord(
                 path=index.name,
@@ -269,6 +276,26 @@ def _write_genomes_tier(
         created_at="2026-09-27T00:00:00+00:00",
     )
     (tier / "manifest.json").write_text(manifest.model_dump_json(indent=2))
+    sgd = data_root / "torchcell-genomes" / "sgd_S288C_R64-4-1_20230830"
+    sgd.mkdir(parents=True, exist_ok=True)
+    sgd_manifest = GenomeManifest(
+        assembly_set="sgd_S288C_R64-4-1_20230830",
+        organism="Saccharomyces cerevisiae",
+        strain_or_population="S288C",
+        source="SGD",
+        release="R64-4-1_20230830",
+        files=[
+            ArtifactRecord(
+                path="S288C_reference_sequence_R64-4-1_20230830.fsa",
+                role="sequence",
+                bytes=_S288C_BYTES,
+                sha256=_S288C_SHA,
+            )
+        ],
+        provenance_complete=True,
+        created_at="2026-09-27T00:00:00+00:00",
+    )
+    (sgd / "manifest.json").write_text(sgd_manifest.model_dump_json(indent=2))
 
 
 def _patch_release(
@@ -336,22 +363,39 @@ _CALL_METHOD = (
 _BY = SegregantParent(
     name="BYa",
     peter_strain_id=None,
-    assembly_member="S288C_reference_genome_R64-4-1_20230830 (SGD; torchcell reference)",
-    assembly_sha256="S288C reference (SGD R64-4-1); see ReferenceGenome",
+    assembly_ref=ArtifactRef(
+        tier="genomes",
+        key="sgd_S288C_R64-4-1_20230830",
+        path="S288C_reference_sequence_R64-4-1_20230830.fsa",
+        sha256=_S288C_SHA,
+        bytes=_S288C_BYTES,
+    ),
     engineered_background=_BY_GENOTYPE,
 )
 _M22 = SegregantParent(
     name="M22",
     peter_strain_id="ADR",
-    assembly_member="1011Assemblies.tar.gz::1011Assemblies/ADR.re.fa",
-    assembly_sha256=_TAR_SHA,
+    assembly_ref=ArtifactRef(
+        tier="genomes",
+        key="peter2018_1011_assemblies",
+        path="1011Assemblies.tar.gz",
+        member="1011Assemblies/ADR.re.fa",
+        sha256=_TAR_SHA,
+        bytes=_TAR_BYTES,
+    ),
     engineered_background=_M22_GENOTYPE,
 )
 _RM = SegregantParent(
     name="RMx",
     peter_strain_id="AAA",
-    assembly_member="1011Assemblies.tar.gz::1011Assemblies/AAA.re.fa",
-    assembly_sha256=_TAR_SHA,
+    assembly_ref=ArtifactRef(
+        tier="genomes",
+        key="peter2018_1011_assemblies",
+        path="1011Assemblies.tar.gz",
+        member="1011Assemblies/AAA.re.fa",
+        sha256=_TAR_SHA,
+        bytes=_TAR_BYTES,
+    ),
     engineered_background=_RM_GENOTYPE,
 )
 
@@ -796,17 +840,19 @@ def test_gene_set_needs_a_genome_and_at_least_one_overlap(
 def test_genomes_tier_pin_and_member_index_gate_the_build(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """A tier manifest pinning the tarball at another digest raises with both digests; a
+    """The tier manifest is the only pin: a tarball pinned at another digest is the
+    digest every Peter parent's ref carries (and its string form parses back to it); a
     member index without ADR raises when the M22 parent is built.
     """
-    with pytest.raises(
-        RuntimeError,
-        match=(
-            f"genomes tier pins 1011Assemblies.tar.gz at {'1' * 64}; the stored records "
-            f"pin {_TAR_SHA}"
-        ),
-    ):
-        _build(tmp_path, monkeypatch, slug="pin", tar_sha="1" * 64)
+    pinned = _build(tmp_path, monkeypatch, slug="pin", tar_sha="1" * 64)
+    parent_2 = pinned[0]["experiment"]["genotype"]["parent_2"]["assembly_ref"]
+    assert parent_2["sha256"] == "1" * 64
+    ref = ArtifactRef.model_validate(parent_2)
+    assert str(ref) == (
+        "tc://genomes/peter2018_1011_assemblies/1011Assemblies.tar.gz"
+        "#1011Assemblies/ADR.re.fa"
+    )
+    assert ArtifactRef.parse(str(ref), sha256="1" * 64, bytes=_TAR_BYTES) == ref
     with pytest.raises(
         RuntimeError,
         match="parent M22: Peter id ADR is not in the assembly member index",

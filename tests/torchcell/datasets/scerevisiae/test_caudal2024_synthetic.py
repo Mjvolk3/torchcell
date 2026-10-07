@@ -57,6 +57,7 @@ import pytest
 
 from torchcell.data import RawSha256MismatchError
 from torchcell.datamodels.schema import (
+    ArtifactRef,
     Environment,
     GenePerturbationType,
     Genotype,
@@ -157,8 +158,14 @@ def _reversed(rows: dict[str, list[str]]) -> dict[str, list[str]]:
 
 
 def _refgene_tar() -> bytes:
+    """The synthetic reference-gene tarball, byte-stable (gzip mtime 0) so its sha256
+    is a constant the expected ``sequence_ref``s can carry.
+    """
     buffer = io.BytesIO()
-    with tarfile.open(fileobj=buffer, mode="w:gz") as tar:
+    with (
+        gzip.GzipFile(fileobj=buffer, mode="wb", mtime=0) as gz,
+        tarfile.open(fileobj=gz, mode="w") as tar,
+    ):
         directory = tarfile.TarInfo("subdir")
         directory.type = tarfile.DIRTYPE
         tar.addfile(directory)
@@ -262,6 +269,15 @@ _REFERENCE_PHENOTYPE = RNASeqExpressionPhenotype(
 )
 
 
+_TARBALL_REF = ArtifactRef(
+    tier="genomes",
+    key=PETER2018_1011,
+    path=m.REFGENE_TAR_NAME,
+    sha256=hashlib.sha256(_refgene_tar()).hexdigest(),
+    bytes=len(_refgene_tar()),
+)
+
+
 def _variant(
     strain: str, sys_name: str, name: str, token: str
 ) -> SequenceVariantPerturbation:
@@ -270,8 +286,14 @@ def _variant(
         perturbed_gene_name=name,
         strain_id=strain,
         sequence_source="peterGenomeEvolution10112018",
-        sequence_uri=f"{sys_name}.fasta#{token}",
-        sequence_sha256=m.REFGENE_TAR_SHA256,
+        sequence_ref=ArtifactRef(
+            tier="genomes",
+            key=PETER2018_1011,
+            path=m.REFGENE_TAR_NAME,
+            member=f"{sys_name}.fasta#{token}",
+            sha256=_TARBALL_REF.sha256,
+            bytes=_TARBALL_REF.bytes,
+        ),
     )
 
 
@@ -438,6 +460,7 @@ def test_side_files_gene_set_reference_index_and_strain_list(
     assert manifest["dataset_name"] == "caudal"
     assert manifest["loader_class"] == _DATASET
     assert sorted(manifest["closure"]) == [
+        "ArtifactRef",
         "ComponentDefinition",
         "Compound",
         "Concentration",
@@ -593,7 +616,7 @@ def test_download_refuses_a_missing_mirror_zip(
 def test_download_symlinks_every_file_then_builds(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """With the two pins repointed at the fixture's digests, each raw file becomes a
+    """With the Caudal zip pin repointed at the fixture's digest, each raw file becomes a
     symlink to its mirror path (the three Peter files resolved through the registry),
     and the build yields the same two records.
     """
@@ -603,9 +626,6 @@ def test_download_symlinks_every_file_then_builds(
     raw = _write_mirror(data_root)
     monkeypatch.setattr(
         m, "CAUDAL_ZIP_SHA256", hashlib.sha256(raw[m.CAUDAL_ZIP_BASENAME]).hexdigest()
-    )
-    monkeypatch.setattr(
-        m, "REFGENE_TAR_SHA256", hashlib.sha256(raw[m.REFGENE_TAR_NAME]).hexdigest()
     )
     dataset = m.CaudalPanTranscriptome2024Dataset(root=str(tmp_path / "caudal"))
     tier = data_root / "torchcell-genomes" / PETER2018_1011
@@ -621,7 +641,7 @@ def test_download_symlinks_every_file_then_builds(
     assert len(dataset) == 2
     pinned = hashlib.sha256(raw[m.REFGENE_TAR_NAME]).hexdigest()
     assert [
-        p["sequence_sha256"]
+        p["sequence_ref"]["sha256"]
         for p in dataset[1]["experiment"]["genotype"]["perturbations"]
         if p["perturbation_type"] == "sequence_variant"
     ] == [pinned, pinned]

@@ -44,3 +44,7 @@ Phase 1 of the artifact-tier plan (decisions D1 to D3). A graph record points at
 - Phase 3 (`feat/schema-artifact-ref`): `sequence_ref: ArtifactRef | None` replaces `sequence_uri` + `sequence_sha256` on the natural-variation perturbations, and `effector_plasmid_ref` on the CRISPR construct; Caudal and Bloom loaders build the refs (full KG rebuild).
 - Phase 4 (`feat/query-artifact-check`): `Neo4jQueryRaw.process` calls `resolve(ref, materialize=False)` once per distinct ref and fails the build on an unresolvable one; the cell dataset exposes `materialize`.
 - Phase 5: deposits into the objects tier (isolate ESM2 embeddings, the Peter gene-keyed store as bgzip FASTA + fai, the perturb-seq per-cell matrix as h5ad), then the Taiga ship and the Radiant tc-data roots (phase 6 of the plan).
+
+## 2026.10.07 - ArtifactRef moved onto the schema surface
+
+`ArtifactRef` is now defined in `torchcell/datamodels/schema.py` (with `ArtifactTier`, `ARTIFACT_TIERS`, `ARTIFACT_URI_SCHEME`, `ARTIFACT_MEMBER_SEPARATOR`); `torchcell/artifacts/ref.py` re-exports it under the old names (`Tier`, `TIERS`, `URI_SCHEME`, `MEMBER_SEPARATOR`), so every import of `torchcell.artifacts.ref` is unchanged. Schema records carry the ref (phase 3, [[torchcell.datamodels.schema]] 2026.10.07), and importing it into `schema.py` from `ref.py` was a cycle (`ref.py` -> `torchcell.datamodels.pydant` -> `torchcell/datamodels/__init__.py` -> `schema`). On the surface its contract is fingerprinted by the schema-impact check.

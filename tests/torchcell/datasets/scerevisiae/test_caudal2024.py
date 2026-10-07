@@ -65,7 +65,7 @@ from tests.torchcell.datasets.scerevisiae.test_caudal2024_synthetic import (
 )
 from torchcell.data import RawSha256MismatchError
 from torchcell.data.experiment_dataset import verify_raw_files
-from torchcell.datamodels.schema import ReferenceGenome
+from torchcell.datamodels.schema import ArtifactRef, ReferenceGenome
 from torchcell.datasets.scerevisiae import caudal2024 as m
 from torchcell.verification.sourced import audit_sourced_value
 
@@ -431,11 +431,6 @@ def test_a_stale_raw_matrix_is_refused_at_build_time(
         "CAUDAL_ZIP_SHA256",
         hashlib.sha256(raw_bytes[m.CAUDAL_ZIP_BASENAME]).hexdigest(),
     )
-    monkeypatch.setattr(
-        m,
-        "REFGENE_TAR_SHA256",
-        hashlib.sha256(raw_bytes[m.REFGENE_TAR_NAME]).hexdigest(),
-    )
     raw = tmp_path / "caudal" / "raw"
     raw.mkdir(parents=True)
     stale = {**_PRESENCE, "AAA": ["1", "1", "1", "1", "0", "1"]}
@@ -576,4 +571,86 @@ def test_sha256_reads_in_chunks_and_matches_hashlib(tmp_path: Path) -> None:
     empty.write_bytes(b"")
     assert m._sha256(str(empty)) == (
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    )
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.07: sequence_ref (ArtifactRef) replaces sequence_uri + sequence_sha256.
+# --------------------------------------------------------------------------- #
+def test_refgene_tarball_ref_reads_sha256_and_bytes_from_the_tier_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The file-level ref names the genomes tier, the Peter set and the tarball, with
+    the sha256 and byte count the synthetic tier's manifest pins and no member.
+    """
+    data_root = tmp_path / "data_root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    raw_bytes = _write_mirror(data_root)
+    tar = raw_bytes[m.REFGENE_TAR_NAME]
+    ref = m.refgene_tarball_ref(str(data_root))
+    assert ref == ArtifactRef(
+        tier="genomes",
+        key="peter2018_1011_assemblies",
+        path="allReferenceGenesWithSNPsAndIndelsInferred.tar.gz",
+        sha256=hashlib.sha256(tar).hexdigest(),
+        bytes=len(tar),
+    )
+    assert m.refgene_tarball_ref() == ref  # DATA_ROOT from the environment
+
+
+def test_a_caudal_sequence_variant_serializes_its_ref_and_round_trips() -> None:
+    """``_sequence_perturbations`` narrows the tarball ref to ``<gene>.fasta#<token>``;
+    the dump carries the ref as a nested object, and its tc:// string parses back to the
+    same ref given the sha256.
+    """
+    tarball = ArtifactRef(
+        tier="genomes",
+        key="peter2018_1011_assemblies",
+        path=m.REFGENE_TAR_NAME,
+        sha256="b" * 64,
+        bytes=160_823_369,
+    )
+    (pert,) = m.CaudalPanTranscriptome2024Dataset._sequence_perturbations(
+        "AAA", [("YAL001C", "TFC3", "AAA_YAL001C_TFC3")], tarball
+    )
+    ref = pert.sequence_ref
+    assert ref is not None
+    assert str(ref) == (
+        "tc://genomes/peter2018_1011_assemblies/"
+        "allReferenceGenesWithSNPsAndIndelsInferred.tar.gz#YAL001C.fasta#AAA_YAL001C_TFC3"
+    )
+    assert pert.model_dump()["sequence_ref"] == {
+        "tier": "genomes",
+        "key": "peter2018_1011_assemblies",
+        "path": "allReferenceGenesWithSNPsAndIndelsInferred.tar.gz",
+        "member": "YAL001C.fasta#AAA_YAL001C_TFC3",
+        "sha256": "b" * 64,
+        "bytes": 160_823_369,
+        "media_type": None,
+    }
+    assert ArtifactRef.parse(str(ref), sha256=ref.sha256, bytes=ref.bytes) == ref
+    assert type(pert).model_validate(pert.model_dump()) == pert
+
+
+_PETER_MANIFEST = osp.join(
+    os.environ.get("DATA_ROOT", ""),
+    "torchcell-genomes",
+    "peter2018_1011_assemblies",
+    "manifest.json",
+)
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not osp.isfile(_PETER_MANIFEST), reason="requires the Peter genomes tier"
+)
+def test_the_tier_manifest_lists_the_reference_gene_tarball() -> None:
+    """The lookup finds the tarball in the real tier at the digest the served Caudal
+    records carried as ``sequence_sha256`` before 2026.10.07.
+    """
+    ref = m.refgene_tarball_ref()
+    assert (ref.path, ref.sha256, ref.bytes) == (
+        "allReferenceGenesWithSNPsAndIndelsInferred.tar.gz",
+        "b5400b89499fe84b1feada51abd7742c29838ae1f28c0cbd208b6622ca533f25",
+        160_823_369,
     )

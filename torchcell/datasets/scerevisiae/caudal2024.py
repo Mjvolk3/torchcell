@@ -86,6 +86,7 @@ from torchcell.data import (
 )
 from torchcell.datamodels.media import SC, restated
 from torchcell.datamodels.schema import (
+    ArtifactRef,
     Environment,
     Experiment,
     ExperimentReference,
@@ -129,14 +130,49 @@ CAUDAL_ZIP_REL = (
     "final_data_annotated_merged_04052022.tab.zip"
 )
 CAUDAL_ZIP_SHA256 = "8b55ccd76e1d19476d8f5f718e9e061cb9e4693e343965114dd4cd65d5f8d26b"
+# The tarball's sha256 and size are pinned by the genomes tier's manifest
+# (``$DATA_ROOT/torchcell-genomes/peter2018_1011_assemblies/manifest.json``), read through
+# ``refgene_tarball_ref``; the loader never restates a hash that manifest already pins.
 REFGENE_TAR_NAME = "allReferenceGenesWithSNPsAndIndelsInferred.tar.gz"
-REFGENE_TAR_SHA256 = "b5400b89499fe84b1feada51abd7742c29838ae1f28c0cbd208b6622ca533f25"
 PRESENCE_NAME = "genesMatrix_PresenceAbsence.tab.gz"
 COPYNUMBER_NAME = "genesMatrix_CopyNumber.tab.gz"
 SGD_FSA_NAME = "S288C_reference_sequence_R64-4-1_20230830.fsa"
 
 CAUDAL_ZIP_BASENAME = "final_data_annotated_merged_04052022.tab.zip"
 RAW_FILES = [CAUDAL_ZIP_BASENAME, REFGENE_TAR_NAME, PRESENCE_NAME, COPYNUMBER_NAME]
+
+
+def refgene_tarball_ref(data_root: str | None = None) -> ArtifactRef:
+    """The file-level ``ArtifactRef`` of the Peter reference-gene tarball.
+
+    ``tier="genomes"``, ``key=PETER2018_1011``, ``path=REFGENE_TAR_NAME``, with the sha256
+    and byte count read from that assembly set's manifest (no member: each perturbation
+    narrows it to ``<gene>.fasta#<token>`` with ``refgene_member_ref``). Raises
+    ``FileNotFoundError`` when the genomes tier holds no manifest for the set, and the
+    manifest's own error when it does not list the tarball.
+    """
+    record = load_genome_manifest(PETER2018_1011, data_root).record(REFGENE_TAR_NAME)
+    return ArtifactRef(
+        tier="genomes",
+        key=PETER2018_1011,
+        path=record.path,
+        sha256=record.sha256,
+        bytes=record.bytes,
+    )
+
+
+def refgene_member_ref(tarball: ArtifactRef, sys_name: str, token: str) -> ArtifactRef:
+    """``tarball`` narrowed to one variant allele: member ``<sys_name>.fasta#<token>``."""
+    return ArtifactRef(
+        tier=tarball.tier,
+        key=tarball.key,
+        path=tarball.path,
+        member=f"{sys_name}.fasta#{token}",
+        sha256=tarball.sha256,
+        bytes=tarball.bytes,
+        media_type=tarball.media_type,
+    )
+
 
 _ROMAN = [
     "I",
@@ -750,9 +786,10 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
     def download(self) -> None:
         """Symlink the hash-pinned mirror files into ``raw_dir`` and verify sha256.
 
-        Large artifacts are referenced in place (never copied). The two files with a
-        module pin (Caudal zip, Peter reference-gene tarball) are hash-verified here; the
-        presence/copy-number matrices are verified by the genomes tier on ``resolve``.
+        Large artifacts are referenced in place (never copied). The Caudal zip is
+        hash-verified here against its module pin; the three Peter files (reference-gene
+        tarball, presence and copy-number matrices) are verified by the genomes tier on
+        ``resolve`` against its manifest.
         ``process`` re-verifies all four in ``raw/`` before reading them.
         """
         data_root = self._data_root()
@@ -764,10 +801,7 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
             PRESENCE_NAME: resolve(PETER2018_1011, PRESENCE_NAME),
             COPYNUMBER_NAME: resolve(PETER2018_1011, COPYNUMBER_NAME),
         }
-        sha256_expected = {
-            CAUDAL_ZIP_BASENAME: CAUDAL_ZIP_SHA256,
-            REFGENE_TAR_NAME: REFGENE_TAR_SHA256,
-        }
+        sha256_expected = {CAUDAL_ZIP_BASENAME: CAUDAL_ZIP_SHA256}
         for name, src in sources.items():
             if not osp.exists(src):
                 raise RuntimeError(f"required raw artifact missing from mirror: {src}")
@@ -785,9 +819,9 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
     def process(self) -> None:
         """Build the 943 per-isolate pan-transcriptome experiments and write LMDB.
 
-        Every file in ``raw/`` is verified before a row is read: the Caudal zip and the
-        reference-gene tarball against this module's pins, the presence and copy-number
-        matrices against the genomes tier's manifest (the pin ``resolve`` checks in
+        Every file in ``raw/`` is verified before a row is read: the Caudal zip against
+        this module's pin, the reference-gene tarball and the presence and copy-number
+        matrices against the genomes tier's manifest (the pins ``resolve`` checks in
         ``download``). A mismatch raises ``RawSha256MismatchError``.
         """
         data_root = self._data_root()
@@ -796,7 +830,7 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
             self.raw_dir,
             {
                 CAUDAL_ZIP_BASENAME: CAUDAL_ZIP_SHA256,
-                REFGENE_TAR_NAME: REFGENE_TAR_SHA256,
+                REFGENE_TAR_NAME: peter.record(REFGENE_TAR_NAME).sha256,
                 PRESENCE_NAME: peter.record(PRESENCE_NAME).sha256,
                 COPYNUMBER_NAME: peter.record(COPYNUMBER_NAME).sha256,
             },
@@ -835,6 +869,7 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
 
         # 3. Sequence variants vs the S288C reference slice (heavy; resumable parquet).
         variants_by_strain = self._sequence_variants(data_root, set(strains))
+        tarball = refgene_tarball_ref(data_root)
 
         # 4. Shared population-mean phenotype reference (absolute TPM baseline).
         self._reference_phenotype = RNASeqExpressionPhenotype(
@@ -867,7 +902,7 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
                     s288c_names,
                 )
                 seq_perts = self._sequence_perturbations(
-                    strain, variants_by_strain.get(strain, [])
+                    strain, variants_by_strain.get(strain, []), tarball
                 )
                 n_seq_total += len(seq_perts)
                 n_cnv_acc_total += len(presence_perts)
@@ -1045,9 +1080,13 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
 
     @staticmethod
     def _sequence_perturbations(
-        strain: str, variants: list[tuple[str, str, str]]
+        strain: str, variants: list[tuple[str, str, str]], tarball: ArtifactRef
     ) -> list[SequenceVariantPerturbation]:
-        """Build the SequenceVariantPerturbations for one isolate."""
+        """Build the SequenceVariantPerturbations for one isolate.
+
+        Each carries ``sequence_ref``: ``tarball`` (``refgene_tarball_ref``) narrowed to the
+        allele's member ``<gene>.fasta#<header_token>``.
+        """
         perts: list[SequenceVariantPerturbation] = []
         for sys_name, symbol, token in variants:
             perts.append(
@@ -1056,8 +1095,7 @@ class CaudalPanTranscriptome2024Dataset(ExperimentDataset):
                     perturbed_gene_name=symbol or sys_name,
                     strain_id=strain,
                     sequence_source=SEQUENCE_SOURCE,
-                    sequence_uri=f"{sys_name}.fasta#{token}",
-                    sequence_sha256=REFGENE_TAR_SHA256,
+                    sequence_ref=refgene_member_ref(tarball, sys_name, token),
                 )
             )
         return perts

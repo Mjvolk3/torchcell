@@ -16,6 +16,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from torchcell.datamodels.media import YPD
 from torchcell.datamodels.schema import (
+    ArtifactRef,
     AssayType,
     Environment,
     EnvironmentResponsePhenotype,
@@ -35,10 +36,20 @@ def _parent(name: str, peter: str | None) -> SegregantParent:
     return SegregantParent(
         name=name,
         peter_strain_id=peter,
-        assembly_member="1011Assemblies.tar.gz::GENOMES_ASSEMBLED/AAA_6.re.fa"
+        assembly_ref=ArtifactRef(
+            tier="genomes",
+            key="peter2018_1011_assemblies",
+            path="1011Assemblies.tar.gz",
+            member="GENOMES_ASSEMBLED/AAA_6.re.fa",
+            sha256="5" * 64,
+        )
         if peter
-        else "S288C reference",
-        assembly_sha256="53540d09" if peter else "S288C reference",
+        else ArtifactRef(
+            tier="genomes",
+            key="sgd_S288C_R64-4-1_20230830",
+            path="S288C_reference_sequence_R64-4-1_20230830.fsa",
+            sha256="d" * 64,
+        ),
         engineered_background=f"{name} MatA ho::HphMX",
     )
 

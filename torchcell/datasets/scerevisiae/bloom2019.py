@@ -112,7 +112,9 @@ from torchcell.datamodels.media import (
     YPD,
     YPD_ETHANOL,
 )
+from torchcell.datamodels.pydant import ModelStrict
 from torchcell.datamodels.schema import (
+    ArtifactRef,
     AssayType,
     Concentration,
     ConcentrationUnit,
@@ -147,6 +149,7 @@ from torchcell.literature.manifest import (
 from torchcell.sequence import GeneSet
 from torchcell.sequence.genome.registry import (
     PETER2018_1011,
+    SGD_S288C_R64,
     load_genome_manifest,
     resolve,
 )
@@ -162,10 +165,12 @@ log = logging.getLogger(__name__)
 CITATION_KEY = "bloomRareVariantsContribute2019"
 PAPER_DOI = "10.7554/eLife.49212"
 RAW_DIR_REL = f"torchcell-raw/{CITATION_KEY}"
+# Parent assemblies are ``ArtifactRef``s into the genomes tier; their sha256 and size
+# come from each assembly set's manifest (``ParentAssemblyRefs.from_tier``), never
+# restated here.
 ASSEMBLY_TAR = "1011Assemblies.tar.gz"
-ASSEMBLY_TAR_SHA256 = "53540d095958ae8c32509c04485f0d2d0948069c7647f828698d611899a9b4da"
 ASSEMBLY_INDEX = "1011Assemblies.tar.gz.member_index.tsv"
-S288C_ASSEMBLY = "S288C_reference_genome_R64-4-1_20230830 (SGD; torchcell reference)"
+S288C_ASSEMBLY_FSA = "S288C_reference_sequence_R64-4-1_20230830.fsa"
 
 DROPBOX_URL = (
     "https://www.dropbox.com/sh/jqm7a11zz9laytd/AABaE0EfQxLH6ounPhJ7yYWya?dl=1"
@@ -779,28 +784,78 @@ def read_assembly_index(path: str | Path) -> dict[str, str]:
     return index
 
 
+def tier_file_ref(
+    assembly_set: str, filename: str, data_root: str | None = None
+) -> ArtifactRef:
+    """File-level ``ArtifactRef`` of one genomes-tier file, sha256 and bytes from its manifest."""
+    record = load_genome_manifest(assembly_set, data_root).record(filename)
+    return ArtifactRef(
+        tier="genomes",
+        key=assembly_set,
+        path=record.path,
+        sha256=record.sha256,
+        bytes=record.bytes,
+    )
+
+
+class ParentAssemblyRefs(ModelStrict):
+    """What ``build_parent`` pins a parent to: the 1011 tarball, its member index, S288C.
+
+    ``tarball`` is the file-level ref of ``1011Assemblies.tar.gz`` (a Peter parent narrows
+    it to its member through ``index``); ``s288c`` is the ref of the SGD R64-4-1 reference
+    sequence, which the S288C-derived BY parent points at.
+    """
+
+    index: dict[str, str]
+    tarball: ArtifactRef
+    s288c: ArtifactRef
+
+    @classmethod
+    def from_tier(cls, data_root: str | None = None) -> ParentAssemblyRefs:
+        """Read both refs from the genomes-tier manifests and the member index."""
+        return cls(
+            index=read_assembly_index(
+                resolve(PETER2018_1011, ASSEMBLY_INDEX, data_root=data_root)
+            ),
+            tarball=tier_file_ref(PETER2018_1011, ASSEMBLY_TAR, data_root),
+            s288c=tier_file_ref(SGD_S288C_R64, S288C_ASSEMBLY_FSA, data_root),
+        )
+
+
 def build_parent(
-    label: str, genotype_text: str, index: dict[str, str]
+    label: str, genotype_text: str, assemblies: ParentAssemblyRefs
 ) -> SegregantParent:
-    """A parent pinned to its assembly; a Peter id absent from the index raises."""
+    """A parent pinned to its assembly; a Peter id absent from the index raises.
+
+    A Peter parent's ``assembly_ref`` is the 1011 tarball with member
+    ``<index[peter]>`` (the release's ``tarball::member`` form as one ref); BY's is the
+    S288C reference sequence file.
+    """
     peter = PARENT_PETER_ID[label]
     if peter is None:
         return SegregantParent(
             name=label,
             peter_strain_id=None,
-            assembly_member=S288C_ASSEMBLY,
-            assembly_sha256="S288C reference (SGD R64-4-1); see ReferenceGenome",
+            assembly_ref=assemblies.s288c,
             engineered_background=genotype_text,
         )
-    if peter not in index:
+    if peter not in assemblies.index:
         raise RuntimeError(
             f"parent {label}: Peter id {peter} is not in the assembly member index"
         )
+    tarball = assemblies.tarball
     return SegregantParent(
         name=label,
         peter_strain_id=peter,
-        assembly_member=f"{ASSEMBLY_TAR}::{index[peter]}",
-        assembly_sha256=ASSEMBLY_TAR_SHA256,
+        assembly_ref=ArtifactRef(
+            tier=tarball.tier,
+            key=tarball.key,
+            path=tarball.path,
+            member=assemblies.index[peter],
+            sha256=tarball.sha256,
+            bytes=tarball.bytes,
+            media_type=tarball.media_type,
+        ),
         engineered_background=genotype_text,
     )
 
@@ -948,7 +1003,7 @@ class Bloom2019Dataset(ExperimentDataset):
 
     # ---- genotypes ------------------------------------------------------------
     def _iter_cross_genotypes(
-        self, cross: str, info: CrossInfo, index: dict[str, str]
+        self, cross: str, info: CrossInfo, assemblies: ParentAssemblyRefs
     ) -> Iterator[tuple[str, SegregantGenotype]]:
         """Stream one cross's matrix as int8, sort markers, and RLE every segregant."""
         path = osp.join(self.raw_dir, f"genotype_{cross}.tsv.gz")
@@ -963,8 +1018,8 @@ class Bloom2019Dataset(ExperimentDataset):
                 f"genotype_{cross}: {values.shape[0]} segregants, expected {EXPECTED_SEGREGANTS[cross]}"
             )
         matrix_sha = manifest_sha256(self._manifest, f"data/genotype_{cross}.tsv.gz")
-        p1 = build_parent(info.parent_1, info.parent_1_genotype, index)
-        p2 = build_parent(info.parent_2, info.parent_2_genotype, index)
+        p1 = build_parent(info.parent_1, info.parent_1_genotype, assemblies)
+        p2 = build_parent(info.parent_2, info.parent_2_genotype, assemblies)
         self._markers[cross] = markers
         for row_id, calls in zip(frame.index.astype(str), values):
             blocks = encode_blocks(calls, markers)
@@ -1003,17 +1058,9 @@ class Bloom2019Dataset(ExperimentDataset):
         info = read_cross_table(
             osp.join(self.raw_dir, XLS_NAME), osp.join(self.raw_dir, README_NAME)
         )
-        # The stored assembly_sha256 is a literal; the tier's manifest must pin the same
-        # tarball, so the stored records and the dereferenceable bytes cannot drift apart.
-        tier_tar_sha256 = (
-            load_genome_manifest(PETER2018_1011).record(ASSEMBLY_TAR).sha256
-        )
-        if tier_tar_sha256 != ASSEMBLY_TAR_SHA256:
-            raise RuntimeError(
-                f"genomes tier pins {ASSEMBLY_TAR} at {tier_tar_sha256}; the stored "
-                f"records pin {ASSEMBLY_TAR_SHA256}"
-            )
-        index = read_assembly_index(resolve(PETER2018_1011, ASSEMBLY_INDEX))
+        # Parent assembly refs carry the sha256 the genomes-tier manifests pin, so the
+        # stored records and the dereferenceable bytes cannot drift apart.
+        assemblies = ParentAssemblyRefs.from_tier()
         # round_trip: the stored value is the exact decimal the release prints, so the
         # verifier's re-read equals it bit for bit (the default parser can differ in
         # the last digit).
@@ -1064,7 +1111,7 @@ class Bloom2019Dataset(ExperimentDataset):
             for cross in CROSSES:
                 counts: list[int] = []
                 for seg_id, genotype in tqdm(
-                    self._iter_cross_genotypes(cross, info[cross], index),
+                    self._iter_cross_genotypes(cross, info[cross], assemblies),
                     total=EXPECTED_SEGREGANTS[cross],
                     desc=f"cross {cross}",
                 ):

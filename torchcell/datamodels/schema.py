@@ -6,9 +6,10 @@
 """Pydantic data models for torchcell genotypes, environments, and phenotypes."""
 
 import math
+import posixpath
 import re
 from enum import StrEnum
-from typing import Any, Literal
+from typing import Any, Literal, Self, get_args
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sortedcontainers import SortedDict
@@ -19,6 +20,142 @@ from torchcell.verification.sourced import ProvenanceGap, SourcedValue
 
 # causes circular import
 # from torchcell.datasets.dataset_registry import dataset_registry
+
+
+# The artifact tiers an ``ArtifactRef`` can point into (see ``torchcell.artifacts``).
+ArtifactTier = Literal["raw", "genomes", "library", "objects"]
+ARTIFACT_TIERS: tuple[str, ...] = get_args(ArtifactTier)
+ARTIFACT_URI_SCHEME = "tc://"
+ARTIFACT_MEMBER_SEPARATOR = "#"
+_ARTIFACT_SHA256 = re.compile(r"[0-9a-f]{64}")
+
+
+class ArtifactRef(ModelStrict):
+    """A sha256-pinned pointer to one file (and optionally a member) in an artifact tier.
+
+    The one pointer type from a graph record to bytes kept off the graph. A ref names a
+    file in one of the four artifact tiers (``raw``, ``genomes``, ``library``,
+    ``objects``) by its key directory and relative path, pins the file's bytes by sha256,
+    and optionally names a member inside the file (a tar member, a FASTA record token, an
+    h5ad obs name). The member never changes which bytes are pinned: ``sha256`` is always
+    the sha256 of the FILE at ``path``.
+
+    String form: ``tc://<tier>/<key>/<path>[#<member>]``. The string carries the location
+    only; the sha256 travels beside it (``ArtifactRef.parse(text, sha256=...)``), because a
+    location without a hash is not a ref. The member is everything after the FIRST ``#``,
+    so a member may itself contain ``#`` (Caudal's ``<gene>.fasta#<token>``) while a path
+    may not.
+
+    Defined here, on the schema surface, so its contract is fingerprinted with the record
+    classes that carry it; ``torchcell.artifacts.ref`` re-exports it with the resolver.
+    """
+
+    tier: ArtifactTier
+    key: str
+    path: str
+    member: str | None = None
+    sha256: str
+    bytes: int | None = None
+    media_type: str | None = None
+
+    @field_validator("sha256")
+    @classmethod
+    def _sha256_is_lowercase_hex(cls, value: str) -> str:
+        if not _ARTIFACT_SHA256.fullmatch(value):
+            raise ValueError(
+                f"sha256 must be 64 lowercase hex characters, got {value!r}"
+            )
+        return value
+
+    @field_validator("key")
+    @classmethod
+    def _key_is_one_directory_name(cls, value: str) -> str:
+        if not value or "/" in value or value in (".", ".."):
+            raise ValueError(f"key must be one directory name, got {value!r}")
+        if value.startswith("_"):
+            raise ValueError(
+                f"key {value!r} starts with '_', which names a service directory"
+            )
+        if ARTIFACT_MEMBER_SEPARATOR in value:
+            raise ValueError(f"key must not contain '#', got {value!r}")
+        return value
+
+    @field_validator("path")
+    @classmethod
+    def _path_is_normalized_and_relative(cls, value: str) -> str:
+        if value in ("", "."):
+            raise ValueError(f"path must name a file, got {value!r}")
+        if value.startswith("/"):
+            raise ValueError(f"path must be relative (no leading slash), got {value!r}")
+        if ".." in value.split("/"):
+            raise ValueError(f"path must not contain '..', got {value!r}")
+        if ARTIFACT_MEMBER_SEPARATOR in value:
+            raise ValueError(f"path must not contain '#', got {value!r}")
+        if posixpath.normpath(value) != value:
+            raise ValueError(
+                f"path must be normalized, got {value!r} "
+                f"(normalized: {posixpath.normpath(value)!r})"
+            )
+        return value
+
+    @field_validator("bytes")
+    @classmethod
+    def _bytes_is_non_negative(cls, value: int | None) -> int | None:
+        if value is not None and value < 0:
+            raise ValueError(f"bytes must be non-negative, got {value}")
+        return value
+
+    @model_validator(mode="after")
+    def _member_requires_a_path(self) -> Self:
+        if self.member is not None and (not self.member or not self.path):
+            raise ValueError("member must be a non-empty name inside the file at path")
+        return self
+
+    def __str__(self) -> str:
+        """``tc://<tier>/<key>/<path>[#<member>]``."""
+        base = f"{ARTIFACT_URI_SCHEME}{self.tier}/{self.key}/{self.path}"
+        if self.member is None:
+            return base
+        return f"{base}{ARTIFACT_MEMBER_SEPARATOR}{self.member}"
+
+    @classmethod
+    def parse(
+        cls,
+        text: str,
+        *,
+        sha256: str,
+        bytes: int | None = None,
+        media_type: str | None = None,
+    ) -> Self:
+        """Build a ref from its string form plus the sha256 the string does not carry.
+
+        Raises ``ValueError`` when ``text`` is not ``tc://<tier>/<key>/<path>[#<member>]``
+        with a known tier; the field validators then apply as on direct construction.
+        """
+        if not text.startswith(ARTIFACT_URI_SCHEME):
+            raise ValueError(f"{text!r} does not start with {ARTIFACT_URI_SCHEME!r}")
+        location, sep, member = text[len(ARTIFACT_URI_SCHEME) :].partition(
+            ARTIFACT_MEMBER_SEPARATOR
+        )
+        parts = location.split("/", 2)
+        if len(parts) != 3:
+            raise ValueError(f"{text!r} is not tc://<tier>/<key>/<path>[#<member>]")
+        tier, key, path = parts
+        if tier not in ARTIFACT_TIERS:
+            raise ValueError(
+                f"{text!r}: unknown tier {tier!r}; tiers are {ARTIFACT_TIERS}"
+            )
+        return cls.model_validate(
+            {
+                "tier": tier,
+                "key": key,
+                "path": path,
+                "member": member if sep else None,
+                "sha256": sha256,
+                "bytes": bytes,
+                "media_type": media_type,
+            }
+        )
 
 
 class ProvenanceGapMixin(ModelStrict):
@@ -598,7 +735,7 @@ class CrisprConstruct(ModelStrict):
     ``dSpCas9-RD1152``, ``dLbCas12a-VP``, ``dCas9-Mxi1``). ``guide_sequence`` is the short
     spacer INLINED as the perturbation identity; it is nullable so a screen that identifies
     only target genes (Mormino: spacers live upstream in the source library) can
-    scaffold-and-defer. ``effector_plasmid_uri``/``_sha256`` are off-graph pointers left
+    scaffold-and-defer. ``effector_plasmid_ref`` is an off-graph ``ArtifactRef`` left
     ``None`` today ("field now, plasmid later") so upgrading to full-plasmid / SBOL capture
     is a NON-breaking extension -- the record shape does not change when fidelity is upgraded.
     Design: ``[[plan.torchcell-crispr-expression-perturbation.2026.07.12]]``.
@@ -626,28 +763,12 @@ class CrisprConstruct(ModelStrict):
         "fitness), not one, so the pool joins the strain identity. None when a study has a "
         "single library (Lian, Mormino) -- a NON-breaking default.",
     )
-    effector_plasmid_uri: str | None = Field(
+    effector_plasmid_ref: ArtifactRef | None = Field(
         default=None,
-        description="off-graph pointer into a plasmid/SBOL store for the full effector+guide "
-        "cassette (future full-plasmid capture; None today)",
+        description="sha256-pinned ArtifactRef to the full effector+guide cassette in a "
+        "plasmid/SBOL store (future full-plasmid capture; None today). The ref carries "
+        "the file's sha256 itself.",
     )
-    effector_plasmid_sha256: str | None = Field(
-        default=None,
-        description="sha256 of the source file the effector plasmid sequence comes from",
-    )
-
-    @model_validator(mode="after")
-    def validate_plasmid_pointer(self) -> "CrisprConstruct":
-        """A plasmid URI must carry its sha256 (mirror the ORF sequence-pointer invariant)."""
-        if (
-            self.effector_plasmid_uri is not None
-            and self.effector_plasmid_sha256 is None
-        ):
-            raise ValueError(
-                "effector_plasmid_uri requires effector_plasmid_sha256 (a pointer must be "
-                "content-addressed)"
-            )
-        return self
 
 
 class StrainConstruction(ModelStrict):
@@ -1197,7 +1318,7 @@ class NaturalGeneAbsencePerturbation(PresenceAbsencePerturbation, ModelStrict):
     mis-use of ``CopyNumberVariantPerturbation`` (copy_number 0) for absence -- CNV is
     now reserved for dosage of a PRESENT gene. The gene id may be a pangenome/accessory
     id, so the native-name validator is relaxed (as for ``GeneAddition``). Sequence, when
-    known, is an off-graph pointer (``sequence_uri`` + ``sequence_sha256``), never inlined.
+    known, is an off-graph ``ArtifactRef`` (``sequence_ref``), never inlined.
     """
 
     description: str = "Natural absence of a reference gene in an isolate vs S288C"
@@ -1214,11 +1335,10 @@ class NaturalGeneAbsencePerturbation(PresenceAbsencePerturbation, ModelStrict):
         default=None,
         description="off-graph store key / citation for the reference gene",
     )
-    sequence_uri: str | None = Field(
-        default=None, description="pointer into the gene-keyed sequence store"
-    )
-    sequence_sha256: str | None = Field(
-        default=None, description="sha256 of the source file the sequence comes from"
+    sequence_ref: ArtifactRef | None = Field(
+        default=None,
+        description="sha256-pinned ArtifactRef to the reference gene sequence in an "
+        "artifact tier (file + member); None when no store holds it",
     )
 
     @field_validator("systematic_gene_name", mode="after")
@@ -1278,12 +1398,10 @@ class NaturalGenePresencePerturbation(PresenceAbsencePerturbation, ModelStrict):
     sequence_source: str | None = Field(
         default=None, description="off-graph store key / citation for the ORF sequence"
     )
-    sequence_uri: str | None = Field(
-        default=None, description="pointer into the pangenome ORF sequence store"
-    )
-    sequence_sha256: str | None = Field(
+    sequence_ref: ArtifactRef | None = Field(
         default=None,
-        description="sha256 of the source file the ORF sequence comes from",
+        description="sha256-pinned ArtifactRef to the ORF sequence in an artifact tier "
+        "(file + member); None when no store holds it",
     )
 
     @field_validator("systematic_gene_name", mode="after")
@@ -1304,8 +1422,8 @@ class SequenceVariantPerturbation(SequencePerturbation, ModelStrict):
     substitution description): this points at the strain's ACTUAL variant allele. The base
     systematic-name validator applies -- these are real S. cerevisiae reference genes
     (``YAL001C`` ...). The sequence is NEVER inlined: ``sequence_source`` + ``strain_id`` +
-    ``sequence_uri`` identify the record in the off-graph gene-keyed store (dereferenced at
-    load, ``sequence_sha256``-verified), mirroring the ``GeneAddition`` pointer pattern.
+    ``sequence_ref`` identify the record in the off-graph gene-keyed store (an
+    ``ArtifactRef``, dereferenced at load and verified by its sha256), mirroring the ``GeneAddition`` pointer pattern.
 
     Naming follows population-genomics usage (sequence variant = SNP + indel), NOT the
     phylogenetic "gene gain/loss" vocabulary (which asserts a lineage polarity a pairwise
@@ -1332,16 +1450,13 @@ class SequenceVariantPerturbation(SequencePerturbation, ModelStrict):
             "'peterGenomeEvolution10112018'; None until the store lands"
         ),
     )
-    sequence_uri: str | None = Field(
+    sequence_ref: ArtifactRef | None = Field(
         default=None,
         description=(
-            "pointer into the gene-keyed sequence store (e.g. "
-            "'<gene>.fasta#<strain_header>'); None until that store lands"
+            "sha256-pinned ArtifactRef to the variant allele in an artifact tier, e.g. "
+            "tc://genomes/peter2018_1011_assemblies/<tarball>#<gene>.fasta#<token>; "
+            "None until a store holds it"
         ),
-    )
-    sequence_sha256: str | None = Field(
-        default=None,
-        description="sha256 of the source file the variant sequence is dereferenced from",
     )
 
 
@@ -1410,12 +1525,10 @@ class CopyNumberVariantPerturbation(GenePerturbation, ModelStrict):
     sequence_source: str | None = Field(
         default=None, description="off-graph store key / citation for the ORF sequence"
     )
-    sequence_uri: str | None = Field(
-        default=None, description="pointer into the pangenome ORF sequence store"
-    )
-    sequence_sha256: str | None = Field(
+    sequence_ref: ArtifactRef | None = Field(
         default=None,
-        description="sha256 of the source file the ORF sequence comes from",
+        description="sha256-pinned ArtifactRef to the ORF sequence in an artifact tier "
+        "(file + member); None when no store holds it",
     )
 
     @field_validator("systematic_gene_name", mode="after")
@@ -3947,16 +4060,16 @@ class SegregantParent(ModelStrict):
 
     ``name`` is the source's label verbatim (e.g. ``BYa``, ``RMx``); ``peter_strain_id``
     is the 1011-collection (Peter 2018) strain id when the parent is one of those
-    isolates (None for the S288C-derived BY); ``assembly_member`` names the assembly
-    file (a member path inside the pinned 1011 assemblies tarball, or the S288C
-    reference) and ``assembly_sha256`` the pinned container; ``engineered_background``
-    is the parent's marker/deletion genotype as the source states it, verbatim.
+    isolates (None for the S288C-derived BY); ``assembly_ref`` is the sha256-pinned
+    ``ArtifactRef`` to the parent's assembly (the 1011 assemblies tarball in the genomes
+    tier with the isolate's member path, or the S288C reference sequence file of the SGD
+    assembly set for BY); ``engineered_background`` is the parent's marker/deletion
+    genotype as the source states it, verbatim.
     """
 
     name: str
     peter_strain_id: str | None = None
-    assembly_member: str
-    assembly_sha256: str
+    assembly_ref: ArtifactRef
     engineered_background: str
 
 

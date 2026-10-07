@@ -121,7 +121,8 @@ import logging
 import os
 import os.path as osp
 import shutil
-from collections.abc import Callable, Mapping
+from collections import Counter
+from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar, Literal, cast
@@ -177,13 +178,19 @@ from torchcell.literature.manifest import (
 )
 from torchcell.literature.retrieve import pmc_cloud_url
 from torchcell.sequence.genome.bacterial import BacterialGenome
+from torchcell.sequence.genome.base import GeneNameStatus
 from torchcell.sequence.genome.ecoli.k12 import (
     EcoliK12BW25113Genome,
     EcoliK12Genome,
     EcoliK12MG1655Genome,
     EcoliK12StrainName,
 )
-from torchcell.verification.report import Provenance, VerificationReport
+from torchcell.verification.report import (
+    Level,
+    LevelResult,
+    Provenance,
+    VerificationReport,
+)
 from torchcell.verification.sourced import (
     ProvenanceGap,
     ProvenanceGapReason,
@@ -1233,6 +1240,80 @@ class CarbonSourceTong2020Dataset(ExperimentDataset):
 EXPECTED_RECORDS: dict[EcoliK12StrainName, int] = {"BW25113": 109320, "MG1655": 2100}
 
 
+def pair_uniqueness_with_perturbations(
+    records: Sequence[Mapping[str, Any]],
+) -> LevelResult:
+    """SUPPLEMENTARY L1: one record per (strain, FULL environment) pair.
+
+    The fitness verifier's ``pair_uniqueness`` keys the environment on temperature, medium
+    name and duration only, so thirty carbon sources on one medium read as one
+    environment and every strain reads as duplicated. This row keys the environment on the
+    environment-response verifier's condition signature, which includes the
+    perturbations. It is added beside the verifier's own row, never in place of it.
+    """
+    from torchcell.verification.environment_response import _condition_signature
+    from torchcell.verification.fitness import _genotype_signature
+
+    seen = Counter(
+        (
+            _genotype_signature(record["experiment"]),
+            _condition_signature(record["experiment"]),
+        )
+        for record in records
+    )
+    duplicated = sum(1 for count in seen.values() if count > 1)
+    return LevelResult(
+        level=Level.L1,
+        name="pair_uniqueness_with_environment_perturbations",
+        passed=duplicated == 0,
+        message=(
+            f"SUPPLEMENTARY: {len(seen)} unique (strain, environment incl. "
+            f"perturbations) pairs, {duplicated} duplicated"
+        ),
+        details={"n_pairs": len(seen), "n_duplicated": duplicated},
+    )
+
+
+def stored_tags_are_loci(
+    records: Sequence[Mapping[str, Any]], genome: BacterialGenome[Any]
+) -> LevelResult:
+    """SUPPLEMENTARY L1: every stored tag resolves to itself as a locus of the genome.
+
+    The shared ``canonical_gene_names`` rule requires status ``current``, which a
+    pseudogene locus never has (the bacterial resolver returns ``non_gene_feature``,
+    naming the same tag). This row accepts a gene or a pseudogene locus that resolves to
+    itself, and counts the pseudogenes. It is added beside the shared row, never in its
+    place.
+    """
+    tags = sorted(
+        {
+            str(perturbation["systematic_gene_name"])
+            for record in records
+            for perturbation in record["experiment"]["genotype"]["perturbations"]
+        }
+    )
+    statuses = Counter[str]()
+    elsewhere: list[str] = []
+    for tag in tags:
+        resolution = genome.resolve_gene_name(tag)
+        statuses[str(resolution.status.value)] += 1
+        if resolution.systematic_name != tag or resolution.status not in (
+            GeneNameStatus.CURRENT,
+            GeneNameStatus.NON_GENE_FEATURE,
+        ):
+            elsewhere.append(tag)
+    return LevelResult(
+        level=Level.L1,
+        name="stored_tags_are_loci_of_the_pinned_assembly",
+        passed=not elsewhere,
+        message=(
+            f"SUPPLEMENTARY: {len(tags)} stored tags, statuses {dict(statuses)}; "
+            f"{len(elsewhere)} do not resolve to themselves"
+        ),
+        details={"statuses": dict(statuses), "not_a_locus": elsewhere[:20]},
+    )
+
+
 def verify_build(
     dataset_root: str, data_root: str | None = None
 ) -> dict[str, VerificationReport]:
@@ -1241,7 +1322,10 @@ def verify_build(
     Each background is checked against its own genome: the resolver and the L4 gene
     universe (every GenBank locus, pseudogenes included) of the strain its records pin.
     One resolver cannot serve both, because a gene symbol resolves in both annotations.
-    Each report is written to ``preprocess/verification_report_<strain>.json``.
+    Two SUPPLEMENTARY rows are appended to each report (``pair_uniqueness_with_
+    perturbations``, ``stored_tags_are_loci``): the verifier's own ``pair_uniqueness``
+    and ``canonical_gene_names`` rows stay in the report with their verdicts. Each report
+    is written to ``preprocess/verification_report_<strain>.json``.
     """
     from torchcell.verification.fitness import verify_fitness_dataset
     from torchcell.verification.runners import load_records
@@ -1273,6 +1357,9 @@ def verify_build(
             resolve_gene_name=genome.resolve_gene_name,
             sgd_genes=set(genome.genbank.loci),
         )
+        subset = by_strain.get(strain_name, [])
+        report.add(pair_uniqueness_with_perturbations(subset))
+        report.add(stored_tags_are_loci(subset, genome))
         out = osp.join(
             dataset_root, "preprocess", f"verification_report_{strain_name}.json"
         )

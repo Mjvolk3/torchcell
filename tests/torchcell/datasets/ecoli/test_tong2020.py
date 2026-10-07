@@ -25,6 +25,7 @@ import os
 import os.path as osp
 import zipfile
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import pytest
@@ -46,6 +47,7 @@ from torchcell.datamodels.media import MEDIA_LIBRARY, MOPS_MINIMAL
 from torchcell.datamodels.schema import (
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
+    BacterialGeneNamespace,
     EnvironmentPhysicalPerturbation,
     MediaComponentRole,
     PhysicalFactor,
@@ -516,3 +518,56 @@ def test_the_release_resolves_to_the_measured_strain_counts() -> None:
     }
     assert sum(not use.numerics_agree for use in strains.crosswalk) == 8
     assert sum(t.EXPECTED_RECORDS.values()) == 30 * len(strains.kept) == 111420
+
+
+# --------------------------------------------------------------------------- #
+# Supplementary verifier rows
+# --------------------------------------------------------------------------- #
+def _record(tag: str, namespace: BacterialGeneNamespace, carbon: str) -> dict[str, Any]:
+    strain = t.StrainRecord(
+        row=0,
+        reported=tag,
+        collection="srna",
+        systematic_gene_name=tag,
+        perturbed_gene_name=tag,
+        gene_namespace=namespace,
+    )
+    return {
+        "experiment": {
+            "genotype": t.genotype(strain).model_dump(),
+            "environment": t.environment(carbon).model_dump(),
+            "phenotype": t.phenotype(1.0, "srna").model_dump(),
+        }
+    }
+
+
+def test_pair_uniqueness_keys_the_environment_on_its_perturbations() -> None:
+    glucose = _record("b0001", "ecoli_k12_mg1655_bnumber", "Glucose")
+    xylose = _record("b0001", "ecoli_k12_mg1655_bnumber", "Xylose")
+    distinct = t.pair_uniqueness_with_perturbations([glucose, xylose])
+    assert (distinct.passed, distinct.details) == (
+        True,
+        {"n_pairs": 2, "n_duplicated": 0},
+    )
+    repeated = t.pair_uniqueness_with_perturbations([glucose, glucose])
+    assert (repeated.passed, repeated.details) == (
+        False,
+        {"n_pairs": 1, "n_duplicated": 1},
+    )
+
+
+def test_stored_tags_accept_a_pseudogene_locus_and_refuse_a_foreign_tag(
+    k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
+) -> None:
+    mg1655, _ = k12
+    namespace: BacterialGeneNamespace = "ecoli_k12_mg1655_bnumber"
+    loci = [_record(tag, namespace, "Glucose") for tag in ("b0001", "b0004")]
+    result = t.stored_tags_are_loci(loci, mg1655)
+    assert result.passed
+    assert result.details == {
+        "statuses": {"current": 1, "non_gene_feature": 1},
+        "not_a_locus": [],
+    }
+    foreign = t.stored_tags_are_loci([_record("b0099", namespace, "Glucose")], mg1655)
+    assert not foreign.passed
+    assert foreign.details == {"statuses": {"retired": 1}, "not_a_locus": ["b0099"]}

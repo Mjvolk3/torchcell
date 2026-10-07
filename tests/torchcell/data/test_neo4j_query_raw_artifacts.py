@@ -230,7 +230,11 @@ def _build(root: Path, **kwargs: Any) -> _MemoryQueryRaw:
 def _stored(raw: Neo4jQueryRaw) -> list[str]:
     env = lmdb.open(raw.lmdb_dir, readonly=True, lock=False)
     with env.begin() as txn:
-        values = [txn.get(f"data_{i}".encode()).decode() for i in range(len(RECORDS))]
+        values: list[str] = []
+        for i in range(len(RECORDS)):
+            stored = txn.get(f"data_{i}".encode())
+            assert stored is not None, f"data_{i} is missing from the store"
+            values.append(stored.decode())
     env.close()
     return values
 

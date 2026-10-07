@@ -8,3 +8,5 @@ subclassing ``ExperimentDataset``; importing it here populates ``dataset_registr
 The shared skeleton (genome, locus-tag reconciliation, assembly pin, injection rule)
 is ``torchcell.datasets.bacteria_common``. No loader has landed yet.
 """
+
+from .lamoureux2023 import RnaseqLamoureux2023Dataset as RnaseqLamoureux2023Dataset

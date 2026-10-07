@@ -72,6 +72,7 @@ def _record(perturbations, environment, ploidy="diploid"):
     """The stored-JSON shape ``aggregate_key_raw`` reads."""
     return {
         "experiment": {
+            "experiment_type": "environment_response",
             "genotype": {"perturbations": [p.model_dump() for p in perturbations]},
             "environment": environment.model_dump(),
         },
@@ -156,4 +157,49 @@ def test_an_undosed_environment_is_its_own_cell() -> None:
     """A media-swap record with no added compound must not join a dosed one."""
     assert AGG.aggregate_check(_data([HOM], _environment())) != (
         AGG.aggregate_check(_data([HOM], _environment(BENOMYL_7)))
+    )
+
+
+def _culture_environment(
+    *perturbations: s.SmallMoleculePerturbation, pre_culture: bool = True
+) -> s.CultureEnvironment:
+    """The strain-resolved family's environment: the base fields plus a protocol."""
+    return s.CultureEnvironment(
+        media=_media(),
+        temperature=s.Temperature(value=30.0),
+        perturbations=list(perturbations),
+        duration_generations=20.0,
+        culture_format=s.CultureFormat(vessel="microwell", working_volume_ul=100.0),
+        pre_culture=(
+            s.PreCulture(source=s.PreCultureSource.frozen_stock, source_label="-5gen")
+            if pre_culture
+            else None
+        ),
+    )
+
+
+def _strain_record(perturbations, environment, ploidy="haploid"):
+    """The stored-JSON shape of a strain-resolved record, which names its family."""
+    record = _record(perturbations, environment, ploidy)
+    record["experiment"]["experiment_type"] = "strain_environment_response"
+    return record
+
+
+def test_raw_path_rebuilds_the_declared_environment_class() -> None:
+    """The base ``Environment`` forbids the protocol fields a ``CultureEnvironment``
+    carries, so the raw path must construct the class the record's family declares;
+    with it the raw and pydantic keys agree on a strain-resolved record.
+    """
+    env = _culture_environment(BENOMYL_7)
+    assert AGG.aggregate_key_raw(_strain_record([HOM], env)) == (
+        AGG.aggregate_check(_data([HOM], env, "haploid"))
+    )
+
+
+def test_the_culture_protocol_is_part_of_the_cell() -> None:
+    """Two screens of one strain and compound that differ in pre-culture are two cells."""
+    assert AGG.aggregate_check(
+        _data([HOM], _culture_environment(BENOMYL_7, pre_culture=True), "haploid")
+    ) != AGG.aggregate_check(
+        _data([HOM], _culture_environment(BENOMYL_7, pre_culture=False), "haploid")
     )

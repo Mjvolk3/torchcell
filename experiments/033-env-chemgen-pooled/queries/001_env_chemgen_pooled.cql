@@ -25,8 +25,14 @@
 // S288C gene set (a dubious ORF retired since the screen) drops its records; the build
 // reports the returned count per dataset beside the served count so that loss is visible.
 //
-// Served counts (kg_manifest.json, release 2026.09.21-ab6d8c5d): Vanacloig 143,218;
-// Hillenmeyer HET 2,698,797; Hoepfner 3,124,319; Wildenhain 428,206; 6,394,540 records.
+// Served counts, release 2026.09.21-ab6d8c5d (build 001): Vanacloig 143,218; Hillenmeyer
+// HET 2,698,797; Hoepfner 3,124,319; Wildenhain 428,206; 6,394,540 records. Release
+// 2026.10.06-4b293d34 (build 002, after #500, #501, #504 to #506): Vanacloig 118,662;
+// Hillenmeyer HET 2,712,677; Hoepfner 3,083,827; Wildenhain 430,820; 6,345,986 records.
+//
+// The partition marker (PARTITION_MARKER of torchcell.data.neo4j_query_raw) after each
+// dataset filter is where the partitioned raw stage (fetch_workers > 0) puts its e.id
+// prefix filter; a single session removes it.
 //
 // Records are returned as the serialized_data properties, not as nodes, for the reason
 // recorded on the 025 query: hydrated nodes are retained by the driver for the life of
@@ -34,7 +40,7 @@
 
 // EnvChemgenVanacloig2022Dataset (haploid, sensitized host, 41 compounds at IC30)
 MATCH (dataset:Dataset)<-[:ExperimentMemberOf]-(e:Experiment)
-WHERE dataset.id = 'EnvChemgenVanacloig2022Dataset'
+WHERE dataset.id = 'EnvChemgenVanacloig2022Dataset' {partition}
 MATCH (e)<-[:GenotypeMemberOf]-(g:Genotype)
 MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
 WHERE ALL(p IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]
@@ -48,7 +54,7 @@ UNION ALL
 
 // HetHillenmeyer2008Dataset (heterozygous diploid, one of two copies, 290 compounds)
 MATCH (dataset:Dataset)<-[:ExperimentMemberOf]-(e:Experiment)
-WHERE dataset.id = 'HetHillenmeyer2008Dataset'
+WHERE dataset.id = 'HetHillenmeyer2008Dataset' {partition}
 MATCH (e)<-[:GenotypeMemberOf]-(g:Genotype)
 MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
 WHERE ALL(p IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]
@@ -62,7 +68,7 @@ UNION ALL
 
 // EnvChemgenHoepfner2014Dataset (diploid; HIP heterozygous and HOP homozygous arms, 148 compounds)
 MATCH (dataset:Dataset)<-[:ExperimentMemberOf]-(e:Experiment)
-WHERE dataset.id = 'EnvChemgenHoepfner2014Dataset'
+WHERE dataset.id = 'EnvChemgenHoepfner2014Dataset' {partition}
 MATCH (e)<-[:GenotypeMemberOf]-(g:Genotype)
 MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
 WHERE ALL(p IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]
@@ -76,7 +82,7 @@ UNION ALL
 
 // EnvChemgenWildenhain2015Dataset (haploid deletion, 242-gene panel, 5,170 compounds)
 MATCH (dataset:Dataset)<-[:ExperimentMemberOf]-(e:Experiment)
-WHERE dataset.id = 'EnvChemgenWildenhain2015Dataset'
+WHERE dataset.id = 'EnvChemgenWildenhain2015Dataset' {partition}
 MATCH (e)<-[:GenotypeMemberOf]-(g:Genotype)
 MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
 WHERE ALL(p IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]

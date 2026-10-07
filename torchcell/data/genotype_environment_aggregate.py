@@ -44,6 +44,7 @@ from torchcell.datamodels.identity import (
     environment_identity,
     identity_sha256,
 )
+from torchcell.datamodels.schema import environment_class_for
 
 
 def _perturbation_identity(
@@ -114,6 +115,10 @@ class GenotypeEnvironmentAggregator(Aggregator):
             cell_identity(
                 perturbations,
                 record["experiment_reference"]["genome_reference"]["ploidy"],
-                Environment(**experiment["environment"]),
+                # the class the record's family declares: the base class forbids the
+                # protocol fields a CultureEnvironment carries
+                environment_class_for(experiment["experiment_type"])(
+                    **experiment["environment"]
+                ),
             )
         )

@@ -40,15 +40,25 @@ import pandas as pd
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from torchcell.datamodels import Environment
 from torchcell.datamodels.identity import environment_identity, identity_sha256
+from torchcell.datamodels.schema import environment_class_for
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
 
-BUILD_ROOT = "/db/experiments/033-env-chemgen-pooled-001-pooled-build"
+#: Which build to flatten. Build 001 is the table of the 2026.09.21 store (every 031 and
+#: 035 result stands on it); build 002 is the table of the 2026.10.06 store, after the
+#: dataset fixes of #500, #501 and #504 to #506. Each build's table keeps its own
+#: directory so the two records can be compared.
+BUILD = os.environ.get("BUILD_NAME", "002-pooled-build")
+BUILD_ROOT = f"/db/experiments/033-env-chemgen-pooled-{BUILD}"
 LMDB_PATH = osp.join(BUILD_ROOT, "processed", "lmdb")
-DEFAULT_OUT = osp.join(DATA_ROOT, "experiments", "033-env-chemgen-pooled", "cell_table")
+DEFAULT_OUT = osp.join(
+    DATA_ROOT,
+    "experiments",
+    "033-env-chemgen-pooled",
+    "cell_table" if BUILD == "001-pooled-build" else f"cell_table_{BUILD[:3]}",
+)
 
 #: The three efflux-regulator deletions of the 3DeltaAlpha host (PDR1, PDR3, SNQ2).
 HOST_GENES: frozenset[str] = frozenset({"YGL013C", "YBL005W", "YDR011W"})
@@ -183,7 +193,9 @@ def flatten(index: int, entry: list[dict[str, Any]]) -> CellRow:
         ploidy=genome["ploidy"],
         strain=genome["strain"],
         environment_id=identity_sha256(
-            environment_identity(Environment(**environment))
+            environment_identity(
+                environment_class_for(experiment["experiment_type"])(**environment)
+            )
         ),
         n_compounds=len(small),
         compound_names="|".join(p["compound"]["name"] for p in small),

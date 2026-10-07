@@ -66,16 +66,31 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 EXPERIMENT = "033-env-chemgen-pooled"
 QUERY = f"experiments/{EXPERIMENT}/queries/001_env_chemgen_pooled.cql"
-BUILD_NAME = "001-pooled-build"
-
-#: Served record counts per dataset, from kg_manifest.json at release 2026.09.21-ab6d8c5d,
-#: so the build can report what the gene filter dropped.
-SERVED_COUNTS: dict[str, int] = {
-    "EnvChemgenVanacloig2022Dataset": 143_218,
-    "HetHillenmeyer2008Dataset": 2_698_797,
-    "EnvChemgenHoepfner2014Dataset": 3_124_319,
-    "EnvChemgenWildenhain2015Dataset": 428_206,
+#: Build 001 is the 2026.09.21 store; build 002 the 2026.10.06 store (#500, #501, #504 to
+#: #506 landed). The served counts per build, from the release records in
+#: database/releases/, so the build can report what the gene filter dropped.
+BUILD_NAME = os.environ.get("BUILD_NAME", "002-pooled-build")
+SERVED_COUNTS_BY_BUILD: dict[str, dict[str, int]] = {
+    "001-pooled-build": {
+        "EnvChemgenVanacloig2022Dataset": 143_218,
+        "HetHillenmeyer2008Dataset": 2_698_797,
+        "EnvChemgenHoepfner2014Dataset": 3_124_319,
+        "EnvChemgenWildenhain2015Dataset": 428_206,
+    },
+    "002-pooled-build": {
+        "EnvChemgenVanacloig2022Dataset": 118_662,
+        "HetHillenmeyer2008Dataset": 2_712_677,
+        "EnvChemgenHoepfner2014Dataset": 3_083_827,
+        "EnvChemgenWildenhain2015Dataset": 430_820,
+    },
 }
+SERVED_COUNTS = SERVED_COUNTS_BY_BUILD[BUILD_NAME]
+#: The raw stage partitioned over this many fetch processes, 256 e.id-prefix partitions
+#: per UNION ALL block (the query carries one {partition} marker per block). Measured on
+#: the Hoepfner block at 0.307 ms per record end to end (slurm 3138) against 4.39 ms
+#: single-session (slurm 2929).
+FETCH_WORKERS = 8
+PARTITION_PREFIX_LENGTH = 2
 
 
 def measurements_per_entry(processed_lmdb: str) -> tuple[Counter[int], Counter[str]]:
@@ -146,6 +161,8 @@ def main() -> None:
         deduplicator=None,
         aggregator=GenotypeEnvironmentAggregator,
         graph_processor=SubgraphRepresentation(),
+        fetch_workers=FETCH_WORKERS,
+        partition_prefix_length=PARTITION_PREFIX_LENGTH,
     )
     print(f"dataset length: {len(dataset)}", flush=True)
 
@@ -168,7 +185,7 @@ def main() -> None:
     out = (
         osp.join(dataset_root, "dataset_index_summary.json")
         if args.genes
-        else f"experiments/{EXPERIMENT}/results/dataset_index_summary.json"
+        else f"experiments/{EXPERIMENT}/results/dataset_index_summary_{BUILD_NAME}.json"
     )
     os.makedirs(osp.dirname(out), exist_ok=True)
     with open(out, "w") as f:

@@ -2,7 +2,7 @@
 # [[torchcell.datasets.ecoli.caglar2017]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/ecoli/caglar2017
 # Test file: tests/torchcell/datasets/ecoli/test_caglar2017.py
-"""Caglar 2017 E. coli molecular phenotype: the raw mirror and the strain gate.
+"""Caglar 2017 E. coli molecular phenotype: the RNA-seq and proteome loaders.
 
 Caglar et al. 2017 (Scientific Reports, doi:10.1038/srep45303) measured mRNA (RNA-seq),
 protein (LC-MS/MS) and 13C central-carbon flux ratios of one wild-type strain across 34
@@ -11,30 +11,65 @@ and two starvation time courses. The processed data are the paper's Supplementar
 Tables S1 (sample sheet), S2 (normalized mRNA), S3 (normalized protein) and S4 (flux
 ratios).
 
-**This module holds no loader, and that is the finding.** The strain is ``REL606``, an
-*E. coli* **B** strain (``STRAIN``, ``LINEAGE``), and the paper's identifiers are REL606
-identifiers: Table S2 is keyed by ``ECB_`` locus tags of GenBank CP000819.1 and Table S3
-by retired RefSeq ``YP_`` protein accessions of NC_012967.1 (``IDENTIFIER_FORMS``). The
-genomes tier holds K-12 MG1655, K-12 BW25113 and KT2440 only
-(``BacterialReferenceStrain``), so no record of this paper can carry an honest
-``AssemblyReferenceGenome``. Writing one against MG1655 would assert that a B-strain
-locus is a K-12 b-number, which is the cross-strain inference plan D5/D9 refuse.
-``require_pinnable_strain`` is the gate a loader calls first; it raises
-``UnpinnedStrainError`` carrying ``STRAIN_GAP`` (a typed ``ProvenanceGap`` on
-``genome_reference``) until ``REL606`` is in the tier's vocabulary.
+STRAIN. ``REL606``, an *E. coli* **B** strain (``STRAIN``, ``LINEAGE``), and the paper's
+identifiers are REL606 identifiers: Table S2 is keyed by ``ECB_`` locus tags of GenBank
+CP000819.1 and Table S3 by retired RefSeq ``YP_`` protein accessions of NC_012967.1
+(``IDENTIFIER_FORMS``). ``require_pinnable_strain`` is the gate each loader calls first;
+it returns now that ``REL606`` is in ``BacterialReferenceStrain`` (assembly set
+``ecoli_B_REL606_ASM1798v1``) and raises ``UnpinnedStrainError`` carrying ``STRAIN_GAP``
+against a vocabulary without it. ``REL606_TIER_ADDITION`` records the tier addition
+that opened it.
 
-``REL606_TIER_ADDITION`` records the exact addition that opens the gate: NCBI assembly
-ASM1798v1 (``GCA_000017985.1`` / ``GCF_000017985.1``), its nine members with the md5
-NCBI publishes and the sha256 measured on retrieval, the locus-tag pattern measured from
-the GenBank flat file, and the schema, registry and genome edits it needs.
+RAW MIRROR. ``deposit_raw_mirror`` writes ``$DATA_ROOT/torchcell-raw/
+caglarColiMolecularPhenotype2017/`` from bytes produced by the recorded retrievers
+(``raw_file_specs``): Tables S1 to S4 from the PMC Article Datasets bucket, and the NCBI
+protein records of every ``YP_`` accession in Table S3, the only scriptable bridge from the
+protein table to ``ECB_`` locus tags. ``identifier_coverage`` re-measures that bridge.
 
-What IS done here: the raw mirror. ``deposit_raw_mirror`` writes
-``$DATA_ROOT/torchcell-raw/caglarColiMolecularPhenotype2017/`` from bytes produced by
-the recorded retrievers (``raw_file_specs``): Tables S1 to S4 from the PMC Article
-Datasets bucket, and the NCBI protein records of every ``YP_`` accession in Table S3,
-which are the only scriptable bridge from the protein table to ``ECB_`` locus tags (no
-``YP_`` accession appears in the current GenBank or RefSeq annotation of the assembly).
-``identifier_coverage`` re-measures all of that from the mirror and the assembly files.
+THE LOG BASE, BACK-SOLVED. The paper says the tables were "normalized, and
+log-transformed" and never names the base (``LOG_TRANSFORMED``). ``back_solve_counts``
+settles it from the released numbers: every cell of Table S2 (4,196 x 152) and Table S3
+(4,196 x 105) inverts, through ``q = (2**y - P)**2 / 2**y`` with ``P = 2**min(table)``, to
+an integer count times one per-sample factor, and that factor equals DESeq2's
+median-of-ratios size factor computed on the reconstructed counts plus the +1
+pseudocount the Methods state (``SIZE_FACTOR_PSEUDOCOUNT``). That inverse is the one of
+DESeq2's parametric variance-stabilizing transform, which is ``log2`` of the normalized
+count for large counts, so the base is 2; base e and base 10 leave half the cells 0.5 off
+an integer. The build refuses a table whose reconstruction misses an integer by more than
+``COUNT_INTEGER_TOLERANCE`` or a size factor by more than ``SIZE_FACTOR_TOLERANCE``, and
+writes the evidence (``VstBackSolve``) and a ``StatDerivation`` of the base.
+
+RNA-SEQ (``RnaseqCaglar2017Dataset``, ``RNASeqExpressionPhenotype``). One record per
+Table S2 sample, i.e. per biological-replicate library (152). ``expression_count`` is the
+reconstructed HTSeq read count of each protein-coding gene (``READ_COUNTING``,
+``CODING_READS_ONLY``); ``expression_tpm`` is the TPM of those counts over the 4,196
+genes, with each gene's length the span of its GenBank gene feature in the REL606
+genome. The TPM is computed here: the paper reports DESeq2-normalized values, not TPM.
+
+PROTEOME (``ProteomeCaglar2017Dataset``, ``ProteinAbundancePhenotype``). One record per
+Table S3 sample (105). ``protein_abundance`` is the DESeq2 size-factor-normalized
+spectral count, the reconstructed integer count divided by the sample's size factor (the
+"Normalized protein counts" the SI names), keyed by the ``ECB_`` tag the deposited NCBI
+record of each ``YP_`` accession names. An unobserved protein is a 0 the source wrote
+(``UNOBSERVED_PROTEINS``). ``n_replicates`` is 1: a record is one biological culture.
+
+GENOTYPE AND ENVIRONMENT. Every record is wild-type REL606 (reference-only, an empty
+``Genotype``); the conditions are environment edits on Davis Minimal medium, read from
+the Table S1 row of the sample: ``DM500`` for glucose, ``DAVIS_MINIMAL`` plus a
+``carbon_source`` factor at 0.5 g/L for glycerol, lactate and gluconate; a magnesium
+sulfate level other than the base as a ``SmallMoleculePerturbation`` at the stated final
+concentration; NaCl added to reach a Na+ level above the ~5 mM base; 37 C, shaken
+flasks; ``duration_hours`` is the sample's ``growthTime_hr`` (the time it was collected).
+The growth phase (exponential, stationary, late stationary) has no slot on
+``Environment``; it selects the record's reference and is kept in the ledgers.
+
+REFERENCE. "The reference conditions always had glucose as carbon source and base Na+ and
+Mg2+ concentrations", one per phase (``REFERENCE_CONDITIONS``). Each record's reference
+is that condition in the record's phase (the late-stationary one applies the same rule to
+the third phase), with the phenotype averaged over the condition's samples.
+
+The flux arm (Table S4) is not loaded: it holds flux RATIOS, which neither
+``MetabolitePhenotype`` (pool sizes) nor ``FluxPhenotype`` (signed net flux) can store.
 """
 
 from __future__ import annotations
@@ -42,21 +77,64 @@ from __future__ import annotations
 import argparse
 import csv
 import gzip
+import json
+import logging
+import math
 import os
+import os.path as osp
+import pickle
 import re
 import shutil
-from collections.abc import Iterable
+from collections import Counter
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
 from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
-from typing import Any, get_args
+from typing import Any, ClassVar, Literal, get_args
 
+import numpy as np
+import pandas as pd
 from Bio import SeqIO
 from pydantic import BaseModel, ConfigDict, Field
 
+from torchcell.data import (
+    ExperimentDataset,
+    check_manifest_pin,
+    link_verified,
+    post_process,
+    verify_raw_files,
+)
+from torchcell.datamodels.compound_identity import resolved_compound
+from torchcell.datamodels.media import DAVIS_MINIMAL, DM500
 from torchcell.datamodels.schema import (
     BACTERIAL_LOCUS_TAG_PATTERNS,
+    BacterialProteinAbundanceExperiment,
+    BacterialProteinAbundanceExperimentReference,
     BacterialReferenceStrain,
+    BacterialRNASeqExpressionExperiment,
+    BacterialRNASeqExpressionExperimentReference,
+    Concentration,
+    ConcentrationUnit,
+    Environment,
+    EnvironmentPerturbationType,
+    EnvironmentPhysicalPerturbation,
+    Experiment,
+    ExperimentReference,
+    Genotype,
+    PhysicalFactor,
+    ProteinAbundancePhenotype,
+    Publication,
+    RNASeqExpressionPhenotype,
+    SmallMoleculePerturbation,
+    Temperature,
 )
+from torchcell.datasets.bacteria_common import (
+    LocusTagReconciliation,
+    assembly_reference,
+    bacterial_genome,
+    reconcile_locus_tags,
+)
+from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
     ArtifactRecord,
@@ -67,12 +145,25 @@ from torchcell.literature.manifest import (
 )
 from torchcell.literature.provenance import run_retriever
 from torchcell.literature.retrieve import pmc_cloud_url
-from torchcell.verification.report import Provenance
+from torchcell.sequence import GeneSet
+from torchcell.sequence.genome.ecoli.rel606 import EcoliBREL606Genome
+from torchcell.verification.levels import l0_structural, l1_count, l2_value_fidelity
+from torchcell.verification.report import (
+    DerivationMethod,
+    Level,
+    LevelResult,
+    Provenance,
+    StatDerivation,
+    VerificationReport,
+)
 from torchcell.verification.sourced import (
     ProvenanceGap,
     ProvenanceGapReason,
     SourcedValue,
+    audit_sourced_value,
 )
+
+log = logging.getLogger(__name__)
 
 # --------------------------------------------------------------------------- #
 # Provenance anchors
@@ -247,8 +338,10 @@ NORMALIZATION = _paper(
     "} 2 ^ { 1 7 }$",
     page="Methods, Normalization and quality control of RNA and protein counts",
     note="'All resulting data sets were checked for quality, normalized, and "
-    "log-transformed.' (Results). The base of the log is not stated in the mirror; the "
-    "Methods defer to ref 10 (the glucose-starvation paper), which is not mirrored",
+    "log-transformed.' (Results). The base of the log is not stated in the mirror and "
+    "the Methods defer to ref 10, which is not mirrored; back_solve_counts settles it "
+    "from the released numbers as 2 (the DESeq2 parametric variance-stabilizing "
+    "transform)",
 )
 TABLE_S2 = _si(
     (4196, 152),
@@ -311,6 +404,144 @@ SODIUM_SERIES = _paper(
     "due to the inclusion of sodium citrate",
     page="Methods, Cell Growth",
     note="mM Na+ at base; NaCl is added to reach each higher level",
+)
+NACL_ADDITION = _paper(
+    95,
+    "so $9 5 \\mathrm { m M N a C l }$ was added for the $1 0 0 \\mathrm { m M N a ^ { + } }$ "
+    "condition, for example",
+    page="Methods, Cell Growth",
+    note="mM NaCl added = the Na+ level less the ~5 mM base; the loader applies the "
+    "stated arithmetic to the 200 and 300 mM levels (195 and 295 mM added)",
+)
+CULTURE_CONDITIONS = _paper(
+    37.0,
+    "This culture was incubated at $3 7 ^ { \\circ } \\mathrm { C }$ with 120 r.p.m. "
+    "orbital shaking",
+    page="Methods, Cell Growth",
+    note="degrees Celsius; 50 ml cultures in 250 ml flasks, orbitally shaken, so the "
+    "oxygen regime is recorded as aerobic",
+)
+EXPONENTIAL_SAMPLING = _paper(
+    "20-60% of maximal OD600",
+    "Exponential-phase samples were taken during growth when the $\\mathrm { O D } _ { 6 "
+    "0 0 }$ reached $2 0 { - } 6 0 \\%$ of the maximum achieved after saturating growth.",
+    page="Methods, Cell Growth",
+    note="the phase is set by an optical density, so a phase's samples are collected "
+    "at different times",
+)
+STATIONARY_SAMPLING = _paper(
+    "20-24 h after the exponential sample",
+    "Stationary phase samples were collected 20–24 hours after the corresponding "
+    "exponential sample.",
+    page="Methods, Cell Growth",
+)
+SAMPLING_TIMES = _paper(
+    "Table S1 growthTime_hr",
+    "The exact sampling times for each condition are provided in "
+    "Supplementary Table S1.",
+    page="Methods, Cell Growth",
+    note="the OCR separates the last three words with no-break spaces, kept verbatim",
+)
+SAMPLE_TIME_COLUMN = _si(
+    "growthTime_hr",
+    "the growth time at which the sample was collected",
+    note="Table S1's description of its growth-time column; the loader stores it as "
+    "Environment.duration_hours",
+)
+REFERENCE_CONDITIONS = _paper(
+    ("exponential", "stationary"),
+    "We used two reference conditions in our comparisons, one for exponential phase and "
+    "one for stationary phase. The reference conditions always had glucose as carbon "
+    "source and base $\\mathrm { N a ^ { + } }$ and $\\mathbf { M } \\mathbf { g } ^ { "
+    "2 + }$ concentrations.",
+    page="Methods, Identifying differentially expressed genes",
+    note="the loader applies the same rule to the late-stationary samples, for which "
+    "the paper names no reference",
+)
+GLUCOSE_TIME_COURSE_PRIOR = _paper(
+    "ref 10",
+    "Results from one of these conditions, long-term glucose starvation, have been "
+    "presented previously10.",
+    page="Results, Experimental design and data collection",
+    note="the glucose time-course samples (GEO GSE67402 / PRIDE PXD002140) are columns "
+    "of Tables S2 and S3, processed with the rest",
+)
+
+# --------------------------------------------------------------------------- #
+# How Tables S2 and S3 were made (what the back-solve inverts)
+# --------------------------------------------------------------------------- #
+_NORMALIZATION_PAGE = (
+    "Methods, Normalization and quality control of RNA and protein counts"
+)
+
+LOG_TRANSFORMED = _paper(
+    "log-transformed; base not stated",
+    "All resulting data sets were checked for quality, normalized, and log-transformed.",
+    page="Results, Experimental design and data collection",
+    note="the base is back-solved, not stated: every cell of Tables S2 and S3 inverts "
+    "exactly as the DESeq2 parametric variance-stabilizing transform, base 2 "
+    "(VstBackSolve)",
+)
+SIZE_FACTOR_PSEUDOCOUNT = _paper(
+    1,
+    "Because we had many mRNAs and proteins with counts of zero at some condition, we "
+    "added pseudo-counts of $+ 1$ to all counts before calculating size factors.",
+    page=_NORMALIZATION_PAGE,
+)
+SIZE_FACTORS_ON_RAW = _paper(
+    "size factors divide the raw counts",
+    "We then used those size factors to normalize the original raw counts (i.e., "
+    "without pseudo-counts).",
+    page=_NORMALIZATION_PAGE,
+)
+READ_COUNTING = _paper(
+    "HTSeq read counts per gene",
+    "The raw number of reads mapping to each gene were counted using HTSeq",
+    page="Methods, RNA-seq",
+)
+CODING_READS_ONLY = _paper(
+    "reads overlapping protein-coding genes",
+    "For RNA, we only analyzed the counts of reads that overlapped annotated protein "
+    "coding genes, i.e., reads mapping to mRNAs.",
+    page=_NORMALIZATION_PAGE,
+    note="so a record's counts are the reads of the 4,196 coding genes, not every "
+    "mapped read",
+)
+PROTEIN_COUNTS_FRACTIONAL = _paper(
+    "spectral counts shared among proteins",
+    "Protein counts can be fractional, because some peptide spectra cannot be uniquely "
+    "mapped to a single protein, so they are equally divided amongst these proteins.",
+    page=_NORMALIZATION_PAGE,
+)
+PROTEIN_COUNTS_ROUNDED = _paper(
+    "rounded to integers",
+    "We rounded all protein counts to the nearest integer for subsequent analysis.",
+    page=_NORMALIZATION_PAGE,
+)
+UNOBSERVED_PROTEINS = _paper(
+    0, "We set the counts of all unobserved proteins to zero.", page=_NORMALIZATION_PAGE
+)
+QC_FLAGGED_SAMPLES = _paper(
+    ("MURI_091", "MURI_130"),
+    "Out of 152 mRNA samples we found only two samples (samples MURI_091 and MURI_130, "
+    "Supplementary Table S1) that seemed to deviate from their biological "
+    "replicas.",
+    page=_NORMALIZATION_PAGE,
+)
+ALL_SAMPLES_KEPT = _paper(
+    True,
+    "Because of this broad consistency among all samples for the same growth "
+    "conditions, we keep all samples for subsequent analysis.",
+    page=_NORMALIZATION_PAGE,
+    note="MURI_091 and MURI_130 are records like every other sample",
+)
+GEO_PROCESSED_COUNTS = _paper(
+    "GSE94117",
+    "Raw Illumina read data and processed files of read counts per gene and normalized "
+    "expression levels per gene have been deposited in the NCBI GEO database",
+    page="Methods, Statistical analysis and data availability",
+    note="not mirrored: Table S2 is the processed matrix the paper names, and its "
+    "counts are reconstructed exactly (back_solve_counts)",
 )
 
 
@@ -1087,12 +1318,1468 @@ def annotation_summary(
     )
 
 
-def main() -> None:
-    """Retrieve and deposit the raw mirror, or measure identifier coverage."""
+# --------------------------------------------------------------------------- #
+# The log base, back-solved: Tables S2 and S3 are DESeq2 VST values of counts
+# --------------------------------------------------------------------------- #
+FloatArray = np.ndarray[Any, np.dtype[np.float64]]
+
+#: The base of the logarithm in Tables S2 and S3. Back-solved (``back_solve_counts``),
+#: not stated: the paper says only "log-transformed" (``LOG_TRANSFORMED``).
+VST_LOG_BASE = 2.0
+#: A reconstructed count further than this from an integer refuses the build. Measured
+#: on the mirror: 8.3e-9 (Table S2) and 1.1e-10 (Table S3) at worst.
+COUNT_INTEGER_TOLERANCE = 1e-6
+#: A per-sample factor further than this (relative) from DESeq2's median-of-ratios size
+#: factor of the reconstructed counts refuses the build.
+SIZE_FACTOR_TOLERANCE = 1e-6
+
+
+def vst_forward(normalized: FloatArray, floor: float) -> FloatArray:
+    """DESeq2's parametric VST of size-factor-normalized counts, written by its floor.
+
+    DESeq2 computes ``log2((1 + e + 2 a q + 2 sqrt(a q (1 + e + a q))) / (4 a))`` for
+    dispersion ``a + e / mean``. Tying ``e`` to the transform of a zero count,
+    ``floor = log2((1 + e) / (4 a))``, leaves ``log2((q + 2P + sqrt(q**2 + 4 P q)) / 2)``
+    with ``P = 2**floor``: one parameter, the table's minimum. For large ``q`` it is
+    ``log2(q)``.
+    """
+    level = VST_LOG_BASE**floor
+    root = np.sqrt(normalized**2 + 4.0 * level * normalized)
+    return np.asarray(
+        np.log2((normalized + 2.0 * level + root) / 2.0), dtype=np.float64
+    )
+
+
+def vst_inverse(values: FloatArray, floor: float) -> FloatArray:
+    """The normalized count of each VST value: ``(2**y - P)**2 / 2**y``, ``P = 2**floor``."""
+    level = VST_LOG_BASE**floor
+    scaled = np.exp2(values)
+    return np.asarray((scaled - level) ** 2 / scaled, dtype=np.float64)
+
+
+def deseq2_size_factors(counts: FloatArray) -> FloatArray:
+    """DESeq2 median-of-ratios size factors of a genes x samples count matrix.
+
+    The Methods add the +1 pseudocount before the size factors are calculated
+    (``SIZE_FACTOR_PSEUDOCOUNT``), so every gene has a finite geometric mean and enters
+    the median, which is what DESeq2's ``estimateSizeFactorsForMatrix`` does then.
+    """
+    logs = np.log(counts + float(SIZE_FACTOR_PSEUDOCOUNT.value))
+    return np.asarray(
+        np.exp(np.median(logs - logs.mean(axis=1, keepdims=True), axis=0)),
+        dtype=np.float64,
+    )
+
+
+class VstBackSolve(BaseModel):
+    """The evidence that one table's values are DESeq2 VST values of integer counts."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    table: str
+    n_features: int
+    n_samples: int
+    log_base: float
+    floor_value: float = Field(description="The table's minimum, the VST of a zero.")
+    floor_level: float = Field(description="``2**floor_value``, the P of the inverse.")
+    zero_cells: int = Field(description="Cells at the floor, i.e. zero counts.")
+    samples_with_a_zero: int
+    max_count_integer_deviation: float = Field(
+        description="Largest distance of a reconstructed count from an integer."
+    )
+    max_size_factor_relative_deviation: float = Field(
+        description="Largest |s / s_DESeq2 - 1| over samples, s_DESeq2 computed on the "
+        "reconstructed counts plus the +1 pseudocount."
+    )
+    size_factor_min: float
+    size_factor_max: float
+    library_size_min: int
+    library_size_median: float
+    library_size_max: int
+
+
+class CountReconstruction(BaseModel):
+    """Integer counts and per-sample size factors recovered from one released table."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid", arbitrary_types_allowed=True)
+
+    evidence: VstBackSolve
+    counts: pd.DataFrame
+    size_factors: pd.Series
+
+
+def back_solve_counts(table: pd.DataFrame, *, label: str) -> CountReconstruction:
+    """Invert a genes x samples VST table to its integer counts and size factors.
+
+    The floor (the table minimum) is the transform of a zero count. Each sample's
+    smallest nonzero normalized count is taken as a count of 1, so its size factor is
+    the reciprocal; every other count is then the normalized count times that factor.
+    Two checks make this a measurement and not an assumption: every reconstructed
+    count must be an integer (``COUNT_INTEGER_TOLERANCE``), and the factors must equal
+    DESeq2's median-of-ratios size factors of the reconstructed counts with the stated
+    +1 pseudocount (``SIZE_FACTOR_TOLERANCE``). A sample whose smallest count is not 1
+    fails the second check.
+    """
+    values = table.to_numpy(dtype=np.float64)
+    floor = float(values.min())
+    normalized = vst_inverse(values, floor)
+    at_floor = values == floor
+    normalized[at_floor] = 0.0
+    size_factors = np.empty(values.shape[1], dtype=np.float64)
+    for j in range(values.shape[1]):
+        positive = normalized[:, j][normalized[:, j] > 0.0]
+        if positive.size == 0:
+            raise RuntimeError(
+                f"{label}: sample {table.columns[j]} has no nonzero count"
+            )
+        size_factors[j] = 1.0 / float(positive.min())
+    raw = normalized * size_factors
+    counts = np.rint(raw)
+    deviation = float(np.abs(raw - counts).max())
+    if deviation > COUNT_INTEGER_TOLERANCE:
+        raise RuntimeError(
+            f"{label}: a reconstructed count is {deviation} from an integer (tolerance "
+            f"{COUNT_INTEGER_TOLERANCE}); the table is not a base-{VST_LOG_BASE} VST of "
+            "counts"
+        )
+    relative = float(np.abs(size_factors / deseq2_size_factors(counts) - 1.0).max())
+    if relative > SIZE_FACTOR_TOLERANCE:
+        raise RuntimeError(
+            f"{label}: the reconstructed size factors differ from DESeq2's (+1 "
+            f"pseudocount) by up to {relative} (tolerance {SIZE_FACTOR_TOLERANCE})"
+        )
+    totals = counts.sum(axis=0)
+    evidence = VstBackSolve(
+        table=label,
+        n_features=int(values.shape[0]),
+        n_samples=int(values.shape[1]),
+        log_base=VST_LOG_BASE,
+        floor_value=floor,
+        floor_level=VST_LOG_BASE**floor,
+        zero_cells=int(at_floor.sum()),
+        samples_with_a_zero=int(at_floor.any(axis=0).sum()),
+        max_count_integer_deviation=deviation,
+        max_size_factor_relative_deviation=relative,
+        size_factor_min=float(size_factors.min()),
+        size_factor_max=float(size_factors.max()),
+        library_size_min=int(totals.min()),
+        library_size_median=float(np.median(totals)),
+        library_size_max=int(totals.max()),
+    )
+    return CountReconstruction(
+        evidence=evidence,
+        counts=pd.DataFrame(
+            counts.astype(np.int64), index=table.index, columns=table.columns
+        ),
+        size_factors=pd.Series(size_factors, index=table.columns),
+    )
+
+
+def log_base_derivation(evidence: Sequence[VstBackSolve]) -> StatDerivation:
+    """The log base as a ``StatDerivation``: back-solved from the released tables."""
+    return StatDerivation(
+        field="log_base",
+        method=DerivationMethod.back_solve,
+        value=VST_LOG_BASE,
+        statistic="every released cell inverts through the base-2 DESeq2 VST to an "
+        "integer count times a per-sample factor equal to DESeq2's +1-pseudocount "
+        "median-of-ratios size factor",
+        diagnostics={
+            **{
+                f"{e.table}_max_count_integer_deviation": e.max_count_integer_deviation
+                for e in evidence
+            },
+            **{
+                f"{e.table}_max_size_factor_relative_deviation": (
+                    e.max_size_factor_relative_deviation
+                )
+                for e in evidence
+            },
+        },
+        provenance=LOG_TRANSFORMED.provenance,
+        rationale="the paper says 'log-transformed' with no base and defers to ref 10, "
+        "which is not mirrored; base e and base 10 versions of the same inverse leave "
+        "cells 0.5 from an integer, base 2 leaves none further than 1e-8",
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Table S1: the sample sheet
+# --------------------------------------------------------------------------- #
+COL_SAMPLE = "dataSet"
+COL_EXPERIMENT = "experiment"
+COL_TIME = "growthTime_hr"
+COL_BATCH = "batchNumber"
+COL_CARBON = "carbonSource"
+COL_MG = "Mg_mM"
+COL_MG_LEVEL = "Mg_mM_Levels"
+COL_NA = "Na_mM"
+COL_NA_LEVEL = "Na_mM_Levels"
+COL_PHASE = "growthPhase"
+COL_CONDITION = "uniqueCondition"
+COL_RNA = "RNA_Data_Freq"
+COL_PROTEIN = "Protein_Data_Freq"
+
+#: Table S1's base Mg2+ level (the Methods state 0.83 mM; the sheet writes 0.8).
+BASE_MG_SHEET_MM = 0.8
+#: Table S1's base Na+ level, the ~5 mM the sodium citrate brings (``SODIUM_SERIES``).
+BASE_NA_MM = 5.0
+#: The carbon source of DM500 and of the reference conditions.
+BASE_CARBON = "glucose"
+
+CarbonSource = Literal["glucose", "glycerol", "lactate", "gluconate"]
+MgLevel = Literal["lowMg", "baseMg", "highMg"]
+NaLevel = Literal["baseNa", "highNa"]
+
+
+class GrowthPhase(StrEnum):
+    """Table S1's ``growthPhase`` cell of a sample with data."""
+
+    exponential = "exponential"
+    stationary = "stationary"
+    late_stationary = "late_stationary"
+
+
+class SampleRow(BaseModel):
+    """One Table S1 row that carries RNA or protein data."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    sample: str
+    experiment: str
+    condition: str = Field(description="Table S1 ``uniqueCondition``.")
+    growth_time_hr: float
+    batch: int
+    carbon_source: CarbonSource
+    mg_mm: float
+    mg_level: MgLevel
+    na_mm: float
+    na_level: NaLevel
+    growth_phase: GrowthPhase
+    rna_technical_replicates: int
+    protein_technical_replicates: int
+
+    @property
+    def reference_condition(self) -> bool:
+        """Glucose with base Mg2+ and base Na+, the paper's reference rule."""
+        return (
+            self.carbon_source == BASE_CARBON
+            and self.mg_level == "baseMg"
+            and self.na_level == "baseNa"
+        )
+
+
+def read_sample_sheet(path: str | Path) -> list[SampleRow]:
+    """Every Table S1 row with RNA or protein data, in sheet order.
+
+    Rows with neither (the pilot cultures and the repeated glucose time course) are not
+    samples of either table. A cell of no known form raises (pydantic), and a level
+    label that disagrees with its number (``baseMg`` off 0.8 mM, ``baseNa`` off 5 mM)
+    is refused.
+    """
+    frame = pd.read_csv(path, dtype=str, keep_default_na=False)
+    rows: list[SampleRow] = []
+    for cells in frame.to_dict(orient="records"):
+        rna = int(cells[COL_RNA])
+        protein = int(cells[COL_PROTEIN])
+        if rna == 0 and protein == 0:
+            continue
+        row = SampleRow.model_validate(
+            {
+                "sample": cells[COL_SAMPLE],
+                "experiment": cells[COL_EXPERIMENT],
+                "condition": cells[COL_CONDITION],
+                "growth_time_hr": float(cells[COL_TIME]),
+                "batch": int(cells[COL_BATCH]),
+                "carbon_source": cells[COL_CARBON],
+                "mg_mm": float(cells[COL_MG]),
+                "mg_level": cells[COL_MG_LEVEL],
+                "na_mm": float(cells[COL_NA]),
+                "na_level": cells[COL_NA_LEVEL],
+                "growth_phase": cells[COL_PHASE],
+                "rna_technical_replicates": rna,
+                "protein_technical_replicates": protein,
+            }
+        )
+        if (row.mg_level == "baseMg") != (row.mg_mm == BASE_MG_SHEET_MM):
+            raise ValueError(f"{row.sample}: {row.mg_level} at {row.mg_mm} mM Mg2+")
+        if (row.na_level == "baseNa") != (row.na_mm == BASE_NA_MM):
+            raise ValueError(f"{row.sample}: {row.na_level} at {row.na_mm} mM Na+")
+        rows.append(row)
+    if len({row.sample for row in rows}) != len(rows):
+        raise ValueError("Table S1 repeats a sample id")
+    return rows
+
+
+# --------------------------------------------------------------------------- #
+# Environment
+# --------------------------------------------------------------------------- #
+#: The carbon source's dose when it replaces glucose (``CARBON_SOURCE_SWAP``).
+SWAPPED_CARBON_G_PER_L = 0.5
+
+
+def carbon_source_perturbation(carbon: str) -> EnvironmentPhysicalPerturbation:
+    """Glycerol, lactate or gluconate at 0.5 g/L in place of DM500's glucose."""
+    return EnvironmentPhysicalPerturbation(
+        factor=PhysicalFactor.carbon_source,
+        magnitude=Concentration(
+            value=SWAPPED_CARBON_G_PER_L, unit=ConcentrationUnit.g_per_l
+        ),
+        agent=resolved_compound(carbon),
+    )
+
+
+def magnesium_perturbation(mg_mm: float) -> SmallMoleculePerturbation:
+    """Magnesium sulfate at Table S1's level, in place of Davis Minimal's 0.83 mM."""
+    return SmallMoleculePerturbation(
+        compound=resolved_compound("magnesium sulfate"),
+        concentration=Concentration(value=mg_mm, unit=ConcentrationUnit.millimolar),
+        description=f"magnesium sulfate set to {mg_mm:g} mM final (Table S1 Mg_mM) in "
+        "place of the 0.83 mM Davis Minimal medium normally holds",
+    )
+
+
+def sodium_perturbation(na_mm: float) -> SmallMoleculePerturbation:
+    """NaCl added to raise Na+ from the ~5 mM base to Table S1's level."""
+    added = na_mm - BASE_NA_MM
+    if added <= 0:
+        raise ValueError(f"{na_mm} mM Na+ is not above the {BASE_NA_MM} mM base")
+    return SmallMoleculePerturbation(
+        compound=resolved_compound("sodium chloride"),
+        concentration=Concentration(value=added, unit=ConcentrationUnit.millimolar),
+        description=f"sodium chloride added to reach {na_mm:g} mM Na+ (Table S1 Na_mM) "
+        f"over the ~{BASE_NA_MM:g} mM the medium's sodium citrate brings",
+    )
+
+
+def build_environment(row: SampleRow) -> Environment:
+    """The environment of one sample: medium, edits, 37 C, aerobic, collection time."""
+    perturbations: list[EnvironmentPerturbationType] = []
+    if row.carbon_source == BASE_CARBON:
+        media = DM500
+    else:
+        media = DAVIS_MINIMAL
+        perturbations.append(carbon_source_perturbation(row.carbon_source))
+    if row.mg_level != "baseMg":
+        perturbations.append(magnesium_perturbation(row.mg_mm))
+    if row.na_level != "baseNa":
+        perturbations.append(sodium_perturbation(row.na_mm))
+    return Environment(
+        media=media,
+        temperature=Temperature(value=float(CULTURE_CONDITIONS.value)),
+        perturbations=perturbations,
+        aerobicity="aerobic",
+        duration_hours=row.growth_time_hr,
+    )
+
+
+def reference_duration_gap(phase: GrowthPhase, times: Iterable[float]) -> ProvenanceGap:
+    """Why a reference environment has no ``duration_hours``."""
+    stated = ", ".join(f"{t:g}" for t in sorted(set(times)))
+    return ProvenanceGap(
+        field="duration_hours",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        looked_in=EXPONENTIAL_SAMPLING.provenance,
+        note=f"the {phase.value} reference condition pools samples Table S1 dates at "
+        f"{stated} h; the paper sets the phase by optical density, so no single "
+        "duration describes the reference",
+    )
+
+
+def reference_environment(phase: GrowthPhase, times: Iterable[float]) -> Environment:
+    """DM500 with base Mg2+ and Na+ (the reference rule) in ``phase``."""
+    return Environment(
+        media=DM500,
+        temperature=Temperature(value=float(CULTURE_CONDITIONS.value)),
+        perturbations=[],
+        aerobicity="aerobic",
+        provenance_gaps=[reference_duration_gap(phase, times)],
+    )
+
+
+def reference_rows(rows: Sequence[SampleRow]) -> dict[GrowthPhase, list[SampleRow]]:
+    """Each phase's reference samples: one Table S1 condition, glucose, base Mg and Na."""
+    out: dict[GrowthPhase, list[SampleRow]] = {}
+    for phase in GrowthPhase:
+        if not any(r.growth_phase is phase for r in rows):
+            continue
+        members = [r for r in rows if r.reference_condition and r.growth_phase is phase]
+        conditions = {r.condition for r in members}
+        if len(conditions) != 1:
+            raise RuntimeError(
+                f"the {phase.value} reference rule selects conditions "
+                f"{sorted(conditions)}"
+            )
+        out[phase] = members
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# Phenotypes
+# --------------------------------------------------------------------------- #
+RNA_MEASUREMENT_TYPE = "rnaseq_tpm"
+PROTEIN_MEASUREMENT_TYPE = "lcmsms_spectral_count_deseq2_size_factor_normalized"
+TPM_TOTAL = 1e6
+
+#: The stored counts are the reads of the coding genes, not the library's mapped reads.
+MAPPED_READS_GAP = ProvenanceGap(
+    field="n_mapped_reads",
+    reason=ProvenanceGapReason.deferred_pending_source_review,
+    looked_in=Provenance(
+        source_uri=f"{RAW_DIR_REL}/{si_table_relpath('S2')}",
+        citation_key=CITATION_KEY,
+        sha256=SI_TABLES["S2"][1],
+        page="Table S2 (coding-gene counts only; no read-depth row)",
+    ),
+    resolve_with=Provenance(
+        source_uri="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE94117",
+        citation_key=CITATION_KEY,
+        page="GEO series files: read counts per gene",
+    ),
+    note="the reconstructed counts sum the reads of the 4,196 protein-coding genes "
+    "('For RNA, we only analyzed the counts of reads that overlapped annotated protein "
+    "coding genes'); the library's total mapped reads are in the GEO deposit, which is "
+    "not mirrored",
+)
+
+
+def gene_lengths(genome: EcoliBREL606Genome, tags: Sequence[str]) -> FloatArray:
+    """Each locus's GenBank gene-feature span (bp); a joined location is refused."""
+    lengths = []
+    for tag in tags:
+        locus = genome.genbank.loci[tag]
+        if locus.segments != 1:
+            raise ValueError(f"{tag} has a {locus.segments}-part location")
+        lengths.append(float(locus.end - locus.start + 1))
+    return np.asarray(lengths, dtype=np.float64)
+
+
+def tpm(counts: FloatArray, lengths: FloatArray) -> FloatArray:
+    """Transcripts per million: counts per base, scaled to sum to one million."""
+    rate = counts / lengths
+    return np.asarray(rate / rate.sum() * TPM_TOTAL, dtype=np.float64)
+
+
+def rnaseq_phenotype(
+    genes: Sequence[str], counts: FloatArray, lengths: FloatArray
+) -> RNASeqExpressionPhenotype:
+    """One library's TPM and integer read counts over the stored genes."""
+    return RNASeqExpressionPhenotype(
+        expression_tpm=dict(
+            zip(genes, (float(v) for v in tpm(counts, lengths)), strict=True)
+        ),
+        expression_count={g: int(c) for g, c in zip(genes, counts, strict=True)},
+        measurement_type=RNA_MEASUREMENT_TYPE,
+        provenance_gaps=[MAPPED_READS_GAP],
+    )
+
+
+def rnaseq_reference_phenotype(
+    genes: Sequence[str], counts: FloatArray, lengths: FloatArray
+) -> RNASeqExpressionPhenotype:
+    """The mean TPM and mean count (rounded half to even) of a genes x samples block."""
+    profiles = np.stack([tpm(counts[:, j], lengths) for j in range(counts.shape[1])])
+    return RNASeqExpressionPhenotype(
+        expression_tpm=dict(
+            zip(genes, (float(v) for v in profiles.mean(axis=0)), strict=True)
+        ),
+        expression_count={
+            g: int(c) for g, c in zip(genes, np.rint(counts.mean(axis=1)), strict=True)
+        },
+        measurement_type=RNA_MEASUREMENT_TYPE,
+        provenance_gaps=[MAPPED_READS_GAP],
+    )
+
+
+def protein_phenotype(
+    proteins: Sequence[str], counts: FloatArray, size_factor: float
+) -> ProteinAbundancePhenotype:
+    """One sample's size-factor-normalized spectral counts; one culture, n = 1."""
+    return ProteinAbundancePhenotype(
+        protein_abundance={
+            p: float(c) / size_factor for p, c in zip(proteins, counts, strict=True)
+        },
+        n_replicates=dict.fromkeys(proteins, 1),
+        measurement_type=PROTEIN_MEASUREMENT_TYPE,
+    )
+
+
+def protein_reference_phenotype(
+    proteins: Sequence[str], normalized: FloatArray
+) -> ProteinAbundancePhenotype:
+    """Mean, standard error and sample count of a proteins x samples block."""
+    n = normalized.shape[1]
+    mean = normalized.mean(axis=1)
+    se = (
+        normalized.std(axis=1, ddof=1) / math.sqrt(n)
+        if n > 1
+        else np.full(len(proteins), math.nan)
+    )
+    return ProteinAbundancePhenotype(
+        protein_abundance={p: float(v) for p, v in zip(proteins, mean, strict=True)},
+        protein_abundance_se={p: float(v) for p, v in zip(proteins, se, strict=True)},
+        n_replicates=dict.fromkeys(proteins, n),
+        measurement_type=PROTEIN_MEASUREMENT_TYPE,
+    )
+
+
+def publication() -> Publication:
+    """The paper every record cites."""
+    return Publication(doi=PAPER_DOI, doi_url=f"https://doi.org/{PAPER_DOI}")
+
+
+# --------------------------------------------------------------------------- #
+# Build bookkeeping
+# --------------------------------------------------------------------------- #
+#: Every released id must resolve to a REL606 locus. Measured on the mirror: 4,196 of
+#: 4,196 for both tables, so anything less means the table or the annotation moved.
+MIN_RESOLVED_FRACTION = 1.0
+
+
+class RecordSample(BaseModel):
+    """What one LMDB record was built from: its Table S1 row and its back-solve."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    index: int
+    sample: str
+    experiment: str
+    condition: str
+    growth_phase: GrowthPhase
+    growth_time_hr: float
+    batch: int
+    technical_replicates: int = Field(
+        description="Table S1's technical-replicate count for this assay."
+    )
+    size_factor: float
+    library_size: int = Field(description="Sum of the reconstructed counts.")
+
+
+class ReplicateGroup(BaseModel):
+    """The records of one Table S1 ``uniqueCondition``: its biological replicates.
+
+    A time course puts several collection times under one condition, and a salt series
+    collects its three replicates at different times (sampling is set by optical
+    density), so the group lists each record's time and batch.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    condition: str
+    growth_phase: GrowthPhase
+    carbon_source: str
+    mg_mm: float
+    na_mm: float
+    samples: list[str]
+    record_indices: list[int]
+    growth_times_hr: list[float]
+    batches: list[int]
+    experiments: list[str]
+
+
+class BuildAccounting(BaseModel):
+    """The retention arithmetic of one build. No rule drops a sample: every Table S1
+    row with this assay's data is a record, and a cell the loader cannot read raises.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    dataset: str
+    table: str
+    sheet_rows_with_data: int = Field(
+        description="Table S1 rows with RNA or protein data."
+    )
+    candidate_records: int = Field(description="Samples (columns) of the table.")
+    kept_records: int
+    dropped_records: int
+    drops_by_reason: dict[str, int]
+    kept_by_growth_phase: dict[str, int]
+    kept_by_carbon_source: dict[str, int]
+    kept_by_experiment: dict[str, int]
+    reference_samples: dict[str, list[str]]
+    notes: list[str]
+
+    def check(self) -> None:
+        """Kept plus dropped is every candidate, and the reasons add up."""
+        if self.kept_records + self.dropped_records != self.candidate_records:
+            raise RuntimeError(f"{self.dataset}: retention does not add up")
+        if sum(self.drops_by_reason.values()) != self.dropped_records:
+            raise RuntimeError(f"{self.dataset}: drop reasons do not add up")
+
+
+def _counts_of(values: Iterable[str]) -> dict[str, int]:
+    return dict(sorted(Counter(values).items()))
+
+
+def _accounting(
+    dataset: str,
+    table: str,
+    sheet_rows: int,
+    rows: Sequence[SampleRow],
+    references: Mapping[GrowthPhase, Sequence[SampleRow]],
+    notes: list[str],
+) -> BuildAccounting:
+    accounting = BuildAccounting(
+        dataset=dataset,
+        table=table,
+        sheet_rows_with_data=sheet_rows,
+        candidate_records=len(rows),
+        kept_records=len(rows),
+        dropped_records=0,
+        drops_by_reason={},
+        kept_by_growth_phase=_counts_of(r.growth_phase.value for r in rows),
+        kept_by_carbon_source=_counts_of(r.carbon_source for r in rows),
+        kept_by_experiment=_counts_of(r.experiment for r in rows),
+        reference_samples={
+            phase.value: [r.sample for r in members]
+            for phase, members in references.items()
+        },
+        notes=notes,
+    )
+    accounting.check()
+    return accounting
+
+
+def replicate_groups(rows: Sequence[SampleRow]) -> list[ReplicateGroup]:
+    """The records grouped by Table S1 condition, in condition order."""
+    groups: dict[str, ReplicateGroup] = {}
+    for index, row in enumerate(rows):
+        group = groups.setdefault(
+            row.condition,
+            ReplicateGroup(
+                condition=row.condition,
+                growth_phase=row.growth_phase,
+                carbon_source=row.carbon_source,
+                mg_mm=row.mg_mm,
+                na_mm=row.na_mm,
+                samples=[],
+                record_indices=[],
+                growth_times_hr=[],
+                batches=[],
+                experiments=[],
+            ),
+        )
+        defining = (row.growth_phase, row.carbon_source, row.mg_mm, row.na_mm)
+        if defining != (
+            group.growth_phase,
+            group.carbon_source,
+            group.mg_mm,
+            group.na_mm,
+        ):
+            raise RuntimeError(
+                f"{row.sample} differs from its condition {row.condition}"
+            )
+        group.samples.append(row.sample)
+        group.record_indices.append(index)
+        group.growth_times_hr.append(row.growth_time_hr)
+        group.batches.append(row.batch)
+        group.experiments.append(row.experiment)
+    return [groups[key] for key in sorted(groups)]
+
+
+def _write_json(directory: str, name: str, payload: Any) -> None:
+    with open(osp.join(directory, name), "w") as handle:
+        json.dump(payload, handle, indent=2)
+
+
+def _write_model(directory: str, name: str, model: BaseModel) -> None:
+    with open(osp.join(directory, name), "w") as handle:
+        handle.write(model.model_dump_json(indent=2))
+
+
+# --------------------------------------------------------------------------- #
+# Shared loader steps
+# --------------------------------------------------------------------------- #
+def _table_pin(table: str) -> tuple[str, str]:
+    """``(mirror relpath, sha256)`` of one supplementary table."""
+    return si_table_relpath(table), SI_TABLES[table][1]
+
+
+def _batch_pins() -> list[tuple[str, str]]:
+    """``(mirror relpath, sha256)`` of every pinned GenPept batch, in table order."""
+    return [(yp_batch_relpath(i), sha) for i, sha in enumerate(YP_BATCH_SHA256)]
+
+
+def _link_mirror_files(raw_dir: str, pins: Iterable[tuple[str, str]]) -> None:
+    """Link each pinned mirror file into ``raw/`` under its base name.
+
+    The manifest must record each pin (``ManifestPinMismatchError`` otherwise) and the
+    file must hash to it; the PMC and NCBI URLs are retrieval metadata, never read here.
+    """
+    data_root = _data_root()
+    manifest = load_manifest(data_root)
+    os.makedirs(raw_dir, exist_ok=True)
+    for relpath, expected in pins:
+        check_manifest_pin(relpath, manifest_sha256(manifest, relpath), expected)
+        src = raw_mirror_dir(data_root) / relpath
+        if not src.exists():
+            raise RuntimeError(f"required raw artifact missing from mirror: {src}")
+        link_verified(src, osp.join(raw_dir, Path(relpath).name), expected)
+
+
+def _raw_pins(pins: Iterable[tuple[str, str]]) -> dict[str, str]:
+    """``{file name in raw/: sha256}`` for ``verify_raw_files``."""
+    return {Path(relpath).name: sha for relpath, sha in pins}
+
+
+def read_released_table(path: str | Path, rows: Sequence[SampleRow]) -> pd.DataFrame:
+    """Table S2 or S3, whose columns must be ``rows``' samples in sheet order."""
+    table = pd.read_csv(path, index_col=0)
+    if list(table.columns) != [row.sample for row in rows]:
+        raise RuntimeError(
+            f"{Path(path).name}: columns are not the Table S1 samples with this assay's "
+            "data, in sheet order"
+        )
+    if not table.index.is_unique:
+        raise RuntimeError(f"{Path(path).name} repeats an identifier")
+    return table
+
+
+def protein_crosswalk(
+    batch_paths: Iterable[str | Path], accessions: Sequence[str]
+) -> dict[str, str]:
+    """``YP_`` accession -> the ``ECB_`` locus tag its deposited NCBI record names.
+
+    The batches must cover exactly ``accessions`` (Table S3's first column), each once.
+    """
+    crosswalk: dict[str, str] = {}
+    for path in batch_paths:
+        for accession, tag in genpept_locus_tags(path).items():
+            if accession in crosswalk:
+                raise ValueError(f"{accession} appears in two batches")
+            crosswalk[accession] = tag
+    if set(crosswalk) != set(accessions):
+        missing = sorted(set(accessions) - set(crosswalk))
+        extra = sorted(set(crosswalk) - set(accessions))
+        raise RuntimeError(
+            f"the NCBI batches miss {missing[:10]} and add {extra[:10]} against Table S3"
+        )
+    return crosswalk
+
+
+def reconcile_rel606(
+    genome: EcoliBREL606Genome, names: Sequence[str], *, label: str
+) -> tuple[list[str], LocusTagReconciliation]:
+    """Each name as a REL606 locus tag, at ``MIN_RESOLVED_FRACTION`` or the build stops."""
+    stored, report = reconcile_locus_tags(genome, pd.Series(list(names)), label=label)
+    report.require_resolved(MIN_RESOLVED_FRACTION)
+    if report.outside_namespace:
+        raise RuntimeError(f"{label}: not REL606 locus tags {report.outside_namespace}")
+    tags = [str(tag) for tag in stored]
+    if len(set(tags)) != len(tags):
+        raise RuntimeError(f"{label}: two identifiers name one locus")
+    return tags, report
+
+
+def environment_cache() -> Callable[[SampleRow], Environment]:
+    """``build_environment`` memoized on the cells that define an environment."""
+    cache: dict[tuple[str, str, float, str, float, float], Environment] = {}
+
+    def environment_of(row: SampleRow) -> Environment:
+        key = (
+            row.carbon_source,
+            row.mg_level,
+            row.mg_mm,
+            row.na_level,
+            row.na_mm,
+            row.growth_time_hr,
+        )
+        if key not in cache:
+            cache[key] = build_environment(row)
+        return cache[key]
+
+    return environment_of
+
+
+def measured_gene_set(dataset: ExperimentDataset, key: str) -> GeneSet:
+    """The loci a built dataset's phenotypes are keyed by (``phenotype[key]``).
+
+    Every Caglar record is wild type, so no genotype names a gene and the base class's
+    genotype scan would return an empty set, which it refuses. The dataset's genes are
+    then the REL606 loci it measures.
+    """
+    if dataset.env is None:
+        dataset._init_db()
+    genes = GeneSet()
+    with dataset.env.begin() as txn:
+        for _, value in txn.cursor():
+            genes.update(pickle.loads(value)["experiment"]["phenotype"][key])
+    dataset.close_lmdb()
+    return genes
+
+
+def _record_samples(
+    rows: Sequence[SampleRow],
+    reconstruction: CountReconstruction,
+    technical: Callable[[SampleRow], int],
+) -> list[dict[str, Any]]:
+    totals = reconstruction.counts.sum(axis=0)
+    return [
+        RecordSample(
+            index=index,
+            sample=row.sample,
+            experiment=row.experiment,
+            condition=row.condition,
+            growth_phase=row.growth_phase,
+            growth_time_hr=row.growth_time_hr,
+            batch=row.batch,
+            technical_replicates=technical(row),
+            size_factor=float(reconstruction.size_factors[row.sample]),
+            library_size=int(totals[row.sample]),
+        ).model_dump(mode="json")
+        for index, row in enumerate(rows)
+    ]
+
+
+# --------------------------------------------------------------------------- #
+# Family 1: RNA-seq (Table S2)
+# --------------------------------------------------------------------------- #
+@register_dataset
+class RnaseqCaglar2017Dataset(ExperimentDataset):
+    """Caglar 2017 RNA-seq: one record per REL606 library (Table S2 sample)."""
+
+    REFERENCE_STRAIN: ClassVar[Literal["REL606"]] = "REL606"
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/rnaseq_caglar2017",
+        io_workers: int = 0,
+        ecoli_genome: EcoliBREL606Genome | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize; the REL606 genome is injected by the build or opened in process."""
+        self.ecoli_genome = ecoli_genome
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @staticmethod
+    def pins() -> list[tuple[str, str]]:
+        """The mirror files this family reads: Tables S1 and S2."""
+        return [_table_pin("S1"), _table_pin("S2")]
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return BacterialRNASeqExpressionExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return BacterialRNASeqExpressionExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """Tables S1 and S2, required before processing."""
+        return list(_raw_pins(self.pins()))
+
+    def download(self) -> None:
+        """Link Tables S1 and S2 from the raw mirror after verifying their pins."""
+        _link_mirror_files(self.raw_dir, self.pins())
+
+    def _genome(self) -> EcoliBREL606Genome:
+        """The injected REL606 genome, or the default cache opened read-only."""
+        if self.ecoli_genome is None:
+            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
+        return self.ecoli_genome
+
+    def compute_gene_set(self) -> GeneSet:
+        """The 4,196 REL606 loci the expression profiles are keyed by."""
+        return measured_gene_set(self, "expression_tpm")
+
+    @post_process
+    def process(self) -> None:
+        """Back-solve Table S2 to counts, then write one record per library."""
+        require_pinnable_strain()
+        verify_raw_files(self.raw_dir, _raw_pins(self.pins()))
+        genome = self._genome()
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+
+        sheet = read_sample_sheet(osp.join(self.raw_dir, SI_TABLES["S1"][0]))
+        rows = [row for row in sheet if row.rna_technical_replicates > 0]
+        table = read_released_table(osp.join(self.raw_dir, SI_TABLES["S2"][0]), rows)
+        reconstruction = back_solve_counts(table, label="table_s2")
+        genes, report = reconcile_rel606(
+            genome, [str(g) for g in table.index], label=f"{self.name} Table S2 genes"
+        )
+        lengths = gene_lengths(genome, genes)
+        counts = reconstruction.counts.to_numpy(dtype=np.float64)
+
+        pin = assembly_reference(self.REFERENCE_STRAIN)
+        reference_members = reference_rows(rows)
+        column = {row.sample: j for j, row in enumerate(rows)}
+        references = {
+            phase: BacterialRNASeqExpressionExperimentReference(
+                dataset_name=self.name,
+                genome_reference=pin,
+                environment_reference=reference_environment(
+                    phase, (r.growth_time_hr for r in members)
+                ),
+                phenotype_reference=rnaseq_reference_phenotype(
+                    genes, counts[:, [column[r.sample] for r in members]], lengths
+                ),
+            )
+            for phase, members in reference_members.items()
+        }
+        environment_of = environment_cache()
+        genotype = Genotype(perturbations=[])
+        pub = publication()
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for index, row in enumerate(rows):
+                experiment = BacterialRNASeqExpressionExperiment(
+                    dataset_name=self.name,
+                    genotype=genotype,
+                    environment=environment_of(row),
+                    phenotype=rnaseq_phenotype(genes, counts[:, index], lengths),
+                )
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(
+                        experiment, references[row.growth_phase], pub, itxn
+                    ),
+                )
+        env.close()
+        interned_env.close()
+
+        out = self.preprocess_dir
+        _write_model(out, "vst_back_solve.json", reconstruction.evidence)
+        _write_model(
+            out,
+            "log_base_derivation.json",
+            log_base_derivation([reconstruction.evidence]),
+        )
+        _write_model(out, "locus_tag_reconciliation.json", report)
+        _write_json(
+            out,
+            "gene_lengths.json",
+            {g: int(n) for g, n in zip(genes, lengths, strict=True)},
+        )
+        _write_json(
+            out,
+            "record_samples.json",
+            _record_samples(rows, reconstruction, lambda r: r.rna_technical_replicates),
+        )
+        _write_json(
+            out,
+            "replicate_groups.json",
+            [g.model_dump(mode="json") for g in replicate_groups(rows)],
+        )
+        _write_model(
+            out,
+            "build_accounting.json",
+            _accounting(
+                self.name,
+                "Table S2 (srep45303-s3.csv)",
+                len(sheet),
+                rows,
+                reference_members,
+                notes=[
+                    "every Table S1 row with RNA data is a record (the authors kept all "
+                    "152, including the two QC-flagged MURI_091 and MURI_130)",
+                    "expression_count is the integer count back-solved from Table S2; "
+                    "expression_tpm is computed here from it and the GenBank gene span",
+                    "the reference of each record is its phase's glucose, base Mg2+ "
+                    "and base Na+ condition, averaged over that condition's samples",
+                ],
+            ),
+        )
+        log.info(
+            "Caglar 2017 RNA-seq: %d records over %d genes; back-solve max integer "
+            "deviation %.3g",
+            len(rows),
+            len(genes),
+            reconstruction.evidence.max_count_integer_deviation,
+        )
+
+    def preprocess_raw(
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
+    ) -> pd.DataFrame:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled inline in process() for this dataset."""
+        raise NotImplementedError
+
+
+# --------------------------------------------------------------------------- #
+# Family 2: proteome (Table S3)
+# --------------------------------------------------------------------------- #
+@register_dataset
+class ProteomeCaglar2017Dataset(ExperimentDataset):
+    """Caglar 2017 proteome: one record per REL606 LC-MS/MS sample (Table S3)."""
+
+    REFERENCE_STRAIN: ClassVar[Literal["REL606"]] = "REL606"
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/proteome_caglar2017",
+        io_workers: int = 0,
+        ecoli_genome: EcoliBREL606Genome | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize; the REL606 genome is injected by the build or opened in process."""
+        self.ecoli_genome = ecoli_genome
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @staticmethod
+    def pins() -> list[tuple[str, str]]:
+        """Tables S1 and S3 and every NCBI batch that keys Table S3 to ``ECB_`` tags."""
+        return [_table_pin("S1"), _table_pin("S3"), *_batch_pins()]
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return BacterialProteinAbundanceExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return BacterialProteinAbundanceExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """Tables S1 and S3 and the GenPept batches, required before processing."""
+        return list(_raw_pins(self.pins()))
+
+    def download(self) -> None:
+        """Link the tables and batches from the raw mirror after verifying their pins."""
+        _link_mirror_files(self.raw_dir, self.pins())
+
+    def _genome(self) -> EcoliBREL606Genome:
+        """The injected REL606 genome, or the default cache opened read-only."""
+        if self.ecoli_genome is None:
+            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
+        return self.ecoli_genome
+
+    def compute_gene_set(self) -> GeneSet:
+        """The 4,196 REL606 loci the abundance profiles are keyed by."""
+        return measured_gene_set(self, "protein_abundance")
+
+    @post_process
+    def process(self) -> None:
+        """Key Table S3 to REL606 loci, back-solve it, write one record per sample."""
+        require_pinnable_strain()
+        verify_raw_files(self.raw_dir, _raw_pins(self.pins()))
+        genome = self._genome()
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+
+        sheet = read_sample_sheet(osp.join(self.raw_dir, SI_TABLES["S1"][0]))
+        rows = [row for row in sheet if row.protein_technical_replicates > 0]
+        table = read_released_table(osp.join(self.raw_dir, SI_TABLES["S3"][0]), rows)
+        accessions = [str(a) for a in table.index]
+        crosswalk = protein_crosswalk(
+            (
+                osp.join(self.raw_dir, Path(relpath).name)
+                for relpath, _ in _batch_pins()
+            ),
+            accessions,
+        )
+        reconstruction = back_solve_counts(table, label="table_s3")
+        proteins, report = reconcile_rel606(
+            genome,
+            [crosswalk[a] for a in accessions],
+            label=f"{self.name} Table S3 proteins (YP_ -> ECB_ by NCBI record)",
+        )
+        counts = reconstruction.counts.to_numpy(dtype=np.float64)
+        size_factors = reconstruction.size_factors.to_numpy(dtype=np.float64)
+        normalized = counts / size_factors
+
+        pin = assembly_reference(self.REFERENCE_STRAIN)
+        reference_members = reference_rows(rows)
+        column = {row.sample: j for j, row in enumerate(rows)}
+        references = {
+            phase: BacterialProteinAbundanceExperimentReference(
+                dataset_name=self.name,
+                genome_reference=pin,
+                environment_reference=reference_environment(
+                    phase, (r.growth_time_hr for r in members)
+                ),
+                phenotype_reference=protein_reference_phenotype(
+                    proteins, normalized[:, [column[r.sample] for r in members]]
+                ),
+            )
+            for phase, members in reference_members.items()
+        }
+        environment_of = environment_cache()
+        genotype = Genotype(perturbations=[])
+        pub = publication()
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for index, row in enumerate(rows):
+                experiment = BacterialProteinAbundanceExperiment(
+                    dataset_name=self.name,
+                    genotype=genotype,
+                    environment=environment_of(row),
+                    phenotype=protein_phenotype(
+                        proteins, counts[:, index], float(size_factors[index])
+                    ),
+                )
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(
+                        experiment, references[row.growth_phase], pub, itxn
+                    ),
+                )
+        env.close()
+        interned_env.close()
+
+        out = self.preprocess_dir
+        _write_model(out, "vst_back_solve.json", reconstruction.evidence)
+        _write_model(
+            out,
+            "log_base_derivation.json",
+            log_base_derivation([reconstruction.evidence]),
+        )
+        _write_model(out, "locus_tag_reconciliation.json", report)
+        _write_json(
+            out, "protein_crosswalk.json", {a: crosswalk[a] for a in accessions}
+        )
+        _write_json(
+            out,
+            "record_samples.json",
+            _record_samples(
+                rows, reconstruction, lambda r: r.protein_technical_replicates
+            ),
+        )
+        _write_json(
+            out,
+            "replicate_groups.json",
+            [g.model_dump(mode="json") for g in replicate_groups(rows)],
+        )
+        _write_model(
+            out,
+            "build_accounting.json",
+            _accounting(
+                self.name,
+                "Table S3 (srep45303-s4.csv)",
+                len(sheet),
+                rows,
+                reference_members,
+                notes=[
+                    "every Table S1 row with protein data is a record",
+                    "protein_abundance is the back-solved integer spectral count over "
+                    "the sample's DESeq2 size factor; an unobserved protein is the 0 "
+                    "the authors wrote",
+                    "n_replicates is 1 per record (one biological culture); Table S1's "
+                    "technical-replicate count is in record_samples.json",
+                    "the reference of each record is its phase's glucose, base Mg2+ "
+                    "and base Na+ condition: mean, standard error and sample count",
+                ],
+            ),
+        )
+        log.info(
+            "Caglar 2017 proteome: %d records over %d proteins; back-solve max "
+            "integer deviation %.3g",
+            len(rows),
+            len(proteins),
+            reconstruction.evidence.max_count_integer_deviation,
+        )
+
+    def preprocess_raw(
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
+    ) -> pd.DataFrame:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled inline in process() for this dataset."""
+        raise NotImplementedError
+
+
+# --------------------------------------------------------------------------- #
+# Verification (L0-L4) of the built dev LMDBs
+# --------------------------------------------------------------------------- #
+Family = Literal["rnaseq", "proteome"]
+DATASET_SLUGS: dict[Family, str] = {
+    "rnaseq": "rnaseq_caglar2017",
+    "proteome": "proteome_caglar2017",
+}
+REL606_PIN = ("ecoli_B_REL606_ASM1798v1", "GCA_000017985.1")
+
+
+def sourced_values() -> dict[str, SourcedValue]:
+    """Every module-level ``SourcedValue``, by name (what the audit re-reads)."""
+    return {
+        name: value
+        for name, value in globals().items()
+        if isinstance(value, SourcedValue)
+    }
+
+
+def _verifier_provenance(family: Family) -> Provenance:
+    table = "S2" if family == "rnaseq" else "S3"
+    obj, sha, _ = SI_TABLES[table]
+    return Provenance(
+        source_uri=f"{RAW_DIR_REL}/data/{obj}",
+        citation_key=CITATION_KEY,
+        sha256=sha,
+        method="Table values inverted through the base-2 DESeq2 VST to integer counts "
+        "(back_solve_counts)",
+        page=f"Supplementary Table {table}",
+    )
+
+
+def _l1_distinct_profiles(
+    records: Sequence[Mapping[str, Any]], key: str
+) -> LevelResult:
+    """L1 per sample: no two records carry the same measured profile."""
+    profiles = Counter(
+        json.dumps(r["experiment"]["phenotype"][key], sort_keys=True) for r in records
+    )
+    repeated = sum(n for n in profiles.values() if n > 1)
+    return LevelResult(
+        level=Level.L1,
+        name="sample_uniqueness",
+        passed=repeated == 0,
+        message=f"{len(profiles)} distinct {key} profiles over {len(records)} records",
+        details={"n_records": len(records), "n_in_repeated_profiles": repeated},
+    )
+
+
+def _l3_assembly_pin(records: Sequence[Mapping[str, Any]]) -> LevelResult:
+    pins = sorted(
+        {
+            (
+                str(r["reference"]["genome_reference"]["assembly_set"]),
+                str(r["reference"]["genome_reference"]["assembly_accession"]),
+            )
+            for r in records
+        }
+    )
+    return LevelResult(
+        level=Level.L3,
+        name="assembly_pin",
+        passed=pins == [REL606_PIN],
+        message=f"assembly pins {pins}",
+        details={"pins": pins},
+    )
+
+
+def _l3_back_solve(evidence: VstBackSolve) -> LevelResult:
+    passed = (
+        evidence.max_count_integer_deviation <= COUNT_INTEGER_TOLERANCE
+        and evidence.max_size_factor_relative_deviation <= SIZE_FACTOR_TOLERANCE
+        and evidence.log_base == VST_LOG_BASE
+    )
+    return LevelResult(
+        level=Level.L3,
+        name="log_base_back_solve",
+        passed=passed,
+        message=f"{evidence.table}: base {evidence.log_base}; counts within "
+        f"{evidence.max_count_integer_deviation:.3g} of integers, size factors within "
+        f"{evidence.max_size_factor_relative_deviation:.3g} of DESeq2's",
+        details=evidence.model_dump(),
+    )
+
+
+def _l4_containment(measured: set[str], universe: Collection[str]) -> LevelResult:
+    outside = sorted(measured - set(universe))
+    return LevelResult(
+        level=Level.L4,
+        name="gene_containment_rel606",
+        passed=not outside,
+        message=f"{len(measured) - len(outside)} of {len(measured)} measured loci are "
+        "REL606 GenBank gene rows",
+        details={"outside": outside[:20], "n_universe": len(universe)},
+    )
+
+
+def verify_rnaseq_records(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    expected_count: int,
+    gene_universe: Collection[str],
+    back_solve: VstBackSolve,
+) -> VerificationReport:
+    """The L0-L4 gate of the RNA-seq family, one record per library.
+
+    The family verifier keys L1 on one record per (strain, environment), which a
+    replicate-level dataset breaks by design: the replicates of a condition share both.
+    L1 here is the count plus distinct count profiles.
+    """
+    from pydantic import TypeAdapter
+
+    from torchcell.datamodels.schema import ExperimentType
+
+    report = VerificationReport(
+        dataset_name=DATASET_SLUGS["rnaseq"], provenance=_verifier_provenance("rnaseq")
+    )
+    validate: Callable[[Any], object] = TypeAdapter(ExperimentType).validate_python
+    report.add(l0_structural((r["experiment"] for r in records), validate))
+    report.add(l1_count(len(records), expected_count))
+    report.add(_l1_distinct_profiles(records, "expression_count"))
+    phenotypes = [r["experiment"]["phenotype"] for r in records]
+    fidelity = l2_value_fidelity(
+        (float(v) for p in phenotypes for v in p["expression_tpm"].values()),
+        allow_nan=False,
+        minimum=0.0,
+    )
+    report.add(fidelity.model_copy(update={"name": "tpm_value_fidelity"}))
+    bad_counts = sum(
+        1
+        for p in phenotypes
+        for v in p["expression_count"].values()
+        if not isinstance(v, int) or isinstance(v, bool) or v < 0
+    )
+    report.add(
+        LevelResult(
+            level=Level.L2,
+            name="count_value_fidelity",
+            passed=bad_counts == 0,
+            message=f"{bad_counts} counts are not non-negative integers",
+            details={"n_bad": bad_counts},
+        )
+    )
+    totals = [sum(p["expression_tpm"].values()) for p in phenotypes]
+    off_scale = [t for t in totals if not math.isclose(t, TPM_TOTAL, rel_tol=1e-9)]
+    report.add(
+        LevelResult(
+            level=Level.L2,
+            name="tpm_scale",
+            passed=not off_scale,
+            message=f"{len(totals) - len(off_scale)}/{len(totals)} records sum to one "
+            "million TPM",
+            details={"off_scale": off_scale[:10]},
+        )
+    )
+    types = sorted({p["measurement_type"] for p in phenotypes})
+    report.add(
+        LevelResult(
+            level=Level.L3,
+            name="measurement_type_consistent",
+            passed=types == [RNA_MEASUREMENT_TYPE],
+            message=f"measurement types {types}",
+            details={"measurement_types": types},
+        )
+    )
+    references = {
+        json.dumps(
+            r["reference"]["phenotype_reference"]["expression_tpm"], sort_keys=True
+        )
+        for r in records
+    }
+    reference_bad = 0
+    for text in references:
+        values = [float(v) for v in json.loads(text).values()]
+        finite = all(math.isfinite(v) and v >= 0 for v in values)
+        if not finite or not math.isclose(sum(values), TPM_TOTAL, rel_tol=1e-9):
+            reference_bad += 1
+    report.add(
+        LevelResult(
+            level=Level.L3,
+            name="reference_tpm",
+            passed=reference_bad == 0,
+            message=f"{len(references) - reference_bad}/{len(references)} references "
+            "are finite, non-negative and sum to one million TPM",
+            details={"n_references": len(references), "n_bad": reference_bad},
+        )
+    )
+    report.add(_l3_assembly_pin(records))
+    report.add(_l3_back_solve(back_solve))
+    measured = {g for p in phenotypes for g in p["expression_tpm"]}
+    report.add(_l4_containment(measured, gene_universe))
+    return report
+
+
+def verify_proteome_records(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    expected_count: int,
+    gene_universe: Collection[str],
+    back_solve: VstBackSolve,
+) -> VerificationReport:
+    """The protein family verifier (L0-L3) plus distinct profiles, the abundance floor,
+    the assembly pin, the back-solve and the REL606 containment (L4).
+    """
+    from torchcell.verification.protein import verify_protein_dataset
+
+    report = verify_protein_dataset(
+        [dict(r) for r in records],
+        dataset_name=DATASET_SLUGS["proteome"],
+        provenance=_verifier_provenance("proteome"),
+        expected_count=expected_count,
+    )
+    report.add(_l1_distinct_profiles(records, "protein_abundance"))
+    floor = l2_value_fidelity(
+        (
+            float(v)
+            for r in records
+            for v in r["experiment"]["phenotype"]["protein_abundance"].values()
+        ),
+        minimum=0.0,
+    )
+    report.add(floor.model_copy(update={"name": "abundance_nonnegative"}))
+    report.add(_l3_assembly_pin(records))
+    report.add(_l3_back_solve(back_solve))
+    measured = {
+        p for r in records for p in r["experiment"]["phenotype"]["protein_abundance"]
+    }
+    report.add(_l4_containment(measured, gene_universe))
+    return report
+
+
+def run_verification(
+    family: Family, data_root: str | None = None
+) -> VerificationReport:
+    """Verify one built dev-tree LMDB (L0-L4) plus the audit of every ``SourcedValue``,
+    and write ``preprocess/verification_report.json``.
+    """
+    from torchcell.verification.runners import (
+        _gene_set_for_reference,
+        _write_report,
+        load_records,
+    )
+
+    base = data_root or _data_root()
+    abs_root = osp.join(base, "data/torchcell", DATASET_SLUGS[family])
+    preprocess = osp.join(abs_root, "preprocess")
+    records = load_records(abs_root)
+    accounting = BuildAccounting.model_validate_json(
+        Path(preprocess, "build_accounting.json").read_text()
+    )
+    back_solve = VstBackSolve.model_validate_json(
+        Path(preprocess, "vst_back_solve.json").read_text()
+    )
+    references = {
+        json.dumps(r["reference"]["genome_reference"], sort_keys=True) for r in records
+    }
+    universe: set[str] = set()
+    for reference in references:
+        universe |= _gene_set_for_reference(json.loads(reference), base)
+    verify = verify_rnaseq_records if family == "rnaseq" else verify_proteome_records
+    report = verify(
+        records,
+        expected_count=accounting.kept_records,
+        gene_universe=universe,
+        back_solve=back_solve,
+    )
+    library = Path(base) / "torchcell-library"
+    for value in sourced_values().values():
+        report.add(audit_sourced_value(value, library))
+    _write_report(report, preprocess)
+    return report
+
+
+DATASET_CLASSES: dict[Family, type[ExperimentDataset]] = {
+    "rnaseq": RnaseqCaglar2017Dataset,
+    "proteome": ProteomeCaglar2017Dataset,
+}
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Deposit the raw mirror, measure identifier coverage, build or verify a family."""
     from dotenv import load_dotenv
 
     load_dotenv()
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(
+        prog="python -m torchcell.datasets.ecoli.caglar2017"
+    )
     sub = parser.add_subparsers(dest="command", required=True)
     deposit = sub.add_parser("deposit", help="retrieve into --staging, then deposit")
     deposit.add_argument("--staging", required=True)
@@ -1100,10 +2787,17 @@ def main() -> None:
     measure.add_argument("--genbank-gbff", required=True)
     measure.add_argument("--refseq-gbff", required=True)
     measure.add_argument("--refseq-gaf", required=True)
-    args = parser.parse_args()
+    for name, text in (
+        ("build", "build (or load) a family's dev-tree LMDB"),
+        ("verify", "run L0-L4 on a family's built dev-tree LMDB"),
+    ):
+        command = sub.add_parser(name, help=text)
+        command.add_argument("--family", choices=sorted(DATASET_SLUGS), required=True)
+    args = parser.parse_args(argv)
     if args.command == "deposit":
         print(deposit_raw_mirror(source_dir=retrieve_raw_files(args.staging)))
-    else:
+        return 0
+    if args.command == "measure":
         coverage = identifier_coverage(
             raw_mirror_dir(), args.genbank_gbff, args.refseq_gbff
         )
@@ -1112,10 +2806,22 @@ def main() -> None:
             args.genbank_gbff, args.refseq_gbff, args.refseq_gaf
         )
         print(summary.model_dump_json(indent=2))
-    print(
-        strain_pin_finding().model_dump_json(indent=2, include={"strain", "pinnable"})
-    )
+        print(
+            strain_pin_finding().model_dump_json(
+                indent=2, include={"strain", "pinnable"}
+            )
+        )
+        return 0
+    family: Family = args.family
+    if args.command == "build":
+        root = osp.join(_data_root(), "data/torchcell", DATASET_SLUGS[family])
+        dataset = DATASET_CLASSES[family](root=root)
+        print(f"{type(dataset).__name__}: len = {len(dataset)}")
+        return 0
+    report = run_verification(family)
+    print(report.summary())
+    return 0 if report.passed else 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

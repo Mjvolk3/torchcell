@@ -204,3 +204,210 @@ that still spell liquid YPD as a bare `Media(name="YPD", state="liquid")` onto
   rather than from the ontology object.
 - `cellobiose` is the one library substance the pinned compound table has not
   resolved; it is honestly gapped and is a one-row builder addition away from closing.
+
+## 2026.10.07 - Bacterial media
+
+Source: `torchcell/datamodels/media.py` (the BACTERIAL MEDIA section, `BACTERIAL_MEDIA_USES`)
+Tests: `tests/torchcell/datamodels/test_media_bacterial.py`
+Plan: [[plan.bacteria-ontology-genome]] section 3d and Step 5 (`feat/bacterial-media-library`).
+
+Twenty-five `MEDIA_LIBRARY` keys added (79 total, from 54), each quoting a mirrored file
+of one of the fifty bacterial rows with that file's sha256 from the key's `manifest.json`.
+No schema change: `Media`, `MediaComponent` and `ConcentrationUnit` express all of it.
+Every quote was re-read against the mirror (`pytest --data`, 190 passed).
+
+### Conventions the entries follow
+
+- **"M9" is not one recipe.** Across the fifty it names at least six formulations:
+  ammonium chloride or ammonium sulfate as the nitrogen salt, anhydrous or hydrated
+  phosphate, with or without trace metals, MOPS or a vendor salts powder. So `M9` is the
+  four salts and each paper's formulation is its own key, suffixed with the paper.
+- **A replaced base component is a dropout** (the SynBase convention). The
+  ammonium-sulfate formulations drop the base's ammonium chloride; a medium that weighs
+  the phosphate as a hydrate drops the anhydrous salt. `media_derivation_issues` stays
+  empty.
+- **A hydrate is its own compound.** 7.52 g of Na2HPO4·2H2O is not 7.52 g of Na2HPO4, and
+  PubChem gives each hydrate its own InChIKey.
+- **A varied carbon or nitrogen source is not a component.** Such media are listed in
+  `CARBON_FREE_MEDIA` with the reason, and the loader carries the variable as
+  `EnvironmentPhysicalPerturbation(factor=carbon_source | nitrogen_source)`.
+- **xlsx quotes are row renderings.** Wetmore 2015 Data Set S1 and Price 2018
+  Supplementary Table 18 are binary, so a quote is a block of consecutive rows of one
+  sheet, cells joined by ` | `, rows by ` / `; the test re-reads the sheet.
+
+### Entries and sources
+
+Rank is the row's rank among the fifty. Base is `base_medium`.
+
+| key | base | carbon | source (citation key, file) | rows |
+|---|---|---|---|---|
+| `LB` | LB | none (complex) | Menasalvas 2025, Schmidt 2016 (`paper.md`); Goodall 2018, Babu 2014 SI 13 corroborate | 6, 11, 20, 22, 23, 24, 28, 32, 40, 42 |
+| `LB_AGAR` | LB | none (complex) | Menasalvas 2025, Schmidt 2016 | 20, 32 |
+| `LB_LENNOX` | LB | none (complex) | Schastnaya 2021; Wetmore 2015 Data Set S1; Price 2018 Table S18 | 2, 21, 30, 46 |
+| `YT_2X` | YT_2X | none (complex) | Wang 2015 | 15 |
+| `M9` | M9 | none (base) | Kang 2026; Borchert 2024 corroborates | 18, 8; base of 14 more |
+| `M9_GLUCOSE` | M9 | 2 g/L glucose | Choe 2019 | 45 |
+| `M9_NOCARBON_WETMORE2015` | M9 | varied | Wetmore 2015 Data Set S1 | 2 |
+| `M9_NONITROGEN_WETMORE2015` | M9 | 4 g/L glucose (N varied) | Wetmore 2015 Data Set S1 | 2 |
+| `M9_NOCARBON_PRICE2018` | M9 | varied | Price 2018 Table S18 | 21 |
+| `M9_NONITROGEN_PRICE2018` | M9 | 4 g/L glucose (N varied) | Price 2018 Table S18 | 21 |
+| `M9_GLUCOSE_CASEIN_FUHRER2017` | M9 | 4 g/L glucose | Fuhrer 2017 | 1 |
+| `M9_SCHMIDT2016` | M9 | varied | Schmidt 2016 | 32 |
+| `M9_NREL_DESIQUEIRA2025` | M9 | varied | de Siqueira 2025 | 14 |
+| `M9_NREL_LIM2025` | M9 | 4 g/L glucose | Lim 2025 | 16 |
+| `M9_NREL_KANG2026` | M9 | varied | Kang 2026 | 18 |
+| `M9_NREL_HIGH_N_KANG2026` | M9 | varied | Kang 2026 | 18 |
+| `M9_MOPS_KANG2026` | M9 | varied | Kang 2026 | 18 |
+| `M9_NREL_CARRUTHERS2025` | M9 | 20 g/L glucose | Carruthers 2025 | 6 |
+| `M9_NREL_MOPS_MENASALVAS2025` | M9 | 2% glucose | Menasalvas 2025 | 20 |
+| `M9_DIFCO` | M9_DIFCO | none (base) | Foo 2014 | 12 |
+| `M9_DIFCO_GLUCOSE_FOO2014` | M9_DIFCO | 0.4% glucose | Foo 2014 | 12 |
+| `MM9_FOO2014` | M9_DIFCO | 1% glucose | Foo 2014 | 12 |
+| `DAVIS_MINIMAL` | DAVIS_MINIMAL | varied | Caglar 2017 (recipe deferred to Lenski 1991) | 9 |
+| `DM500` | DAVIS_MINIMAL | 500 mg/L glucose | Caglar 2017 | 9 |
+| `MOPS_MINIMAL` | MOPS_MINIMAL | none (base) | Price 2018 Table S18; Tong 2020 cites Neidhardt 1974 | 4, 21 |
+
+The anchoring quotes, verbatim (OCR markup kept, as in `media.py`):
+
+- `LB`: `menasalvasBiosensordrivenStrainEngineering2025/paper.md` (sha256 `d1453694...`):
+  `The LB Miller (Luria-Bertani) medium [tryptone $( 1 0 \mathrm { g / }$ liter), yeast extract $( 5 ~ \mathrm { g / l i t e r } )$ , and NaCl (10 g/liter)]`;
+  `schmidtQuantitativeConditiondependentEscherichia2016/paper.md` (`67bedae8...`):
+  `Five grams of yeast extract (BD), $_ { 1 0 \mathrm { ~ g ~ } }$ Tryptone (BD) and $1 0 \ \mathrm { g \ N a C l }$ were dissolved in one liter of water`.
+- `LB_AGAR`: Menasalvas 2025:
+  `LB medium was supplemented with $2 \%$ $\scriptstyle \left( \mathbf { w } / \mathbf { v } \right)$ solid agar`;
+  Schmidt 2016: `LB plates were produced by adding $2 0 \mathrm { g }$ agar (BD)`.
+- `LB_LENNOX`: `schastnayaExtensiveRegulationEnzyme2021/paper.md` (`f299eee7...`):
+  `LB-Lennox medium $\mathrm { { \Delta } _ { 1 0 } g / L }$ tryptone, $5 \mathrm { g / L }$ yeast extract, $5 \mathrm { g / L }$ NaCl)`;
+  `wetmoreRapidQuantificationMutant2015/si/si1.xlsx` (`428a06ca...`), sheet `Media`:
+  `LB / defined | False / desc | Luria-Bertani broth / ... / Sodium Chloride | 5 | g/L`;
+  `priceMutantPhenotypesThousands2018/si/si3.xlsx` (`e5dbf3d5...`), sheet
+  `TableS18_Medias`: `Media | LB / Description | Luria-Bertani broth / ... / Sodium Chloride | 5 | g/L`.
+- `YT_2X`: `wangDynamicInterplayMultidrug2015/paper.md` (`9cd90f00...`):
+  `in 2YT medium (Bacto-tryptone $1 6 { \mathrm { g } } ,$ Bacto-yeast extract $1 0 { \mathrm { g } } { \mathrm { . } }$ and sodium chloride $5 \mathrm { g }$ per liter`.
+- `M9`: `kangMultilayeredMetabolicRemodeling2026/paper.md` (`894aee24...`):
+  `M9 salts $( 6 . 7 8 \ g / \mathrm { L }$`, then 3 g/L KH2PO4, 1 g/L NH4Cl and 0.5 g/L
+  NaCl in the same parenthesis; `borchertMachineLearningAnalysis2024/paper.md`
+  (`9de6b077...`): `$( 6 . 7 8 ~ \mathrm { g / L ~ N a _ { 2 } H P O _ { 4 } , 3 ~ \mathrm { g / L ~ K H _ { 2 } P O _ { 4 } , 0 . 5 ~ \mathrm { g / L ~ N a C l } , } }$ 1 g/L $\mathsf { N H } _ { 4 } \mathsf { C l }$`.
+- `M9_GLUCOSE`: `choeAdaptiveLaboratoryEvolution2019/paper.md` (`11a04220...`):
+  `Cells were grown in M9 glucose medium (47.75 $\mathrm { m M }$ of ${ \mathrm { N a } } _ { 2 } { \mathrm { H P O } } _ { 4 } ,$`
+  through `and $2 { \bf g } 1 ^ { - 1 }$ of glucose)`.
+- `M9_NOCARBON_WETMORE2015` / `M9_NONITROGEN_WETMORE2015`: Data Set S1, sheet `Media`,
+  blocks `M9 minimal media_noCarbon` (`Sodium phosphate dibasic heptahydrate | 13 | g/L`)
+  and `M9 minimal media_noNitrogen` (`D-Glucose | 4 | g/L`); sheet `Expts_Keio` rows
+  `... | M9 minimal media_noCarbon | ... | D-Glucose | 20 | mM | ...` and
+  `... | M9 minimal media_noNitrogen | ... | L-Arginine | 10 | mM | ...` show the varied
+  source.
+- `M9_NOCARBON_PRICE2018` / `M9_NONITROGEN_PRICE2018`: Table S18 blocks
+  `Media | M9 minimal media_noCarbon` and `Media | M9 minimal media_noNitrogen`
+  (`Sodium phosphate dibasic heptahydrate | 12.8 | g/L`). Table S5 counts 60 and 32 Keio
+  experiments on them.
+- `M9_GLUCOSE_CASEIN_FUHRER2017`: `fuhrerGenomewideLandscapeGene2017/paper.md`
+  (`ec87736b...`): `were grown on glucose minimal medium supplemented with casein hydrolysate containing (per liter):`
+  through `$1 ~ \mathrm { m g }$ thiamine HCl.`
+- `M9_SCHMIDT2016`: Schmidt 2016: `$2 0 0 ~ \mathrm { m l }$ f $5 \times$ base salt solution (211 mM`
+  and the trace-element, CaCl2, MgSO4, thiamine and FeCl3 stock clauses; each amount is
+  the stated stock diluted by the stated volume into one liter.
+- `M9_NREL_DESIQUEIRA2025`: `desiqueiraAlternateRoutesAcetate2025/paper.md`
+  (`a3ea14ad...`): `minimal salt (M9) medium composed of $1 \times 1 \mathsf { M } 9$ salts $( 2 ~ { \mathfrak { g } } / { \mathsf { L } } ~ ( { \mathsf { N H } } _ { 4 } ) _ { 2 } { \mathsf { S O } } _ { 4 } ,$`.
+- `M9_NREL_LIM2025`: `limEvolutionguidedToleranceEngineering2025/paper.md`
+  (`26b88d81...`): `The M9 medium contained $2 \ g / \mathrm { L }$` and
+  `As a carbon source, $4 \ g / \mathrm { L }$ glucose was added to the minimal medium unless otherwise stated.`
+- Kang 2026 (three keys): `M9 medium was prepared with the following components:`,
+  `the concentration of $\mathrm { ( N H } _ { 4 } \mathrm { ) } _ { 2 } S 0 _ { 4 }$ was increased to $4 0 ~ \mathrm { m M }$ and is referred to as modified M9.`
+  and `M9-MOPS was prepared with the following components:`.
+- `M9_NREL_CARRUTHERS2025`: `carruthersAutomationMachineLearning2025/paper.md`
+  (`ca9a8a25...`): `Briefly, the medium composition included $2 0 \mathrm { g / L }$ glucose,`.
+- `M9_NREL_MOPS_MENASALVAS2025`: Menasalvas 2025:
+  `At the 1X working concentration, M9 medium contains 47.9 mM` and
+  `This formulation of M9 used for $P .$ putida is sometimes referred to as "NREL`.
+- Foo 2014 (three keys): `fooImprovingMicrobialBiogasoline2014/paper.md`
+  (`b24baad4...`): `Growth assays were performed in M9 minimal medium, which consisted of $1 \times$ M9 salt (Difco)`
+  and `Isopentenol production strains were grown in a modified M9 3-morpholinopropane-1-sulfonic acid (MOPS) minimal medium (MM9)`.
+- `DAVIS_MINIMAL` / `DM500`: `caglarColiMolecularPhenotype2017/paper.md`
+  (`0878d5e7...`): `Davis Minimal medium supplemented with $2 \mu \mathrm { g } / 1$ thiamine $( \mathrm { D M } ) ^ { 3 6 }$ and limiting glucose at $5 0 0 \mathrm { m g / l }$ (DM500)`;
+  ref 36: `36. Lenski, R. E., Rose, M. R., Simpson, S. C. & Tadler, S. C. Long-Term Experimental Evolution in Escherichia coli.`
+- `MOPS_MINIMAL`: Table S18 block `Media | MOPS minimal media_noCarbon` (MOPS 40 mM through
+  `Zinc sulfate heptahydrate | 1e-08 | M`); `tongGeneDispensabilityEscherichia2020/paper.md`
+  (`daea2b92...`): `Using a chemically defined minimal medium (morpholinepropanesulfonic acid [MOPS]) and changing only the carbon source (34)`
+  and `34. Neidhardt FC, Bloch PL, Smith DF. 1974. Culture medium for enterobacteria.`
+
+### Adjudications and readings
+
+- **MOPS sulfate row.** Price 2018's Table S18 lists
+  `Aluminum potassium sulfate dodecahydrate | 0.276 | mM`; the same lab's Wetmore 2015
+  Data Set S1 lists `Potassium Sulfate | 0.276 | mM` in its MOPS formulation, and the two
+  other mirrored MOPS recipes (Schmidt 2022, Thompson 2020) name K2SO4. Recorded as
+  potassium sulfate, both rows quoted on the component. Neidhardt 1974 would settle it
+  and is not mirrored.
+- **Wetmore 2015 and Price 2018 "LB" is Lennox.** Their prose says "LB"; their own media
+  tables give 5 g/L NaCl. Their loaders take `LB_LENNOX`.
+- **Wetmore 13 g/L vs Price 12.8 g/L** of the heptahydrate under the same medium name:
+  two objects, each paper's own.
+- **Foo 2014 spellings.** "manganese chloride" is the anhydrous MnCl2 row (PubChem's name
+  index answers that spelling with a four-water record, so it was not looked up by
+  name); "cupric sulfate" is the existing copper sulfate row; "ammonium molybdate"
+  resolves through PubChem's name index to the heptamolybdate record (CID 485454), the
+  compound Kang 2026 writes as (NH4)6Mo7O24.
+- **OCR readings recorded in notes, never silently:** Carruthers' NaCl `0.58/L` is 0.5 g/L
+  (PDF text layer agrees); Kang's KH2PO4 `3 \gimel A` is 3 g/L; Choe's `g 1 ^ { - 1 }` is
+  g/L; Schastnaya's `\Delta _ { 1 0 }` is `(10`; Goodall's `9` is `g`. Menasalvas'
+  70 mM ammonium sulfate was checked against the PDF text layer because it is far above
+  the other NREL papers' 10 to 15 mM.
+
+### Compound table additions
+
+`torchcell/datamodels/compound_identity_inputs/bacterial_media.txt` lists the 34 labels;
+the curator was run on that list alone (PubChem PUG REST, 2026-10-07) and its 32 rows
+were merged into `compound_identity_table.json` without touching an existing row (the
+diff is additions only, and the merge asserted that no new name, synonym or CID was
+already claimed). `_TABLE_SHA256` re-pinned to `85d6c25a...`. Labels that already had a
+row were reused: sodium chloride, ammonium sulfate, cobalt chloride, copper sulfate,
+manganese sulfate, MnCl2 (`manganese (ii) chloride`), thiamine hydrochloride, D-glucose,
+agar, yeast extract.
+
+### Still unsourced (named, not guessed)
+
+- **Nichols 2011** (rank 10): not mirrored, no PDF. No medium entry.
+- **PRECISE-1K / Lamoureux 2023** (rank 5): names "M9 minimal media with glucose" for the
+  control condition and prints no recipe.
+- **Yunus 2026** (rank 13): "M9 medium with 2% glucose", no recipe.
+- **Mutalik 2020** (rank 3): "LB" deferred to ref 96 (Bertani 2004), not mirrored.
+- **Tong 2020** (rank 4): the carbon-source concentrations live in an external web app
+  (Carbon Phenotype Explorer), not in the mirror.
+- **Tian 2019, Wang 2022** (ranks 17, 19, both blocked): EZ Rich (Teknova, vendor
+  formulation); Wang 2022's M9 is deferred to its ref 29.
+- **Lim 2022, Borchert 2024** (ranks 7, 8, aggregations): no recipe for the aggregated
+  data; Borchert's own growth-assay M9 (salts + Mg + Ca + 18 uM FeSO4) is stated but not
+  added, since its fitness data come from other studies.
+- **Vendor and deferred lines** inside entries: Teknova T1001 trace metals (and Carruthers'
+  volume basis, Menasalvas' "1X"), Difco M9 salts, the Lim 2020 / Linger 2014 2000x
+  trace element solution, the Davis Minimal salts (Lenski 1991), and Schmidt 2016's
+  thiamine amount, which the pinned OCR lost (the PDF text layer reads 1.4 mM stock, 2.8
+  uM final; not recorded until the OCR is redone).
+- **Stated in the mirror but not added** (outside the first tranche or needing many new
+  compounds): the MOPS Rich Defined medium (Wetmore and Price, 4 Keio experiments each;
+  Wetmore's micronutrient units are corrupt in Data Set S1), Shiver 2016's LB Lennox agar
+  (90 mM NaCl) and M9 variants (rank 27), Rapp 2026's M9 (rank 23), the modified MOPS of
+  Schmidt 2022 and Thompson 2020 (ranks 24, 28), Fuhrer 2017's perturbation medium
+  without casein hydrolysate, and Gupta 2024's and Rachwalski 2024's Teknova MOPS kits
+  (vendor formulations).
+
+### Metabolism test scope
+
+`tests/torchcell/metabolism/test_media.py::test_every_library_medium_resolves_or_says_why_not`
+now runs over the yeast keys only: its toy model carries the yeast recipes' species and
+the resolver's dissociation table covers the yeast salts, so the M9 phosphates, ammonium
+chloride, MOPS, tricine, borate, molybdate and cobalt have no exchange there. Mapping a
+bacterial medium onto a bacterial GEM is the bacterial FBA work. The carbon-source test
+still covers every key.
+
+### Admission consequence
+
+`media.py`, `compound_identity.py` and `compound_identity_table.json` are all in
+`VALUE_SURFACE_RELPATHS`, so the next `kg_manifest admit` reports value drift on all
+three and blocks until `--ack-value-drift` is given. The honest reason, now checkable:
+25 `MEDIA_LIBRARY` keys added and 32 compound-table rows added; no pre-existing key's
+`media_identity` digest changed (`test_media_bacterial.py` pins all 54, computed on main
+at `bb31eabbe` and on this branch, identical) and no pre-existing table row changed (the
+table diff is additions only). A served medium or compound node id therefore does not
+move, which is what makes the acknowledgment honest rather than a bypass.

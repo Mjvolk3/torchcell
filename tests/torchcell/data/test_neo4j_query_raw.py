@@ -350,7 +350,12 @@ def test_close_lmdb_is_idempotent_and_a_closed_view_pickles_and_reopens(
         "raw_stage_ran": False,
         "fetch_workers": 0,
         "partition_prefix_length": 1,
+        "artifact_check": True,
+        "artifact_data_root": None,
+        "artifact_client": None,
+        "resolver": neo4j_query_raw.require_resolvable,
         "_stream": neo4j_query_raw._StreamState(),
+        "_checked_artifacts": set(),
     }
     copy = pickle.loads(pickle.dumps(view))
     assert copy.__getstate__()["env"] is None

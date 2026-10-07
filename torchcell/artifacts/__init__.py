@@ -9,7 +9,8 @@ Bytes that do not belong in the graph (sequence tarballs, embeddings, per-cell m
 live in four sha256-manifested tiers under ``DATA_ROOT`` (``raw``, ``genomes``,
 ``library``, ``objects``); a graph record points at them with an ``ArtifactRef``, and
 ``resolve`` / ``materialize`` / ``check`` turn the pointer into verified bytes on disk.
-``deposit`` writes the ``objects`` tier.
+``deposit`` writes the ``objects`` tier; ``iter_refs`` / ``distinct_refs`` find the refs
+inside a record.
 """
 
 from torchcell.artifacts.deposit import deposit
@@ -24,6 +25,7 @@ from torchcell.artifacts.resolve import (
     materialize,
     resolve,
 )
+from torchcell.artifacts.walk import distinct_refs, iter_refs, ref_key
 
 __all__ = [
     "ArtifactIntegrityError",
@@ -34,6 +36,9 @@ __all__ = [
     "TcDataSource",
     "check",
     "deposit",
+    "distinct_refs",
+    "iter_refs",
     "materialize",
+    "ref_key",
     "resolve",
 ]

@@ -11,6 +11,7 @@ import os
 import os.path as osp
 from collections.abc import Callable, Sequence
 from enum import Enum, auto
+from pathlib import Path
 from typing import Any, cast
 
 import hypernetx as hnx
@@ -24,6 +25,8 @@ from pydantic import field_validator
 from sortedcontainers import SortedDict
 from torch_geometric.data import Dataset, HeteroData
 
+from torchcell.artifacts import ArtifactRef, distinct_refs
+from torchcell.artifacts import materialize as materialize_artifact
 from torchcell.data.aggregate import Aggregator
 from torchcell.data.cell_data import to_cell_data
 from torchcell.data.deduplicate import Deduplicator
@@ -865,6 +868,36 @@ class Neo4jCellDataset(Dataset):  # type: ignore[misc]  # Dataset is untyped (An
         )
 
         return processed_graph
+
+    def refs_of(self, index: int) -> list[ArtifactRef]:
+        """The distinct ``ArtifactRef``s of processed entry ``index``, fetching nothing.
+
+        Walks every record the entry aggregates (experiment and reference) and keeps
+        the first ref per ``(tier, key, path, sha256)``. Reads the processed LMDB only;
+        no artifact source is consulted. ``IndexError`` for a missing entry.
+        """
+        if self.env is None:
+            self._init_lmdb_read()
+        serialized_data = self._read_from_lmdb(index)
+        if serialized_data is None:
+            raise IndexError(f"no processed entry at index {index}")
+        data = self._reconstruct_experiments(self._deserialize_json(serialized_data))
+        models = [
+            model
+            for item in data
+            for model in (item["experiment"], item["experiment_reference"])
+        ]
+        return list(distinct_refs(models).values())
+
+    @staticmethod
+    def materialize(ref: ArtifactRef) -> Path:
+        """The verified local path of ``ref``'s file, fetched into the cache if needed.
+
+        ``torchcell.artifacts.materialize`` over the environment's ``DATA_ROOT`` and
+        tc-data (``TC_DATA_URL``), the same sources the raw stage's resolvability gate
+        checked the ref against at build time. Models call this when they need bytes.
+        """
+        return materialize_artifact(ref)
 
     def _init_lmdb_read(self, readahead: bool = False) -> None:
         """Open the LMDB environment for read access.

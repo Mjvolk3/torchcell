@@ -17,9 +17,12 @@ import matplotlib
 
 matplotlib.use("Agg")
 
+from typing import Any  # noqa: E402
+
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pytest  # noqa: E402
+import scipy.stats  # noqa: E402
 import torch  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
@@ -169,15 +172,26 @@ def test_main_builds_one_figure_and_shows_it(
 # Phase 24: linregress ValueError on constant predictions
 
 
-def test_box_plot_constant_predictions_report_r_squared_not_available() -> None:
-    """Three identical predictions make ``linregress`` raise ``ValueError`` (all x values
-    identical, scipy 1.16); the helper turns that into NaN, shown as ``N/A``. Pearson and
-    Spearman of a constant input are NaN without raising. All three predictions (0.5) land
-    in bin 2, ``[0.5, 0.6)``, whose median is the middle measured value 0.6.
-
-    The ``spearmanr`` ``except ValueError`` branch is unreachable here: scipy raises only on
-    unequal lengths, which the shared NaN mask rules out.
+def test_box_plot_constant_predictions_report_r_squared_not_available(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A ``ValueError`` from ``linregress`` becomes NaN, shown as ``N/A``. Three identical
+    predictions make scipy 1.16 raise it ("all x values identical") but scipy 1.18
+    returns a value instead, so the raise is injected on ``scipy.stats`` (the module
+    reads ``stats.linregress`` at call time) and
+    the constant input is kept for the bins: all three predictions (0.5) land in bin 2,
+    ``[0.5, 0.6)``, whose median is the middle measured value 0.6. Pearson and Spearman
+    of a constant input are NaN without raising; the ``spearmanr`` ``except ValueError``
+    branch is unreachable, since scipy raises only on unequal lengths, which the shared
+    NaN mask rules out.
     """
+
+    def identical_x(x: Any, y: Any) -> Any:
+        raise ValueError(
+            "Cannot calculate a linear regression if all x values are identical"
+        )
+
+    monkeypatch.setattr(scipy.stats, "linregress", identical_x)
     fig = fitness.box_plot(np.array([0.4, 0.6, 0.8]), np.array([0.5, 0.5, 0.5]))
     assert fig.axes[0].get_title() == "Pearson: N/A, Spearman: N/A, R²: N/A"
     medians = [float(np.asarray(m.get_ydata())[0]) for m in _medians(fig)]

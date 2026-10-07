@@ -20,6 +20,8 @@ sourcing layer.
   FIA-TOF-MS ion z-scores per BW25113 strain (BioStudies S-BSST5).
 - ``goodall2018`` -- ``GeneEssentialityGoodall2018Dataset``: BW25113 gene-level TraDIS
   essentiality calls.
+- ``gupta2024`` -- ``ProteinTurnoverGupta2024Dataset``: per-protein total turnover in 13
+  NCM3722 growth conditions, the first consumer of ``ProteinTurnoverPhenotype``.
 - ``lamoureux2023`` -- ``RnaseqLamoureux2023Dataset``: PRECISE-1K, one record per MG1655
   RNA-seq library of the samples whose genotype and environment the release states.
 - ``tong2020`` -- ``CarbonSourceTong2020Dataset``: Keio and sRNA-library deletion growth
@@ -39,6 +41,9 @@ from .caglar2017 import RnaseqCaglar2017Dataset as RnaseqCaglar2017Dataset
 from .fuhrer2017 import MetabolomeFuhrer2017Dataset as MetabolomeFuhrer2017Dataset
 from .goodall2018 import (
     GeneEssentialityGoodall2018Dataset as GeneEssentialityGoodall2018Dataset,
+)
+from .gupta2024 import (
+    ProteinTurnoverGupta2024Dataset as ProteinTurnoverGupta2024Dataset,
 )
 from .lamoureux2023 import RnaseqLamoureux2023Dataset as RnaseqLamoureux2023Dataset
 from .price2018 import RbTnseqPrice2018EcoliDataset as RbTnseqPrice2018EcoliDataset

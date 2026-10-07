@@ -91,15 +91,13 @@ has ``millimolar``, so the number is stored verbatim with no arithmetic. What is
 is a MAXIMUM over the 24, 48 and 72 h sampling times ("Maximum isoprenol titers (mM)
 detected"), an upward-biased order statistic, which is why ``duration_hours`` is ``None``
 with a gap rather than a single time. ``ProductTiterExperiment.environment`` is annotated
-``Environment``, not ``CultureEnvironment``, so the vessel and volume would be dumped
-away by pydantic and are carried in :data:`CULTURE_FORMAT` instead; narrowing that slot
-is a served-closure decision raised in the PR.
+``CultureEnvironment``, so the vessel and volume stated in :data:`CULTURE_FORMAT` travel
+on the record; the proteome family's slot is still ``Environment``, which drops them.
 
-ISOPRENOL HAS NO COMPOUND-IDENTITY ROW YET. ``resolved_compound("isoprenol")`` returns
-the canonical name with a ``ProvenanceGap`` on ``inchikey``. The InChIKey is
-``CPJRRXSHAYUTGL-UHFFFAOYSA-N`` (:data:`ISOPRENOL_INCHIKEY`); curating the row needs a
-PubChem call against the committed input lists and is a human act, so the gap is carried
-exactly as the Carruthers loader carries it.
+ISOPRENOL'S COMPOUND-IDENTITY ROW EXISTS. ``resolved_compound("isoprenol")`` returns the
+full identity (PubChem CID 12988, InChIKey ``CPJRRXSHAYUTGL-UHFFFAOYSA-N``), so the
+product carries it rather than a gap; :data:`ISOPRENOL_INCHIKEY` is kept as the
+cross-check that the table's row is the molecule this paper means.
 
 TWO CROSS-SOURCE ASSERTIONS, BOTH MEASURED ON THE PINNED BYTES AND BOTH ENFORCED AT
 BUILD TIME:
@@ -166,6 +164,8 @@ from torchcell.datamodels.schema import (
     BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
+    CultureEnvironment,
+    CultureFormat,
     Environment,
     EnvironmentPerturbationType,
     EnvironmentPhysicalPerturbation,
@@ -314,8 +314,8 @@ TITER_COLUMNS_LOADED: tuple[str, ...] = (TITER_COLUMNS[2], TITER_COLUMNS[3])
 #: The Table S2 column the titer records are referenced against.
 TITER_REFERENCE_COLUMN = TITER_COLUMNS[2]
 
-#: Isoprenol's InChIKey, recorded here because ``compound_identity_table.json`` has no
-#: row for it yet and ``resolved_compound`` therefore returns a gap on ``inchikey``.
+#: Isoprenol's InChIKey, kept as the cross-check on the compound table's row for it
+#: (PubChem CID 12988), which ``resolved_compound`` now returns in full.
 ISOPRENOL_INCHIKEY = "CPJRRXSHAYUTGL-UHFFFAOYSA-N"
 #: Isoprenol's molar mass, used ONLY to check Table S2's mM against the Results text's
 #: mg/L. No stored number is produced from it.
@@ -778,9 +778,10 @@ CULTURE_FORMAT = _paper(
     {"vessel": "test tube", "working_volume_ml": 5.0, "inoculum_od600": 0.2},
     _Q_PRODUCTION_RUN,
     page=_METHODS_PRODUCTION,
-    note="vessel, working volume and inoculum are CultureEnvironment fields, but "
-    "ProductTiterExperiment.environment is annotated Environment, so pydantic would "
-    "dump them away; they are recorded here and in the note until that slot is narrowed",
+    note="vessel, working volume and inoculum are CultureEnvironment fields, and "
+    "ProductTiterExperiment.environment is annotated CultureEnvironment, so "
+    "titer_environment carries them on the record; the proteome family's slot is still "
+    "Environment, which drops them on dump",
 )
 DATA_AVAILABILITY = _paper(
     {"sra_bioproject": SRA_BIOPROJECT, "pride": PRIDE_ACCESSION},
@@ -1387,8 +1388,16 @@ def proteome_environment(condition: str) -> Environment:
     )
 
 
-def titer_environment(column: str) -> Environment:
-    """The M9 production environment of one loaded Table S2 column."""
+def titer_environment(column: str) -> CultureEnvironment:
+    """The M9 production environment of one loaded Table S2 column.
+
+    A ``CultureEnvironment``, since ``ProductTiterExperiment.environment`` is annotated
+    as one: a titer is read with its vessel, so :data:`CULTURE_FORMAT`'s test tube,
+    5 mL working volume and inoculum OD survive the dump instead of being recorded
+    beside the record. ``endpoint`` is deliberately left unset: Table S2 reports the
+    MAXIMUM over the sampling times, so no endpoint rule describes the stored value,
+    which is the same reason ``duration_hours`` is a typed gap below.
+    """
     if column not in TITER_COLUMNS_LOADED:
         raise RuntimeError(
             f"{column!r} is not a Table S2 column this loader writes; the two acetate "
@@ -1410,9 +1419,18 @@ def titer_environment(column: str) -> Environment:
                 ConcentrationUnit.percent_w_v,
             )
         )
-    return Environment(
+    culture = CULTURE_FORMAT.value
+    if not isinstance(culture, dict):
+        raise RuntimeError(f"CULTURE_FORMAT.value is not a mapping: {culture!r}")
+    return CultureEnvironment(
         media=M9_NREL_DESIQUEIRA2025,
         temperature=Temperature(value=float(TEMPERATURE_C.value)),
+        culture_format=CultureFormat(
+            vessel=str(culture["vessel"]),
+            working_volume_ul=float(culture["working_volume_ml"]) * 1000.0,
+            inoculum_od600=float(culture["inoculum_od600"]),
+            provenance=[CULTURE_FORMAT],
+        ),
         perturbations=[
             *carbon,
             SmallMoleculePerturbation(
@@ -1449,10 +1467,9 @@ def titer_environment(column: str) -> Environment:
 def isoprenol_product() -> Any:
     """The product as a typed ``Compound`` through the shared compound-identity layer.
 
-    ``compound_identity_table.json`` has no isoprenol row, so the resolver returns the
-    canonical name with a ``ProvenanceGap`` on ``inchikey``. The key is
-    :data:`ISOPRENOL_INCHIKEY`; curating the row needs a PubChem call against the
-    committed input lists and is a human act, so it is raised in the PR, not done here.
+    ``compound_identity_table.json`` carries the isoprenol row (PubChem CID 12988), so
+    the resolver returns the full identity; :data:`ISOPRENOL_INCHIKEY` is the recorded
+    cross-check that the row is this molecule.
     """
     return resolved_compound("isoprenol")
 

@@ -1785,10 +1785,12 @@ def stored_tags_are_loci(
 ) -> LevelResult:
     """SUPPLEMENTARY L1: every stored tag resolves to itself as a locus of BW25113.
 
-    The shared ``canonical_gene_names`` row requires status ``current``, which a
+    The shared ``canonical_gene_names`` row used to require status ``current``, which a
     pseudogene locus never has (the bacterial resolver answers ``non_gene_feature``,
-    naming the same tag). This row accepts a gene or a pseudogene that resolves to
-    itself and counts both; it is added beside the shared row, never in its place.
+    naming the same tag), so this row was written to carry the real check. That row now
+    accepts a non-gene feature that resolves to ITSELF and counts them, so this one is
+    its stricter restatement over the stored tags alone: it is added beside the shared
+    row, never in its place.
     """
     statuses: Counter[str] = Counter()
     elsewhere: list[str] = []

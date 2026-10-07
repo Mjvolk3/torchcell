@@ -477,13 +477,14 @@ def test_the_titer_phenotype_refuses_a_non_finite_value() -> None:
         ds.titer_phenotype(-1.0)
 
 
-def test_the_product_is_isoprenol_with_the_inchikey_still_an_open_gap() -> None:
-    """The compound table has no isoprenol row, so the key is carried in the module."""
+def test_the_product_is_isoprenol_with_the_table_s_own_identity() -> None:
+    """The compound table carries the isoprenol row, and the module's key cross-checks it."""
     product = ds.isoprenol_product()
     assert product.name == "isoprenol"
-    assert product.inchikey is None
-    assert product.gapped_fields() == {"inchikey"}
     assert ds.ISOPRENOL_INCHIKEY == "CPJRRXSHAYUTGL-UHFFFAOYSA-N"
+    assert product.inchikey == ds.ISOPRENOL_INCHIKEY
+    assert product.pubchem_cid == 12988
+    assert product.gapped_fields() == set()
 
 
 @pytest.mark.parametrize(

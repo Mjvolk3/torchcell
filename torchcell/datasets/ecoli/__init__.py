@@ -26,10 +26,12 @@ sourcing layer.
   on thirty carbon sources, against two assembly pins.
 - ``wang2015`` -- ``EnvChemgenWang2015Dataset``: Keio transporter deletions scored for
   isoprenol tolerance.
+- ``price2018`` -- ``RbTnseqPrice2018EcoliDataset``: the RB-TnSeq fitness compendium,
+  the loader that serves the experiments Wetmore 2015 first reported.
 - ``mutalik2020`` -- the phage-resistance RB-TnSeq raw mirror and sourcing layer; the
   dataset class waits on a loader using the ``PhagePerturbation`` environment leaf.
 - ``wetmore2015`` -- a subsumption record: its *E. coli* experiments are carried by the
-  Price 2018 compendium, which is the loader that will serve them.
+  Price 2018 compendium above, which is the loader that serves them.
 """
 
 from .caglar2017 import ProteomeCaglar2017Dataset as ProteomeCaglar2017Dataset

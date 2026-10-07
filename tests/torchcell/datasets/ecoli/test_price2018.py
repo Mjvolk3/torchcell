@@ -1079,9 +1079,17 @@ def test_verify_runs_the_family_verifier_with_the_bacterial_universe(
     assert results["pair_uniqueness"] is True
     assert results["gene_containment_sgd"] is True
     assert results["compound_identity"] is True
-    # BW25113_0004 is a pseudogene: the shared row reports it, the supplementary passes
-    assert results["canonical_gene_names"] is False
+    # BW25113_0004 is a pseudogene the collection deleted. The shared row used to FAIL
+    # on it (it required status `current`, which a `/pseudo` locus can never have) and
+    # this loader's supplementary row carried the real check; the shared row now accepts
+    # a non-gene feature that resolves to ITSELF and counts it, so both pass and the
+    # supplementary row is the stricter restatement rather than the only honest one.
+    assert results["canonical_gene_names"] is True
     assert results["stored_tags_are_loci_of_the_pinned_assembly"] is True
+    pseudogene = next(
+        r for r in report.results if r.name == "canonical_gene_names"
+    ).details["self_resolving_non_gene_features"]
+    assert any("BW25113_0004" in entry for entry in pseudogene)
     written = json.loads(
         (
             _dataset_root(mirrored) / "preprocess" / "verification_report.json"

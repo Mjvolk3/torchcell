@@ -100,8 +100,8 @@ ENVIRONMENT, AND WHAT THE SLOT CANNOT HOLD. The three Kang media already live in
 ``M9_MOPS_KANG2026``), each carbon-source free, so every sugar is an
 ``EnvironmentPhysicalPerturbation(factor=carbon_source)`` and every inducer, overlay and
 supplement a ``SmallMoleculePerturbation``. ``ProductTiterExperiment.environment`` is
-annotated ``Environment``, not ``CultureEnvironment``, so a vessel and working volume
-would be serialized away; they are recorded in :data:`CULTURE_FORMATS` and in the note.
+annotated ``CultureEnvironment``, so each condition's vessel and working volume
+(:data:`CULTURE_FORMATS`) travel on the record.
 The 48 h sugar + nitrogen pulse that four conditions use has no ``Environment`` slot
 either and is carried per record in ``preprocess/titer_rows.csv``.
 """
@@ -151,7 +151,9 @@ from torchcell.datamodels.schema import (
     Compound,
     Concentration,
     ConcentrationUnit,
-    Environment,
+    CultureEnvironment,
+    CultureFormat,
+    EndpointRule,
     EnvironmentPhysicalPerturbation,
     Experiment,
     ExperimentReference,
@@ -265,7 +267,7 @@ ISOPRENYL_ACETATE_INCHIKEY = "OCUAPVNNQFAQSM-UHFFFAOYSA-N"
 PRODUCT_NAME = "isoprenyl acetate"
 
 #: Vessel and working volume per culture format. ``ProductTiterExperiment.environment``
-#: is annotated ``Environment``, so these would be dumped away on the record.
+#: is annotated ``CultureEnvironment``, so these travel on the record (``_culture_format``).
 CULTURE_FORMATS: dict[str, dict[str, Any]] = {
     "tube": {
         "vessel": "50 mL culture tube",
@@ -1789,15 +1791,45 @@ _FEDBATCH_MEDIUM_NOTE = (
 )
 
 
+#: The sourced statement behind each culture format, by its ``ConditionSpec`` key.
+_FORMAT_PROVENANCE: dict[str, SourcedValue] = {
+    "tube": TUBE_FORMAT,
+    "flask": FLASK_FORMAT,
+    "bioreactor": BIOREACTOR_FORMAT,
+}
+
+
+def _culture_format(key: str, *, endpoint_stated: bool) -> CultureFormat:
+    """The typed culture format of one condition, with the statement that gives it.
+
+    ``shaking_rpm`` is ``None`` for the bioreactor, which is stirred rather than shaken
+    and whose agitation the Methods state as an impeller speed this field cannot carry;
+    that absence is the source's, not a dropped value.
+    """
+    stated = CULTURE_FORMATS[key]
+    return CultureFormat(
+        vessel=str(stated["vessel"]),
+        working_volume_ul=float(stated["working_volume_ml"]) * 1000.0,
+        shaking_rpm=(
+            None if stated["shaking_rpm"] is None else float(stated["shaking_rpm"])
+        ),
+        endpoint=EndpointRule.fixed_duration if endpoint_stated else None,
+        provenance=[_FORMAT_PROVENANCE[key]],
+    )
+
+
 def environment(
     spec: ConditionSpec, *, duration_hours: float | None = None
-) -> Environment:
+) -> CultureEnvironment:
     """The environment of one stated condition.
 
-    A plain ``Environment``, not a ``CultureEnvironment``:
-    ``ProductTiterExperiment.environment`` is annotated ``Environment`` and pydantic
-    serializes by the DECLARED type, so a vessel or working volume would be dumped away
-    without an error. They are carried in :data:`CULTURE_FORMATS` instead.
+    A ``CultureEnvironment``, since ``ProductTiterExperiment.environment`` is annotated
+    as one: a titer is read with its vessel, so the condition's own
+    :data:`CULTURE_FORMATS` entry (tube, flask or bioreactor, each with its quote)
+    travels on the record rather than only beside it. ``endpoint`` is
+    ``fixed_duration`` exactly where the source states the duration, and unset where
+    ``duration_hours`` is a typed gap: an endpoint rule naming a time the source never
+    gave would assert one.
     """
     perturbations: list[Any] = [_carbon("D-glucose", spec.glucose_g_per_l)]
     if spec.xylose_g_per_l is not None:
@@ -1837,9 +1869,12 @@ def environment(
                 note=_DURATION_GAP_NOTE,
             )
         )
-    return Environment(
+    return CultureEnvironment(
         media=_MEDIA_BY_LABEL[spec.medium_label],
         temperature=Temperature(value=float(TEMPERATURE_C.value)),
+        culture_format=_culture_format(
+            spec.culture_format, endpoint_stated=hours is not None
+        ),
         perturbations=perturbations,
         aerobicity=str(AEROBICITY.value),
         duration_hours=hours,

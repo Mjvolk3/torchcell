@@ -14,6 +14,11 @@ What this package holds:
   ``ProteomeCarruthers2025Dataset``: the CRISPRi isoprenol production campaign, 465
   product-titer strains on the IY1449b chassis plus the released 19-sample Top3 proteome
   panel.
+- ``desiqueira2025`` -- ``IsoprenolTiterDeSiqueira2025Dataset`` and
+  ``ProteomeDeSiqueira2025Dataset``: the acetate-tolerization panel, loaded only where
+  the genotype is representable (the wild type and the pre-tolerized parent).
+- ``kang2026`` -- ``IsoprenylAcetateTiterKang2026Dataset``: the isoprenyl acetate
+  production campaign on the PIPA chassis, across the paper's three titer columns.
 - ``lim2022`` -- ``PutidaPrecise321Lim2022Dataset``: putidaPRECISE321, the KT2440
   transcriptome compendium as one record per sample (180 of 321), each naming the study
   its profile was first published in.

@@ -26,6 +26,13 @@ the subclass sets:
   its sequence and whose :meth:`AnnotatedGene.annotate` copies its GFF attributes.
 * ``ANNOTATION_NAME`` / ``ANNOTATION_RELEASE``: how a resolution's ``note`` names the
   annotation.
+* ``AnnotatedGene.FEATURE_ID_PREFIX``: what the GFF puts before a gene id in the
+  feature's ``ID`` (NCBI writes ``ID=gene-b0002`` for the locus tag ``b0002``; SGD writes
+  the bare systematic name, the default ``""``).
+* :meth:`AnnotatedGenome._read_sequences`: how the FASTA members become
+  ``fasta_dna`` / ``fasta_protein`` / ``fasta_cds``. The default parses three plain
+  FASTAs; a release with no CDS FASTA (``GenomeReleaseFiles.cds_fasta`` is ``None``)
+  derives the CDS sequences in its override.
 
 Nothing here is organism-specific. The S. cerevisiae S288C genome is the SGD subclass
 ``SCerevisiaeGenome`` in ``torchcell.sequence.genome.scerevisiae.s288c``, which
@@ -1057,7 +1064,10 @@ class GenomeReleaseFiles(BaseModel):
 
     Each is resolved through the genomes tier (sha256-verified) at construction. The
     GFF is the source of ``data.db``; the DNA FASTA gives the chromosome sequences; the
-    protein and CDS FASTAs are keyed by gene id.
+    protein and CDS FASTAs are keyed by gene id. ``cds_fasta`` is required and may be
+    ``None``, which states that the release ships no CDS FASTA: the subclass then
+    derives the CDS sequences in :meth:`AnnotatedGenome._read_sequences` (an NCBI
+    GenBank assembly carries them as the CDS features of its flat file).
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -1065,7 +1075,7 @@ class GenomeReleaseFiles(BaseModel):
     dna_fasta: str
     gff: str
     protein_fasta: str
-    cds_fasta: str
+    cds_fasta: str | None
 
 
 @define
@@ -1081,6 +1091,9 @@ class AnnotatedGene(Gene):
 
     #: The GFF attribute whose ``GO:``-prefixed values are the gene's GO terms.
     GO_ATTRIBUTE: ClassVar[str]
+    #: What the GFF writes before a gene id in the gene feature's ``ID``: ``""`` when
+    #: the ``ID`` is the gene id itself (SGD), ``"gene-"`` for NCBI's ``ID=gene-b0002``.
+    FEATURE_ID_PREFIX: ClassVar[str] = ""
 
     id: str = field(repr=False)
     db: Any = field(repr=False)
@@ -1099,7 +1112,7 @@ class AnnotatedGene(Gene):
     def __attrs_post_init__(self) -> None:
         """Resolve the gene feature, coordinates, sequence, and GO terms from the DB."""
         feature = self.coding_feature()
-        gene_feature = self.db[self.id]
+        gene_feature = self.db[self.feature_id]
 
         #
         self.id = self.id
@@ -1137,9 +1150,16 @@ class AnnotatedGene(Gene):
     def seqid_to_chromosome(cls, seqid: str) -> int:
         """The integer chromosome key of the GFF ``seqid`` a gene sits on."""
 
+    @property
+    def feature_id(self) -> str:
+        """The ``ID`` of this gene's feature in ``data.db``: :attr:`FEATURE_ID_PREFIX`
+        followed by the gene id.
+        """
+        return self.FEATURE_ID_PREFIX + self.id
+
     def coding_feature(self) -> Feature:
         """The feature whose coordinates give the gene its sequence: the gene row."""
-        return self.db[self.id]
+        return self.db[self.feature_id]
 
     def annotate(self, gene_feature: Feature) -> None:
         """Copy the gene's GFF3 reserved attributes and its GO terms.
@@ -1495,7 +1515,7 @@ class AnnotatedGenome[GeneT: AnnotatedGene](Genome):
     _gene_set: GeneSet = field(init=False, default=None, repr=False)
     _dna_fasta_path: str = field(init=False, default=None, repr=False)
     _protein_fasta_path: str = field(init=False, default=None, repr=False)
-    _cds_fasta_path: str = field(init=False, default=None, repr=False)
+    _cds_fasta_path: str | None = field(init=False, default=None, repr=False)
     _gff_path: str = field(init=False, default=None, repr=False)
     _go: SortedSet[str] = field(init=False, default=None, repr=False)
     _go_genes: SortedDict[str, SortedSet[str]] = field(
@@ -1550,6 +1570,41 @@ class AnnotatedGenome[GeneT: AnnotatedGene](Genome):
         subclass downloads it when absent); the DAG itself is loaded lazily.
         """
 
+    @classmethod
+    def _gene_id_of(cls, feature_id: str) -> str:
+        """The gene id of a ``data.db`` feature ``ID``: the id without the gene class's
+        ``FEATURE_ID_PREFIX``. An ``ID`` that lacks the prefix is refused by name.
+        """
+        prefix = cls.gene_class().FEATURE_ID_PREFIX
+        if not feature_id.startswith(prefix):
+            raise ValueError(
+                f"{cls.__name__}: data.db feature id {feature_id!r} does not start with "
+                f"the gene id prefix {prefix!r} of {cls.gene_class().__name__}"
+            )
+        return feature_id[len(prefix) :]
+
+    def _read_sequences(self) -> None:
+        """Parse the FASTA members into ``fasta_dna`` (keyed by FASTA record id),
+        ``fasta_protein`` and ``fasta_cds`` (keyed by gene id).
+
+        Called once during construction, after ``data.db`` is open and before the
+        chromosome maps are built from ``fasta_dna``. This default reads three plain
+        FASTA files and refuses a release without a CDS FASTA; a subclass whose release
+        has none, or whose FASTAs are keyed by something other than the gene id,
+        overrides it.
+        """
+        if self._cds_fasta_path is None:
+            raise ValueError(
+                f"{type(self).__name__}.release_files() names no cds_fasta; a release "
+                "without a CDS FASTA derives its CDS sequences in an override of "
+                "_read_sequences"
+            )
+        self.fasta_dna = SeqIO.to_dict(SeqIO.parse(self._dna_fasta_path, "fasta"))  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
+        self.fasta_protein = SeqIO.to_dict(  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
+            SeqIO.parse(self._protein_fasta_path, "fasta")  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
+        )
+        self.fasta_cds = SeqIO.to_dict(SeqIO.parse(self._cds_fasta_path, "fasta"))  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
+
     def __attrs_post_init__(self) -> None:
         """Resolve the release files from the genomes tier and build the GFF database."""
         # Call parent class init to ensure all base attributes are set
@@ -1566,7 +1621,8 @@ class AnnotatedGenome[GeneT: AnnotatedGene](Genome):
         gff_filename = files.gff
         self._gff_path: str = resolve(self.ASSEMBLY_SET, gff_filename)
         self._protein_fasta_path = resolve(self.ASSEMBLY_SET, files.protein_fasta)
-        self._cds_fasta_path = resolve(self.ASSEMBLY_SET, files.cds_fasta)
+        if files.cds_fasta is not None:
+            self._cds_fasta_path = resolve(self.ASSEMBLY_SET, files.cds_fasta)
 
         db_path = osp.join(self.genome_root, GENOME_DB_FILENAME)
         source = genome_database_source(self.ASSEMBLY_SET, gff_filename, self._gff_path)
@@ -1609,11 +1665,7 @@ class AnnotatedGenome[GeneT: AnnotatedGene](Genome):
         # Set up connection manager for thread/process-safe database access
         self._db_connection_manager = GffutilsConnectionManager(db_path)
 
-        self.fasta_dna = SeqIO.to_dict(SeqIO.parse(self._dna_fasta_path, "fasta"))  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
-        self.fasta_protein = SeqIO.to_dict(  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
-            SeqIO.parse(self._protein_fasta_path, "fasta")  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
-        )
-        self.fasta_cds = SeqIO.to_dict(SeqIO.parse(self._cds_fasta_path, "fasta"))  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
+        self._read_sequences()
         # Create mapping from chromosome number to sequence identifier
         self.chr_to_nc = {
             self.fasta_chromosome(self.fasta_dna[key]): key
@@ -1919,7 +1971,7 @@ class AnnotatedGenome[GeneT: AnnotatedGene](Genome):
             for feat in self.db.all_features():
                 if feat.featuretype not in self.LOCUS_FEATURE_TYPES:
                     continue
-                fid = feat.id
+                fid = self._gene_id_of(feat.id)
                 if feat.featuretype != "gene":
                     locus_type[fid.upper()] = feat.featuretype
                 for std in feat.attributes.get("gene", []) or []:
@@ -2147,7 +2199,9 @@ class AnnotatedGenome[GeneT: AnnotatedGene](Genome):
 
     def compute_gene_set(self) -> GeneSet:
         """Return the GeneSet of all gene IDs in the database."""
-        genes = [feat.id for feat in list(self.db.features_of_type("gene"))]
+        genes = [
+            self._gene_id_of(feat.id) for feat in list(self.db.features_of_type("gene"))
+        ]
         assert len(genes) == len(set(genes)), (
             "Duplicate genes found... chekc handled by gff."
         )
@@ -2171,8 +2225,10 @@ class AnnotatedGenome[GeneT: AnnotatedGene](Genome):
         for gene_id in genes_to_remove:
             self._gene_set.discard(gene_id)
 
-        # Remove these genes from this instance's private copy of the database
-        self._write("delete", list(genes_to_remove))
+        # Remove these genes from this instance's private copy of the database (by
+        # their data.db feature ids)
+        prefix = self.gene_class().FEATURE_ID_PREFIX
+        self._write("delete", [prefix + gene_id for gene_id in genes_to_remove])
 
         # As in SCerevisiaeGenome.drop_chrmt: the locus index and the GO-to-genes map
         # were built from the pre-drop gene set; reset them so the next access

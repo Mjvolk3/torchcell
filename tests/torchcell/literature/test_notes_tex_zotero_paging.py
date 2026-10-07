@@ -74,7 +74,7 @@ def test_fetch_latest_version_is_the_newest_past_first_page(
 ) -> None:
     """With 150 versions the default (latest) is ``A149``, and ``--version 101`` exists."""
     _, comments = scripts
-    parent = {"key": "PARENT", "data": {"extra": "Doc Key: notes-tex/doc"}}
+    parent = {"key": "PARENT", "data": {"extra": "Doc Key: notes-tex/grp/doc"}}
     annotation = {
         "key": "ANN1",
         "data": {
@@ -91,12 +91,13 @@ def test_fetch_latest_version_is_the_newest_past_first_page(
         collections=[
             collection("ROOT", "torchcell"),
             collection("NOTES", "notes-tex", parent="ROOT"),
-            collection("DOC", "doc", parent="NOTES"),
+            collection("GRP", "grp", parent="NOTES"),
+            collection("DOC", "doc", parent="GRP"),
         ],
         collection_members={"DOC": [parent]},
         children={"PARENT": _attachments(), "A149": [annotation], "A100": []},
     )
-    filename, out = comments.fetch(zot, "doc", None)
+    filename, out = comments.fetch(zot, "notes-tex/grp/doc", None)
     assert filename == "doc_2026-01-01-00-00-00_00000095.pdf"
     assert [c.model_dump() for c in out] == [
         {
@@ -109,7 +110,7 @@ def test_fetch_latest_version_is_the_newest_past_first_page(
             "comment": "fix this",
         }
     ]
-    assert comments.fetch(zot, "doc", 101) == (
+    assert comments.fetch(zot, "notes-tex/grp/doc", 101) == (
         "doc_2026-01-01-00-00-00_00000064.pdf",
         [],
     )

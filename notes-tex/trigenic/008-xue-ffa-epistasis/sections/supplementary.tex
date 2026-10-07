@@ -1,0 +1,372 @@
+%% notes-tex/trigenic/008-xue-ffa-epistasis/sections/supplementary.tex
+%% [[experiments.008-xue-ffa.perspective-epistasis-in-metabolic-engineering]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/trigenic/008-xue-ffa-epistasis/sections/supplementary.tex
+%%
+%% SOURCE: every number and every panel below is produced by a committed script.
+%%   experiments/008-xue-ffa/scripts/supplementary_figure_panels.py
+%%       -> notes/assets/images/008-xue-ffa/si_panel_*.svg  (all six SI panels)
+%%       -> experiments/008-xue-ffa/results/supplementary_readout_counts.csv
+%%          (the per-readout call counts and medians quoted in Notes 1 and 2)
+%%   experiments/008-xue-ffa/scripts/regulator_vs_enzyme_epistasis_model.py
+%%       -> notes/assets/images/008-xue-ffa/regulator_vs_enzyme_epistasis.svg
+%%       -> experiments/008-xue-ffa/results/regulator_vs_enzyme/{singles,pairs,triples,
+%%          genes}.csv and summary.json  (every number in Note 3, and its caveat list)
+%%   experiments/008-xue-ffa/scripts/perturbation_reach_analysis.py
+%%       -> notes/assets/images/008-xue-ffa/perturbation_reach.svg
+%%       -> experiments/008-xue-ffa/results/perturbation_reach/{reach,classes}.csv and
+%%          summary.json  (every number in Note 4)
+%%   experiments/008-xue-ffa/scripts/tf_single_mutant_fitness.py
+%%       -> experiments/008-xue-ffa/results/tf_single_mutant_fitness.csv (the audit trail,
+%%          one row per gene x screen x strain), tf_single_mutant_fitness.tex (that table
+%%          in full) and tf-single-mutant-fitness-compact.tex (\input by Note 5; hyphens, since
+%%          LaTeX cannot \input a path with underscores)
+%% The four model equations moved to the Methods section (review 2026.09.16): they define
+%% what every figure measures, so they belong with the measurement description rather than
+%% behind the main text.
+
+\clearpage
+\section*{Supplementary Information\secstatus{todo}}
+
+\noindent\textbf{Contents}\par\smallskip
+%% The second column is a wrapping p{} rather than an `l' column, which cannot break, and
+%% the 13em reserves what "Supplementary Note~N" plus the column gap actually occupies.
+\begin{tabular}{@{}lp{\dimexpr\linewidth-13em\relax}@{}}
+\suppnoteref{note:digenic}  & The digenic layer the trigenic score is measured against (with \suppfig{fig:si-digenic})\\
+\suppnoteref{note:species}  & The five species under the summed total (with \suppfig{fig:si-species})\\
+\suppnoteref{note:fluxmodel}  & A minimal flux model of the regulator-against-enzyme comparison (with \suppfig{fig:si-fluxmodel})\\
+\suppnoteref{note:reach}  & How far a perturbation reaches on the annotation graphs (with \suppfig{fig:si-reach})\\
+\suppnoteref{note:fitness}  & What each deleted factor costs on its own, in the growth screens\\[4pt]
+Supplementary Figs.\ & A figure supporting a Note sits with that Note\\
+\end{tabular}
+
+%% SI numbering, set ONCE: Supplementary Figures restart at 1 and carry the word
+%% "Supplementary" rather than an S prefix, which is the Nature Portfolio form
+%% ([[paper.proof-writing-standard]]). There is no equation counter to reset: every
+%% equation in this document is now in the main text or in Methods.
+\setcounter{figure}{0}
+\renewcommand{\figurename}{Supplementary Figure}
+
+\suppnote{note:digenic}{The digenic layer the trigenic score is measured against\secstatus{todo}}
+
+The main text is a claim about the third deletion. That claim is made against what the
+first two do, so what the pairs do is worth stating on its own, and it is the opposite of
+the trigenic result.
+
+\notesec{The pairs are positive} On total titer, 43 of the 45 double deletions have a
+positive multiplicative digenic score and the median is $+0.40$. Twenty-five of the 45
+reach a 5\% false discovery rate within the readout, and every one of the 25 is positive
+(\suppfig{fig:si-digenic}a). A pair of deletions therefore tends to produce more titer than
+the product of its singles, which is the behavior a campaign would want and would find if
+it stopped at two.
+
+\notesec{No factor carries it} Drawing all 45 scores as a matrix over the ten factors
+(\suppfig{fig:si-digenic}b) shows the positive scores spread across the panel rather than
+concentrated in the rows of one or two factors. The largest score in absolute value is
+0.98. Every one of the ten factors takes part in at least one called pair, from GCN5 in 1
+of its 9 to TFC7 in 8 of its 9, so no single factor carries the positive digenic signal
+and none is exempt from it.
+
+\notesec{The third deletion undoes it} Writing the multiplicative expectation for a triple
+with the pairs included, as in Eq.~\ref{eq:tau-eps}, gives a prediction of the triple
+from its singles and its pairs alone. Ninety-three of the 120 triples fall below that
+prediction (\suppfig{fig:si-digenic}c), and the vertical distance to the diagonal in that
+panel is $\tau$. The negative trigenic median reported in the main text is therefore not a
+continuation of a downward trend the pairs already set. The pairs trend upward, and the
+third deletion reverses the direction.
+
+\begin{figure*}[t]
+\panelrow{%
+  \panel{a}{figures/si_panel_digenic_volcano.pdf}\hfill
+  \panel{b}{figures/si_panel_digenic_matrix.pdf}\hfill
+  \panel{c}{figures/si_panel_digenic_contribution.pdf}%
+}
+\caption{\textbf{The digenic layer on total fatty acid titer.} \textbf{a}, Digenic score
+$\varepsilon$ against evidence for the 45 double deletions under the multiplicative model.
+The dashed line marks the largest $P$ that Benjamini-Hochberg rejects at a 5\% false
+discovery rate over the 45 tests of this readout; 25 pairs clear it and all 25 are
+positive. \textbf{b}, Every pair's $\varepsilon$ as a matrix over the ten factors, blue
+positive and brick negative on a scale centered at zero. The matrix is symmetric and the
+dots marking a false-discovery-rate call are drawn in the upper triangle only.
+\textbf{c}, Each triple's measured titer against the titer predicted from its singles and
+its pairs, $f_i f_j f_k + \varepsilon_{ij} f_k + \varepsilon_{ik} f_j + \varepsilon_{jk}
+f_i$. The vertical distance to the diagonal is the trigenic score $\tau$, so a point below
+the line is a triple that produces less than its own pairs predict; 93 of 120 do. Filled
+points are triples called at a 5\% false discovery rate within total titer.}
+\label{fig:si-digenic}
+\end{figure*}
+
+\suppnote{note:species}{The five species under the summed total\secstatus{todo}}
+
+Total titer is the sum of five measured fatty acids, and summing is a modeling choice in
+the same sense that the null is. The five species were measured separately, so the choice
+can be audited rather than argued about.
+
+\notesec{Every species interacts, and they do not agree on the sign} Recomputing the
+false-discovery-rate correction within each readout gives 3 to 80 called trigenic
+interactions per species against 86 on the summed total
+(\suppfig{fig:si-species}a). C16:0, C18:0 and C18:1 behave like the total, with 60 to 67 of
+their calls negative. C14:0 does not: all 26 of its calls are positive and its median
+trigenic score is $+3.90$, the largest of any readout. C16:1 is nearly silent, with 2
+digenic and 3 trigenic calls, so a claim about it would be a claim about a readout this
+design cannot resolve.
+
+\notesec{C14:0 reverses between orders} On C14:0 all 15 digenic calls are negative with a
+median of $-1.40$, and all 26 trigenic calls are positive with a median of $+3.90$
+(\suppfig{fig:si-species}c). The direction of the interaction on that species depends on
+how many deletions are counted. Three of the five species move down from the digenic to
+the trigenic median and two move up, so the reversal the main text reports on the summed
+total is a majority behavior rather than a universal one.
+
+\notesec{The summed total is not a faithful summary} Correlating $\tau$ across readouts
+over the same 119 triples (\suppfig{fig:si-species}b) puts the total close to C16:0 and
+C18:1 at $r = 0.91$, further from C16:1 and C18:0 at $r = 0.54$ and $0.40$, and on the
+other side of zero from C14:0 at $r = -0.28$. The two most negatively related species are
+C14:0 and C18:1 at $r = -0.41$. Summing therefore reports the species that carry the most
+mass and cancels a species whose interactions run the other way, which is the mechanism
+behind the main text's observation that 31 positive consensus interactions exist across the
+five species and none survives on their sum.
+
+\notesec{What follows for a campaign} A campaign that optimizes one species is not
+optimizing a scaled version of the total, and the interaction structure it would have to
+navigate is not the one reported here. The reachability result of the main text is stated
+on total titer, and repeating it per species is a separate analysis this document does not
+carry out.
+
+\begin{figure*}[t]
+\panelrow{%
+  \panel{a}{figures/si_panel_species_counts.pdf}\hfill
+  \panel{b}{figures/si_panel_species_agreement.pdf}\hfill
+  \panel{c}{figures/si_panel_species_medians.pdf}%
+}
+\caption{\textbf{The five measured species behind the summed total.} \textbf{a},
+Interactions called at a 5\% false discovery rate within each readout, digenic (solid) and
+trigenic (hatched), stacked by sign, blue positive and brick negative. Counts above each
+bar are the totals. \textbf{b}, Trigenic $\tau$ compared across readouts over the same 119
+triples: Pearson $r$ below the diagonal, and above it the number of triples called at a 5\%
+false discovery rate in both readouts. \textbf{c}, Median interaction score per readout for
+both orders. The gap between the two lines is the quantity the main text reports on total
+titer, and its sign is not the same on every species.}
+\label{fig:si-species}
+\end{figure*}
+
+\suppnote{note:fluxmodel}{A minimal flux model of the regulator-against-enzyme comparison\secstatus{todo}}
+
+The Discussion says the comparison this design cannot make is an enzyme panel of the same
+shape on the same readout. That comparison can be attempted in a model, and attempting it
+is worth reporting, because what the model does is not what it was asked.
+
+\notesec{The model} The network is Yeast9, with the chassis deletions POX1, FAA1 and FAA4
+applied first. The readout is the maximum of the summed export flux of the five measured
+species with growth held at half the base strain's maximum growth, divided by the base
+strain's value, so the base strain reads 1 as it does throughout this document. Two arms
+of ten genes are perturbed. The regulator arm is the ten deleted factors, and none of the
+ten is among the model's 1{,}161 genes. That is not a gap in the reconstruction. Yeast9
+carries the genes with a metabolic function, and a transcription factor has none, so the
+perturbation this design actually applies has no representation in the model at all and can
+only be routed through targets: here through the SGD regulatory graph and TFLink, taken in
+the factor to target direction and restricted to genes of the model. The routing is the
+whole of the mechanism, and it is a coarse one, reaching between 323 and 1{,}401 of the
+model's 4{,}131 reactions per factor. A single deletion in this arm therefore rescales
+between 8 and 34 percent of the network, so the routing rule rather than the deletion sets
+the size of the perturbation. The
+enzyme arm is the ten of the thirteen pathway genes with the most reactions in the model,
+each acting on the reactions it catalyzes. A deletion multiplies both bounds of every
+reaction in its set by a capacity multiplier, or sets them to zero in the binary arm, and
+on a reaction hit by two deletions the multipliers multiply. The perturbation model
+therefore contains no interaction term of any kind, so anything the readout shows is
+produced by the network and by the choice to measure one locus. Interaction scores are
+Eqs.~\ref{eq:eps} and \ref{eq:tau} on that readout.
+
+\notesec{At the multipliers a reader would try first, nothing happens} At 0.75, 0.5 and
+0.25 every digenic and every trigenic score in both arms is zero to numerical tolerance,
+$2 \times 10^{-15}$ against a tolerance of $10^{-6}$. About seven in
+ten of the model's flux bounds sit at its $\pm 1000$ placeholder rather than at a measured
+capacity, and scaling a placeholder binds nothing. This is a property of the model's
+parameterization, not a result about composability.
+
+\notesec{Below that the readout falls off a cliff rather than responding} At 0.1, 0.05,
+0.01 and 0.005 the regulator arm scores a nonzero $\tau$ on all 120 triples and the enzyme
+arm on none, 480 against 0 over the whole sweep. Of those 480, two are graded, meaning
+that all seven readouts the score is computed from clear the growth floor. In the rest the
+score is arithmetic on zeros: $\tau$ is exactly $-1$ at 0.1, where the triples alone fail
+to grow, and exactly $+2$ at 0.05 and 0.01, where the pairs fail too. At 0.005 it is
+exactly twice the product of the three singles, for the same reason. The only nonzero
+enzyme-arm score anywhere is FAS1 with FAS2, the two subunits of fatty acid synthase,
+which share reactions so their multipliers compound.
+
+\notesec{The distance part of the hypothesis fails in this model} Counting hops on the
+model's reaction-metabolite graph with currency metabolites dropped, the regulator arm
+sits a median of 3 reactions from the five readout exchanges and the enzyme arm a median
+of 4. The reason is mechanical: a regulator's reaction set is the union over 125 to 605
+model genes, and a union that large nearly always contains something adjacent to the fatty
+acid exchanges, while an enzyme acts on 2 to 18 reactions. Within
+the regulator arm the rank correlation between a triple's mean hop count and $|\tau|$
+changes sign across settings, from $\rho = -0.33$ at 0.05 to $\rho = +0.52$ at 0.01, so
+there is no stable relation to report.
+
+\notesec{What this establishes} Not which arm interacts more. It establishes what a model
+would need to answer that: graded capacities rather than placeholder bounds, a readout
+that does not collapse onto a feasibility boundary, and a map from a factor deletion to a
+distribution of expression changes rather than an all-or-nothing scaling of every target.
+The last of these is the step the Discussion identifies as missing, and this is what its
+absence costs. Everything in this note is a property of the model defined in
+\file{experiments/008-xue-ffa/scripts/regulator_vs_enzyme_epistasis_model.py}; no
+number in it is a titer, and none of it is evidence about the measured strains. The model
+also ignores whether a factor activates or represses its target, treats every target
+equally, and reads an optimum rather than a titer, and each of those would have to be
+fixed before the comparison means anything.
+
+\begin{figure*}[t]
+\tcfig{figures/regulator_vs_enzyme_epistasis.pdf}{\textbf{A minimal flux model does not
+settle the regulator-against-enzyme comparison.} \textbf{a}, Distance from the perturbed
+reactions to the five readout exchanges, counted in reactions on the model's
+reaction-metabolite graph with currency metabolites dropped. The regulator arm is closer
+than the enzyme arm, not further, because a regulator's reaction set is the union over
+hundreds of targets. \textbf{b}, The fraction of regulator-arm combinations at each order
+that miss the growth floor and export nothing, per capacity multiplier; every nonzero
+interaction score in that arm is arithmetic on these zeros. \textbf{c}, The same for the
+enzyme arm, which misses the floor only at 0.002 and at the binary setting, and at no
+order completely. \textbf{d}, The fraction of the 120 triples with $|\tau|$ above a
+numerical tolerance. The regulator arm scores on every triple in a four-setting window and
+on none outside it, and the enzyme arm scores nowhere; two of the 480 regulator-arm scores
+are computed entirely from strains that clear the growth floor.}{fig:si-fluxmodel}
+\end{figure*}
+
+\suppnote{note:reach}{How far a perturbation reaches on the annotation graphs\secstatus{todo}}
+
+The flux model of \suppnoteref{note:fluxmodel} tested distance. The other half of the
+hypothesis in the Discussion is reach: a factor deletion touches many genes, each of those
+touches reactions, and most of those reactions are nowhere near the one locus the titer
+measures, so one measurement sums many small unmeasured changes. Reach can be counted on
+the graphs this document already uses, and the count is reported here for what it is, a
+property of the annotation rather than a measurement of the cell.
+
+\notesec{Three kinds of seed} The regulator class is the ten deleted factors, none of
+which is a gene of Yeast9. The pathway enzyme class is the thirteen core fatty acid genes
+of Fig.~\ref{fig:network}b, a direct hit on the measured locus. The adjacent enzyme class
+is every Yeast9 gene outside those thirteen whose reactions share at least one
+non-currency metabolite with a reaction a pathway gene catalyzes: one reaction away from
+the pathway, which is where a campaign that blocks a competing flux to divert it toward
+the product makes its deletions. Computed on the model with the fourteen currency
+metabolites of \suppnoteref{note:fluxmodel} dropped, that class has 62 genes, sharing 113
+metabolites with the pathway. The measured locus is the 69 model reactions the thirteen
+genes catalyze plus the five fatty acid exchanges; any other reaction is a place the
+titer does not look.
+
+\notesec{Ten graphs and their union} Nine are gene graphs, all but one of the ten the
+enrichment of Fig.~\ref{fig:models}b scans: physical association, the SGD regulatory
+graph, TFLink, and the six STRING 12.0 channels. The genetic interaction graph is left
+out, since a genetic interaction is a measured epistasis and using it here would answer
+the question with its own answer. The regulatory and TFLink graphs are directed and are
+followed factor to target only. The tenth is the model's own gene-reaction-metabolite
+graph with the same currency metabolites dropped, on which one gene hop is gene to
+reaction to metabolite to reaction to gene. The union carries an edge wherever any of the
+ten does. For every seed, every graph and hop depths one to three, the count is of genes
+reached, of model reactions those genes catalyze, and of how many of those reactions lie
+off the locus.
+
+\notesec{On the union the classes do not separate, and two hops reach everything} At one
+hop a factor reaches a median of 1,416 genes, a pathway enzyme 701 and an adjacent enzyme
+390, but the reactions those genes carry outside the locus are 904, 975 and 667
+respectively, and neither regulator comparison separates (Mann-Whitney $P = 0.16$ against
+the pathway enzymes and $0.09$ against the adjacent ones). The share of touched reactions
+that lie off the locus is 0.97, 0.95 and 0.95. At two hops the median class reaches essentially every
+gene-annotated reaction the model has outside the locus, 2,645 for the regulators and the
+pathway enzymes and 2,644 for the adjacent enzymes, so a two-hop comparison is a
+comparison of ceilings rather than of reach. At three hops the class medians run from
+6,950 to 6,961 of the union's 6,997 genes (\suppfig{fig:si-reach}a,~c).
+
+\notesec{What separates them is the graph, not the amount} The factors reach off-locus
+reactions through the two regulatory graphs only, a median of 483 through the SGD graph and
+476 through TFLink at one hop, and through the metabolic graph not at all, because none of
+them is a gene of the model. The two enzyme classes are the mirror image: nothing through
+either regulatory graph, and their reach, quoted as pathway enzyme against adjacent enzyme,
+carried by STRING coexpression (898 and 546), experimental association (463 and 189),
+neighborhood (265 and 116), database (230 and 117) and the metabolic graph (95 and 72)
+(\suppfig{fig:si-reach}b,~d). Twenty-four of the 99 graph-by-class-by-depth cells have a
+median reach of zero.
+
+\notesec{What this establishes} That on these graphs a factor is not further-reaching than
+an enzyme in the sense the hypothesis needs; the union of curated graphs is dense enough
+that one hop from anything reaches a quarter of the model's reactions and two hops reach
+all of them. It does not establish that reach is irrelevant to the readout, because a gene
+one hop away on a coexpression graph need not change when the seed is deleted, no size of
+change is modeled, and the graphs are unevenly curated: a factor with a long TFLink list
+differs from one with a short list in what the resource recorded as well as in what the
+cell does. Every number in this note is produced by
+\file{experiments/008-xue-ffa/scripts/perturbation_reach_analysis.py} from the graphs and
+the model as stored, and none of it is a titer.
+
+
+\begin{figure*}[t]
+\tcfig{figures/perturbation_reach.pdf}{\textbf{Reach on the annotation graphs does not
+separate a factor from an enzyme.} \textbf{a}, Genes within one, two and three hops of a
+seed on the union of the ten graphs, median per class with the interquartile range shaded,
+on a log axis. Every class saturates at two hops. \textbf{b}, Median number of Yeast9
+reactions outside the measured locus carried by the genes reached at one hop, per graph
+and per class. The factors reach through the two regulatory graphs and the enzymes
+through coexpression, association and the metabolic graph; on the union the three
+medians are within a factor of 1.5. \textbf{c}, The share of touched reactions that lie
+off the locus, per seed, at one and two hops on the union. \textbf{d}, Median out-degree
+of a seed per graph, the first-hop fan-out behind \textbf{b}.}{fig:si-reach}
+\end{figure*}
+
+\suppnote{note:fitness}{What each deleted factor costs on its own, in the growth screens\secstatus{todo}}
+
+Every titer here is a volumetric measurement with no biomass column, so a deletion that
+slows growth and a deletion that lowers output per cell read the same. What each of the
+ten factors does to growth on its own is measured elsewhere, in the genetic interaction
+screens, and putting those values beside the panel says which deletions bring a growth
+cost into the readout.
+
+\notesec{Where the numbers come from} Single-mutant fitness relative to wild type, from
+the strain-level tables of Costanzo et al.~\citep{costanzoGlobalGeneticInteraction2016} at
+both assay temperatures and from the array single-mutant columns of Kuzmin et
+al.~\citep{kuzminSystematicAnalysisComplex2018,kuzminExploringWholegenomeDuplicate2020}.
+The Costanzo uncertainty is a bootstrap standard error over 17 control screens, and the
+Kuzmin array columns carry no uncertainty at all, so none is quoted. Essentiality is the
+mirrored SGD record, counting a null allele scored inviable. The lookup, every strain it
+found and the file and column each value was read from are in
+\file{experiments/008-xue-ffa/scripts/tf_single_mutant_fitness.py} and its CSV; the
+table below is one row per gene, and it names an allele class only where the classes
+disagree.
+
+\begin{table}[h]
+\centering\footnotesize
+\input{tables/tf-single-mutant-fitness-compact.tex}
+\caption{Single-mutant fitness of the ten deleted transcription factors in the growth
+screens, relative to wild type. A dash is a gene the screen carries no fitness value for,
+either because it has no strain there or because the released table leaves the value
+empty. ``inviable'' marks a gene whose null allele SGD records as inviable, which is why
+the screens carry a temperature-sensitive or DAmP allele for it rather than a deletion.}
+\end{table}
+
+\notesec{Three of the ten are not deletable in a laboratory background} MED4, RGR1 and
+TFC7 all carry an inviable null in SGD, and no screen has a deletion strain for any of
+them: Costanzo represents MED4 by temperature-sensitive alleles, RGR1 by a DAmP allele and
+a temperature-sensitive one, and TFC7 by a DAmP allele with no fitness reported. Where the
+hypomorphs do carry a value they are the sickest strains in the set, 0.52 for MED4 and
+0.50 for the RGR1 temperature-sensitive allele against 0.97 for the RGR1 DAmP allele,
+which is the difference between two perturbation strengths rather than two estimates of
+one quantity. The source study nonetheless reports viable deletion strains for all three
+in its producing background. Reconciling that is outside what these data can do, and the
+possibilities, a different background, a partial deletion, or a suppressor, are not
+distinguishable from the released tables. What follows for this document is narrower: for
+these three factors the titer of a strain carrying them is not comparable to a
+laboratory-background deletion of the same gene.
+
+\notesec{The rest are mild, and one is absent} FKH1 and YAP6 are at or within a percent of
+wild-type fitness, RFX1 at 0.97, OPI1 at 0.85 and SPT3 at 0.73, the largest measured cost
+among the seven non-essential factors. RPD3 has a strain in Costanzo but no reported
+fitness, and GCN5 has no strain in any of the five tables, checked both by systematic name
+and by allele name. GCN5 is the one factor whose single deletion raises titer here, so the
+screens offer no growth value for the single most useful deletion in the panel.
+
+\notesec{What this does and does not license} It does not convert any titer into a
+per-cell quantity, and it is not a measurement in the producing background. It bounds one
+reading of the results: the two single deletions that cost the most titer, RPD3 at
+$0.52\times$ and MED4, are a gene with no reported growth value and a gene whose null is
+inviable in a laboratory strain, so a growth contribution to those two titers cannot be
+ruled out from these data. The factors with mild growth costs, FKH1, YAP6 and RFX1, lose
+titer in this chassis anyway, which is a titer effect rather than a growth one.
+

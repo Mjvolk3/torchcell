@@ -33,7 +33,7 @@ collection, written wherever you point it)::
 
     python scripts/lit_bib.py \
         --collection FE8DQKUH --user-collection AC8MFJXK \
-        --out notes-tex/microbe-perturb-seq/references.bib
+        --out notes-tex/wet-lab/024-perturb-seq-costing/references.bib
 
 Cadence: this is an EXPLICIT step, never part of a document build. A build that
 pulls from a live API is not reproducible, since the same commit yields a
@@ -120,7 +120,7 @@ def main() -> None:
         metavar="PATH",
         help=(
             "Write to this path instead of the two managed bibliographies; "
-            "repeatable. Used for notes-tex/<slug>/references.bib."
+            "repeatable. Used for notes-tex/<group>/<slug>/references.bib."
         ),
     )
     parser.add_argument(

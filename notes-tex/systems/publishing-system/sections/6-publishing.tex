@@ -1,0 +1,66 @@
+%% notes-tex/systems/publishing-system/sections/6-publishing.tex
+
+\section{Publishing a build\secstatus{todo}}
+\label{sec:publishing}
+
+\notesec{Why Zotero}
+The point of a review copy is annotation. Zotero's reader keeps highlights and
+comments attached to a specific PDF attachment, so a comment always refers to the
+exact rendering it was made on. A note saying a number is wrong is meaningless
+unless the build it was made against can be identified, and a shared folder does
+not give that.
+
+\notesec{Where a build is filed}
+The collection path is derived from the repository path, never configured. A
+note at \texttt{notes-tex/<group>/<slug>/} publishes into the collection
+\texttt{torchcell / notes-tex / <group> / <slug>}; the manuscript at
+\texttt{paper/nature-biotech/} publishes into \texttt{torchcell / paper / nature-biotech}. The group names the research
+program (\texttt{trigenic}, \texttt{multimodal}, \texttt{metabolism},
+\texttt{wet-lab}, \texttt{database}, \texttt{systems}) and is one more derived
+level: moving the directory moves the collection. The leaf holds the document's
+versions, and the item is filed into the leaf, its group and the flat
+\texttt{notes-tex} index above it, because Zotero does not show a sub-collection's
+items in its parent by default; the group is then the index of one program's
+documents and \texttt{notes-tex} stays the index of all of them. A bare slug on
+the command line is found under \texttt{notes-tex/*/}, and the flat form
+\texttt{notes-tex/<slug>} is refused, as is publishing while a document's
+collection still sits flat from before the group layer; the one-shot
+\file{notes-tex/common/zotero_regroup.py} moved the existing collections under
+their groups and rewrote each item's Doc Key, so no version history was split. The topic collections that
+hold other people's papers are a separate tree, and keeping the two apart is what
+stops a draft from being read as literature when a bibliography is rebuilt. Two
+collections once shared the name \texttt{microbe-perturb-seq}, one for publishing
+and one feeding \texttt{make bib}, and deriving the path from the directory is what
+made that safe.
+
+\notesec{How a version is named}
+Each publish creates one child attachment named
+\begin{center}
+\texttt{<doc>\_<YYYY-MM-DD-HH-MM-SS>\_<sha256[:8]>.pdf}
+\end{center}
+The timestamp is what a
+person sorts by; the hash identifies the bytes and is the same identifier the
+repository's provenance rule uses everywhere else. A re-run of \texttt{make} with
+nothing edited produces the same hash and is skipped as a duplicate, while any
+real edit produces a new one. This rests on the reproducible build: without
+\texttt{SOURCE\_DATE\_EPOCH} two builds of identical sources differed, and every
+publish uploaded a fresh near-identical PDF. The git commit and branch the build
+came from are written into the parent item, so a reviewer can go from a comment to
+the exact source state.
+
+\notesec{The commands}
+For a note, \texttt{zotero\_publish.py <slug>} with \texttt{--dry-run} to preview,
+\texttt{--list} to see the versions, \texttt{--clean} for the share view and
+\texttt{--pdf <stem>} for any other PDF the document builds. For the manuscript,
+\texttt{make publish} wraps the same script with \texttt{--pdf editing} and
+\texttt{--tex sections/frontmatter.tex}, because the title is declared there and
+the stock sample file in the same directory carries a placeholder title that a
+search would also find. Credentials are the repository's \texttt{.env}.
+
+\notesec{Landing}
+A document is edited in a git worktree like any other change, and the commit
+carries the built PDF and the converted figures beside the sources, so the PDF on
+\texttt{main} is always the one its sources produce. The branch is opened as a
+pull request and handed to the merge queue, which rebases, fast-forwards, closes
+the pull request and removes the worktree; publishing to Zotero can happen before
+or after, since the version is identified by content, not by commit.

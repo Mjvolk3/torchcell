@@ -1,0 +1,152 @@
+%% notes-tex/wet-lab/024-perturb-seq-pilot/sections/2-routes.tex
+%% SOURCE: hand-authored synthesis of notes-tex/wet-lab/024-perturb-seq-costing/
+%%         sections/3-method-explainers.tex (Secs. 3.1, 3.2, 3.7) and
+%%         sections/5-application.tex (Sec. 5.5, the core meeting). No new
+%%         numbers; each is cross-referenced to the section that derives it.
+
+\section{The Three Bench Routes\secstatus{todo}}
+\label{sec:routes}
+
+All three routes end in the same object, a table of cells by genes with a
+perturbation label on each cell. They differ in how a cell keeps its identity
+while its RNA is being converted to a sequencing library, and that difference
+decides who does the work. Two of them are the familiar pair, plate barcoding
+and droplet isolation. The third composes them, and it is the one this program
+is aiming at.
+
+%% SOURCE: notes/assets/drawio/perturb-seq-workflow.drawio.svg, exported by
+%% `make figures`. Panel numbering and content are unchanged from Fig. 5 of
+%% 024-perturb-seq-costing.
+\tcfigfit[1.0]{figures/perturb-seq-workflow.pdf}{%
+  \textbf{The whole experiment, from library to count matrix, and the one stage
+  where the three routes differ.} Read left to right. Two symbols recur in panel
+  (b): \textbf{H} is the PCR handle, attached at one end only during barcoding,
+  and \textbf{CB} is the cell barcode. The color key is repeated at the foot of
+  the figure.
+  \textbf{(a)} The stages. Every wet-lab step is common to all three routes
+  except the shaded block, where split-pool barcodes cells across three rounds of
+  plates, unmodified droplet gives each cell its own bead, and preindexing does
+  one plate round first and then a droplet, so several cells can share a droplet
+  and still be told apart. Fragmentation is drawn as its own stage for two
+  reasons: its position relative to ribosomal RNA depletion decides how much
+  that depletion is worth, roughly \$99{,}000 at genome scale, and it determines
+  what a count means.
+  \textbf{(b)} The same physical cutting, with opposite consequences, which is
+  the reason this figure is worth reading rather than skimming. In bulk RNA
+  sequencing every piece of a molecule can be sequenced, so a long transcript
+  yields proportionally more reads and the length has to be divided back out,
+  which is what FPKM and TPM exist to do. In a 3$'$-counting single-cell assay
+  only the barcode-proximal piece keeps the outer handle, so exactly one
+  fragment survives per molecule whatever its length. Applying TPM or FPKM to a
+  count matrix from either route is therefore an error rather than a stylistic
+  choice.
+  \textbf{(c)} The funnel, which is what a budget is actually made of. Cells are
+  lost at recovery, at quality control and at guide assignment, and reads are
+  lost separately to the spike-in, to ribosomal sequence and to cells that are
+  discarded later. Composed from the protocols rather than traced from a
+  published figure, and shared with the costing review, where the numbers drawn
+  in it are sourced individually.}{fig:workflow}
+%% Source notes/assets/drawio/perturb-seq-workflow.drawio, exported by `make figures`
+
+\notesec{Droplet, which the core runs as a service} A microfluidic chip
+co-encapsulates one cell with one barcoded bead, and every molecule released
+inside that droplet picks up the bead's barcode. The Carver Center owns the
+instrument, the GEM-X 5$'$ kit and the quality control, so our bench work
+ends when fixed cells are delivered. Yeast needs one modification, roughly
+a microlitre of zymolyase in the reaction to digest the cell
+wall~\citep{jarianiNewProtocolSinglecell2020}, and the core has said it accepts
+that. A channel recovers about 20{,}000 cells and costs \$2{,}650 for the first
+library and \$2{,}240 for each of the next six.
+
+\notesec{Plate, which we would run ourselves} Cells are fixed and permeabilized,
+then distributed across a 96-well plate where each well appends a different
+barcode; the wells are pooled, re-split and barcoded again, twice more. A cell's
+identity is the sequence of wells it visited, so no instrument ever has to
+isolate it~\citep{brettnerUltraHighthroughputMassively2024}. One pass through
+the protocol handles up to 96 samples and, at a full plate, roughly 480{,}000
+cells. The reagents are cheap and the labor is not: about a week of skilled
+bench work per run, against a channel the core runs.
+
+\notesec{Preindexed droplet, which is one plate round and then a droplet}
+\label{sec:preindexed}
+The third route composes the other two, and it is the one worth aiming at.
+Permeabilized cells are barcoded once on a 384-well plate, where a well-specific
+primer reverse transcribes inside the still-intact cell and writes round one into
+the complementary DNA. The cells are then pooled and deliberately overloaded into
+a single droplet channel, where a bead writes round
+two~\citep{datlingerUltrahighthroughputSinglecellRNA2021}. Neither round
+identifies a cell on its own, and that is the entire trick: a droplet may hold
+several cells, because the plate already told them apart.
+
+What that removes is the constraint that makes droplet screening expensive. An
+ordinary channel runs at low occupancy so that two cells rarely share a droplet,
+which leaves most droplets empty and most of the reagent unused. Datlinger et
+al.\ loaded 100-fold over the recommendation, filled 95.5\% of droplets at an
+average of 9.6 nuclei each, and recovered \textbf{151{,}788} transcriptomes from
+one channel, which is 7.6 times the 20{,}000 the core quotes. Since reagent is
+sold per channel, a genome-scale screen falls from 137 channels and \$364{,}000
+to 18 channels and \$109{,}000. Depleted split-pool is still cheaper at
+\$57{,}500, but a factor of 1.9 is small enough to be decided by things the
+dollar column does not hold, and all of them favor this route: the core runs the
+droplet platform as a service and owns its quality control, the 384-well plate
+labels growth conditions for nothing, and an accurate cell count matters far less
+when the channel is saturated on purpose.
+
+\textbf{The catch is that it has never been run in any microbe.} Every
+demonstration is human or mouse. It also inherits the plate route's sample
+preparation rather than the droplet route's: writing a barcode inside a cell
+needs reagents to reach the transcriptome in situ, which in yeast means fixation
+and wall digestion rather than the in-droplet zymolyase above.
+\textbf{Hypothesis (untested):} the two halves compose, since in-cell reverse
+transcription on fixed yeast and droplet capture of yeast are each established
+separately.
+
+\notesec{A first barcode round on a plate is what makes growth media cheap}
+Wherever round one is a plate of wells, its index is read out of every cell
+whether or not it has been given a meaning. Growing conditions in a deep-well
+plate and barcoding them into the same run therefore costs no barcode space at
+all (\cref{fig:pilots}b), and this is the property the two plate-first routes
+share: split-pool carries 96 such labels and preindexing carries 384. Only the
+unmodified droplet route lacks them, so there each condition buys its own
+channel. That is what makes a plate-first route the one to use when the
+experiment is about growth media, and it is why the \org{P.\ kudriavzevii} run
+should not be a single condition.
+
+\notesec{The guide readout, which is the whole \org{S.\ cerevisiae} question}
+\label{sec:guide}
+Guide RNAs are transcribed by RNA polymerase III, so they are neither capped nor
+polyadenylated, and an assay that captures messenger RNA by its poly(A) tail
+sees nothing. That is why our library is read today by amplifying the plasmid
+rather than the RNA. The 5$'$ kit may not have the problem: it captures the
+guide with a primer against the guide's own scaffold, carried in the
+reverse-transcription mix, and 10x state the requirement as an architectural one,
+that guides be ``engineered for use with standard Cas9 systems with a
+protospacer on the 5$'$ end''\external{10x CG000735}. A conventional polymerase
+III cassette, including ours, has exactly that architecture.
+
+\textbf{Hypothesis (untested):} the scaffold primer reverse transcribes a yeast
+polymerase III guide, and perturbation identity is therefore readable from an
+unmodified library. Two things have to hold and neither is established. The
+primer set is proprietary and validated against the standard \gene{SpCas9}
+scaffold, and 10x say plainly that ``alternate sgRNA structures \dots\ have not
+been tested''\external{10x CG000735}, so our scaffold has to match theirs. And
+the poly-dT half of that primer mix contributes nothing to a guide with no tail,
+so capture rests entirely on the scaffold primer. If it fails, the fallback is a
+polyadenylated guide barcode transcribed by polymerase II, which is a
+construction project of several months.
+
+The guide library is sequenced far more shallowly than the transcriptome, 5{,}000
+read pairs per cell against 20{,}000, and 10x warn against sequencing it
+alone\external{10x CG000735}, so it is pooled with the expression library rather
+than submitted separately. It is in the price in \cref{tab:pilots}.
+
+\begin{keybox}
+\textbf{One channel, one existing library, and the answer is a number.} The
+\org{S.\ cerevisiae} run is worth starting before anything else because it is
+the cheapest way to find out whether the whole program needs a new construct.
+If $q$ comes back near the 0.71 a published yeast screen reports, single-guide
+screening works today and multiplexing is merely expensive. If it comes back
+near zero, the 5$'$ scaffold primer does not engage a polymerase III transcript
+and a polyadenylated guide barcode has to be built before any screen is
+designed.
+\end{keybox}

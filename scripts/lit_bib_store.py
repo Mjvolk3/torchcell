@@ -14,7 +14,7 @@ bibliography instead of regenerating its own through Better BibTeX.
 
 The names are discovered, not configured (see
 :func:`torchcell.literature.bib_store.discover_bib_specs`): ``paper`` for the
-manuscript's group collection, one per ``notes-tex/<slug>/`` that declares a
+manuscript's group collection, one per ``notes-tex/<group>/<slug>/`` that declares a
 ``ZOTERO_COLLECTION``, and ``library`` for the whole torchcell union.
 
 Usage::

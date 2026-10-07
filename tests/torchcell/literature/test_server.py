@@ -129,7 +129,7 @@ def build_mirror(root: Path, *, with_bib: bool = True) -> Path:
                     sha256="0" * 64,
                     n_entries=0,
                     scope=scope,
-                    origin="notes-tex/ghost/Makefile",
+                    origin="notes-tex/grp/ghost/Makefile",
                     generated_at="2026-09-30T00:00:00+00:00",
                 ),
             ],

@@ -13,15 +13,24 @@ you can tell which build it was made against.
 Layout, which is DERIVED from the repo path rather than invented::
 
     repo    <dir>/<pdf>.pdf
-    zotero  torchcell / <dir parent>          <- one flat index per document kind
-            torchcell / <dir leaf>            <- that document and its versions
+    zotero  torchcell / <every directory on the way down>   <- an index at each level
+            torchcell / <dir leaf>                          <- that document and its versions
 
-    notes-tex/024-perturb-seq-costing/024-perturb-seq-costing.pdf
-      -> torchcell / notes-tex / 024-perturb-seq-costing
+    notes-tex/wet-lab/024-perturb-seq-costing/024-perturb-seq-costing.pdf
+      -> torchcell / notes-tex / wet-lab / 024-perturb-seq-costing
     paper/nature-biotech/editing.pdf
       -> torchcell / paper / nature-biotech
 
 so there is never a question of which Zotero collection a document belongs in.
+
+notes-tex documents live one group below ``notes-tex/``: ``notes-tex/<group>/<slug>/``,
+where the group names the research program (``trigenic``, ``multimodal``,
+``metabolism``, ``wet-lab``, ``database``, ``systems``). The flat layout outgrew
+itself at thirty-odd documents, and a group is one more derived collection, not a
+configured one: move the directory and the Zotero path follows. A document given
+as a bare ``<slug>`` is found on disk under ``notes-tex/*/<slug>``; a flat
+``notes-tex/<slug>`` is refused, because publishing from the old layout would file
+the build beside its own history rather than into it.
 The topic collections (``torchcell / torchcell-topics / *``) hold OTHER people's
 papers; these trees hold ours. Keeping the two apart is what stops a draft from
 being mistaken for literature when the bibliography is rebuilt.
@@ -32,12 +41,22 @@ topic collection that feeds ``make bib``. Renaming the wrong one would have
 broken the bibliography. Derive the path from the repo, never from a name that
 happens to match.
 
-The document is filed in BOTH collections, deliberately. Zotero does not show a
+The document is filed in EVERY collection on its path, deliberately: the leaf, its
+group, and the flat ``notes-tex`` index above that. Zotero does not show a
 sub-collection's items in its parent unless the reader has turned on View ->
 Show Items from Subcollections, so filing only into the leaf makes the parent
 look empty -- which is exactly what happened the first time this ran. An item may
 belong to any number of collections and its file is stored once, so the cost is
-nil and the parent becomes a usable index of every document of that kind.
+nil; the group becomes the index of one program's documents and ``notes-tex``
+stays the index of every document.
+
+The group layer was added after thirty-odd documents had been published flat.
+``zotero_regroup.py`` moved each existing collection under its group and rewrote
+the Doc Key marker to the grouped path, so no version history was orphaned. A
+collection still sitting flat under ``notes-tex`` (a document published from a
+branch that has not rebased onto the grouped layout) is detected here and
+refused with a pointer to that script, rather than silently given a second,
+empty collection under the group.
 
 Versioning. Each publish creates one child attachment named::
 
@@ -70,10 +89,11 @@ read.
 
 Usage::
 
-    # a notes-tex document: a bare name still means notes-tex/<name>
+    # a notes-tex document: a bare name is found under notes-tex/<group>/<name>
     python notes-tex/common/zotero_publish.py 024-perturb-seq-costing --dry-run
     python notes-tex/common/zotero_publish.py 024-perturb-seq-costing
     python notes-tex/common/zotero_publish.py 024-perturb-seq-costing --list
+    python notes-tex/common/zotero_publish.py notes-tex/wet-lab/024-perturb-seq-costing
 
     # the manuscript: a repo-relative directory, a named PDF, and the tex that
     # actually declares the title
@@ -107,13 +127,15 @@ from pyzotero.zotero import Zupload
 # The document trees live beside the topic tree, under the same `torchcell` root.
 ROOT_COLLECTION = "torchcell"
 
-# A bare name with no slash is a notes-tex document. That is where every document
-# lived when this script was written, and keeping the short form working means the
-# published Doc Key markers of the existing collections stay correct: the key IS
-# the repo-relative directory, so `024-perturb-seq-costing` and
-# `notes-tex/024-perturb-seq-costing` resolve to the same key and the same parent
-# item. Without that, generalizing this script would have orphaned 19 versions.
+# A bare name with no slash is a notes-tex document, found on disk under
+# notes-tex/<group>/<name>. The key IS the repo-relative directory, so
+# `024-perturb-seq-costing` and `notes-tex/wet-lab/024-perturb-seq-costing`
+# resolve to the same key and the same parent item.
 DEFAULT_PARENT_DIR = "notes-tex"
+# The shared machinery directory, the one child of notes-tex that is not a group.
+COMMON_DIR = "common"
+# notes-tex / <group> / <slug>: the depth every notes-tex document has.
+NOTES_TEX_DEPTH = 3
 
 # Marker written into the parent item's `extra`, and the key this script matches
 # on when deciding whether a parent already exists. Matching on the title would
@@ -200,6 +222,54 @@ def _git(repo: str, *args: str) -> str:
     return subprocess.run(
         ["git", "-C", repo, *args], capture_output=True, text=True, check=True
     ).stdout.strip()
+
+
+def notes_tex_groups(repo: str) -> dict[str, str]:
+    """``{slug: group}`` for every document directory under ``notes-tex/<group>/``.
+
+    Read from the tree, which is the only place the grouping is declared. The
+    ``common`` directory is machinery, not a group, and is skipped.
+    """
+    base = osp.join(repo, DEFAULT_PARENT_DIR)
+    out: dict[str, str] = {}
+    for group in sorted(os.listdir(base)):
+        gdir = osp.join(base, group)
+        if group == COMMON_DIR or not osp.isdir(gdir):
+            continue
+        for slug in sorted(os.listdir(gdir)):
+            if osp.isdir(osp.join(gdir, slug)):
+                if slug in out:
+                    sys.exit(f"{slug} is under both {out[slug]}/ and {group}/; a slug "
+                             f"names one document.")
+                out[slug] = group
+    return out
+
+
+def resolve_doc_dir(repo: str, doc: str) -> str:
+    """The repo-relative document directory for what was typed on the command line.
+
+    A bare name is a notes-tex slug and is looked up under ``notes-tex/*/``. A
+    ``notes-tex/...`` path must be the grouped form, ``notes-tex/<group>/<slug>``:
+    the flat form is refused rather than resolved, since a flat path is what a
+    branch that predates the group layer would pass, and publishing it would file
+    the build into a fresh flat collection beside the document's real history.
+    Any other path (``paper/nature-biotech``) is taken as written.
+    """
+    rel = doc.strip("/")
+    if "/" not in rel:
+        groups = notes_tex_groups(repo)
+        if rel not in groups:
+            sys.exit(f"no {DEFAULT_PARENT_DIR}/<group>/{rel}/ directory. Documents live "
+                     f"one group below {DEFAULT_PARENT_DIR}/; known: "
+                     f"{', '.join(sorted(groups)) or 'none'}.")
+        return f"{DEFAULT_PARENT_DIR}/{groups[rel]}/{rel}"
+    parts = rel.split("/")
+    if parts[0] == DEFAULT_PARENT_DIR:
+        if len(parts) != NOTES_TEX_DEPTH or parts[1] == COMMON_DIR:
+            sys.exit(f"{rel} is not a {DEFAULT_PARENT_DIR}/<group>/<slug> directory. "
+                     f"notes-tex documents live one group below {DEFAULT_PARENT_DIR}/ "
+                     f"(move the directory under its group, then publish).")
+    return rel
 
 
 def _braced(src: str, open_idx: int) -> str:
@@ -384,6 +454,33 @@ def ensure_collection(
     return key
 
 
+def refuse_flat_legacy(zot: zotero.Zotero, root: str, built: BuiltDoc) -> None:
+    """Stop if this document's collection still sits flat under ``notes-tex``.
+
+    Before the group layer every document published into
+    ``torchcell/notes-tex/<slug>``. ``zotero_regroup.py`` moves those under their
+    group and rewrites the Doc Key; a collection that is still flat belongs to a
+    document that script has not been told about (typically one that only exists
+    in an unlanded worktree). Creating ``notes-tex/<group>/<slug>`` beside it would
+    split the version history in two, so this is a refusal, not a fallback.
+    """
+    path = built.collection_path
+    if path[0] != DEFAULT_PARENT_DIR or len(path) != NOTES_TEX_DEPTH:
+        return
+    index = find_collection(zot, DEFAULT_PARENT_DIR, root)
+    if not index:
+        return
+    flat = find_collection(zot, built.doc, index)
+    if flat:
+        sys.exit(
+            f"{ROOT_COLLECTION}/{DEFAULT_PARENT_DIR}/{built.doc} ({flat}) still sits "
+            f"flat under {DEFAULT_PARENT_DIR}, from before the group layer. Move it "
+            f"first so its versions stay in one place:\n"
+            f"  python notes-tex/common/zotero_regroup.py --assign "
+            f"{built.doc}={path[1]} --dry-run"
+        )
+
+
 def find_parent_item(zot: zotero.Zotero, coll: str, doc_key: str) -> dict | None:
     for it in zot.everything(zot.collection_items_top(coll)):
         if f"{DOC_KEY_PREFIX} {doc_key}" in it["data"].get("extra", ""):
@@ -416,8 +513,8 @@ def existing_hashes(zot: zotero.Zotero, parent_key: str) -> dict[str, str]:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("doc", help="repo-relative document directory, e.g. "
-                                "paper/nature-biotech; a bare name means "
-                                "notes-tex/<name>")
+                                "paper/nature-biotech or notes-tex/<group>/<slug>; "
+                                "a bare name is found under notes-tex/*/<name>")
     ap.add_argument("--pdf", default=None, metavar="STEM",
                     help="PDF stem to publish (default: the document directory's "
                          "own name, which is what its Makefile builds). e.g. editing")
@@ -442,11 +539,9 @@ def main() -> None:
 
     if args.clean and args.pdf:
         sys.exit("--clean and --pdf say the same thing; pass only one.")
-    rel_dir = args.doc.strip("/")
-    if "/" not in rel_dir:
-        rel_dir = f"{DEFAULT_PARENT_DIR}/{rel_dir}"
+    rel_dir = resolve_doc_dir(repo, args.doc)
     # The default stem is the document directory's own name, because that is what
-    # Makefile.common builds: notes-tex/eqtl-data-model -> eqtl-data-model.pdf.
+    # Makefile.common builds: notes-tex/database/eqtl-data-model -> eqtl-data-model.pdf.
     # paper/nature-biotech has no such default build and always passes --pdf.
     leaf = rel_dir.rsplit("/", 1)[-1]
     pdf_stem = args.pdf or (f"{leaf}-clean" if args.clean else leaf)
@@ -462,14 +557,18 @@ def main() -> None:
     root = find_collection(zot, ROOT_COLLECTION, None)
     if not root:
         sys.exit(f"no top-level {ROOT_COLLECTION!r} collection in the personal library.")
-    # Walk the repo path down, creating what is missing. `docs` ends up as the
-    # immediate parent so the item can be filed into the index as well as the leaf.
-    docs, coll = root, root
+    refuse_flat_legacy(zot, root, built)
+
+    # Walk the repo path down, creating what is missing. `chain` holds every
+    # collection below the root so the item can be filed into each index as well
+    # as the leaf; `coll` ends up as the leaf.
+    chain: list[str] = []
+    coll: str | None = root
     for name in built.collection_path:
-        docs = coll
         coll = ensure_collection(zot, name, coll, args.dry_run)
         if not coll:
             break
+        chain.append(coll)
     if coll:
         print(f"  collection {ROOT_COLLECTION}/{'/'.join(built.collection_path)} = {coll}")
 
@@ -492,14 +591,14 @@ def main() -> None:
     # its versions underneath.
     if parent:
         print(f"  parent item exists: {parent['key']}")
-        # Backfill for items created before the top-level filing existed, and a
-        # cheap self-heal if someone drags the item out of one collection.
+        # Backfill for items created before an index level existed, and a cheap
+        # self-heal if someone drags the item out of one collection.
         item = parent if parent.get("data") else zot.item(parent["key"])
         cols = set(item["data"].get("collections") or [])
-        if not {coll, docs} <= cols and not args.dry_run:
-            item["data"]["collections"] = sorted(cols | {coll, docs})
+        if not set(chain) <= cols and not args.dry_run:
+            item["data"]["collections"] = sorted(cols | set(chain))
             zot.update_item(item)
-            print(f"  filed into the {built.collection_path[-2]} index as well")
+            print(f"  filed into every index above {built.doc} as well")
     elif args.dry_run:
         print("  [dry-run] would create parent report item")
     else:
@@ -513,8 +612,8 @@ def main() -> None:
         tmpl["institution"] = "University of Illinois Urbana-Champaign"
         tmpl["date"] = built.built_at[:10]
         tmpl["extra"] = built.extra_field()
-        # Both: the per-document collection AND the flat index above it.
-        tmpl["collections"] = [coll, docs]
+        # The per-document collection AND every index above it.
+        tmpl["collections"] = chain
         resp = zot.create_items([tmpl])
         parent = {"key": resp["successful"]["0"]["key"]}
         print(f"  created parent item {parent['key']}")

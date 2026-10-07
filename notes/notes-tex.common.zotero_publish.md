@@ -140,3 +140,48 @@ directory's leaf, and `--clean` means `<doc>-clean`.
 ## 2026.10.01 - Existing versions are read from every page (issue #563)
 
 `existing_hashes` read `zot.children(parent_key)` without `everything(...)`, so only the first 100 child attachments were seen; past 100 versions an already-published build would have been uploaded again as new. It now reads `zot.everything(zot.children(parent_key))`. Only that read changed; what is uploaded and when is unchanged. The same fix applies to `notes-tex/common/zotero_comments.py` `fetch`, whose "latest version" was the newest of the first 100 attachments. Tests: [[tests.torchcell.literature.test_notes_tex_zotero_paging]].
+
+## 2026.10.07 - The group layer: notes-tex/<group>/<slug> and the Zotero path follows
+
+The flat `notes-tex/` layout stopped being navigable at thirty-two Zotero
+subcollections (sixteen documents on `main`, the rest in unlanded worktrees or
+rendered Dendron notes published from the kinetics branch). Documents now live one
+group below `notes-tex/`, and the group names the research program: `trigenic`,
+`multimodal`, `metabolism`, `wet-lab`, `database`, `systems`. The table of what each
+holds is in `notes-tex/README.md`.
+
+What changed in the script:
+
+- `resolve_doc_dir(repo, doc)`: a bare slug is looked up under `notes-tex/*/` in the
+  tree (`notes_tex_groups`, which also refuses a slug present under two groups); a
+  `notes-tex/...` path must be exactly `notes-tex/<group>/<slug>`, and the flat form
+  is refused rather than resolved, since a flat path is what a branch that predates
+  the layer would pass. Other paths (`paper/nature-biotech`) are taken as written.
+  `zotero_comments.py` resolves through the same function.
+- The item is filed into every collection on its path (leaf, group, `notes-tex`
+  index), not just leaf plus immediate parent, so the flat index stays a complete
+  list and the group is the index of one program.
+- `refuse_flat_legacy`: before creating anything, a collection named for the slug
+  still directly under `notes-tex` stops the publish with the `zotero_regroup.py
+  --assign <slug>=<group> --dry-run` command to run. Verified live before the
+  regroup: `zotero_publish.py 010-index-defect --list` printed the refusal naming
+  `UN32F2XZ`.
+
+Elsewhere: `Makefile.common` derives `COMMON` and `REPO` from `MAKEFILE_LIST` instead
+of the constants `../common` and `../..`, and the `sn-nature.bst` symlink target uses
+`$(REPO)`; every document Makefile includes `../../common/Makefile.common`; the
+`.gitignore` build-artifact patterns are two levels deep; `bib_store.discover_bib_specs`
+globs `notes-tex/*/*/Makefile` (the bibliography keeps the slug as its name, so
+`/bib/<slug>` and `make bib-pull` are unchanged); the 99 `%%` tex headers and the
+in-body `\texttt{notes-tex/...}` cross-references carry the grouped path.
+
+Documents that exist only in a worktree (019-*, 026-*, 027-*, 028-*, 031-*, 032-*,
+figure-3-gate, perturbation-operator, metabolic-module-report, metabolism-figure-gate,
+metabolism-figures, cgt-metabolism-io, 034-isobutanol-wetlab, 025-s3-closure) move
+when their branch rebases: `git mv notes-tex/<slug> notes-tex/<group>/<slug>`, fix the
+include depth and headers, and the publisher accepts them. Their Zotero collections
+were moved now (below), so the publish after the move finds its history. The six
+rendered Dendron notes the kinetics branch published (`Doc Key: notes/...md`) were
+moved under `metabolism` with their keys kept; that branch's `load_built_note` sets
+`doc_dir = notes-tex/<fname>`, which the depth gate now refuses, so it has to file
+them as `notes-tex/metabolism/<fname>` when it rebases.

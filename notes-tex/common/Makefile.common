@@ -2,11 +2,12 @@
 # [[notes-tex.common.Makefile]]
 # https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/common/Makefile.common
 #
-# Shared build rules for every document in notes-tex/. A per-document Makefile
-# sets its Zotero collections (if it has any) then includes this file:
+# Shared build rules for every document in notes-tex/<group>/<slug>/. A
+# per-document Makefile sets its Zotero collections (if it has any) then includes
+# this file:
 #
 #     ZOTERO_COLLECTION := FE8DQKUH
-#     include ../common/Makefile.common
+#     include ../../common/Makefile.common
 #
 # Targets
 #   make            -> $(DOC).pdf, draft view (status chips + provenance flags)
@@ -39,8 +40,13 @@ TECTONIC ?= $(shell command -v tectonic 2>/dev/null || echo /tmp/tectonic)
 PYTHON   ?= $(firstword $(wildcard $(HOME)/miniconda3/envs/torchcell/bin/python \
                                    $(HOME)/miniconda3/bin/python) python)
 DOC      ?= $(notdir $(CURDIR))
-COMMON   := ../common
-REPO     := ../..
+# Documents live two levels down, notes-tex/<group>/<slug>/, so the shared
+# directory is ../../common from any document. Derived from where this file was
+# included from rather than written as a constant, so a document at any depth
+# resolves COMMON and REPO to the same two directories and nothing has to be
+# edited when the layout gains or loses a level.
+COMMON   := $(patsubst %/,%,$(dir $(lastword $(MAKEFILE_LIST))))
+REPO     := $(COMMON)/../..
 
 # Tectonic does not honor TEXINPUTS, so shared style files are symlinked into the
 # document directory at build time instead. A symlink rather than a copy so there
@@ -128,7 +134,7 @@ all: $(DOC).pdf
 tcdoc.sty: $(COMMON)/tcdoc.sty
 	@ln -sf $(COMMON)/tcdoc.sty $@
 sn-nature.bst: $(REPO)/paper/nature-biotech/sn-nature.bst
-	@ln -sf ../../paper/nature-biotech/sn-nature.bst $@
+	@ln -sf $(REPO)/paper/nature-biotech/sn-nature.bst $@
 
 # --keep-logs so `make check` has a .log to read; --synctex for editor jump-to-source.
 $(DOC).pdf: $(DEPS) $(FIGURES) $(SHARED_STY)

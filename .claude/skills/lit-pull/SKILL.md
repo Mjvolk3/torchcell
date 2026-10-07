@@ -75,7 +75,7 @@ GOT=$(shasum -a 256 "$REL" | awk '{print $1}')   # macOS: shasum; Linux: sha256s
 The server also holds a **bibliography store**: `GET /bib` is a manifest of every served
 `.bib` (name, entry count, sha256, scope, when it was exported), `GET /bib/<name>` streams
 one with `X-Artifact-SHA256`. Names are the repo's own: `paper` (the group `paper`
-collection the manuscript cites), one per `notes-tex/<slug>` that declares a
+collection the manuscript cites), one per `notes-tex/<group>/<slug>` that declares a
 `ZOTERO_COLLECTION` (e.g. `eqtl-data-model`), and `library` (group + personal `torchcell`
 tree, the Dendron scope). Exported nightly on GilaHyper by `scripts/lit_bib_store.py`.
 
@@ -84,7 +84,7 @@ Preferred client, which checks the hash against the manifest before writing:
 ```bash
 python scripts/lit_bib_pull.py --list                                   # what is served
 python scripts/lit_bib_pull.py --name paper --out paper/nature-biotech/references.bib
-make -C notes-tex/eqtl-data-model bib-pull                              # same, by document
+make -C notes-tex/database/eqtl-data-model bib-pull                              # same, by document
 make -C paper/nature-biotech bib-pull
 ```
 

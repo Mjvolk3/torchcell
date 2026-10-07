@@ -168,7 +168,7 @@ def fetch_paired_collection_entries(
 ) -> list[dict[str, Any]]:
     """Union ONE group collection with ONE personal collection.
 
-    This is the per-document bibliography: a ``notes-tex/<slug>/references.bib``
+    This is the per-document bibliography: a ``notes-tex/<group>/<slug>/references.bib``
     cites the reading for that slug, which lives in a same-named collection in each
     library (e.g. group ``microbe-perturb-seq`` and personal
     ``torchcell/torchcell-topics/microbe-perturb-seq``). The whole-tree union

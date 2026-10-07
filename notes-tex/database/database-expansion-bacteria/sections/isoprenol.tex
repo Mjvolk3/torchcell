@@ -1,0 +1,158 @@
+%% notes-tex/database/database-expansion-bacteria/sections/isoprenol.tex
+%% [[experiments.database.expansion-bacteria]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-bacteria/sections/isoprenol.tex
+%% SOURCE: hand-authored prose; every number quoted here comes from
+%% experiments/database/scripts/build_bacteria_candidate_datasets_table.py and
+%% experiments/database/scripts/build_bacteria_discovery_queue.py
+
+\section{Isoprenol, and the pin that the ordering rule needs\secstatus{todo}}\label{sec:iso}
+
+\subsection{The product named as the priority is the one the rule ranks last\secstatus{todo}}
+
+\term{Isoprenol} is 3-methyl-3-buten-1-ol, an aviation fuel precursor, and it is the
+product the bacterial strain-design work targets. It appears in the literature under two
+names: the earlier papers write \term{isopentenol} and the current ones write isoprenol,
+and they are the same molecule, so a row counts as measuring it under either word.
+
+Section~\ref{sec:cost} stated the cost of ordering rows by measurements in general terms.
+Isoprenol is where that cost becomes a concrete defect. A titer campaign measures tens to
+a few thousand numbers, because a strain yields one titer per condition per replicate and
+strains are built by hand. A barcoded fitness screen measures $10^{6}$ to $10^{8}$. No
+isoprenol campaign can outrank any screen, whatever its relevance.
+
+The effect is not marginal. Of the ten rows that measure isoprenol, the measurement rule
+alone places \emph{nine} outside the fifty recommended builds, spread from rank 55 to rank
+89 of 89. One survives, at rank 6, and it survives for a reason unrelated to isoprenol: it
+carries a 1,500-protein proteome panel alongside its titers, and the panel depth is what
+multiplies its 1,416 instances into 2.1 million measurements. Strip the proteomics and it
+would join the other nine. So under the unaided rule the highest-priority product in the
+portfolio is represented among the recommended builds by a single row, and by accident.
+
+\subsection{A pin, reported as moves, rather than a tuned weight\secstatus{todo}}
+
+Two repairs were available. A weight on production relevance folded into the score would
+reorder the table, and would also make the ordering unauditable: a reader could no longer
+recover what scale alone said, and the weight would be chosen by whoever wanted a
+particular answer. A pin applied after ranking does the same reordering and stays
+reversible, so that is what the generating script does.
+
+The axis divides by the role the molecule plays in the experiment, because that is what
+decides whether a row teaches production or teaches survival.
+
+\begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
+  \item \term{direct} -- isoprenol or isopentenol is the measured product, meaning a
+    titer. Lifted into the first tranche.
+  \item \term{tolerance} -- isoprenol is the stressor and the readout is growth, with no
+    titer. Lifted into the first tranche as well, since the molecule of interest is still
+    the one being measured against. A row reporting both a titer and a tolerance assay is
+    direct, because a row carries one value and the titer is the stronger label.
+  \item \term{precursor} -- the measured product is a different isoprenoid or terpenoid,
+    so the row carries the mevalonate or MEP pathway that feeds isoprenol without
+    carrying the product. Lycopene, pinene, mevalonate and geranic acid are here. Lifted
+    above the cut at fifty, not into the first tranche.
+  \item \term{analog} -- the stressor is a short-chain alcohol or a biomass inhibitor
+    standing in for isoprenol rather than isoprenol itself. Reported on the axis and
+    \emph{not} lifted. Substituting one alcohol for another assumes cross-tolerance, and
+    a row is not promoted on an assumption.
+\end{itemize}
+
+Each lift displaces the weakest row inside the boundary that no pin protects, and every
+lift is recorded with its rank before and after. Table~\ref{tab:bpins} prints the rank the
+measurement rule gives on its own beside the rank this document prints, so the pin can be
+undone row by row. The per-host floor of Sec.~\ref{sec:stage} reads the same protection,
+which is what keeps one mechanism from canceling another.
+
+\subsection{What the sweep found, and what it missed\secstatus{todo}}\label{sec:sweep}
+
+A metadata sweep over Europe PMC returned 300 publications for the two hosts, 200
+\org{E. coli} and 100 \org{P. putida}, and it is held as a separate artifact with a
+separate generating script because none of its record counts have been verified. Every
+cell of its instance column reads ``Verify from supplement'', and its own overview states
+the limit: ``this is a 300-candidate discovery queue, not 300 download-verified
+datasets.'' Table~\ref{tab:bqueue} gives its composition and Table~\ref{tab:bqueueiso}
+every isoprenol-relevant row it returned. A queue row is a lead, and promoting one means
+fetching the paper, counting its axes and writing a curated row; nothing in the queue may
+be cited as though its scale were known.
+
+The sweep flagged six publications as measuring isoprenol directly, four for
+\org{P. putida} and two for \org{E. coli}. All four \org{P. putida} papers were already
+curated here, which is a useful independent check on coverage. Both \org{E. coli} papers
+were absent and are now added, and they matter out of proportion to their size: before
+them the table held no isoprenol row for \org{E. coli} at all, so the product existed in
+one host only and no cross-host question could be posed.
+
+The sweep also missed three isoprenol papers, which is the more useful finding, and the
+third miss is the instructive one. Two were already in this table, a CRISPRi
+downregulation campaign and a lignocellulosic-sugar campaign that reports isoprenol
+alongside isoprenyl acetate; both are titled for an aviation fuel precursor rather than
+for the product. The third sits \emph{in} the queue, at the top of every new row it
+returned with a priority score of 70.1, and its isoprenol flag reads none. Its title names
+\term{biogasoline}, and reading it settles what that means in its own first sentence:
+``Isopentenol (3-methyl-3-buten-1-ol) is an important target compound''. The sweep ranked
+the paper first and misclassified its product.
+
+The mechanism is the same in all three cases. Matching titles and abstracts finds a paper
+named for its product, not one named for its application or its method, and a molecule
+with two accepted names and a fuel-class nickname defeats the match three ways. Three
+misses against ten is a 30 percent false-negative rate on the single axis the sweep was
+built to find, measured against a list assembled by hand. A scored queue is a source of
+leads, and its score is not evidence that it understood the row it ranked.
+
+\subsection{What the same pass added that is not isoprenol\secstatus{todo}}
+
+Fourteen rows were verified and added. Four are the isoprenol and isopentenol rows above.
+Three carry the precursor pathway. Of the remaining seven, four change the table's answer
+to questions it could not previously answer at all.
+
+\notesec{A measured pairwise axis, which the table did not have} Rachwalski et al.\ 2024
+conjugated three essential-gene knockdown constructs into the whole deletion collection,
+giving 4,017 deletions crossed against each, and separately crossed the whole 356-guide
+collection into one deletion background. That is roughly 12,400 distinct gene pairs, and
+the released tables carry a normalized growth value for every pair at every condition
+rather than only the hits, so the negatives are present. The pairing is what matters: an
+essential gene reachable only by knockdown, crossed with a non-essential gene reachable
+only by deletion, is a genotype no deletion collection can produce. It ranks 31st on
+measurements and is printed 40th after the pins, which understates it, because a colony-size value is one number and the
+axis it spans is two-dimensional.
+
+\notesec{A dose on an essential gene} Hawkins et al.\ 2020 target each essential gene with
+100 guides, 10 matched and 9 single-mismatch variants of each, so knockdown is titrated
+rather than switched. The knockdown level is a linear-model prediction at a cross-validated
+$R^{2}$ of 0.56, not a measurement, so the dose enters as an imputed covariate and carries
+its own error. That is a schema requirement, not a caveat to be dropped.
+
+\notesec{A complete matrix, which is rarer than a large one} Royet et al.\ 2025 release a
+fold change and a false-discovery-adjusted $q$ for all 5,729 \org{P. putida} genes under
+each of four metals, with no missing values, so the 22,916 records include every null. The
+design is non-barcoded transposon sequencing, which fixes the addressable genotype at the
+\emph{gene}: no per-mutant record can ever be built from it, whatever the effort.
+
+\notesec{Matched transcriptome and translatome} Choe et al.\ 2019 release expression and
+ribosome-protected-fragment levels over the same 3,457 genes, which is the densest
+per-instance vector in the table. Its genotype side is the weak half: all 31 resequenced
+samples are populations, every variant table reports an allele frequency, and the flagship
+evolved strain has no variant list of its own, so a per-clone genotype would have to be
+manufactured by thresholding frequencies, which the authors never did.
+
+\notesec{One addition the ordering rule still buries, and it is the same defect}
+Silvis et al.\ 2021 is the only route to a bacterial cell-shape phenotype under gene
+perturbation, and shape is the one modality the built yeast morphology data has no
+bacterial counterpart for. It releases four shape summaries for 585 strain-conditions,
+distilled from 2.6 million segmented cells. That is 2,340 measurements, so the rule places
+it 52nd and the pins move it to 64th, in the reserve either way. Nothing pins it, because the pin built here is for one product
+rather than for modality coverage in general, and inventing a second pin unprompted would
+be the hand-tuning that Sec.~\ref{sec:iso} argues against. The row is therefore recorded,
+reported, and outside the recommended fifty. It is worth saying plainly that this is the
+same structural defect isoprenol exposed, showing up on a different axis: a row that is
+the unique carrier of a phenotype class is ranked by its volume, and volume is not what
+makes it unique. Its images are also undeposited, so the provenance chain for 2.6 million
+measured cells ends at a 65-kilobyte workbook.
+
+\clearpage
+\input{tables/pins}
+
+\clearpage
+\input{tables/queue}
+
+\clearpage
+\input{tables/queue-iso}

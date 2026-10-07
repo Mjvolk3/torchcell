@@ -223,29 +223,32 @@ experiments/W019-echo-crispr-array/results/*.zip
 # deploy -- silently dropping ontology/index.html from gh-pages while the build log
 # still reports it rendered.
 docs/source/_extra/ontology/index.html
-# notes-tex: per-document symlink to the shared style file, recreated by any build
-notes-tex/*/tcdoc.sty
-# ...but NOT the canonical file the symlinks point at. `notes-tex/*/tcdoc.sty`
-# matches notes-tex/common/tcdoc.sty just as happily as notes-tex/<doc>/tcdoc.sty,
-# so without this negation the one real copy of the shared style is excluded from
-# the repo. Every notes-tex document then fails to build on a fresh clone with a
-# missing-file error that points at the symlink rather than at the cause.
+# notes-tex: documents live at notes-tex/<group>/<slug>/, so every per-document
+# pattern is two levels deep. The per-document symlink to the shared style file is
+# recreated by any build.
+notes-tex/*/*/tcdoc.sty
+# ...but NOT the canonical file the symlinks point at. A one-level
+# `notes-tex/*/tcdoc.sty` once matched notes-tex/common/tcdoc.sty just as happily
+# as a document symlink and excluded the one real copy of the shared style from
+# the repo, so every document failed to build on a fresh clone with a missing-file
+# error that pointed at the symlink rather than at the cause. The two-level
+# pattern cannot match common/tcdoc.sty; the negation stays as a guard.
 !notes-tex/common/tcdoc.sty
 # tectonic build artifacts
-notes-tex/*/*.aux
-notes-tex/*/*.log
-notes-tex/*/*.out
-notes-tex/*/*.toc
-notes-tex/*/*.bbl
-notes-tex/*/*.blg
-notes-tex/*/*.synctex.gz
-notes-tex/*/*-clean.pdf
+notes-tex/*/*/*.aux
+notes-tex/*/*/*.log
+notes-tex/*/*/*.out
+notes-tex/*/*/*.toc
+notes-tex/*/*/*.bbl
+notes-tex/*/*/*.blg
+notes-tex/*/*/*.synctex.gz
+notes-tex/*/*/*-clean.pdf
 
 # notes-tex: class and bibliography style symlinked from the manuscript at build time.
 # Tectonic does not honor TEXINPUTS, so each document gets its own symlink; any build
 # recreates them, so a fresh clone needs no setup.
-notes-tex/*/sn-nature.bst
-notes-tex/*/sn-jnl.cls
+notes-tex/*/*/sn-nature.bst
+notes-tex/*/*/sn-jnl.cls
 
 # Merge-queue runtime state (SQLite DB + flock + heartbeat).
 # scripts/merge_queue.py puts this at $DATA_ROOT/dev/merge_queue/. On GilaHyper

@@ -124,7 +124,7 @@ Report done only after a render you have looked at.
 
 - Save as `notes/assets/drawio/<subject-name>.drawio`. **Name it for its subject**, not
   for the tool or the session (`splitseq-barcoding.drawio`, not `diagram-test.drawio`).
-- `notes-tex/<doc>/`: reference `figures/<name>.pdf`; `make figures` finds
+- `notes-tex/<group>/<doc>/`: reference `figures/<name>.pdf`; `make figures` finds
   `$REPO/notes/assets/drawio/<name>.{drawio.svg,drawio.png,drawio}` by matching basename
   and exports a cropped PDF. Then `make && make check` -- the gate prints the figure
   width in mm and fails on any `\cite` key missing from `references.bib`.

@@ -314,7 +314,12 @@ body (`content.tex`) compiled by thin wrappers, and builds via Tectonic.
   personal library, so comments attach to the exact build they were made on. Same script
   and same hash-based versioning the `notes-tex/` documents use
   (`notes-tex/common/zotero_publish.py`), and **the collection path is derived from the
-  repo directory**, never configured: `paper/nature-biotech/` -> `torchcell/paper/nature-biotech`.
+  repo directory**, never configured: `paper/nature-biotech/` -> `torchcell/paper/nature-biotech`,
+  and `notes-tex/<group>/<slug>/` -> `torchcell/notes-tex/<group>/<slug>`. notes-tex
+  documents live one group below `notes-tex/` (`trigenic`, `multimodal`, `metabolism`,
+  `wet-lab`, `database`, `systems`; see `notes-tex/README.md`); a new document goes under
+  its group, a bare slug is found under `notes-tex/*/`, and the flat `notes-tex/<slug>`
+  form is refused by the publisher.
   `publish-dry` previews, `publish-list` lists versions, `publish-submission` does the
   clean submission view instead. **Do not confuse this with the GROUP library's `paper`
   collection** (`W46ATS7B`), which holds the papers the manuscript CITES and is what

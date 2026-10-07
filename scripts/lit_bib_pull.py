@@ -16,7 +16,7 @@ Usage::
 
     python scripts/lit_bib_pull.py --list                     # what the server holds
     python scripts/lit_bib_pull.py --name paper --out paper/nature-biotech/references.bib
-    python scripts/lit_bib_pull.py --name eqtl-data-model --out notes-tex/eqtl-data-model/references.bib
+    python scripts/lit_bib_pull.py --name eqtl-data-model --out notes-tex/database/eqtl-data-model/references.bib
 
 ``make bib-pull`` in a notes-tex document (and in ``paper/nature-biotech``) is a
 thin wrapper that passes the document's own name. Reads ``TC_LIT_URL`` and

@@ -1,0 +1,30 @@
+%% notes-tex/database/spell-publications/sections/3-no-geo.tex
+%% [[experiments.015-spell.publications]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/spell-publications/sections/3-no-geo.tex
+%% SOURCE: numbers and table from
+%% experiments/015-spell/scripts/spell_publication_tables.py; prose hand-authored
+
+\section{Studies with no GEO accession\secstatus{todo}}\label{sec:no-geo}
+
+\spellNNoGeo{} READMEs read \texttt{GEO ID: N/A} (Table~\ref{tab:no-geo}). These
+studies were published between \spellNoGeoYearMin{} and \spellNoGeoYearMax{} and
+account for \spellNNoGeoDatasets{} PCL files and \spellNNoGeoConditions{}
+conditions. None of their PCL filenames contains a GEO series id, so the archive
+gives no pointer to the authors' released data. The data location has to be
+recovered from the paper: its methods, its supplementary files, or a laboratory
+or repository address it names. \spellNNoGeoPmc{} of these studies have a PMC id
+and \spellNNoGeoNoPmc{} do not. \spellNNoGeoTwoChannel{} of the \spellNNoGeo{}
+are two-channel microarray studies. \spellNKoStudiesNoGeo{} carry a deletion
+call, and \spellNNamedStudiesNoGeo{} of the \spellNNamedStudies{} gene-named
+studies of Table~\ref{tab:gene-named}, Hughes 2000 and Mnaimneh 2004 among them,
+are in this group.
+
+All \spellNNoGeoPclPrefixed{} of their PCL filenames begin with \texttt{2010.}
+and carry suffixes such as \texttt{flt}, \texttt{knn}, \texttt{avg},
+\texttt{div} and \texttt{log}, which the READMEs do not define. Hypothesis
+(untested): the suffixes name processing steps applied after the authors'
+release, such as filtering, nearest-neighbor imputation, replicate averaging,
+division by a reference and log transformation. If so, the PCL values for these
+studies are further from the source measurements than a GEO series would be.
+
+\input{tables/t4-no-geo}

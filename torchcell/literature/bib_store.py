@@ -5,7 +5,7 @@
 
 r"""Named bibliographies materialized into the mirror, for tc-lit to serve.
 
-Both LaTeX bibliography flows (``notes-tex/<slug>/references.bib`` via
+Both LaTeX bibliography flows (``notes-tex/<group>/<slug>/references.bib`` via
 ``make bib``, and ``paper/nature-biotech/references.bib`` via
 ``zotero_export_bib.py``) read the Better BibTeX endpoint on ``localhost:23119``,
 so they only run on a machine with Zotero desktop open. GilaHyper has no Zotero
@@ -25,7 +25,7 @@ the scope of each bibliography from where it is already declared:
 
 - ``paper`` -- the group ``paper`` collection ONLY, the manuscript's publication
   guarantee (``paper/nature-biotech/zotero_export_bib.py``).
-- one per ``notes-tex/<slug>/`` -- the ``ZOTERO_COLLECTION`` and
+- one per ``notes-tex/<group>/<slug>/`` -- the ``ZOTERO_COLLECTION`` and
   ``ZOTERO_PERSONAL_COLLECTION`` lines of that document's Makefile, named for the
   slug so ``make bib-pull`` can ask for ``$(DOC)``.
 - ``library`` -- the group library unioned with the personal ``torchcell`` tree,
@@ -250,7 +250,10 @@ def discover_bib_specs(
             origin="paper/nature-biotech/zotero_export_bib.py",
         )
     ]
-    for makefile in sorted((root / "notes-tex").glob("*/Makefile")):
+    # Documents live at notes-tex/<group>/<slug>/Makefile. The bibliography keeps
+    # the slug as its name, so `/bib/<slug>` and `make bib-pull` (which asks for
+    # $(DOC), the directory name) are unchanged by which group a document sits in.
+    for makefile in sorted((root / "notes-tex").glob("*/*/Makefile")):
         group_collection, user_collection = parse_makefile_collections(makefile)
         if not group_collection:
             continue

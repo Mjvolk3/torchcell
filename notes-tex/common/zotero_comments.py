@@ -45,12 +45,12 @@ import sys
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from pyzotero import zotero
-
 from zotero_publish import (
-    DEFAULT_PARENT_DIR,
     ROOT_COLLECTION,
+    _git,
     find_collection,
     find_parent_item,
+    resolve_doc_dir,
 )
 
 
@@ -83,13 +83,13 @@ def sort_key(ann: dict) -> list[int]:
         return [0, 0, 0]
 
 
-def fetch(zot: zotero.Zotero, doc: str, version: int | None) -> tuple[str, list[Comment]]:
-    # Same resolution rule as zotero_publish.py since it generalized past
-    # notes-tex: the collection path IS the repo-relative directory, and a bare
-    # name is shorthand for notes-tex/<name>.
-    rel_dir = doc.strip("/")
-    if "/" not in rel_dir:
-        rel_dir = f"{DEFAULT_PARENT_DIR}/{rel_dir}"
+def fetch(zot: zotero.Zotero, rel_dir: str, version: int | None) -> tuple[str, list[Comment]]:
+    """Comments on one published version of the document at ``rel_dir``.
+
+    ``rel_dir`` is the resolved repo-relative directory (``resolve_doc_dir`` in
+    ``zotero_publish.py`` turns a bare slug into ``notes-tex/<group>/<slug>``); the
+    collection path IS that directory.
+    """
     coll = find_collection(zot, ROOT_COLLECTION, None)
     for name in rel_dir.split("/"):
         coll = find_collection(zot, name, coll)
@@ -97,7 +97,7 @@ def fetch(zot: zotero.Zotero, doc: str, version: int | None) -> tuple[str, list[
             sys.exit(f"no Zotero collection {ROOT_COLLECTION}/{rel_dir}")
     parent = find_parent_item(zot, coll, rel_dir)
     if not parent:
-        sys.exit(f"nothing published for {doc} yet")
+        sys.exit(f"nothing published for {rel_dir} yet")
 
     # Attachments oldest-first, so --version 1 is the first build published.
     # Every page is read: pyzotero returns at most 100 children per request, so a
@@ -147,7 +147,8 @@ def main() -> None:
         sys.exit("Set ZOTERO_USER_ID and ZOTERO_API_KEY in repo-root .env.")
 
     zot = zotero.Zotero(user_id, "user", api_key)
-    filename, comments = fetch(zot, args.doc, args.version)
+    repo = _git(notes_tex_dir, "rev-parse", "--show-toplevel")
+    filename, comments = fetch(zot, resolve_doc_dir(repo, args.doc), args.version)
 
     n_written = sum(1 for c in comments if c.comment)
     print(f"# Review comments on {filename}\n")

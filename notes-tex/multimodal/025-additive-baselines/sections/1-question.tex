@@ -1,0 +1,64 @@
+%% notes-tex/multimodal/025-additive-baselines/sections/1-question.tex
+
+\section{The question, and the state of the evidence\secstatus{todo}}
+\label{sec:question}
+
+Tran et al.\ introduced MULTI-evolve in \emph{Science} in 2026
+(\texttt{10.1126/science.aea1820}), a protein engineering framework whose fully
+connected networks were said to learn the epistatic landscape from single and
+double mutants and to identify synergistic combinations at higher order. Visani,
+Verma and DeWitt replied in a preprint, \emph{Additive baselines furnish no evidence
+for epistasis learning by MULTI-evolve} (bioRxiv \texttt{2026.04.23.719915}), which
+does one thing: it fits the null that the original paper never fit. An
+\term{additive model} over mutations predicts a phenotype as a sum of per-mutation
+terms and assigns exactly zero to every interaction, so it is the natural null for
+any claim that a model has learned interaction, as an intercept-only model is the
+null for a claim that a model has learned anything. Their networks' predictions
+correlated with a ridge-regularized additive model's at $r > 0.999$, and on held-out
+data the network did not significantly outperform the additive model or a
+zero-hidden-layer version of itself.
+
+The analogous question for the 010 trigenic transformer is whether its held-out
+performance on the trigenic interaction score survives the same test, and it has a
+second part the protein setting does not have: the published split lets every model
+score the identity of the screen a record came from. Both are answered here on the
+025 build, which holds the 010 records with bit-identical labels, under two splits:
+the published random split (arm R) and a split that never shares a Kuzmin query
+double between parts (arm Q).
+
+\notesec{One difference in the setup, and it cuts against the null}
+In the protein setting the quantity predicted is the multimutant phenotype itself,
+which per-mutation effects explain directly. Here the quantity predicted is already
+a residual: the trigenic interaction score subtracts the expectation built from
+single and double mutant fitness before the model ever sees it. An
+additive-in-single-gene-effects model is therefore a harder null here than it is
+there, and its performance is more surprising, not less. That argument has one
+loophole, the screen structure of Section~\ref{sec:data}, and quantifying it turns
+out to matter more than anything else below.
+
+\begin{keybox}
+\textbf{Measured.} Five nulls and the nonlinear baseline on both arms, on test
+(Table~\ref{tab:heldout}, Figure~\ref{fig:ladders}a,b). Arm R reproduces the 010
+numbers. On arm Q the additive ridge falls from 0.400 to 0.185, the screen-only
+model to zero, and the nonlinear baseline from 0.432 to 0.141, below the ridge.
+Four transformer runs on arm Q, every one peaking on validation by epoch 7 and
+declining afterward (Figure~\ref{fig:disjointruns}a,b). One transformer test score
+on arm Q: GH 1640's validation-selected checkpoint at 0.139, below the ridge by
+0.046 with a paired interval that excludes zero, level with the nonlinear baseline
+(Table~\ref{tab:decision}).
+
+\textbf{Not measured.} Replicates of the 010 configuration on arm Q, which is
+what turns one checkpoint's number into a statement about the model, and the
+learnable-table control for the constant-learning-rate runs.
+\end{keybox}
+
+\notesec{Vocabulary}
+\term{Arm R} and \term{arm Q} are the two training arms of experiment 025, one per
+split; every baseline is fit under both. The \term{ladder} is the ordered set of
+baselines B0 through B5 and the transformer, read left to right by interaction
+capacity. A \term{query pair} is the double mutant a Kuzmin trigenic screen was
+built around; every record in the build is one query pair plus one \term{array
+gene}, and 420 query pairs recur across the 376{,}732 records. A \term{screen} is
+the set of records sharing a query pair. A \term{validation maximum} is the largest
+validation Pearson over a run's logged epochs; it is an upward-biased order
+statistic, and it is never set beside a test number without that label.

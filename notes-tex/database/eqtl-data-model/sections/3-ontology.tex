@@ -1,0 +1,180 @@
+%% notes-tex/database/eqtl-data-model/sections/3-ontology.tex
+%% [[torchcell.datamodels.eqtl-data-model]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/eqtl-data-model/sections/3-ontology.tex
+%% SOURCE: hand-authored. Every class name and the systematic-gene-name pattern are read
+%% from torchcell/datamodels/schema.py, not recalled.
+
+\section{How it fits the ontology\secstatus{todo}}\label{sec:ontology}
+
+\subsection{What already exists\secstatus{todo}}
+
+The primary record is a genotype and an environment mapped to a phenotype, which is exactly
+\file{Experiment}. Nothing conceptual is missing, and four pieces are already built.
+
+\begin{itemize}[leftmargin=1.2em,itemsep=2pt,topsep=2pt]
+  \item \file{RNASeqExpressionPhenotype} is the bulk readout, and it was written for this
+    situation. Its docstring describes a survey ``where each isolate's transcriptome is
+    measured on its OWN genome,'' with ``no common reference to ratio against,'' storing
+    absolute TPM. Albert 2018 and Smith 2008 fit unchanged.
+  \item \file{PseudobulkExpressionPhenotype} is the single-cell readout, built for
+    Nadal-Ribelles 2025. It carries \file{dispersion} and \file{n_cells} per genotype,
+    which is the right shape for Boocock's noise eQTLs: heterogeneity survives as a
+    per-genotype scalar rather than being averaged away.
+  \item \file{SequenceVariantPerturbation} states the intent outright. Together with
+    \file{CopyNumberVariantPerturbation} it ``lets a NATURAL ISOLATE be modeled as a
+    perturbation set off S288C ($\sim$4,500 sequence variants per isolate).''
+  \item The off-graph pointer pattern on that class, \file{sequence_source},
+    \file{sequence_uri} and \file{sequence_sha256}, means variant sequences are never
+    inlined.
+\end{itemize}
+
+\subsection{Where the obvious mapping fails\secstatus{todo}}\label{sec:fails}
+
+Reusing \file{SequenceVariantPerturbation} for a segregant is the obvious move and it is
+wrong. \textbf{A natural isolate and a segregant are not the same kind of object.} Caudal's
+isolates are each individually sequenced, so the variant set is observed and every allele
+dereferences to a real sequence with a hash. A segregant is never sequenced to that
+standard; the \emph{parents} are, and the segregant is imputed as a mosaic of them. That
+class promises a dereferenceable, hash-verified sequence, and for a segregant no such
+artifact exists. Using it would encode an inference as an observation, which is the precise
+failure the verification levels exist to prevent.
+
+\subsection{Four gaps, in order of how much they matter\secstatus{todo}}
+
+\notesec{Intergenic variants have no representation} \file{GenePerturbation} requires
+\file{systematic_gene_name} and validates it against
+
+\begin{quote}\small
+\verb+^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d{4}|YNC[A-Q]\d{4}[WC])$+
+\end{quote}
+
+so every perturbation must attach to a real gene. A promoter SNP 300 bp upstream of an ORF
+has no gene to attach to, and assigning it to the downstream gene is an interpretation,
+wrong whenever the variant acts on a divergent neighbor. This is the sharpest gap and it is
+not incidental: the promoter is where the strongest and most interpretable cis signal lives.
+It is also the same gap that blocks every massively parallel reporter assay, which perturbs
+regulatory sequence exclusively. A gene-anchored patch does exist: the genome machinery
+already carries a flanking-window convention for gene sequence (1,000 bp upstream, 300 bp
+downstream), which covers most promoter variants, and the anchor need not even be a
+natural gene, since a synthetic locus name tied to a sequence hash could stand in for an
+edited or renamed region. Either way the window assignment is an interpretation and would
+have to be recorded as one.
+
+\notesec{Cardinality} An SGA record carries at most three perturbations. A segregant carries
+$\sim\!10^4$. For $n \sim 10^3$ segregants that is $\sim\!10^7$ perturbation objects for one
+dataset, and \file{Genotype} sorts and set-compares its perturbation list on every equality
+check while the L1 key hashes the genotype signature.
+
+\notesec{Reference asymmetry} Reference here means the genome that variants are expressed
+against, not the baseline a phenotype is ratioed to; a record has both, and this gap
+concerns only the first. A segregant's natural genomic reference is one of its two
+parents, but the convention expresses every genotype off S288C. BY is near-isogenic to
+S288C, so BY-derived blocks are nearly empty perturbation sets while RM-derived blocks
+carry the full variant load. Keeping S288C is still right, since it is what makes these
+records comparable to everything else, but the lopsidedness reflects the reference choice
+rather than the biology and should be documented rather than discovered. The phenotype
+side is untouched by this: expression is stored absolute, with no wild-type ratio in
+these designs at all.
+
+\notesec{Linkage is destroyed by a set} Variants arrive in blocks and co-segregate.
+\file{Genotype} does hold its perturbations in a stable order, but that order is a
+canonical sort by systematic gene name and perturbation type, imposed so that equality
+and hashing are well defined; it is set semantics with deterministic iteration, and
+lexical gene-name order is not chromosomal order. Nothing in the representation says two
+variants sit on the same block and travel together, which is exactly the structure that
+makes mapping possible and that limits attribution.
+
+\subsection{The representation that follows\secstatus{todo}}\label{sec:proposal}
+
+Store what was actually determined, a \term{haplotype mosaic} rather than a variant set:
+
+$$
+G_i \;=\; \big\{ (\text{chr},\, \text{start},\, \text{end},\, \text{parent},\, p) \big\},
+\qquad |G_i| \sim 10^1\text{--}10^2
+$$
+
+against two hash-pinned parent assemblies, with a per-interval posterior $p$ and the marker
+spacing recorded as the resolution. This is better on four counts at once.
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=1pt,topsep=2pt]
+  \item \textbf{Honest.} It stores the inference as an inference, with its uncertainty,
+    rather than promising sequence that was never read.
+  \item \textbf{Compact.} Tens of intervals per strain instead of $\sim\!10^4$ variants,
+    which dissolves the cardinality problem rather than solving it.
+  \item \textbf{Lossless.} The full variant set is recoverable exactly from the two parent
+    assemblies plus the intervals, so it becomes a derived view and nothing is given up.
+  \item \textbf{Linkage-preserving.} The interval is the unit, so co-segregation is
+    explicit.
+\end{enumerate}
+
+The cost is a genuinely new perturbation type, keyed on a genomic interval and a parent
+rather than on a gene, carrying a probability. That cost is accepted: the type is judged
+necessary, not merely convenient. It is also the same non-gene-keyed requirement the
+promoter-variant gap already imposes, so the two should be resolved together.
+
+\subsection{What to do\secstatus{todo}}\label{sec:todo}
+
+\begin{enumerate}[leftmargin=1.4em,itemsep=2pt,topsep=2pt]
+  \item \textbf{Ingest the two matrices, not the QTL table.} One
+    \file{RNASeqExpressionExperiment} per segregant per condition, or
+    \file{PseudobulkExpressionExperiment} for the single-cell studies. The QTL table is an
+    estimate conditional on method and threshold, it has no source value to check against
+    at any verification level, and storing it as a \file{Phenotype} would be ingesting
+    somebody's analysis as data.
+  \item \textbf{Decide the intergenic question deliberately}, because it gates both this
+    class and the regulatory-DNA class. With the mosaic type accepted, an interval-keyed
+    perturbation leaf exists regardless, so the live options are: attach promoter
+    variants to that same interval-keyed leaf; or keep gene-keying and assign each
+    variant to a gene via the existing flanking-window convention (1,000 bp upstream,
+    300 bp downstream), with the attribution recorded as an interpretation, e.g. a
+    \file{ProvenanceGap}; or restrict to coding variants. The third is the honest
+    short-term option and the worst long-term one.
+  \item \textbf{Treat the parent assemblies as an ingestion dependency.} A segregant record
+    means nothing without them, so they are part of the artifact rather than context, and
+    each needs a hash-pinned assembly rather than a variant call file.
+  \item \textbf{Measure the cardinality cost} on a single Albert 2018 segregant before
+    building anything.
+\end{enumerate}
+
+\subsection{What was built\secstatus{todo}}\label{sec:built}
+
+The mosaic was implemented on 2026-09-12 for the Bloom 2019 segregant panels (eLife
+8:e49212, doi 10.7554/eLife.49212; 16 crosses, 13,950 haploid segregants, 38 growth
+conditions), in \file{torchcell/datasets/scerevisiae/bloom2019.py}, and it departs from
+Sec.~\ref{sec:proposal} in one respect. The proposal called the cost ``a genuinely new
+perturbation type''. A perturbation leaf cannot carry a mosaic: \file{Genotype} sorts its
+perturbations on \file{systematic_gene_name} and every gene-keyed consumer walks that
+list, so a leaf with no gene either fails the regex or has to carry a name it does not
+have, and a \file{Genotype} with an empty list reads as wild-type S288C to every consumer
+that reads only the list. The mosaic is therefore a \emph{sibling} of \file{Genotype}:
+\file{SegregantGenotype} holds \file{HaplotypeBlock}s of (chromosome, start, end, parent,
+posterior, n\_markers) between two \file{SegregantParent}s pinned to sha256-anchored
+assemblies, and \file{SegregantGrowthExperiment} declares that class as its genotype.
+The base \file{Experiment} rejects a segregant dict, so the union resolves the class
+unambiguously and a gene-keyed consumer fails loudly rather than reading a segregant as
+unperturbed. The new classes enter only the module-level unions and maps, so no served
+dataset's schema contract moved and the admission gate reported the increment admissible.
+
+Three of the four properties in Sec.~\ref{sec:proposal} held as stated on the built
+store. Honest: the release is the R/qtl hard call, so every block carries posterior 1.0
+and the call method is quoted from the authors' code. Lossless: every one of the 13,950
+block sets re-expands to its released marker row, checked at L2. Linkage-preserving by
+construction. Compact needs a correction. Cross A, the BY $\times$ RM cross the estimate
+of Sec.~\ref{sec:proposal} was made for, has a median of 83 blocks per segregant, inside
+the $10^1$--$10^2$ range; the other 15 crosses run from 90 to 143 at the median, and the
+means are pulled to 100--240 by tails of segregants with hundreds to 1,847 blocks. A
+segregant is still a few kilobytes rather than $\sim10^4$ variants, so the cardinality
+argument stands, but the block count is not a property of meiosis alone. It is a
+hypothesis, untested here, that the tail is short runs from genotyping noise in the hard
+calls that a posterior threshold would collapse; the release carries no posteriors, so the
+blocks record the calls as released.
+
+Two items of Sec.~\ref{sec:todo} closed with the build and two stay open. The parent
+assemblies are an ingestion dependency: each parent is pinned to its member of the 1011
+assemblies tarball, and a parent absent from the member index raises. The cardinality
+cost was measured on the whole panel rather than on one Albert 2018 segregant. The
+intergenic question is not resolved but is no longer coupled to this class, since a
+mosaic is not a \file{GenePerturbation} and needs no gene; a cis-eQTL still has no gene
+to attach to, so per-variant attribution and the regulatory-DNA class remain one open
+decision. Ingesting the two matrices for Albert 2018 and Boocock 2025 is the natural next
+increment on the same genotype class.

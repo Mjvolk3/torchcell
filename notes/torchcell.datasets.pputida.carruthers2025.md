@@ -444,3 +444,40 @@ build was run and nothing under `$DATA_ROOT/database/` was touched.
    levels above run from `run_all` instead of from this dataset's test file.
 5. The Dryad deposit needs a manual-browser retrieval before the full 472-strain proteome
    can be loaded.
+
+## 2026.10.07 - Open item 4 closed: both families verify from run_all
+
+The L0-L4 batteries printed above no longer live in
+`tests/torchcell/datasets/pputida/test_carruthers2025.py`. They are
+`carruthers2025.titer_report` and `carruthers2025.proteome_report`, reached through
+`carruthers2025.verify_build(dataset_root, data_root, family=...)` the way the de Siqueira,
+Kang, Lim and Caglar releases reach theirs, and
+`torchcell.verification.runners.run_product_titer` /
+`run_bacterial_protein_abundance` call them from `run_all`. Details, the full passing
+output and the design reasons: [[torchcell.verification.runners]], 2026.10.07.
+
+What changed in the levels themselves, all of it strictly additive:
+
+- The titer L0-L3 now come from the new shared family verifier
+  `torchcell.verification.product_titer.verify_product_titer_dataset`, so the unit decision,
+  the `titer_se == SD/sqrt(n)` identity at 1e-9, the pathway-gene count and the product are
+  checked the same way for every titer dataset. Two rules are new here: an uncertainty
+  number and its type must both be stored or both be typed gaps, and the same for the
+  replicate design.
+- `strain_count_reconciles_with_the_papers_472` asserts the reconciliation this note
+  documents rather than accepting either number: 465 strains plus the seven with six
+  replicates is the paper's 472.
+- The proteome family's `every_protein_key_is_a_kt2440_locus_tag` prefix check is replaced
+  by the runner's `protein_and_perturbed_locus_containment_assembly`, which checks the 1,424
+  keys and the perturbed host loci against the KT2440 locus universe read from the pinned
+  assembly, and by `every_record_carries_the_same_protein_keys` for the per-record key set.
+  The prefix check could not have caught a `PP_` tag the annotation does not carry.
+
+**Item 2 is closed, and the statement above it is now stale.** The section "Environment"
+says a `CultureEnvironment` placed in `ProductTiterExperiment.environment` dumps without its
+culture-protocol slots, because the field was annotated `Environment`. It is annotated
+`CultureEnvironment` now, and the built store carries the vessel: record 0's
+`experiment.environment.culture_format` reads `vessel="48-well BioLector flower plate"`,
+`working_volume_ul=1500.0`, `shaking_rpm=1000.0`, `endpoint="fixed_duration"`, with its own
+`provenance` quote attached. Measured by reading the dev store read-only on 2026.10.07.
+Items 1, 3 and 5 stand.

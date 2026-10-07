@@ -137,7 +137,7 @@ import re
 import shutil
 import statistics
 from collections import Counter, defaultdict
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar, Literal
@@ -205,7 +205,14 @@ from torchcell.literature.manifest import (
 )
 from torchcell.sequence.genome.base import GeneNameStatus
 from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
-from torchcell.verification.report import Provenance
+from torchcell.verification.levels import l3_convention, l4_cross_source
+from torchcell.verification.product_titer import verify_product_titer_dataset
+from torchcell.verification.report import (
+    Level,
+    LevelResult,
+    Provenance,
+    VerificationReport,
+)
 from torchcell.verification.sourced import (
     ProvenanceGap,
     ProvenanceGapReason,
@@ -289,6 +296,14 @@ SPAN_END = SPAN_START + SPAN_LENGTH - 1
 LOCUS_TAG_RE = re.compile(r"PP_\d{4}")
 REPLICATE_RE = re.compile(r"^(?P<base>.+)-R(?P<replicate>\d+)$")
 
+#: The two dataset families this release serves, one per experiment class.
+Family = Literal["titer", "proteome"]
+#: The product every titer record measures, as the compound layer canonicalizes it.
+PRODUCT_NAME = "isoprenol"
+#: One record per ``(construct, DBTL cycle)`` strain of the released Source Data.
+EXPECTED_TITER_RECORDS = 465
+#: One record per released proteome sample bar the non-targeting reference.
+EXPECTED_PROTEOME_RECORDS = 19
 #: What one Top3 number is, named so heterogeneous proteomics is never silently mixed.
 PROTEOME_MEASUREMENT_TYPE = "dia_nn_top3_peptide_signal_mean"
 #: The proteome panel's background: every sample is a derivative of the PP_0815 KO.
@@ -1916,8 +1931,296 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
         raise NotImplementedError
 
 
+# --------------------------------------------------------------------------- #
+# L0-L4 verification of a built tree. The shared family gates do L0-L3
+# (``verify_product_titer_dataset`` / ``verify_protein_dataset``); the two rules below
+# are this release's own, and the two L4 rows join the built store to a DIFFERENT
+# released file from the one its loader read.
+#
+# ``run_product_titer`` and ``run_bacterial_protein_abundance`` in
+# ``torchcell.verification.runners`` call :func:`verify_build` and add the host-aware
+# gene-universe containment, so these levels run from ``run_all``.
+# --------------------------------------------------------------------------- #
+#: Strains the paper's own "472 unique strains" count reaches by dividing its 1,416
+#: non-control cultures by three; seven of the 465 ``(construct, cycle)`` strains carry
+#: SIX replicates rather than three, and 465 + 7 == 472.
+PAPER_STRAIN_COUNT = 472
+#: Protein keys every proteome record carries: 1,501 released minus the 77 dropped.
+PROTEOME_KEYS_PER_RECORD = 1424
+#: Tolerance of the derived standard error against ``SD / sqrt(n)``. The loader derives
+#: it in float from the two stored numbers, so the identity holds to float noise.
+TITER_SE_TOL = 1e-9
+#: Supplementary Data 1 prints its per-target means to two decimals in mg/L.
+SI_TARGET_MEAN_TOL = 5e-3
+#: Targets of Supplementary Data 1's 120-row table that join a single-guide record. All
+#: of them do: the RECORD-level join reaches ``PP_1607`` and ``PP_4194``, released only
+#: under the filler names ``PP_1607_NT1`` / ``PP_4194_NT2`` whose filler guide is not a
+#: perturbation, which a construct-name join cannot.
+SI_TARGET_OVERLAP = 120
+
+
+def _titer_provenance() -> Provenance:
+    """Where the titer family's numbers came from."""
+    return Provenance(
+        source_uri=SOURCE_DATA_REL,
+        citation_key=CITATION_KEY,
+        sha256=SOURCE_DATA_SHA256,
+        method=(
+            "Source Data sheet 'Figure 4b', column 'isoprenoli titer (mg/L)' (the typo "
+            "is the source's), grouped by (construct, DBTL cycle); mean over the "
+            "strain's biological replicates with their sample SD, stored verbatim as "
+            "ug/mL since 1 mg/L == 1 ug/mL"
+        ),
+        page="Source Data 'Figure 4b'; Supplementary Data 1 as the cross-source oracle",
+    )
+
+
+def _proteome_provenance() -> Provenance:
+    """Where the proteome family's numbers came from."""
+    return Provenance(
+        source_uri=SOURCE_DATA_REL,
+        citation_key=CITATION_KEY,
+        sha256=SOURCE_DATA_SHA256,
+        method=(
+            "Source Data sheet 'Supplementary Figure 13abc', column "
+            "'Top_3pep_counts_mean' (DIA-NN Top3 signal), one record per released "
+            "sample of the PP_0815 off-target panel; 77 of 1,501 protein keys dropped "
+            "by a sourced rule"
+        ),
+        page="Source Data 'Supplementary Figure 13abc'",
+    )
+
+
+def _l1_strain_count_reconciles(records: Sequence[dict[str, Any]]) -> LevelResult:
+    """L1: the stored strain count plus its six-replicate strains is the paper's 472.
+
+    The paper reports "472 unique strains (125 single perturbations and 347
+    combinations) in triplicate", which is its 1,416 non-control cultures divided by
+    three. Grouping by ``(construct, DBTL cycle)`` gives 465, because seven strains
+    were cultured six times. This asserts the DOCUMENTED reconciliation rather than
+    accepting either number: 465 + 7 == 472.
+    """
+    six = sum(
+        1 for record in records if record["experiment"]["phenotype"]["n_samples"] == 6
+    )
+    total = len(records) + six
+    return LevelResult(
+        level=Level.L1,
+        name="strain_count_reconciles_with_the_papers_472",
+        passed=total == PAPER_STRAIN_COUNT,
+        message=(
+            f"{len(records)} strains + {six} with six replicates = {total} "
+            f"(the paper's {PAPER_STRAIN_COUNT})"
+        ),
+        details={
+            "n_records": len(records),
+            "n_six_replicate_strains": six,
+            "paper_strain_count": PAPER_STRAIN_COUNT,
+        },
+    )
+
+
+def _l1_same_protein_keys(records: Sequence[dict[str, Any]]) -> LevelResult:
+    """L1: every proteome record carries the same 1,424 protein keys."""
+    key_sets = {
+        frozenset(record["experiment"]["phenotype"]["protein_abundance"])
+        for record in records
+    }
+    sizes = sorted({len(keys) for keys in key_sets})
+    passed = len(key_sets) == 1 and sizes == [PROTEOME_KEYS_PER_RECORD]
+    return LevelResult(
+        level=Level.L1,
+        name="every_record_carries_the_same_protein_keys",
+        passed=passed,
+        message=(
+            f"{len(records)} records share one set of {PROTEOME_KEYS_PER_RECORD} keys"
+            if passed
+            else f"{len(key_sets)} distinct key sets, sizes {sizes}"
+        ),
+        details={
+            "n_key_sets": len(key_sets),
+            "key_set_sizes": sizes,
+            "expected_keys": PROTEOME_KEYS_PER_RECORD,
+        },
+    )
+
+
+def _l3_biological_triplicate(records: Sequence[dict[str, Any]]) -> LevelResult:
+    """L3: every (sample, protein) cell is a biological triplicate.
+
+    Supplementary Fig. 13 caption, verbatim: "All strains were cultured in triplicate
+    (n = 3) and error bars represent standard deviation."
+    """
+    counts = {
+        int(n)
+        for record in records
+        for n in record["experiment"]["phenotype"]["n_replicates"].values()
+    }
+    return l3_convention(
+        "every_sample_is_a_biological_triplicate",
+        counts == {3},
+        detail=(
+            f"stored replicate counts {sorted(counts)}; Supplementary Fig. 13: 'All "
+            "strains were cultured in triplicate (n = 3)'"
+        ),
+    )
+
+
+def _l4_titer_vs_supplementary_data_1(
+    records: Sequence[dict[str, Any]], data_root: str | None
+) -> LevelResult:
+    """L4: the store's single-guide titers against Supplementary Data 1's own means.
+
+    The oracle is a DIFFERENT released file from the one the loader reads, so this
+    joins the built records to an independent statement of the same measurement. Its
+    means are printed to two decimals, hence the 0.005 mg/L tolerance. A target with
+    several single-guide records (the same tag screened in more than one cycle) is
+    joined on the record closest to the released mean, which is the strain the DBTL0
+    table reports.
+    """
+    released = read_si_target_means(str(raw_mirror_dir(data_root) / TARGETS_REL))
+    by_tag: dict[str, list[float]] = {}
+    for record in records:
+        experiment = record["experiment"]
+        targets = [
+            perturbation["systematic_gene_name"]
+            for perturbation in experiment["genotype"]["perturbations"]
+            if perturbation["perturbation_type"] == "bacterial_crispr_interference"
+        ]
+        if len(targets) == 1:
+            by_tag.setdefault(targets[0], []).append(experiment["phenotype"]["titer"])
+    shared = [
+        (tag, min(by_tag[tag], key=lambda titer: abs(titer - mean)), mean)
+        for tag, mean in sorted(released.items())
+        if tag in by_tag
+    ]
+    if len(shared) != SI_TARGET_OVERLAP:
+        raise AssertionError(
+            f"{len(shared)} of Supplementary Data 1's {len(released)} targets join a "
+            f"single-guide record; all {SI_TARGET_OVERLAP} do on the pinned bytes"
+        )
+    return l4_cross_source(shared, tol=SI_TARGET_MEAN_TOL).model_copy(
+        update={"name": "single_guide_titer_vs_supplementary_data_1"}
+    )
+
+
+def _l4_proteome_vs_released_sheet(
+    records: Sequence[dict[str, Any]], data_root: str | None
+) -> LevelResult:
+    """L4: the store's PP_0815-target profile against the released sheet, re-read.
+
+    Every stored abundance must be reproducible from the deposited bytes by the same
+    aggregation, so a store that drifted from its source is caught per protein.
+    """
+    rows = read_proteome_rows(str(raw_mirror_dir(data_root) / SOURCE_DATA_REL))
+    genome = bacterial_genome("pputida", "KT2440", data_root)
+    keys = sorted({row.protein for row in rows})
+    stored_keys, _ = reconcile_locus_tags(genome, pd.Series(keys), label="l4")
+    key_map = dict(zip(keys, stored_keys, strict=True))
+    cells: dict[str, list[float]] = {}
+    for row in rows:
+        if row.sample != PROTEOME_TARGET_SAMPLE:
+            continue
+        cells.setdefault(key_map[row.protein], []).append(row.top3_signal)
+    target = next(
+        record["experiment"]
+        for record in records
+        if any(
+            perturbation["systematic_gene_name"] == PROTEOME_BACKGROUND_DELETION
+            and perturbation["perturbation_type"] == "bacterial_crispr_interference"
+            for perturbation in record["experiment"]["genotype"]["perturbations"]
+        )
+    )
+    abundance = target["phenotype"]["protein_abundance"]
+    shared = [
+        (key, value, sum(cells[key]) / len(cells[key]))
+        for key, value in sorted(abundance.items())
+        if key in cells
+    ]
+    if len(shared) != len(abundance):
+        raise AssertionError(
+            f"{len(abundance) - len(shared)} stored proteins are not in the released "
+            "sheet under their reconciled key"
+        )
+    return l4_cross_source(shared, tol=1e-6).model_copy(
+        update={"name": "stored_target_profile_vs_released_sheet"}
+    )
+
+
+def titer_report(
+    records: Sequence[dict[str, Any]], data_root: str | None = None
+) -> VerificationReport:
+    """The titer family's L0-L4 report over already-loaded records."""
+    report = verify_product_titer_dataset(
+        [dict(record) for record in records],
+        dataset_name="isoprenol_titer_carruthers2025",
+        provenance=_titer_provenance(),
+        expected_count=EXPECTED_TITER_RECORDS,
+        titer_unit=ConcentrationUnit.ug_per_ml.value,
+        titer_unit_detail=(
+            "Supplementary Data 1 and the Source Data release mg/L and "
+            "ConcentrationUnit has no mg/L member; 1 mg/L == 1 ug/mL exactly, so the "
+            "released number is stored verbatim under the numerically identical unit"
+        ),
+        se_tol=TITER_SE_TOL,
+        pathway_gene_counts=(len(PATHWAY_GENES),),
+        product_names=(PRODUCT_NAME,),
+    )
+    report.add(_l1_strain_count_reconciles(records))
+    report.add(_l4_titer_vs_supplementary_data_1(records, data_root))
+    return report
+
+
+def proteome_report(
+    records: Sequence[dict[str, Any]], data_root: str | None = None
+) -> VerificationReport:
+    """The proteome family's L0-L4 report over already-loaded records."""
+    from torchcell.verification.protein import verify_protein_dataset
+
+    report = verify_protein_dataset(
+        [dict(record) for record in records],
+        dataset_name="proteome_carruthers2025",
+        provenance=_proteome_provenance(),
+        expected_count=EXPECTED_PROTEOME_RECORDS,
+        # The panel repeats a genotype by design: PP_0977 and PP_1638 were "cultured
+        # three times owing to poor transformation efficiency", each kept as its own
+        # record, and the five pIY670 tokens plus the PP_0815 background are in every
+        # record. Per-record uniqueness is what the L1 count asserts.
+        allow_duplicate_orfs=True,
+    )
+    report.add(_l1_same_protein_keys(records))
+    report.add(_l3_biological_triplicate(records))
+    report.add(_l4_proteome_vs_released_sheet(records, data_root))
+    return report
+
+
+def verify_build(
+    dataset_root: str, data_root: str | None = None, *, family: Family
+) -> VerificationReport:
+    """Run this release's L0-L4 gate over a built tree and write the report.
+
+    ``family`` is ``"titer"`` or ``"proteome"``. The report is written to
+    ``<dataset_root>/preprocess/verification_report.json``.
+    """
+    from torchcell.verification.runners import load_records
+
+    records = load_records(dataset_root)
+    build = titer_report if family == "titer" else proteome_report
+    report = build(records, data_root)
+    out = osp.join(dataset_root, "preprocess", "verification_report.json")
+    os.makedirs(osp.dirname(out), exist_ok=True)
+    with open(out, "w") as handle:
+        handle.write(report.model_dump_json(indent=2))
+    return report
+
+
 def main() -> None:
-    """Build/load both families for interactive debugging."""
+    """Build/load both families for interactive debugging.
+
+    Verification is NOT run here: the L4 oracles need the real raw mirror, and
+    ``run_product_titer`` / ``run_bacterial_protein_abundance`` in
+    ``torchcell.verification.runners`` are the entry points that run them.
+    """
     from dotenv import load_dotenv
 
     load_dotenv()

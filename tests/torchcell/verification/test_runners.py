@@ -36,7 +36,7 @@ import os
 import pickle
 from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import lmdb
 import pytest
@@ -46,12 +46,14 @@ from tests.torchcell.datasets._genome_injection_fakes import (
     install_bacterial_fakes,
 )
 from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS, CALMORPH_STATISTICS
-from torchcell.datamodels.media import SC, YP_GALACTOSE
+from torchcell.datamodels.media import M9_NREL_CARRUTHERS2025, SC, YP_GALACTOSE
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialDeletionPerturbation,
     BacterialMetaboliteExperiment,
     BacterialMetaboliteExperimentReference,
+    BacterialProteinAbundanceExperiment,
+    BacterialProteinAbundanceExperimentReference,
     BacterialRNASeqExpressionExperiment,
     BacterialRNASeqExpressionExperimentReference,
     CalMorphExperiment,
@@ -59,6 +61,8 @@ from torchcell.datamodels.schema import (
     CalMorphPhenotype,
     Compound,
     Concentration,
+    ConcentrationUnit,
+    CultureEnvironment,
     DoseBasis,
     Environment,
     EnvironmentResponseExperiment,
@@ -68,6 +72,7 @@ from torchcell.datamodels.schema import (
     FitnessExperimentReference,
     FitnessPhenotype,
     Genotype,
+    HeterologousPathwayPerturbation,
     KanMxDeletionPerturbation,
     MeasurementType,
     Media,
@@ -77,6 +82,9 @@ from torchcell.datamodels.schema import (
     MicroarrayExpressionExperiment,
     MicroarrayExpressionExperimentReference,
     MicroarrayExpressionPhenotype,
+    ProductTiterExperiment,
+    ProductTiterExperimentReference,
+    ProductTiterPhenotype,
     ProteinAbundanceExperiment,
     ProteinAbundanceExperimentReference,
     ProteinAbundancePhenotype,
@@ -88,6 +96,7 @@ from torchcell.datamodels.schema import (
     SequenceVariantPerturbation,
     SmallMoleculePerturbation,
     Temperature,
+    UncertaintyType,
     VisualScoreExperiment,
     VisualScoreExperimentReference,
     VisualScorePhenotype,
@@ -148,6 +157,8 @@ RUN_ALL_ORDER = [
     "run_environment_response",
     "run_fitness",
     "run_segregant_growth",
+    "run_product_titer",
+    "run_bacterial_protein_abundance",
 ]
 
 
@@ -864,6 +875,7 @@ MG1655_REFERENCE = _assembly_reference(
 KT2440_REFERENCE = _assembly_reference(
     "KT2440", "pputida_KT2440_ASM756v2", "GCA_000007565.2"
 )
+KT2440_REFERENCE_MODEL = AssemblyReferenceGenome.model_validate(KT2440_REFERENCE)
 
 
 def test_reference_assembly_set_follows_the_record_s_own_reference() -> None:
@@ -2004,3 +2016,347 @@ def test_run_fitness_refuses_a_dataset_pinned_to_two_hosts(
     )
     with pytest.raises(ValueError, match="records name 2 assembly sets"):
         runners.run_fitness(str(tmp_path))
+
+
+# --------------------------------------------------------------------------- #
+# The two bioproduction runners (2026.10.07): they dispatch to each dataset's own
+# entry point and add the host-aware locus containment.
+# --------------------------------------------------------------------------- #
+KT2440_NAMESPACE: Literal["pputida_kt2440_locus_tag"] = "pputida_kt2440_locus_tag"
+
+
+def _pathway_perturbation(token: str, organism: str) -> HeterologousPathwayPerturbation:
+    return HeterologousPathwayPerturbation(
+        systematic_gene_name=token,
+        perturbed_gene_name=token,
+        source_organism=organism,
+        is_heterologous=True,
+        localization="plasmid",
+        gene_namespace=KT2440_NAMESPACE,
+        pathway_name="isoprenol via mevalonate",
+    )
+
+
+def _kt2440_genotype(deleted: list[str], *, native_copy: str | None = None) -> Genotype:
+    """A pIY670-style pathway plus host deletions, and optionally a native extra copy."""
+    perturbations: list[Any] = [
+        _pathway_perturbation("MvaSEf", "Enterococcus faecalis"),
+        _pathway_perturbation("MKMm", "Methanosarcina mazei"),
+    ]
+    if native_copy is not None:
+        perturbations.append(_pathway_perturbation(native_copy, "Pseudomonas putida"))
+    perturbations += [
+        BacterialDeletionPerturbation(
+            systematic_gene_name=gene,
+            perturbed_gene_name=gene,
+            gene_namespace=KT2440_NAMESPACE,
+        )
+        for gene in deleted
+    ]
+    return Genotype(perturbations=perturbations)
+
+
+def _culture_environment() -> CultureEnvironment:
+    return CultureEnvironment(
+        media=M9_NREL_CARRUTHERS2025,
+        temperature=Temperature(value=24.0),
+        duration_hours=48.0,
+    )
+
+
+def _titer_phenotype(titer: float) -> ProductTiterPhenotype:
+    return ProductTiterPhenotype(
+        product=Compound(name="isoprenol"),
+        titer=titer,
+        titer_unit=ConcentrationUnit.ug_per_ml,
+        titer_uncertainty=3.0,
+        titer_uncertainty_type=UncertaintyType.sample_sd,
+        titer_se=1.5,
+        n_samples=4,
+        sample_unit=SampleUnit.biological_replicate,
+    )
+
+
+def _titer_record(
+    deleted: list[str], titer: float = 200.0, *, native_copy: str | None = None
+) -> Record:
+    return {
+        "experiment": ProductTiterExperiment(
+            dataset_name="titer",
+            genotype=_kt2440_genotype(deleted, native_copy=native_copy),
+            environment=_culture_environment(),
+            phenotype=_titer_phenotype(titer),
+        ).model_dump(),
+        "reference": ProductTiterExperimentReference(
+            dataset_name="titer",
+            genome_reference=KT2440_REFERENCE_MODEL,
+            environment_reference=_culture_environment(),
+            phenotype_reference=_titer_phenotype(100.0),
+        ).model_dump(),
+        "publication": _publication(),
+    }
+
+
+def _bacterial_protein_record(deleted: list[str], proteins: list[str]) -> Record:
+    phenotype = ProteinAbundancePhenotype(
+        protein_abundance={tag: 10.0 for tag in proteins},
+        n_replicates={tag: 3 for tag in proteins},
+        measurement_type="dia_nn_top3_peptide_signal_mean",
+    )
+    return {
+        "experiment": BacterialProteinAbundanceExperiment(
+            dataset_name="proteome",
+            genotype=_kt2440_genotype(deleted),
+            environment=_culture_environment(),
+            phenotype=phenotype,
+        ).model_dump(),
+        "reference": BacterialProteinAbundanceExperimentReference(
+            dataset_name="proteome",
+            genome_reference=KT2440_REFERENCE_MODEL,
+            environment_reference=_culture_environment(),
+            phenotype_reference=phenotype,
+        ).model_dump(),
+        "publication": _publication(),
+    }
+
+
+def _fake_family_verify(
+    seen: list[tuple[str, str]], *, passing: bool = True
+) -> Callable[[str, str], VerificationReport]:
+    """Stand in for a loader's entry point: records the call, returns one L0 row."""
+
+    def verify(dataset_root: str, data_root: str) -> VerificationReport:
+        seen.append((dataset_root, data_root))
+        return VerificationReport(dataset_name="fake", provenance=PROV).add(
+            LevelResult(
+                level=Level.L0, name="structural", passed=passing, message="fake gate"
+            )
+        )
+
+    return verify
+
+
+def _stub_bacterial_universe(
+    monkeypatch: pytest.MonkeyPatch, genes: set[str]
+) -> list[str]:
+    """Replace ``_bacterial_gene_set`` with a stub universe; return its call log."""
+    calls: list[str] = []
+
+    def fake(assembly: Any, data_root: str) -> set[str]:
+        calls.append(assembly.assembly_set)
+        return set(genes)
+
+    monkeypatch.setattr(runners, "_bacterial_gene_set", fake)
+    return calls
+
+
+def test_host_perturbed_gene_set_keeps_only_the_records_own_host_loci() -> None:
+    """A heterologous token is not a host locus; a native extra copy is."""
+    records = [
+        _titer_record(["PP_5003"]),
+        _titer_record(["PP_3540"], native_copy="PP_4042"),
+    ]
+    assert runners.host_perturbed_gene_set(records) == {"PP_5003", "PP_3540", "PP_4042"}
+
+
+def test_bacterial_protein_locus_set_unions_quantified_and_perturbed_loci() -> None:
+    """Both are identifiers the record claims are loci of its own pin."""
+    records = [_bacterial_protein_record(["PP_0815"], ["PP_0001", "PP_0002"])]
+    assert runners.bacterial_protein_locus_set(records) == {
+        "PP_0815",
+        "PP_0001",
+        "PP_0002",
+    }
+
+
+def test_run_product_titer_appends_the_host_containment_to_each_loader_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The loader's own gate, then the family's L4, then the report on disk."""
+    _write_lmdb(_root(tmp_path, "titer_a"), [_titer_record(["PP_5003"])])
+    _write_lmdb(_root(tmp_path, "titer_b"), [_titer_record(["PP_3540"], 210.0)])
+    seen: list[tuple[str, str]] = []
+    monkeypatch.setattr(
+        runners,
+        "PRODUCT_TITER_DATASETS",
+        {
+            "titer_a": {
+                "root": "data/torchcell/titer_a",
+                "verify": _fake_family_verify(seen),
+            },
+            "titer_b": {
+                "root": "data/torchcell/titer_b",
+                "verify": _fake_family_verify(seen),
+            },
+        },
+    )
+    universe = _stub_bacterial_universe(monkeypatch, {"PP_5003", "PP_3540"})
+    assert runners.run_product_titer(str(tmp_path)) is True
+    assert seen == [
+        (str(_root(tmp_path, "titer_a")), str(tmp_path)),
+        (str(_root(tmp_path, "titer_b")), str(tmp_path)),
+    ]
+    assert universe == [PPUTIDA_KT2440, PPUTIDA_KT2440]
+    report = _read_report(_root(tmp_path, "titer_a"))
+    assert _names(report) == ["structural", "perturbed_gene_containment_assembly"]
+    containment = _result(report, "perturbed_gene_containment_assembly")
+    assert containment["level"] == Level.L4
+    assert containment["passed"] is True
+    assert containment["details"]["assembly_sets"] == [PPUTIDA_KT2440]
+    assert containment["message"] == (
+        "1.000 of 1 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0)"
+    )
+
+
+def test_run_product_titer_refuses_a_perturbed_locus_off_the_pin(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Containment is 1.0, not a floor with headroom: one stray tag fails the family."""
+    _write_lmdb(_root(tmp_path, "titer_a"), [_titer_record(["PP_5003", "PP_9999"])])
+    monkeypatch.setattr(
+        runners,
+        "PRODUCT_TITER_DATASETS",
+        {
+            "titer_a": {
+                "root": "data/torchcell/titer_a",
+                "verify": _fake_family_verify([]),
+            }
+        },
+    )
+    _stub_bacterial_universe(monkeypatch, {"PP_5003"})
+    assert runners.run_product_titer(str(tmp_path)) is False
+    containment = _result(
+        _read_report(_root(tmp_path, "titer_a")), "perturbed_gene_containment_assembly"
+    )
+    assert containment["passed"] is False
+    assert containment["details"]["missing_examples"] == ["PP_9999"]
+
+
+def test_run_product_titer_fails_when_a_loader_gate_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A failing dataset gate fails the family even with the L4 containment passing."""
+    _write_lmdb(_root(tmp_path, "titer_a"), [_titer_record(["PP_5003"])])
+    monkeypatch.setattr(
+        runners,
+        "PRODUCT_TITER_DATASETS",
+        {
+            "titer_a": {
+                "root": "data/torchcell/titer_a",
+                "verify": _fake_family_verify([], passing=False),
+            }
+        },
+    )
+    _stub_bacterial_universe(monkeypatch, {"PP_5003"})
+    assert runners.run_product_titer(str(tmp_path)) is False
+
+
+def test_run_bacterial_protein_abundance_names_its_own_l4_over_the_union(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The quantified proteins and the perturbed genes are checked as one set."""
+    _write_lmdb(
+        _root(tmp_path, "prot_bact"),
+        [_bacterial_protein_record(["PP_0815"], ["PP_0001", "PP_0002"])],
+    )
+    monkeypatch.setattr(
+        runners,
+        "BACTERIAL_PROTEIN_ABUNDANCE_DATASETS",
+        {
+            "prot_bact": {
+                "root": "data/torchcell/prot_bact",
+                "verify": _fake_family_verify([]),
+            }
+        },
+    )
+    _stub_bacterial_universe(monkeypatch, {"PP_0815", "PP_0001", "PP_0002"})
+    assert runners.run_bacterial_protein_abundance(str(tmp_path)) is True
+    report = _read_report(_root(tmp_path, "prot_bact"))
+    assert _names(report) == [
+        "structural",
+        "protein_and_perturbed_locus_containment_assembly",
+    ]
+    containment = _result(report, "protein_and_perturbed_locus_containment_assembly")
+    assert containment["details"]["n_measured"] == 3
+    assert containment["passed"] is True
+
+
+def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The registry's indirection is one call per dataset, with its family selected."""
+    from torchcell.datasets.ecoli import caglar2017
+    from torchcell.datasets.pputida import (
+        carruthers2025,
+        desiqueira2025,
+        kang2026,
+        lim2025,
+    )
+
+    calls: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = []
+
+    def record(label: str) -> Callable[..., VerificationReport]:
+        def fake(*args: Any, **kwargs: Any) -> VerificationReport:
+            calls.append((label, args, kwargs))
+            return VerificationReport(dataset_name=label, provenance=PROV)
+
+        return fake
+
+    monkeypatch.setattr(carruthers2025, "verify_build", record("carruthers"))
+    monkeypatch.setattr(desiqueira2025, "verify_build", record("desiqueira"))
+    monkeypatch.setattr(kang2026, "verify_build", record("kang"))
+    monkeypatch.setattr(lim2025, "run_proteome_verification", record("lim"))
+    monkeypatch.setattr(caglar2017, "run_verification", record("caglar"))
+
+    assert (
+        runners._verify_carruthers_titer("/root", "/data").dataset_name == "carruthers"
+    )
+    assert (
+        runners._verify_carruthers_proteome("/root", "/data").dataset_name
+        == "carruthers"
+    )
+    assert (
+        runners._verify_desiqueira_titer("/root", "/data").dataset_name == "desiqueira"
+    )
+    assert (
+        runners._verify_desiqueira_proteome("/root", "/data").dataset_name
+        == "desiqueira"
+    )
+    assert runners._verify_kang_titer("/root", "/data").dataset_name == "kang"
+    assert runners._verify_lim_proteome("/root", "/data").dataset_name == "lim"
+    assert runners._verify_caglar_proteome("/root", "/data").dataset_name == "caglar"
+    assert calls == [
+        ("carruthers", ("/root", "/data"), {"family": "titer"}),
+        ("carruthers", ("/root", "/data"), {"family": "proteome"}),
+        ("desiqueira", ("/root", "/data"), {"family": "titer"}),
+        ("desiqueira", ("/root", "/data"), {"family": "proteome"}),
+        ("kang", ("/root", "/data"), {}),
+        ("lim", ("/data",), {}),
+        ("caglar", ("proteome", "/data"), {}),
+    ]
+
+
+def test_the_bioproduction_registries_name_every_landed_store() -> None:
+    """The two registries are the list of landed datasets of each family."""
+    assert {
+        name: spec["root"] for name, spec in runners.PRODUCT_TITER_DATASETS.items()
+    } == {
+        "isoprenol_titer_carruthers2025": (
+            "data/torchcell/isoprenol_titer_carruthers2025"
+        ),
+        "isoprenol_titer_desiqueira2025": (
+            "data/torchcell/isoprenol_titer_desiqueira2025"
+        ),
+        "isoprenyl_acetate_titer_kang2026": (
+            "data/torchcell/isoprenyl_acetate_titer_kang2026"
+        ),
+    }
+    assert {
+        name: spec["root"]
+        for name, spec in runners.BACTERIAL_PROTEIN_ABUNDANCE_DATASETS.items()
+    } == {
+        "proteome_carruthers2025": "data/torchcell/proteome_carruthers2025",
+        "proteome_desiqueira2025": "data/torchcell/proteome_desiqueira2025",
+        "proteome_lim2025": "data/torchcell/proteome_lim2025",
+        "proteome_caglar2017": "data/torchcell/proteome_caglar2017",
+    }

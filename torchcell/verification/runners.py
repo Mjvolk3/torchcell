@@ -16,6 +16,12 @@ Run everything::
 
 Or import and call :func:`run_expression`, :func:`run_morphology`, or :func:`run_all`.
 
+The two bioproduction families work the other way round: each of their datasets already
+carries its own L0-L3 gate and its own raw-mirror cross-source oracles in the loader
+module that owns its readers, so :func:`run_product_titer` and
+:func:`run_bacterial_protein_abundance` dispatch to those entry points and add the one
+rule that is the family's own, the host-aware locus containment.
+
 The L4 gene universe and the canonical-name resolver belong to the host a record is
 written against. The yeast runners use S288C (:func:`_sgd_gene_set`, :func:`_genome`);
 a bacterial runner selects both from each record's own ``genome_reference``
@@ -30,7 +36,7 @@ import gzip
 import os
 import os.path as osp
 import pickle
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 import lmdb
@@ -2025,6 +2031,207 @@ def run_segregant_growth(data_root: str) -> bool:
     return all_passed
 
 
+# --------------------------------------------------------------------------- #
+# Product titer and bacterial protein abundance (the bioproduction families)
+#
+# Both families are bacterial, and each dataset's L0-L3 gate plus its cross-source
+# oracles live in the loader module that owns its readers: the raw-mirror joins a titer
+# oracle needs (a released per-target table, a fed-batch time course, a titer quoted in
+# the Results prose) cannot be written once for the family, and the proteome datasets
+# additionally re-audit every ``SourcedValue`` quote against pinned library bytes. So
+# these two runners DISPATCH to each dataset's own entry point rather than re-stating
+# its checks in a second place, and add the one rule that is the family's own: every
+# host identifier a record carries is a locus of the assembly that record's own
+# ``genome_reference`` pins.
+# --------------------------------------------------------------------------- #
+def _verify_carruthers_titer(dataset_root: str, data_root: str) -> VerificationReport:
+    """Carruthers 2025 isoprenol titer: the shared titer gate plus its own two rules."""
+    from torchcell.datasets.pputida import carruthers2025
+
+    return carruthers2025.verify_build(dataset_root, data_root, family="titer")
+
+
+def _verify_carruthers_proteome(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """Carruthers 2025 proteome: the shared protein gate plus its own three rules."""
+    from torchcell.datasets.pputida import carruthers2025
+
+    return carruthers2025.verify_build(dataset_root, data_root, family="proteome")
+
+
+def _verify_desiqueira_titer(dataset_root: str, data_root: str) -> VerificationReport:
+    """The de Siqueira 2025 titer battery, with its Results-text cross-source row."""
+    from torchcell.datasets.pputida import desiqueira2025
+
+    return desiqueira2025.verify_build(dataset_root, data_root, family="titer")
+
+
+def _verify_desiqueira_proteome(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """The de Siqueira 2025 proteome: the shared gate, its pin and its containment."""
+    from torchcell.datasets.pputida import desiqueira2025
+
+    return desiqueira2025.verify_build(dataset_root, data_root, family="proteome")
+
+
+def _verify_kang_titer(dataset_root: str, data_root: str) -> VerificationReport:
+    """Kang 2026: the Table 1 / Table S4 / Table S9 titers and their two L4 joins."""
+    from torchcell.datasets.pputida import kang2026
+
+    return kang2026.verify_build(dataset_root, data_root)
+
+
+def _verify_lim_proteome(dataset_root: str, data_root: str) -> VerificationReport:
+    """Lim 2025 proteome: the shared protein gate, its containment and quote audits.
+
+    ``dataset_root`` is unused: this entry point resolves its own root under
+    ``data_root``, and the registry's root is what the runner reads and writes.
+    """
+    from torchcell.datasets.pputida import lim2025
+
+    return lim2025.run_proteome_verification(data_root)
+
+
+def _verify_caglar_proteome(dataset_root: str, data_root: str) -> VerificationReport:
+    """Caglar 2017 proteome: the shared protein gate, the VST back-solve and REL606.
+
+    ``dataset_root`` is unused, as in :func:`_verify_lim_proteome`: this entry point
+    takes the family name and resolves the root itself.
+    """
+    from torchcell.datasets.ecoli import caglar2017
+
+    return caglar2017.run_verification("proteome", data_root)
+
+
+#: Every landed ``ProductTiterExperiment`` dataset, with the entry point that verifies it.
+PRODUCT_TITER_DATASETS: dict[str, dict[str, Any]] = {
+    "isoprenol_titer_carruthers2025": {
+        "root": "data/torchcell/isoprenol_titer_carruthers2025",
+        "verify": _verify_carruthers_titer,
+    },
+    "isoprenol_titer_desiqueira2025": {
+        "root": "data/torchcell/isoprenol_titer_desiqueira2025",
+        "verify": _verify_desiqueira_titer,
+    },
+    "isoprenyl_acetate_titer_kang2026": {
+        "root": "data/torchcell/isoprenyl_acetate_titer_kang2026",
+        "verify": _verify_kang_titer,
+    },
+}
+
+#: Every landed ``BacterialProteinAbundanceExperiment`` dataset. Caglar 2017 is here
+#: with the three P. putida proteomes: it is the same experiment class on a different
+#: host, and the containment rule reads its REL606 pin off its own records.
+BACTERIAL_PROTEIN_ABUNDANCE_DATASETS: dict[str, dict[str, Any]] = {
+    "proteome_carruthers2025": {
+        "root": "data/torchcell/proteome_carruthers2025",
+        "verify": _verify_carruthers_proteome,
+    },
+    "proteome_desiqueira2025": {
+        "root": "data/torchcell/proteome_desiqueira2025",
+        "verify": _verify_desiqueira_proteome,
+    },
+    "proteome_lim2025": {
+        "root": "data/torchcell/proteome_lim2025",
+        "verify": _verify_lim_proteome,
+    },
+    "proteome_caglar2017": {
+        "root": "data/torchcell/proteome_caglar2017",
+        "verify": _verify_caglar_proteome,
+    },
+}
+
+
+def host_perturbed_gene_set(records: Sequence[Mapping[str, Any]]) -> set[str]:
+    """Every perturbed identifier a dataset's records assert is a locus of their host.
+
+    The perturbed systematic names MINUS the heterologous ones. A
+    ``HeterologousPathwayPerturbation`` carries ``source_organism``, and when that
+    organism is not the record's own species the identifier is a gene of ANOTHER genome
+    (``MvaSEf``, ``ATF1``) -- which is exactly what the class exists to say, so checking
+    it against the host's locus universe would fail every production record for the
+    wrong reason. An extra copy of a NATIVE gene names its real locus tag and stays in.
+    """
+    genes: set[str] = set()
+    for record in records:
+        species = record["reference"]["genome_reference"]["species"]
+        for perturbation in record["experiment"]["genotype"]["perturbations"]:
+            name = perturbation.get("systematic_gene_name")
+            if name is None or perturbation.get("source_organism", species) != species:
+                continue
+            genes.add(str(name))
+    return genes
+
+
+def bacterial_protein_locus_set(records: Sequence[Mapping[str, Any]]) -> set[str]:
+    """The host loci a protein-abundance dataset names: its quantified proteins and its
+    perturbed genes.
+
+    Both are identifiers the records claim are loci of their own pinned assembly, so
+    containment over their union is the whole L4 question for this family and is never
+    empty (a panel whose arms are environmental, like Caglar's, perturbs no gene but
+    quantifies thousands of proteins).
+    """
+    measured = host_perturbed_gene_set(records)
+    for record in records:
+        measured |= set(record["experiment"]["phenotype"]["protein_abundance"])
+    return measured
+
+
+def _run_bacterial_family(
+    datasets: Mapping[str, Mapping[str, Any]],
+    data_root: str,
+    *,
+    measured_set: Callable[[Sequence[Mapping[str, Any]]], set[str]],
+    l4_name: str,
+) -> bool:
+    """Verify one bioproduction family: each dataset's own gate plus the L4 containment.
+
+    ``min_containment`` is 1.0 and not a floor with headroom: every identifier these
+    records carry was written by a loader that resolved it against the pinned assembly,
+    so one that is not a locus of that assembly is a build error, not an accepted edge.
+    """
+    all_passed = True
+    for spec in datasets.values():
+        abs_root = osp.join(data_root, spec["root"])
+        report = spec["verify"](abs_root, data_root)
+        records = load_records(abs_root)
+        universe, assembly_sets = _dataset_gene_universe(records, data_root)
+        report.add(
+            _l4_assembly_gene_containment(
+                universe, assembly_sets, measured_set(records), min_containment=1.0
+            ).model_copy(update={"name": l4_name})
+        )
+        out = _write_report(report, osp.join(abs_root, "preprocess"))
+        print(report.summary())
+        print(f"  -> verified LMDB: {osp.join(abs_root, 'processed', 'lmdb')}")
+        print(f"  -> wrote report:  {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
+def run_product_titer(data_root: str) -> bool:
+    """Verify every product-titer dataset (L0-L4) and write reports. True if all pass."""
+    return _run_bacterial_family(
+        PRODUCT_TITER_DATASETS,
+        data_root,
+        measured_set=host_perturbed_gene_set,
+        l4_name="perturbed_gene_containment_assembly",
+    )
+
+
+def run_bacterial_protein_abundance(data_root: str) -> bool:
+    """Verify every bacterial protein-abundance dataset (L0-L4). True if all pass."""
+    return _run_bacterial_family(
+        BACTERIAL_PROTEIN_ABUNDANCE_DATASETS,
+        data_root,
+        measured_set=bacterial_protein_locus_set,
+        l4_name="protein_and_perturbed_locus_containment_assembly",
+    )
+
+
 def run_all(data_root: str) -> bool:
     """Run every dataset-family verification. True only if all pass."""
     expression_ok = run_expression(data_root)
@@ -2038,6 +2245,8 @@ def run_all(data_root: str) -> bool:
     environment_ok = run_environment_response(data_root)
     fitness_ok = run_fitness(data_root)
     segregant_ok = run_segregant_growth(data_root)
+    titer_ok = run_product_titer(data_root)
+    bacterial_protein_ok = run_bacterial_protein_abundance(data_root)
     return (
         expression_ok
         and morphology_ok
@@ -2050,6 +2259,8 @@ def run_all(data_root: str) -> bool:
         and environment_ok
         and fitness_ok
         and segregant_ok
+        and titer_ok
+        and bacterial_protein_ok
     )
 
 

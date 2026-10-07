@@ -3,6 +3,7 @@ import StatusBadge from '@site/src/components/StatusBadge';
 import Todo from '@site/src/components/Todo';
 import OntologyExplorer from '@site/src/components/OntologyExplorer';
 import {LinkCard, LinkGrid} from '@site/src/components/LinkCard';
+import ReleaseCount from '@site/src/components/ReleaseCounts';
 import DatasetCard, {
   CardBlurb,
   CardDetails,
@@ -17,6 +18,7 @@ export default {
   OntologyExplorer,
   LinkCard,
   LinkGrid,
+  ReleaseCount,
   DatasetCard,
   CardBlurb,
   CardNotation,

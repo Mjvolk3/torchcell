@@ -56,7 +56,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -67,6 +67,8 @@ from torchcell.knowledge_graphs.kg_manifest import (
 )
 from torchcell.provenance.schema_deps import SchemaSurface
 
+if TYPE_CHECKING:
+    from torchcell.knowledge_graphs.release_snapshot import PairCounts
 RELEASE_LABEL = "KgRelease"
 LATEST_ALIAS = "latest"
 PINNED_ALIAS = "pinned"
@@ -274,6 +276,35 @@ def content_hashes_from_store(
             hashes[name] = content_sha256(record["id"] for record in result)
     driver.close()
     return hashes
+
+
+def count_genotype_environment_pairs(
+    uri: str, user: str, password: str, database: str
+) -> PairCounts:
+    """One pass over every experiment's genotype and environment edges.
+
+    Distinct pairs are counted on the node ids (content hashes, so one genotype node
+    is shared by every experiment that measured it). On the Radiant store (35
+    datasets, 2.95 M experiments) this took 2 minutes; expect tens of minutes on a
+    full release.
+    """
+    from neo4j import GraphDatabase
+
+    from torchcell.knowledge_graphs.release_snapshot import PairCounts
+
+    driver = GraphDatabase.driver(uri, auth=(user, password))
+    with driver.session(database=database) as session:
+        record = session.run(
+            "MATCH (g:Genotype)-[:GenotypeMemberOf]->(e:Experiment)"
+            "<-[:EnvironmentMemberOf]-(v:Environment) "
+            "RETURN count(e) AS experiments, "
+            "count(DISTINCT g.id + '|' + v.id) AS genotype_environment_pairs, "
+            "count(DISTINCT g.id) AS genotypes, count(DISTINCT v.id) AS environments"
+        ).single()
+    driver.close()
+    if record is None:
+        raise LookupError(f"{database}: the pair count returned no row")
+    return PairCounts(**dict(record))
 
 
 # --------------------------------------------------------------------------- the node
@@ -745,7 +776,9 @@ def _release_for(version: str, uri: str, user: str, password: str) -> KgRelease:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Command-line entry: status, datasets, diff, compat, hashes, write-node, stamp."""
+    """Command-line entry: status, datasets, diff, compat, hashes, write-node, stamp,
+    snapshot, count-pairs.
+    """
     parser = argparse.ArgumentParser(
         prog="python -m torchcell.knowledge_graphs.releases",
         description=__doc__.split("\n\n")[0],
@@ -838,6 +871,20 @@ def main(argv: list[str] | None = None) -> int:
         "snapshot's last event note",
     )
 
+    p_pairs = sub.add_parser(
+        "count-pairs",
+        help="count distinct genotype x environment combinations on the release's "
+        "store and record them in database/releases/<release>.json",
+    )
+    p_pairs.add_argument("--release", required=True, help="release id of the snapshot")
+    p_pairs.add_argument("--database", required=True, help="the store's database name")
+    p_pairs.add_argument(
+        "--repo-root",
+        default=None,
+        help="checkout holding database/releases/ (default: the checkout this "
+        "torchcell was imported from)",
+    )
+
     p_node = sub.add_parser(
         "write-node", help="write the KgRelease node from a manifest"
     )
@@ -920,6 +967,28 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     uri, user, password = _connection(args)
+
+    if args.command == "count-pairs":
+        from torchcell.knowledge_graphs.release_snapshot import (
+            load_snapshot,
+            rewrite_snapshot,
+            snapshot_paths,
+            with_pair_counts,
+        )
+
+        target = (
+            Path(args.repo_root).resolve() if args.repo_root else package_checkout()
+        )
+        snapshot = load_snapshot(snapshot_paths(target, args.release)[0])
+        counts = count_genotype_environment_pairs(uri, user, password, args.database)
+        path = rewrite_snapshot(with_pair_counts(snapshot, counts), target)
+        print(
+            f"{args.release}: {counts.experiments} experiments over "
+            f"{counts.genotype_environment_pairs} distinct genotype x environment "
+            f"combinations ({counts.genotypes} genotypes, {counts.environments} "
+            f"environments) -> {path}"
+        )
+        return 0
 
     if args.command == "write-node":
         from torchcell.knowledge_graphs.kg_manifest import load_manifest

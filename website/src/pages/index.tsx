@@ -4,6 +4,7 @@ import Link from '@docusaurus/Link';
 import Layout from '@theme/Layout';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import {LinkCard, LinkGrid} from '@site/src/components/LinkCard';
+import {formatCount, useReleaseCounts} from '@site/src/components/ReleaseCounts';
 import styles from './index.module.css';
 
 const GITHUB_URL = 'https://github.com/Mjvolk3/torchcell';
@@ -59,6 +60,7 @@ const TABS: {title: string; href: string; body: string}[] = [
 
 export default function Home(): ReactNode {
   const {siteConfig} = useDocusaurusContext();
+  const counts = useReleaseCounts();
   return (
     <Layout title="Home" description={siteConfig.tagline}>
       <header className={styles.hero}>
@@ -78,15 +80,25 @@ export default function Home(): ReactNode {
           </div>
           <ul className={styles.stats}>
             <li className={styles.stat}>
-              <span className={styles.statValue}>51</span>
+              <span className={styles.statValue}>{counts.nDatasets}</span>
               <span className={styles.statLabel}>datasets in the served knowledge graph</span>
             </li>
             <li className={styles.stat}>
-              <span className={styles.statValue}>52.7 million</span>
-              <span className={styles.statLabel}>experiments</span>
+              <span className={styles.statValue}>{formatCount(counts.nExperiments)}</span>
+              <span className={styles.statLabel}>experiment records</span>
             </li>
+            {counts.nGenotypeEnvironmentPairs !== null && (
+              <li className={styles.stat}>
+                <span className={styles.statValue}>
+                  {formatCount(counts.nGenotypeEnvironmentPairs)}
+                </span>
+                <span className={styles.statLabel}>
+                  distinct genotype-environment combinations
+                </span>
+              </li>
+            )}
             <li className={styles.stat}>
-              <span className={styles.statValue}>2026.09.21</span>
+              <span className={styles.statValue}>{counts.releaseDate}</span>
               <span className={styles.statLabel}>database release these counts refer to</span>
             </li>
           </ul>

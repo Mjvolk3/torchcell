@@ -550,3 +550,52 @@ Not verified: the staging pages in a browser against the live API. The scratch
 Playwright headless shell cannot start on this VM (13 missing system libraries, no
 sudo), so the leaderboard, account and submit pages were checked only as served HTML
 and API responses; open them in a browser.
+
+## 2026.10.07 - The 52.7 million figure, and the ontology page
+
+Raised by the project owner: "52.7 million experiments" double counts. The figure is the
+sum of per-dataset `n_experiments` in release `2026.09.21-ab6d8c5d` (52,743,047). Five
+datasets are interaction scores derived from the fitness of the same strains in a
+sibling dataset: DmiCostanzo2016 (20,705,612, equal to DmfCostanzo2016), DmiKuzmin2018
+(410,399), DmiKuzmin2020 (632,797), TmiKuzmin2018 (91,111), TmiKuzmin2020 (301,798).
+Those 22.1 million records are second records on genotype-environment combinations the
+fitness datasets already hold, so about 30.6 million combinations is the hand estimate;
+other overlaps (single-mutant fitness strains shared with the Costanzo screens, synthetic
+lethality records duplicating interactions) are not in that estimate.
+
+Decision (option 1): keep the record count, add the distinct count, label both honestly,
+and read both from the committed snapshot instead of typing them into pages.
+
+- `KgReleaseSnapshot.n_genotype_environment_pairs` (None until counted);
+  `releases count-pairs --release <id> --database <db>` runs one pass
+  `(Genotype)-[:GenotypeMemberOf]->(Experiment)<-[:EnvironmentMemberOf]-(Environment)`
+  with `count(DISTINCT g.id + '|' + v.id)`, refuses unless the pass saw exactly the
+  release's experiment total, and rewrites `<release>.json` only. Validated on the
+  Radiant store (35 datasets): 2,952,549 experiments over 1,480,797 distinct
+  combinations, 1,460,533 genotypes, 12 environments, 2 minutes. The genotype nodes are
+  shared across experiments (content-hashed ids), which is what makes the count honest.
+- The site reads the newest `database/releases/*.json` at build time
+  (`docusaurus.config.ts`, `customFields.release`; `RELEASES_DIR` for a build tree
+  outside the checkout, set by `tc_site_publish.sh`). `<ReleaseCount field=... />` in
+  MDX and `useReleaseCounts()` on the home page replace the four hardcoded numbers.
+  Wording is now "experiment records" and "distinct genotype-environment combinations",
+  with one sentence on why they differ. The pairs figure renders "not yet counted" and
+  the home-page stat is omitted until the snapshot carries it.
+- Ontology page: a paragraph stating it is not yet a formal ontology (classes mapped to
+  Biolink through the BioCypher schema configuration, a flat vocabulary with no is-a
+  structure) and that the intended shape is a DAG of terms, because that is what unifies
+  equivalent measurements across datasets.
+
+**To run on GilaHyper, where the release store is** (then commit the rewritten snapshot;
+the next site build picks the number up):
+
+```bash
+python -m torchcell.knowledge_graphs.releases count-pairs \
+    --release 2026.09.21-ab6d8c5d --database <the served database name> --repo-root .
+```
+
+Verified: 9 snapshot tests pass (two new), ruff and strict mypy clean, paired-tests and
+test-quality gates pass; `tsc` clean; staging rebuilt and the live pages show the new
+wording. Not run: `count-pairs` against the release store (no route from the Radiant VM
+to GilaHyper's bolt), so the distinct count on the site is still "not yet counted".
+

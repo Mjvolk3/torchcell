@@ -9,6 +9,13 @@ The TorchCell ontology is the schema of the typed experiment: the classes a
 same classes define what the knowledge graph stores, so the ontology is the shared
 vocabulary of the library and the database.
 
+It is not yet an ontology in the formal sense. Today each class is mapped to a Biolink
+class in the BioCypher schema configuration, and the explorer links every class to its
+Biolink counterpart; the classes themselves form a flat vocabulary with no is-a structure
+of their own. The intended shape is a directed acyclic graph of terms, as a formal
+ontology has, because that is what lets equivalent measurements from different datasets
+be unified under one parent term and queried together.
+
 The explorer connects the schema to the data stored in it. Each class lists the served
 datasets whose records can hold it, and each dataset links to its page in the docs.
 

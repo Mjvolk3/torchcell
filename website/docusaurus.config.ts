@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
@@ -28,6 +30,57 @@ if (siteEnv !== 'production' && siteEnv !== 'staging') {
 }
 const ontologyExplorerUrl =
   process.env.ONTOLOGY_EXPLORER_URL ?? 'https://mjvolk3.github.io/torchcell/ontology/';
+
+// The counts the site quotes come from the newest committed release snapshot
+// (database/releases/<release>.json, written by `releases snapshot` and completed by
+// `releases count-pairs`), never from a number typed into a page. RELEASES_DIR points
+// at that directory when the site is built from a copy outside the checkout
+// (scripts/tc_site_publish.sh sets it).
+const releasesDir = path.resolve(
+  __dirname,
+  process.env.RELEASES_DIR ?? '../database/releases',
+);
+const release = readLatestRelease(releasesDir);
+
+export type ReleaseCounts = {
+  /** release id, e.g. 2026.09.21-ab6d8c5d */
+  release: string;
+  /** the date part of the release id */
+  releaseDate: string;
+  nDatasets: number;
+  /** sum of the per-dataset experiment record counts */
+  nExperiments: number;
+  /** distinct genotype x environment combinations; null until `releases count-pairs` ran */
+  nGenotypeEnvironmentPairs: number | null;
+};
+
+function readLatestRelease(dir: string): ReleaseCounts {
+  const files = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.json') && !f.endsWith('.closures.json'));
+  if (files.length === 0) {
+    throw new Error(`no release snapshot in ${dir}`);
+  }
+  const snapshots = files.map((f) => {
+    const data = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')) as {
+      release: string;
+      built_at: string;
+      datasets: Record<string, {n_experiments: number}>;
+      n_genotype_environment_pairs?: number | null;
+    };
+    return data;
+  });
+  snapshots.sort((a, b) => (a.built_at < b.built_at ? 1 : a.built_at > b.built_at ? -1 : 0));
+  const latest = snapshots[0];
+  const datasets = Object.values(latest.datasets);
+  return {
+    release: latest.release,
+    releaseDate: latest.release.split('-')[0],
+    nDatasets: datasets.length,
+    nExperiments: datasets.reduce((n, d) => n + d.n_experiments, 0),
+    nGenotypeEnvironmentPairs: latest.n_genotype_environment_pairs ?? null,
+  };
+}
 
 // Applies the remembered page width (src/components/WidthToggle.tsx) before the first
 // paint, so a reload in wide mode does not flash the default width.
@@ -70,6 +123,7 @@ const config: Config = {
     benchApiMock,
     siteEnv,
     ontologyExplorerUrl,
+    release,
   },
 
   // Only the production site is for search engines.

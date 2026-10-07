@@ -54,7 +54,9 @@ if [ ! -d "$BUILD_DIR/node_modules" ]; then
 fi
 
 OUT="$BUILD_DIR/build-$TIER"
-(cd "$BUILD_DIR" && nice -n 15 npx docusaurus build --out-dir "$OUT")
+# The site reads its counts from database/releases/ at build time; a build tree outside
+# the checkout has no copy, so point it at the checkout's.
+(cd "$BUILD_DIR" && RELEASES_DIR="$REPO/database/releases" nice -n 15 npx docusaurus build --out-dir "$OUT")
 test -s "$OUT/index.html"
 
 if [ "$TIER" = "staging" ] && ! grep -q 'noindex' "$OUT/index.html"; then

@@ -41,7 +41,10 @@ __all__ = [
     "SnapshotDataset",
     "SnapshotEvent",
     "KgReleaseSnapshot",
+    "PairCounts",
     "composite_sha256",
+    "with_pair_counts",
+    "rewrite_snapshot",
     "snapshot_from_manifest",
     "bootstrap_package_version",
     "snapshot_paths",
@@ -89,6 +92,14 @@ class KgReleaseSnapshot(BaseModel):
     biocypher_version: str
     store_host: str
     n_nodes: int | None
+    # Distinct (genotype, environment) combinations across every experiment of the
+    # release, counted on the store by ``releases count-pairs`` after the snapshot is
+    # written; None until that has run. It is the number of things actually measured:
+    # an interaction score derived from a fitness measurement is a second experiment
+    # record on the same combination, so the sum of ``n_experiments`` overcounts it
+    # (release 2026.09.21: 52.7 M records, of which 22.1 M are DMI/TMI siblings of
+    # DMF/TMF records).
+    n_genotype_environment_pairs: int | None = None
     datasets: dict[str, SnapshotDataset]
     graph_schema: dict[str, GraphSchemaEntry]
     events: list[SnapshotEvent]
@@ -196,6 +207,49 @@ def bootstrap_package_version(
             "events": events,
         }
     )
+
+
+class PairCounts(BaseModel):
+    """What one pass over ``(Genotype)-[:GenotypeMemberOf]->(Experiment)<-[:EnvironmentMemberOf]-(Environment)`` counts."""
+
+    experiments: int
+    genotype_environment_pairs: int
+    genotypes: int
+    environments: int
+
+
+def with_pair_counts(
+    snapshot: KgReleaseSnapshot, counts: PairCounts
+) -> KgReleaseSnapshot:
+    """The snapshot with ``n_genotype_environment_pairs`` filled from a store count.
+
+    Refused unless the pass saw exactly the release's experiments (the sum of the
+    per-dataset ``n_experiments``): a count taken on another store, or on a store
+    whose experiments lack a genotype or an environment edge, would attach a number
+    to a release it does not describe.
+    """
+    expected = sum(entry.n_experiments for entry in snapshot.datasets.values())
+    if counts.experiments != expected:
+        raise ValueError(
+            f"the pass counted {counts.experiments} experiments but release "
+            f"{snapshot.release} holds {expected}; not the release's store"
+        )
+    return snapshot.model_copy(
+        update={"n_genotype_environment_pairs": counts.genotype_environment_pairs}
+    )
+
+
+def rewrite_snapshot(snapshot: KgReleaseSnapshot, repo_root: Path) -> Path:
+    """Rewrite ``<release>.json`` only (same byte-stable dump); the closures file is
+    left as written, since nothing about the closures changes after the stamp.
+    """
+    snapshot_path, closures_path = snapshot_paths(repo_root, snapshot.release)
+    if not closures_path.is_file():
+        raise FileNotFoundError(
+            f"{closures_path} is missing; write the snapshot first (`releases snapshot`)"
+        )
+    snapshot_path.write_text(_dump(snapshot.model_dump(mode="json")), encoding="utf-8")
+    return snapshot_path
 
 
 def snapshot_paths(repo_root: Path, release: str) -> tuple[Path, Path]:

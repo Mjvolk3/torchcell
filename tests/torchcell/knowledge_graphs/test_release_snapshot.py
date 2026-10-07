@@ -2,7 +2,8 @@
 # [[tests.torchcell.knowledge_graphs.test_release_snapshot]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/knowledge_graphs/test_release_snapshot.py
 """Release snapshots from a hand-built manifest: the exact composite hash, sorted
-datasets, byte-stable files, the round trip, the bootstrap override, and the refusals.
+datasets, byte-stable files, the round trip, the bootstrap override, the refusals, and
+the distinct genotype x environment count filled in after the fact.
 
 The manifest serves ``DsB`` (hash ``b`` * 64, 20 records) and ``DsA`` (hash ``a`` * 64,
 10 records), listed in that order, stamped as version 1.0 / release
@@ -27,6 +28,7 @@ from torchcell.knowledge_graphs.kg_manifest import (
 )
 from torchcell.knowledge_graphs.release_snapshot import (
     KgReleaseSnapshot,
+    PairCounts,
     SnapshotDataset,
     SnapshotEvent,
     bootstrap_package_version,
@@ -34,8 +36,10 @@ from torchcell.knowledge_graphs.release_snapshot import (
     load_closures,
     load_snapshot,
     load_snapshots,
+    rewrite_snapshot,
     snapshot_from_manifest,
     snapshot_paths,
+    with_pair_counts,
     write_snapshot,
 )
 
@@ -282,3 +286,66 @@ def test_bootstrap_package_version_fills_the_fields_and_notes_it_once() -> None:
         "to `releases snapshot --torchcell-version` because the manifest predates the "
         "versioning spine"
     )
+
+
+def test_pair_counts_fill_the_field_only_when_the_pass_saw_the_release() -> None:
+    """The release holds 30 experiments (DsA 10 + DsB 20). A pass that counted 30 fills
+    ``n_genotype_environment_pairs`` with its distinct-pair count and changes nothing
+    else; a pass that counted 29 is refused, naming both numbers; a fresh snapshot and
+    one loaded from a file written before the field existed carry None.
+    """
+    snapshot = snapshot_from_manifest(_manifest())
+    assert snapshot.n_genotype_environment_pairs is None
+    legacy = {
+        k: v
+        for k, v in snapshot.model_dump().items()
+        if k != "n_genotype_environment_pairs"
+    }
+    assert KgReleaseSnapshot.model_validate(legacy).n_genotype_environment_pairs is None
+
+    counts = PairCounts(
+        experiments=30, genotype_environment_pairs=18, genotypes=17, environments=2
+    )
+    filled = with_pair_counts(snapshot, counts)
+    assert filled.n_genotype_environment_pairs == 18
+    assert filled.model_dump(exclude={"n_genotype_environment_pairs"}) == (
+        snapshot.model_dump(exclude={"n_genotype_environment_pairs"})
+    )
+    assert snapshot.n_genotype_environment_pairs is None
+
+    with pytest.raises(
+        ValueError, match=r"counted 29 experiments but release .* holds 30"
+    ):
+        with_pair_counts(snapshot, counts.model_copy(update={"experiments": 29}))
+
+
+def test_rewrite_snapshot_touches_only_the_json_and_needs_the_closures(
+    tmp_path: Path,
+) -> None:
+    """After ``write_snapshot``, ``rewrite_snapshot`` with the filled snapshot rewrites
+    ``<release>.json`` byte-stably with the new field and leaves the closures file
+    byte-identical; loading gives the filled snapshot back. Without the closures file
+    it refuses and writes nothing.
+    """
+    manifest = _manifest()
+    snapshot = snapshot_from_manifest(manifest, n_nodes=99)
+    closures = {name: dict(e.closure) for name, e in manifest.datasets.items()}
+    json_path, closures_path = write_snapshot(snapshot, closures, tmp_path)
+    closures_before = closures_path.read_bytes()
+    filled = with_pair_counts(
+        snapshot,
+        PairCounts(
+            experiments=30, genotype_environment_pairs=18, genotypes=17, environments=2
+        ),
+    )
+    assert rewrite_snapshot(filled, tmp_path) == json_path
+    text = json_path.read_text(encoding="utf-8")
+    assert text == json.dumps(filled.model_dump(), indent=2, sort_keys=True) + "\n"
+    assert '"n_genotype_environment_pairs": 18,\n' in text
+    assert closures_path.read_bytes() == closures_before
+    assert load_snapshot(json_path) == filled
+
+    other = tmp_path / "elsewhere"
+    with pytest.raises(FileNotFoundError, match=r"closures\.json is missing"):
+        rewrite_snapshot(filled, other)
+    assert not (other / "database").exists()

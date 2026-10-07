@@ -3,9 +3,9 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/server.py
 # Test file: tests/torchcell/datasets/test_datasets_server.py
 
-"""``tc-data``: keyed read-only HTTP endpoint for packaged datasets and the raw mirror.
+"""``tc-data``: keyed read-only HTTP endpoint for packaged datasets and the file tiers.
 
-Serves two directory trees over the network, with the same key scheme as the
+Serves four directory trees over the network, with the same key scheme as the
 literature endpoint (``torchcell.literature.server``): named API keys stored as sha256
 hashes, presented in the ``X-API-Key`` header, compared constant-time.
 
@@ -16,21 +16,35 @@ hashes, presented in the ``X-API-Key`` header, compared constant-time.
   ``X-Artifact-SHA256`` from its index row. Archives are large, so
   ``Accept-Ranges: bytes`` is advertised and a ``Range`` header is honored (206 with
   ``Content-Range``), which is what lets the client resume a partial download.
-- The raw mirror ``$TC_DATA_RAW_ROOT`` (default ``$DATA_ROOT/torchcell-raw``): one
-  directory per citation key with a ``manifest.json`` in the literature ``Manifest``
-  shape (path, role, bytes, sha256 per file). Files are served only when the manifest
-  lists them, and ``X-Artifact-SHA256`` carries the manifest hash.
+- Three manifest-gated file tiers, one directory per key, each key holding a
+  ``manifest.json`` that lists every file with path, role, bytes and sha256:
+
+  - the raw mirror ``$TC_DATA_RAW_ROOT`` (default ``$DATA_ROOT/torchcell-raw``), keyed
+    by citation key, literature ``Manifest`` shape;
+  - the genomes tier ``$TC_DATA_GENOMES_ROOT`` (default ``$DATA_ROOT/torchcell-genomes``),
+    keyed by assembly set, ``GenomeManifest`` shape
+    (``torchcell.sequence.genome.registry``);
+  - the objects tier ``$TC_DATA_OBJECTS_ROOT`` (default ``$DATA_ROOT/torchcell-objects``),
+    keyed by a citation key or a named derived set, literature ``Manifest`` shape.
+
+  The three tiers share one serving path (:func:`_serve_listed_file`): a file is served
+  only when its key's manifest lists it, ``X-Artifact-SHA256`` carries the manifest hash
+  (never a hash computed from the bytes), and ranges are honored as for archives. The
+  raw mirror must exist at startup; a genomes or objects root that is absent on disk
+  lists no keys and answers every other route of its tier 404.
 
 Swagger UI is on at ``/docs`` (``/openapi.json`` for the schema); ``/health`` needs no
 key. Configuration is environment-driven: ``TC_DATA_ROOT``, ``TC_DATA_RAW_ROOT``,
-``TC_DATA_HOST``, ``TC_DATA_PORT`` (8724), and keys from ``TC_DATA_KEYS_FILE`` (JSON
-``{name: sha256hex}``, preferred) or ``TC_DATA_API_KEYS`` (``name:key,...``).
+``TC_DATA_GENOMES_ROOT``, ``TC_DATA_OBJECTS_ROOT``, ``TC_DATA_HOST``, ``TC_DATA_PORT``
+(8724), and keys from ``TC_DATA_KEYS_FILE`` (JSON ``{name: sha256hex}``, preferred) or
+``TC_DATA_API_KEYS`` (``name:key,...``).
 """
 
 from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Self
 
@@ -42,19 +56,32 @@ from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, ConfigDict, Field
 
 from torchcell.api_keys import API_KEY_HEADER, ApiKeys, print_minted_key
-from torchcell.datasets.artifact import INDEX_FILENAME, ArtifactIndex, DatasetArtifact
-from torchcell.literature.manifest import MANIFEST_FILENAME, Manifest
+from torchcell.datasets.artifact import (
+    INDEX_FILENAME,
+    ArtifactIndex,
+    DatasetArtifact,
+    ManifestFileListing,
+)
+from torchcell.literature.manifest import MANIFEST_FILENAME, ArtifactRecord, Manifest
+from torchcell.sequence.genome.registry import (
+    GENOMES_DIR,
+    GenomeIntegrityError,
+    GenomeManifest,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 APP_TITLE = "torchcell dataset endpoint"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 DEFAULT_PORT = 8724
 RAW_SUBDIR = "torchcell-raw"
+GENOMES_SUBDIR = GENOMES_DIR
+OBJECTS_SUBDIR = "torchcell-objects"
 KEYS_FILE_VAR = "TC_DATA_KEYS_FILE"
 INLINE_KEYS_VAR = "TC_DATA_API_KEYS"
 ARCHIVE_MEDIA_TYPE = "application/x-xz"
+FILE_MEDIA_TYPE = "application/octet-stream"
 
 
 class DataKeys(ApiKeys):
@@ -71,6 +98,12 @@ class DataKeys(ApiKeys):
         return cls.from_env_names(KEYS_FILE_VAR, INLINE_KEYS_VAR)
 
 
+def _tier_root_from_env(var: str, subdir: str) -> Path:
+    """``$<var>`` when set, else ``$DATA_ROOT/<subdir>`` (``KeyError`` if neither is)."""
+    value = os.environ.get(var)
+    return Path(value) if value else Path(os.environ["DATA_ROOT"]) / subdir
+
+
 class DataServerConfig(BaseModel):
     """Runtime configuration for the dataset endpoint."""
 
@@ -78,38 +111,39 @@ class DataServerConfig(BaseModel):
 
     store_root: Path = Field(description="The artifact store (index.json + archives).")
     raw_root: Path = Field(description="The raw mirror (one dir per citation key).")
+    genomes_root: Path = Field(
+        description="The genomes tier (one dir per assembly set); may be absent."
+    )
+    objects_root: Path = Field(
+        description="The objects tier (one dir per object key); may be absent."
+    )
     keys: DataKeys
     host: str = "0.0.0.0"
     port: int = DEFAULT_PORT
 
     @classmethod
     def from_env(cls) -> Self:
-        """Build config from ``TC_DATA_*`` (raw root defaults to ``$DATA_ROOT/torchcell-raw``)."""
+        """Build config from ``TC_DATA_*``; the tier roots default under ``$DATA_ROOT``.
+
+        The store and the raw mirror must exist. The genomes and objects roots are not
+        checked: a root that is absent serves an empty listing, so a host without one of
+        those tiers runs unchanged.
+        """
         store_root = Path(os.environ["TC_DATA_ROOT"])
         if not store_root.is_dir():
             raise FileNotFoundError(f"artifact store does not exist: {store_root}")
-        raw_env = os.environ.get("TC_DATA_RAW_ROOT")
-        raw_root = (
-            Path(raw_env) if raw_env else Path(os.environ["DATA_ROOT"]) / RAW_SUBDIR
-        )
+        raw_root = _tier_root_from_env("TC_DATA_RAW_ROOT", RAW_SUBDIR)
         if not raw_root.is_dir():
             raise FileNotFoundError(f"raw mirror does not exist: {raw_root}")
         return cls(
             store_root=store_root,
             raw_root=raw_root,
+            genomes_root=_tier_root_from_env("TC_DATA_GENOMES_ROOT", GENOMES_SUBDIR),
+            objects_root=_tier_root_from_env("TC_DATA_OBJECTS_ROOT", OBJECTS_SUBDIR),
             keys=DataKeys.from_env(),
             host=os.environ.get("TC_DATA_HOST", "0.0.0.0"),
             port=int(os.environ.get("TC_DATA_PORT", str(DEFAULT_PORT))),
         )
-
-
-class RawFileListing(BaseModel):
-    """One raw-mirror file as its citation key's manifest records it."""
-
-    path: str
-    role: str
-    bytes: int
-    sha256: str
 
 
 class RawKeyListing(BaseModel):
@@ -119,14 +153,47 @@ class RawKeyListing(BaseModel):
     count: int
 
 
+class GenomeSetListing(BaseModel):
+    """Assembly sets in the genomes tier that carry a ``manifest.json``."""
+
+    assembly_sets: list[str]
+    count: int
+
+
+class ObjectKeyListing(BaseModel):
+    """Object keys in the objects tier that carry a ``manifest.json``."""
+
+    object_keys: list[str]
+    count: int
+
+
 class Health(BaseModel):
     """Liveness summary (no auth)."""
 
     status: str
     n_artifacts: int
     n_raw_keys: int
+    n_genome_sets: int
+    n_object_keys: int
     store_root: str
     raw_root: str
+    genomes_root: str
+    objects_root: str
+
+
+class FileTier(BaseModel):
+    """One manifest-gated tier: where it lives and what its keys are called.
+
+    ``list_bare_keys`` keeps the raw mirror's listing contract (every key directory,
+    with or without a manifest); the genomes and objects tiers list only keys that
+    carry a ``manifest.json``, the only keys they can serve.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    root: Path
+    key_noun: str = Field(description='"citation key", "assembly set", "object key".')
+    list_bare_keys: bool
 
 
 _api_key_scheme = APIKeyHeader(name=API_KEY_HEADER, auto_error=False)
@@ -175,61 +242,144 @@ def _contained_file(base: Path, rel_path: str, root: Path) -> Path:
     return target
 
 
-def _raw_key_dir(config: DataServerConfig, citation_key: str) -> Path:
-    """Resolve + containment-check a citation-key directory under the raw mirror.
+def _tier_key_dir(tier: FileTier, key: str) -> Path:
+    """Resolve + containment-check one key directory under a tier root.
 
-    An underscore-prefixed name is a service directory, never a citation key
-    (``_list_raw_keys`` hides it), so it answers exactly like an absent key. The
-    literature server's ``_key_dir`` applies the same rule.
+    An underscore-prefixed name is a service directory, never a key
+    (:func:`_list_tier_keys` hides it), so it answers exactly like an absent key. The
+    literature server's ``_key_dir`` applies the same rule. A tier root absent on disk
+    makes every key absent.
     """
-    base = (config.raw_root / citation_key).resolve()
+    base = (tier.root / key).resolve()
     if (
-        citation_key.startswith("_")
-        or not base.is_relative_to(config.raw_root.resolve())
+        key.startswith("_")
+        or not base.is_relative_to(tier.root.resolve())
         or not base.is_dir()
     ):
-        raise HTTPException(status_code=404, detail="unknown citation key")
+        raise HTTPException(status_code=404, detail=f"unknown {tier.key_noun}")
     return base
 
 
-def _raw_manifest(base: Path) -> Manifest:
-    """A key's ``manifest.json``; a key without one is not served (404)."""
+def _tier_manifest_text(tier: FileTier, base: Path) -> str:
+    """A key's ``manifest.json`` text; a key without one is not served (404)."""
     path = base / MANIFEST_FILENAME
     if not path.is_file():
         raise HTTPException(
-            status_code=404, detail="no manifest.json for this citation key"
+            status_code=404, detail=f"no manifest.json for this {tier.key_noun}"
         )
-    return Manifest.model_validate_json(path.read_text(encoding="utf-8"))
+    return path.read_text(encoding="utf-8")
 
 
-def _list_raw_keys(config: DataServerConfig) -> list[str]:
+def _list_tier_keys(tier: FileTier) -> list[str]:
+    """Key directories under a tier root, sorted; an absent root lists none."""
+    if not tier.root.is_dir():
+        return []
     return sorted(
         p.name
-        for p in config.raw_root.iterdir()
-        if p.is_dir() and not p.name.startswith("_")
+        for p in tier.root.iterdir()
+        if p.is_dir()
+        and not p.name.startswith("_")
+        and (tier.list_bare_keys or (p / MANIFEST_FILENAME).is_file())
     )
+
+
+def _file_listing(files: Sequence[ArtifactRecord]) -> list[ManifestFileListing]:
+    """The ``/files`` rows of a manifest: path, role, bytes, sha256 per file."""
+    return [
+        ManifestFileListing(path=f.path, role=f.role, bytes=f.bytes, sha256=f.sha256)
+        for f in files
+    ]
+
+
+def _serve_listed_file(
+    base: Path, files: Sequence[ArtifactRecord], rel_path: str
+) -> FileResponse:
+    """Stream ``base / rel_path`` when the manifest lists it; the one tier file path.
+
+    A path the manifest does not list is 404 ``file not in the manifest``; a listed
+    entry escaping ``base`` is 400; listed bytes missing from disk are 404
+    ``file not found``. ``X-Artifact-SHA256`` is the manifest's recorded hash, and
+    ``FileResponse`` advertises ``Accept-Ranges: bytes`` and answers ``Range`` with 206.
+    """
+    record = next((f for f in files if f.path == rel_path), None)
+    if record is None:
+        raise HTTPException(status_code=404, detail="file not in the manifest")
+    target = _contained_file(base, rel_path, base)
+    return FileResponse(
+        target,
+        media_type=FILE_MEDIA_TYPE,
+        filename=Path(rel_path).name,
+        headers={"X-Artifact-SHA256": record.sha256},
+    )
+
+
+def raw_tier(config: DataServerConfig) -> FileTier:
+    """The raw mirror as a :class:`FileTier` (lists keys with or without a manifest)."""
+    return FileTier(root=config.raw_root, key_noun="citation key", list_bare_keys=True)
+
+
+def genomes_tier(config: DataServerConfig) -> FileTier:
+    """The genomes tier as a :class:`FileTier` (lists manifested assembly sets)."""
+    return FileTier(
+        root=config.genomes_root, key_noun="assembly set", list_bare_keys=False
+    )
+
+
+def objects_tier(config: DataServerConfig) -> FileTier:
+    """The objects tier as a :class:`FileTier` (lists manifested object keys)."""
+    return FileTier(
+        root=config.objects_root, key_noun="object key", list_bare_keys=False
+    )
+
+
+def _literature_manifest(tier: FileTier, base: Path) -> Manifest:
+    """A raw or objects key's literature-shaped ``Manifest``; corrupt JSON is a 500."""
+    return Manifest.model_validate_json(_tier_manifest_text(tier, base))
+
+
+def _genome_manifest(tier: FileTier, base: Path, assembly_set: str) -> GenomeManifest:
+    """A set's ``GenomeManifest``; one naming another set is an integrity error (500).
+
+    The same check ``registry.load_genome_manifest`` applies on local reads.
+    """
+    manifest = GenomeManifest.model_validate_json(_tier_manifest_text(tier, base))
+    if manifest.assembly_set != assembly_set:
+        raise GenomeIntegrityError(
+            f"{base / MANIFEST_FILENAME} names assembly set "
+            f"{manifest.assembly_set!r}, not {assembly_set!r}"
+        )
+    return manifest
 
 
 def create_app(config: DataServerConfig) -> FastAPI:
     """Build the FastAPI app bound to ``config`` (stored on ``app.state``)."""
     app = FastAPI(
         title=APP_TITLE,
-        summary="Keyed read-only access to packaged torchcell datasets and the raw mirror.",
+        summary=(
+            "Keyed read-only access to packaged torchcell datasets, the raw mirror, "
+            "the genomes tier and the objects tier."
+        ),
         description=(
             "Every route except `/health` needs an `X-API-Key` header. Dataset "
             "archives are `tar.xz` files holding a built dataset's `processed/` "
             "(LMDB) and `preprocess/` (build manifest, gene set, reference index) "
             "directories; verify a download against `X-Artifact-SHA256` or the "
             "index row's `archive_sha256`. The raw mirror serves the source files "
-            "each dataset loader consumed, hash-pinned by its `manifest.json`."
+            "each dataset loader consumed, the genomes tier serves reference and "
+            "isolate assembly sets, and the objects tier serves derived bytes that "
+            "graph records point at (embeddings, matrices, indexed FASTA); each is "
+            "hash-pinned by its key's `manifest.json`."
         ),
         version=APP_VERSION,
     )
     app.state.config = config
+    raw = raw_tier(config)
+    genomes = genomes_tier(config)
+    objects = objects_tier(config)
 
     @app.get("/health", response_model=Health, tags=["service"])
     def health() -> Health:
-        """Liveness: artifact count, raw-key count, and the served roots. No key needed."""
+        """Liveness: artifact and per-tier key counts, and the served roots. No key."""
         index_path = config.store_root / INDEX_FILENAME
         n_artifacts = (
             len(ArtifactIndex.load(index_path).artifacts) if index_path.is_file() else 0
@@ -237,9 +387,13 @@ def create_app(config: DataServerConfig) -> FastAPI:
         return Health(
             status="ok",
             n_artifacts=n_artifacts,
-            n_raw_keys=len(_list_raw_keys(config)),
+            n_raw_keys=len(_list_tier_keys(raw)),
+            n_genome_sets=len(_list_tier_keys(genomes)),
+            n_object_keys=len(_list_tier_keys(objects)),
             store_root=str(config.store_root),
             raw_root=str(config.raw_root),
+            genomes_root=str(config.genomes_root),
+            objects_root=str(config.objects_root),
         )
 
     @app.get("/datasets", response_model=ArtifactIndex, tags=["datasets"])
@@ -289,26 +443,26 @@ def create_app(config: DataServerConfig) -> FastAPI:
     @app.get("/raw", response_model=RawKeyListing, tags=["raw"])
     def list_raw_keys(_: str = Depends(require_key)) -> RawKeyListing:
         """Citation keys present in the raw mirror (dynamic; a new key needs no restart)."""
-        keys = _list_raw_keys(config)
+        keys = _list_tier_keys(raw)
         return RawKeyListing(citation_keys=keys, count=len(keys))
 
     @app.get("/raw/{citation_key}/manifest", response_model=Manifest, tags=["raw"])
     def get_raw_manifest(citation_key: str, _: str = Depends(require_key)) -> Manifest:
         """A key's `manifest.json` verbatim: per-file role, bytes, sha256, retrieval."""
-        return _raw_manifest(_raw_key_dir(config, citation_key))
+        return _literature_manifest(raw, _tier_key_dir(raw, citation_key))
 
     @app.get(
-        "/raw/{citation_key}/files", response_model=list[RawFileListing], tags=["raw"]
+        "/raw/{citation_key}/files",
+        response_model=list[ManifestFileListing],
+        tags=["raw"],
     )
     def list_raw_files(
         citation_key: str, _: str = Depends(require_key)
-    ) -> list[RawFileListing]:
+    ) -> list[ManifestFileListing]:
         """The files a key's manifest lists, with role, bytes and sha256."""
-        manifest = _raw_manifest(_raw_key_dir(config, citation_key))
-        return [
-            RawFileListing(path=f.path, role=f.role, bytes=f.bytes, sha256=f.sha256)
-            for f in manifest.files
-        ]
+        return _file_listing(
+            _literature_manifest(raw, _tier_key_dir(raw, citation_key)).files
+        )
 
     @app.get("/raw/{citation_key}/artifact/{rel_path:path}", tags=["raw"])
     def get_raw_artifact(
@@ -318,17 +472,89 @@ def create_app(config: DataServerConfig) -> FastAPI:
 
         Only files the manifest lists are served; `Range` requests are honored.
         """
-        base = _raw_key_dir(config, citation_key)
-        manifest = _raw_manifest(base)
-        record = next((f for f in manifest.files if f.path == rel_path), None)
-        if record is None:
-            raise HTTPException(status_code=404, detail="file not in the manifest")
-        target = _contained_file(base, rel_path, base)
-        return FileResponse(
-            target,
-            media_type="application/octet-stream",
-            filename=Path(rel_path).name,
-            headers={"X-Artifact-SHA256": record.sha256},
+        base = _tier_key_dir(raw, citation_key)
+        return _serve_listed_file(base, _literature_manifest(raw, base).files, rel_path)
+
+    @app.get("/genomes", response_model=GenomeSetListing, tags=["genomes"])
+    def list_genome_sets(_: str = Depends(require_key)) -> GenomeSetListing:
+        """Assembly sets with a `manifest.json` (empty when the genomes root is absent)."""
+        sets = _list_tier_keys(genomes)
+        return GenomeSetListing(assembly_sets=sets, count=len(sets))
+
+    @app.get(
+        "/genomes/{assembly_set}/manifest",
+        response_model=GenomeManifest,
+        tags=["genomes"],
+    )
+    def get_genome_manifest(
+        assembly_set: str, _: str = Depends(require_key)
+    ) -> GenomeManifest:
+        """A set's `GenomeManifest`: organism, release, and per-file role, bytes, sha256."""
+        return _genome_manifest(
+            genomes, _tier_key_dir(genomes, assembly_set), assembly_set
+        )
+
+    @app.get(
+        "/genomes/{assembly_set}/files",
+        response_model=list[ManifestFileListing],
+        tags=["genomes"],
+    )
+    def list_genome_files(
+        assembly_set: str, _: str = Depends(require_key)
+    ) -> list[ManifestFileListing]:
+        """The files a set's manifest lists, with role, bytes and sha256."""
+        base = _tier_key_dir(genomes, assembly_set)
+        return _file_listing(_genome_manifest(genomes, base, assembly_set).files)
+
+    @app.get("/genomes/{assembly_set}/artifact/{rel_path:path}", tags=["genomes"])
+    def get_genome_artifact(
+        assembly_set: str, rel_path: str, _: str = Depends(require_key)
+    ) -> FileResponse:
+        """Stream one genomes-tier file; `X-Artifact-SHA256` carries the manifest hash.
+
+        Only files the manifest lists are served; `Range` requests are honored.
+        """
+        base = _tier_key_dir(genomes, assembly_set)
+        manifest = _genome_manifest(genomes, base, assembly_set)
+        return _serve_listed_file(base, manifest.files, rel_path)
+
+    @app.get("/objects", response_model=ObjectKeyListing, tags=["objects"])
+    def list_object_keys(_: str = Depends(require_key)) -> ObjectKeyListing:
+        """Object keys with a `manifest.json` (empty when the objects root is absent)."""
+        keys = _list_tier_keys(objects)
+        return ObjectKeyListing(object_keys=keys, count=len(keys))
+
+    @app.get(
+        "/objects/{object_key}/manifest", response_model=Manifest, tags=["objects"]
+    )
+    def get_object_manifest(object_key: str, _: str = Depends(require_key)) -> Manifest:
+        """A key's `manifest.json` verbatim (literature `Manifest` shape)."""
+        return _literature_manifest(objects, _tier_key_dir(objects, object_key))
+
+    @app.get(
+        "/objects/{object_key}/files",
+        response_model=list[ManifestFileListing],
+        tags=["objects"],
+    )
+    def list_object_files(
+        object_key: str, _: str = Depends(require_key)
+    ) -> list[ManifestFileListing]:
+        """The files a key's manifest lists, with role, bytes and sha256."""
+        return _file_listing(
+            _literature_manifest(objects, _tier_key_dir(objects, object_key)).files
+        )
+
+    @app.get("/objects/{object_key}/artifact/{rel_path:path}", tags=["objects"])
+    def get_object_artifact(
+        object_key: str, rel_path: str, _: str = Depends(require_key)
+    ) -> FileResponse:
+        """Stream one objects-tier file; `X-Artifact-SHA256` carries the manifest hash.
+
+        Only files the manifest lists are served; `Range` requests are honored.
+        """
+        base = _tier_key_dir(objects, object_key)
+        return _serve_listed_file(
+            base, _literature_manifest(objects, base).files, rel_path
         )
 
     return app
@@ -359,9 +585,11 @@ def main() -> None:
     host = args.host or config.host
     port = config.port if args.port is None else args.port
     log.info(
-        "dataset endpoint: store %s, raw %s on %s:%d",
+        "dataset endpoint: store %s, raw %s, genomes %s, objects %s on %s:%d",
         config.store_root,
         config.raw_root,
+        config.genomes_root,
+        config.objects_root,
         host,
         port,
     )

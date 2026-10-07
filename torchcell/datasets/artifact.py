@@ -188,3 +188,18 @@ class ArtifactIndex(BaseModel):
         return "".join(
             f"{a.archive_sha256}  {a.rel_path}\n" for a in self.sorted().artifacts
         )
+
+
+class ManifestFileListing(BaseModel):
+    """One served file as its key's ``manifest.json`` records it.
+
+    The row ``GET /raw|genomes|objects/{key}/files`` returns, shared by the server and
+    the client so neither imports the other: the path relative to the key directory,
+    the manifest role, the byte count and the sha256 the ``X-Artifact-SHA256`` header
+    of that file's artifact response carries.
+    """
+
+    path: str
+    role: str
+    bytes: int
+    sha256: str

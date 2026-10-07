@@ -11,6 +11,8 @@
 # .env only from the directory of the compose file):
 #   TC_DATA_ROOT        host artifact store (index.json + <slug>/<archive>.tar.xz)
 #   TC_DATA_RAW_ROOT    host raw mirror (one dir per citation key with manifest.json)
+#   TC_DATA_GENOMES_ROOT  host genomes tier (one dir per assembly set with manifest.json)
+#   TC_DATA_OBJECTS_ROOT  host objects tier (one dir per object key with manifest.json)
 #   TC_DATA_KEYS_FILE   host path to the JSON keys file {name: sha256hex}
 #   TC_DATA_PORT        host port to expose (default 8724)
 #   TC_DATA_UID         uid or uid:gid to run as (Radiant: 1000:555647; default 67392)
@@ -35,14 +37,18 @@ services:
     ports:
       - "${TC_DATA_PORT:-8724}:8724"
     volumes:
-      # Store, raw mirror and keys are mounted READ-ONLY: a read-only server backed
+      # Store, tiers and keys are mounted READ-ONLY: a read-only server backed
       # by read-only mounts cannot mutate an archive under any bug or key.
       - "${TC_DATA_ROOT}:/data/store:ro"
       - "${TC_DATA_RAW_ROOT}:/data/torchcell-raw:ro"
+      - "${TC_DATA_GENOMES_ROOT:?set TC_DATA_GENOMES_ROOT in tc-data.conf}:/data/torchcell-genomes:ro"
+      - "${TC_DATA_OBJECTS_ROOT:?set TC_DATA_OBJECTS_ROOT in tc-data.conf}:/data/torchcell-objects:ro"
       - "${TC_DATA_KEYS_FILE}:/keys.json:ro"
     environment:
       TC_DATA_ROOT: /data/store
       TC_DATA_RAW_ROOT: /data/torchcell-raw
+      TC_DATA_GENOMES_ROOT: /data/torchcell-genomes
+      TC_DATA_OBJECTS_ROOT: /data/torchcell-objects
       TC_DATA_KEYS_FILE: /keys.json
       TC_DATA_HOST: 0.0.0.0
       TC_DATA_PORT: 8724

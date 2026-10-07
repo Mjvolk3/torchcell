@@ -8,3 +8,5 @@ subclassing ``ExperimentDataset``; importing it here populates ``dataset_registr
 The shared skeleton (genome, locus-tag reconciliation, assembly pin, injection rule)
 is ``torchcell.datasets.bacteria_common``. No loader has landed yet.
 """
+
+from .lim2022 import PutidaPrecise321Lim2022Dataset as PutidaPrecise321Lim2022Dataset

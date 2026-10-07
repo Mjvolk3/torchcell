@@ -1,7 +1,7 @@
 # tests/torchcell/datasets/ecoli/test_rousset2018.py
 # [[tests.torchcell.datasets.ecoli.test_rousset2018]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/ecoli/test_rousset2018.py
-"""Rousset 2018 loader: the five screens, table reading, symbols, records, mirror.
+"""Rousset 2018 loader: the four stored screens, tables, symbols, records, mirror.
 
 The synthetic tests run everywhere. The identifier tests read the REAL
 ``EcoliK12MG1655Genome`` class over the synthetic MG1655 assembly of
@@ -14,8 +14,9 @@ b0005 and b0006 case-insensitively, so it is ambiguous; ``nope`` is in no layer.
 
 The data tests (``--data``) audit every module-level ``SourcedValue`` against the
 sha256-pinned paper OCR of BOTH mirrors, read the three real tables from the raw mirror,
-and pin the measured retention arithmetic and identifier histogram on the deposited
-MG1655 set.
+pin the measured retention arithmetic and identifier histogram on the deposited MG1655
+set, and re-measure the growth-screen de-duplication against Cui 2018's own pinned
+table.
 """
 
 from __future__ import annotations
@@ -64,7 +65,12 @@ from torchcell.datasets.bacteria_common import (
     LocusTagResolutionError,
 )
 from torchcell.datasets.dataset_registry import dataset_registry
-from torchcell.literature.manifest import Manifest, RetrievalMethod
+from torchcell.literature.manifest import (
+    ROLE_RAW_DATA,
+    ArtifactRecord,
+    Manifest,
+    RetrievalMethod,
+)
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
 from torchcell.verification.sourced import (
     ProvenanceGapReason,
@@ -147,20 +153,66 @@ def _write(tmp_path: Path, filename: str, frame: pd.DataFrame) -> Path:
     return path
 
 
+def _cui_table(spacers: tuple[str, ...]) -> pd.DataFrame:
+    """A Supplementary-Data-5-shaped table carrying exactly ``spacers``."""
+    n = len(spacers)
+    return pd.DataFrame(
+        {
+            "guide": list(spacers),
+            "gene": ["thrL"] * n,
+            "essential": [False] * n,
+            "pos": list(range(100, 100 + n)),
+            "ori": ["+"] * n,
+            "coding": [True] * n,
+            "fit18": [-0.5] * n,
+            "fit75": [-1.5] * n,
+            "ntargets": [1] * n,
+            "seq": [None] * n,
+        }
+    )
+
+
+def _deposit_cui(data_root: Path, frame: pd.DataFrame) -> str:
+    """Write a stand-in Cui 2018 raw mirror and return the table's sha256."""
+    mirror = data_root / r.CUI2018_RAW_DIR_REL
+    (mirror / "data").mkdir(parents=True, exist_ok=True)
+    path = mirror / r.table_rel(r.CUI2018_SCREEN_FILENAME)
+    frame.to_csv(path, index=False)
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    manifest = Manifest(
+        citation_key=r.CUI2018_KEY,
+        files=[
+            ArtifactRecord(
+                path=r.table_rel(r.CUI2018_SCREEN_FILENAME),
+                role=ROLE_RAW_DATA,
+                bytes=path.stat().st_size,
+                sha256=digest,
+            )
+        ],
+    )
+    (mirror / "manifest.json").write_text(manifest.model_dump_json(indent=2))
+    return digest
+
+
 # --------------------------------------------------------------------------- #
-# The five screens
+# The four stored screens
 # --------------------------------------------------------------------------- #
-def test_the_five_screens_name_their_table_column_strain_and_phage() -> None:
+def test_the_four_stored_screens_name_their_table_column_strain_and_phage() -> None:
+    """The growth screen is absent, and every stored screen names a phage.
+
+    The release carries five screens; the growth one is Cui 2018's, so ``CONDITIONS``
+    holds the four phage-derived screens and ``phage`` is no longer optional.
+    """
     assert [
         (c.screen_id, c.table, c.column, c.strain, c.phage) for c in r.CONDITIONS
     ] == [
-        ("growth_17_generations", r.GROWTH_TABLE, "log2FC", "LC-E75", None),
         ("phage_lambda", r.PHAGE_TABLE, "log2FC_lambda", "FR-E01", "lambda"),
         ("phage_T4", r.PHAGE_TABLE, "log2FC_T4", "FR-E01", "T4"),
         ("phage_186cIts", r.PHAGE_TABLE, "log2FC_186", "FR-E01", "186cIts"),
         ("lambda_transduction", r.TRANSDUCTION_TABLE, "log2FC", "FR-E01", "lambda"),
     ]
-    assert len({c.screen_id for c in r.CONDITIONS}) == 5
+    assert len({c.screen_id for c in r.CONDITIONS}) == 4
+    assert r.GROWTH_TABLE not in {c.table for c in r.CONDITIONS}
     assert r.TABLE_COLUMNS == {
         r.GROWTH_TABLE: ("log2FC",),
         r.PHAGE_TABLE: ("log2FC_lambda", "log2FC_T4", "log2FC_186"),
@@ -181,22 +233,23 @@ def test_only_the_transduction_arm_is_not_a_pooled_barcode_growth_assay() -> Non
 # --------------------------------------------------------------------------- #
 # Media, environments, phenotypes, genotypes
 # --------------------------------------------------------------------------- #
-def test_both_media_derive_from_lb_and_assert_no_lb_amounts() -> None:
-    for medium in (r.ROUSSET2018_LB, r.ROUSSET2018_LB_MALTOSE_CACL2):
-        assert medium.base_medium == "LB"
-        assert MEDIA_LIBRARY["LB"] is LB
-        assert medium.state == "liquid"
-        assert medium.is_synthetic is False
-        lb_components = medium.components[:3]
-        assert [c.compound.name for c in lb_components] == [
-            "tryptone",
-            "yeast extract",
-            "sodium chloride",
-        ]
-        assert all(c.concentration is None for c in lb_components)
-    assert [c.definition for c in r.ROUSSET2018_LB.components[:2]] == [
+def test_the_one_medium_derives_from_lb_and_asserts_no_lb_amounts() -> None:
+    medium = r.ROUSSET2018_LB_MALTOSE_CACL2
+    assert medium.base_medium == "LB"
+    assert MEDIA_LIBRARY["LB"] is LB
+    assert medium.state == "liquid"
+    assert medium.is_synthetic is False
+    lb_components = medium.components[:3]
+    assert [c.compound.name for c in lb_components] == [
+        "tryptone",
+        "yeast extract",
+        "sodium chloride",
+    ]
+    assert all(c.concentration is None for c in lb_components)
+    assert [c.definition for c in medium.components[:2]] == [
         ComponentDefinition.intrinsically_undefined
     ] * 2
+    assert not hasattr(r, "ROUSSET2018_LB")
 
 
 def _dosed(medium: Any) -> list[tuple[str, Any, float | None, Any]]:
@@ -238,48 +291,30 @@ def test_the_phage_medium_adds_the_atc_maltose_and_calcium_the_paper_lists() -> 
     assert all(c.compound.inchikey is not None for c in extra)
 
 
-def test_the_atc_inducer_is_a_medium_component_at_its_per_screen_dose() -> None:
-    """ATc is in the medium, not on the environment axis, at two different doses.
+def test_the_atc_inducer_is_a_medium_component_at_its_stated_dose() -> None:
+    """ATc is in the medium, not on the environment axis.
 
     The paper puts it there ("LB containing 1 microM aTc, 0.2% Maltose and 5 mM CaCl2"),
     it is constant across the dataset rather than the varied condition, and leaving the
     environment axis to the phage alone is what lets the adapter conf enable `phage
     perturbation` without also enabling `environment perturbation`.
     """
-    assert _dosed(r.ROUSSET2018_LB) == [
-        (
-            "anhydrotetracycline",
-            MediaComponentRole.other,
-            1.0,
-            ConcentrationUnit.nanomolar,
-        )
+    (atc,) = [
+        c
+        for c in r.ROUSSET2018_LB_MALTOSE_CACL2.components
+        if c.compound.name == "anhydrotetracycline"
     ]
-    assert r.ROUSSET2018_LB.name != r.ROUSSET2018_LB_MALTOSE_CACL2.name
-    for medium in (r.ROUSSET2018_LB, r.ROUSSET2018_LB_MALTOSE_CACL2):
-        (atc,) = [
-            c for c in medium.components if c.compound.name == "anhydrotetracycline"
-        ]
-        assert atc.compound.inchikey == "KTTKGQINVKPHLY-DOCRCCHOSA-N"
-        assert atc.provenance
-
-
-def test_the_growth_environment_carries_no_perturbation_and_gaps_temperature() -> None:
-    environment = r.environment(r.CONDITIONS[0])
-    assert environment.media is r.ROUSSET2018_LB
-    assert environment.temperature is None
-    assert environment.duration_generations == 17.0
-    assert environment.duration_hours is None
-    assert environment.aerobicity == "aerobic"
-    assert environment.perturbations == []
-    (gap,) = environment.provenance_gaps
-    assert gap.field == "temperature"
-    assert gap.reason is ProvenanceGapReason.not_reported_by_primary
-    assert gap.looked_in is not None
-    assert gap.looked_in.citation_key == r.CUI2018_KEY
+    assert atc.compound.inchikey == "KTTKGQINVKPHLY-DOCRCCHOSA-N"
+    assert atc.provenance
+    assert atc.concentration is not None
+    assert (atc.concentration.value, atc.concentration.unit) == (
+        1.0,
+        ConcentrationUnit.micromolar,
+    )
 
 
 def test_a_phage_environment_carries_exactly_its_phage_at_moi_one() -> None:
-    environment = r.environment(r.CONDITIONS[2])
+    environment = r.environment(r.CONDITIONS[1])
     assert environment.media is r.ROUSSET2018_LB_MALTOSE_CACL2
     assert environment.temperature is not None
     assert environment.temperature.value == 37.0
@@ -316,30 +351,26 @@ def test_a_phage_is_the_only_environment_perturbation_any_screen_carries() -> No
     hold phages and nothing else.
     """
     for condition in r.CONDITIONS:
-        perturbations = r.environment(condition).perturbations
-        assert all(isinstance(p, PhagePerturbation) for p in perturbations)
-        assert len(perturbations) == (0 if condition.phage is None else 1)
+        (perturbation,) = r.environment(condition).perturbations
+        assert isinstance(perturbation, PhagePerturbation)
 
 
-def test_the_growth_medium_is_not_the_dataset_modal_medium() -> None:
-    """Why L3 ``environment_perturbed`` passes the 23,209 perturbation-free records.
+def test_every_stored_record_is_environment_perturbed() -> None:
+    """Why L3 ``environment_perturbed`` has no base-medium clause to fall back on.
 
-    The rule accepts a record with no perturbation whose medium differs from the
-    dataset's modal medium. The growth screen is the minority arm by a margin the
-    release fixes, so the tie cannot drift.
+    While the growth screen was stored, its 23,209 perturbation-free records passed that
+    rule only because their medium was not the dataset's modal one. The growth screen is
+    Cui 2018's, so every record now carries a phage and the rule passes on the
+    perturbation itself.
     """
-    counts = {"growth": 23209, "phage": 3 * 17100 + 17100}
-    assert counts["phage"] > counts["growth"]
-    assert r.EXPECTED_SCREEN_CENSUS["growth_17_generations"] == counts["growth"]
-    assert (
-        sum(r.EXPECTED_SCREEN_CENSUS.values())
-        - r.EXPECTED_SCREEN_CENSUS["growth_17_generations"]
-        == counts["phage"]
-    )
+    assert set(r.EXPECTED_SCREEN_CENSUS) == {c.screen_id for c in r.CONDITIONS}
+    assert sum(r.EXPECTED_SCREEN_CENSUS.values()) == 4 * 17109 == 68436
+    for condition in r.CONDITIONS:
+        assert len(r.environment(condition).perturbations) == 1
 
 
 def test_a_phenotype_is_a_signed_log2_ratio_over_three_biological_replicates() -> None:
-    phenotype = r.phenotype(-9.0, r.CONDITIONS[0])
+    phenotype = r.phenotype(-9.0, r.CONDITIONS[1])
     assert phenotype.measurement_type is MeasurementType.log2_ratio
     assert phenotype.assay_type is AssayType.pooled_competitive_growth_barcode
     assert phenotype.environment_response == -9.0
@@ -408,8 +439,9 @@ def test_two_guides_on_one_gene_are_two_strains_and_one_gene() -> None:
     assert first.crispr.guide_sequence != second.crispr.guide_sequence
 
 
-def test_the_two_host_strains_are_backgrounds_on_the_one_mg1655_assembly() -> None:
-    assert set(r.BACKGROUNDS) == {"LC-E75", "FR-E01"}
+def test_the_one_stored_host_strain_is_a_background_on_the_mg1655_assembly() -> None:
+    """Only FR-E01 has a background: LC-E75 ran the growth screen Cui 2018 serves."""
+    assert set(r.BACKGROUNDS) == {"FR-E01"}
     for label, background in r.BACKGROUNDS.items():
         assert background.name == label
         assert background.reference_strain == "MG1655"
@@ -418,8 +450,10 @@ def test_the_two_host_strains_are_backgrounds_on_the_one_mg1655_assembly() -> No
         assert background.alleles == []
         assert background.provenance
         assert background.gapped_fields() == set()
-    assert "186 attB" in str(r.LC_E75_BACKGROUND.construction)
     assert "HK022" in str(r.FR_E01_BACKGROUND.construction)
+    assert not hasattr(r, "LC_E75_BACKGROUND")
+    assert r.LC_E75_CASSETTE.value == "LC-E75"
+    assert "SUBSUMED" in str(r.LC_E75_CASSETTE.note)
 
 
 # --------------------------------------------------------------------------- #
@@ -678,6 +712,7 @@ def test_the_loader_is_registered_and_receives_the_mg1655_genome(
         r.GROWTH_TABLE,
         r.PHAGE_TABLE,
         r.TRANSDUCTION_TABLE,
+        r.CUI2018_SCREEN_FILENAME,
     ]
 
 
@@ -705,11 +740,10 @@ def _records(census: dict[str, int]) -> list[dict[str, Any]]:
 
 def test_the_screen_census_pins_the_per_screen_split() -> None:
     release = {
-        "growth_17_generations": 23209,
-        "phage_lambda": 17100,
-        "phage_T4": 17100,
-        "phage_186cIts": 17100,
-        "lambda_transduction": 17100,
+        "phage_lambda": 17109,
+        "phage_T4": 17109,
+        "phage_186cIts": 17109,
+        "lambda_transduction": 17109,
     }
     passed = r.screen_census(_records(release))
     assert passed.passed
@@ -743,6 +777,16 @@ _SYNTHETIC_GROWTH: tuple[tuple[str, str | None, str], ...] = (
 )
 #: The synthetic phage/transduction library: two storable genes and the retired symbol.
 _SYNTHETIC_PHAGE_GENES = ("thrL", "thrW", "nope")
+
+#: The synthetic Cui 2018 guide set: five of the seven storable S1 spacers, so the
+#: de-duplication rule splits them 5 served-by-Cui and 2 below the read floor.
+_SYNTHETIC_CUI_SPACERS: tuple[str, ...] = (
+    "A" * 20,
+    "G" * 20,
+    "T" * 20,
+    "AC" * 10,
+    "CT" * 10,
+)
 
 
 def _pin(
@@ -783,6 +827,8 @@ def mirrored(
     )
     data_root = tmp_path / "data_root"
     r.deposit_raw_mirror(table_paths=paths, data_root=str(data_root))
+    digest = _deposit_cui(data_root, _cui_table(_SYNTHETIC_CUI_SPACERS))
+    monkeypatch.setattr(r, "CUI2018_SCREEN_SHA256", digest)
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     monkeypatch.setattr(r, "MIN_RESOLVED_FRACTION", 0.5)
@@ -798,18 +844,17 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
 ) -> None:
     root = tmp_path / "dataset"
     dataset = r.CrispriScreenRousset2018Dataset(root=str(root))
-    # 3 growth records + 2 guides x 3 phage columns + 2 transduction records
-    assert len(dataset) == 11
-    assert sorted(dataset.gene_set) == ["b0001", "b0003", "b0004"]
+    # 2 storable guides x 3 phage columns + 2 transduction records; no growth record
+    assert len(dataset) == 8
+    assert sorted(dataset.gene_set) == ["b0001", "b0003"]
     references = dataset.experiment_reference_index
     assert references is not None
-    assert len(references) == 5
+    assert len(references) == 4
     census: dict[str, int] = {}
     for index in range(len(dataset)):
         screen = dataset[index]["experiment"]["phenotype"]["screen_id"]
         census[screen] = census.get(screen, 0) + 1
     assert census == {
-        "growth_17_generations": 3,
         "phage_lambda": 2,
         "phage_T4": 2,
         "phage_186cIts": 2,
@@ -818,9 +863,9 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     first = dataset[0]["experiment"]
     assert first["genotype"]["perturbations"][0]["systematic_gene_name"] == "b0001"
     assert first["genotype"]["perturbations"][0]["crispr"]["guide_sequence"] == "A" * 20
-    assert first["phenotype"]["environment_response"] == -1.5
-    assert first["phenotype"]["screen_id"] == "growth_17_generations"
+    assert first["phenotype"]["screen_id"] == "phage_lambda"
     assert (root / "raw" / r.GROWTH_TABLE).is_file()
+    assert (root / "raw" / r.CUI2018_SCREEN_FILENAME).is_file()
     assert (root / "preprocess" / "build_manifest.json").is_file()
 
 
@@ -836,27 +881,40 @@ def test_the_build_accounts_for_every_dropped_synthetic_record(
         drops["source_records"],
         drops["kept_records"],
         drops["dropped_records"],
-    ) == (21, 11, 10)
+    ) == (21, 8, 13)
     assert {
         rule["rule"]: (rule["n_records"], rule["items"]) for rule in drops["rules"]
     } == {
         "guide_targets_no_gene": (1, []),
         "guide_targets_the_template_strand": (1, []),
-        "gene_symbol_is_not_in_the_mg1655_annotation": (5, ["nope"]),
-        "gene_symbol_collides_with_another_symbol_on_one_mg1655_locus": (
-            2,
-            ["thrA", "thrA1"],
-        ),
-        "gene_symbol_is_ambiguous_in_mg1655": (1, ["PRO2"]),
+        "growth_screen_measurement_is_served_by_cui2018": (5, []),
+        "growth_screen_guide_is_below_cui2018_read_floor": (2, []),
+        "gene_symbol_is_not_in_the_mg1655_annotation": (4, ["nope"]),
+        "gene_symbol_collides_with_another_symbol_on_one_mg1655_locus": (0, []),
+        "gene_symbol_is_ambiguous_in_mg1655": (0, []),
     }
+    # The S1 Table is accounted for whole, and the Cui attribution names its dataset.
+    growth_rules = {
+        rule["rule"]: rule for rule in drops["rules"] if rule["scope"] == "guide"
+    }
+    assert sum(rule["n_records"] for rule in growth_rules.values()) == 9
+    served = growth_rules["growth_screen_measurement_is_served_by_cui2018"]["served_by"]
+    assert served == (
+        f"{r.CUI2018_DATASET_CLASS} ({r.CUI2018_DATASET}), "
+        f"screen_id {r.CUI2018_SCREEN_ID}"
+    )
+    assert (
+        growth_rules["growth_screen_guide_is_below_cui2018_read_floor"]["served_by"]
+        is None
+    )
     report = _json.loads(
         (root / "preprocess" / "identifier_reconciliation.json").read_text()
     )
-    assert (report["released_symbols"], report["stored_symbols"]) == (7, 3)
-    assert report["stored_b_numbers"] == 3
-    assert report["ambiguous"] == {"PRO2": ["b0005", "b0006"]}
+    assert (report["released_symbols"], report["stored_symbols"]) == (3, 2)
+    assert report["stored_b_numbers"] == 2
+    assert report["ambiguous"] == {}
     assert report["retired"] == ["nope"]
-    assert report["collided"] == ["thrA", "thrA1"]
+    assert report["collided"] == []
 
 
 def test_the_two_screens_of_one_guide_are_two_records_on_one_strain(
@@ -878,9 +936,9 @@ def test_the_two_screens_of_one_guide_are_two_records_on_one_strain(
     assert challenge["environment"] == transduction["environment"]
     assert challenge["phenotype"]["environment_response"] == 0.4
     assert transduction["phenotype"]["environment_response"] == -0.3
-    growth = by_screen["growth_17_generations"]
-    assert growth["reference"]["genome_reference"]["strain"] == "LC-E75"
-    assert by_screen["phage_T4"]["reference"]["genome_reference"]["strain"] == "FR-E01"
+    assert set(by_screen) == {c.screen_id for c in r.CONDITIONS}
+    for record in by_screen.values():
+        assert record["reference"]["genome_reference"]["strain"] == "FR-E01"
 
 
 def test_a_direct_run_opens_the_mg1655_genome_itself(
@@ -932,14 +990,13 @@ def test_verify_build_passes_on_the_synthetic_release(
         r,
         "EXPECTED_SCREEN_CENSUS",
         {
-            "growth_17_generations": 3,
             "phage_lambda": 2,
             "phage_T4": 2,
             "phage_186cIts": 2,
             "lambda_transduction": 2,
         },
     )
-    report = r.verify_build(str(root), data_root=str(mirrored), expected_count=11)
+    report = r.verify_build(str(root), data_root=str(mirrored), expected_count=8)
     verdicts = {result.name: result.passed for result in report.results}
     assert verdicts["structural"] and verdicts["count"]
     assert verdicts["pair_uniqueness"] is True
@@ -983,7 +1040,7 @@ def test_main_builds_the_dataset_under_data_root_and_verifies_it(
             built.append(root)
 
         def __len__(self) -> int:
-            return 11
+            return 8
 
         def __getitem__(self, index: int) -> str:
             return f"record {index}"
@@ -997,7 +1054,7 @@ def test_main_builds_the_dataset_under_data_root_and_verifies_it(
     r.main()
     out = capsys.readouterr().out
     assert built == [str(data_root / "data/torchcell/ecoli_crispri_rousset2018")]
-    assert "len = 11" in out
+    assert "len = 8" in out
     assert "record 0" in out
     assert "guide_targets_no_gene" in out
     assert "PASS" in out
@@ -1014,7 +1071,7 @@ def _data_root() -> str:
 def test_every_sourced_value_is_backed_by_its_verbatim_quote() -> None:
     root = osp.join(_data_root(), "torchcell-library")
     values = [v for v in vars(r).values() if isinstance(v, SourcedValue)]
-    assert len(values) == len(r.SOURCED_VALUES) == 28
+    assert len(values) == len(r.SOURCED_VALUES) == 26
     assert {v.provenance.citation_key for v in values} == {
         r.CITATION_KEY,
         r.CUI2018_KEY,
@@ -1050,6 +1107,56 @@ def test_the_release_has_the_measured_shape_and_sign_distribution() -> None:
 
 
 @pytest.mark.data
+def test_the_growth_screen_is_cui_2018s_screen_to_released_precision() -> None:
+    """The de-duplication measurement, re-run on both pinned mirrors (issue #760).
+
+    Rousset defers the growth screen to Cui 2018, and the two releases carry the same
+    numbers for every spacer they share. That is why no growth-screen record is stored.
+    """
+    import numpy as np
+
+    mirror = osp.join(_data_root(), r.RAW_DIR_REL)
+    growth = r.read_table(osp.join(mirror, r.table_rel(r.GROWTH_TABLE)), r.GROWTH_TABLE)
+    cui = pd.read_csv(
+        osp.join(
+            _data_root(), r.CUI2018_RAW_DIR_REL, r.table_rel(r.CUI2018_SCREEN_FILENAME)
+        )
+    ).drop_duplicates("guide")
+    assert list(cui.columns) == list(r.CUI2018_SCREEN_HEADER)
+    assert len(cui) == 78137
+    joined = growth.merge(cui, left_on="target", right_on="guide", how="inner")
+    assert len(joined) == 54326
+    diff = (joined["log2FC"] - joined["fit75"]).abs()
+    assert round(float(diff.median()), 4) == 0.0
+    assert round(float(diff.max()), 4) == 0.0066
+    assert round(float(np.corrcoef(joined["log2FC"], joined["fit75"])[0, 1]), 4) == 1.0
+    other = (joined["log2FC"] - joined["fit18"]).abs()
+    assert round(float(other.median()), 4) == 0.4151
+    assert round(float(np.corrcoef(joined["log2FC"], joined["fit18"])[0, 1]), 4) == (
+        0.8018
+    )
+    # Neither release is a subset of the other, and the remainder is the abundance tail.
+    spacers = r.cui2018_spacers(
+        osp.join(
+            _data_root(), r.CUI2018_RAW_DIR_REL, r.table_rel(r.CUI2018_SCREEN_FILENAME)
+        )
+    )
+    absent = growth[~growth["target"].isin(spacers)]
+    assert len(absent) == 4920
+    assert len(set(cui["guide"]) - set(growth["target"])) == 23811
+    phage = set(
+        r.read_table(osp.join(mirror, r.table_rel(r.PHAGE_TABLE)), r.PHAGE_TABLE)[
+            "target"
+        ]
+    )
+    shared = growth[growth["target"].isin(spacers)]
+    coding_absent = absent[absent["coding"] == True]  # noqa: E712
+    coding_shared = shared[shared["coding"] == True]  # noqa: E712
+    assert round(float(coding_absent["target"].isin(phage).mean()), 3) == 0.066
+    assert round(float(coding_shared["target"].isin(phage).mean()), 3) == 0.789
+
+
+@pytest.mark.data
 def test_the_release_resolves_to_the_measured_identifier_counts() -> None:
     from torchcell.datasets.bacteria_common import bacterial_genome
 
@@ -1058,40 +1165,42 @@ def test_the_release_resolves_to_the_measured_identifier_counts() -> None:
         filename: r.read_table(osp.join(mirror, r.table_rel(filename)), filename)
         for filename in r.TABLE_SHA256
     }
+    record_tables = {c.table for c in r.CONDITIONS}
     symbols = sorted(
         {
             str(name)
             for filename, frame in tables.items()
+            if filename in record_tables
             for name in frame.loc[r.coding_strand(frame, filename), "gene"].dropna()
         }
     )
-    assert len(symbols) == 3944
+    assert len(symbols) == 3708
     genome = bacterial_genome("ecoli", "MG1655")
     assert isinstance(genome, EcoliK12MG1655Genome)
     resolution = r.resolve_symbols(symbols, genome, label="release")
-    assert len(resolution.stored) == r.EXPECTED_GENES == 3896
+    assert len(resolution.stored) == r.EXPECTED_GENES == 3671
     assert len(set(resolution.stored.values())) == r.EXPECTED_GENES
     assert (
         len(resolution.retired),
         len(resolution.collided),
         resolution.ambiguous,
-    ) == (31, 16, ("rffT",))
+    ) == (28, 8, ("rffT",))
     assert {
         status.value: n for status, n in resolution.report.status_histogram.items()
     } == {
         "current": 0,
-        "renamed": 3853,
-        "non_gene_feature": 59,
-        "retired": 31,
+        "renamed": 3636,
+        "non_gene_feature": 43,
+        "retired": 28,
         "ambiguous": 1,
     }
     assert resolution.report.layer_histogram == {
         "locus tag": 0,
         "old locus tag": 0,
         "RefSeq locus tag": 0,
-        "gene symbol": 3734,
-        "gene synonym": 179,
-        "not found": 31,
+        "gene symbol": 3509,
+        "gene synonym": 171,
+        "not found": 28,
     }
 
 
@@ -1105,15 +1214,30 @@ def test_the_built_store_matches_the_retention_arithmetic() -> None:
     with open(osp.join(preprocess, "dropped_records.json")) as handle:
         log = json.load(handle)
     assert log["source_records"] == 128126
-    assert log["kept_records"] == r.EXPECTED_RECORDS == 91609
-    assert log["dropped_records"] == 36517
+    assert log["kept_records"] == r.EXPECTED_RECORDS == 68436
+    assert log["dropped_records"] == 59690
     assert {rule["rule"]: rule["n_records"] for rule in log["rules"]} == {
         "guide_targets_no_gene": 5063,
         "guide_targets_the_template_strand": 30811,
-        "gene_symbol_is_not_in_the_mg1655_annotation": 307,
-        "gene_symbol_collides_with_another_symbol_on_one_mg1655_locus": 321,
-        "gene_symbol_is_ambiguous_in_mg1655": 15,
+        "growth_screen_measurement_is_served_by_cui2018": 21685,
+        "growth_screen_guide_is_below_cui2018_read_floor": 1687,
+        "gene_symbol_is_not_in_the_mg1655_annotation": 232,
+        "gene_symbol_collides_with_another_symbol_on_one_mg1655_locus": 200,
+        "gene_symbol_is_ambiguous_in_mg1655": 12,
     }
+    # The S1 Table is accounted for whole, and the Cui share is attributed to Cui.
+    by_rule = {rule["rule"]: rule for rule in log["rules"]}
+    assert (
+        by_rule["guide_targets_no_gene"]["n_records"]
+        + by_rule["guide_targets_the_template_strand"]["n_records"]
+        + by_rule["growth_screen_measurement_is_served_by_cui2018"]["n_records"]
+        + by_rule["growth_screen_guide_is_below_cui2018_read_floor"]["n_records"]
+        == 59246
+    )
+    assert by_rule["growth_screen_measurement_is_served_by_cui2018"]["served_by"] == (
+        f"{r.CUI2018_DATASET_CLASS} ({r.CUI2018_DATASET}), "
+        f"screen_id {r.CUI2018_SCREEN_ID}"
+    )
     with open(osp.join(preprocess, "gene_set.json")) as handle:
         assert len(json.load(handle)) == r.EXPECTED_GENES
 
@@ -1125,7 +1249,7 @@ def test_the_stored_records_carry_the_measured_sign_distribution() -> None:
     ``EnvironmentResponsePhenotype`` is the record type because the value is signed and
     routinely negative; these are the fractions that claim rests on, measured over the
     stored records rather than over the released rows (the released coding-strand
-    fractions are the subject of the test above, and differ by the 643 unstorable-symbol
+    fractions are the subject of the test above, and differ by the 444 unstorable-symbol
     records).
     """
     from torchcell.verification.runners import stream_records
@@ -1143,19 +1267,20 @@ def test_the_stored_records_carry_the_measured_sign_distribution() -> None:
         minimum[screen] = min(minimum.get(screen, value), value)
     assert dict(total) == r.EXPECTED_SCREEN_CENSUS
     assert dict(negative) == {
-        "growth_17_generations": 21471,
-        "phage_lambda": 4737,
-        "phage_T4": 14352,
-        "phage_186cIts": 7665,
-        "lambda_transduction": 15246,
+        "phage_lambda": 4740,
+        "phage_T4": 14359,
+        "phage_186cIts": 7670,
+        "lambda_transduction": 15253,
     }
     assert {screen: round(value, 4) for screen, value in minimum.items()} == {
-        "growth_17_generations": -11.9475,
         "phage_lambda": -2.5409,
         "phage_T4": -2.5929,
         "phage_186cIts": -3.3441,
         "lambda_transduction": -10.9705,
     }
-    assert round(
-        negative["growth_17_generations"] / total["growth_17_generations"], 4
-    ) == (0.9251)
+    assert {screen: round(negative[screen] / total[screen], 4) for screen in total} == {
+        "phage_lambda": 0.277,
+        "phage_T4": 0.8393,
+        "phage_186cIts": 0.4483,
+        "lambda_transduction": 0.8915,
+    }

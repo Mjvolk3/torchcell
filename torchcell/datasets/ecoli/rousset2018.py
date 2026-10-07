@@ -2,7 +2,7 @@
 # [[torchcell.datasets.ecoli.rousset2018]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/ecoli/rousset2018
 # Test file: tests/torchcell/datasets/ecoli/test_rousset2018.py
-"""Rousset 2018: genome-wide CRISPR-dCas9 guide fitness, growth and three phages.
+"""Rousset 2018: genome-wide CRISPR-dCas9 guide fitness under three phages.
 
 Rousset et al. 2018 (PLoS Genetics 14:e1007749, doi:10.1371/journal.pgen.1007749;
 PMID 30403660; PMC6242692) screened a pooled library of about 92,000 random-position
@@ -13,6 +13,12 @@ phage lambda, T4 and 186cIts at MOI 1 (S4 Table, three columns on a library of a
 17,200 guides), and recovery of the guide-carrying cosmid after a lambda transduction
 assay (S6 Table, the same 17,200 guides).
 
+THIS DATASET SERVES THE FOUR PHAGE-DERIVED SCREENS. The growth screen is Cui et al.
+2018's screen, released again; it is served by ``CrispriKnockdownCui2018Dataset`` and is
+accounted for in this build's retention ledger rather than stored a second time. The
+measurement behind that, and the reason the non-overlapping remainder is not kept either,
+is below under THE GROWTH SCREEN IS CUI 2018'S SCREEN.
+
 RECORD = one (sgRNA x screen) ``BacterialEnvironmentResponseExperiment``:
 
 - GENOTYPE: one ``BacterialCrisprInterferencePerturbation`` keyed by the target gene's
@@ -20,19 +26,17 @@ RECORD = one (sgRNA x screen) ``BacterialEnvironmentResponseExperiment``:
   (``effector="dCas9"``). The release names genes by SYMBOL, so every symbol is resolved
   to a current locus through ``reconcile_locus_tags``; the symbol it came from is kept on
   ``identifier_mapping`` (``route="gene_symbol"``), never dropped.
-- ENVIRONMENT: the screen's own culture. The growth screen is LB plus 1 nM aTc for 17
-  generations with no environment perturbation; the three phage challenges and the
-  transduction assay are LB plus 1 microM aTc, 0.2% maltose and 5 mM CaCl2 at 37 C for
-  2 h, each carrying exactly one ``PhagePerturbation`` at
-  ``multiplicity_of_infection=1``. The aTc that induces dCas9 is a COMPONENT of the two
-  media, not an ``Environment.perturbation``: the paper puts it there ("diluted 100-fold
-  in LB containing 1 microM aTc, 0.2% Maltose and 5 mM CaCl2" lists it beside the two
-  components the phage medium already carries), it is constant across the dataset rather
-  than the varied condition, and its dose is what distinguishes the two media. That also
-  leaves the phage as the only environment perturbation any record carries, which is what
-  lets the adapter conf enable ``phage perturbation`` and not ``environment
-  perturbation``: the served ``_environment_perturbation_node`` does not filter phages
-  out, so a conf enabling both would emit each phage twice under two labels on one id.
+- ENVIRONMENT: the screen's own culture, which is one medium for all four screens: LB
+  plus 1 microM aTc, 0.2% maltose and 5 mM CaCl2 at 37 C for 2 h, each record carrying
+  exactly one ``PhagePerturbation`` at ``multiplicity_of_infection=1``. The aTc that
+  induces dCas9 is a COMPONENT of that medium, not an ``Environment.perturbation``: the
+  paper puts it there ("diluted 100-fold in LB containing 1 microM aTc, 0.2% Maltose and
+  5 mM CaCl2" lists it beside the two components the medium already carries), and it is
+  constant across the dataset rather than the varied condition. That leaves the phage as
+  the only environment perturbation any record carries, which is what lets the adapter
+  conf enable ``phage perturbation`` and not ``environment perturbation``: the served
+  ``_environment_perturbation_node`` does not filter phages out, so a conf enabling both
+  would emit each phage twice under two labels on one id.
 - PHENOTYPE: ``EnvironmentResponsePhenotype`` with ``measurement_type=log2_ratio``. The
   reference carries 0.0, which is what no change in guide abundance is.
 
@@ -40,32 +44,62 @@ WHY ``EnvironmentResponsePhenotype`` AND NOT ``FitnessPhenotype``. The released 
 a signed DESeq2 ``log2FoldChange`` of guide abundance ("The log2FoldChange ... value
 represents the enrichment or depletion of each sgRNA"), normalized on a non-targeting
 control guide and paired against each sample's own initial condition. It is routinely
-negative. Measured over the 91,609 STORED records: 92.51% of the growth screen (minimum
--11.9475), 89.16% of the transduction screen, 83.93% of T4, 44.82% of 186cIts and 27.70%
-of lambda. ``FitnessPhenotype.validate_fitness`` clamps every non-positive value to 0.0,
-which would erase that signal, and no ``MeasurementType`` member other than
-``log2_ratio`` describes this number.
+negative. Measured over the 68,436 STORED records: 89.15% of the transduction screen,
+83.93% of T4, 44.83% of 186cIts and 27.70% of lambda. ``FitnessPhenotype.validate_fitness``
+clamps every non-positive value to 0.0, which would erase that signal, and no
+``MeasurementType`` member other than ``log2_ratio`` describes this number.
 
-WHY ``PhagePerturbation``. Three of the five screens dose a virion: "followed by
-infection with phage lambda, T4 or 186cIts at a multiplicity of infection (MOI) of 1".
-That is the typed leaf for a bacteriophage on the environment axis, and the dose is an
-MOI rather than a ``Concentration``. The growth screen has no phage and carries none.
+WHY ``PhagePerturbation``. Every stored screen doses a virion: "followed by infection
+with phage lambda, T4 or 186cIts at a multiplicity of infection (MOI) of 1". That is the
+typed leaf for a bacteriophage on the environment axis, and the dose is an MOI rather
+than a ``Concentration``.
 
-THE TWO HOST STRAINS. Both are MG1655 derivatives and both are written against the
-MG1655 assembly, so they differ as a ``BacterialStrainBackground`` on the reference, not
-as a namespace: LC-E75 carries the optimized dcas9 cassette at the phage 186 attB site
-and ran the growth screen; FR-E01 carries the same cassette at the HK022 attB site, built
-so that phage 186 could be studied without interference, and ran the four phage-derived
-screens.
+THE HOST STRAIN. FR-E01, an MG1655 derivative written against the MG1655 assembly, so it
+is a ``BacterialStrainBackground`` on the reference rather than a namespace: it carries
+the same optimized dcas9 cassette as LC-E75 moved to the HK022 attB site, built so that
+phage 186 could be studied without interference.
 
-THE GROWTH SCREEN'S DEFERRAL. "The data for the screen performed with strain LC-E75 grown
-in rich medium was obtained from our previous study [26]", which is Cui et al. 2018 (Nat
-Commun 9:1912, doi:10.1038/s41467-018-04209-5), mirrored as
-``cuiCRISPRiScreenColi2018``. Its "dCas9 knockdown assay" paragraph is where that screen's
-medium (LB), inducer dose (1 nM aTc) and 17-generation serial-dilution design are sourced
-from; Rousset's own Methods state only "rich medium" and the generation count. Neither
-paper states the growth screen's incubation temperature, so it is a typed
-``ProvenanceGap`` on ``temperature``, never the 37 C both papers state for OTHER assays.
+THE GROWTH SCREEN IS CUI 2018'S SCREEN, AND IS NOT STORED HERE. Rousset says so outright:
+"The data for the screen performed with strain LC-E75 grown in rich medium was obtained
+from our previous study [26]", and [26] is Cui et al. 2018 (Nat Commun 9:1912,
+doi:10.1038/s41467-018-04209-5), mirrored as ``cuiCRISPRiScreenColi2018`` and served by
+``CrispriKnockdownCui2018Dataset``. Measured on the two pinned tables, joined on the
+20-nt spacer (Rousset's ``target``, Cui's ``guide``):
+
+- Rousset S1 ``log2FC`` against Cui ``fit75``: 54,326 spacers in common, median absolute
+  difference 0.0000, maximum 0.0066, Pearson r 1.0000. The same measurements to released
+  precision; the 0.0066 is rounding, not re-analysis.
+- Against Cui ``fit18``, the other dose regime: r 0.8018, median absolute difference
+  0.4151. A different screen, and Cui's alone.
+- Cui's table carries 78,137 distinct guides, 23,811 of which Rousset's S1 Table does not
+  carry at all. Cui is therefore the primary release: the study Rousset cites, covering
+  both dose regimes and more of the library.
+
+Neither release is a subset of the other: 4,920 of Rousset's 59,246 released spacers are
+absent from Cui's table. Those are NOT kept as a remainder, because measured on the
+pinned bytes they are the library's low-abundance tail rather than a screen:
+
+- 6.6% of their coding-strand members appear in the 17,220-guide phage library, against
+  78.9% of the shared coding-strand guides. That library's gate is Rousset's own
+  ``BaseMean < 10`` exclusion on this same library, so 93.4% of them fail an abundance
+  floor the paper itself applied.
+- At matched effect size they carry no statistical power: in the 0.25 to 0.5 ``|log2FC|``
+  band 0 of 1,306 reach ``padj < 0.05``, against 29.8% of 16,452 shared guides; in the
+  0.5 to 1.0 band 0.2% against 65.8%. Their median ``|log2FC|`` (0.380) matches the
+  shared set's (0.377), so the deficit is dispersion, not effect size.
+- They are not a region Cui excluded: the median distance from one to the nearest Cui
+  guide is 24 bp (90th percentile 82 bp, maximum 396 bp), so they are interspersed
+  through the chromosome.
+- The storable remainder would be 1,687 records over 1,284 genes, a median of 1 guide per
+  gene against 5 for the shared set, and the paper's own reading rule is that "the
+  effects of genes on a given phenotype should ideally not be inferred from the effect of
+  a single guide". Adding it to the shared set flips 10 genes' essentiality calls under
+  the paper's own ``median log2FC < -2`` rule, moving one gene median by 2.922.
+
+Hypothesis (untested, and not testable from either release because neither publishes read
+counts): the 4,920 fall below Cui's 20-read floor because Cui's table reports both dose
+arms and the LC-E18 arm was sequenced 2.3-fold shallower, while Rousset's growth analysis
+applied the same floor to the LC-E75 arm alone.
 
 RECORDS DROPPED (rule + counts in ``preprocess/dropped_records.json``):
 
@@ -83,66 +117,61 @@ RECORDS DROPPED (rule + counts in ``preprocess/dropped_records.json``):
    ``BacterialCrisprInterferencePerturbation``, whose ``expression_direction`` is
    ``"decreased"`` with no slot for the target strand, so storing a template-strand guide
    would assert a knockdown the paper's own data says did not happen.
-3. ``gene_symbol_is_not_in_the_mg1655_annotation`` (31 symbols, 307 records): RETIRED
-   against GCA_000005845.2 (the insertion-sequence and cryptic-prophage names
-   ``insA-7``, ``lomR_1``, ``C0299``, ``G0-10699``, ...).
-4. ``gene_symbol_collides_with_another_symbol_on_one_mg1655_locus`` (16 symbols, 321
-   records): two released symbols resolve to ONE current locus (the annotation merges the
-   pseudogene fragments ``yaiT``/``yaiU``, ``ydeK``/``ydeU``, ...).
-   ``reconcile_locus_tags`` keeps both as given so the records stay distinct, and a bare
-   symbol is not a b-number, so neither member can be stored. The group is dropped whole:
-   unlike Tong 2020's b-number case, no member IS the locus tag.
-5. ``gene_symbol_is_ambiguous_in_mg1655`` (``rffT`` -> b3793, b4481; 15 records).
+3. ``growth_screen_measurement_is_served_by_cui2018`` (21,685 guides): the remaining S1
+   rows whose spacer Cui's table carries. The rule names the dataset that serves them
+   (``served_by``), so the drop is attributable rather than a disappearance.
+4. ``growth_screen_guide_is_below_cui2018_read_floor`` (1,687 guides): the remaining S1
+   rows whose spacer Cui's table does not carry, the low-abundance tail measured above.
+5. ``gene_symbol_is_not_in_the_mg1655_annotation`` (S4/S6; RETIRED against
+   GCA_000005845.2, the insertion-sequence and cryptic-prophage names ``insA-7``,
+   ``lomR_1``, ``C0299``, ``G0-10699``, ...).
+6. ``gene_symbol_collides_with_another_symbol_on_one_mg1655_locus``: two released symbols
+   resolve to ONE current locus (the annotation merges the pseudogene fragments
+   ``yaiT``/``yaiU``, ``ydeK``/``ydeU``, ...). ``reconcile_locus_tags`` keeps both as
+   given so the records stay distinct, and a bare symbol is not a b-number, so neither
+   member can be stored. The group is dropped whole: unlike Tong 2020's b-number case, no
+   member IS the locus tag.
+7. ``gene_symbol_is_ambiguous_in_mg1655``.
 
 Retention arithmetic: 59,246 + 3 x 17,220 + 17,220 = 128,126 released (guide, screen)
-cells, minus 5,063 + 30,811 + 307 + 321 + 15 = 36,517 dropped, leaves 91,609 records over
-3,896 genes. The candidate table's 236,000 is 59,000 guides x 4 conditions, which counts
-every guide in every condition; the phage and transduction screens were released on the
-filtered 17,220-guide library, and the growth screen's template-strand and intergenic
-guides are not gene perturbations.
+cells. The S1 Table's 59,246 are accounted for whole by rules 1 to 4
+(5,063 + 30,811 + 21,685 + 1,687), and rules 5 to 7 remove 444 of the 68,880 phage-derived
+cells, leaving 68,436 records over 3,671 genes. The candidate table's 236,000 is 59,000
+guides x 4 conditions, which counts every guide in every condition; the phage and
+transduction screens were released on the filtered 17,220-guide library.
 
 SOURCED VALUES (module-level ``SourcedValue``s anchored to the sha256 of
 ``roussetGenomewideCRISPRdCas9Screens2018/paper.md`` or of
 ``cuiCRISPRiScreenColi2018/paper.md``, or typed ``ProvenanceGap``s):
 
-- ``n_samples = 3``, ``sample_unit=biological_replicate`` for every record. Growth screen:
-  "This screen was performed over 17 generations in triplicates from independent aliquots
-  of the library generated from 3 independent transformations into strain LC-E75." Phage
-  and transduction screens: "The phage screen was performed in triplicates as follows".
+- ``n_samples = 3``, ``sample_unit=biological_replicate`` for every record: "The phage
+  screen was performed in triplicates as follows".
 - Uncertainty: a ``not_reported_by_primary`` gap on
   ``environment_response_uncertainty``. The released tables carry one log2FC per guide
-  and screen; DESeq2's ``lfcSE`` is not among the released columns. S1 Table additionally
-  releases ``padj`` and ``gamma``, which are not uncertainties: ``padj`` is the adjusted
-  p-value of the DESeq2 test and the schema has no p-value slot, and ``gamma`` is named in
-  the S1 Table caption but defined nowhere in either mirrored paper (solving
-  ``log2FC / log2(gamma)`` over the 20,540 rows with ``|log2FC| > 0.5`` gives an implied
-  generation count of 11.41 to 15.58, median 12.07, so it is not log2FC rescaled by the
-  stated 17 generations either). Both are left out rather than stored under a field whose
-  meaning they would misstate.
+  and screen; DESeq2's ``lfcSE`` is not among the released columns.
 - ``multiplicity_of_infection = 1.0`` and ``host_of_propagation = "MG1655"`` for all three
   phages; no phage family, genome type, taxon or accession is stated, so those stay None.
 - ``titer_pfu_per_ml``: the stocks are 10^7 pfu/microL but the infected culture's volume
   at MOI 1 is not stated, so the in-culture titer is not computed.
-- ``Temperature(37.0)``, ``duration_hours = 2.0`` and the phage-screen medium (including
-  its 1 microM aTc) from the phage-screen paragraph; ``duration_generations = 17.0``, the
-  growth-screen medium and its 1 nM aTc from Rousset plus the Cui 2018 deferral;
-  ``aerobic`` from shaken flask cultures with no gas control described.
-
-The growth screen therefore carries NO environment perturbation, and the
-environment-response verifier's L3 ``environment_perturbed`` rule passes it on the rule's
-own base-medium clause: its 23,209 records sit on ``ROUSSET2018_LB`` while the modal
-medium over the dataset is the phage screens' ``ROUSSET2018_LB_MALTOSE_CACL2`` (68,400
-records), a 2.9x margin the release fixes.
+- ``Temperature(37.0)``, ``duration_hours = 2.0`` and the medium (including its 1 microM
+  aTc) from the phage-screen paragraph; ``aerobic`` from shaken flask cultures with no gas
+  control described.
+- The two Cui 2018 values the de-duplication rules cite: its 20-read floor
+  (``CUI_READ_FLOOR``) and its two arms' sequencing depth (``CUI_SCREEN_DEPTH``).
 
 DATA SOURCE: S1, S4 and S6 Tables (``pgen.1007749.s011.csv``, ``.s014.csv``,
 ``.s016.csv``) from the PMC Article Datasets bucket (``pmc_cloud``, prefix
 ``PMC6242692.1``), deposited in
 ``$DATA_ROOT/torchcell-raw/roussetGenomewideCRISPRdCas9Screens2018/`` with a
-``manifest.json``. S2, S5 and S7 Tables are the gene-level medians and model estimates
-derived from these three, so they are not consumed; S3 Table, S8 to S10 Tables and the
-ten SI figures carry no per-guide value. The ENA BioProject PRJEB28256 holds the raw
-reads the log2FC values were computed from and is recorded as the upstream accession, not
-mirrored.
+``manifest.json``. S1 Table is still read and sha256-verified although no record comes
+from it: the de-duplication ledger is derived from its bytes rather than asserted. The
+build also reads ONE column of Cui 2018's own mirrored screen table
+(``41467_2018_4209_MOESM8_ESM.csv``, verified against Cui's manifest), because the
+de-duplication rule is defined by Cui's released guide set. S2, S5 and S7 Tables are the
+gene-level medians and model estimates derived from the three above, so they are not
+consumed; S3 Table, S8 to S10 Tables and the ten SI figures carry no per-guide value. The
+ENA BioProject PRJEB28256 holds the raw reads the log2FC values were computed from and is
+recorded as the upstream accession, not mirrored.
 """
 
 from __future__ import annotations
@@ -252,6 +281,31 @@ CUI2018_DOI = "10.1038/s41467-018-04209-5"
 CUI2018_PAPER_MD_SHA256 = (
     "b8e28e16f0cbb4f8d4061f79505409c1a9aa03ed4ba8349ba4dca2327d26d22d"
 )
+CUI2018_DATASET = "crispri_knockdown_cui2018"
+CUI2018_DATASET_CLASS = "CrispriKnockdownCui2018Dataset"
+CUI2018_SCREEN_ID = "LC-E75"
+
+#: Cui 2018's released screen table (Supplementary Data 5, MOESM8), pinned by the same
+#: sha256 its own loader pins, read here for ONE column: the 20-nt ``guide`` spacer. The
+#: growth-screen de-duplication rule is DEFINED by that guide set, so it is read from the
+#: bytes rather than asserted as a count.
+CUI2018_SCREEN_FILENAME = "41467_2018_4209_MOESM8_ESM.csv"
+CUI2018_SCREEN_SHA256 = (
+    "95ebaa5a0c92c63849617f48889e2d28b7805fdffdd960527f8a501381143c1e"
+)
+CUI2018_RAW_DIR_REL = f"torchcell-raw/{CUI2018_KEY}"
+CUI2018_SCREEN_HEADER: tuple[str, ...] = (
+    "guide",
+    "gene",
+    "essential",
+    "pos",
+    "ori",
+    "coding",
+    "fit18",
+    "fit75",
+    "ntargets",
+    "seq",
+)
 
 #: The ENA BioProject holding the raw reads behind every released log2FC. Recorded as
 #: the upstream accession; the loader consumes the computed tables, not the reads.
@@ -276,6 +330,16 @@ TABLE_LABEL: dict[str, str] = {
     PHAGE_TABLE: "S4 Table",
     TRANSDUCTION_TABLE: "S6 Table",
 }
+
+
+def raw_sha256() -> dict[str, str]:
+    """Every raw file the build consumes and verifies, with its pinned sha256.
+
+    Rousset's three tables, plus Cui 2018's screen table, whose guide set the
+    growth-screen de-duplication rule is defined by. The Cui file is read from ITS OWN
+    mirror and is never deposited into Rousset's.
+    """
+    return {**TABLE_SHA256, CUI2018_SCREEN_FILENAME: CUI2018_SCREEN_SHA256}
 
 
 def table_rel(filename: str) -> str:
@@ -351,8 +415,8 @@ _SCREENS = "Materials and Methods, 'High-throughput screens'"
 _ANALYSIS = "Materials and Methods, 'Data analysis'"
 _PHAGE_STOCKS = "Materials and Methods, 'Phage strains and stocks'"
 _SI = "Supporting information"
-_CUI_MEDIA = "Methods, 'Bacterial strains and media'"
-_CUI_ASSAY = "Methods, 'dCas9 knockdown assay'"
+_CUI_SEQUENCING = "Methods, 'Library sequencing'"
+_CUI_FOLD_CHANGE = "Methods, 'Fold-change computation'"
 
 LIBRARY_TARGETS_MG1655 = _paper(
     "MG1655",
@@ -368,15 +432,17 @@ FILTERED_LIBRARY = _paper(
     "yielding a library of \\~ 59,000 guides used to perform the analyses below "
     "(S1 Table)",
     page="Results, 'Identifying essential genes'",
-    note="the growth screen's released library; S1 Table carries 59,246 rows",
+    note="the growth screen's released library; S1 Table carries 59,246 rows, which "
+    "this dataset accounts for in its retention ledger and does not store",
 )
 LC_E75_CASSETTE = _paper(
     "LC-E75",
     "This strain expresses an optimized dcas9 cassette under the control of an "
     "aTc-inducible pTet promoter integrated at the phage 186 attB site.",
     page=_STRAINS,
-    note="the growth screen's host: MG1655 plus a chromosomal aTc-inducible dcas9 "
-    "cassette at the phage 186 attB site",
+    note="the host of the SUBSUMED growth screen: MG1655 plus a chromosomal "
+    "aTc-inducible dcas9 cassette at the phage 186 attB site. No record here carries "
+    "this background; it identifies the screen the ledger attributes to Cui 2018",
 )
 FR_E01_CASSETTE = _paper(
     "FR-E01",
@@ -400,16 +466,19 @@ EFFECTOR = _paper(
     note="the guide-directed effector of every record; the paper's title names the "
     "screens CRISPR-dCas9",
 )
-GROWTH_SCREEN_DESIGN = _paper(
-    (17.0, 3),
+GROWTH_SCREEN_DEFERRAL = _paper(
+    CUI2018_KEY,
     "The data for the screen performed with strain LC-E75 grown in rich medium was "
     "obtained from our previous study [26]. This screen was performed over 17 "
     "generations in triplicates from independent aliquots of the library generated from "
     "3 independent transformations into strain LC-E75.",
     page=_SCREENS,
-    note="17 generations of exposure and 3 independent library transformations, which "
-    "is the replicate unit; reference [26] is Cui 2018 (mirrored), whose 'dCas9 "
-    "knockdown assay' paragraph carries the medium and the inducer dose",
+    note="reference [26] is Cui 2018 (mirrored), so the growth screen's released "
+    "log2FC values ARE Cui's fit75 column rather than a re-analysis of it. Measured on "
+    "the two pinned tables, joined on the 20-nt spacer: 54,326 spacers in common, "
+    "median absolute difference 0.0000, maximum 0.0066, Pearson r 1.0000 against "
+    "fit75, against r 0.8018 and a median absolute difference of 0.4151 for Cui's "
+    "other screen (fit18). This dataset therefore stores no growth-screen record",
 )
 PHAGE_SCREEN_TRIPLICATE = _paper(
     3,
@@ -554,36 +623,25 @@ RAW_READS_ACCESSION = _paper(
     page=_ANALYSIS,
 )
 
-GROWTH_MEDIUM = _cui(
-    "LB",
-    "Cells were grown in Luria-Bertani (LB) broth.",
-    page=_CUI_MEDIA,
-    note="Rousset calls the growth screen's medium 'rich medium' and defers the screen "
-    "to this paper; neither states the LB formulation, so the three LB ingredients are "
-    "listed with no amount",
+CUI_READ_FLOOR = _cui(
+    20,
+    "Guides with a total number of reads across samples ${ < } 2 0$ were discarded "
+    "from the analysis.",
+    page=_CUI_FOLD_CHANGE,
+    note="the floor Cui's released table is filtered on, and the reason 4,920 of "
+    "Rousset's 59,246 released spacers do not appear in it at all. Rousset's own growth "
+    "analysis states the same count ('Guides with fewer than 20 reads in total were "
+    "discarded') over the LC-E75 arm alone, while Cui's table reports both arms",
 )
-GROWTH_INDUCTION = _cui(
-    (1.0, "nM"),
-    "The expression of dCas9 was then induced by addition of aTc to a final "
-    "concentration of $1 \\mathrm { n M }$ .",
-    page=_CUI_ASSAY,
-    note="the growth screen's inducer dose, three orders of magnitude below the phage "
-    "screen's 1 microM; dCas9 was deliberately kept low in LC-E75",
-)
-GROWTH_SERIAL_DILUTION = _cui(
-    17.0,
-    "Cells were grown for 17 generations by diluting the culture 100-fold once it "
-    "reached OD600 2.2–2.5.",
-    page=_CUI_ASSAY,
-    note="the exposure the 17-generation count measures; Rousset states the same count",
-)
-GROWTH_REPLICATE_UNIT = _cui(
-    "biological_replicate",
-    "The experiment was performed in triplicates starting from independent aliquots of "
-    "the library generated from independent electroporation assays.",
-    page=_CUI_ASSAY,
-    note="independent library transformations, which is a biological replicate rather "
-    "than a technical one",
+CUI_SCREEN_DEPTH = _cui(
+    (7.5e6, 17.0e6),
+    "we obtained on average 7.5 million and 17 million reads per experimental condition "
+    "for LC-E18 and LC-E75, respectively.",
+    page=_CUI_SEQUENCING,
+    note="the two arms Cui's table reports are sequenced 2.3-fold apart. Hypothesis "
+    "(untested, and not testable from either release because neither publishes counts): "
+    "the shallower LC-E18 arm is what put the 4,920 spacers under the 20-read floor. "
+    "What IS measured is that those spacers are the library's low-abundance tail",
 )
 
 #: Every module-level sourced value, for the mirror audit.
@@ -594,7 +652,7 @@ SOURCED_VALUES: tuple[SourcedValue, ...] = (
     FR_E01_CASSETTE,
     FR_E01_PARENT,
     EFFECTOR,
-    GROWTH_SCREEN_DESIGN,
+    GROWTH_SCREEN_DEFERRAL,
     PHAGE_SCREEN_TRIPLICATE,
     PHAGE_SCREEN_TEMPERATURE,
     PHAGE_SCREEN_INDUCTION,
@@ -612,10 +670,8 @@ SOURCED_VALUES: tuple[SourcedValue, ...] = (
     PHAGE_TABLE_COLUMNS,
     TRANSDUCTION_TABLE_COLUMNS,
     RAW_READS_ACCESSION,
-    GROWTH_MEDIUM,
-    GROWTH_INDUCTION,
-    GROWTH_SERIAL_DILUTION,
-    GROWTH_REPLICATE_UNIT,
+    CUI_READ_FLOOR,
+    CUI_SCREEN_DEPTH,
 )
 
 
@@ -626,10 +682,10 @@ def _lb_ingredients(provenance: SourcedValue) -> list[MediaComponent]:
     """LB's three ingredients with NO amounts.
 
     ``LB`` in the media library carries the Miller amounts, corroborated by four other
-    papers. Neither Rousset 2018 nor Cui 2018 states a formulation (and the project's own
-    "LB" is Miller for some rows and Lennox for others), so asserting either would
-    fabricate three numbers. The identities are LB's definition; the amounts are
-    ``None``, which is what an unsourced amount means.
+    papers. Rousset 2018 states no formulation (and the project's own "LB" is Miller for
+    some rows and Lennox for others), so asserting either would fabricate three numbers.
+    The identities are LB's definition; the amounts are ``None``, which is what an
+    unsourced amount means.
     """
     return [
         MediaComponent(
@@ -638,7 +694,7 @@ def _lb_ingredients(provenance: SourcedValue) -> list[MediaComponent]:
             concentration=None,
             definition=ComponentDefinition.intrinsically_undefined,
             provenance=[provenance],
-            note="LB ingredient; no amount is stated by either paper",
+            note="LB ingredient; no amount is stated by the paper",
         ),
         MediaComponent(
             compound=resolved_compound("yeast extract"),
@@ -646,14 +702,14 @@ def _lb_ingredients(provenance: SourcedValue) -> list[MediaComponent]:
             concentration=None,
             definition=ComponentDefinition.intrinsically_undefined,
             provenance=[provenance],
-            note="LB ingredient; no amount is stated by either paper",
+            note="LB ingredient; no amount is stated by the paper",
         ),
         MediaComponent(
             compound=resolved_compound("sodium chloride"),
             role=MediaComponentRole.bulk_salt,
             concentration=None,
             provenance=[provenance],
-            note="LB ingredient; no amount is stated by either paper, and the Miller "
+            note="LB ingredient; no amount is stated by the paper, and the Miller "
             "and Lennox formulations differ in exactly this component",
         ),
     ]
@@ -668,9 +724,9 @@ def _atc(
     there: "diluted 100-fold in LB containing 1 microM aTc, 0.2% Maltose and 5 mM CaCl2"
     lists aTc beside the two components this medium already carries. It is also constant
     across the dataset rather than the varied condition, so the environment axis would
-    hold a factor nothing in the dataset contrasts. The dose IS the discriminator between
-    the two media (1 nM in the growth screen, 1 microM in the phage screens), which is why
-    it is stored rather than noted.
+    hold a factor nothing in the dataset contrasts. The dose is stored rather than noted
+    because it is what switches the knockdown on, and because it is three orders of
+    magnitude above the 1 nM Cui 2018 used on the same cassette.
     """
     return MediaComponent(
         compound=resolved_compound("anhydrotetracycline"),
@@ -682,20 +738,6 @@ def _atc(
         "role is 'other' rather than a nutrient role",
     )
 
-
-ROUSSET2018_LB = Media(
-    name="LB with 1 nM aTc, formulation not stated "
-    "(Rousset 2018 growth-based screen), liquid",
-    state="liquid",
-    is_synthetic=False,
-    base_medium="LB",
-    components=[
-        *_lb_ingredients(GROWTH_MEDIUM),
-        _atc(GROWTH_INDUCTION.value[0], ConcentrationUnit.nanomolar, GROWTH_INDUCTION),
-    ],
-    provenance=[GROWTH_MEDIUM, GROWTH_SERIAL_DILUTION, GROWTH_INDUCTION],
-)
-"""The growth screen's medium: LB plus 1 nM aTc, through the Cui 2018 deferral."""
 
 ROUSSET2018_LB_MALTOSE_CACL2 = Media(
     name="LB with 1 uM aTc, 0.2% maltose and 5 mM CaCl2, formulation not stated "
@@ -730,19 +772,6 @@ ROUSSET2018_LB_MALTOSE_CACL2 = Media(
 )
 """The phage screens' medium: LB plus the aTc, maltose and CaCl2 the paper lists."""
 
-LC_E75_BACKGROUND = BacterialStrainBackground(
-    name="LC-E75",
-    reference_strain=REFERENCE_STRAIN_NAME,
-    assembly_set="ecoli_K12_MG1655_ASM584v2",
-    parents=["MG1655"],
-    construction="MG1655 carrying an optimized aTc-inducible dcas9 cassette integrated "
-    "at the phage 186 attB site; dCas9 expression was tuned down to limit the bad-seed "
-    "and off-target effects",
-    genotype_statement="MG1655 186attB::pTet-dcas9 (optimized cassette)",
-    provenance=[LC_E75_CASSETTE, LIBRARY_TARGETS_MG1655],
-)
-"""The growth screen's host strain, as a background on the MG1655 assembly."""
-
 FR_E01_BACKGROUND = BacterialStrainBackground(
     name="FR-E01",
     reference_strain=REFERENCE_STRAIN_NAME,
@@ -758,13 +787,14 @@ FR_E01_BACKGROUND = BacterialStrainBackground(
 
 
 # --------------------------------------------------------------------------- #
-# The five screens
+# The four stored screens
 # --------------------------------------------------------------------------- #
-StrainLabel = Literal["LC-E75", "FR-E01"]
+#: Only FR-E01 appears: the LC-E75 growth screen is Cui 2018's and is not stored. The
+#: label stays a ``Literal`` so a condition cannot name a strain with no background.
+StrainLabel = Literal["FR-E01"]
 
 BACKGROUNDS: dict[StrainLabel, BacterialStrainBackground] = {
-    "LC-E75": LC_E75_BACKGROUND,
-    "FR-E01": FR_E01_BACKGROUND,
+    "FR-E01": FR_E01_BACKGROUND
 }
 
 
@@ -783,22 +813,12 @@ class ScreenCondition(BaseModel):
     table: str
     column: str
     strain: StrainLabel
-    phage: str | None
+    phage: str
     assay_type: AssayType
     units: str
 
 
 CONDITIONS: tuple[ScreenCondition, ...] = (
-    ScreenCondition(
-        screen_id="growth_17_generations",
-        table=GROWTH_TABLE,
-        column="log2FC",
-        strain="LC-E75",
-        phage=None,
-        assay_type=AssayType.pooled_competitive_growth_barcode,
-        units="log2(sgRNA abundance after 17 generations of dCas9 induction / initial "
-        "pool), DESeq2, normalized on a non-targeting control guide",
-    ),
     ScreenCondition(
         screen_id="phage_lambda",
         table=PHAGE_TABLE,
@@ -846,30 +866,16 @@ CONDITIONS: tuple[ScreenCondition, ...] = (
     ),
 )
 
-#: The released column each condition reads, keyed by table.
+#: The released column each condition reads, keyed by table. S1 Table is still read and
+#: validated, for the retention ledger that attributes it to Cui 2018, so its one
+#: measured column is listed although no condition reads it.
 TABLE_COLUMNS: dict[str, tuple[str, ...]] = {
-    table: tuple(c.column for c in CONDITIONS if c.table == table)
-    for table in (GROWTH_TABLE, PHAGE_TABLE, TRANSDUCTION_TABLE)
+    GROWTH_TABLE: ("log2FC",),
+    **{
+        table: tuple(c.column for c in CONDITIONS if c.table == table)
+        for table in (PHAGE_TABLE, TRANSDUCTION_TABLE)
+    },
 }
-
-
-def _growth_temperature_gap() -> ProvenanceGap:
-    """Neither paper states the growth screen's incubation temperature."""
-    return ProvenanceGap(
-        field="temperature",
-        reason=ProvenanceGapReason.not_reported_by_primary,
-        looked_in=Provenance(
-            source_uri=PAPER_MD,
-            citation_key=CUI2018_KEY,
-            sha256=CUI2018_PAPER_MD_SHA256,
-            method="MinerU OCR of the publisher PDF (torchcell-library mirror)",
-            page=_CUI_ASSAY,
-        ),
-        note="Rousset's 'High-throughput screens' paragraph states 37 C for the PHAGE "
-        "screen only, and the Cui 2018 'dCas9 knockdown assay' paragraph the growth "
-        "screen defers to states no temperature; both papers state 37 C for other "
-        "assays, which is not this one",
-    )
 
 
 def phage_perturbation(name: str) -> PhagePerturbation:
@@ -888,16 +894,7 @@ def phage_perturbation(name: str) -> PhagePerturbation:
 
 
 def environment(condition: ScreenCondition) -> Environment:
-    """The culture one screen was run in."""
-    if condition.phage is None:
-        return Environment(
-            media=ROUSSET2018_LB,
-            temperature=None,
-            perturbations=[],
-            aerobicity="aerobic",
-            duration_generations=GROWTH_SERIAL_DILUTION.value,
-            provenance_gaps=[_growth_temperature_gap()],
-        )
+    """The culture one screen was run in: the one phage-screen medium, plus its phage."""
     return Environment(
         media=ROUSSET2018_LB_MALTOSE_CACL2,
         temperature=Temperature(value=PHAGE_SCREEN_TEMPERATURE.value),
@@ -1062,8 +1059,19 @@ def deposit_raw_mirror(
 
 def load_manifest(data_root: str | None = None) -> Manifest:
     """Read the raw mirror's ``manifest.json``."""
-    path = raw_mirror_dir(data_root) / "manifest.json"
-    return Manifest.model_validate_json(path.read_text())
+    return load_manifest_of(CITATION_KEY, data_root)
+
+
+def load_manifest_of(citation_key: str, data_root: str | None = None) -> Manifest:
+    """Read one raw mirror's ``manifest.json``.
+
+    Two mirrors are read: Rousset's own, and Cui 2018's, whose screen table the
+    growth-screen de-duplication rule is defined by. Each file is checked against the
+    manifest of the mirror it comes from, so neither mirror's pin stands in for the
+    other's.
+    """
+    path = Path(data_root or _data_root()) / f"torchcell-raw/{citation_key}"
+    return Manifest.model_validate_json((path / "manifest.json").read_text())
 
 
 def manifest_sha256(manifest: Manifest, relpath: str) -> str:
@@ -1142,6 +1150,23 @@ def read_table(path: str | Path, filename: str) -> pd.DataFrame:
         if frame[column].isna().any():
             raise ValueError(f"{filename}: column {column} has empty cells")
     return frame.reset_index(drop=True)
+
+
+def cui2018_spacers(path: str | Path) -> frozenset[str]:
+    """Every 20-nt spacer Cui 2018 released a fitness value for.
+
+    The de-duplication rule is defined by this set, so it is read from Cui's own pinned
+    bytes rather than pinned as a count here. One row of that table is a (guide, target
+    position) pair, so the guide column repeats for a multi-target guide; the set is what
+    the rule needs.
+    """
+    frame = pd.read_csv(path, usecols=["guide"])
+    if list(frame.columns) != ["guide"]:
+        raise ValueError(f"{path}: expected a guide column, got {list(frame.columns)}")
+    spacers = frame["guide"].astype(str)
+    if not (spacers.str.len() == 20).all():
+        raise ValueError(f"{path}: every Cui 2018 guide must be 20 nt")
+    return frozenset(spacers)
 
 
 def coding_strand(frame: pd.DataFrame, filename: str) -> pd.Series:
@@ -1281,13 +1306,20 @@ def resolve_symbols(
 # Retention bookkeeping
 # --------------------------------------------------------------------------- #
 class DropRule(BaseModel):
-    """One retention rule, the records it removed, and the items it removed them for."""
+    """One retention rule, the records it removed, and the items it removed them for.
+
+    ``served_by`` is the dataset that holds the dropped measurements instead, for a rule
+    that drops a record because another release owns it. It is None for a rule that
+    drops a record outright, so a reader can tell the two apart without reading the
+    description.
+    """
 
     rule: str
     scope: Literal["guide", "gene"]
     description: str
     n_records: int
     items: list[str] = []
+    served_by: str | None = None
 
 
 class DropLog(BaseModel):
@@ -1349,8 +1381,8 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
-        """The three mirrored SI tables."""
-        return list(TABLE_SHA256)
+        """Rousset's three SI tables, plus Cui 2018's screen table."""
+        return list(raw_sha256())
 
     def download(self) -> None:
         """Link the mirror files into ``raw/`` after verifying their pinned sha256s.
@@ -1361,22 +1393,38 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
         created, so an incomplete mirror leaves no half-populated raw directory behind.
         """
         data_root = _data_root()
-        manifest = load_manifest(data_root)
-        mirror = raw_mirror_dir(data_root)
-        for filename, sha256 in TABLE_SHA256.items():
+        sources = {
+            **{
+                filename: (raw_mirror_dir(data_root), CITATION_KEY)
+                for filename in TABLE_SHA256
+            },
+            CUI2018_SCREEN_FILENAME: (
+                Path(data_root) / CUI2018_RAW_DIR_REL,
+                CUI2018_KEY,
+            ),
+        }
+        manifests = {
+            key: load_manifest_of(key, data_root) for key in (CITATION_KEY, CUI2018_KEY)
+        }
+        for filename, sha256 in raw_sha256().items():
+            mirror, key = sources[filename]
             relpath = table_rel(filename)
-            check_manifest_pin(relpath, manifest_sha256(manifest, relpath), sha256)
+            check_manifest_pin(
+                relpath, manifest_sha256(manifests[key], relpath), sha256
+            )
             if not (mirror / relpath).exists():
                 raise RuntimeError(
                     f"required raw artifact missing from mirror: {mirror / relpath}"
                 )
         os.makedirs(self.raw_dir, exist_ok=True)
-        for filename, sha256 in TABLE_SHA256.items():
+        for filename, sha256 in raw_sha256().items():
+            mirror, _ = sources[filename]
             link_verified(
                 mirror / table_rel(filename), osp.join(self.raw_dir, filename), sha256
             )
         log.info(
-            "Rousset 2018 S1/S4/S6 Tables linked into %s (sha256 verified)",
+            "Rousset 2018 S1/S4/S6 Tables and the Cui 2018 screen table linked into %s "
+            "(sha256 verified)",
             self.raw_dir,
         )
 
@@ -1395,7 +1443,7 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Parse the three tables into per-(guide, screen) records; write the LMDB."""
-        verify_raw_files(self.raw_dir, dict(TABLE_SHA256))
+        verify_raw_files(self.raw_dir, raw_sha256())
         tables = {
             filename: read_table(osp.join(self.raw_dir, filename), filename)
             for filename in TABLE_SHA256
@@ -1405,10 +1453,12 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
             for filename, frame in tables.items()
         }
         genome = self._genome()
+        record_tables = {c.table for c in CONDITIONS}
         symbols = sorted(
             {
                 str(name)
                 for filename, frame in tables.items()
+                if filename in record_tables
                 for name in frame.loc[coding[filename], "gene"].dropna()
             }
         )
@@ -1476,7 +1526,14 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
         env.close()
         interned_env.close()
 
-        self._write_reports(tables, coding, resolution, dropped_by_symbol, idx)
+        self._write_reports(
+            tables,
+            coding,
+            resolution,
+            dropped_by_symbol,
+            idx,
+            cui2018_spacers(osp.join(self.raw_dir, CUI2018_SCREEN_FILENAME)),
+        )
         log.info(
             "Rousset2018: wrote %d records over %d genes and %d screens",
             idx,
@@ -1491,12 +1548,17 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
         resolution: SymbolResolution,
         dropped_by_symbol: Mapping[str, int],
         kept_records: int,
+        cui_spacers: frozenset[str],
     ) -> None:
         """Write the drop accounting and the identifier report to ``preprocess/``."""
         growth = tables[GROWTH_TABLE]
         n_no_gene = int(growth["gene"].isna().sum())
         n_template = int((~coding[GROWTH_TABLE] & growth["gene"].notna()).sum())
-        source_records = sum(len(tables[c.table]) for c in CONDITIONS)
+        storable = growth.loc[coding[GROWTH_TABLE], "target"].astype(str)
+        in_cui = storable.isin(cui_spacers)
+        n_served_by_cui = int(in_cui.sum())
+        n_below_read_floor = int((~in_cui).sum())
+        source_records = len(growth) + sum(len(tables[c.table]) for c in CONDITIONS)
 
         def by_rule(items: Sequence[str]) -> int:
             return sum(dropped_by_symbol.get(symbol, 0) for symbol in items)
@@ -1526,6 +1588,50 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
                     "own S2 Table says did not happen"
                 ),
                 n_records=n_template,
+            ),
+            DropRule(
+                rule="growth_screen_measurement_is_served_by_cui2018",
+                scope="guide",
+                description=(
+                    "the S1 Table row's 20-nt spacer is in Cui 2018's released screen "
+                    "table, whose fit75 column IS this value. Rousset states the "
+                    "deferral outright ('The data for the screen performed with strain "
+                    "LC-E75 grown in rich medium was obtained from our previous study "
+                    "[26]'), and the two releases agree on the 54,326 spacers they "
+                    "share to a median absolute difference of 0.0000 (maximum 0.0066, "
+                    "Pearson r 1.0000); against Cui's other screen, fit18, the same "
+                    "join gives r 0.8018 and a median absolute difference of 0.4151. "
+                    "Cui 2018 is the primary release: it is the study Rousset cites, it "
+                    "covers both dCas9 dose regimes, and it carries 23,811 spacers "
+                    "Rousset's table does not. Storing these rows here would store one "
+                    "measurement twice under two dataset names"
+                ),
+                n_records=n_served_by_cui,
+                served_by=f"{CUI2018_DATASET_CLASS} ({CUI2018_DATASET}), "
+                f"screen_id {CUI2018_SCREEN_ID}",
+            ),
+            DropRule(
+                rule="growth_screen_guide_is_below_cui2018_read_floor",
+                scope="guide",
+                description=(
+                    "the S1 Table row's spacer is absent from Cui 2018's table "
+                    "entirely, so no other dataset serves it, and it is NOT stored "
+                    "either: these guides are the library's low-abundance tail rather "
+                    "than a screen. Measured on the pinned bytes, over the 4,920 "
+                    "released spacers Cui's table does not carry: 93.4% of their "
+                    "coding-strand members fail the BaseMean >= 10 floor Rousset's own "
+                    "phage analysis applied to this same library (6.6% appear in the "
+                    "17,220-guide phage library, against 78.9% of the shared "
+                    "coding-strand guides), and at matched effect size they carry no "
+                    "statistical power (0 of 1,306 reach padj < 0.05 in the 0.25 to 0.5 "
+                    "|log2FC| band, against 29.8% of 16,452 shared guides; 0.2% against "
+                    "65.8% in the 0.5 to 1.0 band). The storable remainder is 1 guide "
+                    "per gene at the median against 5 for the shared set, and the "
+                    "paper's own reading rule is that a gene's phenotype should not be "
+                    "inferred from one guide. Keeping it would store the screen's noise "
+                    "floor under the name of a genome-wide screen"
+                ),
+                n_records=n_below_read_floor,
             ),
             DropRule(
                 rule="gene_symbol_is_not_in_the_mg1655_annotation",
@@ -1607,19 +1713,20 @@ class CrispriScreenRousset2018Dataset(ExperimentDataset):
 # Verification (L0-L4) of a built tree
 # --------------------------------------------------------------------------- #
 #: The frozen per-screen record-count oracle, from the drop accounting of the release.
+#: The growth screen is absent: it is Cui 2018's screen and is accounted for in the
+#: retention ledger rather than stored.
 EXPECTED_SCREEN_CENSUS: dict[str, int] = {
-    "growth_17_generations": 23209,
-    "phage_lambda": 17100,
-    "phage_T4": 17100,
-    "phage_186cIts": 17100,
-    "lambda_transduction": 17100,
+    "phage_lambda": 17109,
+    "phage_T4": 17109,
+    "phage_186cIts": 17109,
+    "lambda_transduction": 17109,
 }
 
-#: The frozen record-count oracle: the five screens together.
+#: The frozen record-count oracle: the four phage-derived screens together.
 EXPECTED_RECORDS = sum(EXPECTED_SCREEN_CENSUS.values())
 
 #: The frozen gene-set oracle: distinct MG1655 b-numbers across the kept records.
-EXPECTED_GENES = 3896
+EXPECTED_GENES = 3671
 
 
 def screen_census(records: Iterable[Mapping[str, Any]]) -> LevelResult:
@@ -1659,7 +1766,7 @@ def verify_build(
     """Run the environment-response L0-L4 verifier on a built tree and write its report.
 
     The LMDB is STREAMED, twice: once for the verifier and once for the census row. The
-    91,609 records are never materialized, which is the choice Price 2018 and Borchert
+    68,436 records are never materialized, which is the choice Price 2018 and Borchert
     2024 make for the two other large bacterial stores (an eager ``load_records`` of this
     store takes tens of minutes; two streaming passes take a fraction of that).
 
@@ -1685,16 +1792,16 @@ def verify_build(
         provenance=Provenance(
             source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/data/",
             citation_key=CITATION_KEY,
-            sha256=TABLE_SHA256[GROWTH_TABLE],
+            sha256=TABLE_SHA256[PHAGE_TABLE],
             method=(
-                "S1, S4 and S6 Tables (PMC Article Datasets "
+                "S4 and S6 Tables (PMC Article Datasets "
                 f"{PMCID}.1): one BacterialEnvironmentResponseExperiment per (sgRNA, "
                 "screen), DESeq2 log2FoldChange of guide abundance normalized on a "
                 "non-targeting control guide and paired against each sample's initial "
-                "condition; coding-strand in-gene guides only"
+                "condition; coding-strand in-gene guides only. The S1 Table growth "
+                "screen is Cui 2018's and is not stored"
             ),
             page=(
-                f"{TABLE_LABEL[GROWTH_TABLE]} ({GROWTH_TABLE}), "
                 f"{TABLE_LABEL[PHAGE_TABLE]} ({PHAGE_TABLE}), "
                 f"{TABLE_LABEL[TRANSDUCTION_TABLE]} ({TRANSDUCTION_TABLE})"
             ),

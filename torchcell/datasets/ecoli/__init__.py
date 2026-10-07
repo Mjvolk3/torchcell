@@ -40,8 +40,10 @@ sourcing layer.
 - ``price2018`` -- ``RbTnseqPrice2018EcoliDataset``: the RB-TnSeq fitness compendium,
   the loader that serves the experiments Wetmore 2015 first reported.
 - ``rousset2018`` -- ``CrispriScreenRousset2018Dataset``: per-sgRNA dCas9 knockdown
-  log2FC from five screens in two MG1655 derivatives, growth over 17 generations plus
-  three phage challenges and a lambda transduction assay.
+  log2FC from the three phage challenges and the lambda transduction assay in FR-E01.
+  Its fifth released screen, growth over 17 generations, is Cui 2018's screen released
+  again (r 1.0000 over the 54,326 spacers they share), so it is accounted for in the
+  retention ledger rather than stored twice.
 - ``schmidt2016`` -- ``ProteomeSchmidt2016Dataset``: the condition-dependent BW25113
   proteome, one record per loaded growth condition in absolute protein copies per cell.
 - ``mutalik2020`` -- the phage-resistance RB-TnSeq raw mirror and sourcing layer; the

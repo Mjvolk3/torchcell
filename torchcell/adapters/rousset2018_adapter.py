@@ -9,16 +9,16 @@ One record per (sgRNA, screen): a single ``BacterialCrisprInterferencePerturbati
 served as a ``bacterial perturbation`` node with its guide on a ``crispr construct``
 node, and the guide's log2 fold change as an ``EnvironmentResponsePhenotype``.
 
-The environment is where this conf differs from the other bacterial ones. The three
-phage challenges and the lambda transduction assay each carry exactly one
-``PhagePerturbation``, so the conf enables ``phage perturbation`` and NOT ``environment
-perturbation``: the served ``_environment_perturbation_node`` does not filter phages out,
-so a conf enabling both would emit each phage twice, once under each label, on one
-content id. The aTc that induces dCas9 is a component of the two media rather than an
-environment perturbation (the paper lists it with the maltose and CaCl2), which is what
-leaves the phage as the only environment perturbation any record carries. The growth
-screen carries none at all, and its temperature is a typed gap, so both the phage and the
-temperature node methods emit nothing for its 23,209 records.
+The environment is where this conf differs from the other bacterial ones. All four
+stored screens, the three phage challenges and the lambda transduction assay, carry
+exactly one ``PhagePerturbation``, so the conf enables ``phage perturbation`` and NOT
+``environment perturbation``: the served ``_environment_perturbation_node`` does not
+filter phages out, so a conf enabling both would emit each phage twice, once under each
+label, on one content id. The aTc that induces dCas9 is a component of the medium rather
+than an environment perturbation (the paper lists it with the maltose and CaCl2), which
+is what leaves the phage as the only environment perturbation any record carries. The
+released growth screen is Cui 2018's and is not stored, so every one of the 68,400
+records carries a phage and a temperature and the enable-list needs no per-screen branch.
 """
 
 import os.path as osp

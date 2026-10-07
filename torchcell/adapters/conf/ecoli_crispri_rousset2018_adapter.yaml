@@ -1,13 +1,14 @@
 # Rousset 2018 CRISPR-dCas9 screens: BacterialEnvironmentResponseExperiment.
 # One BacterialCrisprInterferencePerturbation per record, served as `bacterial
 # perturbation` with its 20-nt spacer on a `crispr construct` node. The environment of
-# the four phage-derived screens carries exactly one PhagePerturbation, so `phage
-# perturbation` is enabled and `environment perturbation` is NOT: the served
+# each of the four stored phage-derived screens carries exactly one PhagePerturbation, so
+# `phage perturbation` is enabled and `environment perturbation` is NOT: the served
 # `_environment_perturbation_node` does not filter phages out, so enabling both would
 # emit each phage twice under two labels on one content id. The aTc inducer is a
-# component of the two media (the paper lists it with the maltose and CaCl2), which is
-# what leaves the phage as the only environment perturbation. The phage nodes are linked
-# by `environment perturbation to environment`, whose graph class declares both
+# component of the medium (the paper lists it with the maltose and CaCl2), which is what
+# leaves the phage as the only environment perturbation. The released growth screen is
+# Cui 2018's and is not stored, so no record is phage-free. The phage nodes are linked by
+# `environment perturbation to environment`, whose graph class declares both
 # `environment perturbation` and `phage perturbation` as sources.
 cell_adapter:
   node_methods:

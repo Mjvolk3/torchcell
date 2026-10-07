@@ -475,11 +475,15 @@ def assert_gate_resolves_own_files(bacterial: Bacterial) -> None:
 # --------------------------------------------------------------------------- #
 RECORDS = 200
 # Chunked node methods a conf enables only when the records carry that sub-object.
+ENV_PERTURBATION_NODE = "environment perturbation (chunked)"
+ENV_PERTURBATION_NODE_LABEL = "environment perturbation"
+PHAGE_NODE = "phage perturbation (chunked)"
+PHAGE_NODE_LABEL = "phage perturbation"
 OPTIONAL_FAMILIES = (
     "bacterial perturbation (chunked)",
     "crispr construct (chunked)",
-    "environment perturbation (chunked)",
-    "phage perturbation (chunked)",
+    ENV_PERTURBATION_NODE,
+    PHAGE_NODE,
 )
 STORE_FILES = (
     "processed/lmdb",
@@ -562,12 +566,32 @@ def assert_dev_store_graph(
     assert ("environment perturbation" in labels) is shape.env_perturbation
 
     # The converse: a sub-object family the conf leaves OFF is absent from the records,
-    # so the enable-list drops nothing they carry.
+    # so the enable-list drops nothing they carry. A conf serving a phage is the one
+    # exception: `environment perturbation` is left off because `phage perturbation`
+    # already serves the SAME objects, which is asserted by id below rather than by
+    # absence.
     enabled = {m["method_name"] for m in adapter.config.cell_adapter.node_methods}
+    overlapping = {ENV_PERTURBATION_NODE} if bacterial.case.shape.phage else set()
     left_off = [
         (name, method)
         for name, method in adapter.node_methods
-        if name in OPTIONAL_FAMILIES and name not in enabled
+        if name in OPTIONAL_FAMILIES and name not in enabled | overlapping
     ]
     adapter._single_pass_methods = left_off
     assert adapter._all_chunked(view, SINGLE_PASS_NODES, inprocess=True) == []
+
+    if not bacterial.case.shape.phage:
+        return
+    by_name = dict(adapter.node_methods)
+    ran: dict[str, list[Any]] = {}
+    for name in (PHAGE_NODE, ENV_PERTURBATION_NODE):
+        adapter._single_pass_methods = [(name, by_name[name])]
+        ran[name] = adapter._all_chunked(view, SINGLE_PASS_NODES, inprocess=True)
+    assert ran[PHAGE_NODE]
+    assert {n.get_label() for n in ran[PHAGE_NODE]} == {PHAGE_NODE_LABEL}
+    assert {n.get_label() for n in ran[ENV_PERTURBATION_NODE]} == {
+        ENV_PERTURBATION_NODE_LABEL
+    }
+    assert {n.get_id() for n in ran[ENV_PERTURBATION_NODE]} == {
+        n.get_id() for n in ran[PHAGE_NODE]
+    }

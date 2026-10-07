@@ -818,9 +818,11 @@
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_lines</span><span class="p">:</span>
         <span class="n">dropped</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">-</span> <span class="n">max_lines</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="n">lines</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[:</span> <span class="n">max_lines</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"…  +</span><span class="si">{</span><span class="n">dropped</span><span class="si">}</span><span class="s2"> more lines — full list in the interactive map"</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="c1"># Short enough to FIT the narrowest lane box: the long form overflowed and was</span>
+        <span class="c1"># clipped mid-word by ``_truncate`` the first time a lane went over (the</span>
+        <span class="c1"># bacterial experiment families, 2026-10-07). The figure's footer already</span>
+        <span class="c1"># carries the explorer URL, so the notice does not repeat it.</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mf">0.0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"…  +</span><span class="si">{</span><span class="n">dropped</span><span class="si">}</span><span class="s2"> more lines; see the map below"</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">lines</span>
 
 

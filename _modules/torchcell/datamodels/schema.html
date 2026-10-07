@@ -396,6 +396,117 @@
 <span class="sd">validator)."""</span>
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Bacterial gene identity (plan D1, [[plan.bacteria-ontology-genome]]).</span>
+<span class="c1">#</span>
+<span class="c1"># A bacterial gene is identified by its GenBank locus tag, and the NAMESPACE that</span>
+<span class="c1"># tag belongs to is carried in its own field. ``Genotype`` derives its content</span>
+<span class="c1"># identity from the sorted systematic names of its perturbations, so without the</span>
+<span class="c1"># namespace a b-number and a ``PP_`` tag would be two anonymous strings in one id</span>
+<span class="c1"># space; with it, a future host whose tags DO collide with an existing one stays</span>
+<span class="c1"># distinguishable and no rename is needed.</span>
+<span class="c1">#</span>
+<span class="c1"># The tag forms below were MEASURED from the deposited GenBank flat file of each</span>
+<span class="c1"># assembly set (``torchcell.sequence.genome.registry``), not recalled: every one of</span>
+<span class="c1"># MG1655's 4,651, BW25113's 4,490 and KT2440's 5,786 gene features matches its</span>
+<span class="c1"># host's pattern, the three patterns are pairwise disjoint, and none of them matches</span>
+<span class="c1"># a yeast systematic name. ``tests/torchcell/datamodels/test_schema.py`` re-pins</span>
+<span class="c1"># those counts and the disjointness.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span>
+    <span class="s2">"ecoli_k12_mg1655_bnumber"</span><span class="p">,</span>
+    <span class="s2">"ecoli_k12_bw25113_locus_tag"</span><span class="p">,</span>
+    <span class="s2">"pputida_kt2440_locus_tag"</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="sd">"""The identifier namespace a bacterial locus tag belongs to.</span>
+
+<span class="sd">One member per deposited strain assembly set, because a ``BW25113_`` number is NOT an</span>
+<span class="sd">MG1655 b-number (measured: joining the two by gene name leaves 45 disagreements and 230</span>
+<span class="sd">BW25113 genes absent from MG1655, so no string surgery relates them). A record states</span>
+<span class="sd">which namespace its ``systematic_gene_name`` is written in; the assembly those bytes</span>
+<span class="sd">come from is pinned by ``AssemblyReferenceGenome.assembly_set``.</span>
+<span class="sd">"""</span>
+
+<span class="n">BACTERIAL_LOCUS_TAG_PATTERNS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"ecoli_k12_mg1655_bnumber"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"^b\d</span><span class="si">{4}</span><span class="s2">$"</span><span class="p">,</span>
+    <span class="s2">"ecoli_k12_bw25113_locus_tag"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"^BW25113_\d</span><span class="si">{4}</span><span class="s2">$"</span><span class="p">,</span>
+    <span class="s2">"pputida_kt2440_locus_tag"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="sa">r</span><span class="s2">"^PP_(?:\d</span><span class="si">{4}</span><span class="s2">|(?:5|16|23)S[A-G]|t\d</span><span class="si">{2}</span><span class="s2">|tm\d</span><span class="si">{2}</span><span class="s2">|mr\d</span><span class="si">{2}</span><span class="s2">|r\d</span><span class="si">{2}</span><span class="s2">)$"</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+<span class="sd">"""Locus-tag pattern of each namespace, measured from the deposited GenBank files.</span>
+
+<span class="sd">MG1655 and BW25113 are uniform four-digit tags. KT2440 is four-digit for its 5,621</span>
+<span class="sd">protein-coding genes plus the named structural-RNA tags its annotation uses: the</span>
+<span class="sd">rRNA operons (``PP_16SA``-``PP_16SG``, ``PP_23SA``-``PP_23SG``, ``PP_5SA``-``PP_5SG``),</span>
+<span class="sd">75 tRNA tags (``PP_t01``-``PP_t75``), 67 ``PP_mr`` tags, ``PP_tm01`` and ``PP_r01``.</span>
+<span class="sd">Admitting only four-digit tags would silently reject 165 real KT2440 genes.</span>
+<span class="sd">"""</span>
+
+<span class="n">BACTERIAL_LOCUS_TAG_PATTERN</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"^(?:"</span>
+    <span class="o">+</span> <span class="s2">"|"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pattern</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">BACTERIAL_LOCUS_TAG_PATTERNS</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="o">+</span> <span class="s2">")$"</span>
+<span class="p">)</span>
+<span class="sd">"""Any of the three namespaces' tags -- what a bacterial leaf's name validator accepts.</span>
+
+<span class="sd">A leaf accepts any host's tag (one leaf class serves all three hosts) and the</span>
+<span class="sd">namespace field is then required to AGREE with the tag's own form, so the pair cannot</span>
+<span class="sd">disagree. A yeast systematic name matches none of the three and is rejected, which is</span>
+<span class="sd">the behavior that keeps the two families' identifier spaces separate.</span>
+<span class="sd">"""</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_bacterial_locus_tag</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Return ``value`` if it is a locus tag of one of the three bacterial namespaces.</span>
+
+<span class="sd">    The bacterial counterpart of ``GenePerturbation.validate_sys_gene_name``. The yeast</span>
+<span class="sd">    validator is deliberately left untouched (widening it would move 35 of 36 served</span>
+<span class="sd">    dataset closures and would admit ``b0002`` into a yeast SGA leaf), so each bacterial</span>
+<span class="sd">    leaf overrides the name validator with this one instead.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">BACTERIAL_LOCUS_TAG_PATTERN</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Invalid bacterial locus tag </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">; expected one of "</span>
+            <span class="o">+</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">namespace</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="k">for</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">BACTERIAL_LOCUS_TAG_PATTERNS</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_namespace_of_locus_tag</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The namespace whose pattern ``value`` matches, or ``None`` for a foreign id.</span>
+
+<span class="sd">    ``None`` is not a failure: a heterologous gene carried on an expression cassette</span>
+<span class="sd">    has no host locus tag at all (``HeterologousPathwayPerturbation``), and that case is</span>
+<span class="sd">    distinguished from a tag written in the wrong namespace.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="n">BACTERIAL_LOCUS_TAG_PATTERNS</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">namespace</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_gene_namespace</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="s2">"GenePerturbation"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Raise when a record's locus tag belongs to a namespace other than its own.</span>
+
+<span class="sd">    ``gene_namespace`` names the HOST genome the record is written against. When the</span>
+<span class="sd">    identifier IS a host locus tag the two must agree, so a KT2440 tag cannot be filed</span>
+<span class="sd">    under the MG1655 namespace. When the identifier is foreign to all three (a</span>
+<span class="sd">    heterologous gene symbol on an addition leaf) the namespace still names the host the</span>
+<span class="sd">    construct was built in, and there is nothing to cross-check.</span>
+<span class="sd">    """</span>
+    <span class="n">namespace</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"gene_namespace"</span><span class="p">)</span>
+    <span class="n">tag_namespace</span> <span class="o">=</span> <span class="n">_namespace_of_locus_tag</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tag_namespace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">tag_namespace</span> <span class="o">!=</span> <span class="n">namespace</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="si">!r}</span><span class="s2"> is a </span><span class="si">{</span><span class="n">tag_namespace</span><span class="si">}</span><span class="s2"> tag but "</span>
+            <span class="sa">f</span><span class="s2">"gene_namespace is </span><span class="si">{</span><span class="n">namespace</span><span class="si">!r}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+
 <div class="viewcode-block" id="MatingType">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.MatingType.html#torchcell.datamodels.schema.MatingType">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MatingType</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
@@ -735,6 +846,322 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Bacterial strain background + the assembly pin (plan 3b, 3e; decisions D6, D7).</span>
+<span class="c1">#</span>
+<span class="c1"># These are SIBLINGS of the yeast ``StrainBackground`` / ``BackgroundAllele`` and</span>
+<span class="c1"># ``ReferenceGenome``, never edits to them. Widening</span>
+<span class="c1"># ``StrainBackground.reference_strain`` past ``Literal["S288C"]`` or touching</span>
+<span class="c1"># ``BackgroundAllele`` moves 4 of 36 served dataset closures (the chemogenomic</span>
+<span class="c1"># loaders), and adding ``assembly_set`` to ``ReferenceGenome`` moves 36 of 36; the</span>
+<span class="c1"># new classes below move none. The duplication is the measured price of that, and</span>
+<span class="c1"># unifying the two families later is a rebuild whose purpose is the unification.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">BacterialReferenceStrain</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"MG1655"</span><span class="p">,</span> <span class="s2">"BW25113"</span><span class="p">,</span> <span class="s2">"KT2440"</span><span class="p">]</span>
+<span class="sd">"""The sequenced strain a bacterial background's alleles are edits against.</span>
+
+<span class="sd">One member per deposited assembly set, for the same reason ``BacterialGeneNamespace``</span>
+<span class="sd">has one: the two *E. coli* K-12 strains are not interchangeable, and a record that said</span>
+<span class="sd">only "K-12" would not say which genome its genotype is written against.</span>
+<span class="sd">"""</span>
+
+<span class="c1">#: Assembly-set id of each bacterial reference strain. Stated here rather than imported</span>
+<span class="c1">#: from ``torchcell.sequence.genome.registry`` because ``schema.py`` sits UNDER the</span>
+<span class="c1">#: sequence package in the import graph (``torchcell.sequence`` imports</span>
+<span class="c1">#: ``torchcell.datamodels``), so importing the registry here is a cycle. Equality with</span>
+<span class="c1">#: the registry's own constants is pinned by ``test_schema.py`` instead, which is what</span>
+<span class="c1">#: keeps the two from drifting.</span>
+<span class="n">BACTERIAL_ASSEMBLY_SETS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"MG1655"</span><span class="p">:</span> <span class="s2">"ecoli_K12_MG1655_ASM584v2"</span><span class="p">,</span>
+    <span class="s2">"BW25113"</span><span class="p">:</span> <span class="s2">"ecoli_K12_BW25113_ASM75055v1"</span><span class="p">,</span>
+    <span class="s2">"KT2440"</span><span class="p">:</span> <span class="s2">"pputida_KT2440_ASM756v2"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">BacterialAssemblySet</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span>
+    <span class="s2">"ecoli_K12_MG1655_ASM584v2"</span><span class="p">,</span>
+    <span class="s2">"ecoli_K12_BW25113_ASM75055v1"</span><span class="p">,</span>
+    <span class="s2">"pputida_KT2440_ASM756v2"</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="sd">"""A deposited bacterial assembly set id, as a closed vocabulary.</span>
+
+<span class="sd">An id outside this set is rejected at construction, which is the "validated against the</span>
+<span class="sd">registry's known ids" requirement in declarative form: a loader cannot invent a set id,</span>
+<span class="sd">and ``resolve(assembly_set, member)`` is then guaranteed to name a set the tier knows.</span>
+<span class="sd">"""</span>
+
+<span class="c1">#: The GenBank / RefSeq accession PAIR of each assembly set, read from the</span>
+<span class="c1">#: ``_assembly_report.txt`` member deposited in that set ("# GenBank assembly accession"</span>
+<span class="c1">#: and "# RefSeq assembly accession"). A record names one of its own set's two</span>
+<span class="c1">#: accessions, so a (set, accession) pair cannot disagree.</span>
+<span class="n">ASSEMBLY_SET_ACCESSIONS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"ecoli_K12_MG1655_ASM584v2"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"GCA_000005845.2"</span><span class="p">,</span> <span class="s2">"GCF_000005845.2"</span><span class="p">),</span>
+    <span class="s2">"ecoli_K12_BW25113_ASM75055v1"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"GCA_000750555.1"</span><span class="p">,</span> <span class="s2">"GCF_000750555.1"</span><span class="p">),</span>
+    <span class="s2">"pputida_KT2440_ASM756v2"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"GCA_000007565.2"</span><span class="p">,</span> <span class="s2">"GCF_000007565.2"</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">ASSEMBLY_ACCESSION_PATTERN</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"^GC[AF]_\d</span><span class="si">{9}</span><span class="s2">\.\d+$"</span>
+
+<span class="c1">#: BW25113's background genotype, VERBATIM from the ``/note`` qualifier of the ``source``</span>
+<span class="c1">#: feature of ``GCA_000750555.1_ASM75055v1_genomic.gbff.gz`` in the</span>
+<span class="c1">#: ``ecoli_K12_BW25113_ASM75055v1`` assembly set. The full qualifier reads</span>
+<span class="c1">#: "from B. L. Wanner laboratory; genotype: rrnB3 lacZ4787 hsdR514 (araBAD)567</span>
+<span class="c1">#: (rhaBAD)568 rph-1"; this constant is the genotype clause of it. The source is a</span>
+<span class="c1">#: sha256-pinned artifact in the genomes tier, so the string has provenance without a</span>
+<span class="c1">#: paper quote, and ``test_schema.py`` re-reads it from those bytes.</span>
+<span class="n">BW25113_BACKGROUND_GENOTYPE</span> <span class="o">=</span> <span class="s2">"rrnB3 lacZ4787 hsdR514 (araBAD)567 (rhaBAD)568 rph-1"</span>
+
+<span class="c1">#: The same genotype split into its six lesion designations, each verbatim. Deliberately</span>
+<span class="c1">#: NOT expanded into ``BacterialBackgroundAllele`` records here: the ``/note`` gives each</span>
+<span class="c1">#: lesion's DESIGNATION and nothing else, while an allele record also asserts an edit</span>
+<span class="c1">#: kind, a functional status and a locus. Three of the six name a gene BW25113's own</span>
+<span class="c1">#: annotation still carries (measured: lacZ at BW25113_0344, hsdR at BW25113_4350, rph at</span>
+<span class="c1">#: BW25113_3643) and the two operon deletions name genes it does NOT annotate at all</span>
+<span class="c1">#: (araB, araA, rhaB, rhaA are absent, which is what being deleted looks like), so</span>
+<span class="c1">#: mapping those to a locus would mean borrowing MG1655 b-numbers -- the cross-strain</span>
+<span class="c1">#: inference this plan refuses. The loader that needs the typed alleles sources the edit</span>
+<span class="c1">#: kinds from the BW25113 construction paper and records which lesion it mapped how.</span>
+<span class="n">BW25113_BACKGROUND_LESIONS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"rrnB3"</span><span class="p">,</span>
+    <span class="s2">"lacZ4787"</span><span class="p">,</span>
+    <span class="s2">"hsdR514"</span><span class="p">,</span>
+    <span class="s2">"(araBAD)567"</span><span class="p">,</span>
+    <span class="s2">"(rhaBAD)568"</span><span class="p">,</span>
+    <span class="s2">"rph-1"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialBackgroundAllele</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One allele a bacterial strain background carries, as an edit against its assembly.</span>
+
+<span class="sd">    The bacterial sibling of ``BackgroundAllele``: same sourced-or-gapped contract and</span>
+<span class="sd">    the same ``AlleleEdit`` mechanism vocabulary, with two differences that follow from</span>
+<span class="sd">    the host. ``systematic_gene_name`` is a locus tag validated against</span>
+<span class="sd">    ``gene_namespace``'s pattern rather than an R64 ORF name, and there is no</span>
+<span class="sd">    ``zygosity`` field at all: these strains are haploid, so a copy count would have one</span>
+<span class="sd">    possible value and would be a field that cannot carry information.</span>
+
+<span class="sd">    ``allele_name`` is the designation verbatim as the source writes it (``lacZ4787``,</span>
+<span class="sd">    ``rph-1``); ``gene_name`` is the gene symbol the assembly's annotation carries</span>
+<span class="sd">    (``lacZ``). ``functional`` says whether the allele keeps the gene's function, which</span>
+<span class="sd">    is what a per-locus dosage read needs. ``cassette`` is required for a</span>
+<span class="sd">    ``cassette_replacement`` and forbidden otherwise, exactly as on the yeast class.</span>
+<span class="sd">    """</span>
+
+    <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span>
+    <span class="n">gene_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">allele_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">edit</span><span class="p">:</span> <span class="n">AlleleEdit</span>
+    <span class="n">functional</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"True if the allele keeps the gene's function; False for a null"</span>
+    <span class="p">)</span>
+    <span class="n">cassette</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"cassette that replaced the gene, verbatim (e.g. 'kan', 'FRT-kan-FRT'); "</span>
+        <span class="s2">"set iff edit == cassette_replacement"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">deleted_span</span><span class="p">:</span> <span class="n">GenomicSpan</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"removed interval on the pinned assembly, when the source gives it"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SourcedValue</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"quotes that state this allele; None only with a gap on "</span>
+        <span class="s2">"'provenance' (an asserted-but-unsourced allele)"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_systematic</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The allele sits at a real locus tag of one of the bacterial namespaces."""</span>
+        <span class="k">return</span> <span class="n">_validate_bacterial_locus_tag</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_allele</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BacterialBackgroundAllele"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Tag agrees with namespace; cassette iff cassette_replacement; sourced or gapped."""</span>
+        <span class="n">tag_namespace</span> <span class="o">=</span> <span class="n">_namespace_of_locus_tag</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">tag_namespace</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_namespace</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="si">!r}</span><span class="s2"> is a </span><span class="si">{</span><span class="n">tag_namespace</span><span class="si">}</span><span class="s2"> tag but "</span>
+                <span class="sa">f</span><span class="s2">"gene_namespace is </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gene_namespace</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">edit</span> <span class="ow">is</span> <span class="n">AlleleEdit</span><span class="o">.</span><span class="n">cassette_replacement</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cassette</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"cassette is required for a cassette_replacement and forbidden for "</span>
+                <span class="sa">f</span><span class="s2">"edit=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">edit</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"provenance"</span><span class="p">,))</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mechanism_so</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""(SO id, SO name) of this allele's edit."""</span>
+        <span class="k">return</span> <span class="n">ALLELE_EDIT_SO</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">edit</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_sourced</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True when the allele carries no declared gap."""</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance_gaps</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialStrainBackground</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The genome content a bacterial strain carries beyond its reference assembly.</span>
+
+<span class="sd">    The bacterial sibling of ``StrainBackground``. ``name`` is the strain label the</span>
+<span class="sd">    records join on and must equal the reference's ``strain``; ``reference_strain`` is</span>
+<span class="sd">    the sequenced strain every allele is an edit against, and ``assembly_set`` is the</span>
+<span class="sd">    deposited bytes that strain means. There is no ``mating_type`` and no ``ploidy``:</span>
+<span class="sd">    both are eukaryote facts, and a haploid single-replicon genome has nothing to state.</span>
+
+<span class="sd">    The motivating case is BW25113, whose lesions are given by its own deposited GenBank</span>
+<span class="sd">    ``source`` feature (``BW25113_BACKGROUND_GENOTYPE``) rather than by a paper, and the</span>
+<span class="sd">    production-chassis rows, which carry stacked deletions plus heterologous cassettes.</span>
+<span class="sd">    ``construction`` is a one-line method statement; ``provenance`` is set or gapped.</span>
+<span class="sd">    """</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">reference_strain</span><span class="p">:</span> <span class="n">BacterialReferenceStrain</span>
+    <span class="n">assembly_set</span><span class="p">:</span> <span class="n">BacterialAssemblySet</span>
+    <span class="n">parents</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"strains this background was made from, verbatim"</span>
+    <span class="p">)</span>
+    <span class="n">construction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"how the background was made, one line"</span>
+    <span class="p">)</span>
+    <span class="n">genotype_statement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the background genotype exactly as the source writes it (e.g. "</span>
+        <span class="s2">"BW25113's 'rrnB3 lacZ4787 hsdR514 (araBAD)567 (rhaBAD)568 rph-1'), kept "</span>
+        <span class="s2">"verbatim beside the typed alleles so nothing the source said is lost"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">alleles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BacterialBackgroundAllele</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"every allele of the background beyond the reference assembly, each "</span>
+        <span class="s2">"sourced or gapped; empty when the source states only a genotype string"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SourcedValue</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"quotes stating the strain name and genotype; None only with a gap "</span>
+        <span class="s2">"on 'provenance'"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_background</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BacterialStrainBackground"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Named, sourced-or-gapped, consistent strain/assembly, one entry per locus."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"BacterialStrainBackground.name cannot be empty"</span><span class="p">)</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"provenance"</span><span class="p">,))</span>
+        <span class="n">expected</span> <span class="o">=</span> <span class="n">BACTERIAL_ASSEMBLY_SETS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">reference_strain</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">assembly_set</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"reference strain </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">reference_strain</span><span class="si">!r}</span><span class="s2"> is assembly set "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">expected</span><span class="si">!r}</span><span class="s2">, not </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">assembly_set</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">seen</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">allele</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alleles</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">allele</span><span class="o">.</span><span class="n">systematic_gene_name</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">allele</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="si">}</span><span class="s2">: a haploid background carries one "</span>
+                    <span class="s2">"allele entry per locus"</span>
+                <span class="p">)</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">allele</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">alleles_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BacterialBackgroundAllele</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The background's allele entry at one locus (empty = the reference allele)."""</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alleles</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">systematic_gene_name</span> <span class="o">==</span> <span class="n">systematic_gene_name</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">functional_copies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Functional copies of a gene in the UNPERTURBED background: 1 or 0.</span>
+
+<span class="sd">        Haploid, so the answer is 1 unless the background carries a non-functional</span>
+<span class="sd">        allele at the locus.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="mi">0</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="n">a</span><span class="o">.</span><span class="n">functional</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alleles_at</span><span class="p">(</span><span class="n">systematic_gene_name</span><span class="p">))</span>
+            <span class="k">else</span> <span class="mi">1</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_fully_sourced</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True when the background and every allele carry no declared gap."""</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance_gaps</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">is_sourced</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alleles</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">AssemblyReferenceGenome</span><span class="p">(</span><span class="n">ReferenceGenome</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A ``ReferenceGenome`` that PINS the assembly its genotypes are written against.</span>
+
+<span class="sd">    ``assembly_set`` is the deposited set id the genomes tier dereferences and</span>
+<span class="sd">    ``assembly_accession`` one of that set's two NCBI accessions (GenBank ``GCA_`` or</span>
+<span class="sd">    RefSeq ``GCF_``), so a record states in the record which sha256-pinned bytes its</span>
+<span class="sd">    locus tags mean. That is what the yeast records leave implicit today, and what</span>
+<span class="sd">    sequence-level genotype fidelity requires of a substrate serving three hosts whose</span>
+<span class="sd">    tag spaces are disjoint.</span>
+
+<span class="sd">    IMPORTANT, and measured: pydantic v2 serializes a field by its DECLARED type, so an</span>
+<span class="sd">    instance of this class placed in a slot annotated ``ReferenceGenome`` keeps the</span>
+<span class="sd">    subclass as an attribute but dumps only ``{species, strain, ploidy}``, and</span>
+<span class="sd">    re-validating that dump yields a plain ``ReferenceGenome``. The assembly pin</span>
+<span class="sd">    therefore survives ONLY where a field is re-annotated to this class, which is why</span>
+<span class="sd">    each bacterial ``ExperimentReference`` below narrows ``genome_reference`` to it --</span>
+<span class="sd">    the same narrowing ``StrainEnvironmentResponseExperimentReference`` does for</span>
+<span class="sd">    ``StrainReferenceGenome``. A new field here (rather than on ``ReferenceGenome``)</span>
+<span class="sd">    moves 0 of 36 served closures instead of 36 of 36.</span>
+
+<span class="sd">    ``background`` optionally carries the typed ``BacterialStrainBackground``; it is the</span>
+<span class="sd">    bacterial counterpart of ``StrainReferenceGenome.background`` and is ``None`` for a</span>
+<span class="sd">    record whose background is just the reference strain.</span>
+<span class="sd">    """</span>
+
+    <span class="n">assembly_set</span><span class="p">:</span> <span class="n">BacterialAssemblySet</span>
+    <span class="n">assembly_accession</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"NCBI accession of the pinned assembly, GenBank 'GCA_...' or RefSeq "</span>
+        <span class="s2">"'GCF_...'; must be one of this set's two"</span>
+    <span class="p">)</span>
+    <span class="n">background</span><span class="p">:</span> <span class="n">BacterialStrainBackground</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the strain's content beyond the reference assembly; None when the "</span>
+        <span class="s2">"strain IS the reference"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"assembly_accession"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_accession</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The accession has the NCBI assembly-accession shape."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">ASSEMBLY_ACCESSION_PATTERN</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"invalid assembly accession </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">; expected 'GCA_NNNNNNNNN.N' or "</span>
+                <span class="s2">"'GCF_NNNNNNNNN.N'"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_assembly</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"AssemblyReferenceGenome"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The accession belongs to the pinned set, and the background names that set."""</span>
+        <span class="n">allowed</span> <span class="o">=</span> <span class="n">ASSEMBLY_SET_ACCESSIONS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">assembly_set</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">assembly_accession</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">assembly_accession</span><span class="si">!r}</span><span class="s2"> is not an accession of "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">assembly_set</span><span class="si">!r}</span><span class="s2"> (expected one of </span><span class="si">{</span><span class="n">allowed</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">background</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">assembly_set</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">assembly_set</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"background pins assembly set </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">assembly_set</span><span class="si">!r}</span><span class="s2"> != "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">assembly_set</span><span class="si">!r}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">strain</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"background name </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> != strain </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">strain</span><span class="si">!r}</span><span class="s2">"</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -1999,6 +2426,299 @@
 
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Bacterial perturbation leaves (plan 3a).</span>
+<span class="c1">#</span>
+<span class="c1"># Each is a subclass of the axis leaf its OUTCOME already belongs to, so every</span>
+<span class="c1"># existing filter keeps working: ``issubclass(_, DeletionPerturbation)`` still</span>
+<span class="c1"># catches a bacterial knockout, and the expression axis still holds every</span>
+<span class="c1"># modulation. Each carries a required ``gene_namespace`` and overrides the name</span>
+<span class="c1"># validator with the bacterial patterns, so the yeast validator on</span>
+<span class="c1"># ``GenePerturbation`` is untouched and a bacterial tag still FAILS on a yeast leaf</span>
+<span class="c1"># (widening the base would admit ``b0002`` into an SGA leaf and would move 35 of 36</span>
+<span class="c1"># served dataset closures for no benefit). A new leaf moves 0 of 36.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialDeletionPerturbation</span><span class="p">(</span><span class="n">DeletionPerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A bacterial gene deletion, identified by a namespaced locus tag.</span>
+
+<span class="sd">    Serves the catalogued single-deletion rows (the Keio collection and the</span>
+<span class="sd">    chemical-genomics screens built on it) and the Keio-derived deletion pairs. Same</span>
+<span class="sd">    AXIS-1 ``state="absent"`` and SO ``deletion`` mechanism as the yeast deletion</span>
+<span class="sd">    leaves; what differs is the identifier space, which is why this is a leaf rather</span>
+<span class="sd">    than a reuse. ``collection`` and ``cassette`` are strain discriminators in the</span>
+<span class="sd">    same sense they are on the yeast barcoded leaf: two records that delete the same</span>
+<span class="sd">    gene from different collections are two strains, not two replicates.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Bacterial gene deletion, identified by a namespaced locus tag"</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"bacterial_deletion"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"bacterial_deletion"</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">deletion_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial"</span>
+    <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which host's locus-tag namespace systematic_gene_name is written in"</span>
+    <span class="p">)</span>
+    <span class="n">collection</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the physical deletion collection the strain came from, verbatim "</span>
+        <span class="s2">"(e.g. 'Keio collection'); None when unsourced"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">cassette</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the exact replacement cassette, verbatim (e.g. 'FRT-kan-FRT'); "</span>
+        <span class="s2">"None when unsourced"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">construction</span><span class="p">:</span> <span class="n">StrainConstruction</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"accession / lab / batch / plate of this strain"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_sys_gene_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A bacterial locus tag, not a yeast systematic name."""</span>
+        <span class="k">return</span> <span class="n">_validate_bacterial_locus_tag</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BacterialDeletionPerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The locus tag's own namespace is the one the record declares."""</span>
+        <span class="n">_check_gene_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TransposonInsertionPerturbation</span><span class="p">(</span><span class="n">PresenceAbsencePerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A transposon insertion that disrupts a gene, as a REALIZED genotype.</span>
+
+<span class="sd">    The readout leaf of the transposon / RB-TnSeq rows. It is an AXIS-1 absence --</span>
+<span class="sd">    the gene's function is gone -- by the mechanism of a ``transgenic_insertion``</span>
+<span class="sd">    (SO:0001218), which is the honest pairing: the state is what happened to the gene,</span>
+<span class="sd">    the SO term is what was done to the DNA.</span>
+
+<span class="sd">    What makes it realized rather than designed is that the insertion was MAPPED: a</span>
+<span class="sd">    pooled library is built by random insertion and then sequenced, so each strain's</span>
+<span class="sd">    barcode and the position its insertion was mapped to are measurements, not a</span>
+<span class="sd">    design. ``insertion_position`` is 1-based on the replicon of the pinned assembly</span>
+<span class="sd">    and ``insertion_strand`` the orientation the mapping reported; both are ``None``</span>
+<span class="sd">    when a study releases only gene-level calls. ``barcode`` is the random tag a</span>
+<span class="sd">    Bar-seq / RB-TnSeq strain is counted by, which IS its read-out identity in a</span>
+<span class="sd">    pooled assay.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Transposon insertion disrupting a gene, with its mapped insertion site"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"transposon_insertion"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"transposon_insertion"</span>
+    <span class="n">state</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"absent"</span>
+    <span class="n">mechanism_so_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"SO:0001218"</span>
+    <span class="n">mechanism_so_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"transgenic_insertion"</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"engineered"</span>
+    <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which host's locus-tag namespace systematic_gene_name is written in"</span>
+    <span class="p">)</span>
+    <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the random barcode the strain is counted by in a pooled assay; "</span>
+        <span class="s2">"None when the source released no per-strain tag"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">insertion_position</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"1-based position the insertion was mapped to on the replicon of "</span>
+        <span class="s2">"the pinned assembly; None when only gene-level calls were released"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">insertion_strand</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"+"</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"orientation of the inserted element as mapped; None when unreleased"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">transposon</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the transposon / delivery vector, verbatim (e.g. 'mariner Himar1', "</span>
+        <span class="s2">"'Tn5'); None when unsourced"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">library_pool</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the mutant library sub-pool this strain was screened in, when a "</span>
+        <span class="s2">"study runs several; a pooled measurement is pool-relative, so the pool joins "</span>
+        <span class="s2">"the strain identity"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_sys_gene_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A bacterial locus tag, not a yeast systematic name."""</span>
+        <span class="k">return</span> <span class="n">_validate_bacterial_locus_tag</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"mechanism_so_id"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_mechanism_so_id</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Mechanism SO id is well-formed."""</span>
+        <span class="k">return</span> <span class="n">_validate_so_id</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"insertion_position"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_position</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A mapped position is 1-based, so it is at least 1."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"insertion_position is 1-based, got </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"TransposonInsertionPerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The locus tag's own namespace is the one the record declares."""</span>
+        <span class="n">_check_gene_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialCrisprInterferencePerturbation</span><span class="p">(</span>
+    <span class="n">CrisprInterferencePerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""CRISPRi knockdown of a bacterial gene, reusing the shared guide construct.</span>
+
+<span class="sd">    The ``+guide`` rows. It inherits the whole expression axis unchanged -- present</span>
+<span class="sd">    gene, ``sgRNA`` mechanism, ``expression_direction="decreased"`` -- and the</span>
+<span class="sd">    ``crispr`` construct the yeast CRISPRi leaf already defines, so the guide payload</span>
+<span class="sd">    is described once for both families. Only the identifier space differs.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"CRISPR interference (decreased expression) of a bacterial gene by locus tag"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"bacterial_crispr_interference"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"bacterial_crispr_interference"</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="p">)</span>
+    <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which host's locus-tag namespace systematic_gene_name is written in"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_sys_gene_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A bacterial locus tag, not a yeast systematic name."""</span>
+        <span class="k">return</span> <span class="n">_validate_bacterial_locus_tag</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BacterialCrisprInterferencePerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The locus tag's own namespace is the one the record declares."""</span>
+        <span class="n">_check_gene_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PromoterReplacementPerturbation</span><span class="p">(</span><span class="n">ExpressionModulationPerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A gene's native promoter replaced by a characterized promoter part.</span>
+
+<span class="sd">    The expression axis without CRISPR: the gene stays PRESENT, its coding sequence is</span>
+<span class="sd">    unedited and its copy number unchanged, and what changed is the regulatory part</span>
+<span class="sd">    driving it. The mechanism is therefore neither a plain insertion nor a plain</span>
+<span class="sd">    deletion but SO:1000032 ``delins`` -- the native promoter removed and the new part</span>
+<span class="sd">    put in its place -- rather than the ``sgRNA`` term the CRISPR leaves inherit.</span>
+
+<span class="sd">    ``expression_direction`` is REQUIRED with no default, because a promoter swap can</span>
+<span class="sd">    raise or lower expression depending on the part, and defaulting it would assert a</span>
+<span class="sd">    direction the record did not state. ``crispr`` is re-declared as optional here (the</span>
+<span class="sd">    axis base requires it for the guide-directed leaves); a promoter replacement</span>
+<span class="sd">    introduces no guide and no Cas effector, so it is ``None``. The base class is left</span>
+<span class="sd">    untouched, since widening ITS field would move every served CRISPR loader's closure.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Native promoter replaced by a characterized promoter part"</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"promoter_replacement"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"promoter_replacement"</span>
+    <span class="n">mechanism_so_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"SO:1000032"</span>
+    <span class="n">mechanism_so_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"delins"</span>
+    <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which host's locus-tag namespace systematic_gene_name is written in"</span>
+    <span class="p">)</span>
+    <span class="n">promoter_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"identity of the promoter part installed, verbatim (e.g. 'Ptac', "</span>
+        <span class="s2">"'P14g', 'ParaBAD')"</span>
+    <span class="p">)</span>
+    <span class="n">native_promoter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the promoter it replaced, verbatim, when the source names it"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">promoter_sequence</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"sequence of the installed part, when released; None otherwise"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">is_inducible</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"True when the installed part is inducible rather than "</span>
+        <span class="s2">"constitutive. The INDUCER and its dose are deliberately not here: they are a "</span>
+        <span class="s2">"``SmallMoleculePerturbation`` on the environment, carrying the typed "</span>
+        <span class="s2">"``Compound``, so the molecule joins the shared compound layer and the genome "</span>
+        <span class="s2">"edit does not restate it (one canonical encoding)."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">crispr</span><span class="p">:</span> <span class="n">CrisprConstruct</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>  <span class="c1"># type: ignore[assignment]</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"no guide-directed machinery is involved in a promoter swap; the "</span>
+        <span class="s2">"field is inherited from the expression axis and stays None"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_sys_gene_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A bacterial locus tag, not a yeast systematic name."""</span>
+        <span class="k">return</span> <span class="n">_validate_bacterial_locus_tag</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"PromoterReplacementPerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The locus tag's own namespace is the one the record declares."""</span>
+        <span class="n">_check_gene_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">HeterologousPathwayPerturbation</span><span class="p">(</span><span class="n">GeneAdditionPerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One heterologous gene of an expressed pathway, with its cassette and copy context.</span>
+
+<span class="sd">    The engineered-chassis production rows. It inherits the gene-addition axis whole</span>
+<span class="sd">    (``state="present"``, SO ``insertion``, the relaxed name validator a heterologous</span>
+<span class="sd">    gene needs since it has no host locus tag) and adds the two things a production</span>
+<span class="sd">    record cannot be read without: WHICH pathway the gene belongs to, so the genes of</span>
+<span class="sd">    one pathway are recoverable as a set rather than as unrelated additions, and the</span>
+<span class="sd">    copy context of the cassette carrying it.</span>
+
+<span class="sd">    ``gene_namespace`` names the HOST genome the construct was built in, not the</span>
+<span class="sd">    namespace of ``systematic_gene_name`` (which is typically a heterologous gene</span>
+<span class="sd">    symbol). That is the one place the field means the host rather than the identifier's</span>
+<span class="sd">    own space, and it is checked only when the identifier IS a host locus tag -- which</span>
+<span class="sd">    it legitimately is for an extra copy of a NATIVE gene in the same pathway.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Heterologous pathway gene added on a cassette, with its copy context"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"heterologous_pathway"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"heterologous_pathway"</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the HOST genome the construct was built in (not the namespace of "</span>
+        <span class="s2">"systematic_gene_name, which is usually a heterologous symbol)"</span>
+    <span class="p">)</span>
+    <span class="n">pathway_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the pathway this gene is part of, verbatim (e.g. 'isoprenol via "</span>
+        <span class="s2">"mevalonate'), so one pathway's genes form a recoverable set"</span>
+    <span class="p">)</span>
+    <span class="n">copy_number</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"copies of the cassette carrying this gene (strictly &gt; 0; absence "</span>
+        <span class="s2">"is not a copy count)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">promoter_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the promoter driving this gene on the cassette, verbatim"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"copy_number"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_copy_number_positive</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""M2: this leaf means the gene IS present, so ``copy_number &gt; 0``."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"copy_number must be &gt; 0 for an ADDED gene (absence is a deletion "</span>
+                <span class="s2">"leaf, never copy_number=0)"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"HeterologousPathwayPerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""When the identifier is a host locus tag it must be this host's."""</span>
+        <span class="n">_check_gene_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
 <span class="n">SgaPerturbationType</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">SgaKanMxDeletionPerturbation</span>
     <span class="o">|</span> <span class="n">SgaNatMxDeletionPerturbation</span>
@@ -2026,6 +2746,11 @@
     <span class="o">|</span> <span class="n">EngineeredCopyNumberPerturbation</span>
     <span class="o">|</span> <span class="n">CrisprActivationPerturbation</span>
     <span class="o">|</span> <span class="n">CrisprInterferencePerturbation</span>
+    <span class="o">|</span> <span class="n">BacterialDeletionPerturbation</span>
+    <span class="o">|</span> <span class="n">TransposonInsertionPerturbation</span>
+    <span class="o">|</span> <span class="n">BacterialCrisprInterferencePerturbation</span>
+    <span class="o">|</span> <span class="n">PromoterReplacementPerturbation</span>
+    <span class="o">|</span> <span class="n">HeterologousPathwayPerturbation</span>
 <span class="p">)</span>
 
 
@@ -4792,6 +5517,538 @@
 
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Bacterial phenotypes (plan 3c). Three record types the fifty bacterial rows need</span>
+<span class="c1"># and that no existing class can hold; the other eight families they need are</span>
+<span class="c1"># REUSED unchanged, and get bacterial experiment pairs further below purely so</span>
+<span class="c1"># their reference can pin an assembly.</span>
+<span class="c1">#</span>
+<span class="c1"># A new phenotype class moves 0 of 36 served dataset closures, and the unions and</span>
+<span class="c1"># maps it is appended to are module-level assignments outside the fingerprinted</span>
+<span class="c1"># surface.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProductYieldUnit</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How a production yield was expressed. Add values as datasets need them.</span>
+
+<span class="sd">    A yield is a RATIO, so it carries no concentration unit and cannot reuse</span>
+<span class="sd">    ``ConcentrationUnit``; these three are the forms a fermentation paper reports.</span>
+<span class="sd">    """</span>
+
+    <span class="n">g_per_g_substrate</span> <span class="o">=</span> <span class="s2">"g/g_substrate"</span>
+    <span class="n">mol_per_mol_substrate</span> <span class="o">=</span> <span class="s2">"mol/mol_substrate"</span>
+    <span class="n">percent_of_theoretical</span> <span class="o">=</span> <span class="s2">"percent_of_theoretical"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ProductivityUnit</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How a volumetric productivity was expressed. Add values as datasets need them."""</span>
+
+    <span class="n">g_per_l_per_h</span> <span class="o">=</span> <span class="s2">"g/L/h"</span>
+    <span class="n">mg_per_l_per_h</span> <span class="o">=</span> <span class="s2">"mg/L/h"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ProductTiterPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""How much of a named product a strain made: titer, with yield and productivity.</span>
+
+<span class="sd">    The phenotype side of inverse strain design, and the one genuinely new record type</span>
+<span class="sd">    the engineering half of the bacterial list needs. The product is a typed</span>
+<span class="sd">    ``Compound``, NOT a free-text product name, so a titer joins the same compound</span>
+<span class="sd">    entity a chemogenomic dataset dosing that molecule already uses and "every record</span>
+<span class="sd">    about isoprenol" is one query rather than a string match.</span>
+
+<span class="sd">    The value is a plain float with a typed ``titer_unit``, so the ML-facing label stays</span>
+<span class="sd">    scalar, and the uncertainty ontology is ``FitnessPhenotype``'s: the source-reported</span>
+<span class="sd">    number in ``titer_uncertainty`` with its ``titer_uncertainty_type``, the replicate</span>
+<span class="sd">    design in ``n_samples`` + ``sample_unit``, and the DERIVED standard error in</span>
+<span class="sd">    ``titer_se`` (auto-filled through ``derive_se``). ``product_yield`` and</span>
+<span class="sd">    ``productivity`` are optional because most rows release only a titer, and each is</span>
+<span class="sd">    paired with its own unit enum since neither is a concentration.</span>
+
+<span class="sd">    What is deliberately NOT here: the fermentation context. The medium, the carbon</span>
+<span class="sd">    source, the oxygen regime, the vessel and the duration are all ``Environment``</span>
+<span class="sd">    (and ``CultureEnvironment``) slots already, and putting them on the phenotype would</span>
+<span class="sd">    make "what was measured" carry part of "what it was grown in".</span>
+<span class="sd">    """</span>
+
+    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"global"</span>
+    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"titer"</span>
+    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"titer_se"</span>
+
+    <span class="n">product</span><span class="p">:</span> <span class="n">Compound</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"typed chemical identity of the product measured (InChIKey / ChEBI "</span>
+        <span class="s2">"when sourced), the join key onto the shared compound layer"</span>
+    <span class="p">)</span>
+    <span class="n">titer</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"measured product titer in ``titer_unit``"</span><span class="p">)</span>
+    <span class="n">titer_unit</span><span class="p">:</span> <span class="n">ConcentrationUnit</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"typed UO-aligned unit of the titer, e.g. 'g/L' | 'mM'"</span>
+    <span class="p">)</span>
+    <span class="n">titer_se</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"DERIVED standard error of the titer"</span>
+    <span class="p">)</span>
+    <span class="n">titer_uncertainty</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"source-reported uncertainty number, verbatim (its meaning is given "</span>
+        <span class="s2">"by titer_uncertainty_type)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">titer_uncertainty_type</span><span class="p">:</span> <span class="n">UncertaintyType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"what titer_uncertainty IS (sample_sd, ...)"</span>
+    <span class="p">)</span>
+    <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"number of independent replicate cultures the titer is over"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sample_unit</span><span class="p">:</span> <span class="n">SampleUnit</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what one sample in n_samples is (biological_replicate, ...)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">product_yield</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"product per substrate consumed; None when not released"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">product_yield_unit</span><span class="p">:</span> <span class="n">ProductYieldUnit</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"typed unit of product_yield; required when it is set"</span>
+    <span class="p">)</span>
+    <span class="n">productivity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"volumetric productivity; None when not released"</span>
+    <span class="p">)</span>
+    <span class="n">productivity_unit</span><span class="p">:</span> <span class="n">ProductivityUnit</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"typed unit of productivity; required when it is set"</span>
+    <span class="p">)</span>
+    <span class="n">quantification_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"how the product was quantified, verbatim (e.g. 'GC-MS', "</span>
+        <span class="s2">"'HPLC-RID'); None when the source does not state it"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"titer"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_titer</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A titer is a measured amount: finite and non-negative."""</span>
+        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"titer must be a finite number"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"titer must be non-negative, got </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"n_samples"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_n_samples</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""n_samples is a positive integer or None."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n_samples must be a positive integer or None, got: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fill_titer_se</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Derive the ML-facing titer_se from the reported uncertainty (frozen -&gt; fill first)."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="n">unc</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"titer_uncertainty"</span><span class="p">)</span>
+        <span class="n">typ</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"titer_uncertainty_type"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unc</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">typ</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"titer_se"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="n">typ</span> <span class="o">=</span> <span class="n">UncertaintyType</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_samples"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">typ</span> <span class="ow">in</span> <span class="p">(</span><span class="n">UncertaintyType</span><span class="o">.</span><span class="n">sample_sd</span><span class="p">,</span> <span class="n">UncertaintyType</span><span class="o">.</span><span class="n">variance</span><span class="p">)</span> <span class="ow">and</span> <span class="n">n</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"titer_se"</span><span class="p">]</span> <span class="o">=</span> <span class="n">derive_se</span><span class="p">(</span><span class="n">unc</span><span class="p">,</span> <span class="n">typ</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_titer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ProductTiterPhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""No unlabelled uncertainty, no unitless yield or productivity."""</span>
+        <span class="n">unc</span><span class="p">,</span> <span class="n">typ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">titer_uncertainty</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">titer_uncertainty_type</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">unc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">typ</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"titer_uncertainty and titer_uncertainty_type must both be set or both "</span>
+                <span class="s2">"be None (no unlabelled uncertainty)"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">typ</span> <span class="ow">in</span> <span class="p">(</span><span class="n">UncertaintyType</span><span class="o">.</span><span class="n">sample_sd</span><span class="p">,</span> <span class="n">UncertaintyType</span><span class="o">.</span><span class="n">variance</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_unit</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n_samples and sample_unit are required for </span><span class="si">{</span><span class="n">typ</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">value_name</span><span class="p">,</span> <span class="n">unit_name</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="p">(</span><span class="s2">"product_yield"</span><span class="p">,</span> <span class="s2">"product_yield_unit"</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">"productivity"</span><span class="p">,</span> <span class="s2">"productivity_unit"</span><span class="p">),</span>
+        <span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_name</span><span class="p">)</span>
+            <span class="n">unit</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unit_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">unit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">value_name</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">unit_name</span><span class="si">}</span><span class="s2"> must both be set or both be None "</span>
+                    <span class="s2">"(a bare number with no unit is not a measurement)"</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">value_name</span><span class="si">}</span><span class="s2"> must be non-negative, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ProteinTurnoverPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Per-protein turnover: how fast each protein is degraded and replaced.</span>
+
+<span class="sd">    Distinct from ``ProteinAbundancePhenotype``, which is a STANDING amount: a turnover</span>
+<span class="sd">    measurement is a RATE, obtained by following a label into or out of the proteome, and</span>
+<span class="sd">    two strains can hold the same abundance through entirely different synthesis and</span>
+<span class="sd">    degradation rates. Keyed by the protein's locus tag in the record's namespace, with</span>
+<span class="sd">    the same ragged-key honesty as the other dict-valued families: a protein the assay</span>
+<span class="sd">    did not quantify is simply not a key, never a zero.</span>
+
+<span class="sd">    ``degradation_rate`` is the primary label; ``half_life`` and ``synthesis_rate`` are</span>
+<span class="sd">    optional companions a study may release instead of or beside it.</span>
+<span class="sd">    ``measurement_type`` records WHAT the numbers are, including their time unit, so two</span>
+<span class="sd">    assays are never silently compared.</span>
+<span class="sd">    """</span>
+
+    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"node"</span>
+    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"degradation_rate"</span>
+    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">"degradation_rate_se"</span>
+
+    <span class="n">degradation_rate</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein locus tag -&gt; degradation rate in measurement_type's unit"</span>
+    <span class="p">)</span>
+    <span class="n">degradation_rate_se</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"protein locus tag -&gt; standard error of the rate"</span>
+    <span class="p">)</span>
+    <span class="n">half_life</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein locus tag -&gt; half-life, when the source reports one"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">synthesis_rate</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein locus tag -&gt; synthesis rate, when the source reports one"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">n_replicates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein locus tag -&gt; number of independent samples/replicates"</span>
+    <span class="p">)</span>
+    <span class="n">measurement_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what the numbers are, including the time unit, e.g. "</span>
+        <span class="s2">"'pulse_silac_degradation_rate_per_hour'"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_turnover</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ProteinTurnoverPhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Non-empty rates, matching replicate keys, non-negative rates and errors."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">degradation_rate</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"degradation_rate cannot be empty"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_replicates</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">degradation_rate</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"n_replicates keys must match degradation_rate keys"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_replicates</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n_replicates for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be &gt;= 1"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">rate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">degradation_rate</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">rate</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">rate</span><span class="p">)</span> <span class="ow">or</span> <span class="n">rate</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"degradation_rate for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be finite and non-negative"</span>
+                <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"degradation_rate_se"</span><span class="p">,</span> <span class="s2">"half_life"</span><span class="p">,</span> <span class="s2">"synthesis_rate"</span><span class="p">):</span>
+            <span class="n">mapping</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mapping</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">mapping</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">degradation_rate</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not in degradation_rate"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be non-negative"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">FluxPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Per-reaction net metabolic flux, with the confidence interval of the fit.</span>
+
+<span class="sd">    A flux map is not a measurement of one reaction at a time: it is a FIT of a whole</span>
+<span class="sd">    reaction network to labeling data, so the interval is a property of that fit and is</span>
+<span class="sd">    stored as an interval rather than as a scalar statistic. ``label_statistic_name`` is</span>
+<span class="sd">    therefore ``None`` -- a two-sided confidence bound is not a single number, and naming</span>
+<span class="sd">    one of the two bounds as "the" statistic would misreport it.</span>
+
+<span class="sd">    ``net_flux`` is SIGNED: a net flux through a reversible reaction can run either way,</span>
+<span class="sd">    and the sign is the direction, so nothing here is clamped. Keys are the source's own</span>
+<span class="sd">    reaction identifiers; ``target_reaction_ids`` maps them to a constraint-based model's</span>
+<span class="sd">    reaction ids where that mapping is settled, and is ``None`` until it is -- the data is</span>
+<span class="sd">    captured, the modeling choice deferred.</span>
+<span class="sd">    """</span>
+
+    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"metabolism"</span>
+    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"net_flux"</span>
+    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">net_flux</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"reaction id -&gt; signed net flux in measurement_type's unit"</span>
+    <span class="p">)</span>
+    <span class="n">net_flux_lower</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"reaction id -&gt; lower confidence bound of the fitted flux"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">net_flux_upper</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"reaction id -&gt; upper confidence bound of the fitted flux"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">confidence_level</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the level the bounds are stated at, as a fraction (e.g. 0.95); "</span>
+        <span class="s2">"None when the source does not say, which is then a typed gap"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">measurement_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what the numbers are, including the unit, e.g. "</span>
+        <span class="s2">"'c13_mfa_net_flux_mmol_per_gdcw_per_h'"</span>
+    <span class="p">)</span>
+    <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"independent labeling experiments the fit is over (one fit, so this "</span>
+        <span class="s2">"is a scalar, not a per-reaction count)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sample_unit</span><span class="p">:</span> <span class="n">SampleUnit</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"what one sample in n_samples is"</span>
+    <span class="p">)</span>
+    <span class="n">target_reaction_ids</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"reaction key -&gt; constraint-based-model reaction id for CBM linkage; "</span>
+        <span class="s2">"None until that mapping is decided"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_flux</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"FluxPhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Non-empty fluxes, finite values, bounds that key on and bracket the flux."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">net_flux</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"net_flux cannot be empty"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">net_flux</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"net_flux for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be finite"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"net_flux_lower"</span><span class="p">,</span> <span class="s2">"net_flux_upper"</span><span class="p">):</span>
+            <span class="n">mapping</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mapping</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">mapping</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">net_flux</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not in net_flux"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be finite"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">net_flux_lower</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">net_flux_upper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">net_flux_lower</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">net_flux_upper</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">net_flux_lower</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">net_flux_upper</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"net_flux bounds for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> are inverted: "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">net_flux_lower</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2"> &gt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">net_flux_upper</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">lower</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">net_flux_lower</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">lower</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">net_flux</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"net_flux_lower for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> exceeds the fitted flux "</span>
+                    <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">lower</span><span class="si">}</span><span class="s2"> &gt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">net_flux</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">upper</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">net_flux_upper</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">upper</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">net_flux</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"net_flux_upper for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is below the fitted flux "</span>
+                    <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">upper</span><span class="si">}</span><span class="s2"> &lt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">net_flux</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence_level</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"confidence_level is a fraction in (0, 1), got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">confidence_level</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"n_samples must be a positive integer, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Bacterial experiment families (plan 3b, 3c).</span>
+<span class="c1">#</span>
+<span class="c1"># Every pair below exists for ONE reason: pydantic v2 serializes a field by its</span>
+<span class="c1"># DECLARED type, so an ``AssemblyReferenceGenome`` in a slot annotated</span>
+<span class="c1"># ``ReferenceGenome`` dumps without its assembly pin. Each reference therefore</span>
+<span class="c1"># re-annotates ``genome_reference`` to the subclass. The existing yeast pairs CANNOT</span>
+<span class="c1"># be narrowed instead: their ``genome_reference`` admits a plain ``ReferenceGenome``</span>
+<span class="c1"># today and every served yeast record stores one, so narrowing the shared class would</span>
+<span class="c1"># invalidate all 51 of them.</span>
+<span class="c1">#</span>
+<span class="c1"># The three new phenotypes come first, then the families whose phenotype is REUSED</span>
+<span class="c1"># unchanged and which exist only to carry the pin. ``environment`` stays the shared</span>
+<span class="c1"># ``Environment`` throughout, so the cross-dataset medium-level aggregate still</span>
+<span class="c1"># forms across hosts.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProductTiterExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reference (parent-strain) context for a product-titer experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"product_titer"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">ProductTiterPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ProductTiterExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Experiment measuring how much product a strain made."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"product_titer"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">ProductTiterPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ProteinTurnoverExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reference (control) context for a protein-turnover experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"protein_turnover"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">ProteinTurnoverPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ProteinTurnoverExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Experiment measuring per-protein turnover rates."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"protein_turnover"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">ProteinTurnoverPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">FluxExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reference (parent-strain) context for a flux experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"flux"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">FluxPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">FluxExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Experiment measuring a fitted net-flux distribution."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"flux"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">FluxPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialFitnessExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Assembly-pinned reference for a bacterial fitness experiment.</span>
+
+<span class="sd">    Same ``FitnessPhenotype`` as the yeast family; the reference pins the assembly the</span>
+<span class="sd">    genotype's locus tags are written against.</span>
+<span class="sd">    """</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_fitness"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">FitnessPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialFitnessExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Bacterial fitness experiment (transposon, RB-TnSeq, CRISPRi, Keio growth)."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_fitness"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">FitnessPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialEnvironmentResponseExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Assembly-pinned reference for a bacterial environment-response experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_environment_response"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">EnvironmentResponsePhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialEnvironmentResponseExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A bacterial strain's response to an environmental perturbation."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_environment_response"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">EnvironmentResponsePhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialGeneInteractionExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Assembly-pinned reference for a bacterial gene-interaction experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_gene_interaction"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">GeneInteractionPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialGeneInteractionExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Bacterial gene-interaction experiment (double-mutant screens)."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_gene_interaction"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">GeneInteractionPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialGeneEssentialityExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Assembly-pinned reference for a bacterial gene-essentiality experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_gene_essentiality"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">GeneEssentialityPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialGeneEssentialityExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Bacterial gene-essentiality calls (e.g. a TraDIS essentiality classification)."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_gene_essentiality"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">GeneEssentialityPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialProteinAbundanceExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Assembly-pinned reference for a bacterial protein-abundance experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_protein_abundance"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">ProteinAbundancePhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialProteinAbundanceExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Bacterial proteome abundance experiment."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_protein_abundance"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">ProteinAbundancePhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialMetaboliteExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Assembly-pinned reference for a bacterial metabolite experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_metabolite"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">MetabolitePhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialMetaboliteExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Bacterial metabolome experiment."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_metabolite"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">MetabolitePhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialRNASeqExpressionExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Assembly-pinned reference for a bacterial RNA-seq expression experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_rnaseq_expression"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">RNASeqExpressionPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialRNASeqExpressionExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Bacterial transcriptome experiment (absolute TPM on the pinned assembly)."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_rnaseq_expression"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">RNASeqExpressionPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialVisualScoreExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Assembly-pinned reference for a bacterial visual-score experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_visual_score"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">VisualScorePhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialVisualScoreExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Bacterial visual-score experiment (a scored plate as a product proxy)."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_visual_score"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">VisualScorePhenotype</span>
+
+
 <span class="n">PhenotypeType</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Phenotype</span>
     <span class="o">|</span> <span class="n">FitnessPhenotype</span>
@@ -4807,6 +6064,9 @@
     <span class="o">|</span> <span class="n">MetabolitePhenotype</span>
     <span class="o">|</span> <span class="n">ProteinAbundancePhenotype</span>
     <span class="o">|</span> <span class="n">EnvironmentResponsePhenotype</span>
+    <span class="o">|</span> <span class="n">ProductTiterPhenotype</span>
+    <span class="o">|</span> <span class="n">ProteinTurnoverPhenotype</span>
+    <span class="o">|</span> <span class="n">FluxPhenotype</span>
 <span class="p">)</span>
 
 <span class="n">ExperimentType</span> <span class="o">=</span> <span class="p">(</span>
@@ -4826,6 +6086,17 @@
     <span class="o">|</span> <span class="n">EnvironmentResponseExperiment</span>
     <span class="o">|</span> <span class="n">StrainEnvironmentResponseExperiment</span>
     <span class="o">|</span> <span class="n">SegregantGrowthExperiment</span>
+    <span class="o">|</span> <span class="n">ProductTiterExperiment</span>
+    <span class="o">|</span> <span class="n">ProteinTurnoverExperiment</span>
+    <span class="o">|</span> <span class="n">FluxExperiment</span>
+    <span class="o">|</span> <span class="n">BacterialFitnessExperiment</span>
+    <span class="o">|</span> <span class="n">BacterialEnvironmentResponseExperiment</span>
+    <span class="o">|</span> <span class="n">BacterialGeneInteractionExperiment</span>
+    <span class="o">|</span> <span class="n">BacterialGeneEssentialityExperiment</span>
+    <span class="o">|</span> <span class="n">BacterialProteinAbundanceExperiment</span>
+    <span class="o">|</span> <span class="n">BacterialMetaboliteExperiment</span>
+    <span class="o">|</span> <span class="n">BacterialRNASeqExpressionExperiment</span>
+    <span class="o">|</span> <span class="n">BacterialVisualScoreExperiment</span>
 <span class="p">)</span>
 
 <span class="n">ExperimentReferenceType</span> <span class="o">=</span> <span class="p">(</span>
@@ -4845,6 +6116,17 @@
     <span class="o">|</span> <span class="n">EnvironmentResponseExperimentReference</span>
     <span class="o">|</span> <span class="n">StrainEnvironmentResponseExperimentReference</span>
     <span class="o">|</span> <span class="n">SegregantGrowthExperimentReference</span>
+    <span class="o">|</span> <span class="n">ProductTiterExperimentReference</span>
+    <span class="o">|</span> <span class="n">ProteinTurnoverExperimentReference</span>
+    <span class="o">|</span> <span class="n">FluxExperimentReference</span>
+    <span class="o">|</span> <span class="n">BacterialFitnessExperimentReference</span>
+    <span class="o">|</span> <span class="n">BacterialEnvironmentResponseExperimentReference</span>
+    <span class="o">|</span> <span class="n">BacterialGeneInteractionExperimentReference</span>
+    <span class="o">|</span> <span class="n">BacterialGeneEssentialityExperimentReference</span>
+    <span class="o">|</span> <span class="n">BacterialProteinAbundanceExperimentReference</span>
+    <span class="o">|</span> <span class="n">BacterialMetaboliteExperimentReference</span>
+    <span class="o">|</span> <span class="n">BacterialRNASeqExpressionExperimentReference</span>
+    <span class="o">|</span> <span class="n">BacterialVisualScoreExperimentReference</span>
 <span class="p">)</span>
 
 
@@ -4864,6 +6146,17 @@
     <span class="s2">"environment_response"</span><span class="p">:</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">,</span>
     <span class="s2">"strain_environment_response"</span><span class="p">:</span> <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">,</span>
     <span class="s2">"segregant_growth"</span><span class="p">:</span> <span class="n">SegregantGrowthExperiment</span><span class="p">,</span>
+    <span class="s2">"product_titer"</span><span class="p">:</span> <span class="n">ProductTiterExperiment</span><span class="p">,</span>
+    <span class="s2">"protein_turnover"</span><span class="p">:</span> <span class="n">ProteinTurnoverExperiment</span><span class="p">,</span>
+    <span class="s2">"flux"</span><span class="p">:</span> <span class="n">FluxExperiment</span><span class="p">,</span>
+    <span class="s2">"bacterial_fitness"</span><span class="p">:</span> <span class="n">BacterialFitnessExperiment</span><span class="p">,</span>
+    <span class="s2">"bacterial_environment_response"</span><span class="p">:</span> <span class="n">BacterialEnvironmentResponseExperiment</span><span class="p">,</span>
+    <span class="s2">"bacterial_gene_interaction"</span><span class="p">:</span> <span class="n">BacterialGeneInteractionExperiment</span><span class="p">,</span>
+    <span class="s2">"bacterial_gene_essentiality"</span><span class="p">:</span> <span class="n">BacterialGeneEssentialityExperiment</span><span class="p">,</span>
+    <span class="s2">"bacterial_protein_abundance"</span><span class="p">:</span> <span class="n">BacterialProteinAbundanceExperiment</span><span class="p">,</span>
+    <span class="s2">"bacterial_metabolite"</span><span class="p">:</span> <span class="n">BacterialMetaboliteExperiment</span><span class="p">,</span>
+    <span class="s2">"bacterial_rnaseq_expression"</span><span class="p">:</span> <span class="n">BacterialRNASeqExpressionExperiment</span><span class="p">,</span>
+    <span class="s2">"bacterial_visual_score"</span><span class="p">:</span> <span class="n">BacterialVisualScoreExperiment</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="n">EXPERIMENT_REFERENCE_TYPE_MAP</span> <span class="o">=</span> <span class="p">{</span>
@@ -4882,6 +6175,17 @@
     <span class="s2">"environment_response"</span><span class="p">:</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">,</span>
     <span class="s2">"strain_environment_response"</span><span class="p">:</span> <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">,</span>
     <span class="s2">"segregant_growth"</span><span class="p">:</span> <span class="n">SegregantGrowthExperimentReference</span><span class="p">,</span>
+    <span class="s2">"product_titer"</span><span class="p">:</span> <span class="n">ProductTiterExperimentReference</span><span class="p">,</span>
+    <span class="s2">"protein_turnover"</span><span class="p">:</span> <span class="n">ProteinTurnoverExperimentReference</span><span class="p">,</span>
+    <span class="s2">"flux"</span><span class="p">:</span> <span class="n">FluxExperimentReference</span><span class="p">,</span>
+    <span class="s2">"bacterial_fitness"</span><span class="p">:</span> <span class="n">BacterialFitnessExperimentReference</span><span class="p">,</span>
+    <span class="s2">"bacterial_environment_response"</span><span class="p">:</span> <span class="n">BacterialEnvironmentResponseExperimentReference</span><span class="p">,</span>
+    <span class="s2">"bacterial_gene_interaction"</span><span class="p">:</span> <span class="n">BacterialGeneInteractionExperimentReference</span><span class="p">,</span>
+    <span class="s2">"bacterial_gene_essentiality"</span><span class="p">:</span> <span class="n">BacterialGeneEssentialityExperimentReference</span><span class="p">,</span>
+    <span class="s2">"bacterial_protein_abundance"</span><span class="p">:</span> <span class="n">BacterialProteinAbundanceExperimentReference</span><span class="p">,</span>
+    <span class="s2">"bacterial_metabolite"</span><span class="p">:</span> <span class="n">BacterialMetaboliteExperimentReference</span><span class="p">,</span>
+    <span class="s2">"bacterial_rnaseq_expression"</span><span class="p">:</span> <span class="n">BacterialRNASeqExpressionExperimentReference</span><span class="p">,</span>
+    <span class="s2">"bacterial_visual_score"</span><span class="p">:</span> <span class="n">BacterialVisualScoreExperimentReference</span><span class="p">,</span>
 <span class="p">}</span>
 
 

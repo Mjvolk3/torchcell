@@ -1305,7 +1305,9 @@ def test_the_dev_build_holds_every_expected_record() -> None:
     try:
         assert env.stat()["entries"] == p.EXPECTED_RECORDS
         with env.begin() as txn:
-            first = pickle.loads(txn.get(b"0"))
+            payload: bytes | None = txn.get(b"0")
+        assert payload is not None, "record 0 is absent from the built LMDB"
+        first: dict[str, Any] = pickle.loads(payload)
     finally:
         env.close()
     experiment = first["experiment"]

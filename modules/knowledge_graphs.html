@@ -619,19 +619,22 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.bootstrap_package_version.html#torchcell.knowledge_graphs.release_snapshot.bootstrap_package_version" title="torchcell.knowledge_graphs.release_snapshot.bootstrap_package_version"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.bootstrap_package_version</span></code></a></p></td>
 <td><p>Fill the package version of a snapshot whose manifest predates the spine.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.snapshot_paths.html#torchcell.knowledge_graphs.release_snapshot.snapshot_paths" title="torchcell.knowledge_graphs.release_snapshot.snapshot_paths"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.snapshot_paths</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.pair_package_tag.html#torchcell.knowledge_graphs.release_snapshot.pair_package_tag" title="torchcell.knowledge_graphs.release_snapshot.pair_package_tag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.pair_package_tag</span></code></a></p></td>
+<td><p>The snapshot paired with package <code class="docutils literal notranslate"><span class="pre">tag</span></code>, cut after the build.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.snapshot_paths.html#torchcell.knowledge_graphs.release_snapshot.snapshot_paths" title="torchcell.knowledge_graphs.release_snapshot.snapshot_paths"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.snapshot_paths</span></code></a></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">(&lt;release&gt;.json,</span> <span class="pre">&lt;release&gt;.closures.json)</span></code> under <code class="docutils literal notranslate"><span class="pre">database/releases/</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.write_snapshot.html#torchcell.knowledge_graphs.release_snapshot.write_snapshot" title="torchcell.knowledge_graphs.release_snapshot.write_snapshot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.write_snapshot</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.write_snapshot.html#torchcell.knowledge_graphs.release_snapshot.write_snapshot" title="torchcell.knowledge_graphs.release_snapshot.write_snapshot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.write_snapshot</span></code></a></p></td>
 <td><p>Write the snapshot and its closures companion; returns the two paths.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.load_snapshot.html#torchcell.knowledge_graphs.release_snapshot.load_snapshot" title="torchcell.knowledge_graphs.release_snapshot.load_snapshot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.load_snapshot</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.load_snapshot.html#torchcell.knowledge_graphs.release_snapshot.load_snapshot" title="torchcell.knowledge_graphs.release_snapshot.load_snapshot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.load_snapshot</span></code></a></p></td>
 <td><p>Read one snapshot file.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.load_snapshots.html#torchcell.knowledge_graphs.release_snapshot.load_snapshots" title="torchcell.knowledge_graphs.release_snapshot.load_snapshots"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.load_snapshots</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.load_snapshots.html#torchcell.knowledge_graphs.release_snapshot.load_snapshots" title="torchcell.knowledge_graphs.release_snapshot.load_snapshots"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.load_snapshots</span></code></a></p></td>
 <td><p>Every committed snapshot, oldest build first (ties broken by release id).</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.load_closures.html#torchcell.knowledge_graphs.release_snapshot.load_closures" title="torchcell.knowledge_graphs.release_snapshot.load_closures"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.load_closures</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.release_snapshot.load_closures.html#torchcell.knowledge_graphs.release_snapshot.load_closures" title="torchcell.knowledge_graphs.release_snapshot.load_closures"><code class="xref py py-obj docutils literal notranslate"><span class="pre">release_snapshot.load_closures</span></code></a></p></td>
 <td><p>The per-dataset closure fingerprints committed beside <code class="docutils literal notranslate"><span class="pre">release</span></code>'s snapshot.</p></td>
 </tr>
 </tbody>
@@ -662,6 +665,9 @@
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.ReleaseCompatibility.html#torchcell.knowledge_graphs.releases.ReleaseCompatibility" title="torchcell.knowledge_graphs.releases.ReleaseCompatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.ReleaseCompatibility</span></code></a></p></td>
 <td><p>Whether the local schema surface matches the contracts a release was built under.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.IncompatibleReleaseError.html#torchcell.knowledge_graphs.releases.IncompatibleReleaseError" title="torchcell.knowledge_graphs.releases.IncompatibleReleaseError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.IncompatibleReleaseError</span></code></a></p></td>
+<td><p>A served release and the installed package are not a pair.</p></td>
 </tr>
 </tbody>
 </table>
@@ -721,25 +727,28 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.closure_compatibility.html#torchcell.knowledge_graphs.releases.closure_compatibility" title="torchcell.knowledge_graphs.releases.closure_compatibility"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.closure_compatibility</span></code></a></p></td>
 <td><p>The compatibility verdict from a release's closures and any schema surface.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.package_checkout.html#torchcell.knowledge_graphs.releases.package_checkout" title="torchcell.knowledge_graphs.releases.package_checkout"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.package_checkout</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.require_paired.html#torchcell.knowledge_graphs.releases.require_paired" title="torchcell.knowledge_graphs.releases.require_paired"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.require_paired</span></code></a></p></td>
+<td><p>The compatibility report, or <code class="xref py py-class docutils literal notranslate"><span class="pre">IncompatibleReleaseError</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.package_checkout.html#torchcell.knowledge_graphs.releases.package_checkout" title="torchcell.knowledge_graphs.releases.package_checkout"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.package_checkout</span></code></a></p></td>
 <td><p>The checkout this <code class="docutils literal notranslate"><span class="pre">torchcell</span></code> was imported from (the parent of the package).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.commit_index.html#torchcell.knowledge_graphs.releases.commit_index" title="torchcell.knowledge_graphs.releases.commit_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.commit_index</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.commit_index.html#torchcell.knowledge_graphs.releases.commit_index" title="torchcell.knowledge_graphs.releases.commit_index"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.commit_index</span></code></a></p></td>
 <td><p>Position of <code class="docutils literal notranslate"><span class="pre">sha</span></code> on linear main, <code class="docutils literal notranslate"><span class="pre">(off-main)</span></code>, or <code class="docutils literal notranslate"><span class="pre">(unknown)</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.commit_date.html#torchcell.knowledge_graphs.releases.commit_date" title="torchcell.knowledge_graphs.releases.commit_date"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.commit_date</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.commit_date.html#torchcell.knowledge_graphs.releases.commit_date" title="torchcell.knowledge_graphs.releases.commit_date"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.commit_date</span></code></a></p></td>
 <td><p>Committer date of <code class="docutils literal notranslate"><span class="pre">sha</span></code> as <code class="docutils literal notranslate"><span class="pre">YYYY.MM.DD</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.behind_main.html#torchcell.knowledge_graphs.releases.behind_main" title="torchcell.knowledge_graphs.releases.behind_main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.behind_main</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.behind_main.html#torchcell.knowledge_graphs.releases.behind_main" title="torchcell.knowledge_graphs.releases.behind_main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.behind_main</span></code></a></p></td>
 <td><p>How far a served commit lags local main.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.package_label.html#torchcell.knowledge_graphs.releases.package_label" title="torchcell.knowledge_graphs.releases.package_label"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.package_label</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.package_label.html#torchcell.knowledge_graphs.releases.package_label" title="torchcell.knowledge_graphs.releases.package_label"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.package_label</span></code></a></p></td>
 <td><p>The PKG cell: the tag when the build ran from one, else the version marked untagged.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.status_rows.html#torchcell.knowledge_graphs.releases.status_rows" title="torchcell.knowledge_graphs.releases.status_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.status_rows</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.status_rows.html#torchcell.knowledge_graphs.releases.status_rows" title="torchcell.knowledge_graphs.releases.status_rows"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.status_rows</span></code></a></p></td>
 <td><p>Table rows for one host: HOST DATABASE VERSION RELEASE PKG COMMIT# DATE DATASETS NODES ALIASES STATUS.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.format_table.html#torchcell.knowledge_graphs.releases.format_table" title="torchcell.knowledge_graphs.releases.format_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.format_table</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="../generated/torchcell.knowledge_graphs.releases.format_table.html#torchcell.knowledge_graphs.releases.format_table" title="torchcell.knowledge_graphs.releases.format_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">releases.format_table</span></code></a></p></td>
 <td><p>Fixed-width table with the header row.</p></td>
 </tr>
 </tbody>

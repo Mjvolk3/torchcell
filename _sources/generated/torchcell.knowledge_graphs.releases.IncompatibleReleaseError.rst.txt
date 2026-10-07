@@ -1,0 +1,8 @@
+﻿torchcell.knowledge\_graphs.releases.IncompatibleReleaseError
+=============================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autoclass:: IncompatibleReleaseError
+   :show-inheritance:
+   :members:

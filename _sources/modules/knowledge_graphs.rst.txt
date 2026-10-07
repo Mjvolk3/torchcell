@@ -261,6 +261,7 @@ Functions
    release_snapshot.composite_sha256
    release_snapshot.snapshot_from_manifest
    release_snapshot.bootstrap_package_version
+   release_snapshot.pair_package_tag
    release_snapshot.snapshot_paths
    release_snapshot.write_snapshot
    release_snapshot.load_snapshot
@@ -286,6 +287,7 @@ Classes
    releases.ReleaseDiff
    releases.DatasetDrift
    releases.ReleaseCompatibility
+   releases.IncompatibleReleaseError
 
 Functions
 ~~~~~~~~~
@@ -311,6 +313,7 @@ Functions
    releases.compatibility
    releases.compatibility_with_surface
    releases.closure_compatibility
+   releases.require_paired
    releases.package_checkout
    releases.commit_index
    releases.commit_date

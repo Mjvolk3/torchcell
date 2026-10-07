@@ -162,41 +162,10 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Run a small forward/backward pass to sanity-check the model."""</span>
-    <span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">set_detect_anomaly</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="c1"># Model configuration</span>
-    <span class="n">input_dim</span> <span class="o">=</span> <span class="mi">10</span>
-    <span class="n">output_dim</span> <span class="o">=</span> <span class="mi">8</span>  <span class="c1"># For the aggregated data</span>
-
-    <span class="n">model</span> <span class="o">=</span> <span class="n">SimpleLinearModel</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">)</span>
-
-    <span class="c1"># Dummy data</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">)</span>
-    <span class="n">batch</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="mi">20</span><span class="p">,),</span> <span class="n">i</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)])</span>
-
-    <span class="c1"># Forward pass</span>
-    <span class="n">x_set</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">x_set</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-
-    <span class="c1"># Let's assume you want to predict some values for each set.</span>
-    <span class="c1"># So, we'll create a dummy target tensor for demonstration purposes.</span>
-    <span class="n">target</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">)</span>
-
-    <span class="c1"># Simple mean squared error loss</span>
-    <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
-    <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">x_set</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Loss:"</span><span class="p">,</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
-
-    <span class="c1"># Backpropagation</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
-    <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Gradients computed successfully!"</span><span class="p">)</span>
-
-
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
-    <span class="n">main</span><span class="p">()</span>
+    <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span>
+        <span class="s2">"the demo main moved to torchcell/scratch/linear_demo.py on 2026-10-06"</span>
+    <span class="p">)</span>
 </pre></div>
 
            </div>

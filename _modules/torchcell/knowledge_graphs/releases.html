@@ -347,6 +347,8 @@
 
 
 
+<div class="viewcode-block" id="IncompatibleReleaseError">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.IncompatibleReleaseError.html#torchcell.knowledge_graphs.releases.IncompatibleReleaseError">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">IncompatibleReleaseError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""A served release and the installed package are not a pair.</span>
 
@@ -355,7 +357,8 @@
 <span class="sd">    no release node at all. A package version and a knowledge-graph release either</span>
 <span class="sd">    read every served record under the contract it was written with, or the client</span>
 <span class="sd">    refuses; there is no partial pair.</span>
-<span class="sd">    """</span>
+<span class="sd">    """</span></div>
+
 
 
 <span class="c1"># --------------------------------------------------------------------------- identity</span>
@@ -815,6 +818,8 @@
 
 
 
+<div class="viewcode-block" id="require_paired">
+<a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.require_paired.html#torchcell.knowledge_graphs.releases.require_paired">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">require_paired</span><span class="p">(</span>
     <span class="n">release</span><span class="p">:</span> <span class="n">KgRelease</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">,</span>
@@ -866,7 +871,8 @@
         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">release</span><span class="o">.</span><span class="n">n_datasets</span><span class="si">}</span><span class="s2"> served datasets. </span><span class="si">{</span><span class="n">remedy</span><span class="si">}</span><span class="s2"> or set "</span>
         <span class="s2">"TORCHCELL_KG_VERSION to a release built under the installed schema."</span>
     <span class="p">)</span>
-    <span class="k">raise</span> <span class="n">IncompatibleReleaseError</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
+    <span class="k">raise</span> <span class="n">IncompatibleReleaseError</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span></div>
+
 
 
 <span class="c1"># --------------------------------------------------------------------------- reporting</span>

@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.release\_snapshot.pair\_package\_tag
+================================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.release_snapshot
+
+.. autofunction:: pair_package_tag

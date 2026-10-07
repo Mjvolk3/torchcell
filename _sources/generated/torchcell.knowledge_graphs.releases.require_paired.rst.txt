@@ -1,0 +1,6 @@
+﻿torchcell.knowledge\_graphs.releases.require\_paired
+====================================================
+
+.. currentmodule:: torchcell.knowledge_graphs.releases
+
+.. autofunction:: require_paired

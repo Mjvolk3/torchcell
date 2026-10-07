@@ -189,7 +189,14 @@
     <span class="p">),</span>
     <span class="s2">"phenotype"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Phenotype"</span><span class="p">,),</span>
     <span class="s2">"experiment"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Experiment"</span><span class="p">,</span> <span class="s2">"ExperimentReference"</span><span class="p">),</span>
-    <span class="s2">"provenance"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"Publication"</span><span class="p">,</span> <span class="s2">"ProvenanceGapMixin"</span><span class="p">,</span> <span class="s2">"ReferenceGenome"</span><span class="p">,</span> <span class="s2">"SOTerm"</span><span class="p">),</span>
+    <span class="c1"># ArtifactRef: the sha256-pinned pointer from a record to off-graph bytes.</span>
+    <span class="s2">"provenance"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"Publication"</span><span class="p">,</span>
+        <span class="s2">"ProvenanceGapMixin"</span><span class="p">,</span>
+        <span class="s2">"ReferenceGenome"</span><span class="p">,</span>
+        <span class="s2">"SOTerm"</span><span class="p">,</span>
+        <span class="s2">"ArtifactRef"</span><span class="p">,</span>
+    <span class="p">),</span>
 <span class="p">}</span>
 
 <span class="n">LANE_TITLES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>

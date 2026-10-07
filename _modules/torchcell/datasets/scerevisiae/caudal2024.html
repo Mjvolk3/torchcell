@@ -200,6 +200,7 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SC</span><span class="p">,</span> <span class="n">restated</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ArtifactRef</span><span class="p">,</span>
     <span class="n">Environment</span><span class="p">,</span>
     <span class="n">Experiment</span><span class="p">,</span>
     <span class="n">ExperimentReference</span><span class="p">,</span>
@@ -243,14 +244,49 @@
     <span class="s2">"final_data_annotated_merged_04052022.tab.zip"</span>
 <span class="p">)</span>
 <span class="n">CAUDAL_ZIP_SHA256</span> <span class="o">=</span> <span class="s2">"8b55ccd76e1d19476d8f5f718e9e061cb9e4693e343965114dd4cd65d5f8d26b"</span>
+<span class="c1"># The tarball's sha256 and size are pinned by the genomes tier's manifest</span>
+<span class="c1"># (``$DATA_ROOT/torchcell-genomes/peter2018_1011_assemblies/manifest.json``), read through</span>
+<span class="c1"># ``refgene_tarball_ref``; the loader never restates a hash that manifest already pins.</span>
 <span class="n">REFGENE_TAR_NAME</span> <span class="o">=</span> <span class="s2">"allReferenceGenesWithSNPsAndIndelsInferred.tar.gz"</span>
-<span class="n">REFGENE_TAR_SHA256</span> <span class="o">=</span> <span class="s2">"b5400b89499fe84b1feada51abd7742c29838ae1f28c0cbd208b6622ca533f25"</span>
 <span class="n">PRESENCE_NAME</span> <span class="o">=</span> <span class="s2">"genesMatrix_PresenceAbsence.tab.gz"</span>
 <span class="n">COPYNUMBER_NAME</span> <span class="o">=</span> <span class="s2">"genesMatrix_CopyNumber.tab.gz"</span>
 <span class="n">SGD_FSA_NAME</span> <span class="o">=</span> <span class="s2">"S288C_reference_sequence_R64-4-1_20230830.fsa"</span>
 
 <span class="n">CAUDAL_ZIP_BASENAME</span> <span class="o">=</span> <span class="s2">"final_data_annotated_merged_04052022.tab.zip"</span>
 <span class="n">RAW_FILES</span> <span class="o">=</span> <span class="p">[</span><span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">,</span> <span class="n">REFGENE_TAR_NAME</span><span class="p">,</span> <span class="n">PRESENCE_NAME</span><span class="p">,</span> <span class="n">COPYNUMBER_NAME</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">refgene_tarball_ref</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArtifactRef</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The file-level ``ArtifactRef`` of the Peter reference-gene tarball.</span>
+
+<span class="sd">    ``tier="genomes"``, ``key=PETER2018_1011``, ``path=REFGENE_TAR_NAME``, with the sha256</span>
+<span class="sd">    and byte count read from that assembly set's manifest (no member: each perturbation</span>
+<span class="sd">    narrows it to ``&lt;gene&gt;.fasta#&lt;token&gt;`` with ``refgene_member_ref``). Raises</span>
+<span class="sd">    ``FileNotFoundError`` when the genomes tier holds no manifest for the set, and the</span>
+<span class="sd">    manifest's own error when it does not list the tarball.</span>
+<span class="sd">    """</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">load_genome_manifest</span><span class="p">(</span><span class="n">PETER2018_1011</span><span class="p">,</span> <span class="n">data_root</span><span class="p">)</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">REFGENE_TAR_NAME</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ArtifactRef</span><span class="p">(</span>
+        <span class="n">tier</span><span class="o">=</span><span class="s2">"genomes"</span><span class="p">,</span>
+        <span class="n">key</span><span class="o">=</span><span class="n">PETER2018_1011</span><span class="p">,</span>
+        <span class="n">path</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+        <span class="n">sha256</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span>
+        <span class="nb">bytes</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">refgene_member_ref</span><span class="p">(</span><span class="n">tarball</span><span class="p">:</span> <span class="n">ArtifactRef</span><span class="p">,</span> <span class="n">sys_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArtifactRef</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``tarball`` narrowed to one variant allele: member ``&lt;sys_name&gt;.fasta#&lt;token&gt;``."""</span>
+    <span class="k">return</span> <span class="n">ArtifactRef</span><span class="p">(</span>
+        <span class="n">tier</span><span class="o">=</span><span class="n">tarball</span><span class="o">.</span><span class="n">tier</span><span class="p">,</span>
+        <span class="n">key</span><span class="o">=</span><span class="n">tarball</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+        <span class="n">path</span><span class="o">=</span><span class="n">tarball</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+        <span class="n">member</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">sys_name</span><span class="si">}</span><span class="s2">.fasta#</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">sha256</span><span class="o">=</span><span class="n">tarball</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span>
+        <span class="nb">bytes</span><span class="o">=</span><span class="n">tarball</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span>
+        <span class="n">media_type</span><span class="o">=</span><span class="n">tarball</span><span class="o">.</span><span class="n">media_type</span><span class="p">,</span>
+    <span class="p">)</span>
+
 
 <span class="n">_ROMAN</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"I"</span><span class="p">,</span>
@@ -868,9 +904,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Symlink the hash-pinned mirror files into ``raw_dir`` and verify sha256.</span>
 
-<span class="sd">        Large artifacts are referenced in place (never copied). The two files with a</span>
-<span class="sd">        module pin (Caudal zip, Peter reference-gene tarball) are hash-verified here; the</span>
-<span class="sd">        presence/copy-number matrices are verified by the genomes tier on ``resolve``.</span>
+<span class="sd">        Large artifacts are referenced in place (never copied). The Caudal zip is</span>
+<span class="sd">        hash-verified here against its module pin; the three Peter files (reference-gene</span>
+<span class="sd">        tarball, presence and copy-number matrices) are verified by the genomes tier on</span>
+<span class="sd">        ``resolve`` against its manifest.</span>
 <span class="sd">        ``process`` re-verifies all four in ``raw/`` before reading them.</span>
 <span class="sd">        """</span>
         <span class="n">data_root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_root</span><span class="p">()</span>
@@ -882,10 +919,7 @@
             <span class="n">PRESENCE_NAME</span><span class="p">:</span> <span class="n">resolve</span><span class="p">(</span><span class="n">PETER2018_1011</span><span class="p">,</span> <span class="n">PRESENCE_NAME</span><span class="p">),</span>
             <span class="n">COPYNUMBER_NAME</span><span class="p">:</span> <span class="n">resolve</span><span class="p">(</span><span class="n">PETER2018_1011</span><span class="p">,</span> <span class="n">COPYNUMBER_NAME</span><span class="p">),</span>
         <span class="p">}</span>
-        <span class="n">sha256_expected</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">:</span> <span class="n">CAUDAL_ZIP_SHA256</span><span class="p">,</span>
-            <span class="n">REFGENE_TAR_NAME</span><span class="p">:</span> <span class="n">REFGENE_TAR_SHA256</span><span class="p">,</span>
-        <span class="p">}</span>
+        <span class="n">sha256_expected</span> <span class="o">=</span> <span class="p">{</span><span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">:</span> <span class="n">CAUDAL_ZIP_SHA256</span><span class="p">}</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">src</span> <span class="ow">in</span> <span class="n">sources</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">src</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"required raw artifact missing from mirror: </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -906,9 +940,9 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Build the 943 per-isolate pan-transcriptome experiments and write LMDB.</span>
 
-<span class="sd">        Every file in ``raw/`` is verified before a row is read: the Caudal zip and the</span>
-<span class="sd">        reference-gene tarball against this module's pins, the presence and copy-number</span>
-<span class="sd">        matrices against the genomes tier's manifest (the pin ``resolve`` checks in</span>
+<span class="sd">        Every file in ``raw/`` is verified before a row is read: the Caudal zip against</span>
+<span class="sd">        this module's pin, the reference-gene tarball and the presence and copy-number</span>
+<span class="sd">        matrices against the genomes tier's manifest (the pins ``resolve`` checks in</span>
 <span class="sd">        ``download``). A mismatch raises ``RawSha256MismatchError``.</span>
 <span class="sd">        """</span>
         <span class="n">data_root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_root</span><span class="p">()</span>
@@ -917,7 +951,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span>
             <span class="p">{</span>
                 <span class="n">CAUDAL_ZIP_BASENAME</span><span class="p">:</span> <span class="n">CAUDAL_ZIP_SHA256</span><span class="p">,</span>
-                <span class="n">REFGENE_TAR_NAME</span><span class="p">:</span> <span class="n">REFGENE_TAR_SHA256</span><span class="p">,</span>
+                <span class="n">REFGENE_TAR_NAME</span><span class="p">:</span> <span class="n">peter</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">REFGENE_TAR_NAME</span><span class="p">)</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span>
                 <span class="n">PRESENCE_NAME</span><span class="p">:</span> <span class="n">peter</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">PRESENCE_NAME</span><span class="p">)</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span>
                 <span class="n">COPYNUMBER_NAME</span><span class="p">:</span> <span class="n">peter</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">COPYNUMBER_NAME</span><span class="p">)</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span>
             <span class="p">},</span>
@@ -956,6 +990,7 @@
 
         <span class="c1"># 3. Sequence variants vs the S288C reference slice (heavy; resumable parquet).</span>
         <span class="n">variants_by_strain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_variants</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="nb">set</span><span class="p">(</span><span class="n">strains</span><span class="p">))</span>
+        <span class="n">tarball</span> <span class="o">=</span> <span class="n">refgene_tarball_ref</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
 
         <span class="c1"># 4. Shared population-mean phenotype reference (absolute TPM baseline).</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_reference_phenotype</span> <span class="o">=</span> <span class="n">RNASeqExpressionPhenotype</span><span class="p">(</span>
@@ -988,7 +1023,7 @@
                     <span class="n">s288c_names</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="n">seq_perts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sequence_perturbations</span><span class="p">(</span>
-                    <span class="n">strain</span><span class="p">,</span> <span class="n">variants_by_strain</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">strain</span><span class="p">,</span> <span class="p">[])</span>
+                    <span class="n">strain</span><span class="p">,</span> <span class="n">variants_by_strain</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">strain</span><span class="p">,</span> <span class="p">[]),</span> <span class="n">tarball</span>
                 <span class="p">)</span>
                 <span class="n">n_seq_total</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq_perts</span><span class="p">)</span>
                 <span class="n">n_cnv_acc_total</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">presence_perts</span><span class="p">)</span>
@@ -1167,9 +1202,13 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_sequence_perturbations</span><span class="p">(</span>
-        <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">variants</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span>
+        <span class="n">strain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">variants</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="n">tarball</span><span class="p">:</span> <span class="n">ArtifactRef</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SequenceVariantPerturbation</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Build the SequenceVariantPerturbations for one isolate."""</span>
+<span class="w">        </span><span class="sd">"""Build the SequenceVariantPerturbations for one isolate.</span>
+
+<span class="sd">        Each carries ``sequence_ref``: ``tarball`` (``refgene_tarball_ref``) narrowed to the</span>
+<span class="sd">        allele's member ``&lt;gene&gt;.fasta#&lt;header_token&gt;``.</span>
+<span class="sd">        """</span>
         <span class="n">perts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SequenceVariantPerturbation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">sys_name</span><span class="p">,</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">variants</span><span class="p">:</span>
             <span class="n">perts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -1178,8 +1217,7 @@
                     <span class="n">perturbed_gene_name</span><span class="o">=</span><span class="n">symbol</span> <span class="ow">or</span> <span class="n">sys_name</span><span class="p">,</span>
                     <span class="n">strain_id</span><span class="o">=</span><span class="n">strain</span><span class="p">,</span>
                     <span class="n">sequence_source</span><span class="o">=</span><span class="n">SEQUENCE_SOURCE</span><span class="p">,</span>
-                    <span class="n">sequence_uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">sys_name</span><span class="si">}</span><span class="s2">.fasta#</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-                    <span class="n">sequence_sha256</span><span class="o">=</span><span class="n">REFGENE_TAR_SHA256</span><span class="p">,</span>
+                    <span class="n">sequence_ref</span><span class="o">=</span><span class="n">refgene_member_ref</span><span class="p">(</span><span class="n">tarball</span><span class="p">,</span> <span class="n">sys_name</span><span class="p">,</span> <span class="n">token</span><span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">perts</span>

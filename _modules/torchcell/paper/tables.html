@@ -262,8 +262,8 @@
 
 <span class="sd">    This counts the stored PERTURBATION -- the edit that defines the genotype,</span>
 <span class="sd">    whether a single gene deletion or thousands of natural gene-presence entries</span>
-<span class="sd">    that amount to an entirely new genome (referenced by ``sequence_uri`` +</span>
-<span class="sd">    ``sequence_sha256``) -- alongside the environment and the measured phenotype.</span>
+<span class="sd">    that amount to an entirely new genome (referenced by ``sequence_ref``, an</span>
+<span class="sd">    ``ArtifactRef``) -- alongside the environment and the measured phenotype.</span>
 <span class="sd">    It never includes the shared reference genome (that lives external, as a</span>
 <span class="sd">    pointer, and is not stored per-instance); only each instance's delta from it.</span>
 <span class="sd">    Constant record metadata (experiment_type, dataset_name) compresses away.</span>

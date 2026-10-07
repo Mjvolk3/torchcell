@@ -226,7 +226,9 @@
     <span class="n">YPD</span><span class="p">,</span>
     <span class="n">YPD_ETHANOL</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.pydant</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelStrict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ArtifactRef</span><span class="p">,</span>
     <span class="n">AssayType</span><span class="p">,</span>
     <span class="n">Concentration</span><span class="p">,</span>
     <span class="n">ConcentrationUnit</span><span class="p">,</span>
@@ -261,6 +263,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneSet</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.registry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">PETER2018_1011</span><span class="p">,</span>
+    <span class="n">SGD_S288C_R64</span><span class="p">,</span>
     <span class="n">load_genome_manifest</span><span class="p">,</span>
     <span class="n">resolve</span><span class="p">,</span>
 <span class="p">)</span>
@@ -276,10 +279,12 @@
 <span class="n">CITATION_KEY</span> <span class="o">=</span> <span class="s2">"bloomRareVariantsContribute2019"</span>
 <span class="n">PAPER_DOI</span> <span class="o">=</span> <span class="s2">"10.7554/eLife.49212"</span>
 <span class="n">RAW_DIR_REL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"torchcell-raw/</span><span class="si">{</span><span class="n">CITATION_KEY</span><span class="si">}</span><span class="s2">"</span>
+<span class="c1"># Parent assemblies are ``ArtifactRef``s into the genomes tier; their sha256 and size</span>
+<span class="c1"># come from each assembly set's manifest (``ParentAssemblyRefs.from_tier``), never</span>
+<span class="c1"># restated here.</span>
 <span class="n">ASSEMBLY_TAR</span> <span class="o">=</span> <span class="s2">"1011Assemblies.tar.gz"</span>
-<span class="n">ASSEMBLY_TAR_SHA256</span> <span class="o">=</span> <span class="s2">"53540d095958ae8c32509c04485f0d2d0948069c7647f828698d611899a9b4da"</span>
 <span class="n">ASSEMBLY_INDEX</span> <span class="o">=</span> <span class="s2">"1011Assemblies.tar.gz.member_index.tsv"</span>
-<span class="n">S288C_ASSEMBLY</span> <span class="o">=</span> <span class="s2">"S288C_reference_genome_R64-4-1_20230830 (SGD; torchcell reference)"</span>
+<span class="n">S288C_ASSEMBLY_FSA</span> <span class="o">=</span> <span class="s2">"S288C_reference_sequence_R64-4-1_20230830.fsa"</span>
 
 <span class="n">DROPBOX_URL</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"https://www.dropbox.com/sh/jqm7a11zz9laytd/AABaE0EfQxLH6ounPhJ7yYWya?dl=1"</span>
@@ -893,28 +898,78 @@
     <span class="k">return</span> <span class="n">index</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">tier_file_ref</span><span class="p">(</span>
+    <span class="n">assembly_set</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArtifactRef</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""File-level ``ArtifactRef`` of one genomes-tier file, sha256 and bytes from its manifest."""</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">load_genome_manifest</span><span class="p">(</span><span class="n">assembly_set</span><span class="p">,</span> <span class="n">data_root</span><span class="p">)</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ArtifactRef</span><span class="p">(</span>
+        <span class="n">tier</span><span class="o">=</span><span class="s2">"genomes"</span><span class="p">,</span>
+        <span class="n">key</span><span class="o">=</span><span class="n">assembly_set</span><span class="p">,</span>
+        <span class="n">path</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+        <span class="n">sha256</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span>
+        <span class="nb">bytes</span><span class="o">=</span><span class="n">record</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ParentAssemblyRefs</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What ``build_parent`` pins a parent to: the 1011 tarball, its member index, S288C.</span>
+
+<span class="sd">    ``tarball`` is the file-level ref of ``1011Assemblies.tar.gz`` (a Peter parent narrows</span>
+<span class="sd">    it to its member through ``index``); ``s288c`` is the ref of the SGD R64-4-1 reference</span>
+<span class="sd">    sequence, which the S288C-derived BY parent points at.</span>
+<span class="sd">    """</span>
+
+    <span class="n">index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="n">tarball</span><span class="p">:</span> <span class="n">ArtifactRef</span>
+    <span class="n">s288c</span><span class="p">:</span> <span class="n">ArtifactRef</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_tier</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParentAssemblyRefs</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Read both refs from the genomes-tier manifests and the member index."""</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">read_assembly_index</span><span class="p">(</span>
+                <span class="n">resolve</span><span class="p">(</span><span class="n">PETER2018_1011</span><span class="p">,</span> <span class="n">ASSEMBLY_INDEX</span><span class="p">,</span> <span class="n">data_root</span><span class="o">=</span><span class="n">data_root</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">tarball</span><span class="o">=</span><span class="n">tier_file_ref</span><span class="p">(</span><span class="n">PETER2018_1011</span><span class="p">,</span> <span class="n">ASSEMBLY_TAR</span><span class="p">,</span> <span class="n">data_root</span><span class="p">),</span>
+            <span class="n">s288c</span><span class="o">=</span><span class="n">tier_file_ref</span><span class="p">(</span><span class="n">SGD_S288C_R64</span><span class="p">,</span> <span class="n">S288C_ASSEMBLY_FSA</span><span class="p">,</span> <span class="n">data_root</span><span class="p">),</span>
+        <span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">build_parent</span><span class="p">(</span>
-    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">genotype_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">genotype_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">assemblies</span><span class="p">:</span> <span class="n">ParentAssemblyRefs</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SegregantParent</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""A parent pinned to its assembly; a Peter id absent from the index raises."""</span>
+<span class="w">    </span><span class="sd">"""A parent pinned to its assembly; a Peter id absent from the index raises.</span>
+
+<span class="sd">    A Peter parent's ``assembly_ref`` is the 1011 tarball with member</span>
+<span class="sd">    ``&lt;index[peter]&gt;`` (the release's ``tarball::member`` form as one ref); BY's is the</span>
+<span class="sd">    S288C reference sequence file.</span>
+<span class="sd">    """</span>
     <span class="n">peter</span> <span class="o">=</span> <span class="n">PARENT_PETER_ID</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">peter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">SegregantParent</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
             <span class="n">peter_strain_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">assembly_member</span><span class="o">=</span><span class="n">S288C_ASSEMBLY</span><span class="p">,</span>
-            <span class="n">assembly_sha256</span><span class="o">=</span><span class="s2">"S288C reference (SGD R64-4-1); see ReferenceGenome"</span><span class="p">,</span>
+            <span class="n">assembly_ref</span><span class="o">=</span><span class="n">assemblies</span><span class="o">.</span><span class="n">s288c</span><span class="p">,</span>
             <span class="n">engineered_background</span><span class="o">=</span><span class="n">genotype_text</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="n">peter</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">index</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">peter</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">assemblies</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"parent </span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">: Peter id </span><span class="si">{</span><span class="n">peter</span><span class="si">}</span><span class="s2"> is not in the assembly member index"</span>
         <span class="p">)</span>
+    <span class="n">tarball</span> <span class="o">=</span> <span class="n">assemblies</span><span class="o">.</span><span class="n">tarball</span>
     <span class="k">return</span> <span class="n">SegregantParent</span><span class="p">(</span>
         <span class="n">name</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
         <span class="n">peter_strain_id</span><span class="o">=</span><span class="n">peter</span><span class="p">,</span>
-        <span class="n">assembly_member</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ASSEMBLY_TAR</span><span class="si">}</span><span class="s2">::</span><span class="si">{</span><span class="n">index</span><span class="p">[</span><span class="n">peter</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
-        <span class="n">assembly_sha256</span><span class="o">=</span><span class="n">ASSEMBLY_TAR_SHA256</span><span class="p">,</span>
+        <span class="n">assembly_ref</span><span class="o">=</span><span class="n">ArtifactRef</span><span class="p">(</span>
+            <span class="n">tier</span><span class="o">=</span><span class="n">tarball</span><span class="o">.</span><span class="n">tier</span><span class="p">,</span>
+            <span class="n">key</span><span class="o">=</span><span class="n">tarball</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+            <span class="n">path</span><span class="o">=</span><span class="n">tarball</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+            <span class="n">member</span><span class="o">=</span><span class="n">assemblies</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">peter</span><span class="p">],</span>
+            <span class="n">sha256</span><span class="o">=</span><span class="n">tarball</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span>
+            <span class="nb">bytes</span><span class="o">=</span><span class="n">tarball</span><span class="o">.</span><span class="n">bytes</span><span class="p">,</span>
+            <span class="n">media_type</span><span class="o">=</span><span class="n">tarball</span><span class="o">.</span><span class="n">media_type</span><span class="p">,</span>
+        <span class="p">),</span>
         <span class="n">engineered_background</span><span class="o">=</span><span class="n">genotype_text</span><span class="p">,</span>
     <span class="p">)</span>
 
@@ -1070,7 +1125,7 @@
 
     <span class="c1"># ---- genotypes ------------------------------------------------------------</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_iter_cross_genotypes</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">cross</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">info</span><span class="p">:</span> <span class="n">CrossInfo</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cross</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">info</span><span class="p">:</span> <span class="n">CrossInfo</span><span class="p">,</span> <span class="n">assemblies</span><span class="p">:</span> <span class="n">ParentAssemblyRefs</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SegregantGenotype</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">"""Stream one cross's matrix as int8, sort markers, and RLE every segregant."""</span>
         <span class="n">path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"genotype_</span><span class="si">{</span><span class="n">cross</span><span class="si">}</span><span class="s2">.tsv.gz"</span><span class="p">)</span>
@@ -1085,8 +1140,8 @@
                 <span class="sa">f</span><span class="s2">"genotype_</span><span class="si">{</span><span class="n">cross</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> segregants, expected </span><span class="si">{</span><span class="n">EXPECTED_SEGREGANTS</span><span class="p">[</span><span class="n">cross</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="n">matrix_sha</span> <span class="o">=</span> <span class="n">manifest_sha256</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_manifest</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"data/genotype_</span><span class="si">{</span><span class="n">cross</span><span class="si">}</span><span class="s2">.tsv.gz"</span><span class="p">)</span>
-        <span class="n">p1</span> <span class="o">=</span> <span class="n">build_parent</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">parent_1</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">parent_1_genotype</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
-        <span class="n">p2</span> <span class="o">=</span> <span class="n">build_parent</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">parent_2</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">parent_2_genotype</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span>
+        <span class="n">p1</span> <span class="o">=</span> <span class="n">build_parent</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">parent_1</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">parent_1_genotype</span><span class="p">,</span> <span class="n">assemblies</span><span class="p">)</span>
+        <span class="n">p2</span> <span class="o">=</span> <span class="n">build_parent</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">parent_2</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">parent_2_genotype</span><span class="p">,</span> <span class="n">assemblies</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_markers</span><span class="p">[</span><span class="n">cross</span><span class="p">]</span> <span class="o">=</span> <span class="n">markers</span>
         <span class="k">for</span> <span class="n">row_id</span><span class="p">,</span> <span class="n">calls</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">frame</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">),</span> <span class="n">values</span><span class="p">):</span>
             <span class="n">blocks</span> <span class="o">=</span> <span class="n">encode_blocks</span><span class="p">(</span><span class="n">calls</span><span class="p">,</span> <span class="n">markers</span><span class="p">)</span>
@@ -1127,17 +1182,9 @@
         <span class="n">info</span> <span class="o">=</span> <span class="n">read_cross_table</span><span class="p">(</span>
             <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">XLS_NAME</span><span class="p">),</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="n">README_NAME</span><span class="p">)</span>
         <span class="p">)</span>
-        <span class="c1"># The stored assembly_sha256 is a literal; the tier's manifest must pin the same</span>
-        <span class="c1"># tarball, so the stored records and the dereferenceable bytes cannot drift apart.</span>
-        <span class="n">tier_tar_sha256</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">load_genome_manifest</span><span class="p">(</span><span class="n">PETER2018_1011</span><span class="p">)</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">ASSEMBLY_TAR</span><span class="p">)</span><span class="o">.</span><span class="n">sha256</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">tier_tar_sha256</span> <span class="o">!=</span> <span class="n">ASSEMBLY_TAR_SHA256</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"genomes tier pins </span><span class="si">{</span><span class="n">ASSEMBLY_TAR</span><span class="si">}</span><span class="s2"> at </span><span class="si">{</span><span class="n">tier_tar_sha256</span><span class="si">}</span><span class="s2">; the stored "</span>
-                <span class="sa">f</span><span class="s2">"records pin </span><span class="si">{</span><span class="n">ASSEMBLY_TAR_SHA256</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span>
-        <span class="n">index</span> <span class="o">=</span> <span class="n">read_assembly_index</span><span class="p">(</span><span class="n">resolve</span><span class="p">(</span><span class="n">PETER2018_1011</span><span class="p">,</span> <span class="n">ASSEMBLY_INDEX</span><span class="p">))</span>
+        <span class="c1"># Parent assembly refs carry the sha256 the genomes-tier manifests pin, so the</span>
+        <span class="c1"># stored records and the dereferenceable bytes cannot drift apart.</span>
+        <span class="n">assemblies</span> <span class="o">=</span> <span class="n">ParentAssemblyRefs</span><span class="o">.</span><span class="n">from_tier</span><span class="p">()</span>
         <span class="c1"># round_trip: the stored value is the exact decimal the release prints, so the</span>
         <span class="c1"># verifier's re-read equals it bit for bit (the default parser can differ in</span>
         <span class="c1"># the last digit).</span>
@@ -1188,7 +1235,7 @@
             <span class="k">for</span> <span class="n">cross</span> <span class="ow">in</span> <span class="n">CROSSES</span><span class="p">:</span>
                 <span class="n">counts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
                 <span class="k">for</span> <span class="n">seg_id</span><span class="p">,</span> <span class="n">genotype</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_iter_cross_genotypes</span><span class="p">(</span><span class="n">cross</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="n">cross</span><span class="p">],</span> <span class="n">index</span><span class="p">),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_iter_cross_genotypes</span><span class="p">(</span><span class="n">cross</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="n">cross</span><span class="p">],</span> <span class="n">assemblies</span><span class="p">),</span>
                     <span class="n">total</span><span class="o">=</span><span class="n">EXPECTED_SEGREGANTS</span><span class="p">[</span><span class="n">cross</span><span class="p">],</span>
                     <span class="n">desc</span><span class="o">=</span><span class="sa">f</span><span class="s2">"cross </span><span class="si">{</span><span class="n">cross</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
                 <span class="p">):</span>

@@ -120,9 +120,10 @@
 <span class="sd">"""Pydantic data models for torchcell genotypes, environments, and phenotypes."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">posixpath</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Self</span><span class="p">,</span> <span class="n">get_args</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">field_validator</span><span class="p">,</span> <span class="n">model_validator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sortedcontainers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SortedDict</span>
@@ -133,6 +134,142 @@
 
 <span class="c1"># causes circular import</span>
 <span class="c1"># from torchcell.datasets.dataset_registry import dataset_registry</span>
+
+
+<span class="c1"># The artifact tiers an ``ArtifactRef`` can point into (see ``torchcell.artifacts``).</span>
+<span class="n">ArtifactTier</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"raw"</span><span class="p">,</span> <span class="s2">"genomes"</span><span class="p">,</span> <span class="s2">"library"</span><span class="p">,</span> <span class="s2">"objects"</span><span class="p">]</span>
+<span class="n">ARTIFACT_TIERS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_args</span><span class="p">(</span><span class="n">ArtifactTier</span><span class="p">)</span>
+<span class="n">ARTIFACT_URI_SCHEME</span> <span class="o">=</span> <span class="s2">"tc://"</span>
+<span class="n">ARTIFACT_MEMBER_SEPARATOR</span> <span class="o">=</span> <span class="s2">"#"</span>
+<span class="n">_ARTIFACT_SHA256</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[0-9a-f]</span><span class="si">{64}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ArtifactRef</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A sha256-pinned pointer to one file (and optionally a member) in an artifact tier.</span>
+
+<span class="sd">    The one pointer type from a graph record to bytes kept off the graph. A ref names a</span>
+<span class="sd">    file in one of the four artifact tiers (``raw``, ``genomes``, ``library``,</span>
+<span class="sd">    ``objects``) by its key directory and relative path, pins the file's bytes by sha256,</span>
+<span class="sd">    and optionally names a member inside the file (a tar member, a FASTA record token, an</span>
+<span class="sd">    h5ad obs name). The member never changes which bytes are pinned: ``sha256`` is always</span>
+<span class="sd">    the sha256 of the FILE at ``path``.</span>
+
+<span class="sd">    String form: ``tc://&lt;tier&gt;/&lt;key&gt;/&lt;path&gt;[#&lt;member&gt;]``. The string carries the location</span>
+<span class="sd">    only; the sha256 travels beside it (``ArtifactRef.parse(text, sha256=...)``), because a</span>
+<span class="sd">    location without a hash is not a ref. The member is everything after the FIRST ``#``,</span>
+<span class="sd">    so a member may itself contain ``#`` (Caudal's ``&lt;gene&gt;.fasta#&lt;token&gt;``) while a path</span>
+<span class="sd">    may not.</span>
+
+<span class="sd">    Defined here, on the schema surface, so its contract is fingerprinted with the record</span>
+<span class="sd">    classes that carry it; ``torchcell.artifacts.ref`` re-exports it with the resolver.</span>
+<span class="sd">    """</span>
+
+    <span class="n">tier</span><span class="p">:</span> <span class="n">ArtifactTier</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">member</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">sha256</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="nb">bytes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">media_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"sha256"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sha256_is_lowercase_hex</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_ARTIFACT_SHA256</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"sha256 must be 64 lowercase hex characters, got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"key"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_key_is_one_directory_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span> <span class="ow">or</span> <span class="s2">"/"</span> <span class="ow">in</span> <span class="n">value</span> <span class="ow">or</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="s2">".."</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"key must be one directory name, got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"_"</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"key </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2"> starts with '_', which names a service directory"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">ARTIFACT_MEMBER_SEPARATOR</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"key must not contain '#', got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"path"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_path_is_normalized_and_relative</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="s2">"."</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"path must name a file, got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"/"</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"path must be relative (no leading slash), got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">".."</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"path must not contain '..', got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ARTIFACT_MEMBER_SEPARATOR</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"path must not contain '#', got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">posixpath</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="n">value</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"path must be normalized, got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2"> "</span>
+                <span class="sa">f</span><span class="s2">"(normalized: </span><span class="si">{</span><span class="n">posixpath</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">!r}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"bytes"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_bytes_is_non_negative</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"bytes must be non-negative, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_member_requires_a_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">member</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">member</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"member must be a non-empty name inside the file at path"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``tc://&lt;tier&gt;/&lt;key&gt;/&lt;path&gt;[#&lt;member&gt;]``."""</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ARTIFACT_URI_SCHEME</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">tier</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">member</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">base</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base</span><span class="si">}{</span><span class="n">ARTIFACT_MEMBER_SEPARATOR</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">member</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">sha256</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="nb">bytes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">media_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build a ref from its string form plus the sha256 the string does not carry.</span>
+
+<span class="sd">        Raises ``ValueError`` when ``text`` is not ``tc://&lt;tier&gt;/&lt;key&gt;/&lt;path&gt;[#&lt;member&gt;]``</span>
+<span class="sd">        with a known tier; the field validators then apply as on direct construction.</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">ARTIFACT_URI_SCHEME</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">text</span><span class="si">!r}</span><span class="s2"> does not start with </span><span class="si">{</span><span class="n">ARTIFACT_URI_SCHEME</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">location</span><span class="p">,</span> <span class="n">sep</span><span class="p">,</span> <span class="n">member</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">ARTIFACT_URI_SCHEME</span><span class="p">)</span> <span class="p">:]</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span>
+            <span class="n">ARTIFACT_MEMBER_SEPARATOR</span>
+        <span class="p">)</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">location</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">text</span><span class="si">!r}</span><span class="s2"> is not tc://&lt;tier&gt;/&lt;key&gt;/&lt;path&gt;[#&lt;member&gt;]"</span><span class="p">)</span>
+        <span class="n">tier</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">parts</span>
+        <span class="k">if</span> <span class="n">tier</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ARTIFACT_TIERS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">text</span><span class="si">!r}</span><span class="s2">: unknown tier </span><span class="si">{</span><span class="n">tier</span><span class="si">!r}</span><span class="s2">; tiers are </span><span class="si">{</span><span class="n">ARTIFACT_TIERS</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">"tier"</span><span class="p">:</span> <span class="n">tier</span><span class="p">,</span>
+                <span class="s2">"key"</span><span class="p">:</span> <span class="n">key</span><span class="p">,</span>
+                <span class="s2">"path"</span><span class="p">:</span> <span class="n">path</span><span class="p">,</span>
+                <span class="s2">"member"</span><span class="p">:</span> <span class="n">member</span> <span class="k">if</span> <span class="n">sep</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="s2">"sha256"</span><span class="p">:</span> <span class="n">sha256</span><span class="p">,</span>
+                <span class="s2">"bytes"</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+                <span class="s2">"media_type"</span><span class="p">:</span> <span class="n">media_type</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
 
 
 <div class="viewcode-block" id="ProvenanceGapMixin">
@@ -795,7 +932,7 @@
 <span class="sd">    ``dSpCas9-RD1152``, ``dLbCas12a-VP``, ``dCas9-Mxi1``). ``guide_sequence`` is the short</span>
 <span class="sd">    spacer INLINED as the perturbation identity; it is nullable so a screen that identifies</span>
 <span class="sd">    only target genes (Mormino: spacers live upstream in the source library) can</span>
-<span class="sd">    scaffold-and-defer. ``effector_plasmid_uri``/``_sha256`` are off-graph pointers left</span>
+<span class="sd">    scaffold-and-defer. ``effector_plasmid_ref`` is an off-graph ``ArtifactRef`` left</span>
 <span class="sd">    ``None`` today ("field now, plasmid later") so upgrading to full-plasmid / SBOL capture</span>
 <span class="sd">    is a NON-breaking extension -- the record shape does not change when fidelity is upgraded.</span>
 <span class="sd">    Design: ``[[plan.torchcell-crispr-expression-perturbation.2026.07.12]]``.</span>
@@ -823,31 +960,12 @@
         <span class="s2">"fitness), not one, so the pool joins the strain identity. None when a study has a "</span>
         <span class="s2">"single library (Lian, Mormino) -- a NON-breaking default."</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">effector_plasmid_uri</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">effector_plasmid_ref</span><span class="p">:</span> <span class="n">ArtifactRef</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"off-graph pointer into a plasmid/SBOL store for the full effector+guide "</span>
-        <span class="s2">"cassette (future full-plasmid capture; None today)"</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">effector_plasmid_sha256</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"sha256 of the source file the effector plasmid sequence comes from"</span><span class="p">,</span>
-    <span class="p">)</span>
-
-<div class="viewcode-block" id="CrisprConstruct.validate_plasmid_pointer">
-<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.CrisprConstruct.html#torchcell.datamodels.schema.CrisprConstruct.validate_plasmid_pointer">[docs]</a>
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">validate_plasmid_pointer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"CrisprConstruct"</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""A plasmid URI must carry its sha256 (mirror the ORF sequence-pointer invariant)."""</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">effector_plasmid_uri</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">effector_plasmid_sha256</span> <span class="ow">is</span> <span class="kc">None</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"effector_plasmid_uri requires effector_plasmid_sha256 (a pointer must be "</span>
-                <span class="s2">"content-addressed)"</span>
-            <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span></div>
-</div>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"sha256-pinned ArtifactRef to the full effector+guide cassette in a "</span>
+        <span class="s2">"plasmid/SBOL store (future full-plasmid capture; None today). The ref carries "</span>
+        <span class="s2">"the file's sha256 itself."</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 
 
@@ -1475,7 +1593,7 @@
 <span class="sd">    mis-use of ``CopyNumberVariantPerturbation`` (copy_number 0) for absence -- CNV is</span>
 <span class="sd">    now reserved for dosage of a PRESENT gene. The gene id may be a pangenome/accessory</span>
 <span class="sd">    id, so the native-name validator is relaxed (as for ``GeneAddition``). Sequence, when</span>
-<span class="sd">    known, is an off-graph pointer (``sequence_uri`` + ``sequence_sha256``), never inlined.</span>
+<span class="sd">    known, is an off-graph ``ArtifactRef`` (``sequence_ref``), never inlined.</span>
 <span class="sd">    """</span>
 
     <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"Natural absence of a reference gene in an isolate vs S288C"</span>
@@ -1492,11 +1610,10 @@
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"off-graph store key / citation for the reference gene"</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">sequence_uri</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"pointer into the gene-keyed sequence store"</span>
-    <span class="p">)</span>
-    <span class="n">sequence_sha256</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"sha256 of the source file the sequence comes from"</span>
+    <span class="n">sequence_ref</span><span class="p">:</span> <span class="n">ArtifactRef</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"sha256-pinned ArtifactRef to the reference gene sequence in an "</span>
+        <span class="s2">"artifact tier (file + member); None when no store holds it"</span><span class="p">,</span>
     <span class="p">)</span>
 
 <div class="viewcode-block" id="NaturalGeneAbsencePerturbation.validate_sys_gene_name">
@@ -1565,12 +1682,10 @@
     <span class="n">sequence_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"off-graph store key / citation for the ORF sequence"</span>
     <span class="p">)</span>
-    <span class="n">sequence_uri</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"pointer into the pangenome ORF sequence store"</span>
-    <span class="p">)</span>
-    <span class="n">sequence_sha256</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">sequence_ref</span><span class="p">:</span> <span class="n">ArtifactRef</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"sha256 of the source file the ORF sequence comes from"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"sha256-pinned ArtifactRef to the ORF sequence in an artifact tier "</span>
+        <span class="s2">"(file + member); None when no store holds it"</span><span class="p">,</span>
     <span class="p">)</span>
 
 <div class="viewcode-block" id="NaturalGenePresencePerturbation.validate_sys_gene_name">
@@ -1597,8 +1712,8 @@
 <span class="sd">    substitution description): this points at the strain's ACTUAL variant allele. The base</span>
 <span class="sd">    systematic-name validator applies -- these are real S. cerevisiae reference genes</span>
 <span class="sd">    (``YAL001C`` ...). The sequence is NEVER inlined: ``sequence_source`` + ``strain_id`` +</span>
-<span class="sd">    ``sequence_uri`` identify the record in the off-graph gene-keyed store (dereferenced at</span>
-<span class="sd">    load, ``sequence_sha256``-verified), mirroring the ``GeneAddition`` pointer pattern.</span>
+<span class="sd">    ``sequence_ref`` identify the record in the off-graph gene-keyed store (an</span>
+<span class="sd">    ``ArtifactRef``, dereferenced at load and verified by its sha256), mirroring the ``GeneAddition`` pointer pattern.</span>
 
 <span class="sd">    Naming follows population-genomics usage (sequence variant = SNP + indel), NOT the</span>
 <span class="sd">    phylogenetic "gene gain/loss" vocabulary (which asserts a lineage polarity a pairwise</span>
@@ -1625,16 +1740,13 @@
             <span class="s2">"'peterGenomeEvolution10112018'; None until the store lands"</span>
         <span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">sequence_uri</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">sequence_ref</span><span class="p">:</span> <span class="n">ArtifactRef</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">"pointer into the gene-keyed sequence store (e.g. "</span>
-            <span class="s2">"'&lt;gene&gt;.fasta#&lt;strain_header&gt;'); None until that store lands"</span>
+            <span class="s2">"sha256-pinned ArtifactRef to the variant allele in an artifact tier, e.g. "</span>
+            <span class="s2">"tc://genomes/peter2018_1011_assemblies/&lt;tarball&gt;#&lt;gene&gt;.fasta#&lt;token&gt;; "</span>
+            <span class="s2">"None until a store holds it"</span>
         <span class="p">),</span>
-    <span class="p">)</span>
-    <span class="n">sequence_sha256</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"sha256 of the source file the variant sequence is dereferenced from"</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -1709,12 +1821,10 @@
     <span class="n">sequence_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"off-graph store key / citation for the ORF sequence"</span>
     <span class="p">)</span>
-    <span class="n">sequence_uri</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"pointer into the pangenome ORF sequence store"</span>
-    <span class="p">)</span>
-    <span class="n">sequence_sha256</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">sequence_ref</span><span class="p">:</span> <span class="n">ArtifactRef</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"sha256 of the source file the ORF sequence comes from"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"sha256-pinned ArtifactRef to the ORF sequence in an artifact tier "</span>
+        <span class="s2">"(file + member); None when no store holds it"</span><span class="p">,</span>
     <span class="p">)</span>
 
 <div class="viewcode-block" id="CopyNumberVariantPerturbation.validate_sys_gene_name">
@@ -4597,16 +4707,16 @@
 
 <span class="sd">    ``name`` is the source's label verbatim (e.g. ``BYa``, ``RMx``); ``peter_strain_id``</span>
 <span class="sd">    is the 1011-collection (Peter 2018) strain id when the parent is one of those</span>
-<span class="sd">    isolates (None for the S288C-derived BY); ``assembly_member`` names the assembly</span>
-<span class="sd">    file (a member path inside the pinned 1011 assemblies tarball, or the S288C</span>
-<span class="sd">    reference) and ``assembly_sha256`` the pinned container; ``engineered_background``</span>
-<span class="sd">    is the parent's marker/deletion genotype as the source states it, verbatim.</span>
+<span class="sd">    isolates (None for the S288C-derived BY); ``assembly_ref`` is the sha256-pinned</span>
+<span class="sd">    ``ArtifactRef`` to the parent's assembly (the 1011 assemblies tarball in the genomes</span>
+<span class="sd">    tier with the isolate's member path, or the S288C reference sequence file of the SGD</span>
+<span class="sd">    assembly set for BY); ``engineered_background`` is the parent's marker/deletion</span>
+<span class="sd">    genotype as the source states it, verbatim.</span>
 <span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">peter_strain_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">assembly_member</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">assembly_sha256</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">assembly_ref</span><span class="p">:</span> <span class="n">ArtifactRef</span>
     <span class="n">engineered_background</span><span class="p">:</span> <span class="nb">str</span></div>
 
 

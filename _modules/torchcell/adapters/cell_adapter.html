@@ -1071,6 +1071,9 @@
         <span class="n">construct_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">construct</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
         <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="c1"># The plasmid ArtifactRef is projected flat, as a node property can hold only</span>
+        <span class="c1"># scalars: its tc:// location string and the sha256 it pins (both None today).</span>
+        <span class="n">plasmid</span> <span class="o">=</span> <span class="n">construct</span><span class="o">.</span><span class="n">effector_plasmid_ref</span>
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
             <span class="n">node_id</span><span class="o">=</span><span class="n">construct_id</span><span class="p">,</span>
             <span class="n">preferred_id</span><span class="o">=</span><span class="s2">"crispr construct"</span><span class="p">,</span>
@@ -1080,8 +1083,8 @@
                 <span class="s2">"guide_sequence"</span><span class="p">:</span> <span class="n">construct</span><span class="o">.</span><span class="n">guide_sequence</span><span class="p">,</span>
                 <span class="s2">"n_guides"</span><span class="p">:</span> <span class="n">construct</span><span class="o">.</span><span class="n">n_guides</span><span class="p">,</span>
                 <span class="s2">"library_pool"</span><span class="p">:</span> <span class="n">construct</span><span class="o">.</span><span class="n">library_pool</span><span class="p">,</span>
-                <span class="s2">"effector_plasmid_uri"</span><span class="p">:</span> <span class="n">construct</span><span class="o">.</span><span class="n">effector_plasmid_uri</span><span class="p">,</span>
-                <span class="s2">"effector_plasmid_sha256"</span><span class="p">:</span> <span class="n">construct</span><span class="o">.</span><span class="n">effector_plasmid_sha256</span><span class="p">,</span>
+                <span class="s2">"effector_plasmid_ref"</span><span class="p">:</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">plasmid</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">plasmid</span><span class="p">),</span>
+                <span class="s2">"effector_plasmid_sha256"</span><span class="p">:</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">plasmid</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">plasmid</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span>
             <span class="p">},</span>
         <span class="p">)</span>
 

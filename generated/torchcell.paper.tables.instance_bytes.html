@@ -129,8 +129,8 @@
 <dd><p>Serialize the full stored INSTANCE (perturbation + environment + phenotype).</p>
 <p>This counts the stored PERTURBATION – the edit that defines the genotype,
 whether a single gene deletion or thousands of natural gene-presence entries
-that amount to an entirely new genome (referenced by <code class="docutils literal notranslate"><span class="pre">sequence_uri</span></code> +
-<code class="docutils literal notranslate"><span class="pre">sequence_sha256</span></code>) – alongside the environment and the measured phenotype.
+that amount to an entirely new genome (referenced by <code class="docutils literal notranslate"><span class="pre">sequence_ref</span></code>, an
+<code class="docutils literal notranslate"><span class="pre">ArtifactRef</span></code>) – alongside the environment and the measured phenotype.
 It never includes the shared reference genome (that lives external, as a
 pointer, and is not stored per-instance); only each instance’s delta from it.
 Constant record metadata (experiment_type, dataset_name) compresses away.</p>

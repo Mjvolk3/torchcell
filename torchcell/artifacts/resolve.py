@@ -58,6 +58,14 @@ class ArtifactUnresolvableError(LookupError):
     """No source holds the ref; the message names every source tried and why."""
 
 
+class RemoteEndpointError(RuntimeError):
+    """tc-data answered a remote lookup with a status that is neither a hit nor a miss.
+
+    Raised instead of the HTTP library's own exception so callers match one type
+    whatever transport the client is built on; a 404 is a ``RemoteMissError``.
+    """
+
+
 class ArtifactIntegrityError(RuntimeError):
     """A manifest or the bytes disagree with the sha256 (or size) the ref pins."""
 
@@ -138,7 +146,8 @@ class TcDataSource:
         response = self._http.get(url, headers=self._headers)
         if response.status_code == 404:
             raise RemoteMissError(f"{url}: HTTP 404")
-        response.raise_for_status()
+        if response.status_code >= 400:
+            raise RemoteEndpointError(f"{url}: HTTP {response.status_code}")
         if tier == "genomes":
             return GenomeManifest.model_validate_json(response.content)
         return Manifest.model_validate_json(response.content)
@@ -151,10 +160,8 @@ class TcDataSource:
             if response.status_code == 404:
                 raise RemoteMissError(f"{url}: HTTP 404")
             if response.status_code != 200:
-                raise httpx.HTTPStatusError(
-                    f"{url}: expected HTTP 200, got {response.status_code}",
-                    request=response.request,
-                    response=response,
+                raise RemoteEndpointError(
+                    f"{url}: expected HTTP 200, got {response.status_code}"
                 )
             with dest.open("wb") as handle:
                 for chunk in response.iter_bytes(CHUNK):

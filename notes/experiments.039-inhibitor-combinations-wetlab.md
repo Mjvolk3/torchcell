@@ -72,7 +72,7 @@ the run.
 Only ex26 was processed by the Bioscreen software (`MV_ex26_..._Traits.txt`, 48 of 200
 wells grew). `results/ex26_isobole.csv`.
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex26_isobole_furfural_acetic_acid_2026-10-07-15-37-19.svgEX26)
+![](assets/images/039-inhibitor-combinations-wetlab/ex26_isobole_furfural_acetic_acid_2026-10-07-15-37-19.svg)
 
 For ex27 and ex28 the generation time is derived here from the raw curves
 (`generation_time` in the script: baseline-subtracted OD, growth if the rise is at least

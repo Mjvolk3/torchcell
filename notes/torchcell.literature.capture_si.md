@@ -69,7 +69,7 @@ A `manual` key is the "manual-once, deposit, reproducible via the mirror" case o
 
 ### Validation on 2026-10-07
 
-- Dry run over the two collections against the real mirror: 50 `no_mirror_dir` (the paper sync had not captured any of them yet).
+- Dry run over the two collections against the real mirror: 50 `no_mirror_dir` at 09:06 UTC (the paper sync had not captured any of them yet), then 7 `would_capture` and 43 `no_mirror_dir` at 09:18 UTC once the bacterial sync had mirrored its first keys; the 7 resolved exactly as on the stub keys (pmc_cloud 6, elsevier 1, 84 files).
 - Dry run over stub keys for the same 50 DOIs (scratch mirror holding only a manifest per key): 46 `would_capture` (pmc_cloud 37, elsevier 7, springer 2; 377 files, about 726 MB through the PMC route alone), 4 `manual`.
 - Dry run on mirrored yeast keys: `kemmerenLargeScaleGeneticPerturbations2014` elsevier 5, `ohnukiHighdimensionalSinglecellPhenotyping2018` pmc_cloud 30, `sameithHighresolutionGeneExpression2015` springer 4, `oduibhirCellCyclePopulation2014` pmc_cloud 17, `mullederFunctionalMetabolomicsDescribes2016` pmc_cloud 4, `caudalPantranscriptomeRevealsLarge2024` present (SI from the issue #598 script).
 - One real capture into a scratch copy of `sameithHighresolutionGeneExpression2015`: four files written as `si/si1.xlsx` to `si/si4.xlsx`, each record verified by `verify_artifact` and re-fetched to a matching sha256 by `check_source`; a second run was `present` with no download. The real mirror's manifest was unchanged (same sha256 before and after).

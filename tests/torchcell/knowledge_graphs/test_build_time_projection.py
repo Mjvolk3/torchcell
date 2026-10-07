@@ -481,6 +481,7 @@ def test_dataset_sizes_cover_the_same_datasets_as_the_adapter_map() -> None:
 BACTERIAL_DATASETS = {
     "CarbonSourceTong2020Dataset",
     "CrispriArrayYunus2026Dataset",
+    "CrispriKnockdownCui2018Dataset",
     "CrispriKnockdownYunus2026Dataset",
     "EnvChemgenWang2015Dataset",
     "GeneEssentialityGoodall2018Dataset",

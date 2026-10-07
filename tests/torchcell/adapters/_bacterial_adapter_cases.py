@@ -55,6 +55,7 @@ from tests.torchcell.adapters._adapter_init_harness import (
 from torchcell.adapters import (
     CarbonSourceTong2020Adapter,
     CrispriArrayYunus2026Adapter,
+    CrispriKnockdownCui2018Adapter,
     CrispriKnockdownYunus2026Adapter,
     EnvChemgenWang2015Adapter,
     GeneEssentialityGoodall2018Adapter,
@@ -82,6 +83,7 @@ from torchcell.datasets.ecoli.caglar2017 import (
     ProteomeCaglar2017Dataset,
     RnaseqCaglar2017Dataset,
 )
+from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
@@ -168,8 +170,8 @@ TURNOVER = "protein turnover phenotype"
 # for the two RB-TnSeq stores rebuilding at the time, read off `build_genotype` /
 # `build_environment` in the loader). Caglar 2017 is a wild-type panel with no
 # perturbation in any record; Fuhrer 2017 and Goodall 2018 carry no environment
-# perturbation; the CRISPRi leaves of Carruthers, Menasalvas and Yunus carry a
-# CrisprConstruct.
+# perturbation; the CRISPRi leaves of Carruthers, Cui, Menasalvas and Yunus
+# carry a CrisprConstruct.
 BACTERIAL: list[Bacterial] = [
     _case(
         RnaseqCaglar2017Adapter,
@@ -186,6 +188,14 @@ BACTERIAL: list[Bacterial] = [
         ProteomeCaglar2017Dataset,
         PROTEOME,
         perturbation=False,
+    ),
+    _case(
+        CrispriKnockdownCui2018Adapter,
+        "cui2018",
+        "crispri_knockdown_cui2018",
+        CrispriKnockdownCui2018Dataset,
+        RESPONSE,
+        crispr=True,
     ),
     _case(
         MetabolomeFuhrer2017Adapter,

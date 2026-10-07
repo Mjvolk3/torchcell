@@ -36,6 +36,9 @@ from .costanzo2016_adapter import SmfCostanzo2016Adapter as SmfCostanzo2016Adapt
 from .costanzo2021_adapter import (
     EnvChemgenCostanzo2021Adapter as EnvChemgenCostanzo2021Adapter,
 )
+from .cui2018_adapter import (
+    CrispriKnockdownCui2018Adapter as CrispriKnockdownCui2018Adapter,
+)
 from .dasilveira2014_adapter import (
     MetaboliteDaSilveira2014Adapter as MetaboliteDaSilveira2014Adapter,
 )
@@ -246,6 +249,7 @@ baryshnikova_adapters = ["SmfBaryshnikova2010Adapter"]
 ecoli_adapters = [
     "RnaseqCaglar2017Adapter",
     "ProteomeCaglar2017Adapter",
+    "CrispriKnockdownCui2018Adapter",
     "MetabolomeFuhrer2017Adapter",
     "GeneEssentialityGoodall2018Adapter",
     "ProteinTurnoverGupta2024Adapter",

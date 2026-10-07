@@ -376,3 +376,54 @@ record identity -- `screen_id` and the strain background differ, and `pair_uniqu
 computed per dataset -- but it would make the two datasets' guides joinable, which is
 worth knowing before anyone treats them as independent samples of guide space. The two
 guide sets have NOT been compared here; doing so needs Rousset's released guide list.
+
+## 2026.10.07 - The BioCypher adapter and its enable-list
+
+`torchcell/adapters/cui2018_adapter.py` serves `CrispriKnockdownCui2018Dataset` as
+`CrispriKnockdownCui2018Adapter`, with the enable-list in
+`torchcell/adapters/conf/crispri_knockdown_cui2018_adapter.yaml`. The conf name is the
+loader's root slug, `crispri_knockdown_cui2018`, which
+`test_each_conf_is_named_after_the_dataset_root_slug` pins, and the module names exactly
+one conf yaml so `kg_manifest`'s `_adapter_conf_name` regex resolves this dataset to its
+own file (issue #743). Registered in `dataset_adapter_map`, re-exported from
+`torchcell/adapters/__init__.py`, and listed in `kg_bacteria.yaml`, which takes the
+bacterial rehearsal from 20 datasets to 21.
+
+### The enable-list, one line of why per family
+
+Measured on record 0, record 70,771 and record 141,541 of the dev store at
+`$DATA_ROOT/data/torchcell/crispri_knockdown_cui2018` (141,542 records,
+`build_manifest.json` fresh), not assumed from the loader:
+
+| family | on | why |
+|---|---|---|
+| `bacterial perturbation` | yes | every genotype carries `BacterialCrisprInterferencePerturbation` leaves, which belong to the bacterial class, never the served yeast `perturbation` class |
+| `crispr construct` | yes | each leaf carries the record's one `CrisprConstruct` (dCas9, the 20-nt spacer, `n_guides=1`), so the construct is a node and `crispr construct to perturbation` links it |
+| `environment perturbation` | yes | the environment carries one `SmallMoleculePerturbation`, the 1 nM anhydrotetracycline that induces dCas9, on the experiment AND on the reference, so both the chunked method and the reference method are on |
+| `environment response phenotype` | yes | the phenotype is `EnvironmentResponsePhenotype` (`measurement_type=log2_ratio`, `assay_type=pooled_competitive_growth_barcode`), the only phenotype method this dataset may enable |
+| `media` + `temperature` | yes | LB Miller liquid at 37 C on both sides of the record |
+| `publication` | yes | PMID 29765036 rides on every record |
+| `segregant genotype`, `phage perturbation`, `perturbation` | no | the records carry none of them, and the yeast `perturbation` class would put bacterial leaves under served `MATCH (:Perturbation)` queries |
+
+Every node class the conf can write is declared in
+`biocypher/config/torchcell_schema_config.yaml` (BioCypher drops an undeclared class
+silently), checked through the admission gate's own `dataset_conf_methods` by
+`test_conf_methods_are_registered_and_their_classes_declared`. The converse holds too:
+`assert_dev_store_graph` runs the adapter over the first 200 records of the dev store the
+way the build runs it and asserts that every optional family the conf leaves OFF emits
+nothing, so the enable-list drops nothing the records carry.
+
+### Admission check (recorded, not acted on)
+
+`python -m torchcell.knowledge_graphs.kg_manifest --manifest
+/scratch/projects/torchcell/database/kg_manifest.json admit --dataset
+CrispriKnockdownCui2018Dataset --data-root /scratch/projects/torchcell-scratch`, no
+`--neo4j-uri` because the dataset is not served, reports BLOCKED by exactly the four
+store-wide reasons the 20 landed bacterial adapters hit
+([[plan.bacteria-ontology-genome]]): 11 served datasets whose schema closure changed, the
+served `crispr construct` graph class changed, plumbing drift on
+`_crispr_construct_node_from`, and the value surface (`compound_identity.py`,
+`compound_identity_table.json`, `media.py`). None of those files is touched here. Every
+dataset-specific check passes: dev LMDB `fresh`, in `dataset_adapter_map`, no undeclared
+phenotype method, not served. So this dataset enters the full rebuild, not the
+incremental path.

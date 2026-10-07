@@ -59,7 +59,7 @@ THE IDENTIFIER ROUTE IS TWO LAYERS, BOTH MEASURED. The release keys on UniProt e
 (``sp|A5A614|YCIZ_ECOLI``) plus a gene-name column, neither of which is a locus tag.
 
 1. The pinned GenBank assembly carries UniProt accessions itself, as
-   ``/db_xref="UniProtKB/Swiss-Prot:<acc>"`` on its CDS features (4,281 accessions, none
+   ``/db_xref="UniProtKB/Swiss-Prot:<acc>"`` on its CDS features (4,275 accessions, none
    mapping to two loci). 3,225 of the 3,262 released accessions resolve through it.
 2. The remaining rows go through ``reconcile_locus_tags`` on the released gene name,
    which the genome resolves at its symbol and synonym layers.

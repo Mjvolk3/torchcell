@@ -61,6 +61,7 @@ from torchcell.data.neo4j_query_raw import (
 )
 from torchcell.datamodels.interned_constant import constant_id
 from torchcell.datamodels.schema import (
+    EXPERIMENT_TYPE_MAP,
     Environment,
     FitnessExperiment,
     FitnessExperimentReference,
@@ -1318,3 +1319,74 @@ def test_full_caches_are_emptied_between_batches(
     rows_capped = neo4j_query_raw._render_partition("A")
     assert len(built) == 2
     assert rows_capped == rows_default
+
+
+# Phase 24: environment-class guard, dump-length guard, empty partitioned build
+
+
+class _IntEnvironmentExperiment:
+    """An experiment class whose ``environment`` is annotated ``int``."""
+
+    environment: int
+
+
+def test_environment_class_for_refuses_a_non_environment_annotation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # the module reads the schema's own dict, so the item is set there
+    monkeypatch.setitem(EXPERIMENT_TYPE_MAP, "toy_kind", _IntEnvironmentExperiment)
+    with pytest.raises(TypeError) as excinfo:
+        neo4j_query_raw.environment_class_for("toy_kind")
+    assert str(excinfo.value) == (
+        "'toy_kind' declares environment: <class 'int'>, not an Environment subclass"
+    )
+
+
+def test_experiment_json_refuses_a_model_that_dumps_an_extra_field() -> None:
+    """A computed field adds ``b`` to the dump: 2 dumped fields against 2 declared
+    fields minus the environment (1), so the splice would misplace fragments.
+    """
+    from pydantic import BaseModel, computed_field
+
+    class Toy(BaseModel):
+        environment: int = 0
+        a: int = 1
+
+        @computed_field  # type: ignore[prop-decorator]
+        @property
+        def b(self) -> int:
+            return 2
+
+    cached: Any = None  # never read: the guard fires before the environment is used
+    with pytest.raises(ValueError) as excinfo:
+        Neo4jQueryRaw._experiment_json(Toy(), cached)
+    assert str(excinfo.value) == (
+        "Toy dumps fields ['a', 'b'], not its declared fields "
+        "['environment', 'a'] without the environment"
+    )
+
+
+def test_an_empty_partitioned_build_raises_and_removes_its_staging_store(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``fetch_workers=1`` takes the partitioned path; zero rendered records raise
+    ``EmptyQueryResultError`` naming the FINAL directory, and the ``lmdb.partial``
+    staging store is removed, leaving only the empty ``raw/lmdb`` the constructor made.
+    """
+    monkeypatch.setattr(Neo4jQueryRaw, "_process_partitioned", lambda self: 0)
+    lmdb_dir = tmp_path / "raw" / "lmdb"
+    with pytest.raises(neo4j_query_raw.EmptyQueryResultError) as excinfo:
+        Neo4jQueryRaw(
+            uri=URI,
+            username="u",
+            password="p",
+            root_dir=str(tmp_path),
+            query=QUERY,
+            fetch_workers=1,
+        )
+    assert str(excinfo.value) == (
+        f"the query returned no records; no store was written at {lmdb_dir}. "
+        f"Query: {QUERY}"
+    )
+    assert sorted(p.name for p in (tmp_path / "raw").iterdir()) == ["lmdb"]
+    assert list(lmdb_dir.iterdir()) == []

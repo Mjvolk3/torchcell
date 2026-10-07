@@ -495,3 +495,40 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     assert list((staged.root / "processed").iterdir()) == []
     assert not (staged.root / "preprocess").exists()
     assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
+
+
+# Phase 24: the drop-accounting guard
+
+
+def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``DropLog`` is patched to report one more dropped record than the build lost.
+
+    The rules still total 19 (3 + 9 + 3 + 3 + 1, as in
+    ``test_drop_log_accounts_for_every_missing_record``) while the log says 20, so the
+    build raises the exact mismatch message; the log is written before the check, so the
+    tampered 20 is on disk for inspection.
+    """
+    real = s.DropLog
+
+    def inflated(**kwargs: Any) -> Any:
+        kwargs["dropped_records"] += 1
+        return real(**kwargs)
+
+    monkeypatch.setattr(s, "DropLog", inflated)
+    monkeypatch.setattr(
+        s.FattyAcidSmith2006Dataset, "_read_table", lambda self: _table()
+    )
+    raw = tmp_path / "smith" / "raw"
+    raw.mkdir(parents=True)
+    (raw / s.XLS_FILENAME).write_bytes(b"placeholder: _read_table is stubbed")
+    with pytest.raises(RuntimeError) as err:
+        s.FattyAcidSmith2006Dataset(root=str(tmp_path / "smith"), genome=_genome())
+    assert str(err.value) == (
+        "drop accounting mismatch: rules total 19, 20 records missing from the build"
+    )
+    log = json.loads(
+        (tmp_path / "smith" / "preprocess" / "dropped_records.json").read_text()
+    )
+    assert log["dropped_records"] == 20

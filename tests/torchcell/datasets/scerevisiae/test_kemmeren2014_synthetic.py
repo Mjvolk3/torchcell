@@ -1470,3 +1470,112 @@ def test_extract_channels_skips_a_non_numeric_cell() -> None:
     )
     assert dict(deletion) == {"Q0010": 0.0, "YAL001C": 2.0}
     assert dict(refpool) == {"Q0010": 1.0, "YAL001C": 4.0}
+
+
+# Phase 24: the parallel writer's skipped-gene accounting and the summary log
+
+
+class _Done:
+    def __init__(self, value: Any) -> None:
+        self._value = value
+
+    def result(self) -> Any:
+        return self._value
+
+
+class _InlineExecutor:
+    """Runs each submitted batch at once in this process (no pickling, no workers)."""
+
+    def __init__(self, max_workers: int) -> None:
+        self.max_workers = max_workers
+
+    def __enter__(self) -> _InlineExecutor:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        return None
+
+    def submit(self, fn: Any, *args: Any) -> _Done:
+        return _Done(fn(*args))
+
+
+def test_parallel_writer_packs_written_records_and_logs_the_skipped_indices(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Four genes in batches of 2; the batch function returns ``None`` for the second
+    gene of each batch, so ``all_results`` is ``[b"r0", None, b"r2", None]``.
+
+    Written records are renumbered densely (keys ``0`` and ``1`` hold ``r0`` and ``r2``)
+    and the warnings name the 2 skipped genes and their result indices ``[1, 3]``.
+    ``_process_parallel`` runs unbound on a namespace carrying the four attributes it
+    reads; ``ProcessPoolExecutor`` is an inline executor on the module.
+    """
+    import logging
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(m, "ProcessPoolExecutor", _InlineExecutor)
+    calls: list[tuple[list[str], str]] = []
+
+    def batch(items: list[Any], probes: Any, strains: Any, name: str) -> list[Any]:
+        calls.append(([gene for gene, _ in items], name))
+        return [
+            f"r{int(gene[1:])}".encode() if gene in ("g0", "g2") else None
+            for gene, _ in items
+        ]
+
+    fake = SimpleNamespace(
+        batch_size=2,
+        process_workers=1,
+        _process_batch=batch,
+        processed_dir=str(tmp_path),
+        name="MicroarrayKemmeren2014Dataset",
+    )
+    genes: dict[str, list[Any]] = {f"g{i}": [] for i in range(4)}
+    with caplog.at_level(logging.INFO, logger=m.__name__):
+        m.MicroarrayKemmeren2014Dataset._process_parallel(
+            cast(Any, fake), genes, {}, {}
+        )
+    assert calls == [
+        (["g0", "g1"], "MicroarrayKemmeren2014Dataset"),
+        (["g2", "g3"], "MicroarrayKemmeren2014Dataset"),
+    ]
+    env = lmdb.open(str(tmp_path / "lmdb"), readonly=True, lock=False)
+    with env.begin() as txn:
+        stored = dict(txn.cursor())
+    env.close()
+    assert stored == {b"0": b"r0", b"1": b"r2"}
+    messages = [r.getMessage() for r in caplog.records if r.name == m.__name__]
+    assert messages == [
+        "Created 2 batches of size 2",
+        "Wrote 2 experiments to LMDB",
+        "Total gene deletions attempted: 4",
+        "Skipped 2 genes (could not calculate log2 ratios)",
+        "Indices of skipped genes: [1, 3]",
+    ]
+
+
+def test_processing_summary_on_a_dict_never_reports_duplicates(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Finding: ``_log_processing_summary`` counts ``Counter(dict.keys())``; dict keys
+    are unique, so every count is 1 and the ``Found N duplicate gene deletions`` lines
+    (kemmeren2014.py 1324 to 1326) cannot fire on the dict the signature takes. Pinned:
+    the exact summary for two genes over three samples (2 deletion, 1 wild type).
+    """
+    import logging
+
+    samples = [
+        {"is_deletion": True, "is_wildtype": False},
+        {"is_deletion": True, "is_wildtype": False},
+        {"is_deletion": False, "is_wildtype": True},
+    ]
+    with caplog.at_level(logging.INFO, logger=m.__name__):
+        m.MicroarrayKemmeren2014Dataset._log_processing_summary(
+            cast(Any, None), {"YAL001C": [], "YBR001C": []}, samples
+        )
+    messages = [r.getMessage() for r in caplog.records if r.name == m.__name__]
+    assert messages == [
+        "Processed 2 unique gene deletion experiments",
+        "Total samples: 3, Deletion samples: 2, Wildtype: 1",
+        "Unique gene deletions: 2",
+    ]

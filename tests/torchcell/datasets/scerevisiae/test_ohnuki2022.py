@@ -587,3 +587,21 @@ def test_main_builds_under_data_root_and_prints_the_first_item(
     m.main()
     assert calls == [{"root": f"{tmp_path}/data/torchcell/scmd_ohnuki2022"}]
     assert capsys.readouterr().out == "len = 7\nitem[0]\n"
+
+
+# Phase 24: the chunked sha256 helper
+
+
+def test_sha256_spans_more_than_one_mebibyte_chunk(tmp_path: Path) -> None:
+    """``_sha256`` of ``(1 << 20) + 5`` bytes of ``b"x"`` (two reads: 1 MiB, then 5).
+
+    The hex digest is the one-shot ``hashlib.sha256`` of the same bytes, so a helper
+    that hashed only the first chunk fails. Finding: ``_sha256`` is not called anywhere
+    in the module; it is pinned as a helper.
+    """
+    data = b"x" * ((1 << 20) + 5)
+    path = tmp_path / "blob.bin"
+    path.write_bytes(data)
+    expected = "87fdbc9d8a44bce194d4cc22e90e6c21dd71179b6ecd0ac1c2af0b34b85e2e18"
+    assert hashlib.sha256(data).hexdigest() == expected
+    assert m._sha256(str(path)) == expected

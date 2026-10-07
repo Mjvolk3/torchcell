@@ -463,3 +463,54 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     assert list((staged.root / "processed").iterdir()) == []
     assert not (staged.root / "preprocess").exists()
     assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed
+
+
+# Phase 24: the verified-copy log line and the inert generic hooks
+
+
+def test_download_copies_a_matching_mirror_file_and_logs_the_verified_line(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A mirror file whose digest matches the pin is copied byte for byte and logged.
+
+    ``_XLSX_SHA256`` is patched to ``sha256(b"pinned workbook")`` so a hand-built file
+    passes; ``download`` is called unbound on a namespace with only ``raw_dir`` (the
+    one attribute it reads), so no build runs. The log line is
+    ``Verified <raw_dir>/<file> (sha256 <digest>)`` at INFO.
+    """
+    import logging
+    from types import SimpleNamespace
+
+    data_root = tmp_path / "data_root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    mirror = data_root / "torchcell-library" / m._LIBRARY_CITATION_KEY / "data"
+    mirror.mkdir(parents=True)
+    (mirror / m._XLSX_FILENAME).write_bytes(b"pinned workbook")
+    digest = hashlib.sha256(b"pinned workbook").hexdigest()
+    monkeypatch.setattr(m, "_XLSX_SHA256", digest)
+    raw_dir = tmp_path / "root" / "raw"
+    with caplog.at_level(logging.INFO, logger=m.__name__):
+        m.IsobutanolScreenLopez2024Dataset.download(
+            cast(Any, SimpleNamespace(raw_dir=str(raw_dir)))
+        )
+    dest = raw_dir / m._XLSX_FILENAME
+    assert dest.read_bytes() == b"pinned workbook"
+    assert [r.getMessage() for r in caplog.records if r.name == m.__name__] == [
+        f"Verified {dest} (sha256 {digest})"
+    ]
+
+
+def test_generic_hooks_pass_the_frame_through_and_refuse_create_experiment() -> None:
+    """``preprocess_raw`` returns the very frame it was given (``is``), ``preprocess``
+    ignored; ``create_experiment`` raises a bare ``NotImplementedError`` (empty message),
+    since both screens build their experiments inline in ``process()``.
+    """
+    frame = pd.DataFrame({"a": [1]})
+    for cls in (
+        m.IsobutanolScreenLopez2024Dataset,
+        m.IsobutanolValidatedLopez2024Dataset,
+    ):
+        assert cls.preprocess_raw(cast(Any, None), frame, {"k": 1}) is frame
+        with pytest.raises(NotImplementedError) as err:
+            cls.create_experiment(cast(Any, None))
+        assert str(err.value) == ""

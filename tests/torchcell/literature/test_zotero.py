@@ -10,6 +10,9 @@ The collection-creating branch of ``collection_key(create_if_missing=True)`` is 
 and is deliberately not exercised; ``create_if_missing=True`` is called only on a name
 that exists, where the fake's missing ``create_collections`` would raise if a create
 were attempted.
+Phase 24 exercises the create branch once, on a local ``FakeZot`` subclass whose
+``create_collections`` only records its payload and answers the Zotero success shape;
+no client is ever built, so nothing is sent anywhere.
 
 Paging: ``FakeZot`` answers at most 100 rows per request and pages through
 ``everything``/``follow`` like pyzotero, so a lookup that reads only the first page
@@ -420,3 +423,30 @@ def test_smoke_test_logs_collections(
         "  - Alpha (key=K1)",
         "  - beta (key=K2)",
     ]
+
+
+# Phase 24: the create branch of _resolve_name (recorded, never sent) and max_tries=0
+
+
+class _CreatingZot(FakeZot):
+    """``FakeZot`` plus a recording ``create_collections`` answering Zotero's shape."""
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.created: list[list[dict[str, str]]] = []
+
+    def create_collections(self, payload: list[dict[str, str]]) -> dict[str, Any]:
+        self.created.append(payload)
+        return {"successful": {"0": {"data": {"key": "ABC12345"}}}}
+
+
+def test_collection_key_create_if_missing_creates_the_named_collection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A missing name with ``create_if_missing=True`` posts ``[{"name": name}]`` once
+    (original case kept) and returns the key from ``successful["0"]``.
+    """
+    zot = _CreatingZot(collections=[collection("K1", "Beta")])
+    lib = make_library(monkeypatch, zot)
+    assert lib.collection_key("NewColl", create_if_missing=True) == "ABC12345"
+    assert zot.created == [[{"name": "NewColl"}]]

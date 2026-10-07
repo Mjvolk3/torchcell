@@ -635,3 +635,52 @@ def test_the_release_disagrees_with_itself_on_exactly_33_arrays() -> None:
             }
         ),
     }
+
+
+# Phase 24: the key-wins drop detail and the kept-column environment guard
+
+
+def test_a_key_wins_column_that_drops_names_header_and_key_in_its_detail() -> None:
+    """Header ``minimal media`` dosed ``400 um``; key file ``synthetic complete for
+    BY4743``. The key's medium is served (``synthetic complete``), the dose on an
+    agent-less media swap drops the array, and the detail appends both source strings.
+    """
+    header = _header("x1:minimal media:400:um::::20gen:hom_09_02:new scanner")
+    control = {"x1": "hom_09_02::new scanner::20::tag3::YPD::dmso::0"}
+    column = parse_columns(header, control, {"x1": "synthetic complete for BY4743"})[0]
+    assert column.key_check.rule is KeyHeaderRule.key_wins_strain_medium
+    assert column.drop_reason == "unnamed_agent_dosed_into_a_media_swap"
+    assert column.drop_detail == (
+        "synthetic complete: 400 um (header 'minimal media', key file "
+        "'synthetic complete for BY4743')"
+    )
+
+
+def test_iter_records_refuses_a_kept_group_whose_head_has_no_environment() -> None:
+    """A zero-generation column (environment None) forced into the KEPT groups with a
+    strain row that has a value at its index (``[None, 1.0]``, index 1): the generator
+    raises naming the column header instead of yielding an environment-less record.
+    """
+    from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
+        MATRICES,
+        MatrixRows,
+        iter_records,
+    )
+
+    column = _one_column("minimal media", "synthetic complete for BY4743", "0gen")
+    matrix = MatrixRows(
+        rows=[_row("YAL001C")], dropped_strains=[], dropped_genes={}, constructed={}
+    )
+    records = iter_records(
+        "HomHillenmeyer2008Dataset",
+        MATRICES["hom"],
+        matrix,
+        {"g": [column]},
+        hillenmeyer_background(),
+    )
+    with pytest.raises(ValueError) as err:
+        next(records)
+    assert str(err.value) == (
+        "kept column 'x1:minimal media::::::0gen:hom_09_02:new scanner' has no "
+        "environment"
+    )

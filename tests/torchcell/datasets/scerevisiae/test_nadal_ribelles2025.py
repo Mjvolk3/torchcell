@@ -322,3 +322,22 @@ def test_main_builds_under_data_root_with_a_read_only_genome(
         f"record[0] environment: {_CONTROL.model_dump()}\n"
     )
     assert (root / "processed" / "lmdb" / "data.mdb").is_file()
+
+
+# Phase 24: the chunked sha256 helper
+
+
+def test_sha256_reads_in_chunks_and_matches_the_one_shot_digest(tmp_path: Path) -> None:
+    """``_sha256(path, chunk_size=3)`` on ``b"abcdefghij"`` (four reads: 3, 3, 3, 1).
+
+    The digest equals ``hashlib.sha256(b"abcdefghij")``, pinned as hex so a helper that
+    dropped the last short chunk (or hashed only the first) fails. Finding: ``_sha256``
+    is not called anywhere in the module (the raw files are verified through
+    ``verify_raw_files``); it is pinned as a helper.
+    """
+    path = tmp_path / "blob.bin"
+    path.write_bytes(b"abcdefghij")
+    expected = "72399361da6a7754fec986dca5b7cbaf1c810a28ded4abaf56b2106d06cb78b0"
+    assert hashlib.sha256(b"abcdefghij").hexdigest() == expected
+    assert m._sha256(str(path), chunk_size=3) == expected
+    assert m._sha256(str(path)) == expected

@@ -701,3 +701,68 @@ def test_main_without_aux_reduction_in_the_config_raises(
         dcell_module.main(
             _main_cfg(lr=1e-3, epochs=1, plot_every=5, aux_reduction=None)
         )
+
+
+# ---------------------------------------------------------------- Phase 24
+
+
+def test_a_term_with_no_children_and_no_gene_columns_is_refused_by_index(
+    dcell_batch: HeteroData, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The placeholder makes the refusal unreachable from data (see the finding above),
+    so the gene-state extractor is replaced by one returning a [2, 0] tensor: the root of
+    a graph without child edges then has no input at all and ``_prepare_term_input``
+    raises the ValueError naming term 0 (dcell.py:386-389).
+    """
+    from tests.torchcell.conftest import make_dcell_graph  # noqa: PLC0415
+
+    graph = make_dcell_graph()
+    del graph["gene_ontology", "is_child_of", "gene_ontology"]
+    model = _model(graph)
+    monkeypatch.setattr(
+        model, "_extract_gene_states_for_term", lambda term, batch: torch.zeros(2, 0)
+    )
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "GO term 0 has no children and no genes. This should not happen in a "
+            "well-formed GO hierarchy."
+        ),
+    ):
+        model._prepare_term_input(0, dcell_batch, {})
+
+
+class _EmptyEvalDCell(_OneArgPlotDCell):
+    """Trains normally, but its two-argument eval forward predicts nothing."""
+
+    def forward(
+        self, cell_graph: HeteroData, batch: HeteroData | None = None
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
+        predictions, outputs = super().forward(cell_graph, batch)
+        if batch is not None and not self.training:
+            return predictions[:0], outputs
+        return predictions, outputs
+
+
+def test_main_reports_no_predictions_and_skips_the_results_figure(
+    fake_loader: HeteroData,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """One epoch with the final evaluation returning an empty prediction tensor: ``main``
+    prints the no-predictions line (dcell.py:832) instead of the metrics, saves only the
+    last-epoch intermediate plot (no ``dcell_results`` figure), still prints the
+    closing line, and returns the empty predictions.
+    """
+    monkeypatch.setattr(dcell_module, "DCell", _EmptyEvalDCell)
+    torch.manual_seed(0)
+    _, (predictions, _) = dcell_module.main(_main_cfg(lr=0.0, epochs=1, plot_every=5))
+    out = capsys.readouterr().out
+    assert "No predictions were generated. Check model and data setup.\n" in out
+    assert "Final Mean Squared Error" not in out
+    assert out.endswith("\nDCell training demonstration complete!\n")
+    assert predictions.numel() == 0
+    (plot_dir,) = list(tmp_path.iterdir())
+    names = sorted(p.name.rsplit("_", 1)[0] for p in plot_dir.iterdir())
+    assert names == ["dcell_epoch_0001"]

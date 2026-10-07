@@ -592,3 +592,44 @@ def test_an_int_term_index_equals_the_tensor_index() -> None:
     expected = torch.cat([torch.ones(3, 2), 2 * torch.ones(3, 2), torch.zeros(3, 1)], 1)
     assert torch.equal(from_int, expected)
     assert torch.equal(from_tensor, expected)
+
+
+# ---------------------------------------------------------------------------
+# Phase 24: a term with neither children nor gene columns (dcell_opt.py:753-755)
+# ---------------------------------------------------------------------------
+
+
+def test_a_term_with_no_inputs_gets_a_zero_column_where_dcell_raises(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Finding: the two models disagree on a term with no inputs. With the gene-state
+    extractor returning a [3, 0] tensor, leaf term 1 (no children) has nothing to
+    concatenate; ``DCellOpt`` returns zeros [3, 1] (line 755) while ``DCell`` raises
+    the "no children and no genes" ValueError for the same term. Reachable only when a
+    term's gene columns are empty, which the placeholder prevents in both models.
+    """
+    graph = make_dcell_graph()
+    with torch.random.fork_rng():
+        torch.manual_seed(0)
+        opt = DCellOpt(graph, min_subsystem_size=2, subsystem_ratio=0.5)
+    monkeypatch.setattr(
+        opt, "_extract_gene_states_for_term", lambda term, batch: torch.zeros(3, 0)
+    )
+    batch = make_dcell_batch(_BATCH)
+    out = opt._prepare_term_input_optimized(
+        torch.tensor(1),
+        batch,
+        torch.zeros(3, 3, 2),
+        torch.zeros(3, 3, dtype=torch.bool),
+    )
+    assert torch.equal(out, torch.zeros(3, 1))
+    with torch.random.fork_rng():
+        torch.manual_seed(0)
+        ref = DCell(graph, min_subsystem_size=2, subsystem_ratio=0.5)
+    monkeypatch.setattr(
+        ref, "_extract_gene_states_for_term", lambda term, batch: torch.zeros(3, 0)
+    )
+    with pytest.raises(
+        ValueError, match=re.escape("GO term 1 has no children and no genes.")
+    ):
+        ref._prepare_term_input(1, batch, {})

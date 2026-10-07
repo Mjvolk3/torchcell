@@ -779,3 +779,60 @@ def test_pit_ks_quantile_grid_has_a_structural_floor() -> None:
     assert d_quantile == pytest.approx(0.05, abs=0.015)
     assert d_gaussian < 0.03
     assert d_quantile > d_gaussian
+
+
+# ---------------------------------------------------------------------------
+# Phase 24: masked_mean on a 3-d elem and an empty mask, the default quantile grid,
+# and the row mask applied to a feature mask (distributional.py:383, 387, 658, 779)
+# ---------------------------------------------------------------------------
+
+
+def test_masked_mean_broadcasts_a_feature_mask_over_the_knot_axis() -> None:
+    """Elem = arange(12) as [B=2, F=2, K=3] (rows [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [9, 10, 11]); the mask keeps (0, 0) and (1, 1), so the mean is over all three knots
+    of those two genes: (0 + 1 + 2 + 9 + 10 + 11) / 6 = 33 / 6 = 5.5.
+    """
+    from torchcell.losses.distributional import masked_mean  # noqa: PLC0415
+
+    elem = torch.arange(12.0).reshape(2, 2, 3)
+    mask = torch.tensor([[True, False], [False, True]])
+    assert masked_mean(elem, mask).item() == 5.5
+
+
+def test_masked_mean_of_an_empty_mask_is_a_graph_connected_zero() -> None:
+    """No entry selected: the result is exactly 0.0 and backward gives elem a zero
+    gradient (``elem.sum() * 0``), not ``None`` and not a NaN from 0 / 0.
+    """
+    from torchcell.losses.distributional import masked_mean  # noqa: PLC0415
+
+    elem = torch.tensor([[1.0, 2.0]], requires_grad=True)
+    out = masked_mean(elem, torch.tensor([[False, False]]))
+    assert out.item() == 0.0
+    out.backward()
+    assert elem.grad is not None
+    assert torch.equal(elem.grad, torch.zeros(1, 2))
+
+
+def test_quantile_head_without_a_grid_uses_19_knots_from_005_to_095() -> None:
+    """``DistHead("quantile")`` with no ``quantiles`` registers
+    linspace(0.05, 0.95, 19) (step 0.05), so ``param_dim`` is 19 and the median index
+    is 9, the knot at 0.5. (``make_dist_head`` always passes a grid, so only the class
+    reaches this default.)
+    """
+    head = DistHead("quantile")
+    assert torch.equal(head.taus, torch.linspace(0.05, 0.95, 19))
+    assert (head.param_dim, head.median_index) == (19, 9)
+    assert head.taus[9].item() == pytest.approx(0.5, abs=1e-7)
+
+
+def test_row_mask_also_selects_the_feature_mask_rows() -> None:
+    """Point mode, params [[1, 2], [3, 4], [5, 6]], target 0, row mask [T, F, T] and
+    feature mask [[T, F], [T, T], [F, T]]: the kept rows are 0 and 2 with feature
+    masks [T, F] and [F, T], so the loss is (1^2 + 6^2) / 2 = 18.5.
+    """
+    head = DistHead("point")
+    params = torch.tensor([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+    target = torch.zeros(3, 2)
+    row = torch.tensor([True, False, True])
+    feature = torch.tensor([[True, False], [True, True], [False, True]])
+    assert head.loss(params, target, row, feature).item() == 18.5

@@ -558,3 +558,49 @@ def test_neighbor_metabolism_filters_reaction_nodes_but_not_hyperedge_indices() 
     assert out[RMR].num_edges == 6
     assert out["metabolite"].node_ids == ["m_a", "m_b", "m_c"]
     assert out["metabolite"].mask.tolist() == [True, True, True]
+
+
+# Phase 24: the composed NeighborSubgraphRepresentation.process past the list Finding
+
+
+@pytest.mark.parametrize("num_hops", [1, 2])
+def test_neighbor_process_composes_the_pieces_once_indices_are_a_tensor(
+    monkeypatch: pytest.MonkeyPatch, num_hops: int
+) -> None:
+    """With ``_process_gene_info`` wrapped to hand back ``perturbed_indices`` as a
+    tensor (the one change the list Finding needs), ``process`` runs to the end and
+    its output equals ``_neighbor_pieces`` (the steps called directly) in every store
+    and key: same node and edge types, equal tensors and lists. The one-hop physical
+    edges are src [1, 1, 2] dst [2, 1, 2] (3 edges), the two-hop ones src
+    [0, 1, 0, 1, 2] dst [1, 2, 0, 1, 2] (5 edges), and the fitness value 0.9 sits at
+    sample 0 either way.
+    """
+    processor = NeighborSubgraphRepresentation(num_hops=num_hops)
+    real = processor._process_gene_info
+
+    def tensor_indices(cell_graph: HeteroData, data: list[Any]) -> dict[str, Any]:
+        info = real(cell_graph, data)
+        info["perturbed_indices"] = torch.tensor(info["perturbed_indices"])
+        return info
+
+    monkeypatch.setattr(processor, "_process_gene_info", tensor_indices)
+    out = processor.process(_cell_graph(), PHENOTYPES, [_record(["YAL003W"], 0.9)])
+    expected = _neighbor_pieces(num_hops=num_hops)
+
+    assert sorted(out.node_types) == sorted(expected.node_types)
+    assert sorted(out.edge_types) == sorted(expected.edge_types)
+    for store in [*expected.node_types, *expected.edge_types]:
+        assert sorted(out[store].keys()) == sorted(expected[store].keys()), store
+        for key in expected[store].keys():
+            want = expected[store][key]
+            if isinstance(want, torch.Tensor):
+                torch.testing.assert_close(out[store][key], want, rtol=0, atol=0)
+            else:
+                assert out[store][key] == want, (store, key)
+    physical = {
+        1: ([[1, 1, 2], [2, 1, 2]], 3),
+        2: ([[0, 1, 0, 1, 2], [1, 2, 0, 1, 2]], 5),
+    }[num_hops]
+    assert (out[PHYSICAL].edge_index.tolist(), out[PHYSICAL].num_edges) == physical
+    torch.testing.assert_close(out["gene"].phenotype_values, torch.tensor([0.9]))
+    assert out["gene"].phenotype_sample_indices.tolist() == [0]

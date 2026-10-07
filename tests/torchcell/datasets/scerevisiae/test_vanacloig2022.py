@@ -1209,3 +1209,58 @@ def test_schema_classes_raw_file_and_the_inline_stubs() -> None:
     assert dataset.preprocess_raw(frame) is frame
     with pytest.raises(NotImplementedError):
         dataset.create_experiment()
+
+
+# Phase 24: the drop-accounting guard and the TMM reference fallback
+
+
+def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The ``built`` fixture's setup with ``DropLog`` reporting one extra dropped record.
+
+    That fixture drops 12 - 5 = 7 records and its rules total 7
+    (``test_drop_rules_account_for_every_source_record``); the log says 8, so the build
+    raises the exact mismatch message after the tampered log is on disk.
+    """
+    real = v.DropLog
+
+    def inflated(**kwargs: Any) -> Any:
+        kwargs["dropped_records"] += 1
+        return real(**kwargs)
+
+    monkeypatch.setattr(v, "DropLog", inflated)
+    monkeypatch.setattr(v, "default_genome", lambda: _FakeGenome())
+    monkeypatch.setattr(v.EnvChemgenVanacloig2022Dataset, "download", lambda self: None)
+    monkeypatch.setattr(
+        v.EnvChemgenVanacloig2022Dataset, "_load_matrix", lambda self: _matrix()
+    )
+    root = tmp_path / "env_chemgen_vanacloig2022"
+    (root / "raw").mkdir(parents=True)
+    with gzip.open(root / "raw" / v.DATA_FILENAME, "wt") as handle:
+        handle.write("placeholder\n")
+    with pytest.raises(RuntimeError) as err:
+        v.EnvChemgenVanacloig2022Dataset(root=str(root))
+    assert str(err.value) == (
+        "drop accounting mismatch: rules total 7, 8 records missing from the build"
+    )
+    log = json.loads((root / "preprocess" / "dropped_records.json").read_text())
+    assert log["dropped_records"] == 8
+
+
+def test_tmm_reference_falls_back_to_the_largest_sqrt_sum_when_fractions_vanish() -> (
+    None
+):
+    """Library sizes of 1e30 push every 75th-percentile fraction below 1e-20.
+
+    Counts are constant per column (1, 9, 4 over four genes), so the fractions are
+    1e-30, 9e-30, 4e-30: the usual rule (closest to the mean 4.67e-30) would pick ``c``.
+    The fallback takes ``argmax(sum(sqrt(counts)))`` over (4, 12, 8), i.e. ``b``. The
+    same counts with unit library sizes keep the usual rule and pick ``c``.
+    """
+    counts = np.array([[1.0, 9.0, 4.0]] * 4)
+    factors = v.tmm_factors(counts, np.array([1e30, 1e30, 1e30]), ["a", "b", "c"])
+    assert factors.reference_column == "b"
+    assert factors.library_sizes == [1e30, 1e30, 1e30]
+    usual = v.tmm_factors(counts, np.array([1.0, 1.0, 1.0]), ["a", "b", "c"])
+    assert usual.reference_column == "c"

@@ -777,3 +777,55 @@ def test_writer_loader_never_probes_module_attributes(
     assert writer.extract_full_masks.__module__ == "_full_mask_writer"
     assert writer.extract_full_masks.__code__.co_filename == str(WRITER)
     assert vars(writer)["load_dotenv"] is dotenv.load_dotenv
+
+
+# Phase 24: the reaction and metabolite payloads of a record
+
+
+def test_reaction_and_metabolite_payloads_are_loaded_by_type(
+    tmp_path: Path, source: Neo4jCellDataset
+) -> None:
+    """A hand-built record with ``reaction`` and ``metabolite`` dicts. Tensors are
+    copied onto the CPU with their dtype kept (a float ``w_flux`` stays float64, a
+    uint8 ``extra_u8`` stays uint8), except the key ``pert_mask``, which is cast uint8
+    -> bool; non-tensors (a list of ids, a string tag) are stored as given. A loaded
+    reaction ``pert_mask`` [F, T, F] is NOT replaced by ``~node_masks["reaction"]``
+    ([F, F, T]); the metabolite dict has no ``pert_mask``, so it is derived as
+    ``~[T, F]`` = [F, T]. The graph-level reaction ``node_ids`` still come from the
+    source cell graph.
+    """
+    record = {
+        "gene": {"perturbation_indices": torch.tensor([2]), "pert_mask": None},
+        "reaction": {
+            "pert_mask": torch.tensor([0, 1, 0], dtype=U8),
+            "w_flux": torch.tensor([0.5, -1.0, 2.0], dtype=torch.float64),
+            "kept_ids": ["r_A", "r_C"],
+        },
+        "metabolite": {"extra_u8": torch.tensor([3, 4], dtype=U8), "tag": "pool-1"},
+        "node_masks": {
+            "gene": torch.tensor([1, 1, 0, 1, 1], dtype=U8),
+            "reaction": torch.tensor([1, 1, 0], dtype=U8),
+            "metabolite": torch.tensor([1, 0], dtype=U8),
+        },
+        "edge_masks": {},
+    }
+    _write_store(tmp_path / "rm", [record], {"length": 1, "storage_type": "full_masks"})
+    ds = Neo4jPreprocessedCellDatasetFullMasks(
+        root=str(tmp_path / "rm"), source_dataset=source
+    )
+    item = ds[0]
+    reaction = item["reaction"]
+    assert reaction.node_ids == ["r_A", "r_B", "r_C"]
+    assert reaction.pert_mask.dtype == torch.bool
+    assert reaction.pert_mask.tolist() == [False, True, False]
+    assert reaction.mask.tolist() == [True, True, False]
+    assert reaction.w_flux.dtype == torch.float64
+    assert reaction.w_flux.tolist() == [0.5, -1.0, 2.0]
+    assert reaction.kept_ids == ["r_A", "r_C"]
+    metabolite = item["metabolite"]
+    assert metabolite.node_ids == ["m_x", "m_y"]
+    assert metabolite.extra_u8.dtype == U8
+    assert metabolite.extra_u8.tolist() == [3, 4]
+    assert metabolite.tag == "pool-1"
+    assert metabolite.mask.tolist() == [True, False]
+    assert metabolite.pert_mask.tolist() == [False, True]

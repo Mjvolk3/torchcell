@@ -282,3 +282,29 @@ def test_unknown_model_name_is_refused_with_the_valid_list(
         "random_6579, random_1000, random_100, random_10, random_1"
     )
     assert not root.exists()
+
+
+# Phase 24: parse_genome(None) and the refused initialize_model
+
+
+def test_parse_genome_none_and_initialize_model_refusal(
+    embedding_genome: Any, tmp_path: Path
+) -> None:
+    """``parse_genome(None)`` returns None (the merged-dataset case); a real genome gives
+    its gene set; ``initialize_model`` raises with the exact text.
+
+    Not covered: the post-init ``process()`` when the store is absent (line 67);
+    ``BaseEmbeddingDataset.__init__`` already ``torch.load``s that path, so a missing
+    store raises there first.
+    """
+    assert RandomEmbeddingDataset.parse_genome(None) is None
+    parsed = RandomEmbeddingDataset.parse_genome(embedding_genome)
+    assert parsed == ParsedGenome(gene_set=embedding_genome.gene_set)
+    ds = RandomEmbeddingDataset(
+        root=str(tmp_path), genome=embedding_genome, model_name="random_1"
+    )
+    with pytest.raises(
+        NotImplementedError,
+        match="^initialize_model is not needed for RandomEmbeddingDataset$",
+    ):
+        ds.initialize_model()

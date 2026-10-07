@@ -51,6 +51,7 @@ import os
 import os.path as osp
 import pickle
 import re
+import types
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -1242,3 +1243,33 @@ def test_gene_graph_validator_never_sees_max_gene_set(
     assert sorted(gg.graph.nodes()) == ["YAL001C", "YZZ999W"]
     assert [r for r in caplog.records if "max_gene_set" in r.getMessage()] == []
     assert list(GeneGraph.model_fields) == ["name", "graph", "max_gene_set"]
+
+
+# Phase 24: GeneGraph's max_gene_set validator
+
+
+def test_gene_graph_validator_warns_on_nodes_outside_the_gene_set(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Called with ``max_gene_set`` in ``info.data``: two nodes, one outside the set,
+    give one warning naming the count 1, and the same graph object comes back.
+    Reachable only by this direct call: construction never reaches it, because
+    ``graph`` is declared before ``max_gene_set`` (the Phase 21 Finding above).
+    """
+    graph = nx.Graph()
+    graph.add_edge("YAL001C", "YOUTSIDE")
+    info: Any = types.SimpleNamespace(data={"max_gene_set": GeneSet(["YAL001C"])})
+    with caplog.at_level(logging.WARNING, logger="torchcell.graph.graph"):
+        returned = GeneGraph.validate_genes_in_graph(graph, info)
+    assert returned is graph
+    assert [
+        (r.name, r.levelname, r.getMessage())
+        for r in caplog.records
+        if r.name == "torchcell.graph.graph"
+    ] == [
+        (
+            "torchcell.graph.graph",
+            "WARNING",
+            "Graph contains 1 nodes not in max_gene_set",
+        )
+    ]

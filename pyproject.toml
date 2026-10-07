@@ -248,6 +248,10 @@ paths = [
 [tool.coverage.run]
 source = ["torchcell"]
 branch = true
+# torchcell/scratch is the carve-out for one-off scripts (no __init__.py; outside mypy
+# discovery, the import sweep, the legacy partition and the API docs). Two of its loaders
+# are imported by tests, which is the only reason they ever entered the denominator.
+omit = ["torchcell/scratch/*"]
 
 [tool.coverage.report]
 show_missing = true
@@ -256,6 +260,12 @@ exclude_lines = [
     "pragma: no cover",
     "if __name__ == .__main__.",
     "if TYPE_CHECKING:",
+]
+# Bodies that never execute by construction: an abstract method (the subclass overrides
+# it) and a Protocol stub whose body is a bare ellipsis.
+exclude_also = [
+    "@(abc\\.)?abstractmethod",
+    "^\\s*\\.\\.\\.$",
 ]
 
 # https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html

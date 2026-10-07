@@ -164,3 +164,23 @@ def test_main_builds_one_figure_and_shows_it(
     fitness.main()
     assert shown == [1]
     assert plt.gca().get_xlabel() == "Predicted growth"
+
+
+# Phase 24: linregress ValueError on constant predictions
+
+
+def test_box_plot_constant_predictions_report_r_squared_not_available() -> None:
+    """Three identical predictions make ``linregress`` raise ``ValueError`` (all x values
+    identical, scipy 1.16); the helper turns that into NaN, shown as ``N/A``. Pearson and
+    Spearman of a constant input are NaN without raising. All three predictions (0.5) land
+    in bin 2, ``[0.5, 0.6)``, whose median is the middle measured value 0.6.
+
+    The ``spearmanr`` ``except ValueError`` branch is unreachable here: scipy raises only on
+    unequal lengths, which the shared NaN mask rules out.
+    """
+    fig = fitness.box_plot(np.array([0.4, 0.6, 0.8]), np.array([0.5, 0.5, 0.5]))
+    assert fig.axes[0].get_title() == "Pearson: N/A, Spearman: N/A, R²: N/A"
+    medians = [float(np.asarray(m.get_ydata())[0]) for m in _medians(fig)]
+    assert medians[2] == pytest.approx(0.6)
+    assert np.isnan(medians[:2] + medians[3:]).all()
+    plt.close(fig)

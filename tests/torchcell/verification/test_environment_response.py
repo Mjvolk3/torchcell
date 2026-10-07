@@ -686,3 +686,49 @@ def test_eager_and_streaming_reports_are_equal() -> None:
     assert _details(eager, "se_nonnegative")["bad"] == [
         {"index": 2, "value": -0.5, "reason": "< 0.0"}
     ]
+
+
+# Phase 24: the chemogenomic strain discriminators in the genotype signature
+
+
+def test_genotype_signature_appends_construction_collection_and_constructed_orf() -> (
+    None
+):
+    """``construction`` adds its five fields in order (``strain_accession``, ``lab``,
+    ``batch``, ``plate``, ``well``; a missing one is None), then ``collection``, then
+    ``constructed_orf.source_systematic_name``. Two constructions of one ORF that differ
+    only in ``batch`` give two signatures.
+    """
+    construction = {"strain_accession": "SA1", "lab": "L", "plate": "P3", "well": "A1"}
+    first = _deletion(
+        "YAL001C",
+        construction={**construction, "batch": "b1"},
+        collection="YKO",
+        constructed_orf={"source_systematic_name": "YAL001W"},
+    )
+    second = _deletion("YAL001C", construction={**construction, "batch": "b2"})
+    experiment = {"genotype": {"perturbations": [second, first]}}
+    assert _genotype_signature(experiment, frozenset()) == (
+        (
+            "YAL001C",
+            "kanmx_deletion",
+            "YAL001C",
+            "SA1",
+            "L",
+            "b1",
+            "P3",
+            "A1",
+            "YKO",
+            "YAL001W",
+        ),
+        ("YAL001C", "kanmx_deletion", "YAL001C", "SA1", "L", "b2", "P3", "A1"),
+    )
+
+
+def test_genotype_signature_construction_without_fields_adds_five_nones() -> None:
+    experiment = {
+        "genotype": {"perturbations": [_deletion("YAL001C", construction={})]}
+    }
+    assert _genotype_signature(experiment, frozenset()) == (
+        ("YAL001C", "kanmx_deletion", "YAL001C", None, None, None, None, None),
+    )

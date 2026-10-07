@@ -1882,11 +1882,15 @@ def test_perturbed_stage_guards_name_their_stage_including_finite_overflow(
       z_p = 3e38 - (-3e38) = 6e38 overflows float32 (max 3.4028e38) to +inf, caught as
       "perturbation difference (z_p_global)" (:1060-1063).
 
-    The remaining guards after these (pert_gene_embs :1049, the dimension adjustment
-    :1111, the prediction stack :1130, the softmax :1143, the weighted predictions
-    :1150, concat :1166 and the final output :1175) only see rows of an already-checked
-    tensor, softmax weights of finite logits, or convex combinations of finite values,
-    so they cannot fire; they are left uncovered.
+    The guards on pert_gene_embs (:1049), the dimension adjustment (:1111), the
+    prediction stack (:1130) and concat (:1166) cannot fire: they see rows of an
+    already-checked tensor, and 0.5 a + 0.5 b of finite float32 values cannot exceed
+    the float32 maximum. The softmax (:1143) and weighted-prediction (:1150) guards
+    cannot fire with the real softmax, since finite logits give weights in [0, 1]; the
+    Phase 24 tests below reach them only by replacing ``F.softmax``. The final-output
+    guard (:1175) CAN fire from finite inputs: float32 softmax weights can sum to
+    slightly more than 1, so two predictions at the float32 maximum overflow in the
+    weighted sum (``test_a_convex_gate_over_two_finite_maxima_overflows_the_final_sum``).
     """
     cell_graph, batch = _cell_graph(), _batch([[0, 1], [2, 3]])
     model = _tiny().eval()
@@ -1950,3 +1954,165 @@ def test_hetero_conv_fallback_sum_is_reachable_only_by_mutating_the_method() -> 
     out, attn = layer(x, edges)
     assert torch.equal(out["gene"], 5 * x["gene"])
     assert attn is None
+
+
+# ---------------------------------------------------------------- 2026.10.07, Phase 24
+#
+# The late guards and the 1-D unsqueezes, each reached by replacing the ONE submodule
+# (or the module's ``F.softmax`` for the gate weights) that produces the tensor the
+# guard checks. ``FMAX`` is the largest finite float32, 3.4028235e38.
+
+FMAX = torch.finfo(torch.float32).max
+
+
+class _Squeeze(nn.Module):
+    """Wraps a predictor and drops its trailing unit dimension: [B, 1] -> [B]."""
+
+    def __init__(self, inner: nn.Module) -> None:
+        super().__init__()
+        self.inner = inner
+
+    def forward(self, *args: Any) -> torch.Tensor:
+        out: torch.Tensor = self.inner(*args)
+        return out.squeeze(-1)
+
+
+class _Fill(nn.Module):
+    """Returns ``value`` with shape [rows, width]; rows from the first argument, or
+    from the largest batch assignment + 1 for the local predictor's (embs, assign).
+    """
+
+    def __init__(self, value: float | list[float], local: bool = False) -> None:
+        super().__init__()
+        self.value = torch.tensor(value, dtype=torch.float32).reshape(1, -1)
+        self.local = local
+        self.outputs: list[torch.Tensor] = []
+
+    def forward(self, x: torch.Tensor, assign: Any = None) -> torch.Tensor:
+        rows = int(assign.max()) + 1 if self.local else x.size(0)
+        out = self.value.expand(rows, -1).clone()
+        self.outputs.append(out)
+        return out
+
+
+@pytest.mark.parametrize("which", ["global", "local"])
+def test_a_one_dimensional_interaction_is_unsqueezed_to_a_column(
+    monkeypatch: pytest.MonkeyPatch, restore_rng: None, which: str
+) -> None:
+    """A batch of one genotype {0, 1}; the global (line 1118) or local (line 1120)
+    predictor is wrapped to return [1] instead of [1, 1]. The forward unsqueezes it
+    back, so the prediction [1, 1] is bit-identical to the unwrapped model's.
+    """
+    cell_graph, batch = _cell_graph(), _batch([[0, 1]])
+    with torch.no_grad():
+        expected, _ = _tiny().eval()(cell_graph, batch)
+        model = _tiny().eval()
+        name = (
+            "global_interaction_predictor"
+            if which == "global"
+            else "gene_interaction_predictor"
+        )
+        monkeypatch.setattr(model, name, _Squeeze(getattr(model, name)))
+        pred, reps = model(cell_graph, batch)
+    assert pred.shape == (1, 1)
+    assert torch.equal(pred, expected)
+    assert reps[f"{which}_interaction"].shape == (1, 1)
+
+
+class _GateSoftmax:
+    """The module's ``F`` with ``softmax`` replaced for ONE tensor: when called on the
+    gate logits (the recorded output of ``gate_mlp``) it returns ``value`` everywhere;
+    every other call goes to the real ``F``.
+    """
+
+    def __init__(self, real: Any, gate: "_Recording", value: float) -> None:
+        self.real = real
+        self.gate = gate
+        self.value = value
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self.real, name)
+
+    def softmax(self, x: torch.Tensor, dim: int) -> torch.Tensor:
+        if self.gate.outputs and x is self.gate.outputs[-1]:
+            return torch.full_like(x, self.value)
+        out: torch.Tensor = self.real.softmax(x, dim=dim)
+        return out
+
+
+class _Recording(nn.Module):
+    """Wraps a module and keeps each output object."""
+
+    def __init__(self, inner: nn.Module) -> None:
+        super().__init__()
+        self.inner = inner
+        self.outputs: list[torch.Tensor] = []
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        out: torch.Tensor = self.inner(x)
+        self.outputs.append(out)
+        return out
+
+
+def test_nan_gate_weights_are_named_after_the_softmax(
+    monkeypatch: pytest.MonkeyPatch, restore_rng: None
+) -> None:
+    """The softmax of the gate logits replaced by NaN (finite logits cannot give a
+    non-finite softmax): "gate weights after softmax" (line 1143).
+    """
+    model = _tiny().eval()
+    assert model.gate_mlp is not None
+    gate = _Recording(model.gate_mlp)
+    monkeypatch.setattr(model, "gate_mlp", gate)
+    monkeypatch.setattr(
+        dango_module, "F", _GateSoftmax(torch.nn.functional, gate, float("nan"))
+    )
+    with pytest.raises(
+        RuntimeError, match=r"^NaN or inf detected in gate weights after softmax$"
+    ):
+        model(_cell_graph(), _batch([[0, 1], [2, 3]]))
+
+
+def test_gate_weights_above_one_overflow_the_weighted_predictions(
+    monkeypatch: pytest.MonkeyPatch, restore_rng: None
+) -> None:
+    """Both predictors return FMAX (finite) and the gate softmax returns 2 (finite, not
+    a distribution): every guard up to the weights passes, and FMAX * 2 overflows to
+    +inf in ``pred_stack * gate_weights``: "weighted predictions" (line 1150).
+    """
+    model = _tiny().eval()
+    monkeypatch.setattr(model, "global_interaction_predictor", _Fill(FMAX))
+    monkeypatch.setattr(model, "gene_interaction_predictor", _Fill(FMAX, local=True))
+    assert model.gate_mlp is not None
+    gate = _Recording(model.gate_mlp)
+    monkeypatch.setattr(model, "gate_mlp", gate)
+    monkeypatch.setattr(dango_module, "F", _GateSoftmax(torch.nn.functional, gate, 2.0))
+    with pytest.raises(
+        RuntimeError, match=r"^NaN or inf detected in weighted predictions$"
+    ):
+        model(_cell_graph(), _batch([[0, 1], [2, 3]]))
+
+
+def test_a_convex_gate_over_two_finite_maxima_overflows_the_final_sum(
+    monkeypatch: pytest.MonkeyPatch, restore_rng: None
+) -> None:
+    """Both predictors return FMAX and the gate logits are [0, -2.9]; the softmax weights
+    w = [0.9478465, 0.0521536] (float32) give finite products FMAX * w =
+    [3.2253542e38, 1.7746936e37], whose sum in float32 rounds past FMAX to +inf. Every
+    guard before the sum passes, so the overflow is named by the final check:
+    "final gene interaction output" (line 1175). The weighted-sum combination thus
+    loses a prediction that is itself at the float32 maximum.
+    """
+    model = _tiny().eval()
+    monkeypatch.setattr(model, "global_interaction_predictor", _Fill(FMAX))
+    monkeypatch.setattr(model, "gene_interaction_predictor", _Fill(FMAX, local=True))
+    gate = _Fill([0.0, -2.9])
+    monkeypatch.setattr(model, "gate_mlp", gate)
+    with pytest.raises(
+        RuntimeError, match=r"^NaN or inf detected in final gene interaction output$"
+    ):
+        model(_cell_graph(), _batch([[0, 1], [2, 3]]))
+    weights = torch.softmax(gate.outputs[0], dim=1)
+    products = torch.full((2, 2), FMAX) * weights
+    assert torch.isfinite(products).all()
+    assert torch.isinf(products.sum(dim=1)).all()

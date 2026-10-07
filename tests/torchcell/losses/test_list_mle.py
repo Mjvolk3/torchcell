@@ -24,7 +24,7 @@ import math
 import pytest
 import torch
 
-from torchcell.losses.list_mle import ListMLELoss
+from torchcell.losses.list_mle import ListMLELoss, main
 
 Y_PRED = torch.tensor([[1.0, 2.0, 3.0]])
 Y_TRUE_DESC = torch.tensor([[3.0, 2.0, 1.0]])
@@ -85,3 +85,25 @@ def test_gradient_flows_to_the_predictions() -> None:
     assert y_pred.grad is not None
     expected = 3 * torch.softmax(Y_PRED, dim=1) - 1
     torch.testing.assert_close(y_pred.grad, expected, atol=1e-6, rtol=0)
+
+
+# Phase 24: the demo main's printed value
+
+
+def test_main_prints_the_implemented_value_of_its_toy_pair(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Predictions [0.2, 0.8, 0.1], truths [0.1, 0.7, 0.2]: whatever the order, the
+    implemented loss is n * logsumexp(y) - sum(y) = 3 log(e^0.2 + e^0.8 + e^0.1) - 1.1
+    = 3.4467756199 (float64); main prints the float32 ``loss.item()``. The last float32
+    bit depends on the kernel's operand order (x86 prints 3.4467759132385254, one ulp
+    above the rounded closed form), so the printed value is pinned to within two ulp
+    at 3.45 (4.8e-7), not to its exact string.
+    """
+    main()
+    out = capsys.readouterr().out
+    assert out.startswith("ListMLE Loss: ") and out.endswith("\n")
+    closed_form = 3 * math.log(math.exp(0.2) + math.exp(0.8) + math.exp(0.1)) - 1.1
+    assert float(out.removeprefix("ListMLE Loss: ")) == pytest.approx(
+        closed_form, abs=4.8e-7
+    )

@@ -184,3 +184,36 @@ def test_cross_a_round_trip_against_the_release() -> None:
         "BY "
     )
     assert {c: i.n_segregants_xls for c, i in info.items()} == b.EXPECTED_SEGREGANTS
+
+
+# Phase 24: the condition-partition and block-coverage guards
+
+
+def test_condition_partition_guard_refuses_38_residual_conditions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``_spec`` is patched to drop ``measurement_type``, so every column takes the
+    residual default: 38 residual and 0 absolute, which trips the 36/2 partition guard
+    (the 38-column count guard before it still passes).
+    """
+    real = b._spec
+
+    def all_residual(*args: object, **kwargs: object) -> b.ConditionSpec:
+        kwargs.pop("measurement_type", None)
+        return real(*args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(b, "_spec", all_residual)
+    with pytest.raises(
+        ValueError, match="^expected exactly 36 residual and 2 absolute conditions$"
+    ):
+        b.build_conditions()
+
+
+def test_expand_blocks_refuses_blocks_that_stop_short_of_the_marker_list() -> None:
+    """Two chrI markers and one aligned block spanning only the first (n_markers 1):
+    every block aligns, but coverage ends at 1 of 2 markers.
+    """
+    markers = b.sorted_markers(["chrI_100_A_T_1", "chrI_200_A_T_2"])
+    blocks = b.encode_blocks(np.array([1, 2], dtype=np.int8), markers)[:1]
+    with pytest.raises(ValueError, match="^blocks cover 1 of 2 markers$"):
+        b.expand_blocks(blocks, markers)

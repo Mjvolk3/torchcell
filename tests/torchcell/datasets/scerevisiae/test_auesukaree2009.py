@@ -913,3 +913,37 @@ def test_inline_construction_hooks_are_inert() -> None:
     assert dataset.preprocess_raw(frame) is frame
     with pytest.raises(NotImplementedError):
         dataset.create_experiment()
+
+
+# Phase 24: the verified-copy log line on the raw-mirror path
+
+
+def test_download_copies_a_matching_raw_mirror_pdf_and_logs_the_verified_line(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """The raw-mirror ``paper/paper.pdf`` is copied into ``raw_dir`` and logged.
+
+    ``_PDF_SHA256`` is patched to ``sha256(b"%PDF-stub")``; the source is
+    ``$DATA_ROOT/torchcell-raw/<CITATION_KEY>/paper/paper.pdf``. ``download`` runs
+    unbound on a namespace with only ``raw_dir``. INFO line:
+    ``Verified <raw_dir>/paper.pdf (sha256 <digest>)``.
+    """
+    import logging
+
+    data_root = tmp_path / "data_root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    src = data_root / "torchcell-raw" / a.CITATION_KEY / "paper" / "paper.pdf"
+    src.parent.mkdir(parents=True)
+    src.write_bytes(b"%PDF-stub")
+    digest = hashlib.sha256(b"%PDF-stub").hexdigest()
+    monkeypatch.setattr(a, "_PDF_SHA256", digest)
+    raw_dir = tmp_path / "root" / "raw"
+    with caplog.at_level(logging.INFO, logger=a.__name__):
+        a.EnvChemgenAuesukaree2009Dataset.download(
+            cast(Any, SimpleNamespace(raw_dir=str(raw_dir)))
+        )
+    dest = raw_dir / "paper.pdf"
+    assert dest.read_bytes() == b"%PDF-stub"
+    assert [r.getMessage() for r in caplog.records if r.name == a.__name__] == [
+        f"Verified {dest} (sha256 {digest})"
+    ]

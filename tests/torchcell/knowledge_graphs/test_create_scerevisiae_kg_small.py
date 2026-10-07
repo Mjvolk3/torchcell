@@ -606,3 +606,97 @@ def test_a_config_without_a_local_head_ontology_stops_before_biocypher(
     with pytest.raises(HeadOntologyError, match=re.escape(BIOLINK_SOURCE_URL)):
         ks.main(_cfg(FULL_CFG))
     assert FakeBioCypher.instances == []
+
+
+# Phase 24: the fast-writer sink path
+
+
+class FakeSink:
+    """``FastCsvSink`` stand-in: records its construction and every write, in order, and
+    returns how many items each write consumed (the real sink's contract).
+    """
+
+    instances: list[FakeSink] = []
+
+    def __init__(self, bc: Any, specs: Any) -> None:
+        """Record the BioCypher instance and the row specs it is bound to."""
+        self.bc = bc
+        self.specs = specs
+        self.calls: list[tuple[Any, ...]] = []
+        FakeSink.instances.append(self)
+
+    def write_nodes(self, nodes: Any) -> int:
+        """Drain and record the node stream; return its length plus 100, so the logged
+        totals can only come from the sink's return value.
+        """
+        items = list(nodes)
+        self.calls.append(("write_nodes", items))
+        return len(items) + 100
+
+    def write_edges(self, edges: Any) -> int:
+        """Drain and record the edge stream; return its length plus 100."""
+        items = list(edges)
+        self.calls.append(("write_edges", items))
+        return len(items) + 100
+
+    def finish(self) -> None:
+        """Record the close."""
+        self.calls.append(("finish",))
+
+
+def test_fast_writer_routes_every_write_through_the_sink_and_finishes_it_once(
+    build: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``adapters.fast_writer: true`` freezes row specs from the BioCypher instance
+    (``build_row_specs(bc)``) and wraps it in one ``FastCsvSink(bc, specs)``. The same
+    full build as ``test_full_build_prefilters_caps_skips_and_writes_the_import_call``
+    then sends alpha's 2 nodes and 2 edges and beta's 3 and 3 to the sink, not to
+    BioCypher, and calls ``finish`` exactly once, after the last edge write; BioCypher
+    itself only writes the import call and the schema node. The counts the sink returns
+    are the logged totals: the fake returns length + 100, so alpha logs 102 and beta
+    103 of each, 205 in total, and every adapter carries the specs.
+    """
+    reset_instances(FakeSink)
+    specs = SimpleNamespace(name="row-specs")
+    spec_calls: list[Any] = []
+
+    def build_row_specs(bc: Any) -> SimpleNamespace:
+        spec_calls.append(bc)
+        return specs
+
+    monkeypatch.setattr(ks, "build_row_specs", build_row_specs)
+    monkeypatch.setattr(ks, "FastCsvSink", FakeSink)
+    cfg = {**FULL_CFG, "adapters": {**BASE["adapters"], "fast_writer": True}}
+    ks.main(_cfg(cfg))
+
+    (bc,) = FakeBioCypher.instances
+    (sink,) = FakeSink.instances
+    assert spec_calls == [bc]
+    assert (sink.bc, sink.specs) == (bc, specs)
+    assert sink.calls == [
+        ("write_nodes", [("node", "FakeAdapterA", 0), ("node", "FakeAdapterA", 1)]),
+        ("write_edges", [("edge", "FakeAdapterA", 0), ("edge", "FakeAdapterA", 1)]),
+        ("write_nodes", [("node", "FakeAdapterB", i) for i in range(3)]),
+        ("write_edges", [("edge", "FakeAdapterB", i) for i in range(3)]),
+        ("finish",),
+    ]
+    assert bc.calls == [("write_import_call",), ("write_schema_info", True)]
+    (adapter_a,) = FakeAdapterA.instances
+    (adapter_b,) = FakeAdapterB.instances
+    # set by main() after construction, so not a declared attribute of the fake
+    assert vars(adapter_a)["row_specs"] is specs
+    assert vars(adapter_b)["row_specs"] is specs
+    totals = [d for d in build.wandb.logged if "generation_wall_s" in d]
+    assert [(d["total_nodes"], d["total_edges"]) for d in totals] == [(205, 205)]
+    assert build.wandb.logged[12:14] == [
+        {
+            "FakeAdapterB_write_nodes_time(s)": 1.0,
+            "FakeAdapterB_n_nodes": 103,
+            "total_nodes": 205,
+        },
+        {
+            "FakeAdapterB_write_edges_time": 1.0,
+            "FakeAdapterB_n_edges": 103,
+            "total_edges": 205,
+        },
+    ]

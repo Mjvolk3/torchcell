@@ -1378,3 +1378,33 @@ def test_inline_construction_hooks_are_inert(tmp_path: Path) -> None:
     assert dataset.preprocess_raw(frame) is frame
     with pytest.raises(NotImplementedError):
         dataset.create_experiment()
+
+
+# Phase 24: the drop-accounting guard
+
+
+def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The ``built`` fixture rows with ``DropLog`` reporting one extra dropped record.
+
+    The fixture holds 0 unresolved strains and drops 1 SID-only compound cell, so the
+    rule total is 0 + 1 = 1 while the tampered log says 2: the exact mismatch message
+    (this loader says ``rule total``, singular), the tampered 2 already on disk.
+    """
+    real = w.DropLog
+
+    def inflated(**kwargs: Any) -> Any:
+        kwargs["dropped_records"] += 1
+        return real(**kwargs)
+
+    monkeypatch.setattr(w, "DropLog", inflated)
+    root = tmp_path / "env_chemgen_wildenhain2015"
+    _write_raw(root, _rows())
+    with pytest.raises(RuntimeError) as err:
+        _build(root, monkeypatch)
+    assert str(err.value) == (
+        "drop accounting mismatch: rule total 1, 2 records missing from the build"
+    )
+    log = json.loads((root / "preprocess" / "dropped_records.json").read_text())
+    assert log["dropped_records"] == 2

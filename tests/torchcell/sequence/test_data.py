@@ -25,6 +25,7 @@ the source:
 """
 
 import logging
+import re
 from pathlib import Path
 from typing import Any, cast
 
@@ -792,3 +793,24 @@ if __name__ == "__main__":
     cds_str = "ATGGCGGCGCTGAAA"
     codon_frequency_vector = compute_codon_frequency(cds_str)
     print(codon_frequency_vector)
+
+
+# Phase 24: ParsedGenome's own gene_set check, reached only by a direct call
+
+
+def test_parsed_genome_validator_names_the_rejected_type() -> None:
+    """Finding: the pydantic ``is_instance_of`` check refuses a non-GeneSet before the
+    field validator runs, so its message is reachable only by calling it directly.
+    ``check_seq_len``'s negative-length branch is unreachable (``len`` is never < 0).
+    """
+    with pytest.raises(
+        ValidationError, match=re.escape("Input should be an instance of GeneSet")
+    ):
+        ParsedGenome(gene_set=["YAL001C"])  # type: ignore[arg-type]
+    validate = cast(Any, ParsedGenome).validate_gene_set
+    with pytest.raises(
+        ValueError, match=re.escape("gene_set must be a GeneSet, got list")
+    ):
+        validate(["YAL001C"])
+    genes = GeneSet(["YAL001C"])
+    assert validate(genes) is genes

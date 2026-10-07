@@ -26,8 +26,10 @@ Derivations:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
+import sys
 import urllib.request
 from pathlib import Path
 from types import SimpleNamespace
@@ -1069,3 +1071,87 @@ def test_curate_flushes_the_cache_every_50_distinct_lookups(
     assert len(json.loads(cache.read_text())) == 51
     assert [r.resolution_status for r in rows] == ["UNRESOLVED_PUBLIC"] * 51
     assert len(net.requests) == 51  # no synonyms batch: no CID was found
+
+
+# Phase 24: main() writes the table, the digest, the per-source buckets and the drops
+
+
+def test_main_writes_the_table_and_prints_every_summary_line(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``curate`` is replaced by a recorder returning two rows and four directives.
+
+    Status lookup keys are every row name and synonym, lowercased: ``glucose``,
+    ``d-glucose`` (RESOLVED) and ``mystery`` (UNRESOLVED_PUBLIC). ``hil`` has two labels
+    on the resolved row; ``vana`` has ``Mystery`` plus ``Dropped``, which is no key and so
+    counts as ``AMBIGUOUS_LABEL`` and is listed as dropped. Buckets print sorted by state.
+    """
+    rows = [
+        CuratedRow(
+            name="Glucose", synonyms=["D-glucose"], resolution_status="RESOLVED"
+        ),
+        CuratedRow(
+            name="Mystery",
+            resolution_status="UNRESOLVED_PUBLIC",
+            unresolved_reason="no PubChem hit",
+        ),
+    ]
+    directives = [
+        CurationDirective(label="glucose", source="hil"),
+        CurationDirective(label="D-Glucose", source="hil"),
+        CurationDirective(label="Mystery", source="vana"),
+        CurationDirective(label="Dropped", source="vana"),
+    ]
+    calls: list[tuple[list[Path], list[Path], Path | None]] = []
+
+    def fake_curate(
+        names: list[Path], cids: list[Path], cache: Path | None
+    ) -> tuple[list[CuratedRow], list[CurationDirective]]:
+        calls.append((names, cids, cache))
+        return rows, directives
+
+    monkeypatch.setattr(cur, "curate", fake_curate)
+    out = tmp_path / "table.json"
+    argv = ["prog", "--names", "a.txt", "--names", "b.txt", "--cids", "c.txt"]
+    argv += ["--out", str(out), "--cache", "cache.json"]
+    monkeypatch.setattr(sys, "argv", argv)
+    cur.main()
+
+    assert calls == [
+        ([Path("a.txt"), Path("b.txt")], [Path("c.txt")], Path("cache.json"))
+    ]
+    text = serialize(rows)
+    assert out.read_text(encoding="utf-8") == text
+    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    assert capsys.readouterr().out.splitlines() == [
+        f"wrote {out} (2 records)",
+        f"sha256 = {digest}",
+        "  hil: {'RESOLVED': 2}",
+        "  vana: {'AMBIGUOUS_LABEL': 1, 'UNRESOLVED_PUBLIC': 1}",
+        "  [UNRESOLVED_PUBLIC] Mystery: no PubChem hit",
+        "  AMBIGUOUS labels dropped as lookup keys (1): ['Dropped']",
+    ]
+
+
+def test_main_without_drops_omits_the_dropped_line(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Defaults: no ``--names``/``--cids`` gives empty lists and ``--cache`` gives None."""
+    rows = [CuratedRow(name="Glucose", resolution_status="RESOLVED")]
+    directives = [CurationDirective(label="Glucose", source="hil")]
+    calls: list[tuple[list[Path], list[Path], Path | None]] = []
+
+    def fake_curate(
+        names: list[Path], cids: list[Path], cache: Path | None
+    ) -> tuple[list[CuratedRow], list[CurationDirective]]:
+        calls.append((names, cids, cache))
+        return rows, directives
+
+    monkeypatch.setattr(cur, "curate", fake_curate)
+    out = tmp_path / "t.json"
+    monkeypatch.setattr(sys, "argv", ["prog", "--out", str(out)])
+    cur.main()
+    assert calls == [([], [], None)]
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0] == f"wrote {out} (1 records)"
+    assert lines[2:] == ["  hil: {'RESOLVED': 1}"]

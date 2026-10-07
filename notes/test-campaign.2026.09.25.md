@@ -1539,3 +1539,95 @@ Reviewers: two independent read-only agents on Opus 5.5, seven and eight modules
 - Two writer statements corrected: the allowlisted spell.py line is the `ASSET_IMAGES_DIR` join, not `DATA_ROOT`; `sameith2015` bound `load_dotenv` at module level and called it only in the main (the test docstring now says so). The unowned `knowledge_graphs.rst` regeneration was flagged and is kept as housekeeping.
 
 After the audit: 6861 passed.
+
+## 2026.10.07 - Phase 24: the scattered non-main lines (PR-24)
+
+Targets: after Phase 23 the live tree stood at 97.7% line+branch with 816 uncovered statements over 141 modules (behavioral run at main `8464bb9b0`, session scratch `missing_all.md`). Three kinds were out of scope by rule: GPU-only branches (FlexAttention in `nn/masked_attention_block.py` and `nn/self_attention_block.py`, CUDA streams in `models/dcell_opt.py`, `torch.cuda.empty_cache` in the trainers, device transfers between two devices, `dist.*` gathers), the two kept mains' CUDA and plot paths in `models/hetero_cell_bipartite_dango_gi.py` and `models/dcell.py`, and two scratch loaders (`torchcell/scratch/load_batch*.py`, 108 statements) that had entered the denominator only because four tests import them. Everything else was listed per module with two lines of context (`missing_context.md`) and split into four lanes: A, the CLIs and small data, literature, schema and viz modules; B, models, nn, losses, transforms and trainers; C, the dataset loaders; D, image processing, the small KG build and the graph processor. The brief's rule: not every line must be covered; a line without a checkable contract on a hand-built input is left and named with the reason, and every test written pins a fact.
+
+Coverage config (`pyproject.toml`): `[tool.coverage.run] omit = ["torchcell/scratch/*"]`, since the carve-out already sits outside mypy discovery, the import sweep, the legacy partition and the API docs; and `[tool.coverage.report] exclude_also` for `@abstractmethod` bodies and Protocol `...` stubs, which never execute by construction (`sequence/data.py`, `sequence/db_connection.py`, `data/graph_processor.py`, `data/deduplicate.py`, `data/neo4j_query_raw.py`). The two changes remove 261 statements from the denominator (48,599 to 48,338) and 139 of the uncovered ones; the remaining gain is tests.
+
+Written (160 new test cases, 54 test files, one new): Lane A, `database/test_browser_style.py` (`main` writes both renders byte for byte and names the rule count, `--check` current and stale, `lane_of` KeyError, `_caption` forms), `datamodels/test_compound_identity_curate.py` (`main` with `curate` replaced on the module: the out file equals `serialize(rows)`, the sha256 line, the per-source buckets, the unresolved and dropped-label lines), `viz/test_viz_fitness.py` and `viz/test_genetic_interaction_score.py` (constant predictions make `linregress` raise and the title reads `R²: N/A`), `datamodels/test_schema.py` (five validator messages and the functional-allele skip), `data/test_neo4j_query_raw.py` (environment annotation TypeError, field-count ValueError, `EmptyQueryResultError` with the staging store removed), `verification/test_environment_response.py` (the 10- and 8-tuple signatures), `literature/test_sync.py` (UNSUPPORTED and FAILED results, the logged exception) and `literature/test_zotero.py` (`create_if_missing` on a local recording subclass; nothing is sent), `graph/test_graph.py` (the validator's warning by direct call), `sequence/test_data.py` (what a caller gets, and the validator message by direct call), `datasets/test_random_embedding.py`, `test_one_hot_gene.py`, `test_codon_frequency.py` (`parse_genome(None)`, the exact NotImplementedError, a pre-transform stamp stored), `losses/test_list_mle.py` (`main` prints the closed form within two float32 ulp). Lane B, `models/test_hetero_cell_bipartite_dango_gi.py` and `..._gi_lazy.py` (the one-dimensional interaction unsqueeze, the dict edge stores, the sum fallback, and each NaN or overflow guard reached with the message it names, `F.softmax` replaced on the module where a real softmax cannot produce the input), `nn/test_self_attention_block.py` (NaN rows zeroed and renormalized), `nn/test_hetero_nsa.py` (relation without a block skipped; the residual rank squeeze), `nn/test_stoichiometric_hypergraph_conv.py` (bias shapes; `concat=False` is the head mean plus bias), `models/test_diffusion_decoder.py` (eps loss replayed under seed 4 with a `t = 0` row; the assertion and the unknown-parameterization message), `losses/test_distributional.py`, `test_multi_dim_nan_tolerant.py`, `test_mle_wasserstein.py` (closed forms: 33/6, 18.5, the 19-knot grid, uniform weights, log 2 totals, the full buffer), `transforms/test_coo_regression_to_classification.py`, `models/test_dcell.py` and `test_dcell_opt.py` (the no-children-no-genes term), the four `trainers/test_int_*` files (accumulator degree fields, the `latents` dict on the first batch, the target reshapes, the device probe order on the `meta` device). Lane C, the new [[tests.torchcell.datasets.test_loader_mains]] (16 loader mains plus `sgd_gene_graph`: exact root under `$DATA_ROOT/data/torchcell`, genome kwargs, `genome=` only where passed, one `load_dotenv` call, the printed lines) and the guards in `test_bloom2019*.py`, `test_hillenmeyer2008.py`, `test_hoepfner2014_synthetic.py`, `test_kemmeren2014_synthetic.py`, `test_lian2019_synthetic.py`, `test_lopez2024.py`, `test_xue2025.py`, `test_auesukaree2009.py`, `test_smith2006_synthetic.py`, `test_smith2016_synthetic.py`, `test_vanacloig2022.py`, `test_wildenhain2015.py`, `test_nadal_ribelles2025.py`, `test_ohnuki2022.py`. Lane D, `sga/test_cellpose_seg.py` and `sga/test_image.py` (singular RANSAC samples, empty Otsu splits with the window pinned by pixel counts, contrast routing, off-gel and off-node refusals, gapped label ids), `knowledge_graphs/test_create_scerevisiae_kg_small.py` (the sink receives every write and `finish` once; totals come from its return value), `data/test_graph_processor_subgraph.py` (the composed `NeighborSubgraph.process` at one and two hops), `data/test_neo4j_preprocessed_cell_full_masks.py` (typed reaction and metabolite payloads), `datasets/test_codon_language_model.py` and `test_datasets_fungal_up_down_transformer.py` (`parse_genome`).
+
+Left uncovered on purpose, with the reason in the lane reports: the GPU-only branches above; abstract-free dead code named below; `smith2006._read_table` (needs a BIFF `.xls`); the mid-batch LMDB commits in `hillenmeyer2008` and `hoepfner2014` (local literals of 250,000 and 500,000 records); `bloom2019` L454 (sorting a permutation always yields a permutation); `kemmeren2014` L1108 (an earlier ValueError in the same try fires first, already a recorded finding); the already-checked-tensor guards in both gated-interaction models (eager :318, :1050, :1112, :1130, :1166; lazy :352, :1285, :1360, :1378); `random_embedding` L67 and `one_hot_gene` L53 to 54 (the base class loads the store first; the latter already pinned as dead); `codon_language_model` and `fungal_up_down_transformer` L69 to 70 (the post-init rebuild has no hand-built input); `schema.py` L2495 (every `UncertaintyType` member is handled before it); `sequence/data.py` L83 (`len` is never negative); `nucleotide_transformer.py` and the kept `dcell.py` and `hetero_cell_bipartite_dango_gi.py` mains' CUDA and plot lines.
+
+Findings (source; none fixed here, each pinned by a test or named): `datasets/scerevisiae/nadal_ribelles2025.py` and `ohnuki2022.py` each define a `_sha256` helper that nothing in the module calls. `kemmeren2014._log_processing_summary` counts duplicates with `Counter(dict.keys())`, so its "duplicate gene deletions" lines can never fire. `datamodels/schema._require_value_or_gap`'s empty-list branch is dead: the `ProvenanceGapMixin` validator refuses any gapped non-None value first. `ParsedGenome.validate_gene_set`'s message is reachable only by a direct call; pydantic's instance check runs first and a caller sees `Input should be an instance of GeneSet`. `losses/multi_dim_nan_tolerant.WeightedDistLoss` widens an equal min and max label by half a unit (L1001 to 1003) but still fits `gaussian_kde` on the identical labels, which raises `LinAlgError`: a constant dimension crashes the loss. `models/dcell_opt.py` returns zeros `[B, 1]` for a GO term with no children and no genes (L755) where `models/dcell.py` raises the ValueError (L387): the two implementations disagree. In `models/hetero_cell_bipartite_dango_gi.py` the final-output guard (L1175) can fire from finite inputs: float32 softmax weights sum to slightly more than 1, so two predictions at the float32 maximum overflow in the weighted sum; the Phase 21 docstring that said the guard cannot fire is corrected. Dead code: `multi_dim_nan_tolerant.py` L1352 (preceded by the same `any()` early return), `mle_wasserstein.py` L711 (`weighted_dist` is never written into `loss_dict`), `coo_regression_to_classification.py` L736 (`bin_values` gets one entry per bin), `sga/image.py`'s `sl is None` guards in both detectors (a None slot has area 0, below the gate) and its `argmin` fallback (always rejected by the node gate it feeds). `with_zotero_retry(max_tries=0)` raises the post-loop AssertionError without calling the function; no caller passes 0, so the test for it was rejected as padding rather than kept. Test-suite observation from the Lane A audit: `tests/torchcell/datasets/test_codon_frequency.py` has a pre-existing autouse fixture that fakes `torch.cuda.is_available`, against the brief's rule; left for a separate change.
+
+Runs: behavioral suite under the sentinel, PR-24 worktree on `8464bb9b0` after the audit edits: 7033 passed, 125 skipped, 321 deselected, 9 xfailed, 7862 warnings in 439.53s (0:07:19) (base at `8464bb9b0`: 6873 passed, 125 skipped, 9 xfailed in 478.26s); `test_import_all.py` 321 passed; the sentinel directory absent afterwards; ruff and mypy (CI form) clean on all 54 files; `test_quality_check.py` 353 files clean; `check_paired_tests.py` 0 added modules; `legacy_partition.py --check` live 317, carve-out 34, package-data 2; `docs/gen_api_pages.py --check` exit 0; diff-cover: no source lines in the diff. Table: the 67 modules whose coverage changed, from `coverage_gaps.py --all` (the full 319-row table is in the session scratch).
+
+Generated by: python scripts/coverage_gaps.py --before coverage-base.json --after coverage-p24.json --import-only coverage-import2.json --all
+Live-critical: importer graph (scripts/legacy_partition.py) @ 8464bb9b0
+
+| Module | Live-critical | Statements | before @ 8464bb9b0 | after @ 8464bb9b0 | import-only @ 8464bb9b0 | Delta |
+| `torchcell/datasets/fungal_up_down_transformer.py` | yes | 61 | 88.9% | 91.4% | 21.0% | +2.5 |
+| `torchcell/datasets/codon_language_model.py` | yes | 69 | 90.8% | 93.1% | 24.1% | +2.3 |
+| `torchcell/trainers/int_transformer_cell.py` | yes | 650 | 95.2% | 96.8% | 5.6% | +1.6 |
+| `torchcell/models/dcell.py` | yes | 409 | 96.3% | 97.3% | 7.0% | +1.0 |
+| `torchcell/datasets/sgd_gene_graph.py` | yes | 94 | 80.3% | 97.5% | 14.8% | +17.2 |
+| `torchcell/losses/mle_wasserstein.py` | yes | 290 | 97.0% | 97.6% | 12.2% | +0.5 |
+| `torchcell/datasets/random_embedding.py` | yes | 68 | 94.2% | 97.7% | 24.4% | +3.5 |
+| `torchcell/datasets/codon_frequency.py` | yes | 47 | 90.9% | 98.2% | 30.9% | +7.3 |
+| `torchcell/datasets/scerevisiae/kemmeren2014.py` | yes | 652 | 98.0% | 98.5% | 6.9% | +0.5 |
+| `torchcell/viz/fitness.py` | yes | 114 | 97.0% | 98.5% | 7.5% | +1.5 |
+| `torchcell/viz/genetic_interaction_score.py` | yes | 124 | 97.2% | 98.6% | 6.9% | +1.4 |
+| `torchcell/data/aggregate.py` | yes | 120 | 97.6% | 98.7% | 17.1% | +1.2 |
+| `torchcell/datamodels/conversion.py` | yes | 139 | 98.9% | 98.9% | 19.9% | -0.0 |
+| `torchcell/datasets/client.py` | yes | 81 | 97.0% | 99.0% | 33.0% | +2.0 |
+| `torchcell/sga/cellpose_seg.py` | yes | 443 | 95.9% | 99.0% | 10.2% | +3.1 |
+| `torchcell/literature/zotero.py` | yes | 167 | 97.6% | 99.0% | 25.6% | +1.4 |
+| `torchcell/losses/multi_dim_nan_tolerant.py` | yes | 591 | 97.9% | 99.2% | 11.8% | +1.3 |
+| `torchcell/data/experiment_dataset.py` | yes | 377 | 99.2% | 99.2% | 17.8% | -0.0 |
+| `torchcell/datasets/scerevisiae/hillenmeyer2008.py` | yes | 652 | 97.8% | 99.3% | 29.0% | +1.5 |
+| `torchcell/data/deduplicate.py` | yes | 106 | 97.3% | 99.3% | 15.0% | +2.0 |
+| `torchcell/graph/graph.py` | yes | 722 | 98.3% | 99.3% | 17.2% | +1.0 |
+| `torchcell/datasets/scerevisiae/smith2006.py` | yes | 251 | 95.6% | 99.3% | 36.6% | +3.7 |
+| `torchcell/datasets/scerevisiae/auesukaree2009.py` | yes | 251 | 96.3% | 99.3% | 33.9% | +3.0 |
+| `torchcell/sequence/data.py` | yes | 243 | 96.7% | 99.4% | 20.0% | +2.7 |
+| `torchcell/transforms/coo_regression_to_classification.py` | yes | 387 | 98.0% | 99.5% | 6.6% | +1.4 |
+| `torchcell/datasets/scerevisiae/xue2025.py` | yes | 164 | 93.9% | 99.5% | 26.3% | +5.6 |
+| `torchcell/datasets/scerevisiae/hoepfner2014.py` | yes | 710 | 99.3% | 99.5% | 30.9% | +0.2 |
+| `torchcell/datasets/scerevisiae/costanzo2021.py` | yes | 197 | 95.2% | 99.6% | 41.9% | +4.4 |
+| `torchcell/datasets/scerevisiae/lopez2024.py` | yes | 196 | 93.9% | 99.6% | 24.3% | +5.7 |
+| `torchcell/datasets/scerevisiae/mota2024.py` | yes | 228 | 96.7% | 99.6% | 35.3% | +2.9 |
+| `torchcell/datasets/scerevisiae/bloom2019.py` | yes | 434 | 97.1% | 99.6% | 26.1% | +2.5 |
+| `torchcell/verification/environment_response.py` | yes | 236 | 97.7% | 99.7% | 9.8% | +2.0 |
+| `torchcell/datasets/scerevisiae/lian2019.py` | yes | 266 | 96.6% | 99.7% | 32.2% | +3.1 |
+| `torchcell/datamodels/schema.py` | yes | 1406 | 99.3% | 99.8% | 58.7% | +0.5 |
+| `torchcell/datasets/scerevisiae/vanacloig2022.py` | yes | 427 | 97.3% | 99.8% | 37.2% | +2.5 |
+| `torchcell/sga/image.py` | yes | 380 | 97.0% | 99.8% | 5.0% | +2.8 |
+| `torchcell/data/neo4j_query_raw.py` | yes | 555 | 98.6% | 99.9% | 19.7% | +1.3 |
+| `torchcell/data/embedding.py` | yes | 69 | 98.1% | 100.0% | 19.2% | +1.9 |
+| `torchcell/data/graph_processor.py` | yes | 1010 | 99.2% | 100.0% | 7.1% | +0.8 |
+| `torchcell/datasets/scerevisiae/baryshnikova2010.py` | yes | 227 | 97.8% | 100.0% | 36.5% | +2.2 |
+| `torchcell/datasets/scerevisiae/cooper2010.py` | yes | 353 | 98.5% | 100.0% | 42.3% | +1.5 |
+| `torchcell/datasets/scerevisiae/mormino2022.py` | yes | 190 | 96.3% | 100.0% | 43.5% | +3.7 |
+| `torchcell/datasets/scerevisiae/nadal_ribelles2025.py` | yes | 237 | 97.6% | 100.0% | 25.8% | +2.4 |
+| `torchcell/datasets/scerevisiae/ohnuki2022.py` | yes | 134 | 95.6% | 100.0% | 29.1% | +4.4 |
+| `torchcell/datasets/scerevisiae/smith2016.py` | yes | 235 | 96.0% | 100.0% | 35.3% | +4.0 |
+| `torchcell/datasets/scerevisiae/wildenhain2015.py` | yes | 372 | 98.0% | 100.0% | 37.7% | +2.0 |
+| `torchcell/datasets/scerevisiae/zelezniak2018.py` | yes | 284 | 97.1% | 100.0% | 25.9% | +2.9 |
+| `torchcell/knowledge_graphs/create_scerevisiae_kg_small.py` | yes | 208 | 97.5% | 100.0% | 14.9% | +2.5 |
+| `torchcell/literature/sync.py` | yes | 116 | 95.9% | 100.0% | 30.1% | +4.1 |
+| `torchcell/losses/distributional.py` | yes | 207 | 97.0% | 100.0% | 15.2% | +3.0 |
+| `torchcell/losses/list_mle.py` | yes | 22 | 79.2% | 100.0% | 25.0% | +20.8 |
+| `torchcell/metabolism/parameters.py` | yes | 145 | 99.5% | 100.0% | 27.3% | +0.5 |
+| `torchcell/sequence/db_connection.py` | yes | 41 | 85.5% | 100.0% | 48.9% | +14.5 |
+| `torchcell/nn/self_attention_block.py` |  | 56 | 82.3% | 88.7% | 16.1% | +6.5 |
+| `torchcell/models/hetero_cell_bipartite_dango_gi.py` |  | 1211 | 88.4% | 89.0% | 4.0% | +0.6 |
+| `torchcell/models/dcell_opt.py` |  | 347 | 94.3% | 94.9% | 7.8% | +0.6 |
+| `torchcell/trainers/int_dcell.py` |  | 322 | 94.4% | 96.7% | 7.7% | +2.3 |
+| `torchcell/trainers/int_dango.py` |  | 253 | 95.4% | 97.1% | 9.7% | +1.6 |
+| `torchcell/nn/hetero_nsa.py` |  | 215 | 95.4% | 97.9% | 5.5% | +2.4 |
+| `torchcell/data/neo4j_preprocessed_cell_full_masks.py` |  | 138 | 94.1% | 98.0% | 14.2% | +3.9 |
+| `torchcell/models/hetero_cell_bipartite_dango_gi_lazy.py` |  | 543 | 95.7% | 98.4% | 6.6% | +2.7 |
+| `torchcell/trainers/int_hetero_cell.py` |  | 418 | 98.5% | 98.8% | 13.6% | +0.3 |
+| `torchcell/nn/stoichiometric_hypergraph_conv.py` |  | 87 | 91.2% | 99.1% | 14.2% | +8.0 |
+| `torchcell/database/browser_style.py` |  | 118 | 73.9% | 100.0% | 44.2% | +26.1 |
+| `torchcell/datamodels/compound_identity_curate.py` |  | 315 | 91.4% | 100.0% | 20.2% | +8.6 |
+| `torchcell/losses/dango.py` |  | 82 | 99.0% | 100.0% | 20.4% | +1.0 |
+| `torchcell/models/diffusion_decoder.py` |  | 195 | 97.1% | 100.0% | 11.1% | +2.9 |
+| TOTAL (line+branch) |  | 48338 | 97.7% | 98.8% | 20.9% | +1.1 |
+| TOTAL (line only) | | 48338 | 98.3% | 99.4% | 26.5% | |
+
+### Quality audit
+
+Reviewers: four independent read-only agents on Opus 5.5, one per lane, each with the audit brief (verdict per new test function; every constant re-derived from the source; patches checked against the binding the module reads; hermeticity; prose). Auditors 2 and 4 also mutated the source in memory through a pytest plugin to confirm a test fails when its guarded line is removed. Totals over 120 new test functions: 92 accept, 18 accept with note, 1 rewrite, 3 reject. Applied before the commit: every note (the exact `_caption` message was already pinned; the GeneGraph and ParsedGenome tests say what a caller gets; the `initialize_model` no-op assertions dropped; the ListMLE string replaced by a two-ulp bound because the last float32 bit is kernel-order dependent; the loader-mains test pins the single `load_dotenv` call; the Vanacloig TMM test adds the unit-size control that picks the usual reference; the `_recover_colony` test pins the 709 and 1684 window pixels; the corner comment corrected from "about -54" to the measured -86.6 to -92.2; three `Finding:` docstrings on redundant guards; the fake sink returns length + 100 so the logged totals 205 can only come from it; the diffusion eps test moved to seed 4 so a `t = 0` row distinguishes `actual_noise` from `noise`; the unobservable `2d_to_3d` residual case dropped; the gi test file's Phase 21 docstring corrected about L1175), the rewrite (`_tighten_instance` on a 120-pixel instance with `grow_px=0`, which fails without the `n == 0` guard), and the three rejects removed (the zero-tries retry, the stub-receiver alias test of an unreachable property body, the `pass`-bodied `initialize_model`). After the audit: 7033 passed.

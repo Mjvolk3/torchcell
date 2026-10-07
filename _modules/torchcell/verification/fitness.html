@@ -293,13 +293,16 @@
     <span class="n">expected_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">resolve_gene_name</span><span class="p">:</span> <span class="n">GeneNameResolver</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sgd_genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">gene_universe_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"reference"</span><span class="p">,</span>
     <span class="n">min_containment</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.90</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VerificationReport</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Run the L0-L4 record-level gate for a single-mutant fitness dataset.</span>
 
 <span class="sd">    ``sgd_genes`` turns on the L4 gene rules (aggregate containment + per-record genome</span>
-<span class="sd">    membership) and ``resolve_gene_name`` the annotation half of the canonical-name rule;</span>
-<span class="sd">    without them the caller owns L4 (:func:`fitness_gene_set` is the overlap key).</span>
+<span class="sd">    membership), ``gene_universe_label`` is what the containment row calls that universe</span>
+<span class="sd">    (the host's, not always S288C's), and ``resolve_gene_name`` the annotation half of the</span>
+<span class="sd">    canonical-name rule; without them the caller owns L4 (:func:`fitness_gene_set` is the</span>
+<span class="sd">    overlap key).</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeAdapter</span>
 
@@ -341,6 +344,7 @@
     <span class="n">shared</span> <span class="o">=</span> <span class="n">SharedRecordRules</span><span class="p">(</span>
         <span class="n">resolve_gene_name</span><span class="o">=</span><span class="n">resolve_gene_name</span><span class="p">,</span>
         <span class="n">sgd_genes</span><span class="o">=</span><span class="n">sgd_genes</span><span class="p">,</span>
+        <span class="n">gene_universe_label</span><span class="o">=</span><span class="n">gene_universe_label</span><span class="p">,</span>
         <span class="n">min_containment</span><span class="o">=</span><span class="n">min_containment</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">shared</span><span class="o">.</span><span class="n">add_all</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>

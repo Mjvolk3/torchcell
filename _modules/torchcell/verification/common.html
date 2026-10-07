@@ -366,6 +366,7 @@
         <span class="n">background_genes</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(),</span>
         <span class="n">resolve_gene_name</span><span class="p">:</span> <span class="n">GeneNameResolver</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">sgd_genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">gene_universe_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"reference"</span><span class="p">,</span>
         <span class="n">min_containment</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.90</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Start an empty accumulation for one dataset."""</span>
@@ -376,6 +377,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">background_genes</span> <span class="o">=</span> <span class="n">background_genes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resolve_gene_name</span> <span class="o">=</span> <span class="n">resolve_gene_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sgd_genes</span> <span class="o">=</span> <span class="n">sgd_genes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gene_universe_label</span> <span class="o">=</span> <span class="n">gene_universe_label</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">min_containment</span> <span class="o">=</span> <span class="n">min_containment</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_census</span> <span class="o">=</span> <span class="n">CarrierGapCensus</span><span class="p">(</span><span class="n">n_records</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_records_with_gaps</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_gaps</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -908,9 +910,14 @@
 
 <span class="sd">        An empty measured set (no record carries a gene perturbation) passes both</span>
 <span class="sd">        results vacuously, each saying the set is empty, and adds a FAILING</span>
-<span class="sd">        ``measured_genes_present`` result ahead of them: a dataset verified against the</span>
-<span class="sd">        SGD gene set that measures no gene fails for that stated reason, not for a</span>
+<span class="sd">        ``measured_genes_present`` result ahead of them: a dataset verified against a</span>
+<span class="sd">        gene universe that measures no gene fails for that stated reason, not for a</span>
 <span class="sd">        fabricated 0.000 overlap.</span>
+
+<span class="sd">        The message names the universe it was GIVEN (``gene_universe_label``), because</span>
+<span class="sd">        this rule serves every host: four landed bacterial loaders pass their strain's</span>
+<span class="sd">        locus universe here, and a row reading "are S288C reference genes" over a</span>
+<span class="sd">        ``PP_`` tag is a claim that was never checked.</span>
 <span class="sd">        """</span>
         <span class="n">measured</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gene_records</span><span class="p">)</span>
         <span class="n">missing</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">measured</span> <span class="o">-</span> <span class="n">sgd_genes</span><span class="p">)</span>
@@ -920,8 +927,8 @@
             <span class="n">name</span><span class="o">=</span><span class="s2">"gene_containment_sgd"</span><span class="p">,</span>
             <span class="n">passed</span><span class="o">=</span><span class="n">overlap</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_containment</span><span class="p">,</span>
             <span class="n">message</span><span class="o">=</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">overlap</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">measured</span><span class="p">)</span><span class="si">}</span><span class="s2"> measured genes are S288C reference "</span>
-                <span class="sa">f</span><span class="s2">"genes (&gt;= </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">min_containment</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">overlap</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">measured</span><span class="p">)</span><span class="si">}</span><span class="s2"> measured genes are "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gene_universe_label</span><span class="si">}</span><span class="s2"> genes (&gt;= </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">min_containment</span><span class="si">}</span><span class="s2">)"</span>
                 <span class="k">if</span> <span class="n">measured</span>
                 <span class="k">else</span> <span class="s2">"no measured genes (the measured gene set is empty); containment "</span>
                 <span class="s2">"holds vacuously"</span>
@@ -1001,6 +1008,7 @@
     <span class="n">background_genes</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(),</span>
     <span class="n">resolve_gene_name</span><span class="p">:</span> <span class="n">GeneNameResolver</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sgd_genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">gene_universe_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"reference"</span><span class="p">,</span>
     <span class="n">min_containment</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.90</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">LevelResult</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Run every shared rule over a materialized record sequence."""</span>
@@ -1008,6 +1016,7 @@
         <span class="n">background_genes</span><span class="o">=</span><span class="n">background_genes</span><span class="p">,</span>
         <span class="n">resolve_gene_name</span><span class="o">=</span><span class="n">resolve_gene_name</span><span class="p">,</span>
         <span class="n">sgd_genes</span><span class="o">=</span><span class="n">sgd_genes</span><span class="p">,</span>
+        <span class="n">gene_universe_label</span><span class="o">=</span><span class="n">gene_universe_label</span><span class="p">,</span>
         <span class="n">min_containment</span><span class="o">=</span><span class="n">min_containment</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">rules</span><span class="o">.</span><span class="n">add_all</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>

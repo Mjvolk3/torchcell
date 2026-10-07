@@ -31,6 +31,8 @@ sourcing layer.
   its own batches in the integrated S1 Dataset matrix.
 - ``tong2020`` -- ``CarbonSourceTong2020Dataset``: Keio and sRNA-library deletion growth
   on thirty carbon sources, against two assembly pins.
+- ``wang2018`` -- ``CrispriGuideFitnessWang2018Dataset``: the genome-scale pooled CRISPRi
+  library, one signed log2 fitness per (guide, screen) over five screens.
 - ``wang2015`` -- ``EnvChemgenWang2015Dataset``: Keio transporter deletions scored for
   isoprenol tolerance.
 - ``rapp2026`` -- ``MetabolomeRapp2026Dataset``: the metabolome of a CRISPRi library
@@ -62,3 +64,6 @@ from .schmidt2016 import ProteomeSchmidt2016Dataset as ProteomeSchmidt2016Datase
 from .shiver2016 import EnvChemgenShiver2016Dataset as EnvChemgenShiver2016Dataset
 from .tong2020 import CarbonSourceTong2020Dataset as CarbonSourceTong2020Dataset
 from .wang2015 import EnvChemgenWang2015Dataset as EnvChemgenWang2015Dataset
+from .wang2018 import (
+    CrispriGuideFitnessWang2018Dataset as CrispriGuideFitnessWang2018Dataset,
+)

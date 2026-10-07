@@ -59,15 +59,7 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.datasets.bacteria_common import LocusTagResolutionError
 from torchcell.literature.manifest import ROLE_SI_DATA, Manifest, RetrievalMethod
-from torchcell.verification.levels import (
-    l0_structural,
-    l1_count,
-    l2_cross_method,
-    l2_value_fidelity,
-    l3_convention,
-    l4_cross_source,
-)
-from torchcell.verification.report import Level
+from torchcell.verification.report import Level, VerificationReport
 
 
 # --------------------------------------------------------------------------- #
@@ -676,14 +668,16 @@ def test_the_released_cultures_match_the_papers_own_control_and_strain_counts() 
 @pytest.mark.data
 @requires_built
 def test_the_built_titer_store_has_one_record_per_strain_and_passes_l0_to_l4() -> None:
-    """L0 schema, L1 count, L2 value fidelity and cross-method, L3 units, L4 oracle."""
+    """L0 schema, L1 count + the 472 reconciliation, L2 fidelity and the SE identity,
+    L3 unit and pathway pins, L4 against Supplementary Data 1.
+    """
     from torchcell.verification.runners import load_records
 
-    records = load_records(TITER_ROOT)
-    report = _titer_levels(records)
-    assert all(result.passed for result in report), [
-        (r.level, r.name, r.message) for r in report if not r.passed
+    report = c25.titer_report(load_records(TITER_ROOT), DATA_ROOT)
+    assert report.passed, [
+        (r.level, r.name, r.message) for r in report.results if not r.passed
     ]
+    assert report.levels_covered == {Level.L0, Level.L1, Level.L2, Level.L3, Level.L4}
 
 
 @pytest.mark.data
@@ -691,14 +685,14 @@ def test_the_built_titer_store_has_one_record_per_strain_and_passes_l0_to_l4() -
 def test_the_built_proteome_store_has_one_record_per_sample_and_passes_l0_to_l4() -> (
     None
 ):
-    """The same five levels over the protein-abundance family."""
+    """The protein family's own five levels over the PP_0815 off-target panel."""
     from torchcell.verification.runners import load_records
 
-    records = load_records(PROTEOME_ROOT)
-    report = _proteome_levels(records)
-    assert all(result.passed for result in report), [
-        (r.level, r.name, r.message) for r in report if not r.passed
+    report = c25.proteome_report(load_records(PROTEOME_ROOT), DATA_ROOT)
+    assert report.passed, [
+        (r.level, r.name, r.message) for r in report.results if not r.passed
     ]
+    assert report.levels_covered == {Level.L0, Level.L1, Level.L2, Level.L3, Level.L4}
 
 
 @pytest.mark.data
@@ -755,195 +749,12 @@ def test_the_build_manifests_name_this_loader_module() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# The L0-L4 level batteries (shared by the data-gated tests and ``main``)
+# The L0-L4 batteries moved INTO the loader module (``c25.titer_report`` and
+# ``c25.proteome_report``), so ``run_product_titer`` and
+# ``run_bacterial_protein_abundance`` run them from ``run_all``. What stays here is
+# the data-gated assertion that they pass on the real stores; regenerate the note's
+# table with ``python -m torchcell.verification.runners``.
 # --------------------------------------------------------------------------- #
-def _titer_levels(records: list[dict[str, Any]]) -> list[Any]:
-    """L0 to L4 over the product-titer family."""
-    experiments = [record["experiment"] for record in records]
-    titers = [exp["phenotype"]["titer"] for exp in experiments]
-    uncertainties = [exp["phenotype"]["titer_uncertainty"] for exp in experiments]
-    sqrt_n = [
-        exp["phenotype"]["titer_uncertainty"] / math.sqrt(exp["phenotype"]["n_samples"])
-        for exp in experiments
-    ]
-    derived = [exp["phenotype"]["titer_se"] for exp in experiments]
-    return [
-        l0_structural(experiments, ProductTiterExperiment.model_validate),
-        l1_count(len(records), 465),
-        l2_value_fidelity(titers, minimum=0.0),
-        l2_value_fidelity(uncertainties, minimum=0.0),
-        l2_cross_method(derived, sqrt_n, tol=1e-9),
-        l3_convention(
-            "titer_unit_is_the_sources_mg_per_l_as_ug_per_ml",
-            all(
-                exp["phenotype"]["titer_unit"] == ConcentrationUnit.ug_per_ml.value
-                for exp in experiments
-            ),
-            detail="1 mg/L == 1 ug/mL exactly, so the released number is stored verbatim",
-        ),
-        l3_convention(
-            "every_genotype_carries_the_five_pathway_genes",
-            all(
-                sum(
-                    1
-                    for pert in exp["genotype"]["perturbations"]
-                    if pert["perturbation_type"] == "heterologous_pathway"
-                )
-                == 5
-                for exp in experiments
-            ),
-            detail="IY1449b + pIY670 is the production strain IY1452b",
-        ),
-        _titer_l4(experiments),
-    ]
-
-
-def _titer_l4(experiments: list[dict[str, Any]]) -> Any:
-    """L4: the store's single-guide titers against Supplementary Data 1's own means.
-
-    The oracle is a DIFFERENT released file from the one the loader reads, so this
-    joins the built records to an independent statement of the same measurement. Its
-    means are printed to two decimals, hence the 0.005 tolerance.
-    """
-    si_path = osp.join(DATA_ROOT, c25.RAW_DIR_REL, c25.TARGETS_REL)
-    released = c25.read_si_target_means(si_path)
-    by_tag: dict[str, list[float]] = {}
-    for exp in experiments:
-        targets = [
-            pert["systematic_gene_name"]
-            for pert in exp["genotype"]["perturbations"]
-            if pert["perturbation_type"] == "bacterial_crispr_interference"
-        ]
-        if len(targets) == 1:
-            by_tag.setdefault(targets[0], []).append(exp["phenotype"]["titer"])
-    shared = [
-        (tag, min(by_tag[tag], key=lambda t: abs(t - mean)), mean)
-        for tag, mean in sorted(released.items())
-        if tag in by_tag
-    ]
-    if len(shared) != 120:
-        raise AssertionError(
-            f"{len(shared)} of Supplementary Data 1's {len(released)} targets join a "
-            "single-guide record; all 120 do on the pinned bytes. The record-level "
-            "join reaches two the construct-name join cannot (PP_1607 and PP_4194 are "
-            "released only as the NT-filler names PP_1607_NT1 and PP_4194_NT2, whose "
-            "filler guide is not a perturbation)"
-        )
-    return l4_cross_source(shared, tol=5e-3).model_copy(
-        update={"name": "single_guide_titer_vs_supplementary_data_1"}
-    )
-
-
-def _proteome_levels(records: list[dict[str, Any]]) -> list[Any]:
-    """L0 to L4 over the protein-abundance family."""
-    from torchcell.datamodels.schema import BacterialProteinAbundanceExperiment
-
-    experiments = [record["experiment"] for record in records]
-    abundances = [
-        value
-        for exp in experiments
-        for value in exp["phenotype"]["protein_abundance"].values()
-    ]
-    key_counts = [len(exp["phenotype"]["protein_abundance"]) for exp in experiments]
-    replicate_counts = [
-        n for exp in experiments for n in exp["phenotype"]["n_replicates"].values()
-    ]
-    return [
-        l0_structural(experiments, BacterialProteinAbundanceExperiment.model_validate),
-        l1_count(len(records), 19),
-        l2_value_fidelity(abundances, minimum=0.0),
-        l2_cross_method(key_counts, [1424] * len(key_counts), tol=0.0),
-        l3_convention(
-            "every_protein_key_is_a_kt2440_locus_tag",
-            all(
-                key.startswith("PP_")
-                for exp in experiments
-                for key in exp["phenotype"]["protein_abundance"]
-            ),
-            detail="the 77 non-host keys are dropped by a sourced rule",
-        ),
-        l3_convention(
-            "every_sample_is_a_biological_triplicate",
-            set(replicate_counts) == {3},
-            detail="Supplementary Fig. 13: 'All strains were cultured in triplicate'",
-        ),
-        _proteome_l4(experiments),
-    ]
-
-
-def _proteome_l4(experiments: list[dict[str, Any]]) -> Any:
-    """L4: the store's PP_0815-target profile against the released sheet, re-read.
-
-    Every stored abundance must be reproducible from the deposited bytes by the same
-    aggregation, so a store that drifted from its source is caught per protein.
-    """
-    from torchcell.datasets.bacteria_common import (
-        bacterial_genome,
-        reconcile_locus_tags,
-    )
-
-    rows = c25.read_proteome_rows(
-        osp.join(DATA_ROOT, c25.RAW_DIR_REL, c25.SOURCE_DATA_REL)
-    )
-    genome = bacterial_genome("pputida", "KT2440")
-    keys = sorted({row.protein for row in rows})
-    stored_keys, _ = reconcile_locus_tags(genome, pd.Series(keys), label="l4")
-    key_map = dict(zip(keys, stored_keys, strict=True))
-    cells: dict[str, list[float]] = {}
-    for row in rows:
-        if row.sample != c25.PROTEOME_TARGET_SAMPLE:
-            continue
-        cells.setdefault(key_map[row.protein], []).append(row.top3_signal)
-    target = next(
-        exp
-        for exp in experiments
-        if any(
-            pert["systematic_gene_name"] == c25.PROTEOME_BACKGROUND_DELETION
-            and pert["perturbation_type"] == "bacterial_crispr_interference"
-            for pert in exp["genotype"]["perturbations"]
-        )
-    )
-    abundance = target["phenotype"]["protein_abundance"]
-    shared = [
-        (key, value, sum(cells[key]) / len(cells[key]))
-        for key, value in sorted(abundance.items())
-        if key in cells
-    ]
-    if len(shared) != len(abundance):
-        raise AssertionError(
-            f"{len(abundance) - len(shared)} stored proteins are not in the released "
-            "sheet under their reconciled key"
-        )
-    return l4_cross_source(shared, tol=1e-6).model_copy(
-        update={"name": "stored_target_profile_vs_released_sheet"}
-    )
-
-
-def main() -> int:
-    """Print the L0-L4 report for both built stores (the PR's verifier numbers)."""
-    from dotenv import load_dotenv
-
-    load_dotenv()
-    from torchcell.verification.runners import load_records
-
-    failures = 0
-    for label, root, battery in (
-        ("isoprenol titer", TITER_ROOT, _titer_levels),
-        ("proteome", PROTEOME_ROOT, _proteome_levels),
-    ):
-        print(f"=== {label} ({root}) ===")
-        for result in battery(load_records(root)):
-            flag = "PASS" if result.passed else "FAIL"
-            level = (
-                result.level.value if isinstance(result.level, Level) else result.level
-            )
-            print(f"  [{flag}] {level} {result.name}: {result.message}")
-            failures += not result.passed
-    return 1 if failures else 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
 
 
 # --------------------------------------------------------------------------- #
@@ -1700,18 +1511,65 @@ def test_the_proteome_loaders_accounting_names_both_drop_rules(
     assert len(accounting.notes) == 4
 
 
-def test_both_loaders_pass_their_level_batteries_on_the_synthetic_build(
-    built_titer: Any, built_proteome: Any
+def test_both_loaders_pass_their_full_level_batteries_on_the_synthetic_build(
+    built_titer: Any,
+    built_proteome: Any,
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """L0 to L3 hold on the fixture too; the L4s need the real mirror, so are skipped."""
+    """L0 to L4 hold on the fixture, both cross-source joins included.
+
+    The module's record and overlap counts are pinned to the real released bytes, so
+    the fixture's own shape is patched over them; everything else, including the two
+    L4 joins against the synthetic workbooks, is the code the real stores run. The
+    fixture's one six-replicate construct is what reconciles its strain count, and its
+    filler construct is released under a name no single tag matches, so the oracle
+    joins the five single-guide targets plus the six-replicate one.
+    """
+    monkeypatch.setattr(c25, "bacterial_genome", lambda *a, **k: synthetic_kt2440)
+    monkeypatch.setattr(c25, "EXPECTED_TITER_RECORDS", len(built_titer))
+    monkeypatch.setattr(c25, "EXPECTED_PROTEOME_RECORDS", len(built_proteome))
+    monkeypatch.setattr(c25, "PROTEOME_KEYS_PER_RECORD", len(PROTEOME_TAGS))
+    monkeypatch.setattr(c25, "PAPER_STRAIN_COUNT", len(built_titer) + 1)
+    monkeypatch.setattr(c25, "SI_TARGET_OVERLAP", len(SINGLE_GUIDE_TARGETS) + 1)
+    families: tuple[tuple[str, c25.Family], ...] = (
+        (built_titer.root, "titer"),
+        (built_proteome.root, "proteome"),
+    )
+    for root, family in families:
+        report = c25.verify_build(root, str(synthetic_mirror), family=family)
+        assert report.passed, [
+            (r.level, r.name, r.message) for r in report.results if not r.passed
+        ]
+        assert report.levels_covered == {
+            Level.L0,
+            Level.L1,
+            Level.L2,
+            Level.L3,
+            Level.L4,
+        }
+        written = VerificationReport.model_validate_json(
+            Path(root, "preprocess/verification_report.json").read_text()
+        )
+        assert written.results == report.results
+
+
+def test_the_titer_battery_fails_a_store_whose_se_is_not_sd_over_sqrt_n(
+    built_titer: Any, synthetic_mirror: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The derived standard error is checked, not assumed: break one and L2 fails."""
     from torchcell.verification.runners import load_records
 
-    titer = _titer_levels_without_l4(load_records(built_titer.root), len(built_titer))
-    proteome = _proteome_levels_without_l4(
-        load_records(built_proteome.root), len(built_proteome), len(PROTEOME_TAGS)
-    )
-    for result in (*titer, *proteome):
-        assert result.passed, (result.level, result.name, result.message)
+    monkeypatch.setattr(c25, "EXPECTED_TITER_RECORDS", len(built_titer))
+    monkeypatch.setattr(c25, "PAPER_STRAIN_COUNT", len(built_titer) + 1)
+    monkeypatch.setattr(c25, "SI_TARGET_OVERLAP", len(SINGLE_GUIDE_TARGETS) + 1)
+    records = load_records(built_titer.root)
+    records[0]["experiment"]["phenotype"]["titer_se"] += 1.0
+    report = c25.titer_report(records, str(synthetic_mirror))
+    broken = [r for r in report.results if not r.passed]
+    assert [r.name for r in broken] == ["se_is_the_uncertainty_over_sqrt_n"]
+    assert broken[0].details["worst"][0]["index"] == 0
 
 
 # --- the build-time refusals, each driven by a doctored workbook ----------- #
@@ -1932,52 +1790,3 @@ def test_main_builds_both_families_and_prints_their_accounting(
     assert "IsoprenolTiterCarruthers2025Dataset: len =" in out
     assert "ProteomeCarruthers2025Dataset: len =" in out
     assert '"dropped_records": 0' in out
-
-
-def _titer_levels_without_l4(records: list[dict[str, Any]], expected: int) -> list[Any]:
-    """The titer battery minus the L4, which needs the real Supplementary Data 1."""
-    return [
-        l0_structural(
-            [record["experiment"] for record in records],
-            ProductTiterExperiment.model_validate,
-        ),
-        l1_count(len(records), expected),
-        l2_value_fidelity(
-            [record["experiment"]["phenotype"]["titer"] for record in records],
-            minimum=0.0,
-        ),
-        l3_convention(
-            "titer_unit_is_the_sources_mg_per_l_as_ug_per_ml",
-            all(
-                record["experiment"]["phenotype"]["titer_unit"]
-                == ConcentrationUnit.ug_per_ml.value
-                for record in records
-            ),
-        ),
-    ]
-
-
-def _proteome_levels_without_l4(
-    records: list[dict[str, Any]], expected: int, keys: int
-) -> list[Any]:
-    """The proteome battery minus the L4, which needs the real released sheet."""
-    from torchcell.datamodels.schema import BacterialProteinAbundanceExperiment
-
-    experiments = [record["experiment"] for record in records]
-    return [
-        l0_structural(experiments, BacterialProteinAbundanceExperiment.model_validate),
-        l1_count(len(records), expected),
-        l2_cross_method(
-            [len(exp["phenotype"]["protein_abundance"]) for exp in experiments],
-            [keys] * len(experiments),
-            tol=0.0,
-        ),
-        l3_convention(
-            "every_protein_key_is_a_kt2440_locus_tag",
-            all(
-                key.startswith("PP_")
-                for exp in experiments
-                for key in exp["phenotype"]["protein_abundance"]
-            ),
-        ),
-    ]

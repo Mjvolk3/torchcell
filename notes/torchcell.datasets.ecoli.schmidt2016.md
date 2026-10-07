@@ -374,3 +374,65 @@ proteome_schmidt2016: PASS
 - The number of expected tryptic peptides per protein, which the abundance model divides
   by, is not a released column. It is not needed: the SE derivation cancels it, measured
   to 9.3e-10.
+
+## 2026.10.07 - BioCypher adapter and its enable-list
+
+`ProteomeSchmidt2016Adapter` (`torchcell/adapters/schmidt2016_adapter.py`) serves this
+dataset to BioCypher, with its enable-list in
+`torchcell/adapters/conf/proteome_schmidt2016_adapter.yaml`. The adapter is registered
+in `dataset_adapter_map`, re-exported from `torchcell/adapters/__init__.py`, and named
+in `torchcell/knowledge_graphs/conf/kg_bacteria.yaml`, so the bacteria-only rehearsal
+generation covers it. The module names exactly one conf file, because
+`kg_manifest._CONF_RE` reads the FIRST quoted `*_adapter.yaml` out of the module source
+and would otherwise fingerprint a sibling's conf (issue #743).
+
+### Why no gene-perturbation method is enabled
+
+Every one of the 14 records is wild-type BW25113 with an empty genotype, measured on the
+dev store at `$DATA_ROOT/data/torchcell/proteome_schmidt2016`: the perturbation count is
+0 in 14 of 14. The paper's three deletion strains carry no abundance data and the loader
+does not load them, so the only varying axis is the environment and the glucose arm is
+the phenotype reference. Neither `bacterial perturbation (chunked)` nor `perturbation to
+genotype (chunked)` is enabled, and `crispr construct (chunked)` is off for the same
+reason: there is no perturbation leaf for a construct to hang off. The `genotype
+(chunked)` node itself IS served, one empty genotype per record, because the genotype is
+what the experiment points at. The landed `ProteomeCaglar2017Adapter` is the precedent;
+its REL606 panel is wild type in 105 of 105 records and carries the same shape.
+
+Enabling a perturbation method here would not fail loudly. The method would simply walk
+an empty list and write nothing, which is why the admission gate checks the converse:
+`assert_dev_store_graph` runs every family the conf leaves OFF over the real records and
+requires it to emit nothing, so the enable-list is pinned in both directions.
+
+### The rest of the enable-list
+
+- **Environment, media, temperature, and their references** are enabled: the 14 records
+  span LB and 13 M9 variants, with temperature varying (37 C, and 42 C for the heat
+  arm), so every one of those sub-objects differs between records.
+- **The environment-perturbation pair** is enabled: 13 of the 14 records carry at least
+  one `EnvironmentPhysicalPerturbation` or `SmallMoleculePerturbation` (the LB record
+  carries none, two records carry two), and the glucose reference environment carries
+  one, so the reference method has a node to write.
+- **`protein abundance phenotype`** is the phenotype class of
+  `BacterialProteinAbundanceExperiment`, which the harness derives from the loader's
+  `experiment_class` rather than from the conf.
+- **Genome, dataset, publication** are the standard trio; the genome is the pinned
+  `ecoli_K12_BW25113_ASM75055v1` assembly reference.
+
+Measured over all 14 records, the adapter emits these node labels: `dataset` 1,
+`environment` 15, `environment perturbation` 16, `experiment` 14, `experiment
+reference` 2, `genome` 1, `genotype` 14, `interned constant` 14, `media` 15, `protein
+abundance phenotype` 16, `publication` 14, `temperature` 15. No `perturbation` and no
+`bacterial perturbation` node appears, which
+`tests/torchcell/adapters/test_schmidt2016_adapter.py` pins on the conf (hermetic) and
+on the emitted graph (data-gated).
+
+### Admission
+
+`kg_manifest admit --dataset ProteomeSchmidt2016Dataset` reads the dev LMDB as `fresh`
+and `served: no (new dataset)`, then BLOCKS on four store-wide conditions that predate
+this adapter: 11 served datasets whose schema closure changed, the `crispr construct`
+graph class, `_crispr_construct_node_from` adapter drift, and the media and
+compound-identity value surface. The identical four blocks come back for the already
+landed `ProteomeCaglar2017Dataset`, so they belong to the pending full rebuild, not to
+this dataset.

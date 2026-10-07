@@ -130,6 +130,9 @@ from .sameith2015_adapter import (
 from .sameith2015_adapter import (
     SmMicroarraySameith2015Adapter as SmMicroarraySameith2015Adapter,
 )
+from .schmidt2016_adapter import (
+    ProteomeSchmidt2016Adapter as ProteomeSchmidt2016Adapter,
+)
 from .sgd_adapter import GeneEssentialitySgdAdapter as GeneEssentialitySgdAdapter
 from .smith2006_adapter import Smith2006Adapter as Smith2006Adapter
 from .smith2016_adapter import Smith2016Adapter as Smith2016Adapter
@@ -256,6 +259,7 @@ ecoli_adapters = [
     "RnaseqLamoureux2023Adapter",
     "RbTnseqPrice2018EcoliAdapter",
     "MetabolomeRapp2026Adapter",
+    "ProteomeSchmidt2016Adapter",
     "CarbonSourceTong2020Adapter",
     "EnvChemgenWang2015Adapter",
 ]

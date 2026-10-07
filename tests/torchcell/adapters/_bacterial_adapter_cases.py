@@ -71,6 +71,7 @@ from torchcell.adapters import (
     ProteomeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Adapter,
     ProteomeLim2025Adapter,
+    ProteomeSchmidt2016Adapter,
     PutidaPrecise321Lim2022Adapter,
     RbTnseqBorchert2024Adapter,
     RbTnseqPrice2018EcoliAdapter,
@@ -90,6 +91,7 @@ from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
 from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
+from torchcell.datasets.ecoli.schmidt2016 import ProteomeSchmidt2016Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
 from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
@@ -169,8 +171,10 @@ TURNOVER = "protein turnover phenotype"
 # The shape of each dataset's records, measured on its dev-tree LMDB on 2026-10-07 (and,
 # for the two RB-TnSeq stores rebuilding at the time, read off `build_genotype` /
 # `build_environment` in the loader). Caglar 2017 is a wild-type panel with no
-# perturbation in any record; Fuhrer 2017 and Goodall 2018 carry no environment
-# perturbation; the CRISPRi leaves of Carruthers, Cui, Menasalvas and Yunus
+# perturbation in any record, and so is Schmidt 2016, whose paper's three deletion
+# strains carry no abundance data and are not loaded; Fuhrer 2017 and Goodall 2018 carry
+# no environment perturbation; the CRISPRi leaves of Carruthers, Cui, Menasalvas and
+# Yunus
 # carry a CrisprConstruct.
 BACTERIAL: list[Bacterial] = [
     _case(
@@ -241,6 +245,14 @@ BACTERIAL: list[Bacterial] = [
         MetabolomeRapp2026Dataset,
         "metabolite phenotype",
         crispr=True,
+    ),
+    _case(
+        ProteomeSchmidt2016Adapter,
+        "schmidt2016",
+        "proteome_schmidt2016",
+        ProteomeSchmidt2016Dataset,
+        PROTEOME,
+        perturbation=False,
     ),
     _case(
         CarbonSourceTong2020Adapter,

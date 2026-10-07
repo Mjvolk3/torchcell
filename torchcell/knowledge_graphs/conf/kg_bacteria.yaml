@@ -65,6 +65,7 @@ datasets:
   - RnaseqLamoureux2023Dataset
   - RbTnseqPrice2018EcoliDataset
   - MetabolomeRapp2026Dataset
+  - ProteomeSchmidt2016Dataset
   - CarbonSourceTong2020Dataset
   - EnvChemgenWang2015Dataset
   # P. putida

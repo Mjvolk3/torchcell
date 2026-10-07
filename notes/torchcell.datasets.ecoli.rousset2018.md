@@ -35,12 +35,27 @@ read-count filters.
 
 `BacterialEnvironmentResponseExperiment` with an `EnvironmentResponsePhenotype`,
 `measurement_type=log2_ratio`. The released value is a signed DESeq2 `log2FoldChange` of
-guide abundance; measured on the stored cells, 92.49% of the growth screen, 27.73% of the
-lambda column, 83.95% of T4, 44.81% of 186cIts and 89.14% of the transduction column are
-negative, and the growth screen's minimum is -11.95. `FitnessPhenotype.validate_fitness`
-clamps every non-positive value to 0.0, so that class would erase the signal, and no other
-`MeasurementType` member describes a log2 abundance ratio. The reference carries 0.0,
-which is also what the environment-response verifier's numeric L3 rule requires.
+guide abundance, and it is routinely negative. Measured over the 91,609 STORED records by
+`test_the_stored_records_carry_the_measured_sign_distribution` in
+`tests/torchcell/datasets/ecoli/test_rousset2018.py`, which streams the built LMDB and
+counts by `screen_id` (run with `--data`):
+
+| screen | records | negative | fraction | minimum |
+|---|---|---|---|---|
+| `growth_17_generations` | 23,209 | 21,471 | 0.9251 | -11.9475 |
+| `phage_lambda` | 17,100 | 4,737 | 0.2770 | -2.5409 |
+| `phage_T4` | 17,100 | 14,352 | 0.8393 | -2.5929 |
+| `phage_186cIts` | 17,100 | 7,665 | 0.4482 | -3.3441 |
+| `lambda_transduction` | 17,100 | 15,246 | 0.8916 | -10.9705 |
+
+`FitnessPhenotype.validate_fitness` clamps every non-positive value to 0.0, so that class
+would erase that signal, and no other `MeasurementType` member describes a log2 abundance
+ratio. The reference carries 0.0, which is also what the environment-response verifier's
+numeric L3 rule requires.
+
+(The data test asserts 0.9249 and -11.95 instead, because it measures the growth screen's
+RELEASED coding-strand in-gene rows, 23,372 of them, before the 163 unstorable-symbol
+records are dropped. Two sets, two numbers, both stated.)
 
 Genotype: one `BacterialCrisprInterferencePerturbation` per record, keyed by the target
 gene's MG1655 b-number, with the 20-nt spacer on the shared `crispr` construct

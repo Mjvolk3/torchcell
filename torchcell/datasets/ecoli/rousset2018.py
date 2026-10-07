@@ -33,10 +33,11 @@ WHY ``EnvironmentResponsePhenotype`` AND NOT ``FitnessPhenotype``. The released 
 a signed DESeq2 ``log2FoldChange`` of guide abundance ("The log2FoldChange ... value
 represents the enrichment or depletion of each sgRNA"), normalized on a non-targeting
 control guide and paired against each sample's own initial condition. It is routinely
-negative: 92.49% of the growth screen's stored cells, 83.95% of the T4 column and 89.14%
-of the transduction column, with a minimum of -11.95. ``FitnessPhenotype.validate_fitness``
-clamps every non-positive value to 0.0, which would erase the entire signal, and no
-``MeasurementType`` member other than ``log2_ratio`` describes this number.
+negative. Measured over the 91,609 STORED records: 92.51% of the growth screen (minimum
+-11.9475), 89.16% of the transduction screen, 83.93% of T4, 44.82% of 186cIts and 27.70%
+of lambda. ``FitnessPhenotype.validate_fitness`` clamps every non-positive value to 0.0,
+which would erase that signal, and no ``MeasurementType`` member other than
+``log2_ratio`` describes this number.
 
 WHY ``PhagePerturbation``. Three of the five screens dose a virion: "followed by
 infection with phage lambda, T4 or 186cIts at a multiplicity of infection (MOI) of 1".

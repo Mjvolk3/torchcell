@@ -23,6 +23,7 @@ from __future__ import annotations
 import hashlib
 import os
 import os.path as osp
+from collections import Counter
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
@@ -1071,3 +1072,46 @@ def test_the_built_store_matches_the_retention_arithmetic() -> None:
     }
     with open(osp.join(preprocess, "gene_set.json")) as handle:
         assert len(json.load(handle)) == r.EXPECTED_GENES
+
+
+@pytest.mark.data
+def test_the_stored_records_carry_the_measured_sign_distribution() -> None:
+    """The per-screen sign census of the built store, the note's record-type evidence.
+
+    ``EnvironmentResponsePhenotype`` is the record type because the value is signed and
+    routinely negative; these are the fractions that claim rests on, measured over the
+    stored records rather than over the released rows (the released coding-strand
+    fractions are the subject of the test above, and differ by the 643 unstorable-symbol
+    records).
+    """
+    from torchcell.verification.runners import stream_records
+
+    root = osp.join(_data_root(), "data/torchcell/ecoli_crispri_rousset2018")
+    negative: Counter[str] = Counter()
+    total: Counter[str] = Counter()
+    minimum: dict[str, float] = {}
+    for record in stream_records(root):
+        phenotype = record["experiment"]["phenotype"]
+        screen = str(phenotype["screen_id"])
+        value = float(phenotype["environment_response"])
+        total[screen] += 1
+        negative[screen] += value < 0
+        minimum[screen] = min(minimum.get(screen, value), value)
+    assert dict(total) == r.EXPECTED_SCREEN_CENSUS
+    assert dict(negative) == {
+        "growth_17_generations": 21471,
+        "phage_lambda": 4737,
+        "phage_T4": 14352,
+        "phage_186cIts": 7665,
+        "lambda_transduction": 15246,
+    }
+    assert {screen: round(value, 4) for screen, value in minimum.items()} == {
+        "growth_17_generations": -11.9475,
+        "phage_lambda": -2.5409,
+        "phage_T4": -2.5929,
+        "phage_186cIts": -3.3441,
+        "lambda_transduction": -10.9705,
+    }
+    assert round(
+        negative["growth_17_generations"] / total["growth_17_generations"], 4
+    ) == (0.9251)

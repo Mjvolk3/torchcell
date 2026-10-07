@@ -321,6 +321,32 @@ class Excluded(BaseModel):
     rule: Literal["no-sequence", "off-host", "not-a-dataset", "no-per-record-data"]
 
 
+class Acquisition(BaseModel):
+    """A resource worth having that is NOT a row of the ranked table.
+
+    A ranked row carries a verified instance count and a confirmed accession. A row
+    here carries neither: it is a lead whose scale is asserted somewhere we cannot
+    check, so it cannot be ranked against rows whose numbers were read off a file.
+    Keeping it in its own table is what stops an unverifiable number from being
+    compared with a measured one, and printing it first is what stops it from being
+    forgotten, which is the only way a lead like this is actually lost.
+
+    ``claimed`` is reproduced as the source states it and is never presented as
+    measured. ``verification`` records what was actually done to check it, including
+    a search that found nothing, because "we looked and did not find it" is a result
+    and "we never looked" is not.
+    """
+
+    name: str
+    organism: Organism
+    modality: str
+    claimed: str
+    claim_source: str
+    verification: str
+    why: str
+    blocking_action: str
+
+
 class SchemaNeed(BaseModel):
     """One change the schema needs before any bacterial row can be written.
 
@@ -341,6 +367,43 @@ class SchemaNeed(BaseModel):
 # The shared blockers. Established by running the validators, not by reading them:
 # see the dated section of notes/experiments.database.expansion-bacteria.md.
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Acquisition targets: leads that are not ranked rows. Printed FIRST in the
+# document, before the fifty, because an unlocated deposit is the one kind of row
+# that disappears from a backlog without anyone deciding to drop it.
+# ---------------------------------------------------------------------------
+
+ACQUISITION: list[Acquisition] = [
+    Acquisition(
+        name="Genome-wide KT2440 CRISPRi guide library, pooled growth selection",
+        organism="P. putida",
+        modality="CRISPRi repression, multiple guides per gene, pooled selection "
+        "read out by guide enrichment and depletion",
+        claimed="78,932 library members at 10 to 15 guides per gene, plus 798 "
+        "non-targeting controls; selections in glucose, in acetate, and in "
+        "p-coumaric acid at 10 and 50 mM. About 316,000 guide by selection slots "
+        "if every member were quantified in all four selections, which is a "
+        "product of the design and not a count of released values.",
+        claim_source="A US Department of Energy project abstract, supplied by the "
+        "owner on 2026-10-07. Not a peer-reviewed dataset release, and no "
+        "accession accompanied the figures.",
+        verification="UNVERIFIED. Searched 2026-10-07 and found no publication or "
+        "deposit carrying these figures. The nearest confirmed genome-wide KT2440 "
+        "CRISPRi resource is the dCpf1 library of row 20 (Menasalvas 2025), "
+        "reported at about 16,500 guide targets, so the claimed scale is roughly "
+        "five times that and is not the same library. Nothing here was measured "
+        "from a file.",
+        why="It is the only candidate whose perturbation modality matches the "
+        "Carruthers 2025 target of row 6: repression rather than transposon "
+        "disruption, several guides per gene, and a pooled selection readout. A "
+        "transposon compendium transfers across a modality boundary; this would "
+        "not have to.",
+        blocking_action="Locate the deposit before any loader work. Until a file "
+        "exists with a sha256, this row cannot be ranked, costed or scheduled, and "
+        "the claimed slot count must not be added to any instance total.",
+    )
+]
 
 SCHEMA_NEEDS: list[SchemaNeed] = [
     SchemaNeed(
@@ -5673,6 +5736,56 @@ row shares (Table~\ref{tab:bschema}); a dash means those two are the whole cost.
     )
 
 
+def render_acquisition() -> str:
+    """The leads that are not ranked rows, printed before the fifty.
+
+    One block per target rather than a wide grid: every field is a sentence, and a
+    6-column landscape table would wrap each of them to three lines.
+    """
+    head = r"""\begingroup
+\footnotesize
+\begin{longtable}{@{}L{30mm} L{140mm}@{}}
+\caption[]{Acquisition targets, which are NOT among the fifty and carry no verified
+instance count. A ranked row in Table~\ref{tab:bfinal} has a confirmed accession and a
+number read off a file; a row here has neither, so the two cannot be compared and this
+table is deliberately kept out of every total. \emph{Claimed} reproduces the source's
+own figures and is not a measurement. \emph{Verification} is what was done to check
+them, and a search that found nothing is recorded as such.}
+\label{tab:bacquisition}\\
+\toprule
+Field & Statement \\
+\midrule
+\endfirsthead
+\toprule
+Field & Statement \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+"""
+    lines = []
+    for a in ACQUISITION:
+        lines.append(
+            r"\multicolumn{2}{@{}L{172mm}@{}}{\textbf{"
+            + tex_escape(a.name)
+            + r"} \quad \org{"
+            + tex_escape(a.organism)
+            + r"}} \\"
+        )
+        lines.append(r"\addlinespace[3pt]")
+        for label, value in (
+            ("Modality", a.modality),
+            ("Claimed", a.claimed),
+            ("Claim source", a.claim_source),
+            ("Verification", a.verification),
+            ("Why it matters", a.why),
+            ("Blocking action", a.blocking_action),
+        ):
+            lines.append(label + " & " + tex_escape(value) + r" \\")
+        lines.append(r"\addlinespace[6pt]")
+    return head + "\n".join(lines) + "\n\\end{longtable}\n\\endgroup\n"
+
+
 def render_schema() -> str:
     """The blockers every row shares, with how each was established."""
     head = r"""\begingroup
@@ -5945,6 +6058,7 @@ def main() -> None:
             f"only {len(rows)} candidates; the target is {TARGET_COUNT} rows"
         )
 
+    write(TEX_DIR / "acquisition.tex", render_acquisition())
     write(TEX_DIR / "final.tex", render_final(rows))
     write(TEX_DIR / "sources.tex", render_sources(rows[:TRANCHE_2]))
     write(TEX_DIR / "analogs.tex", render_analogs(rows[:TRANCHE_2]))
@@ -5966,6 +6080,7 @@ def main() -> None:
                 "quota_1": QUOTA_1,
                 "n_candidates": len(rows),
                 "quota_moves": quota_moves,
+                "acquisition": [a.model_dump() for a in ACQUISITION],
                 "schema_needs": [s.model_dump() for s in SCHEMA_NEEDS],
                 "candidates": [c.model_dump() for c in rows],
                 "excluded": [e.model_dump() for e in EXCLUDED],

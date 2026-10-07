@@ -1,0 +1,36 @@
+%% notes-tex/database/database-expansion-bacteria/sections/acquisition.tex
+%% [[experiments.database.expansion-bacteria]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-bacteria/sections/acquisition.tex
+%% SOURCE: acquisition table from
+%% experiments/database/scripts/build_bacteria_candidate_datasets_table.py
+%% (ACQUISITION list); surrounding prose is hand-authored
+
+\section{Acquisition targets, outside the fifty\secstatus{todo}}\label{sec:acquisition}
+
+Table~\ref{tab:bacquisition} holds one resource that is worth having and is not a row of
+the ranked list. A ranked row earns its place with two things: a confirmed accession, and
+an instance count read off a released file. A row here has neither. Its scale is asserted
+in a project abstract, so it cannot be ordered against rows whose numbers came from data,
+and none of its figures enter any total in this document.
+
+The entry is a genome-wide CRISPRi guide library for \org{P. putida} KT2440. Its claim is
+roughly 78,932 members at 10 to 15 guides per gene with 798 non-targeting controls,
+selected in glucose, in acetate, and in p-coumaric acid at two concentrations. A search on
+2026-10-07 found no publication and no deposit carrying those figures. The closest
+confirmed resource is the dCpf1 library of row 20, reported at about 16,500 guide targets,
+which is a different library at roughly a fifth of the claimed size.
+
+What makes it worth a section of its own is \term{modality}, meaning the physical way a
+gene is perturbed. The target campaign of row 6 represses genes with CRISPRi, while the
+largest verified supplement available today, the transposon fitness compendium of row 8,
+disrupts them with insertions. A model trained on insertion fitness and applied to
+repression crosses that boundary, and a repression library of this size would not have to.
+Several guides per gene would also supply a graded knockdown rather than a single
+all-or-nothing edit.
+
+Acquisition is therefore a prerequisite and not a schedule item: until a file exists with a
+\file{sha256}, the library cannot be ranked, costed, or assigned a loader. The reason it
+leads the document is that an unlocated deposit is the one kind of entry that leaves a
+backlog without anyone deciding to drop it.
+
+\input{tables/acquisition}

@@ -1,0 +1,33 @@
+%% GENERATED FILE -- do not hand-edit.
+%% SOURCE: experiments/database/scripts/build_bacteria_candidate_datasets_table.py
+\begingroup
+\footnotesize
+\begin{longtable}{@{}L{30mm} L{140mm}@{}}
+\caption[]{Acquisition targets, which are NOT among the fifty and carry no verified
+instance count. A ranked row in Table~\ref{tab:bfinal} has a confirmed accession and a
+number read off a file; a row here has neither, so the two cannot be compared and this
+table is deliberately kept out of every total. \emph{Claimed} reproduces the source's
+own figures and is not a measurement. \emph{Verification} is what was done to check
+them, and a search that found nothing is recorded as such.}
+\label{tab:bacquisition}\\
+\toprule
+Field & Statement \\
+\midrule
+\endfirsthead
+\toprule
+Field & Statement \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\multicolumn{2}{@{}L{172mm}@{}}{\textbf{Genome-wide KT2440 CRISPRi guide library, pooled growth selection} \quad \org{P. putida}} \\
+\addlinespace[3pt]
+Modality & CRISPRi repression, multiple guides per gene, pooled selection read out by guide enrichment and depletion \\
+Claimed & 78,932 library members at 10 to 15 guides per gene, plus 798 non-targeting controls; selections in glucose, in acetate, and in p-coumaric acid at 10 and 50 mM. About 316,000 guide by selection slots if every member were quantified in all four selections, which is a product of the design and not a count of released values. \\
+Claim source & A US Department of Energy project abstract, supplied by the owner on 2026-10-07. Not a peer-reviewed dataset release, and no accession accompanied the figures. \\
+Verification & UNVERIFIED. Searched 2026-10-07 and found no publication or deposit carrying these figures. The nearest confirmed genome-wide KT2440 CRISPRi resource is the dCpf1 library of row 20 (Menasalvas 2025), reported at about 16,500 guide targets, so the claimed scale is roughly five times that and is not the same library. Nothing here was measured from a file. \\
+Why it matters & It is the only candidate whose perturbation modality matches the Carruthers 2025 target of row 6: repression rather than transposon disruption, several guides per gene, and a pooled selection readout. A transposon compendium transfers across a modality boundary; this would not have to. \\
+Blocking action & Locate the deposit before any loader work. Until a file exists with a sha256, this row cannot be ranked, costed or scheduled, and the claimed slot count must not be added to any instance total. \\
+\addlinespace[6pt]
+\end{longtable}
+\endgroup

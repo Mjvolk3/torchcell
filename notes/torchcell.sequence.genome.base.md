@@ -72,3 +72,28 @@ The feature index, `go_genes`, `chr_to_nc`, `chr_to_len`, the attribute-table sh
 
 - `tests/torchcell/sequence/genome/test_base.py`: a `ToyGenome` with one linear replicon, its own locus types, GO in a `go_terms` attribute and no SGD convention; pins resolution through the tier, the recorded source, chromosome 1, the gene set, both strands, GO from the hook (an `Ontology_term` row is ignored), every resolver layer with the toy labels, the subclass refusal text, the generic pickle restore, `remove_deprecated_go_terms` rewriting only the hook attribute, `drop_empty_go`, `get_seq`, and the abstract surface.
 - `tests/torchcell/sequence/genome/scerevisiae/test_s288c.py` and `test_s288c_synthetic.py` are unchanged and pass.
+
+## 2026.10.07 - Hooks for the bacterial genomes
+
+Added in step 3 of [[plan.bacteria-ontology-genome]] for
+[[torchcell.sequence.genome.bacterial]], each a no-op for `SCerevisiaeGenome`:
+
+- `AnnotatedGene.FEATURE_ID_PREFIX` (default `""`) and `AnnotatedGene.feature_id`: the
+  GFF `ID` of a gene is the prefix plus the gene id. NCBI writes `ID=gene-b0002` for the
+  locus tag `b0002`. The gene lookup, the default `coding_feature`, `compute_gene_set`,
+  `feature_index` (through `_gene_id_of`, which refuses an `ID` without the prefix) and
+  `drop_empty_go` (which deletes by feature id) honor it.
+- `GenomeReleaseFiles.cds_fasta: str | None`, required and explicit: `None` states the
+  release ships no CDS FASTA, and the CDS member is then not resolved.
+- `AnnotatedGenome._read_sequences()`: the three FASTA parses moved verbatim into a hook,
+  called at the same point of construction. The default refuses `cds_fasta=None`; the
+  bacterial override reads gzipped members, re-keys proteins to locus tags and takes the
+  CDS from the GenBank file.
+
+The resolve order of the members (DNA, GFF, protein, CDS when named) is unchanged, so
+`test_construction_resolves_every_member_and_records_the_subclass_source` and both S288C
+suites pass unchanged.
+
+Observation, not changed: the base `__getitem__` catches `KeyError`, but gffutils'
+`FeatureNotFoundError` derives from `Exception`, so an id absent from `data.db` raises
+rather than returning None. The bacterial `__getitem__` checks membership instead.

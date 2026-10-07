@@ -49,3 +49,7 @@ from .lim2025 import ProteomeLim2025Dataset as ProteomeLim2025Dataset
 from .menasalvas2025 import (
     IsoprenolSelectionMenasalvas2025Dataset as IsoprenolSelectionMenasalvas2025Dataset,
 )
+from .yunus2026 import CrispriArrayYunus2026Dataset as CrispriArrayYunus2026Dataset
+from .yunus2026 import (
+    CrispriKnockdownYunus2026Dataset as CrispriKnockdownYunus2026Dataset,
+)

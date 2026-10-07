@@ -1,0 +1,31 @@
+{
+  "ref": "tc://genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz#YAL002W.fasta#AAB_YAL002W_VPS8",
+  "sha256": "b5400b89499fe84b1feada51abd7742c29838ae1f28c0cbd208b6622ca533f25",
+  "bytes": 160823369,
+  "local": {
+    "path": "/scratch/projects/torchcell-scratch/torchcell-genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz",
+    "source": "local",
+    "verified": true,
+    "seconds": 0.293
+  },
+  "wrong_sha256": "ArtifactIntegrityError: tc://genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz#YAL002W.fasta#AAB_YAL002W_VPS8: local genomes manifest /scratch/projects/torchcell-scra",
+  "remote_check": {
+    "resolvable": true,
+    "seconds": 0.002,
+    "cache_files_after": []
+  },
+  "remote": {
+    "path": "artifact-cache/b5400b89499fe84b1feada51abd7742c29838ae1f28c0cbd208b6622ca533f25/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz",
+    "source": "remote",
+    "verified": true,
+    "bytes": 160823369,
+    "seconds": 0.33,
+    "mb_per_s": 487.7
+  },
+  "remote_again": {
+    "same_path": true,
+    "source": "remote",
+    "verified": true,
+    "seconds": 0.106
+  }
+}

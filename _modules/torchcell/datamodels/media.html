@@ -1994,6 +1994,11 @@
     <span class="n">sha256</span><span class="o">=</span><span class="s2">"daea2b924f553b75c3bfc626b2dbd10147e4a23c4272dd4b03b703242ac1623a"</span><span class="p">,</span>
     <span class="n">source_uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="n">_WANG2018</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">citation_key</span><span class="o">=</span><span class="s2">"wangPooledCRISPRInterference2018"</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="o">=</span><span class="s2">"9980415d606835ab1ae3a1ad92a64784c822aad1ca01b514662d2fb21d1a3a55"</span><span class="p">,</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="c1">#: Wetmore 2015 Data Set S1 ("The defined medium formulations used for each experiment</span>
 <span class="c1">#: are contained in Data Set S1"), sheets ``Media`` and ``Expts_Keio``.</span>
 <span class="n">_WETMORE2015_DS1</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
@@ -3972,6 +3977,52 @@
 <span class="sd">"""Neidhardt's MOPS minimal medium without a carbon source: Tong 2020's minimal medium by</span>
 <span class="sd">its own citation, and Price 2018's 'MOPS minimal media_noCarbon' (rows 4 and 21)."""</span>
 
+<span class="n">_Q_WANG18_MOPS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"MOPS medium was prepared according to standard laboratory techniques53 "</span>
+    <span class="s2">"$</span><span class="se">\\</span><span class="s2">scriptstyle ( 1 0 </span><span class="se">\\</span><span class="s2">mathrm { g } / </span><span class="se">\\</span><span class="s2">mathrm { L }$ glucose). All cultures were "</span>
+    <span class="s2">"carried out at $3 7 ^ { </span><span class="se">\\</span><span class="s2">circ } </span><span class="se">\\</span><span class="s2">mathrm { C }$"</span>
+<span class="p">)</span>
+<span class="n">_Q_WANG18_CASAMINO</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"we performed another screening with MOPS medium supplemented with "</span>
+    <span class="s2">"$0 . 5 </span><span class="se">\\</span><span class="s2">mathrm { g } / </span><span class="se">\\</span><span class="s2">mathrm { L }$ casamino acid, which is composed of all "</span>
+    <span class="s2">"amino acids except for tryptophan"</span>
+<span class="p">)</span>
+
+<span class="n">MOPS_CASAMINO_WANG2018</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"MOPS minimal medium with 0.5 g/L casamino acids, no carbon source "</span>
+    <span class="s2">"(Wang 2018; Neidhardt 1974 formulation as tabulated by Price 2018)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"MOPS_MINIMAL"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="o">*</span><span class="n">MOPS_MINIMAL</span><span class="o">.</span><span class="n">components</span><span class="p">,</span>
+        <span class="n">_mixture</span><span class="p">(</span>
+            <span class="s2">"casamino acids"</span><span class="p">,</span>
+            <span class="n">_COMPLEX</span><span class="p">,</span>
+            <span class="n">_UNDEFINED</span><span class="p">,</span>
+            <span class="n">concentration</span><span class="o">=</span><span class="n">_c</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">_GL</span><span class="p">),</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">_cite</span><span class="p">(</span><span class="n">_WANG2018</span><span class="p">,</span> <span class="s2">"0.5 g/L"</span><span class="p">,</span> <span class="n">_Q_WANG18_CASAMINO</span><span class="p">)],</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"an acid hydrolysate of casein, so there is no structure to resolve; "</span>
+            <span class="s2">"the source states its one compositional fact, that tryptophan is absent, "</span>
+            <span class="s2">"which is why this medium is the L-Trp-biosynthesis selective condition"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_cite</span><span class="p">(</span>
+            <span class="n">_WANG2018</span><span class="p">,</span>
+            <span class="s2">"MOPS medium supplemented with 0.5 g/L casamino acid"</span><span class="p">,</span>
+            <span class="n">_Q_WANG18_CASAMINO</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"is_synthetic is False because casamino acids is an undefined "</span>
+            <span class="s2">"hydrolysate; the MOPS base is Neidhardt 1974, which Wang 2018 cites as "</span>
+            <span class="sa">f</span><span class="s2">"its reference 53 ('</span><span class="si">{</span><span class="n">_Q_WANG18_MOPS</span><span class="si">}</span><span class="s2">'), and the stated 10 g/L glucose is "</span>
+            <span class="s2">"carried by the loader as an EnvironmentPhysicalPerturbation(factor="</span>
+            <span class="s2">"carbon_source), so this entry stays carbon-free like its base"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Wang 2018's L-Trp-biosynthesis selective medium: MOPS minimal plus 0.5 g/L casamino</span>
+<span class="sd">acids, the amino-acid mixture that carries every amino acid except tryptophan (row 25)."""</span>
+
 
 <span class="c1">#: Which of the fifty bacterial rows (rank in [[plan.bacteria-ontology-genome]]'s table,</span>
 <span class="c1">#: first author, year) use each bacterial entry, and how the paper states it. "names" means</span>
@@ -3987,6 +4038,9 @@
         <span class="s2">"2024: name LB Miller"</span><span class="p">,</span>
         <span class="s2">"32 Schmidt 2016: the LB condition of the proteome map"</span><span class="p">,</span>
         <span class="s2">"42 Babu 2014: SI states the Miller amounts"</span><span class="p">,</span>
+        <span class="s2">"25 Wang 2018: names LB broth; the essentiality screen's selective and control "</span>
+        <span class="s2">"cultures, the auxotrophy and L-Trp control cultures, and the initial library "</span>
+        <span class="s2">"the two chemical-tolerance screens are scored against"</span><span class="p">,</span>
     <span class="p">),</span>
     <span class="s2">"LB_AGAR"</span><span class="p">:</span> <span class="p">(</span>
         <span class="s2">"20 Menasalvas 2025: LB Miller + 2</span><span class="si">% a</span><span class="s2">gar"</span><span class="p">,</span>
@@ -4036,6 +4090,13 @@
     <span class="s2">"MOPS_MINIMAL"</span><span class="p">:</span> <span class="p">(</span>
         <span class="s2">"4 Tong 2020: names Teknova MOPS minimal, cites Neidhardt 1974"</span><span class="p">,</span>
         <span class="s2">"21 Price 2018: Table S18 (2 Keio experiments)"</span><span class="p">,</span>
+        <span class="s2">"25 Wang 2018: the auxotrophy, furfural and isobutanol selective conditions; "</span>
+        <span class="s2">"cites Neidhardt 1974 and states 10 g/L glucose, carried as a carbon-source "</span>
+        <span class="s2">"factor"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"MOPS_CASAMINO_WANG2018"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"25 Wang 2018: the L-Trp-biosynthesis selective condition (0.5 g/L casamino "</span>
+        <span class="s2">"acid in MOPS)"</span><span class="p">,</span>
     <span class="p">),</span>
 <span class="p">}</span>
 <span class="sd">"""Use map for the bacterial entries; the keys are exactly the bacterial media."""</span>
@@ -4110,6 +4171,7 @@
     <span class="s2">"DAVIS_MINIMAL"</span><span class="p">:</span> <span class="n">DAVIS_MINIMAL</span><span class="p">,</span>
     <span class="s2">"DM500"</span><span class="p">:</span> <span class="n">DM500</span><span class="p">,</span>
     <span class="s2">"MOPS_MINIMAL"</span><span class="p">:</span> <span class="n">MOPS_MINIMAL</span><span class="p">,</span>
+    <span class="s2">"MOPS_CASAMINO_WANG2018"</span><span class="p">:</span> <span class="n">MOPS_CASAMINO_WANG2018</span><span class="p">,</span>
 <span class="p">}</span> <span class="o">|</span> <span class="p">{</span>
     <span class="n">_hm_key</span><span class="p">(</span><span class="n">compound</span><span class="p">,</span> <span class="n">partial</span><span class="p">):</span> <span class="n">HILLENMEYER_DROPOUT_MEDIA</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">compound</span><span class="p">,</span> <span class="n">partial</span> <span class="ow">in</span> <span class="n">_HILLENMEYER_DROPOUTS</span>
@@ -4152,6 +4214,9 @@
     <span class="s2">"DAVIS_MINIMAL"</span><span class="p">:</span> <span class="s2">"base; the carbon source is the variable of Caglar 2017's carbon arm"</span><span class="p">,</span>
     <span class="s2">"MOPS_MINIMAL"</span><span class="p">:</span> <span class="s2">"base; the carbon source is the variable (Tong 2020) and Price 2018 "</span>
     <span class="s2">"tabulates it without one"</span><span class="p">,</span>
+    <span class="s2">"MOPS_CASAMINO_WANG2018"</span><span class="p">:</span> <span class="s2">"same as its MOPS base; Wang 2018's stated 10 g/L glucose "</span>
+    <span class="s2">"is carried as a carbon-source factor so all four of its MOPS conditions share one "</span>
+    <span class="s2">"base object"</span><span class="p">,</span>
 <span class="p">}</span>
 
 

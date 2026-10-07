@@ -292,3 +292,195 @@ measured above.
 
 Gaps 2 to 5 of the list above are unchanged. Gap 1 (`genome_reference`) is closed: a
 record can store `assembly_reference("REL606")`, which pins `GCA_000017985.1`.
+
+## 2026.10.07 - The RNA-seq and proteome loaders
+
+Two registered classes in `torchcell/datasets/ecoli/caglar2017.py`, both wild-type REL606
+against `assembly_reference("REL606")` (`ecoli_B_REL606_ASM1798v1`, `GCA_000017985.1`),
+`REFERENCE_STRAIN = "REL606"`, genome injected as `ecoli_genome`:
+
+| class | root | source | records | phenotype |
+|---|---|---|---|---|
+| `RnaseqCaglar2017Dataset` | `data/torchcell/rnaseq_caglar2017` | Tables S1 + S2 | 152 | `RNASeqExpressionPhenotype`, `rnaseq_tpm` |
+| `ProteomeCaglar2017Dataset` | `data/torchcell/proteome_caglar2017` | Tables S1 + S3 + 42 NCBI batches | 105 | `ProteinAbundancePhenotype`, `lcmsms_spectral_count_deseq2_size_factor_normalized` |
+
+The flux arm (Table S4) is not loaded; the schema proposal it needs is at the end.
+
+### The log base: back-solved, not quoted
+
+The mirror never states the base. The paper says `All resulting data sets were checked for quality, normalized, and log-transformed.`
+and the Methods defer to ref 10, which is not mirrored. What the Methods do state is the
+normalization: `we added pseudo-counts of $+ 1$ to all counts before calculating size factors.`
+and `We then used those size factors to normalize the original raw counts (i.e., without pseudo-counts).`
+
+`back_solve_counts` settles the base from the released numbers. Every sample's minimum is
+the same value (Table S2 `-1.14456265985177`, Table S3 `0.968021139095309`), which is what
+a variance-stabilizing transform of a zero count looks like (it depends only on the
+normalized count, so zero maps to one value in every sample). DESeq2's parametric VST,
+written through that floor `P = 2**floor`, inverts as `q = (2**y - P)**2 / 2**y`. Taking
+each sample's smallest nonzero `q` as a count of 1 gives its size factor; every other cell
+is then `q` times that factor. Measured on the mirror (`--data` tests pin these):
+
+| | Table S2 (mRNA) | Table S3 (protein) |
+|---|---|---|
+| features x samples | 4,196 x 152 | 4,196 x 105 |
+| zero cells (at the floor) | 185,331 | 203,214 |
+| worst distance of a reconstructed count from an integer | 8.3e-9 | 1.1e-10 |
+| worst relative gap, factor vs DESeq2's +1 median-of-ratios size factor of the reconstructed counts | 1.5e-14 | 1.6e-14 |
+| size factors | 0.210 to 13.87 | 0.499 to 4.98 |
+| library size (sum of counts) min / median / max | 3,271 / 177,377 / 5,005,764 | 1,107 / 64,241 / 198,696 |
+
+The same inverse in base e or base 10 leaves cells 0.5 from an integer (max deviation
+0.49999 and 0.5), and plain `log2(q + P)` or `ln(q + P)` do too. So the tables are the
+base-2 DESeq2 VST of size-factor-normalized integer counts, and the size factors are the
++1-pseudocount ones the Methods describe; for large counts the VST is `log2(q)`, so the
+base is 2. That the authors called DESeq2's `varianceStabilizingTransformation` and not a
+hand-written function of the same form is inference; the functional form and the integer
+counts are measured. The build refuses a table that misses either check
+(`COUNT_INTEGER_TOLERANCE`, `SIZE_FACTOR_TOLERANCE`, both 1e-6) and writes
+`preprocess/vst_back_solve.json` and `preprocess/log_base_derivation.json` (a
+`StatDerivation`, method `back_solve`).
+
+### What is stored
+
+- **RNA-seq.** `expression_count` is the reconstructed integer count of each of the 4,196
+  coding genes (`The raw number of reads mapping to each gene were counted using HTSeq`;
+  `For RNA, we only analyzed the counts of reads that overlapped annotated protein coding genes, i.e., reads mapping to mRNAs.`).
+  `expression_tpm` is computed here: counts per base over the GenBank gene-feature span of
+  each locus in the REL606 genome (all 4,196 are single-part, non-pseudo CDS genes, 66 to
+  7,152 bp), scaled to sum to one million. The paper reports no TPM; this one is a
+  derivation from the reconstructed counts, recorded in `gene_lengths.json`.
+  `n_mapped_reads` is a typed gap (`deferred_pending_source_review`, resolve with GEO
+  GSE94117): the counts are reads on coding genes, not the library's mapped reads.
+- **Proteome.** `protein_abundance` is the reconstructed integer spectral count over the
+  sample's size factor, the "Normalized protein counts" the SI names
+  (`Supplementary Table S3: Normalized protein counts.`), keyed by the `ECB_` tag each
+  `YP_` accession's deposited NCBI record names (`protein_crosswalk.json`). An unobserved
+  protein is the 0 the source wrote (`We set the counts of all unobserved proteins to zero.`).
+  The VST values themselves are not stored: they depend on a dispersion fit over the whole
+  table, and they put an unobserved protein at 0.968.
+- **Replicates.** A record is one biological-replicate culture (`For each experimental condition, bacteria were grown in three biological replicates.`),
+  so the protein `n_replicates` is 1 and `protein_abundance_se` is `None`. Table S1's
+  technical-replicate counts (RNA 1 for all 152; protein 1 for 93 and 2 for 12) are in
+  `record_samples.json`; the paper does not say whether two technical runs were summed or
+  averaged before the counts, and the size factor absorbs depth either way. The replicates
+  of a condition are listed in `replicate_groups.json` (by Table S1 `uniqueCondition`,
+  with each record's collection time and batch).
+- **QC.** The authors kept every sample, including the two RNA samples they flagged
+  (`MURI_091`, `MURI_130`), and so does the loader: no record is dropped, and
+  `build_accounting.json` reads `drops_by_reason: {}` for both families. A Table S1 cell
+  the loader cannot read raises instead.
+
+### Identifiers
+
+`reconcile_locus_tags` against `EcoliBREL606Genome`, both families:
+
+| | Table S2 genes | Table S3 proteins (after `YP_` to `ECB_`) |
+|---|---|---|
+| unique names | 4,196 | 4,196 |
+| current / renamed / non-gene / retired / ambiguous | 4,196 / 0 / 0 / 0 / 0 | 4,196 / 0 / 0 / 0 / 0 |
+| layer: locus tag | 4,196 | 4,196 |
+| remapped, outside `ecoli_b_rel606_locus_tag` | 0, 0 | 0, 0 |
+
+`MIN_RESOLVED_FRACTION` is 1.0 for both.
+
+### Environment
+
+Every record is wild-type REL606 (an empty `Genotype`); the conditions are environment
+edits read from the sample's Table S1 row:
+
+- carbon: glucose is `DM500`; glycerol, lactate and gluconate are `DAVIS_MINIMAL` plus an
+  `EnvironmentPhysicalPerturbation(factor=carbon_source)` at 0.5 g/L (the compound through
+  `resolved_compound`; `gluconate` carries the resolver's deferred InChIKey gap);
+- Mg2+: a non-base level is a `SmallMoleculePerturbation` of magnesium sulfate at Table
+  S1's `Mg_mM`, its `description` saying it replaces the 0.83 mM DM level (Table S1 writes
+  the base as 0.8, and the loader refuses a `baseMg` row at another number);
+- Na+: NaCl added at `Na_mM - 5` mM (`so $9 5 \mathrm { m M N a C l }$ was added for the $1 0 0 \mathrm { m M N a ^ { + } }$ condition, for example`);
+- 37 C, aerobic (orbitally shaken flasks), `duration_hours` = `growthTime_hr`
+  (`the growth time at which the sample was collected`).
+
+Records use 57 distinct environments (RNA) and 40 (protein); the perturbation counts
+(RNA: 60 Mg, 37 carbon, 16 NaCl; protein: 18, 39, 11) are the Table 1 sums.
+
+**Growth phase has no slot.** `Environment` has no growth-phase field and `PhysicalFactor`
+no growth-phase member, so the phase is carried by the collection time, by which
+reference a record points at, and by the ledgers. A typed growth phase is a
+`schema.py` change (proposal in the PR body), outside this branch.
+
+**Reference.** `The reference conditions always had glucose as carbon source and base $\mathrm { N a ^ { + } }$ and $\mathbf { M } \mathbf { g } ^ { 2 + }$ concentrations.`,
+one per phase. Each record points at its phase's glucose, base Mg2+, base Na+ condition
+(the late-stationary one applies the same rule to the third phase, which the paper's
+DESeq2 contrasts did not use). The reference phenotype averages that condition's samples
+(RNA: mean TPM, mean count rounded half to even; protein: mean, standard error, sample
+count). Members: RNA 21 / 12 / 6 (exponential / stationary / late stationary), protein
+20 / 11 / 6. The reference environment has no `duration_hours`; a typed gap says why (the
+pooled samples were collected at several stated times, and the paper sets the phase by
+optical density).
+
+**Dataset gene set.** No genotype names a gene, so `ExperimentDataset.compute_gene_set`
+would return the empty set, which the base class refuses. Both classes override it to the
+4,196 loci their phenotypes are keyed by (`measured_gene_set`).
+
+### Cross-check against the paper's Table 1
+
+Table S1's samples with data reproduce the paper's Table 1 `# samples` column exactly
+(`test_the_sample_sheet_reproduces_the_paper_s_table_1_sample_counts`):
+
+| | exponential / stationary / late stationary | glucose / glycerol / lactate / gluconate | low / base / high Mg | base / high Na |
+|---|---|---|---|---|
+| mRNA | 79 / 63 / 10 | 115 / 25 / 6 / 6 | 36 / 92 / 24 | 136 / 16 |
+| protein | 56 / 37 / 12 | 66 / 27 / 6 / 6 | 6 / 87 / 12 | 94 / 11 |
+
+### Build and verification (dev tree)
+
+`python -m torchcell.database.build_dataset_lmdb --dataset <Class>`: RNA-seq 152 records,
+gene set 4,196, 3 references, 19 MB; proteome 105, 4,196, 3, 13 MB. Both read `fresh`
+under `torchcell.provenance.build_manifest`. A first RNA-seq build failed on the empty
+gene set (above); that partial tree is in `/scratch/projects/torchcell-deprecated/2026-10-07_112847__rnaseq_caglar2017/`.
+
+`python -m torchcell.datasets.ecoli.caglar2017 verify --family {rnaseq,proteome}` (the
+module's own verifiers; the RNA-seq family verifier's L1 strain uniqueness fails on
+replicate-level records by design), both PASS:
+
+- RNA-seq: L0 152 validated; L1 count 152/152, 152 distinct count profiles; L2 637,792
+  TPMs finite and non-negative, counts non-negative integers, 152/152 sum to one million;
+  L3 one measurement type, 3/3 references finite and summing to one million, assembly pin
+  `ecoli_B_REL606_ASM1798v1` / `GCA_000017985.1`, back-solve within tolerance; L4 4,196 of
+  4,196 loci are REL606 gene rows.
+- Proteome: the protein family verifier (L0 105, L1 count, L2 440,580 finite values, L3
+  reference finite and key-matched, one measurement type) plus 105 distinct profiles,
+  abundances non-negative, the assembly pin, the back-solve, and L4 4,196 of 4,196.
+- Both: 45 of 45 `SourcedValue`s re-read verbatim from the sha256-pinned mirror.
+
+### Checklist (plan section 4)
+
+1. Paper pinned (`paper.md` `0878d5e7...`, `si/si1.md` `1b7b8ed0...`); 45 `SourcedValue`s.
+2. Tables and columns: S1 `dataSet`, `experiment`, `growthTime_hr`, `batchNumber`,
+   `carbonSource`, `Mg_mM`, `Mg_mM_Levels`, `Na_mM`, `Na_mM_Levels`, `growthPhase`,
+   `uniqueCondition`, `RNA_Data_Freq`, `Protein_Data_Freq`; S2 and S3 every sample column;
+   the GenPept `/locus_tag` of each `YP_` record.
+3. Strain: REL606, pinned (gate open since `feat/rel606-genome`).
+4. Identifiers: histogram above, 4,196 CURRENT in both.
+5. `n_samples` and uncertainty: one culture per record (protein `n_replicates` 1, no SE);
+   reference aggregates state their sample count and SE. Log base back-solved.
+6. Media: `DM500` / `DAVIS_MINIMAL` with carbon, Mg2+ and Na+ as typed edits.
+7. Superset: measured, none. PRECISE-1K's 1,035 samples are MG1655 582, GMOS 241,
+   BW25113 160, DGF-298 26, W3110 26, and no strain description names REL606 or an E. coli
+   B strain. The glucose time-course columns are ref 10's samples, processed with the
+   rest (`Results from one of these conditions, long-term glucose starvation, have been presented previously10.`);
+   ref 10 has no loader.
+8. Note: this section.
+9. LMDBs built, manifests fresh, L0 to L4 pass.
+
+### Gaps carried forward
+
+1. **Growth phase** has no typed slot (schema proposal in the PR).
+2. **Flux ratios** (Table S4) have no phenotype class; proposal in the PR. `SDEFluxRatio`
+   is still undefined in the mirror, and which flux condition had two replicates is not
+   named.
+3. **`n_mapped_reads`**: typed gap; GEO GSE94117 is not mirrored.
+4. **Gluconate** has no InChIKey in the compound table (the resolver's deferred gap).
+5. **Technical replicates** of the 12 two-run protein samples: summed or averaged is not
+   stated.
+6. `ProvenanceGapReason` still has no member for a genome missing from the tier (gap 5 of
+   the first section; moot now that REL606 is deposited).

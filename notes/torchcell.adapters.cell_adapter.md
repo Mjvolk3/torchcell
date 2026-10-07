@@ -61,3 +61,16 @@ This edits methods used by SERVED datasets, so the `kg_manifest` admission gate 
 
 1. `MEDIA_LIBRARY` has 51 media and 48 distinct composition identities. `SC`, `SC_PARTIAL_BIOTIN`, `SC_PARTIAL_CALCIUM_PANTOTHENATE` and `SC_PARTIAL_PYRIDOXINE_HYDROCHLORIDE` collapse to ONE media node, because the partial drop-out is recorded only in the medium's `name` and the component's `note`: the biotin row's `concentration` is `None` in both SC and SC_PARTIAL_BIOTIN, so no typed slot distinguishes them. Composition identity is reporting the truth here (the typed compositions ARE identical), and the fix belongs in the media library: either the reduced level as a sourced concentration, or the drop-out as `EnvironmentPhysicalPerturbation(factor=nutrient_dropout, agent=<compound>)`. Until then, the four Hillenmeyer partial drop-out conditions cannot be told apart in the graph.
 2. `YPD` (the library root) and `YPD_AGAR` do NOT share an id, because the root no longer lists an agar row while the plate does. That is a composition difference, not a quote difference: every non-component slot of the two projections is equal, which is exactly what the fix was for.
+
+## 2026.10.07 - Bacterial perturbation and the three bacterial-program phenotypes
+
+Eleven methods ADDED, none changed (measured by `kg_manifest drift` against the served
+manifest): `_bacterial_perturbation_node` (+ `_bacterial_perturbation_node_from`), and for
+each of product titer, protein turnover and flux a `(chunked)` node method, a `reference`
+collector and a static `_*_properties` builder. Seven table entries:
+`bacterial perturbation (chunked)`, `product titer phenotype (chunked)`,
+`protein turnover phenotype (chunked)`, `flux phenotype (chunked)` and the three
+`reference` names. Module constant `BACTERIAL_PERTURBATION_LEAVES` (the five leaves that
+declare `gene_namespace`). A bacterial conf enables `bacterial perturbation (chunked)`
+instead of `perturbation (chunked)`. Classes, id rule, projection and the measurement:
+[[torchcell.adapters.bacterial-graph-classes]].

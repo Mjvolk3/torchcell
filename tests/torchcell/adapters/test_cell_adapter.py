@@ -362,6 +362,7 @@ NODE_METHODS = [
     "genotype (chunked)",
     "segregant genotype (chunked)",
     "perturbation (chunked)",
+    "bacterial perturbation (chunked)",
     "crispr construct (chunked)",
     "environment (chunked)",
     "environment reference",
@@ -384,6 +385,9 @@ NODE_METHODS = [
     "metabolite phenotype (chunked)",
     "protein abundance phenotype (chunked)",
     "environment response phenotype (chunked)",
+    "product titer phenotype (chunked)",
+    "protein turnover phenotype (chunked)",
+    "flux phenotype (chunked)",
     "fitness phenotype reference",
     "gene interaction phenotype reference",
     "gene essentiality phenotype reference",
@@ -397,6 +401,9 @@ NODE_METHODS = [
     "metabolite phenotype reference",
     "protein abundance phenotype reference",
     "environment response phenotype reference",
+    "product titer phenotype reference",
+    "protein turnover phenotype reference",
+    "flux phenotype reference",
     "dataset",
     "publication (chunked)",
 ]
@@ -423,7 +430,7 @@ EDGE_METHODS = [
 def test_supported_method_names_are_the_registration_tables_in_order(
     recorder: _WandbRecorder,
 ) -> None:
-    """43 node methods and 16 edge methods, in the order ``__init__`` registers them;
+    """50 node methods and 16 edge methods, in the order ``__init__`` registers them;
     every "(chunked)" name maps to a decorated handler and every other name to a
     ``_get_`` collector, which is how ``get_nodes`` routes them.
     """

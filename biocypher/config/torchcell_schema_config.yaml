@@ -79,6 +79,28 @@ perturbation:
         description: str
         strain_id: str
 
+# A gene perturbation of a bacterial host (the five bacterial leaves in schema.py:
+# BacterialDeletionPerturbation, TransposonInsertionPerturbation,
+# BacterialCrisprInterferencePerturbation, PromoterReplacementPerturbation,
+# HeterologousPathwayPerturbation). It is a SIBLING of `perturbation` under `genotype`,
+# not a child, and its own class rather than extra properties on `perturbation`:
+# `perturbation` is served, so adding `gene_namespace` to it would force a full rebuild,
+# and an `is_a: perturbation` would put bacterial nodes under every served
+# `MATCH (:Perturbation)`. gene_namespace names the host locus-tag space the
+# systematic_gene_name is written in (`b0002` alone does not say which genome). No
+# strain_id: none of the five leaves declares one, so it would be a column that is
+# always null. Same id rule as `perturbation` (sha256 of the leaf's model_dump), so the
+# existing `perturbation member of` edges already point at these nodes.
+bacterial perturbation:
+    is_a: genotype
+    represented_as: node
+    properties:
+        systematic_gene_name: str
+        perturbed_gene_name: str
+        perturbation_type: str
+        description: str
+        gene_namespace: str
+
 # A haploid segregant of a biparental cross: a haplotype MOSAIC against two pinned
 # parent assemblies (SegregantGenotype), not a list of gene perturbations. It IS a
 # genotype (is_a), so genotype-level queries reach it; the gene-keyed properties of
@@ -312,6 +334,68 @@ environment response phenotype:
         category: str
         category_label: str
         screen_id: str
+
+# How much of a named product a strain made (ProductTiterPhenotype). Every field but
+# provenance_gaps is projected: enums as their value, and the product, a typed
+# Compound, as the JSON of its model_dump (name, InChIKey, ChEBI, PubChem, SMILES),
+# the same JSON-string convention the dict-valued phenotypes use. A property is named
+# by its field so the phenotype <-> node class bijection
+# (torchcell/datamodels/ontology_checks.py) matches it without an alias table.
+product titer phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        product: str
+        titer: float
+        titer_unit: str
+        titer_se: float
+        titer_uncertainty: float
+        titer_uncertainty_type: str
+        n_samples: int
+        sample_unit: str
+        product_yield: float
+        product_yield_unit: str
+        productivity: float
+        productivity_unit: str
+        quantification_method: str
+
+# Per-protein turnover rates (ProteinTurnoverPhenotype): every dict keyed by locus tag
+# is a JSON string, as for protein abundance; measurement_type carries the time unit.
+protein turnover phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        degradation_rate: str
+        degradation_rate_se: str
+        half_life: str
+        synthesis_rate: str
+        n_replicates: str
+        measurement_type: str
+
+# A fitted net-flux map (FluxPhenotype): signed per-reaction fluxes and their
+# confidence bounds as JSON strings; confidence_level and n_samples are scalars of the
+# whole fit. label_statistic_name is null by design (an interval is not one number).
+flux phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        net_flux: str
+        net_flux_lower: str
+        net_flux_upper: str
+        confidence_level: float
+        measurement_type: str
+        n_samples: int
+        sample_unit: str
+        target_reaction_ids: str
 # PHENOTYPES END
 
 # RELATIONSHIPS
@@ -327,17 +411,23 @@ genotype member of:
     source: [genotype, segregant genotype]
     target: experiment
 
+# Two sources since `bacterial perturbation` joined, so input_label is required for the
+# same reason as on `genotype member of`. The adapter's relationship_label is unchanged
+# ("perturbation member of"), so the served PerturbationMemberOf edges keep their type.
 perturbation member of:
     is_a: genetically associated with
     represented_as: edge
-    source: perturbation
+    input_label: perturbation member of
+    source: [perturbation, bacterial perturbation]
     target: genotype
 
+# A bacterial CRISPRi leaf carries the shared CrisprConstruct, so its construct edge
+# targets a `bacterial perturbation` node.
 crispr construct member of:
     is_a: part of
     represented_as: edge
     source: crispr construct
-    target: perturbation
+    target: [perturbation, bacterial perturbation]
 
 environment member of:
     is_a: participates in
@@ -365,6 +455,9 @@ phenotype member of:
             metabolite phenotype,
             protein abundance phenotype,
             environment response phenotype,
+            product titer phenotype,
+            protein turnover phenotype,
+            flux phenotype,
         ]
     target: [experiment, experiment reference]
 

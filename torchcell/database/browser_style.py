@@ -103,6 +103,7 @@ ANCESTOR_LABELS: tuple[str, ...] = (
 LANE_OF_LABEL: dict[str, str] = {
     "Genotype": "genotype",
     "Perturbation": "genotype",
+    "BacterialPerturbation": "genotype",
     "SegregantGenotype": "genotype",
     "CrisprConstruct": "genotype",
     "Environment": "environment",
@@ -124,6 +125,7 @@ LANE_OF_LABEL: dict[str, str] = {
 CAPTION_OF_LABEL: dict[str, str] = {
     "Genotype": "{perturbed_gene_name}",
     "Perturbation": "{perturbed_gene_name}",
+    "BacterialPerturbation": "{perturbed_gene_name}",
     "SegregantGenotype": "{segregant_id}",
     "CrisprConstruct": "{effector}",
     "Environment": "{media}",

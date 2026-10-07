@@ -143,11 +143,12 @@ def _lines(out: str) -> list[str]:
 def test_real_schema_compact_table(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """The committed ``torchcell_schema_config.yaml``: 27 nodes (23 under five Biolink
+    """The committed ``torchcell_schema_config.yaml``: 31 nodes (27 under five Biolink
     parents, 4 auto-mapped by name), 13 edges under five relations, 10 concepts in all.
-    The 27th node is ``interned constant`` (tcdb-002), a third ``information
-    content entity`` beside experiment and experiment reference, so the concept count
-    is unchanged.
+    ``interned constant`` (tcdb-002) is a third ``information content entity`` beside
+    experiment and experiment reference; ``bacterial perturbation`` joins genotype and
+    the product titer, protein turnover and flux phenotypes join phenotypic feature, so
+    the concept count is unchanged.
     Changing the schema changes this table, which is the point: the ``tc-onto`` view is
     what the knowledge graph's classes map to.
     """
@@ -160,14 +161,15 @@ def test_real_schema_compact_table(
     assert rows == [
         f"{'environmental exposure':25} → environment, environment perturbation, "
         "media, temperature",
-        f"{'genotype':25} → perturbation, segregant genotype",
+        f"{'genotype':25} → bacterial perturbation, perturbation, segregant genotype",
         "information content entity → experiment, experiment reference, interned "
         "constant",
         f"{'nucleic acid entity':25} → crispr construct",
         f"{'phenotypic feature':25} → calmorph phenotype, environment response "
-        "phenotype, fitness phenotype, gene essentiality phenotype, gene interaction "
-        "phenotype, metabolite phenotype, microarray expression phenotype, protein "
-        "abundance phenotype, pseudobulk expression phenotype, rnaseq expression "
+        "phenotype, fitness phenotype, flux phenotype, gene essentiality phenotype, "
+        "gene interaction phenotype, metabolite phenotype, microarray expression "
+        "phenotype, product titer phenotype, protein abundance phenotype, protein "
+        "turnover phenotype, pseudobulk expression phenotype, rnaseq expression "
         "phenotype, synthetic lethality phenotype, synthetic rescue phenotype, visual "
         "score phenotype",
         f"{'✓ auto-mapped':25} → dataset, genome, genotype, publication",
@@ -180,7 +182,7 @@ def test_real_schema_compact_table(
         f"{'participates in':25} → environment member of, genome member of, "
         "genotype member of, phenotype member of",
     ]
-    assert "Nodes:    23/27 explicit + 4 auto-mapped = 27/27 total" in lines
+    assert "Nodes:    27/31 explicit + 4 auto-mapped = 31/31 total" in lines
     assert "Edges:    13/13 mapped to 5 Biolink concepts" in lines
     assert "Total:    10 unique Biolink concepts used" in lines
     assert "✓ 4 nodes auto-mapped by name matching" in lines
@@ -191,8 +193,9 @@ def test_compact_headers_count_the_schema(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The compact headers print ``len(nodes)`` and ``len(edges)`` (issue #532; they were
-    the literals 16 and 11): the committed schema has 27 nodes (``interned constant``
-    joined in tcdb-002) and 13 edges, the small
+    the literals 16 and 11): the committed schema has 31 nodes (``interned constant``
+    joined in tcdb-002, the four bacterial-program classes after it) and 13 edges, the
+    small
     test schema 3 nodes and 2 edges (its stray string entry is neither).
     """
     monkeypatch.chdir(tmp_path)
@@ -200,7 +203,7 @@ def test_compact_headers_count_the_schema(
 
     small = tmp_path / "schema.yaml"
     small.write_text(yaml.safe_dump(SCHEMA))
-    for path, n_nodes, n_edges in ((REAL_SCHEMA, 27, 13), (small, 3, 2)):
+    for path, n_nodes, n_edges in ((REAL_SCHEMA, 31, 13), (small, 3, 2)):
         print_schema_mappings(str(path), compact=True)
         lines = _lines(capsys.readouterr().out)
         assert f"📦 NODES ({n_nodes} total)" in lines

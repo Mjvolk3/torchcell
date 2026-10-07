@@ -121,6 +121,15 @@ node.NucleicAcidEntity {
   caption: "{id}";
 }
 
+node.BacterialPerturbation {
+  color: #FFE6CC;
+  border-color: #D79B00;
+  border-width: 2px;
+  text-color-internal: #000000;
+  diameter: 50px;
+  caption: "{perturbed_gene_name}";
+}
+
 node.CalmorphPhenotype {
   color: #E1D5E7;
   border-color: #9673A6;
@@ -194,6 +203,15 @@ node.ExperimentReference {
 }
 
 node.FitnessPhenotype {
+  color: #E1D5E7;
+  border-color: #9673A6;
+  border-width: 2px;
+  text-color-internal: #000000;
+  diameter: 50px;
+  caption: "{id}";
+}
+
+node.FluxPhenotype {
   color: #E1D5E7;
   border-color: #9673A6;
   border-width: 2px;
@@ -283,7 +301,25 @@ node.Perturbation {
   caption: "{perturbed_gene_name}";
 }
 
+node.ProductTiterPhenotype {
+  color: #E1D5E7;
+  border-color: #9673A6;
+  border-width: 2px;
+  text-color-internal: #000000;
+  diameter: 50px;
+  caption: "{id}";
+}
+
 node.ProteinAbundancePhenotype {
+  color: #E1D5E7;
+  border-color: #9673A6;
+  border-width: 2px;
+  text-color-internal: #000000;
+  diameter: 50px;
+  caption: "{id}";
+}
+
+node.ProteinTurnoverPhenotype {
   color: #E1D5E7;
   border-color: #9673A6;
   border-width: 2px;

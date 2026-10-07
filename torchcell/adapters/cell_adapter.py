@@ -33,6 +33,13 @@ from torchcell.datamodels.identity import (
     temperature_identity,
 )
 from torchcell.datamodels.interned_constant import split_experiment_dump
+from torchcell.datamodels.schema import (
+    BacterialCrisprInterferencePerturbation,
+    BacterialDeletionPerturbation,
+    HeterologousPathwayPerturbation,
+    PromoterReplacementPerturbation,
+    TransposonInsertionPerturbation,
+)
 from torchcell.fast_csv import RenderedChunk, RowSpecs
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
 
@@ -60,6 +67,20 @@ r7: the budget is a per-adapter attribute (``single_pass_chunk_budget_bytes``) b
 2.7x more chunks, and the pool is rebuilt every chunks_per_worker x workers of them.
 """
 SINGLE_PASS_MIN_CHUNK = 256
+BACTERIAL_PERTURBATION_LEAVES: tuple[type, ...] = (
+    BacterialDeletionPerturbation,
+    TransposonInsertionPerturbation,
+    BacterialCrisprInterferencePerturbation,
+    PromoterReplacementPerturbation,
+    HeterologousPathwayPerturbation,
+)
+"""The gene-perturbation leaves written as ``bacterial perturbation`` nodes.
+
+Exactly the leaves that carry ``gene_namespace``. A yeast leaf is never one of them, so a
+yeast record emits no ``bacterial perturbation`` node, and ``_perturbation_node`` (served)
+is not touched to exclude them: a bacterial adapter conf enables
+``bacterial perturbation (chunked)`` instead of ``perturbation (chunked)``.
+"""
 CGROUP_MEMORY_CURRENT = "/sys/fs/cgroup/memory.current"
 CGROUP_MEMORY_MAX = "/sys/fs/cgroup/memory.max"
 
@@ -181,6 +202,7 @@ class CellAdapter:
             ("genotype (chunked)", self._genotype_node),
             ("segregant genotype (chunked)", self._segregant_genotype_node),
             ("perturbation (chunked)", self._perturbation_node),
+            ("bacterial perturbation (chunked)", self._bacterial_perturbation_node),
             ("crispr construct (chunked)", self._crispr_construct_node),
             ("environment (chunked)", self._environment_node),
             ("environment reference", self._get_environment_reference_nodes),
@@ -233,6 +255,12 @@ class CellAdapter:
                 "environment response phenotype (chunked)",
                 self._environment_response_phenotype_node,
             ),
+            ("product titer phenotype (chunked)", self._product_titer_phenotype_node),
+            (
+                "protein turnover phenotype (chunked)",
+                self._protein_turnover_phenotype_node,
+            ),
+            ("flux phenotype (chunked)", self._flux_phenotype_node),
             (
                 "fitness phenotype reference",
                 self._get_fitness_phenotype_reference_nodes,
@@ -285,6 +313,15 @@ class CellAdapter:
                 "environment response phenotype reference",
                 self._get_environment_response_phenotype_reference_nodes,
             ),
+            (
+                "product titer phenotype reference",
+                self._get_product_titer_phenotype_reference_nodes,
+            ),
+            (
+                "protein turnover phenotype reference",
+                self._get_protein_turnover_phenotype_reference_nodes,
+            ),
+            ("flux phenotype reference", self._get_flux_phenotype_reference_nodes),
             ("dataset", self._get_dataset_nodes),
             ("publication (chunked)", self._publication_node),
         ]
@@ -916,6 +953,43 @@ class CellAdapter:
             )
             nodes.append(node)
         return nodes
+
+    # --- Bacterial perturbations (a sibling class of `perturbation`) ---
+    # A bacterial leaf carries gene_namespace, the host locus-tag space its
+    # systematic_gene_name is written in; the served `perturbation` class has no such
+    # property and cannot gain one without a full rebuild, so these leaves are their own
+    # class. The node id is the sha256 of the leaf's model_dump, the id
+    # _perturbation_to_genotype_edges and _crispr_construct_to_perturbation_edges
+    # already address, so those edge methods connect these nodes unchanged.
+
+    @staticmethod
+    def _bacterial_perturbation_node_from(perturbation: Any) -> BioCypherNode:
+        perturbation_id = hashlib.sha256(
+            json.dumps(perturbation.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=perturbation_id,
+            preferred_id=perturbation.perturbation_type,
+            node_label="bacterial perturbation",
+            properties={
+                "systematic_gene_name": perturbation.systematic_gene_name,
+                "perturbed_gene_name": perturbation.perturbed_gene_name,
+                "perturbation_type": perturbation.perturbation_type,
+                "description": perturbation.description,
+                "gene_namespace": perturbation.gene_namespace,
+            },
+        )
+
+    @data_chunker
+    def _bacterial_perturbation_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> list[BioCypherNode]:
+        """One node per perturbation of a bacterial leaf class; none for a yeast leaf."""
+        return [
+            self._bacterial_perturbation_node_from(perturbation)
+            for perturbation in data["experiment"].genotype.perturbations
+            if isinstance(perturbation, BACTERIAL_PERTURBATION_LEAVES)
+        ]
 
     # Environment.temperature is Optional: a curation layer that never carried a
     # temperature records a typed gap instead of guessing one. Every read of it is
@@ -1965,6 +2039,202 @@ class CellAdapter:
                     preferred_id="protein abundance phenotype",
                     node_label="protein abundance phenotype",
                     properties=properties,
+                )
+            )
+        return nodes
+
+    # --- Product titer, protein turnover and flux phenotypes ---
+    # Shaped as _fitness_phenotype_node: id = sha256 of the phenotype's model_dump,
+    # preferred_id phenotype_<id> on the experiment side and the class name on the
+    # reference side, no serialized_data. The properties are every field except
+    # provenance_gaps, named by the field: an enum as its value, a dict and the product
+    # Compound as a JSON string, None kept as None.
+
+    @staticmethod
+    def _product_titer_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``ProductTiterPhenotype`` (experiment or reference)."""
+        uncertainty_type = phenotype.titer_uncertainty_type
+        sample_unit = phenotype.sample_unit
+        yield_unit = phenotype.product_yield_unit
+        productivity_unit = phenotype.productivity_unit
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "product": json.dumps(phenotype.product.model_dump()),
+            "titer": phenotype.titer,
+            "titer_unit": str(phenotype.titer_unit.value),
+            "titer_se": phenotype.titer_se,
+            "titer_uncertainty": phenotype.titer_uncertainty,
+            "titer_uncertainty_type": (
+                str(uncertainty_type.value) if uncertainty_type is not None else None
+            ),
+            "n_samples": phenotype.n_samples,
+            "sample_unit": str(sample_unit.value) if sample_unit is not None else None,
+            "product_yield": phenotype.product_yield,
+            "product_yield_unit": (
+                str(yield_unit.value) if yield_unit is not None else None
+            ),
+            "productivity": phenotype.productivity,
+            "productivity_unit": (
+                str(productivity_unit.value) if productivity_unit is not None else None
+            ),
+            "quantification_method": phenotype.quantification_method,
+        }
+
+    @data_chunker
+    def _product_titer_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="product titer phenotype",
+            properties=self._product_titer_properties(phenotype),
+        )
+
+    def _get_product_titer_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="product titer phenotype",
+                    node_label="product titer phenotype",
+                    properties=self._product_titer_properties(phenotype),
+                )
+            )
+        return nodes
+
+    @staticmethod
+    def _protein_turnover_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``ProteinTurnoverPhenotype`` (experiment or reference)."""
+        degradation_rate_se = phenotype.degradation_rate_se
+        half_life = phenotype.half_life
+        synthesis_rate = phenotype.synthesis_rate
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "degradation_rate": json.dumps(phenotype.degradation_rate),
+            "degradation_rate_se": (
+                json.dumps(degradation_rate_se)
+                if degradation_rate_se is not None
+                else None
+            ),
+            "half_life": json.dumps(half_life) if half_life is not None else None,
+            "synthesis_rate": (
+                json.dumps(synthesis_rate) if synthesis_rate is not None else None
+            ),
+            "n_replicates": json.dumps(phenotype.n_replicates),
+            "measurement_type": phenotype.measurement_type,
+        }
+
+    @data_chunker
+    def _protein_turnover_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="protein turnover phenotype",
+            properties=self._protein_turnover_properties(phenotype),
+        )
+
+    def _get_protein_turnover_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="protein turnover phenotype",
+                    node_label="protein turnover phenotype",
+                    properties=self._protein_turnover_properties(phenotype),
+                )
+            )
+        return nodes
+
+    @staticmethod
+    def _flux_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``FluxPhenotype`` (experiment or reference)."""
+        lower = phenotype.net_flux_lower
+        upper = phenotype.net_flux_upper
+        sample_unit = phenotype.sample_unit
+        target_reaction_ids = phenotype.target_reaction_ids
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "net_flux": json.dumps(phenotype.net_flux),
+            "net_flux_lower": json.dumps(lower) if lower is not None else None,
+            "net_flux_upper": json.dumps(upper) if upper is not None else None,
+            "confidence_level": phenotype.confidence_level,
+            "measurement_type": phenotype.measurement_type,
+            "n_samples": phenotype.n_samples,
+            "sample_unit": str(sample_unit.value) if sample_unit is not None else None,
+            "target_reaction_ids": (
+                json.dumps(target_reaction_ids)
+                if target_reaction_ids is not None
+                else None
+            ),
+        }
+
+    @data_chunker
+    def _flux_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="flux phenotype",
+            properties=self._flux_properties(phenotype),
+        )
+
+    def _get_flux_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="flux phenotype",
+                    node_label="flux phenotype",
+                    properties=self._flux_properties(phenotype),
                 )
             )
         return nodes

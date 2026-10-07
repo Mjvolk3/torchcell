@@ -111,3 +111,21 @@ def test_adapter_confs_are_well_formed_yaml() -> None:
     for path in sorted(conf_dir.glob("*_adapter.yaml")):
         conf = yaml.safe_load(path.read_text(encoding="utf-8"))
         assert set(conf["cell_adapter"]) == {"node_methods", "edge_methods"}, path.name
+
+
+def test_no_conf_enables_both_perturbation_classes() -> None:
+    """A bacterial conf enables ``bacterial perturbation (chunked)`` INSTEAD of
+    ``perturbation (chunked)``.
+
+    The served ``perturbation`` method emits every leaf of a genotype, bacterial ones
+    included, under the ``perturbation`` label, and the bacterial method emits the same
+    leaf under the same content id with the ``bacterial perturbation`` label. Enabling both
+    writes one id under two classes, and the import keeps whichever row it reads first.
+    """
+    both = sorted(
+        dataset_class.__name__
+        for dataset_class in dataset_adapter_map
+        if {"perturbation (chunked)", "bacterial perturbation (chunked)"}
+        <= set(dataset_conf_methods(dataset_class, REPO_ROOT))
+    )
+    assert both == []

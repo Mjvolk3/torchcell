@@ -273,38 +273,33 @@ def test_adapter_emits_exactly_the_declared_properties() -> None:
     assert [m.model_dump() for m in mismatches] == []
 
 
-#: Phenotype classes that exist in ``schema.py`` with no graph node class YET, each
-#: with the step that adds one. The schema half of the bacterial expansion lands before
-#: the graph half ON PURPOSE: the commit every bacterial loader depends on carries no
-#: graph-schema drift, because a change to an EXISTING served graph class cannot be
-#: repaired by an incremental import and would force a full rebuild of the served store.
-#: Adding the three node classes (and the adapter methods that emit them) is the next
-#: step; until then these three are stored in a record and not yet queryable in Cypher.
-PENDING_GRAPH_NODE_CLASSES: frozenset[str] = frozenset(
-    {"ProductTiterPhenotype", "ProteinTurnoverPhenotype", "FluxPhenotype"}
-)
-
-
 def test_phenotype_classes_and_node_classes_are_in_bijection() -> None:
     """Each concrete phenotype has exactly one node class, and conversely.
 
     The mapping is derived from the property sets, not from a naming convention, so
     it holds for ``RNASeqExpressionPhenotype`` <-> ``rnaseq expression phenotype``
     and ``CalMorphPhenotype`` <-> ``calmorph phenotype`` without an alias table, and
-    a field renamed on one side without the other breaks the match.
-
-    The one slack is ``PENDING_GRAPH_NODE_CLASSES``, named above with the reason: a
-    class listed there must still be unmapped, so the day its node class lands this
-    test fails until the name is removed, and a class NOT listed there that loses its
-    node class fails immediately.
+    a field renamed on one side without the other breaks the match. There is no slack:
+    the three bacterial-program phenotypes (product titer, protein turnover, flux),
+    which landed in ``schema.py`` one step before their node classes, are mapped.
     """
     mapping = oc.phenotype_label_map(GRAPH_SCHEMA)
     assert mapping.ambiguous == {}
     assert mapping.unmatched_labels == []
-    assert set(mapping.unmapped_classes) == set(PENDING_GRAPH_NODE_CLASSES)
-    assert len(mapping.matched) == len(CONCRETE_PHENOTYPES) - len(
-        PENDING_GRAPH_NODE_CLASSES
-    )
+    assert mapping.unmapped_classes == []
+    assert len(mapping.matched) == len(CONCRETE_PHENOTYPES)
+    assert {
+        label: mapping.matched[label]
+        for label in (
+            "product titer phenotype",
+            "protein turnover phenotype",
+            "flux phenotype",
+        )
+    } == {
+        "product titer phenotype": "ProductTiterPhenotype",
+        "protein turnover phenotype": "ProteinTurnoverPhenotype",
+        "flux phenotype": "FluxPhenotype",
+    }
 
 
 def test_phenotype_member_of_sources_are_exactly_the_phenotype_node_classes() -> None:

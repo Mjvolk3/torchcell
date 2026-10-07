@@ -449,12 +449,16 @@ def test_main_writes_both_orientations_then_reports_no_changes(
 
 
 def test_real_schema_diagram(md: ModuleType) -> None:
-    """The real config (read-only): 27 nodes (4 auto-mapped: dataset, genome, genotype,
-    publication; 23 inherited), 5 Biolink classes, 13 edges expanding to 40 data lines.
-    The 23rd inherited node is ``interned constant`` (tcdb-002), a third ``information
-    content entity`` beside experiment and experiment reference.
-    Line count 123 = 1 header + (2 + 5) + (2 + 4) + (2 + 23) + (2 + 23 is_a lines)
-    + (2 + 40) + 9 legend + 5 styling + 3 class lines. ``Genotype`` is declared on
+    """The real config (read-only): 31 nodes (4 auto-mapped: dataset, genome, genotype,
+    publication; 27 inherited), 5 Biolink classes, 13 edges expanding to 48 data lines.
+    ``interned constant`` (tcdb-002) is a third ``information content entity`` beside
+    experiment and experiment reference; the bacterial program added four inherited
+    nodes (``bacterial perturbation`` under genotype, and the product titer, protein
+    turnover and flux phenotypes) and eight data lines (one more ``perturbation member
+    of`` source, one more ``crispr construct member of`` target, and three phenotype
+    sources times the two ``phenotype member of`` targets).
+    Line count 139 = 1 header + (2 + 5) + (2 + 4) + (2 + 27) + (2 + 27 is_a lines)
+    + (2 + 48) + 9 legend + 5 styling + 3 class lines. ``Genotype`` is declared on
     lines 5 and 13 (Biolink class and auto-mapped node, the duplicate Finding), and
     the list-valued ``source`` of ``genotype member of`` expands to two lines.
     """
@@ -470,8 +474,8 @@ def test_real_schema_diagram(md: ModuleType) -> None:
             n_data_lines += (1 if isinstance(src, str) else len(src)) * (
                 1 if isinstance(tgt, str) else len(tgt)
             )
-    assert (len(gen.nodes), n_edges, n_data_lines) == (27, 13, 40)
-    assert len(lines) == 123
+    assert (len(gen.nodes), n_edges, n_data_lines) == (31, 13, 48)
+    assert len(lines) == 139
     assert lines[2:8] == [
         "    %% Biolink Classes (Parent Entity Types)",
         '    EnvironmentalExposure["environmental exposure"]',
@@ -493,6 +497,11 @@ def test_real_schema_diagram(md: ModuleType) -> None:
         "    InformationContentEntity -->|is_a| InternedConstant",
     ]
     assert "    Genotype -->|is_a| SegregantGenotype" in lines
+    assert "    Genotype -->|is_a| BacterialPerturbation" in lines
+    assert (
+        '    BacterialPerturbation -.->|"perturbation member of<br/>(is_a: genetically associated with)"| Genotype'
+        in lines
+    )
     assert (
         '    Perturbation -.->|"perturbation member of<br/>(is_a: genetically associated with)"| Genotype'
         in lines

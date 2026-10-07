@@ -131,10 +131,7 @@ endpoint with Swagger documentation. Each archive holds a dataset’s <code clas
 directory (the records LMDB and its <code class="docutils literal notranslate"><span class="pre">interned</span></code> sibling) and <code class="docutils literal notranslate"><span class="pre">preprocess/</span></code> directory
 (<code class="docutils literal notranslate"><span class="pre">build_manifest.json</span></code>, <code class="docutils literal notranslate"><span class="pre">gene_set.json</span></code>, <code class="docutils literal notranslate"><span class="pre">experiment_reference_index.json</span></code>), exactly
 as the loader wrote them, so a download replaces the build step. The raw files each
-loader consumed are served from the same endpoint, hash-pinned by their <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code>,
-and so are two more file tiers that graph records point at without storing their bytes:
-the genomes tier (reference and isolate assembly sets) and the objects tier (derived
-files such as embeddings, matrices and indexed FASTA).</p>
+loader consumed are served from the same endpoint, hash-pinned by their <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code>.</p>
 <p>The endpoint is <code class="docutils literal notranslate"><span class="pre">http://torchcell-database.ncsa.illinois.edu:8724</span></code>, on the database
 host, serving the archive store and the raw mirror from the Taiga project storage. A
 user needs nothing but that URL and a key: no account on the host, no ssh. Ask the
@@ -177,30 +174,6 @@ carries the key in the <code class="docutils literal notranslate"><span class="p
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/raw/{citation_key}/artifact/{path}</span></code></p></td>
 <td><p>one raw file; <code class="docutils literal notranslate"><span class="pre">X-Artifact-SHA256</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/genomes</span></code></p></td>
-<td><p>assembly sets in the genomes tier that carry a manifest</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/genomes/{assembly_set}/manifest</span></code></p></td>
-<td><p>the set’s genome manifest</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/genomes/{assembly_set}/files</span></code></p></td>
-<td><p>the files that manifest lists, with sha256</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/genomes/{assembly_set}/artifact/{path}</span></code></p></td>
-<td><p>one genomes file; <code class="docutils literal notranslate"><span class="pre">X-Artifact-SHA256</span></code>, <code class="docutils literal notranslate"><span class="pre">Accept-Ranges:</span> <span class="pre">bytes</span></code></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/objects</span></code></p></td>
-<td><p>object keys in the objects tier that carry a manifest</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/objects/{object_key}/manifest</span></code></p></td>
-<td><p>the key’s <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/objects/{object_key}/files</span></code></p></td>
-<td><p>the files that manifest lists, with sha256</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/objects/{object_key}/artifact/{path}</span></code></p></td>
-<td><p>one objects file; <code class="docutils literal notranslate"><span class="pre">X-Artifact-SHA256</span></code>, <code class="docutils literal notranslate"><span class="pre">Accept-Ranges:</span> <span class="pre">bytes</span></code></p></td>
-</tr>
 </tbody>
 </table>
 <p>An index row records the dataset <code class="docutils literal notranslate"><span class="pre">slug</span></code>, the loader <code class="docutils literal notranslate"><span class="pre">dataset_class</span></code>, the
@@ -209,28 +182,6 @@ release it was admitted to, <code class="docutils literal notranslate"><span cla
 the release manifest), the archive name, <code class="docutils literal notranslate"><span class="pre">archive_sha256</span></code>, <code class="docutils literal notranslate"><span class="pre">archive_bytes</span></code>, and
 <code class="docutils literal notranslate"><span class="pre">status</span></code> (<code class="docutils literal notranslate"><span class="pre">supported</span></code> or <code class="docutils literal notranslate"><span class="pre">deprecated</span></code>). Pick the newest <code class="docutils literal notranslate"><span class="pre">supported</span></code> row whose
 <code class="docutils literal notranslate"><span class="pre">torchcell_version</span></code> shares your installed <code class="docutils literal notranslate"><span class="pre">major.minor</span></code>.</p>
-</section>
-<section id="raw-genomes-and-objects-tiers">
-<h2>Raw, genomes and objects tiers<a class="headerlink" href="#raw-genomes-and-objects-tiers" title="Link to this heading"></a></h2>
-<p>The three file tiers share one serving rule. Each key (a citation key, an assembly set,
-or an object key) is a directory with a <code class="docutils literal notranslate"><span class="pre">manifest.json</span></code> listing every file by path,
-role, size and sha256; a file is served only if its key’s manifest lists it, and the
-<code class="docutils literal notranslate"><span class="pre">X-Artifact-SHA256</span></code> header of the response is the manifest’s hash, so a client checks
-the bytes it received against it. Every file route honors <code class="docutils literal notranslate"><span class="pre">Range</span></code>, which is how an
-interrupted download of a large assembly container resumes.</p>
-<ul class="simple">
-<li><p><strong>Raw</strong> (<code class="docutils literal notranslate"><span class="pre">/raw</span></code>): the source files each dataset loader consumed, keyed by citation
-key; the manifest is the literature <code class="docutils literal notranslate"><span class="pre">Manifest</span></code>.</p></li>
-<li><p><strong>Genomes</strong> (<code class="docutils literal notranslate"><span class="pre">/genomes</span></code>): sequence-level reference data, one assembly set per key
-(for example the SGD S288C R64-4-1 release, or the Peter et al. 2018 isolate
-assemblies); the manifest is a genome manifest naming the organism, strain or
-population, source and release.</p></li>
-<li><p><strong>Objects</strong> (<code class="docutils literal notranslate"><span class="pre">/objects</span></code>): derived files a record points at, keyed by a citation key
-or a named derived set; the manifest is the literature <code class="docutils literal notranslate"><span class="pre">Manifest</span></code>, and each file’s
-processing record names the script and inputs that produced it.</p></li>
-</ul>
-<p><code class="docutils literal notranslate"><span class="pre">/genomes</span></code> and <code class="docutils literal notranslate"><span class="pre">/objects</span></code> list only keys that carry a manifest, and an endpoint without
-one of those tiers answers its listing with an empty list.</p>
 </section>
 <section id="curl">
 <h2>curl<a class="headerlink" href="#curl" title="Link to this heading"></a></h2>
@@ -253,15 +204,6 @@ tar<span class="w"> </span>-xf<span class="w"> </span><span class="s2">"</span><
 <span class="c1"># raw files</span>
 curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/raw"</span>
 curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/raw/&lt;citation_key&gt;/files"</span>
-
-<span class="c1"># genomes and objects tiers: list, read the file rows, fetch one file, verify it</span>
-curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/genomes"</span>
-curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/genomes/&lt;assembly_set&gt;/files"</span>
-curl<span class="w"> </span>-C<span class="w"> </span>-<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span>-D<span class="w"> </span>headers.txt<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-o<span class="w"> </span><span class="s2">"&lt;file&gt;"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/genomes/&lt;assembly_set&gt;/artifact/&lt;path&gt;"</span>
-grep<span class="w"> </span>-i<span class="w"> </span>x-artifact-sha256<span class="w"> </span>headers.txt<span class="p">;</span><span class="w"> </span>sha256sum<span class="w"> </span><span class="s2">"&lt;file&gt;"</span><span class="w">   </span><span class="c1"># the two must agree</span>
-curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/objects"</span>
-curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: </span><span class="nv">$TC_DATA_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$TC_DATA_URL</span><span class="s2">/objects/&lt;object_key&gt;/files"</span>
 </pre></div>
 </div>
 </section>
@@ -303,14 +245,6 @@ and restarting revokes that key and no other.</p>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_RAW_ROOT</span></code></p></td>
 <td><p>server</p></td>
 <td><p>the raw mirror; defaults to <code class="docutils literal notranslate"><span class="pre">$DATA_ROOT/torchcell-raw</span></code></p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_GENOMES_ROOT</span></code></p></td>
-<td><p>server</p></td>
-<td><p>the genomes tier; defaults to <code class="docutils literal notranslate"><span class="pre">$DATA_ROOT/torchcell-genomes</span></code>; may be absent</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_OBJECTS_ROOT</span></code></p></td>
-<td><p>server</p></td>
-<td><p>the objects tier; defaults to <code class="docutils literal notranslate"><span class="pre">$DATA_ROOT/torchcell-objects</span></code>; may be absent</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">TC_DATA_KEYS_FILE</span></code></p></td>
 <td><p>server</p></td>
@@ -360,29 +294,7 @@ no error. <code class="docutils literal notranslate"><span class="pre">load_dote
 </pre></div>
 </div>
 <p>The raw mirror keys and files are one <code class="docutils literal notranslate"><span class="pre">GET</span></code> away with the same header; see the Swagger
-page for the exact shapes. All three file tiers have client methods:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetClient</span>
-
-<span class="n">client</span> <span class="o">=</span> <span class="n">DatasetClient</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>
-<span class="n">client</span><span class="o">.</span><span class="n">raw_manifest</span><span class="p">(</span><span class="s2">"&lt;citation_key&gt;"</span><span class="p">)</span>    <span class="c1"># literature Manifest</span>
-<span class="n">client</span><span class="o">.</span><span class="n">raw_files</span><span class="p">(</span><span class="s2">"&lt;citation_key&gt;"</span><span class="p">)</span>       <span class="c1"># path, role, bytes, sha256</span>
-<span class="n">client</span><span class="o">.</span><span class="n">download_raw_file</span><span class="p">(</span><span class="s2">"&lt;citation_key&gt;"</span><span class="p">,</span> <span class="s2">"&lt;path&gt;"</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s2">"raw/&lt;path&gt;"</span><span class="p">)</span>
-<span class="n">client</span><span class="o">.</span><span class="n">genomes</span><span class="p">()</span>                       <span class="c1"># ["peter2018_1011_assemblies", ...]</span>
-<span class="n">client</span><span class="o">.</span><span class="n">genome_manifest</span><span class="p">(</span><span class="s2">"peter2018_1011_assemblies"</span><span class="p">)</span>   <span class="c1"># GenomeManifest</span>
-<span class="n">client</span><span class="o">.</span><span class="n">genome_files</span><span class="p">(</span><span class="s2">"peter2018_1011_assemblies"</span><span class="p">)</span>      <span class="c1"># path, role, bytes, sha256</span>
-<span class="n">client</span><span class="o">.</span><span class="n">download_genome_file</span><span class="p">(</span>
-    <span class="s2">"peter2018_1011_assemblies"</span><span class="p">,</span> <span class="s2">"&lt;path&gt;"</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s2">"genomes/&lt;path&gt;"</span>
-<span class="p">)</span>
-<span class="n">client</span><span class="o">.</span><span class="n">objects</span><span class="p">()</span>
-<span class="n">client</span><span class="o">.</span><span class="n">object_manifest</span><span class="p">(</span><span class="s2">"&lt;object_key&gt;"</span><span class="p">)</span>  <span class="c1"># literature Manifest</span>
-<span class="n">client</span><span class="o">.</span><span class="n">download_object_file</span><span class="p">(</span><span class="s2">"&lt;object_key&gt;"</span><span class="p">,</span> <span class="s2">"&lt;path&gt;"</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s2">"objects/&lt;path&gt;"</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Each download looks up the file’s row in the key’s manifest first (a path the manifest
-does not list raises <code class="docutils literal notranslate"><span class="pre">KeyError</span></code> before any request), resumes a <code class="docutils literal notranslate"><span class="pre">&lt;dest&gt;.part</span></code> with a
-<code class="docutils literal notranslate"><span class="pre">Range</span></code> request, and requires both the server’s <code class="docutils literal notranslate"><span class="pre">X-Artifact-SHA256</span></code> and the hash of
-the received bytes to equal the manifest row; on a mismatch the partial file is
-removed and <code class="docutils literal notranslate"><span class="pre">ArtifactIntegrityError</span></code> is raised.</p>
+page for the exact shapes.</p>
 </section>
 </section>
 

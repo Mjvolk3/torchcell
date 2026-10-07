@@ -201,3 +201,70 @@ python -c "from torchcell.sequence.genome import registry as r; [print(s, len(r.
 
 which prints 9, 9, 10 and 1. The weekly `scripts/backup_mirrors_to_bulk.sh` copies the
 whole tier to `/bulk/torchcell-genomes/` on Sundays, so no extra backup step is needed.
+
+## 2026.10.07 - E. coli B REL606 set added
+
+A fifth set, `ecoli_B_REL606_ASM1798v1` (`registry.ECOLI_B_REL606`), for the Caglar 2017
+row ([[torchcell.datasets.ecoli.caglar2017]]); genome class
+[[torchcell.sequence.genome.ecoli.rel606]]. The nine NCBI members are the six GCA
+suffixes plus the GCF GenBank file, GFF and `_gene_ontology.gaf.gz`, the same shape as
+BW25113 and KT2440 without a host GAF. No locus-tag-keyed GAF exists for REL606 (no GO
+Consortium E. coli B file, no EBI GOA proteome for taxon 413997, and NCBI's GAF is keyed
+on `WP_` proteins), so its GO is the RefSeq GFF's inline terms, already a member.
+
+The script gained `--set ASSEMBLY_SET` (repeatable): it provisions only the named sets,
+because the four earlier sets already have manifests and a run refuses any selected set
+whose manifest exists. Without `--set` every set is selected, as before.
+
+Run on GilaHyper, 2026-10-07, into a fresh empty refetch dir in the session scratch,
+Python isolated (`-I`, worktree on `sys.path`) as before:
+
+```bash
+WT=~/Documents/projects/torchcell.worktrees/feat/rel606-genome
+R=<session scratchpad>/genomes-refetch-rel606
+python -I -c "import sys,runpy; sys.path.insert(0,'$WT'); \
+  sys.argv=['provision', '--refetch-dir', '$R', '--set', 'ecoli_B_REL606_ASM1798v1', '--dry-run']; \
+  runpy.run_path('$WT/scripts/provision_bacterial_genomes.py', run_name='__main__')"
+# then the same without --dry-run
+```
+
+- Dry run (15:45 UTC): 9 members and 2 `md5checksums.txt` listings fetched, all HTTP 200.
+- **md5: 9 of 9 match** their directory's `md5checksums.txt`.
+- **Drift: none.** All 9 members equal, in bytes and sha256, the digests the Caglar
+  finding measured the same day (`REL606_TIER_ADDITION` in
+  `torchcell/datasets/ecoli/caglar2017.py`, restated in the script's `PLAN_DIGESTS`). The
+  two listings also equal the sha256 that finding recorded (`c7a6602a...` GCA,
+  `cff986bd...` GCF).
+- Deposit: no file re-fetched (sidecars matched), manifest written, then
+  `verify_assembly_set` re-hashed all 9 members, every digest equal to the table below.
+  `provenance_complete: true`; 9,970,344 bytes of members.
+
+### ecoli_B_REL606_ASM1798v1 (9 members, 9,970,344 bytes)
+
+| member | role | bytes | sha256 | md5 vs NCBI |
+|---|---|---|---|---|
+| `GCA_000017985.1_ASM1798v1_genomic.gbff.gz` | annotation | 3,239,604 | `aacf2559815f959c9417984ce1632228fd94caeac4b62b7910f714e310542e6b` | `9c93575508d0eb2559106185330e483b` match |
+| `GCA_000017985.1_ASM1798v1_genomic.fna.gz` | sequence | 1,375,449 | `070a03fc2e2813853d5327608ee3ebcb4b0b2fe7faa239169921b3362b24adfa` | `84ac547b7fa22c6291aa519f2d1ce444` match |
+| `GCA_000017985.1_ASM1798v1_genomic.gff.gz` | annotation | 270,806 | `b928f83a99ea3ec7e64137f36490c37aa4585689de1abb884ff9cbaa4e1199d5` | `673a2039153095efd66128386d2d9b80` match |
+| `GCA_000017985.1_ASM1798v1_protein.faa.gz` | sequence | 889,482 | `40f1748bf2e86f5a43d7a8bb1515a0b3812f66f27f4d7fb9dc62a0c348962663` | `732ed5bf0131047db14f5c019a8286db` match |
+| `GCA_000017985.1_ASM1798v1_feature_table.txt.gz` | index | 173,353 | `5cba47c018f4a5180eb1af9f06e4b9103837f894a08f05fb5f6f70e8795379ec` | `52ce70f6a9e672ea4f044474c24fc8e2` match |
+| `GCA_000017985.1_ASM1798v1_assembly_report.txt` | index | 1,172 | `51968f440a6497669ad8ccf703c437d5a8055990d2c7e27194b9cc1ffeeda369` | `e89ce0ff1c31066a8639ec94e40e66a2` match |
+| `GCF_000017985.1_ASM1798v1_genomic.gbff.gz` | annotation | 3,428,153 | `b90a8ab7a8f1e9e736952b6e17017a9cd6bc6567cb11b1ecdc2e7c895695a26b` | `15b4bbd969d274c99919bcd5d57d4d87` match |
+| `GCF_000017985.1_ASM1798v1_genomic.gff.gz` | annotation | 433,859 | `27c302a37ac517de79999cc8438c744367e5c12ad4ac60b34f55bfd753214f25` | `9a52f090f2e985a44e5e6752018b0b23` match |
+| `GCF_000017985.1_ASM1798v1_gene_ontology.gaf.gz` | annotation | 158,466 | `4cbd6f5767d0f8651346891af174eaf9fd3353c25b6916fdee1f3d6c399374b1` | `42ac1448a06841ec7d7e86aab3f916e0` match |
+
+Replicon, from the deposited assembly report: `CP000819.1` / `NC_012967.1`, 4,629,812 bp,
+organism `Escherichia coli B str. REL606 (E. coli)`, taxid 413997.
+
+URLs: `https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/017/985/GCA_000017985.1_ASM1798v1/`
+and `https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/017/985/GCF_000017985.1_ASM1798v1/`
+plus the member name.
+
+Seeding another machine adds one line to the rsync block above (the set pins
+`go_release_2026-08-05` by id, so that set is needed too):
+
+```bash
+rsync -a gilahyper:/scratch/projects/torchcell-scratch/torchcell-genomes/ecoli_B_REL606_ASM1798v1/ $DATA_ROOT/torchcell-genomes/ecoli_B_REL606_ASM1798v1/
+```
+
+and `verify_assembly_set(registry.ECOLI_B_REL606)` returns 9 digests.

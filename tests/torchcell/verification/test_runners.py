@@ -88,8 +88,10 @@ from torchcell.datamodels.schema import (
     VisualScorePhenotype,
 )
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
+from torchcell.sequence.genome.ecoli.rel606 import EcoliBREL606Genome
 from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
 from torchcell.sequence.genome.registry import (
+    ECOLI_B_REL606,
     ECOLI_K12_BW25113,
     ECOLI_K12_MG1655,
     PETER2018_1011,
@@ -928,6 +930,62 @@ def test_genome_for_reference_hands_each_record_its_own_host_genome(
             },
         ),
     ]
+
+
+REL606_REFERENCE = _assembly_reference(
+    "REL606", "ecoli_B_REL606_ASM1798v1", "GCA_000017985.1"
+)
+
+
+def test_a_rel606_record_gets_the_rel606_universe_and_genome(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An E. coli B REL606 reference selects its own set, its ``ECB_`` locus-tag universe
+    and its own genome (read-only, default root); no K-12 universe stands in for it.
+    """
+    seen: list[tuple[str, str]] = []
+
+    def fake(assembly: Any, data_root: str) -> set[str]:
+        seen.append((assembly.assembly_set, data_root))
+        return {"ECB_00001"}
+
+    monkeypatch.setattr(runners, "_bacterial_gene_set", fake)
+    assert runners._reference_assembly_set(REL606_REFERENCE) == ECOLI_B_REL606
+    assert runners._ecoli_rel606_gene_set("/r") == {"ECB_00001"}
+    assert runners._gene_set_for_reference(REL606_REFERENCE, "/r") == {"ECB_00001"}
+    assert seen == [(ECOLI_B_REL606, "/r"), (ECOLI_B_REL606, "/r")]
+    log = install_bacterial_fakes(monkeypatch)
+    genome = runners._genome_for_reference(REL606_REFERENCE, "/root")
+    assert isinstance(genome, EcoliBREL606Genome)
+    assert log == [
+        (
+            "FakeREL606Genome",
+            {"genome_root": "/root/data/ecoli/rel606/genome", "overwrite": False},
+        )
+    ]
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not os.path.isfile(
+        os.path.join(
+            os.environ.get("DATA_ROOT", ""),
+            "torchcell-genomes",
+            ECOLI_B_REL606,
+            "manifest.json",
+        )
+    ),
+    reason="requires the REL606 assembly set",
+)
+def test_rel606_gene_set_on_the_deposited_tier() -> None:
+    """Every GenBank gene feature of GCA_000017985.1: 4,383 ``ECB_`` loci, tRNA and rRNA
+    tags and pseudogenes included, with every protein's CDS on one of them.
+    """
+    data_root = os.environ["DATA_ROOT"]
+    rel606 = runners._ecoli_rel606_gene_set(data_root)
+    assert len(rel606) == 4383
+    assert {"ECB_00001", "ECB_t00001", "ECB_r00001", "ECB_00042"} <= rel606
+    assert runners._gene_set_for_reference(REL606_REFERENCE, data_root) == rel606
 
 
 BACTERIAL_TIER = all(

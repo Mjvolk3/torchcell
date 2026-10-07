@@ -2,11 +2,11 @@
 # [[scripts.provision_bacterial_genomes]]
 # https://github.com/Mjvolk3/torchcell/tree/main/scripts/provision_bacterial_genomes.py
 
-"""Deposit the three bacterial assembly sets and the GO release set into the genomes tier.
+"""Deposit the bacterial assembly sets and the GO release set into the genomes tier.
 
 Seeds ``$DATA_ROOT/torchcell-genomes/`` with the four sets of
 [[plan.bacteria-ontology-genome]] section 1, one per strain and one for the shared GO
-ontology:
+ontology, plus the E. coli B REL606 set the Caglar 2017 row needs:
 
 - ``ecoli_K12_MG1655_ASM584v2``: NCBI GCA_000005845.2 and GCF_000005845.2, plus the GO
   Consortium ``ECOLI-uniprot.gaf.gz`` (b-numbers in column 11);
@@ -14,7 +14,14 @@ ontology:
   RefSeq GAF NCBI publishes for it; MG1655's GAF is referenced by set id, not copied;
 - ``pputida_KT2440_ASM756v2``: NCBI GCA_000007565.2 and GCF_000007565.2 with the RefSeq
   GAF, plus EBI GOA's ``109.P_putida_KT2440.goa`` (``PP_`` tags in column 11);
-- ``go_release_2026-08-05``: ``go-basic.obo`` from the dated GO release.
+- ``go_release_2026-08-05``: ``go-basic.obo`` from the dated GO release;
+- ``ecoli_B_REL606_ASM1798v1``: NCBI GCA_000017985.1 and GCF_000017985.1 with the RefSeq
+  GAF. No GO Consortium or EBI GOA file covers REL606, so its GO is the RefSeq GFF's
+  inline ``Ontology_term`` rows (a member already).
+
+``--set`` (repeatable) provisions only the named sets; without it every set is
+provisioned. A set whose manifest already exists in the tier stops the run, so adding a
+set to an existing tier names it: ``--set ecoli_B_REL606_ASM1798v1``.
 
 Every member is fetched by the ``direct_url`` retriever into
 ``--refetch-dir/<assembly_set>/``, so its ``RetrievalRecord`` names the function and URL
@@ -38,6 +45,8 @@ Usage::
 
     PYTHONPATH=$WT python scripts/provision_bacterial_genomes.py --refetch-dir $R --dry-run
     PYTHONPATH=$WT python scripts/provision_bacterial_genomes.py --refetch-dir $R
+    PYTHONPATH=$WT python scripts/provision_bacterial_genomes.py --refetch-dir $R \
+        --set ecoli_B_REL606_ASM1798v1
 """
 
 from __future__ import annotations
@@ -62,6 +71,7 @@ from torchcell.literature.manifest import (
 )
 from torchcell.literature.retrieve import RETRIEVERS
 from torchcell.sequence.genome.registry import (
+    ECOLI_B_REL606,
     ECOLI_K12_BW25113,
     ECOLI_K12_MG1655,
     GO_RELEASE_20260805,
@@ -218,6 +228,44 @@ PLAN_DIGESTS: dict[str, tuple[int, str]] = {
         32227785,
         "b08d45b268b8c24ccb2513dbbbc7d4df9f6521c099b413f79eb31e06e0fa3bcc",
     ),
+    # E. coli B REL606 (ASM1798v1), measured on 2026-10-07 for the Caglar 2017 strain
+    # finding: ``REL606_TIER_ADDITION`` in torchcell/datasets/ecoli/caglar2017.py.
+    "GCA_000017985.1_ASM1798v1_genomic.gbff.gz": (
+        3239604,
+        "aacf2559815f959c9417984ce1632228fd94caeac4b62b7910f714e310542e6b",
+    ),
+    "GCA_000017985.1_ASM1798v1_genomic.fna.gz": (
+        1375449,
+        "070a03fc2e2813853d5327608ee3ebcb4b0b2fe7faa239169921b3362b24adfa",
+    ),
+    "GCA_000017985.1_ASM1798v1_genomic.gff.gz": (
+        270806,
+        "b928f83a99ea3ec7e64137f36490c37aa4585689de1abb884ff9cbaa4e1199d5",
+    ),
+    "GCA_000017985.1_ASM1798v1_protein.faa.gz": (
+        889482,
+        "40f1748bf2e86f5a43d7a8bb1515a0b3812f66f27f4d7fb9dc62a0c348962663",
+    ),
+    "GCA_000017985.1_ASM1798v1_feature_table.txt.gz": (
+        173353,
+        "5cba47c018f4a5180eb1af9f06e4b9103837f894a08f05fb5f6f70e8795379ec",
+    ),
+    "GCA_000017985.1_ASM1798v1_assembly_report.txt": (
+        1172,
+        "51968f440a6497669ad8ccf703c437d5a8055990d2c7e27194b9cc1ffeeda369",
+    ),
+    "GCF_000017985.1_ASM1798v1_genomic.gbff.gz": (
+        3428153,
+        "b90a8ab7a8f1e9e736952b6e17017a9cd6bc6567cb11b1ecdc2e7c895695a26b",
+    ),
+    "GCF_000017985.1_ASM1798v1_genomic.gff.gz": (
+        433859,
+        "27c302a37ac517de79999cc8438c744367e5c12ad4ac60b34f55bfd753214f25",
+    ),
+    "GCF_000017985.1_ASM1798v1_gene_ontology.gaf.gz": (
+        158466,
+        "4cbd6f5767d0f8651346891af174eaf9fd3353c25b6916fdee1f3d6c399374b1",
+    ),
 }
 
 #: Header keys worth recording from the annotation and ontology files themselves.
@@ -286,7 +334,7 @@ def ncbi_members(name: str, suffixes: dict[str, str]) -> list[MemberSpec]:
 
 
 def set_specs() -> list[SetSpec]:
-    """The four sets of plan section 1, in deposit order."""
+    """The four sets of plan section 1, then REL606, in deposit order."""
     go_ref = (
         f"The GO ontology is pinned by set id {GO_RELEASE_20260805} (go-basic.obo), "
         "not copied here."
@@ -294,6 +342,7 @@ def set_specs() -> list[SetSpec]:
     mg_gca, mg_gcf = "GCA_000005845.2_ASM584v2", "GCF_000005845.2_ASM584v2"
     bw_gca, bw_gcf = "GCA_000750555.1_ASM75055v1", "GCF_000750555.1_ASM75055v1"
     kt_gca, kt_gcf = "GCA_000007565.2_ASM756v2", "GCF_000007565.2_ASM756v2"
+    rel_gca, rel_gcf = "GCA_000017985.1_ASM1798v1", "GCF_000017985.1_ASM1798v1"
     ecoli_gaf = f"{GO_RELEASE_URL}/annotations/gaf/ECOLI-uniprot.gaf.gz"
     kt_goa = f"{EBI_GOA_PROTEOMES}/109.P_putida_KT2440.goa"
     gaf_with_refseq = {**GCF_SUFFIXES, NCBI_GAF_SUFFIX: ROLE_ANNOTATION}
@@ -386,6 +435,32 @@ def set_specs() -> list[SetSpec]:
                 f"id from {ECOLI_K12_MG1655}, {ECOLI_K12_BW25113} and {PPUTIDA_KT2440}. "
                 "The yeast genome's go.obo (releases/2024-01-17, downloaded at "
                 "construction) is a different file and is not changed by this set."
+            ),
+        ),
+        SetSpec(
+            assembly_set=ECOLI_B_REL606,
+            organism="Escherichia coli",
+            strain_or_population="B REL606",
+            source="NCBI",
+            release="ASM1798v1",
+            source_url=ncbi_dir(rel_gca),
+            members=[
+                *ncbi_members(rel_gca, GCA_SUFFIXES),
+                *ncbi_members(rel_gcf, gaf_with_refseq),
+            ],
+            notes=(
+                "E. coli B REL606, the ancestor of the Lenski long-term evolution "
+                "experiment; a B strain, so neither K-12 set is its genome. GenBank "
+                "(GCA) and RefSeq (GCF) annotations of one sequence, CP000819.1 / "
+                "NC_012967.1. GCA carries the ECB_ locus tags the papers report "
+                "(ECB_NNNNN, ECB_tNNNNN, ECB_rNNNNN); GCF retags to ECB_RS with "
+                "old_locus_tag. The FASTA is deposited once, from GCA. GO: the GO "
+                "Consortium release 2026-08-05 has no E. coli B GAF (ECOLI-uniprot is "
+                "K-12) and EBI GOA's proteome2taxid lists no proteome for taxon 413997 "
+                "(checked 2026-10-07), so the locus-tag-keyed GO is the RefSeq GFF's "
+                "inline Ontology_term rows through old_locus_tag. NCBI's WP_-keyed GAF "
+                "is a member because the GCF listing names it; it carries no locus "
+                "tag. " + go_ref
             ),
         ),
     ]
@@ -609,6 +684,14 @@ def main(argv: list[str] | None = None) -> int:
         "--dry-run", action="store_true", help="fetch, check, print; deposit nothing"
     )
     ap.add_argument(
+        "--set",
+        dest="sets",
+        action="append",
+        default=[],
+        metavar="ASSEMBLY_SET",
+        help="provision only this set (repeatable); default every set",
+    )
+    ap.add_argument(
         "--accept-drift",
         action="append",
         default=[],
@@ -623,6 +706,12 @@ def main(argv: list[str] | None = None) -> int:
         args.data_root = os.environ["DATA_ROOT"]
     refetch = Path(args.refetch_dir)
     specs = set_specs()
+    if args.sets:
+        known = {spec.assembly_set for spec in specs}
+        unknown_sets = sorted(set(args.sets) - known)
+        if unknown_sets:
+            raise SystemExit(f"--set names unknown sets {unknown_sets}; known: {known}")
+        specs = [spec for spec in specs if spec.assembly_set in args.sets]
     print(f"DATA_ROOT {args.data_root}; refetch dir {refetch}")
     if not args.dry_run:
         for spec in specs:

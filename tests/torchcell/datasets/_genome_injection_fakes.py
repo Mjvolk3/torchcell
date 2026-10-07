@@ -5,9 +5,9 @@
 
 Each fake genome SUBCLASSES the real genome class and replaces ``__init__`` with one that
 only records its keyword arguments, so an injected object passes ``isinstance`` against
-the real class (``SCerevisiaeGenome``, ``EcoliK12Genome``, ``PPutidaKT2440Genome``) while
-no genome is built and no tier file is read. :func:`install_bacterial_fakes` puts the
-three bacterial fakes into ``bacteria_common.BACTERIAL_GENOME_CLASSES``, the one map every
+the real class (``SCerevisiaeGenome``, ``EcoliK12Genome``, ``EcoliBREL606Genome``,
+``PPutidaKT2440Genome``) while no genome is built and no tier file is read.
+:func:`install_bacterial_fakes` puts the four bacterial fakes into ``bacteria_common.BACTERIAL_GENOME_CLASSES``, the one map every
 entry point reaches through ``BacterialGenomeInjector``; the yeast fake is patched at each
 entry point's own import site by the test using it. The toy loaders declare exactly the
 parameters the injection rule reads.
@@ -24,6 +24,7 @@ from torchcell.sequence.genome.ecoli.k12 import (
     EcoliK12BW25113Genome,
     EcoliK12MG1655Genome,
 )
+from torchcell.sequence.genome.ecoli.rel606 import EcoliBREL606Genome
 from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
@@ -60,6 +61,10 @@ class FakeKT2440Genome(_Records, PPutidaKT2440Genome):
     """A ``PPutidaKT2440Genome`` that only records its kwargs."""
 
 
+class FakeREL606Genome(_Records, EcoliBREL606Genome):
+    """An ``EcoliBREL606Genome`` that only records its kwargs."""
+
+
 def install_bacterial_fakes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> list[tuple[str, dict[str, Any]]]:
@@ -73,6 +78,9 @@ def install_bacterial_fakes(
     )
     monkeypatch.setitem(
         bacteria_common.BACTERIAL_GENOME_CLASSES, "KT2440", FakeKT2440Genome
+    )
+    monkeypatch.setitem(
+        bacteria_common.BACTERIAL_GENOME_CLASSES, "REL606", FakeREL606Genome
     )
     return BUILD_LOG
 
@@ -103,6 +111,24 @@ class EcoliBW25113Loader:
     def __init__(
         self,
         root: str = "data/torchcell/ecoli_bw25113_toy",
+        io_workers: int = 0,
+        ecoli_genome: Any = None,
+    ) -> None:
+        self.kwargs = {
+            "root": root,
+            "io_workers": io_workers,
+            "ecoli_genome": ecoli_genome,
+        }
+
+
+class EcoliREL606Loader:
+    """A loader written against E. coli B REL606: names ``ecoli_genome``."""
+
+    REFERENCE_STRAIN: ClassVar[str] = "REL606"
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/ecoli_rel606_toy",
         io_workers: int = 0,
         ecoli_genome: Any = None,
     ) -> None:

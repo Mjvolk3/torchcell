@@ -2,7 +2,7 @@
 # [[torchcell.datasets.bacteria_common]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/bacteria_common
 # Test file: tests/torchcell/datasets/test_bacteria_common.py
-"""The shared skeleton of the bacterial dataset loaders (E. coli K-12, P. putida KT2440).
+"""The shared skeleton of the bacterial dataset loaders (E. coli, P. putida KT2440).
 
 The bacterial counterpart of ``scerevisiae/gene_name_reconcile.py``, plus what a
 bacterial loader needs that a yeast one does not. Section 4 of
@@ -71,6 +71,7 @@ from torchcell.sequence.genome.ecoli.k12 import (
     EcoliK12StrainName,
 )
 from torchcell.sequence.genome.ecoli.k12 import eck_crosswalk as _annotation_crosswalk
+from torchcell.sequence.genome.ecoli.rel606 import EcoliBREL606Genome, EcoliBStrainName
 from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
 from torchcell.sequence.genome.registry import resolve
 
@@ -93,6 +94,7 @@ __all__ = [
     "BacterialGenomeInjector",
     "BacterialHost",
     "BacterialReferenceStrain",
+    "BacterialStrainGenome",
     "EckCrosswalk",
     "EckPair",
     "LocusTagReconciliation",
@@ -115,11 +117,11 @@ __all__ = [
 BacterialHost = Literal["ecoli", "pputida"]
 """A bacterial host; each names the loader parameter its genome is injected through."""
 
-#: The reference strains of each host. Two for E. coli, never one: a ``BW25113_`` number
-#: is not an MG1655 b-number, so an E. coli loader states which strain it is written
-#: against (plan D5).
+#: The reference strains of each host. Several for E. coli, never one: a ``BW25113_``
+#: number is not an MG1655 b-number and an ``ECB_`` tag is neither (REL606 is an E. coli
+#: B strain), so an E. coli loader states which strain it is written against (plan D5).
 HOST_STRAINS: dict[BacterialHost, tuple[BacterialReferenceStrain, ...]] = {
-    "ecoli": ("MG1655", "BW25113"),
+    "ecoli": ("MG1655", "BW25113", "REL606"),
     "pputida": ("KT2440",),
 }
 
@@ -129,6 +131,7 @@ STRAIN_GENE_NAMESPACES: dict[BacterialReferenceStrain, BacterialGeneNamespace] =
     "MG1655": "ecoli_k12_mg1655_bnumber",
     "BW25113": "ecoli_k12_bw25113_locus_tag",
     "KT2440": "pputida_kt2440_locus_tag",
+    "REL606": "ecoli_b_rel606_locus_tag",
 }
 
 #: The schema's per-namespace locus-tag patterns (``BACTERIAL_LOCUS_TAG_PATTERNS``),
@@ -138,13 +141,18 @@ LOCUS_TAG_PATTERNS: dict[str, re.Pattern[str]] = {
     for namespace, pattern in BACTERIAL_LOCUS_TAG_PATTERNS.items()
 }
 
+#: A genome of one reference strain, as :func:`bacterial_genome` returns it.
+BacterialStrainGenome = EcoliK12Genome | EcoliBREL606Genome | PPutidaKT2440Genome
+
 #: The genome class of each reference strain.
 BACTERIAL_GENOME_CLASSES: dict[
-    BacterialReferenceStrain, type[EcoliK12Genome] | type[PPutidaKT2440Genome]
+    BacterialReferenceStrain,
+    type[EcoliK12Genome] | type[EcoliBREL606Genome] | type[PPutidaKT2440Genome],
 ] = {
     "MG1655": EcoliK12MG1655Genome,
     "BW25113": EcoliK12BW25113Genome,
     "KT2440": PPutidaKT2440Genome,
+    "REL606": EcoliBREL606Genome,
 }
 
 _STRAIN: TypeAdapter[BacterialReferenceStrain] = TypeAdapter(BacterialReferenceStrain)
@@ -186,6 +194,12 @@ def bacterial_genome(
 
 @overload
 def bacterial_genome(
+    host: Literal["ecoli"], strain: EcoliBStrainName, data_root: str | None = None
+) -> EcoliBREL606Genome: ...
+
+
+@overload
+def bacterial_genome(
     host: Literal["pputida"], strain: Literal["KT2440"], data_root: str | None = None
 ) -> PPutidaKT2440Genome: ...
 
@@ -193,17 +207,18 @@ def bacterial_genome(
 @overload
 def bacterial_genome(
     host: BacterialHost, strain: BacterialReferenceStrain, data_root: str | None = None
-) -> EcoliK12Genome | PPutidaKT2440Genome: ...
+) -> BacterialStrainGenome: ...
 
 
 def bacterial_genome(
     host: BacterialHost, strain: BacterialReferenceStrain, data_root: str | None = None
-) -> EcoliK12Genome | PPutidaKT2440Genome:
+) -> BacterialStrainGenome:
     """The genome of ``strain`` from its default cache root (read-only reference use).
 
     The cache root is ``<data_root>/<ASSEMBLY.default_genome_root>``
     (``data/ecoli/mg1655/genome``, ``data/ecoli/bw25113/genome``,
-    ``data/pputida/kt2440/genome``) with ``data_root`` defaulting to ``$DATA_ROOT``, and
+    ``data/ecoli/rel606/genome``, ``data/pputida/kt2440/genome``) with ``data_root``
+    defaulting to ``$DATA_ROOT``, and
     the genome is opened with ``overwrite=False``: an existing ``data.db`` is reopened,
     never rebuilt in place. The sequence and annotation files come from the genomes tier
     under ``$DATA_ROOT`` through ``registry.resolve``. A strain of another host is refused.
@@ -307,7 +322,8 @@ def assembly_reference(
     ``species`` is the genome class's organism, ``assembly_set`` the strain's set, and
     ``assembly_accession`` the GenBank (``GCA_``) accession read from the deposited
     assembly report: the records' identifiers are GenBank locus tags (plan D1), which
-    RefSeq retags for BW25113 and KT2440, so the GenBank assembly is the one they mean.
+    RefSeq retags for BW25113, REL606 and KT2440, so the GenBank assembly is the one
+    they mean.
     ``strain`` is the reference strain, or the background's ``name`` when a background
     is given (the schema requires the two to agree); the background must be an edit of
     ``strain``'s assembly.
@@ -591,13 +607,9 @@ class BacterialGenomeInjector:
     def __init__(self, data_root: str) -> None:
         """Build genomes under ``data_root``'s default cache roots."""
         self.data_root = data_root
-        self.built: dict[
-            BacterialReferenceStrain, EcoliK12Genome | PPutidaKT2440Genome
-        ] = {}
+        self.built: dict[BacterialReferenceStrain, BacterialStrainGenome] = {}
 
-    def genome_kwargs(
-        self, dataset_class: type
-    ) -> dict[str, EcoliK12Genome | PPutidaKT2440Genome]:
+    def genome_kwargs(self, dataset_class: type) -> dict[str, BacterialStrainGenome]:
         """The bacterial genome keyword ``dataset_class.__init__`` declares, if any.
 
         Refused: a loader naming both bacterial parameters, a bacterial loader (one

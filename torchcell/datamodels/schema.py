@@ -291,6 +291,7 @@ BacterialGeneNamespace = Literal[
     "ecoli_k12_mg1655_bnumber",
     "ecoli_k12_bw25113_locus_tag",
     "pputida_kt2440_locus_tag",
+    "ecoli_b_rel606_locus_tag",
 ]
 """The identifier namespace a bacterial locus tag belongs to.
 
@@ -307,6 +308,7 @@ BACTERIAL_LOCUS_TAG_PATTERNS: dict[str, str] = {
     "pputida_kt2440_locus_tag": (
         r"^PP_(?:\d{4}|(?:5|16|23)S[A-G]|t\d{2}|tm\d{2}|mr\d{2}|r\d{2})$"
     ),
+    "ecoli_b_rel606_locus_tag": r"^ECB_[rt]?\d{5}$",
 }
 """Locus-tag pattern of each namespace, measured from the deposited GenBank files.
 
@@ -314,7 +316,9 @@ MG1655 and BW25113 are uniform four-digit tags. KT2440 is four-digit for its 5,6
 protein-coding genes plus the named structural-RNA tags its annotation uses: the
 rRNA operons (``PP_16SA``-``PP_16SG``, ``PP_23SA``-``PP_23SG``, ``PP_5SA``-``PP_5SG``),
 75 tRNA tags (``PP_t01``-``PP_t75``), 67 ``PP_mr`` tags, ``PP_tm01`` and ``PP_r01``.
-Admitting only four-digit tags would silently reject 165 real KT2440 genes.
+Admitting only four-digit tags would silently reject 165 real KT2440 genes. E. coli B
+REL606 (GCA_000017985.1) is five-digit: 4,276 ``ECB_NNNNN``, 85 tRNA ``ECB_tNNNNN`` and
+22 rRNA ``ECB_rNNNNN`` of its 4,383 gene features.
 """
 
 BACTERIAL_LOCUS_TAG_PATTERN = (
@@ -703,7 +707,7 @@ class StrainReferenceGenome(ReferenceGenome):
 # new classes below move none. The duplication is the measured price of that, and
 # unifying the two families later is a rebuild whose purpose is the unification.
 # --------------------------------------------------------------------------- #
-BacterialReferenceStrain = Literal["MG1655", "BW25113", "KT2440"]
+BacterialReferenceStrain = Literal["MG1655", "BW25113", "KT2440", "REL606"]
 """The sequenced strain a bacterial background's alleles are edits against.
 
 One member per deposited assembly set, for the same reason ``BacterialGeneNamespace``
@@ -721,12 +725,14 @@ BACTERIAL_ASSEMBLY_SETS: dict[str, str] = {
     "MG1655": "ecoli_K12_MG1655_ASM584v2",
     "BW25113": "ecoli_K12_BW25113_ASM75055v1",
     "KT2440": "pputida_KT2440_ASM756v2",
+    "REL606": "ecoli_B_REL606_ASM1798v1",
 }
 
 BacterialAssemblySet = Literal[
     "ecoli_K12_MG1655_ASM584v2",
     "ecoli_K12_BW25113_ASM75055v1",
     "pputida_KT2440_ASM756v2",
+    "ecoli_B_REL606_ASM1798v1",
 ]
 """A deposited bacterial assembly set id, as a closed vocabulary.
 
@@ -743,6 +749,7 @@ ASSEMBLY_SET_ACCESSIONS: dict[str, tuple[str, str]] = {
     "ecoli_K12_MG1655_ASM584v2": ("GCA_000005845.2", "GCF_000005845.2"),
     "ecoli_K12_BW25113_ASM75055v1": ("GCA_000750555.1", "GCF_000750555.1"),
     "pputida_KT2440_ASM756v2": ("GCA_000007565.2", "GCF_000007565.2"),
+    "ecoli_B_REL606_ASM1798v1": ("GCA_000017985.1", "GCF_000017985.1"),
 }
 
 ASSEMBLY_ACCESSION_PATTERN = r"^GC[AF]_\d{9}\.\d+$"

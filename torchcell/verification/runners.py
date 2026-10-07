@@ -21,7 +21,7 @@ written against. The yeast runners use S288C (:func:`_sgd_gene_set`, :func:`_gen
 a bacterial runner selects both from each record's own ``genome_reference``
 (:func:`_gene_set_for_reference`, :func:`_genome_for_reference`), whose
 ``assembly_set`` names the strain: :func:`_ecoli_k12_gene_set` for MG1655 or BW25113,
-:func:`_pputida_gene_set` for KT2440.
+:func:`_ecoli_rel606_gene_set` for E. coli B REL606, :func:`_pputida_gene_set` for KT2440.
 """
 
 from __future__ import annotations
@@ -43,6 +43,7 @@ from torchcell.sequence.genome.ecoli.k12 import (
     MG1655_ASSEMBLY,
     EcoliK12StrainName,
 )
+from torchcell.sequence.genome.ecoli.rel606 import REL606_ASSEMBLY
 from torchcell.sequence.genome.pputida.kt2440 import KT2440_ASSEMBLY
 from torchcell.sequence.genome.registry import PETER2018_1011, SGD_S288C_R64, resolve
 from torchcell.verification.environment_response import (
@@ -806,7 +807,12 @@ def _genome(data_root: str) -> Any:
 #: The GenBank assembly each bacterial strain set's locus-tag universe is read from.
 BACTERIAL_GENE_ASSEMBLIES: dict[str, BacterialAssembly] = {
     assembly.assembly_set: assembly
-    for assembly in (MG1655_ASSEMBLY, BW25113_ASSEMBLY, KT2440_ASSEMBLY)
+    for assembly in (
+        MG1655_ASSEMBLY,
+        BW25113_ASSEMBLY,
+        KT2440_ASSEMBLY,
+        REL606_ASSEMBLY,
+    )
 }
 #: The species a reference without an ``assembly_set`` must name (a yeast record).
 YEAST_SPECIES = "Saccharomyces cerevisiae"
@@ -867,6 +873,13 @@ def _ecoli_k12_gene_set(data_root: str, strain: EcoliK12StrainName) -> set[str]:
     return _bacterial_gene_set(
         BACTERIAL_GENE_ASSEMBLIES[BACTERIAL_ASSEMBLY_SETS[strain]], data_root
     )
+
+
+def _ecoli_rel606_gene_set(data_root: str) -> set[str]:
+    """The E. coli B REL606 locus-tag universe (``ECB_`` tags, tRNA and rRNA included);
+    a B strain, so no K-12 universe stands in for it.
+    """
+    return _bacterial_gene_set(REL606_ASSEMBLY, data_root)
 
 
 def _pputida_gene_set(data_root: str) -> set[str]:

@@ -45,6 +45,11 @@ ECOLI_K12_MG1655 = "ecoli_K12_MG1655_ASM584v2"
 #: inline terms and NCBI's GAF; MG1655's GAF is referenced by the ``ECOLI_K12_MG1655``
 #: id, never copied, and which source a loader reads is still open.
 ECOLI_K12_BW25113 = "ecoli_K12_BW25113_ASM75055v1"
+#: E. coli B REL606 (the Lenski long-term evolution ancestor), NCBI assembly ASM1798v1
+#: (GCA_000017985.1 / GCF_000017985.1, replicon CP000819.1 / NC_012967.1): ``ECB_``
+#: locus tags. A B strain, not K-12, so neither K-12 set stands in for it. No GO
+#: Consortium or EBI GOA file covers it; its GO is the RefSeq GFF's inline terms.
+ECOLI_B_REL606 = "ecoli_B_REL606_ASM1798v1"
 #: P. putida KT2440, NCBI assembly ASM756v2 (GCA_000007565.2 / GCF_000007565.2):
 #: ``PP_`` locus tags, plus the EBI GOA proteome file keyed to them.
 PPUTIDA_KT2440 = "pputida_KT2440_ASM756v2"

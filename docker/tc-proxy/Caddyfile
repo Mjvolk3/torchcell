@@ -1,0 +1,104 @@
+# docker/tc-proxy/Caddyfile
+#
+# The ONE public HTTPS entry point of the Radiant VM (torchcell-database.ncsa.illinois.edu),
+# run by docker-compose.tc-proxy.yml with host networking, so 127.0.0.1 below is the VM's
+# loopback, where each tc-bench tier publishes its API port.
+#
+# One host name, two tiers, told apart by path prefix (decided 2026-10-07):
+#
+#   https://<host>/staging/            the STAGING website (static files, built with
+#                                      BASE_URL=/staging/ and SITE_ENV=staging)
+#   https://<host>/staging/api/v1/...  the staging API (loopback 8725); the /staging
+#                                      prefix is stripped, the API serves /api/v1/...
+#   https://<host>/api/v1/...          the PRODUCTION API (loopback 9725)
+#   https://<host>/                    nothing: the production website lives on GitHub
+#                                      Pages (https://mjvolk3.github.io/torchcell/site/)
+#                                      and calls the production API across origins
+#
+# So TC_BENCH_PUBLIC_URL is https://<host>/staging for staging and https://<host> for
+# production, and the two callback URLs to register on the one CILogon client are
+#   https://<host>/staging/api/v1/auth/callback
+#   https://<host>/api/v1/auth/callback
+#
+# Certificates: certbot on the host owns the Let's Encrypt certificate for this name and
+# renews it (also used by Neo4j on 7473). Caddy only READS it, from the read-only
+# /etc/letsencrypt mount, and obtains nothing itself: an explicit `tls <cert> <key>`
+# turns Caddy's ACME off for that host. Renewal was HTTP-01 "standalone", which binds
+# port 80 itself and so fails once Caddy holds 80; the runbook switches it to "webroot",
+# and the http:// block below serves the challenge files certbot writes under
+# /srv/tc-site/acme. After a renewal the deploy hook restarts this container
+# (database/scripts/copy_certs.sh) so the new certificate is loaded.
+#
+# No Strict-Transport-Security here: HSTS is per host, all ports, and this host also
+# serves the plain-HTTP data endpoint on 8724, which a browser would then refuse.
+
+{
+	# No admin API: with host networking it would listen on the host's loopback. Config
+	# changes are a `docker compose ... restart`.
+	admin off
+}
+
+# Port 80: certbot's HTTP-01 challenge files, everything else to HTTPS.
+http://torchcell-database.ncsa.illinois.edu {
+	handle /.well-known/acme-challenge/* {
+		root * /srv/tc-site/acme
+		file_server
+	}
+	handle {
+		redir https://{host}{uri} permanent
+	}
+}
+
+torchcell-database.ncsa.illinois.edu {
+	tls /etc/letsencrypt/live/torchcell-database.ncsa.illinois.edu/fullchain.pem /etc/letsencrypt/live/torchcell-database.ncsa.illinois.edu/privkey.pem
+
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options "nosniff"
+		# SAMEORIGIN, not DENY: the ontology explorer is framed by the site itself.
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# One submission is at most 16 MiB of predictions plus metadata; refuse larger
+	# bodies here, before they reach either API.
+	@api path /api/* /staging/api/*
+	request_body @api {
+		max_size 17MB
+	}
+
+	# Staging API: strip the tier prefix, the service itself serves /api/v1/...
+	handle /staging/api/* {
+		uri strip_prefix /staging
+		reverse_proxy 127.0.0.1:8725
+	}
+
+	# Staging site: test accounts and test submissions; built with SITE_ENV=staging,
+	# which adds the staging bar and a noindex tag. Keep it out of search results here too.
+	redir /staging /staging/ permanent
+	handle /staging/* {
+		header X-Robots-Tag "noindex, nofollow"
+		uri strip_prefix /staging
+		root * /srv/tc-site/staging
+		try_files {path} {path}/index.html /404.html
+		file_server
+	}
+
+	# Production API. The production website is on GitHub Pages.
+	handle /api/* {
+		reverse_proxy 127.0.0.1:9725
+	}
+
+	# Anything else: the production site's home.
+	handle {
+		redir https://mjvolk3.github.io/torchcell/site/ temporary
+	}
+
+	# Access log to stdout: `docker logs tc-proxy`, rotated by the compose logging limits.
+	# A file under a bind mount is not writable with every capability dropped.
+	log {
+		output stdout
+	}
+}

@@ -117,7 +117,7 @@ paper-pull:
 # rebuilt from the current tree; production runs the exact image staging ran, never a
 # rebuild. See docker-compose.tc-bench.yml and scripts/tc_bench_deploy.sh. DRY_RUN=1
 # prints the commands only.
-.PHONY: bench-redeploy bench-promote-prod site-build
+.PHONY: bench-redeploy bench-promote-prod site-build site-publish
 bench-redeploy:
 	@FORCE="$(FORCE)" DRY_RUN="$(DRY_RUN)" bash scripts/tc_bench_redeploy.sh
 bench-promote-prod:
@@ -128,6 +128,11 @@ site-build:
 	@case "$(TIER)" in staging|prod) ;; *) echo "usage: make site-build TIER=staging|prod"; exit 2;; esac
 	@test -f website/site.$(TIER).env || { echo "missing website/site.$(TIER).env (copy site.$(TIER).env.example)"; exit 2; }
 	@cd website && set -a && . ./site.$(TIER).env && set +a && npx docusaurus build --out-dir build-$(TIER)
+# Build one tier's site and copy it into the directory the reverse proxy serves
+# (SITE_PUBLISH_DIR in website/site.<tier>.env). TC_SITE_BUILD_DIR moves the build off
+# the repository disk; see scripts/tc_site_publish.sh.
+site-publish:
+	@bash scripts/tc_site_publish.sh "$(TIER)"
 
 .PHONY: help
 help:
@@ -149,6 +154,7 @@ help:
 	@echo "  make bench-redeploy  - Rebuild the benchmark STAGING tier from this tree and verify it"
 	@echo "  make bench-promote-prod CONFIRM=1 - Start PRODUCTION on the image staging ran (bare: plan only)"
 	@echo "  make site-build TIER=staging|prod - Build that tier's website into website/build-<tier>/"
+	@echo "  make site-publish TIER=staging|prod - Build it and copy it where the proxy (tc-proxy) serves it"
 	@echo "  make paper           - Build submission + editing + twocolumn PDFs"
 	@echo "  make paper-submission/-editing/-twocolumn/-figproto - one PDF"
 	@echo "  make paper-fig       - Force re-render all figures from draw.io + size/scale check"

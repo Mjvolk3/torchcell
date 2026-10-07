@@ -413,3 +413,127 @@ staging bar and `noindex` on a staging build in headless Chromium.
 Not run: no image was built and no container was started, so the real build, start and
 health assertion paths of the scripts are untested. Host names in the examples are
 placeholders until hosting is decided.
+
+## 2026.10.07 - Staging goes public on the existing host name
+
+Decided by the project owner: one host name, the one the Radiant VM already has, with
+the two tiers told apart by path prefix, and the production website on GitHub Pages.
+
+| Tier | Website | API |
+|---|---|---|
+| staging | `https://torchcell-database.ncsa.illinois.edu/staging/` (this VM, Caddy) | `https://torchcell-database.ncsa.illinois.edu/staging/api/v1` (loopback 8725) |
+| production | `https://mjvolk3.github.io/torchcell/site/` (GitHub Pages, the website workflow) | `https://torchcell-database.ncsa.illinois.edu/api/v1` (loopback 9725) |
+
+Why: the Docusaurus defaults already name the Pages location, the sign-in flow was
+designed to hand a bearer token to a site on another origin, and a dedicated production
+host name would need NCSA DNS, a second certificate and the public site on borrowed
+hardware. One host name also means one CILogon client registered once with both final
+callback URLs, `/staging/api/v1/auth/callback` and `/api/v1/auth/callback`, which
+matters because CILogon approves registrations by hand.
+
+### What was checked on the host (2026-10-07)
+
+- The instance carries the security groups `default`, `remote SSH` and `remote HTTP/HTTPS`.
+  `nc -vz torchcell-database.ncsa.illinois.edu 443` from the M1 answered `Connection
+  refused`, so 443 reaches the VM and no OpenStack change is needed. Port 80 is reachable
+  too: the certificate has renewed by HTTP-01.
+- Nothing listens on 80 or 443. Public ports today are 22, 7473, 7474, 7687 (Neo4j) and
+  8724 (the data endpoint, plain HTTP).
+- Certbot 3.1.0 renews the certificate with `authenticator = standalone`, which binds
+  port 80 itself; `certbot-renew.timer` runs twice a day. The deploy hook installed at
+  `/etc/letsencrypt/renewal-hooks/deploy/torchcell-neo4j.sh` execs
+  `/home/rocky/projects/torchcell/database/scripts/copy_certs.sh`, the primary checkout's
+  copy, so the proxy restart added to that script in this branch takes effect only after
+  the branch lands and the primary checkout is pulled.
+- The root disk is 88% full (5.1 GB free). The caddy image is about 50 MB, the API image
+  and `postgres:17-alpine` together under 1 GB.
+- `make` is not installed on the VM; run the scripts behind the targets with `bash`.
+- The scratch development stack (`bench-work/dev/run.sh`) publishes 127.0.0.1:8725, the
+  staging port. It is not running; it must stay stopped once staging is up.
+- The API builds its callback from `TC_BENCH_PUBLIC_URL` plus the API prefix
+  (`callback_url` in `app.py`), so the `/staging` prefix is honored once the proxy strips
+  it before forwarding.
+
+### Files added or changed in this branch
+
+- `docker/tc-proxy/Caddyfile`: the live proxy config for this host. An `http://` block
+  serves certbot's challenge files from `/srv/tc-site/acme` and redirects everything else.
+  The HTTPS block uses `tls` with certbot's files, so Caddy obtains no certificate itself;
+  `/staging/api/*` and `/staging/*` strip the prefix and go to port 8725 and the staging
+  site root (with `X-Robots-Tag: noindex`); `/api/*` goes to port 9725; everything else
+  redirects to the Pages site. Bodies over 17 MB are refused before either API. No HSTS:
+  it is per host across all ports and would make a browser refuse the plain-HTTP data
+  endpoint on 8724. `admin off`.
+- `docker-compose.tc-proxy.yml`: `caddy:2-alpine` with host networking (the tiers publish
+  on loopback, which a bridged container cannot reach), read-only mounts of the Caddyfile,
+  `/etc/letsencrypt` and `/home/rocky/srv/tc-site`, logs under
+  `~/.local/state/tc-proxy/logs`, all capabilities dropped but `NET_BIND_SERVICE`,
+  0.5 CPU and 128 MB. `docker compose config` parses.
+- `scripts/tc_site_publish.sh` and `make site-publish TIER=staging|prod`: build the tier's
+  site from `website/site.<tier>.env`, refuse a staging build without the `noindex` tag,
+  rsync into `SITE_PUBLISH_DIR` (new key in both `site.*.env.example`).
+  `TC_SITE_BUILD_DIR` builds in a prepared copy that holds `node_modules`, so nothing
+  heavy lands on the root disk. Production on Pages does not use it; the website
+  workflow builds there.
+- The four env templates (`docker/tc-bench/tc-bench.{staging,prod}.env.example`,
+  `website/site.{staging,prod}.env.example`) carry the real URLs of the table above
+  instead of `example.org`.
+- `database/scripts/copy_certs.sh`: restarts `tc-proxy` after a renewal when it exists.
+- Written on the VM, git-ignored: `.env.tc-bench.staging` (every value real except the
+  CILogon client id) and `website/site.staging.env`.
+
+### Runbook, and how far it has run
+
+Done 2026-10-07 as rocky, no container started:
+
+1. Directories: `/home/rocky/srv/tc-site/{staging,acme}`, `~/.local/state/tc-proxy/logs`,
+   and on Taiga `data/torchcell/tc-bench/staging/{datasets,submissions}` with the
+   `gene-essentiality-sgd` bundle copied from the development stack.
+2. Secrets under `~/.config/tc-bench/staging/secrets/` (mode 600): `db_password` and
+   `jwt_secret` generated, `admin_keys.json` as `{}`, `cilogon_client_secret` a
+   placeholder line until the registration is approved.
+3. Staging site built and published: `TC_SITE_BUILD_DIR=<scratch website-preview/src>
+   bash scripts/tc_site_publish.sh staging`, 5.5 MB in `/home/rocky/srv/tc-site/staging`,
+   links under `/staging/`, `noindex` present.
+
+Remaining, in order:
+
+4. Proxy, from the branch's checkout (the Caddyfile is bind-mounted by relative path, so
+   `up` again from the primary checkout after the branch lands):
+
+   ```bash
+   docker compose -f docker-compose.tc-proxy.yml up -d
+   curl -sI https://torchcell-database.ncsa.illinois.edu/staging/ | head -1   # 200
+   ```
+
+   Then `https://torchcell-database.ncsa.illinois.edu/staging/` works from any browser,
+   with the staging bar. This is the tunnel-free view; it works before the API.
+5. Certificate renewal to webroot, with sudo, after the proxy is up (the dry run inside
+   `reconfigure` needs port 80 answering) and before the next real renewal:
+
+   ```bash
+   sudo certbot reconfigure --cert-name torchcell-database.ncsa.illinois.edu \
+        --authenticator webroot --webroot-path /home/rocky/srv/tc-site/acme
+   ```
+
+6. Staging API: `bash scripts/tc_bench_redeploy.sh` (builds the image, starts PostgreSQL
+   and the API, asserts `/health` says `tier=staging`), then the two one-time commands in
+   `docker-compose.tc-bench.yml`'s header (`--gen-admin-key`, `--init-db`). Check
+   `https://torchcell-database.ncsa.illinois.edu/staging/api/v1/health` from the browser.
+   The redeploy script refuses a dirty tree without `FORCE=1`; the branch's changes must
+   be committed first.
+7. CILogon: register at <https://cilogon.org/oauth2/register> with both callbacks
+   (`https://torchcell-database.ncsa.illinois.edu/staging/api/v1/auth/callback` and
+   `https://torchcell-database.ncsa.illinois.edu/api/v1/auth/callback`) and the four
+   scopes; when approved, put the id in `.env.tc-bench.staging`, the secret in the secrets
+   file, and redeploy. Until then every page but sign-in works.
+8. Production: land the branch, point the website workflow at Pages with the
+   `site.prod.env.example` values, start the production tier with
+   `bash scripts/tc_bench_promote_prod.sh` (`CONFIRM=1`) once staging has run the
+   landed image.
+9. Day to day: edit in the worktree, `bash scripts/tc_site_publish.sh staging` for site
+   changes, `bash scripts/tc_bench_redeploy.sh` for API changes, refresh the browser.
+   The loopback preview on port 3000 and its tunnel are no longer needed.
+
+Not run: steps 4 to 9. The Caddyfile has not been validated by Caddy itself (that needs
+the image pulled).

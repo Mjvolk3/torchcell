@@ -1,0 +1,57 @@
+# docker-compose.tc-proxy.yml
+# The TLS reverse proxy (Caddy) in front of the website and the benchmark API on the
+# Radiant VM: docker/tc-proxy/Caddyfile. Separate from docker-compose.tc-bench.yml because
+# the proxy outlives every tier redeploy and will front both tiers.
+#
+#   docker compose -f docker-compose.tc-proxy.yml up -d
+#   docker compose -f docker-compose.tc-proxy.yml restart     # after a Caddyfile change
+#
+# Host networking, on purpose: each tc-bench tier publishes its API on the host's
+# LOOPBACK only (127.0.0.1:8725 staging, 127.0.0.1:9725 production), which a bridged
+# container cannot reach, and host networking is what lets the Caddyfile say
+# reverse_proxy 127.0.0.1:<port>. The proxy therefore binds the host's 80 and 443
+# directly; both are open in the VM's OpenStack security group ("remote HTTP/HTTPS",
+# checked 2026-10-07). Nothing else may listen on 80 or 443 on this host.
+#
+# Mounts, all read-only:
+#   /etc/letsencrypt    certbot's certificate for the host name (root-owned; the caddy
+#                       image runs as root and reads it; the renewal hook restarts this
+#                       container after each renewal)
+#   /home/rocky/srv/tc-site
+#                       staging/ and production/ hold the built websites
+#                       (scripts/tc_site_publish.sh writes them); acme/ is certbot's
+#                       webroot for the HTTP-01 challenge
+#   (access logs go to stdout: `docker logs tc-proxy`, rotated at 5 x 20 MB)
+#
+# Good-neighbor limits as in docker-compose.tc-bench.yml. Disk: the caddy image is about
+# 50 MB; the two site builds are about 12 MB each.
+
+services:
+  tc-proxy:
+    image: caddy:2-alpine
+    container_name: tc-proxy
+    network_mode: host
+    volumes:
+      - ./docker/tc-proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /home/rocky/srv/tc-site:/srv/tc-site:ro
+      - tc-proxy-data:/data
+      - tc-proxy-config:/config
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    cpus: 0.5
+    mem_limit: 128m
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+    restart: unless-stopped
+
+volumes:
+  tc-proxy-data:
+  tc-proxy-config:

@@ -52,3 +52,25 @@ compound-level bootstrap interval.
 1. The ladder (`baseline_ladder.py`, 12 encoders, kernel ridge and kNN, nested): the bar.
 2. The round-9 control (CGT + bilinear head, pool fit, 50 epochs, 3 seeds) and the
    environment-encoder head (035 round 10), nine seeds each, and their stacks with ridge.
+
+### Round 1: the ladder on the corrected table (slurm 3374)
+
+`baseline_ladder.py`, fold seeds 0, 1, 2, 96 compound-evaluations (32 compounds x 3 fold
+seeds); `results/ladder/ladder_r2_summary.csv`. Centered Spearman per held-out compound
+across strains, median and mean over the 96 evaluations:
+
+| model (nested) | median centered Spearman per held-out compound (96 compound-evaluations) | mean centered Spearman (96) | inner leave-one-compound-out mean |
+|---|---|---|---|
+| kernel ridge, linear kernel on FCFP4 counts (nested ridge, the reference) | **0.359** | 0.323 | 0.331 |
+| kernel ridge, RBF on FCFP4 counts | 0.357 | 0.319 | 0.329 |
+| kNN, linear kernel on FCFP4 counts | 0.347 | **0.330** | **0.340** |
+| kNN, mean of all encoder kernels | 0.334 | 0.314 | 0.306 |
+| kNN, RBF on FCFP4 counts | 0.326 | 0.305 | 0.308 |
+| kernel ridge, RBF on Uni-Mol | 0.323 | 0.298 | 0.286 |
+| kNN, RBF on ChemBERTa-2 MTR | 0.320 | 0.309 | 0.319 |
+
+The bar is nested ridge on FCFP4 counts at median 0.359, against 0.343 on the same 32
+compounds of build 001 (035 round 2, "published" view). The ladder's own per-fold pick
+split between ridge and kNN on the FCFP4 linear kernel (and once each the all-encoder
+combo and ChemBERTa-2 MTR), so, as on build 001, no encoder or kernel separates from the
+raw count fingerprint.

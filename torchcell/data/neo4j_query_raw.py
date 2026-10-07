@@ -24,16 +24,15 @@ from attrs import define, field
 from neo4j import GraphDatabase
 from tqdm import tqdm
 
-from torchcell.artifacts import (
-    ArtifactRef,
+from torchcell.artifacts.ref import ArtifactRef
+from torchcell.artifacts.resolve import (
     ArtifactUnresolvableError,
     RemoteSource,
     ResolvedArtifact,
-    distinct_refs,
 )
-from torchcell.artifacts import materialize as materialize_artifact
-from torchcell.artifacts import resolve as resolve_artifact
-from torchcell.artifacts.walk import RefKey, ref_key
+from torchcell.artifacts.resolve import materialize as materialize_artifact
+from torchcell.artifacts.resolve import resolve as resolve_artifact
+from torchcell.artifacts.walk import RefKey, distinct_refs, ref_key
 from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
 from torchcell.datamodels.interned_constant import (
     INTERNED_CONSTANT_NEO4J_LABEL,

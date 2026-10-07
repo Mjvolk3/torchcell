@@ -40,7 +40,7 @@ from torchcell.artifacts.tiers import (
     resolve_data_root,
 )
 from torchcell.datamodels.pydant import ModelStrict
-from torchcell.datasets.client import (
+from torchcell.endpoint_http import (
     API_KEY_VAR,
     CHUNK,
     DEFAULT_TIMEOUT,

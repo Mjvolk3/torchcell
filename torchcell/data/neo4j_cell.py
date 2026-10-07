@@ -25,8 +25,9 @@ from pydantic import field_validator
 from sortedcontainers import SortedDict
 from torch_geometric.data import Dataset, HeteroData
 
-from torchcell.artifacts import ArtifactRef, distinct_refs
-from torchcell.artifacts import materialize as materialize_artifact
+from torchcell.artifacts.ref import ArtifactRef
+from torchcell.artifacts.resolve import materialize as materialize_artifact
+from torchcell.artifacts.walk import distinct_refs
 from torchcell.data.aggregate import Aggregator
 from torchcell.data.cell_data import to_cell_data
 from torchcell.data.deduplicate import Deduplicator

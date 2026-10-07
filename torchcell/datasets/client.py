@@ -30,9 +30,8 @@ from __future__ import annotations
 import hashlib
 import os
 import tarfile
-from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Literal, Protocol, Self
+from typing import Any, Literal, Self
 from urllib.parse import quote
 
 import httpx
@@ -44,14 +43,17 @@ from torchcell.datasets.artifact import (
     DatasetArtifact,
     ManifestFileListing,
 )
+from torchcell.endpoint_http import (  # noqa: F401  (re-exported names)
+    API_KEY_VAR,
+    CHUNK,
+    DEFAULT_TIMEOUT,
+    URL_VAR,
+    HttpClient,
+)
 from torchcell.literature.manifest import Manifest
 from torchcell.sequence.genome.registry import GenomeManifest
 
-URL_VAR = "TC_DATA_URL"
-API_KEY_VAR = "TC_DATA_API_KEY"
 PART_SUFFIX = ".part"
-CHUNK = 1 << 20
-DEFAULT_TIMEOUT = 120.0
 
 
 #: The manifest-gated tiers the client downloads single files from.
@@ -81,18 +83,6 @@ class EndpointError(RuntimeError):
 
 class ArtifactIntegrityError(RuntimeError):
     """Downloaded bytes, or the server's hash header, disagree with the recorded sha256."""
-
-
-class HttpClient(Protocol):
-    """The two ``httpx.Client`` calls the client makes; a test client satisfies it too."""
-
-    def get(self, url: str, *, headers: Mapping[str, str]) -> Any:
-        """A buffered GET returning a response with ``raise_for_status`` and ``content``."""
-        ...
-
-    def stream(self, method: str, url: str, *, headers: Mapping[str, str]) -> Any:
-        """A context manager yielding a response with ``iter_bytes`` and ``headers``."""
-        ...
 
 
 class DatasetClient:

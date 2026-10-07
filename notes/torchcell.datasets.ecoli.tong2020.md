@@ -189,3 +189,47 @@ spent 24 h on the same carbon source, which the field does not count.
 | reference phenotype | `n_samples` | `not_reported_by_primary` | 1.0 is the per-plate normalization, not a wild-type replicate set |
 | carbon-source compound | `inchikey` | `deferred_pending_source_review` (from `resolved_compound`) | 17 of the 30 header labels have no row in the compound table (Glucosamine, Thymidine, Saccharate, alpha-ketoglutarate, Malate, Succinate, Fumarate, Ribose, Fucose, Oxaloacetate, Pyruvate, Galacturonate, Mannitol, Glucuronate, Gluconate, N-acetyl Glucosamine, D-alanine); stereochemistry is not stated by the paper |
 | agar component | concentration | none (a `MediaComponent` is not a gap carrier) | the paper gives no agar amount; stated in the component's note |
+
+### Build, manifest and verification (checklist item 9)
+
+`python -m torchcell.database.build_dataset_lmdb --dataset CarbonSourceTong2020Dataset`
+(dev tree, `$DATA_ROOT/data/torchcell/ecoli_carbon_source_tong2020`):
+`BUILT CarbonSourceTong2020Dataset: 111420 records ... in 111s; gene_set size 3714;
+references 60`. Built from commit `17c4e5371`; the manifest's `torchcell_dirty: true` is
+the untracked `.wt-in-progress` marker only. `check_all` reads
+`ecoli_carbon_source_tong2020 status='fresh' drift=[]`. The rebuild from the commit is
+byte-identical to the first build from the working tree (sha256 over every LMDB key and
+value: records `46797d46f92317b44143d8bb8daa4e504496556fdfc189efba6a3c64f6f86e17`,
+interned `ba59a2ed4e54144f75c8e406fd59ebc8afa2010f471083add0627ef45e0ab5c1`).
+
+`verify_build` (run on the final build) runs `verify_fitness_dataset` once per background, each against its own
+strain's resolver and L4 gene universe (every GenBank locus, pseudogenes included), and
+appends two SUPPLEMENTARY rows. Reports:
+`preprocess/verification_report_BW25113.json`, `..._MG1655.json`.
+
+| level | rule | BW25113 (Keio) | MG1655 (library) |
+|---|---|---|---|
+| L0 | structural | ok, 109,320 validated | ok, 2,100 |
+| L1 | count | ok, 109,320 = 109,320 | ok, 2,100 = 2,100 |
+| L1 | pair_uniqueness | **FAIL**, 3,644 pairs each repeated | **FAIL**, 70 |
+| L1 | provenance_gaps (informational) | 389,908 gaps over all records; deferred: `inchikey`, `magnitude` | 11,690 |
+| L1 | canonical_gene_names | **FAIL**, 108 "not current" (all `non_gene_feature`, each resolving to itself) | **FAIL**, 1 (b4639) |
+| L2 | value_fidelity, se_nonnegative, uncertainty_sanity | ok | ok |
+| L3 | reference_one, compound_identity, media_compound_identity, media_membership | ok | ok |
+| L4 | gene_containment, current_genome_genes | ok, 1.000 of 3,644 | ok, 1.000 of 70 |
+| L1 | SUPPLEMENTARY pair_uniqueness_with_environment_perturbations | ok, 109,320 unique, 0 duplicated | ok, 2,100 unique, 0 duplicated |
+| L1 | SUPPLEMENTARY stored_tags_are_loci_of_the_pinned_assembly | ok, 3,644 tags: 3,536 current, 108 pseudogene, 0 elsewhere | ok, 70 tags: 69 current, 1 pseudogene, 0 elsewhere |
+
+The two failing rows are the verifier's, not the records':
+
+- `fitness._environment_signature` keys an environment on temperature, medium name and
+  duration only. Thirty carbon sources on one medium therefore read as one environment
+  and every strain as thirty duplicates. Keyed with the environment-response condition
+  signature (perturbations included), every (strain, environment) pair is unique.
+- `common._gene_name_result` requires status `current` of a stored systematic name. A
+  bacterial pseudogene locus resolves to ITSELF with `non_gene_feature`; the Keio
+  collection and the library deleted 109 such loci (`BW25113_0218`, ..., `b4639`).
+
+Neither rule is changed here (scope); the exact changes are in the PR body. The L4 row
+names say "S288C" because the shared rule's wording is yeast; the universe passed is the
+strain's own GenBank loci.

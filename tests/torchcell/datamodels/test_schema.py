@@ -1259,6 +1259,43 @@ def test_the_three_locus_tag_patterns_are_pairwise_disjoint() -> None:
             assert matching == {owner}, (tag, matching)
 
 
+def test_the_rel606_namespace_owns_its_tags_and_no_other_namespace_does() -> None:
+    """E. coli B REL606's five-digit ``ECB_`` tags (numbered, tRNA, rRNA) match only its
+    own namespace, and no REL606 pattern match is a tag of the other three or a yeast
+    name. A four-digit ``ECB_`` and a RefSeq ``ECB_RS`` tag are not GenBank tags.
+    """
+    pattern = s.BACTERIAL_LOCUS_TAG_PATTERNS["ecoli_b_rel606_locus_tag"]
+    assert pattern == r"^ECB_[rt]?\d{5}$"
+    for tag in ("ECB_00001", "ECB_04279", "ECB_t00085", "ECB_r00022"):
+        matching = {
+            namespace
+            for namespace, other in s.BACTERIAL_LOCUS_TAG_PATTERNS.items()
+            if re.match(other, tag)
+        }
+        assert matching == {"ecoli_b_rel606_locus_tag"}, tag
+    for tag in (
+        "b0001",
+        "BW25113_0001",
+        "PP_0001",
+        "YAL001C",
+        "ECB_0001",
+        "ECB_RS00005",
+    ):
+        assert not re.match(pattern, tag), tag
+    leaf = s.BacterialDeletionPerturbation(
+        systematic_gene_name="ECB_00002",
+        perturbed_gene_name="thrA",
+        gene_namespace="ecoli_b_rel606_locus_tag",
+    )
+    assert leaf.gene_namespace == "ecoli_b_rel606_locus_tag"
+    with pytest.raises(ValidationError, match="is a ecoli_b_rel606_locus_tag tag"):
+        s.BacterialDeletionPerturbation(
+            systematic_gene_name="ECB_00002",
+            perturbed_gene_name="thrA",
+            gene_namespace="ecoli_k12_mg1655_bnumber",
+        )
+
+
 def test_a_kt2440_structural_rna_tag_is_admitted() -> None:
     """KT2440's named RNA tags are real genes, so the pattern must not be digits-only.
 
@@ -1428,11 +1465,13 @@ def test_the_assembly_set_vocabulary_equals_the_registry_ids() -> None:
         registry.ECOLI_K12_MG1655,
         registry.ECOLI_K12_BW25113,
         registry.PPUTIDA_KT2440,
+        registry.ECOLI_B_REL606,
     }
     assert s.BACTERIAL_ASSEMBLY_SETS == {
         "MG1655": registry.ECOLI_K12_MG1655,
         "BW25113": registry.ECOLI_K12_BW25113,
         "KT2440": registry.PPUTIDA_KT2440,
+        "REL606": registry.ECOLI_B_REL606,
     }
     # every strain of the background vocabulary has a set, and every set an accession pair
     assert set(typing.get_args(s.BacterialReferenceStrain)) == set(

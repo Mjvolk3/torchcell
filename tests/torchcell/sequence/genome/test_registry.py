@@ -29,6 +29,7 @@ import pytest
 
 from torchcell.literature.manifest import ArtifactRecord
 from torchcell.sequence.genome.registry import (
+    ECOLI_B_REL606,
     ECOLI_K12_BW25113,
     ECOLI_K12_MG1655,
     GO_RELEASE_20260805,
@@ -337,6 +338,7 @@ def test_bacterial_set_ids_are_the_deposited_directory_names() -> None:
     assert ECOLI_K12_MG1655 == "ecoli_K12_MG1655_ASM584v2"
     assert ECOLI_K12_BW25113 == "ecoli_K12_BW25113_ASM75055v1"
     assert PPUTIDA_KT2440 == "pputida_KT2440_ASM756v2"
+    assert ECOLI_B_REL606 == "ecoli_B_REL606_ASM1798v1"
     assert GO_RELEASE_20260805 == "go_release_2026-08-05"
     assert ROLE_ONTOLOGY == "ontology"
 

@@ -19,8 +19,9 @@ import os
 import re
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
+import pandas as pd
 import pytest
 from Bio import SeqIO
 from Bio.Seq import Seq
@@ -28,6 +29,7 @@ from Bio.SeqFeature import SeqFeature, SimpleLocation
 from Bio.SeqRecord import SeqRecord
 
 from torchcell.datamodels.schema import BACTERIAL_LOCUS_TAG_PATTERNS
+from torchcell.datasets.bacteria_common import bacterial_genome, reconcile_locus_tags
 from torchcell.datasets.ecoli import caglar2017 as c
 from torchcell.literature.manifest import Manifest, sha256_file
 from torchcell.verification.sourced import (
@@ -44,17 +46,37 @@ def _sha(data: bytes) -> str:
 # --------------------------------------------------------------------------- #
 # The strain gate
 # --------------------------------------------------------------------------- #
-def test_the_strain_is_rel606_and_no_tier_strain_is_its_genome() -> None:
-    finding = c.strain_pin_finding()
+#: The tier's strain vocabulary before the REL606 set was deposited.
+_K12_AND_KT2440 = Literal["MG1655", "BW25113", "KT2440"]
+
+
+def test_the_gate_is_open_now_that_the_tier_holds_rel606() -> None:
+    """REL606 is in ``BacterialReferenceStrain`` (set ecoli_B_REL606_ASM1798v1), so the
+    finding is pinnable and carries neither the gap nor the tier addition.
+    """
+    finding = c.require_pinnable_strain()
     assert finding.strain == "REL606"
     assert finding.lineage == "E. coli B"
+    assert finding.tier_strains == ("MG1655", "BW25113", "KT2440", "REL606")
+    assert finding.pinnable is True
+    assert (finding.gap, finding.tier_addition) == (None, None)
+
+
+def test_without_rel606_in_the_vocabulary_no_tier_strain_is_its_genome(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(c, "BacterialReferenceStrain", _K12_AND_KT2440)
+    finding = c.strain_pin_finding()
     assert finding.tier_strains == ("MG1655", "BW25113", "KT2440")
     assert finding.pinnable is False
     assert finding.gap == c.STRAIN_GAP
     assert finding.tier_addition == c.REL606_TIER_ADDITION
 
 
-def test_the_gate_refuses_with_the_typed_gap_on_genome_reference() -> None:
+def test_the_gate_refuses_with_the_typed_gap_on_genome_reference(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(c, "BacterialReferenceStrain", _K12_AND_KT2440)
     with pytest.raises(
         c.UnpinnedStrainError, match=r"strain REL606 \(E\. coli B\)"
     ) as e:
@@ -129,8 +151,11 @@ def test_the_proposed_rel606_pattern_is_disjoint_from_every_deposited_namespace(
     other_tags = ["b0001", "BW25113_0001", "PP_0001", "PP_16SA", "YAL001C", "ECB_0001"]
     assert [bool(rel606.match(tag)) for tag in rel606_tags] == [True] * 4
     assert [bool(rel606.match(tag)) for tag in other_tags] == [False] * 6
-    for pattern in BACTERIAL_LOCUS_TAG_PATTERNS.values():
-        assert [bool(re.match(pattern, tag)) for tag in rel606_tags] == [False] * 4
+    namespace = c.REL606_TIER_ADDITION.gene_namespace
+    assert BACTERIAL_LOCUS_TAG_PATTERNS[namespace] == rel606.pattern
+    for other, pattern in BACTERIAL_LOCUS_TAG_PATTERNS.items():
+        if other != namespace:
+            assert [bool(re.match(pattern, t)) for t in rel606_tags] == [False] * 4
 
 
 # --------------------------------------------------------------------------- #
@@ -477,6 +502,7 @@ def test_identifier_coverage_counts_each_route_exactly(
             "ecoli_k12_mg1655_bnumber": 0,
             "ecoli_k12_bw25113_locus_tag": 0,
             "pputida_kt2440_locus_tag": 0,
+            "ecoli_b_rel606_locus_tag": 2,
         },
         "rel606_pattern_matches": 2,
     }
@@ -607,8 +633,33 @@ def test_every_table_s3_protein_resolves_to_a_rel606_locus_tag_through_ncbi() ->
     assert sum(crosswalk[p] == m for m, p in zip(mrna, protein, strict=True)) == (
         ROW_ALIGNED
     )
-    for pattern in BACTERIAL_LOCUS_TAG_PATTERNS.values():
-        assert not any(re.match(pattern, name) for name in mrna + protein)
+    namespace = c.REL606_TIER_ADDITION.gene_namespace
+    for other, pattern in BACTERIAL_LOCUS_TAG_PATTERNS.items():
+        if other != namespace:
+            assert not any(re.match(pattern, name) for name in mrna + protein)
+    assert all(re.match(BACTERIAL_LOCUS_TAG_PATTERNS[namespace], m) for m in mrna)
+
+
+_REL606_CACHE = _DATA_ROOT / "data/ecoli/rel606/genome/data.db"
+
+
+@pytest.mark.data
+@_ON_DISK
+@pytest.mark.skipif(
+    not _REL606_CACHE.is_file(), reason="the REL606 data.db cache is not built"
+)
+def test_every_table_s2_id_is_a_current_rel606_gene() -> None:
+    """The reconciliation the note predicted, now measured on the REL606 genome: all
+    4,196 Table S2 ids resolve CURRENT at the locus-tag layer, none remapped.
+    """
+    root = c.raw_mirror_dir(str(_data_root()))
+    mrna = c.read_table_ids(root / c.si_table_relpath("S2"))
+    genome = bacterial_genome("ecoli", "REL606", str(_data_root()))
+    stored, report = reconcile_locus_tags(genome, pd.Series(mrna), label="caglar S2")
+    assert stored.tolist() == mrna
+    assert (report.unique_names, report.resolved, report.remapped) == (4196, 4196, 0)
+    assert report.layer_histogram["locus tag"] == 4196
+    assert report.outside_namespace == ()
 
 
 #: Rows of Table S3 whose NCBI locus tag equals the ECB_ id on the same row of Table S2,

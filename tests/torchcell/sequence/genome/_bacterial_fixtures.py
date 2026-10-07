@@ -582,3 +582,78 @@ KT2440_GAF = [
     gaf_row("parA", "PP0002|PP_0002", "GO:0000003"),
     gaf_row("asd", "asd|PP_0005", "GO:0000001"),
 ]
+
+#: Synthetic E. coli B REL606: five-digit ``ECB_`` tags (numbered, tRNA ``t``, rRNA
+#: ``r``), two tRNAs sharing the symbol ``metZ``, a pseudogene, no ``gene_synonym``, and
+#: RefSeq ``ECB_RS`` retagging whose ``Ontology_term`` rows carry the GO (one of them the
+#: obsolete GO:0000002).
+REL606_LOCI = [
+    SyntheticLocus(
+        tag="ECB_00001",
+        parts=((1, 9),),
+        strand="+",
+        symbol="thrL",
+        product="thr operon leader peptide",
+        protein_id="ACT37694.1",
+        protein="MK",
+        refseq_tag="ECB_RS00005",
+        refseq_go=("GO:0000001",),
+    ),
+    SyntheticLocus(
+        tag="ECB_00002",
+        parts=((12, 26),),
+        strand="-",
+        symbol="thrA",
+        product="bifunctional aspartokinase I/homeserine dehydrogenase I",
+        protein_id="ACT37695.1",
+        protein="MRVLK",
+        refseq_tag="ECB_RS00010",
+        refseq_go=("GO:0000003", "GO:0000002"),
+    ),
+    SyntheticLocus(
+        tag="ECB_t00001",
+        parts=((30, 41),),
+        strand="+",
+        symbol="metZ",
+        product_type="tRNA",
+        product="tRNA-Met",
+        refseq_tag="ECB_RS00015",
+    ),
+    SyntheticLocus(
+        tag="ECB_t00002",
+        parts=((44, 52),),
+        strand="+",
+        symbol="metZ",
+        product_type="tRNA",
+        product="tRNA-Met",
+        refseq_tag="ECB_RS00020",
+    ),
+    SyntheticLocus(
+        tag="ECB_00042",
+        parts=((55, 66),),
+        strand="+",
+        symbol="caiB",
+        pseudo=True,
+        refseq_tag="ECB_RS00025",
+        refseq_go=("GO:0000001",),
+    ),
+    SyntheticLocus(
+        tag="ECB_r00001",
+        parts=((70, 81),),
+        strand="-",
+        symbol="rrsA",
+        product_type="rRNA",
+        product="16S ribosomal RNA",
+        refseq_tag="ECB_RS00030",
+    ),
+    SyntheticLocus(
+        tag="ECB_00003",
+        parts=((84, 97),),
+        strand="+",
+        symbol="thrB",
+        product="homoserine kinase",
+        protein_id="ACT37696.1",
+        protein="MVKVY",
+        refseq_tag="ECB_RS00035",
+    ),
+]

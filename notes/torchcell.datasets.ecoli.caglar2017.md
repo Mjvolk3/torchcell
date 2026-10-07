@@ -271,3 +271,24 @@ run left the tree hash (`03506b35...`) and the manifest's mtime unchanged.
 8. **Dendron note.** This note.
 9. **LMDB.** None. No class is registered, so `len(dataset)`, drop counts, the build
    manifest and the L0 to L4 verifier do not apply.
+
+## 2026.10.07 - The strain gate is open
+
+The six edits listed above are made on branch `feat/rel606-genome`
+([[torchcell.sequence.genome.ecoli.rel606]], [[scripts.provision_bacterial_genomes]]):
+the `ecoli_B_REL606_ASM1798v1` set is deposited (all nine members equal to
+`REL606_TIER_ADDITION` in bytes, sha256 and NCBI md5), `REL606` is in
+`BacterialReferenceStrain`, and `EcoliBREL606Genome` reads it. This module is unchanged;
+its gate now reports `pinnable=True` with no gap, so `require_pinnable_strain()` returns
+instead of raising. The tests that pinned the closed gate now pin it by patching the
+strain vocabulary back to the three earlier strains.
+
+The hypothesis under "Identifier coverage" is now measured: `reconcile_locus_tags` of
+Table S2's 4,196 `ECB_` ids against the REL606 genome gives 4,196 `CURRENT` at the
+locus-tag layer, none remapped and none outside the `ecoli_b_rel606_locus_tag`
+namespace (`test_every_table_s2_id_is_a_current_rel606_gene`, `--data`). Table S3 (YP_
+proteins) was not reconciled here; its route to the same tags is the NCBI-record join
+measured above.
+
+Gaps 2 to 5 of the list above are unchanged. Gap 1 (`genome_reference`) is closed: a
+record can store `assembly_reference("REL606")`, which pins `GCA_000017985.1`.

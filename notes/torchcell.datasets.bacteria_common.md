@@ -180,3 +180,18 @@ class FitnessWetmore2015Dataset(ExperimentDataset):
 Acceptance per loader: the LMDB builds, `len(dataset)` matches the record count the PR
 states, the build manifest reads fresh under
 `python -m torchcell.provenance.build_manifest`, and the family verifier passes L0 to L4.
+
+## 2026.10.07 - E. coli B REL606 as a fourth strain
+
+`REL606` joins the strain vocabulary ([[torchcell.sequence.genome.ecoli.rel606]]):
+`HOST_STRAINS["ecoli"]` is `("MG1655", "BW25113", "REL606")`,
+`STRAIN_GENE_NAMESPACES["REL606"]` is `ecoli_b_rel606_locus_tag` (pattern
+`^ECB_[rt]?\d{5}$`), and `BACTERIAL_GENOME_CLASSES["REL606"]` is `EcoliBREL606Genome`,
+built on `data/ecoli/rel606/genome`. REL606 is an E. coli B strain, so its genome is not
+an `EcoliK12Genome`; a REL606 loader still names `ecoli_genome` and states
+`REFERENCE_STRAIN: ClassVar[EcoliBStrainName] = "REL606"`, and the injector hands it the B
+genome. `bacterial_genome("ecoli", "REL606")` has its own overload returning
+`EcoliBREL606Genome`; `BacterialStrainGenome` names the union of the three genome
+classes that `bacterial_genome` and the injector return. `assembly_reference("REL606")`
+reads the deposited report (taxid 413997) and pins `GCA_000017985.1`. `eck_crosswalk`
+stays K-12 only.

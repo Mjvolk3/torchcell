@@ -44,9 +44,11 @@ from tests.torchcell.datasets._genome_injection_fakes import (
     BacterialLoaderNamingYeastGenome,
     EcoliBW25113Loader,
     EcoliMG1655Loader,
+    EcoliREL606Loader,
     FakeBW25113Genome,
     FakeKT2440Genome,
     FakeMG1655Genome,
+    FakeREL606Genome,
     PputidaLoader,
     YeastLoader,
     install_bacterial_fakes,
@@ -71,8 +73,10 @@ from torchcell.sequence.genome.ecoli.k12 import (
     EcoliK12Genome,
     EcoliK12MG1655Genome,
 )
+from torchcell.sequence.genome.ecoli.rel606 import EcoliBREL606Genome
 from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
 from torchcell.sequence.genome.registry import (
+    ECOLI_B_REL606,
     ECOLI_K12_BW25113,
     ECOLI_K12_MG1655,
     GO_RELEASE_20260805,
@@ -98,20 +102,25 @@ def test_the_namespace_vocabulary_is_the_schema_s_own_objects() -> None:
 
 
 def test_each_strain_has_its_own_namespace_host_and_genome_class() -> None:
-    """Three strains, three namespaces, two hosts; each genome class reads its set."""
+    """Four strains, four namespaces, two hosts; each genome class reads its set."""
     assert bc.STRAIN_GENE_NAMESPACES == {
         "MG1655": "ecoli_k12_mg1655_bnumber",
         "BW25113": "ecoli_k12_bw25113_locus_tag",
         "KT2440": "pputida_kt2440_locus_tag",
+        "REL606": "ecoli_b_rel606_locus_tag",
     }
     assert set(bc.STRAIN_GENE_NAMESPACES.values()) == set(
         schema.BACTERIAL_LOCUS_TAG_PATTERNS
     )
-    assert bc.HOST_STRAINS == {"ecoli": ("MG1655", "BW25113"), "pputida": ("KT2440",)}
+    assert bc.HOST_STRAINS == {
+        "ecoli": ("MG1655", "BW25113", "REL606"),
+        "pputida": ("KT2440",),
+    }
     assert {s: bc.host_of_strain(s) for s in bc.STRAIN_GENE_NAMESPACES} == {
         "MG1655": "ecoli",
         "BW25113": "ecoli",
         "KT2440": "pputida",
+        "REL606": "ecoli",
     }
     assert {
         strain: cls.ASSEMBLY.assembly_set
@@ -120,11 +129,13 @@ def test_each_strain_has_its_own_namespace_host_and_genome_class() -> None:
         "MG1655": ECOLI_K12_MG1655,
         "BW25113": ECOLI_K12_BW25113,
         "KT2440": PPUTIDA_KT2440,
+        "REL606": ECOLI_B_REL606,
     }
     assert bc.BACTERIAL_GENOME_CLASSES == {
         "MG1655": EcoliK12MG1655Genome,
         "BW25113": EcoliK12BW25113Genome,
         "KT2440": PPutidaKT2440Genome,
+        "REL606": EcoliBREL606Genome,
     }
 
 
@@ -134,6 +145,7 @@ def test_each_compiled_pattern_matches_its_own_strain_s_tags_only() -> None:
         "ecoli_k12_mg1655_bnumber": "b0002",
         "ecoli_k12_bw25113_locus_tag": "BW25113_0002",
         "pputida_kt2440_locus_tag": "PP_16SA",
+        "ecoli_b_rel606_locus_tag": "ECB_t00001",
     }
     for owner, tag in samples.items():
         assert {ns for ns, p in bc.LOCUS_TAG_PATTERNS.items() if p.match(tag)} == {
@@ -145,6 +157,7 @@ def test_each_compiled_pattern_matches_its_own_strain_s_tags_only() -> None:
 def test_strain_of_assembly_set_inverts_the_schema_map_and_refuses_others() -> None:
     assert bc.strain_of_assembly_set(ECOLI_K12_BW25113) == "BW25113"
     assert bc.strain_of_assembly_set(PPUTIDA_KT2440) == "KT2440"
+    assert bc.strain_of_assembly_set(ECOLI_B_REL606) == "REL606"
     with pytest.raises(
         KeyError, match="'sgd_S288C_R64-4-1_20230830' is not a bacterial"
     ):
@@ -207,6 +220,25 @@ def test_bacterial_genome_refuses_a_strain_of_the_other_host(
     with pytest.raises(ValueError, match="'MG1655' is not a pputida strain"):
         bc.bacterial_genome("pputida", "MG1655", "/dr")
     assert log == []
+
+
+def test_bacterial_genome_opens_rel606_as_an_ecoli_b_genome_not_a_k12_one(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """REL606 is an E. coli strain whose genome is the B class, on its own root."""
+    log = install_bacterial_fakes(monkeypatch)
+    genome = bc.bacterial_genome("ecoli", "REL606", "/dr")
+    assert type(genome) is FakeREL606Genome
+    assert isinstance(genome, EcoliBREL606Genome)
+    assert not isinstance(genome, EcoliK12Genome)
+    assert log == [
+        (
+            "FakeREL606Genome",
+            {"genome_root": "/dr/data/ecoli/rel606/genome", "overwrite": False},
+        )
+    ]
+    with pytest.raises(ValueError, match="'REL606' is not a pputida strain"):
+        bc.bacterial_genome("pputida", "REL606", "/dr")
 
 
 # --------------------------------------------------------------------------- #
@@ -432,10 +464,43 @@ def test_assembly_reference_pins_the_genbank_accession_of_the_report(
     }
 
 
+REL606_REPORT = """# Assembly name:  ASM1798v1
+# Organism name:  Escherichia coli B str. REL606 (E. coli)
+# Infraspecific name:  strain=REL606
+# Taxid:          413997
+# GenBank assembly accession: GCA_000017985.1
+# RefSeq assembly accession: GCF_000017985.1
+# RefSeq assembly and GenBank assemblies identical: yes
+#
+## Assembly-Units:
+CP000819.1\tassembled-molecule\tna\tChromosome\tCP000819.1\t=\tNC_012967.1
+"""
+
+
+def test_assembly_reference_pins_rel606_to_its_genbank_accession(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """The REL606 report is read from its own set and the record pins GCA_000017985.1."""
+    calls = _serve_report(monkeypatch, tmp_path, REL606_REPORT)
+    reference = bc.assembly_reference("REL606", data_root="/dr")
+    assert calls == [
+        (ECOLI_B_REL606, "GCA_000017985.1_ASM1798v1_assembly_report.txt", "/dr")
+    ]
+    assert reference.model_dump() == {
+        "species": "Escherichia coli",
+        "strain": "REL606",
+        "ploidy": "haploid",
+        "assembly_set": ECOLI_B_REL606,
+        "assembly_accession": "GCA_000017985.1",
+        "background": None,
+    }
+
+
 _SETS: dict[BacterialReferenceStrain, BacterialAssemblySet] = {
     "MG1655": "ecoli_K12_MG1655_ASM584v2",
     "BW25113": "ecoli_K12_BW25113_ASM75055v1",
     "KT2440": "pputida_KT2440_ASM756v2",
+    "REL606": "ecoli_B_REL606_ASM1798v1",
 }
 
 
@@ -492,6 +557,22 @@ def test_injector_hands_each_loader_its_own_host_genome_built_once(
     assert [name for name, _ in log] == ["FakeMG1655Genome", "FakeKT2440Genome"]
 
 
+def test_injector_hands_a_rel606_loader_the_b_genome_under_ecoli_genome(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A REL606 loader names ``ecoli_genome`` and gets the REL606 genome, never a K-12
+    one; an MG1655 loader in the same build gets its own.
+    """
+    log = install_bacterial_fakes(monkeypatch)
+    injector = bc.BacterialGenomeInjector("/dr")
+    rel606 = injector.genome_kwargs(EcoliREL606Loader)
+    mg1655 = injector.genome_kwargs(EcoliMG1655Loader)
+    assert isinstance(rel606["ecoli_genome"], EcoliBREL606Genome)
+    assert isinstance(mg1655["ecoli_genome"], EcoliK12MG1655Genome)
+    assert bc.declared_reference_strain(EcoliREL606Loader) == "REL606"
+    assert [name for name, _ in log] == ["FakeREL606Genome", "FakeMG1655Genome"]
+
+
 class _BothHosts:
     REFERENCE_STRAIN = "MG1655"
 
@@ -542,7 +623,7 @@ class _UnknownStrain:
         (
             _UnknownStrain,
             ValidationError,
-            "Input should be 'MG1655', 'BW25113' or 'KT2440'",
+            "Input should be 'MG1655', 'BW25113', 'KT2440' or 'REL606'",
         ),
     ],
     ids=[
@@ -690,3 +771,55 @@ class TestTierMG1655:
             11,
         )
         assert all(not pair.numerics_agree for pair in crosswalk.numeric_disagreements)
+
+
+REL606_TIER = osp.isfile(
+    osp.join(DATA_ROOT, "torchcell-genomes", ECOLI_B_REL606, "manifest.json")
+)
+REL606_CACHE = osp.isfile(
+    osp.join(DATA_ROOT, EcoliBREL606Genome.ASSEMBLY.default_genome_root, "data.db")
+)
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not REL606_TIER, reason="requires the REL606 assembly set")
+def test_tier_assembly_reference_reads_the_deposited_rel606_report() -> None:
+    """Taxid 413997 and the ASM1798v1 accession pair, from the deposited report."""
+    report = bc.read_assembly_report("REL606")
+    assert report.model_dump(exclude={"sha256"}) == {
+        "assembly_set": ECOLI_B_REL606,
+        "member": "GCA_000017985.1_ASM1798v1_assembly_report.txt",
+        "assembly_name": "ASM1798v1",
+        "organism_name": "Escherichia coli B str. REL606 (E. coli)",
+        "infraspecific_name": "strain=REL606",
+        "taxid": 413997,
+        "genbank_accession": "GCA_000017985.1",
+        "refseq_accession": "GCF_000017985.1",
+    }
+    assert report.sha256 == (
+        "51968f440a6497669ad8ccf703c437d5a8055990d2c7e27194b9cc1ffeeda369"
+    )
+    assert bc.assembly_reference("REL606").assembly_accession == "GCA_000017985.1"
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (REL606_TIER and REL606_CACHE),
+    reason="requires the REL606 assembly set and its built data.db cache",
+)
+def test_tier_bacterial_genome_reopens_the_rel606_default_cache() -> None:
+    """The REL606 class on ``data/ecoli/rel606/genome``, never overwritten; 4,316 genes
+    (4,383 GenBank loci less 67 pseudogenes); thrA reconciles to ECB_00002.
+    """
+    genome = bc.bacterial_genome("ecoli", "REL606")
+    assert type(genome) is EcoliBREL606Genome
+    assert genome.genome_root == osp.join(DATA_ROOT, "data/ecoli/rel606/genome")
+    assert (genome.overwrite, len(genome.gene_set)) == (False, 4316)
+    stored, report = bc.reconcile_locus_tags(
+        genome, pd.Series(["ECB_00001", "thrA", "ECB_99999"]), label="rel606"
+    )
+    assert stored.tolist() == ["ECB_00001", "ECB_00002", "ECB_99999"]
+    assert (report.gene_namespace, report.outside_namespace) == (
+        "ecoli_b_rel606_locus_tag",
+        (),
+    )

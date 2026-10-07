@@ -108,6 +108,7 @@ class RetrievalMethod(StrEnum):
     pubchem_api = "pubchem_api"
     manual_browser = "manual_browser"
     local_archive = "local_archive"
+    globus = "globus"
 
 
 class SourceCheck(BaseModel):

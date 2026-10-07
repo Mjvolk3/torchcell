@@ -176,6 +176,7 @@ module = [
     "sklearn", "sklearn.*",
     "sortedcontainers", "sortedcontainers.*",
     "sympy", "sympy.*",
+    "tokenizers", "tokenizers.*",
     "torch", "torch.*",
     "torch_geometric", "torch_geometric.*",
     "torch_scatter", "torch_scatter.*",
@@ -248,6 +249,7 @@ paths = [
 "torchcell/datasets/fungal_up_down_transformer.py" = "tests/torchcell/datasets/test_datasets_fungal_up_down_transformer.py"
 "torchcell/knowledge_graphs/supported_queries/registry.py" = "tests/torchcell/knowledge_graphs/supported_queries/test_supported_queries_registry.py"
 "torchcell/models/esm2.py" = "tests/torchcell/models/test_models_esm2.py"
+"torchcell/models/genslm.py" = "tests/torchcell/models/test_models_genslm.py"
 "torchcell/models/protT5.py" = "tests/torchcell/models/test_models_protT5.py"
 "torchcell/losses/dango.py" = "tests/torchcell/losses/test_losses_dango.py"
 
@@ -291,6 +293,7 @@ torchcell = [
     "knowledge_graphs/queries/*.cql", # supported Cypher queries (showcase pages, T5 registry)
     "adapters/conf/*.yaml",
     "datamodels/*.json", # pinned data tables (e.g. compound_identity_table.json)
+    "models/genslm_assets/*.json", # GenSLM codon tokenizer + GPT-NeoX configs (vendored, MIT)
     "knowledge_graphs/supported_queries/registry.json", # supported-query registry (T5)
 ]
 

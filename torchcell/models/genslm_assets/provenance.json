@@ -1,0 +1,34 @@
+{
+  "source_repository": "https://github.com/ramanathanlab/genslm",
+  "license": "MIT",
+  "commit": "6622c47e8d9f00a1e8b8c4e30b78e6d702d2b883",
+  "retrieved_at": "2026-10-07",
+  "retrieval_command": "curl -sL https://raw.githubusercontent.com/ramanathanlab/genslm/main/genslm/<upstream_path>",
+  "files": [
+    {
+      "path": "codon_wordlevel_69vocab.json",
+      "upstream_path": "tokenizer_files/codon_wordlevel_69vocab.json",
+      "sha256": "3eea20ff7e2733f389964d111a0679f3afaf7a5e7e1acfd6e2319af6a93fa892"
+    },
+    {
+      "path": "neox_25M.json",
+      "upstream_path": "architectures/neox/neox_25,290,752.json",
+      "sha256": "f2b5532019b5dbd05207681cae835c6419cbe0496ff8d83df42424665abd13a5"
+    },
+    {
+      "path": "neox_250M.json",
+      "upstream_path": "architectures/neox/neox_244,464,576.json",
+      "sha256": "41cb8c554ef07fb45634af8b230d254227021957876c79e5b42537cff80bc4e1"
+    },
+    {
+      "path": "neox_2.5B.json",
+      "upstream_path": "architectures/neox/neox_2,533,931,008.json",
+      "sha256": "f9708c9167a9f645db68a7e22e7e385aaa94da8d19ae7c0f976b5b02bbfea9ea"
+    },
+    {
+      "path": "neox_25B.json",
+      "upstream_path": "architectures/neox/neox_25,076,188,032.json",
+      "sha256": "9752d8031553e79acad81b923b920f031bf43ac4f62c8202528f5cb34a943d94"
+    }
+  ]
+}

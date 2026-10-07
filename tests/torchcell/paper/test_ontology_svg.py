@@ -649,10 +649,31 @@ def test_lane_body_lines_reuse_a_repeated_family_and_cap_the_line_count() -> Non
         (7.0, "same 2 families as Experiment"),
     ]
     capped = svg._lane_body_lines(graph, "experiment", 140.0, max_lines=3)
-    assert capped == [
-        *full[:2],
-        (0.0, f"{ELLIPSIS}  +2 more lines \u2014 full list in the interactive map"),
+    assert capped == [*full[:2], (0.0, f"{ELLIPSIS}  +2 more lines; see the map below")]
+
+
+def test_the_overflow_notice_fits_the_narrowest_lane_box() -> None:
+    """The "+N more lines" notice must not itself overflow and get clipped.
+
+    It did: the first lane to go over its line budget (the bacterial experiment
+    families) rendered the notice as "...full list in the interacti…", clipped
+    mid-word by ``_truncate``, because the notice was wider than the box it announces
+    the overflow of. The schematic's lane boxes are (507.4 - 20 - 18) / 3 = 156.47 pt
+    wide and the body text is 6 pt, so the notice is measured against that width here
+    rather than re-checked by eye on a render.
+    """
+    names = [("Experiment", None)] + [
+        (f"Child{index}Experiment", "Experiment") for index in range(12)
     ]
+    graph = OntologyGraph(
+        classes={n: _model(n, "experiment", parent=p) for n, p in names}
+    )
+    box_w = (507.4 - 20.0 - 18.0) / 3.0
+    capped = svg._lane_body_lines(graph, "experiment", box_w, max_lines=3)
+    notice = capped[-1][1]
+    assert notice.startswith(ELLIPSIS)
+    assert "more lines" in notice
+    assert svg._truncate(notice, box_w - svg.INDENT_W, 6.0) == notice
 
 
 def test_schematic_blocks_arrows_footer_and_the_elbow_route() -> None:

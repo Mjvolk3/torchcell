@@ -86,13 +86,29 @@ EXPERIMENT_KINDS: list[str] = sorted(EXPERIMENT_TYPES)
 # --------------------------------------------------------------------------- #
 # Representation: lanes, direction, reachability.
 # --------------------------------------------------------------------------- #
-def test_record_lanes_are_disjoint() -> None:
-    """Genotype, environment and phenotype share no class.
+#: Classes a pair of lanes may legitimately SHARE, with the pair that shares them.
+#: A shared class here must be a pure IDENTITY object -- something whose only job is to
+#: say which thing is meant -- never a measurement or a growth condition.
+#:
+#: ``Compound`` is shared by the environment and phenotype lanes because
+#: ``ProductTiterPhenotype`` keys its product on the same typed compound a
+#: chemogenomic dataset doses. That is the goal rather than a violation: it is what
+#: makes "every record about isoprenol" one query across a tolerance screen that doses
+#: it and a production run that makes it. The rejected alternative was a free-text
+#: product name, which joins nothing. Recorded in
+#: ``[[torchcell.datamodels.ontology-checks]]`` as the anticipated case.
+SHARED_IDENTITY_CLASSES: dict[str, list[str]] = {"environment&phenotype": ["Compound"]}
 
-    Disjointness is what keeps a persistent entity separable from a contingent
-    observation. If a ``Media`` were also reachable from a ``Phenotype``, "what the
-    cell was grown in" and "what was measured" would be one object, and a query for
-    every record on YPD would depend on which phenotype family was measured.
+
+def test_record_lanes_share_only_identity_classes() -> None:
+    """Genotype, environment and phenotype share nothing but named identity objects.
+
+    What must hold is that a lane never reaches another lane's MEASUREMENT or growth
+    condition: if a ``Media`` were reachable from a ``Phenotype``, "what the cell was
+    grown in" and "what was measured" would be one object, and a query for every
+    record on YPD would depend on which phenotype family was measured. A shared
+    identity object is the opposite -- it is the join working as intended -- so the
+    check names exactly which classes are shared rather than demanding emptiness.
     """
     lanes = oc.lane_membership()
     overlaps = {
@@ -100,7 +116,28 @@ def test_record_lanes_are_disjoint() -> None:
         for a, b in itertools.combinations(sorted(lanes), 2)
         if lanes[a] & lanes[b]
     }
-    assert overlaps == {}
+    assert overlaps == SHARED_IDENTITY_CLASSES
+
+
+def test_a_shared_class_is_never_a_measurement_or_a_condition() -> None:
+    """The shared-class allowance cannot be used to smuggle a lane root across.
+
+    A lane's own root (``Genotype``, ``Environment``, ``Phenotype``) and the growth
+    condition classes are what the lane separation is FOR, so none of them may appear
+    in the shared list however convenient it would be.
+    """
+    forbidden = {
+        s.Genotype,
+        s.SegregantGenotype,
+        s.Environment,
+        s.CultureEnvironment,
+        s.Phenotype,
+        s.Media,
+        s.MediaComponent,
+        s.Temperature,
+    }
+    shared = {name for names in SHARED_IDENTITY_CLASSES.values() for name in names}
+    assert shared & {cls.__name__ for cls in forbidden} == set()
 
 
 def test_no_lane_composes_an_experiment() -> None:
@@ -177,7 +214,17 @@ def test_every_experiment_family_uses_the_shared_environment_class(kind: str) ->
     such subclasses is closed, so a new one fails here until it is named.
     """
     allowed_environments = {s.Environment, s.CultureEnvironment}
-    allowed_genomes = {s.ReferenceGenome, s.StrainReferenceGenome}
+    # ``AssemblyReferenceGenome`` is the third sanctioned narrowing: it only ADDS the
+    # assembly-set + accession pin (and an optional bacterial background), keeps
+    # ``species``/``strain``/``ploidy``, and exists as a subclass precisely so the 51
+    # served yeast references keep storing a plain ``ReferenceGenome``. The bacterial
+    # families must narrow to it because pydantic serializes by DECLARED type, so the
+    # pin would be dropped from a base-typed slot.
+    allowed_genomes = {
+        s.ReferenceGenome,
+        s.StrainReferenceGenome,
+        s.AssemblyReferenceGenome,
+    }
     experiment = EXPERIMENT_TYPES[kind]
     reference = EXPERIMENT_REFERENCE_TYPES[kind]
     for annotation in (
@@ -226,6 +273,18 @@ def test_adapter_emits_exactly_the_declared_properties() -> None:
     assert [m.model_dump() for m in mismatches] == []
 
 
+#: Phenotype classes that exist in ``schema.py`` with no graph node class YET, each
+#: with the step that adds one. The schema half of the bacterial expansion lands before
+#: the graph half ON PURPOSE: the commit every bacterial loader depends on carries no
+#: graph-schema drift, because a change to an EXISTING served graph class cannot be
+#: repaired by an incremental import and would force a full rebuild of the served store.
+#: Adding the three node classes (and the adapter methods that emit them) is the next
+#: step; until then these three are stored in a record and not yet queryable in Cypher.
+PENDING_GRAPH_NODE_CLASSES: frozenset[str] = frozenset(
+    {"ProductTiterPhenotype", "ProteinTurnoverPhenotype", "FluxPhenotype"}
+)
+
+
 def test_phenotype_classes_and_node_classes_are_in_bijection() -> None:
     """Each concrete phenotype has exactly one node class, and conversely.
 
@@ -233,12 +292,19 @@ def test_phenotype_classes_and_node_classes_are_in_bijection() -> None:
     it holds for ``RNASeqExpressionPhenotype`` <-> ``rnaseq expression phenotype``
     and ``CalMorphPhenotype`` <-> ``calmorph phenotype`` without an alias table, and
     a field renamed on one side without the other breaks the match.
+
+    The one slack is ``PENDING_GRAPH_NODE_CLASSES``, named above with the reason: a
+    class listed there must still be unmapped, so the day its node class lands this
+    test fails until the name is removed, and a class NOT listed there that loses its
+    node class fails immediately.
     """
     mapping = oc.phenotype_label_map(GRAPH_SCHEMA)
     assert mapping.ambiguous == {}
     assert mapping.unmatched_labels == []
-    assert mapping.unmapped_classes == []
-    assert len(mapping.matched) == len(CONCRETE_PHENOTYPES)
+    assert set(mapping.unmapped_classes) == set(PENDING_GRAPH_NODE_CLASSES)
+    assert len(mapping.matched) == len(CONCRETE_PHENOTYPES) - len(
+        PENDING_GRAPH_NODE_CLASSES
+    )
 
 
 def test_phenotype_member_of_sources_are_exactly_the_phenotype_node_classes() -> None:

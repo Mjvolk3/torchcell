@@ -18,6 +18,7 @@ are pinned value by value because the KG stores the values.
 
 import math
 import re
+import typing
 from types import SimpleNamespace
 from typing import Any
 
@@ -1069,3 +1070,805 @@ def test_functional_copies_skips_a_functional_allele_of_a_compound_heterozygote(
 def test_pre_culture_quantities_must_be_non_negative(field: str) -> None:
     with _refuses(f"PreCulture.{field} must be non-negative"):
         s.PreCulture.model_validate({"source": "log_phase_culture", field: -0.5})
+
+
+# --------------------------------------------------------------------------- #
+# Bacterial additions (plan 3a, 3b, 3c, 3e: [[plan.bacteria-ontology-genome]]).
+#
+# Three properties are what the whole bacterial expansion rests on and each is
+# checked here rather than assumed:
+#   1. the two identifier families stay SEPARATE -- a bacterial tag fails on a yeast
+#      leaf and a yeast name fails on a bacterial one, so one id space cannot leak
+#      into the other through ``Genotype``'s content identity;
+#   2. the assembly pin is only honored where a field is re-annotated to the
+#      subclass, which is a pydantic fact and therefore a test, not a comment;
+#   3. the vocabularies (assembly set ids, locus-tag patterns, the BW25113 genotype)
+#      agree with the deposited tier rather than with memory.
+# --------------------------------------------------------------------------- #
+_MG1655: dict[str, Any] = dict(
+    systematic_gene_name="b0002",
+    perturbed_gene_name="thrA",
+    gene_namespace="ecoli_k12_mg1655_bnumber",
+)
+
+_BACTERIAL_LEAF_CASES: list[tuple[type[s.GenePerturbation], dict[str, Any]]] = [
+    (s.BacterialDeletionPerturbation, {**_MG1655}),
+    (
+        s.TransposonInsertionPerturbation,
+        {
+            **_MG1655,
+            "barcode": "ACGT" * 5,
+            "insertion_position": 547,
+            "insertion_strand": "-",
+        },
+    ),
+    (
+        s.BacterialCrisprInterferencePerturbation,
+        {**_MG1655, "crispr": s.CrisprConstruct(effector="dCas9-Mxi1")},
+    ),
+    (
+        s.PromoterReplacementPerturbation,
+        {**_MG1655, "expression_direction": "decreased", "promoter_name": "Ptac"},
+    ),
+    (
+        s.HeterologousPathwayPerturbation,
+        dict(
+            systematic_gene_name="Efa:mvaE",
+            perturbed_gene_name="mvaE",
+            gene_namespace="pputida_kt2440_locus_tag",
+            source_organism="Enterococcus faecalis",
+            is_heterologous=True,
+            localization="chromosomal_integration",
+            pathway_name="isoprenol via mevalonate",
+        ),
+    ),
+]
+_LEAF_IDS = [cls.__name__ for cls, _ in _BACTERIAL_LEAF_CASES]
+
+
+def _assembly_reference(
+    strain: str = "MG1655",
+    assembly_set: Any = "ecoli_K12_MG1655_ASM584v2",
+    accession: str = "GCA_000005845.2",
+    **kw: Any,
+) -> s.AssemblyReferenceGenome:
+    return s.AssemblyReferenceGenome(
+        species="Escherichia coli",
+        strain=strain,
+        assembly_set=assembly_set,
+        assembly_accession=accession,
+        **kw,
+    )
+
+
+def _lb() -> Media:
+    return Media(name="LB", state="liquid", is_synthetic=False)
+
+
+def _experiment_cls(kind: str) -> type[s.Experiment]:
+    """``EXPERIMENT_TYPE_MAP[kind]``, narrowed to the class the schema guarantees."""
+    cls = s.EXPERIMENT_TYPE_MAP[kind]
+    assert isinstance(cls, type) and issubclass(cls, s.Experiment)
+    return cls
+
+
+def _reference_cls(kind: str) -> type[s.ExperimentReference]:
+    """``EXPERIMENT_REFERENCE_TYPE_MAP[kind]``, narrowed the same way."""
+    cls = s.EXPERIMENT_REFERENCE_TYPE_MAP[kind]
+    assert isinstance(cls, type) and issubclass(cls, s.ExperimentReference)
+    return cls
+
+
+# --- 1. the two identifier families stay separate -------------------------- #
+def test_the_yeast_validator_still_refuses_a_b_number() -> None:
+    """The base yeast validator is UNTOUCHED, which is the point of the new leaves.
+
+    Widening ``GenePerturbation.validate_sys_gene_name`` to admit bacterial tags would
+    let ``b0002`` into an SGA deletion leaf, and it was measured to move 35 of 36
+    served dataset closures. So the yeast leaves must keep refusing, and a bacterial
+    record must be impossible to file as a yeast one.
+    """
+    with _refuses("Invalid systematic gene name format"):
+        s.DeletionPerturbation(systematic_gene_name="b0002", perturbed_gene_name="thrA")
+    with _refuses("Invalid systematic gene name format"):
+        s.KanMxDeletionPerturbation(
+            systematic_gene_name="b0002", perturbed_gene_name="thrA"
+        )
+    with _refuses("Invalid systematic gene name format"):
+        _kanmx(name="PP_0002", pert="x")
+
+
+def test_the_bacterial_leaf_validates_exactly_what_the_yeast_leaf_refuses() -> None:
+    """The same identifier: refused as a yeast deletion, accepted as a bacterial one."""
+    with _refuses("Invalid systematic gene name format"):
+        s.DeletionPerturbation(systematic_gene_name="b0002", perturbed_gene_name="thrA")
+    accepted = s.BacterialDeletionPerturbation(**_MG1655)
+    assert accepted.systematic_gene_name == "b0002"
+    assert accepted.gene_namespace == "ecoli_k12_mg1655_bnumber"
+    # and it is still a deletion, so an "every knockout" filter keeps catching it
+    assert isinstance(accepted, s.DeletionPerturbation)
+    assert accepted.state == "absent"
+    assert accepted.mechanism_so_id == "SO:0000159"
+
+
+@pytest.mark.parametrize("cls,kwargs", _BACTERIAL_LEAF_CASES, ids=_LEAF_IDS)
+def test_a_bacterial_leaf_refuses_a_yeast_systematic_name(
+    cls: type[s.GenePerturbation], kwargs: dict[str, Any]
+) -> None:
+    """Symmetry: a yeast ORF name is not a locus tag.
+
+    The gene-addition-derived leaf is the documented exception -- it relaxes the name
+    validator because a heterologous gene has no host locus tag at all -- so it is
+    checked for what it DOES refuse instead.
+    """
+    if cls is s.HeterologousPathwayPerturbation:
+        with _refuses("systematic_gene_name must be non-empty"):
+            cls(**{**kwargs, "systematic_gene_name": ""})
+        return
+    with pytest.raises(ValidationError, match="Invalid bacterial locus tag"):
+        cls(**{**kwargs, "systematic_gene_name": "YAL001C"})
+
+
+def test_the_namespace_must_agree_with_the_tag_it_carries() -> None:
+    """A KT2440 tag cannot be filed under the MG1655 namespace.
+
+    The namespace is what keeps the three hosts' tags in separate id spaces, so a
+    record whose namespace disagrees with its own tag would defeat the mechanism while
+    looking well-formed.
+    """
+    with _refuses(
+        "'PP_0002' is a pputida_kt2440_locus_tag tag but gene_namespace is "
+        "'ecoli_k12_mg1655_bnumber'"
+    ):
+        s.BacterialDeletionPerturbation(
+            systematic_gene_name="PP_0002",
+            perturbed_gene_name="x",
+            gene_namespace="ecoli_k12_mg1655_bnumber",
+        )
+    # the matching namespace is accepted
+    assert (
+        s.BacterialDeletionPerturbation(
+            systematic_gene_name="PP_0002",
+            perturbed_gene_name="x",
+            gene_namespace="pputida_kt2440_locus_tag",
+        ).gene_namespace
+        == "pputida_kt2440_locus_tag"
+    )
+
+
+def test_the_three_locus_tag_patterns_are_pairwise_disjoint() -> None:
+    """No identifier can belong to two namespaces, which is what makes the id space safe."""
+    samples = {
+        "ecoli_k12_mg1655_bnumber": ["b0001", "b4651"],
+        "ecoli_k12_bw25113_locus_tag": ["BW25113_0001", "BW25113_4490"],
+        "pputida_kt2440_locus_tag": [
+            "PP_0002",
+            "PP_16SA",
+            "PP_23SG",
+            "PP_t01",
+            "PP_mr01",
+        ],
+    }
+    for owner, tags in samples.items():
+        for tag in tags:
+            matching = {
+                namespace
+                for namespace, pattern in s.BACTERIAL_LOCUS_TAG_PATTERNS.items()
+                if re.match(pattern, tag)
+            }
+            assert matching == {owner}, (tag, matching)
+
+
+def test_a_kt2440_structural_rna_tag_is_admitted() -> None:
+    """KT2440's named RNA tags are real genes, so the pattern must not be digits-only.
+
+    Measured from the deposited GenBank file: 165 of KT2440's 5,786 gene features carry
+    a named tag rather than a four-digit one, so a digits-only pattern would silently
+    refuse every rRNA, tRNA and ``PP_mr`` gene.
+    """
+    for tag in (
+        "PP_16SA",
+        "PP_5SG",
+        "PP_23SB",
+        "PP_t75",
+        "PP_mr67",
+        "PP_tm01",
+        "PP_r01",
+    ):
+        assert s._namespace_of_locus_tag(tag) == "pputida_kt2440_locus_tag", tag
+    assert s._namespace_of_locus_tag("PP_nope") is None
+
+
+@pytest.mark.parametrize("cls,kwargs", _BACTERIAL_LEAF_CASES, ids=_LEAF_IDS)
+def test_a_bacterial_leaf_round_trips_through_genotype(
+    cls: type[s.GenePerturbation], kwargs: dict[str, Any]
+) -> None:
+    """Each leaf survives a ``Genotype`` dump + revalidate as its own class."""
+    leaf: Any = cls(**kwargs)
+    genotype = Genotype(perturbations=[leaf])
+    back = Genotype.model_validate(genotype.model_dump())
+    assert type(back.perturbations[0]) is cls
+    assert back.perturbations[0].model_dump() == leaf.model_dump()
+    assert back == genotype
+
+
+def test_every_bacterial_leaf_round_trips_in_one_genotype() -> None:
+    """All five in one genotype, so the union resolves each tag unambiguously."""
+    leaves: list[Any] = [cls(**kwargs) for cls, kwargs in _BACTERIAL_LEAF_CASES]
+    genotype = Genotype(
+        perturbations=[
+            leaf.model_copy(update={"perturbed_gene_name": f"g{index}"})
+            for index, leaf in enumerate(leaves)
+        ]
+    )
+    back = Genotype.model_validate(genotype.model_dump())
+    assert {type(p) for p in back.perturbations} == {type(leaf) for leaf in leaves}
+    assert len(back) == 5
+
+
+# --- 2. the assembly pin, and where it survives ---------------------------- #
+def test_assembly_reference_genome_refuses_an_unknown_assembly_set() -> None:
+    """A set id outside the deposited vocabulary cannot be stored.
+
+    The pin is only worth anything if it dereferences, so an invented set id is a
+    validation error rather than a pointer that fails later at ``resolve``.
+    """
+    with pytest.raises(ValidationError):
+        _assembly_reference(assembly_set="ecoli_K12_MG1655_ASM584v3")
+    with pytest.raises(ValidationError):
+        _assembly_reference(assembly_set="sgd_S288C_R64-4-1_20230830")
+
+
+def test_assembly_reference_genome_refuses_a_foreign_or_malformed_accession() -> None:
+    """The accession must be one of ITS OWN set's two, so the pair cannot disagree."""
+    with _refuses(
+        "'GCA_000750555.1' is not an accession of 'ecoli_K12_MG1655_ASM584v2' "
+        "(expected one of ('GCA_000005845.2', 'GCF_000005845.2'))"
+    ):
+        _assembly_reference(accession="GCA_000750555.1")
+    with _refuses(
+        "invalid assembly accession 'ASM584v2'; expected 'GCA_NNNNNNNNN.N' or "
+        "'GCF_NNNNNNNNN.N'"
+    ):
+        _assembly_reference(accession="ASM584v2")
+    # either member of the pair is accepted
+    assert _assembly_reference(accession="GCF_000005845.2").assembly_accession == (
+        "GCF_000005845.2"
+    )
+
+
+def test_the_assembly_pin_survives_only_where_the_field_is_re_annotated() -> None:
+    """THE serialization finding, as a test rather than a comment.
+
+    pydantic v2 serializes a field by its DECLARED type. An ``AssemblyReferenceGenome``
+    in a slot annotated ``ReferenceGenome`` keeps the subclass as a python attribute but
+    DUMPS only the base's three fields, and revalidating that dump yields a plain
+    ``ReferenceGenome`` -- the assembly pin is gone, silently. That is why every
+    bacterial reference class re-annotates ``genome_reference``, and why adding the pin
+    to the base class instead would have been the only alternative (at a measured cost
+    of 36 of 36 served dataset closures).
+    """
+    reference = _assembly_reference()
+    base_slot = s.FitnessExperimentReference(
+        dataset_name="t",
+        genome_reference=reference,
+        environment_reference=Environment(media=_lb()),
+        phenotype_reference=FitnessPhenotype(fitness=1.0),
+    )
+    # the attribute keeps the subclass ...
+    assert isinstance(base_slot.genome_reference, s.AssemblyReferenceGenome)
+    # ... and the dump silently loses the pin
+    dumped = base_slot.model_dump()["genome_reference"]
+    assert set(dumped) == {"species", "strain", "ploidy"}
+    assert "assembly_set" not in dumped
+    revalidated = s.FitnessExperimentReference.model_validate(base_slot.model_dump())
+    assert type(revalidated.genome_reference) is s.ReferenceGenome
+
+    # the narrowed slot keeps it, through dict AND json
+    narrowed = s.BacterialFitnessExperimentReference(
+        dataset_name="t",
+        genome_reference=reference,
+        environment_reference=Environment(media=_lb()),
+        phenotype_reference=FitnessPhenotype(fitness=1.0),
+    )
+    kept = narrowed.model_dump()["genome_reference"]
+    assert kept["assembly_set"] == "ecoli_K12_MG1655_ASM584v2"
+    assert kept["assembly_accession"] == "GCA_000005845.2"
+    back = s.BacterialFitnessExperimentReference.model_validate_json(
+        narrowed.model_dump_json()
+    )
+    assert back.genome_reference == reference
+    assert type(back.genome_reference) is s.AssemblyReferenceGenome
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "product_titer",
+        "protein_turnover",
+        "flux",
+        "bacterial_fitness",
+        "bacterial_environment_response",
+        "bacterial_gene_interaction",
+        "bacterial_gene_essentiality",
+        "bacterial_protein_abundance",
+        "bacterial_metabolite",
+        "bacterial_rnaseq_expression",
+        "bacterial_visual_score",
+    ],
+)
+def test_every_bacterial_reference_pins_an_assembly(kind: str) -> None:
+    """Each new family's reference declares the subclass, not the base.
+
+    This is the property the whole pair exists for; the reconstruction path reaches the
+    class through ``EXPERIMENT_REFERENCE_TYPE_MAP[tag]``, so it is checked through the
+    map the way the loaders use it.
+    """
+    reference_cls = _reference_cls(kind)
+    assert (
+        reference_cls.model_fields["genome_reference"].annotation
+        is s.AssemblyReferenceGenome
+    )
+    assert _experiment_cls(kind).model_fields["experiment_type"].default == kind
+    assert reference_cls.model_fields["experiment_reference_type"].default == kind
+
+
+# --- 3. the vocabularies agree with the deposited tier --------------------- #
+def test_the_assembly_set_vocabulary_equals_the_registry_ids() -> None:
+    """``schema.py`` restates the set ids; the registry owns them.
+
+    The restatement exists because ``torchcell.sequence`` imports
+    ``torchcell.datamodels``, so ``schema.py`` importing the registry would be a cycle.
+    This test is what makes the restatement safe: the two cannot drift without failing
+    here.
+    """
+    from torchcell.sequence.genome import registry
+
+    assert set(typing.get_args(s.BacterialAssemblySet)) == {
+        registry.ECOLI_K12_MG1655,
+        registry.ECOLI_K12_BW25113,
+        registry.PPUTIDA_KT2440,
+    }
+    assert s.BACTERIAL_ASSEMBLY_SETS == {
+        "MG1655": registry.ECOLI_K12_MG1655,
+        "BW25113": registry.ECOLI_K12_BW25113,
+        "KT2440": registry.PPUTIDA_KT2440,
+    }
+    # every strain of the background vocabulary has a set, and every set an accession pair
+    assert set(typing.get_args(s.BacterialReferenceStrain)) == set(
+        s.BACTERIAL_ASSEMBLY_SETS
+    )
+    assert set(s.ASSEMBLY_SET_ACCESSIONS) == set(
+        typing.get_args(s.BacterialAssemblySet)
+    )
+    for genbank, refseq in s.ASSEMBLY_SET_ACCESSIONS.values():
+        assert genbank.startswith("GCA_") and refseq.startswith("GCF_")
+        assert genbank.split("_")[1] == refseq.split("_")[1]
+
+
+def test_the_namespace_vocabulary_covers_every_assembly_set() -> None:
+    """One identifier namespace per deposited strain set, and no orphan on either side."""
+    assert len(typing.get_args(s.BacterialGeneNamespace)) == len(
+        typing.get_args(s.BacterialAssemblySet)
+    )
+    assert set(s.BACTERIAL_LOCUS_TAG_PATTERNS) == set(
+        typing.get_args(s.BacterialGeneNamespace)
+    )
+
+
+@pytest.mark.data
+def test_the_bw25113_genotype_is_verbatim_from_the_deposited_genbank_bytes() -> None:
+    """The background-genotype constant is a substring of the sha256-pinned file.
+
+    The constant's provenance is the tier, not a paper: it is read from the ``/note``
+    qualifier of the ``source`` feature of BW25113's deposited GenBank flat file, whose
+    bytes ``registry.resolve`` verifies against the manifest's sha256 on every call. So
+    this reads the real bytes rather than trusting the string in ``schema.py``.
+
+    Data-gated: it needs the genomes tier, so it runs under ``--data`` with the real
+    ``DATA_ROOT`` exported (``tests/conftest.py`` otherwise points ``DATA_ROOT`` at a
+    sentinel path, and ``registry`` deliberately has no fallback to a legacy location).
+    """
+    import gzip
+
+    from torchcell.sequence.genome import registry
+
+    path = registry.resolve(
+        registry.ECOLI_K12_BW25113, "GCA_000750555.1_ASM75055v1_genomic.gbff.gz"
+    )
+    with gzip.open(path, "rt") as handle:
+        header = handle.read(200_000)
+    flattened = " ".join(header.split())
+    assert s.BW25113_BACKGROUND_GENOTYPE in flattened
+    assert f"genotype: {s.BW25113_BACKGROUND_GENOTYPE}" in flattened
+    # the split-out lesions reconstruct the statement exactly, in order
+    assert " ".join(s.BW25113_BACKGROUND_LESIONS) == s.BW25113_BACKGROUND_GENOTYPE
+
+
+# --- 4. the bacterial strain background ------------------------------------ #
+def _bw25113_allele(**kw: Any) -> s.BacterialBackgroundAllele:
+    fields: dict[str, Any] = dict(
+        systematic_gene_name="BW25113_3643",
+        gene_namespace="ecoli_k12_bw25113_locus_tag",
+        gene_name="rph",
+        allele_name="rph-1",
+        edit=s.AlleleEdit.sequence_variant,
+        functional=False,
+        provenance_gaps=[_gap("provenance")],
+    )
+    fields.update(kw)
+    return s.BacterialBackgroundAllele(**fields)
+
+
+def _bw25113_background(**kw: Any) -> s.BacterialStrainBackground:
+    fields: dict[str, Any] = dict(
+        name="BW25113",
+        reference_strain="BW25113",
+        assembly_set="ecoli_K12_BW25113_ASM75055v1",
+        genotype_statement=s.BW25113_BACKGROUND_GENOTYPE,
+        alleles=[_bw25113_allele()],
+        provenance_gaps=[_gap("provenance")],
+    )
+    fields.update(kw)
+    return s.BacterialStrainBackground(**fields)
+
+
+def test_the_bacterial_background_is_a_sibling_not_a_widening() -> None:
+    """The yeast classes are untouched: no bacterial strain is admissible there.
+
+    Widening ``StrainBackground.reference_strain`` was measured to move 4 of 36 served
+    closures (the chemogenomic loaders), so the bacterial background is a separate
+    class and the yeast Literal still admits only S288C.
+    """
+    assert typing.get_args(
+        s.StrainBackground.model_fields["reference_strain"].annotation
+    ) == ("S288C",)
+    with pytest.raises(ValidationError):
+        s.StrainBackground(
+            name="BW25113",
+            reference_strain="BW25113",  # type: ignore[arg-type]
+            mating_type=None,
+            ploidy="haploid",
+            provenance_gaps=[_gap("mating_type"), _gap("provenance")],
+        )
+    assert _bw25113_background().reference_strain == "BW25113"
+
+
+def test_the_background_strain_and_assembly_set_cannot_disagree() -> None:
+    """A background that named another strain's assembly would pin the wrong bytes."""
+    with _refuses(
+        "reference strain 'BW25113' is assembly set 'ecoli_K12_BW25113_ASM75055v1', "
+        "not 'ecoli_K12_MG1655_ASM584v2'"
+    ):
+        _bw25113_background(assembly_set="ecoli_K12_MG1655_ASM584v2")
+
+
+def test_a_background_allele_is_validated_in_its_own_namespace() -> None:
+    """An allele's locus tag belongs to the namespace the allele declares."""
+    with pytest.raises(ValidationError, match="Invalid bacterial locus tag"):
+        _bw25113_allele(systematic_gene_name="YOR202W")
+    with _refuses(
+        "'b3643' is a ecoli_k12_mg1655_bnumber tag but gene_namespace is "
+        "'ecoli_k12_bw25113_locus_tag'"
+    ):
+        _bw25113_allele(systematic_gene_name="b3643")
+
+
+def test_a_background_allele_needs_a_cassette_exactly_when_it_is_a_replacement() -> (
+    None
+):
+    with _refuses(
+        "cassette is required for a cassette_replacement and forbidden for "
+        "edit=sequence_variant"
+    ):
+        _bw25113_allele(cassette="FRT-kan-FRT")
+    replacement = _bw25113_allele(
+        edit=s.AlleleEdit.cassette_replacement, cassette="FRT-kan-FRT"
+    )
+    assert replacement.mechanism_so == ("SO:0000159", "deletion")
+
+
+def test_a_haploid_background_carries_one_allele_entry_per_locus() -> None:
+    """No zygosity means no compound heterozygote, so a second entry is a conflict."""
+    with _refuses(
+        "BW25113_3643: a haploid background carries one allele entry per locus"
+    ):
+        _bw25113_background(alleles=[_bw25113_allele(), _bw25113_allele()])
+
+
+def test_background_functional_copies_is_haploid() -> None:
+    background = _bw25113_background()
+    assert background.functional_copies("BW25113_3643") == 0
+    assert background.functional_copies("BW25113_0344") == 1
+    assert background.alleles_at("BW25113_3643")[0].allele_name == "rph-1"
+    assert not background.is_fully_sourced  # every element here is a declared gap
+
+
+def test_the_background_rides_on_the_assembly_reference() -> None:
+    """The background reaches a record through the reference, and must agree with it."""
+    reference = _assembly_reference(
+        strain="BW25113",
+        assembly_set="ecoli_K12_BW25113_ASM75055v1",
+        accession="GCA_000750555.1",
+        background=_bw25113_background(),
+    )
+    assert reference.background is not None
+    assert reference.background.genotype_statement == s.BW25113_BACKGROUND_GENOTYPE
+    with _refuses("background name 'BW25113' != strain 'MG1655'"):
+        _assembly_reference(
+            strain="MG1655",
+            assembly_set="ecoli_K12_BW25113_ASM75055v1",
+            accession="GCA_000750555.1",
+            background=_bw25113_background(),
+        )
+
+
+# --- 5. the three new phenotypes ------------------------------------------- #
+def _titer(**kw: Any) -> s.ProductTiterPhenotype:
+    fields: dict[str, Any] = dict(
+        product=s.Compound(name="isoprenol", inchikey="XHQZJYCNDZAGLW-UHFFFAOYSA-N"),
+        titer=2.4,
+        titer_unit=s.ConcentrationUnit.g_per_l,
+    )
+    fields.update(kw)
+    return s.ProductTiterPhenotype(**fields)
+
+
+def test_the_titer_standard_error_is_derived_from_the_reported_uncertainty() -> None:
+    """A sample SD of 0.3 over 9 replicates is an SE of 0.1, computed not stored."""
+    phenotype = _titer(
+        titer_uncertainty=0.3,
+        titer_uncertainty_type=s.UncertaintyType.sample_sd,
+        n_samples=9,
+        sample_unit=s.SampleUnit.biological_replicate,
+    )
+    assert phenotype.titer_se == pytest.approx(0.1)
+    # a bootstrap SE is already an SE and is used as-is
+    assert _titer(
+        titer_uncertainty=0.25, titer_uncertainty_type=s.UncertaintyType.bootstrap_se
+    ).titer_se == pytest.approx(0.25)
+
+
+def test_a_titer_uncertainty_may_never_be_unlabelled() -> None:
+    with _refuses(
+        "titer_uncertainty and titer_uncertainty_type must both be set or both be None "
+        "(no unlabelled uncertainty)"
+    ):
+        _titer(titer_uncertainty=0.3)
+    with _refuses("n_samples and sample_unit are required for sample_sd"):
+        _titer(
+            titer_uncertainty=0.3, titer_uncertainty_type=s.UncertaintyType.sample_sd
+        )
+
+
+def test_a_yield_or_productivity_without_its_unit_is_refused() -> None:
+    """A bare number with no unit is not a measurement."""
+    with _refuses(
+        "product_yield and product_yield_unit must both be set or both be None "
+        "(a bare number with no unit is not a measurement)"
+    ):
+        _titer(product_yield=0.12)
+    with _refuses(
+        "productivity and productivity_unit must both be set or both be None "
+        "(a bare number with no unit is not a measurement)"
+    ):
+        _titer(productivity=0.05)
+    ok = _titer(
+        product_yield=0.12,
+        product_yield_unit=s.ProductYieldUnit.g_per_g_substrate,
+        productivity=0.05,
+        productivity_unit=s.ProductivityUnit.g_per_l_per_h,
+    )
+    assert ok.product_yield_unit is s.ProductYieldUnit.g_per_g_substrate
+    assert ok.productivity_unit is s.ProductivityUnit.g_per_l_per_h
+
+
+def test_a_titer_is_a_finite_non_negative_amount() -> None:
+    with _refuses("titer must be a finite number"):
+        _titer(titer=float("nan"))
+    with _refuses("titer must be non-negative, got -1.0"):
+        _titer(titer=-1.0)
+    assert _titer(titer=0.0).titer == 0.0  # a strain that made none is a real datum
+
+
+def test_the_product_is_a_typed_compound_so_a_titer_joins_the_compound_layer() -> None:
+    """The product is the same entity a chemogenomic dataset dosing it would use."""
+    phenotype = _titer()
+    assert phenotype.product.inchikey == "XHQZJYCNDZAGLW-UHFFFAOYSA-N"
+    assert phenotype.label_name == "titer"
+    assert phenotype.label_statistic_name == "titer_se"
+    assert phenotype.graph_level == "global"
+
+
+def test_protein_turnover_keys_its_replicates_on_the_same_proteins() -> None:
+    fields: dict[str, Any] = dict(
+        degradation_rate={"b0002": 0.11, "b0003": 0.07},
+        n_replicates={"b0002": 3, "b0003": 3},
+        measurement_type="pulse_silac_degradation_rate_per_hour",
+    )
+    phenotype = s.ProteinTurnoverPhenotype(**fields)
+    assert phenotype.label_name == "degradation_rate"
+    with _refuses("n_replicates keys must match degradation_rate keys"):
+        s.ProteinTurnoverPhenotype(**{**fields, "n_replicates": {"b0002": 3}})
+    with _refuses("degradation_rate cannot be empty"):
+        s.ProteinTurnoverPhenotype(
+            **{**fields, "degradation_rate": {}, "n_replicates": {}}
+        )
+    with _refuses("degradation_rate for b0002 must be finite and non-negative"):
+        s.ProteinTurnoverPhenotype(
+            **{**fields, "degradation_rate": {"b0002": -0.1, "b0003": 0.07}}
+        )
+    with _refuses("half_life key b9999 not in degradation_rate"):
+        s.ProteinTurnoverPhenotype(**{**fields, "half_life": {"b9999": 6.0}})
+
+
+def test_a_flux_record_states_an_interval_rather_than_one_statistic() -> None:
+    """A fitted flux's uncertainty is two-sided, so there is no single label statistic."""
+    fields: dict[str, Any] = dict(
+        net_flux={"PGI": -1.2},
+        net_flux_lower={"PGI": -1.5},
+        net_flux_upper={"PGI": -0.9},
+        confidence_level=0.95,
+        measurement_type="c13_mfa_net_flux_mmol_per_gdcw_per_h",
+    )
+    phenotype = s.FluxPhenotype(**fields)
+    assert phenotype.label_name == "net_flux"
+    assert phenotype.label_statistic_name is None
+    assert phenotype.graph_level == "metabolism"
+    # a net flux is SIGNED: nothing is clamped, because the sign is the direction
+    assert phenotype.net_flux["PGI"] == -1.2
+
+
+def test_flux_bounds_must_bracket_the_fitted_flux() -> None:
+    fields: dict[str, Any] = dict(
+        net_flux={"PGI": -1.2}, measurement_type="c13_mfa_net_flux_mmol_per_gdcw_per_h"
+    )
+    with _refuses("net_flux_lower for PGI exceeds the fitted flux (-1.0 > -1.2)"):
+        s.FluxPhenotype(**{**fields, "net_flux_lower": {"PGI": -1.0}})
+    with _refuses("net_flux_upper for PGI is below the fitted flux (-1.5 < -1.2)"):
+        s.FluxPhenotype(**{**fields, "net_flux_upper": {"PGI": -1.5}})
+    with _refuses("net_flux bounds for PGI are inverted: -0.9 > -1.5"):
+        s.FluxPhenotype(
+            **{
+                **fields,
+                "net_flux_lower": {"PGI": -0.9},
+                "net_flux_upper": {"PGI": -1.5},
+            }
+        )
+    with _refuses("net_flux_lower key TPI not in net_flux"):
+        s.FluxPhenotype(**{**fields, "net_flux_lower": {"TPI": -2.0}})
+    with _refuses("confidence_level is a fraction in (0, 1), got 95.0"):
+        s.FluxPhenotype(**{**fields, "confidence_level": 95.0})
+
+
+# --- 6. the new experiment families reconstruct through the maps ----------- #
+def test_a_product_titer_record_round_trips_through_the_type_maps() -> None:
+    """The reconstruction path the loaders use resolves the new tags to these classes."""
+    experiment = s.ProductTiterExperiment(
+        dataset_name="Toy",
+        genotype=Genotype(
+            perturbations=[
+                s.HeterologousPathwayPerturbation(
+                    systematic_gene_name="Efa:mvaE",
+                    perturbed_gene_name="mvaE",
+                    gene_namespace="pputida_kt2440_locus_tag",
+                    source_organism="Enterococcus faecalis",
+                    is_heterologous=True,
+                    localization="chromosomal_integration",
+                    pathway_name="isoprenol via mevalonate",
+                )
+            ]
+        ),
+        environment=Environment(media=_lb()),
+        phenotype=_titer(),
+    )
+    reference = s.ProductTiterExperimentReference(
+        dataset_name="Toy",
+        genome_reference=_assembly_reference(
+            strain="KT2440",
+            assembly_set="pputida_KT2440_ASM756v2",
+            accession="GCA_000007565.2",
+        ),
+        environment_reference=Environment(media=_lb()),
+        phenotype_reference=_titer(titer=0.0),
+    )
+    kind = experiment.experiment_type
+    assert kind == "product_titer"
+    assert _experiment_cls(kind).model_validate(experiment.model_dump()) == experiment
+    rebuilt = _reference_cls(kind).model_validate(reference.model_dump())
+    assert rebuilt == reference
+    assert isinstance(rebuilt.genome_reference, s.AssemblyReferenceGenome)
+    assert rebuilt.genome_reference.assembly_set == "pputida_KT2440_ASM756v2"
+
+
+def _bacterial_fitness_experiment() -> s.BacterialFitnessExperiment:
+    return s.BacterialFitnessExperiment(
+        dataset_name="Toy",
+        genotype=Genotype(perturbations=[s.BacterialDeletionPerturbation(**_MG1655)]),
+        environment=Environment(media=_lb()),
+        phenotype=FitnessPhenotype(fitness=0.82),
+    )
+
+
+def test_a_reused_phenotype_family_reconstructs_through_the_tag_not_the_union() -> None:
+    """The tag is the reconstruction key, and for these families it has to be.
+
+    An assembly-pinned family whose phenotype is REUSED has exactly the same field set
+    on the experiment side as its yeast sibling -- only the reference differs -- and
+    ``experiment_type`` is a plain ``str`` on every experiment class rather than a
+    ``Literal``. So the undiscriminated ``ExperimentType`` union cannot tell the two
+    apart and pydantic's smart mode may return the sibling, while the tag survives
+    unchanged. Every reconstruction path in the codebase (the raw query loader, the
+    deduplicator, the aggregator, ``Neo4jCellDataset``) keys on
+    ``EXPERIMENT_TYPE_MAP[experiment_type]`` for precisely this reason, so that is the
+    path pinned here. The stored record is identical either way; what the map buys is
+    the exact class.
+    """
+    experiment = _bacterial_fitness_experiment()
+    dumped = experiment.model_dump()
+    assert dumped["experiment_type"] == "bacterial_fitness"
+
+    rebuilt = _experiment_cls("bacterial_fitness").model_validate(dumped)
+    assert type(rebuilt) is s.BacterialFitnessExperiment
+    assert rebuilt == experiment
+    assert isinstance(rebuilt, s.BacterialFitnessExperiment)
+    assert rebuilt.phenotype.fitness == pytest.approx(0.82)
+    assert isinstance(rebuilt.genotype, Genotype)
+    assert rebuilt.genotype.systematic_gene_names == ["b0002"]
+
+    # the union keeps every value and the tag, and may widen the class
+    adapter: TypeAdapter[Any] = TypeAdapter(ExperimentType)
+    through_union: Any = adapter.validate_python(dumped)
+    assert through_union.model_dump() == dumped
+    assert through_union.experiment_type == "bacterial_fitness"
+
+
+def test_a_new_phenotype_family_is_discriminated_by_its_own_fields() -> None:
+    """A family with a NEW phenotype class does resolve through the union.
+
+    ``ProductTiterExperiment`` carries fields no other experiment has, so unlike the
+    reused families it is unambiguous even without a tag discriminator. Pinning both
+    behaviors keeps the difference between them visible.
+    """
+    experiment = s.ProductTiterExperiment(
+        dataset_name="Toy",
+        genotype=Genotype(perturbations=[s.BacterialDeletionPerturbation(**_MG1655)]),
+        environment=Environment(media=_lb()),
+        phenotype=_titer(),
+    )
+    titer_adapter: TypeAdapter[Any] = TypeAdapter(ExperimentType)
+    back: Any = titer_adapter.validate_python(experiment.model_dump())
+    assert isinstance(back, s.ProductTiterExperiment)
+    assert back.phenotype.titer == pytest.approx(2.4)
+    assert back.phenotype.product.name == "isoprenol"
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "product_titer",
+        "protein_turnover",
+        "flux",
+        "bacterial_fitness",
+        "bacterial_environment_response",
+        "bacterial_gene_interaction",
+        "bacterial_gene_essentiality",
+        "bacterial_protein_abundance",
+        "bacterial_metabolite",
+        "bacterial_rnaseq_expression",
+        "bacterial_visual_score",
+    ],
+)
+def test_every_new_family_is_in_both_maps_and_both_unions(kind: str) -> None:
+    """A family missing from a map or a union is unreconstructible from the store."""
+    experiment_cls = _experiment_cls(kind)
+    reference_cls = _reference_cls(kind)
+    assert experiment_cls in typing.get_args(ExperimentType)
+    assert reference_cls in typing.get_args(s.ExperimentReferenceType)
+    # the pair measures the same phenotype class, or the control is not a control
+    assert (
+        experiment_cls.model_fields["phenotype"].annotation
+        is reference_cls.model_fields["phenotype_reference"].annotation
+    )
+    # the medium stays the shared Environment, so the cross-host medium join still forms
+    assert experiment_cls.model_fields["environment"].annotation is Environment

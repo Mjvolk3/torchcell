@@ -35,6 +35,9 @@ from torchcell.datamodels.identity import (
     temperature_identity,
 )
 from torchcell.datamodels.media import MEDIA_LIBRARY, YPD, YPD_AGAR, YPD_LIQUID
+from torchcell.datamodels.ontology_checks import (
+    compound_has_identity as oc_compound_has_identity,
+)
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -417,3 +420,74 @@ def test_identity_sha256_is_independent_of_key_insertion_order() -> None:
     assert identity_sha256({"a": 1, "b": [2, 3]}) == identity_sha256(
         {"b": [2, 3], "a": 1}
     )
+
+
+# --------------------------------------------------------------------------- #
+# The product of a titer joins the compound layer (plan 3c).
+#
+# ``ProductTiterPhenotype`` keys its product on the same typed ``Compound`` the
+# environment side already uses, which is the whole reason it is a ``Compound`` and
+# not a product-name string. These pin the join that choice buys, and the one place
+# it deliberately stops.
+# --------------------------------------------------------------------------- #
+_ISOPRENOL_KEY = "XHQZJYCNDZAGLW-UHFFFAOYSA-N"
+
+
+def _titer(product: s.Compound, **kw: object) -> s.ProductTiterPhenotype:
+    fields: dict[str, object] = dict(
+        product=product, titer=2.4, titer_unit=s.ConcentrationUnit.g_per_l
+    )
+    fields.update(kw)
+    return s.ProductTiterPhenotype(**fields)  # type: ignore[arg-type]
+
+
+def test_a_product_made_and_a_compound_dosed_are_one_compound_node() -> None:
+    """The molecule a strain MAKES is the molecule another screen DOSES.
+
+    This is the cross-lane join the typed product exists for: a tolerance screen that
+    doses isoprenol and a production run that makes it land on one compound identity,
+    so "everything about isoprenol" is one query. A free-text product name would join
+    neither.
+    """
+    made = _titer(s.Compound(name="isoprenol", inchikey=_ISOPRENOL_KEY))
+    dosed = s.SmallMoleculePerturbation(
+        compound=s.Compound(name="3-methyl-3-buten-1-ol", inchikey=_ISOPRENOL_KEY),
+        concentration=s.Concentration(value=5.0, unit=s.ConcentrationUnit.g_per_l),
+    )
+    assert made.product.name != dosed.compound.name
+    assert compound_identity_key(made.product) == compound_identity_key(dosed.compound)
+    assert compound_identity_key(made.product) == f"inchikey:{_ISOPRENOL_KEY}"
+
+
+def test_two_spellings_of_one_product_are_one_compound_node() -> None:
+    """Two papers naming the same product differently still agree on its identity."""
+    first = _titer(s.Compound(name="isoprenol", inchikey=_ISOPRENOL_KEY))
+    second = _titer(
+        s.Compound(name="Isoprenol (3-methyl-3-buten-1-ol)", inchikey=_ISOPRENOL_KEY),
+        titer=1.1,
+    )
+    assert compound_identity_key(first.product) == compound_identity_key(second.product)
+
+
+def test_an_unidentified_product_falls_through_to_its_normalized_name() -> None:
+    """A product nobody resolved still has a key, and it is honest about being a name.
+
+    The field name is part of the key, so a name-keyed product can never be mistaken
+    for one carrying a real structure identifier.
+    """
+    unresolved = _titer(s.Compound(name="  Isoprenol  "))
+    assert compound_identity_key(unresolved.product) == "name:isoprenol"
+    assert not oc_compound_has_identity(unresolved.product)
+
+
+def test_the_titer_itself_is_not_part_of_any_identity_projection() -> None:
+    """A measurement is not an identity: two titers of one product share its node.
+
+    The compound is a persistent entity, the titer a contingent observation. If the
+    value entered the compound key, every measurement would mint its own product node
+    and the join would be empty by construction.
+    """
+    low = _titer(s.Compound(name="isoprenol", inchikey=_ISOPRENOL_KEY), titer=0.2)
+    high = _titer(s.Compound(name="isoprenol", inchikey=_ISOPRENOL_KEY), titer=9.9)
+    assert low.titer != high.titer
+    assert compound_identity_key(low.product) == compound_identity_key(high.product)

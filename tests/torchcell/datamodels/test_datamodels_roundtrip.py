@@ -114,6 +114,58 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "pubmed_id": "12345678",
         "pubmed_url": "https://pubmed.ncbi.nlm.nih.gov/12345678/",
     },
+    # Bacterial additions: the locus-tag validator rejects the sweep's default
+    # ``YAL001C``, and the assembly pin rejects a placeholder accession, so each of
+    # these commits a real tag / a real deposited (set, accession) pair.
+    "torchcell.datamodels.schema.AssemblyReferenceGenome": {
+        "species": "Escherichia coli",
+        "strain": "MG1655",
+        "assembly_set": "ecoli_K12_MG1655_ASM584v2",
+        "assembly_accession": "GCA_000005845.2",
+    },
+    "torchcell.datamodels.schema.BacterialBackgroundAllele": {
+        "systematic_gene_name": "BW25113_3643",
+        "gene_namespace": "ecoli_k12_bw25113_locus_tag",
+        "gene_name": "rph",
+        "allele_name": "rph-1",
+        "edit": "sequence_variant",
+        "functional": False,
+        "provenance_gaps": [
+            {"field": "provenance", "reason": "deferred_pending_source_review"}
+        ],
+    },
+    "torchcell.datamodels.schema.BacterialStrainBackground": {
+        "name": "BW25113",
+        "reference_strain": "BW25113",
+        "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+        "genotype_statement": "rrnB3 lacZ4787 hsdR514 (araBAD)567 (rhaBAD)568 rph-1",
+        "provenance_gaps": [
+            {"field": "provenance", "reason": "deferred_pending_source_review"}
+        ],
+    },
+    "torchcell.datamodels.schema.BacterialDeletionPerturbation": {
+        "systematic_gene_name": "b0002",
+        "perturbed_gene_name": "thrA",
+        "gene_namespace": "ecoli_k12_mg1655_bnumber",
+    },
+    "torchcell.datamodels.schema.TransposonInsertionPerturbation": {
+        "systematic_gene_name": "b0002",
+        "perturbed_gene_name": "thrA",
+        "gene_namespace": "ecoli_k12_mg1655_bnumber",
+    },
+    "torchcell.datamodels.schema.BacterialCrisprInterferencePerturbation": {
+        "systematic_gene_name": "b0002",
+        "perturbed_gene_name": "thrA",
+        "gene_namespace": "ecoli_k12_mg1655_bnumber",
+        "crispr": {"effector": "dCas9-Mxi1"},
+    },
+    "torchcell.datamodels.schema.PromoterReplacementPerturbation": {
+        "systematic_gene_name": "b0002",
+        "perturbed_gene_name": "thrA",
+        "gene_namespace": "ecoli_k12_mg1655_bnumber",
+        "expression_direction": "increased",
+        "promoter_name": "Ptac",
+    },
     "torchcell.datamodels.schema.VisualScorePhenotype": {
         "visual_score": 2.0,
         "n_replicates": 3,

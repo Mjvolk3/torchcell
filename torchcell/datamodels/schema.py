@@ -270,6 +270,117 @@ SGD_SYSTEMATIC_GENE_PATTERN = (
 validator)."""
 
 
+# --------------------------------------------------------------------------- #
+# Bacterial gene identity (plan D1, [[plan.bacteria-ontology-genome]]).
+#
+# A bacterial gene is identified by its GenBank locus tag, and the NAMESPACE that
+# tag belongs to is carried in its own field. ``Genotype`` derives its content
+# identity from the sorted systematic names of its perturbations, so without the
+# namespace a b-number and a ``PP_`` tag would be two anonymous strings in one id
+# space; with it, a future host whose tags DO collide with an existing one stays
+# distinguishable and no rename is needed.
+#
+# The tag forms below were MEASURED from the deposited GenBank flat file of each
+# assembly set (``torchcell.sequence.genome.registry``), not recalled: every one of
+# MG1655's 4,651, BW25113's 4,490 and KT2440's 5,786 gene features matches its
+# host's pattern, the three patterns are pairwise disjoint, and none of them matches
+# a yeast systematic name. ``tests/torchcell/datamodels/test_schema.py`` re-pins
+# those counts and the disjointness.
+# --------------------------------------------------------------------------- #
+BacterialGeneNamespace = Literal[
+    "ecoli_k12_mg1655_bnumber",
+    "ecoli_k12_bw25113_locus_tag",
+    "pputida_kt2440_locus_tag",
+]
+"""The identifier namespace a bacterial locus tag belongs to.
+
+One member per deposited strain assembly set, because a ``BW25113_`` number is NOT an
+MG1655 b-number (measured: joining the two by gene name leaves 45 disagreements and 230
+BW25113 genes absent from MG1655, so no string surgery relates them). A record states
+which namespace its ``systematic_gene_name`` is written in; the assembly those bytes
+come from is pinned by ``AssemblyReferenceGenome.assembly_set``.
+"""
+
+BACTERIAL_LOCUS_TAG_PATTERNS: dict[str, str] = {
+    "ecoli_k12_mg1655_bnumber": r"^b\d{4}$",
+    "ecoli_k12_bw25113_locus_tag": r"^BW25113_\d{4}$",
+    "pputida_kt2440_locus_tag": (
+        r"^PP_(?:\d{4}|(?:5|16|23)S[A-G]|t\d{2}|tm\d{2}|mr\d{2}|r\d{2})$"
+    ),
+}
+"""Locus-tag pattern of each namespace, measured from the deposited GenBank files.
+
+MG1655 and BW25113 are uniform four-digit tags. KT2440 is four-digit for its 5,621
+protein-coding genes plus the named structural-RNA tags its annotation uses: the
+rRNA operons (``PP_16SA``-``PP_16SG``, ``PP_23SA``-``PP_23SG``, ``PP_5SA``-``PP_5SG``),
+75 tRNA tags (``PP_t01``-``PP_t75``), 67 ``PP_mr`` tags, ``PP_tm01`` and ``PP_r01``.
+Admitting only four-digit tags would silently reject 165 real KT2440 genes.
+"""
+
+BACTERIAL_LOCUS_TAG_PATTERN = (
+    "^(?:"
+    + "|".join(pattern[1:-1] for pattern in BACTERIAL_LOCUS_TAG_PATTERNS.values())
+    + ")$"
+)
+"""Any of the three namespaces' tags -- what a bacterial leaf's name validator accepts.
+
+A leaf accepts any host's tag (one leaf class serves all three hosts) and the
+namespace field is then required to AGREE with the tag's own form, so the pair cannot
+disagree. A yeast systematic name matches none of the three and is rejected, which is
+the behavior that keeps the two families' identifier spaces separate.
+"""
+
+
+def _validate_bacterial_locus_tag(value: str) -> str:
+    """Return ``value`` if it is a locus tag of one of the three bacterial namespaces.
+
+    The bacterial counterpart of ``GenePerturbation.validate_sys_gene_name``. The yeast
+    validator is deliberately left untouched (widening it would move 35 of 36 served
+    dataset closures and would admit ``b0002`` into a yeast SGA leaf), so each bacterial
+    leaf overrides the name validator with this one instead.
+    """
+    if not re.match(BACTERIAL_LOCUS_TAG_PATTERN, value):
+        raise ValueError(
+            f"Invalid bacterial locus tag {value!r}; expected one of "
+            + ", ".join(
+                f"{namespace} ({pattern})"
+                for namespace, pattern in BACTERIAL_LOCUS_TAG_PATTERNS.items()
+            )
+        )
+    return value
+
+
+def _namespace_of_locus_tag(value: str) -> str | None:
+    """The namespace whose pattern ``value`` matches, or ``None`` for a foreign id.
+
+    ``None`` is not a failure: a heterologous gene carried on an expression cassette
+    has no host locus tag at all (``HeterologousPathwayPerturbation``), and that case is
+    distinguished from a tag written in the wrong namespace.
+    """
+    for namespace, pattern in BACTERIAL_LOCUS_TAG_PATTERNS.items():
+        if re.match(pattern, value):
+            return namespace
+    return None
+
+
+def _check_gene_namespace(model: "GenePerturbation") -> None:
+    """Raise when a record's locus tag belongs to a namespace other than its own.
+
+    ``gene_namespace`` names the HOST genome the record is written against. When the
+    identifier IS a host locus tag the two must agree, so a KT2440 tag cannot be filed
+    under the MG1655 namespace. When the identifier is foreign to all three (a
+    heterologous gene symbol on an addition leaf) the namespace still names the host the
+    construct was built in, and there is nothing to cross-check.
+    """
+    namespace = getattr(model, "gene_namespace")
+    tag_namespace = _namespace_of_locus_tag(model.systematic_gene_name)
+    if tag_namespace is not None and tag_namespace != namespace:
+        raise ValueError(
+            f"{model.systematic_gene_name!r} is a {tag_namespace} tag but "
+            f"gene_namespace is {namespace!r}"
+        )
+
+
 class MatingType(StrEnum):
     """Mating-type locus state. The R64 reference (S288C) is MATalpha, so a MATa
     strain differs from the reference IN SEQUENCE at MAT (chrIII), not only in label.
@@ -578,6 +689,322 @@ class StrainReferenceGenome(ReferenceGenome):
                 f"background ploidy {self.background.ploidy!r} != ploidy "
                 f"{self.ploidy!r}"
             )
+        return self
+
+
+# --------------------------------------------------------------------------- #
+# Bacterial strain background + the assembly pin (plan 3b, 3e; decisions D6, D7).
+#
+# These are SIBLINGS of the yeast ``StrainBackground`` / ``BackgroundAllele`` and
+# ``ReferenceGenome``, never edits to them. Widening
+# ``StrainBackground.reference_strain`` past ``Literal["S288C"]`` or touching
+# ``BackgroundAllele`` moves 4 of 36 served dataset closures (the chemogenomic
+# loaders), and adding ``assembly_set`` to ``ReferenceGenome`` moves 36 of 36; the
+# new classes below move none. The duplication is the measured price of that, and
+# unifying the two families later is a rebuild whose purpose is the unification.
+# --------------------------------------------------------------------------- #
+BacterialReferenceStrain = Literal["MG1655", "BW25113", "KT2440"]
+"""The sequenced strain a bacterial background's alleles are edits against.
+
+One member per deposited assembly set, for the same reason ``BacterialGeneNamespace``
+has one: the two *E. coli* K-12 strains are not interchangeable, and a record that said
+only "K-12" would not say which genome its genotype is written against.
+"""
+
+#: Assembly-set id of each bacterial reference strain. Stated here rather than imported
+#: from ``torchcell.sequence.genome.registry`` because ``schema.py`` sits UNDER the
+#: sequence package in the import graph (``torchcell.sequence`` imports
+#: ``torchcell.datamodels``), so importing the registry here is a cycle. Equality with
+#: the registry's own constants is pinned by ``test_schema.py`` instead, which is what
+#: keeps the two from drifting.
+BACTERIAL_ASSEMBLY_SETS: dict[str, str] = {
+    "MG1655": "ecoli_K12_MG1655_ASM584v2",
+    "BW25113": "ecoli_K12_BW25113_ASM75055v1",
+    "KT2440": "pputida_KT2440_ASM756v2",
+}
+
+BacterialAssemblySet = Literal[
+    "ecoli_K12_MG1655_ASM584v2",
+    "ecoli_K12_BW25113_ASM75055v1",
+    "pputida_KT2440_ASM756v2",
+]
+"""A deposited bacterial assembly set id, as a closed vocabulary.
+
+An id outside this set is rejected at construction, which is the "validated against the
+registry's known ids" requirement in declarative form: a loader cannot invent a set id,
+and ``resolve(assembly_set, member)`` is then guaranteed to name a set the tier knows.
+"""
+
+#: The GenBank / RefSeq accession PAIR of each assembly set, read from the
+#: ``_assembly_report.txt`` member deposited in that set ("# GenBank assembly accession"
+#: and "# RefSeq assembly accession"). A record names one of its own set's two
+#: accessions, so a (set, accession) pair cannot disagree.
+ASSEMBLY_SET_ACCESSIONS: dict[str, tuple[str, str]] = {
+    "ecoli_K12_MG1655_ASM584v2": ("GCA_000005845.2", "GCF_000005845.2"),
+    "ecoli_K12_BW25113_ASM75055v1": ("GCA_000750555.1", "GCF_000750555.1"),
+    "pputida_KT2440_ASM756v2": ("GCA_000007565.2", "GCF_000007565.2"),
+}
+
+ASSEMBLY_ACCESSION_PATTERN = r"^GC[AF]_\d{9}\.\d+$"
+
+#: BW25113's background genotype, VERBATIM from the ``/note`` qualifier of the ``source``
+#: feature of ``GCA_000750555.1_ASM75055v1_genomic.gbff.gz`` in the
+#: ``ecoli_K12_BW25113_ASM75055v1`` assembly set. The full qualifier reads
+#: "from B. L. Wanner laboratory; genotype: rrnB3 lacZ4787 hsdR514 (araBAD)567
+#: (rhaBAD)568 rph-1"; this constant is the genotype clause of it. The source is a
+#: sha256-pinned artifact in the genomes tier, so the string has provenance without a
+#: paper quote, and ``test_schema.py`` re-reads it from those bytes.
+BW25113_BACKGROUND_GENOTYPE = "rrnB3 lacZ4787 hsdR514 (araBAD)567 (rhaBAD)568 rph-1"
+
+#: The same genotype split into its six lesion designations, each verbatim. Deliberately
+#: NOT expanded into ``BacterialBackgroundAllele`` records here: the ``/note`` gives each
+#: lesion's DESIGNATION and nothing else, while an allele record also asserts an edit
+#: kind, a functional status and a locus. Three of the six name a gene BW25113's own
+#: annotation still carries (measured: lacZ at BW25113_0344, hsdR at BW25113_4350, rph at
+#: BW25113_3643) and the two operon deletions name genes it does NOT annotate at all
+#: (araB, araA, rhaB, rhaA are absent, which is what being deleted looks like), so
+#: mapping those to a locus would mean borrowing MG1655 b-numbers -- the cross-strain
+#: inference this plan refuses. The loader that needs the typed alleles sources the edit
+#: kinds from the BW25113 construction paper and records which lesion it mapped how.
+BW25113_BACKGROUND_LESIONS: tuple[str, ...] = (
+    "rrnB3",
+    "lacZ4787",
+    "hsdR514",
+    "(araBAD)567",
+    "(rhaBAD)568",
+    "rph-1",
+)
+
+
+class BacterialBackgroundAllele(ProvenanceGapMixin):
+    """One allele a bacterial strain background carries, as an edit against its assembly.
+
+    The bacterial sibling of ``BackgroundAllele``: same sourced-or-gapped contract and
+    the same ``AlleleEdit`` mechanism vocabulary, with two differences that follow from
+    the host. ``systematic_gene_name`` is a locus tag validated against
+    ``gene_namespace``'s pattern rather than an R64 ORF name, and there is no
+    ``zygosity`` field at all: these strains are haploid, so a copy count would have one
+    possible value and would be a field that cannot carry information.
+
+    ``allele_name`` is the designation verbatim as the source writes it (``lacZ4787``,
+    ``rph-1``); ``gene_name`` is the gene symbol the assembly's annotation carries
+    (``lacZ``). ``functional`` says whether the allele keeps the gene's function, which
+    is what a per-locus dosage read needs. ``cassette`` is required for a
+    ``cassette_replacement`` and forbidden otherwise, exactly as on the yeast class.
+    """
+
+    systematic_gene_name: str
+    gene_namespace: BacterialGeneNamespace
+    gene_name: str
+    allele_name: str
+    edit: AlleleEdit
+    functional: bool = Field(
+        description="True if the allele keeps the gene's function; False for a null"
+    )
+    cassette: str | None = Field(
+        default=None,
+        description="cassette that replaced the gene, verbatim (e.g. 'kan', 'FRT-kan-FRT'); "
+        "set iff edit == cassette_replacement",
+    )
+    deleted_span: GenomicSpan | None = Field(
+        default=None,
+        description="removed interval on the pinned assembly, when the source gives it",
+    )
+    provenance: list[SourcedValue] | None = Field(
+        default=None,
+        description="quotes that state this allele; None only with a gap on "
+        "'provenance' (an asserted-but-unsourced allele)",
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def _validate_systematic(cls, v: str) -> str:
+        """The allele sits at a real locus tag of one of the bacterial namespaces."""
+        return _validate_bacterial_locus_tag(v)
+
+    @model_validator(mode="after")
+    def _check_allele(self) -> "BacterialBackgroundAllele":
+        """Tag agrees with namespace; cassette iff cassette_replacement; sourced or gapped."""
+        tag_namespace = _namespace_of_locus_tag(self.systematic_gene_name)
+        if tag_namespace != self.gene_namespace:
+            raise ValueError(
+                f"{self.systematic_gene_name!r} is a {tag_namespace} tag but "
+                f"gene_namespace is {self.gene_namespace!r}"
+            )
+        if (self.edit is AlleleEdit.cassette_replacement) != (
+            self.cassette is not None
+        ):
+            raise ValueError(
+                "cassette is required for a cassette_replacement and forbidden for "
+                f"edit={self.edit.value}"
+            )
+        _require_value_or_gap(self, ("provenance",))
+        return self
+
+    @property
+    def mechanism_so(self) -> tuple[str, str]:
+        """(SO id, SO name) of this allele's edit."""
+        return ALLELE_EDIT_SO[self.edit]
+
+    @property
+    def is_sourced(self) -> bool:
+        """True when the allele carries no declared gap."""
+        return not self.provenance_gaps
+
+
+class BacterialStrainBackground(ProvenanceGapMixin):
+    """The genome content a bacterial strain carries beyond its reference assembly.
+
+    The bacterial sibling of ``StrainBackground``. ``name`` is the strain label the
+    records join on and must equal the reference's ``strain``; ``reference_strain`` is
+    the sequenced strain every allele is an edit against, and ``assembly_set`` is the
+    deposited bytes that strain means. There is no ``mating_type`` and no ``ploidy``:
+    both are eukaryote facts, and a haploid single-replicon genome has nothing to state.
+
+    The motivating case is BW25113, whose lesions are given by its own deposited GenBank
+    ``source`` feature (``BW25113_BACKGROUND_GENOTYPE``) rather than by a paper, and the
+    production-chassis rows, which carry stacked deletions plus heterologous cassettes.
+    ``construction`` is a one-line method statement; ``provenance`` is set or gapped.
+    """
+
+    name: str
+    reference_strain: BacterialReferenceStrain
+    assembly_set: BacterialAssemblySet
+    parents: list[str] | None = Field(
+        default=None, description="strains this background was made from, verbatim"
+    )
+    construction: str | None = Field(
+        default=None, description="how the background was made, one line"
+    )
+    genotype_statement: str | None = Field(
+        default=None,
+        description="the background genotype exactly as the source writes it (e.g. "
+        "BW25113's 'rrnB3 lacZ4787 hsdR514 (araBAD)567 (rhaBAD)568 rph-1'), kept "
+        "verbatim beside the typed alleles so nothing the source said is lost",
+    )
+    alleles: list[BacterialBackgroundAllele] = Field(
+        default_factory=list,
+        description="every allele of the background beyond the reference assembly, each "
+        "sourced or gapped; empty when the source states only a genotype string",
+    )
+    provenance: list[SourcedValue] | None = Field(
+        default=None,
+        description="quotes stating the strain name and genotype; None only with a gap "
+        "on 'provenance'",
+    )
+
+    @model_validator(mode="after")
+    def _check_background(self) -> "BacterialStrainBackground":
+        """Named, sourced-or-gapped, consistent strain/assembly, one entry per locus."""
+        if not self.name.strip():
+            raise ValueError("BacterialStrainBackground.name cannot be empty")
+        _require_value_or_gap(self, ("provenance",))
+        expected = BACTERIAL_ASSEMBLY_SETS[self.reference_strain]
+        if self.assembly_set != expected:
+            raise ValueError(
+                f"reference strain {self.reference_strain!r} is assembly set "
+                f"{expected!r}, not {self.assembly_set!r}"
+            )
+        seen: set[str] = set()
+        for allele in self.alleles:
+            if allele.systematic_gene_name in seen:
+                raise ValueError(
+                    f"{allele.systematic_gene_name}: a haploid background carries one "
+                    "allele entry per locus"
+                )
+            seen.add(allele.systematic_gene_name)
+        return self
+
+    def alleles_at(self, systematic_gene_name: str) -> list[BacterialBackgroundAllele]:
+        """The background's allele entry at one locus (empty = the reference allele)."""
+        return [
+            a for a in self.alleles if a.systematic_gene_name == systematic_gene_name
+        ]
+
+    def functional_copies(self, systematic_gene_name: str) -> int:
+        """Functional copies of a gene in the UNPERTURBED background: 1 or 0.
+
+        Haploid, so the answer is 1 unless the background carries a non-functional
+        allele at the locus.
+        """
+        return (
+            0
+            if any(not a.functional for a in self.alleles_at(systematic_gene_name))
+            else 1
+        )
+
+    @property
+    def is_fully_sourced(self) -> bool:
+        """True when the background and every allele carry no declared gap."""
+        return not self.provenance_gaps and all(a.is_sourced for a in self.alleles)
+
+
+class AssemblyReferenceGenome(ReferenceGenome):
+    """A ``ReferenceGenome`` that PINS the assembly its genotypes are written against.
+
+    ``assembly_set`` is the deposited set id the genomes tier dereferences and
+    ``assembly_accession`` one of that set's two NCBI accessions (GenBank ``GCA_`` or
+    RefSeq ``GCF_``), so a record states in the record which sha256-pinned bytes its
+    locus tags mean. That is what the yeast records leave implicit today, and what
+    sequence-level genotype fidelity requires of a substrate serving three hosts whose
+    tag spaces are disjoint.
+
+    IMPORTANT, and measured: pydantic v2 serializes a field by its DECLARED type, so an
+    instance of this class placed in a slot annotated ``ReferenceGenome`` keeps the
+    subclass as an attribute but dumps only ``{species, strain, ploidy}``, and
+    re-validating that dump yields a plain ``ReferenceGenome``. The assembly pin
+    therefore survives ONLY where a field is re-annotated to this class, which is why
+    each bacterial ``ExperimentReference`` below narrows ``genome_reference`` to it --
+    the same narrowing ``StrainEnvironmentResponseExperimentReference`` does for
+    ``StrainReferenceGenome``. A new field here (rather than on ``ReferenceGenome``)
+    moves 0 of 36 served closures instead of 36 of 36.
+
+    ``background`` optionally carries the typed ``BacterialStrainBackground``; it is the
+    bacterial counterpart of ``StrainReferenceGenome.background`` and is ``None`` for a
+    record whose background is just the reference strain.
+    """
+
+    assembly_set: BacterialAssemblySet
+    assembly_accession: str = Field(
+        description="NCBI accession of the pinned assembly, GenBank 'GCA_...' or RefSeq "
+        "'GCF_...'; must be one of this set's two"
+    )
+    background: BacterialStrainBackground | None = Field(
+        default=None,
+        description="the strain's content beyond the reference assembly; None when the "
+        "strain IS the reference",
+    )
+
+    @field_validator("assembly_accession", mode="after")
+    @classmethod
+    def _validate_accession(cls, v: str) -> str:
+        """The accession has the NCBI assembly-accession shape."""
+        if not re.match(ASSEMBLY_ACCESSION_PATTERN, v):
+            raise ValueError(
+                f"invalid assembly accession {v!r}; expected 'GCA_NNNNNNNNN.N' or "
+                "'GCF_NNNNNNNNN.N'"
+            )
+        return v
+
+    @model_validator(mode="after")
+    def _check_assembly(self) -> "AssemblyReferenceGenome":
+        """The accession belongs to the pinned set, and the background names that set."""
+        allowed = ASSEMBLY_SET_ACCESSIONS[self.assembly_set]
+        if self.assembly_accession not in allowed:
+            raise ValueError(
+                f"{self.assembly_accession!r} is not an accession of "
+                f"{self.assembly_set!r} (expected one of {allowed})"
+            )
+        if self.background is not None:
+            if self.background.assembly_set != self.assembly_set:
+                raise ValueError(
+                    f"background pins assembly set {self.background.assembly_set!r} != "
+                    f"{self.assembly_set!r}"
+                )
+            if self.background.name != self.strain:
+                raise ValueError(
+                    f"background name {self.background.name!r} != strain {self.strain!r}"
+                )
         return self
 
 
@@ -1675,6 +2102,299 @@ class CrisprInterferencePerturbation(ExpressionModulationPerturbation, ModelStri
     expression_direction: str = "decreased"
 
 
+# --------------------------------------------------------------------------- #
+# Bacterial perturbation leaves (plan 3a).
+#
+# Each is a subclass of the axis leaf its OUTCOME already belongs to, so every
+# existing filter keeps working: ``issubclass(_, DeletionPerturbation)`` still
+# catches a bacterial knockout, and the expression axis still holds every
+# modulation. Each carries a required ``gene_namespace`` and overrides the name
+# validator with the bacterial patterns, so the yeast validator on
+# ``GenePerturbation`` is untouched and a bacterial tag still FAILS on a yeast leaf
+# (widening the base would admit ``b0002`` into an SGA leaf and would move 35 of 36
+# served dataset closures for no benefit). A new leaf moves 0 of 36.
+# --------------------------------------------------------------------------- #
+class BacterialDeletionPerturbation(DeletionPerturbation, ModelStrict):
+    """A bacterial gene deletion, identified by a namespaced locus tag.
+
+    Serves the catalogued single-deletion rows (the Keio collection and the
+    chemical-genomics screens built on it) and the Keio-derived deletion pairs. Same
+    AXIS-1 ``state="absent"`` and SO ``deletion`` mechanism as the yeast deletion
+    leaves; what differs is the identifier space, which is why this is a leaf rather
+    than a reuse. ``collection`` and ``cassette`` are strain discriminators in the
+    same sense they are on the yeast barcoded leaf: two records that delete the same
+    gene from different collections are two strains, not two replicates.
+    """
+
+    description: str = "Bacterial gene deletion, identified by a namespaced locus tag"
+    perturbation_type: Literal["bacterial_deletion"] = "bacterial_deletion"  # type: ignore[assignment]
+    deletion_type: str = "bacterial"
+    gene_namespace: BacterialGeneNamespace = Field(
+        description="which host's locus-tag namespace systematic_gene_name is written in"
+    )
+    collection: str | None = Field(
+        default=None,
+        description="the physical deletion collection the strain came from, verbatim "
+        "(e.g. 'Keio collection'); None when unsourced",
+    )
+    cassette: str | None = Field(
+        default=None,
+        description="the exact replacement cassette, verbatim (e.g. 'FRT-kan-FRT'); "
+        "None when unsourced",
+    )
+    construction: StrainConstruction | None = Field(
+        default=None, description="accession / lab / batch / plate of this strain"
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """A bacterial locus tag, not a yeast systematic name."""
+        return _validate_bacterial_locus_tag(v)
+
+    @model_validator(mode="after")
+    def _check_namespace(self) -> "BacterialDeletionPerturbation":
+        """The locus tag's own namespace is the one the record declares."""
+        _check_gene_namespace(self)
+        return self
+
+
+class TransposonInsertionPerturbation(PresenceAbsencePerturbation, ModelStrict):
+    """A transposon insertion that disrupts a gene, as a REALIZED genotype.
+
+    The readout leaf of the transposon / RB-TnSeq rows. It is an AXIS-1 absence --
+    the gene's function is gone -- by the mechanism of a ``transgenic_insertion``
+    (SO:0001218), which is the honest pairing: the state is what happened to the gene,
+    the SO term is what was done to the DNA.
+
+    What makes it realized rather than designed is that the insertion was MAPPED: a
+    pooled library is built by random insertion and then sequenced, so each strain's
+    barcode and the position its insertion was mapped to are measurements, not a
+    design. ``insertion_position`` is 1-based on the replicon of the pinned assembly
+    and ``insertion_strand`` the orientation the mapping reported; both are ``None``
+    when a study releases only gene-level calls. ``barcode`` is the random tag a
+    Bar-seq / RB-TnSeq strain is counted by, which IS its read-out identity in a
+    pooled assay.
+    """
+
+    description: str = (
+        "Transposon insertion disrupting a gene, with its mapped insertion site"
+    )
+    perturbation_type: Literal["transposon_insertion"] = "transposon_insertion"
+    state: str = "absent"
+    mechanism_so_id: str = "SO:0001218"
+    mechanism_so_name: str = "transgenic_insertion"
+    provenance: str = "engineered"
+    gene_namespace: BacterialGeneNamespace = Field(
+        description="which host's locus-tag namespace systematic_gene_name is written in"
+    )
+    barcode: str | None = Field(
+        default=None,
+        description="the random barcode the strain is counted by in a pooled assay; "
+        "None when the source released no per-strain tag",
+    )
+    insertion_position: int | None = Field(
+        default=None,
+        description="1-based position the insertion was mapped to on the replicon of "
+        "the pinned assembly; None when only gene-level calls were released",
+    )
+    insertion_strand: Literal["+", "-"] | None = Field(
+        default=None,
+        description="orientation of the inserted element as mapped; None when unreleased",
+    )
+    transposon: str | None = Field(
+        default=None,
+        description="the transposon / delivery vector, verbatim (e.g. 'mariner Himar1', "
+        "'Tn5'); None when unsourced",
+    )
+    library_pool: str | None = Field(
+        default=None,
+        description="the mutant library sub-pool this strain was screened in, when a "
+        "study runs several; a pooled measurement is pool-relative, so the pool joins "
+        "the strain identity",
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """A bacterial locus tag, not a yeast systematic name."""
+        return _validate_bacterial_locus_tag(v)
+
+    @field_validator("mechanism_so_id", mode="after")
+    @classmethod
+    def validate_mechanism_so_id(cls, v: str) -> str:
+        """Mechanism SO id is well-formed."""
+        return _validate_so_id(v)
+
+    @field_validator("insertion_position", mode="after")
+    @classmethod
+    def _validate_position(cls, v: int | None) -> int | None:
+        """A mapped position is 1-based, so it is at least 1."""
+        if v is not None and v < 1:
+            raise ValueError(f"insertion_position is 1-based, got {v}")
+        return v
+
+    @model_validator(mode="after")
+    def _check_namespace(self) -> "TransposonInsertionPerturbation":
+        """The locus tag's own namespace is the one the record declares."""
+        _check_gene_namespace(self)
+        return self
+
+
+class BacterialCrisprInterferencePerturbation(
+    CrisprInterferencePerturbation, ModelStrict
+):
+    """CRISPRi knockdown of a bacterial gene, reusing the shared guide construct.
+
+    The ``+guide`` rows. It inherits the whole expression axis unchanged -- present
+    gene, ``sgRNA`` mechanism, ``expression_direction="decreased"`` -- and the
+    ``crispr`` construct the yeast CRISPRi leaf already defines, so the guide payload
+    is described once for both families. Only the identifier space differs.
+    """
+
+    description: str = (
+        "CRISPR interference (decreased expression) of a bacterial gene by locus tag"
+    )
+    perturbation_type: Literal["bacterial_crispr_interference"] = (
+        "bacterial_crispr_interference"  # type: ignore[assignment]
+    )
+    gene_namespace: BacterialGeneNamespace = Field(
+        description="which host's locus-tag namespace systematic_gene_name is written in"
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """A bacterial locus tag, not a yeast systematic name."""
+        return _validate_bacterial_locus_tag(v)
+
+    @model_validator(mode="after")
+    def _check_namespace(self) -> "BacterialCrisprInterferencePerturbation":
+        """The locus tag's own namespace is the one the record declares."""
+        _check_gene_namespace(self)
+        return self
+
+
+class PromoterReplacementPerturbation(ExpressionModulationPerturbation, ModelStrict):
+    """A gene's native promoter replaced by a characterized promoter part.
+
+    The expression axis without CRISPR: the gene stays PRESENT, its coding sequence is
+    unedited and its copy number unchanged, and what changed is the regulatory part
+    driving it. The mechanism is therefore neither a plain insertion nor a plain
+    deletion but SO:1000032 ``delins`` -- the native promoter removed and the new part
+    put in its place -- rather than the ``sgRNA`` term the CRISPR leaves inherit.
+
+    ``expression_direction`` is REQUIRED with no default, because a promoter swap can
+    raise or lower expression depending on the part, and defaulting it would assert a
+    direction the record did not state. ``crispr`` is re-declared as optional here (the
+    axis base requires it for the guide-directed leaves); a promoter replacement
+    introduces no guide and no Cas effector, so it is ``None``. The base class is left
+    untouched, since widening ITS field would move every served CRISPR loader's closure.
+    """
+
+    description: str = "Native promoter replaced by a characterized promoter part"
+    perturbation_type: Literal["promoter_replacement"] = "promoter_replacement"
+    mechanism_so_id: str = "SO:1000032"
+    mechanism_so_name: str = "delins"
+    gene_namespace: BacterialGeneNamespace = Field(
+        description="which host's locus-tag namespace systematic_gene_name is written in"
+    )
+    promoter_name: str = Field(
+        description="identity of the promoter part installed, verbatim (e.g. 'Ptac', "
+        "'P14g', 'ParaBAD')"
+    )
+    native_promoter: str | None = Field(
+        default=None,
+        description="the promoter it replaced, verbatim, when the source names it",
+    )
+    promoter_sequence: str | None = Field(
+        default=None,
+        description="sequence of the installed part, when released; None otherwise",
+    )
+    is_inducible: bool = Field(
+        default=False,
+        description="True when the installed part is inducible rather than "
+        "constitutive. The INDUCER and its dose are deliberately not here: they are a "
+        "``SmallMoleculePerturbation`` on the environment, carrying the typed "
+        "``Compound``, so the molecule joins the shared compound layer and the genome "
+        "edit does not restate it (one canonical encoding).",
+    )
+    crispr: CrisprConstruct | None = Field(  # type: ignore[assignment]
+        default=None,
+        description="no guide-directed machinery is involved in a promoter swap; the "
+        "field is inherited from the expression axis and stays None",
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """A bacterial locus tag, not a yeast systematic name."""
+        return _validate_bacterial_locus_tag(v)
+
+    @model_validator(mode="after")
+    def _check_namespace(self) -> "PromoterReplacementPerturbation":
+        """The locus tag's own namespace is the one the record declares."""
+        _check_gene_namespace(self)
+        return self
+
+
+class HeterologousPathwayPerturbation(GeneAdditionPerturbation, ModelStrict):
+    """One heterologous gene of an expressed pathway, with its cassette and copy context.
+
+    The engineered-chassis production rows. It inherits the gene-addition axis whole
+    (``state="present"``, SO ``insertion``, the relaxed name validator a heterologous
+    gene needs since it has no host locus tag) and adds the two things a production
+    record cannot be read without: WHICH pathway the gene belongs to, so the genes of
+    one pathway are recoverable as a set rather than as unrelated additions, and the
+    copy context of the cassette carrying it.
+
+    ``gene_namespace`` names the HOST genome the construct was built in, not the
+    namespace of ``systematic_gene_name`` (which is typically a heterologous gene
+    symbol). That is the one place the field means the host rather than the identifier's
+    own space, and it is checked only when the identifier IS a host locus tag -- which
+    it legitimately is for an extra copy of a NATIVE gene in the same pathway.
+    """
+
+    description: str = (
+        "Heterologous pathway gene added on a cassette, with its copy context"
+    )
+    perturbation_type: Literal["heterologous_pathway"] = "heterologous_pathway"  # type: ignore[assignment]
+    gene_namespace: BacterialGeneNamespace = Field(
+        description="the HOST genome the construct was built in (not the namespace of "
+        "systematic_gene_name, which is usually a heterologous symbol)"
+    )
+    pathway_name: str = Field(
+        description="the pathway this gene is part of, verbatim (e.g. 'isoprenol via "
+        "mevalonate'), so one pathway's genes form a recoverable set"
+    )
+    copy_number: float = Field(
+        default=1.0,
+        description="copies of the cassette carrying this gene (strictly > 0; absence "
+        "is not a copy count)",
+    )
+    promoter_name: str | None = Field(
+        default=None,
+        description="the promoter driving this gene on the cassette, verbatim",
+    )
+
+    @field_validator("copy_number", mode="after")
+    @classmethod
+    def validate_copy_number_positive(cls, v: float) -> float:
+        """M2: this leaf means the gene IS present, so ``copy_number > 0``."""
+        if v <= 0:
+            raise ValueError(
+                "copy_number must be > 0 for an ADDED gene (absence is a deletion "
+                "leaf, never copy_number=0)"
+            )
+        return v
+
+    @model_validator(mode="after")
+    def _check_namespace(self) -> "HeterologousPathwayPerturbation":
+        """When the identifier is a host locus tag it must be this host's."""
+        _check_gene_namespace(self)
+        return self
+
+
 SgaPerturbationType = (
     SgaKanMxDeletionPerturbation
     | SgaNatMxDeletionPerturbation
@@ -1702,6 +2422,11 @@ GenePerturbationType = (
     | EngineeredCopyNumberPerturbation
     | CrisprActivationPerturbation
     | CrisprInterferencePerturbation
+    | BacterialDeletionPerturbation
+    | TransposonInsertionPerturbation
+    | BacterialCrisprInterferencePerturbation
+    | PromoterReplacementPerturbation
+    | HeterologousPathwayPerturbation
 )
 
 
@@ -4138,6 +4863,538 @@ class SegregantGrowthExperiment(Experiment, ModelStrict):
     phenotype: EnvironmentResponsePhenotype
 
 
+# --------------------------------------------------------------------------- #
+# Bacterial phenotypes (plan 3c). Three record types the fifty bacterial rows need
+# and that no existing class can hold; the other eight families they need are
+# REUSED unchanged, and get bacterial experiment pairs further below purely so
+# their reference can pin an assembly.
+#
+# A new phenotype class moves 0 of 36 served dataset closures, and the unions and
+# maps it is appended to are module-level assignments outside the fingerprinted
+# surface.
+# --------------------------------------------------------------------------- #
+class ProductYieldUnit(StrEnum):
+    """How a production yield was expressed. Add values as datasets need them.
+
+    A yield is a RATIO, so it carries no concentration unit and cannot reuse
+    ``ConcentrationUnit``; these three are the forms a fermentation paper reports.
+    """
+
+    g_per_g_substrate = "g/g_substrate"
+    mol_per_mol_substrate = "mol/mol_substrate"
+    percent_of_theoretical = "percent_of_theoretical"
+
+
+class ProductivityUnit(StrEnum):
+    """How a volumetric productivity was expressed. Add values as datasets need them."""
+
+    g_per_l_per_h = "g/L/h"
+    mg_per_l_per_h = "mg/L/h"
+
+
+class ProductTiterPhenotype(Phenotype, ModelStrict):
+    """How much of a named product a strain made: titer, with yield and productivity.
+
+    The phenotype side of inverse strain design, and the one genuinely new record type
+    the engineering half of the bacterial list needs. The product is a typed
+    ``Compound``, NOT a free-text product name, so a titer joins the same compound
+    entity a chemogenomic dataset dosing that molecule already uses and "every record
+    about isoprenol" is one query rather than a string match.
+
+    The value is a plain float with a typed ``titer_unit``, so the ML-facing label stays
+    scalar, and the uncertainty ontology is ``FitnessPhenotype``'s: the source-reported
+    number in ``titer_uncertainty`` with its ``titer_uncertainty_type``, the replicate
+    design in ``n_samples`` + ``sample_unit``, and the DERIVED standard error in
+    ``titer_se`` (auto-filled through ``derive_se``). ``product_yield`` and
+    ``productivity`` are optional because most rows release only a titer, and each is
+    paired with its own unit enum since neither is a concentration.
+
+    What is deliberately NOT here: the fermentation context. The medium, the carbon
+    source, the oxygen regime, the vessel and the duration are all ``Environment``
+    (and ``CultureEnvironment``) slots already, and putting them on the phenotype would
+    make "what was measured" carry part of "what it was grown in".
+    """
+
+    graph_level: str = "global"
+    label_name: str = "titer"
+    label_statistic_name: str = "titer_se"
+
+    product: Compound = Field(
+        description="typed chemical identity of the product measured (InChIKey / ChEBI "
+        "when sourced), the join key onto the shared compound layer"
+    )
+    titer: float = Field(description="measured product titer in ``titer_unit``")
+    titer_unit: ConcentrationUnit = Field(
+        description="typed UO-aligned unit of the titer, e.g. 'g/L' | 'mM'"
+    )
+    titer_se: float | None = Field(
+        default=None, description="DERIVED standard error of the titer"
+    )
+    titer_uncertainty: float | None = Field(
+        default=None,
+        description="source-reported uncertainty number, verbatim (its meaning is given "
+        "by titer_uncertainty_type)",
+    )
+    titer_uncertainty_type: UncertaintyType | None = Field(
+        default=None, description="what titer_uncertainty IS (sample_sd, ...)"
+    )
+    n_samples: int | None = Field(
+        default=None,
+        description="number of independent replicate cultures the titer is over",
+    )
+    sample_unit: SampleUnit | None = Field(
+        default=None,
+        description="what one sample in n_samples is (biological_replicate, ...)",
+    )
+    product_yield: float | None = Field(
+        default=None,
+        description="product per substrate consumed; None when not released",
+    )
+    product_yield_unit: ProductYieldUnit | None = Field(
+        default=None, description="typed unit of product_yield; required when it is set"
+    )
+    productivity: float | None = Field(
+        default=None, description="volumetric productivity; None when not released"
+    )
+    productivity_unit: ProductivityUnit | None = Field(
+        default=None, description="typed unit of productivity; required when it is set"
+    )
+    quantification_method: str | None = Field(
+        default=None,
+        description="how the product was quantified, verbatim (e.g. 'GC-MS', "
+        "'HPLC-RID'); None when the source does not state it",
+    )
+
+    @field_validator("titer", mode="after")
+    @classmethod
+    def validate_titer(cls, v: float) -> float:
+        """A titer is a measured amount: finite and non-negative."""
+        if math.isnan(v) or math.isinf(v):
+            raise ValueError("titer must be a finite number")
+        if v < 0:
+            raise ValueError(f"titer must be non-negative, got {v}")
+        return v
+
+    @field_validator("n_samples", mode="after")
+    @classmethod
+    def validate_n_samples(cls, v: int | None) -> int | None:
+        """n_samples is a positive integer or None."""
+        if v is not None and v < 1:
+            raise ValueError(f"n_samples must be a positive integer or None, got: {v}")
+        return v
+
+    @model_validator(mode="before")
+    @classmethod
+    def _fill_titer_se(cls, data: Any) -> Any:
+        """Derive the ML-facing titer_se from the reported uncertainty (frozen -> fill first)."""
+        if not isinstance(data, dict):
+            return data
+        unc = data.get("titer_uncertainty")
+        typ = data.get("titer_uncertainty_type")
+        if unc is None or typ is None or data.get("titer_se") is not None:
+            return data
+        typ = UncertaintyType(typ)
+        n = data.get("n_samples")
+        if typ in (UncertaintyType.sample_sd, UncertaintyType.variance) and n is None:
+            return data
+        data["titer_se"] = derive_se(unc, typ, n)
+        return data
+
+    @model_validator(mode="after")
+    def _check_titer(self) -> "ProductTiterPhenotype":
+        """No unlabelled uncertainty, no unitless yield or productivity."""
+        unc, typ = self.titer_uncertainty, self.titer_uncertainty_type
+        if (unc is None) != (typ is None):
+            raise ValueError(
+                "titer_uncertainty and titer_uncertainty_type must both be set or both "
+                "be None (no unlabelled uncertainty)"
+            )
+        if typ in (UncertaintyType.sample_sd, UncertaintyType.variance) and (
+            self.n_samples is None or self.sample_unit is None
+        ):
+            raise ValueError(f"n_samples and sample_unit are required for {typ}")
+        for value_name, unit_name in (
+            ("product_yield", "product_yield_unit"),
+            ("productivity", "productivity_unit"),
+        ):
+            value = getattr(self, value_name)
+            unit = getattr(self, unit_name)
+            if (value is None) != (unit is None):
+                raise ValueError(
+                    f"{value_name} and {unit_name} must both be set or both be None "
+                    "(a bare number with no unit is not a measurement)"
+                )
+            if value is not None and value < 0:
+                raise ValueError(f"{value_name} must be non-negative, got {value}")
+        return self
+
+
+class ProteinTurnoverPhenotype(Phenotype, ModelStrict):
+    """Per-protein turnover: how fast each protein is degraded and replaced.
+
+    Distinct from ``ProteinAbundancePhenotype``, which is a STANDING amount: a turnover
+    measurement is a RATE, obtained by following a label into or out of the proteome, and
+    two strains can hold the same abundance through entirely different synthesis and
+    degradation rates. Keyed by the protein's locus tag in the record's namespace, with
+    the same ragged-key honesty as the other dict-valued families: a protein the assay
+    did not quantify is simply not a key, never a zero.
+
+    ``degradation_rate`` is the primary label; ``half_life`` and ``synthesis_rate`` are
+    optional companions a study may release instead of or beside it.
+    ``measurement_type`` records WHAT the numbers are, including their time unit, so two
+    assays are never silently compared.
+    """
+
+    graph_level: str = "node"
+    label_name: str = "degradation_rate"
+    label_statistic_name: str | None = "degradation_rate_se"
+
+    degradation_rate: dict[str, float] = Field(
+        description="protein locus tag -> degradation rate in measurement_type's unit"
+    )
+    degradation_rate_se: dict[str, float] | None = Field(
+        default=None, description="protein locus tag -> standard error of the rate"
+    )
+    half_life: dict[str, float] | None = Field(
+        default=None,
+        description="protein locus tag -> half-life, when the source reports one",
+    )
+    synthesis_rate: dict[str, float] | None = Field(
+        default=None,
+        description="protein locus tag -> synthesis rate, when the source reports one",
+    )
+    n_replicates: dict[str, int] = Field(
+        description="protein locus tag -> number of independent samples/replicates"
+    )
+    measurement_type: str = Field(
+        description="what the numbers are, including the time unit, e.g. "
+        "'pulse_silac_degradation_rate_per_hour'"
+    )
+
+    @model_validator(mode="after")
+    def validate_turnover(self) -> "ProteinTurnoverPhenotype":
+        """Non-empty rates, matching replicate keys, non-negative rates and errors."""
+        if not self.degradation_rate:
+            raise ValueError("degradation_rate cannot be empty")
+        if set(self.n_replicates) != set(self.degradation_rate):
+            raise ValueError("n_replicates keys must match degradation_rate keys")
+        for key, n in self.n_replicates.items():
+            if n < 1:
+                raise ValueError(f"n_replicates for {key} must be >= 1")
+        for key, rate in self.degradation_rate.items():
+            if math.isnan(rate) or math.isinf(rate) or rate < 0:
+                raise ValueError(
+                    f"degradation_rate for {key} must be finite and non-negative"
+                )
+        for name in ("degradation_rate_se", "half_life", "synthesis_rate"):
+            mapping = getattr(self, name)
+            if mapping is None:
+                continue
+            for key, value in mapping.items():
+                if key not in self.degradation_rate:
+                    raise ValueError(f"{name} key {key} not in degradation_rate")
+                if not math.isnan(value) and value < 0:
+                    raise ValueError(f"{name} for {key} must be non-negative")
+        return self
+
+
+class FluxPhenotype(Phenotype, ModelStrict):
+    """Per-reaction net metabolic flux, with the confidence interval of the fit.
+
+    A flux map is not a measurement of one reaction at a time: it is a FIT of a whole
+    reaction network to labeling data, so the interval is a property of that fit and is
+    stored as an interval rather than as a scalar statistic. ``label_statistic_name`` is
+    therefore ``None`` -- a two-sided confidence bound is not a single number, and naming
+    one of the two bounds as "the" statistic would misreport it.
+
+    ``net_flux`` is SIGNED: a net flux through a reversible reaction can run either way,
+    and the sign is the direction, so nothing here is clamped. Keys are the source's own
+    reaction identifiers; ``target_reaction_ids`` maps them to a constraint-based model's
+    reaction ids where that mapping is settled, and is ``None`` until it is -- the data is
+    captured, the modeling choice deferred.
+    """
+
+    graph_level: str = "metabolism"
+    label_name: str = "net_flux"
+    label_statistic_name: str | None = None
+
+    net_flux: dict[str, float] = Field(
+        description="reaction id -> signed net flux in measurement_type's unit"
+    )
+    net_flux_lower: dict[str, float] | None = Field(
+        default=None,
+        description="reaction id -> lower confidence bound of the fitted flux",
+    )
+    net_flux_upper: dict[str, float] | None = Field(
+        default=None,
+        description="reaction id -> upper confidence bound of the fitted flux",
+    )
+    confidence_level: float | None = Field(
+        default=None,
+        description="the level the bounds are stated at, as a fraction (e.g. 0.95); "
+        "None when the source does not say, which is then a typed gap",
+    )
+    measurement_type: str = Field(
+        description="what the numbers are, including the unit, e.g. "
+        "'c13_mfa_net_flux_mmol_per_gdcw_per_h'"
+    )
+    n_samples: int | None = Field(
+        default=None,
+        description="independent labeling experiments the fit is over (one fit, so this "
+        "is a scalar, not a per-reaction count)",
+    )
+    sample_unit: SampleUnit | None = Field(
+        default=None, description="what one sample in n_samples is"
+    )
+    target_reaction_ids: dict[str, str] | None = Field(
+        default=None,
+        description="reaction key -> constraint-based-model reaction id for CBM linkage; "
+        "None until that mapping is decided",
+    )
+
+    @model_validator(mode="after")
+    def validate_flux(self) -> "FluxPhenotype":
+        """Non-empty fluxes, finite values, bounds that key on and bracket the flux."""
+        if not self.net_flux:
+            raise ValueError("net_flux cannot be empty")
+        for key, value in self.net_flux.items():
+            if math.isnan(value) or math.isinf(value):
+                raise ValueError(f"net_flux for {key} must be finite")
+        for name in ("net_flux_lower", "net_flux_upper"):
+            mapping = getattr(self, name)
+            if mapping is None:
+                continue
+            for key, value in mapping.items():
+                if key not in self.net_flux:
+                    raise ValueError(f"{name} key {key} not in net_flux")
+                if math.isnan(value) or math.isinf(value):
+                    raise ValueError(f"{name} for {key} must be finite")
+        if self.net_flux_lower is not None and self.net_flux_upper is not None:
+            for key in set(self.net_flux_lower) & set(self.net_flux_upper):
+                if self.net_flux_lower[key] > self.net_flux_upper[key]:
+                    raise ValueError(
+                        f"net_flux bounds for {key} are inverted: "
+                        f"{self.net_flux_lower[key]} > {self.net_flux_upper[key]}"
+                    )
+        for key, lower in (self.net_flux_lower or {}).items():
+            if lower > self.net_flux[key]:
+                raise ValueError(
+                    f"net_flux_lower for {key} exceeds the fitted flux "
+                    f"({lower} > {self.net_flux[key]})"
+                )
+        for key, upper in (self.net_flux_upper or {}).items():
+            if upper < self.net_flux[key]:
+                raise ValueError(
+                    f"net_flux_upper for {key} is below the fitted flux "
+                    f"({upper} < {self.net_flux[key]})"
+                )
+        if self.confidence_level is not None and not 0.0 < self.confidence_level < 1.0:
+            raise ValueError(
+                f"confidence_level is a fraction in (0, 1), got {self.confidence_level}"
+            )
+        if self.n_samples is not None and self.n_samples < 1:
+            raise ValueError(
+                f"n_samples must be a positive integer, got {self.n_samples}"
+            )
+        return self
+
+
+# --------------------------------------------------------------------------- #
+# Bacterial experiment families (plan 3b, 3c).
+#
+# Every pair below exists for ONE reason: pydantic v2 serializes a field by its
+# DECLARED type, so an ``AssemblyReferenceGenome`` in a slot annotated
+# ``ReferenceGenome`` dumps without its assembly pin. Each reference therefore
+# re-annotates ``genome_reference`` to the subclass. The existing yeast pairs CANNOT
+# be narrowed instead: their ``genome_reference`` admits a plain ``ReferenceGenome``
+# today and every served yeast record stores one, so narrowing the shared class would
+# invalidate all 51 of them.
+#
+# The three new phenotypes come first, then the families whose phenotype is REUSED
+# unchanged and which exist only to carry the pin. ``environment`` stays the shared
+# ``Environment`` throughout, so the cross-dataset medium-level aggregate still
+# forms across hosts.
+# --------------------------------------------------------------------------- #
+class ProductTiterExperimentReference(ExperimentReference, ModelStrict):
+    """Reference (parent-strain) context for a product-titer experiment."""
+
+    experiment_reference_type: str = "product_titer"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: ProductTiterPhenotype
+
+
+class ProductTiterExperiment(Experiment, ModelStrict):
+    """Experiment measuring how much product a strain made."""
+
+    experiment_type: str = "product_titer"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: ProductTiterPhenotype
+
+
+class ProteinTurnoverExperimentReference(ExperimentReference, ModelStrict):
+    """Reference (control) context for a protein-turnover experiment."""
+
+    experiment_reference_type: str = "protein_turnover"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: ProteinTurnoverPhenotype
+
+
+class ProteinTurnoverExperiment(Experiment, ModelStrict):
+    """Experiment measuring per-protein turnover rates."""
+
+    experiment_type: str = "protein_turnover"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: ProteinTurnoverPhenotype
+
+
+class FluxExperimentReference(ExperimentReference, ModelStrict):
+    """Reference (parent-strain) context for a flux experiment."""
+
+    experiment_reference_type: str = "flux"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: FluxPhenotype
+
+
+class FluxExperiment(Experiment, ModelStrict):
+    """Experiment measuring a fitted net-flux distribution."""
+
+    experiment_type: str = "flux"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: FluxPhenotype
+
+
+class BacterialFitnessExperimentReference(ExperimentReference, ModelStrict):
+    """Assembly-pinned reference for a bacterial fitness experiment.
+
+    Same ``FitnessPhenotype`` as the yeast family; the reference pins the assembly the
+    genotype's locus tags are written against.
+    """
+
+    experiment_reference_type: str = "bacterial_fitness"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: FitnessPhenotype
+
+
+class BacterialFitnessExperiment(Experiment, ModelStrict):
+    """Bacterial fitness experiment (transposon, RB-TnSeq, CRISPRi, Keio growth)."""
+
+    experiment_type: str = "bacterial_fitness"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: FitnessPhenotype
+
+
+class BacterialEnvironmentResponseExperimentReference(ExperimentReference, ModelStrict):
+    """Assembly-pinned reference for a bacterial environment-response experiment."""
+
+    experiment_reference_type: str = "bacterial_environment_response"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: EnvironmentResponsePhenotype
+
+
+class BacterialEnvironmentResponseExperiment(Experiment, ModelStrict):
+    """A bacterial strain's response to an environmental perturbation."""
+
+    experiment_type: str = "bacterial_environment_response"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: EnvironmentResponsePhenotype
+
+
+class BacterialGeneInteractionExperimentReference(ExperimentReference, ModelStrict):
+    """Assembly-pinned reference for a bacterial gene-interaction experiment."""
+
+    experiment_reference_type: str = "bacterial_gene_interaction"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: GeneInteractionPhenotype
+
+
+class BacterialGeneInteractionExperiment(Experiment, ModelStrict):
+    """Bacterial gene-interaction experiment (double-mutant screens)."""
+
+    experiment_type: str = "bacterial_gene_interaction"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: GeneInteractionPhenotype
+
+
+class BacterialGeneEssentialityExperimentReference(ExperimentReference, ModelStrict):
+    """Assembly-pinned reference for a bacterial gene-essentiality experiment."""
+
+    experiment_reference_type: str = "bacterial_gene_essentiality"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: GeneEssentialityPhenotype
+
+
+class BacterialGeneEssentialityExperiment(Experiment, ModelStrict):
+    """Bacterial gene-essentiality calls (e.g. a TraDIS essentiality classification)."""
+
+    experiment_type: str = "bacterial_gene_essentiality"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: GeneEssentialityPhenotype
+
+
+class BacterialProteinAbundanceExperimentReference(ExperimentReference, ModelStrict):
+    """Assembly-pinned reference for a bacterial protein-abundance experiment."""
+
+    experiment_reference_type: str = "bacterial_protein_abundance"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: ProteinAbundancePhenotype
+
+
+class BacterialProteinAbundanceExperiment(Experiment, ModelStrict):
+    """Bacterial proteome abundance experiment."""
+
+    experiment_type: str = "bacterial_protein_abundance"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: ProteinAbundancePhenotype
+
+
+class BacterialMetaboliteExperimentReference(ExperimentReference, ModelStrict):
+    """Assembly-pinned reference for a bacterial metabolite experiment."""
+
+    experiment_reference_type: str = "bacterial_metabolite"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: MetabolitePhenotype
+
+
+class BacterialMetaboliteExperiment(Experiment, ModelStrict):
+    """Bacterial metabolome experiment."""
+
+    experiment_type: str = "bacterial_metabolite"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: MetabolitePhenotype
+
+
+class BacterialRNASeqExpressionExperimentReference(ExperimentReference, ModelStrict):
+    """Assembly-pinned reference for a bacterial RNA-seq expression experiment."""
+
+    experiment_reference_type: str = "bacterial_rnaseq_expression"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: RNASeqExpressionPhenotype
+
+
+class BacterialRNASeqExpressionExperiment(Experiment, ModelStrict):
+    """Bacterial transcriptome experiment (absolute TPM on the pinned assembly)."""
+
+    experiment_type: str = "bacterial_rnaseq_expression"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: RNASeqExpressionPhenotype
+
+
+class BacterialVisualScoreExperimentReference(ExperimentReference, ModelStrict):
+    """Assembly-pinned reference for a bacterial visual-score experiment."""
+
+    experiment_reference_type: str = "bacterial_visual_score"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: VisualScorePhenotype
+
+
+class BacterialVisualScoreExperiment(Experiment, ModelStrict):
+    """Bacterial visual-score experiment (a scored plate as a product proxy)."""
+
+    experiment_type: str = "bacterial_visual_score"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: VisualScorePhenotype
+
+
 PhenotypeType = (
     Phenotype
     | FitnessPhenotype
@@ -4153,6 +5410,9 @@ PhenotypeType = (
     | MetabolitePhenotype
     | ProteinAbundancePhenotype
     | EnvironmentResponsePhenotype
+    | ProductTiterPhenotype
+    | ProteinTurnoverPhenotype
+    | FluxPhenotype
 )
 
 ExperimentType = (
@@ -4172,6 +5432,17 @@ ExperimentType = (
     | EnvironmentResponseExperiment
     | StrainEnvironmentResponseExperiment
     | SegregantGrowthExperiment
+    | ProductTiterExperiment
+    | ProteinTurnoverExperiment
+    | FluxExperiment
+    | BacterialFitnessExperiment
+    | BacterialEnvironmentResponseExperiment
+    | BacterialGeneInteractionExperiment
+    | BacterialGeneEssentialityExperiment
+    | BacterialProteinAbundanceExperiment
+    | BacterialMetaboliteExperiment
+    | BacterialRNASeqExpressionExperiment
+    | BacterialVisualScoreExperiment
 )
 
 ExperimentReferenceType = (
@@ -4191,6 +5462,17 @@ ExperimentReferenceType = (
     | EnvironmentResponseExperimentReference
     | StrainEnvironmentResponseExperimentReference
     | SegregantGrowthExperimentReference
+    | ProductTiterExperimentReference
+    | ProteinTurnoverExperimentReference
+    | FluxExperimentReference
+    | BacterialFitnessExperimentReference
+    | BacterialEnvironmentResponseExperimentReference
+    | BacterialGeneInteractionExperimentReference
+    | BacterialGeneEssentialityExperimentReference
+    | BacterialProteinAbundanceExperimentReference
+    | BacterialMetaboliteExperimentReference
+    | BacterialRNASeqExpressionExperimentReference
+    | BacterialVisualScoreExperimentReference
 )
 
 
@@ -4210,6 +5492,17 @@ EXPERIMENT_TYPE_MAP = {
     "environment_response": EnvironmentResponseExperiment,
     "strain_environment_response": StrainEnvironmentResponseExperiment,
     "segregant_growth": SegregantGrowthExperiment,
+    "product_titer": ProductTiterExperiment,
+    "protein_turnover": ProteinTurnoverExperiment,
+    "flux": FluxExperiment,
+    "bacterial_fitness": BacterialFitnessExperiment,
+    "bacterial_environment_response": BacterialEnvironmentResponseExperiment,
+    "bacterial_gene_interaction": BacterialGeneInteractionExperiment,
+    "bacterial_gene_essentiality": BacterialGeneEssentialityExperiment,
+    "bacterial_protein_abundance": BacterialProteinAbundanceExperiment,
+    "bacterial_metabolite": BacterialMetaboliteExperiment,
+    "bacterial_rnaseq_expression": BacterialRNASeqExpressionExperiment,
+    "bacterial_visual_score": BacterialVisualScoreExperiment,
 }
 
 EXPERIMENT_REFERENCE_TYPE_MAP = {
@@ -4228,6 +5521,17 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "environment_response": EnvironmentResponseExperimentReference,
     "strain_environment_response": StrainEnvironmentResponseExperimentReference,
     "segregant_growth": SegregantGrowthExperimentReference,
+    "product_titer": ProductTiterExperimentReference,
+    "protein_turnover": ProteinTurnoverExperimentReference,
+    "flux": FluxExperimentReference,
+    "bacterial_fitness": BacterialFitnessExperimentReference,
+    "bacterial_environment_response": BacterialEnvironmentResponseExperimentReference,
+    "bacterial_gene_interaction": BacterialGeneInteractionExperimentReference,
+    "bacterial_gene_essentiality": BacterialGeneEssentialityExperimentReference,
+    "bacterial_protein_abundance": BacterialProteinAbundanceExperimentReference,
+    "bacterial_metabolite": BacterialMetaboliteExperimentReference,
+    "bacterial_rnaseq_expression": BacterialRNASeqExpressionExperimentReference,
+    "bacterial_visual_score": BacterialVisualScoreExperimentReference,
 }
 
 

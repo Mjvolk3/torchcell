@@ -602,7 +602,6 @@ def _l4_parents(raw_dir: str | Path, assembly_index_path: str | Path) -> LevelRe
         if not missing
         else f"parents absent from the assembly index: {missing}",
         missing=missing,
-        assembly_sha256=b.ASSEMBLY_TAR_SHA256,
     )
 
 

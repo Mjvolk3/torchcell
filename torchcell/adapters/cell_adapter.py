@@ -937,6 +937,9 @@ class CellAdapter:
         construct_id = hashlib.sha256(
             json.dumps(construct.model_dump()).encode("utf-8")
         ).hexdigest()
+        # The plasmid ArtifactRef is projected flat, as a node property can hold only
+        # scalars: its tc:// location string and the sha256 it pins (both None today).
+        plasmid = construct.effector_plasmid_ref
         return BioCypherNode(
             node_id=construct_id,
             preferred_id="crispr construct",
@@ -946,8 +949,8 @@ class CellAdapter:
                 "guide_sequence": construct.guide_sequence,
                 "n_guides": construct.n_guides,
                 "library_pool": construct.library_pool,
-                "effector_plasmid_uri": construct.effector_plasmid_uri,
-                "effector_plasmid_sha256": construct.effector_plasmid_sha256,
+                "effector_plasmid_ref": None if plasmid is None else str(plasmid),
+                "effector_plasmid_sha256": None if plasmid is None else plasmid.sha256,
             },
         )
 

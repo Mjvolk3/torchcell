@@ -75,7 +75,14 @@ LANE_ROOTS: dict[str, tuple[str, ...]] = {
     ),
     "phenotype": ("Phenotype",),
     "experiment": ("Experiment", "ExperimentReference"),
-    "provenance": ("Publication", "ProvenanceGapMixin", "ReferenceGenome", "SOTerm"),
+    # ArtifactRef: the sha256-pinned pointer from a record to off-graph bytes.
+    "provenance": (
+        "Publication",
+        "ProvenanceGapMixin",
+        "ReferenceGenome",
+        "SOTerm",
+        "ArtifactRef",
+    ),
 }
 
 LANE_TITLES: dict[str, str] = {

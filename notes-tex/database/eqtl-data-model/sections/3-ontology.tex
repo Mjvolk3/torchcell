@@ -23,9 +23,9 @@ The primary record is a genotype and an environment mapped to a phenotype, which
   \item \file{SequenceVariantPerturbation} states the intent outright. Together with
     \file{CopyNumberVariantPerturbation} it ``lets a NATURAL ISOLATE be modeled as a
     perturbation set off S288C ($\sim$4,500 sequence variants per isolate).''
-  \item The off-graph pointer pattern on that class, \file{sequence_source},
-    \file{sequence_uri} and \file{sequence_sha256}, means variant sequences are never
-    inlined.
+  \item The off-graph pointer pattern on that class, \file{sequence_source} and
+    \file{sequence_ref} (an \file{ArtifactRef}: tier, key, file path, member and the
+    file's sha256), means variant sequences are never inlined.
 \end{itemize}
 
 \subsection{Where the obvious mapping fails\secstatus{todo}}\label{sec:fails}

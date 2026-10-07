@@ -548,9 +548,13 @@ def test_perturbation_nodes_read_strain_id_only_where_the_leaf_declares_it() -> 
 
 
 def _segregant() -> s.SegregantGenotype:
-    parent = {
-        "assembly_member": "S288C_reference.fa",
-        "assembly_sha256": "a" * 64,
+    parent: dict[str, Any] = {
+        "assembly_ref": s.ArtifactRef(
+            tier="genomes",
+            key="sgd_S288C_R64-4-1_20230830",
+            path="S288C_reference_sequence_R64-4-1_20230830.fsa",
+            sha256="a" * 64,
+        ),
         "engineered_background": "MATa his3 leu2",
     }
     return s.SegregantGenotype(

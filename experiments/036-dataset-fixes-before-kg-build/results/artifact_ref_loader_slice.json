@@ -1,0 +1,76 @@
+{
+  "caudal": {
+    "AAA": {
+      "n_sequence_variants": 4557,
+      "n_with_ref": 4557,
+      "first_two": [
+        {
+          "tc": "tc://genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz#YAL001C.fasta#AAA_YAL001C_TFC3",
+          "sha256": "b5400b89499fe84b1feada51abd7742c29838ae1f28c0cbd208b6622ca533f25",
+          "bytes": 160823369,
+          "parse_round_trip": true,
+          "resolves_locally": true
+        },
+        {
+          "tc": "tc://genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz#YAL002W.fasta#AAA_YAL002W_VPS8",
+          "sha256": "b5400b89499fe84b1feada51abd7742c29838ae1f28c0cbd208b6622ca533f25",
+          "bytes": 160823369,
+          "parse_round_trip": true,
+          "resolves_locally": true
+        }
+      ],
+      "all_round_trip": true
+    },
+    "AAB": {
+      "n_sequence_variants": 4913,
+      "n_with_ref": 4913,
+      "first_two": [
+        {
+          "tc": "tc://genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz#YAL001C.fasta#AAB_YAL001C_TFC3",
+          "sha256": "b5400b89499fe84b1feada51abd7742c29838ae1f28c0cbd208b6622ca533f25",
+          "bytes": 160823369,
+          "parse_round_trip": true,
+          "resolves_locally": true
+        },
+        {
+          "tc": "tc://genomes/peter2018_1011_assemblies/allReferenceGenesWithSNPsAndIndelsInferred.tar.gz#YAL002W.fasta#AAB_YAL002W_VPS8",
+          "sha256": "b5400b89499fe84b1feada51abd7742c29838ae1f28c0cbd208b6622ca533f25",
+          "bytes": 160823369,
+          "parse_round_trip": true,
+          "resolves_locally": true
+        }
+      ],
+      "all_round_trip": true
+    }
+  },
+  "bloom": {
+    "A/BYa": {
+      "tc": "tc://genomes/sgd_S288C_R64-4-1_20230830/S288C_reference_sequence_R64-4-1_20230830.fsa",
+      "sha256": "dbf065ffc3f5bbaa7554ef53c6861399eecc597fe058df5f81ba557944e3f86b",
+      "bytes": 12361395,
+      "parse_round_trip": true,
+      "resolves_locally": true
+    },
+    "A/RMx": {
+      "tc": "tc://genomes/peter2018_1011_assemblies/1011Assemblies.tar.gz#GENOMES_ASSEMBLED/AAA_6.re.fa",
+      "sha256": "53540d095958ae8c32509c04485f0d2d0948069c7647f828698d611899a9b4da",
+      "bytes": 3999623201,
+      "parse_round_trip": true,
+      "resolves_locally": true
+    },
+    "375/BYa": {
+      "tc": "tc://genomes/sgd_S288C_R64-4-1_20230830/S288C_reference_sequence_R64-4-1_20230830.fsa",
+      "sha256": "dbf065ffc3f5bbaa7554ef53c6861399eecc597fe058df5f81ba557944e3f86b",
+      "bytes": 12361395,
+      "parse_round_trip": true,
+      "resolves_locally": true
+    },
+    "375/M22": {
+      "tc": "tc://genomes/peter2018_1011_assemblies/1011Assemblies.tar.gz#GENOMES_ASSEMBLED/ADR_4.re.fa",
+      "sha256": "53540d095958ae8c32509c04485f0d2d0948069c7647f828698d611899a9b4da",
+      "bytes": 3999623201,
+      "parse_round_trip": true,
+      "resolves_locally": true
+    }
+  }
+}

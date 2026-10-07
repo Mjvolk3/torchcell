@@ -112,7 +112,7 @@ crispr construct:
         guide_sequence: str
         n_guides: int
         library_pool: str
-        effector_plasmid_uri: str
+        effector_plasmid_ref: str
         effector_plasmid_sha256: str
 
 environment:

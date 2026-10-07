@@ -19,6 +19,7 @@ from tests.torchcell.adapters._adapter_init_harness import (
 from torchcell.adapters.bloom2019_adapter import Bloom2019Adapter
 from torchcell.adapters.cell_adapter import CellAdapter
 from torchcell.datamodels.schema import (
+    ArtifactRef,
     AssayType,
     EnvironmentResponsePhenotype,
     HaplotypeBlock,
@@ -33,12 +34,26 @@ def _genotype() -> SegregantGenotype:
     parent = SegregantParent(
         name="RMx",
         peter_strain_id="AAA",
-        assembly_member="1011Assemblies.tar.gz::GENOMES_ASSEMBLED/AAA_6.re.fa",
-        assembly_sha256="53540d09",
+        assembly_ref=ArtifactRef(
+            tier="genomes",
+            key="peter2018_1011_assemblies",
+            path="1011Assemblies.tar.gz",
+            member="GENOMES_ASSEMBLED/AAA_6.re.fa",
+            sha256="5" * 64,
+        ),
         engineered_background="RM MatAlpha AMN1-BY ho::HphMX flo8::NatMX",
     )
     by = parent.model_copy(
-        update={"name": "BYa", "peter_strain_id": None, "assembly_member": "S288C"}
+        update={
+            "name": "BYa",
+            "peter_strain_id": None,
+            "assembly_ref": ArtifactRef(
+                tier="genomes",
+                key="sgd_S288C_R64-4-1_20230830",
+                path="S288C_reference_sequence_R64-4-1_20230830.fsa",
+                sha256="d" * 64,
+            ),
+        }
     )
     return SegregantGenotype(
         cross="A",

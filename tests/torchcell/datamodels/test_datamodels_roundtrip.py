@@ -48,9 +48,8 @@ FIELD_VALUES: dict[str, Any] = {
     "so_id": "SO:0000704",
     "mechanism_so_id": "SO:0000159",
     "mechanism_so_name": "deletion",
-    "sequence_sha256": "a" * 64,
-    "effector_plasmid_sha256": "a" * 64,
     "pubmed_id": "12345678",
+    "sha256": "a" * 64,
 }
 
 # class qualname -> keyword arguments; committed when a validator wants a specific shape.

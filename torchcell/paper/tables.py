@@ -131,8 +131,8 @@ def instance_bytes(record: dict[str, Any]) -> bytes:
 
     This counts the stored PERTURBATION -- the edit that defines the genotype,
     whether a single gene deletion or thousands of natural gene-presence entries
-    that amount to an entirely new genome (referenced by ``sequence_uri`` +
-    ``sequence_sha256``) -- alongside the environment and the measured phenotype.
+    that amount to an entirely new genome (referenced by ``sequence_ref``, an
+    ``ArtifactRef``) -- alongside the environment and the measured phenotype.
     It never includes the shared reference genome (that lives external, as a
     pointer, and is not stored per-instance); only each instance's delta from it.
     Constant record metadata (experiment_type, dataset_name) compresses away.

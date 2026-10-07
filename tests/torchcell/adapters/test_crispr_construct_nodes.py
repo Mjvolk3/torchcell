@@ -20,6 +20,7 @@ import yaml
 import torchcell
 from torchcell.adapters.cell_adapter import CellAdapter
 from torchcell.datamodels.schema import (
+    ArtifactRef,
     CrisprConstruct,
     CrisprInterferencePerturbation,
     Genotype,
@@ -76,11 +77,28 @@ def test_crispr_construct_node_is_content_addressed_and_projects_the_reagent() -
     assert props["guide_sequence"] == "GTCAGGTACTCCGAATTCGA"
     assert props["n_guides"] == 4
     assert props["library_pool"] == "gene_tiling_20bp"
-    assert props["effector_plasmid_uri"] is None
+    assert props["effector_plasmid_ref"] is None
     assert props["effector_plasmid_sha256"] is None
     assert "serialized_data" not in props
     # Two equal constructs are one node, which is what lets the reagent join records.
     assert CellAdapter._crispr_construct_node_from(_construct()).get_id() == expected
+
+
+def test_crispr_construct_node_projects_the_plasmid_ref_flat() -> None:
+    """A plasmid ArtifactRef becomes two scalars: its tc:// string and its sha256."""
+    ref = ArtifactRef(
+        tier="objects",
+        key="lian2019-plasmids",
+        path="pMAGIC.gb",
+        member="cassette",
+        sha256="c" * 64,
+    )
+    construct = _construct().model_copy(update={"effector_plasmid_ref": ref})
+    props = CellAdapter._crispr_construct_node_from(construct).get_properties()
+    assert props["effector_plasmid_ref"] == (
+        "tc://objects/lian2019-plasmids/pMAGIC.gb#cassette"
+    )
+    assert props["effector_plasmid_sha256"] == "c" * 64
 
 
 def test_crispr_construct_node_method_emits_one_node_per_construct() -> None:
@@ -164,7 +182,7 @@ def test_graph_schema_declares_the_construct_class_and_its_edge() -> None:
         "guide_sequence",
         "n_guides",
         "library_pool",
-        "effector_plasmid_uri",
+        "effector_plasmid_ref",
         "effector_plasmid_sha256",
     }
     edge = schema["crispr construct member of"]

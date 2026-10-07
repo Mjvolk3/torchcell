@@ -14,6 +14,7 @@ import numpy as np
 import pytest
 
 from torchcell.datamodels.schema import (
+    ArtifactRef,
     EnvironmentPhysicalPerturbation,
     MeasurementType,
     SmallMoleculePerturbation,
@@ -217,3 +218,86 @@ def test_expand_blocks_refuses_blocks_that_stop_short_of_the_marker_list() -> No
     blocks = b.encode_blocks(np.array([1, 2], dtype=np.int8), markers)[:1]
     with pytest.raises(ValueError, match="^blocks cover 1 of 2 markers$"):
         b.expand_blocks(blocks, markers)
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.07: parents point at their assemblies by ArtifactRef.
+# --------------------------------------------------------------------------- #
+_TARBALL = ArtifactRef(
+    tier="genomes",
+    key="peter2018_1011_assemblies",
+    path="1011Assemblies.tar.gz",
+    sha256="5" * 64,
+    bytes=3_999_623_201,
+)
+_S288C = ArtifactRef(
+    tier="genomes",
+    key="sgd_S288C_R64-4-1_20230830",
+    path="S288C_reference_sequence_R64-4-1_20230830.fsa",
+    sha256="d" * 64,
+    bytes=12_361_395,
+)
+_ASSEMBLIES = b.ParentAssemblyRefs(
+    index={"AAA": "GENOMES_ASSEMBLED/AAA_6.re.fa"}, tarball=_TARBALL, s288c=_S288C
+)
+
+
+def test_a_peter_parent_serializes_the_tarball_member_ref_and_round_trips() -> None:
+    """RM (Peter AAA) gets the 1011 tarball narrowed to its index member: the release's
+    ``tarball::member`` form as one ref, whose tc:// string parses back given the sha256.
+    """
+    parent = b.build_parent("RMx", "RM genotype", _ASSEMBLIES)
+    ref = parent.assembly_ref
+    assert str(ref) == (
+        "tc://genomes/peter2018_1011_assemblies/1011Assemblies.tar.gz"
+        "#GENOMES_ASSEMBLED/AAA_6.re.fa"
+    )
+    assert parent.model_dump()["assembly_ref"] == {
+        "tier": "genomes",
+        "key": "peter2018_1011_assemblies",
+        "path": "1011Assemblies.tar.gz",
+        "member": "GENOMES_ASSEMBLED/AAA_6.re.fa",
+        "sha256": "5" * 64,
+        "bytes": 3_999_623_201,
+        "media_type": None,
+    }
+    assert ArtifactRef.parse(str(ref), sha256=ref.sha256, bytes=ref.bytes) == ref
+
+
+def test_the_by_parent_points_at_the_s288c_reference_sequence() -> None:
+    parent = b.build_parent("BYa", "BY genotype", _ASSEMBLIES)
+    assert parent.peter_strain_id is None
+    assert parent.assembly_ref == _S288C
+    assert str(parent.assembly_ref) == (
+        "tc://genomes/sgd_S288C_R64-4-1_20230830/"
+        "S288C_reference_sequence_R64-4-1_20230830.fsa"
+    )
+
+
+_GENOMES = osp.join(os.environ.get("DATA_ROOT", ""), "torchcell-genomes")
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (
+        osp.isfile(osp.join(_GENOMES, "peter2018_1011_assemblies", "manifest.json"))
+        and osp.isfile(
+            osp.join(_GENOMES, "sgd_S288C_R64-4-1_20230830", "manifest.json")
+        )
+    ),
+    reason="requires the Peter and SGD genomes tiers",
+)
+def test_parent_assembly_refs_find_both_files_in_the_tier_manifests() -> None:
+    """The lookup finds the 1011 tarball at the digest the served Bloom records carried
+    as ``assembly_sha256`` before 2026.10.07, and the SGD reference sequence file.
+    """
+    refs = b.ParentAssemblyRefs.from_tier()
+    assert (refs.tarball.path, refs.tarball.sha256) == (
+        "1011Assemblies.tar.gz",
+        "53540d095958ae8c32509c04485f0d2d0948069c7647f828698d611899a9b4da",
+    )
+    assert (refs.s288c.path, refs.s288c.sha256) == (
+        "S288C_reference_sequence_R64-4-1_20230830.fsa",
+        "dbf065ffc3f5bbaa7554ef53c6861399eecc597fe058df5f81ba557944e3f86b",
+    )
+    assert set(b.PARENT_PETER_ID.values()) - {None} <= set(refs.index)

@@ -12,6 +12,11 @@ bytes. Expected values, derived from the source: every resolved path is
 ``DATA_ROOT`` is a ``KeyError``, never a default; each refusal carries the seed hint
 ``rsync -a gilahyper:/scratch/projects/torchcell-scratch/torchcell-genomes/<set>/
 <root>/<set>/`` or names the file, the pinned value and the value on disk.
+
+2026.10.07. The four bacterial set ids (``scripts/provision_bacterial_genomes.py``) are
+pinned to their literal strings, and each one is exercised against its own tmp tier
+holding one fake member named like the real deposit (``<filename>`` plus a newline as the
+bytes), so no test reads the deposited tier or touches the network.
 """
 
 from __future__ import annotations
@@ -24,6 +29,12 @@ import pytest
 
 from torchcell.literature.manifest import ArtifactRecord
 from torchcell.sequence.genome.registry import (
+    ECOLI_K12_BW25113,
+    ECOLI_K12_MG1655,
+    GO_RELEASE_20260805,
+    PPUTIDA_KT2440,
+    ROLE_ANNOTATION,
+    ROLE_ONTOLOGY,
     ROLE_SEQUENCE,
     SENTINEL_ASSEMBLY_SETS,
     SGD_S288C_R64,
@@ -284,3 +295,90 @@ def test_deposit_refuses_empty_missing_and_wrong_size(tmp_path: Path) -> None:
     assert str(again.value) == (
         f"{manifest_path} exists; a deposited manifest is never rewritten"
     )
+
+
+#: One member per bacterial set, named like the deposited file, with its deposited role.
+BACTERIAL_MEMBERS = [
+    (ECOLI_K12_MG1655, "GCA_000005845.2_ASM584v2_genomic.gbff.gz", ROLE_ANNOTATION),
+    (ECOLI_K12_BW25113, "GCA_000750555.1_ASM75055v1_genomic.fna.gz", ROLE_SEQUENCE),
+    (PPUTIDA_KT2440, "109.P_putida_KT2440.goa", ROLE_ANNOTATION),
+    (GO_RELEASE_20260805, "go-basic.obo", ROLE_ONTOLOGY),
+]
+
+
+def _bacterial_tier(tmp_path: Path, assembly_set: str, filename: str, role: str) -> str:
+    """Deposit ``assembly_set`` holding one fake member; return the data root."""
+    d = tmp_path / "torchcell-genomes" / assembly_set
+    d.mkdir(parents=True)
+    data = f"{filename}\n".encode()
+    (d / filename).write_bytes(data)
+    deposit_assembly_set(
+        GenomeManifest(
+            assembly_set=assembly_set,
+            organism="test",
+            strain_or_population="test",
+            source="test",
+            release="test",
+            files=[
+                ArtifactRecord(
+                    path=filename, role=role, bytes=len(data), sha256=_sha(data)
+                )
+            ],
+            provenance_complete=False,
+            created_at="2026-10-07T00:00:00+00:00",
+        ),
+        data_root=str(tmp_path),
+    )
+    return str(tmp_path)
+
+
+def test_bacterial_set_ids_are_the_deposited_directory_names() -> None:
+    """The ids are the tier directory names the provisioning script deposited."""
+    assert ECOLI_K12_MG1655 == "ecoli_K12_MG1655_ASM584v2"
+    assert ECOLI_K12_BW25113 == "ecoli_K12_BW25113_ASM75055v1"
+    assert PPUTIDA_KT2440 == "pputida_KT2440_ASM756v2"
+    assert GO_RELEASE_20260805 == "go_release_2026-08-05"
+    assert ROLE_ONTOLOGY == "ontology"
+
+
+@pytest.mark.parametrize(("assembly_set", "filename", "role"), BACTERIAL_MEMBERS)
+def test_bacterial_set_resolves_and_verifies(
+    tmp_path: Path, assembly_set: str, filename: str, role: str
+) -> None:
+    """Each id resolves to ``<root>/torchcell-genomes/<id>/<file>`` with its sha256."""
+    data_root = _bacterial_tier(tmp_path, assembly_set, filename, role)
+    expected = f"{tmp_path}/torchcell-genomes/{assembly_set}/{filename}"
+    assert resolve(assembly_set, filename, data_root=data_root) == expected
+    assert verify_assembly_set(assembly_set, data_root=data_root) == {
+        filename: _sha(f"{filename}\n".encode())
+    }
+    assert load_genome_manifest(assembly_set, data_root).record(filename).role == role
+
+
+@pytest.mark.parametrize(("assembly_set", "filename", "role"), BACTERIAL_MEMBERS)
+def test_bacterial_set_corrupted_copy_raises_integrity_error(
+    tmp_path: Path, assembly_set: str, filename: str, role: str
+) -> None:
+    """One appended byte on disk: ``resolve`` names both digests and refuses."""
+    data_root = _bacterial_tier(tmp_path, assembly_set, filename, role)
+    pinned = _sha(f"{filename}\n".encode())
+    corrupted = f"{filename}\nX".encode()
+    (tmp_path / "torchcell-genomes" / assembly_set / filename).write_bytes(corrupted)
+    with pytest.raises(GenomeIntegrityError) as err:
+        resolve(assembly_set, filename, data_root=data_root)
+    assert str(err.value) == (
+        f"{assembly_set}/{filename}: sha256 {_sha(corrupted)} on disk, manifest pins "
+        f"{pinned}"
+    )
+
+
+@pytest.mark.parametrize(
+    ("assembly_set", "filename"), [(s, f) for s, f, _ in BACTERIAL_MEMBERS]
+)
+def test_absent_bacterial_set_names_the_rsync(
+    tmp_path: Path, assembly_set: str, filename: str
+) -> None:
+    """A machine without the set gets the rsync from the canonical host, exactly."""
+    with pytest.raises(FileNotFoundError) as err:
+        resolve(assembly_set, filename, data_root=str(tmp_path))
+    assert str(err.value) == _hint(f"{tmp_path}/torchcell-genomes", assembly_set)

@@ -35,13 +35,30 @@ GENOME_MANIFEST_VERSION = 1
 SGD_S288C_R64 = "sgd_S288C_R64-4-1_20230830"
 #: Peter et al. 2018: the 1,011 isolate assemblies and the pangenome matrices.
 PETER2018_1011 = "peter2018_1011_assemblies"
+#: E. coli K-12 MG1655, NCBI assembly ASM584v2 (GCA_000005845.2 with its RefSeq
+#: annotation GCF_000005845.2): b-number locus tags, plus the GO Consortium
+#: ``ECOLI-uniprot.gaf.gz`` keyed to b-numbers.
+ECOLI_K12_MG1655 = "ecoli_K12_MG1655_ASM584v2"
+#: E. coli K-12 BW25113 (the Keio background), NCBI assembly ASM75055v1
+#: (GCA_000750555.1 / GCF_000750555.1). One set per strain, never one per host: a
+#: ``BW25113_`` number is not an MG1655 b-number. Its own GO is the RefSeq GFF's
+#: inline terms and NCBI's GAF; MG1655's GAF is referenced by the ``ECOLI_K12_MG1655``
+#: id, never copied, and which source a loader reads is still open.
+ECOLI_K12_BW25113 = "ecoli_K12_BW25113_ASM75055v1"
+#: P. putida KT2440, NCBI assembly ASM756v2 (GCA_000007565.2 / GCF_000007565.2):
+#: ``PP_`` locus tags, plus the EBI GOA proteome file keyed to them.
+PPUTIDA_KT2440 = "pputida_KT2440_ASM756v2"
+#: The GO Consortium release of 2026-08-05: ``go-basic.obo``, one copy that every
+#: bacterial set pins by this id instead of carrying its own.
+GO_RELEASE_20260805 = "go_release_2026-08-05"
 
 #: Roles a file in an assembly set can play (explicit per file; never inferred).
 ROLE_CONTAINER = "container"  # the archive the release was fetched as
 ROLE_SEQUENCE = "sequence"  # FASTA of chromosomes, ORFs, proteins, assemblies
 ROLE_ANNOTATION = "annotation"  # GFF, gene associations
 ROLE_MATRIX = "matrix"  # gene-by-isolate presence or copy-number tables
-ROLE_INDEX = "index"  # a derived index over a container (member paths)
+ROLE_INDEX = "index"  # member paths of a container, or a locus or replicon table
+ROLE_ONTOLOGY = "ontology"  # an ontology release (OBO), not a gene annotation
 
 #: Stored-record sentinels that name an assembly set without a filesystem path. The
 #: Bloom 2019 BY parent stores the first string (``bloom2019.S288C_ASSEMBLY``); a

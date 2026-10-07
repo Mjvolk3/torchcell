@@ -42,3 +42,36 @@ Open items carried in the plan note: the `ReferenceGenome` assembly pointer wait
 full-rebuild window; the `overwrite=True` default and a DDP-safe build-when-absent; an NCBI
 assembly set for `s288c_ncbi.py` and `s288c_gb.py`; tier sync to Delta, IGB and the Mac;
 deprecation of the legacy S288C copy once nothing reads it.
+
+## 2026.10.07 - Bacterial assembly sets deposited
+
+Four ids added beside `SGD_S288C_R64` and `PETER2018_1011`, each the name of a tier
+directory deposited the same day by `scripts/provision_bacterial_genomes.py`
+([[scripts.provision_bacterial_genomes]]); plan [[plan.bacteria-ontology-genome]] section 1
+and decisions D4, D5, D8, D9.
+
+| constant | assembly set | members | what it holds |
+|---|---|---|---|
+| `ECOLI_K12_MG1655` | `ecoli_K12_MG1655_ASM584v2` | 9 | GCA_000005845.2 (GBFF, FASTA, GFF3, proteins, feature table, assembly report) + GCF GBFF and GFF3 + GO Consortium `ECOLI-uniprot.gaf.gz` |
+| `ECOLI_K12_BW25113` | `ecoli_K12_BW25113_ASM75055v1` | 9 | GCA_000750555.1 (same six) + GCF GBFF, GFF3 and NCBI `_gene_ontology.gaf.gz` |
+| `PPUTIDA_KT2440` | `pputida_KT2440_ASM756v2` | 10 | GCA_000007565.2 (same six) + GCF GBFF, GFF3 and NCBI GAF + EBI GOA `109.P_putida_KT2440.goa` |
+| `GO_RELEASE_20260805` | `go_release_2026-08-05` | 1 | `go-basic.obo` (`data-version: releases/2026-07-26`) |
+
+One set per strain, never per host (D5): a `BW25113_` number is not an MG1655 b-number.
+The sequence is deposited once per strain, from GCA, because the GCF FASTA is the same
+sequence under a different header. The three strain sets pin the GO ontology by the
+`go_release_2026-08-05` id rather than carrying a copy each, and BW25113 references
+MG1655's GAF by the `ecoli_K12_MG1655_ASM584v2` id rather than copying it (D9). Both
+references are recorded as text in the manifests' `notes`; `GenomeManifest` has no
+structured cross-set field.
+
+New role constant `ROLE_ONTOLOGY = "ontology"` for `go-basic.obo`, which is an ontology
+release and not a gene annotation. `ROLE_INDEX`'s comment now also covers the NCBI feature
+table and assembly report, which the plan assigns that role.
+
+Measured on GilaHyper: all 29 members re-fetched and equal to the plan's Verified digests
+(no upstream drift), all 26 NCBI members equal to NCBI's published md5, and
+`verify_assembly_set` returns 9 / 9 / 10 / 1 digests. Tests:
+`tests/torchcell/sequence/genome/test_registry.py` pins the four ids and, on a tmp tier per
+id, `resolve` and `verify_assembly_set`, a `GenomeIntegrityError` naming both digests on a
+corrupted copy, and the exact rsync hint for an absent set (27 passed).

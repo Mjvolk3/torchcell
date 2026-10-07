@@ -647,14 +647,17 @@ def plot_isoboles(from_raw: pd.DataFrame) -> list[str]:
         ax.set_ylabel(f"{NAMES[inhibitor]} (g/L)")
         ax.set_title(f"{run}: {NAMES[inhibitor]} x acetic acid", fontsize=6)
         box(ax)
-    cbar = fig.colorbar(im, ax=axes, fraction=0.015, pad=0.02)
+    # the color bar gets its own axis to the right of the third panel
+    fig.subplots_adjust(left=0.06, right=0.86, top=0.86, bottom=0.2, wspace=0.4)
+    cax = fig.add_axes([0.885, 0.2, 0.012, 0.66])
+    cbar = fig.colorbar(im, cax=cax)
     cbar.set_label("fitness (wild-type GT / GT), GT from the raw curve")
     cbar.outline.set_linewidth(0.5)
     fig.suptitle(
-        "isoboles from the raw curves, mean of two plates; no growth (OD rise < 0.3) drawn at 0, front = last growth",
+        "isoboles from the raw curves, mean of two plates; no growth (OD rise < 0.3) "
+        "drawn at 0, front = last growth",
         fontsize=6,
     )
-    fig.subplots_adjust(left=0.06, right=0.9, top=0.86, bottom=0.2, wspace=0.35)
     return save(fig, "isoboles_from_raw")
 
 

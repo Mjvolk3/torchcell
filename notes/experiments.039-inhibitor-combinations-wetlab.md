@@ -36,11 +36,11 @@ biological replicates, 200 wells (8 uninhibited controls, 3 blanks). `results/ex
 | 5 | 6 | 0 | |
 | 6 | 1 | 0 | |
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex23_combinations_fitness_2026-10-07-15-37-18.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/ex23_combinations_fitness_2026-10-07-15-43-21.svg)
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex23_pair_matrix_2026-10-07-15-37-18.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/ex23_pair_matrix_2026-10-07-15-43-22.svg)
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex23_single_inhibitor_curves_2026-10-07-15-37-18.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/ex23_single_inhibitor_curves_2026-10-07-15-43-22.svg)
 
 Read off the data: HMF is the strongest single inhibitor at its concentration (fitness
 0.44), the pair that fails to grow is FA + LA, and every combination of four or more fails.
@@ -57,7 +57,7 @@ is the titration step. The control wells of this run grew slower (mean generatio
 2.62 h) than most low-concentration wells, so fitness exceeds 1 at the low end.
 `results/ex21_titration.csv`.
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex21_titrations_2026-10-07-15-37-18.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/ex21_titrations_2026-10-07-15-43-22.svg)
 
 ### The isoboles: ex26 furfural, ex27 formic acid and ex28 5-HMF, each against acetic acid
 
@@ -72,7 +72,7 @@ the run.
 Only ex26 was processed by the Bioscreen software (`MV_ex26_..._Traits.txt`, 48 of 200
 wells grew). `results/ex26_isobole.csv`.
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex26_isobole_furfural_acetic_acid_2026-10-07-15-37-19.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/ex26_isobole_furfural_acetic_acid_2026-10-07-15-43-22.svg)
 
 For ex27 and ex28 the generation time is derived here from the raw curves
 (`generation_time` in the script: baseline-subtracted OD, growth if the rise is at least
@@ -82,7 +82,7 @@ ranks the 45 wells both call grown with a Spearman of 0.80 (`results/ex26_trait_
 so the two unprocessed isoboles are read on a checked footing. Wells grown: ex26 45, ex27
 76, ex28 53 of 200 (`results/isoboles_from_raw.csv`).
 
-![](assets/images/039-inhibitor-combinations-wetlab/isoboles_from_raw_2026-10-07-15-37-19.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/isoboles_from_raw_2026-10-07-15-43-22.svg)
 
 Formic acid x acetic acid is the cleanest trade-off (a diagonal front from FA 1.6 g/L
 alone to AA 2.8 g/L alone). 5-HMF x acetic acid has a ragged front with growth islands at

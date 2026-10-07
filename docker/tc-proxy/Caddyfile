@@ -82,8 +82,19 @@ torchcell-database.ncsa.illinois.edu {
 		header X-Robots-Tag "noindex, nofollow"
 		uri strip_prefix /staging
 		root * /srv/tc-site/staging
-		try_files {path} {path}/index.html /404.html
+		try_files {path} {path}/index.html
 		file_server
+	}
+
+	# A missing staging page is a real 404 with the site's 404 page as its body. Only the
+	# staging file server raises 404 errors here: proxied API responses are not errors,
+	# and the catch-all redirects.
+	handle_errors 404 {
+		rewrite * /404.html
+		root * /srv/tc-site/staging
+		file_server {
+			status 404
+		}
 	}
 
 	# Production API. The production website is on GitHub Pages.

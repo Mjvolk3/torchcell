@@ -70,6 +70,10 @@ jobs:
           # read-only, so the gh-pages push 403s ("denied to github-actions[bot]").
           personal_token: ${{ secrets.TORCHCELL_SEMANTIC_RELEASE_TOKEN }}
           publish_dir: ./build/docs
+          # The Docusaurus site (website.yaml) lives in site/ on the same branch; without
+          # this, every docs publish would delete it. Stale docs files therefore linger
+          # until the next full rebuild of the branch; the explorer check above still runs.
+          keep_files: true
 
   # Deliberately a SEPARATE job with no relation to `build`, so it can never stop the page
   # shipping. It used to be a step inside `build`, sitting before the deploy: a stale

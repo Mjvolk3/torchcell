@@ -1,9 +1,15 @@
-name: Website (build check)
+name: Website (build and deploy)
 
-# Builds the Docusaurus site under website/ and type-checks it. It does NOT deploy:
-# where the site is hosted (a GitHub Pages subpath beside the Sphinx docs, or the reverse
-# proxy on the database host) is undecided, and the Sphinx deploy in docs.yaml owns the
-# gh-pages branch today. See notes/plan.website-benchmark-platform.2026.10.01.md.
+# Builds the Docusaurus site under website/, type-checks it, and on main publishes it to
+# GitHub Pages under /torchcell/site/ (the `site/` directory of the gh-pages branch),
+# beside the Sphinx docs that docs.yaml publishes at the branch root. The production
+# site calls the production benchmark API on the database host; those three build
+# settings are plain variables below (website/site.prod.env.example has the same
+# values). Decided 2026-10-07; see notes/plan.website-benchmark-platform.2026.10.01.md.
+#
+# The two deploys share one branch: this one writes only `site/` (destination_dir), and
+# the docs deploy must keep files it did not write (keep_files in docs.yaml), or each
+# docs publish would wipe the site.
 
 on:
   push:
@@ -46,4 +52,19 @@ jobs:
         run: npm run typecheck
 
       - name: Build (broken links fail the build)
+        env:
+          SITE_ENV: production
+          SITE_URL: https://mjvolk3.github.io
+          BASE_URL: /torchcell/site/
+          BENCH_API_URL: https://torchcell-database.ncsa.illinois.edu/api/v1
+          ONTOLOGY_EXPLORER_URL: https://mjvolk3.github.io/torchcell/ontology/
         run: npm run build
+
+      - name: Deploy to GitHub Pages (site/ only)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          # Admin PAT, as in docs.yaml: the default GITHUB_TOKEN cannot push gh-pages.
+          personal_token: ${{ secrets.TORCHCELL_SEMANTIC_RELEASE_TOKEN }}
+          publish_dir: ./website/build
+          destination_dir: site

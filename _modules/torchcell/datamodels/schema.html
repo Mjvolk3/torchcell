@@ -417,6 +417,7 @@
     <span class="s2">"ecoli_k12_mg1655_bnumber"</span><span class="p">,</span>
     <span class="s2">"ecoli_k12_bw25113_locus_tag"</span><span class="p">,</span>
     <span class="s2">"pputida_kt2440_locus_tag"</span><span class="p">,</span>
+    <span class="s2">"ecoli_b_rel606_locus_tag"</span><span class="p">,</span>
 <span class="p">]</span>
 <span class="sd">"""The identifier namespace a bacterial locus tag belongs to.</span>
 
@@ -433,6 +434,7 @@
     <span class="s2">"pputida_kt2440_locus_tag"</span><span class="p">:</span> <span class="p">(</span>
         <span class="sa">r</span><span class="s2">"^PP_(?:\d</span><span class="si">{4}</span><span class="s2">|(?:5|16|23)S[A-G]|t\d</span><span class="si">{2}</span><span class="s2">|tm\d</span><span class="si">{2}</span><span class="s2">|mr\d</span><span class="si">{2}</span><span class="s2">|r\d</span><span class="si">{2}</span><span class="s2">)$"</span>
     <span class="p">),</span>
+    <span class="s2">"ecoli_b_rel606_locus_tag"</span><span class="p">:</span> <span class="sa">r</span><span class="s2">"^ECB_[rt]?\d</span><span class="si">{5}</span><span class="s2">$"</span><span class="p">,</span>
 <span class="p">}</span>
 <span class="sd">"""Locus-tag pattern of each namespace, measured from the deposited GenBank files.</span>
 
@@ -440,7 +442,9 @@
 <span class="sd">protein-coding genes plus the named structural-RNA tags its annotation uses: the</span>
 <span class="sd">rRNA operons (``PP_16SA``-``PP_16SG``, ``PP_23SA``-``PP_23SG``, ``PP_5SA``-``PP_5SG``),</span>
 <span class="sd">75 tRNA tags (``PP_t01``-``PP_t75``), 67 ``PP_mr`` tags, ``PP_tm01`` and ``PP_r01``.</span>
-<span class="sd">Admitting only four-digit tags would silently reject 165 real KT2440 genes.</span>
+<span class="sd">Admitting only four-digit tags would silently reject 165 real KT2440 genes. E. coli B</span>
+<span class="sd">REL606 (GCA_000017985.1) is five-digit: 4,276 ``ECB_NNNNN``, 85 tRNA ``ECB_tNNNNN`` and</span>
+<span class="sd">22 rRNA ``ECB_rNNNNN`` of its 4,383 gene features.</span>
 <span class="sd">"""</span>
 
 <span class="n">BACTERIAL_LOCUS_TAG_PATTERN</span> <span class="o">=</span> <span class="p">(</span>
@@ -859,7 +863,7 @@
 <span class="c1"># new classes below move none. The duplication is the measured price of that, and</span>
 <span class="c1"># unifying the two families later is a rebuild whose purpose is the unification.</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
-<span class="n">BacterialReferenceStrain</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"MG1655"</span><span class="p">,</span> <span class="s2">"BW25113"</span><span class="p">,</span> <span class="s2">"KT2440"</span><span class="p">]</span>
+<span class="n">BacterialReferenceStrain</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"MG1655"</span><span class="p">,</span> <span class="s2">"BW25113"</span><span class="p">,</span> <span class="s2">"KT2440"</span><span class="p">,</span> <span class="s2">"REL606"</span><span class="p">]</span>
 <span class="sd">"""The sequenced strain a bacterial background's alleles are edits against.</span>
 
 <span class="sd">One member per deposited assembly set, for the same reason ``BacterialGeneNamespace``</span>
@@ -877,12 +881,14 @@
     <span class="s2">"MG1655"</span><span class="p">:</span> <span class="s2">"ecoli_K12_MG1655_ASM584v2"</span><span class="p">,</span>
     <span class="s2">"BW25113"</span><span class="p">:</span> <span class="s2">"ecoli_K12_BW25113_ASM75055v1"</span><span class="p">,</span>
     <span class="s2">"KT2440"</span><span class="p">:</span> <span class="s2">"pputida_KT2440_ASM756v2"</span><span class="p">,</span>
+    <span class="s2">"REL606"</span><span class="p">:</span> <span class="s2">"ecoli_B_REL606_ASM1798v1"</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="n">BacterialAssemblySet</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span>
     <span class="s2">"ecoli_K12_MG1655_ASM584v2"</span><span class="p">,</span>
     <span class="s2">"ecoli_K12_BW25113_ASM75055v1"</span><span class="p">,</span>
     <span class="s2">"pputida_KT2440_ASM756v2"</span><span class="p">,</span>
+    <span class="s2">"ecoli_B_REL606_ASM1798v1"</span><span class="p">,</span>
 <span class="p">]</span>
 <span class="sd">"""A deposited bacterial assembly set id, as a closed vocabulary.</span>
 
@@ -899,6 +905,7 @@
     <span class="s2">"ecoli_K12_MG1655_ASM584v2"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"GCA_000005845.2"</span><span class="p">,</span> <span class="s2">"GCF_000005845.2"</span><span class="p">),</span>
     <span class="s2">"ecoli_K12_BW25113_ASM75055v1"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"GCA_000750555.1"</span><span class="p">,</span> <span class="s2">"GCF_000750555.1"</span><span class="p">),</span>
     <span class="s2">"pputida_KT2440_ASM756v2"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"GCA_000007565.2"</span><span class="p">,</span> <span class="s2">"GCF_000007565.2"</span><span class="p">),</span>
+    <span class="s2">"ecoli_B_REL606_ASM1798v1"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"GCA_000017985.1"</span><span class="p">,</span> <span class="s2">"GCF_000017985.1"</span><span class="p">),</span>
 <span class="p">}</span>
 
 <span class="n">ASSEMBLY_ACCESSION_PATTERN</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"^GC[AF]_\d</span><span class="si">{9}</span><span class="s2">\.\d+$"</span>

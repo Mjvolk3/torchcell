@@ -11,6 +11,10 @@ dataset:
 #     properties:
 #         name: str
 
+# source_type / title / identifier / identifier_url carry a NON-journal source (a
+# dissertation, a preliminary-exam report, an in-house measurement), which has no DOI
+# and no PubMed id: it is identified by title plus the deposited document's
+# mirror-relative path and sha256 (Publication.identifier).
 publication:
     represented_as: node
     properties:
@@ -18,6 +22,10 @@ publication:
         pubmed_url: str
         doi: str
         doi_url: str
+        source_type: str
+        title: str
+        identifier: str
+        identifier_url: str
         serialized_data: str
 
 # experiment: recorded experimental observation (data record, not the process)

@@ -1,0 +1,29 @@
+[
+  {
+    "user_id": "mock-baselines",
+    "display_name": "TorchCell baselines",
+    "affiliation": null,
+    "identity_provider": null,
+    "created_at": "2026-09-01T00:00:00Z",
+    "n_submissions": 3,
+    "last_submitted_at": "2026-10-01T12:00:00Z"
+  },
+  {
+    "user_id": "mock-user-a",
+    "display_name": "Ada Lovelace",
+    "affiliation": "Analytical Engine Institute",
+    "identity_provider": "ORCID",
+    "created_at": "2026-09-10T00:00:00Z",
+    "n_submissions": 2,
+    "last_submitted_at": "2026-09-28T09:30:00Z"
+  },
+  {
+    "user_id": "mock-user-b",
+    "display_name": "Barbara McClintock",
+    "affiliation": "Cold Spring Harbor",
+    "identity_provider": "GitHub",
+    "created_at": "2026-09-12T00:00:00Z",
+    "n_submissions": 1,
+    "last_submitted_at": "2026-09-20T15:00:00Z"
+  }
+]

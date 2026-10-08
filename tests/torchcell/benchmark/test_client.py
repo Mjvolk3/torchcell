@@ -261,3 +261,18 @@ def test_cli_read_commands(
     assert (code, out["remaining"]) == (0, 3)
     code, out = _run(monkeypatch, capsys, api, ["mine"])
     assert (code, out) == (0, [])
+
+
+def test_withdraw_takes_the_submission_off_the_board(
+    bench: Bench, api: BenchClient, tmp_path: Path, labels: Labels, to_csv: Csv
+) -> None:
+    """``withdraw`` returns the row as withdrawn and the board is empty afterwards; a
+    second withdraw raises 409 through ``raise_for_status``; the CLI prints the result.
+    """
+    result = api.submit(SLUG, META, _write(tmp_path, to_csv(labels)))
+    withdrawn = api.withdraw(result.submission_id, "found a leak")
+    assert withdrawn.submission_id == result.submission_id
+    assert withdrawn.status is SubmissionStatus.WITHDRAWN
+    assert bench.client.get(bench.url(f"/leaderboard/{SLUG}")).json() == []
+    with pytest.raises(Exception, match="409"):
+        api.withdraw(result.submission_id)

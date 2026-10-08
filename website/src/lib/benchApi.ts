@@ -70,6 +70,12 @@ export type BenchmarkDatasetPublic = {
 
 export type SubmissionStatus = 'rejected' | 'provisional' | 'verified' | 'withdrawn';
 
+/** One row of the people directory: an account with at least one scored submission. */
+export type UserDirectoryEntry = UserPublic & {
+  n_submissions: number;
+  last_submitted_at: string;
+};
+
 export type LeaderboardRow = {
   submission_id: string;
   user_id: string;
@@ -378,9 +384,13 @@ export interface BenchApi {
     predictions: File,
   ): Promise<SubmissionResult>;
   mine(accessToken: string): Promise<SubmissionResult[]>;
+  /** Take one of the account's own scored submissions off the board; the row is kept. */
+  withdraw(accessToken: string, submissionId: string, note: string): Promise<SubmissionResult>;
 
   leaderboard(slug: string, verifiedOnly: boolean): Promise<LeaderboardRow[]>;
   userHistory(userId: string): Promise<UserHistory>;
+  /** Every account with a scored submission, most recent submitter first. */
+  users(): Promise<UserDirectoryEntry[]>;
 }
 
 async function readBody(res: Response): Promise<unknown> {
@@ -485,6 +495,15 @@ function createHttpApi(baseUrl: string): BenchApi {
 
     mine: (accessToken) =>
       request<SubmissionResult[]>('/submissions/mine', {headers: bearer(accessToken)}),
+    withdraw(accessToken, submissionId, note) {
+      const form = new FormData();
+      form.append('note', note);
+      return request<SubmissionResult>(
+        `/submissions/${encodeURIComponent(submissionId)}/withdraw`,
+        {method: 'POST', headers: bearer(accessToken), body: form},
+      );
+    },
+    users: () => request<UserDirectoryEntry[]>('/users'),
 
     leaderboard: (slug, verifiedOnly) =>
       request<LeaderboardRow[]>(
@@ -559,6 +578,15 @@ function createMockApi(baseUrl: string, mockBaseUrl: string): BenchApi {
     quota: () => fixture<Quota>('quota'),
     submit: () => fixture<SubmissionResult>('submission-result'),
     mine: () => fixture<SubmissionResult[]>('submissions-mine'),
+    async withdraw(_accessToken, submissionId) {
+      const rows = await fixture<SubmissionResult[]>('submissions-mine');
+      const row = rows.find((r) => r.submission_id === submissionId);
+      if (!row) {
+        throw new BenchApiError(404, 'unknown submission', [], null);
+      }
+      return {...row, status: 'withdrawn'};
+    },
+    users: () => fixture<UserDirectoryEntry[]>('users'),
 
     async leaderboard(slug, verifiedOnly) {
       const rows = await fixture<LeaderboardRow[]>(`leaderboard-${slug}`);

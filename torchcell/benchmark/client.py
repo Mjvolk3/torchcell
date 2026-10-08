@@ -164,6 +164,22 @@ class BenchClient:
         """Every attempt of the account, newest first, rejected ones included."""
         return _RESULTS.validate_json(self._get("/submissions/mine", auth=True).content)
 
+    def withdraw(self, submission_id: str, note: str = "") -> SubmissionResult:
+        """Take one of the account's own scored submissions off the board.
+
+        The row and its archive are kept; ``note`` says why. Another account's
+        submission, or an unknown id, raises from ``raise_for_status`` (404); one that
+        is already withdrawn or was rejected raises as 409.
+        """
+        response = self._http.post(
+            f"{self.url}/submissions/{submission_id}/withdraw",
+            headers=self._auth(),
+            data={"note": note},
+            files={},
+        )
+        response.raise_for_status()
+        return SubmissionResult.model_validate_json(response.content)
+
     def validate(self, slug: str, predictions: bytes) -> ValidationReport:
         """Validate ``predictions`` against the template of ``slug``; nothing is uploaded."""
         spec = SubmissionSpec.from_template_csv(self.template(slug).decode("utf-8"))
@@ -212,7 +228,9 @@ def _print(value: Any) -> None:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    """CLI: list datasets, fetch a template, read the quota, submit, list attempts."""
+    """CLI: list datasets, fetch a template, read the quota, submit, list attempts,
+    withdraw one.
+    """
     load_dotenv()
     parser = argparse.ArgumentParser(prog="tc-bench", description=main.__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -222,6 +240,11 @@ def main(argv: Sequence[str] | None = None) -> None:
     template.add_argument("--out", type=Path, required=True)
     commands.add_parser("quota", help="Show the account's quota.")
     commands.add_parser("mine", help="List the account's attempts.")
+    withdraw = commands.add_parser(
+        "withdraw", help="Take one of your scored submissions off the board."
+    )
+    withdraw.add_argument("submission_id")
+    withdraw.add_argument("--note", default="", help="Why, kept with the row.")
     submit = commands.add_parser("submit", help="Validate, upload and grade.")
     submit.add_argument("--dataset", required=True)
     submit.add_argument("--metadata", type=Path, required=True, help="A JSON file.")
@@ -243,6 +266,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         _print(client.quota().model_dump(mode="json"))
     elif args.command == "mine":
         _print([r.model_dump(mode="json") for r in client.mine()])
+    elif args.command == "withdraw":
+        _print(client.withdraw(args.submission_id, args.note).model_dump(mode="json"))
     else:
         metadata = SubmissionMetadata.model_validate_json(
             args.metadata.read_text(encoding="utf-8")

@@ -472,6 +472,13 @@ class UserHistory(BaseModel):
     submissions: list[UserHistoryRow]
 
 
+class UserDirectoryEntry(UserPublic):
+    """One row of the people directory: an account with at least one scored submission."""
+
+    n_submissions: int = Field(description="Scored submissions, every dataset.")
+    last_submitted_at: datetime
+
+
 def _user_public(user: User) -> UserPublic:
     return UserPublic(
         user_id=user.id,
@@ -1281,6 +1288,63 @@ def create_app(
         ).all()
         return UserHistory(
             user=_user_public(user), submissions=[_row(row, user) for row in rows]
+        )
+
+    @router.get("/users", response_model=list[UserDirectoryEntry], tags=["leaderboard"])
+    def user_directory(
+        session: Session = Depends(get_session),
+    ) -> list[UserDirectoryEntry]:
+        """Every account with a scored submission, most recent submitter first.
+
+        The way to a person's history without a link from a board row: the directory
+        lists who has submitted, how many times, and when, and each row leads to the
+        account's public record.
+        """
+        rows = session.execute(
+            select(User, func.count(Submission.id), func.max(Submission.created_at))
+            .join(Submission, Submission.user_id == User.id)
+            .where(Submission.status.in_(BOARD_STATUSES))
+            .group_by(User.id)
+        ).all()
+        entries = [
+            UserDirectoryEntry(
+                **_user_public(user).model_dump(),
+                n_submissions=count,
+                last_submitted_at=last,
+            )
+            for user, count, last in rows
+        ]
+        entries.sort(key=lambda e: e.last_submitted_at, reverse=True)
+        return entries
+
+    @router.post(
+        "/submissions/{submission_id}/withdraw",
+        response_model=SubmissionResult,
+        tags=["submissions"],
+    )
+    def withdraw_own_submission(
+        submission_id: str,
+        note: Annotated[str, Form(max_length=2000)] = "",
+        user: User = Depends(current_user),
+        session: Session = Depends(get_session),
+    ) -> SubmissionResult:
+        """Take one of the account's own scored submissions off the board.
+
+        The row and its archive are kept, the status becomes ``withdrawn``, and the
+        note (why: a bug found, a leak noticed) is stored with it. A session token or a
+        personal API token may do this; another account's submission answers 404, as if
+        it did not exist, and an already withdrawn or rejected one answers 409.
+        """
+        submission = session.get(Submission, submission_id)
+        if submission is None or submission.user_id != user.id:
+            raise HTTPException(status_code=404, detail="unknown submission")
+        return review(
+            session,
+            submission_id,
+            BOARD_STATUSES,
+            SubmissionStatus.WITHDRAWN,
+            f"owner:{user.id}",
+            note.strip(),
         )
 
     # ------------------------------------------------------------------------ admin

@@ -89,7 +89,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Boards',
-      items: ['benchmark/leaderboard', 'benchmark/submit', 'benchmark/account'],
+      items: ['benchmark/leaderboard', 'benchmark/submit', 'benchmark/account', 'benchmark/user'],
     },
     {
       type: 'category',

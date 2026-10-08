@@ -47,6 +47,7 @@ import csv
 import io
 import json
 import random
+import subprocess
 import tarfile
 from collections import defaultdict
 from datetime import UTC, datetime
@@ -128,6 +129,7 @@ class BundleBuild(BaseModel):
     seed: int
     fractions: dict[str, float]
     mirror_provenance_sha256: str
+    torchcell_commit: str
     universe: int
     universe_by_qualifier: dict[str, int]
     archives: list[ArchiveUsed]
@@ -202,6 +204,17 @@ def stratified_split(genes: set[str], seed: int) -> dict[Split, list[str]]:
         Split.VAL: ordered[n_train : n_train + n_val],
         Split.TEST: ordered[n_train + n_val :],
     }
+
+
+def repo_head() -> str:
+    """The commit the build runs at, so the code link points at code that exists."""
+    repo = Path(__file__).resolve().parents[3]
+    return subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
 
 
 def content_sha256(hashes: list[str]) -> str:
@@ -395,6 +408,7 @@ def main() -> None:
     )
 
     predictions, coverage = smf_baseline(smf_bytes, splits)
+    head = repo_head()
     RESULTS.mkdir(parents=True, exist_ok=True)
     (RESULTS / "smf_baseline_predictions.csv").write_bytes(predictions)
     metadata = {
@@ -407,7 +421,9 @@ def main() -> None:
         ),
         "model_family": "lookup",
         "encoding": "none",
-        "code_url": "https://github.com/Mjvolk3/torchcell/blob/main/" + SCRIPT,
+        # Pinned to the commit the build ran at: a `main` link answers 404 until the
+        # branch lands, and a pinned one keeps pointing at the code that produced the file.
+        "code_url": f"https://github.com/Mjvolk3/torchcell/blob/{head}/{SCRIPT}",
         "uses_external_data": True,
         "external_data_description": (
             f"SmfCostanzo2016Dataset via tc-data archive {smf.archive} "
@@ -431,6 +447,7 @@ def main() -> None:
         seed=SEED,
         fractions={split.value: fraction for split, fraction in FRACTIONS.items()},
         mirror_provenance_sha256=sha256_bytes(provenance_bytes),
+        torchcell_commit=head,
         universe=len(universe),
         universe_by_qualifier=dict(sorted(by_qualifier.items())),
         archives=[essentiality, smf],

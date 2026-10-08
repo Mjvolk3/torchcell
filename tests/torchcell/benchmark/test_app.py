@@ -56,6 +56,7 @@ from torchcell.benchmark.app import API_PREFIX, BenchServerConfig, create_app
 from torchcell.benchmark.db import (
     ApiToken,
     LoginCode,
+    Submission,
     User,
     init_schema,
     make_session_factory,
@@ -1314,3 +1315,83 @@ def test_tier_and_build_come_from_the_environment_and_show_in_health(
     _set_env(monkeypatch, {**env, "TC_BENCH_TIER": "preview"})
     with pytest.raises(ValidationError, match="tier"):
         BenchServerConfig.from_env()
+
+
+def test_people_directory_lists_scored_submitters_newest_first(
+    bench: Bench, labels: Labels, to_csv: Csv
+) -> None:
+    """Two accounts submit; the directory lists both with their counts, the later
+    submitter first; a withdrawn submission no longer counts, and an account with
+    only a rejected attempt is not listed at all.
+    """
+    assert bench.client.get(bench.url("/users")).json() == []
+    alice = bench.register()
+    bob = bench.register("bob@example.org", "Bob")
+    first = bench.submit(alice, to_csv(labels)).json()["submission_id"]
+    bench.clock.now += timedelta(hours=1)
+    bench.submit(alice, to_csv(labels))
+    bench.clock.now += timedelta(hours=1)
+    bench.submit(bob, to_csv(labels))
+    carol = bench.register("carol@example.org", "Carol")
+    bench.submit(carol, b"record_id,split,target,prediction\nnope,val,fitness,1\n")
+
+    rows = bench.client.get(bench.url("/users")).json()
+    assert [(r["display_name"], r["n_submissions"]) for r in rows] == [
+        ("Bob", 1),
+        ("Alice", 2),
+    ]
+    assert rows[1]["last_submitted_at"] > rows[0]["created_at"]
+
+    bench.client.post(
+        bench.url(f"/submissions/{first}/withdraw"), headers=alice, data={"note": "dup"}
+    )
+    rows = bench.client.get(bench.url("/users")).json()
+    assert [(r["display_name"], r["n_submissions"]) for r in rows] == [
+        ("Bob", 1),
+        ("Alice", 1),
+    ]
+
+
+def test_owner_withdraws_a_submission_and_nobody_else_can(
+    bench: Bench, labels: Labels, to_csv: Csv
+) -> None:
+    """The owner withdraws with a note: status withdrawn, off the board, reviewer
+    recorded as the owner, row kept in the account's own list. A second account gets
+    404 for it; withdrawing again is 409; a rejected attempt cannot be withdrawn.
+    """
+    alice = bench.register()
+    bob = bench.register("bob@example.org", "Bob")
+    submission_id = bench.submit(alice, to_csv(labels)).json()["submission_id"]
+    url = bench.url(f"/submissions/{submission_id}/withdraw")
+
+    denied = bench.client.post(url, headers=bob, data={"note": "mine?"})
+    assert denied.status_code == 404
+    assert bench.client.get(bench.url(f"/leaderboard/{SLUG}")).json() != []
+
+    done = bench.client.post(url, headers=alice, data={"note": "found a leak"})
+    assert done.status_code == 200
+    assert done.json()["status"] == "withdrawn"
+    assert bench.client.get(bench.url(f"/leaderboard/{SLUG}")).json() == []
+    mine = bench.client.get(bench.url("/submissions/mine"), headers=alice).json()
+    assert [(r["submission_id"], r["status"]) for r in mine] == [
+        (submission_id, "withdrawn")
+    ]
+    with bench.sessions() as session:
+        row = session.get(Submission, submission_id)
+        assert row is not None
+        assert row.review_note == "found a leak"
+        assert row.reviewed_by == f"owner:{row.user_id}"
+
+    again = bench.client.post(url, headers=alice, data={})
+    assert again.status_code == 409
+    assert again.json() == {"detail": "submission is withdrawn"}
+
+    bench.clock.now += timedelta(hours=1)  # past the quota window
+    rejected = bench.submit(
+        alice, b"record_id,split,target,prediction\nnope,val,fitness,1\n"
+    ).json()["detail"]["submission_id"]
+    refused = bench.client.post(
+        bench.url(f"/submissions/{rejected}/withdraw"), headers=alice, data={}
+    )
+    assert refused.status_code == 409
+    assert bench.client.post(url).status_code == 401

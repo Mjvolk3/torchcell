@@ -371,7 +371,62 @@ function ApiTokens({api, accessToken}: {api: BenchApi; accessToken: string}): Re
   );
 }
 
-export function MySubmissions({rows}: {rows: SubmissionResult[]}): ReactNode {
+/**
+ * Withdraw one of the account's scored submissions: a reason is asked for, the row
+ * stays in this list as withdrawn, and the board drops it. Only provisional and
+ * verified rows offer it; rejected ones were never on a board.
+ */
+function WithdrawButton({
+  row,
+  onWithdraw,
+}: {
+  row: SubmissionResult;
+  onWithdraw: (submissionId: string, note: string) => Promise<void>;
+}): ReactNode {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (row.status !== 'provisional' && row.status !== 'verified') {
+    return null;
+  }
+  return (
+    <>
+      <button
+        type="button"
+        className="button button--sm button--secondary"
+        disabled={busy}
+        onClick={async () => {
+          const note = window.prompt(
+            'Withdraw this submission from the board? Say why (kept with the row):',
+            '',
+          );
+          if (note === null) {
+            return;
+          }
+          setBusy(true);
+          setError(null);
+          try {
+            await onWithdraw(row.submission_id, note);
+          } catch (e) {
+            setError(e instanceof Error ? e.message : String(e));
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        {busy ? 'Withdrawing' : 'Withdraw'}
+      </button>
+      {error ? <span className={styles.muted}> {error}</span> : null}
+    </>
+  );
+}
+
+export function MySubmissions({
+  rows,
+  onWithdraw,
+}: {
+  rows: SubmissionResult[];
+  onWithdraw?: (submissionId: string, note: string) => Promise<void>;
+}): ReactNode {
   if (rows.length === 0) {
     return <p className={styles.muted}>This account has no submissions.</p>;
   }
@@ -394,6 +449,7 @@ export function MySubmissions({rows}: {rows: SubmissionResult[]}): ReactNode {
             </th>
             <th scope="col">Flags</th>
             <th scope="col">Rejection reasons</th>
+            {onWithdraw ? <th scope="col">Withdraw</th> : null}
           </tr>
         </thead>
         <tbody>
@@ -431,6 +487,11 @@ export function MySubmissions({rows}: {rows: SubmissionResult[]}): ReactNode {
                   </ul>
                 )}
               </td>
+              {onWithdraw ? (
+                <td>
+                  <WithdrawButton row={row} onWithdraw={onWithdraw} />
+                </td>
+              ) : null}
             </tr>
             );
           })}
@@ -529,10 +590,20 @@ function SignedIn({
       <h2>My submissions</h2>
       <p>
         Every attempt from this account, newest first, including rejected attempts and the
-        reasons the grader gave.
+        reasons the grader gave. A scored submission can be withdrawn here if you find a
+        problem with it: it leaves the board, and the row and its file are kept with your
+        note.
       </p>
       <LoadGate state={mineState} onRetry={reloadMine}>
-        {(rows) => <MySubmissions rows={rows} />}
+        {(rows) => (
+          <MySubmissions
+            rows={rows}
+            onWithdraw={async (submissionId, note) => {
+              await api.withdraw(accessToken, submissionId, note);
+              reloadMine();
+            }}
+          />
+        )}
       </LoadGate>
     </>
   );

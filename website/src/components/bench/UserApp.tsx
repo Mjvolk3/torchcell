@@ -237,6 +237,54 @@ export function History({history}: {history: UserHistory}): ReactNode {
   );
 }
 
+/** Everyone with a scored submission, most recent submitter first; each row opens a history. */
+function Directory(): ReactNode {
+  const api = useBenchApi();
+  const [state, reload] = useLoad(() => api.users(), [api]);
+  return (
+    <LoadGate state={state} onRetry={reload}>
+      {(people) =>
+        people.length === 0 ? (
+          <p className={styles.muted}>Nobody has a scored submission yet.</p>
+        ) : (
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Affiliation</th>
+                  <th scope="col">Signs in with</th>
+                  <th scope="col" className={styles.num}>
+                    Scored submissions
+                  </th>
+                  <th scope="col">Last submission</th>
+                </tr>
+              </thead>
+              <tbody>
+                {people.map((person) => (
+                  <tr key={person.user_id}>
+                    <td>
+                      <Link to={`/benchmark/user?id=${encodeURIComponent(person.user_id)}`}>
+                        {person.display_name}
+                      </Link>
+                    </td>
+                    <td>{person.affiliation ?? <span className={styles.muted}>none</span>}</td>
+                    <td>
+                      {person.identity_provider ?? <span className={styles.muted}>none</span>}
+                    </td>
+                    <td className={styles.num}>{person.n_submissions}</td>
+                    <td title={person.last_submitted_at}>{fmtDate(person.last_submitted_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      }
+    </LoadGate>
+  );
+}
+
 function User(): ReactNode {
   const api = useBenchApi();
   const location = useLocation();
@@ -247,19 +295,18 @@ function User(): ReactNode {
   );
 
   if (userId === null) {
-    return (
-      <div className={styles.empty}>
-        <p className={styles.emptyTitle}>No user selected</p>
-        <p>
-          This page takes a user id in the address, as <code>?id=&lt;user_id&gt;</code>. User
-          names on the <Link to="/benchmark/leaderboard">leaderboard</Link> link here.
-        </p>
-      </div>
-    );
+    return <Directory />;
   }
   return (
     <LoadGate state={state} onRetry={reload}>
-      {(history) => <History history={history} />}
+      {(history) => (
+        <>
+          <p>
+            <Link to="/benchmark/user">All people</Link>
+          </p>
+          <History history={history} />
+        </>
+      )}
     </LoadGate>
   );
 }

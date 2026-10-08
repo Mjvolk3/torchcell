@@ -102,10 +102,10 @@ reasons in `rejection_reasons`.
 ## Submit with any HTTP client
 
 <BenchCode language="bash">{`
-curl -X POST {API}/submissions \\
-  -H "Authorization: Bearer $TC_BENCH_TOKEN" \\
-  -F dataset=<dataset> \\
-  -F "metadata=<metadata.json" \\
+curl -X POST {API}/submissions \
+  -H "Authorization: Bearer $TC_BENCH_TOKEN" \
+  -F dataset=<dataset> \
+  -F "metadata=<metadata.json" \
   -F "predictions=@predictions.csv;type=text/csv"
 `}</BenchCode>
 
@@ -129,3 +129,24 @@ shows the name its field has in the request, and "This form as an API request" u
 the form shows the current values as `metadata.json` and a `curl` command.
 
 <SubmitApp />
+
+
+## Withdrawing a submission
+
+If you find a problem with a scored submission, take it off the board yourself. The
+row, the file and your note are kept, and the attempt still counts toward the quota.
+
+```bash
+tc-bench withdraw <submission_id> --note "validation genes leaked into training"
+```
+
+The same call over HTTP, with the session token or an API token:
+
+```bash
+curl -X POST -H "Authorization: Bearer $TC_BENCH_TOKEN" \
+  -F 'note=validation genes leaked into training' \
+  "$TC_BENCH_URL/submissions/<submission_id>/withdraw"
+```
+
+Another account's submission answers `404`; one already withdrawn, or a rejected
+attempt, answers `409`. The account page offers the same action as a button.

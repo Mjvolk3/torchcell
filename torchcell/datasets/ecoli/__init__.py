@@ -24,6 +24,9 @@ sourcing layer.
   as a ko/wt growth-rate ratio; the module records the exact mismatch for the other 25.
 - ``fuhrer2017`` -- ``MetabolomeFuhrer2017Dataset``: the Keio deletion metabolome,
   FIA-TOF-MS ion z-scores per BW25113 strain (BioStudies S-BSST5).
+- ``girgis2009`` -- ``EnvChemgenGirgis2009Dataset``: the 17-antibiotic transposon
+  selection read by microarray genetic footprinting, one combined z-score per
+  (MG1655 gene, drug).
 - ``goodall2018`` -- ``GeneEssentialityGoodall2018Dataset``: BW25113 gene-level TraDIS
   essentiality calls.
 - ``gupta2024`` -- ``ProteinTurnoverGupta2024Dataset``: per-protein total turnover in 13
@@ -68,6 +71,7 @@ from .caglar2017 import RnaseqCaglar2017Dataset as RnaseqCaglar2017Dataset
 from .campos2018 import GrowthRateCampos2018Dataset as GrowthRateCampos2018Dataset
 from .cui2018 import CrispriKnockdownCui2018Dataset as CrispriKnockdownCui2018Dataset
 from .fuhrer2017 import MetabolomeFuhrer2017Dataset as MetabolomeFuhrer2017Dataset
+from .girgis2009 import EnvChemgenGirgis2009Dataset as EnvChemgenGirgis2009Dataset
 from .goodall2018 import (
     GeneEssentialityGoodall2018Dataset as GeneEssentialityGoodall2018Dataset,
 )

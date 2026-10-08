@@ -33,9 +33,12 @@ SGA_DM_SELECTION, 26.0 C (a derivation, recorded in ``_TEMPERATURE.note``), aero
 ``duration_hours`` gap; ``n_samples`` 3 screens, no uncertainty (none released).
 
 The sha256 contract (issue #524, fixed): ``download`` hashes the mirror file before
-copying, so a refusal leaves nothing in ``raw/``; ``process`` verifies the file in
-``raw/`` against the pin before reading a row; ``deposit_raw_mirror`` checks the source
-before creating any mirror directory.
+linking it, so a refusal leaves nothing in ``raw/`` and ``raw/`` never holds a second
+copy of the mirror's bytes; ``_process`` verifies the file in ``raw/`` against the pin
+before PyG creates ``processed/``, so a refusal leaves no ``processed/`` directory and
+every retry refuses again (nothing re-downloads or re-links over the file); ``process``
+re-verifies before reading a row; ``deposit_raw_mirror`` checks the source before
+creating any mirror directory.
 
 The strain-row contract (issue #524, fixed 2026.10.01): a blank Systematic Name raises
 ``BlankSystematicNameError`` and a strain on two rows (the sheet-row-2 strain again, padded)
@@ -50,6 +53,7 @@ import hashlib
 import json
 import os
 import os.path as osp
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
@@ -783,13 +787,15 @@ def test_a_failed_sha256_check_leaves_nothing_in_raw_and_every_retry_refuses(
             c.EnvChemgenCostanzo2021Dataset(root=root, genome=genome)
         assert str(err.value) == expected
         assert os.listdir(Path(root) / "raw") == []
-        assert not (Path(root) / "processed" / "lmdb").exists()
+        assert not (Path(root) / "processed").exists()
 
 
-def test_download_copies_from_the_mirror_and_verifies_the_pin(
+def test_download_links_the_mirror_file_and_verifies_the_pin(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """With the pin set to the synthetic file's digest the build runs through download."""
+    """With the pin set to the synthetic file's digest the build runs through download,
+    and ``raw/`` holds a symlink to the mirror file rather than a copy of its bytes.
+    """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     _two_conditions(monkeypatch)
     data_root = tmp_path / "dr"
@@ -802,8 +808,59 @@ def test_download_copies_from_the_mirror_and_verifies_the_pin(
     built = c.EnvChemgenCostanzo2021Dataset(
         root=str(root), genome=cast(SCerevisiaeGenome, _FullStub())
     )
-    assert (root / "raw" / c._S1_FILENAME).read_bytes() == source.read_bytes()
+    raw = root / "raw" / c._S1_FILENAME
+    assert raw.is_symlink()
+    assert os.readlink(raw) == str(source)
     assert len(built) == 6
+
+
+def test_a_corrupted_raw_file_refuses_before_processed_exists_and_on_every_retry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    real_verify_raw_files: Callable[[str, Mapping[str, str]], None],
+) -> None:
+    """Contract (issue #524): Data File S1 is linked from the mirror under its pin, then
+    the fixture file's bytes are corrupted (one byte appended). PyG skips ``download``
+    because ``raw/`` holds the file, so the next construction meets the corrupted bytes
+    at build time: ``RawSha256MismatchError`` names the ``raw/`` path, the pin and the
+    observed digest; no ``processed/``, ``preprocess/`` or drop log is left; and a retry
+    refuses identically with the link untouched, so nothing re-downloads or re-links.
+    """
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    monkeypatch.setattr(c, "verify_raw_files", real_verify_raw_files)
+    _two_conditions(monkeypatch)
+    data_root = tmp_path / "dr"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    source = _mirror_file(data_root)
+    pin = hashlib.sha256(source.read_bytes()).hexdigest()
+    monkeypatch.setattr(c, "_S1_SHA256", pin)
+    root = tmp_path / "build"
+    dataset = c.EnvChemgenCostanzo2021Dataset.__new__(c.EnvChemgenCostanzo2021Dataset)
+    dataset.root = str(root)
+    dataset.download()
+    raw = root / "raw" / c._S1_FILENAME
+    assert os.readlink(raw) == str(source)
+
+    with open(source, "ab") as handle:
+        handle.write(b"\0")
+    observed = hashlib.sha256(source.read_bytes()).hexdigest()
+    assert observed != pin
+    for _ in range(2):
+        with pytest.raises(RawSha256MismatchError) as err:
+            c.EnvChemgenCostanzo2021Dataset(
+                root=str(root), genome=cast(SCerevisiaeGenome, _FullStub())
+            )
+        assert str(err.value) == (
+            f"sha256 mismatch for {raw}: expected {pin}, observed {observed}"
+        )
+        assert (err.value.path, err.value.expected, err.value.observed) == (
+            str(raw),
+            pin,
+            observed,
+        )
+        assert sorted(os.listdir(root)) == ["raw"]
+        assert os.listdir(root / "raw") == [c._S1_FILENAME]
+        assert os.readlink(raw) == str(source)
 
 
 class _FrozenDatetime:
@@ -964,7 +1021,7 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     """Contract (issue #524): with Data File S1 already in ``raw/`` PyG skips
     ``download``, so ``process`` verifies it first. A file off the pin raises
     ``RawSha256MismatchError`` naming the file and both digests before any row is read;
-    no store is written and the file is left as found.
+    no ``processed/`` directory is created and the file is left as found.
     """
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     staged = off_pin_raw(c, [c._S1_FILENAME])
@@ -978,6 +1035,7 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
         "f6c313de416ce8cc6ae87e2020b4389bd4adeb07cdb6a438aecaf1e45e6228ad, "
         f"observed {staged.observed}"
     )
-    assert os.listdir(staged.root / "processed") == []
+    assert not (staged.root / "processed").exists()
     assert not (staged.root / "preprocess").exists()
+    assert not (staged.root / c._DROPPED_FILENAME).exists()
     assert hashlib.sha256(raw.read_bytes()).hexdigest() == staged.observed

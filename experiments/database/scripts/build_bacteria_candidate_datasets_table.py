@@ -3059,7 +3059,22 @@ CANDIDATES: list[Candidate] = [
         "mimic. These samples are NOT in the Fitness Browser, which is "
         "precisely why the Borchert 2024 compendium reached into SRA for "
         "them; the 39 samples of Putida_ML5_set100 are recoverable at full "
-        "precision from that workbook.",
+        "precision from that workbook. MEASURED SUBSUMPTION, and it is near "
+        "total: the 13 pairwise comparison sheets of Supplementary File 1 "
+        "carry 42 distinct (experiment, replicate) fitness columns, and each "
+        "one equals exactly one Borchert 2024 sample column on all 4,732 "
+        "shared loci to a maximum absolute difference of 0.0005, the "
+        "half-unit of the compendium's three-decimal rounding, with the "
+        "runner-up column never nearer than 1.78. So 198,744 of the released "
+        "values are the served compendium records. What IS new: the "
+        "compendium eliminated 832 protein-coding genes for lacking a value "
+        "in some sample, and 271 of them carry full triplicate fitness here, "
+        "which is the 10,824 records RbTnseqBorchert2023Dataset stores. Its "
+        "t, p, q and adjusted-q columns (64,853 rows x 4) have no field on "
+        "any phenotype class and are recorded on issue #776 rather than "
+        "stored; the 186,957 barcode-level rows are raw read counts and the "
+        "growth curves are back-scattered light with no MeasurementType "
+        "member.",
         accession="https://www.ncbi.nlm.nih.gov/bioproject/PRJNA856070",
         accession_confirmed=True,
         status="candidate",

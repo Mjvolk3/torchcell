@@ -10,6 +10,9 @@ from .baryshnikova2010_adapter import (
     SmfBaryshnikova2010Adapter as SmfBaryshnikova2010Adapter,
 )
 from .bloom2019_adapter import Bloom2019Adapter as Bloom2019Adapter
+from .borchert2023_adapter import (
+    RbTnseqBorchert2023Adapter as RbTnseqBorchert2023Adapter,
+)
 from .borchert2024_adapter import (
     RbTnseqBorchert2024Adapter as RbTnseqBorchert2024Adapter,
 )
@@ -340,6 +343,7 @@ ecoli_adapters = [
 ]
 
 pputida_adapters = [
+    "RbTnseqBorchert2023Adapter",
     "RbTnseqBorchert2024Adapter",
     "IsoprenolTiterCarruthers2025Adapter",
     "ProteomeCarruthers2025Adapter",

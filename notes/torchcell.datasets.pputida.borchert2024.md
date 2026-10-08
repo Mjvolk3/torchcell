@@ -267,3 +267,32 @@ records, gene set 4,732, 290 references, 412 s (the first build: 397 s, 6.3 GB p
 LMDB 4.9 GB (records about 2 KB, no overflow pages). The build manifest reads
 `fresh` under `torchcell.provenance.build_manifest`. Each sample's first record is checked
 against `_intern_record`'s serialization before the fast path writes the rest.
+
+## 2026.10.08 - The 42 Borchert 2023 samples: subsumption measured in full, and a closable duration gap
+
+`RbTnseqBorchert2023Dataset` landed beside this loader. Measuring the partition between the
+two produced two findings about THIS dataset.
+
+**The 42 samples this release attributes to Borchert 2023 are that paper's own cultures,
+value for value.** All 13 of Borchert 2023's pairwise comparison sheets were compared
+numerically against `fitness_measurements`: each of the 42 (experiment, replicate) arms
+equals exactly one sample column here on all 4,732 shared loci, maximum absolute difference
+0.000500 over all 42, with the runner-up column never nearer than 1.7885. Borchert 2023
+releases full precision and this release rounds to three decimals, so 0.000500 is the
+half-unit of that rounding. Corroborated independently by Table S3's BarSeq `IT` index,
+which is the index inside each matched sample name on all 42 (`Exp1A` used `IT08`, and the
+match is `set100IT008`).
+
+**`duration_hours` is closable for those 42 samples and is still a gap here.** This loader
+records `duration_hours` as `not_reported_by_primary` for all 332 samples, correctly: the
+release has no growth-time column. Borchert 2023's Table S4 does, per replicate, at the
+time of sampling (`10:40`, `10:05`, `10:05` for the glucose reference, and so on for all
+14 experiments). `RbTnseqBorchert2023Dataset` stores it. Filling it on the 42 samples here
+would change served records, so it is a full knowledge-graph rebuild rather than an
+increment, and it was not done. Recorded so the next full rebuild can take it.
+
+The 271 loci Borchert 2023 recovers are the ones this release's own filter eliminated
+("In instances where gene fitness data for a particular gene did not exist across all 332
+data sets, the gene was eliminated from analysis"). They are disjoint from this store's
+4,732 by construction, and the sibling build asserts it against this dataset's LMDB on
+every run. Full measurement: [[torchcell.datasets.pputida.borchert2023]].

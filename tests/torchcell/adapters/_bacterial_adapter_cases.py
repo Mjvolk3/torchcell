@@ -96,6 +96,7 @@ from torchcell.adapters import (
     ProteomeSrmSet1Schmidt2016Adapter,
     ProteomeSrmSet2Schmidt2016Adapter,
     PutidaPrecise321Lim2022Adapter,
+    RbTnseqBorchert2023Adapter,
     RbTnseqBorchert2024Adapter,
     RbTnseqPrice2018EcoliAdapter,
     RnaseqCaglar2017Adapter,
@@ -148,6 +149,7 @@ from torchcell.datasets.ecoli.shiver2016 import EnvChemgenShiver2016Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
 from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
 from torchcell.datasets.ecoli.wang2018 import CrispriGuideFitnessWang2018Dataset
+from torchcell.datasets.pputida.borchert2023 import RbTnseqBorchert2023Dataset
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
 from torchcell.datasets.pputida.carruthers2025 import (
     IsoprenolTiterCarruthers2025Dataset,
@@ -476,6 +478,13 @@ BACTERIAL: list[Bacterial] = [
         CrispriGuideFitnessWang2018Dataset,
         RESPONSE,
         crispr=True,
+    ),
+    _case(
+        RbTnseqBorchert2023Adapter,
+        "borchert2023",
+        "rbtnseq_borchert2023",
+        RbTnseqBorchert2023Dataset,
+        RESPONSE,
     ),
     _case(
         RbTnseqBorchert2024Adapter,

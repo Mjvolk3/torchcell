@@ -518,6 +518,7 @@ BACTERIAL_DATASETS = {
     "ProteomeSrmSet1Schmidt2016Dataset",
     "ProteomeSrmSet2Schmidt2016Dataset",
     "PutidaPrecise321Lim2022Dataset",
+    "RbTnseqBorchert2023Dataset",
     "RbTnseqBorchert2024Dataset",
     "RbTnseqPrice2018EcoliDataset",
     "RnaseqCaglar2017Dataset",

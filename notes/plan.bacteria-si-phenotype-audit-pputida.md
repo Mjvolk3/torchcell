@@ -778,7 +778,7 @@ items. Items 1 to 5 and 7 need no schema change and no new class.
 
 | rank | risk | evidence | status |
 |---|---|---|---|
-| 1 | **Borchert 2023's comparison sheets ARE the Borchert 2024 compendium's fitness** | Measured here: joining `borchertRBTnSeqIdentifiesGenetic2023/si/si1.xlsx` sheet `Glu_v_Glu_Van` on `old_locus_tag` against `fModule_Metadata.xlsx` `sysName`, all 4,732 overlapping loci agree on six per-replicate columns with max absolute difference 0.000500, which is the half-unit of the compendium's three-decimal rounding. 12 further comparison sheets were header-inspected and NOT numerically compared | Latent: Borchert 2023 has no loader. A loader over those sheets would re-store the fitness. Its t, p, q and adjusted-q columns, its 186,957 barcode-level rows and its growth curves ARE new |
+| 1 | **Borchert 2023's comparison sheets ARE the Borchert 2024 compendium's fitness** | Measured here: joining `borchertRBTnSeqIdentifiesGenetic2023/si/si1.xlsx` sheet `Glu_v_Glu_Van` on `old_locus_tag` against `fModule_Metadata.xlsx` `sysName`, all 4,732 overlapping loci agree on six per-replicate columns with max absolute difference 0.000500, which is the half-unit of the compendium's three-decimal rounding. 12 further comparison sheets were header-inspected and NOT numerically compared | **CLOSED 2026.10.08**, see the section below: all 13 sheets are now compared numerically, 42 of 42 arms match to 0.000500 with the runner-up no nearer than 1.7885, and `RbTnseqBorchert2023Dataset` stores only the 271 loci the compendium eliminated (10,824 records). The build asserts the partition against the served store in both directions |
 | 2 | **Caglar 2017's glucose time course is Houser 2015 re-released** | The paper says so: "Results from one of these conditions, long-term glucose starvation, have been presented previously10", and splits the deposits, "accession GSE67402 for the glucose time-course previously published10 ... accession PXD002140 for the glucose time-course previously published10". Measured here: `experiment == 'glucose_time_course'` covers 27 samples (MURI 16 to 33 and 97 to 105) and all 27 appear as columns in BOTH the 152-sample mRNA table and the 105-sample protein table, i.e. 17.8 % and 25.7 % of the stored records | Latent: Houser 2015 is not mirrored and has no loader. Nothing in the Caglar loader or note records this |
 | 3 | **Carruthers 2025, internal: two Source Data sheets export the same control triplicate** | `Supplementary Figure 13d`'s `Non-Target` rows (298.0681, 309.4453, 293.9713) are bit-identical to `Figure 6a`'s `PP_0815` / `Non-target` rows. Their `Target` triplicates are NOT the same cultures: 422.4448, 495.3173, 464.3335 against 464.3335, 477.8291, 450.4693, sharing exactly one value | Live for any revision that loads both sheets. Must deduplicate the reference group and decide what the disagreeing Target triplicates are |
 | 4 | **Carruthers 2025, internal: the KO-comparison sheets re-export the stored titers** | All 33 `Figure 6a` `CRISPRi` rows and all 99 `Figure 6d` `CRISPRi` rows match a `Figure 4b` value; the KO rows match none | Live. A revision must take only the non-CRISPRi rows |
@@ -881,7 +881,8 @@ over the line. That contradiction is the decision, and it gates five of the rows
   join measured in Caglar's own Table S1, not on reading Houser.
 - **Twelve of Borchert 2023's 13 comparison sheets.** Header-inspected; only `Glu_v_Glu_Van`
   was numerically compared. The six-column, 4,732-gene match there is strong evidence the
-  others follow, and it is not a measurement of them.
+  others follow, and it is not a measurement of them. **Measured 2026.10.08** (see the
+  section below): all thirteen follow.
 - **The meaning of Lim 2025's `Fit mean` row.** Measured absent from `paper.md` and from the
   extracted `si1.docx` text. Not guessed.
 - **Raw deposits.** PRIDE PXD063733 / 063737 / 063738 / 063740 / 063743 / 063744 / 063746
@@ -1168,3 +1169,53 @@ documents, not a contradiction.
 becomes 136 once rank 1 (55, corrected to 0 by the Caglar section above) and rank 4 (21,
 corrected to 0 here) come out: 49 + 21 + 10 + 1 for ranks 2, 3, 5 and 7, of which ranks 5
 and 7 are now built and ranks 2 and 3 (Carruthers, 70 records) are still open.
+
+
+## 2026.10.08 - Row 29 closed: the subsumption extended to all 13 sheets, and the 271 loci it recovers
+
+Duplication risk 1 above is now measured in full rather than on one sheet, and the loader
+that follows from it is landed.
+
+**The subsumption, reproduced and extended.** Across Borchert 2023's 13 comparison sheets
+the replicate columns resolve to 42 distinct (experiment, replicate) arms, which is Table
+S3's own `Exp./Rep.` key `Exp1A` to `Exp14C`. Each arm was joined to the compendium's
+`fitness_measurements` on the locus tag and compared against all 332 sample columns.
+
+| statistic | value |
+|---|---|
+| arms measured | 42 of 42 |
+| shared loci per arm | 4,732 |
+| largest absolute difference over all 42 | 0.000500 |
+| smallest runner-up distance over all 42 | 1.7885 |
+| (locus, arm) values therefore already served | 198,744 |
+
+Independently corroborated and not used as the proof: Table S3's BarSeq `IT` index of every
+(experiment, replicate) is the index inside the matched compendium sample name, on all 42
+(`1A` = `IT08` against `set100IT008`).
+
+Two further internal measurements. The eleven day-1 sheets' `M9_Glucose_Rep*` columns agree
+to exactly 0.0 while the `Glu_v_Glu_PCA` sheet's differ by up to 6.93, which is the paper's
+"performed on a separate day" made numeric and the reason experiments 1 and 13 are separate
+arms. All 26 `_mean` columns are the arithmetic mean of their own three replicates to at
+most 7.3e-14, so they are derived.
+
+**What changed the partition.** The compendium eliminated 832 of the 5,564 protein-coding
+genes for lacking a value in some sample. Measured: 271 of them carry full triplicate
+fitness in at least one Borchert 2023 sheet, 10,824 (locus, arm) values the compendium does
+not have, all 271 resolving as current KT2440 locus tags. That is the new material, and it
+is what `RbTnseqBorchert2023Dataset` stores.
+
+**The significance triple has no home.** The 64,853 (gene, comparison) rows each carry a
+`t-statistic`, `p-value`, `q-value` and `adjusted_q-value`. No phenotype class has a field
+for any of them, `GeneInteractionPhenotype.gene_interaction_p_value` is the schema's only
+p-value and is not applicable to a fitness contrast, and the triple is a different grain
+besides: it belongs to a contrast of two cultures, not to one (locus, culture) record. The
+measurement is recorded on issue #776, which already asks for fields on
+`EnvironmentResponsePhenotype`; no near-duplicate issue was opened.
+
+**A gap on the served records that Table S4 closes.** Borchert 2023 releases a per-replicate
+growth duration at the time of sampling, which the compendium does not, so `duration_hours`
+is a value on the new records and remains a gap on the 332 served ones. Filling it there is
+a full-rebuild change and was not done.
+
+Details, every quote and the L0 to L4 result: [[torchcell.datasets.pputida.borchert2023]].

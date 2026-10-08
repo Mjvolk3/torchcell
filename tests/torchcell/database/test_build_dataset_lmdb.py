@@ -340,8 +340,8 @@ def test_main_requires_the_dataset_flag(capsys: pytest.CaptureFixture[str]) -> N
         m.main([])
     assert excinfo.value.code == 2
     assert capsys.readouterr().err.splitlines()[-1] == (
-        "python -m torchcell.database.build_dataset_lmdb: error: the following "
-        "arguments are required: --dataset"
+        "python -m torchcell.database.build_dataset_lmdb: error: --dataset is required "
+        "unless --list-stale is given"
     )
 
 
@@ -507,3 +507,156 @@ def test_a_bacterial_loader_naming_genome_is_refused_before_any_genome_is_built(
     with pytest.raises(TypeError, match="is a bacterial loader that names 'genome'"):
         build_dataset(BacterialLoaderNamingYeastGenome, "/dr", io_workers=0)
     assert genome_fakes == []
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.08: --list-stale and --retire-existing, the bulk-rebuild half the array
+# slurm script (gilahyper_build_dataset_lmdbs_array.slurm) runs per task.
+# --------------------------------------------------------------------------- #
+def test_retire_existing_renames_both_directories_and_refuses_a_taken_stamp(
+    tmp_path: Path,
+) -> None:
+    """``processed`` and ``preprocess`` become ``.superseded.<stamp>`` siblings (a rename,
+    their contents intact); a missing directory is skipped; a sibling that already carries
+    the stamp is refused before anything moves.
+    """
+    root = tmp_path / "store"
+    (root / "processed" / "lmdb").mkdir(parents=True)
+    (root / "processed" / "lmdb" / "data.mdb").write_bytes(b"x")
+    (root / "preprocess").mkdir()
+    moved = m.retire_existing(str(root), stamp="20261008-000000")
+    assert moved == [
+        f"{root}/processed.superseded.20261008-000000",
+        f"{root}/preprocess.superseded.20261008-000000",
+    ]
+    assert (
+        root / "processed.superseded.20261008-000000" / "lmdb" / "data.mdb"
+    ).exists()
+    assert sorted(p.name for p in root.iterdir()) == [
+        "preprocess.superseded.20261008-000000",
+        "processed.superseded.20261008-000000",
+    ]
+    (root / "processed").mkdir()
+    with pytest.raises(FileExistsError, match="refusing to retire over it"):
+        m.retire_existing(str(root), stamp="20261008-000000")
+    assert (root / "processed").is_dir()
+
+
+def test_main_retire_existing_rebuilds_over_an_old_store(
+    tmp_path: Path,
+    cli: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A second build with ``--retire-existing`` prints the two retired paths, leaves the
+    old store as superseded siblings, and builds a fresh one in place.
+    """
+    import time as real_time
+
+    root = tmp_path / "data" / "torchcell" / "toy_build"
+    monkeypatch.setattr(m, "time", real_time)  # two builds outrun the two-tick clock
+    assert m.main(["--dataset", "ToyBuildDataset", "--data-root", str(tmp_path)]) == 0
+    capsys.readouterr()
+    assert (
+        m.main(
+            [
+                "--dataset",
+                "ToyBuildDataset",
+                "--data-root",
+                str(tmp_path),
+                "--retire-existing",
+            ]
+        )
+        == 0
+    )
+    out = capsys.readouterr().out.splitlines()
+    retired = [line for line in out if line.startswith("retired ")]
+    assert len(retired) == 2
+    assert retired[0].startswith(f"retired {root}/processed.superseded.")
+    assert retired[1].startswith(f"retired {root}/preprocess.superseded.")
+    assert (root / "processed" / "lmdb" / "data.mdb").is_file()
+    assert (root / "preprocess" / "build_manifest.json").is_file()
+    names = sorted(p.name for p in root.iterdir())
+    assert names[:2] == ["preprocess", names[1]] and names[1].startswith(
+        "preprocess.superseded."
+    )
+
+
+def test_list_stale_names_every_mapped_store_that_is_not_fresh(
+    tmp_path: Path,
+    cli: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Over a map of three toys: a just-built store is fresh (not listed), a store
+    without a build manifest and an unbuilt one are listed, in map order; the status
+    objects carry the reason.
+    """
+    import time as real_time
+
+    import torchcell.knowledge_graphs.dataset_adapter_map as adapter_map
+
+    monkeypatch.setattr(m, "time", real_time)  # two builds outrun the two-tick clock
+
+    class ToyUnbuiltDataset(ToyBuildDataset):
+        def __init__(self, root: str = "data/torchcell/toy_unbuilt", **kw: Any) -> None:
+            super().__init__(root=root, **kw)
+
+    calls: list[bool] = []
+
+    def build_adapter_map(include_private: bool = False) -> dict[type, type]:
+        calls.append(include_private)
+        return {
+            ToyBuildDataset: object,
+            ToyNoManifestDataset: object,
+            ToyUnbuiltDataset: object,
+        }
+
+    monkeypatch.setattr(adapter_map, "build_adapter_map", build_adapter_map)
+    assert m.main(["--dataset", "ToyBuildDataset", "--data-root", str(tmp_path)]) == 0
+    assert (
+        m.main(["--dataset", "ToyNoManifestDataset", "--data-root", str(tmp_path)]) == 1
+    )
+    capsys.readouterr()
+    assert (
+        m.main(["--list-stale", "--include-private", "--data-root", str(tmp_path)]) == 0
+    )
+    assert capsys.readouterr().out == "ToyNoManifestDataset\nToyUnbuiltDataset\n"
+    assert calls == [True]
+    statuses = m.mapped_store_status(str(tmp_path), include_private=False)
+    assert [(s.dataset_class, s.state, s.drift) for s in statuses] == [
+        ("ToyBuildDataset", "fresh", []),
+        ("ToyNoManifestDataset", "no_manifest", []),
+        ("ToyUnbuiltDataset", "no_lmdb", []),
+    ]
+    assert [s.needs_rebuild for s in statuses] == [False, True, True]
+
+
+def test_list_stale_reports_a_store_whose_closure_drifted(
+    tmp_path: Path, cli: list[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Editing one stored fingerprint makes the store stale on that symbol alone."""
+    import json as _json
+
+    import torchcell.knowledge_graphs.dataset_adapter_map as adapter_map
+
+    monkeypatch.setattr(
+        adapter_map,
+        "build_adapter_map",
+        lambda include_private=False: {ToyBuildDataset: object},
+    )
+    assert m.main(["--dataset", "ToyBuildDataset", "--data-root", str(tmp_path)]) == 0
+    manifest = (
+        tmp_path
+        / "data"
+        / "torchcell"
+        / "toy_build"
+        / "preprocess"
+        / "build_manifest.json"
+    )
+    doc = _json.loads(manifest.read_text())
+    symbol = sorted(doc["closure"])[0]
+    doc["closure"][symbol] = "0" * 16
+    manifest.write_text(_json.dumps(doc))
+    (status,) = m.mapped_store_status(str(tmp_path), include_private=False)
+    assert (status.state, status.drift) == ("stale", [symbol])

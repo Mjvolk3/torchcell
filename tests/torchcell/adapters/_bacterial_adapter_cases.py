@@ -71,6 +71,7 @@ from torchcell.adapters import (
     IsoprenylAcetateTiterKang2026Adapter,
     MetabolomeFuhrer2017Adapter,
     MetabolomeRapp2026Adapter,
+    MetabolomeSchastnaya2021Adapter,
     ProteinTurnoverGupta2024Adapter,
     ProteomeCaglar2017Adapter,
     ProteomeCarruthers2025Adapter,
@@ -101,6 +102,7 @@ from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
 from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
 from torchcell.datasets.ecoli.rousset2018 import CrispriScreenRousset2018Dataset
+from torchcell.datasets.ecoli.schastnaya2021 import MetabolomeSchastnaya2021Dataset
 from torchcell.datasets.ecoli.schmidt2016 import ProteomeSchmidt2016Dataset
 from torchcell.datasets.ecoli.shiver2016 import EnvChemgenShiver2016Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
@@ -188,9 +190,10 @@ TURNOVER = "protein turnover phenotype"
 # perturbation in any record, and so are Schmidt 2016, whose paper's three deletion
 # strains carry no abundance data and are not loaded, and Mori 2021, whose engineered
 # NCM3722 derivatives are all in samples dropped on their medium; Fuhrer 2017 and
-# Goodall 2018 carry no environment perturbation, and so does Campos 2018, whose screen
-# is one medium at one temperature; the CRISPRi leaves of Carruthers, Cui, Menasalvas,
-# Wang 2018 and Yunus carry a CrisprConstruct. Shiver 2016's three temperature-only conditions
+# Goodall 2018 carry no environment perturbation, and neither do Campos 2018, whose
+# screen is one medium at one temperature, nor Schastnaya 2021, whose carbon source is
+# part of the medium; the CRISPRi leaves of Carruthers, Cui, Menasalvas, Wang 2018 and
+# Yunus carry a CrisprConstruct. Shiver 2016's three temperature-only conditions
 # carry no environment perturbation, but its other 54 do, so its pair is enabled.
 BACTERIAL: list[Bacterial] = [
     _case(
@@ -294,6 +297,14 @@ BACTERIAL: list[Bacterial] = [
         crispr=True,
         env_perturbation=False,
         phage=True,
+    ),
+    _case(
+        MetabolomeSchastnaya2021Adapter,
+        "schastnaya2021",
+        "metabolome_schastnaya2021",
+        MetabolomeSchastnaya2021Dataset,
+        "metabolite phenotype",
+        env_perturbation=False,
     ),
     _case(
         EnvChemgenShiver2016Adapter,

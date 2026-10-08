@@ -51,6 +51,11 @@ sourcing layer.
   Its fifth released screen, growth over 17 generations, is Cui 2018's screen released
   again (r 1.0000 over the 54,326 spacers they share), so it is accounted for in the
   retention ledger rather than stored twice.
+- ``schastnaya2021`` -- ``MetabolomeSchastnaya2021Dataset``: the KEIO deletion arm of a
+  phosphosite screen, FIA-TOF-MS ion log2 fold changes against an MG1655 wild type on
+  four carbon sources. Its 171 phosphomutant columns are a genomic codon substitution,
+  for which the schema has no bacterial perturbation leaf, so they are accounted for in
+  the retention ledger rather than stored under a leaf that would misstate them.
 - ``schmidt2016`` -- ``ProteomeSchmidt2016Dataset``: the condition-dependent BW25113
   proteome, one record per loaded growth condition in absolute protein copies per cell.
 - ``mori2021`` -- ``ProteomeMori2021Dataset``: the DIA/SWATH absolute proteome, one
@@ -84,6 +89,9 @@ from .price2018 import RbTnseqPrice2018EcoliDataset as RbTnseqPrice2018EcoliData
 from .rapp2026 import MetabolomeRapp2026Dataset as MetabolomeRapp2026Dataset
 from .rousset2018 import (
     CrispriScreenRousset2018Dataset as CrispriScreenRousset2018Dataset,
+)
+from .schastnaya2021 import (
+    MetabolomeSchastnaya2021Dataset as MetabolomeSchastnaya2021Dataset,
 )
 from .schmidt2016 import ProteomeSchmidt2016Dataset as ProteomeSchmidt2016Dataset
 from .shiver2016 import EnvChemgenShiver2016Dataset as EnvChemgenShiver2016Dataset

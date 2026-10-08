@@ -497,6 +497,7 @@ BACTERIAL_DATASETS = {
     "IsoprenylAcetateTiterKang2026Dataset",
     "MetabolomeFuhrer2017Dataset",
     "MetabolomeRapp2026Dataset",
+    "MetabolomeSchastnaya2021Dataset",
     "ProteinTurnoverGupta2024Dataset",
     "ProteomeMori2021Dataset",
     "ProteomeCaglar2017Dataset",

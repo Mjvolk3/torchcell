@@ -7,6 +7,8 @@ from pathlib import Path
 import pytest
 from pydantic import BaseModel
 
+import torchcell.knowledge_graphs.kg_manifest as kg_manifest
+from torchcell.artifacts.ref import ArtifactRef
 from torchcell.knowledge_graphs.kg_manifest import (
     VERSION_RELPATH,
     AdapterDrift,
@@ -26,12 +28,16 @@ from torchcell.knowledge_graphs.kg_manifest import (
     format_batch_report,
     format_report,
     graph_schema_from_yaml,
+    load_manifest,
+    manifest_artifact_refs,
     package_tag_at_ref,
     package_version_at_ref,
     package_version_from_source,
     parse_n_experiments,
     record_admission,
+    record_artifact_refs,
     record_batch_admission,
+    save_manifest,
     split_dataset_args,
     superset_check,
     value_surface_drift,
@@ -730,3 +736,196 @@ def test_manifest_entry_without_superset_fields_still_loads() -> None:
     assert entry.superset_of is None
     report = AdmissionReport.model_validate(_member("X").model_dump())
     assert report.served is False and report.superset is None
+
+
+# ------------------------------------------------------------------ artifact pointers
+
+SHA_GENES = "1" * 64
+SHA_FASTA = "2" * 64
+#: Two members of one genomes file (with size and media type) and one raw file.
+GENES_G1 = ArtifactRef(
+    tier="genomes",
+    key="set_v1",
+    path="genes.tar.gz",
+    member="YAL001C",
+    sha256=SHA_GENES,
+    bytes=10,
+    media_type="application/gzip",
+)
+GENES_G2 = GENES_G1.model_copy(update={"member": "YAL002W"})
+FASTA = ArtifactRef(
+    tier="raw", key="caudal2024", path="data/seqs.fasta", sha256=SHA_FASTA
+)
+
+
+class _RefExperiment(BaseModel):
+    """A record class that carries pointers, one nested in a list."""
+
+    sequence_ref: ArtifactRef
+    extra_refs: list[ArtifactRef] = []
+
+
+class _RefReference(BaseModel):
+    """A reference model with no pointer."""
+
+    label: str
+
+
+class _FakeRefDataset:
+    """A three-record dev-tree dataset whose experiments carry refs; records each open."""
+
+    opened: list[str] = []
+    closed: list[str] = []
+    RECORDS = [
+        _RefExperiment(sequence_ref=GENES_G2),
+        _RefExperiment(sequence_ref=FASTA, extra_refs=[GENES_G1]),
+        _RefExperiment(sequence_ref=GENES_G1),
+    ]
+
+    def __init__(self, root: str = "data/torchcell/fake_ref") -> None:
+        self.root = root
+        type(self).opened.append(root)
+
+    def __len__(self) -> int:
+        return len(self.RECORDS)
+
+    def __getitem__(self, i: int) -> int:
+        return i
+
+    def transform_item(self, i: int) -> dict[str, object]:
+        return {
+            "experiment": self.RECORDS[i],
+            "reference": _RefReference(label="r"),
+            "publication": "not a model",
+        }
+
+    def close_lmdb(self) -> None:
+        type(self).closed.append(self.root)
+
+
+def _ref_entry(name: str, closure: dict[str, str]) -> KgDatasetEntry:
+    return KgDatasetEntry(
+        dataset_class=name,
+        loader_relpath=f"torchcell/datasets/{name}.py",
+        adapter_files=[],
+        closure=closure,
+        n_experiments=3,
+        biocypher_out="2026-10-08_00-00-00",
+        import_mode="full",
+        admitted_at="2026-10-08T00:00:00+00:00",
+    )
+
+
+@pytest.fixture
+def ref_registry(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Serve ``_FakeRefDataset`` as ``RefDataset``; returns every name looked up."""
+    looked_up: list[str] = []
+
+    def dataset_class(name: str) -> type:
+        looked_up.append(name)
+        assert name == "RefDataset", f"looked up {name}"
+        return _FakeRefDataset
+
+    monkeypatch.setattr(kg_manifest, "_dataset_class", dataset_class)
+    monkeypatch.setattr(
+        kg_manifest, "_dataset_default_root", lambda cls: "data/torchcell/fake_ref"
+    )
+    monkeypatch.setattr(_FakeRefDataset, "opened", [])
+    monkeypatch.setattr(_FakeRefDataset, "closed", [])
+    return looked_up
+
+
+def _ref_manifest() -> KgBuildManifest:
+    return _manifest_with(
+        [
+            _ref_entry("RefDataset", {"ArtifactRef": "f0", "Experiment": "f1"}),
+            _ref_entry("PlainDataset", {"Experiment": "f1"}),
+        ]
+    )
+
+
+#: The recorded set: two FILE-level refs, sorted by (tier, key, path, sha256), with
+#: member, bytes and media_type stripped.
+FILE_REFS = [
+    ArtifactRef(tier="genomes", key="set_v1", path="genes.tar.gz", sha256=SHA_GENES),
+    ArtifactRef(tier="raw", key="caudal2024", path="data/seqs.fasta", sha256=SHA_FASTA),
+]
+
+
+def test_record_artifact_refs_walks_only_ref_bearing_closures(
+    tmp_path: Path, ref_registry: list[str]
+) -> None:
+    """Three records with two members of one file and one other file record exactly two
+    file-level refs; the closure without ArtifactRef gets [] and is never opened.
+    """
+    manifest = _ref_manifest()
+    assert manifest_artifact_refs(manifest) is None
+    counts = record_artifact_refs(manifest, tmp_path)
+    assert counts == {"PlainDataset": 0, "RefDataset": 2}
+    assert manifest.datasets["RefDataset"].artifact_refs == FILE_REFS
+    assert manifest.datasets["PlainDataset"].artifact_refs == []
+    assert ref_registry == ["RefDataset"]
+    root = str(tmp_path / "data/torchcell/fake_ref")
+    assert (_FakeRefDataset.opened, _FakeRefDataset.closed) == ([root], [root])
+    assert manifest_artifact_refs(manifest) == {
+        "PlainDataset": [],
+        "RefDataset": FILE_REFS,
+    }
+
+
+def test_record_artifact_refs_only_records_the_named_subset(
+    tmp_path: Path, ref_registry: list[str]
+) -> None:
+    """``only`` records the named entries and leaves the rest unrecorded (None); an
+    unserved name is refused before anything is opened.
+    """
+    manifest = _ref_manifest()
+    assert record_artifact_refs(manifest, tmp_path, only=["PlainDataset"]) == {
+        "PlainDataset": 0
+    }
+    assert manifest.datasets["PlainDataset"].artifact_refs == []
+    assert manifest.datasets["RefDataset"].artifact_refs is None
+    assert ref_registry == []
+    assert manifest_artifact_refs(manifest) is None
+    with pytest.raises(
+        ValueError, match=r"datasets not in the manifest: \['GoneDataset'\]"
+    ):
+        record_artifact_refs(manifest, tmp_path, only=["RefDataset", "GoneDataset"])
+    assert _FakeRefDataset.opened == []
+
+
+def test_cli_artifact_refs_saves_the_manifest_and_prints_one_line_per_dataset(
+    tmp_path: Path, ref_registry: list[str], capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Every served dataset by default, or the ``--dataset`` subset."""
+    path = tmp_path / "kg_manifest.json"
+    save_manifest(_ref_manifest(), path)
+    argv = ["--manifest", str(path), "artifact-refs", "--data-root", str(tmp_path)]
+    assert kg_manifest.main([*argv, "--dataset", "PlainDataset"]) == 0
+    assert capsys.readouterr().out == (
+        "PlainDataset: no ref-bearing class in its closure\n"
+    )
+    assert load_manifest(path).datasets["RefDataset"].artifact_refs is None
+    assert kg_manifest.main(argv) == 0
+    assert capsys.readouterr().out == (
+        "PlainDataset: no ref-bearing class in its closure\nRefDataset: 2 pointer(s)\n"
+    )
+    saved = load_manifest(path)
+    assert saved.datasets["RefDataset"].artifact_refs == FILE_REFS
+    assert saved.datasets["PlainDataset"].artifact_refs == []
+
+
+def test_manifest_entry_without_artifact_refs_loads_as_unrecorded() -> None:
+    """Back-compat: an entry written before pointer recording reads as None, not []."""
+    entry = KgDatasetEntry.model_validate(
+        {
+            "dataset_class": "X",
+            "loader_relpath": "x.py",
+            "adapter_files": [],
+            "closure": {},
+            "biocypher_out": "t",
+            "import_mode": "full",
+            "admitted_at": "t",
+        }
+    )
+    assert entry.artifact_refs is None

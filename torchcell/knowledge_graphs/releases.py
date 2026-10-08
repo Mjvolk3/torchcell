@@ -38,6 +38,13 @@ node and the committed snapshot (``snapshot``, ``torchcell.knowledge_graphs
 .release_snapshot``) carry them, so ``scripts/kg_compat_page.py`` can say which package
 tags read which release without the machine-local manifest.
 
+**The files the graph points at.** A release also records its artifact pointer set
+(``artifact_refs``, dataset -> file-level ``ArtifactRef``; recorded by ``kg_manifest
+artifact-refs`` before the stamp, None on a release that predates the recording).
+``artifacts`` reads it from a store's node and asks tc-data whether every pointed file is
+listed with the sha256 the pointer pins, printing one ``STATE<TAB>CODE<TAB>DETAIL`` line
+for ``scripts/ops.sh``.
+
     python -m torchcell.knowledge_graphs.releases status --label gilahyper
     python -m torchcell.knowledge_graphs.releases datasets --version latest
     python -m torchcell.knowledge_graphs.releases diff 2026.09.17-7715ee35 latest
@@ -50,6 +57,7 @@ import argparse
 import csv
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from collections import defaultdict
@@ -58,11 +66,16 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
 
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
+# ArtifactRef is defined on the schema surface; importing it from there keeps the
+# artifacts package (fastapi, pandas through the genome registry) off the CLI's import path.
+from torchcell.datamodels.schema import ArtifactRef
 from torchcell.knowledge_graphs.kg_manifest import (
     KgBuildManifest,
     checkout_package_version,
+    manifest_artifact_refs,
     surface_in_worktree,
 )
 from torchcell.provenance.schema_deps import SchemaSurface
@@ -73,6 +86,9 @@ PINNED_ALIAS = "pinned"
 DEFAULT_VERSION = LATEST_ALIAS
 SYSTEM_DATABASES = ("system",)
 _COMMIT_CHARS = 8
+DEFAULT_TC_DATA_API_KEY_ENV = "TC_DATA_API_KEY"
+#: How many failing pointers the one-line ``artifacts`` verdict names.
+_FAILING_SHOWN = 3
 
 
 # --------------------------------------------------------------------------- models
@@ -105,6 +121,9 @@ class KgRelease(BaseModel):
     datasets: dict[str, ReleaseDataset]
     # dataset -> schema symbol -> contract fingerprint at build; the compatibility check
     closures: dict[str, dict[str, str]] = Field(default_factory=dict)
+    # dataset -> the file-level artifact pointers its records carry; None on a node
+    # written before pointer recording, or from a manifest with an unrecorded entry
+    artifact_refs: dict[str, list[ArtifactRef]] | None = None
 
     @property
     def n_datasets(self) -> int:
@@ -129,6 +148,17 @@ class KgRelease(BaseModel):
                 separators=(",", ":"),
             ),
             "closures_json": json.dumps(self.closures, separators=(",", ":")),
+            "artifact_refs_json": (
+                None
+                if self.artifact_refs is None
+                else json.dumps(
+                    {
+                        name: [ref.model_dump(exclude_none=True) for ref in refs]
+                        for name, refs in sorted(self.artifact_refs.items())
+                    },
+                    separators=(",", ":"),
+                )
+            ),
         }
 
     @classmethod
@@ -138,6 +168,15 @@ class KgRelease(BaseModel):
             k: ReleaseDataset.model_validate(v)
             for k, v in json.loads(props["datasets_json"]).items()
         }
+        refs_json = props.get("artifact_refs_json")
+        artifact_refs = (
+            None
+            if refs_json is None
+            else {
+                name: [ArtifactRef.model_validate(ref) for ref in refs]
+                for name, refs in json.loads(refs_json).items()
+            }
+        )
         return cls(
             release=props["release"],
             version=props["version"],
@@ -150,6 +189,7 @@ class KgRelease(BaseModel):
             n_nodes=props.get("n_nodes"),
             datasets=datasets,
             closures=json.loads(props.get("closures_json") or "{}"),
+            artifact_refs=artifact_refs,
         )
 
 
@@ -367,6 +407,7 @@ def release_from_manifest(
         closures={
             name: dict(entry.closure) for name, entry in manifest.datasets.items()
         },
+        artifact_refs=manifest_artifact_refs(manifest),
     )
 
 
@@ -797,7 +838,207 @@ def format_table(rows: list[list[str]]) -> str:
     )
 
 
+# --------------------------------------------------------------------------- artifacts
+
+
+class PointerCheck(BaseModel):
+    """One distinct pointed file and what tc-data's manifest says about it."""
+
+    ref: str  # tc://<tier>/<key>/<path>
+    sha256: str  # what the pointer pins
+    state: Literal["listed", "sha256_mismatch", "missing"]
+    listed_sha256: str | None = None  # what the manifest lists, when it lists the path
+    datasets: list[str]  # the served datasets whose records point at the file
+
+
+class ArtifactProbe(BaseModel):
+    """The verdict of ``artifacts``: one ops line plus the full classification."""
+
+    state: Literal["ok", "warn", "fail"]
+    code: str
+    detail: str
+    release: str | None = None
+    checks: list[PointerCheck] = Field(default_factory=list)
+
+    def line(self) -> str:
+        """``STATE<TAB>CODE<TAB>DETAIL``, the form ``scripts/ops.sh`` renders."""
+        return f"{self.state}\t{self.code}\t{self.detail}"
+
+
+def read_release_bounded(
+    uri: str, user: str, password: str, database: str, *, timeout_s: float
+) -> KgRelease | None:
+    """:func:`read_release` with a wall-clock bound; ``TimeoutError`` past it.
+
+    The read runs on a daemon thread: a driver call that never returns (a host that
+    accepts the TCP connection and then hangs) must not hold the interpreter open at
+    exit, or the verdict printed after the bound would never reach the panel, whose
+    outer ``timeout`` would fire first.
+    """
+    import threading
+
+    box: dict[str, Any] = {}
+
+    def run() -> None:
+        try:
+            box["value"] = read_release(uri, user, password, database)
+        except BaseException as exc:  # noqa: BLE001 -- re-raised on the caller's thread
+            box["error"] = exc
+
+    thread = threading.Thread(target=run, name="read-release", daemon=True)
+    thread.start()
+    thread.join(timeout_s)
+    if thread.is_alive():
+        raise TimeoutError(f"read_release did not answer within {timeout_s} s")
+    if "error" in box:
+        raise box["error"]
+    return box.get("value")
+
+
+def classify_pointers(
+    artifact_refs: Mapping[str, list[ArtifactRef]], source: Any
+) -> list[PointerCheck]:
+    """Each distinct pointed file, classified against ``source``'s manifests.
+
+    Refs are deduplicated across datasets by ``ref_key`` and grouped by ``(tier, key)``,
+    so each key's manifest is fetched once. A file is ``listed`` when the manifest lists
+    its path with the pinned sha256, ``sha256_mismatch`` when it lists the path with
+    another, and ``missing`` when the path is absent or the source has no such key (a
+    ``RemoteMissError``, which includes a tier tc-data does not serve). Any other error
+    of the source propagates.
+    """
+    from torchcell.artifacts.resolve import RemoteMissError
+    from torchcell.artifacts.tiers import find_record
+    from torchcell.artifacts.walk import ref_key
+
+    pointed: dict[tuple[str, str, str, str], tuple[ArtifactRef, list[str]]] = {}
+    for name in sorted(artifact_refs):
+        for ref in artifact_refs[name]:
+            entry = pointed.setdefault(ref_key(ref), (ref, []))
+            if name not in entry[1]:
+                entry[1].append(name)
+    by_key: dict[tuple[str, str], list[tuple[ArtifactRef, list[str]]]] = defaultdict(
+        list
+    )
+    for file_key in sorted(pointed):
+        ref, names = pointed[file_key]
+        by_key[(ref.tier, ref.key)].append((ref, names))
+    checks: list[PointerCheck] = []
+    for (tier, tier_key), members in by_key.items():
+        try:
+            records = source.manifest(tier, tier_key).files
+        except RemoteMissError:
+            records = []
+        for ref, names in members:
+            record = find_record(records, ref.path)
+            if record is None:
+                state: Literal["listed", "sha256_mismatch", "missing"] = "missing"
+            elif record.sha256 == ref.sha256:
+                state = "listed"
+            else:
+                state = "sha256_mismatch"
+            checks.append(
+                PointerCheck(
+                    ref=str(ref),
+                    sha256=ref.sha256,
+                    state=state,
+                    listed_sha256=None if record is None else record.sha256,
+                    datasets=names,
+                )
+            )
+    return checks
+
+
+def artifact_probe(
+    release: KgRelease | None,
+    *,
+    tc_data_url: str,
+    api_key: str | None,
+    api_key_env: str = DEFAULT_TC_DATA_API_KEY_ENV,
+    http: Any = None,
+    timeout_s: float = 5.0,
+) -> ArtifactProbe:
+    """Whether tc-data lists every file ``release`` points at, with its sha256.
+
+    The checks run in the order that needs the least: a store without a release node or
+    a release that predates pointer recording is a warning (nothing to check), a release
+    pointing at no file is ok without asking tc-data, and only then are the key and the
+    endpoint required. ``http`` injects the client (tests).
+    """
+    import httpx
+
+    from torchcell.artifacts.resolve import RemoteEndpointError, TcDataSource
+
+    if release is None:
+        return ArtifactProbe(state="warn", code="n/a", detail="no release node")
+    tag = release.release
+    if release.artifact_refs is None:
+        return ArtifactProbe(
+            state="warn",
+            code="n/a",
+            detail="release predates pointer recording",
+            release=tag,
+        )
+    if not any(release.artifact_refs.values()):
+        return ArtifactProbe(
+            state="ok",
+            code="0",
+            detail="the release points at no artifact file",
+            release=tag,
+        )
+    if not api_key:
+        return ArtifactProbe(
+            state="fail", code="n/a", detail=f"{api_key_env} unset", release=tag
+        )
+    source = TcDataSource(tc_data_url, api_key, http=http, timeout=timeout_s)
+    try:
+        checks = classify_pointers(release.artifact_refs, source)
+    except (RemoteEndpointError, httpx.HTTPError) as exc:
+        return ArtifactProbe(
+            state="fail",
+            code="n/a",
+            detail=f"tc-data unreachable: {_fault_text(exc)}",
+            release=tag,
+        )
+    n_total = len(checks)
+    listed = sum(check.state == "listed" for check in checks)
+    if listed == n_total:
+        return ArtifactProbe(
+            state="ok",
+            code=f"{n_total}/{n_total}",
+            detail="every pointer listed by tc-data with its sha256",
+            release=tag,
+            checks=checks,
+        )
+    failing = [check for check in checks if check.state != "listed"]
+    missing = sum(check.state == "missing" for check in failing)
+    shown = ", ".join(check.ref for check in failing[:_FAILING_SHOWN])
+    more = ", ..." if len(failing) > _FAILING_SHOWN else ""
+    return ArtifactProbe(
+        state="fail",
+        code=f"{listed}/{n_total}",
+        detail=(
+            f"{missing} missing, {len(failing) - missing} sha256 mismatch: "
+            f"{shown}{more}"
+        ),
+        release=tag,
+        checks=checks,
+    )
+
+
 # --------------------------------------------------------------------------- CLI
+
+
+def _host_spec(spec: str, user: str, password: str) -> tuple[str, str, str, str]:
+    """``LABEL=URI[|USER|PASSWORD]`` as ``(label, uri, user, password)``; missing parts inherit."""
+    label, _, rest = spec.partition("=")
+    parts = rest.split("|")
+    return (
+        label,
+        parts[0],
+        parts[1] if len(parts) > 1 else user,
+        parts[2] if len(parts) > 2 else password,
+    )
 
 
 def _connection(args: argparse.Namespace) -> tuple[str, str, str]:
@@ -941,6 +1182,26 @@ def main(argv: list[str] | None = None) -> int:
     p_node.add_argument("--built-at", required=True)
     p_node.add_argument("--n-nodes", type=int, default=None)
 
+    p_art = sub.add_parser(
+        "artifacts",
+        help="whether tc-data lists every file a served release points at, with its "
+        "sha256; one STATE<TAB>CODE<TAB>DETAIL line (exit 0 always)",
+    )
+    p_art.add_argument("--host", required=True, help="LABEL=URI[|USER|PASSWORD]")
+    p_art.add_argument("--database", required=True)
+    p_art.add_argument("--tc-data-url", required=True)
+    p_art.add_argument("--host-timeout", type=float, default=20.0)
+    p_art.add_argument(
+        "--tc-data-timeout", type=float, default=5.0, help="seconds per tc-data request"
+    )
+    p_art.add_argument(
+        "--api-key-env",
+        default=DEFAULT_TC_DATA_API_KEY_ENV,
+        help="the environment variable holding the tc-data key (read after the repo "
+        ".env is loaded; the key itself is never printed)",
+    )
+    p_art.add_argument("--json", action="store_true")
+
     args = parser.parse_args(argv)
     repo_root = Path(args.repo).resolve() if args.repo else None
 
@@ -1079,21 +1340,47 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
 
+    if args.command == "artifacts":
+        load_dotenv()
+        _, host_uri, host_user, host_password = _host_spec(args.host, user, password)
+        try:
+            served = read_release_bounded(
+                host_uri,
+                host_user,
+                host_password,
+                args.database,
+                timeout_s=args.host_timeout,
+            )
+        except TimeoutError:
+            probe = ArtifactProbe(
+                state="fail",
+                code="n/a",
+                detail=f"host unreachable within {args.host_timeout:g} s",
+            )
+        except Exception as exc:  # a reporter: refusal, auth or a store fault is a line
+            probe = ArtifactProbe(
+                state="fail",
+                code="n/a",
+                detail=f"release read failed: {_fault_text(exc)}",
+            )
+        else:
+            probe = artifact_probe(
+                served,
+                tc_data_url=args.tc_data_url,
+                api_key=os.environ.get(args.api_key_env),
+                api_key_env=args.api_key_env,
+                timeout_s=args.tc_data_timeout,
+            )
+        # flushed: ops.sh bounds this process, and a hung driver thread can hold exit
+        print(
+            probe.model_dump_json(indent=1) if args.json else probe.line(), flush=True
+        )
+        return 0
+
     if args.command == "status":
         hosts: list[tuple[str, str, str, str]] = [(args.label, uri, user, password)]
         if args.host:
-            hosts = []
-            for spec in args.host:
-                label, _, rest = spec.partition("=")
-                parts = rest.split("|")
-                hosts.append(
-                    (
-                        label,
-                        parts[0],
-                        parts[1] if len(parts) > 1 else user,
-                        parts[2] if len(parts) > 2 else password,
-                    )
-                )
+            hosts = [_host_spec(spec, user, password) for spec in args.host]
         by_host = {
             label: list_databases_bounded(u, usr, pw, timeout_s=args.host_timeout)
             for label, u, usr, pw in hosts

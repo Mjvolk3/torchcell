@@ -29,10 +29,23 @@
 #   OPS_RADIANT_URI                            default neo4j+s://torchcell-database.ncsa.illinois.edu:7687
 #   OPS_RADIANT_USER / OPS_RADIANT_PASSWORD    default torchcell / torchcell
 #   OPS_TC_LIT_URL                             default http://localhost:8723
+#   OPS_RADIANT_TC_DATA                        default http://torchcell-database.ncsa.illinois.edu:8724
+#                                              (tc-data on Radiant; its key is TC_DATA_API_KEY)
 #   OPS_BROWSER_URL                            default http://localhost:7474
 #   OPS_TIMEOUT_SECONDS                        default 5 (curl); the bolt probes get 4x
 #   OPS_HOSTS                                  default "gilahyper,radiant"; a host that is
 #                                              not listed is neither queried nor probed
+#
+# The `artifacts` line in each host's health block: whether tc-data (on Radiant, for both
+# hosts) lists every flat file the served release's records point at (ArtifactRef,
+# tc://<tier>/<key>/<path>) with the sha256 the pointer pins. The release records its
+# pointer set at the stamp (kg_manifest artifact-refs), so nothing is scanned here.
+#   ✓ N/N  every pointer listed with its sha256; ✓ 0  the release points at no file
+#   ! n/a  no release node, or the release predates pointer recording
+#   ✗ k/N  m missing, s sha256 mismatch: tc://... ; ✗ n/a  TC_DATA_API_KEY unset,
+#          tc-data unreachable: <error>, or the host did not answer; ✗ ERR  the python
+#          call itself failed or timed out
+# The radiant block also probes tc-data's /health just before it.
 #
 # Speed: the radiant bolt probe (about 13 s when the store faults) and its https probe
 # (the full curl timeout when the host is down) are most of a slow run, so
@@ -68,6 +81,7 @@ RADIANT_USER="${OPS_RADIANT_USER:-torchcell}"
 RADIANT_PASSWORD="${OPS_RADIANT_PASSWORD:-torchcell}"
 RADIANT_HTTPS="${OPS_RADIANT_HTTPS:-https://torchcell-database.ncsa.illinois.edu:7473}"
 TC_LIT_URL="${OPS_TC_LIT_URL:-http://localhost:8723}"
+RADIANT_TC_DATA="${OPS_RADIANT_TC_DATA:-http://torchcell-database.ncsa.illinois.edu:8724}"
 BROWSER_URL="${OPS_BROWSER_URL:-http://localhost:7474}"
 TIMEOUT="${OPS_TIMEOUT_SECONDS:-5}"
 BOLT_TIMEOUT=$((TIMEOUT * 4))
@@ -163,6 +177,36 @@ release_table() {
         | grep -vE '^INFO --|DeprecationWarning|^<frozen|^$'
 }
 
+# The flat files a host's served release points at, checked against tc-data. One python
+# call prints one STATE<TAB>CODE<TAB>DETAIL line; a timeout, or output without that line
+# (a traceback), renders as ERR with the first non-banner line seen.
+probe_artifacts() {  # label uri user password
+    local raw rc verdict state code detail last
+    raw=$(PYTHONWARNINGS=ignore timeout $((BOLT_TIMEOUT + TIMEOUT)) "$PY" -m torchcell.knowledge_graphs.releases \
+        artifacts --host "$1=$2|$3|$4" --database torchcell --tc-data-url "$RADIANT_TC_DATA" \
+        --host-timeout "$BOLT_TIMEOUT" --tc-data-timeout "$TIMEOUT" 2>&1)
+    rc=$?
+    # The verdict is read before the exit code: a host that hangs makes the probe print
+    # its "host unreachable" verdict at the bound and then wait on the driver, so the
+    # outer timeout (rc 124) can land after a perfectly good line.
+    verdict=$(grep -E $'^(ok|warn|fail)\t' <<<"$raw" | tail -1)
+    IFS=$'\t' read -r state code detail <<<"$verdict"
+    case "$state" in
+        ok)   line "✓" "$GREEN" "artifacts" "$code" "$detail" ;;
+        warn) line "!" "$YELLOW" "artifacts" "$code" "$detail" ;;
+        fail) line "✗" "$RED" "artifacts" "$code" "$detail" ;;
+        *)
+            if [[ $rc -eq 124 ]]; then
+                line "✗" "$RED" "artifacts" "ERR" "no answer within $((BOLT_TIMEOUT + TIMEOUT))s"
+                return
+            fi
+            # the last non-banner line of a traceback is the error itself
+            last=$(grep -vE '^INFO --|DeprecationWarning|^<frozen|^$' <<<"$raw" | tail -1)
+            line "✗" "$RED" "artifacts" "ERR" "${last:-rc $rc, no output}"
+            ;;
+    esac
+}
+
 # The release id of a host's [default] row: the <date>-<sha> token, wherever the
 # columns put it (the DATABASE column can contain a space).
 default_release() {  # label table
@@ -219,6 +263,7 @@ print_health() {
         probe_disk "disk /scratch" "/scratch"
         probe_disk "disk /db" "/db"
         probe_disk "disk /bulk" "/bulk"
+        probe_artifacts gilahyper "$GH_URI" "$GH_USER" "$GH_PASSWORD"
     fi
     if wants_host radiant; then
         echo "== health (radiant) =="
@@ -228,6 +273,8 @@ print_health() {
         # sequential retry succeeds; `dig` answers both records in 50 ms. Under the 5 s
         # curl budget that stall alone reads as 000 while the server is up (2026-10-07).
         probe_http "radiant https" "$RADIANT_HTTPS/" -k -4
+        probe_http "tc-data" "$RADIANT_TC_DATA/health" -4
+        probe_artifacts radiant "$RADIANT_URI" "$RADIANT_USER" "$RADIANT_PASSWORD"
     fi
 }
 

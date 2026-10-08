@@ -67,6 +67,14 @@ surface) on their own, so a change to a surface every dataset shares (a new grap
 new ``CellAdapter`` method) can be shown ADDED-only against the served manifest before any
 dataset that uses it exists.
 
+**The pointer set.** Records may carry ``ArtifactRef`` pointers to files kept off the
+graph (Caudal's ``sequence_ref``, Bloom's ``assembly_ref``, a ``CrisprConstruct``'s
+``effector_plasmid_ref``). The served store is too large to scan for them, so
+``record_artifact_refs`` (``artifact-refs``) walks each dataset whose closure names
+``ArtifactRef`` once per release and writes the distinct FILE-level refs into
+``KgDatasetEntry.artifact_refs``; the release node and the snapshot carry the set from
+there, and ``releases artifacts`` checks it against tc-data.
+
 The manifest lives beside the store (a machine-local file under the build tree), never
 in git: it describes one physical database.
 """
@@ -83,7 +91,7 @@ import re
 import socket
 import subprocess
 import sys
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, cast
@@ -91,6 +99,9 @@ from typing import Any, Literal, cast
 import yaml
 from pydantic import BaseModel, Field
 
+# ArtifactRef is defined on the schema surface; importing it from there keeps the
+# artifacts package (fastapi, pandas through the genome registry) off the CLI's import path.
+from torchcell.datamodels.schema import ArtifactRef
 from torchcell.provenance.build_manifest import (
     MANIFEST_FILENAME,
     BuildManifest,
@@ -158,6 +169,11 @@ __all__ = [
     "format_batch_report",
     "split_dataset_args",
     "parse_n_experiments",
+    "ARTIFACT_REF_SYMBOL",
+    "file_level_refs",
+    "dataset_artifact_refs",
+    "record_artifact_refs",
+    "manifest_artifact_refs",
 ]
 
 KG_MANIFEST_SCHEMA_VERSION = 1
@@ -175,6 +191,8 @@ VALUE_SURFACE_RELPATHS = (
     "torchcell/datamodels/compound_identity.py",
     "torchcell/datamodels/compound_identity_table.json",
 )
+#: The closure key that marks a dataset whose records can carry artifact pointers.
+ARTIFACT_REF_SYMBOL = "ArtifactRef"
 
 
 class GraphSchemaEntry(BaseModel):
@@ -235,6 +253,11 @@ class KgDatasetEntry(BaseModel):
     # Set when this entry was admitted as a superset of an entry already served: the
     # previous entry's identity and how many records the increment added to it.
     superset_of: SupersetLineage | None = None
+    # The distinct FILE-level artifact pointers the dataset's records carry (``member``,
+    # ``bytes`` and ``media_type`` stripped; sorted by ``ref_key``), written by
+    # ``record_artifact_refs``. None: never recorded (a manifest written before pointer
+    # recording, or an entry admitted since); ``[]``: recorded, and there are none.
+    artifact_refs: list[ArtifactRef] | None = None
 
 
 class KgEvent(BaseModel):
@@ -907,6 +930,85 @@ def dev_experiment_ids(dataset_class: type, data_root: Path) -> list[str]:
     ]
     dataset.close_lmdb()
     return ids
+
+
+def file_level_refs(refs: Iterable[ArtifactRef]) -> list[ArtifactRef]:
+    """The distinct files ``refs`` name, sorted by ``ref_key``, members stripped.
+
+    A file-level ref keeps ``tier``, ``key``, ``path`` and ``sha256`` only, so two members
+    of one file (and two refs differing only in ``bytes`` or ``media_type``) collapse to
+    one entry.
+    """
+    from torchcell.artifacts.walk import ref_key
+
+    files: dict[tuple[str, str, str, str], ArtifactRef] = {}
+    for ref in refs:
+        files.setdefault(
+            ref_key(ref),
+            ArtifactRef(tier=ref.tier, key=ref.key, path=ref.path, sha256=ref.sha256),
+        )
+    return [files[key] for key in sorted(files)]
+
+
+def dataset_artifact_refs(dataset_class: type, data_root: Path) -> list[ArtifactRef]:
+    """The file-level refs every record of the dev-tree LMDB of ``dataset_class`` carries.
+
+    Opens the dataset read-only as ``dev_experiment_ids`` does and walks the pydantic
+    models of each ``transform_item`` (the experiment and the reference) with
+    ``distinct_refs``.
+    """
+    from torchcell.artifacts.walk import distinct_refs
+
+    dataset = dataset_class(root=str(data_root / _dataset_default_root(dataset_class)))
+    found: dict[tuple[str, str, str, str], ArtifactRef] = {}
+    for i in range(len(dataset)):
+        item = dataset.transform_item(dataset[i])
+        models = [value for value in item.values() if isinstance(value, BaseModel)]
+        for key, ref in distinct_refs(models).items():
+            found.setdefault(key, ref)
+    dataset.close_lmdb()
+    return file_level_refs(found.values())
+
+
+def record_artifact_refs(
+    manifest: KgBuildManifest, data_root: Path, *, only: Sequence[str] | None = None
+) -> dict[str, int]:
+    """Write each entry's ``artifact_refs`` from its dev-tree LMDB; ``{dataset: n_refs}``.
+
+    Every entry, or the ``only`` subset (each must be served), is recorded. An entry
+    whose closure has no ``ArtifactRef`` key gets ``[]`` without its dataset being
+    opened: none of its record classes can carry a pointer.
+    """
+    names = sorted(manifest.datasets) if only is None else list(only)
+    unknown = sorted(set(names) - set(manifest.datasets))
+    if unknown:
+        raise ValueError(f"datasets not in the manifest: {unknown}")
+    counts: dict[str, int] = {}
+    for name in names:
+        entry = manifest.datasets[name]
+        if ARTIFACT_REF_SYMBOL in entry.closure:
+            refs = dataset_artifact_refs(_dataset_class(name), data_root)
+        else:
+            refs = []
+        entry.artifact_refs = refs
+        counts[name] = len(refs)
+    return counts
+
+
+def manifest_artifact_refs(
+    manifest: KgBuildManifest,
+) -> dict[str, list[ArtifactRef]] | None:
+    """``dataset -> refs`` for a release, or None when ANY entry was never recorded.
+
+    A half-recorded manifest never reads as complete: one None entry makes the whole
+    pointer set unknown.
+    """
+    if any(entry.artifact_refs is None for entry in manifest.datasets.values()):
+        return None
+    return {
+        name: list(entry.artifact_refs or [])
+        for name, entry in sorted(manifest.datasets.items())
+    }
 
 
 def superset_check(
@@ -1826,6 +1928,20 @@ def main(argv: list[str] | None = None) -> int:
     p_drift.add_argument("--report", default=None, help="write the JSON report here")
 
     sub.add_parser("show", help="print the manifest summary")
+
+    p_refs = sub.add_parser(
+        "artifact-refs",
+        help="record the artifact pointers each served dataset's records carry, read "
+        "from the dev-tree LMDBs (datasets whose closure names ArtifactRef are walked)",
+    )
+    p_refs.add_argument("--data-root", required=True, help="dev tree holding the LMDBs")
+    p_refs.add_argument(
+        "--dataset",
+        action="append",
+        default=None,
+        help="record only this dataset; repeat the flag or pass a comma-separated list "
+        "(default: every served dataset)",
+    )
     args = parser.parse_args(argv)
 
     repo_root = Path(args.repo or ".").resolve()
@@ -1864,6 +1980,16 @@ def main(argv: list[str] | None = None) -> int:
                 surface_drift.model_dump_json(indent=2), encoding="utf-8"
             )
         return 1 if surface_drift.changes_served else 0
+    if args.command == "artifact-refs":
+        only = split_dataset_args(args.dataset) if args.dataset else None
+        counts = record_artifact_refs(manifest, Path(args.data_root), only=only)
+        save_manifest(manifest, manifest_path)
+        for name, n_refs in counts.items():
+            if ARTIFACT_REF_SYMBOL in manifest.datasets[name].closure:
+                print(f"{name}: {n_refs} pointer(s)")
+            else:
+                print(f"{name}: no ref-bearing class in its closure")
+        return 0
     if args.command == "show":
         print(
             f"{manifest.database} on {manifest.store_host}: neo4j {manifest.neo4j_version}, "

@@ -116,3 +116,24 @@ The two October full builds (KG 2.0, 3.0) ran from an untagged `main` and their 
 - The live rebuild script refuses to start unless `BUILD_COMMIT` carries a `v*` tag and the fingerprint checkout sits on it, so future stamps record the tag and `retag` is never needed again.
 
 Measured 2026-10-06 on `e6367528b` (main after the `DB(kg)` cut): `compat --version latest` 51 compatible, 0 drifted, 0 unchecked; the three committed snapshots were retagged to `v1.2.1`, `v1.6.1`, `v1.6.2`.
+
+## 2026.10.08 - The pointer set on the release node, and `artifacts`
+
+`KgRelease.artifact_refs: dict[str, list[ArtifactRef]] | None` (dataset -> file-level refs) goes on the node as `artifact_refs_json`, compact sorted JSON without None fields; `to_properties` writes None when unrecorded (the `SET r += $props` then leaves no property), and `from_properties` reads a node without the key as None. `write-node` fills it from the manifest through `kg_manifest.manifest_artifact_refs`, None when any entry is unrecorded.
+
+`artifacts --host LABEL=URI|USER|PASSWORD --database NAME --tc-data-url URL [--host-timeout S] [--tc-data-timeout S] [--api-key-env TC_DATA_API_KEY] [--json]` is the reporter `scripts/ops.sh` renders. It calls `load_dotenv()` (the repo `.env`, as the loaders do), reads the node with `read_release` bounded by `--host-timeout` (`read_release_bounded`), and classifies (`classify_pointers`, `artifact_probe`): refs deduplicated across datasets by `ref_key`, grouped by `(tier, key)`, one `TcDataSource.manifest` call per key; a file is `listed` (path listed with the pinned sha256), `sha256_mismatch`, or `missing` (path absent, or the key answers 404, which includes a tier tc-data does not serve). One `STATE<TAB>CODE<TAB>DETAIL` line, exit 0 always, `--json` for the full classification. The checks run cheapest first, so a release with nothing to check never needs the key or the endpoint:
+
+| state | code | detail |
+|---|---|---|
+| `fail` | `n/a` | `host unreachable within S s` (no answer within `--host-timeout`) or `release read failed: <first line>` (refused, auth, a faulting store) |
+| `warn` | `n/a` | `no release node` |
+| `warn` | `n/a` | `release predates pointer recording` (`artifact_refs` None) |
+| `ok` | `0` | `the release points at no artifact file` |
+| `fail` | `n/a` | `TC_DATA_API_KEY unset` (the variable named by `--api-key-env`; the key is never printed) |
+| `fail` | `n/a` | `tc-data unreachable: <first line>` (a transport error or a non-404 error status, e.g. 401) |
+| `ok` | `N/N` | `every pointer listed by tc-data with its sha256` |
+| `fail` | `k/N` | `m missing, s sha256 mismatch: tc://... (first three, then ", ...")` |
+
+The line is printed with `flush=True` because ops.sh bounds the process with `timeout`, and an abandoned driver thread can hold interpreter exit past the verdict. The `--host` parsing is shared with `status` (`_host_spec`).
+
+Tests (`tests/torchcell/knowledge_graphs/test_releases.py`): `test_properties_round_trip_the_artifact_refs_as_compact_json`, `test_cli_write_node_carries_the_manifest_pointer_set_or_none_when_half_recorded`, and one per state, each pinning the printed line: `test_cli_artifacts_ok_when_every_pointer_is_listed_with_its_sha256`, `test_cli_artifacts_ok_without_asking_tc_data_when_nothing_is_pointed_at`, `test_cli_artifacts_warns_on_a_store_without_a_release_node`, `test_cli_artifacts_warns_on_a_release_that_predates_pointer_recording`, `test_cli_artifacts_fails_naming_missing_and_mismatched_pointers`, `test_cli_artifacts_fails_when_the_api_key_is_unset`, `test_cli_artifacts_fails_when_tc_data_is_unreachable_or_refuses`, `test_cli_artifacts_fails_when_the_host_does_not_answer_or_the_read_raises`. `test_to_properties_flattens_the_maps_to_compact_sorted_json` now pins `artifact_refs_json: None`.

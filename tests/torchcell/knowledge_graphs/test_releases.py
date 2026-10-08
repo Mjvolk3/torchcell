@@ -27,9 +27,11 @@ import time
 from pathlib import Path
 from typing import Any
 
+import httpx
 import pytest
 
 import torchcell.knowledge_graphs.releases as releases
+from torchcell.artifacts.ref import ArtifactRef
 from torchcell.knowledge_graphs.kg_manifest import (
     KgBuildManifest,
     KgDatasetEntry,
@@ -70,6 +72,7 @@ from torchcell.knowledge_graphs.releases import (
     status_rows,
     write_release,
 )
+from torchcell.literature.manifest import ArtifactRecord, Manifest
 from torchcell.provenance.schema_deps import SchemaSurface
 
 
@@ -429,6 +432,7 @@ def test_to_properties_flattens_the_maps_to_compact_sorted_json() -> None:
             + '"}}'
         ),
         "closures_json": '{"DsA":{"Experiment":"aa"}}',
+        "artifact_refs_json": None,
     }
 
 
@@ -1517,3 +1521,356 @@ def test_cli_compat_requires_a_repo_and_exits_one_on_drift(
         "1 compatible, 1 drifted, 0 unchecked",
         "  DsB: Experiment",
     ]
+
+
+# --------------------------------------------------------------------------- artifacts
+
+
+def _ref(tier: str, key: str, path: str, digit: str) -> ArtifactRef:
+    return ArtifactRef(tier=tier, key=key, path=path, sha256=digit * 64)  # type: ignore[arg-type]
+
+
+EMB_A = _ref("objects", "esm2", "a.npy", "1")
+EMB_B = _ref("objects", "esm2", "b.npy", "2")
+EMB_C = _ref("objects", "esm2", "c.npy", "3")
+GONE_X = _ref("raw", "gone", "x.tsv", "4")
+GONE_Y = _ref("raw", "gone", "y.tsv", "5")
+TC = "http://tc"
+ESM2_URL = f"{TC}/objects/esm2/manifest"
+GONE_URL = f"{TC}/raw/gone/manifest"
+
+
+def _esm2_manifest(files: dict[str, str]) -> bytes:
+    """A tc-data manifest for key esm2 listing ``path -> sha256``."""
+    return (
+        Manifest(
+            citation_key="esm2",
+            files=[
+                ArtifactRecord(path=path, role="object", bytes=1, sha256=sha)
+                for path, sha in files.items()
+            ],
+            created_at="2026-10-08T00:00:00+00:00",
+        )
+        .model_dump_json()
+        .encode()
+    )
+
+
+def test_properties_round_trip_the_artifact_refs_as_compact_json() -> None:
+    """Refs go on the node as sorted compact JSON without None fields and come back
+    equal; an old node with no ``artifact_refs_json`` reads as unrecorded (None).
+    """
+    release = RELEASE.model_copy(
+        update={"artifact_refs": {"DsB": [EMB_A], "DsA": [EMB_A, GONE_X]}}
+    )
+    props = release.to_properties()
+    assert props["artifact_refs_json"] == (
+        '{"DsA":[{"tier":"objects","key":"esm2","path":"a.npy","sha256":"'
+        + "1" * 64
+        + '"},{"tier":"raw","key":"gone","path":"x.tsv","sha256":"'
+        + "4" * 64
+        + '"}],"DsB":[{"tier":"objects","key":"esm2","path":"a.npy","sha256":"'
+        + "1" * 64
+        + '"}]}'
+    )
+    assert KgRelease.from_properties(props) == release
+    empty = RELEASE.model_copy(update={"artifact_refs": {"DsA": [], "DsB": []}})
+    assert empty.to_properties()["artifact_refs_json"] == '{"DsA":[],"DsB":[]}'
+    assert KgRelease.from_properties(empty.to_properties()).artifact_refs == {
+        "DsA": [],
+        "DsB": [],
+    }
+    old = RELEASE.to_properties()
+    del old["artifact_refs_json"]
+    assert KgRelease.from_properties(old).artifact_refs is None
+
+
+def test_cli_write_node_carries_the_manifest_pointer_set_or_none_when_half_recorded(
+    tmp_path: Path, drivers: list[_ScriptedDriver]
+) -> None:
+    """Every entry recorded: the node gets the dataset -> refs map; one entry still None:
+    the node gets None, so a half-recorded manifest never reads as complete.
+    """
+    manifest = _manifest({"DsA": 10, "DsB": 20})
+    stamp_manifest(
+        manifest,
+        kind="full",
+        built_at="2026-09-17T20:36:32-05:00",
+        content_hashes={"DsA": "a" * 64, "DsB": "b" * 64},
+        previous_version=None,
+        torchcell_version="1.2.0",
+        torchcell_tag=None,
+    )
+    manifest.datasets["DsA"].artifact_refs = [EMB_A]
+    manifest.datasets["DsB"].artifact_refs = []
+    path = tmp_path / "kg_manifest.json"
+    save_manifest(manifest, path)
+    argv = [
+        "--uri",
+        BOLT,
+        "write-node",
+        "--manifest",
+        str(path),
+        "--database",
+        "torchcell",
+        "--built-at",
+        "2026-09-17T21:00:00-05:00",
+    ]
+    assert main(argv) == 0
+    props = drivers[0].calls[0][2]["props"]
+    assert props["artifact_refs_json"] == (
+        '{"DsA":[{"tier":"objects","key":"esm2","path":"a.npy","sha256":"'
+        + "1" * 64
+        + '"}],"DsB":[]}'
+    )
+    manifest.datasets["DsB"].artifact_refs = None
+    save_manifest(manifest, path)
+    assert main(argv) == 0
+    assert drivers[1].calls[0][2]["props"]["artifact_refs_json"] is None
+
+
+class _HttpResponse:
+    def __init__(self, status: int, content: bytes) -> None:
+        self.status_code = status
+        self.content = content
+
+
+class _TcData:
+    """An ``HttpClient`` answering manifest GETs by URL (a status and body, or a raised
+    transport error); records each URL and the headers it carried.
+    """
+
+    def __init__(self, answers: dict[str, tuple[int, bytes] | Exception]) -> None:
+        self.answers = answers
+        self.calls: list[tuple[str, dict[str, str]]] = []
+
+    def get(self, url: str, *, headers: Any) -> _HttpResponse:
+        self.calls.append((url, dict(headers)))
+        answer = self.answers[url]
+        if isinstance(answer, Exception):
+            raise answer
+        return _HttpResponse(*answer)
+
+    def stream(self, method: str, url: str, *, headers: Any) -> Any:
+        raise AssertionError(f"the probe downloads nothing, asked for {url}")
+
+
+SECRET_KEY = "TCDATA-SECRET-123"
+
+
+@pytest.fixture
+def probe_env(monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+    """No repo ``.env`` is read (calls counted), the key is the distinctive
+    ``TCDATA-SECRET-123`` (so a test can assert it never reaches stdout), and
+    ``httpx.Client`` builds the ``_TcData`` the test puts under ``"http"`` (timeouts
+    recorded).
+    """
+    state: dict[str, Any] = {"dotenv": 0, "timeouts": [], "http": _TcData({})}
+
+    def load_dotenv() -> bool:
+        state["dotenv"] += 1
+        return False
+
+    def client(timeout: float) -> _TcData:
+        state["timeouts"].append(timeout)
+        http: _TcData = state["http"]
+        return http
+
+    monkeypatch.setattr(releases, "load_dotenv", load_dotenv)
+    monkeypatch.setenv("TC_DATA_API_KEY", SECRET_KEY)
+    monkeypatch.setattr(httpx, "Client", client)
+    return state
+
+
+def _serve(monkeypatch: pytest.MonkeyPatch, release: KgRelease) -> None:
+    """The scripted DBMS, with ``release`` as the torchcell database's node."""
+
+    class Serving(_ScriptedDriver):
+        def __init__(self, uri: str, auth: tuple[str, str], **kwargs: Any) -> None:
+            super().__init__(uri, auth, **kwargs)
+            self.release_rows["torchcell"] = [[release.to_properties()]]
+
+    monkeypatch.setattr("neo4j.GraphDatabase.driver", Serving)
+
+
+def _artifacts(*extra: str, database: str = "torchcell") -> list[str]:
+    return [
+        "artifacts",
+        "--host",
+        "gh=bolt://x:7687|u|p",
+        "--database",
+        database,
+        "--tc-data-url",
+        TC,
+        *extra,
+    ]
+
+
+def _with_refs(refs: dict[str, list[ArtifactRef]]) -> KgRelease:
+    return RELEASE.model_copy(update={"artifact_refs": refs})
+
+
+def test_cli_artifacts_ok_when_every_pointer_is_listed_with_its_sha256(
+    monkeypatch: pytest.MonkeyPatch,
+    probe_env: dict[str, Any],
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A file two datasets share counts once; each key's manifest is fetched once, with
+    the key in the header; the request timeout is ``--tc-data-timeout``.
+    """
+    _serve(monkeypatch, _with_refs({"DsA": [EMB_A, EMB_B], "DsB": [EMB_A]}))
+    probe_env["http"] = _TcData(
+        {ESM2_URL: (200, _esm2_manifest({"a.npy": "1" * 64, "b.npy": "2" * 64}))}
+    )
+    assert main(_artifacts("--tc-data-timeout", "2.5")) == 0
+    assert capsys.readouterr().out == (
+        "ok\t2/2\tevery pointer listed by tc-data with its sha256\n"
+    )
+    assert probe_env["http"].calls == [(ESM2_URL, {"X-API-Key": SECRET_KEY})]
+    assert probe_env["timeouts"] == [2.5]
+    assert probe_env["dotenv"] == 1
+
+
+def test_cli_artifacts_ok_without_asking_tc_data_when_nothing_is_pointed_at(
+    monkeypatch: pytest.MonkeyPatch,
+    probe_env: dict[str, Any],
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Recorded and empty for every dataset: ok 0, and no client is built."""
+    _serve(monkeypatch, _with_refs({"DsA": [], "DsB": []}))
+    monkeypatch.delenv("TC_DATA_API_KEY")
+    assert main(_artifacts()) == 0
+    assert capsys.readouterr().out == "ok\t0\tthe release points at no artifact file\n"
+    assert probe_env["timeouts"] == []
+
+
+def test_cli_artifacts_warns_on_a_store_without_a_release_node(
+    drivers: list[_ScriptedDriver],
+    probe_env: dict[str, Any],
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The scripted ``neo4j`` database carries no KgRelease node."""
+    assert main(_artifacts(database="neo4j")) == 0
+    assert capsys.readouterr().out == "warn\tn/a\tno release node\n"
+    assert drivers[0].calls == [("neo4j", "MATCH (r:KgRelease) RETURN r", {})]
+
+
+def test_cli_artifacts_warns_on_a_release_that_predates_pointer_recording(
+    drivers: list[_ScriptedDriver],
+    probe_env: dict[str, Any],
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """RELEASE has no ``artifact_refs_json``; no tc-data client is built."""
+    assert main(_artifacts()) == 0
+    assert capsys.readouterr().out == "warn\tn/a\trelease predates pointer recording\n"
+    assert (drivers[0].uri, drivers[0].auth) == ("bolt://x:7687", ("u", "p"))
+    assert probe_env["timeouts"] == []
+
+
+def test_cli_artifacts_fails_naming_missing_and_mismatched_pointers(
+    monkeypatch: pytest.MonkeyPatch,
+    probe_env: dict[str, Any],
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """a.npy listed; b.npy listed with another sha256; c.npy not listed; key ``gone``
+    answers 404, so both its files are missing. Four fail; the line names the first
+    three in ref order and elides the rest; ``--json`` gives every classification.
+    """
+    _serve(
+        monkeypatch,
+        _with_refs({"DsA": [EMB_A, EMB_B, EMB_C], "DsB": [GONE_Y, GONE_X, EMB_A]}),
+    )
+    probe_env["http"] = _TcData(
+        {
+            ESM2_URL: (200, _esm2_manifest({"a.npy": "1" * 64, "b.npy": "9" * 64})),
+            GONE_URL: (404, b""),
+        }
+    )
+    assert main(_artifacts()) == 0
+    assert capsys.readouterr().out == (
+        "fail\t1/5\t3 missing, 1 sha256 mismatch: tc://objects/esm2/b.npy, "
+        "tc://objects/esm2/c.npy, tc://raw/gone/x.tsv, ...\n"
+    )
+    assert [url for url, _ in probe_env["http"].calls] == [ESM2_URL, GONE_URL]
+    assert main(_artifacts("--json")) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert (report["state"], report["code"], report["release"]) == (
+        "fail",
+        "1/5",
+        "2026.09.17-7715ee35",
+    )
+    assert [
+        (c["ref"], c["state"], c["listed_sha256"], c["datasets"])
+        for c in report["checks"]
+    ] == [
+        ("tc://objects/esm2/a.npy", "listed", "1" * 64, ["DsA", "DsB"]),
+        ("tc://objects/esm2/b.npy", "sha256_mismatch", "9" * 64, ["DsA"]),
+        ("tc://objects/esm2/c.npy", "missing", None, ["DsA"]),
+        ("tc://raw/gone/x.tsv", "missing", None, ["DsB"]),
+        ("tc://raw/gone/y.tsv", "missing", None, ["DsB"]),
+    ]
+
+
+def test_cli_artifacts_fails_when_the_api_key_is_unset(
+    monkeypatch: pytest.MonkeyPatch,
+    probe_env: dict[str, Any],
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The line names the variable (default or ``--api-key-env``), never a value."""
+    _serve(monkeypatch, _with_refs({"DsA": [EMB_A], "DsB": []}))
+    monkeypatch.delenv("TC_DATA_API_KEY")
+    assert main(_artifacts()) == 0
+    assert capsys.readouterr().out == "fail\tn/a\tTC_DATA_API_KEY unset\n"
+    monkeypatch.setenv("TC_DATA_API_KEY", SECRET_KEY)
+    assert main(_artifacts("--api-key-env", "OPS_TC_DATA_KEY")) == 0
+    assert capsys.readouterr().out == "fail\tn/a\tOPS_TC_DATA_KEY unset\n"
+    assert probe_env["timeouts"] == []
+
+
+def test_cli_artifacts_fails_when_tc_data_is_unreachable_or_refuses(
+    monkeypatch: pytest.MonkeyPatch,
+    probe_env: dict[str, Any],
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A transport error and a non-404 error status both read tc-data unreachable with
+    the error's first line.
+    """
+    _serve(monkeypatch, _with_refs({"DsA": [EMB_A], "DsB": []}))
+    probe_env["http"] = _TcData(
+        {ESM2_URL: httpx.ConnectError("[Errno 111] Connection refused\nmore")}
+    )
+    assert main(_artifacts()) == 0
+    assert capsys.readouterr().out == (
+        "fail\tn/a\ttc-data unreachable: [Errno 111] Connection refused\n"
+    )
+    probe_env["http"] = _TcData({ESM2_URL: (401, b"")})
+    assert main(_artifacts()) == 0
+    assert capsys.readouterr().out == (
+        f"fail\tn/a\ttc-data unreachable: {ESM2_URL}: HTTP 401\n"
+    )
+
+
+def test_cli_artifacts_fails_when_the_host_does_not_answer_or_the_read_raises(
+    monkeypatch: pytest.MonkeyPatch,
+    probe_env: dict[str, Any],
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A read past ``--host-timeout`` reads host unreachable within S s; a read that
+    raises reads release read failed with the error's first line.
+    """
+
+    def hangs(uri: str, user: str, password: str, database: str) -> None:
+        time.sleep(0.5)
+
+    monkeypatch.setattr(releases, "read_release", hangs)
+    assert main(_artifacts("--host-timeout", "0.05")) == 0
+    assert capsys.readouterr().out == "fail\tn/a\thost unreachable within 0.05 s\n"
+
+    def refuses(uri: str, user: str, password: str, database: str) -> None:
+        raise OSError("Couldn't connect to x:7687\ndetail")
+
+    monkeypatch.setattr(releases, "read_release", refuses)
+    assert main(_artifacts()) == 0
+    assert capsys.readouterr().out == (
+        "fail\tn/a\trelease read failed: Couldn't connect to x:7687\n"
+    )

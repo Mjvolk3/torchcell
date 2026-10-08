@@ -36,8 +36,10 @@ The CRISPRd cassette is 121 nt: the upper-cased 44 nt barcode + 56 nt of donor t
 a 21 nt spacer; the stored guide is the last 21 nt and the donor the first 100 nt. An
 ``inf`` or blank SD stores ``environment_response_uncertainty`` None with no type, so no
 SE; a finite SD is ``sample_sd`` with n = 3, SE = SD / sqrt(3) (0.1 -> 0.057735...).
-Round 2 records carry the SIZ1 CRISPRi background, round 3 SIZ1 CRISPRi + NAT1 CRISPRa,
-each with no guide. Furfural 5 / 10 / 15 mM by round in SED-URA/G418 at 30 C.
+Every record's genotype is the ONE screened guide; the round's integrated cassettes ride
+on the reference's typed ``StrainBackground`` instead (round 1 bAID, round 2
+bAID-X3::SIZ1i, round 3 bAID-X3::SIZ1i-X4::NAT1a). Furfural 5 / 10 / 15 mM by round in
+SED-URA/G418 at 30 C, 50 mL in a shaken 250 mL baffled flask.
 """
 
 from __future__ import annotations
@@ -68,16 +70,17 @@ from torchcell.datamodels.schema import (
     CrisprConstruct,
     CrisprDeletionPerturbation,
     CrisprInterferencePerturbation,
-    Environment,
-    EnvironmentResponseExperiment,
-    EnvironmentResponseExperimentReference,
+    CultureEnvironment,
+    CultureFormat,
     EnvironmentResponsePhenotype,
     Genotype,
     MeasurementType,
     Publication,
-    ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
+    StrainEnvironmentResponseExperiment,
+    StrainEnvironmentResponseExperimentReference,
+    StrainReferenceGenome,
     Temperature,
     UncertaintyType,
 )
@@ -231,8 +234,8 @@ _PUBLICATION = Publication(
 )
 
 
-def _environment(furfural_mm: float) -> Environment:
-    return Environment(
+def _environment(furfural_mm: float) -> CultureEnvironment:
+    return CultureEnvironment(
         media=SED_URA_G418,
         temperature=Temperature(value=30.0),
         perturbations=[
@@ -244,28 +247,22 @@ def _environment(furfural_mm: float) -> Environment:
             )
         ],
         aerobicity="aerobic",
-        provenance_gaps=list(ln.DURATION_GAPS),
+        culture_format=CultureFormat(
+            vessel="250 mL baffled flask",
+            working_volume_ul=50000.0,
+            shaking_rpm=250.0,
+            provenance=[ln.SCREEN_VESSEL, ln.SHAKING_RPM, ln.HARVEST],
+            provenance_gaps=[ln.ENDPOINT_GAP, ln.INOCULUM_GAP],
+        ),
+        provenance_gaps=[
+            *ln.DURATION_GAPS,
+            ln.PRE_CULTURE_GAP,
+            ln.AUXOTROPH_SUPPLEMENT_GAP,
+        ],
     )
 
 
 _ENVIRONMENT = {1: _environment(5.0), 2: _environment(10.0), 3: _environment(15.0)}
-_SIZ1_BACKGROUND = CrisprInterferencePerturbation(
-    systematic_gene_name="YDR409W",
-    perturbed_gene_name="SIZ1",
-    crispr=CrisprConstruct(
-        effector="dSpCas9-RD1152", guide_sequence=None, n_guides=None
-    ),
-)
-_NAT1_BACKGROUND = CrisprActivationPerturbation(
-    systematic_gene_name="YDL040C",
-    perturbed_gene_name="NAT1",
-    crispr=CrisprConstruct(effector="dLbCas12a-VP", guide_sequence=None, n_guides=None),
-)
-_BACKGROUND: dict[int, list[Any]] = {
-    1: [],
-    2: [_SIZ1_BACKGROUND],
-    3: [_SIZ1_BACKGROUND, _NAT1_BACKGROUND],
-}
 
 
 def _phenotype(mean: float, sd: float | None) -> EnvironmentResponsePhenotype:
@@ -285,20 +282,30 @@ def _phenotype(mean: float, sd: float | None) -> EnvironmentResponsePhenotype:
 
 def _experiment(
     foreground: Any, rnd: int, mean: float, sd: float | None
-) -> EnvironmentResponseExperiment:
-    return EnvironmentResponseExperiment(
+) -> StrainEnvironmentResponseExperiment:
+    """The record: the ONE screened guide, the round's environment and its phenotype.
+
+    The round's integrated cassettes are NOT here; they are on the reference's typed
+    background (``_reference``), because they are constant across the round and shared
+    with its reference strain.
+    """
+    return StrainEnvironmentResponseExperiment(
         dataset_name="CrisprMagicLian2019Dataset",
-        genotype=Genotype(perturbations=[foreground, *_BACKGROUND[rnd]]),
+        genotype=Genotype(perturbations=[foreground]),
         environment=_ENVIRONMENT[rnd],
         phenotype=_phenotype(mean, sd),
     )
 
 
-def _reference(rnd: int) -> EnvironmentResponseExperimentReference:
-    return EnvironmentResponseExperimentReference(
+def _reference(rnd: int) -> StrainEnvironmentResponseExperimentReference:
+    background = ln.round_background(rnd)
+    return StrainEnvironmentResponseExperimentReference(
         dataset_name="CrisprMagicLian2019Dataset",
-        genome_reference=ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="bAID"
+        genome_reference=StrainReferenceGenome(
+            species="Saccharomyces cerevisiae",
+            strain=background.name,
+            ploidy="haploid",
+            background=background,
         ),
         environment_reference=_ENVIRONMENT[rnd],
         phenotype_reference=EnvironmentResponsePhenotype(
@@ -368,9 +375,9 @@ def test_build_writes_eight_guide_round_records_with_round_backgrounds(
     dataset: ln.CrisprMagicLian2019Dataset,
 ) -> None:
     """The eight kept (guide, round) cells, in row-major then round order, each equal to
-    a hand-built ``EnvironmentResponseExperiment``: the modality's effector and leaf
+    a hand-built ``StrainEnvironmentResponseExperiment``: the modality's effector and leaf
     class (i -> ``dSpCas9-RD1152`` CRISPRi, a -> ``dLbCas12a-VP`` CRISPRa, d -> ``SaCas9``
-    CRISPRd), the round's integrated background with no guide, furfural 5/10/15 mM, and
+    CRISPRd), ONE perturbation per record whatever the round, furfural 5/10/15 mM, and
     the SE derived from a finite SD with n = 3 (0.1 / sqrt(3) = 0.057735...). The CRISPRd
     row stores the last 21 nt of the 121 nt cassette as the guide and the first 100 nt
     (the upper-cased barcode + 56 nt tail) as the donor; its ``inf`` and blank SDs store
@@ -399,9 +406,11 @@ def test_build_writes_eight_guide_round_records_with_round_backgrounds(
     assert deletion["crispr"]["guide_sequence"] == _D_SPACER
     assert deletion["donor_sequence"] == _CASSETTE[:100]
     assert len(deletion["donor_sequence"]) == 100
+    # ONE perturbation per record in every round: the round's integrated cassettes are
+    # on the reference's background, not in the genotype.
     assert [
         len(dataset[i]["experiment"]["genotype"]["perturbations"]) for i in range(8)
-    ] == [1, 2, 3, 1, 1, 3, 1, 2]
+    ] == [1, 1, 1, 1, 1, 1, 1, 1]
     assert dataset[0]["publication"] == _PUBLICATION.model_dump()
 
 
@@ -488,9 +497,11 @@ def test_one_reference_per_round_gene_set_manifest_and_interned_store(
     dataset: ln.CrisprMagicLian2019Dataset,
 ) -> None:
     """Three references in first-sighting order (rounds 1, 2, 3) with member indices
-    [0, 3, 4, 6], [1, 7], [2, 5], each the bAID host with the round's furfural
-    environment and a zero log2FC baseline at n = 3. ``gene_set.json`` is the four ORFs
-    sorted (the round backgrounds contribute SIZ1 and NAT1 as well); the build manifest
+    [0, 3, 4, 6], [1, 7], [2, 5], each the round's typed host background with the round's
+    furfural environment and a zero log2FC baseline at n = 3. ``gene_set.json`` is the
+    four ORFs sorted (each is a screened foreground somewhere: SIZ1 in round 1 and NAT1
+    in rounds 1 and 2, so dropping the background perturbations does not shrink the gene
+    set); the build manifest
     names the slug, class, module, host and HEAD; ``interned`` holds 6 entries (three
     environments + three references) while the publication stays inline.
     """
@@ -518,8 +529,8 @@ def test_one_reference_per_round_gene_set_manifest_and_interned_store(
         "YMR263W",
     ]
     assert dataset.gene_set == _GENES
-    assert dataset.experiment_class is EnvironmentResponseExperiment
-    assert dataset.reference_class is EnvironmentResponseExperimentReference
+    assert dataset.experiment_class is StrainEnvironmentResponseExperiment
+    assert dataset.reference_class is StrainEnvironmentResponseExperimentReference
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     head = subprocess.run(
         ["git", "-C", str(Path(ln.__file__).parent), "rev-parse", "HEAD"],

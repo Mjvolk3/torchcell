@@ -1,7 +1,9 @@
 # Lian 2019 MAGIC screen: 266,304 (guide, round) records across three CRISPR modalities.
-# Each record's genotype is a 1-/2-/3-perturbation mixed-modality combo, and the "crispr
-# construct" node/edge pair carries the per-guide effector, spacer and (for CRISPRd) the
-# donor through the construct's serialized_data.
+# Each record's genotype is the ONE screened guide; the round's accumulated integrated
+# cassettes ride on the reference genome's typed StrainBackground (its serialized_data on
+# the "genome" node), so the genotype states what the screen varied and the background
+# states what the host carries. The "crispr construct" node/edge pair carries the
+# per-guide effector, spacer and (for CRISPRd) the donor through its serialized_data.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"

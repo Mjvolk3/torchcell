@@ -298,3 +298,87 @@ Now `process()` starts with `verify_raw_files(self.raw_dir, ...)` against `TSV_S
 ## 2026.09.30 - Module constant is the one pin at download (issue #561)
 
 Before this change, `download()` verified the mirror bytes against the digest recorded in the raw-mirror `manifest.json`, and `process()` verified them against the module constant. Because `deposit_raw_mirror` writes the manifest from the constant, the two were equal by construction, but the loader still carried two pins. Now `download()` verifies the bytes against the module constant, and `check_manifest_pin` refuses a manifest that records any other digest, raising `ManifestPinMismatchError` named by path with both digests. The manifest stays the retrieval record. Built records are unchanged. Tests: `test_download_refuses_a_manifest_digest_off_the_module_pin` in [[tests.torchcell.datasets.scerevisiae.test_raw_pins]].
+
+## 2026.10.07 - Typed strain background, and the integration locus IS stated
+
+### The corrected locus claim
+
+The previous build's module docstring said of the bAID host that "the integration LOCUS is
+not stated anywhere in the release". That is wrong. Supplementary Table 11, "Strains
+constructed in this study", in the mirrored SI OCR
+(`si/si1.md`, sha256 `b2bcfe2e672674438216472e3e06903c93d4ee54cd8b6fd9b5f964ad2a3d32db`)
+carries the strain table, verbatim:
+
+```text
+BY4742 | MATα his3∆1 leu2∆0 lys2∆0 ura3∆0
+bAID   | BY4742-Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]
+R1     | bAID-X3::SIZ1i
+R2     | bAID-X3::SIZ1i-X4::NAT1a
+R3     | bAID-X3::SIZ1i-X4::NAT1a-XI1::PDR1i
+```
+
+So bAID is BY4742 with the CRISPR-AID cassette integrated at the **Delta** site (the Ty1
+delta repeat family), carrying KanMX plus the four orthogonal effector cassettes, and each
+round strain adds a gRNA cassette at a named pre-selected locus. The landing pads are named
+in the Results ("integrate heterologous cassettes into X2, X3, X4, XI1, XI2, XI3, XII1,
+XII2, XII4, and XII5 loci"), and the integrations are marker-less ("in a CRISPR-assisted
+and marker-less manner").
+
+The round-to-host mapping is sourced from the SI figure legends, not inferred: round 2 was
+screened in R1 ("the second round iMAGIC screening identified targets when integrated into
+the X4 locus of R1 strain (SIZ1i)", Supplementary Fig 4) and round 3 in R2 ("the third
+round iMAGIC screening identified targets when integrated into the XI1 locus of the R2
+strain (SIZ1i-NAT1a)", Supplementary Fig 6; the paper's Results says the same, "we used the
+NAT1a and SIZ1i-integrated strain (R2) as the parent strain for the third round"). R3 is the
+product of round 3 and is not itself screened here.
+
+### What the records look like now
+
+The dataset moved to the strain-resolved family, the same shape vanacloig2022 uses:
+`StrainEnvironmentResponseExperiment` / `StrainEnvironmentResponseExperimentReference`,
+`StrainReferenceGenome`, `CultureEnvironment`.
+
+- **The reference genome carries a typed `StrainBackground` per round** (`round_background`):
+  BY4742's four auxotrophies as `BackgroundAllele`s, plus the host's cassettes as the new
+  `IntegratedCassette` entries. The strain string is the SI's own genotype column (`bAID`,
+  `bAID-X3::SIZ1i`, `bAID-X3::SIZ1i-X4::NAT1a`) rather than its terse `R1` / `R2` label, so
+  the join key says what the strain is.
+- **`locus` is the site verbatim and `locus_systematic_gene_name` stays None** for every
+  cassette here: a Ty1 delta repeat family and an intergenic landing pad are not R64 ORFs,
+  and giving one a systematic name would be an invention.
+- **The round's cassettes left the `Genotype`.** They are constant across every record of
+  that round and shared with the round's reference strain, which is exactly the line the
+  schema draws between a background and a genotype, so each record's `Genotype` now holds
+  the ONE screened guide. A round-2 record is still the strain in the tube: the background
+  states what else it carries, and at which locus. Consequence to know when reading older
+  analyses: perturbation count per record is now 1 in every round, where it used to be
+  1/2/3 by round. Record count is unchanged, because every drop rule is unchanged (the
+  `guide_targets_its_own_round_background` rule still fires on the round's background ORFs,
+  which `ROUND_BACKGROUND` still records alongside each cassette's designation and locus).
+- **The culture protocol is typed**: 50 mL in a shaken 250 mL baffled flask at 250 rpm.
+  `endpoint` is a typed `ProvenanceGap`, not a value: the cultures were read at mid-log
+  phase, and `EndpointRule`'s three members are a fixed duration, a fixed generation count
+  and control saturation, so picking one would assert a rule the paper did not use.
+  `inoculum_od600` is likewise gapped, because the OD 0.05 the Methods state belongs to the
+  individually constructed validation strains in culture tubes, not to the pooled screening
+  flasks these records come from. `pre_culture` is gapped (the library-construction
+  paragraph's "cultured in 50 mL SED-URA/G418 medium for ~2 days" fits no
+  `PreCultureSource` member, and labeling it `overnight_culture` would assert a time the
+  source contradicts), and so is `auxotroph_supplements` (SED-URA's CSM-URA complements
+  His/Leu/Lys inside the medium, and uracil is deliberately withheld to select the guide
+  plasmid).
+- **The BY4742 auxotrophies stay asserted with a pending-review gap** naming Brachmann
+  1998, even though the SI states the genotype string. The SI says WHICH alleles the strain
+  carries; it does not say how any of them was made, and `STANDARD_ALLELES` reads each
+  designation as a specific `AlleleEdit` (`his3Δ1` partial, the three `Δ0` alleles full)
+  that only Brachmann 1998 states.
+
+### One sharp edge worth remembering
+
+A `SourcedValue` whose `value` is a dict with INTEGER keys does not survive the record's
+JSON round trip: the stored copy comes back with string keys, so the freshly built
+reference and the stored one compare unequal and the synthetic build test fails with a diff
+deep inside the background's provenance. `ROUND_STRAIN_GENOTYPES` is therefore a LIST in
+round order, with `ROUND_STRAIN` as the derived round-keyed lookup for code. Any
+`SourcedValue` that is embedded in a record (rather than only read at build time, like
+`FURFURAL_MM`) has to be JSON-stable.

@@ -2971,10 +2971,25 @@ CANDIDATES: list[Candidate] = [
         "through leucine metabolism after oxidation and CoA activation, which "
         "is the product-loss pathway the isoprenol producers delete. A "
         "published correction exists (AEM 87(8):e00177-21, DOI "
-        "10.1128/aem.00177-21). Fitness Browser only, Cloudflare-blocked, so "
-        "unconfirmed; not every published condition survived the compendium's "
-        "completeness filter, so the full matrix is not recoverable from the "
-        "workbook alone.",
+        "10.1128/aem.00177-21). MEASURED SUBSUMPTION 2026-10-08 and it is "
+        "TOTAL, so this row is a provenance record and NOT a loader "
+        "(experiments/036-dataset-fixes-before-kg-build/scripts/"
+        "bacteria_subsumed_rows.py). Each of the 23 enumerated carbon sources "
+        "is a condition of the Borchert 2024 compendium's carbon-source group, "
+        "which holds 47 samples at them, 22 of the 23 in exactly the "
+        "biological duplicate the Methods state; the 23rd, butyrate, has a "
+        "third sample from an earlier library set and date. The served "
+        "RbTnseqBorchert2024Dataset carries all 47 of those samples as 222,404 "
+        "records over 4,732 loci each, so a loader for this row would store "
+        "every one of those values a second time. The earlier note that not "
+        "every published condition survived the compendium's completeness "
+        "filter was WRONG: that filter eliminated LOCI, not conditions, and no "
+        "condition this paper reports is missing. Nothing is left to load "
+        "either, because the paper released no per-gene data file: its "
+        "supplemental material is one figure PDF, it references no Table S, "
+        "and its only release is the Fitness Browser, which answered HTTP 403 "
+        "when probed on 2026-10-08. Provenance record: $DATA_ROOT/"
+        "torchcell-raw/thompsonFattyAcidAlcohol2020/subsumption_record.json.",
         accession="https://fit.genomics.lbl.gov/cgi-bin/org.cgi?orgId=Putida",
         accession_confirmed=False,
         status="candidate",

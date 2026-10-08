@@ -24,8 +24,11 @@ Table 1 enumerates its nitrogen sources, and the mapping onto the compendium's
 nitrogen-source samples is a bijection, so the row needs no loader. What the compendium
 does NOT carry is measured too, and it is not nothing.
 
-ROW 28 Thompson 2020 fatty acid and alcohol is measured in the section that follows
-(added per row, one commit each).
+ROW 28, Thompson 2020 fatty acid and alcohol (``thompsonFattyAcidAlcohol2020``), the
+other row triaged as subsumed by that compendium. Measured the same way, and here the
+subsumption has no gap at all: every carbon source the Results enumerate is a condition
+the compendium carries. The row's claim that the compendium's completeness filter dropped
+published conditions is measured FALSE; that filter dropped loci.
 
 Run from the repo root::
 
@@ -219,8 +222,9 @@ class SubsumptionRecord(BaseModel):
     citation_key: str
     doi: str
     title: str
+    #: The row's NAME, not its rank. A rank rots: the schedule re-ranks on every row
+    #: that lands, and this very branch moves one row eight places.
     row_name: str
-    row_rank: int
     decision: Literal[
         "subsumed_no_loader", "partly_subsumed_loader_warranted", "not_subsumed"
     ]
@@ -904,7 +908,6 @@ def butland_record() -> tuple[ButlandRecord, pd.DataFrame]:
             doi=BUTLAND_DOI,
             title=BUTLAND_TITLE,
             row_name="Butland 2008",
-            row_rank=33,
             decision="partly_subsumed_loader_warranted",
             served_coverage=coverage,
             release_files=BUTLAND_RELEASE_FILES,
@@ -1399,7 +1402,6 @@ def schmidt_record(store: ServedCompendium) -> tuple[PutidaRecord, pd.DataFrame]
             doi=SCHMIDT_DOI,
             title=SCHMIDT_TITLE,
             row_name="Schmidt 2022 nitrogen",
-            row_rank=24,
             decision="subsumed_no_loader",
             served_coverage=coverage,
             release_files=SCHMIDT_RELEASE_FILES,
@@ -1423,6 +1425,200 @@ def schmidt_record(store: ServedCompendium) -> tuple[PutidaRecord, pd.DataFrame]
 SCHMIDT_SI_EXPECTED: Final = [
     "Schmidt 2022 released no per-gene data file: its supplemental material is one "
     "figure PDF (SUPPLEMENTAL FILE 1, PDF file, 3.1 MB) and its fitness data are "
+    "published only on the Fitness Browser, which is probed rather than mirrored. The "
+    "bytes that carry this paper's values are the Borchert 2024 compendium release, "
+    "under that key's own raw mirror, so nothing is deposited here"
+]
+
+
+# --------------------------------------------------------------------------- #
+# Thompson 2020 fatty acid and alcohol: provenance anchors
+# --------------------------------------------------------------------------- #
+THOMPSON_KEY: Final = "thompsonFattyAcidAlcohol2020"
+THOMPSON_DOI: Final = "10.1128/AEM.01665-20"
+THOMPSON_TITLE: Final = (
+    "Fatty Acid and Alcohol Metabolism in Pseudomonas putida: Functional Analysis "
+    "Using Random Barcode Transposon Sequencing"
+)
+THOMPSON_PAPER_MD: Final = ReleaseFile(
+    relpath="paper.md",
+    mirror="torchcell-library",
+    citation_key=THOMPSON_KEY,
+    role="paper_ocr",
+    bytes=97573,
+    sha256="389d0d6cd196f9f159d0485f6b8ed09743dfbe3b6682369db489d7356a469b45",
+    source_url="https://doi.org/10.1128/AEM.01665-20",
+    retrieval_method=RetrievalMethod.zotero_attachment,
+    retrieval_command=(
+        "torchcell.literature.ocr.ocr_pdf(paper.pdf) over the Zotero attachment "
+        "captured by torchcell.literature.capture"
+    ),
+    retrieved_at="2026-10-07",
+    purpose="the Results enumerate all 13 fatty acids and all 10 alcohols by name; "
+    "the abstract and Methods state the condition and replicate counts",
+)
+THOMPSON_RELEASE_FILES: Final = (THOMPSON_PAPER_MD, COMPENDIUM_RELEASE)
+#: Carbon source as the Results word it -> (compendium ``condition_1``, why the two
+#: names are the same compound). The paper names a fatty acid by its chain length and
+#: anion; the compendium names the acid or its sodium salt.
+THOMPSON_COMPOUNDS: Final[dict[str, tuple[str, str]]] = {
+    "propionate (C3)": ("Sodium propionate", "the salt the compendium names"),
+    "butyrate (C4)": ("Sodium butyrate", "the salt the compendium names"),
+    "valerate (C5)": ("Valeric acid", "the acid of the same five-carbon anion"),
+    "hexanoate (C6)": ("Hexanoic acid", "the acid of the same six-carbon anion"),
+    "heptanoate (C7)": ("Heptanoic acid", "the acid of the same seven-carbon anion"),
+    "octanoate (C8)": ("Octanoic acid", "the acid of the same eight-carbon anion"),
+    "nonanoate (C9)": ("Nonanoic acid", "the acid of the same nine-carbon anion"),
+    "decanoate (C10)": ("Decanoic acid", "the acid of the same ten-carbon anion"),
+    "laurate (C12)": ("Lauric acid", "laurate IS dodecanoate, the C12 acid"),
+    "myristate (C14)": ("Myristic acid", "myristate IS tetradecanoate, the C14 acid"),
+    "Tween 20": ("Tween 20", ""),
+    "butyl stearate": ("Butyl stearate", ""),
+    "oleic acid": ("Oleic acid", ""),
+    "ethanol": ("Ethanol", ""),
+    "butanol": ("Butanol", ""),
+    "pentanol": ("1-Pentanol", "the primary alcohol the compendium names"),
+    "1,2-propanediol": ("1,2-Propanediol", ""),
+    "1,3-butanediol": ("1,3-Butandiol", "the compendium drops the second e"),
+    "1,4-butanediol": ("1,4-Butanediol", ""),
+    "1,5-pentanediol": ("1,5-Pentanediol", ""),
+    "isopentanol": ("3-methyl-1-butanol", "isopentanol IS 3-methyl-1-butanol"),
+    "isoprenol": ("3-methyl-3-butenol", "isoprenol IS 3-methyl-3-buten-1-ol"),
+    "2-methyl-1-butanol": ("2-methyl-1-butanol", ""),
+}
+#: The paper's two enumerations, each a count the measurement checks the map against.
+THOMPSON_FATTY_ACIDS: Final = 13
+THOMPSON_ALCOHOLS: Final = 10
+
+
+def _thompson_quote(value: Any, quote: str, *, page: str) -> SourcedValue:
+    """Bind a value to a verbatim quote of the pinned Thompson 2020 OCR."""
+    return _quote(
+        value,
+        quote,
+        source="paper.md",
+        citation_key=THOMPSON_KEY,
+        sha256=THOMPSON_PAPER_MD.sha256,
+        page=page,
+        method=_OCR,
+    )
+
+
+THOMPSON_SOURCED: Final[dict[str, SourcedValue]] = {
+    "conditions": _thompson_quote(
+        {"fatty_acids": THOMPSON_FATTY_ACIDS, "alcohols": THOMPSON_ALCOHOLS},
+        "Global fitness analyses of transposon libraries grown on 13 fatty acids and "
+        "10 alcohols produced strong phenotypes for hundreds of genes.",
+        page="Abstract",
+    ),
+    "fatty_acids_enumerated": _thompson_quote(
+        THOMPSON_FATTY_ACIDS,
+        "barcoded transposon mutant libraries were grown in minimal medium with "
+        "straight-chain fatty acids ${ \\mathrm { \\Sigma } } ( { \\mathsf { C } } _ "
+        "{ 3 }$ to $\\mathsf { C } _ { 1 0 ^ { \\prime } } \\mathsf { C } _ { 1 2 ^ { "
+        "\\prime } }$ and ${ \\sf C } _ { 1 4 } )$ , fatty esters (Tween 20 and butyl "
+        "stearate), and an unsaturated fatty acid (oleic acid) as sole carbon sources.",
+        page="Results, 'Global analysis of fatty acid metabolism'",
+    ),
+    "alcohols_enumerated": _thompson_quote(
+        THOMPSON_ALCOHOLS,
+        "transposon libraries were grown on a number of short $n$ -alcohols (ethanol, "
+        "butanol, and pentanol), diols (1,2- propanediol, 1,3-butanediol, "
+        "1,4-butanediol, and 1,5-pentanediol), and branched-chain alcohols "
+        "(isopentanol, isoprenol, and 2-methyl-1-butanol).",
+        page="Results, 'Global analysis of alcohol catabolism'",
+    ),
+    "replicates_and_release": _thompson_quote(
+        {"biological_replicates": 2, "release": "http://fit.genomics.lbl.gov"},
+        "All experiments were conducted in biological duplicate, and all fitness data "
+        "are publicly available at http://fit.genomics.lbl.gov.",
+        page="Materials and Methods, 'RB-Tn-Seq'",
+    ),
+    "library": _thompson_quote(
+        "JBEI-1",
+        "utilized the P. putida library JBEI-1, which has been described previously, "
+        "with slight modification (18).",
+        page="Materials and Methods, 'RB-Tn-Seq'",
+    ),
+}
+
+
+def thompson_record(store: ServedCompendium) -> tuple[PutidaRecord, pd.DataFrame]:
+    """Thompson 2020's measured provenance record, and the per-compound table."""
+    stated = (
+        THOMPSON_SOURCED["conditions"].value["fatty_acids"]
+        + THOMPSON_SOURCED["conditions"].value["alcohols"]
+    )
+    if len(THOMPSON_COMPOUNDS) != stated:
+        raise RuntimeError(
+            f"the compound map holds {len(THOMPSON_COMPOUNDS)} compounds, the abstract "
+            f"states {stated}"
+        )
+    evidence, coverage, table = putida_coverage(
+        group="carbon source",
+        compound_map=THOMPSON_COMPOUNDS,
+        conditions_stated=stated,
+        compounds_enumerated=stated,
+        conditions_absent=0,
+        replicate_assays_absent=None,
+        store=store,
+    )
+    replicated = [c for c in evidence.compounds if len(c.compendium_samples) == 2]
+    conclusion = (
+        "SUBSUMED. Every one of the "
+        f"{evidence.paper_compounds_enumerated} carbon sources the Results enumerate "
+        "is a condition of the compendium's "
+        f"{evidence.compendium_experiment_group} group, which holds "
+        f"{evidence.compendium_samples_at_matched_conditions} samples at them, "
+        f"{len(replicated)} of the {evidence.paper_compounds_enumerated} in exactly "
+        "the biological duplicate the Methods state. The served "
+        f"{coverage.served_dataset} carries all "
+        f"{evidence.served_samples_at_matched_conditions} of those samples as "
+        f"{evidence.served_records_at_matched_conditions} records, "
+        f"{evidence.compendium_loci} loci each, so a loader for this row would store "
+        "every one of them a second time. No loader."
+    )
+    loadable = (
+        "Nothing, and that is measured rather than assumed. No condition this paper "
+        "reports is missing from the compendium's carbon-source group, so unlike "
+        "Schmidt 2022 there is not even a condition-level gap. The only slice the "
+        "compendium is known to drop is the set of loci it eliminated for lacking a "
+        "value in some sample, and this paper released no per-gene data file to "
+        "recover them from: its supplemental material is one figure PDF and its only "
+        f"release is the Fitness Browser, which answers {FITNESS_BROWSER} with the "
+        "status recorded in release_probes. Borchert 2023's own SI carried "
+        "per-replicate fitness, which is why that row became a loader; this one has no "
+        "such bytes."
+    )
+    return (
+        PutidaRecord(
+            citation_key=THOMPSON_KEY,
+            doi=THOMPSON_DOI,
+            title=THOMPSON_TITLE,
+            row_name="Thompson 2020 fatty acid and alcohol",
+            decision="subsumed_no_loader",
+            served_coverage=coverage,
+            release_files=THOMPSON_RELEASE_FILES,
+            release_probes=(
+                probe_release(
+                    FITNESS_BROWSER,
+                    "the paper's only data release; a non-200 is the measured form of "
+                    "the schedule row's Cloudflare-blocked claim",
+                ),
+            ),
+            sourced_values=THOMPSON_SOURCED,
+            versus_superset=evidence,
+            conclusion=conclusion,
+            loadable_slice=loadable,
+            measured_at=datetime.now(UTC).isoformat(),
+        ),
+        table,
+    )
+
+
+THOMPSON_SI_EXPECTED: Final = [
+    "Thompson 2020 released no per-gene data file: its supplemental material is one "
+    "figure PDF (SUPPLEMENTAL FILE 1, PDF file, 3 MB) and its fitness data are "
     "published only on the Fitness Browser, which is probed rather than mirrored. The "
     "bytes that carry this paper's values are the Borchert 2024 compendium release, "
     "under that key's own raw mirror, so nothing is deposited here"
@@ -1552,7 +1748,8 @@ def main(argv: list[str] | None = None) -> None:
     butland, butland_pairs = butland_record()
     store = served_compendium()
     schmidt, schmidt_compounds = schmidt_record(store)
-    rows: list[SubsumptionRecord] = [butland, schmidt]
+    thompson, thompson_compounds = thompson_record(store)
+    rows: list[SubsumptionRecord] = [butland, schmidt, thompson]
     results: dict[str, Any] = {
         "script": SCRIPT,
         "measured_at": butland.measured_at,
@@ -1585,6 +1782,18 @@ def main(argv: list[str] | None = None) -> None:
                 )
             )
         )
+        written.append(
+            str(
+                extend_manifest(
+                    THOMPSON_KEY,
+                    [],
+                    doi=THOMPSON_DOI,
+                    title=THOMPSON_TITLE,
+                    si_expected=THOMPSON_SI_EXPECTED,
+                    si_data_sources=(FITNESS_BROWSER,),
+                )
+            )
+        )
         written.extend(str(write_record(row)) for row in rows)
         results["written"] = written
 
@@ -1594,6 +1803,9 @@ def main(argv: list[str] | None = None) -> None:
     )
     schmidt_compounds.to_csv(
         osp.join(RESULTS, "schmidt2022_nitrogen_conditions.csv"), index=False
+    )
+    thompson_compounds.to_csv(
+        osp.join(RESULTS, "thompson2020_carbon_conditions.csv"), index=False
     )
     path = osp.join(RESULTS, "bacteria_subsumed_rows.json")
     with open(path, "w") as handle:

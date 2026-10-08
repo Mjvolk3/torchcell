@@ -158,3 +158,73 @@ record's `release_probes`.
 
 So: `decision = "subsumed_no_loader"`, with the absent slice named and its
 unrecoverability measured rather than waved at.
+
+## 2026.10.08 - Thompson 2020 fatty acid and alcohol (row 28 -> 29) is subsumed with no gap at all
+
+Measured by the same script. Per-compound table:
+`experiments/036-dataset-fixes-before-kg-build/results/thompson2020_carbon_conditions.csv`.
+Provenance record:
+`$DATA_ROOT/torchcell-raw/thompsonFattyAcidAlcohol2020/subsumption_record.json`.
+
+### The paper's own enumeration
+
+The abstract states the scale ("Global fitness analyses of transposon libraries grown on 13
+fatty acids and 10 alcohols produced strong phenotypes for hundreds of genes") and the
+Results name every compound: straight-chain C3 to C10 plus C12 and C14, the esters Tween 20
+and butyl stearate, and oleic acid; then ethanol, butanol, pentanol, the four diols, and the
+three branched-chain alcohols. 13 + 10 = 23, and the script raises if the compound map and
+the abstract's two counts ever disagree.
+
+### Every one of the 23 is a served compendium condition
+
+The Borchert 2024 compendium's `carbon source` group holds 206 samples over 54 conditions.
+Mapping the paper's 23 names onto it needs the same kind of synonym table as Schmidt (the
+paper names an anion, the compendium names the acid or its sodium salt; isopentanol =
+3-methyl-1-butanol, isoprenol = 3-methyl-3-butenol), and with it:
+
+- 23 of 23 compounds match a condition;
+- 0 compounds are unmatched;
+- **47 samples** sit at those 23 conditions, 22 of the 23 in exactly the biological duplicate
+  the Methods state. Butyrate is the exception with three: two in the fatty-acid set and one
+  from an earlier library set and date.
+
+The samples spread over three compendium library sets, which is why no single metadata column
+attributes them: the fatty acids are one set, six alcohols another, and four alcohols plus
+propionate sit in a set shared with another study's aromatics. Condition identity, not the
+`person` or `set` column, is what makes the match.
+
+### What the served store holds
+
+All **47** of those samples are served, **4,732 loci each**, for **222,404 records** out of
+the store's 1,372,280. A loader for this row would store every one of those values a second
+time.
+
+### Nothing is left over, and that is measured
+
+Unlike Schmidt 2022, there is not even a condition-level gap: no condition this paper reports
+is missing from the compendium's carbon-source group. The schedule row's earlier claim that
+"not every published condition survived the compendium's completeness filter" was **wrong**:
+that filter eliminated LOCI (the matrix is the 4,732 loci carrying a value in all 332
+samples), not conditions.
+
+The eliminated loci are the only slice the compendium is known to drop, and this paper
+released nothing to recover them from: its supplemental material is one figure PDF
+("SUPPLEMENTAL FILE 1, PDF file, 3 MB"), it references no Table S, and the Methods publish
+its fitness data only at `http://fit.genomics.lbl.gov`, which answered **HTTP 403 on
+2026-10-08** when the script probed it. Borchert 2023's own SI carried per-replicate fitness,
+which is what made that row a real 10,824-value loader; this one has no such bytes.
+
+`decision = "subsumed_no_loader"`.
+
+### What changed on the three rows, together
+
+| Row | Before | After | Loader? |
+|---|---|---|---|
+| 24 Schmidt 2022 nitrogen | `candidate`, "must be deduplicated against that row" | `candidate`, bijection measured, 492,128 served records | no |
+| 29 Thompson 2020 (was 28) | `candidate`, "not every published condition survived" | `candidate`, 23 of 23 conditions served, 222,404 records | no |
+| 25 Butland 2008 (was 33) | `blocked`, `recall`, 155,415 estimate | `candidate`, `sourced`, 314,847 measured | YES, 321 pairs at least |
+
+The `Status` enum is `Literal["candidate", "blocked", "aggregation"]` and has no member for
+"served elsewhere, no loader needed", so all three keep `candidate` and the measurement with
+its date lives in `why`. A `subsumed` member would fit rows 24 and 29 exactly; it was not
+invented here.

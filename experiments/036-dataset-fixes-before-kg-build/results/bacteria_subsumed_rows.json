@@ -1,13 +1,12 @@
 {
   "script": "experiments/036-dataset-fixes-before-kg-build/scripts/bacteria_subsumed_rows.py",
-  "measured_at": "2026-10-08T21:40:07.072900+00:00",
+  "measured_at": "2026-10-08T21:44:16.878502+00:00",
   "rows": {
     "Butland 2008": {
       "citation_key": "butlandESGAColiSynthetic2008",
       "doi": "10.1038/nmeth.1239",
       "title": "eSGA: E. coli synthetic genetic array analysis",
       "row_name": "Butland 2008",
-      "row_rank": 33,
       "decision": "partly_subsumed_loader_warranted",
       "served_coverage": {
         "served_dataset": "GeneInteractionBabu2014Dataset",
@@ -221,7 +220,7 @@
       },
       "conclusion": "NOT SUBSUMED, and the retrieval blocker is resolved. The served GeneInteractionBabu2014Dataset carries 727 of this paper's measurements under GeneInteractionPhenotype.screen_id == 'Butland et al.', which is 0.23 percent of the 314847 interaction scores Supplementary Table 4 releases without any filtering, over 160563 distinct gene pairs once the two Keio isolates of a gene are collapsed. Babu's release is the high-confidence tail of a re-analysis, not a superset of this one: it re-publishes 1129 rows over these 39 donors, and leaves 490 of this paper's own 1270 high-confidence gene pairs out.",
       "loadable_slice": "321 of the 799 non-essential high-confidence pairs are absent from Babu's released Table S2 altogether, and the unfiltered Supplementary Table 4 matrix holds 314847 S scores against 727 served records. Both slices load against the existing GeneInteractionPhenotype with no schema change, because Babu's own GI score IS this S score for the pairs the two releases share (793 of 873 matched rows are identical). The 489 SPA-tag essential pairs stay blocked on the hypomorph perturbation leaf the Babu loader already filed.",
-      "measured_at": "2026-10-08T21:40:07.072900+00:00",
+      "measured_at": "2026-10-08T21:44:16.878502+00:00",
       "script": "experiments/036-dataset-fixes-before-kg-build/scripts/bacteria_subsumed_rows.py",
       "release": {
         "array_rows": 8073,
@@ -280,7 +279,6 @@
       "doi": "10.1128/aem.02430-21",
       "title": "Nitrogen Metabolism in Pseudomonas putida: Functional Analysis Using Random Barcode Transposon Sequencing",
       "row_name": "Schmidt 2022 nitrogen",
-      "row_rank": 24,
       "decision": "subsumed_no_loader",
       "served_coverage": {
         "served_dataset": "RbTnseqBorchert2024Dataset",
@@ -325,7 +323,7 @@
         {
           "url": "https://fit.genomics.lbl.gov/cgi-bin/org.cgi?orgId=Putida",
           "status_code": 403,
-          "probed_at": "2026-10-08T21:42:15.177126+00:00",
+          "probed_at": "2026-10-08T21:46:26.695001+00:00",
           "note": "the paper's only data release; a non-200 is the measured form of the schedule row's Cloudflare-blocked claim"
         }
       ],
@@ -396,7 +394,7 @@
       },
       "conclusion": "SUBSUMED for every sole-nitrogen-source condition the paper reports, and the mapping is a bijection, not a sample. Table 1 enumerates 52 nitrogen sources; the compendium's nitrogen source group holds exactly 52 conditions and 104 samples, every condition is one of this paper's compounds and every compound is one of those conditions, with the biological duplicate the Methods state. The served RbTnseqBorchert2024Dataset carries all 104 of those samples as 492128 records, 4732 loci each, so a loader for this row would store every one of them a second time. No loader.",
       "loadable_slice": "NOT total, and the gap is not loadable either. The 19 amino-acid drop-out conditions of Table 1 have no condition in the compendium's nitrogen-source group at all, and by this paper's own t-SNE Methods it ran 129 sole-nitrogen-source growth assays over 51 conditions against the 102 samples the compendium carries over those same conditions, so 27 replicate assays are absent as well. Neither slice is recoverable: this paper released no per-gene data file, its supplemental material is one figure PDF, and its only release is the Fitness Browser, which answers https://fit.genomics.lbl.gov/cgi-bin/org.cgi?orgId=Putida with the status recorded in release_probes. Unlike Borchert 2023, whose own SI carries per-replicate fitness for the loci the compendium eliminated, there are no bytes here to load.",
-      "measured_at": "2026-10-08T21:42:15.177593+00:00",
+      "measured_at": "2026-10-08T21:46:26.695514+00:00",
       "script": "experiments/036-dataset-fixes-before-kg-build/scripts/bacteria_subsumed_rows.py",
       "versus_superset": {
         "compendium_citation_key": "borchertMachineLearningAnalysis2024",
@@ -1149,6 +1147,516 @@
         "conditions_absent_from_compendium": 19,
         "replicate_assays_absent_from_compendium": 27
       }
+    },
+    "Thompson 2020 fatty acid and alcohol": {
+      "citation_key": "thompsonFattyAcidAlcohol2020",
+      "doi": "10.1128/AEM.01665-20",
+      "title": "Fatty Acid and Alcohol Metabolism in Pseudomonas putida: Functional Analysis Using Random Barcode Transposon Sequencing",
+      "row_name": "Thompson 2020 fatty acid and alcohol",
+      "decision": "subsumed_no_loader",
+      "served_coverage": {
+        "served_dataset": "RbTnseqBorchert2024Dataset",
+        "served_store": "$DATA_ROOT/data/torchcell/rbtnseq_borchert2024",
+        "served_records": 1372280,
+        "records_from_this_paper": 222404,
+        "released_instances": 222404,
+        "released_instances_basis": "the records the served store holds for this paper's samples. This paper released no per-record file of its own, so there is no independent release count to divide by and the fraction is 1.0 by construction; what is absent from the compendium is counted in versus_superset instead",
+        "attribution_field": "EnvironmentResponsePhenotype.screen_id",
+        "attribution_value": "the compendium sample name, one per growth assay",
+        "served_fraction": 1.0
+      },
+      "release_files": [
+        {
+          "relpath": "paper.md",
+          "mirror": "torchcell-library",
+          "citation_key": "thompsonFattyAcidAlcohol2020",
+          "role": "paper_ocr",
+          "bytes": 97573,
+          "sha256": "389d0d6cd196f9f159d0485f6b8ed09743dfbe3b6682369db489d7356a469b45",
+          "source_url": "https://doi.org/10.1128/AEM.01665-20",
+          "retrieval_method": "zotero_attachment",
+          "retrieval_command": "torchcell.literature.ocr.ocr_pdf(paper.pdf) over the Zotero attachment captured by torchcell.literature.capture",
+          "retrieved_at": "2026-10-07",
+          "purpose": "the Results enumerate all 13 fatty acids and all 10 alcohols by name; the abstract and Methods state the condition and replicate counts"
+        },
+        {
+          "relpath": "data/fModule_Metadata.xlsx",
+          "mirror": "torchcell-raw",
+          "citation_key": "borchertMachineLearningAnalysis2024",
+          "role": "raw_data",
+          "bytes": 23261645,
+          "sha256": "4d649385ac06684482396a125f135df22a2a5060da73485b2cd14468f8cc8be1",
+          "source_url": "https://raw.githubusercontent.com/beckham-lab/fModule/30eaef39a4609335f0f10c2d25a8eb69d426b0ce/fModule_Metadata.xlsx",
+          "retrieval_method": "direct_url",
+          "retrieval_command": "torchcell.literature.retrieve.direct_url(url='https://raw.githubusercontent.com/beckham-lab/fModule/30eaef39a4609335f0f10c2d25a8eb69d426b0ce/fModule_Metadata.xlsx')",
+          "retrieved_at": "2026-10-07",
+          "purpose": "the compendium release the served RbTnseqBorchert2024Dataset is built from: sheet metadata names every sample's condition, sheet fitness_measurements is the gene by sample fitness matrix"
+        }
+      ],
+      "release_probes": [
+        {
+          "url": "https://fit.genomics.lbl.gov/cgi-bin/org.cgi?orgId=Putida",
+          "status_code": 403,
+          "probed_at": "2026-10-08T21:46:32.732802+00:00",
+          "note": "the paper's only data release; a non-200 is the measured form of the schedule row's Cloudflare-blocked claim"
+        }
+      ],
+      "sourced_values": {
+        "conditions": {
+          "value": {
+            "fatty_acids": 13,
+            "alcohols": 10
+          },
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "thompsonFattyAcidAlcohol2020",
+            "sha256": "389d0d6cd196f9f159d0485f6b8ed09743dfbe3b6682369db489d7356a469b45",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Abstract",
+            "retrieved": null
+          },
+          "quote": "Global fitness analyses of transposon libraries grown on 13 fatty acids and 10 alcohols produced strong phenotypes for hundreds of genes.",
+          "note": null
+        },
+        "fatty_acids_enumerated": {
+          "value": 13,
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "thompsonFattyAcidAlcohol2020",
+            "sha256": "389d0d6cd196f9f159d0485f6b8ed09743dfbe3b6682369db489d7356a469b45",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Results, 'Global analysis of fatty acid metabolism'",
+            "retrieved": null
+          },
+          "quote": "barcoded transposon mutant libraries were grown in minimal medium with straight-chain fatty acids ${ \\mathrm { \\Sigma } } ( { \\mathsf { C } } _ { 3 }$ to $\\mathsf { C } _ { 1 0 ^ { \\prime } } \\mathsf { C } _ { 1 2 ^ { \\prime } }$ and ${ \\sf C } _ { 1 4 } )$ , fatty esters (Tween 20 and butyl stearate), and an unsaturated fatty acid (oleic acid) as sole carbon sources.",
+          "note": null
+        },
+        "alcohols_enumerated": {
+          "value": 10,
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "thompsonFattyAcidAlcohol2020",
+            "sha256": "389d0d6cd196f9f159d0485f6b8ed09743dfbe3b6682369db489d7356a469b45",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Results, 'Global analysis of alcohol catabolism'",
+            "retrieved": null
+          },
+          "quote": "transposon libraries were grown on a number of short $n$ -alcohols (ethanol, butanol, and pentanol), diols (1,2- propanediol, 1,3-butanediol, 1,4-butanediol, and 1,5-pentanediol), and branched-chain alcohols (isopentanol, isoprenol, and 2-methyl-1-butanol).",
+          "note": null
+        },
+        "replicates_and_release": {
+          "value": {
+            "biological_replicates": 2,
+            "release": "http://fit.genomics.lbl.gov"
+          },
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "thompsonFattyAcidAlcohol2020",
+            "sha256": "389d0d6cd196f9f159d0485f6b8ed09743dfbe3b6682369db489d7356a469b45",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Materials and Methods, 'RB-Tn-Seq'",
+            "retrieved": null
+          },
+          "quote": "All experiments were conducted in biological duplicate, and all fitness data are publicly available at http://fit.genomics.lbl.gov.",
+          "note": null
+        },
+        "library": {
+          "value": "JBEI-1",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "thompsonFattyAcidAlcohol2020",
+            "sha256": "389d0d6cd196f9f159d0485f6b8ed09743dfbe3b6682369db489d7356a469b45",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Materials and Methods, 'RB-Tn-Seq'",
+            "retrieved": null
+          },
+          "quote": "utilized the P. putida library JBEI-1, which has been described previously, with slight modification (18).",
+          "note": null
+        }
+      },
+      "conclusion": "SUBSUMED. Every one of the 23 carbon sources the Results enumerate is a condition of the compendium's carbon source group, which holds 47 samples at them, 22 of the 23 in exactly the biological duplicate the Methods state. The served RbTnseqBorchert2024Dataset carries all 47 of those samples as 222404 records, 4732 loci each, so a loader for this row would store every one of them a second time. No loader.",
+      "loadable_slice": "Nothing, and that is measured rather than assumed. No condition this paper reports is missing from the compendium's carbon-source group, so unlike Schmidt 2022 there is not even a condition-level gap. The only slice the compendium is known to drop is the set of loci it eliminated for lacking a value in some sample, and this paper released no per-gene data file to recover them from: its supplemental material is one figure PDF and its only release is the Fitness Browser, which answers https://fit.genomics.lbl.gov/cgi-bin/org.cgi?orgId=Putida with the status recorded in release_probes. Borchert 2023's own SI carried per-replicate fitness, which is why that row became a loader; this one has no such bytes.",
+      "measured_at": "2026-10-08T21:46:32.733469+00:00",
+      "script": "experiments/036-dataset-fixes-before-kg-build/scripts/bacteria_subsumed_rows.py",
+      "versus_superset": {
+        "compendium_citation_key": "borchertMachineLearningAnalysis2024",
+        "compendium_samples_total": 332,
+        "compendium_loci": 4732,
+        "compendium_experiment_group": "carbon source",
+        "compendium_samples_in_group": 206,
+        "compendium_conditions_in_group": 54,
+        "paper_conditions_stated": 23,
+        "paper_compounds_enumerated": 23,
+        "compounds_matched": 23,
+        "compounds_unmatched": [],
+        "group_conditions_unmatched": [
+          "2-Piperidinone",
+          "3-methyl-2-oxobutanoate",
+          "4-Aminobutyric acid",
+          "4-Hydroxybenzoic Acid",
+          "4-Hydroxyvalerate",
+          "4-acetoxybenzoic acid",
+          "4-acetoxyvanillic acid",
+          "4-hydroxybenzoic acid",
+          "5-Aminovaleric acid",
+          "D-Galacturonic Acid monohydrate",
+          "D-Glucose",
+          "D-Glucuronic Acid",
+          "D-Lysine",
+          "Ferulic Acid",
+          "Ferulic acid",
+          "L-Arginine",
+          "L-Glutamic acid monopotassium salt monohydrate",
+          "L-Histidine",
+          "L-Lysine",
+          "Levulinic Acid",
+          "Phenylacetic acid",
+          "Potassium acetate",
+          "Protocatechuic Acid",
+          "Sodium succinate dibasic hexahydrate",
+          "Vanillic Acid",
+          "Vanillic acid",
+          "Vanillin",
+          "a-Ketoglutaric acid disodium salt hydrate",
+          "benzoic acid",
+          "beta-hydroxyisobutanoate ",
+          "p-Coumaric acid"
+        ],
+        "compendium_samples_at_matched_conditions": 47,
+        "served_samples_at_matched_conditions": 47,
+        "served_records_at_matched_conditions": 222404,
+        "served_loci_per_sample": [
+          4732
+        ],
+        "compounds": [
+          {
+            "paper_name": "1,2-propanediol",
+            "compendium_condition": "1,2-Propanediol",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set12IT002",
+              "set12IT032"
+            ],
+            "served_samples": [
+              "set12IT002",
+              "set12IT032"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "1,3-butanediol",
+            "compendium_condition": "1,3-Butandiol",
+            "synonym_note": "the compendium drops the second e",
+            "compendium_samples": [
+              "set16IT006",
+              "set16IT007"
+            ],
+            "served_samples": [
+              "set16IT006",
+              "set16IT007"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "1,4-butanediol",
+            "compendium_condition": "1,4-Butanediol",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set12IT009",
+              "set12IT039"
+            ],
+            "served_samples": [
+              "set12IT009",
+              "set12IT039"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "1,5-pentanediol",
+            "compendium_condition": "1,5-Pentanediol",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set12IT008",
+              "set12IT038"
+            ],
+            "served_samples": [
+              "set12IT008",
+              "set12IT038"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "2-methyl-1-butanol",
+            "compendium_condition": "2-methyl-1-butanol",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set12IT007",
+              "set12IT037"
+            ],
+            "served_samples": [
+              "set12IT007",
+              "set12IT037"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "Tween 20",
+            "compendium_condition": "Tween 20",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set15IT063",
+              "set15IT077"
+            ],
+            "served_samples": [
+              "set15IT063",
+              "set15IT077"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "butanol",
+            "compendium_condition": "Butanol",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set16IT004",
+              "set16IT005"
+            ],
+            "served_samples": [
+              "set16IT004",
+              "set16IT005"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "butyl stearate",
+            "compendium_condition": "Butyl stearate",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set15IT054",
+              "set15IT068"
+            ],
+            "served_samples": [
+              "set15IT054",
+              "set15IT068"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "butyrate (C4)",
+            "compendium_condition": "Sodium butyrate",
+            "synonym_note": "the salt the compendium names",
+            "compendium_samples": [
+              "set10IT053",
+              "set15IT065",
+              "set15IT079"
+            ],
+            "served_samples": [
+              "set10IT053",
+              "set15IT065",
+              "set15IT079"
+            ],
+            "served_records": 14196
+          },
+          {
+            "paper_name": "decanoate (C10)",
+            "compendium_condition": "Decanoic acid",
+            "synonym_note": "the acid of the same ten-carbon anion",
+            "compendium_samples": [
+              "set15IT058",
+              "set15IT072"
+            ],
+            "served_samples": [
+              "set15IT058",
+              "set15IT072"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "ethanol",
+            "compendium_condition": "Ethanol",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set16IT014",
+              "set16IT015"
+            ],
+            "served_samples": [
+              "set16IT014",
+              "set16IT015"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "heptanoate (C7)",
+            "compendium_condition": "Heptanoic acid",
+            "synonym_note": "the acid of the same seven-carbon anion",
+            "compendium_samples": [
+              "set15IT067",
+              "set15IT081"
+            ],
+            "served_samples": [
+              "set15IT067",
+              "set15IT081"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "hexanoate (C6)",
+            "compendium_condition": "Hexanoic acid",
+            "synonym_note": "the acid of the same six-carbon anion",
+            "compendium_samples": [
+              "set15IT057",
+              "set15IT071"
+            ],
+            "served_samples": [
+              "set15IT057",
+              "set15IT071"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "isopentanol",
+            "compendium_condition": "3-methyl-1-butanol",
+            "synonym_note": "isopentanol IS 3-methyl-1-butanol",
+            "compendium_samples": [
+              "set16IT010",
+              "set16IT011"
+            ],
+            "served_samples": [
+              "set16IT010",
+              "set16IT011"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "isoprenol",
+            "compendium_condition": "3-methyl-3-butenol",
+            "synonym_note": "isoprenol IS 3-methyl-3-buten-1-ol",
+            "compendium_samples": [
+              "set16IT008",
+              "set16IT009"
+            ],
+            "served_samples": [
+              "set16IT008",
+              "set16IT009"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "laurate (C12)",
+            "compendium_condition": "Lauric acid",
+            "synonym_note": "laurate IS dodecanoate, the C12 acid",
+            "compendium_samples": [
+              "set15IT059",
+              "set15IT073"
+            ],
+            "served_samples": [
+              "set15IT059",
+              "set15IT073"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "myristate (C14)",
+            "compendium_condition": "Myristic acid",
+            "synonym_note": "myristate IS tetradecanoate, the C14 acid",
+            "compendium_samples": [
+              "set15IT064",
+              "set15IT078"
+            ],
+            "served_samples": [
+              "set15IT064",
+              "set15IT078"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "nonanoate (C9)",
+            "compendium_condition": "Nonanoic acid",
+            "synonym_note": "the acid of the same nine-carbon anion",
+            "compendium_samples": [
+              "set15IT062",
+              "set15IT076"
+            ],
+            "served_samples": [
+              "set15IT062",
+              "set15IT076"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "octanoate (C8)",
+            "compendium_condition": "Octanoic acid",
+            "synonym_note": "the acid of the same eight-carbon anion",
+            "compendium_samples": [
+              "set15IT061",
+              "set15IT075"
+            ],
+            "served_samples": [
+              "set15IT061",
+              "set15IT075"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "oleic acid",
+            "compendium_condition": "Oleic acid",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set15IT066",
+              "set15IT080"
+            ],
+            "served_samples": [
+              "set15IT066",
+              "set15IT080"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "pentanol",
+            "compendium_condition": "1-Pentanol",
+            "synonym_note": "the primary alcohol the compendium names",
+            "compendium_samples": [
+              "set16IT012",
+              "set16IT013"
+            ],
+            "served_samples": [
+              "set16IT012",
+              "set16IT013"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "propionate (C3)",
+            "compendium_condition": "Sodium propionate",
+            "synonym_note": "the salt the compendium names",
+            "compendium_samples": [
+              "set12IT004",
+              "set12IT034"
+            ],
+            "served_samples": [
+              "set12IT004",
+              "set12IT034"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "valerate (C5)",
+            "compendium_condition": "Valeric acid",
+            "synonym_note": "the acid of the same five-carbon anion",
+            "compendium_samples": [
+              "set15IT060",
+              "set15IT074"
+            ],
+            "served_samples": [
+              "set15IT060",
+              "set15IT074"
+            ],
+            "served_records": 9464
+          }
+        ],
+        "conditions_absent_from_compendium": 0,
+        "replicate_assays_absent_from_compendium": null
+      }
     }
   },
   "quote_audit": {
@@ -1165,12 +1673,21 @@
       "replicates_and_release": "value backed by verbatim quote in paper.md",
       "library": "value backed by verbatim quote in paper.md",
       "assay_count": "value backed by verbatim quote in paper.md"
+    },
+    "Thompson 2020 fatty acid and alcohol": {
+      "conditions": "value backed by verbatim quote in paper.md",
+      "fatty_acids_enumerated": "value backed by verbatim quote in paper.md",
+      "alcohols_enumerated": "value backed by verbatim quote in paper.md",
+      "replicates_and_release": "value backed by verbatim quote in paper.md",
+      "library": "value backed by verbatim quote in paper.md"
     }
   },
   "written": [
     "/scratch/projects/torchcell-scratch/torchcell-raw/butlandESGAColiSynthetic2008/manifest.json",
     "/scratch/projects/torchcell-scratch/torchcell-raw/schmidtNitrogenMetabolismPseudomonas2022/manifest.json",
+    "/scratch/projects/torchcell-scratch/torchcell-raw/thompsonFattyAcidAlcohol2020/manifest.json",
     "/scratch/projects/torchcell-scratch/torchcell-raw/butlandESGAColiSynthetic2008/subsumption_record.json",
-    "/scratch/projects/torchcell-scratch/torchcell-raw/schmidtNitrogenMetabolismPseudomonas2022/subsumption_record.json"
+    "/scratch/projects/torchcell-scratch/torchcell-raw/schmidtNitrogenMetabolismPseudomonas2022/subsumption_record.json",
+    "/scratch/projects/torchcell-scratch/torchcell-raw/thompsonFattyAcidAlcohol2020/subsumption_record.json"
   ]
 }

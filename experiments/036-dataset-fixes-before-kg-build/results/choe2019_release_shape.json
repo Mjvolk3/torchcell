@@ -1,0 +1,1286 @@
+{
+  "background_carriers": {
+    "background_with_no_typed_alleles": {
+      "alleles": 0,
+      "constructed": true,
+      "genotype_statement": "E. coli MG1655 with large deletions MD1 toMD56",
+      "is_fully_sourced": true
+    },
+    "typed_gap_on_alleles": {
+      "consequence": "the unenumerated 1.1 Mbp has no typed home; it is recorded in the loader's preprocess/genotype_gaps.json and in the note",
+      "constructed": false,
+      "error": "1 validation error for BacterialStrainBackground | Value error, field 'alleles' has a ProvenanceGap but is not None (cannot both store a value and declare it missing) [type=value_error, input_value={'name': 'MS56', 'referen...are never enumerated')]}, input_type=dict] | For further information visit https://errors.pydantic.dev/2.12/v/value_error",
+      "error_type": "ValidationError"
+    }
+  },
+  "chip_seq_peaks": 839,
+  "citation_key": "choeAdaptiveLaboratoryEvolution2019",
+  "day62_thresholding": {
+    "distinct_nonzero_frequencies_on_last_day": 27,
+    "last_timepoint_day": "62",
+    "rows_above_50_percent_on_last_day": 30,
+    "rows_at_100_percent_on_last_day": 11,
+    "rows_at_zero_on_last_day": 79,
+    "rows_between_5_and_95_percent_on_last_day": 23,
+    "timepoint_labels_days": [
+      "0",
+      "5",
+      "10",
+      "15",
+      "20",
+      "25",
+      "27",
+      "28",
+      "29",
+      "30",
+      "33",
+      "35",
+      "37",
+      "40",
+      "43",
+      "45",
+      "50",
+      "55",
+      "60",
+      "62"
+    ],
+    "timepoints": 20,
+    "variant_rows": 117
+  },
+  "deleted_region": {
+    "contiguous": true,
+    "finding": "the released coordinates are MS56 coordinates, so no GenomicSpan against the pinned MG1655 assembly can carry them; the gene-keyed deletions are what a record can state",
+    "genes_fully_inside_window": 21,
+    "locus_tags": [
+      "b2721",
+      "b2722",
+      "b2723",
+      "b2724",
+      "b2725",
+      "b2726",
+      "b2727",
+      "b2728",
+      "b2729",
+      "b2730",
+      "b2731",
+      "b2732",
+      "b2733",
+      "b2734",
+      "b2735",
+      "b2736",
+      "b2737",
+      "b2738",
+      "b2739",
+      "b2740",
+      "b2741"
+    ],
+    "mg1655_window": [
+      2844762,
+      2867551
+    ],
+    "mg1655_window_bp": 22790,
+    "ms56_to_mg1655_offset_bp": 806266,
+    "named_symbols": [
+      "hycE",
+      "hycD",
+      "hycC",
+      "hycB",
+      "hycA",
+      "hypA",
+      "hypB",
+      "hypC",
+      "hypD",
+      "hypE",
+      "fhlA",
+      "ygbA",
+      "mutS",
+      "pphB",
+      "ygbI",
+      "ygbJ",
+      "ygbK",
+      "ygbL",
+      "ygbM",
+      "ygbN",
+      "rpoS"
+    ],
+    "released_ms56_window": [
+      2038496,
+      2059460
+    ],
+    "released_ms56_window_bp": 20965,
+    "unlisted_genes_inside_window": []
+  },
+  "doi": "10.1038/s41467-019-08888-6",
+  "growth_panels": {
+    "evolved_over_parent_from_fig2c_rates": 2.815904936014625,
+    "evolved_over_parent_released_by_fig2f": 1.398983199132316,
+    "fig2c_means": {
+      "MG1655": 0.5892166666666666,
+      "MS56": 0.18233333333333332,
+      "eMS57": 0.5134333333333333,
+      "\u039421 kb": 0.3985666666666667,
+      "\u0394rpoS": 0.409
+    },
+    "fig2c_parent_over_wild_type": 0.30945040024891807,
+    "fig2c_recovery_fraction_of_evolved": {
+      "\u039421 kb": 0.7762773485684608,
+      "\u0394rpoS": 0.7965980653119522
+    },
+    "fig2c_replicates": {
+      "MG1655": [
+        0.5828,
+        0.597,
+        0.58785
+      ],
+      "MS56": [
+        0.1834,
+        0.1876,
+        0.176
+      ],
+      "eMS57": [
+        0.5148,
+        0.5152,
+        0.5103
+      ],
+      "\u039421 kb": [
+        0.4073,
+        0.3891,
+        0.3993
+      ],
+      "\u0394rpoS": [
+        0.4158,
+        0.4215,
+        0.3897
+      ]
+    },
+    "fig2c_title": "Growth rate of MG1655, MS56, eMS57, and deletion strains",
+    "fig2f_means": {
+      "cspC*/cspCWT": 1.1511535723538389,
+      "eMS57/MS56": 1.398983199132316,
+      "ilvN*/ilvNWT": 0.9857491722652751,
+      "yifB*/yifBWT": 0.6883242459926527
+    },
+    "fig2f_replicates": {
+      "cspC*/cspCWT": [
+        1.193092236328973,
+        1.1627038768390179,
+        1.0976646038935256
+      ],
+      "eMS57/MS56": [
+        1.421071401277824,
+        1.4733489228066399,
+        1.3025292733124838
+      ],
+      "ilvN*/ilvNWT": [
+        1.0073143271396994,
+        1.0033412933448602,
+        0.9465918963112657
+      ],
+      "yifB*/yifBWT": [
+        0.6154782959906288,
+        0.7074886092907978,
+        0.7420058326965318
+      ]
+    },
+    "fig2f_title": "Growth rate of MS56 after reconstruction of SNV",
+    "note": "the Fig. 2c sheet releases no unit cell; the records store a dimensionless ratio, so no unit is asserted",
+    "panel_disagreement_factor": 2.0128225540958025,
+    "stated_recovery_fraction_of_evolved": 0.8
+  },
+  "growth_rate_panels": {
+    "fig2c_strains": [
+      {
+        "replicates": [
+          0.5828,
+          0.597,
+          0.58785
+        ],
+        "strain": "MG1655"
+      },
+      {
+        "replicates": [
+          0.1834,
+          0.1876,
+          0.176
+        ],
+        "strain": "MS56"
+      },
+      {
+        "replicates": [
+          0.5148,
+          0.5152,
+          0.5103
+        ],
+        "strain": "eMS57"
+      },
+      {
+        "replicates": [
+          0.4073,
+          0.3891,
+          0.3993
+        ],
+        "strain": "\u039421 kb"
+      },
+      {
+        "replicates": [
+          0.4158,
+          0.4215,
+          0.3897
+        ],
+        "strain": "\u0394rpoS"
+      }
+    ],
+    "fig2c_title": "Growth rate of MG1655, MS56, eMS57, and deletion strains",
+    "fig2g_rows": [
+      {
+        "media": "M9",
+        "replicates": [
+          0.3014083886729206,
+          0.31200028010069325,
+          null
+        ],
+        "strain": "MG1655"
+      },
+      {
+        "media": null,
+        "replicates": [
+          0.3271973417144539,
+          0.3161449332680825,
+          0.29334934084744146
+        ],
+        "strain": "eMS57"
+      },
+      {
+        "media": "M9 + valine",
+        "replicates": [
+          null,
+          null,
+          null
+        ],
+        "strain": "MG1655"
+      },
+      {
+        "media": null,
+        "replicates": [
+          0.3050925248217111,
+          0.30163864718222,
+          0.30877666097050155
+        ],
+        "strain": "eMS57"
+      },
+      {
+        "media": "M9 + valine + isoleucine",
+        "replicates": [
+          0.344927246930508,
+          0.3324932874283402,
+          0.36495973723955627
+        ],
+        "strain": "MG1655"
+      },
+      {
+        "media": null,
+        "replicates": [
+          0.40893911251574255,
+          0.360815084072167,
+          0.39466308493917945
+        ],
+        "strain": "eMS57"
+      }
+    ],
+    "fig2g_title": "Growth rate of MG1655 and eMS57 in valine or isoleucin supplemented M9 glucose medium"
+  },
+  "keio_fitness_arm": {
+    "panel_strains_total": 62,
+    "panel_strains_with_a_released_number": 2,
+    "quantified_strains": {
+      "abgR": {
+        "fitness": 0.698,
+        "genotype_len": 1,
+        "resolution_status": "renamed",
+        "stored_locus_tag": "BW25113_1339"
+      },
+      "ydaS": {
+        "fitness": 0.7240000000000001,
+        "genotype_len": 1,
+        "resolution_status": "renamed",
+        "stored_locus_tag": "BW25113_1357"
+      }
+    }
+  },
+  "perturbation_leaf_probe": {
+    "attempts": {
+      "AllelePerturbation(b_number)": {
+        "constructed": false,
+        "error": "1 validation error for AllelePerturbation | systematic_gene_name | Value error, Invalid systematic gene name format [type=value_error, input_value='b0078', input_type=str] | For further information visit https://errors.pydantic.dev/2.12/v/value_error",
+        "error_type": "ValidationError"
+      },
+      "BacterialBackgroundAllele(functional_unknown)": {
+        "constructed": false,
+        "error": "1 validation error for BacterialBackgroundAllele | functional | Input should be a valid boolean [type=bool_type, input_value=None, input_type=NoneType] | For further information visit https://errors.pydantic.dev/2.12/v/bool_type",
+        "error_type": "ValidationError"
+      },
+      "BacterialDeletionPerturbation(b_number)": {
+        "constructed": true,
+        "fields_without_a_home": [
+          "aa_change",
+          "allele",
+          "allelic_frequency_percent_by_day",
+          "gene",
+          "position",
+          "ref",
+          "type"
+        ]
+      },
+      "BacterialStrainBackground(two_alleles_one_locus)": {
+        "constructed": false,
+        "error": "1 validation error for BacterialBackgroundAllele | provenance_gaps | Input should be a valid list [type=list_type, input_value=None, input_type=NoneType] | For further information visit https://errors.pydantic.dev/2.12/v/list_type",
+        "error_type": "ValidationError"
+      },
+      "SequenceVariantPerturbation(b_number)": {
+        "constructed": false,
+        "error": "1 validation error for SequenceVariantPerturbation | systematic_gene_name | Value error, Invalid systematic gene name format [type=value_error, input_value='b0078', input_type=str] | For further information visit https://errors.pydantic.dev/2.12/v/value_error",
+        "error_type": "ValidationError"
+      },
+      "SequenceVariantPerturbation(gene_symbol)": {
+        "constructed": false,
+        "error": "1 validation error for SequenceVariantPerturbation | systematic_gene_name | Value error, Invalid systematic gene name format [type=value_error, input_value='ilvH', input_type=str] | For further information visit https://errors.pydantic.dev/2.12/v/value_error",
+        "error_type": "ValidationError"
+      }
+    },
+    "gene_symbol_resolves_to": "b0078",
+    "genes_with_more_than_one_call_in_supplementary_data_2": {
+      "intergenic": 13,
+      "iscR": 3,
+      "rrsH": 2,
+      "tufA": 2,
+      "yafF": 5,
+      "ydjN": 4,
+      "yeaM": 2
+    },
+    "genotype_equality_rule": "Genotype.__eq__ compares set(perturbations), so an evolved clone written with its parent's perturbations only is genotype-identical to its parent",
+    "probe_row": {
+      "aa_change": "Gly21Cys",
+      "allele": "T",
+      "allelic_frequency_percent_by_day": {
+        "0": 0.0,
+        "10": 0.0,
+        "15": 0.0,
+        "20": 0.0,
+        "25": 0.0,
+        "27": 100.0,
+        "28": 0.0,
+        "29": 0.0,
+        "30": 0.0,
+        "33": 0.0,
+        "35": 0.0,
+        "37": 0.0,
+        "40": 0.0,
+        "43": 0.0,
+        "45": 0.0,
+        "5": 0.0,
+        "50": 0.0,
+        "55": 0.0,
+        "60": 0.0,
+        "62": 0.0
+      },
+      "gene": "ilvH",
+      "position": 82242,
+      "ref": "G",
+      "type": "SNV"
+    }
+  },
+  "phenotype_microarray": {
+    "assays": {
+      "Carbon": 192,
+      "Nitrogen": 96,
+      "Phosphorus": 60,
+      "Sulfur": 36
+    },
+    "distinct_nutrients": 354,
+    "duplicate_plate_assay_nutrient_keys": [],
+    "evolved_columns": [
+      "eMS1",
+      "eMS2"
+    ],
+    "mg1655_columns": [
+      "MG1",
+      "MG2"
+    ],
+    "non_numeric_cells": 0,
+    "nutrient_rows": 384,
+    "plates": {
+      "PM1": 96,
+      "PM2": 96,
+      "PM3B": 96,
+      "PM4A": 96
+    },
+    "sheet": "PM1",
+    "strain_columns": [
+      "MG1",
+      "MG2",
+      "eMS1",
+      "eMS2"
+    ]
+  },
+  "riboseq_table": {
+    "columns": {
+      "RPF_MG1655_1": {
+        "max": 40169.46026468466,
+        "min": 0.0,
+        "missing": 230,
+        "sum": 1264059.0427045666,
+        "values": 3227,
+        "zeros": 27
+      },
+      "RPF_MG1655_2": {
+        "max": 36821.48182763258,
+        "min": 0.0,
+        "missing": 230,
+        "sum": 1263628.928495445,
+        "values": 3227,
+        "zeros": 36
+      },
+      "RPF_eMS57_1": {
+        "max": 30310.160995886938,
+        "min": 0.0,
+        "missing": 230,
+        "sum": 1264955.9523720872,
+        "values": 3227,
+        "zeros": 11
+      },
+      "RPF_eMS57_2": {
+        "max": 27409.018726087994,
+        "min": 0.0,
+        "missing": 230,
+        "sum": 1240571.6145467563,
+        "values": 3227,
+        "zeros": 16
+      },
+      "TE_MG1655": {
+        "max": 251.14743683438058,
+        "min": 0.0,
+        "missing": 235,
+        "sum": 7299.165266773785,
+        "values": 3222,
+        "zeros": 10
+      },
+      "TE_eMS57": {
+        "max": 702.3805391800948,
+        "min": 0.0,
+        "missing": 233,
+        "sum": 5577.804905931582,
+        "values": 3224,
+        "zeros": 7
+      }
+    },
+    "distinct_gene_labels": 3457,
+    "duplicate_gene_labels": [],
+    "file": "si/si10.xlsx",
+    "gene_rows": 3457
+  },
+  "rnaseq_loadability": {
+    "b_numbers_with_a_gene_span": 3391,
+    "count_back_solve": [
+      {
+        "assumed_count_of_smallest_product": 1,
+        "fraction_within_0.01_of_an_integer": 0.027892234548335976,
+        "implied_total_mapped_reads_millions": 28.949614079946578,
+        "max_integer_residual": 0.4999999933126391
+      },
+      {
+        "assumed_count_of_smallest_product": 2,
+        "fraction_within_0.01_of_an_integer": 0.027258320126782885,
+        "implied_total_mapped_reads_millions": 57.899228159893156,
+        "max_integer_residual": 0.4999990112260093
+      },
+      {
+        "assumed_count_of_smallest_product": 3,
+        "fraction_within_0.01_of_an_integer": 0.027258320126782885,
+        "implied_total_mapped_reads_millions": 86.84884223983973,
+        "max_integer_residual": 0.4999999799379147
+      },
+      {
+        "assumed_count_of_smallest_product": 4,
+        "fraction_within_0.01_of_an_integer": 0.030427892234548337,
+        "implied_total_mapped_reads_millions": 115.79845631978631,
+        "max_integer_residual": 0.49999529583237745
+      },
+      {
+        "assumed_count_of_smallest_product": 5,
+        "fraction_within_0.01_of_an_integer": 0.02630744849445325,
+        "implied_total_mapped_reads_millions": 144.74807039973288,
+        "max_integer_residual": 0.4999999665631947
+      },
+      {
+        "assumed_count_of_smallest_product": 6,
+        "fraction_within_0.01_of_an_integer": 0.03328050713153724,
+        "implied_total_mapped_reads_millions": 173.69768447967945,
+        "max_integer_residual": 0.4999970336775732
+      },
+      {
+        "assumed_count_of_smallest_product": 7,
+        "fraction_within_0.01_of_an_integer": 0.030744849445324882,
+        "implied_total_mapped_reads_millions": 202.64729855962602,
+        "max_integer_residual": 0.4999999531884711
+      },
+      {
+        "assumed_count_of_smallest_product": 8,
+        "fraction_within_0.01_of_an_integer": 0.03391442155309033,
+        "implied_total_mapped_reads_millions": 231.59691263957262,
+        "max_integer_residual": 0.4999999882754125
+      }
+    ],
+    "expression_count_probe": {
+      "empty_expression_count": "1 validation error for RNASeqExpressionPhenotype | expression_count | Value error, expression_count cannot be empty [type=value_error, input_value={}, input_type=dict] | For further information visit https://errors.pydantic.dev/2.12/v/value_error",
+      "non_integer_expression_count": "1 validation error for RNASeqExpressionPhenotype | expression_count | Value error, expression_count for b0001 must be a non-negative integer, got: 1.5 [type=value_error, input_value={'b0001': 1.5}, input_type=dict] | For further information visit https://errors.pydantic.dev/2.12/v/value_error",
+      "omitted_expression_count": "1 validation error for RNASeqExpressionPhenotype | expression_count | Field required [type=missing, input_value={'expression_tpm': {'b0001': 1.0}}, input_type=dict] | For further information visit https://errors.pydantic.dev/2.12/v/missing"
+    },
+    "gene_rows": 3457,
+    "resolution_layer_histogram": {
+      "RefSeq locus tag": 0,
+      "gene symbol": 3280,
+      "gene synonym": 172,
+      "locus tag": 0,
+      "not found": 5,
+      "old locus tag": 0
+    },
+    "resolution_status_histogram": {
+      "ambiguous": 3,
+      "current": 0,
+      "non_gene_feature": 56,
+      "renamed": 3393,
+      "retired": 5
+    },
+    "resolved_to_b_number": 3447,
+    "rpkm_sum_is_one_million": false,
+    "rpkm_sum_mg1655_1": 1047098.261735352,
+    "unresolved_labels": [
+      "ade",
+      "rdoA",
+      "rhmA",
+      "rhmR",
+      "rhmT",
+      "spr",
+      "tsaA",
+      "waaJ",
+      "waaR",
+      "ybfK"
+    ]
+  },
+  "rnaseq_table": {
+    "columns": {
+      "MG1655_1": {
+        "max": 110159.9197,
+        "min": 0.0,
+        "missing": 230,
+        "sum": 1057127.338498854,
+        "values": 3227,
+        "zeros": 13
+      },
+      "MG1655_2": {
+        "max": 101963.3657,
+        "min": 0.0,
+        "missing": 230,
+        "sum": 1048544.619561741,
+        "values": 3227,
+        "zeros": 14
+      },
+      "eMG1655_1": {
+        "max": 74760.49961991564,
+        "min": 0.0,
+        "missing": 229,
+        "sum": 1450525.147558819,
+        "values": 3228,
+        "zeros": 98
+      },
+      "eMG1655_2": {
+        "max": 82882.84476995209,
+        "min": 0.0,
+        "missing": 229,
+        "sum": 1496210.265511351,
+        "values": 3228,
+        "zeros": 80
+      },
+      "eMS57_1": {
+        "max": 80817.90931,
+        "min": 0.0,
+        "missing": 230,
+        "sum": 970123.877983138,
+        "values": 3227,
+        "zeros": 6
+      },
+      "eMS57_2": {
+        "max": 89143.826,
+        "min": 0.0,
+        "missing": 230,
+        "sum": 977233.726591895,
+        "values": 3227,
+        "zeros": 10
+      },
+      "p_value_eMS57_over_MG1655": {
+        "max": 0.998168917613,
+        "min": 9.22310963086e-06,
+        "missing": 230,
+        "sum": NaN,
+        "values": 3227,
+        "zeros": 0
+      }
+    },
+    "distinct_gene_labels": 3457,
+    "duplicate_gene_labels": [],
+    "file": "si/si9.xlsx",
+    "gene_rows": 3457
+  },
+  "source_data_sheets": {
+    "Fig1a": {
+      "has_numbers": true,
+      "max_column": 6,
+      "populated_rows": 19,
+      "title_cell": "Growth of MG1655 and MS56 in LB medium"
+    },
+    "Fig1b": {
+      "has_numbers": true,
+      "max_column": 10,
+      "populated_rows": 11,
+      "title_cell": "Growth of MG1655 and MS56 in M9 glucose medium"
+    },
+    "Fig1c": {
+      "has_numbers": true,
+      "max_column": 6,
+      "populated_rows": 126,
+      "title_cell": "Adaptive lab evolution of E. coli MS56"
+    },
+    "Fig1d": {
+      "has_numbers": true,
+      "max_column": 16,
+      "populated_rows": 12,
+      "title_cell": "Growth of MG1655 and eMS57 in M9 glucose medium"
+    },
+    "Fig1f": {
+      "has_numbers": false,
+      "max_column": 2,
+      "populated_rows": 2,
+      "title_cell": "Phenotype microarray characterization of MG1655 and eMS57"
+    },
+    "Fig1g": {
+      "has_numbers": true,
+      "max_column": 5,
+      "populated_rows": 17,
+      "title_cell": "Intra and extracellular pyruvate level in MG1655 and eMS57"
+    },
+    "Fig1h": {
+      "has_numbers": true,
+      "max_column": 14,
+      "populated_rows": 18,
+      "title_cell": "Growth of MG1655 and eMS57 in M9 glucose medium supplemented with toxic pyruvate analog (FP)"
+    },
+    "Fig2b": {
+      "has_numbers": false,
+      "max_column": 2,
+      "populated_rows": 1,
+      "title_cell": "Large deletion tracking PCR"
+    },
+    "Fig2c": {
+      "has_numbers": true,
+      "max_column": 8,
+      "populated_rows": 7,
+      "title_cell": "Growth rate of MG1655, MS56, eMS57, and deletion strains"
+    },
+    "Fig2f": {
+      "has_numbers": true,
+      "max_column": 5,
+      "populated_rows": 6,
+      "title_cell": "Growth rate of MS56 after reconstruction of SNV"
+    },
+    "Fig2g": {
+      "has_numbers": true,
+      "max_column": 6,
+      "populated_rows": 8,
+      "title_cell": "Growth rate of MG1655 and eMS57 in valine or isoleucin supplemented M9 glucose medium"
+    },
+    "Fig2h": {
+      "has_numbers": false,
+      "max_column": 2,
+      "populated_rows": 2,
+      "title_cell": "Number of mutations occurred during 300 generations of confirmation ALE"
+    },
+    "Fig3d": {
+      "has_numbers": true,
+      "max_column": 8,
+      "populated_rows": 8,
+      "title_cell": "Intracellular NAD, NADP, and ATP level in MG1655 and eMS57"
+    },
+    "Fig3e": {
+      "has_numbers": false,
+      "max_column": 2,
+      "populated_rows": 2,
+      "title_cell": "Relative gene expression for deoxynucleoside degradation and synthesis between the evolved strains (eMS57 and eMG1655) and the wild type E. coli K-12 MG1655. "
+    }
+  },
+  "strain_writability": [
+    {
+      "genotype": "Laboratory E. coli, train K-12, substr. MG1655",
+      "strain": "MG1655",
+      "verdict": "writable",
+      "why": "the reference strain; an unperturbed record is Genotype(perturbations=[])"
+    },
+    {
+      "genotype": "E. coli MG1655 adaptively evolved in M9glucose medium",
+      "strain": "eMG1655",
+      "verdict": "blocked",
+      "why": "evolved clone; Supplementary Data 3 gives per-replicate POPULATION allele frequencies, never a clone genotype"
+    },
+    {
+      "genotype": "E. coli MG1655 with large deletions MD1 toMD56",
+      "strain": "MS56",
+      "verdict": "background only",
+      "why": "writable as a BacterialStrainBackground with a verbatim genotype_statement and NO typed alleles, because this paper enumerates none of the 55 regions and defers them to its reference 4; not writable as a perturbation set, so an MG1655-referenced MS56 record would assert that MS56 is genotypically MG1655"
+    },
+    {
+      "genotype": "E. coli MS56 adaptively evolved in M9 glucosemedium",
+      "strain": "eMS57",
+      "verdict": "blocked",
+      "why": "evolved clone with NO variant list of its own; a genotype needs a day-62 frequency threshold the authors never applied"
+    },
+    {
+      "genotype": "eMS57, puuP::mutS-kan",
+      "strain": "eMS57mutS+",
+      "verdict": "blocked",
+      "why": "the puuP::mutS-kan knock-in is writable, but its parent eMS57 is not"
+    },
+    {
+      "genotype": "MS56, (hycEDCBA-hypABCDE-fhlA-ygbA-mutS-pphB-ygbIJKLMN-rpoS)::kan",
+      "strain": "MS56 421 kb",
+      "verdict": "writable",
+      "why": "21 named genes, each a BacterialDeletionPerturbation on the MG1655 b-number namespace with cassette 'kan', on the MS56 background"
+    },
+    {
+      "genotype": "MS56, rpoS::kan",
+      "strain": "MS56 drpoS",
+      "verdict": "writable",
+      "why": "one named gene, one BacterialDeletionPerturbation, on the MS56 background"
+    },
+    {
+      "genotype": "MS56, cspC::cspC-kan / MS56, cspC::cspC(G37A)-kanR",
+      "strain": "cspCWT / cspCmut",
+      "verdict": "blocked",
+      "why": "a DESIGNED single sequence variant with the base change released; the perturbation axis has no bacterial sequence-variant leaf, and BacterialBackgroundAllele needs a functional flag the paper does not determine"
+    },
+    {
+      "genotype": "MS56, ilvN::ilvN-kan / MS56, ilvN::ilvN(C202T)-kanR",
+      "strain": "ilvNWT / ilvNmut",
+      "verdict": "blocked",
+      "why": "same gap as cspC; the paper calls the allele a possible hitchhiker, so even its functional consequence is unresolved"
+    },
+    {
+      "genotype": "MS56, yifB::yifB-kan / MS56, yifB::yifB(1169C insertion)-kanR",
+      "strain": "yifBWT / yifBmut",
+      "verdict": "blocked",
+      "why": "same gap as cspC; a frameshift insertion at a stated position with no leaf to hold it"
+    }
+  ],
+  "variant_row_ledger_rows": 117,
+  "variant_tables": [
+    {
+      "distinct_genes": 93,
+      "file": "si/si5.xlsx",
+      "frequency_column_labels": [
+        "0",
+        "5",
+        "10",
+        "15",
+        "20",
+        "25",
+        "27",
+        "28",
+        "29",
+        "30",
+        "33",
+        "35",
+        "37",
+        "40",
+        "43",
+        "45",
+        "50",
+        "55",
+        "60",
+        "62"
+      ],
+      "frequency_columns": 20,
+      "header_rows": [
+        [
+          "Gene",
+          "Position",
+          "Type",
+          "Ref",
+          "Allele",
+          "AA change",
+          "Allelic frequency (%)",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "Lineage Analysis"
+        ],
+        [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "0",
+          "5",
+          "10",
+          "15",
+          "20",
+          "25",
+          "27",
+          "28",
+          "29",
+          "30",
+          "33",
+          "35",
+          "37",
+          "40",
+          "43",
+          "45",
+          "50",
+          "55",
+          "60",
+          "62",
+          ""
+        ]
+      ],
+      "intergenic_rows": 22,
+      "intergenic_spellings": [
+        "intergenic",
+        "intergenic1",
+        "intergenic2",
+        "intergenic3",
+        "intergenic4",
+        "intergenic5",
+        "intergenic6",
+        "intergenic7a",
+        "intergenic7b",
+        "intergenic8"
+      ],
+      "label": "Supplementary Data 2 (MS56 ALE)",
+      "loci_with_more_than_one_call": {
+        "iscR": 3,
+        "rrsH": 2,
+        "tufA": 2,
+        "yafF": 5,
+        "ydjN": 4,
+        "yeaM": 2
+      },
+      "mutation_type_histogram": {
+        "Deletion": 10,
+        "Insertion": 11,
+        "MNV": 1,
+        "SNV": 95
+      },
+      "rows_with_amino_acid_change": 72,
+      "stray_rows_excluded": [
+        125
+      ],
+      "variant_rows": 117,
+      "worksheets": {
+        "Sheet1": {
+          "first_row": [
+            "Supplementary Data 2. Sequence variations detected by genome re-sequencing.",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "max_column": 27,
+          "populated_rows": 121
+        }
+      }
+    },
+    {
+      "distinct_genes": 67,
+      "file": "si/si6.xlsx",
+      "frequency_column_labels": [
+        "Replicate 1",
+        "Replicate 2",
+        "Replicate 3"
+      ],
+      "frequency_columns": 3,
+      "header_rows": [
+        [
+          "Position",
+          "Gene",
+          "Ref",
+          "Allele",
+          "Type",
+          "AA change",
+          "Allelic frequency (%)",
+          "",
+          ""
+        ],
+        [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "Replicate 1",
+          "Replicate 2",
+          "Replicate 3"
+        ]
+      ],
+      "intergenic_rows": 20,
+      "intergenic_spellings": [
+        "-"
+      ],
+      "label": "Supplementary Data 3 (MG1655 ALE)",
+      "loci_with_more_than_one_call": {
+        "clpA": 2,
+        "eco": 2,
+        "eptC": 2,
+        "lpxL": 2,
+        "nfrA": 2,
+        "rpoB": 2,
+        "rpoC": 5,
+        "umuC": 5,
+        "yhdP": 2
+      },
+      "mutation_type_histogram": {
+        "Deletion": 7,
+        "MNV": 5,
+        "SNV": 89
+      },
+      "rows_with_amino_acid_change": 64,
+      "stray_rows_excluded": [],
+      "variant_rows": 101,
+      "worksheets": {
+        "Sheet1": {
+          "first_row": [
+            "Supplementary Data 3. Sequence variations detected by genome re-sequencing of MG1655 ALE experiment.",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "max_column": 9,
+          "populated_rows": 104
+        },
+        "Sheet2": {
+          "first_row": [
+            "2098739",
+            "ygcG",
+            "C",
+            "G",
+            "SNV",
+            "20",
+            "0",
+            "0",
+            "0",
+            ""
+          ],
+          "max_column": 10,
+          "populated_rows": 44
+        }
+      }
+    },
+    {
+      "distinct_genes": 84,
+      "file": "si/si7.xlsx",
+      "frequency_column_labels": [
+        "Day0",
+        "Day29",
+        "Day0",
+        "Day29",
+        "Day0",
+        "Day29",
+        "Day0",
+        "Day29"
+      ],
+      "frequency_columns": 8,
+      "header_rows": [
+        [
+          "Position",
+          "Gene",
+          "Ref",
+          "Allele",
+          "Type",
+          "AA change",
+          "eMS57 Replicate #1",
+          "",
+          "",
+          "eMS57 Replicate #2",
+          "",
+          "",
+          "eMS57mutS+ Replicate #1",
+          "",
+          "",
+          "eMS57mutS+ Replicate #2",
+          "",
+          ""
+        ],
+        [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "Allelic frequency (%)",
+          "",
+          "Count",
+          "Allelic frequency (%)",
+          "",
+          "Count",
+          "Allelic frequency (%)",
+          "",
+          "Count",
+          "Allelic frequency (%)",
+          "",
+          "Count"
+        ],
+        [
+          "",
+          "",
+          "",
+          "",
+          "",
+          "",
+          "Day0",
+          "Day29",
+          "",
+          "Day0",
+          "Day29",
+          "",
+          "Day0",
+          "Day29",
+          "",
+          "Day0",
+          "Day29",
+          ""
+        ]
+      ],
+      "intergenic_rows": 6,
+      "intergenic_spellings": [
+        "intergenic"
+      ],
+      "label": "Supplementary Data 4 (300 extra generations)",
+      "loci_with_more_than_one_call": {
+        "carB": 4,
+        "eutA": 2,
+        "fusA": 3,
+        "gltB": 2,
+        "mfd": 3,
+        "mukB": 2,
+        "nirB": 3,
+        "nuoB": 7,
+        "nuoM": 2,
+        "puuD": 2,
+        "rplA": 4,
+        "rplB": 2,
+        "rpoB": 8,
+        "rpoC": 8,
+        "rpsI": 3,
+        "rrlC": 2,
+        "ruvB": 4,
+        "tufA": 3,
+        "typA": 4,
+        "ubiH": 3,
+        "valS": 5,
+        "ycjS": 2
+      },
+      "mutation_type_histogram": {
+        "Deletion": 3,
+        "Insertion": 9,
+        "MNV": 1,
+        "SNV": 132
+      },
+      "rows_with_amino_acid_change": 64,
+      "stray_rows_excluded": [],
+      "variant_rows": 145,
+      "worksheets": {
+        "Sheet1": {
+          "first_row": [
+            "Supplementary Data 4. Sequence variations detected by genome re-sequencing of 300 generations of additional ALE experiment.",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ],
+          "max_column": 18,
+          "populated_rows": 149
+        },
+        "Sheet2": {
+          "first_row": [
+            "2098739",
+            "ygcG",
+            "C",
+            "G",
+            "SNV",
+            "20",
+            "0",
+            "0",
+            "0",
+            ""
+          ],
+          "max_column": 10,
+          "populated_rows": 44
+        }
+      }
+    }
+  ],
+  "verified_files": {
+    "paper.md": {
+      "bytes": 95359,
+      "role": "paper_ocr",
+      "sha256": "11a042209df0f0518197d594340ed4ab573d90ddc2574a37139451ae697f7713",
+      "source_url": "mineru-ocr"
+    },
+    "si/si1.md": {
+      "bytes": 32847,
+      "role": "si_ocr",
+      "sha256": "fcadf7faf5805d6a61e557cbf8440f17279664a96d81bf6cbec630a991a957bc",
+      "source_url": "mineru-ocr"
+    },
+    "si/si1.pdf": {
+      "bytes": 2906450,
+      "role": "Supplementary Information (Figs. 1-19, Tables 1-3)",
+      "sha256": "537dce71e89c465aef0e25f25c7b955fbc2ed6d51814e37b1b41e6af15cb3ec5",
+      "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6389913.1/41467_2019_8888_MOESM1_ESM.pdf"
+    },
+    "si/si10.xlsx": {
+      "bytes": 356094,
+      "role": "Supplementary Data 7: translation level (RPF) by Ribo-seq",
+      "sha256": "5e09107499321f2effeb4e391652ebcfb91a55484e6aa893faa4a28f15691e5e",
+      "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6389913.1/41467_2019_8888_MOESM10_ESM.xlsx"
+    },
+    "si/si11.pdf": {
+      "bytes": 76134,
+      "role": "Reporting Summary",
+      "sha256": "47c1cd1186198692f9fd82a4a6339ee82072fb6bd4997ae51d319d40b66e2260",
+      "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6389913.1/41467_2019_8888_MOESM11_ESM.pdf"
+    },
+    "si/si12.xlsx": {
+      "bytes": 157856,
+      "role": "Source Data",
+      "sha256": "fcc30417afa1a986bfb72294fbd648c11abefe5ef0bed06627f2f7398b544705",
+      "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6389913.1/41467_2019_8888_MOESM12_ESM.xlsx"
+    },
+    "si/si2.md": {
+      "bytes": 176059,
+      "role": "si_ocr",
+      "sha256": "31d397d46b9aac3044f6862f8e6c381a514678d664d707d5641a1c62cf130ef9",
+      "source_url": "mineru-ocr"
+    },
+    "si/si2.pdf": {
+      "bytes": 4507225,
+      "role": "Peer Review File",
+      "sha256": "df950f64d2756f9a40e1a497cbc78ec2b162a6a404181859eefae95a830f7be4",
+      "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6389913.1/41467_2019_8888_MOESM2_ESM.pdf"
+    },
+    "si/si3.md": {
+      "bytes": 1046,
+      "role": "si_ocr",
+      "sha256": "ffcb91e72025ab55c62f945643578841f2b54605969c65f575917904cb8ee8d5",
+      "source_url": "mineru-ocr"
+    },
+    "si/si3.pdf": {
+      "bytes": 17025,
+      "role": "Description of Additional Supplementary Files",
+      "sha256": "b78d235e95192e37e7ae2a9ad8e79bb2dd44401f0673047e79da657f1de5e425",
+      "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6389913.1/41467_2019_8888_MOESM3_ESM.pdf"
+    },
+    "si/si4.xlsx": {
+      "bytes": 26853,
+      "role": "Supplementary Data 1: final readout of phenotype microarray",
+      "sha256": "1d0795a99f99086d9098c259e25a8339412d6abed53dc9a0c13a922120cde2d0",
+      "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6389913.1/41467_2019_8888_MOESM4_ESM.xlsx"
+    },
+    "si/si5.xlsx": {
+      "bytes": 25840,
+      "role": "Supplementary Data 2: sequence variations, MS56 ALE",
+      "sha256": "1315778a8810998afcdaa9475023e5c6d261fc72630c95e1e9072515a5e26856",
+      "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6389913.1/41467_2019_8888_MOESM5_ESM.xlsx"
+    },
+    "si/si6.xlsx": {
+      "bytes": 21699,
+      "role": "Supplementary Data 3: sequence variations, MG1655 ALE",
+      "sha256": "88426981ff35e8686d2184acebc0116a0890297fbbc8c296149bca1c525a9d4d",
+      "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6389913.1/41467_2019_8888_MOESM6_ESM.xlsx"
+    },
+    "si/si7.xlsx": {
+      "bytes": 27916,
+      "role": "Supplementary Data 4: sequence variations, 300 extra generations",
+      "sha256": "6efdca5e32c55a2af76f742d7d8a59ac656f0003416711bc7a41b11bb163b18b",
+      "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6389913.1/41467_2019_8888_MOESM7_ESM.xlsx"
+    },
+    "si/si8.xlsx": {
+      "bytes": 55843,
+      "role": "Supplementary Data 5: peaks detected from ChIP-seq",
+      "sha256": "d5114aff6b9efde077373a62038106d496ff89f94402ef1edd26cad468d48a45",
+      "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6389913.1/41467_2019_8888_MOESM8_ESM.xlsx"
+    },
+    "si/si9.xlsx": {
+      "bytes": 370383,
+      "role": "Supplementary Data 6: expression level by RNA-seq (RPKM)",
+      "sha256": "5d227b5a34620d64a196bce68ef760344905b714d860ba5488070b90b81c057b",
+      "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6389913.1/41467_2019_8888_MOESM9_ESM.xlsx"
+    }
+  }
+}

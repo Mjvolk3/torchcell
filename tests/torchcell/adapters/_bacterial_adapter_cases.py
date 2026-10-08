@@ -73,6 +73,7 @@ from torchcell.adapters import (
     GeneInteractionBabu2014Adapter,
     GrowthAucRapp2026Adapter,
     GrowthRateCampos2018Adapter,
+    GrowthRateChoe2019Adapter,
     GrowthRateSchmidt2016Adapter,
     IsoprenolSelectionMenasalvas2025Adapter,
     IsoprenolTiterCarruthers2025Adapter,
@@ -103,6 +104,7 @@ from torchcell.adapters import (
     RnaseqLamoureux2023Adapter,
     RnaseqPublicK12Lamoureux2023Adapter,
     TargetedMetabolomeRapp2026Adapter,
+    TranscriptionFactorKnockoutChoe2019Adapter,
 )
 from torchcell.adapters.cell_adapter import SINGLE_PASS_EDGES, SINGLE_PASS_NODES
 from torchcell.datamodels.schema import PhagePerturbation
@@ -113,6 +115,10 @@ from torchcell.datasets.ecoli.caglar2017 import (
     RnaseqCaglar2017Dataset,
 )
 from torchcell.datasets.ecoli.campos2018 import GrowthRateCampos2018Dataset
+from torchcell.datasets.ecoli.choe2019_growth_rate import (
+    GrowthRateChoe2019Dataset,
+    TranscriptionFactorKnockoutChoe2019Dataset,
+)
 from torchcell.datasets.ecoli.choe2025 import CrispriChemgenChoe2025Dataset
 from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
@@ -240,7 +246,8 @@ INTERACTION = "gene interaction phenotype"
 # 2018 and Price 2018's Table S1 essentiality calls (one library-selection
 # environment, measured 2026-10-08) carry no environment perturbation, and neither
 # do Campos 2018, whose
-# screen is one medium at one temperature, nor Schastnaya 2021, whose carbon source is
+# screen is one medium at one temperature, nor either Choe 2019 arm, whose two
+# panels are one M9 glucose medium with no added compound, nor Schastnaya 2021, whose carbon source is
 # part of the medium; the CRISPRi leaves of Carruthers, Choe, Cui, Menasalvas, Wang 2018 and
 # Yunus carry a CrisprConstruct. Shiver 2016's three temperature-only conditions
 # carry no environment perturbation, but its other 54 do, so its pair is enabled.
@@ -274,6 +281,22 @@ BACTERIAL: list[Bacterial] = [
         "campos2018",
         "ecoli_growth_rate_campos2018",
         GrowthRateCampos2018Dataset,
+        "fitness phenotype",
+        env_perturbation=False,
+    ),
+    _case(
+        GrowthRateChoe2019Adapter,
+        "choe2019_growth_rate",
+        "growth_rate_choe2019",
+        GrowthRateChoe2019Dataset,
+        "fitness phenotype",
+        env_perturbation=False,
+    ),
+    _case(
+        TranscriptionFactorKnockoutChoe2019Adapter,
+        "choe2019_tf_knockout",
+        "tf_knockout_growth_choe2019",
+        TranscriptionFactorKnockoutChoe2019Dataset,
         "fitness phenotype",
         env_perturbation=False,
     ),

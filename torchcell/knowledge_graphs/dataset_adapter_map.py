@@ -38,6 +38,7 @@ from torchcell.adapters import (
     GeneInteractionBabu2014Adapter,
     GrowthAucRapp2026Adapter,
     GrowthRateCampos2018Adapter,
+    GrowthRateChoe2019Adapter,
     GrowthRateSchmidt2016Adapter,
     HetHillenmeyer2008Adapter,
     HomHillenmeyer2008Adapter,
@@ -97,6 +98,7 @@ from torchcell.adapters import (
     TmfKuzmin2020Adapter,
     TmiKuzmin2018Adapter,
     TmiKuzmin2020Adapter,
+    TranscriptionFactorKnockoutChoe2019Adapter,
 )
 from torchcell.adapters.ohya2005_adapter import ScmdOhya2005Adapter
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
@@ -105,6 +107,10 @@ from torchcell.datasets.ecoli.caglar2017 import (
     RnaseqCaglar2017Dataset,
 )
 from torchcell.datasets.ecoli.campos2018 import GrowthRateCampos2018Dataset
+from torchcell.datasets.ecoli.choe2019_growth_rate import (
+    GrowthRateChoe2019Dataset,
+    TranscriptionFactorKnockoutChoe2019Dataset,
+)
 from torchcell.datasets.ecoli.choe2025 import CrispriChemgenChoe2025Dataset
 from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
@@ -302,6 +308,8 @@ dataset_adapter_map = {
     CrispriChemgenChoe2025Dataset: CrispriChemgenChoe2025Adapter,
     CrispriKnockdownCui2018Dataset: CrispriKnockdownCui2018Adapter,
     GrowthRateCampos2018Dataset: GrowthRateCampos2018Adapter,
+    GrowthRateChoe2019Dataset: GrowthRateChoe2019Adapter,
+    TranscriptionFactorKnockoutChoe2019Dataset: TranscriptionFactorKnockoutChoe2019Adapter,
     MetabolomeFuhrer2017Dataset: MetabolomeFuhrer2017Adapter,
     EnvChemgenGirgis2009Dataset: EnvChemgenGirgis2009Adapter,
     GeneEssentialityGoodall2018Dataset: GeneEssentialityGoodall2018Adapter,

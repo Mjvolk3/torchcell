@@ -495,6 +495,7 @@ BACTERIAL_DATASETS = {
     "GeneInteractionBabu2014Dataset",
     "GrowthAucRapp2026Dataset",
     "GrowthRateCampos2018Dataset",
+    "GrowthRateChoe2019Dataset",
     "GrowthRateSchmidt2016Dataset",
     "IsoprenolSelectionMenasalvas2025Dataset",
     "IsoprenolTiterCarruthers2025Dataset",
@@ -525,6 +526,7 @@ BACTERIAL_DATASETS = {
     "RnaseqLamoureux2023Dataset",
     "RnaseqPublicK12Lamoureux2023Dataset",
     "TargetedMetabolomeRapp2026Dataset",
+    "TranscriptionFactorKnockoutChoe2019Dataset",
 }
 """The E. coli and P. putida datasets mapped in plan step 9 and after, none calibrated
 yet."""

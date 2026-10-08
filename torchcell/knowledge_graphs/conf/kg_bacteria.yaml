@@ -60,6 +60,8 @@ datasets:
   - RnaseqCaglar2017Dataset
   - ProteomeCaglar2017Dataset
   - GrowthRateCampos2018Dataset
+  - GrowthRateChoe2019Dataset
+  - TranscriptionFactorKnockoutChoe2019Dataset
   - CrispriChemgenChoe2025Dataset
   - CrispriKnockdownCui2018Dataset
   - MetabolomeFuhrer2017Dataset

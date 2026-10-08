@@ -28,6 +28,13 @@ sourcing layer.
   released phenotype is 26 features of ONE medium (19 morphological, 2 growth, 5 cell
   cycle), of which only the Gompertz maximal growth rate has a phenotype class, served
   as a ko/wt growth-rate ratio; the module records the exact mismatch for the other 25.
+- ``choe2019_growth_rate`` -- ``GrowthRateChoe2019Dataset`` and
+  ``TranscriptionFactorKnockoutChoe2019Dataset``: the two writable arms of the
+  genome-reduced ALE campaign. The first serves the two designed deletions built on the
+  reduced parent MS56 as parent-relative fitness, the second the two Keio BW25113
+  deletions whose growth rate the Supplementary Fig. 6 legend states. Every evolved
+  strain is refused: the release gives population allele frequencies rather than clone
+  genotypes, and no perturbation leaf holds a called bacterial variant.
 - ``choe2025`` -- ``CrispriChemgenChoe2025Dataset``: the genome-scale MG1655 CRISPRi
   guide library scored against twelve antibiotics, one record per (guide, drug).
 - ``fuhrer2017`` -- ``MetabolomeFuhrer2017Dataset``: the Keio deletion metabolome,
@@ -109,6 +116,10 @@ from .babu2014 import GeneInteractionBabu2014Dataset as GeneInteractionBabu2014D
 from .caglar2017 import ProteomeCaglar2017Dataset as ProteomeCaglar2017Dataset
 from .caglar2017 import RnaseqCaglar2017Dataset as RnaseqCaglar2017Dataset
 from .campos2018 import GrowthRateCampos2018Dataset as GrowthRateCampos2018Dataset
+from .choe2019_growth_rate import GrowthRateChoe2019Dataset as GrowthRateChoe2019Dataset
+from .choe2019_growth_rate import (
+    TranscriptionFactorKnockoutChoe2019Dataset as TranscriptionFactorKnockoutChoe2019Dataset,
+)
 from .choe2025 import CrispriChemgenChoe2025Dataset as CrispriChemgenChoe2025Dataset
 from .cui2018 import CrispriKnockdownCui2018Dataset as CrispriKnockdownCui2018Dataset
 from .fuhrer2017 import MetabolomeFuhrer2017Dataset as MetabolomeFuhrer2017Dataset

@@ -190,6 +190,7 @@ from pathlib import Path
 from typing import Any, ClassVar, Final
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, TypeAdapter
 from tqdm import tqdm
@@ -1158,30 +1159,38 @@ def read_s_scores(path: str | Path) -> Matrix:
     return matrix
 
 
-def score_block(matrix: Matrix) -> Any:
+#: A numeric cell the workbook suffixed with its footnote letter, e.g. ``0.0456f``.
+_FOOTNOTED_NUMBER = re.compile(r"-?\d+(\.\d+)?[a-z]")
+
+
+def score_block(matrix: Matrix) -> npt.NDArray[np.float64]:
     """The S sheet's values as floats, with the one footnote-marked cell unmarked.
 
     Exactly one cell of each numeric sheet carries the footnote letter that binds the
     sheet's score definition to Collins 2006; it is the only non-numeric cell, which is
     asserted rather than assumed.
+
+    The cells are flattened and coerced in one pass rather than indexed as a frame:
+    ``DataFrame.iat`` is typed as a single-axis indexer and ``ndarray.nonzero`` as a
+    tuple of unknown length by the stubs CI installs, so the frame-indexed form type
+    checks here and fails there (``ci-mypy-stubs-differ-from-local``).
     """
-    frame = pd.DataFrame(matrix.values)
-    numeric = frame.apply(lambda column: pd.to_numeric(column, errors="coerce"))
-    marked = [
-        (int(row), int(column))
-        for row, column in zip(*numeric.isna().to_numpy().nonzero(), strict=True)
-    ]
-    if len(marked) != 1:
+    flat = np.asarray(matrix.values, dtype=object).reshape(-1)
+    numeric = pd.to_numeric(pd.Series(flat), errors="coerce").to_numpy(dtype=float)
+    marked = np.flatnonzero(np.isnan(numeric))
+    width = np.asarray(matrix.values).shape[1]
+    if marked.size != 1:
+        positions = [divmod(int(index), width) for index in marked[:5]]
         raise SheetFormatError(
-            f"{matrix.sheet}: {len(marked)} non-numeric cells, expected the one "
-            f"footnote-marked cell: {marked[:5]}"
+            f"{matrix.sheet}: {marked.size} non-numeric cells, expected the one "
+            f"footnote-marked cell: {positions}"
         )
-    row, column = marked[0]
-    text = str(frame.iat[row, column])
-    if not re.fullmatch(r"-?\d+(\.\d+)?[a-z]", text):
+    position = int(marked[0])
+    text = str(flat[position])
+    if not _FOOTNOTED_NUMBER.fullmatch(text):
         raise SheetFormatError(f"{matrix.sheet}: non-numeric cell {text!r}")
-    numeric.iat[row, column] = float(text[:-1])
-    return numeric.to_numpy(dtype=float)
+    numeric[position] = float(text[:-1])
+    return numeric.reshape(np.asarray(matrix.values).shape)
 
 
 _COLONY_GROUP = re.compile(r"(\d+):\(([-\d,]+)\)")

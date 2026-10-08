@@ -146,7 +146,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.schema_deps</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ContractSpec</span><span class="p">,</span>
     <span class="n">SchemaSurface</span><span class="p">,</span>
-    <span class="n">binding_members</span><span class="p">,</span>
     <span class="n">default_surface_modules</span><span class="p">,</span>
     <span class="n">load_surface</span><span class="p">,</span>
     <span class="n">load_surface_from_sources</span><span class="p">,</span>
@@ -160,7 +159,6 @@
     <span class="s2">"LoaderImpact"</span><span class="p">,</span>
     <span class="s2">"ImpactReport"</span><span class="p">,</span>
     <span class="s2">"classify_change"</span><span class="p">,</span>
-    <span class="s2">"classify_binding_change"</span><span class="p">,</span>
     <span class="s2">"diff_surfaces"</span><span class="p">,</span>
     <span class="s2">"map_impacts"</span><span class="p">,</span>
     <span class="s2">"build_impact_report"</span><span class="p">,</span>
@@ -316,77 +314,10 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">classify_binding_change</span><span class="p">(</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">old_source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">new_source</span><span class="p">:</span> <span class="nb">str</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ChangeKind</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">"""Classify a changed module-level binding (#734) by its member set.</span>
-
-<span class="sd">    For a ``Literal``, a union alias, a tuple/set display or a dict display, lost members</span>
-<span class="sd">    are breaking (stored values or patterns stop being valid) and only-gained members are</span>
-<span class="sd">    stale (a widening). A reorder with the same members is stale. A binding with no</span>
-<span class="sd">    member set on either side (a helper function, a computed pattern) is breaking, since</span>
-<span class="sd">    nothing static says the change only widens.</span>
-<span class="sd">    """</span>
-    <span class="n">old_members</span> <span class="o">=</span> <span class="n">binding_members</span><span class="p">(</span><span class="n">old_source</span><span class="p">)</span>
-    <span class="n">new_members</span> <span class="o">=</span> <span class="n">binding_members</span><span class="p">(</span><span class="n">new_source</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">old_members</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">new_members</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span><span class="p">,</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"module-level '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' changed"</span><span class="p">]</span>
-    <span class="n">lost</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">old_members</span> <span class="o">-</span> <span class="n">new_members</span><span class="p">)</span>
-    <span class="n">gained</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">new_members</span> <span class="o">-</span> <span class="n">old_members</span><span class="p">)</span>
-    <span class="n">reasons</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">kinds</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ChangeKind</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">if</span> <span class="n">lost</span><span class="p">:</span>
-        <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"lost members </span><span class="si">{</span><span class="n">lost</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">gained</span><span class="p">:</span>
-        <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"gained members </span><span class="si">{</span><span class="n">gained</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">stale</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">reasons</span><span class="p">:</span>
-        <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"members reordered"</span><span class="p">)</span>
-        <span class="n">kinds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">stale</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">_max_kind</span><span class="p">(</span><span class="n">kinds</span><span class="p">),</span> <span class="n">reasons</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_diff_bindings</span><span class="p">(</span><span class="n">old</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">,</span> <span class="n">new</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolChange</span><span class="p">]:</span>
-    <span class="n">changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolChange</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">old</span><span class="o">.</span><span class="n">bindings</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">new</span><span class="o">.</span><span class="n">bindings</span><span class="p">)):</span>
-        <span class="n">old_binding</span> <span class="o">=</span> <span class="n">old</span><span class="o">.</span><span class="n">bindings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-        <span class="n">new_binding</span> <span class="o">=</span> <span class="n">new</span><span class="o">.</span><span class="n">bindings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">old_binding</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">changes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">SymbolChange</span><span class="p">(</span>
-                    <span class="n">symbol</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
-                    <span class="n">kind</span><span class="o">=</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">stale</span><span class="p">,</span>
-                    <span class="n">status</span><span class="o">=</span><span class="s2">"added"</span><span class="p">,</span>
-                    <span class="n">reasons</span><span class="o">=</span><span class="p">[</span><span class="s2">"new module-level binding"</span><span class="p">],</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="n">new_binding</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">changes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">SymbolChange</span><span class="p">(</span>
-                    <span class="n">symbol</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
-                    <span class="n">kind</span><span class="o">=</span><span class="n">ChangeKind</span><span class="o">.</span><span class="n">breaking</span><span class="p">,</span>
-                    <span class="n">status</span><span class="o">=</span><span class="s2">"removed"</span><span class="p">,</span>
-                    <span class="n">reasons</span><span class="o">=</span><span class="p">[</span><span class="s2">"module-level binding removed"</span><span class="p">],</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="n">old_binding</span><span class="o">.</span><span class="n">source</span> <span class="o">!=</span> <span class="n">new_binding</span><span class="o">.</span><span class="n">source</span><span class="p">:</span>
-            <span class="n">kind</span><span class="p">,</span> <span class="n">reasons</span> <span class="o">=</span> <span class="n">classify_binding_change</span><span class="p">(</span>
-                <span class="n">name</span><span class="p">,</span> <span class="n">old_binding</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">new_binding</span><span class="o">.</span><span class="n">source</span>
-            <span class="p">)</span>
-            <span class="n">changes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">SymbolChange</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">"modified"</span><span class="p">,</span> <span class="n">reasons</span><span class="o">=</span><span class="n">reasons</span><span class="p">)</span>
-            <span class="p">)</span>
-    <span class="k">return</span> <span class="n">changes</span>
-
-
 <div class="viewcode-block" id="diff_surfaces">
 <a class="viewcode-back" href="../../../generated/torchcell.provenance.diff_surfaces.html#torchcell.provenance.diff_surfaces">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">diff_surfaces</span><span class="p">(</span><span class="n">old</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">,</span> <span class="n">new</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolChange</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Every symbol whose contract changed between two surfaces, classified.</span>
-
-<span class="sd">    Classes first, then the module-level bindings (#734), each in name order.</span>
-<span class="sd">    """</span>
+<span class="w">    </span><span class="sd">"""Every symbol whose contract changed between two surfaces, classified."""</span>
     <span class="n">changes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolChange</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">old</span><span class="o">.</span><span class="n">names</span> <span class="o">|</span> <span class="n">new</span><span class="o">.</span><span class="n">names</span><span class="p">):</span>
         <span class="n">old_spec</span> <span class="o">=</span> <span class="n">old</span><span class="o">.</span><span class="n">specs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
@@ -414,7 +345,6 @@
             <span class="n">changes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">SymbolChange</span><span class="p">(</span><span class="n">symbol</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">"modified"</span><span class="p">,</span> <span class="n">reasons</span><span class="o">=</span><span class="n">reasons</span><span class="p">)</span>
             <span class="p">)</span>
-    <span class="n">changes</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_diff_bindings</span><span class="p">(</span><span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">changes</span></div>
 
 

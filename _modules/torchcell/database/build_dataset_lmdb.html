@@ -139,16 +139,6 @@
 <span class="sd">Usage (dev tree, from a slurm job or a shell)::</span>
 
 <span class="sd">    python -m torchcell.database.build_dataset_lmdb --dataset NadalRibellesPerturbSeq2025Dataset</span>
-
-<span class="sd">A full knowledge-graph rebuild needs EVERY mapped dev store fresh under the current schema</span>
-<span class="sd">(the live-rebuild slurm script refuses otherwise), and a shared-class change such as</span>
-<span class="sd">``Publication`` makes all of them stale at once. ``--list-stale`` prints, one class per</span>
-<span class="sd">line, every mapped dataset whose store is stale, missing, or without a manifest (the same</span>
-<span class="sd">check the live rebuild's preflight runs; ``--include-private`` adds the private map), and</span>
-<span class="sd">``--retire-existing`` moves an existing ``processed/`` and ``preprocess/`` aside as</span>
-<span class="sd">``&lt;name&gt;.superseded.&lt;timestamp&gt;`` siblings before the build instead of refusing, which is</span>
-<span class="sd">what ``database/slurm/scripts/gilahyper_build_dataset_lmdbs_array.slurm`` runs per array</span>
-<span class="sd">task over that list. Nothing is deleted: a superseded store is a rename.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -159,11 +149,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span>
 
 
 <div class="viewcode-block" id="dataset_default_root">
@@ -190,86 +178,6 @@
         <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> is not a registered dataset; known: </span><span class="si">{</span><span class="n">known</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">dataset_registry</span><span class="p">[</span><span class="n">name</span><span class="p">]</span></div>
 
-
-
-<span class="n">StoreState</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"fresh"</span><span class="p">,</span> <span class="s2">"stale"</span><span class="p">,</span> <span class="s2">"no_lmdb"</span><span class="p">,</span> <span class="s2">"no_manifest"</span><span class="p">]</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">StoreStatus</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""One mapped dataset's dev store against the current schema surface."""</span>
-
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="n">dataset_class</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">state</span><span class="p">:</span> <span class="n">StoreState</span>
-    <span class="n">drift</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">needs_rebuild</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Everything but ``fresh`` is rebuilt before a full knowledge-graph build."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">!=</span> <span class="s2">"fresh"</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">mapped_store_status</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">include_private</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">StoreStatus</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""The state of every mapped dataset's dev store, in adapter-map order.</span>
-
-<span class="sd">    The same check the live rebuild's preflight runs: an LMDB must exist, its build</span>
-<span class="sd">    manifest must exist, and every fingerprint in the manifest's closure must equal the</span>
-<span class="sd">    current schema surface's.</span>
-<span class="sd">    """</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_adapter_map</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.build_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">BuildManifest</span><span class="p">,</span> <span class="n">check_manifest</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.schema_deps</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_default_surface</span>
-
-    <span class="n">surface</span> <span class="o">=</span> <span class="n">load_default_surface</span><span class="p">()</span>
-    <span class="n">statuses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">StoreStatus</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">build_adapter_map</span><span class="p">(</span><span class="n">include_private</span><span class="o">=</span><span class="n">include_private</span><span class="p">):</span>
-        <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">dataset_default_root</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span>
-        <span class="n">preprocess_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"preprocess"</span><span class="p">)</span>
-        <span class="n">manifest_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"build_manifest.json"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"processed"</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">)):</span>
-            <span class="n">statuses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">StoreStatus</span><span class="p">(</span><span class="n">dataset_class</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"no_lmdb"</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="k">continue</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">):</span>
-            <span class="n">statuses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">StoreStatus</span><span class="p">(</span><span class="n">dataset_class</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"no_manifest"</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="k">continue</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
-            <span class="n">manifest</span> <span class="o">=</span> <span class="n">BuildManifest</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">check_manifest</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">surface</span><span class="p">,</span> <span class="n">preprocess_dir</span><span class="p">)</span>
-        <span class="n">statuses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">StoreStatus</span><span class="p">(</span>
-                <span class="n">dataset_class</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
-                <span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span>
-                <span class="n">state</span><span class="o">=</span><span class="s2">"stale"</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">is_stale</span> <span class="k">else</span> <span class="s2">"fresh"</span><span class="p">,</span>
-                <span class="n">drift</span><span class="o">=</span><span class="nb">sorted</span><span class="p">({</span><span class="n">d</span><span class="o">.</span><span class="n">symbol</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">drift</span><span class="p">}),</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-    <span class="k">return</span> <span class="n">statuses</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">retire_existing</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">stamp</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Move ``root/processed`` and ``root/preprocess`` aside as ``.superseded.&lt;stamp&gt;``.</span>
-
-<span class="sd">    A rename on the same filesystem, never a delete; returns the new paths. A sibling</span>
-<span class="sd">    that already carries the stamp is refused rather than merged into.</span>
-<span class="sd">    """</span>
-    <span class="n">stamp</span> <span class="o">=</span> <span class="n">stamp</span> <span class="ow">or</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y%m</span><span class="si">%d</span><span class="s2">-%H%M%S"</span><span class="p">)</span>
-    <span class="n">moved</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"processed"</span><span class="p">,</span> <span class="s2">"preprocess"</span><span class="p">):</span>
-        <span class="n">src</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">src</span><span class="p">):</span>
-            <span class="k">continue</span>
-        <span class="n">dest</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">.superseded.</span><span class="si">{</span><span class="n">stamp</span><span class="si">}</span><span class="s2">"</span>
-        <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2"> already exists; refusing to retire over it"</span><span class="p">)</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
-        <span class="n">moved</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">moved</span>
 
 
 <div class="viewcode-block" id="build_dataset">
@@ -321,47 +229,20 @@
         <span class="n">prog</span><span class="o">=</span><span class="s2">"python -m torchcell.database.build_dataset_lmdb"</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"Build one registered dataset's LMDB in the dev tree."</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--dataset"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"registered dataset class name"</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--dataset"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"registered dataset class name"</span>
+    <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">"--data-root"</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">"dev-tree DATA_ROOT (default: $DATA_ROOT from the environment / .env)"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--io-workers"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">"--list-stale"</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">"print every mapped dataset whose dev store is stale, missing or has no "</span>
-        <span class="s2">"manifest, one class per line, and exit (no build)"</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">"--include-private"</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">"with --list-stale: include PRIVATE_DATASET_ADAPTER_MAP"</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s2">"--retire-existing"</span><span class="p">,</span>
-        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s2">"move an existing processed/ and preprocess/ aside as "</span>
-        <span class="s2">"*.superseded.&lt;timestamp&gt; before building instead of refusing"</span><span class="p">,</span>
-    <span class="p">)</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
 
     <span class="n">load_dotenv</span><span class="p">()</span>
     <span class="n">data_root</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">data_root</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">list_stale</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">status</span> <span class="ow">in</span> <span class="n">mapped_store_status</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">include_private</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">status</span><span class="o">.</span><span class="n">needs_rebuild</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="n">status</span><span class="o">.</span><span class="n">dataset_class</span><span class="p">)</span>
-        <span class="k">return</span> <span class="mi">0</span>
-    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"--dataset is required unless --list-stale is given"</span><span class="p">)</span>
     <span class="n">dataset_class</span> <span class="o">=</span> <span class="n">resolve_dataset_class</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">retire_existing</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">moved</span> <span class="ow">in</span> <span class="n">retire_existing</span><span class="p">(</span>
-            <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">dataset_default_root</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">))</span>
-        <span class="p">):</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"retired </span><span class="si">{</span><span class="n">moved</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
     <span class="n">dataset</span> <span class="o">=</span> <span class="n">build_dataset</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">,</span> <span class="n">data_root</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">io_workers</span><span class="p">)</span>
     <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>

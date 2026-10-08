@@ -24,7 +24,8 @@ shown as their own category, not dropped. Figures and tables from
 
 ### ex23: all 63 combinations at one concentration each (the main target)
 
-One concentration per inhibitor (FF 6, AA 4, HMF 2.522, FA 1, LVA 2, LA 40 g/L), three
+One dispensed concentration per inhibitor (FF 1.5, AA 2, HMF 2.522, FA 1, LVA 6, LA 20 g/L;
+see [[2026.10.08 - Dose corrections|dendron://torchcell/experiments.039-inhibitor-combinations-wetlab#20261008---dose-corrections]]), three
 biological replicates, 200 wells (8 uninhibited controls, 3 blanks). `results/ex23_conditions.csv`.
 
 | number of inhibitors | combinations | grew within 48 h | mean fitness of those that grew |
@@ -36,11 +37,11 @@ biological replicates, 200 wells (8 uninhibited controls, 3 blanks). `results/ex
 | 5 | 6 | 0 | |
 | 6 | 1 | 0 | |
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex23_combinations_fitness_2026-10-07-15-43-21.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/ex23_combinations_fitness_2026-10-08-00-44-14.svg)
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex23_pair_matrix_2026-10-07-15-43-22.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/ex23_pair_matrix_2026-10-08-00-44-14.svg)
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex23_single_inhibitor_curves_2026-10-07-15-43-22.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/ex23_single_inhibitor_curves_2026-10-08-00-44-15.svg)
 
 Read off the data: HMF is the strongest single inhibitor at its concentration (fitness
 0.44), the pair that fails to grow is FA + LA, and every combination of four or more fails.
@@ -51,13 +52,13 @@ The target is therefore two-part: growth or no growth over all 63, and a fitness
 
 Nine concentrations per inhibitor, three biological replicates; wells in blocks of ten
 (control, then the titration from the highest concentration down). The concentration
-labels are the processing notebook's, verbatim, in g/L; two are out of order there (FF 28
-between 24 and 12, FA 1.25 between 0.25 and 0.063) and are kept as recorded, so the x axis
-is the titration step. The control wells of this run grew slower (mean generation time
+labels are the processing notebook's in g/L, except two notebook typos replaced by the
+dispensed doses (FF 18, FA 0.125 g/L; see the 2026.10.08 section); the x axis is the
+titration step. The control wells of this run grew slower (mean generation time
 2.62 h) than most low-concentration wells, so fitness exceeds 1 at the low end.
 `results/ex21_titration.csv`.
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex21_titrations_2026-10-07-15-43-22.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/ex21_titrations_2026-10-08-00-44-15.svg)
 
 ### The isoboles: ex26 furfural, ex27 formic acid and ex28 5-HMF, each against acetic acid
 
@@ -72,7 +73,7 @@ the run.
 Only ex26 was processed by the Bioscreen software (`MV_ex26_..._Traits.txt`, 48 of 200
 wells grew). `results/ex26_isobole.csv`.
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex26_isobole_furfural_acetic_acid_2026-10-07-15-43-22.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/ex26_isobole_furfural_acetic_acid_2026-10-08-00-44-15.svg)
 
 For ex27 and ex28 the generation time is derived here from the raw curves
 (`generation_time` in the script: baseline-subtracted OD, growth if the rise is at least
@@ -82,7 +83,7 @@ ranks the 45 wells both call grown with a Spearman of 0.80 (`results/ex26_trait_
 so the two unprocessed isoboles are read on a checked footing. Wells grown: ex26 45, ex27
 76, ex28 53 of 200 (`results/isoboles_from_raw.csv`).
 
-![](assets/images/039-inhibitor-combinations-wetlab/isoboles_from_raw_2026-10-07-15-43-22.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/isoboles_from_raw_2026-10-08-00-44-15.svg)
 
 Formic acid x acetic acid is the cleanest trade-off (a diagonal front from FA 1.6 g/L
 alone to AA 2.8 g/L alone). 5-HMF x acetic acid has a ragged front with growth islands at
@@ -97,3 +98,28 @@ rows x 200 wells, UTF-16), the well map
 each stock and of YPD per well), the stock table `02_wet_lab_records/experiments/inhibitors.xlsx`,
 and the strain: BY4742-iAID6, the MAGIC background that `CrisprMagicLian2019Dataset`
 already carries. Admission as a dataset is a separate decision.
+
+## 2026.10.08 - Dose corrections
+
+Two sets of doses in the 2026.10.07 figures were wrong; the figures above are regenerated
+with the dispensed doses and the superseded files removed.
+
+- **ex23.** The script plotted the literature `C2` column of `inhibitors.xlsx` (FF 6, AA 4,
+  HMF 2.522, FA 1, LVA 2, LA 40 g/L), which is the fifth titration step, not what ex23
+  dispensed. The dispensed doses are FF 1.5, AA 2, HMF 2.522, FA 1, LVA 6, LA 20 g/L:
+  uL of stock in the well map `1_inhibitor-screen_2021-04-14_205953.xlsx` (42.5, 8.5, 17,
+  17, 51, 85) x stock concentration (`inhibitors.xlsx` C12:C17: 60, 400, 252.2, 100, 200,
+  400 g/L) / the 1700 uL tube (`1_inhibitor-screen.ipynb`, "ypd_v =  1700"). The Fig 11b
+  dose table of the 2021 prelim report
+  (`/bulk/thesis/thesis_archive/reports/Prelim_Report_2021_Michael_Volk.pdf`, p. 13) shows
+  the same six values. Only axis and legend labels change; the fitness values do not.
+- **ex21.** Two titration labels were notebook typos carried verbatim: the dispensed
+  volumes (uL of stock per 4 mL tube in `inhibitors_titration_array.xlsx` x stock / 4000 uL)
+  give FF 18 g/L where `MV_ex21_data_processing_v2.ipynb` says "28", and FA 0.125 g/L where
+  it says "1.25". With these corrected both titrations are monotone. The `label` column of
+  `results/ex21_titration.csv` changes accordingly.
+
+The derivation and its sourced values are in
+[[torchcell.datasets.private_torchcell.volk2021_inhibitor_bioscreen]]
+(`torchcell/datasets/private_torchcell/bioscreen.py`, `volk2021_sources.py`, on branch
+`feat/private-torchcell-bioscreen-volk2021`).

@@ -13,11 +13,12 @@ ex21
     three biological replicates. Wells run in blocks of ten per replicate: the block's
     first well is the uninhibited control, the next nine the titration from the highest
     concentration down (``MV_ex21_data_processing_v2.ipynb``). The concentration labels
-    are the notebook's, verbatim, in g/L.
+    are the notebook's in g/L, with its two typos (FF "28", FA "1.25") replaced by the
+    dispensed doses (18 and 0.125 g/L).
 ex23
-    all 63 non-empty combinations of the six inhibitors, one concentration each (the
-    ``C2`` column of ``inhibitors.xlsx``: FF 6, AA 4, HMF 2.522, FA 1, LVA 2, LA 40 g/L),
-    three biological replicates, 200 wells.
+    all 63 non-empty combinations of the six inhibitors, one dispensed concentration
+    each (well-map volume x stock / 1700 uL tube: FF 1.5, AA 2, HMF 2.522, FA 1, LVA 6,
+    LA 20 g/L), three biological replicates, 200 wells.
 ex26, ex27, ex28
     the isoboles furfural x acetic acid, formic acid x acetic acid and 5-HMF x acetic
     acid: a 10 x 10 grid of concentrations, two plates each (the design sheet
@@ -82,18 +83,31 @@ NAMES = {
     "LVA": "levulinic acid",
     "LA": "lactic acid",
 }
-#: ex23: one concentration per inhibitor, g/L (inhibitors.xlsx, column C2)
-EX23_G_PER_L = {"FF": 6.0, "AA": 4.0, "HMF": 2.522, "FA": 1.0, "LVA": 2.0, "LA": 40.0}
-#: ex21: the first well of each inhibitor's first replicate block, and the notebook's
-#: concentration labels (g/L, highest first), verbatim; two labels are out of order in
-#: the notebook (FF 28 between 24 and 12, FA 1.25 between 0.25 and 0.063) and are kept
-#: as recorded, so the x axis is the titration step, not the concentration.
+#: ex23: the dose each inhibitor was dispensed at, g/L = uL of stock in the well map
+#: (``1_inhibitor-screen_2021-04-14_205953.xlsx``: FF 42.5, AA 8.5, HMF 17, FA 17,
+#: LVA 51, LA 85) x stock (``inhibitors.xlsx`` C12:C17: 60, 400, 252.2, 100, 200, 400
+#: g/L) / the 1700 uL tube (``1_inhibitor-screen.ipynb``, "ypd_v =  1700"). The 2021
+#: prelim report's Fig 11b dose table (``Prelim_Report_2021_Michael_Volk.pdf`` p. 13)
+#: shows the same six values. These are NOT the literature ``C2`` column of
+#: ``inhibitors.xlsx`` (FF 6, AA 4, HMF 2.522, FA 1, LVA 2, LA 40), which an earlier
+#: version of this script plotted. Derivation: ``volk2021_sources.EX23_VOLUMES_UL`` and
+#: [[torchcell.datasets.private_torchcell.volk2021_inhibitor_bioscreen]].
+EX23_G_PER_L = {"FF": 1.5, "AA": 2.0, "HMF": 2.522, "FA": 1.0, "LVA": 6.0, "LA": 20.0}
+#: ex21: the first well of each inhibitor's first replicate block, and the dispensed
+#: concentration of each titration step (g/L, highest first). The labels are the
+#: processing notebook's (``MV_ex21_data_processing_v2.ipynb``) except two typos that
+#: the dispensed volumes correct (uL of stock per 4 mL tube in
+#: ``inhibitors_titration_array.xlsx`` x stock / 4000 uL): the notebook's FF string
+#: "28" is 18 g/L and its FA string "1.25" is 0.125 g/L. The notebook's lists, verbatim:
+#: FF ["30", "24", "28", "12", "6", "3", "1.5", "0.75", "0.375"] and
+#: FA ["5", "4", "3", "2", "1", "0.5", "0.25", "1.25", "0.063"].
+#: The x axis stays the titration step.
 EX21_BLOCK_START = {"FF": 1, "AA": 31, "HMF": 61, "FA": 101, "LVA": 131, "LA": 161}
 EX21_LABELS = {
-    "FF": ["30", "24", "28", "12", "6", "3", "1.5", "0.75", "0.375"],
+    "FF": ["30", "24", "18", "12", "6", "3", "1.5", "0.75", "0.375"],
     "AA": ["20", "16", "12", "8", "4", "2", "1", "0.5", "0.25"],
     "HMF": ["12.5", "10", "7.5", "5", "2.52", "1.26", "0.63", "0.32", "0.16"],
-    "FA": ["5", "4", "3", "2", "1", "0.5", "0.25", "1.25", "0.063"],
+    "FA": ["5", "4", "3", "2", "1", "0.5", "0.25", "0.125", "0.063"],
     "LVA": ["10", "8", "6", "4", "2", "1", "0.5", "0.25", "0.125"],
     "LA": ["200", "160", "120", "80", "40", "20", "10", "5", "2.5"],
 }

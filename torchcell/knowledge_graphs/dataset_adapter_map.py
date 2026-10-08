@@ -10,6 +10,7 @@ from torchcell.adapters import (
     CaudalPanTranscriptome2024Adapter,
     CrispriArrayYunus2026Adapter,
     CrispriChemgenChoe2025Adapter,
+    CrispriCrossRachwalski2024Adapter,
     CrispriDifferentialProteomeYunus2026Adapter,
     CrispriGuideFitnessWang2018Adapter,
     CrispriKnockdownCui2018Adapter,
@@ -130,6 +131,7 @@ from torchcell.datasets.ecoli.price2018 import (
     GeneEssentialityPrice2018EcoliDataset,
     RbTnseqPrice2018EcoliDataset,
 )
+from torchcell.datasets.ecoli.rachwalski2024 import CrispriCrossRachwalski2024Dataset
 from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
 from torchcell.datasets.ecoli.rapp2026_platforms import (
     GrowthAucRapp2026Dataset,
@@ -325,6 +327,7 @@ dataset_adapter_map = {
     PhageRbTnseqMutalik2020Dataset: PhageRbTnseqMutalik2020Adapter,
     RbTnseqPrice2018EcoliDataset: RbTnseqPrice2018EcoliAdapter,
     GeneEssentialityPrice2018EcoliDataset: GeneEssentialityPrice2018EcoliAdapter,
+    CrispriCrossRachwalski2024Dataset: CrispriCrossRachwalski2024Adapter,
     MetabolomeRapp2026Dataset: MetabolomeRapp2026Adapter,
     GrowthAucRapp2026Dataset: GrowthAucRapp2026Adapter,
     MetaboliteIntensityRapp2026Dataset: MetaboliteIntensityRapp2026Adapter,

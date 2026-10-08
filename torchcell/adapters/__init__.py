@@ -166,6 +166,9 @@ from .price2018_ecoli_adapter import (
 from .price2018_ecoli_essentiality_adapter import (
     GeneEssentialityPrice2018EcoliAdapter as GeneEssentialityPrice2018EcoliAdapter,
 )
+from .rachwalski2024_adapter import (
+    CrispriCrossRachwalski2024Adapter as CrispriCrossRachwalski2024Adapter,
+)
 from .rapp2026_adapter import MetabolomeRapp2026Adapter as MetabolomeRapp2026Adapter
 from .rapp2026_growth_adapter import (
     GrowthAucRapp2026Adapter as GrowthAucRapp2026Adapter,
@@ -344,6 +347,7 @@ ecoli_adapters = [
     "ProteomeMori2021Adapter",
     "PhageRbTnseqMutalik2020Adapter",
     "RbTnseqPrice2018EcoliAdapter",
+    "CrispriCrossRachwalski2024Adapter",
     "MetabolomeRapp2026Adapter",
     "GrowthAucRapp2026Adapter",
     "MetaboliteIntensityRapp2026Adapter",

@@ -60,6 +60,7 @@ from torchcell.adapters import (
     CarbonSourceTong2020Adapter,
     CrispriArrayYunus2026Adapter,
     CrispriChemgenChoe2025Adapter,
+    CrispriCrossRachwalski2024Adapter,
     CrispriDifferentialProteomeYunus2026Adapter,
     CrispriGuideFitnessWang2018Adapter,
     CrispriKnockdownCui2018Adapter,
@@ -138,6 +139,7 @@ from torchcell.datasets.ecoli.price2018 import (
     GeneEssentialityPrice2018EcoliDataset,
     RbTnseqPrice2018EcoliDataset,
 )
+from torchcell.datasets.ecoli.rachwalski2024 import CrispriCrossRachwalski2024Dataset
 from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
 from torchcell.datasets.ecoli.rapp2026_platforms import (
     GrowthAucRapp2026Dataset,
@@ -402,6 +404,14 @@ BACTERIAL: list[Bacterial] = [
         GeneEssentialityPrice2018EcoliDataset,
         "gene essentiality phenotype",
         env_perturbation=False,
+    ),
+    _case(
+        CrispriCrossRachwalski2024Adapter,
+        "rachwalski2024",
+        "crispri_cross_rachwalski2024",
+        CrispriCrossRachwalski2024Dataset,
+        "fitness phenotype",
+        crispr=True,
     ),
     _case(
         MetabolomeRapp2026Adapter,

@@ -482,6 +482,7 @@ BACTERIAL_DATASETS = {
     "CarbonSourceTong2020Dataset",
     "CrispriArrayYunus2026Dataset",
     "CrispriChemgenChoe2025Dataset",
+    "CrispriCrossRachwalski2024Dataset",
     "CrispriDifferentialProteomeYunus2026Dataset",
     "CrispriGuideFitnessWang2018Dataset",
     "CrispriKnockdownCui2018Dataset",

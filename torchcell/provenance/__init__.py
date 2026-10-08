@@ -32,6 +32,7 @@ from torchcell.provenance.schema_deps import (
     FieldSpec,
     ModuleBinding,
     SchemaSurface,
+    binding_fingerprint,
     binding_members,
     collect_module_bindings,
     contract_spec,
@@ -49,6 +50,7 @@ from torchcell.provenance.schema_impact import (
     LoaderImpact,
     SymbolChange,
     build_impact_report,
+    classify_binding_change,
     classify_change,
     diff_surfaces,
 )
@@ -59,6 +61,7 @@ __all__ = [
     "FieldSpec",
     "ModuleBinding",
     "SchemaSurface",
+    "binding_fingerprint",
     "binding_members",
     "collect_module_bindings",
     "contract_spec",
@@ -75,6 +78,7 @@ __all__ = [
     "LoaderImpact",
     "SymbolChange",
     "build_impact_report",
+    "classify_binding_change",
     "classify_change",
     "diff_surfaces",
     # build_manifest

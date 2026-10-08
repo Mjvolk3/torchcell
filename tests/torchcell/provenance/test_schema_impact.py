@@ -592,7 +592,8 @@ ACK_TAIL = "\nTORCHCELL_SCHEMA_ACK set -> impact acknowledged; proceeding.\n"
 def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """A throwaway repo whose HEAD holds SCHEMA; the gate is pointed at its surface.
 
-    ``pydant.py`` is written after the commit (with no classes), so it exists in the
+    ``pydant.py`` is written after the commit (a docstring only: no classes and, since
+    #734, no module-level bindings, which are surface symbols too), so it exists in the
     working tree, which ``load_surface`` reads, but not at HEAD, where ``_git_show``
     returns "" for it.
     """
@@ -609,7 +610,7 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     _git(root, "init", "-q")
     _git(root, "add", "-A")
     _git(root, "commit", "-q", "-m", "base")
-    (datamodels / "pydant.py").write_text("VERSION = 1\n")
+    (datamodels / "pydant.py").write_text('"""No surface symbols."""\n')
     monkeypatch.setattr(
         si,
         "default_surface_modules",
@@ -811,7 +812,7 @@ def test_repo_root_inside_and_outside_a_repo(
     assert _REAL_REPO_ROOT() == outside.resolve()
 
 
-# 2026.10.08, issue #734: changes to module-level vocabularies a class resolves through.
+# 2026.10.08, issue #734: module-level bindings are diffed and mapped like classes.
 VOCAB = """
 import re
 from typing import Literal
@@ -824,6 +825,10 @@ def _validate_tag(value):
     return any(re.match(p, value) for p in PATTERNS.values())
 
 
+class ModelStrict(BaseModel):
+    pass
+
+
 class Leaf(ModelStrict):
     namespace: Namespace
     tag: str
@@ -831,79 +836,86 @@ class Leaf(ModelStrict):
     @field_validator("tag")
     def _tag(cls, value):
         return _validate_tag(value)
+
+
+class Other(ModelStrict):
+    x: int
 """
 
 
+def _changes(
+    old_src: str, new_src: str
+) -> list[tuple[str, si.ChangeKind, str, list[str]]]:
+    return [
+        (c.symbol, c.kind, c.status, c.reasons)
+        for c in si.diff_surfaces(_surface(old_src), _surface(new_src))
+    ]
+
+
 def test_literal_and_pattern_widening_is_stale() -> None:
-    """The REL606 shape: one namespace and its pattern added, nothing removed."""
+    """The REL606 shape: one namespace and its pattern added, nothing removed. No class
+    changes; the two binding nodes do.
+    """
     new = VOCAB.replace('"bw25113"]', '"bw25113", "rel606"]').replace(
         '"^BW25113_[0-9]{4}$"}', '"^BW25113_[0-9]{4}$", "rel606": "^ECB_[0-9]{5}$"}'
     )
-    assert _verdict(VOCAB, new, "Leaf") == (
-        S,
-        "modified",
-        [
-            "module-level 'Namespace' gained members [\"'rel606'\"]",
-            "module-level 'PATTERNS' gained members [\"'rel606': '^ECB_[0-9]{5}$'\"]",
-        ],
-    )
+    assert _changes(VOCAB, new) == [
+        ("Namespace", S, "modified", ["gained members [\"'rel606'\"]"]),
+        (
+            "PATTERNS",
+            S,
+            "modified",
+            ["gained members [\"'rel606': '^ECB_[0-9]{5}$'\"]"],
+        ),
+    ]
 
 
 def test_literal_narrowing_is_breaking() -> None:
     new = VOCAB.replace('Literal["mg1655", "bw25113"]', 'Literal["mg1655"]')
-    assert _verdict(VOCAB, new, "Leaf") == (
-        B,
-        "modified",
-        ["module-level 'Namespace' lost members [\"'bw25113'\"]"],
-    )
+    assert _changes(VOCAB, new) == [
+        ("Namespace", B, "modified", ["lost members [\"'bw25113'\"]"])
+    ]
 
 
 def test_changed_pattern_is_breaking() -> None:
     new = VOCAB.replace('"^b[0-9]{4}$"', '"^b[0-9]{5}$"')
-    assert _verdict(VOCAB, new, "Leaf") == (
-        B,
-        "modified",
-        [
-            "module-level 'PATTERNS' lost members [\"'mg1655': '^b[0-9]{4}$'\"]",
-            "module-level 'PATTERNS' gained members [\"'mg1655': '^b[0-9]{5}$'\"]",
-        ],
-    )
+    assert _changes(VOCAB, new) == [
+        (
+            "PATTERNS",
+            B,
+            "modified",
+            [
+                "lost members [\"'mg1655': '^b[0-9]{4}$'\"]",
+                "gained members [\"'mg1655': '^b[0-9]{5}$'\"]",
+            ],
+        )
+    ]
 
 
 def test_changed_helper_function_is_breaking() -> None:
     new = VOCAB.replace("return any(", "return all(")
-    assert _verdict(VOCAB, new, "Leaf") == (
-        B,
-        "modified",
-        ["module-level '_validate_tag' changed"],
-    )
+    assert _changes(VOCAB, new) == [
+        ("_validate_tag", B, "modified", ["module-level '_validate_tag' changed"])
+    ]
 
 
 def test_reordered_literal_is_stale() -> None:
     new = VOCAB.replace('Literal["mg1655", "bw25113"]', 'Literal["bw25113", "mg1655"]')
-    assert _verdict(VOCAB, new, "Leaf") == (
-        S,
-        "modified",
-        ["module-level 'Namespace' reordered"],
-    )
+    assert _changes(VOCAB, new) == [("Namespace", S, "modified", ["members reordered"])]
 
 
-def test_newly_reached_and_dropped_bindings_are_reported() -> None:
-    """Retargeting a field from the alias to ``str`` drops the binding (and changes the
-    type, which is what makes it breaking); the reverse adds it.
-    """
-    plain = VOCAB.replace("    namespace: Namespace\n", "    namespace: str\n")
-    kind, _, reasons = _verdict(VOCAB, plain, "Leaf")
-    assert kind == B
-    assert "no longer resolves through module-level 'Namespace'" in reasons
-    kind, _, reasons = _verdict(plain, VOCAB, "Leaf")
-    assert "now resolves through module-level 'Namespace'" in reasons
+def test_added_and_removed_bindings() -> None:
+    added = VOCAB + "\nEXTRA = ('a',)\n"
+    assert _changes(VOCAB, added) == [
+        ("EXTRA", S, "added", ["new module-level binding"])
+    ]
+    assert _changes(added, VOCAB) == [
+        ("EXTRA", B, "removed", ["module-level binding removed"])
+    ]
 
 
-def test_vocabulary_change_flags_the_loaders_that_reach_the_class(
-    tmp_path: Path,
-) -> None:
-    """A narrowed Literal maps to the loader importing the leaf, as an enum change would."""
+def test_vocabulary_change_flags_only_the_loaders_that_reach_it(tmp_path: Path) -> None:
+    """A narrowed Literal maps to the loader importing Leaf, not to one importing Other."""
     old_surface = _surface(VOCAB)
     new_surface = _surface(
         VOCAB.replace('Literal["mg1655", "bw25113"]', 'Literal["mg1655"]')
@@ -911,12 +923,26 @@ def test_vocabulary_change_flags_the_loaders_that_reach_the_class(
     leaf_loader = tmp_path / "leaf_loader.py"
     leaf_loader.write_text("from torchcell.datamodels.schema import Leaf\n")
     other = tmp_path / "other.py"
-    other.write_text("from torchcell.datamodels.schema import ModelStrict\n")
+    other.write_text("from torchcell.datamodels.schema import Other\n")
     changes = si.diff_surfaces(old_surface, new_surface)
-    assert [c.symbol for c in changes] == ["Leaf"]
     impacts = si.map_impacts(
         changes, [leaf_loader, other], old_surface, new_surface, tmp_path
     )
     assert [(i.loader, i.changed_symbols, i.kind) for i in impacts] == [
-        ("leaf_loader.py", ["Leaf"], B)
+        ("leaf_loader.py", ["Namespace"], B)
     ]
+
+
+def test_pattern_change_reaches_the_loader_through_the_helper(tmp_path: Path) -> None:
+    old_surface = _surface(VOCAB)
+    new_surface = _surface(VOCAB.replace('"^b[0-9]{4}$"', '"^b[0-9]{5}$"'))
+    leaf_loader = tmp_path / "leaf_loader.py"
+    leaf_loader.write_text("from torchcell.datamodels.schema import Leaf\n")
+    impacts = si.map_impacts(
+        si.diff_surfaces(old_surface, new_surface),
+        [leaf_loader],
+        old_surface,
+        new_surface,
+        tmp_path,
+    )
+    assert [(i.changed_symbols, i.kind) for i in impacts] == [(["PATTERNS"], B)]

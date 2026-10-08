@@ -664,6 +664,32 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             page="Mol Syst Biol 13:907; S-BSST5 zscore_neg.tsv, zscore_pos.tsv",
         ),
     },
+    # The paired-modality chemostat metabolome. 24 BW25113 Keio disruptants at one
+    # dilution rate; the reference is the wild-type control of each record's OWN
+    # measurement series, restricted to the metabolites that record also detected, so
+    # it is an absolute baseline and not centered on 0. L4 is the BW25113 locus
+    # universe, read off the records' own assembly pin.
+    "metabolome_ishii2007": {
+        "root": "data/torchcell/metabolome_ishii2007",
+        # 35 Metabolite columns - 1 empty (GR04x) - 5 reference - 4 dilution-rate
+        # (culture_not_batch) - 1 duplicate pfkA culture = 24 kept records.
+        "expected_count": 24,
+        "reference_centered": False,
+        "provenance": Provenance(
+            source_uri="http://ecoli.iab.keio.ac.jp/Quantitative_data.xls",
+            citation_key="ishiiMultipleHighThroughputAnalyses2007",
+            sha256=("2b7663f505af2137d31697a4d316eb1f7ffd24274f73e4844d27d03348313888"),
+            method=(
+                "CE-TOFMS intracellular concentration in mM per glucose-limited "
+                "chemostat culture (anion, cation and nucleotide protocols, one "
+                "measurement each); reference = the wild-type 0.2 h-1 control column "
+                "of the record's own series. The publisher supplement is behind a "
+                "Cloudflare challenge, so the data comes from the paper's own "
+                "reference 21, the Keio project web site"
+            ),
+            page="Science 316:593; project web site v1.0.0, sheet 'Metabolite'",
+        ),
+    },
     # The CRISPRi metabolome. L4 is the MG1655 locus universe (the records' own
     # assembly pin), and the reference is the measured profile of the 15 empty-sgRNA
     # control strains on the per-batch-median scale, so it is not centered on 0.
@@ -2363,6 +2389,17 @@ def _verify_caglar_proteome(dataset_root: str, data_root: str) -> VerificationRe
     return caglar2017.run_verification("proteome", data_root)
 
 
+def _verify_ishii_proteome(dataset_root: str, data_root: str) -> VerificationReport:
+    """Ishii 2007 proteome: the shared protein gate plus the BW25113 containment.
+
+    ``dataset_root`` is unused, as in :func:`_verify_caglar_proteome`: the loader's own
+    entry point takes the family name and resolves the root itself.
+    """
+    from torchcell.datasets.ecoli import ishii2007
+
+    return ishii2007.run_verification("proteome_ishii2007", data_root)
+
+
 #: Every landed ``ProductTiterExperiment`` dataset, with the entry point that verifies it.
 PRODUCT_TITER_DATASETS: dict[str, dict[str, Any]] = {
     "isopentenol_titer_foo2014": {
@@ -2414,6 +2451,10 @@ BACTERIAL_PROTEIN_ABUNDANCE_DATASETS: dict[str, dict[str, Any]] = {
     "proteome_caglar2017": {
         "root": "data/torchcell/proteome_caglar2017",
         "verify": _verify_caglar_proteome,
+    },
+    "proteome_ishii2007": {
+        "root": "data/torchcell/proteome_ishii2007",
+        "verify": _verify_ishii_proteome,
     },
 }
 

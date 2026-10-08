@@ -181,6 +181,7 @@ module = [
     "torch_scatter", "torch_scatter.*",
     "torch_sparse", "torch_sparse.*",
     "umap", "umap.*",
+    "xlrd", "xlrd.*",
     "yaml", "yaml.*",
 ]
 ignore_missing_imports = true

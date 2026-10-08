@@ -42,6 +42,7 @@ from torchcell.adapters import (
     EnvChemgenWang2015Adapter,
     EnvChemgenWildenhain2015Adapter,
     FattyAcidXue2025Adapter,
+    FluxIshii2007Adapter,
     GeneEssentialityGoodall2018Adapter,
     GeneEssentialityPrice2018EcoliAdapter,
     GeneEssentialitySgdAdapter,
@@ -65,6 +66,7 @@ from torchcell.adapters import (
     MetaboliteIntensityRapp2026Adapter,
     MetaboliteZelezniak2018Adapter,
     MetabolomeFuhrer2017Adapter,
+    MetabolomeIshii2007Adapter,
     MetabolomeRapp2026Adapter,
     MetabolomeSchastnaya2021Adapter,
     MicroarrayKemmeren2014Adapter,
@@ -77,6 +79,7 @@ from torchcell.adapters import (
     ProteomeCaglar2017Adapter,
     ProteomeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Adapter,
+    ProteomeIshii2007Adapter,
     ProteomeLim2025Adapter,
     ProteomeLog10PercentDeSiqueira2025Adapter,
     ProteomeMessner2023Adapter,
@@ -134,6 +137,11 @@ from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
+from torchcell.datasets.ecoli.ishii2007 import (
+    FluxIshii2007Dataset,
+    MetabolomeIshii2007Dataset,
+    ProteomeIshii2007Dataset,
+)
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
 from torchcell.datasets.ecoli.lamoureux2023_public_k12 import (
     RnaseqPublicK12Lamoureux2023Dataset,
@@ -340,6 +348,9 @@ dataset_adapter_map: dict[type, type] = {
     EnvChemgenGirgis2009Dataset: EnvChemgenGirgis2009Adapter,
     GeneEssentialityGoodall2018Dataset: GeneEssentialityGoodall2018Adapter,
     ProteinTurnoverGupta2024Dataset: ProteinTurnoverGupta2024Adapter,
+    MetabolomeIshii2007Dataset: MetabolomeIshii2007Adapter,
+    ProteomeIshii2007Dataset: ProteomeIshii2007Adapter,
+    FluxIshii2007Dataset: FluxIshii2007Adapter,
     RnaseqLamoureux2023Dataset: RnaseqLamoureux2023Adapter,
     RnaseqPublicK12Lamoureux2023Dataset: RnaseqPublicK12Lamoureux2023Adapter,
     ProteomeMori2021Dataset: ProteomeMori2021Adapter,

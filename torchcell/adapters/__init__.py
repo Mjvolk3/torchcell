@@ -99,6 +99,13 @@ from .hillenmeyer2008_adapter import (
 from .hoepfner2014_adapter import (
     EnvChemgenHoepfner2014Adapter as EnvChemgenHoepfner2014Adapter,
 )
+from .ishii2007_flux_adapter import FluxIshii2007Adapter as FluxIshii2007Adapter
+from .ishii2007_metabolome_adapter import (
+    MetabolomeIshii2007Adapter as MetabolomeIshii2007Adapter,
+)
+from .ishii2007_proteome_adapter import (
+    ProteomeIshii2007Adapter as ProteomeIshii2007Adapter,
+)
 from .kang2026_adapter import (
     IsoprenylAcetateTiterKang2026Adapter as IsoprenylAcetateTiterKang2026Adapter,
 )
@@ -343,6 +350,9 @@ ecoli_adapters = [
     "GeneEssentialityGoodall2018Adapter",
     "GeneEssentialityPrice2018EcoliAdapter",
     "ProteinTurnoverGupta2024Adapter",
+    "MetabolomeIshii2007Adapter",
+    "ProteomeIshii2007Adapter",
+    "FluxIshii2007Adapter",
     "RnaseqLamoureux2023Adapter",
     "ProteomeMori2021Adapter",
     "PhageRbTnseqMutalik2020Adapter",

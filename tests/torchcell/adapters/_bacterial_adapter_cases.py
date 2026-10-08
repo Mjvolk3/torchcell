@@ -69,6 +69,7 @@ from torchcell.adapters import (
     EnvChemgenGirgis2009Adapter,
     EnvChemgenShiver2016Adapter,
     EnvChemgenWang2015Adapter,
+    FluxIshii2007Adapter,
     GeneEssentialityGoodall2018Adapter,
     GeneEssentialityPrice2018EcoliAdapter,
     GeneInteractionBabu2014Adapter,
@@ -84,6 +85,7 @@ from torchcell.adapters import (
     IsoprenylAcetateTiterKang2026Adapter,
     MetaboliteIntensityRapp2026Adapter,
     MetabolomeFuhrer2017Adapter,
+    MetabolomeIshii2007Adapter,
     MetabolomeRapp2026Adapter,
     MetabolomeSchastnaya2021Adapter,
     PhageRbTnseqMutalik2020Adapter,
@@ -92,6 +94,7 @@ from torchcell.adapters import (
     ProteomeCaglar2017Adapter,
     ProteomeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Adapter,
+    ProteomeIshii2007Adapter,
     ProteomeLim2025Adapter,
     ProteomeLog10PercentDeSiqueira2025Adapter,
     ProteomeMori2021Adapter,
@@ -129,6 +132,11 @@ from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
+from torchcell.datasets.ecoli.ishii2007 import (
+    FluxIshii2007Dataset,
+    MetabolomeIshii2007Dataset,
+    ProteomeIshii2007Dataset,
+)
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
 from torchcell.datasets.ecoli.lamoureux2023_public_k12 import (
     RnaseqPublicK12Lamoureux2023Dataset,
@@ -241,6 +249,7 @@ TITER = "product titer phenotype"
 RESPONSE = "environment response phenotype"
 TURNOVER = "protein turnover phenotype"
 INTERACTION = "gene interaction phenotype"
+FLUX = "flux phenotype"
 
 # The shape of each dataset's records, measured on its dev-tree LMDB on 2026-10-07 (and,
 # for the two RB-TnSeq stores rebuilding at the time, read off `build_genotype` /
@@ -358,6 +367,30 @@ BACTERIAL: list[Bacterial] = [
         "protein_turnover_gupta2024",
         ProteinTurnoverGupta2024Dataset,
         TURNOVER,
+    ),
+    _case(
+        MetabolomeIshii2007Adapter,
+        "ishii2007_metabolome",
+        "metabolome_ishii2007",
+        MetabolomeIshii2007Dataset,
+        "metabolite phenotype",
+        env_perturbation=False,
+    ),
+    _case(
+        ProteomeIshii2007Adapter,
+        "ishii2007_proteome",
+        "proteome_ishii2007",
+        ProteomeIshii2007Dataset,
+        PROTEOME,
+        env_perturbation=False,
+    ),
+    _case(
+        FluxIshii2007Adapter,
+        "ishii2007_flux",
+        "flux_ishii2007",
+        FluxIshii2007Dataset,
+        FLUX,
+        env_perturbation=False,
     ),
     _case(
         RnaseqLamoureux2023Adapter,

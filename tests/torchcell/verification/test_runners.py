@@ -1820,6 +1820,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "isobutanol_validated_lopez2024": 224,
         "ffa_xue2025": 176,
         "metabolome_fuhrer2017": 3735,
+        "metabolome_ishii2007": 24,
         "metabolome_rapp2026": 1496,
         "targeted_metabolome_rapp2026": 406,
         "metabolite_intensity_rapp2026": 406,
@@ -1943,7 +1944,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         name: spec["root"] for registry in registries for name, spec in registry.items()
     }
     assert roots == {name: f"data/torchcell/{name}" for name in roots}
-    assert len(roots) == 41  # 3 + 1 + 13 + 2 + 5 + 13 + 3 + 1
+    assert len(roots) == 42  # 3 + 1 + 14 + 2 + 5 + 13 + 3 + 1
     assert all(
         isinstance(spec["provenance"], Provenance)
         for registry in registries
@@ -2572,4 +2573,5 @@ def test_the_bioproduction_registries_name_every_landed_store() -> None:
         ),
         "proteome_lim2025": "data/torchcell/proteome_lim2025",
         "proteome_caglar2017": "data/torchcell/proteome_caglar2017",
+        "proteome_ishii2007": "data/torchcell/proteome_ishii2007",
     }

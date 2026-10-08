@@ -68,6 +68,9 @@ datasets:
   - EnvChemgenGirgis2009Dataset
   - GeneEssentialityGoodall2018Dataset
   - ProteinTurnoverGupta2024Dataset
+  - MetabolomeIshii2007Dataset
+  - ProteomeIshii2007Dataset
+  - FluxIshii2007Dataset
   - RnaseqLamoureux2023Dataset
   - RnaseqPublicK12Lamoureux2023Dataset
   - ProteomeMori2021Dataset

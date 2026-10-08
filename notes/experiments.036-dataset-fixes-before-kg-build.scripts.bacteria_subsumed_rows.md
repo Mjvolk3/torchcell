@@ -95,3 +95,66 @@ Still blocked, and already filed:
   loader filed;
 - the raw and normalized colony sizes, which need a colony-size phenotype class that does not
   exist (issue #776 item 3 is the neighboring gap).
+
+## 2026.10.08 - Schmidt 2022 nitrogen (row 24) is subsumed condition for condition, and the gap is not loadable
+
+Measured by the same script and recorded in the same results JSON. Per-compound table:
+`experiments/036-dataset-fixes-before-kg-build/results/schmidt2022_nitrogen_conditions.csv`.
+Provenance record:
+`$DATA_ROOT/torchcell-raw/schmidtNitrogenMetabolismPseudomonas2022/subsumption_record.json`.
+
+### The paper's own enumeration
+
+Table 1 of the OCR is a real table, not an image, so the condition list comes out of the
+released bytes rather than a hand count. It marks a sole-nitrogen source `(N)` and an
+amino-acid drop-out condition `(-)`: **52 `(N)` and 19 `(-)`**, which is the abstract's
+"we identified genes and proteins involved in the assimilation of 52 different nitrogen
+containing compounds. To assay amino acid biosynthesis, 19 amino acid drop-out conditions
+were also tested. From these 71 conditions ...". The script asserts the parse against the
+compound map and raises on any disagreement, so the two can never drift.
+
+### The mapping onto the served compendium is a bijection
+
+The Borchert 2024 compendium's `nitrogen source` experiment group holds **104 samples over
+52 distinct `condition_1` values**. Mapping Table 1's 52 names onto those 52 conditions
+needs a synonym table (salt forms, spelled-out acids, and three genuine chemistry synonyms:
+5-oxoproline = L-pyroglutamic acid, valerolactam = 2-piperidinone, gamma-aminobutyric =
+4-aminobutyric acid), and with it:
+
+- 52 of 52 compounds match a condition;
+- 0 compounds are unmatched;
+- 0 group conditions are left over.
+
+Two samples per condition, which is the Methods' "Experiments were conducted in biological
+duplicates".
+
+### What the served store holds
+
+`RbTnseqBorchert2024Dataset` at `$DATA_ROOT/data/torchcell/rbtnseq_borchert2024`: 1,372,280
+records over 290 samples. All **104** nitrogen-source samples are served, **4,732 loci
+each**, for **492,128 records**. A loader for this row would store every one of those values
+a second time, so there is nothing to load.
+
+### What the compendium does NOT have, and why it still is not loadable
+
+This is the part the Borchert 2023 precedent warns about, and it is real here too:
+
+- the **19 amino-acid drop-out conditions** have no condition in the compendium's
+  nitrogen-source group at all;
+- the paper's t-SNE Methods name "129 sole-nitrogen source growth assays in 51 different
+  conditions" (2-ABA excluded), against the **102** samples the compendium carries over
+  those same 51 conditions, so **27 replicate assays** are absent as well;
+- and separately, the compendium's matrix is 4,732 loci, the set carrying a value in every
+  one of its 332 samples, so any locus this paper measured that some other sample lacks is
+  outside it.
+
+None of it is recoverable. Unlike Borchert 2023, whose Supplementary File 1 released
+per-replicate fitness and therefore yielded a real 10,824-value loader, this paper released
+**no per-gene data file**: its supplemental material is one figure PDF
+("SUPPLEMENTAL FILE 1, PDF file, 3.1 MB"), it references no Table S, and its Methods publish
+the fitness data only at `http://fit.genomics.lbl.gov`. That endpoint is probed by the
+script rather than assumed Cloudflare-blocked: **HTTP 403 on 2026-10-08**, recorded in the
+record's `release_probes`.
+
+So: `decision = "subsumed_no_loader"`, with the absent slice named and its
+unrecoverability measured rather than waved at.

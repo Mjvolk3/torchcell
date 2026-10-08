@@ -1,6 +1,6 @@
 {
   "script": "experiments/036-dataset-fixes-before-kg-build/scripts/bacteria_subsumed_rows.py",
-  "measured_at": "2026-10-08T21:39:22.276587+00:00",
+  "measured_at": "2026-10-08T21:40:07.072900+00:00",
   "rows": {
     "Butland 2008": {
       "citation_key": "butlandESGAColiSynthetic2008",
@@ -221,7 +221,7 @@
       },
       "conclusion": "NOT SUBSUMED, and the retrieval blocker is resolved. The served GeneInteractionBabu2014Dataset carries 727 of this paper's measurements under GeneInteractionPhenotype.screen_id == 'Butland et al.', which is 0.23 percent of the 314847 interaction scores Supplementary Table 4 releases without any filtering, over 160563 distinct gene pairs once the two Keio isolates of a gene are collapsed. Babu's release is the high-confidence tail of a re-analysis, not a superset of this one: it re-publishes 1129 rows over these 39 donors, and leaves 490 of this paper's own 1270 high-confidence gene pairs out.",
       "loadable_slice": "321 of the 799 non-essential high-confidence pairs are absent from Babu's released Table S2 altogether, and the unfiltered Supplementary Table 4 matrix holds 314847 S scores against 727 served records. Both slices load against the existing GeneInteractionPhenotype with no schema change, because Babu's own GI score IS this S score for the pairs the two releases share (793 of 873 matched rows are identical). The 489 SPA-tag essential pairs stay blocked on the hypomorph perturbation leaf the Babu loader already filed.",
-      "measured_at": "2026-10-08T21:39:22.276587+00:00",
+      "measured_at": "2026-10-08T21:40:07.072900+00:00",
       "script": "experiments/036-dataset-fixes-before-kg-build/scripts/bacteria_subsumed_rows.py",
       "release": {
         "array_rows": 8073,
@@ -274,6 +274,881 @@
         "hc_rows_max_abs_score_difference": 9.93036,
         "hc_rows_matched_only_reversed": 65
       }
+    },
+    "Schmidt 2022 nitrogen": {
+      "citation_key": "schmidtNitrogenMetabolismPseudomonas2022",
+      "doi": "10.1128/aem.02430-21",
+      "title": "Nitrogen Metabolism in Pseudomonas putida: Functional Analysis Using Random Barcode Transposon Sequencing",
+      "row_name": "Schmidt 2022 nitrogen",
+      "row_rank": 24,
+      "decision": "subsumed_no_loader",
+      "served_coverage": {
+        "served_dataset": "RbTnseqBorchert2024Dataset",
+        "served_store": "$DATA_ROOT/data/torchcell/rbtnseq_borchert2024",
+        "served_records": 1372280,
+        "records_from_this_paper": 492128,
+        "released_instances": 492128,
+        "released_instances_basis": "the records the served store holds for this paper's samples. This paper released no per-record file of its own, so there is no independent release count to divide by and the fraction is 1.0 by construction; what is absent from the compendium is counted in versus_superset instead",
+        "attribution_field": "EnvironmentResponsePhenotype.screen_id",
+        "attribution_value": "the compendium sample name, one per growth assay",
+        "served_fraction": 1.0
+      },
+      "release_files": [
+        {
+          "relpath": "paper.md",
+          "mirror": "torchcell-library",
+          "citation_key": "schmidtNitrogenMetabolismPseudomonas2022",
+          "role": "paper_ocr",
+          "bytes": 148030,
+          "sha256": "acc5c8bfaa588f5dda7767127f523c1721496cffa6e010acfe7e7865ede36c66",
+          "source_url": "https://doi.org/10.1128/aem.02430-21",
+          "retrieval_method": "zotero_attachment",
+          "retrieval_command": "torchcell.literature.ocr.ocr_pdf(paper.pdf) over the Zotero attachment captured by torchcell.literature.capture",
+          "retrieved_at": "2026-10-07",
+          "purpose": "Table 1 enumerates every nitrogen source and every drop-out condition; the abstract and Methods state the condition and replicate counts"
+        },
+        {
+          "relpath": "data/fModule_Metadata.xlsx",
+          "mirror": "torchcell-raw",
+          "citation_key": "borchertMachineLearningAnalysis2024",
+          "role": "raw_data",
+          "bytes": 23261645,
+          "sha256": "4d649385ac06684482396a125f135df22a2a5060da73485b2cd14468f8cc8be1",
+          "source_url": "https://raw.githubusercontent.com/beckham-lab/fModule/30eaef39a4609335f0f10c2d25a8eb69d426b0ce/fModule_Metadata.xlsx",
+          "retrieval_method": "direct_url",
+          "retrieval_command": "torchcell.literature.retrieve.direct_url(url='https://raw.githubusercontent.com/beckham-lab/fModule/30eaef39a4609335f0f10c2d25a8eb69d426b0ce/fModule_Metadata.xlsx')",
+          "retrieved_at": "2026-10-07",
+          "purpose": "the compendium release the served RbTnseqBorchert2024Dataset is built from: sheet metadata names every sample's condition, sheet fitness_measurements is the gene by sample fitness matrix"
+        }
+      ],
+      "release_probes": [
+        {
+          "url": "https://fit.genomics.lbl.gov/cgi-bin/org.cgi?orgId=Putida",
+          "status_code": 403,
+          "probed_at": "2026-10-08T21:42:15.177126+00:00",
+          "note": "the paper's only data release; a non-200 is the measured form of the schedule row's Cloudflare-blocked claim"
+        }
+      ],
+      "sourced_values": {
+        "conditions": {
+          "value": {
+            "compounds": 52,
+            "dropout_conditions": 19,
+            "conditions": 71
+          },
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "schmidtNitrogenMetabolismPseudomonas2022",
+            "sha256": "acc5c8bfaa588f5dda7767127f523c1721496cffa6e010acfe7e7865ede36c66",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Abstract",
+            "retrieved": null
+          },
+          "quote": "Using pooled mutant fitness assays, we identified genes and proteins involved in the assimilation of 52 different nitrogen containing compounds. To assay amino acid biosynthesis, 19 amino acid drop-out conditions were also tested. From these 71 conditions, significant fitness phenotypes were elicited in 672 different genes including 100 transcriptional regulators and 112 transport-related proteins.",
+          "note": null
+        },
+        "replicates_and_release": {
+          "value": {
+            "biological_replicates": 2,
+            "release": "http://fit.genomics.lbl.gov"
+          },
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "schmidtNitrogenMetabolismPseudomonas2022",
+            "sha256": "acc5c8bfaa588f5dda7767127f523c1721496cffa6e010acfe7e7865ede36c66",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Materials and Methods, 'BarSeq assays'",
+            "retrieved": null
+          },
+          "quote": "Experiments were conducted in biological duplicates, and the fitness data are publicly available at http://fit.genomics.lbl.gov.",
+          "note": null
+        },
+        "library": {
+          "value": "JBEI-1",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "schmidtNitrogenMetabolismPseudomonas2022",
+            "sha256": "acc5c8bfaa588f5dda7767127f523c1721496cffa6e010acfe7e7865ede36c66",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Materials and Methods, 'BarSeq assays'",
+            "retrieved": null
+          },
+          "quote": "BarSeq experiments utilized the $P .$ . putida library JBEI-1 and were completed as previously described (15).",
+          "note": null
+        },
+        "assay_count": {
+          "value": {
+            "sole_nitrogen_assays": 129,
+            "conditions": 51,
+            "dropout_conditions": 19
+          },
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "schmidtNitrogenMetabolismPseudomonas2022",
+            "sha256": "acc5c8bfaa588f5dda7767127f523c1721496cffa6e010acfe7e7865ede36c66",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Materials and Methods, 't-stochastic neighbor embedding of BarSeq results'",
+            "retrieved": null
+          },
+          "quote": "This resulted in a file containing fitness scores for 615 significantly affected genes across 129 sole-nitrogen source growth assays in 51 different conditions, and 19 amino acid dropout conditions. 2-ABA was excluded from the analysis due to the large number of significantly affected genes in this condition.",
+          "note": null
+        }
+      },
+      "conclusion": "SUBSUMED for every sole-nitrogen-source condition the paper reports, and the mapping is a bijection, not a sample. Table 1 enumerates 52 nitrogen sources; the compendium's nitrogen source group holds exactly 52 conditions and 104 samples, every condition is one of this paper's compounds and every compound is one of those conditions, with the biological duplicate the Methods state. The served RbTnseqBorchert2024Dataset carries all 104 of those samples as 492128 records, 4732 loci each, so a loader for this row would store every one of them a second time. No loader.",
+      "loadable_slice": "NOT total, and the gap is not loadable either. The 19 amino-acid drop-out conditions of Table 1 have no condition in the compendium's nitrogen-source group at all, and by this paper's own t-SNE Methods it ran 129 sole-nitrogen-source growth assays over 51 conditions against the 102 samples the compendium carries over those same conditions, so 27 replicate assays are absent as well. Neither slice is recoverable: this paper released no per-gene data file, its supplemental material is one figure PDF, and its only release is the Fitness Browser, which answers https://fit.genomics.lbl.gov/cgi-bin/org.cgi?orgId=Putida with the status recorded in release_probes. Unlike Borchert 2023, whose own SI carries per-replicate fitness for the loci the compendium eliminated, there are no bytes here to load.",
+      "measured_at": "2026-10-08T21:42:15.177593+00:00",
+      "script": "experiments/036-dataset-fixes-before-kg-build/scripts/bacteria_subsumed_rows.py",
+      "versus_superset": {
+        "compendium_citation_key": "borchertMachineLearningAnalysis2024",
+        "compendium_samples_total": 332,
+        "compendium_loci": 4732,
+        "compendium_experiment_group": "nitrogen source",
+        "compendium_samples_in_group": 104,
+        "compendium_conditions_in_group": 52,
+        "paper_conditions_stated": 71,
+        "paper_compounds_enumerated": 52,
+        "compounds_matched": 52,
+        "compounds_unmatched": [],
+        "group_conditions_unmatched": [],
+        "compendium_samples_at_matched_conditions": 104,
+        "served_samples_at_matched_conditions": 104,
+        "served_records_at_matched_conditions": 492128,
+        "served_loci_per_sample": [
+          4732
+        ],
+        "compounds": [
+          {
+            "paper_name": "1,3 diaminopropane",
+            "compendium_condition": "Propandiamine",
+            "synonym_note": "the compendium's shorter name for 1,3-diaminopropane",
+            "compendium_samples": [
+              "set29IT004",
+              "set29IT005"
+            ],
+            "served_samples": [
+              "set29IT004",
+              "set29IT005"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "1,6-diaminohexane",
+            "compendium_condition": "1,6-Hexanediamine",
+            "synonym_note": "1,6-diaminohexane IS 1,6-hexanediamine",
+            "compendium_samples": [
+              "set28IT029",
+              "set28IT030"
+            ],
+            "served_samples": [
+              "set28IT029",
+              "set28IT030"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "3-aminobutyrate",
+            "compendium_condition": "3-aminobutyric acid",
+            "synonym_note": "the acid spelled out",
+            "compendium_samples": [
+              "set27IT030",
+              "set27IT031"
+            ],
+            "served_samples": [
+              "set27IT030",
+              "set27IT031"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "4-guanidinobutyrate",
+            "compendium_condition": "4-Guanidinobutyric acid",
+            "synonym_note": "the acid spelled out",
+            "compendium_samples": [
+              "set28IT023",
+              "set28IT024"
+            ],
+            "served_samples": [
+              "set28IT023",
+              "set28IT024"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "5-aminovalerate",
+            "compendium_condition": "5-Aminovaleric acid",
+            "synonym_note": "the acid spelled out",
+            "compendium_samples": [
+              "set27IT018",
+              "set27IT019"
+            ],
+            "served_samples": [
+              "set27IT018",
+              "set27IT019"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "5-oxoproline",
+            "compendium_condition": "L-pyroglutamic acid",
+            "synonym_note": "5-oxoproline IS pyroglutamic acid, the intramolecular lactam of glutamate",
+            "compendium_samples": [
+              "set28IT041",
+              "set28IT042"
+            ],
+            "served_samples": [
+              "set28IT041",
+              "set28IT042"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "6-aminocaproic acid",
+            "compendium_condition": "e-Amino-N-Caproic Acid",
+            "synonym_note": "the compendium names the same compound by its epsilon-amino position",
+            "compendium_samples": [
+              "set27IT006",
+              "set27IT007"
+            ],
+            "served_samples": [
+              "set27IT006",
+              "set27IT007"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "D-alanine",
+            "compendium_condition": "D-Alanine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT034",
+              "set27IT035"
+            ],
+            "served_samples": [
+              "set27IT034",
+              "set27IT035"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "D-lysine",
+            "compendium_condition": "D-Lysine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT032",
+              "set27IT033"
+            ],
+            "served_samples": [
+              "set27IT032",
+              "set27IT033"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "DL-2-aminobutyrate",
+            "compendium_condition": "DL-2-Aminobutyric acid",
+            "synonym_note": "the acid spelled out",
+            "compendium_samples": [
+              "set27IT028",
+              "set27IT029"
+            ],
+            "served_samples": [
+              "set27IT028",
+              "set27IT029"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "DL-3-aminoisobutyrate",
+            "compendium_condition": "DL-3-Aminoisobutyric acid",
+            "synonym_note": "the acid spelled out",
+            "compendium_samples": [
+              "set29IT014",
+              "set29IT015"
+            ],
+            "served_samples": [
+              "set29IT014",
+              "set29IT015"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-alanine",
+            "compendium_condition": "L-Alanine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT046",
+              "set27IT047"
+            ],
+            "served_samples": [
+              "set27IT046",
+              "set27IT047"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-arginine",
+            "compendium_condition": "L-Arginine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT036",
+              "set27IT037"
+            ],
+            "served_samples": [
+              "set27IT036",
+              "set27IT037"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-asparagine",
+            "compendium_condition": "L-Asparagine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT052",
+              "set27IT053"
+            ],
+            "served_samples": [
+              "set27IT052",
+              "set27IT053"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-aspartate",
+            "compendium_condition": "L-Aspartate",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT038",
+              "set27IT039"
+            ],
+            "served_samples": [
+              "set27IT038",
+              "set27IT039"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-cysteine",
+            "compendium_condition": "L-Cysteine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT048",
+              "set27IT049"
+            ],
+            "served_samples": [
+              "set27IT048",
+              "set27IT049"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-glutamate",
+            "compendium_condition": "L-Glutamic acid monopotassium salt monohydrate",
+            "synonym_note": "the salt and hydrate the compendium names",
+            "compendium_samples": [
+              "set28IT045",
+              "set28IT046"
+            ],
+            "served_samples": [
+              "set28IT045",
+              "set28IT046"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-glutamine",
+            "compendium_condition": "L-Glutamine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT044",
+              "set27IT045"
+            ],
+            "served_samples": [
+              "set27IT044",
+              "set27IT045"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-histidine",
+            "compendium_condition": "L-Histidine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT062",
+              "set27IT063"
+            ],
+            "served_samples": [
+              "set27IT062",
+              "set27IT063"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-isoleucine",
+            "compendium_condition": "L-Isoleucine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT066",
+              "set27IT067"
+            ],
+            "served_samples": [
+              "set27IT066",
+              "set27IT067"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-leucine",
+            "compendium_condition": "L-Leucine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT068",
+              "set27IT069"
+            ],
+            "served_samples": [
+              "set27IT068",
+              "set27IT069"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-lysine",
+            "compendium_condition": "L-Lysine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT050",
+              "set27IT051"
+            ],
+            "served_samples": [
+              "set27IT050",
+              "set27IT051"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-methionine",
+            "compendium_condition": "L-Methionine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT058",
+              "set27IT059"
+            ],
+            "served_samples": [
+              "set27IT058",
+              "set27IT059"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-ornithine",
+            "compendium_condition": "L-Ornithine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT042",
+              "set27IT043"
+            ],
+            "served_samples": [
+              "set27IT042",
+              "set27IT043"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-phenylalanine",
+            "compendium_condition": "L-Phenylalanine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT064",
+              "set27IT065"
+            ],
+            "served_samples": [
+              "set27IT064",
+              "set27IT065"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-pipecolic",
+            "compendium_condition": "L-Pipecolic Acid",
+            "synonym_note": "the acid spelled out",
+            "compendium_samples": [
+              "set28IT039",
+              "set28IT040"
+            ],
+            "served_samples": [
+              "set28IT039",
+              "set28IT040"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-proline",
+            "compendium_condition": "L-Proline",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT054",
+              "set27IT055"
+            ],
+            "served_samples": [
+              "set27IT054",
+              "set27IT055"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-serine",
+            "compendium_condition": "L-Serine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT072",
+              "set27IT073"
+            ],
+            "served_samples": [
+              "set27IT072",
+              "set27IT073"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-threonine",
+            "compendium_condition": "L-Threonine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT070",
+              "set27IT071"
+            ],
+            "served_samples": [
+              "set27IT070",
+              "set27IT071"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "L-valine",
+            "compendium_condition": "L-Valine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT060",
+              "set27IT061"
+            ],
+            "served_samples": [
+              "set27IT060",
+              "set27IT061"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "adenine",
+            "compendium_condition": "Adenine hydrochloride hydrate",
+            "synonym_note": "the salt and hydrate the compendium names",
+            "compendium_samples": [
+              "set28IT037",
+              "set28IT038"
+            ],
+            "served_samples": [
+              "set28IT037",
+              "set28IT038"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "ammonium",
+            "compendium_condition": "Ammonium chloride",
+            "synonym_note": "the salt the compendium names",
+            "compendium_samples": [
+              "set27IT004",
+              "set27IT005"
+            ],
+            "served_samples": [
+              "set27IT004",
+              "set27IT005"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "betaine",
+            "compendium_condition": "Betaine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set28IT009",
+              "set28IT010"
+            ],
+            "served_samples": [
+              "set28IT009",
+              "set28IT010"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "butyrolactam",
+            "compendium_condition": "Butyrolactam",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set28IT017",
+              "set28IT018"
+            ],
+            "served_samples": [
+              "set28IT017",
+              "set28IT018"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "cadaverine",
+            "compendium_condition": "Cadaverine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set28IT031",
+              "set28IT032"
+            ],
+            "served_samples": [
+              "set28IT031",
+              "set28IT032"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "caprolactam",
+            "compendium_condition": "Caprolactam",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT020",
+              "set27IT021"
+            ],
+            "served_samples": [
+              "set27IT020",
+              "set27IT021"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "carnitine",
+            "compendium_condition": "Carnitine Hydrochloride",
+            "synonym_note": "the salt the compendium names",
+            "compendium_samples": [
+              "set28IT007",
+              "set28IT008"
+            ],
+            "served_samples": [
+              "set28IT007",
+              "set28IT008"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "choline",
+            "compendium_condition": "Choline chloride",
+            "synonym_note": "the salt the compendium names",
+            "compendium_samples": [
+              "set28IT005",
+              "set28IT006"
+            ],
+            "served_samples": [
+              "set28IT005",
+              "set28IT006"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "cytosine",
+            "compendium_condition": "Cytosine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set28IT021",
+              "set28IT022"
+            ],
+            "served_samples": [
+              "set28IT021",
+              "set28IT022"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "ethanolamine",
+            "compendium_condition": "Ethanolamine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set28IT003",
+              "set28IT004"
+            ],
+            "served_samples": [
+              "set28IT003",
+              "set28IT004"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "glycine",
+            "compendium_condition": "Glycine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT056",
+              "set27IT057"
+            ],
+            "served_samples": [
+              "set27IT056",
+              "set27IT057"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "hydantoin",
+            "compendium_condition": "Hydantoin",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT024",
+              "set27IT025"
+            ],
+            "served_samples": [
+              "set27IT024",
+              "set27IT025"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "nicotinic acid",
+            "compendium_condition": "Nicotinic Acid",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set28IT013",
+              "set28IT014"
+            ],
+            "served_samples": [
+              "set28IT013",
+              "set28IT014"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "nitrate",
+            "compendium_condition": "Sodium nitrate",
+            "synonym_note": "the salt the compendium names",
+            "compendium_samples": [
+              "set27IT016",
+              "set27IT017"
+            ],
+            "served_samples": [
+              "set27IT016",
+              "set27IT017"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "nitrite",
+            "compendium_condition": "Sodium nitrite",
+            "synonym_note": "the salt the compendium names",
+            "compendium_samples": [
+              "set27IT010",
+              "set27IT011"
+            ],
+            "served_samples": [
+              "set27IT010",
+              "set27IT011"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "putrescine",
+            "compendium_condition": "Putrescine Dihydrochloride",
+            "synonym_note": "the salt the compendium names",
+            "compendium_samples": [
+              "set29IT006",
+              "set29IT007"
+            ],
+            "served_samples": [
+              "set29IT006",
+              "set29IT007"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "spermidine",
+            "compendium_condition": "spermidine",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set28IT027",
+              "set28IT028"
+            ],
+            "served_samples": [
+              "set28IT027",
+              "set28IT028"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "uracil",
+            "compendium_condition": "Uracil",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set28IT035",
+              "set28IT036"
+            ],
+            "served_samples": [
+              "set28IT035",
+              "set28IT036"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "urea",
+            "compendium_condition": "Urea",
+            "synonym_note": "",
+            "compendium_samples": [
+              "set27IT008",
+              "set27IT009"
+            ],
+            "served_samples": [
+              "set27IT008",
+              "set27IT009"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "valerolactam",
+            "compendium_condition": "2-Piperidinone",
+            "synonym_note": "valerolactam IS 2-piperidinone, the six-membered lactam",
+            "compendium_samples": [
+              "set27IT012",
+              "set27IT013"
+            ],
+            "served_samples": [
+              "set27IT012",
+              "set27IT013"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "y-aminobutyric",
+            "compendium_condition": "4-Aminobutyric acid",
+            "synonym_note": "gamma-aminobutyric acid IS 4-aminobutyric acid; the OCR renders the gamma as a y",
+            "compendium_samples": [
+              "set27IT014",
+              "set27IT015"
+            ],
+            "served_samples": [
+              "set27IT014",
+              "set27IT015"
+            ],
+            "served_records": 9464
+          },
+          {
+            "paper_name": "\u03b2-alanine",
+            "compendium_condition": "Beta-alanine",
+            "synonym_note": "the Greek letter spelled out",
+            "compendium_samples": [
+              "set27IT040",
+              "set27IT041"
+            ],
+            "served_samples": [
+              "set27IT040",
+              "set27IT041"
+            ],
+            "served_records": 9464
+          }
+        ],
+        "conditions_absent_from_compendium": 19,
+        "replicate_assays_absent_from_compendium": 27
+      }
     }
   },
   "quote_audit": {
@@ -284,10 +1159,18 @@
       "high_confidence_set": "value backed by verbatim quote in paper.md",
       "unfiltered_matrix": "checked against the pinned spreadsheet cell of the publisher's released workbook by the row's own measurement, not by the text audit",
       "superset_combines_these_screens": "value backed by verbatim quote in si7.md"
+    },
+    "Schmidt 2022 nitrogen": {
+      "conditions": "value backed by verbatim quote in paper.md",
+      "replicates_and_release": "value backed by verbatim quote in paper.md",
+      "library": "value backed by verbatim quote in paper.md",
+      "assay_count": "value backed by verbatim quote in paper.md"
     }
   },
   "written": [
     "/scratch/projects/torchcell-scratch/torchcell-raw/butlandESGAColiSynthetic2008/manifest.json",
-    "/scratch/projects/torchcell-scratch/torchcell-raw/butlandESGAColiSynthetic2008/subsumption_record.json"
+    "/scratch/projects/torchcell-scratch/torchcell-raw/schmidtNitrogenMetabolismPseudomonas2022/manifest.json",
+    "/scratch/projects/torchcell-scratch/torchcell-raw/butlandESGAColiSynthetic2008/subsumption_record.json",
+    "/scratch/projects/torchcell-scratch/torchcell-raw/schmidtNitrogenMetabolismPseudomonas2022/subsumption_record.json"
   ]
 }

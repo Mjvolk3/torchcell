@@ -17,8 +17,15 @@ triage's premise is WRONG, and that is this script's main finding. Supplementary
 4 releases the complete unfiltered 39 x 8,073 interaction matrix, so the served Babu
 2014 records carry a small fraction of the release rather than all of it.
 
-ROW 24 Schmidt 2022 nitrogen and ROW 28 Thompson 2020 fatty acid and alcohol are
-measured in the sections that follow (added per row, one commit each).
+ROW 24, Schmidt 2022 nitrogen (``schmidtNitrogenMetabolismPseudomonas2022``), triaged as
+subsumed by the Borchert 2024 KT2440 RB-TnSeq compendium that ``RbTnseqBorchert2024Dataset``
+serves. Here that is measured rather than assumed, in both directions: the paper's own
+Table 1 enumerates its nitrogen sources, and the mapping onto the compendium's
+nitrogen-source samples is a bijection, so the row needs no loader. What the compendium
+does NOT carry is measured too, and it is not nothing.
+
+ROW 28 Thompson 2020 fatty acid and alcohol is measured in the section that follows
+(added per row, one commit each).
 
 Run from the repo root::
 
@@ -37,6 +44,7 @@ import argparse
 import json
 import os
 import os.path as osp
+import re
 import shutil
 from collections import Counter
 from datetime import UTC, datetime
@@ -912,6 +920,516 @@ def butland_record() -> tuple[ButlandRecord, pd.DataFrame]:
 
 
 # --------------------------------------------------------------------------- #
+# The Borchert 2024 compendium: the superset both P. putida rows defer to
+# --------------------------------------------------------------------------- #
+COMPENDIUM_KEY: Final = "borchertMachineLearningAnalysis2024"
+COMPENDIUM_RELEASE: Final = ReleaseFile(
+    relpath="data/fModule_Metadata.xlsx",
+    mirror="torchcell-raw",
+    citation_key=COMPENDIUM_KEY,
+    role=ROLE_RAW_DATA,
+    bytes=23261645,
+    sha256="4d649385ac06684482396a125f135df22a2a5060da73485b2cd14468f8cc8be1",
+    source_url="https://raw.githubusercontent.com/beckham-lab/fModule/"
+    "30eaef39a4609335f0f10c2d25a8eb69d426b0ce/fModule_Metadata.xlsx",
+    retrieval_method=RetrievalMethod.direct_url,
+    retrieval_command=(
+        "torchcell.literature.retrieve.direct_url(url='https://raw.githubusercontent."
+        "com/beckham-lab/fModule/30eaef39a4609335f0f10c2d25a8eb69d426b0ce/"
+        "fModule_Metadata.xlsx')"
+    ),
+    retrieved_at="2026-10-07",
+    purpose="the compendium release the served RbTnseqBorchert2024Dataset is built "
+    "from: sheet metadata names every sample's condition, sheet "
+    "fitness_measurements is the gene by sample fitness matrix",
+)
+COMPENDIUM_SLUG: Final = "data/torchcell/rbtnseq_borchert2024"
+#: The Fitness Browser, which is the only place either P. putida paper released its own
+#: per-gene values. Probed, not assumed: the row's "Cloudflare-blocked" claim is a
+#: measurement with a date like any other.
+FITNESS_BROWSER: Final = "https://fit.genomics.lbl.gov/cgi-bin/org.cgi?orgId=Putida"
+
+
+class ServedCompendium(BaseModel):
+    """The served Borchert 2024 store, read once: records and loci per sample."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    records: int
+    samples: int
+    records_per_sample: dict[str, int]
+    loci_per_sample: dict[str, int]
+
+
+def compendium_metadata() -> pd.DataFrame:
+    """The compendium's per-sample metadata sheet, from the pinned release."""
+    return pd.read_excel(verified(COMPENDIUM_RELEASE), sheet_name="metadata")
+
+
+def compendium_loci() -> list[str]:
+    """Every locus of the compendium's gene by sample fitness matrix."""
+    frame = pd.read_excel(
+        verified(COMPENDIUM_RELEASE), sheet_name="fitness_measurements", usecols=[1]
+    )
+    return [str(locus) for locus in frame["locusId"]]
+
+
+def served_compendium() -> ServedCompendium:
+    """Read the served Borchert 2024 store once, then close the LMDB handle.
+
+    1.37 million records, so this is the slow step (about four minutes). Both P. putida
+    rows read the same store, so it is read once and passed to each. The handle is
+    closed before returning, because a held handle makes the next reader of this store
+    fail with "already open in this process", and that only surfaces in the full-suite
+    run.
+    """
+    from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
+
+    dataset = RbTnseqBorchert2024Dataset(
+        root=osp.join(os.environ["DATA_ROOT"], COMPENDIUM_SLUG)
+    )
+    per_sample: Counter[str] = Counter()
+    loci: dict[str, set[str]] = {}
+    for index in range(len(dataset)):
+        experiment = dataset[index]["experiment"]
+        sample = experiment["phenotype"]["screen_id"]
+        per_sample[sample] += 1
+        loci.setdefault(sample, set()).add(
+            experiment["genotype"]["perturbations"][0]["systematic_gene_name"]
+        )
+    total = len(dataset)
+    dataset.close_lmdb()
+    return ServedCompendium(
+        records=total,
+        samples=len(per_sample),
+        records_per_sample=dict(per_sample),
+        loci_per_sample={name: len(names) for name, names in loci.items()},
+    )
+
+
+def probe_release(url: str, note: str) -> ReleaseProbe:
+    """Record the HTTP status of a release endpoint that holds no mirrored file.
+
+    ``requests`` returns a 4xx as a status rather than raising, which is what this
+    needs: the status IS the measurement. A connection that cannot be made raises, and
+    that is correct, because then nothing was measured.
+    """
+    import requests
+
+    response = requests.get(url, timeout=60, allow_redirects=True)
+    return ReleaseProbe(
+        url=url,
+        status_code=response.status_code,
+        probed_at=datetime.now(UTC).isoformat(),
+        note=note,
+    )
+
+
+class CompoundCoverage(BaseModel):
+    """One compound a paper enumerates, and what the compendium and store hold for it."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    paper_name: str
+    compendium_condition: str
+    synonym_note: str
+    compendium_samples: tuple[str, ...]
+    served_samples: tuple[str, ...]
+    served_records: int
+
+
+class PutidaVersusCompendium(BaseModel):
+    """How much of one P. putida paper the served compendium holds, per sample."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    compendium_citation_key: str
+    compendium_samples_total: int
+    compendium_loci: int
+    compendium_experiment_group: str
+    compendium_samples_in_group: int
+    compendium_conditions_in_group: int
+    paper_conditions_stated: int
+    paper_compounds_enumerated: int
+    compounds_matched: int
+    compounds_unmatched: tuple[str, ...]
+    group_conditions_unmatched: tuple[str, ...]
+    compendium_samples_at_matched_conditions: int
+    served_samples_at_matched_conditions: int
+    served_records_at_matched_conditions: int
+    served_loci_per_sample: tuple[int, ...]
+    compounds: tuple[CompoundCoverage, ...]
+    conditions_absent_from_compendium: int
+    replicate_assays_absent_from_compendium: int | None
+
+
+class PutidaRecord(SubsumptionRecord):
+    """A P. putida row's record: its conditions, and what the compendium serves."""
+
+    versus_superset: PutidaVersusCompendium
+
+
+def putida_coverage(
+    *,
+    group: str,
+    compound_map: dict[str, tuple[str, str]],
+    conditions_stated: int,
+    compounds_enumerated: int,
+    conditions_absent: int,
+    replicate_assays_absent: int | None,
+    store: ServedCompendium,
+) -> tuple[PutidaVersusCompendium, ServedCoverage, pd.DataFrame]:
+    """Match one paper's enumerated compounds to the compendium group, then to the store.
+
+    ``compound_map`` is the paper name to (compendium ``condition_1``, why the two
+    names are the same compound) mapping; it is the only hand-authored step, and the
+    measurement checks it both ways, so a compound the compendium does not carry and a
+    group condition no compound claims both show up as a count.
+    """
+    metadata = compendium_metadata()
+    in_group = metadata[metadata["expGroup"] == group]
+    targets = {condition for condition, _ in compound_map.values()}
+    group_conditions = set(in_group["condition_1"])
+    matched_rows = in_group[in_group["condition_1"].isin(targets)]
+
+    compounds: list[CompoundCoverage] = []
+    for paper_name, (condition, note) in sorted(compound_map.items()):
+        samples = tuple(
+            sorted(in_group[in_group["condition_1"] == condition]["expName"])
+        )
+        served = tuple(name for name in samples if name in store.records_per_sample)
+        compounds.append(
+            CompoundCoverage(
+                paper_name=paper_name,
+                compendium_condition=condition,
+                synonym_note=note,
+                compendium_samples=samples,
+                served_samples=served,
+                served_records=sum(store.records_per_sample[n] for n in served),
+            )
+        )
+    served_samples = [name for c in compounds for name in c.served_samples]
+    evidence = PutidaVersusCompendium(
+        compendium_citation_key=COMPENDIUM_KEY,
+        compendium_samples_total=len(metadata),
+        compendium_loci=len(compendium_loci()),
+        compendium_experiment_group=group,
+        compendium_samples_in_group=len(in_group),
+        compendium_conditions_in_group=len(group_conditions),
+        paper_conditions_stated=conditions_stated,
+        paper_compounds_enumerated=compounds_enumerated,
+        compounds_matched=sum(1 for c in compounds if c.compendium_samples),
+        compounds_unmatched=tuple(
+            c.paper_name for c in compounds if not c.compendium_samples
+        ),
+        group_conditions_unmatched=tuple(sorted(group_conditions - targets)),
+        compendium_samples_at_matched_conditions=len(matched_rows),
+        served_samples_at_matched_conditions=len(served_samples),
+        served_records_at_matched_conditions=sum(c.served_records for c in compounds),
+        served_loci_per_sample=tuple(
+            sorted({store.loci_per_sample[name] for name in served_samples})
+        ),
+        compounds=tuple(compounds),
+        conditions_absent_from_compendium=conditions_absent,
+        replicate_assays_absent_from_compendium=replicate_assays_absent,
+    )
+    coverage = ServedCoverage(
+        served_dataset="RbTnseqBorchert2024Dataset",
+        served_store=f"$DATA_ROOT/{COMPENDIUM_SLUG}",
+        served_records=store.records,
+        records_from_this_paper=evidence.served_records_at_matched_conditions,
+        released_instances=evidence.served_records_at_matched_conditions,
+        released_instances_basis="the records the served store holds for this paper's "
+        "samples. This paper released no per-record file of its own, so there is no "
+        "independent release count to divide by and the fraction is 1.0 by "
+        "construction; what is absent from the compendium is counted in "
+        "versus_superset instead",
+        attribution_field="EnvironmentResponsePhenotype.screen_id",
+        attribution_value="the compendium sample name, one per growth assay",
+    )
+    table = pd.DataFrame(
+        {
+            "paper_name": [c.paper_name for c in compounds],
+            "compendium_condition": [c.compendium_condition for c in compounds],
+            "synonym_note": [c.synonym_note for c in compounds],
+            "compendium_samples": [" ".join(c.compendium_samples) for c in compounds],
+            "served_samples": [" ".join(c.served_samples) for c in compounds],
+            "served_records": [c.served_records for c in compounds],
+        }
+    )
+    return evidence, coverage, table
+
+
+# --------------------------------------------------------------------------- #
+# Schmidt 2022 nitrogen: provenance anchors
+# --------------------------------------------------------------------------- #
+SCHMIDT_KEY: Final = "schmidtNitrogenMetabolismPseudomonas2022"
+SCHMIDT_DOI: Final = "10.1128/aem.02430-21"
+SCHMIDT_TITLE: Final = (
+    "Nitrogen Metabolism in Pseudomonas putida: Functional Analysis Using Random "
+    "Barcode Transposon Sequencing"
+)
+SCHMIDT_RETRIEVED_AT: Final = "2026-10-07"
+SCHMIDT_PAPER_MD: Final = ReleaseFile(
+    relpath="paper.md",
+    mirror="torchcell-library",
+    citation_key=SCHMIDT_KEY,
+    role="paper_ocr",
+    bytes=148030,
+    sha256="acc5c8bfaa588f5dda7767127f523c1721496cffa6e010acfe7e7865ede36c66",
+    source_url="https://doi.org/10.1128/aem.02430-21",
+    retrieval_method=RetrievalMethod.zotero_attachment,
+    retrieval_command=(
+        "torchcell.literature.ocr.ocr_pdf(paper.pdf) over the Zotero attachment "
+        "captured by torchcell.literature.capture"
+    ),
+    retrieved_at=SCHMIDT_RETRIEVED_AT,
+    purpose="Table 1 enumerates every nitrogen source and every drop-out condition; "
+    "the abstract and Methods state the condition and replicate counts",
+)
+SCHMIDT_RELEASE_FILES: Final = (SCHMIDT_PAPER_MD, COMPENDIUM_RELEASE)
+#: Nitrogen source as Table 1 words it -> (compendium ``condition_1``, why they are the
+#: same compound). The note is empty when the two names differ only in case, salt form
+#: or spelled-out acid, and states the synonym when the names are genuinely different
+#: chemistry words.
+SCHMIDT_COMPOUNDS: Final[dict[str, tuple[str, str]]] = {
+    "ammonium": ("Ammonium chloride", "the salt the compendium names"),
+    "nitrite": ("Sodium nitrite", "the salt the compendium names"),
+    "nitrate": ("Sodium nitrate", "the salt the compendium names"),
+    "urea": ("Urea", ""),
+    "L-isoleucine": ("L-Isoleucine", ""),
+    "L-leucine": ("L-Leucine", ""),
+    "D-lysine": ("D-Lysine", ""),
+    "L-lysine": ("L-Lysine", ""),
+    "L-methionine": ("L-Methionine", ""),
+    "L-ornithine": ("L-Ornithine", ""),
+    "L-pipecolic": ("L-Pipecolic Acid", "the acid spelled out"),
+    "L-proline": ("L-Proline", ""),
+    "L-threonine": ("L-Threonine", ""),
+    "L-phenylalanine": ("L-Phenylalanine", ""),
+    "L-serine": ("L-Serine", ""),
+    "L-valine": ("L-Valine", ""),
+    "4-guanidinobutyrate": ("4-Guanidinobutyric acid", "the acid spelled out"),
+    "D-alanine": ("D-Alanine", ""),
+    "L-alanine": ("L-Alanine", ""),
+    "L-arginine": ("L-Arginine", ""),
+    "L-asparagine": ("L-Asparagine", ""),
+    "L-aspartate": ("L-Aspartate", ""),
+    "L-cysteine": ("L-Cysteine", ""),
+    "L-glutamate": (
+        "L-Glutamic acid monopotassium salt monohydrate",
+        "the salt and hydrate the compendium names",
+    ),
+    "L-glutamine": ("L-Glutamine", ""),
+    "glycine": ("Glycine", ""),
+    "L-histidine": ("L-Histidine", ""),
+    "betaine": ("Betaine", ""),
+    "carnitine": ("Carnitine Hydrochloride", "the salt the compendium names"),
+    "choline": ("Choline chloride", "the salt the compendium names"),
+    "ethanolamine": ("Ethanolamine", ""),
+    "adenine": (
+        "Adenine hydrochloride hydrate",
+        "the salt and hydrate the compendium names",
+    ),
+    "cytosine": ("Cytosine", ""),
+    "hydantoin": ("Hydantoin", ""),
+    "uracil": ("Uracil", ""),
+    "butyrolactam": ("Butyrolactam", ""),
+    "caprolactam": ("Caprolactam", ""),
+    "y-aminobutyric": (
+        "4-Aminobutyric acid",
+        "gamma-aminobutyric acid IS 4-aminobutyric acid; the OCR renders the gamma "
+        "as a y",
+    ),
+    "5-oxoproline": (
+        "L-pyroglutamic acid",
+        "5-oxoproline IS pyroglutamic acid, the intramolecular lactam of glutamate",
+    ),
+    "valerolactam": (
+        "2-Piperidinone",
+        "valerolactam IS 2-piperidinone, the six-membered lactam",
+    ),
+    "1,3 diaminopropane": (
+        "Propandiamine",
+        "the compendium's shorter name for 1,3-diaminopropane",
+    ),
+    "1,6-diaminohexane": (
+        "1,6-Hexanediamine",
+        "1,6-diaminohexane IS 1,6-hexanediamine",
+    ),
+    "DL-2-aminobutyrate": ("DL-2-Aminobutyric acid", "the acid spelled out"),
+    "DL-3-aminoisobutyrate": ("DL-3-Aminoisobutyric acid", "the acid spelled out"),
+    "3-aminobutyrate": ("3-aminobutyric acid", "the acid spelled out"),
+    "5-aminovalerate": ("5-Aminovaleric acid", "the acid spelled out"),
+    "6-aminocaproic acid": (
+        "e-Amino-N-Caproic Acid",
+        "the compendium names the same compound by its epsilon-amino position",
+    ),
+    "β-alanine": ("Beta-alanine", "the Greek letter spelled out"),
+    "cadaverine": ("Cadaverine", ""),
+    "putrescine": ("Putrescine Dihydrochloride", "the salt the compendium names"),
+    "spermidine": ("spermidine", ""),
+    "nicotinic acid": ("Nicotinic Acid", ""),
+}
+#: The one nitrogen source the paper's own t-SNE analysis drops, which is why its
+#: Methods count 51 conditions rather than 52.
+SCHMIDT_TSNE_EXCLUDED: Final = "DL-2-aminobutyrate"
+
+
+def _schmidt_quote(value: Any, quote: str, *, page: str) -> SourcedValue:
+    """Bind a value to a verbatim quote of the pinned Schmidt 2022 OCR."""
+    return _quote(
+        value,
+        quote,
+        source="paper.md",
+        citation_key=SCHMIDT_KEY,
+        sha256=SCHMIDT_PAPER_MD.sha256,
+        page=page,
+        method=_OCR,
+    )
+
+
+SCHMIDT_SOURCED: Final[dict[str, SourcedValue]] = {
+    "conditions": _schmidt_quote(
+        {"compounds": 52, "dropout_conditions": 19, "conditions": 71},
+        "Using pooled mutant fitness assays, we identified genes and proteins involved "
+        "in the assimilation of 52 different nitrogen containing compounds. To assay "
+        "amino acid biosynthesis, 19 amino acid drop-out conditions were also tested. "
+        "From these 71 conditions, significant fitness phenotypes were elicited in 672 "
+        "different genes including 100 transcriptional regulators and 112 "
+        "transport-related proteins.",
+        page="Abstract",
+    ),
+    "replicates_and_release": _schmidt_quote(
+        {"biological_replicates": 2, "release": "http://fit.genomics.lbl.gov"},
+        "Experiments were conducted in biological duplicates, and the fitness data are "
+        "publicly available at http://fit.genomics.lbl.gov.",
+        page="Materials and Methods, 'BarSeq assays'",
+    ),
+    "library": _schmidt_quote(
+        "JBEI-1",
+        "BarSeq experiments utilized the $P .$ . putida library JBEI-1 and were "
+        "completed as previously described (15).",
+        page="Materials and Methods, 'BarSeq assays'",
+    ),
+    "assay_count": _schmidt_quote(
+        {"sole_nitrogen_assays": 129, "conditions": 51, "dropout_conditions": 19},
+        "This resulted in a file containing fitness scores for 615 significantly "
+        "affected genes across 129 sole-nitrogen source growth assays in 51 different "
+        "conditions, and 19 amino acid dropout conditions. 2-ABA was excluded from the "
+        "analysis due to the large number of significantly affected genes in this "
+        "condition.",
+        page="Materials and Methods, 't-stochastic neighbor embedding of BarSeq "
+        "results'",
+    ),
+}
+
+
+def schmidt_table_1() -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Table 1's nitrogen sources and drop-out conditions, parsed from the OCR table.
+
+    Table 1 marks a sole-nitrogen source ``(N)`` and an amino-acid drop-out condition
+    ``(-)``, so the two lists come straight out of the released table rather than from
+    a hand count.
+    """
+    text = verified(SCHMIDT_PAPER_MD).read_text()
+    start = text.index("TABLE 1 Compounds used as nitrogen sources")
+    table = text[start : text.index("</table>", start)]
+    cells = [cell.strip() for cell in re.findall(r"<td[^>]*>([^<]*)</td>", table)]
+    sources = tuple(c[:-3].strip() for c in cells if c.endswith("(N)"))
+    dropouts = tuple(c[:-3].strip() for c in cells if c.endswith("(-)"))
+    return sources, dropouts
+
+
+def schmidt_record(store: ServedCompendium) -> tuple[PutidaRecord, pd.DataFrame]:
+    """Schmidt 2022's measured provenance record, and the per-compound table."""
+    sources, dropouts = schmidt_table_1()
+    if set(sources) != set(SCHMIDT_COMPOUNDS):
+        raise RuntimeError(
+            "Table 1's nitrogen sources and the compound map disagree: "
+            f"{sorted(set(sources) ^ set(SCHMIDT_COMPOUNDS))}"
+        )
+    metadata = compendium_metadata()
+    nitrogen = metadata[metadata["expGroup"] == "nitrogen source"]
+    excluded = SCHMIDT_COMPOUNDS[SCHMIDT_TSNE_EXCLUDED][0]
+    assays = SCHMIDT_SOURCED["assay_count"].value["sole_nitrogen_assays"]
+    carried_on_tsne_conditions = int((nitrogen["condition_1"] != excluded).sum())
+    evidence, coverage, table = putida_coverage(
+        group="nitrogen source",
+        compound_map=SCHMIDT_COMPOUNDS,
+        conditions_stated=SCHMIDT_SOURCED["conditions"].value["conditions"],
+        compounds_enumerated=len(sources),
+        conditions_absent=len(dropouts),
+        replicate_assays_absent=assays - carried_on_tsne_conditions,
+        store=store,
+    )
+    conclusion = (
+        "SUBSUMED for every sole-nitrogen-source condition the paper reports, and the "
+        "mapping is a bijection, not a sample. Table 1 enumerates "
+        f"{evidence.paper_compounds_enumerated} nitrogen sources; the compendium's "
+        f"{evidence.compendium_experiment_group} group holds exactly "
+        f"{evidence.compendium_conditions_in_group} conditions and "
+        f"{evidence.compendium_samples_in_group} samples, every condition is one of "
+        "this paper's compounds and every compound is one of those conditions, with "
+        "the biological duplicate the Methods state. The served "
+        f"{coverage.served_dataset} carries all "
+        f"{evidence.served_samples_at_matched_conditions} of those samples as "
+        f"{evidence.served_records_at_matched_conditions} records, "
+        f"{evidence.compendium_loci} loci each, so a loader for this row would store "
+        "every one of them a second time. No loader."
+    )
+    loadable = (
+        f"NOT total, and the gap is not loadable either. The {len(dropouts)} "
+        "amino-acid drop-out conditions of Table 1 have no condition in the "
+        "compendium's nitrogen-source group at all, and by this paper's own t-SNE "
+        f"Methods it ran {assays} sole-nitrogen-source growth assays over "
+        f"{SCHMIDT_SOURCED['assay_count'].value['conditions']} conditions against the "
+        f"{carried_on_tsne_conditions} samples the compendium carries over those same "
+        f"conditions, so {evidence.replicate_assays_absent_from_compendium} replicate "
+        "assays are absent as well. Neither slice is recoverable: this paper released "
+        "no per-gene data file, its supplemental material is one figure PDF, and its "
+        f"only release is the Fitness Browser, which answers {FITNESS_BROWSER} with "
+        "the status recorded in release_probes. Unlike Borchert 2023, whose own SI "
+        "carries per-replicate fitness for the loci the compendium eliminated, there "
+        "are no bytes here to load."
+    )
+    return (
+        PutidaRecord(
+            citation_key=SCHMIDT_KEY,
+            doi=SCHMIDT_DOI,
+            title=SCHMIDT_TITLE,
+            row_name="Schmidt 2022 nitrogen",
+            row_rank=24,
+            decision="subsumed_no_loader",
+            served_coverage=coverage,
+            release_files=SCHMIDT_RELEASE_FILES,
+            release_probes=(
+                probe_release(
+                    FITNESS_BROWSER,
+                    "the paper's only data release; a non-200 is the measured form of "
+                    "the schedule row's Cloudflare-blocked claim",
+                ),
+            ),
+            sourced_values=SCHMIDT_SOURCED,
+            versus_superset=evidence,
+            conclusion=conclusion,
+            loadable_slice=loadable,
+            measured_at=datetime.now(UTC).isoformat(),
+        ),
+        table,
+    )
+
+
+SCHMIDT_SI_EXPECTED: Final = [
+    "Schmidt 2022 released no per-gene data file: its supplemental material is one "
+    "figure PDF (SUPPLEMENTAL FILE 1, PDF file, 3.1 MB) and its fitness data are "
+    "published only on the Fitness Browser, which is probed rather than mirrored. The "
+    "bytes that carry this paper's values are the Borchert 2024 compendium release, "
+    "under that key's own raw mirror, so nothing is deposited here"
+]
+
+
+# --------------------------------------------------------------------------- #
 # Depositing a record into the raw mirror
 # --------------------------------------------------------------------------- #
 def deposit_release_files(
@@ -960,6 +1478,7 @@ def extend_manifest(
     doi: str,
     title: str,
     si_expected: list[str],
+    si_data_sources: tuple[str, ...] = (),
 ) -> Path:
     """Add the deposited files to the key's raw manifest, keeping what is already there.
 
@@ -968,6 +1487,7 @@ def extend_manifest(
     run deposited survives.
     """
     root = data_root() / RAW_REL / citation_key
+    root.mkdir(parents=True, exist_ok=True)
     path = root / "manifest.json"
     manifest = (
         Manifest.model_validate_json(path.read_text())
@@ -986,7 +1506,8 @@ def extend_manifest(
                 f"{record.sha256}; refusing"
             )
     manifest.files.sort(key=lambda record: record.path)
-    for url in (record.source for record in records):
+    sources = [record.source for record in records] + list(si_data_sources)
+    for url in sources:
         if url is not None and url not in manifest.si_data_sources:
             manifest.si_data_sources.append(url)
     manifest.si_expected = si_expected
@@ -1029,27 +1550,50 @@ def main(argv: list[str] | None = None) -> None:
     load_dotenv()
 
     butland, butland_pairs = butland_record()
+    store = served_compendium()
+    schmidt, schmidt_compounds = schmidt_record(store)
+    rows: list[SubsumptionRecord] = [butland, schmidt]
     results: dict[str, Any] = {
         "script": SCRIPT,
         "measured_at": butland.measured_at,
-        "rows": {butland.row_name: butland.model_dump(mode="json")},
-        "quote_audit": {butland.row_name: audit_quotes(butland)},
+        "rows": {row.row_name: row.model_dump(mode="json") for row in rows},
+        "quote_audit": {row.row_name: audit_quotes(row) for row in rows},
     }
     if args.write_records:
+        written: list[str] = []
         deposited = deposit_release_files(BUTLAND_KEY, BUTLAND_RAW_DEPOSIT)
-        manifest = extend_manifest(
-            BUTLAND_KEY,
-            deposited,
-            doi=BUTLAND_DOI,
-            title=BUTLAND_TITLE,
-            si_expected=BUTLAND_SI_EXPECTED,
+        written.append(
+            str(
+                extend_manifest(
+                    BUTLAND_KEY,
+                    deposited,
+                    doi=BUTLAND_DOI,
+                    title=BUTLAND_TITLE,
+                    si_expected=BUTLAND_SI_EXPECTED,
+                )
+            )
         )
-        record = write_record(butland)
-        results["written"] = [str(manifest), str(record)]
+        written.append(
+            str(
+                extend_manifest(
+                    SCHMIDT_KEY,
+                    [],
+                    doi=SCHMIDT_DOI,
+                    title=SCHMIDT_TITLE,
+                    si_expected=SCHMIDT_SI_EXPECTED,
+                    si_data_sources=(FITNESS_BROWSER,),
+                )
+            )
+        )
+        written.extend(str(write_record(row)) for row in rows)
+        results["written"] = written
 
     os.makedirs(RESULTS, exist_ok=True)
     butland_pairs.to_csv(
         osp.join(RESULTS, "butland2008_high_confidence_pairs.csv"), index=False
+    )
+    schmidt_compounds.to_csv(
+        osp.join(RESULTS, "schmidt2022_nitrogen_conditions.csv"), index=False
     )
     path = osp.join(RESULTS, "bacteria_subsumed_rows.json")
     with open(path, "w") as handle:

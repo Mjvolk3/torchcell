@@ -119,7 +119,7 @@ python scripts/check_dataset_staleness.py
 
 Related: [[torchcell.datamodels.media-components]], [[torchcell.datasets.scerevisiae.hoepfner2014]].
 
-## 2026.10.08 - Module-Level Vocabularies in the Contract Fingerprint (#734)
+## 2026.10.08 - Module-Level Vocabularies as Closure Nodes (#734)
 
 ### Problem
 
@@ -132,54 +132,71 @@ module-level name changed. Measured on this branch: narrowing `BacterialGeneName
 ### Rule
 
 `schema_deps.collect_module_bindings` collects every top-level non-class binding of the surface
-modules (`x = ...`, `x: T = ...` with the annotation dropped, `type X = ...`, and functions with
-the docstring stripped). `class_module_bindings` seeds from the binding names a class body
-mentions and follows each binding's own references transitively; classes are not traversed,
-since a class a binding names is a closure node with its own fingerprint. The reached bindings
-go into `ContractSpec.module_bindings` and are appended to `canonical()` as `module::<name>::<source>`
-lines, last and only when present. A class that reaches no module-level name therefore keeps its
-pre-#734 canonical text byte for byte, and the closure graph (`ref_graph`) is unchanged.
+modules: `x = ...`, `x: T = ...` (the annotation dropped), `type X = ...`, and functions (docstring
+stripped). Each binding is a closure node with its own fingerprint (`binding_fingerprint`,
+SHA-256 of `module::<normalized source>`), exactly as an enum class is:
 
-`schema_impact.classify_change` reads the same field, so the pre-commit `schema-impact` hook sees
-the same vocabularies: for a `Literal`, a union alias, a tuple/set display or a dict display,
-`binding_members` gives a member set; lost members are BREAKING, only-gained members are stale,
-a reorder is stale, and a change to a binding with no member set (a helper function, a computed
-string) is BREAKING. Verified on the live schema: narrowing `BacterialGeneNamespace` in the
-working tree makes `scripts/run-schema-impact.sh` exit 1 with 6 changed classes and 29 impacted
-bacterial loaders; the REL606-shaped widening is stale (pinned in `test_schema_impact.py`).
+- a class has an edge to every binding its body names (field annotation, default, validator body);
+- a binding has an edge to every binding its source names, so
+  `TransposonInsertionPerturbation -> _validate_bacterial_locus_tag -> BACTERIAL_LOCUS_TAG_PATTERN -> BACTERIAL_LOCUS_TAG_PATTERNS`
+  is in the closure of every loader that imports the leaf;
+- a binding has NO edge to a class it names. A union alias (`GenePerturbationType`) is a node whose
+  membership is fingerprinted; its member classes stay in a loader's closure only through the
+  loader's own imports, which keeps the closure lever tight.
+- a loader importing a binding directly (`from torchcell.datamodels.schema import BACTERIAL_LOCUS_TAG_PATTERNS`)
+  depends on it.
 
-### Measured fingerprint movement (2026.10.08, branch tip on #778)
+`SchemaSurface.bindings` holds them, `SchemaSurface.fingerprints` covers classes and bindings, and
+`ContractSpec` and every class fingerprint are unchanged.
 
-Old rule vs new rule on the same tree (`schema.py` + `pydant.py` of this branch):
+`schema_impact.diff_surfaces` diffs bindings after classes, and `classify_binding_change` classifies
+by member set (`binding_members`: a `Literal`, a union, a tuple/set display, a dict display's
+`key: value` items). Lost members are BREAKING, only-gained members stale, a reorder stale, and a
+change to a binding with no member set (a helper function, a computed string) BREAKING. The
+`schema-impact` pre-commit hook goes through the same `load_surface_from_sources`, so it sees the
+same nodes. Verified on the live schema in the working tree, each edit reverted after: dropping
+`ecoli_b_rel606_locus_tag` from `BacterialGeneNamespace` makes `scripts/run-schema-impact.sh` exit 1
+with one changed symbol (`BacterialGeneNamespace`, lost members) and 29 impacted bacterial loaders;
+changing the MG1655 pattern to `^b\d{5}$` exits 1 via `BACTERIAL_LOCUS_TAG_PATTERNS` with the same 29.
+The REL606-shaped widening is stale (pinned in `test_schema_impact.py`).
 
-- 169 surface classes; 141 reach no module-level binding and are identical under both rules.
-- 28 move once, by construction: `ArtifactRef`, `AssemblyReferenceGenome`, `BackgroundAllele`,
-  `BacterialBackgroundAllele`, `BacterialCrisprInterferencePerturbation`,
-  `BacterialDeletionPerturbation`, `BacterialStrainBackground`, `Compound`,
-  `ConditionalAllelePerturbation`, `ConstructedOrf`, `CopyNumberVariantPerturbation`,
-  `DerivedIdentifierMapping`, `EngineeredCopyNumberPerturbation`, `Environment`
-  (`EnvironmentPerturbationType`), `EnvironmentResponsePhenotype`,
-  `ExpressionModulationPerturbation`, `FitnessPhenotype` (`derive_se`), `Genotype`
-  (`GenePerturbationType`), `HeterologousPathwayPerturbation`, `IntegratedCassette`,
-  `PhagePerturbation`, `PresenceAbsencePerturbation`, `ProductTiterPhenotype`,
-  `PromoterReplacementPerturbation`, `SOTerm`, `SequencePerturbation`, `StrainBackground`,
-  `TransposonInsertionPerturbation`.
-- Served store (`/scratch/projects/torchcell/database/kg_manifest.json`, read-only, 51
-  datasets): all 51 closures move under the new rule, since `Compound`, `Environment` and
-  `Genotype` sit in every closure. Under the OLD rule on the same tree all 51 already differ
-  from the served manifest (`Publication` and `SourceType` in all 51, from #778), so the new rule
-  adds zero datasets to the rebuild #778 already requires.
-- Dev build manifests under `DATA_ROOT=/scratch/projects/torchcell-scratch`: old rule 6 fresh,
-  101 stale, 20 unmanifested; new rule 0 fresh, 107 stale, 20 unmanifested. The 6 that flip are
-  `crispr_magic_lian2019`, `growth_auc_rapp2026`, `growth_rate_schmidt2016`,
-  `inhibitor_bioscreen_volk2021`, `metabolite_intensity_rapp2026`, `targeted_metabolome_rapp2026`.
+### Why not fold the vocabulary into the class fingerprint
+
+That was the first implementation on this branch. It moved 28 of 169 class fingerprints, including
+`Genotype`, `Environment` and `Compound`, which sit in every closure. `scripts/kg_compat_page.py`
+recomputes each package tag's surface with the CURRENT rule and compares it with closures recorded
+under the old rule, so every historical pairing broke: `--check` failed with
+`broken pair: 2026.09.21-ab6d8c5d records v1.2.1 as its package but the verdict is 'incompatible (all 51 datasets drift)'`,
+while the base commit passes. A fingerprint-rule change on existing symbols is a retroactive change
+to every recorded closure; new symbols are not, because every stored-closure check
+(`build_manifest.check_manifest`, `releases.closure_compatibility`, the supported-query check)
+iterates the STORED symbols.
+
+### Measured movement (2026.10.08, branch tip on #778, old rule vs this rule on the same tree)
+
+- 169 surface classes, 41 bindings; class fingerprints moved: 0.
+- Served store (`/scratch/projects/torchcell/database/kg_manifest.json`, read-only, 51 datasets):
+  0 of the symbols already in a served closure change fingerprint, so the stored-symbol drift is
+  identical under both rules (51 of 51 drift, from #778's `Publication`/`SourceType`). All 51
+  closures GAIN binding symbols (7 to 19 each): `CHEBI_ID_PATTERN`, `INCHIKEY_PATTERN`,
+  `EnvironmentPerturbationType`, `GenePerturbationType`, `SgaPerturbationType` in 51;
+  `SO_ID_PATTERN`, `_validate_so_id` in 50; `_Z95`, `derive_se` in 28;
+  `CATEGORICAL_MEASUREMENT_TYPES` in 13; `ALLELE_EDIT_SO`, `CASSETTE_INTEGRATION_SO`,
+  `SGD_SYSTEMATIC_GENE_PATTERN`, `_require_value_or_gap` in 6; the five `ArtifactRef` bindings in 5;
+  `ExperimentType` in 1.
+- `kg_manifest admit` counts a symbol in the current closure but not the stored one as drift, so
+  every served dataset reads as drifted until the next full rebuild records closures with the
+  bindings. #778 already requires that full rebuild for all 51, so this adds no rebuild.
+- `scripts/kg_compat_page.py --check`: current. Supported-query check: all ok.
+- Dev build manifests under `DATA_ROOT=/scratch/projects/torchcell-scratch`: identical under both
+  rules (6 fresh, 104 stale, 20 unmanifested at the time of the run), since the check reads stored
+  symbols only.
 
 ### Left open
 
-- Union aliases (`GenePerturbationType`, `EnvironmentPerturbationType`) are folded as TEXT into
-  `Genotype`/`Environment`, so adding or removing a member class is caught; the member classes are
-  still not closure edges of `Genotype`, so a contract change inside a member reaches a loader only
-  if the loader imports that member (most do). Adding those edges grows every served closure, and
-  `kg_manifest admit` counts an added closure symbol as drift, so it is a separate decision.
-- `ProvenanceGap` is imported from `torchcell/verification/sourced.py`, outside the surface; its
-  contract is not fingerprinted.
+- Union-alias member classes are not closure edges (see Rule). A contract change inside a member
+  reaches a loader only if the loader imports that member, as before.
+- `ProvenanceGap` and `SourcedValue` are imported from `torchcell/verification/sourced.py`, outside
+  the surface; their contracts are not fingerprinted.
+- Bindings imported INTO `schema.py` from another module (e.g. `CALMORPH_LABELS`) are not surface
+  bindings; no surface class names `CALMORPH_LABELS` today.

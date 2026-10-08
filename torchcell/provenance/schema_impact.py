@@ -46,6 +46,7 @@ __all__ = [
     "LoaderImpact",
     "ImpactReport",
     "classify_change",
+    "classify_binding_change",
     "diff_surfaces",
     "map_impacts",
     "build_impact_report",
@@ -178,38 +179,6 @@ def classify_change(
         reasons.append(f"validator/serializer changed: {changed_methods}")
         kinds.append(ChangeKind.stale)
 
-    # Module-level names the class resolves through (#734): a Literal alias, pattern map,
-    # union alias or helper function. A member set that only grew is a widening (stale);
-    # a lost member, or a change to a binding with no member set, is breaking.
-    old_bindings = dict(old.module_bindings)
-    new_bindings = dict(new.module_bindings)
-    for name in sorted(set(new_bindings) - set(old_bindings)):
-        reasons.append(f"now resolves through module-level '{name}'")
-        kinds.append(ChangeKind.stale)
-    for name in sorted(set(old_bindings) - set(new_bindings)):
-        reasons.append(f"no longer resolves through module-level '{name}'")
-        kinds.append(ChangeKind.stale)
-    for name in sorted(set(old_bindings) & set(new_bindings)):
-        if old_bindings[name] == new_bindings[name]:
-            continue
-        old_members = binding_members(old_bindings[name])
-        new_members = binding_members(new_bindings[name])
-        if old_members is None or new_members is None:
-            reasons.append(f"module-level '{name}' changed")
-            kinds.append(ChangeKind.breaking)
-            continue
-        lost = sorted(old_members - new_members)
-        gained = sorted(new_members - old_members)
-        if lost:
-            reasons.append(f"module-level '{name}' lost members {lost}")
-            kinds.append(ChangeKind.breaking)
-        if gained:
-            reasons.append(f"module-level '{name}' gained members {gained}")
-            kinds.append(ChangeKind.stale)
-        if not lost and not gained:
-            reasons.append(f"module-level '{name}' reordered")
-            kinds.append(ChangeKind.stale)
-
     if (
         not reasons
     ):  # fingerprint differed but no structural reason surfaced -> be conservative
@@ -218,8 +187,75 @@ def classify_change(
     return _max_kind(kinds), reasons
 
 
+def classify_binding_change(
+    name: str, old_source: str, new_source: str
+) -> tuple[ChangeKind, list[str]]:
+    """Classify a changed module-level binding (#734) by its member set.
+
+    For a ``Literal``, a union alias, a tuple/set display or a dict display, lost members
+    are breaking (stored values or patterns stop being valid) and only-gained members are
+    stale (a widening). A reorder with the same members is stale. A binding with no
+    member set on either side (a helper function, a computed pattern) is breaking, since
+    nothing static says the change only widens.
+    """
+    old_members = binding_members(old_source)
+    new_members = binding_members(new_source)
+    if old_members is None or new_members is None:
+        return ChangeKind.breaking, [f"module-level '{name}' changed"]
+    lost = sorted(old_members - new_members)
+    gained = sorted(new_members - old_members)
+    reasons: list[str] = []
+    kinds: list[ChangeKind] = []
+    if lost:
+        reasons.append(f"lost members {lost}")
+        kinds.append(ChangeKind.breaking)
+    if gained:
+        reasons.append(f"gained members {gained}")
+        kinds.append(ChangeKind.stale)
+    if not reasons:
+        reasons.append("members reordered")
+        kinds.append(ChangeKind.stale)
+    return _max_kind(kinds), reasons
+
+
+def _diff_bindings(old: SchemaSurface, new: SchemaSurface) -> list[SymbolChange]:
+    changes: list[SymbolChange] = []
+    for name in sorted(set(old.bindings) | set(new.bindings)):
+        old_binding = old.bindings.get(name)
+        new_binding = new.bindings.get(name)
+        if old_binding is None:
+            changes.append(
+                SymbolChange(
+                    symbol=name,
+                    kind=ChangeKind.stale,
+                    status="added",
+                    reasons=["new module-level binding"],
+                )
+            )
+        elif new_binding is None:
+            changes.append(
+                SymbolChange(
+                    symbol=name,
+                    kind=ChangeKind.breaking,
+                    status="removed",
+                    reasons=["module-level binding removed"],
+                )
+            )
+        elif old_binding.source != new_binding.source:
+            kind, reasons = classify_binding_change(
+                name, old_binding.source, new_binding.source
+            )
+            changes.append(
+                SymbolChange(symbol=name, kind=kind, status="modified", reasons=reasons)
+            )
+    return changes
+
+
 def diff_surfaces(old: SchemaSurface, new: SchemaSurface) -> list[SymbolChange]:
-    """Every symbol whose contract changed between two surfaces, classified."""
+    """Every symbol whose contract changed between two surfaces, classified.
+
+    Classes first, then the module-level bindings (#734), each in name order.
+    """
     changes: list[SymbolChange] = []
     for name in sorted(old.names | new.names):
         old_spec = old.specs.get(name)
@@ -247,6 +283,7 @@ def diff_surfaces(old: SchemaSurface, new: SchemaSurface) -> list[SymbolChange]:
             changes.append(
                 SymbolChange(symbol=name, kind=kind, status="modified", reasons=reasons)
             )
+    changes.extend(_diff_bindings(old, new))
     return changes
 
 

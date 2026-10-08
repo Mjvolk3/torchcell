@@ -23,6 +23,7 @@ top-level surface classes).
 from __future__ import annotations
 
 import ast
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -522,7 +523,7 @@ def test_forward_closure_terminates_on_a_cycle_and_keeps_unknown_seeds(
     assert sd.forward_closure(seeds, graph) == expected
 
 
-# 2026.10.08, issue #734: module-level vocabularies a class resolves through.
+# 2026.10.08, issue #734: module-level vocabularies are closure nodes, as enums are.
 VOCAB_SCHEMA = '''
 import re
 from typing import Literal
@@ -531,7 +532,7 @@ from pydantic import BaseModel, Field, field_validator
 
 Namespace = Literal["mg1655", "bw25113"]
 Unrelated = Literal["x", "y"]
-PATTERNS: dict[str, str] = {"mg1655": "^b\\\\d{4}$", "bw25113": "^BW25113_\\\\d{4}$"}
+PATTERNS: dict[str, str] = {"mg1655": "^b[0-9]{4}$", "bw25113": "^BW25113_[0-9]{4}$"}
 ALLOWED_STATES: tuple[str, ...] = ("solid", "liquid")
 
 
@@ -567,125 +568,159 @@ class Medium(ModelStrict):
         return value
 
 
-class Plain(ModelStrict):
-    x: int
-
-
 class Genotype(ModelStrict):
     perturbations: list[Deletion]
 '''
 
 
-def test_alias_annotated_class_folds_the_transitive_module_bindings() -> None:
-    """Deletion reaches the Literal alias by annotation and the pattern map through the
-    helper its validator calls; Medium reaches the tuple its validator reads; Plain and
-    the class-only Genotype reach nothing.
+def _closure_map(surface: sd.SchemaSurface, seed: str) -> dict[str, str]:
+    """``symbol -> fingerprint`` over a seed's closure, the shape a manifest records."""
+    return {
+        name: surface.fingerprints[name]
+        for name in sd.forward_closure({seed}, surface.ref_graph)
+    }
+
+
+def test_bindings_are_graph_nodes_with_exact_edges() -> None:
+    """A class has an edge to each binding its body names (annotation or validator); a
+    binding to each binding its source names; a binding never to a class.
     """
     surface = _surface(VOCAB_SCHEMA)
-    assert [n for n, _ in surface.specs["Deletion"].module_bindings] == [
+    assert set(surface.bindings) == {
         "Namespace",
+        "Unrelated",
         "PATTERNS",
+        "ALLOWED_STATES",
         "_validate_tag",
-    ]
-    assert dict(surface.specs["Deletion"].module_bindings)["Namespace"] == (
-        "Literal['mg1655', 'bw25113']"
-    )
-    assert surface.specs["Medium"].module_bindings == (
-        ("ALLOWED_STATES", "('solid', 'liquid')"),
-    )
-    assert surface.specs["Plain"].module_bindings == ()
-    assert surface.specs["Genotype"].module_bindings == ()
+    }
+    assert surface.names == {"ModelStrict", "Deletion", "Medium", "Genotype"}
+    assert surface.ref_graph == {
+        "ModelStrict": set(),
+        "Deletion": {"ModelStrict", "Namespace", "_validate_tag"},
+        "Medium": {"ModelStrict", "ALLOWED_STATES"},
+        "Genotype": {"ModelStrict", "Deletion"},
+        "Namespace": set(),
+        "Unrelated": set(),
+        "PATTERNS": set(),
+        "ALLOWED_STATES": set(),
+        "_validate_tag": {"PATTERNS"},
+    }
+    assert surface.bindings["Namespace"].source == "Literal['mg1655', 'bw25113']"
+    assert set(_closure_map(surface, "Genotype")) == {
+        "Genotype",
+        "Deletion",
+        "ModelStrict",
+        "Namespace",
+        "_validate_tag",
+        "PATTERNS",
+    }
 
 
-def test_adding_a_literal_member_moves_the_fingerprint_of_its_users_only() -> None:
-    """Widening the alias moves Deletion; Medium, Plain and ModelStrict are untouched.
-    Genotype's own fingerprint stays, and Deletion sits in its closure, so a loader
-    importing Genotype is still flagged through Deletion.
+def test_class_fingerprints_ignore_the_bindings_they_reach() -> None:
+    """Every class fingerprint is the fingerprint of its own spec, so closures recorded
+    before #734 are checked against the same values.
+    """
+    surface = _surface(VOCAB_SCHEMA)
+    for name, spec in surface.specs.items():
+        assert surface.fingerprints[name] == sd.spec_fingerprint(spec), name
+
+
+def test_adding_a_literal_member_moves_the_closure_of_its_users_only() -> None:
+    """Widening the alias moves exactly the ``Namespace`` node: every class fingerprint
+    stays, the closure of a Genotype importer moves at Namespace, and Medium's closure
+    does not move.
     """
     widened = VOCAB_SCHEMA.replace(
         'Namespace = Literal["mg1655", "bw25113"]',
         'Namespace = Literal["mg1655", "bw25113", "rel606"]',
     )
     before, after = _surface(VOCAB_SCHEMA), _surface(widened)
-    assert after.fingerprints["Deletion"] != before.fingerprints["Deletion"]
-    for name in ("Medium", "Plain", "ModelStrict", "Genotype"):
-        assert after.fingerprints[name] == before.fingerprints[name], name
-    assert "Deletion" in sd.forward_closure({"Genotype"}, after.ref_graph)
+    moved = {
+        n
+        for n in before.fingerprints
+        if before.fingerprints[n] != after.fingerprints[n]
+    }
+    assert moved == {"Namespace"}
+    old_map, new_map = _closure_map(before, "Genotype"), _closure_map(after, "Genotype")
+    assert {n for n in old_map if old_map[n] != new_map[n]} == {"Namespace"}
+    assert _closure_map(after, "Medium") == _closure_map(before, "Medium")
 
 
-def test_an_unrelated_alias_change_moves_no_fingerprint() -> None:
-    """``Unrelated`` is referenced by no class, so changing it moves nothing."""
+def test_an_unrelated_alias_change_moves_no_closure() -> None:
+    """``Unrelated`` is named by no class: its own node moves, no class's closure does."""
     changed = VOCAB_SCHEMA.replace(
         'Unrelated = Literal["x", "y"]', 'Unrelated = Literal["x"]'
     )
-    assert _surface(changed).fingerprints == _surface(VOCAB_SCHEMA).fingerprints
+    before, after = _surface(VOCAB_SCHEMA), _surface(changed)
+    assert after.fingerprints["Unrelated"] != before.fingerprints["Unrelated"]
+    for name in before.names:
+        assert _closure_map(after, name) == _closure_map(before, name), name
 
 
-def test_a_pattern_reached_through_a_helper_moves_the_fingerprint() -> None:
-    """The #734 case: a changed pattern in a map read only by a module-level helper."""
-    changed = VOCAB_SCHEMA.replace("^b\\\\d{4}$", "^b\\\\d{5}$")
+def test_a_pattern_reached_through_a_helper_moves_the_closure() -> None:
+    """The #734 case: a changed pattern in a map that only a module-level helper reads."""
+    changed = VOCAB_SCHEMA.replace('"^b[0-9]{4}$"', '"^b[0-9]{5}$"')
     assert changed != VOCAB_SCHEMA
-    assert (
-        _surface(changed).fingerprints["Deletion"]
-        != _surface(VOCAB_SCHEMA).fingerprints["Deletion"]
-    )
-    assert (
-        _surface(changed).fingerprints["Medium"]
-        == _surface(VOCAB_SCHEMA).fingerprints["Medium"]
-    )
+    before, after = _surface(VOCAB_SCHEMA), _surface(changed)
+    old_map, new_map = _closure_map(before, "Deletion"), _closure_map(after, "Deletion")
+    assert {n for n in old_map if old_map[n] != new_map[n]} == {"PATTERNS"}
+    assert _closure_map(after, "Medium") == _closure_map(before, "Medium")
 
 
-def test_a_helper_docstring_edit_does_not_move_the_fingerprint() -> None:
+def test_a_helper_docstring_edit_moves_nothing() -> None:
     changed = VOCAB_SCHEMA.replace('"""Helper docstring."""', '"""Reworded."""')
     assert _surface(changed).fingerprints == _surface(VOCAB_SCHEMA).fingerprints
 
 
-def test_narrowing_an_allowed_tuple_moves_the_fingerprint() -> None:
+def test_narrowing_an_allowed_tuple_moves_its_node() -> None:
     changed = VOCAB_SCHEMA.replace('("solid", "liquid")', '("solid",)')
+    before, after = _surface(VOCAB_SCHEMA), _surface(changed)
+    assert after.fingerprints["ALLOWED_STATES"] != before.fingerprints["ALLOWED_STATES"]
+    assert _closure_map(after, "Deletion") == _closure_map(before, "Deletion")
+
+
+def test_a_loader_importing_a_binding_depends_on_it(tmp_path: Path) -> None:
+    loader = tmp_path / "loader.py"
+    loader.write_text(
+        "from torchcell.datamodels.schema import Medium, PATTERNS, Unknown\n"
+    )
+    surface = _surface(VOCAB_SCHEMA)
+    assert sd.loader_schema_deps(loader, surface) == {"Medium", "PATTERNS"}
+    assert sd.loader_closure(loader, surface) == {
+        "Medium",
+        "ModelStrict",
+        "ALLOWED_STATES",
+        "PATTERNS",
+    }
+
+
+def test_binding_fingerprint_is_the_prefixed_source_hash() -> None:
+    binding = sd.ModuleBinding(source="Literal['a']", refs=frozenset())
     assert (
-        _surface(changed).fingerprints["Medium"]
-        != _surface(VOCAB_SCHEMA).fingerprints["Medium"]
+        sd.binding_fingerprint(binding)
+        == hashlib.sha256(b"module::Literal['a']").hexdigest()
     )
-
-
-def test_a_class_with_no_module_binding_keeps_the_pre_734_fingerprint() -> None:
-    """The canonical text gains ``module::`` lines only when a binding is reached, so a
-    class beside an unused alias hashes exactly as the class alone (the pinned value).
-    """
-    src = "from typing import Literal\nUnused = Literal['a']\nclass M(Base):\n    x: int\n"
-    surface = _surface(src)
-    assert (
-        surface.fingerprints["M"]
-        == "ed8d43cc85679c4e4398592efa1795d614a8e1394a47d568bb2aa2099f65f641"
-    )
-
-
-def test_canonical_appends_module_lines_last() -> None:
-    spec = sd.ContractSpec(
-        bases=("B",),
-        fields=(),
-        assigns=(),
-        methods=(),
-        config=None,
-        module_bindings=(("A", "Literal['a']"),),
-    )
-    assert spec.canonical() == "bases::B\nmodule::A::Literal['a']"
 
 
 def test_type_statement_and_annotated_assignment_are_bindings() -> None:
-    """``type X = ...`` binds; the annotation of ``Y: T = v`` is not part of the text;
-    a later binding of a name replaces an earlier one; a class name stays a class.
+    """``type X = ...`` binds; the annotation of ``Y: T = v`` is not part of the text; a
+    later binding of a name replaces an earlier one; a bare annotation, an import and a
+    class bind nothing.
     """
     src = (
+        "import re\n"
         "type X = Literal['a']\n"
         "Y: tuple[str, ...] = ('p',)\n"
         "Y: tuple[str, ...] = ('q',)\n"
+        "Z: int\n"
         "class C(B):\n    x: X\n    y: str = Y[0]\n"
     )
     bindings = sd.collect_module_bindings({"s": src}, {"C"})
-    assert bindings["X"] == sd.ModuleBinding(source="Literal['a']", refs=frozenset())
-    assert bindings["Y"].source == "('q',)"
-    assert "C" not in bindings
+    assert bindings == {
+        "X": sd.ModuleBinding(source="Literal['a']", refs=frozenset()),
+        "Y": sd.ModuleBinding(source="('q',)", refs=frozenset()),
+    }
+    assert _surface(src).ref_graph["C"] == {"X", "Y"}
 
 
 @pytest.mark.parametrize(
@@ -708,12 +743,19 @@ def test_binding_members(source: str, members: set[str] | None) -> None:
 
 
 def test_live_surface_bacterial_leaves_reach_the_locus_tag_vocabularies() -> None:
-    """On the real schema the leaves of #734 reach both the namespace Literal and the
-    pattern map (through ``_validate_bacterial_locus_tag``), and ``Genotype`` reaches the
-    ``GenePerturbationType`` union alias.
+    """On the real schema the #734 leaves reach the namespace Literal directly and the
+    pattern map through ``_validate_bacterial_locus_tag``; ``Genotype`` reaches the
+    ``GenePerturbationType`` union node but not its member classes.
     """
     surface = sd.load_default_surface()
     for leaf in ("TransposonInsertionPerturbation", "BacterialDeletionPerturbation"):
-        names = dict(surface.specs[leaf].module_bindings)
-        assert {"BacterialGeneNamespace", "BACTERIAL_LOCUS_TAG_PATTERNS"} <= set(names)
-    assert "GenePerturbationType" in dict(surface.specs["Genotype"].module_bindings)
+        reach = sd.forward_closure({leaf}, surface.ref_graph)
+        assert {
+            "BacterialGeneNamespace",
+            "_validate_bacterial_locus_tag",
+            "BACTERIAL_LOCUS_TAG_PATTERNS",
+        } <= reach
+    assert "GenePerturbationType" in surface.ref_graph["Genotype"]
+    assert "BacterialDeletionPerturbation" not in sd.forward_closure(
+        {"Genotype"}, surface.ref_graph
+    )

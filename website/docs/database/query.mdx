@@ -1,0 +1,105 @@
+---
+title: How a query works
+sidebar_label: How a query works
+description: What a Cypher query against the served graph returns, how the library turns it into training data, and what the graph alone does not hold.
+---
+
+The served knowledge graph is a Neo4j database. Every stored measurement is one
+`Experiment` node, and the node carries the complete typed record, a
+`genotype x environment -> phenotype` object, as JSON in its `serialized_data`
+property. The parts of the record are also nodes of their own, linked to the experiment
+by member-of edges: `Genotype` (and its `Perturbation` nodes), `Environment` (with its
+`Media`), the phenotype node, the `ExperimentReference` that holds the control
+measurement, the `Dataset` the record belongs to, and the `Publication` it cites. The
+classes and their fields are the [ontology](/ontology/).
+
+## What a query returns
+
+A query is written in Cypher, Neo4j's query language, and matches that structure: which
+dataset, which perturbed genes, which medium, which phenotype level. It returns the
+records themselves as JSON strings, never whole nodes, because a record is complete on
+its own and the strings are what the library parses. This is the single-mutant fitness
+half of the committed query the gene essentiality page is built from
+(`torchcell/knowledge_graphs/queries/essentiality_smf.cql`), abridged:
+
+```cypher
+MATCH (dataset:Dataset)<-[:ExperimentMemberOf]-(e:Experiment)
+WHERE dataset.id = 'SmfCostanzo2016Dataset'
+MATCH (e)<-[:GenotypeMemberOf]-(g:Genotype)
+MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
+MATCH (e)<-[:PhenotypeMemberOf]-(phen:PhenotypicFeature)
+MATCH (e)<-[:EnvironmentMemberOf]-(env:Environment)
+MATCH (env)<-[:MediaMemberOf]-(m:Media)
+WHERE phen.graph_level = 'global'
+  AND m.state = 'solid'
+  AND ALL(p IN [(g)<-[:PerturbationMemberOf]-(pert) | pert]
+          WHERE p.systematic_gene_name IN $gene_set)
+WITH DISTINCT e, ref ORDER BY e.id
+RETURN e.serialized_data AS e_serialized, ref.serialized_data AS ref_serialized
+```
+
+`$gene_set` is a parameter: the systematic gene names the caller allows, so a query
+can be restricted to the genes a genome build or a model knows. Each returned row is one
+experiment and its reference. The experiment string holds an `experiment_type` field
+that names the record class, and the rest of the fields are that class's fields.
+
+Run it from Neo4j Browser or over [Bolt](./bolt.mdx) with any driver. The committed
+queries under `torchcell/knowledge_graphs/queries/` are the supported ones; each file
+states the datasets it selects and the filters it applies.
+
+## From records to training data
+
+The library does four things with the rows that a driver alone does not:
+
+1. **Typing.** `Neo4jQueryRaw` parses each string back into the pydantic class named by
+   its `experiment_type`, so every field is validated and typed, and caches the parsed
+   records in a local LMDB store (a memory-mapped key-value file) keyed by the query,
+   so the query runs once per machine.
+2. **Conversion.** `Neo4jCellDataset` applies a converter when datasets of different
+   phenotype classes are queried together. The essentiality page's query converts each
+   inviable record to a fitness of zero against a wild-type reference of one, tagged so
+   that a measured fitness outranks it where both exist.
+3. **Deduplication and aggregation.** When several records measure the same genotype in
+   the same environment, a deduplicator decides which survive and an aggregator folds
+   them into one training example per genotype.
+4. **Graphs and embeddings.** The dataset attaches gene graphs (protein interaction,
+   regulatory, metabolic) and node embeddings built from the genome, and a graph
+   processor turns each example into the tensors a model consumes. `CellDataModule` then
+   splits and batches.
+
+## What the graph alone does not hold
+
+A query gives every measurement with its provenance fields, and that is enough for
+analysis in any language. These are the things a reader needs the library, or the data
+endpoint, for:
+
+- **The raw source files.** The published tables the records were read from live in the
+  raw mirror, one directory per citation key, each file with its retrieval record and
+  sha256. The graph holds the values, not the files. The data endpoint serves the mirror
+  at `/raw/{citation_key}/...`.
+- **The built per-dataset stores.** Each loader's output, the LMDB store with its
+  preprocess files such as `data.csv` and `gene_set.json`, is packaged as a tc-data
+  archive with a hash in `index.json`. That is what a loader rebuilds and what the
+  benchmark bundles are built from.
+- **Genome sequences and annotations.** The reference genome and its annotation, which
+  define the gene set, the gene graphs, and the sequence-level encodings, are not in the
+  graph. The data endpoint serves the genome sets it was built with.
+- **Gene graphs and embeddings.** The interaction, regulatory, and metabolic graphs and
+  the node embeddings are built by the library from their own sources; nothing in the
+  knowledge graph encodes them.
+- **The label policy.** Which record wins when two sources measure the same strain,
+  and how a converted record ranks against a measured one, is library code, not graph
+  content. Two readers running the same query and their own rules get different
+  training sets.
+- **Compatibility.** A release carries a `KgRelease` node, and the repository commits a
+  snapshot of every release under `database/releases/`. Which library versions can read
+  which release is on the [releases page](./releases.mdx); a query does not tell you.
+
+## Without the library
+
+A driver, the committed query, and `json.loads` on each returned string give the typed
+records as plain dictionaries. The field names and classes are the ones the
+[schema explorer](/ontology/explorer) shows, so a reader in R or Julia loses nothing
+about the measurements. What they take on themselves is everything in the two sections
+above: typing and validation, conversion between phenotype classes, the choice of which
+duplicate wins, and every file the records were derived from.

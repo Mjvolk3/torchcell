@@ -599,3 +599,43 @@ test-quality gates pass; `tsc` clean; staging rebuilt and the live pages show th
 wording. Not run: `count-pairs` against the release store (no route from the Radiant VM
 to GilaHyper's bolt), so the distinct count on the site is still "not yet counted".
 
+## 2026.10.08 - First board from SGD alone, provenance first, the SMF lookup as the upload test
+
+Decided by the project owner: the first dataset is gene essentiality only, with no
+fitness dataset spent on the labels, so the Costanzo 2016 single-mutant fitness we used
+before becomes the upload test case instead; and every benchmark dataset page opens
+with a provenance section.
+
+- `experiments/035-benchmark-bundles/scripts/sgd_phenotype_mirror.py` mirrored
+  `SGD_features.tab` and one `phenotype_details` JSON per ORF (6,613; 5,783 Verified,
+  147 Uncharacterized, 683 Dubious; 229 MB) into
+  `torchcell-raw/cherrySGDSaccharomycesGenome1998/` on Taiga, with `provenance.json`
+  (url, command, sha256, retrieved_at per file). SGD answered about four requests a
+  second; 14 minutes with six workers.
+- `gene_essentiality_bundle.py`, bundle version 2: label 1 = the served dataset's gene
+  set (1,140), label 0 = SGD ORFs with a viable null call in S288C and not in that set
+  (4,790), 683 excluded. Splits 4,744 / 593 / 593. Drift against the fresh SGD read:
+  1,161 inviable now, 21 not in the served set, none missing from it; 54 genes carry
+  both calls (labeled 1). Build record in `results/gene_essentiality_bundle.json`.
+- `BundleProvenance` and `SourceRecord` in `torchcell.benchmark.bundle`, served on the
+  public dataset record and rendered first in the leaderboard's dataset panel; the
+  datasets page opens with a Provenance table. A set of files is one source with
+  `n_files` and a hash over the sorted per-file hashes.
+- The upload test case: the Costanzo 2016 deletion-fitness lookup (1 - min fitness over
+  KanMX/NatMX deletion strains at 30 C; a gene with no deletion strain scores 1),
+  covering 855 of 1,186 scored genes. Uploaded through `/admin/baselines` on staging
+  and graded: val AUROC 0.9421, AUPRC 0.6975; test AUROC 0.9363, AUPRC 0.6563
+  (n = 593 per split, 19% essential). One run; a lookup has no seed.
+- `scripts/ops.sh`: Radiant rows for the staging site and both benchmark tiers
+  (tier, build, bundle count; 502 reads "proxy up, tier not running"); tc-data is
+  probed on the host only, since 8724 is closed by the security group. Verified from
+  the VM with `OPS_HOSTS=radiant bash scripts/ops.sh health`: all rows as expected.
+  The release table half of `make ops` was not run here (no neo4j driver in the
+  scratch venv); it is unchanged.
+- `website/docs/database/query.mdx`: what a query returns, the four things the library
+  does with the rows, and what the graph alone does not hold.
+
+Staging: `https://torchcell-database.ncsa.illinois.edu/staging/benchmark/leaderboard/`
+shows the one entry; the v1 bundle is kept beside the datasets root under
+`datasets.superseded/`.
+

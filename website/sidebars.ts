@@ -32,7 +32,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Access',
-      items: ['database/browser', 'database/bolt'],
+      items: ['database/browser', 'database/bolt', 'database/query'],
     },
     {
       type: 'category',

@@ -186,9 +186,9 @@ as a zero.
 ### Sourcing and identifiers
 
 Every statistic carries a verbatim quote plus the sha256 and section of the file it came
-from, audited at verification time; 24 `SOURCED_VALUES`, ten against the Ishii `paper.md`
+from, audited at verification time; 23 `SOURCED_VALUES`: eight against the Ishii `paper.md`
 (sha256 `1d30256f408a939cf1cf400c03f36a124a8274627393602cabcb92cf72394065`), two against
-Baba 2006, and the rest against the `Information` sheet of the pinned workbook.
+Baba 2006, and thirteen against the `Information` sheet of the pinned workbook.
 
 - **Background strain**, through the deferral chain Ishii -> "(13)" -> Baba 2006
   (mirrored): Ishii says only "E. coli K-12"; Baba says "E. coli K-12 strain BW25113".
@@ -234,7 +234,7 @@ Baba 2006, and the rest against the `Information` sheet of the pinned workbook.
 | L2 se non-negative | 0 (no SE released) | 1,291 values | n/a |
 | L3 reference | subset for 2,820 values | key-matched for 1,348 | interval not half-stated |
 | L3 measurement type | single | single | single |
-| L3 provenance audit | 24 quotes | 24 quotes | 24 quotes |
+| L3 provenance audit | 23 quotes | 23 quotes | 23 quotes |
 | L4 containment | 24 of 24 loci | 64 of 64 identifiers | 24 of 24 loci |
 
 `metabolome_ishii2007` is registered in `METABOLITE_DATASETS` and `proteome_ishii2007` in

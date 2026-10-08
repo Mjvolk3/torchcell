@@ -1404,3 +1404,42 @@ def test_an_adapter_module_without_a_conf_name_is_refused() -> None:
 def test_n_experiments_named_twice_is_refused() -> None:
     with pytest.raises(ValueError, match="^--n-experiments given twice for ADataset$"):
         km.parse_n_experiments(["ADataset=1", "ADataset=2"], ["ADataset"])
+
+
+def test_a_private_dataset_is_never_admissible(
+    toy: _Toy, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """In-house data has no incremental path into the public served store.
+
+    The reason names the dataset and says plainly that there is no path, rather than
+    offering a flag: incremental admission writes into the SERVED store, which is the
+    public one, so an in-house graph is a different store, not a flag on this one.
+    """
+    from torchcell.data.experiment_dataset import Visibility
+
+    monkeypatch.setattr(
+        toy.classes["ToyDataset"], "visibility", Visibility.private, raising=False
+    )
+    report = _admit(toy, _bootstrap(toy))
+    assert report.verdict == "blocked"
+    assert any(
+        "ToyDataset is PRIVATE (visibility=private)" in reason
+        for reason in report.reasons
+    )
+
+
+def test_a_recorded_entry_carries_the_loader_visibility(toy: _Toy) -> None:
+    """Both the bootstrap and the admission entry stamp the class's visibility."""
+    manifest = _bootstrap(toy)
+    assert manifest.datasets["ServedDataset"].visibility == "public"
+    report = _admit(toy, manifest)
+    assert report.verdict == "admissible"
+    entry = km._dataset_entry(
+        report,
+        n_experiments=3,
+        biocypher_out=BIOCYPHER_OUT,
+        repo_root=toy.repo,
+        at=BUILT_AT,
+        previous=None,
+    )
+    assert entry.visibility == "public"

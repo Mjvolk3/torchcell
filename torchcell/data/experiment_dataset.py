@@ -14,9 +14,10 @@ import pickle
 import shutil
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Mapping
+from enum import StrEnum
 from functools import wraps
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
 import lmdb
 import numpy as np
@@ -344,8 +345,33 @@ def post_process(func: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
+class Visibility(StrEnum):
+    """Whether a dataset may leave the house.
+
+    - ``public``: servable on the public knowledge graph and publishable in a
+      ``tc-data`` release. Every dataset built from a published source.
+    - ``private``: in-house data (``torchcell/datasets/private_torchcell/``). It is
+      never written into the public graph and never packaged into a release; the build
+      and the packager each refuse it, rather than relying on a human to leave it out
+      of a config.
+
+    Filtering is exact rather than heuristic: every record carries ``dataset_name``,
+    which is the dataset class's own name, so the set of private records in any store is
+    exactly the records whose ``dataset_name`` names a class with
+    ``visibility is private``.
+    """
+
+    public = "public"
+    private = "private"
+
+
 class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyped (Any) in torch_geometric
     """Abstract PyG dataset storing experiment items in an LMDB store."""
+
+    #: Whether this dataset may be served publicly or published in a release. A
+    #: ClassVar, not a field: it is a property of the LOADER, decided once in code, and
+    #: the build and release gates read it off the class without instantiating it.
+    visibility: ClassVar[Visibility] = Visibility.public
 
     def __init__(
         self,

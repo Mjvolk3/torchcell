@@ -55,6 +55,8 @@ from tests.torchcell.knowledge_graphs._kg_build_fakes import (
     import_build_module,
     reset_instances,
 )
+from torchcell.data.experiment_dataset import Visibility
+from torchcell.knowledge_graphs.dataset_adapter_map import PrivateDatasetRefused
 from torchcell.sequence.genome.ecoli.k12 import EcoliK12Genome, EcoliK12MG1655Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
@@ -401,3 +403,51 @@ def test_a_yeast_only_build_never_builds_a_bacterial_genome(
     create_kg.main(_cfg(CFG))
     assert len(FakeBeta.instances) == 1
     assert log == []
+
+
+def test_a_private_dataset_is_refused_before_any_dataset_is_instantiated(
+    build: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A private loader named in a public build's config stops the build, by name.
+
+    Nothing is instantiated and nothing is written: the gate runs after the config is
+    resolved and before the first loader is constructed, so a public build cannot
+    half-produce a store that contains in-house records.
+    """
+    monkeypatch.setattr(FakeBeta, "visibility", Visibility.private, raising=False)
+    with pytest.raises(PrivateDatasetRefused) as excinfo:
+        create_kg.main(_cfg(CFG))
+    assert "FakeBeta" in str(excinfo.value)
+    assert "--include-private" in str(excinfo.value)
+    assert FakeAlpha.instances == []
+    assert FakeBeta.instances == []
+    assert FakeBioCypher.instances[0].calls == []
+
+
+def test_include_private_lets_the_build_through_and_unions_the_private_map(
+    build: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With the module flag set, the private loader builds through its private adapter."""
+    monkeypatch.setattr(FakeBeta, "visibility", Visibility.private, raising=False)
+    monkeypatch.setattr(create_kg, "INCLUDE_PRIVATE", True)
+    monkeypatch.setattr(create_kg, "dataset_adapter_map", {FakeAlpha: FakeAdapterA})
+    monkeypatch.setattr(
+        create_kg, "PRIVATE_DATASET_ADAPTER_MAP", {FakeBeta: FakeAdapterB}
+    )
+    create_kg.main(_cfg(CFG))
+    assert len(FakeAlpha.instances) == 1
+    assert len(FakeBeta.instances) == 1
+    assert len(FakeAdapterB.instances) == 1
+
+
+def test_take_include_private_flag_removes_it_so_hydra_never_sees_it() -> None:
+    """Hydra parses the same argv and rejects an option it does not know."""
+    argv = ["create_kg.py", "--include-private", "datasets=alpha"]
+    assert create_kg.take_include_private_flag(argv) is True
+    assert argv == ["create_kg.py", "datasets=alpha"]
+    plain = ["create_kg.py", "datasets=alpha"]
+    assert create_kg.take_include_private_flag(plain) is False
+    assert plain == ["create_kg.py", "datasets=alpha"]
+    twice = ["create_kg.py", "--include-private", "--include-private"]
+    assert create_kg.take_include_private_flag(twice) is True
+    assert twice == ["create_kg.py"]

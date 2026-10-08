@@ -4,6 +4,12 @@ Genomes are injected by loader parameter NAME: ``genome`` receives ``SCerevisiae
 (and ``scerevisiae_graph`` the graph on it); ``ecoli_genome`` / ``pputida_genome``
 receive the bacterial genome of the loader's ``REFERENCE_STRAIN``, built on first request
 (``torchcell.datasets.bacteria_common.BacterialGenomeInjector``).
+
+PRIVATE datasets (``visibility = Visibility.private``) are refused before any dataset is
+instantiated, unless the build is run with ``--include-private``. The flag is read off
+``sys.argv`` by :func:`take_include_private_flag` and REMOVED there, because hydra parses
+the same argv and rejects an option it does not know. Reading it from the class rather
+than from the yaml is what makes the gate unbypassable by editing a config.
 """
 
 import hashlib
@@ -14,6 +20,7 @@ import math
 import multiprocessing as mp
 import os
 import os.path as osp
+import sys
 import time
 import uuid
 from datetime import datetime
@@ -29,7 +36,11 @@ from biocypher import BioCypher  # type: ignore[attr-defined]  # untyped re-expo
 from torchcell.datasets import dataset_registry
 from torchcell.datasets.bacteria_common import BacterialGenomeInjector
 from torchcell.graph import SCerevisiaeGraph
-from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
+from torchcell.knowledge_graphs.dataset_adapter_map import (
+    PRIVATE_DATASET_ADAPTER_MAP,
+    dataset_adapter_map,
+    refuse_private_datasets,
+)
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 log = logging.getLogger(__name__)
@@ -45,6 +56,27 @@ DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
 BIOCYPHER_CONFIG_PATH = cast(str, os.getenv("BIOCYPHER_CONFIG_PATH"))
 SCHEMA_CONFIG_PATH = cast(str, os.getenv("SCHEMA_CONFIG_PATH"))
 BIOCYPHER_OUT_PATH = cast(str, os.getenv("BIOCYPHER_OUT_PATH"))
+
+
+#: ``--include-private`` was passed on the command line. Set once by
+#: :func:`take_include_private_flag` before hydra parses argv; False in every other
+#: entry (a test calling ``main`` directly, an import).
+INCLUDE_PRIVATE = False
+
+INCLUDE_PRIVATE_FLAG = "--include-private"
+
+
+def take_include_private_flag(argv: list[str]) -> bool:
+    """Remove ``--include-private`` from ``argv`` and report whether it was there.
+
+    Hydra owns ``sys.argv``, so the flag has to be taken out of it before
+    ``main()`` runs or hydra fails on an unrecognized option.
+    """
+    if INCLUDE_PRIVATE_FLAG not in argv:
+        return False
+    while INCLUDE_PRIVATE_FLAG in argv:
+        argv.remove(INCLUDE_PRIVATE_FLAG)
+    return True
 
 
 def get_num_workers() -> int:
@@ -151,6 +183,17 @@ def main(cfg: DictConfig) -> None:
         }
         dataset_configs.append(dataset_config)
 
+    # Visibility gate, before anything is instantiated: a private loader named in a
+    # public build's config is refused by name, never silently dropped.
+    refuse_private_datasets(
+        [cast(type, config["class"]) for config in dataset_configs], INCLUDE_PRIVATE
+    )
+    adapter_map = (
+        {**dataset_adapter_map, **PRIVATE_DATASET_ADAPTER_MAP}
+        if INCLUDE_PRIVATE
+        else dataset_adapter_map
+    )
+
     # Instantiate datasets
     datasets = []
     for config in dataset_configs:
@@ -171,7 +214,7 @@ def main(cfg: DictConfig) -> None:
 
     # Instantiate adapters based on the dataset-adapter mapping
     adapters = [
-        dataset_adapter_map[cast(Any, type(dataset))](
+        adapter_map[cast(Any, type(dataset))](
             dataset=dataset,
             process_workers=process_workers,
             io_workers=io_workers,
@@ -212,6 +255,7 @@ def main(cfg: DictConfig) -> None:
 
 
 if __name__ == "__main__":
+    INCLUDE_PRIVATE = take_include_private_flag(sys.argv)
     main()
 
     # Read the logged file name from the file

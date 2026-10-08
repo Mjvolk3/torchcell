@@ -508,6 +508,78 @@ def test_publication_needs_an_identifier_and_a_url() -> None:
         s.Publication(doi_url="https://doi.org/10.1/x")
 
 
+def test_a_publication_defaults_to_a_journal_article_with_nothing_else_stated() -> None:
+    """The default keeps every record written before ``source_type`` existed valid."""
+    publication = s.Publication(doi="10.1/x", doi_url="https://doi.org/10.1/x")
+    assert publication.source_type is s.SourceType.journal_article
+    assert publication.title is None
+    assert publication.identifier is None
+    assert publication.identifier_url is None
+
+
+_DISSERTATION_ID = "si/thesis.pdf sha256:" + "a" * 64
+
+
+@pytest.mark.parametrize(
+    "source_type",
+    [s.SourceType.dissertation, s.SourceType.preliminary_report, s.SourceType.in_house],
+)
+def test_a_non_journal_source_is_identified_by_title_plus_deposited_document(
+    source_type: s.SourceType,
+) -> None:
+    """No DOI, no URL: the identity is the title plus the mirrored document's path+hash."""
+    publication = s.Publication(
+        source_type=source_type,
+        title="Engineering furfural tolerance",
+        identifier=_DISSERTATION_ID,
+        identifier_url="https://example.invalid/thesis.pdf",
+    )
+    assert publication.doi is None
+    assert publication.pubmed_id is None
+    assert publication.identifier == _DISSERTATION_ID
+    with _refuses(f"a {source_type.value} source requires a title"):
+        s.Publication(source_type=source_type, identifier=_DISSERTATION_ID)
+    with _refuses(f"a {source_type.value} source requires a title"):
+        s.Publication(source_type=source_type, title="   ", identifier=_DISSERTATION_ID)
+    with _refuses(f"a {source_type.value} source requires an identifier"):
+        s.Publication(source_type=source_type, title="Engineering furfural tolerance")
+
+
+def test_a_non_journal_source_may_also_carry_a_doi_without_being_required_to() -> None:
+    """doi/pubmed go optional, not forbidden: a thesis later deposited with a DOI fits."""
+    publication = s.Publication(
+        source_type=s.SourceType.dissertation,
+        title="Engineering furfural tolerance",
+        identifier=_DISSERTATION_ID,
+        doi="10.1/thesis",
+        doi_url="https://doi.org/10.1/thesis",
+    )
+    assert publication.doi == "10.1/thesis"
+
+
+def test_source_type_vocabulary_is_closed_and_free_of_aliases() -> None:
+    """``a = "x"`` then ``b = "x"`` would collapse two kinds of source silently."""
+    assert {t.value for t in s.SourceType} == {
+        "journal_article",
+        "dissertation",
+        "preliminary_report",
+        "in_house",
+    }
+    assert len(list(s.SourceType)) == len({t.value for t in s.SourceType})
+
+
+def test_relative_growth_rate_is_its_own_measurement_type() -> None:
+    """A wild-type-relative generation-time ratio is not an absolute growth rate."""
+    assert s.MeasurementType.relative_growth_rate.value == "relative_growth_rate"
+    # A rate and a ratio against the run's wild type are different numbers; keeping
+    # them as separate members is what stops one being averaged with the other.
+    assert {"growth_rate", "relative_growth_rate"} <= {
+        m.value for m in s.MeasurementType
+    }
+    assert len(list(s.MeasurementType)) == len({m.value for m in s.MeasurementType})
+    assert s.MeasurementType.relative_growth_rate not in s.CATEGORICAL_MEASUREMENT_TYPES
+
+
 def _microarray(**overrides: Any) -> Any:
     kwargs: dict[str, Any] = {
         "expression": {"YAL002W": 90.0, "YAL001C": 100.0},

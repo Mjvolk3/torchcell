@@ -65,6 +65,16 @@ EXAMPLES: dict[str, dict[str, Any]] = {
             {"field": "provenance", "reason": "deferred_pending_source_review"}
         ],
     },
+    "torchcell.datamodels.schema.IntegratedCassette": {
+        "name": "Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]",
+        "locus": "Delta",
+        "elements": ["KanMX", "dLbCpf1-VP", "Csy4", "dSpCas9-RD1152", "SaCas9"],
+        "marker": "KanMX",
+        "zygosity": "haploid",
+        "provenance_gaps": [
+            {"field": "provenance", "reason": "deferred_pending_source_review"}
+        ],
+    },
     "torchcell.datamodels.schema.StrainBackground": {
         "name": "BY4741",
         "mating_type": "a",

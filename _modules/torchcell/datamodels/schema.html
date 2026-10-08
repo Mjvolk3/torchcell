@@ -3162,6 +3162,9 @@
 
 <span class="sd">    A typed enum (never a free string) so 'uM' / 'µM' / 'micromolar' can never</span>
 <span class="sd">    silently coexist across datasets. Temperature units live on ``TemperatureUnit``.</span>
+
+<span class="sd">    ``percent`` is a percent the source reports WITHOUT stating v/v or w/v; never a</span>
+<span class="sd">    substitute for ``percent_v_v`` / ``percent_w_v`` when the source states the basis.</span>
 <span class="sd">    """</span>
 
     <span class="n">molar</span> <span class="o">=</span> <span class="s2">"M"</span>
@@ -3170,6 +3173,9 @@
     <span class="n">nanomolar</span> <span class="o">=</span> <span class="s2">"nM"</span>
     <span class="n">percent_v_v</span> <span class="o">=</span> <span class="s2">"percent_v/v"</span>
     <span class="n">percent_w_v</span> <span class="o">=</span> <span class="s2">"percent_w/v"</span>
+    <span class="c1"># no molar conversion exists for a basis-free percent (the basis and a density are</span>
+    <span class="c1"># not reported), so a consumer computing a log10 molar leaves it None</span>
+    <span class="n">percent</span> <span class="o">=</span> <span class="s2">"percent"</span>
     <span class="n">ug_per_ml</span> <span class="o">=</span> <span class="s2">"ug/mL"</span>
     <span class="n">g_per_l</span> <span class="o">=</span> <span class="s2">"g/L"</span>
     <span class="n">ph</span> <span class="o">=</span> <span class="s2">"pH"</span>  <span class="c1"># dimensionless -log10[H+]; magnitude unit for a PhysicalFactor.ph edit</span></div>

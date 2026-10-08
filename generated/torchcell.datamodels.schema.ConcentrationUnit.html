@@ -139,6 +139,8 @@
 <p>UO-aligned units for a dose / physical-factor magnitude (G2 unit typing).</p>
 <p>A typed enum (never a free string) so ‘uM’ / ‘µM’ / ‘micromolar’ can never
 silently coexist across datasets. Temperature units live on <code class="docutils literal notranslate"><span class="pre">TemperatureUnit</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">percent</span></code> is a percent the source reports WITHOUT stating v/v or w/v; never a
+substitute for <code class="docutils literal notranslate"><span class="pre">percent_v_v</span></code> / <code class="docutils literal notranslate"><span class="pre">percent_w_v</span></code> when the source states the basis.</p>
 </dd></dl>
 
 </section>

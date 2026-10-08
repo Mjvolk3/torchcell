@@ -152,16 +152,22 @@
 <span class="sd">batch, because the paper's design is paired and its comparison is "to the paired SynBase</span>
 <span class="sd">medium control"; MMS is the one served condition the paper analyzed UNPAIRED, so its</span>
 <span class="sd">control is the mean of all 16 control columns (its ``units`` string records that). DMSO</span>
-<span class="sd">is served as a condition (1% v/v) paired the same way.</span>
+<span class="sd">is served as a condition paired the same way, at its Table S1 dose (below).</span>
 
 <span class="sd">DOSES AND VEHICLES (Table S1). Table S1 is the ``Table_S1.pdf`` member of the OUP</span>
 <span class="sd">supplement zip (PMC Article Datasets copy, ``si/si1.zip`` of the paper's mirror key),</span>
 <span class="sd">stored as ``si/si2.pdf`` and OCR'd to ``si/si2.md``. Each served condition's row is a</span>
-<span class="sd">``SourcedValue`` in ``TABLE_S1_DOSES``: a mM / uM / ug/mL IC30 is stored as the</span>
-<span class="sd">``Concentration`` value; a percent IC30 (MBO, EtOH, IBA, GVL) keeps ``value=None`` under</span>
-<span class="sd">the IC30 basis because the table writes no v/v or w/v; Benomyl, MMS and DMSO keep their</span>
-<span class="sd">fixed doses. The "Dissolved in DMSO?" column sets ``solvent``: "Yes" is DMSO at the</span>
-<span class="sd">paper's final 1% v/v, "No" is ``None`` (dissolved directly).</span>
+<span class="sd">``SourcedValue`` in ``TABLE_S1_DOSES``, and every dose is the number that row reports</span>
+<span class="sd">(#764): a mM / uM / ug/mL IC30 is stored with that unit; a percent IC30 (MBO 1.50%, EtOH</span>
+<span class="sd">4%, IBA 0.75%, GVL 1.5%) and MMS's fixed 0.01% are stored with the basis-free</span>
+<span class="sd">``ConcentrationUnit.percent``, because the table writes no v/v or w/v for them. A molar</span>
+<span class="sd">conversion of those five needs a basis and a density the paper does not report, so a</span>
+<span class="sd">consumer computing a log10 molar dose leaves them None. DMSO's own condition is Table</span>
+<span class="sd">S1's "2.50%" as ``percent_v_v`` under the IC30 basis: the paper's only DMSO fraction</span>
+<span class="sd">statement that names a basis ("the final concentration of DMSO in SynBase medium was 1%</span>
+<span class="sd">(v/v)") fixes v/v as its convention for DMSO. Benomyl keeps Piotrowski 2017's 34.4 uM</span>
+<span class="sd">(fixed). The "Dissolved in DMSO?" column sets ``solvent``: "Yes" is the DMSO vehicle at</span>
+<span class="sd">that sentence's final 1% v/v, "No" is ``None`` (dissolved directly).</span>
 
 <span class="sd">STRAIN BACKGROUND (#500). The screened strains are the MATa meiotic progeny of the SGA</span>
 <span class="sd">cross of query Y13206 (MATalpha pdr1::natMX pdr3::KlURA3 snq2::KlLEU2 can1::STE2pr-</span>
@@ -171,10 +177,24 @@
 
 <span class="sd">RECORDS DROPPED (rule + count written to ``preprocess/dropped_records.json``): the 11</span>
 <span class="sd">matrix tokens Fig 1B does not list (the paper never reports them); compounds with no</span>
-<span class="sd">resolvable structure identifier; library rows whose ORF is not a barcoded ORF with</span>
-<span class="sd">counts, is a locus the SGA selections fix in every strain, is not a current R64 gene, or</span>
-<span class="sd">is the legacy spelling of an ORF already in the pool (those carry a typed</span>
-<span class="sd">``ConstructedOrf`` in the ledger); and cells whose three replicate counts are ALL zero.</span>
+<span class="sd">resolvable structure identifier; library rows whose gene column is not a systematic ORF</span>
+<span class="sd">or whose EVERY count column is missing, whose ORF is a locus the SGA selections fix in</span>
+<span class="sd">every strain, is not a current R64 gene, or is the legacy spelling of an ORF already in</span>
+<span class="sd">the pool (those carry a typed ``ConstructedOrf`` in the ledger), or that carry no barcode</span>
+<span class="sd">while another row of the release carries the same ORF with one; cells one of whose</span>
+<span class="sd">counts (a replicate or a paired control) is missing; and cells whose three replicate</span>
+<span class="sd">counts are ALL zero.</span>
+
+<span class="sd">MISSING COUNTS AND BARCODES (#524). A missing count removes only the cells that use it,</span>
+<span class="sd">never the strain's row: the paper's per-compound edgeR fit permits no NA count and its</span>
+<span class="sd">design is three replicates against the paired controls, so a cell with a missing member</span>
+<span class="sd">count has no value the method defines, while the strain's other cells are untouched. TMM</span>
+<span class="sd">for a condition runs over the rows complete in that condition's own columns. A row whose</span>
+<span class="sd">gene column carries no ``_&lt;barcode&gt;`` suffix is served only when no other row names its</span>
+<span class="sd">ORF (the matrix is the release's only barcode source, so the barcode is absent from the</span>
+<span class="sd">release): ``barcode=None`` with a typed ``ProvenanceGap`` (``BARCODE_ABSENT_GAP``), never</span>
+<span class="sd">an empty string. GSE186866 itself has no row with a partly missing count and no row</span>
+<span class="sd">without a barcode (2 rows miss every count), so neither rule changes the served build.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -454,8 +474,8 @@
     <span class="s2">"SynBase medium with the inhibitor relative to growth in SynBase medium lacking the "</span>
     <span class="s2">"inhibitor (Table S1, Supporting Information)."</span><span class="p">,</span>
     <span class="n">note</span><span class="o">=</span><span class="s2">"the per-compound IC30 values are Table S1's rows (TABLE_S1_DOSES, quoted from "</span>
-    <span class="s2">"si/si2.md); a percent IC30 states no v/v or w/v, so those compounds keep "</span>
-    <span class="s2">"Concentration.value None and the IC30 basis carries the dose"</span><span class="p">,</span>
+    <span class="s2">"si/si2.md); a percent IC30 states no v/v or w/v, so it is stored with the "</span>
+    <span class="s2">"basis-free ConcentrationUnit.percent (#764)"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">BENOMYL_MMS_DOSE</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="p">{</span><span class="s2">"benomyl_ug_per_ml"</span><span class="p">:</span> <span class="mf">10.0</span><span class="p">,</span> <span class="s2">"mms_percent"</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">},</span>
@@ -464,9 +484,10 @@
     <span class="n">note</span><span class="o">=</span><span class="s2">"both doses were taken from Piotrowski 2017 rather than set to an IC30, so "</span>
     <span class="s2">"their basis is 'fixed'. Piotrowski 2017 (mirrored) states benomyl as 34.4 uM "</span>
     <span class="s2">"(BENOMYL_MOLAR), which is the stored value; Table S1 confirms the 10 ug/mL "</span>
-    <span class="s2">"(TABLE_S1_DOSES['Benomyl']). The MMS percent is stored as a basis only: neither "</span>
-    <span class="s2">"paper nor Table S1 writes v/v or w/v for this 0.01% (Piotrowski 2017 names no "</span>
-    <span class="s2">"MMS dose), so the unit would be a guess"</span><span class="p">,</span>
+    <span class="s2">"(TABLE_S1_DOSES['Benomyl']). The MMS 0.01 is stored with the basis-free "</span>
+    <span class="s2">"ConcentrationUnit.percent (#764): neither paper nor Table S1 writes v/v or w/v for "</span>
+    <span class="s2">"it (Piotrowski 2017 names no MMS dose), and the stored number is Table S1's "</span>
+    <span class="s2">"(TABLE_S1_DOSES['MMS']), which equals this sentence's"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">BENOMYL_MOLAR</span> <span class="o">=</span> <span class="n">_piotrowski</span><span class="p">(</span>
     <span class="mf">34.4</span><span class="p">,</span>
@@ -524,13 +545,16 @@
     <span class="s2">"{ v / v } )$ ."</span><span class="p">,</span>
     <span class="n">note</span><span class="o">=</span><span class="s2">"Table S1's 'Dissolved in DMSO?' column names the compounds this covers "</span>
     <span class="s2">"(TABLE_S1_DOSES); each 'Yes' compound carries Solvent(DMSO, 1% v/v) from this "</span>
-    <span class="s2">"sentence, and DMSO itself is served as a condition (DMSO_DOSE)"</span><span class="p">,</span>
+    <span class="s2">"sentence (DMSO_VEHICLE_PERCENT). It is also the paper's only DMSO fraction "</span>
+    <span class="s2">"statement that names a basis, so it fixes v/v as the paper's convention for DMSO "</span>
+    <span class="s2">"and sets the unit of DMSO's own condition dose (TABLE_S1_DOSES['DMSO'], 2.50%)"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">DMSO_DOSE</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+<span class="n">DMSO_VEHICLE_PERCENT</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="mf">1.0</span><span class="p">,</span>
     <span class="n">VEHICLE_CONTROL</span><span class="o">.</span><span class="n">quote</span><span class="p">,</span>
-    <span class="n">note</span><span class="o">=</span><span class="s2">"DMSO's own condition columns are the vehicle at its final 1% v/v with no "</span>
-    <span class="s2">"inhibitor; Fig 1B lists DMSO as one of the 34 analyzed conditions (FIG_1B_CONDITIONS)"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the final DMSO fraction of the VEHICLE the DMSO-dissolved inhibitors were "</span>
+    <span class="s2">"delivered in (Solvent.percent); DMSO's own condition, one of the 34 Fig 1B "</span>
+    <span class="s2">"conditions (FIG_1B_CONDITIONS), is dosed at Table S1's 2.50</span><span class="si">% i</span><span class="s2">nstead (#764)"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">FIG_1B_CONDITIONS</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="mi">34</span><span class="p">,</span>
@@ -645,6 +669,22 @@
     <span class="s2">"inhibitor/control ratio' and states no pseudocount; the loader adds 1 CPM "</span>
     <span class="s2">"(CPM_PRIOR) to both sides, a loader choice, so a cell whose control mean is near "</span>
     <span class="s2">"1 CPM has a pseudocount-dominated denominator and a large replicate SD"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1">#: The typed absence a library row with no ``_&lt;barcode&gt;`` suffix is served with (#524):</span>
+<span class="c1">#: the GSE186866 gene column is the release's only barcode source.</span>
+<span class="n">BARCODE_ABSENT_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+    <span class="n">field</span><span class="o">=</span><span class="s2">"barcode"</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+    <span class="n">looked_in</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+        <span class="n">source_uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">RAW_DIR_REL</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">DATA_REL</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+        <span class="n">sha256</span><span class="o">=</span><span class="n">DATA_SHA256</span><span class="p">,</span>
+        <span class="n">page</span><span class="o">=</span><span class="s2">"gene column ('&lt;ORF&gt;_&lt;barcode&gt;')"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"this row's gene column names the ORF with no '_&lt;barcode&gt;' suffix, no other "</span>
+    <span class="s2">"row names the ORF, and the count matrix is the only file the release carries "</span>
+    <span class="s2">"barcodes in, so the strain's UPTAG is absent from the release"</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -806,7 +846,7 @@
 <span class="c1">#: The one served condition the paper analyzed UNPAIRED, so it keeps the pooled control.</span>
 <span class="n">UNPAIRED_COMPOUND_TOKENS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">"MMS"</span><span class="p">})</span>
 
-<span class="c1">#: The vehicle served as its own condition (1% v/v, DMSO_DOSE).</span>
+<span class="c1">#: The vehicle, also served as its own condition (Table S1's 2.50% v/v).</span>
 <span class="n">DMSO_TOKEN</span> <span class="o">=</span> <span class="s2">"DMSO"</span>
 
 
@@ -837,7 +877,7 @@
     <span class="sa">r</span><span class="s2">"&lt;td&gt;(?P&lt;dmso&gt;Yes|No)&lt;/td&gt;"</span>
 <span class="p">)</span>
 <span class="n">_TABLE_S1_AMOUNT</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(?P&lt;number&gt;\d+(?:\.\d+)?) (?P&lt;unit&gt;mM|uM|ug/mL)"</span><span class="p">)</span>
-<span class="n">_TABLE_S1_PERCENT</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\d+(?:\.\d+)?%"</span><span class="p">)</span>
+<span class="n">_TABLE_S1_PERCENT</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(?P&lt;number&gt;\d+(?:\.\d+)?)%"</span><span class="p">)</span>
 <span class="n">_TABLE_S1_UNITS</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"mM"</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">millimolar</span><span class="p">,</span>
     <span class="s2">"uM"</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">micromolar</span><span class="p">,</span>
@@ -845,8 +885,10 @@
 <span class="p">}</span>
 
 <span class="n">_PERCENT_NOTE</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"Table S1 writes this IC30 as a bare percent with no v/v or w/v, and the schema has "</span>
-    <span class="s2">"no basis-free percent unit, so Concentration.value stays None under the IC30 basis"</span>
+    <span class="s2">"Table S1 writes this dose as a bare percent with no v/v or w/v, so the reported "</span>
+    <span class="s2">"number is stored with the basis-free ConcentrationUnit.percent (#764); a molar "</span>
+    <span class="s2">"conversion needs that basis and a density, neither reported, so no log10 molar dose "</span>
+    <span class="s2">"exists for it"</span>
 <span class="p">)</span>
 <span class="n">_OCR_CL_NOTE</span> <span class="o">=</span> <span class="s2">"the OCR reads the chloride 'Cl' as 'CI'"</span>
 
@@ -951,16 +993,20 @@
     <span class="p">),</span>
     <span class="s2">"DMSO"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
         <span class="s2">"&lt;tr&gt;&lt;td&gt;DMSO&lt;/td&gt;&lt;td&gt;2.50%&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;67-68-5&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;D-8779&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
-        <span class="n">note</span><span class="o">=</span><span class="s2">"Table S1 lists DMSO at 2.50</span><span class="si">% u</span><span class="s2">nder the IC30 column, which conflicts with "</span>
-        <span class="s2">"the paper's vehicle sentence (VEHICLE_CONTROL: final DMSO 1% v/v) that the "</span>
-        <span class="s2">"served DMSO_DOSE quotes. Left for review; the served DMSO record stays 1.0 "</span>
-        <span class="s2">"percent_v/v, fixed"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"IC30 '2.50%', the dose of DMSO's own condition (#764: the reported value "</span>
+        <span class="s2">"is served). Table S1 writes '2.50%' without v/v or w/v; the paper's only DMSO "</span>
+        <span class="s2">"fraction statement that names a basis, 'the final concentration of DMSO in "</span>
+        <span class="s2">"SynBase medium was 1% (v/v)' (VEHICLE_CONTROL), fixes v/v as the paper's "</span>
+        <span class="s2">"convention for DMSO, so the dose is 2.5 percent_v/v under the IC30 basis. The "</span>
+        <span class="s2">"1% v/v of that sentence is the vehicle fraction of the DMSO-dissolved "</span>
+        <span class="s2">"inhibitors (DMSO_VEHICLE_PERCENT), a different quantity"</span><span class="p">,</span>
     <span class="p">),</span>
     <span class="s2">"GVL"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
         <span class="s2">"&lt;tr&gt;&lt;td&gt;Gamma valerolactone (GVL)&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;108-29-2&lt;/td&gt;&lt;td&gt;Acros Organics&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
         <span class="n">note</span><span class="o">=</span><span class="s2">"the OCR leaves GVL's IC30 cell empty; the '1.5%' (and the catalog number "</span>
         <span class="s2">"140795000) landed on the next row, the 'OTHER COMPOUNDS' section header "</span>
-        <span class="s2">"(GVL_TABLE_S1_DISPLACED). A percent either way: "</span> <span class="o">+</span> <span class="n">_PERCENT_NOTE</span><span class="p">,</span>
+        <span class="s2">"(GVL_TABLE_S1_DISPLACED), and the dose is parsed from that row. "</span>
+        <span class="o">+</span> <span class="n">_PERCENT_NOTE</span><span class="p">,</span>
     <span class="p">),</span>
     <span class="s2">"AzelaicAcid"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
         <span class="s2">"&lt;tr&gt;&lt;td&gt;Azelaic Acid&lt;/td&gt;&lt;td&gt;10 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;123-99-9&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;246379&lt;/td&gt;&lt;/tr&gt;"</span>
@@ -975,8 +1021,8 @@
     <span class="p">),</span>
     <span class="s2">"MMS"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
         <span class="s2">"&lt;tr&gt;&lt;td&gt;Methylmethane sulphonate (MMS)&lt;/td&gt;&lt;td&gt;0.01%&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;66-27-3&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;129925&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
-        <span class="n">note</span><span class="o">=</span><span class="s2">"IC30 column '0.01%', the published fixed dose (BENOMYL_MMS_DOSE); no v/v or "</span>
-        <span class="s2">"w/v, so value None under the fixed basis"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"IC30 column '0.01%', the published fixed dose (BENOMYL_MMS_DOSE), served "</span>
+        <span class="s2">"under the fixed basis. "</span> <span class="o">+</span> <span class="n">_PERCENT_NOTE</span><span class="p">,</span>
     <span class="p">),</span>
     <span class="s2">"Acetamide"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
         <span class="s2">"&lt;tr&gt;&lt;td&gt;Acetamide&lt;/td&gt;&lt;td&gt;250 mM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;60-35-5&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;00160&lt;/td&gt;&lt;/tr&gt;"</span>
@@ -989,47 +1035,87 @@
         <span class="s2">"&lt;tr&gt;&lt;td&gt;2,6-Dimethylpyrazine&lt;/td&gt;&lt;td&gt;38 mM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;108-50-9&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;W327301&lt;/td&gt;&lt;/tr&gt;"</span>
     <span class="p">),</span>
 <span class="p">}</span>
-<span class="n">GVL_TABLE_S1_DISPLACED</span> <span class="o">=</span> <span class="n">_table_s1</span><span class="p">(</span>
-    <span class="s2">"1.5%"</span><span class="p">,</span>
+<span class="n">_SECTION_ROW</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"&lt;tr&gt;&lt;td&gt;(?P&lt;header&gt;[A-Z ]+)&lt;/td&gt;&lt;td&gt;(?P&lt;ic30&gt;[^&lt;]*)&lt;/td&gt;"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_section_row_cell</span><span class="p">(</span><span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A Table S1 section-header row that carries a displaced IC30 cell, parsed."""</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">_SECTION_ROW</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">quote</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"not a Table S1 section-header row: </span><span class="si">{</span><span class="n">quote</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_table_s1</span><span class="p">(</span><span class="n">match</span><span class="p">[</span><span class="s2">"ic30"</span><span class="p">],</span> <span class="n">quote</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">)</span>
+
+
+<span class="n">GVL_TABLE_S1_DISPLACED</span> <span class="o">=</span> <span class="n">_section_row_cell</span><span class="p">(</span>
     <span class="s2">"&lt;tr&gt;&lt;td&gt;OTHER COMPOUNDS&lt;/td&gt;&lt;td&gt;1.5%&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;td&gt;140795000&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
     <span class="n">note</span><span class="o">=</span><span class="s2">"the row after GVL's: a section header carrying an IC30 and a catalog number, "</span>
-    <span class="s2">"which the OCR displaced from the GVL row above it (TABLE_S1_DOSES['GVL']); "</span>
-    <span class="s2">"recorded so the GVL percent is quoted, not typed"</span><span class="p">,</span>
+    <span class="s2">"which the OCR displaced from the GVL row above it (TABLE_S1_DOSES['GVL']); the "</span>
+    <span class="s2">"GVL dose is parsed from this quote, not typed. The PDF's own text layer agrees: "</span>
+    <span class="s2">"'pdftotext -layout si/si2.pdf' (sha256 "</span> <span class="o">+</span> <span class="n">SI2_PDF_SHA256</span> <span class="o">+</span> <span class="s2">") prints '1.5%' and "</span>
+    <span class="s2">"'140795000' on the 'Gamma valerolactone (GVL)' line and nothing else on the "</span>
+    <span class="s2">"'OTHER COMPOUNDS' line"</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="c1">#: The one Fig 1B token whose IC30 cell the OCR left empty, and the row its cell is on.</span>
+<span class="n">_DISPLACED_IC30</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"GVL"</span><span class="p">:</span> <span class="n">GVL_TABLE_S1_DISPLACED</span><span class="p">}</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">table_s1_ic30</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Concentration</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The IC30 dose Table S1 states for ``token``, as a typed ``Concentration``.</span>
 
-<span class="sd">    A mM / uM / ug/mL cell is the value and unit; a percent cell (or GVL's cell, which</span>
-<span class="sd">    the OCR left empty) is the IC30 basis alone (``_PERCENT_NOTE``). Any other cell</span>
-<span class="sd">    text raises: it is a row the loader has not been taught to read.</span>
-<span class="sd">    """</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_table_s1_cell</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``token``'s IC30 cell text: its own row's, or the displaced row's for GVL."""</span>
     <span class="n">row</span><span class="p">:</span> <span class="n">TableS1Row</span> <span class="o">=</span> <span class="n">TABLE_S1_DOSES</span><span class="p">[</span><span class="n">token</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
-    <span class="n">amount</span> <span class="o">=</span> <span class="n">_TABLE_S1_AMOUNT</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">ic30</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">ic30</span> <span class="o">==</span> <span class="s2">""</span> <span class="ow">and</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">_DISPLACED_IC30</span><span class="p">:</span>
+        <span class="n">cell</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">_DISPLACED_IC30</span><span class="p">[</span><span class="n">token</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="n">cell</span>
+    <span class="k">return</span> <span class="n">row</span><span class="o">.</span><span class="n">ic30</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">table_s1_percent</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The number of ``token``'s percent cell in Table S1 (e.g. '2.50%' -&gt; 2.5)."""</span>
+    <span class="n">cell</span> <span class="o">=</span> <span class="n">_table_s1_cell</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+    <span class="n">percent</span> <span class="o">=</span> <span class="n">_TABLE_S1_PERCENT</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">percent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">: Table S1 IC30 cell </span><span class="si">{</span><span class="n">cell</span><span class="si">!r}</span><span class="s2"> is not a percent"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">percent</span><span class="p">[</span><span class="s2">"number"</span><span class="p">])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">table_s1_ic30</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">basis</span><span class="p">:</span> <span class="n">DoseBasis</span> <span class="o">=</span> <span class="n">DoseBasis</span><span class="o">.</span><span class="n">IC30</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Concentration</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The dose Table S1 states for ``token``, as a typed ``Concentration``.</span>
+
+<span class="sd">    A mM / uM / ug/mL cell is the value and unit; a percent cell is the reported number</span>
+<span class="sd">    in the basis-free ``ConcentrationUnit.percent`` (``_PERCENT_NOTE``). ``basis`` is</span>
+<span class="sd">    IC30 for the column's own meaning and ``fixed`` for MMS, whose published dose the</span>
+<span class="sd">    column repeats. Any other cell text (an empty cell included) raises: it is a row the</span>
+<span class="sd">    loader has not been taught to read.</span>
+<span class="sd">    """</span>
+    <span class="n">cell</span> <span class="o">=</span> <span class="n">_table_s1_cell</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+    <span class="n">amount</span> <span class="o">=</span> <span class="n">_TABLE_S1_AMOUNT</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">amount</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span>
             <span class="n">value</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">amount</span><span class="p">[</span><span class="s2">"number"</span><span class="p">]),</span>
             <span class="n">unit</span><span class="o">=</span><span class="n">_TABLE_S1_UNITS</span><span class="p">[</span><span class="n">amount</span><span class="p">[</span><span class="s2">"unit"</span><span class="p">]],</span>
-            <span class="n">basis</span><span class="o">=</span><span class="n">DoseBasis</span><span class="o">.</span><span class="n">IC30</span><span class="p">,</span>
+            <span class="n">basis</span><span class="o">=</span><span class="n">basis</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">ic30</span> <span class="o">==</span> <span class="s2">""</span> <span class="ow">or</span> <span class="n">_TABLE_S1_PERCENT</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">ic30</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span><span class="n">basis</span><span class="o">=</span><span class="n">IC30_BASIS</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">: unreadable Table S1 IC30 cell </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">ic30</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_TABLE_S1_PERCENT</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">cell</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">table_s1_percent</span><span class="p">(</span><span class="n">token</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">percent</span><span class="p">,</span> <span class="n">basis</span><span class="o">=</span><span class="n">basis</span>
+        <span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">: unreadable Table S1 IC30 cell </span><span class="si">{</span><span class="n">cell</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">table_s1_solvent</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solvent</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The vehicle Table S1's "Dissolved in DMSO?" column states for ``token``.</span>
 
-<span class="sd">    "Yes" is DMSO at the final 1% v/v of the paper's vehicle sentence (DMSO_DOSE,</span>
-<span class="sd">    quoting VEHICLE_CONTROL); "No" is ``None``, which the schema defines as dissolved</span>
-<span class="sd">    directly.</span>
+<span class="sd">    "Yes" is DMSO at the final 1% v/v of the paper's vehicle sentence</span>
+<span class="sd">    (DMSO_VEHICLE_PERCENT, quoting VEHICLE_CONTROL); "No" is ``None``, which the schema</span>
+<span class="sd">    defines as dissolved directly.</span>
 <span class="sd">    """</span>
     <span class="n">row</span><span class="p">:</span> <span class="n">TableS1Row</span> <span class="o">=</span> <span class="n">TABLE_S1_DOSES</span><span class="p">[</span><span class="n">token</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">dissolved_in_dmso</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="k">return</span> <span class="n">Solvent</span><span class="p">(</span>
-        <span class="n">name</span><span class="o">=</span><span class="n">DMSO_TOKEN</span><span class="p">,</span> <span class="n">percent</span><span class="o">=</span><span class="n">DMSO_DOSE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="n">DMSO_TOKEN</span><span class="p">)</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">DMSO_TOKEN</span><span class="p">,</span>
+        <span class="n">percent</span><span class="o">=</span><span class="n">DMSO_VEHICLE_PERCENT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="n">DMSO_TOKEN</span><span class="p">),</span>
     <span class="p">)</span>
 
 
@@ -1265,7 +1351,7 @@
 
     <span class="n">source_orf</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">current_orf</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">constructed_orf</span><span class="p">:</span> <span class="n">ConstructedOrf</span>
 
 
@@ -1286,7 +1372,7 @@
     <span class="n">keep_mask</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span>
     <span class="n">systematic</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">common</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-    <span class="n">barcode</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">barcode</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
     <span class="n">dropped_retired</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">dropped_legacy_duplicate</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
     <span class="n">legacy_target</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
@@ -1339,7 +1425,7 @@
     <span class="n">keep_mask</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">systematic</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">common</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">kept_barcodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">kept_barcodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">legacy_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">legacy</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">orf</span><span class="p">,</span> <span class="n">barcode</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">orfs</span><span class="p">,</span> <span class="n">barcodes</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="n">mapped</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">orf</span><span class="p">)</span>
@@ -1368,7 +1454,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">legacy_orf_strain</span><span class="p">(</span>
-    <span class="n">source_orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">current_orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">source_orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">current_orf</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LegacyOrfStrain</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""The typed ledger entry for a dropped legacy-spelling strain."""</span>
     <span class="k">return</span> <span class="n">LegacyOrfStrain</span><span class="p">(</span>
@@ -1459,7 +1545,12 @@
 
     <span class="c1"># ---- environment / phenotype builders ------------------------------------ #</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_concentration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compound</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Concentration</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The dose as the paper SET it: an IC30 target, or a published fixed dose."""</span>
+<span class="w">        </span><span class="sd">"""The dose as the paper SET it: an IC30 target, or a published fixed dose.</span>
+
+<span class="sd">        Every value is the one Table S1 reports (#764), except Benomyl, whose fixed</span>
+<span class="sd">        dose is Piotrowski 2017's molar statement of the same 10 ug/mL. DMSO's percent</span>
+<span class="sd">        is v/v by the paper's own DMSO convention (TABLE_S1_DOSES['DMSO'] note).</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="n">compound</span> <span class="o">==</span> <span class="s2">"Benomyl"</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span>
                 <span class="n">value</span><span class="o">=</span><span class="n">BENOMYL_MOLAR</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -1467,12 +1558,12 @@
                 <span class="n">basis</span><span class="o">=</span><span class="n">DoseBasis</span><span class="o">.</span><span class="n">fixed</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">compound</span> <span class="o">==</span> <span class="s2">"MMS"</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span><span class="n">basis</span><span class="o">=</span><span class="n">DoseBasis</span><span class="o">.</span><span class="n">fixed</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">table_s1_ic30</span><span class="p">(</span><span class="n">compound</span><span class="p">,</span> <span class="n">basis</span><span class="o">=</span><span class="n">DoseBasis</span><span class="o">.</span><span class="n">fixed</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">compound</span> <span class="o">==</span> <span class="n">DMSO_TOKEN</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span>
-                <span class="n">value</span><span class="o">=</span><span class="n">DMSO_DOSE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">table_s1_percent</span><span class="p">(</span><span class="n">DMSO_TOKEN</span><span class="p">),</span>
                 <span class="n">unit</span><span class="o">=</span><span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">percent_v_v</span><span class="p">,</span>
-                <span class="n">basis</span><span class="o">=</span><span class="n">DoseBasis</span><span class="o">.</span><span class="n">fixed</span><span class="p">,</span>
+                <span class="n">basis</span><span class="o">=</span><span class="n">DoseBasis</span><span class="o">.</span><span class="n">IC30</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">table_s1_ic30</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>
 
@@ -1586,8 +1677,12 @@
             <span class="n">units</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_units</span><span class="p">(</span><span class="n">compound</span><span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_genotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">systematic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">common</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Genotype</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The ONE screened deletion; the constant background is on the reference."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_genotype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">systematic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">common</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">barcode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Genotype</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The ONE screened deletion; the constant background is on the reference.</span>
+
+<span class="sd">        ``barcode`` None is a row the release carries no barcode for; it is served with</span>
+<span class="sd">        ``BARCODE_ABSENT_GAP`` so the absence is typed.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="n">Genotype</span><span class="p">(</span>
             <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
                 <span class="n">BarcodedKanMxDeletionPerturbation</span><span class="p">(</span>
@@ -1596,6 +1691,7 @@
                     <span class="n">barcode</span><span class="o">=</span><span class="n">barcode</span><span class="p">,</span>
                     <span class="n">collection</span><span class="o">=</span><span class="n">LIBRARY_COLLECTION</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                     <span class="n">cassette</span><span class="o">=</span><span class="n">ARRAY_KANMX</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[]</span> <span class="k">if</span> <span class="n">barcode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">BARCODE_ABSENT_GAP</span><span class="p">],</span>
                 <span class="p">)</span>
             <span class="p">]</span>
         <span class="p">)</span>
@@ -1641,14 +1737,24 @@
         <span class="c1"># --- library-row retention --------------------------------------------- #</span>
         <span class="n">split</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"_"</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">orfs</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">barcodes</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s2">""</span><span class="p">)</span>
+        <span class="c1"># No suffix, or an empty one, is a barcode the release does not carry: None.</span>
+        <span class="n">barcodes</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="n">str</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">tag</span><span class="p">:</span> <span class="n">tag</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">tag</span> <span class="o">!=</span> <span class="s2">""</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
         <span class="n">is_orf</span> <span class="o">=</span> <span class="n">orfs</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">gene</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">_SYSTEMATIC_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gene</span><span class="p">)))</span>
-        <span class="n">has_counts</span> <span class="o">=</span> <span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="n">sample_cols</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># A row is dropped whole only when EVERY count is missing; a partly missing row</span>
+        <span class="c1"># loses just the cells that use a missing count (the cell rule below).</span>
+        <span class="n">has_counts</span> <span class="o">=</span> <span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="n">sample_cols</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">not_background</span> <span class="o">=</span> <span class="o">~</span><span class="n">orfs</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">SELECTED_BACKGROUND_LOCI</span><span class="p">)</span>
-        <span class="n">prefilter</span> <span class="o">=</span> <span class="n">is_orf</span> <span class="o">&amp;</span> <span class="n">has_counts</span> <span class="o">&amp;</span> <span class="n">not_background</span>
+        <span class="n">candidate</span> <span class="o">=</span> <span class="n">is_orf</span> <span class="o">&amp;</span> <span class="n">has_counts</span> <span class="o">&amp;</span> <span class="n">not_background</span>
+        <span class="n">barcoded_orfs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">orfs</span><span class="p">[</span><span class="n">candidate</span> <span class="o">&amp;</span> <span class="n">barcodes</span><span class="o">.</span><span class="n">notna</span><span class="p">()])</span>
+        <span class="n">shadowed</span> <span class="o">=</span> <span class="n">candidate</span> <span class="o">&amp;</span> <span class="n">barcodes</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">orfs</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">barcoded_orfs</span><span class="p">)</span>
+        <span class="n">prefilter</span> <span class="o">=</span> <span class="n">candidate</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">shadowed</span>
         <span class="n">n_non_orf</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="o">~</span><span class="n">is_orf</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
         <span class="n">n_all_nan</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">is_orf</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">has_counts</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
         <span class="n">background_rows</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">orfs</span><span class="p">[</span><span class="n">is_orf</span> <span class="o">&amp;</span> <span class="n">has_counts</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">not_background</span><span class="p">])</span>
+        <span class="n">shadowed_rows</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">orfs</span><span class="p">[</span><span class="n">shadowed</span><span class="p">])</span>
+        <span class="n">n_barcodeless_served</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">prefilter</span> <span class="o">&amp;</span> <span class="n">barcodes</span><span class="o">.</span><span class="n">isna</span><span class="p">())</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
 
         <span class="n">genome</span> <span class="o">=</span> <span class="n">default_genome</span><span class="p">()</span>
         <span class="n">library</span> <span class="o">=</span> <span class="n">resolve_library_rows</span><span class="p">(</span>
@@ -1700,8 +1806,11 @@
                 <span class="n">rule</span><span class="o">=</span><span class="s2">"row_is_not_a_barcoded_orf_or_carries_no_counts"</span><span class="p">,</span>
                 <span class="n">scope</span><span class="o">=</span><span class="s2">"library_row"</span><span class="p">,</span>
                 <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">"the gene column is not '&lt;systematic ORF&gt;_&lt;barcode&gt;', or every count "</span>
-                    <span class="s2">"column is missing (a QC-dropped barcode)"</span>
+                    <span class="s2">"the gene column does not name a systematic ORF (before any "</span>
+                    <span class="s2">"'_&lt;barcode&gt;' suffix), or every count column is missing (a "</span>
+                    <span class="s2">"QC-dropped barcode); a row missing only some counts is kept and "</span>
+                    <span class="s2">"loses just the cells that use them "</span>
+                    <span class="s2">"(a_count_the_cell_uses_is_missing)"</span>
                 <span class="p">),</span>
                 <span class="n">n_records</span><span class="o">=</span><span class="p">(</span><span class="n">n_non_orf</span> <span class="o">+</span> <span class="n">n_all_nan</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_kept_compounds</span><span class="p">,</span>
                 <span class="n">items</span><span class="o">=</span><span class="p">[],</span>
@@ -1719,6 +1828,21 @@
                 <span class="p">),</span>
                 <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">background_rows</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_kept_compounds</span><span class="p">,</span>
                 <span class="n">items</span><span class="o">=</span><span class="n">background_rows</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">DropRule</span><span class="p">(</span>
+                <span class="n">rule</span><span class="o">=</span><span class="s2">"barcodeless_row_of_an_orf_another_row_carries_with_a_barcode"</span><span class="p">,</span>
+                <span class="n">scope</span><span class="o">=</span><span class="s2">"library_row"</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">"the gene column names the ORF with no '_&lt;barcode&gt;' suffix while "</span>
+                    <span class="s2">"another row of the release carries the same ORF with a barcode, so "</span>
+                    <span class="s2">"the barcode is not absent from the release and this row cannot be "</span>
+                    <span class="s2">"told apart from that strain; a barcodeless row whose ORF no other "</span>
+                    <span class="s2">"row names is served with barcode None and BARCODE_ABSENT_GAP"</span>
+                <span class="p">),</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">shadowed_rows</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_kept_compounds</span><span class="p">,</span>
+                <span class="n">items</span><span class="o">=</span><span class="n">shadowed_rows</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
         <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -1754,15 +1878,18 @@
         <span class="p">]</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Vanacloig: </span><span class="si">%d</span><span class="s2"> conditions kept (</span><span class="si">%d</span><span class="s2"> unreported, </span><span class="si">%d</span><span class="s2"> unidentified dropped); "</span>
-            <span class="s2">"</span><span class="si">%d</span><span class="s2"> library rows kept (</span><span class="si">%d</span><span class="s2"> non-ORF, </span><span class="si">%d</span><span class="s2"> all-NaN, </span><span class="si">%d</span><span class="s2"> background loci, </span><span class="si">%d</span><span class="s2"> "</span>
-            <span class="s2">"retired, </span><span class="si">%d</span><span class="s2"> legacy duplicates dropped)"</span><span class="p">,</span>
+            <span class="s2">"</span><span class="si">%d</span><span class="s2"> library rows kept, </span><span class="si">%d</span><span class="s2"> of them without a barcode (</span><span class="si">%d</span><span class="s2"> non-ORF, </span><span class="si">%d</span><span class="s2"> "</span>
+            <span class="s2">"all-NaN, </span><span class="si">%d</span><span class="s2"> background loci, </span><span class="si">%d</span><span class="s2"> barcodeless duplicates, </span><span class="si">%d</span><span class="s2"> retired, </span><span class="si">%d</span><span class="s2"> "</span>
+            <span class="s2">"legacy duplicates dropped)"</span><span class="p">,</span>
             <span class="n">n_kept_compounds</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">unreported</span><span class="p">),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">unidentified</span><span class="p">),</span>
             <span class="n">n_rows</span><span class="p">,</span>
+            <span class="n">n_barcodeless_served</span><span class="p">,</span>
             <span class="n">n_non_orf</span><span class="p">,</span>
             <span class="n">n_all_nan</span><span class="p">,</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">background_rows</span><span class="p">),</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">shadowed_rows</span><span class="p">),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">dropped_retired</span><span class="p">),</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">library</span><span class="o">.</span><span class="n">dropped_legacy_duplicate</span><span class="p">),</span>
         <span class="p">)</span>
@@ -1770,11 +1897,11 @@
         <span class="c1"># --- normalization ----------------------------------------------------- #</span>
         <span class="c1"># The library size is a property of the SEQUENCED SAMPLE, so it is summed over</span>
         <span class="c1"># EVERY released barcode (NaN = a QC-dropped barcode contributing no reads)</span>
-        <span class="c1"># BEFORE any retention rule is applied, and TMM runs over every complete row.</span>
+        <span class="c1"># BEFORE any retention rule is applied. TMM for a condition runs over every row</span>
+        <span class="c1"># complete in that condition's own columns (edgeR permits no NA count).</span>
         <span class="n">col_idx</span> <span class="o">=</span> <span class="p">{</span><span class="n">column</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">column</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sample_cols</span><span class="p">)}</span>
         <span class="n">all_counts</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">sample_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
         <span class="n">library_sizes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">all_counts</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">complete</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">all_counts</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">kept_counts</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">keep</span><span class="p">,</span> <span class="n">sample_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
 
         <span class="n">publication</span> <span class="o">=</span> <span class="n">Publication</span><span class="p">(</span><span class="n">doi</span><span class="o">=</span><span class="n">PAPER_DOI</span><span class="p">,</span> <span class="n">doi_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://doi.org/</span><span class="si">{</span><span class="n">PAPER_DOI</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -1783,6 +1910,7 @@
         <span class="n">env</span><span class="p">,</span> <span class="n">interned_env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_open_write_lmdb</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">))</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">n_all_zero_cells</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">missing_cells</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">normalization</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TmmFactors</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">,</span> <span class="n">interned_env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">compound</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">kept_compounds</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"Vanacloig conditions"</span><span class="p">):</span>
@@ -1802,6 +1930,7 @@
                 <span class="n">control_set</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">c</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">paired</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">group</span><span class="p">})</span>
                 <span class="n">members</span> <span class="o">=</span> <span class="n">control_set</span> <span class="o">+</span> <span class="n">cols</span>
                 <span class="n">member_idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">col_idx</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">members</span><span class="p">]</span>
+                <span class="n">complete</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">all_counts</span><span class="p">[:,</span> <span class="n">member_idx</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">factors</span> <span class="o">=</span> <span class="n">tmm_factors</span><span class="p">(</span>
                     <span class="n">all_counts</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">complete</span><span class="p">,</span> <span class="n">member_idx</span><span class="p">)],</span>
                     <span class="n">library_sizes</span><span class="p">[</span><span class="n">member_idx</span><span class="p">],</span>
@@ -1826,12 +1955,21 @@
                 <span class="p">)</span>
                 <span class="n">response</span> <span class="o">=</span> <span class="n">log_rep</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">sd</span> <span class="o">=</span> <span class="n">log_rep</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-                <span class="n">all_zero</span> <span class="o">=</span> <span class="p">(</span><span class="n">kept_counts</span><span class="p">[:,</span> <span class="p">[</span><span class="n">col_idx</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">]]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="c1"># A cell with a missing replicate or paired-control count has no value</span>
+                <span class="c1"># the method defines; it is dropped first, so each cell counts once.</span>
+                <span class="n">missing</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">kept_counts</span><span class="p">[:,</span> <span class="n">member_idx</span><span class="p">])</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">missing_cells</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">library</span><span class="o">.</span><span class="n">systematic</span><span class="p">[</span><span class="n">row</span><span class="p">]</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">compound</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">all_zero</span> <span class="o">=</span> <span class="p">(</span><span class="n">kept_counts</span><span class="p">[:,</span> <span class="p">[</span><span class="n">col_idx</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">]]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span>
+                    <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+                <span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">missing</span>
                 <span class="n">n_all_zero_cells</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">all_zero</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
                 <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>
                 <span class="n">reference</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reference</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_rows</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="n">all_zero</span><span class="p">[</span><span class="n">row</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">missing</span><span class="p">[</span><span class="n">row</span><span class="p">]</span> <span class="ow">or</span> <span class="n">all_zero</span><span class="p">[</span><span class="n">row</span><span class="p">]:</span>
                         <span class="k">continue</span>
                     <span class="n">experiment</span> <span class="o">=</span> <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">(</span>
                         <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
@@ -1853,6 +1991,22 @@
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="n">interned_env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
+        <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">DropRule</span><span class="p">(</span>
+                <span class="n">rule</span><span class="o">=</span><span class="s2">"a_count_the_cell_uses_is_missing"</span><span class="p">,</span>
+                <span class="n">scope</span><span class="o">=</span><span class="s2">"cell"</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">"one of the counts this (strain, compound) cell is computed from, a "</span>
+                    <span class="s2">"replicate or one of its paired controls, is missing (NaN) in the "</span>
+                    <span class="s2">"release; the paper's per-compound edgeR fit permits no NA count and "</span>
+                    <span class="s2">"its design is three replicates against the paired controls, so the "</span>
+                    <span class="s2">"cell has no value the method defines and is dropped, while the "</span>
+                    <span class="s2">"strain's other cells are kept. Items are '&lt;ORF&gt;:&lt;token&gt;'"</span>
+                <span class="p">),</span>
+                <span class="n">n_records</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">missing_cells</span><span class="p">),</span>
+                <span class="n">items</span><span class="o">=</span><span class="n">missing_cells</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
         <span class="n">rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">DropRule</span><span class="p">(</span>
                 <span class="n">rule</span><span class="o">=</span><span class="s2">"all_three_replicate_counts_are_zero"</span><span class="p">,</span>

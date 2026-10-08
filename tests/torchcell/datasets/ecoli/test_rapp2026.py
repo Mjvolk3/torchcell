@@ -781,7 +781,9 @@ def test_build_two_records_with_the_control_reference_and_ledgers(
     the two ctrl strains are the reference.
     """
     dataset = m.MetabolomeRapp2026Dataset(root=str(synthetic), ecoli_genome=mg1655)
-    assert presence_only_pins == [m.DATA_SHA256]
+    assert presence_only_pins == [
+        {name: m.DATA_SHA256[name] for name in dataset.raw_file_names}
+    ]
     assert len(dataset) == 2
     keys = ["ppal[M+H]+", "ppal[M-H]-", "ac-gcald[M+H]+", "didp[M+H]+", "didp[M-H]-"]
 
@@ -1032,11 +1034,18 @@ def test_retrieve_runs_the_recorded_retriever_and_verifies(
 
 
 def test_every_consumed_file_is_pinned_once_from_the_elsevier_cdn() -> None:
+    """``RAW_FILES`` is the citation key's whole mirrored set, one manifest for it.
+
+    Table S2 and Table S6 are pinned here and READ by ``rapp2026_platforms``; the other
+    five are what ``process()`` consumes.
+    """
     assert [(f.name, f.member) for f in m.RAW_FILES] == [
         ("si2.xlsx", "mmc2.xlsx"),
+        ("si3.xlsx", "mmc3.xlsx"),
         ("si4.xlsx", "mmc4.xlsx"),
         ("si5.xlsx", "mmc5.xlsx"),
         ("si6.xlsx", "mmc6.xlsx"),
+        ("si7.xlsx", "mmc7.xlsx"),
         ("si10.xlsx", "mmc10.xlsx"),
     ]
     assert all(
@@ -1344,7 +1353,10 @@ def test_the_dataset_declares_its_schema_classes_and_raw_files() -> None:
     shell = object.__new__(m.MetabolomeRapp2026Dataset)
     assert shell.experiment_class.__name__ == "BacterialMetaboliteExperiment"
     assert shell.reference_class.__name__ == "BacterialMetaboliteExperimentReference"
-    assert shell.raw_file_names == [raw.name for raw in m.RAW_FILES]
+    assert shell.raw_file_names == [
+        raw.name for raw in m.RAW_FILES if raw.name not in m.PLATFORM_ONLY_FILES
+    ]
+    assert m.PLATFORM_ONLY_FILES == (m.TABLE_S2, m.TABLE_S6)
     frame = __import__("pandas").DataFrame({"a": [1]})
     assert shell.preprocess_raw(frame) is frame
     with pytest.raises(NotImplementedError):

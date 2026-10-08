@@ -16,8 +16,11 @@ build time, that mean reproduces the paper's own ``Mean_FC`` column exactly for 
 so the stored statistic is the paper's, not a re-derivation of it.
 
 DATA. The matrices are in the publisher SI, which the Elsevier CDN serves directly
-(``RetrievalMethod.direct_url`` through ``retrieve.elsevier_mmc``). The loader consumes
-five workbooks: Table S4 (``si5.xlsx``, rows annotated m/z features, columns the 3,026
+(``RetrievalMethod.direct_url`` through ``retrieve.elsevier_mmc``). ``RAW_FILES`` pins
+the SEVEN workbooks the citation key's raw mirror holds, which is one manifest shared
+with ``rapp2026_platforms``: Table S2 (``si3.xlsx``) and Table S6 (``si7.xlsx``) are
+pinned here and read THERE, by the growth and targeted-LC-MS/MS loaders. This loader
+consumes the other five: Table S4 (``si5.xlsx``, rows annotated m/z features, columns the 3,026
 samples; the values), Table S3 (``si4.xlsx``, one row per sample: target gene, b-number,
 sampling OD, plate, well, replicate), Table S1 (``si2.xlsx``, the sgRNA of each library
 gene including its 20-nt base-pairing region), Table S9 (``si10.xlsx``, the 802 isobaric
@@ -170,6 +173,10 @@ DATA_RETRIEVED_AT = "2026-10-07T11:43:21.426570+00:00"
 #: Table S1: the sgRNA of every library gene (``mmc2.xlsx``).
 TABLE_S1 = "si2.xlsx"
 TABLE_S1_SHEET = "Table_S1"
+#: Table S2: the 181-point OD600 growth curve of every strain (``mmc3.xlsx``). Consumed
+#: by ``rapp2026_platforms.GrowthAucRapp2026Dataset``, not by this module.
+TABLE_S2 = "si3.xlsx"
+TABLE_S2_SHEET = "Table_S2"
 #: Table S3: one row per metabolome sample (``mmc4.xlsx``).
 TABLE_S3 = "si4.xlsx"
 TABLE_S3_SHEET = "Table_S3"
@@ -179,6 +186,12 @@ TABLE_S4_SHEET = "Table_S4"
 #: Table S5: the accumulating pairs, read only to cross-check the mean (``mmc6.xlsx``).
 TABLE_S5 = "si6.xlsx"
 TABLE_S5_SHEET = "TableS5"
+#: Table S6: the targeted LC-MS/MS screen of the accumulating pairs (``mmc7.xlsx``).
+#: Consumed by ``rapp2026_platforms.TargetedMetabolomeRapp2026Dataset``, not here.
+TABLE_S6 = "si7.xlsx"
+TABLE_S6_SHEET = "Table_S6"
+#: The column-legend sheet both Table S5 and Table S6 carry beside their data sheet.
+LEGEND_SHEET = "Legend"
 #: Table S9: the 802 isobaric metabolites, the identity layer (``mmc10.xlsx``).
 TABLE_S9 = "si10.xlsx"
 TABLE_S9_SHEET = "TableS9"
@@ -235,6 +248,14 @@ RAW_FILES: tuple[RawFile, ...] = (
         "region, full oligo)",
     ),
     _elsevier_file(
+        TABLE_S2,
+        "mmc3.xlsx",
+        "bc7ff53a40a51c955eb599062f3da05cf8ad906b31d45f2acdca89e8bfca7239",
+        7390438,
+        "Table S2: the OD600 growth curve of every strain, 181 points at 10 min "
+        "spacing over 0-30 h, three replicate cultures per strain",
+    ),
+    _elsevier_file(
         TABLE_S3,
         "mmc4.xlsx",
         "4a7fd186dabaa384baf2f8009843ba95fbf3a88851f61c82cb2b920d1c47079f",
@@ -259,6 +280,14 @@ RAW_FILES: tuple[RawFile, ...] = (
         "R2_FC; read only to cross-check the stored mean",
     ),
     _elsevier_file(
+        TABLE_S6,
+        "mmc7.xlsx",
+        "c4957a1d7966e47bf2f1ab5863aa06e87a8620199db1c2f86075a51e868162de",
+        590835,
+        "Table S6: the targeted LC-MS/MS screen of 1,256 strain-metabolite pairs "
+        "(EIC peak-height fold change, precursor intensity, MS2 fragments)",
+    ),
+    _elsevier_file(
         TABLE_S9,
         "mmc10.xlsx",
         "46aed36e634f52e239691bf490f698a24e342e46a650681ce50147a520d8e697",
@@ -267,9 +296,12 @@ RAW_FILES: tuple[RawFile, ...] = (
         "mass and neutral formula",
     ),
 )
-#: ``{raw file name: pinned sha256}``, the build-time check of every consumed file.
+#: ``{raw file name: pinned sha256}`` over the whole mirrored set.
 DATA_SHA256: dict[str, str] = {f.name: f.sha256 for f in RAW_FILES}
 RAW_FILES_BY_NAME: dict[str, RawFile] = {f.name: f for f in RAW_FILES}
+#: Mirrored here, read by ``rapp2026_platforms``: this loader links neither and reads
+#: neither, so ``raw_file_names`` and the build-time sha256 check leave them out.
+PLATFORM_ONLY_FILES: tuple[str, ...] = (TABLE_S2, TABLE_S6)
 
 #: Released files deliberately not mirrored (the loader does not read them).
 NOT_MIRRORED = (
@@ -278,7 +310,6 @@ NOT_MIRRORED = (
     "mmc1.pdf (Figures S1-S12 + Data S3), mmc14.pdf (Data S1 parity plots), mmc16.pdf "
     "(transparent peer review) and mmc17.pdf (the article): captured in the literature "
     "mirror, not read here",
-    "mmc3.xlsx (Table S2 growth curves), mmc7.xlsx (Table S6 LC-MS/MS spectra), "
     "mmc8.xlsx (Table S7 non-annotated features), mmc9.xlsx (Table S8 SIRIUS "
     "predictions), mmc11.xlsx (Table S10 iML1515 reactants), mmc12.xlsx (Table S11 "
     "EcoCyc pathways), mmc13.xlsx (Table S12 pathway reactants), mmc15.zip (Data S2 "
@@ -1822,8 +1853,17 @@ class MetabolomeRapp2026Dataset(ExperimentDataset):
 
     @property
     def raw_file_names(self) -> list[str]:
-        """Every consumed file, linked from the raw mirror."""
-        return [raw.name for raw in RAW_FILES]
+        """The five workbooks this loader reads, linked from the raw mirror.
+
+        ``RAW_FILES`` pins seven, one manifest for the citation key; Table S2 and
+        Table S6 (``PLATFORM_ONLY_FILES``) are read by ``rapp2026_platforms`` and are
+        not linked here.
+        """
+        return [raw.name for raw in RAW_FILES if raw.name not in PLATFORM_ONLY_FILES]
+
+    def _consumed_sha256(self) -> dict[str, str]:
+        """``{name: sha256}`` of the files this loader reads."""
+        return {name: DATA_SHA256[name] for name in self.raw_file_names}
 
     def download(self) -> None:
         """Link each mirror file into ``raw/`` after checking the manifest and sha256.
@@ -1834,7 +1874,10 @@ class MetabolomeRapp2026Dataset(ExperimentDataset):
         data_root = _data_root()
         manifest = load_manifest(data_root)
         os.makedirs(self.raw_dir, exist_ok=True)
+        names = set(self.raw_file_names)
         for raw in RAW_FILES:
+            if raw.name not in names:
+                continue
             check_manifest_pin(
                 raw.mirror_relpath,
                 manifest_sha256(manifest, raw.mirror_relpath),
@@ -1866,7 +1909,7 @@ class MetabolomeRapp2026Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Parse the five SI workbooks into per-strain records + the LMDB."""
-        verify_raw_files(self.raw_dir, DATA_SHA256)
+        verify_raw_files(self.raw_dir, self._consumed_sha256())
         guides = read_guides(self._raw(TABLE_S1))
         sample_rows = read_sample_rows(self._raw(TABLE_S3))
         metabolites = read_metabolites(self._raw(TABLE_S9))

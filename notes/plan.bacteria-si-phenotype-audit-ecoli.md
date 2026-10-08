@@ -3838,3 +3838,42 @@ serves. Against our own store, `PRJNA645443` is the one overlapping identifier (
 records it as holding that paper's raw reads, and that dataset serves RB-TnSeq fitness), and
 none of the 38 PMIDs or 30 GEO series matches any other *E. coli* or *P. putida* loader.
 That is the measured negative the #760 pattern asked for.
+
+## 2026.10.08 - Ranks 4, 5 and 6 landed, with three measured corrections
+
+Ranks 4 (Rapp growth AUC), 5 (Table S6 targeted LC-MS/MS) and 6 (Table S5 absolute
+intensities) are implemented in `torchcell/datasets/ecoli/rapp2026_platforms.py`, one
+dataset per family; the whole build, verification and sourcing record is in
+[[torchcell.datasets.ecoli.rapp2026_platforms]]. Ranks 7 and 8 remain excluded. What the
+implementation changes about this audit's own numbers:
+
+1. **Each accumulation family is 406 records, not 411.** This audit counted strains with
+   `df["Gene"].nunique() = 411` on both Table S5 and Table S6. Measured during the
+   implementation: **4 of those 411 tokens are control wells** (`ctrl4`, `ctrl7`, `ctrl8`,
+   `ctrl11`, carrying 1, 6, 1 and 2 rows), which carry no knockdown and so cannot be
+   records, and `phnE` is dropped by the `b_number_remapped_by_the_annotation` rule this
+   audit already records for the metabolome loader. 411 - 4 - 1 = **406 records**, with
+   **1,244** targeted values (1,256 - 10 - 2) and **1,373** intensity values
+   (1,385 - 10 - 2). Rank 4's 1,514 is unchanged.
+2. **Rank 7's exclusion now has a measurement behind it.** The audit called
+   `Intensity PrecMz` "low value: an instrument-scale intensity with no normalization".
+   Measured: `Intensity PrecMz / fold-change` is NOT constant within a feature key
+   (median relative spread 0.185, maximum 3.34 over the 173 multi-strain keys), so it is
+   not the numerator of the released fold change and cannot reconstruct that statistic's
+   denominator either. The exclusion stands, and is now a finding rather than a judgment.
+3. **The 181-point curve of rank 4 is not blocked by gap 3 for the reason given, but the
+   AUC is still the only thing stored.** The audit's row reads the released axis as
+   "181 OD600 time columns 0 .. 30 (10 min spacing, 0-30 h)" against a Methods sentence
+   naming 24 h. The Figure S1 caption resolves the discrepancy: "The cultures were back
+   diluted into fresh medium at t = 6 h", so the axis is 6 h pre-dilution plus 24 h after.
+   The time series itself remains unstored (no `Phenotype` subclass has a time axis, which
+   is unchanged), and the trapezoid over the full released axis reproduces the paper's
+   489 / 1,026 split as 490 / 1,025, which is the evidence that the released axis is what
+   the paper's `trapz.m` consumed.
+
+The audit's non-duplication statistics for rank 5 reproduce to the digit (Pearson
+r = 0.6722046 linear, 0.6701132 on log2, median absolute log2 difference 1.1648917 over
+the same 1,256 1:1-joined pairs) and the build now refuses any other answer. Two further
+measurements on that join: rank correlation 0.5533, and log2 fold change > 1 on 1,062 of
+1,256 rows (0.8455), which is the paper's "85% of the tested pairs" -- the second platform
+agrees on the CALL and not on the number.

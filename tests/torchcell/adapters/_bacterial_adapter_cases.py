@@ -68,6 +68,7 @@ from torchcell.adapters import (
     EnvChemgenShiver2016Adapter,
     EnvChemgenWang2015Adapter,
     GeneEssentialityGoodall2018Adapter,
+    GrowthAucRapp2026Adapter,
     GrowthRateCampos2018Adapter,
     GrowthRateSchmidt2016Adapter,
     IsoprenolSelectionMenasalvas2025Adapter,
@@ -75,6 +76,7 @@ from torchcell.adapters import (
     IsoprenolTiterDeSiqueira2025Adapter,
     IsoprenolToleranceLim2025Adapter,
     IsoprenylAcetateTiterKang2026Adapter,
+    MetaboliteIntensityRapp2026Adapter,
     MetabolomeFuhrer2017Adapter,
     MetabolomeRapp2026Adapter,
     MetabolomeSchastnaya2021Adapter,
@@ -94,6 +96,7 @@ from torchcell.adapters import (
     RnaseqCaglar2017Adapter,
     RnaseqLamoureux2023Adapter,
     RnaseqPublicK12Lamoureux2023Adapter,
+    TargetedMetabolomeRapp2026Adapter,
 )
 from torchcell.adapters.cell_adapter import SINGLE_PASS_EDGES, SINGLE_PASS_NODES
 from torchcell.datamodels.schema import PhagePerturbation
@@ -117,6 +120,11 @@ from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
 from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
+from torchcell.datasets.ecoli.rapp2026_platforms import (
+    GrowthAucRapp2026Dataset,
+    MetaboliteIntensityRapp2026Dataset,
+    TargetedMetabolomeRapp2026Dataset,
+)
 from torchcell.datasets.ecoli.rousset2018 import CrispriScreenRousset2018Dataset
 from torchcell.datasets.ecoli.schastnaya2021 import MetabolomeSchastnaya2021Dataset
 from torchcell.datasets.ecoli.schmidt2016 import ProteomeSchmidt2016Dataset
@@ -333,6 +341,30 @@ BACTERIAL: list[Bacterial] = [
         "rapp2026",
         "metabolome_rapp2026",
         MetabolomeRapp2026Dataset,
+        "metabolite phenotype",
+        crispr=True,
+    ),
+    _case(
+        GrowthAucRapp2026Adapter,
+        "rapp2026_growth",
+        "growth_auc_rapp2026",
+        GrowthAucRapp2026Dataset,
+        "fitness phenotype",
+        crispr=True,
+    ),
+    _case(
+        MetaboliteIntensityRapp2026Adapter,
+        "rapp2026_intensity",
+        "metabolite_intensity_rapp2026",
+        MetaboliteIntensityRapp2026Dataset,
+        "metabolite phenotype",
+        crispr=True,
+    ),
+    _case(
+        TargetedMetabolomeRapp2026Adapter,
+        "rapp2026_targeted",
+        "targeted_metabolome_rapp2026",
+        TargetedMetabolomeRapp2026Dataset,
         "metabolite phenotype",
         crispr=True,
     ),

@@ -491,12 +491,14 @@ BACTERIAL_DATASETS = {
     "EnvChemgenWang2015Dataset",
     "GeneEssentialityGoodall2018Dataset",
     "GrowthRateCampos2018Dataset",
+    "GrowthAucRapp2026Dataset",
     "GrowthRateSchmidt2016Dataset",
     "IsoprenolSelectionMenasalvas2025Dataset",
     "IsoprenolTiterCarruthers2025Dataset",
     "IsoprenolTiterDeSiqueira2025Dataset",
     "IsoprenolToleranceLim2025Dataset",
     "IsoprenylAcetateTiterKang2026Dataset",
+    "MetaboliteIntensityRapp2026Dataset",
     "MetabolomeFuhrer2017Dataset",
     "MetabolomeRapp2026Dataset",
     "MetabolomeSchastnaya2021Dataset",
@@ -516,6 +518,7 @@ BACTERIAL_DATASETS = {
     "RnaseqCaglar2017Dataset",
     "RnaseqLamoureux2023Dataset",
     "RnaseqPublicK12Lamoureux2023Dataset",
+    "TargetedMetabolomeRapp2026Dataset",
 }
 """The E. coli and P. putida datasets mapped in plan step 9 and after, none calibrated
 yet."""

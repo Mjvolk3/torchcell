@@ -306,3 +306,23 @@ store by the data-gated graph check:
 
 The perturbation nodes are the `bacterial perturbation` class, never the served yeast
 `perturbation` class. No KG build was run.
+
+## 2026.10.08 - The mirror now serves three sibling families
+
+[[torchcell.datasets.ecoli.rapp2026_platforms]] adds the release's three other
+per-strain quantity families (growth AUC, targeted LC-MS/MS fold change, absolute FI-MS
+intensity), which changes two things here and nothing about what this loader stores.
+
+- **`RAW_FILES` pins seven workbooks, not five.** Table S2 (`si3.xlsx`, `mmc3`, sha256
+  `bc7ff53a40a5...`) and Table S6 (`si7.xlsx`, `mmc7`, sha256 `c4957a1d7966...`) are
+  pinned here so the citation key keeps ONE raw-mirror manifest, and are read by the
+  sibling module. `NOT_MIRRORED` no longer lists them as unconsumed.
+- **`raw_file_names` is this loader's own five.** `PLATFORM_ONLY_FILES` names the two it
+  does not read, so `download()` links five and `process()` sha256-checks five
+  (`_consumed_sha256`). The built store is unaffected: the same five files, the same
+  1,496 records.
+
+The three siblings reuse this module's `SOURCED_VALUES`, `SCREEN_MEDIA`, `environment()`,
+`host_background()`, `read_guides`, `read_sample_rows`, `read_metabolites` and the
+`b_number_remapped_by_the_annotation` drop rule, so there is one strain pin, one medium
+and one `phnE` decision across all four families of this paper.

@@ -3691,20 +3691,26 @@ CANDIDATES: list[Candidate] = [
         instances_n=29,
         instances_basis="reported",
         phenotype="paired transcriptome, proteome, metabolome and 13C flux in glucose-limited chemostats",
-        dim=4300,
-        dim_basis="estimate",
+        dim=579,
+        dim_basis="reported",
         seq_basis="K-12-KO",
         modality="mixed",
-        why="Design confirmed from a secondary open-access source: 24 single-gene "
-        "disruptants at a fixed dilution rate of 0.2 per hour plus wild type "
-        "at 5 dilution rates, measured by DNA microarray, 2D-DIGE, CE-TOFMS "
-        "and metabolic flux analysis. Per-layer depth (transcripts, proteins, "
-        "metabolites, fluxes) is NOT confirmed: the paper is paywalled and "
-        "absent from PMC, and no accessible secondary source quotes those "
-        "counts, so 4,300 is a genome-wide-array estimate for the dominant "
-        "layer and must be replaced before use in any ranking.",
-        accession="Science supporting online material; no repository accession found",
-        accession_confirmed=False,
+        why="Design and per-layer depth both MEASURED off the released workbook "
+        "(ishii2007_release_inventory.py, 2026-10-08): 24 single-gene disruptants at a "
+        "fixed dilution rate of 0.2 per hour plus wild type at 5 dilution rates. Per "
+        "layer, targets and servable records: metabolite 579 and 24, mRNA 85 and 24, "
+        "protein 67 and 24, flux 50 and 24. The earlier 4,300 was a genome-wide-array "
+        "estimate and is replaced by 579, the largest targeted panel; the genome-wide "
+        "DNA-array arm is a separate 4,213-oligo ratio release. The data is NOT in the "
+        "paywalled supplement: the paper's reference 21 is a project web site that "
+        "serves the whole release over plain HTTP, and science.org answers HTTP 403 "
+        "with a Cloudflare challenge for every route. Three of the four layers are "
+        "loaded (metabolome, proteome, flux, 24 records each); the qRT-PCR mRNA layer "
+        "is an absolute transcript abundance no phenotype holds.",
+        accession="Keio project web site (the paper's reference 21), "
+        "http://ecoli.iab.keio.ac.jp/; no repository accession, and the Science "
+        "supporting online material is Cloudflare-gated",
+        accession_confirmed=True,
         status="candidate",
         confidence="sourced",
         analog=Analog(

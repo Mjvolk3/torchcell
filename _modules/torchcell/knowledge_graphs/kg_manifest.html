@@ -809,10 +809,15 @@
 <div class="viewcode-block" id="dataset_adapter_files">
 <a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.kg_manifest.dataset_adapter_files.html#torchcell.knowledge_graphs.kg_manifest.dataset_adapter_files">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">dataset_adapter_files</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Repo-relative adapter module + conf yaml serving ``dataset_class``."""</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataset_adapter_map</span>
+<span class="w">    </span><span class="sd">"""Repo-relative adapter module + conf yaml serving ``dataset_class``.</span>
 
-    <span class="n">adapter_class</span> <span class="o">=</span> <span class="n">dataset_adapter_map</span><span class="p">[</span><span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="n">dataset_class</span><span class="p">)]</span>
+<span class="sd">    Looked up in the public and private maps together: this resolves the files of a</span>
+<span class="sd">    dataset already in (or entering) a store, and whether a private dataset may be</span>
+<span class="sd">    there at all is decided by ``check_admission`` and the build gate, not here.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_adapter_map</span>
+
+    <span class="n">adapter_class</span> <span class="o">=</span> <span class="n">build_adapter_map</span><span class="p">(</span><span class="n">include_private</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="n">dataset_class</span><span class="p">)]</span>
     <span class="n">adapter_file</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getsourcefile</span><span class="p">(</span><span class="n">adapter_class</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
     <span class="n">rel</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">adapter_file</span><span class="o">.</span><span class="n">relative_to</span><span class="p">(</span><span class="n">repo_root</span><span class="o">.</span><span class="n">resolve</span><span class="p">()))</span>
     <span class="n">conf</span> <span class="o">=</span> <span class="n">_adapter_conf_name</span><span class="p">(</span><span class="n">adapter_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">))</span>
@@ -1018,6 +1023,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_dataset_class</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">:</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">torchcell.datasets.ecoli</span>  <span class="c1"># noqa: F401  # populates the registry</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">torchcell.datasets.pputida</span>  <span class="c1"># noqa: F401  # populates the registry</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">torchcell.datasets.private_torchcell</span>  <span class="c1"># noqa: F401  # populates the registry</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae</span>  <span class="c1"># noqa: F401  # populates the registry</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataset_registry</span>
 
@@ -1452,6 +1458,7 @@
     <span class="n">ack_value_drift</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">served_experiment_ids</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">served_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"live store"</span><span class="p">,</span>
+    <span class="n">include_private</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdmissionReport</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Decide whether ``dataset_class_name`` can be added to the store incrementally.</span>
 
@@ -1459,8 +1466,12 @@
 <span class="sd">    Dataset node (``live_experiment_ids`` bound to a connection in production, named by</span>
 <span class="sd">    ``served_source`` in the report). It is called only when the dataset is already</span>
 <span class="sd">    served, to run the superset proof; without it a served dataset blocks.</span>
+
+<span class="sd">    A PRIVATE dataset blocks unless ``include_private`` (``admit --include-private``),</span>
+<span class="sd">    the same opt-in the build takes: the in-house store carries private data, a public</span>
+<span class="sd">    one never does. With the flag the private adapter map is searched too.</span>
 <span class="sd">    """</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataset_adapter_map</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_adapter_map</span>
 
     <span class="n">commit</span><span class="p">,</span> <span class="n">dirty</span> <span class="o">=</span> <span class="n">_git_info</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)</span>
     <span class="n">torchcell_version</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">checkout_package_version</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)</span>
@@ -1526,15 +1537,20 @@
 
     <span class="c1"># 5. the new dataset itself</span>
     <span class="n">dataset_class</span> <span class="o">=</span> <span class="n">_dataset_class</span><span class="p">(</span><span class="n">dataset_class_name</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">dataset_visibility</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"private"</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">dataset_visibility</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"private"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">include_private</span><span class="p">:</span>
         <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_class_name</span><span class="si">}</span><span class="s2"> is PRIVATE (visibility=private): in-house data is "</span>
-            <span class="s2">"never admitted to the public served graph, so there is no incremental "</span>
-            <span class="s2">"path for it"</span>
+            <span class="s2">"admitted only to an in-house store, by an admission run with "</span>
+            <span class="s2">"--include-private"</span>
         <span class="p">)</span>
-    <span class="n">in_map</span> <span class="o">=</span> <span class="n">dataset_class</span> <span class="ow">in</span> <span class="n">dataset_adapter_map</span>
+    <span class="n">in_map</span> <span class="o">=</span> <span class="n">dataset_class</span> <span class="ow">in</span> <span class="n">build_adapter_map</span><span class="p">(</span><span class="n">include_private</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">in_map</span><span class="p">:</span>
-        <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_class_name</span><span class="si">}</span><span class="s2"> is not in dataset_adapter_map"</span><span class="p">)</span>
+        <span class="n">searched</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"dataset_adapter_map or PRIVATE_DATASET_ADAPTER_MAP"</span>
+            <span class="k">if</span> <span class="n">include_private</span>
+            <span class="k">else</span> <span class="s2">"dataset_adapter_map"</span>
+        <span class="p">)</span>
+        <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_class_name</span><span class="si">}</span><span class="s2"> is not in </span><span class="si">{</span><span class="n">searched</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">served</span> <span class="o">=</span> <span class="n">dataset_class_name</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span>
     <span class="n">rel</span> <span class="o">=</span> <span class="n">loader_relpath</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">)</span>
     <span class="n">new_closure</span> <span class="o">=</span> <span class="n">closure_in_worktree</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">surface</span><span class="p">)</span>
@@ -1692,6 +1708,7 @@
     <span class="n">ack_value_drift</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">served_experiment_ids</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">served_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"live store"</span><span class="p">,</span>
+    <span class="n">include_private</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BatchAdmissionReport</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Decide whether every named dataset can be added in ONE incremental import."""</span>
     <span class="k">return</span> <span class="n">batch_report_from_members</span><span class="p">(</span>
@@ -1705,6 +1722,7 @@
                 <span class="n">ack_value_drift</span><span class="p">,</span>
                 <span class="n">served_experiment_ids</span><span class="p">,</span>
                 <span class="n">served_source</span><span class="p">,</span>
+                <span class="n">include_private</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">dataset_class_names</span>
         <span class="p">]</span>
@@ -2222,6 +2240,12 @@
         <span class="s2">"re-admission is a superset of what the store holds"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">p_admit</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--database"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">"torchcell"</span><span class="p">)</span>
+    <span class="n">p_admit</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--include-private"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"admit a PRIVATE dataset (visibility=private) into an in-house store; "</span>
+        <span class="s2">"without it a private dataset blocks"</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">p_rec</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"record"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"record a completed incremental admission"</span><span class="p">)</span>
     <span class="n">p_rec</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--report"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"the admission report JSON"</span><span class="p">)</span>
@@ -2338,6 +2362,7 @@
                 <span class="n">args</span><span class="o">.</span><span class="n">ack_value_drift</span><span class="p">,</span>
                 <span class="n">served_ids</span><span class="p">,</span>
                 <span class="n">uri</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">include_private</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="n">format_report</span><span class="p">(</span><span class="n">report</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">report</span><span class="p">:</span>
@@ -2354,6 +2379,7 @@
             <span class="n">args</span><span class="o">.</span><span class="n">ack_value_drift</span><span class="p">,</span>
             <span class="n">served_ids</span><span class="p">,</span>
             <span class="n">uri</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">include_private</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">format_batch_report</span><span class="p">(</span><span class="n">batch</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">report</span><span class="p">:</span>

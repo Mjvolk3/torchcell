@@ -116,7 +116,15 @@
 <span class="c1"># [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]]</span>
 <span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg_small</span>
 <span class="c1"># Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg_small.py</span>
-<span class="sd">"""Build a small S. cerevisiae BioCypher knowledge graph from Costanzo/Kuzmin data."""</span>
+<span class="sd">"""Build the S. cerevisiae (and bacterial) BioCypher knowledge graph from dev LMDBs.</span>
+
+<span class="sd">The full and incremental builds both run this module. Membership is</span>
+<span class="sd">``dataset_adapter_map`` (the public datasets), unioned with</span>
+<span class="sd">``PRIVATE_DATASET_ADAPTER_MAP`` only when the command line carries</span>
+<span class="sd">``--include-private`` (``take_include_private_flag`` removes it from</span>
+<span class="sd">``sys.argv`` before hydra parses it). A private dataset named in ``datasets`` without the</span>
+<span class="sd">flag is refused by name (``refuse_private_datasets``), never silently dropped.</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
@@ -125,6 +133,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
@@ -144,7 +153,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.bacteria_common</span><span class="w"> </span><span class="kn">import</span> <span class="n">BacterialGenomeInjector</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.fast_csv</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastCsvSink</span><span class="p">,</span> <span class="n">build_row_specs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGraph</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataset_adapter_map</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PRIVATE_DATASET_ADAPTER_MAP</span><span class="p">,</span>
+    <span class="n">dataset_adapter_map</span><span class="p">,</span>
+    <span class="n">refuse_private_datasets</span><span class="p">,</span>
+    <span class="n">take_include_private_flag</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.head_ontology</span><span class="w"> </span><span class="kn">import</span> <span class="n">verify_head_ontology</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.incremental_import</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">INCREMENTAL_CALL_FILENAME</span><span class="p">,</span>
@@ -162,6 +176,10 @@
 <span class="n">logging</span><span class="o">.</span><span class="n">captureWarnings</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"SSL_CERT_FILE"</span><span class="p">]</span> <span class="o">=</span> <span class="n">certifi</span><span class="o">.</span><span class="n">where</span><span class="p">()</span>
+
+<span class="c1">#: ``--include-private`` was passed on the command line (set in ``__main__`` below,</span>
+<span class="c1">#: before hydra parses argv); False for any other entry.</span>
+<span class="n">INCLUDE_PRIVATE</span> <span class="o">=</span> <span class="kc">False</span>
 
 
 <div class="viewcode-block" id="get_num_workers">
@@ -384,18 +402,38 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="s2">"import_mode: incremental requires a non-empty `datasets` list"</span>
         <span class="p">)</span>
-    <span class="n">known_names</span> <span class="o">=</span> <span class="p">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">dataset_adapter_map</span><span class="p">}</span>
+    <span class="c1"># Visibility gate: a private dataset named without --include-private is refused</span>
+    <span class="c1"># by name; with the flag the private map joins the build (all of it when</span>
+    <span class="c1"># `datasets: null`).</span>
+    <span class="k">if</span> <span class="n">selected_names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">refuse_private_datasets</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">PRIVATE_DATASET_ADAPTER_MAP</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">selected_names</span><span class="p">],</span>
+            <span class="n">INCLUDE_PRIVATE</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="n">adapter_map</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">{</span><span class="o">**</span><span class="n">dataset_adapter_map</span><span class="p">,</span> <span class="o">**</span><span class="n">PRIVATE_DATASET_ADAPTER_MAP</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">INCLUDE_PRIVATE</span>
+        <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">dataset_adapter_map</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">known_names</span> <span class="o">=</span> <span class="p">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">adapter_map</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">selected_names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">unknown</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">selected_names</span><span class="p">)</span> <span class="o">-</span> <span class="n">known_names</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"datasets not in dataset_adapter_map: </span><span class="si">{</span><span class="n">unknown</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">searched</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">"dataset_adapter_map or PRIVATE_DATASET_ADAPTER_MAP"</span>
+                <span class="k">if</span> <span class="n">INCLUDE_PRIVATE</span>
+                <span class="k">else</span> <span class="s2">"dataset_adapter_map"</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"datasets not in </span><span class="si">{</span><span class="n">searched</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">unknown</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">build_items</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">(</span><span class="n">dataset_class</span><span class="p">,</span> <span class="n">adapter_class</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">dataset_class</span><span class="p">,</span> <span class="n">adapter_class</span> <span class="ow">in</span> <span class="n">dataset_adapter_map</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">dataset_class</span><span class="p">,</span> <span class="n">adapter_class</span> <span class="ow">in</span> <span class="n">adapter_map</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">selected_names</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">dataset_class</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">selected_names</span>
     <span class="p">]</span>
     <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="s2">"Build membership: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"ALL"</span> <span class="k">if</span> <span class="n">selected_names</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">selected_names</span>
+        <span class="s2">"Build membership: </span><span class="si">%s</span><span class="s2"> (include_private=</span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
+        <span class="s2">"ALL"</span> <span class="k">if</span> <span class="n">selected_names</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">selected_names</span><span class="p">,</span>
+        <span class="n">INCLUDE_PRIVATE</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Build every selected dataset (subset), each paired with its adapter.</span>
@@ -583,6 +621,7 @@
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">INCLUDE_PRIVATE</span> <span class="o">=</span> <span class="n">take_include_private_flag</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
     <span class="n">main</span><span class="p">()</span>
 
     <span class="c1"># Read the logged file name from the file</span>

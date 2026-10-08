@@ -196,7 +196,10 @@
 <span class="sd">    carries the human recipe as its command and the deposited bytes are what every</span>
 <span class="sd">    rebuild reads; re-checking the source is not scriptable for it. ``pmc_cloud`` is</span>
 <span class="sd">    one object of the PMC Article Datasets bucket on AWS, which replaced the retired</span>
-<span class="sd">    ``pmc_oa_api`` package service.</span>
+<span class="sd">    ``pmc_oa_api`` package service. ``local_archive`` is a sha256-verified copy of a</span>
+<span class="sd">    file out of a local archive whose own manifest records where the file originally</span>
+<span class="sd">    lived (the thesis archive's ``MANIFEST.tsv``); the record's ``source_url`` names</span>
+<span class="sd">    that original location and the retriever reads the archive copy.</span>
 <span class="sd">    """</span>
 
     <span class="n">springer_esm</span> <span class="o">=</span> <span class="s2">"springer_esm"</span>
@@ -208,6 +211,7 @@
     <span class="n">radiant_endpoint</span> <span class="o">=</span> <span class="s2">"radiant_endpoint"</span>
     <span class="n">pubchem_api</span> <span class="o">=</span> <span class="s2">"pubchem_api"</span>
     <span class="n">manual_browser</span> <span class="o">=</span> <span class="s2">"manual_browser"</span>
+    <span class="n">local_archive</span> <span class="o">=</span> <span class="s2">"local_archive"</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">SourceCheck</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>

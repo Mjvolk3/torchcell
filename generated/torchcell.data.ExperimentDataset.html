@@ -134,6 +134,17 @@ ClassVar, not a field: it is a property of the LOADER, decided once in code, and
 the build and release gates read it off the class without instantiating it.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.has_gene_perturbations">
+<span class="sig-name descname"><span class="pre">has_gene_perturbations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.14)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#torchcell.data.ExperimentDataset.has_gene_perturbations" title="Link to this definition"></a></dt>
+<dd><p>Whether the records carry gene-keyed perturbations. True for every screen of
+edited strains, where an empty gene set after a build is a broken build and the
+<code class="docutils literal notranslate"><span class="pre">gene_set</span></code> setter refuses it. A dataset whose every record is the unedited host
+in a varied environment (the in-house Bioscreen runs, <code class="docutils literal notranslate"><span class="pre">Genotype(perturbations=[])</span></code>
+on a typed background) declares False here, in code, and its gene set is legitimately
+empty: the edits that define the strain live on the reference’s background.</p>
+</dd></dl>
+
 <dl class="py property">
 <dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.experiment_class">
 <em class="property"><span class="k"><span class="pre">abstract</span></span><span class="w"> </span><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">experiment_class</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#type" title="(in Python v3.14)"><span class="pre">type</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="torchcell.datamodels.schema.Experiment.html#torchcell.datamodels.schema.Experiment" title="torchcell.datamodels.schema.Experiment"><span class="pre">Experiment</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchcell.data.ExperimentDataset.experiment_class" title="Link to this definition"></a></dt>

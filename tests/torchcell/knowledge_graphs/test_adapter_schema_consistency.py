@@ -9,17 +9,24 @@ method table and that every experiment type in the schema's registry that a mapp
 dataset produces has a phenotype node class.
 """
 
+import inspect
+import sys
 from pathlib import Path
 
+import pytest
 import yaml
 
 import torchcell
-from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
+from torchcell.knowledge_graphs.dataset_adapter_map import (
+    build_adapter_map,
+    dataset_adapter_map,
+)
 from torchcell.knowledge_graphs.kg_manifest import (
     CELL_ADAPTER_RELPATH,
     SCHEMA_CONFIG_RELPATH,
     GraphSchemaEntry,
     cell_adapter_surface,
+    dataset_adapter_files,
     dataset_conf_methods,
     graph_schema_from_yaml,
 )
@@ -164,3 +171,45 @@ def test_no_conf_enables_both_environment_perturbation_classes() -> None:
         <= set(dataset_conf_methods(dataset_class, REPO_ROOT))
     )
     assert both == []
+
+
+class _ConfOpened(Exception):
+    """Raised by the recording ``open`` to stop an adapter right after it names its conf."""
+
+
+def test_every_mapped_dataset_fingerprints_the_conf_its_adapter_loads(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Issue #743: the gate's conf for a dataset is the file its adapter OPENS.
+
+    Public and private maps together, since ``dataset_adapter_files`` resolves both.
+
+    Each adapter is constructed with ``None`` for every required argument and the
+    builtin ``open`` shadowed in its module, so construction stops at the first file it
+    opens, which is its conf (every adapter opens the conf before touching the dataset).
+    That runtime path is compared with what ``dataset_adapter_files`` resolves from the
+    class source. Eight modules serve several dataset classes each, so a module-level
+    resolution fails here for every class after the first.
+    """
+    resolved: dict[str, str] = {}
+    opened: dict[str, str] = {}
+    every_map = build_adapter_map(include_private=True)
+    for dataset_class, adapter_class in every_map.items():
+        _, conf_rel = dataset_adapter_files(dataset_class, REPO_ROOT)
+        resolved[dataset_class.__name__] = Path(conf_rel).name
+        module = sys.modules[adapter_class.__module__]
+
+        def record(path: str, *args: object, **kwargs: object) -> None:
+            raise _ConfOpened(path)
+
+        monkeypatch.setattr(module, "open", record, raising=False)
+        required = [
+            name
+            for name, p in inspect.signature(adapter_class).parameters.items()
+            if p.default is inspect.Parameter.empty
+        ]
+        with pytest.raises(_ConfOpened) as caught:
+            adapter_class(**dict.fromkeys(required))
+        opened[dataset_class.__name__] = Path(str(caught.value)).name
+    assert len(opened) == len(every_map)
+    assert resolved == opened

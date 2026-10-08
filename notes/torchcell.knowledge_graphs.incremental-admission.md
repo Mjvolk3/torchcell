@@ -273,3 +273,52 @@ Left for later: the admission's dev-id walk is the slow step (a million pydantic
 constructions, single process); an increment re-admits in about 20 min per dataset, the
 dry run of both took 57. Staging leaves `*.superseded.2026-09-21_*` copies of both LMDBs
 in the uid-7474 build tree, as before.
+
+## 2026.10.08 - Each dataset's conf comes from its adapter class (issue #743)
+
+`dataset_adapter_files` used to take the first `*_adapter.yaml` literal anywhere in the
+adapter MODULE. Eight modules serve several dataset classes (Costanzo 2016, Kuzmin 2018,
+Kuzmin 2020, Hillenmeyer 2008, Lopez 2024, Sameith 2015, SynthLethDB, Zelezniak 2018), so
+every class after the first was fingerprinted against the first class's conf. The
+resolver now reads the conf literal inside the adapter CLASS body
+(`kg_manifest.adapter_conf_name`, AST scoped to the class, whole-literal match). A class
+that names no conf, or more than one, raises `ValueError` naming the class and module;
+there is no fallback to the module text.
+
+`adapter_drift_against` now watches, per served dataset, the union of the files the
+manifest entry recorded and the files the adapter class binds now. A manifest written
+before this fix names the wrong conf in its entries, but `manifest.adapter_files` hashes
+every adapter file at the build commit, so the bound conf's baseline is already there.
+
+Measured against the served manifest (`/scratch/projects/torchcell/database/kg_manifest.json`,
+release `2026.10.06-4b293d34`, read only) with `scripts/kg_manifest_conf_audit.py`: 23
+served datasets live in the 8 modules and 15 of them recorded another class's conf. For
+all 15, the bound conf IS hashed in `manifest.adapter_files`, that hash equals the file at
+the served commit, and the working tree still matches it. So the recorded hashes are
+right; what was wrong is which conf each dataset entry points at, and through it which
+enable-list the gate read. Seven of the 15 enable a different method list than the conf
+they were attributed (Dmi Costanzo 2016, Dmi and Tmi Kuzmin 2018 and 2020: gene
+interaction instead of fitness; Proteome Zelezniak 2018: protein abundance instead of
+metabolite; SynthRescue: synthetic rescue instead of synthetic lethality).
+
+Consequences, from an in-memory simulation on that manifest (hashes altered in memory,
+file untouched):
+
+- **Wrongly admissible: possible before the fix.** Under the old resolution no served
+  dataset enabled `gene interaction phenotype` or `synthetic rescue phenotype`, so a
+  change to `_gene_interaction_phenotype_node` or `_synthetic_rescue_phenotype_node` was
+  flagged for nobody; with the fix it blocks for the five Dmi/Tmi datasets and for
+  SynthRescue. An edit to `dmf_costanzo2016_adapter.yaml` was likewise flagged for nobody
+  and now blocks for DmfCostanzo2016. Neither happened: those four CellAdapter
+  fingerprints and all 15 bound confs are unchanged at `origin/main` against the
+  manifest, and the manifest records only its bootstrap event, so no admission was
+  decided against it.
+- **Wrongly blocked: no verdict changes.** The first class of all 8 modules is itself
+  served, so an edit to the first conf blocked anyway; the old resolution only widened
+  the attribution to the sibling datasets. The union keeps that wider attribution for the
+  pre-fix entries until they are rewritten.
+
+The next FULL rebuild rewrites every entry through the fixed resolver. Tests:
+`test_adapter_schema_consistency.py::test_every_mapped_dataset_fingerprints_the_conf_its_adapter_loads`
+(all 103 mapped adapters, 102 public and 1 private: the conf the gate resolves equals the
+file the adapter opens at construction, and no two datasets share a conf) and the multi-class synthetic module tests in `test_kg_manifest_admission.py`.

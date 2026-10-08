@@ -663,4 +663,25 @@ reference is a curation decision that needs an explicit instruction each time.
 9 *P. putida*; the floor of six per host still does not bind. Engineering rows: 32, median
 137 measurements, median rule rank 75.5. Screens: 19, median 219,788. The document builds
 to 80 pages (77 before) and `make check` is clean: 0 errors, 0 warnings, 21 SOURCE
-comments, 0 style violations. The PDF was not republished to Zotero from this branch.
+comments, 0 style violations.
+
+### Published to Zotero
+
+The rebuilt PDF was published after the branch landed, by
+`notes-tex/common/zotero_publish.py database-expansion-bacteria`, as
+`database-expansion-bacteria_2026-10-08-01-04-06_cd7d8aa6.pdf` into
+`torchcell/notes-tex/database/database-expansion-bacteria` (collection `RA3VRXN9`, parent
+item `DE5CT49Z`). Fifth version in that collection. 359,830 bytes, sha256
+`cd7d8aa66c07ecb7f9ad02c6ea2e2584dc2dad425ad2f70d4bfcb83b79e44181`, stamped `main @
+08a90d88f02c`.
+
+This is the one sanctioned agent write to Zotero, our own built PDF into its own output
+collection. Nothing was added to the bibliography and no paper was filed, so the mismatch
+noted above between the fifty and the 2026.10.07 filing of `database/Escherichia-coli` and
+`database/Pseudomonas-putida` is still open.
+
+The first `zotero_publish.py` invocation failed with `upload failed:` and a payload that
+echoed the attachment template back under `failure` with no error code. An immediate
+retry, with no change to the file or the arguments, succeeded. So the failure was
+transient in the upload step, not a rejection; worth knowing because the message looks
+like a permanent one.

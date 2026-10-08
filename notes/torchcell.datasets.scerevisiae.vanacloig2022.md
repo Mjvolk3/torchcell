@@ -265,3 +265,50 @@ Source 45 tokens x 3,651 rows = 164,295; kept **118,662** (was 143,218); 34 cond
 - The four BY auxotrophies stay pending until Brachmann 1998 or the Piotrowski 2017 strain table (Supplementary, not mirrored) is mirrored.
 - Pre-existing on main, not caused here: `tests/torchcell/data/test_neo4j_query_raw_single_pass.py::test_cached_environment_is_safe_to_pass_unvalidated` asserts every experiment class's `environment` is exactly `Environment`, which `StrainEnvironmentResponseExperiment` (#507) is not; the neo4j single-pass query path may therefore hand a cached plain `Environment` to a strain-resolved record.
 - Experiment 033's cell table keys on `"environment_response"`; it must add `"strain_environment_response"` to keep Vanacloig records.
+
+## 2026.10.07 - Table S1 doses and vehicles
+
+Issue #764. Table S1 was the open item above ("Which inhibitors DMSO delivered"); it is now mirrored and every served condition's dose and vehicle is sourced from it.
+
+### Mirror chain (key `vanacloig-pedrosComparativeChemicalGenomic2022`)
+
+| file | sha256 | how |
+|---|---|---|
+| `si/si1.zip` | `707e3edecaecc3e17b553e248f5b836219a24912a0a1536a03942fd4e95e29eb` | `scripts/lit_capture_si.py`, `pmc_cloud` route: PMC Article Datasets object `PMC9508847.1/foac036_supplemental_files.zip` |
+| `si/si2.pdf` | `2712cfdb92569c014a933307973353ec8da0218ba00326d165999f8c0ef96d85` | zip member `Table_S1.pdf`, stored by `capture_si.store_zip_member` (`--zip-member si/si1.zip:Table_S1.pdf`); retrieval `retrieve.zip_member` with `url`, `member`, `container_sha256` = the zip's |
+| `si/si2.md` | `bad5b060bda2f50470e6a72c4005d48a9ecad8a9fa837a5bd2008307cc35e5d2` | MinerU 2.7.6, pipeline backend, `device_mode=cpu`, 200 dpi (`si/si2_ocr_provenance.json`) |
+
+Table S1's header row: Chemical Additive | IC30 Concentration | Dissolved in DMSO? | CAS Number or reference | Vendor/Source | Catalog #. It lists 48 chemicals; the loader serves the 34 of `FIG_1B_TOKENS`.
+
+### Dose and vehicle rules
+
+`TABLE_S1_DOSES` holds one `SourcedValue` per Fig 1B token (`_table_s1`, `source_uri="si/si2.md"`, `page="Table S1"`), whose quote is that compound's row exactly as MinerU wrote it (HTML table row). The IC30 cell and the DMSO flag are parsed from the quote, so no number is typed separately. The mirror audit test checks every row.
+
+- mM, uM and ug/mL rows (27 conditions): `Concentration(value, unit, basis=IC30)`, e.g. Furfural 8 mM, 2,2'-Dipyridyl 18 ug/mL, CV 15 uM.
+- Percent rows stay basis-only, `value=None`: MBO 1.50%, Ethanol 4%, Isobutanol 0.75%, GVL 1.5% (IC30), MMS 0.01% (fixed). Table S1 writes no v/v or w/v and the schema has no basis-free percent unit; the percent rides in each row's `note`. A unit decision is open in #764.
+- GVL: the OCR leaves its IC30 cell empty and puts `1.5%` (with the catalog number 140795000) on the next row, the "OTHER COMPOUNDS" header; both rows are quoted (`TABLE_S1_DOSES["GVL"]`, `GVL_TABLE_S1_DISPLACED`).
+- Benomyl stays 34.4 uM fixed (Piotrowski 2017); Table S1 confirms the Methods' 10 ug/mL.
+- DMSO stays 1.0 percent_v/v fixed (the #501 finding). Table S1 lists DMSO at 2.50% under the IC30 column, which conflicts with the Methods' "final concentration of DMSO in SynBase medium was 1% (v/v)". Left for review in #764.
+- Vehicle: "Dissolved in DMSO? Yes" (17 compounds: the phenolics, both amides, and azelaic acid) -> `Solvent(name="DMSO", percent=1.0, compound=dimethyl sulfoxide)`, the percent from the `VEHICLE_CONTROL` sentence; "No" -> `solvent=None` (dissolved directly). `_solvent_gap` and the pending-source `TABLE_S1` provenance are retired; no record carries a solvent gap now.
+- OCR quirks kept verbatim in the quotes: "EMIM-CI", "BMIM-CI" (Cl read as CI), "MethyIglyoxal".
+- MBO: Table S1 names the chemical "2-Methyl-3-buten-2-ol (MBO)", agreeing with the Results definition already adopted (`MBO_IDENTITY_RULE` updated).
+
+The commit message of the loader change says "29 conditions" carry a numeric IC30; the count is 27.
+
+### Dev rebuild and record check
+
+Old build moved aside to `processed.superseded.20261007-185707` and `preprocess.superseded.20261007-185707`; rebuilt with `python -m torchcell.database.build_dataset_lmdb --dataset EnvChemgenVanacloig2022Dataset`: 118,662 records in 84 s, 3,587 genes (unchanged). `python -m torchcell.provenance.build_manifest` reads the new build fresh (its two STALE `env_chemgen_vanacloig2022` lines are the older `.deprecated-2026-09-13-pre-gaps` and `.superseded-2026-09-12-libsize` sibling directories). One record per condition, `environment.perturbations[0]`:
+
+| token | concentration | solvent | gaps |
+|---|---|---|---|
+| Furfural | 8.0 mM, IC30 | None | [] |
+| Vanillin | 5.0 mM, IC30 | DMSO, 1.0 (dimethyl sulfoxide, IAZDPXIOMUYVGZ-UHFFFAOYSA-N) | [] |
+| EtOH | None, IC30 | None | [] |
+| 22Dipyridyl | 18.0 ug/mL, IC30 | None | [] |
+| DMSO | 1.0 percent_v/v, fixed | None | [] |
+
+### Served store
+
+The served KG still carries the old Vanacloig records (no IC30 values, solvent gaps) until the next FULL rebuild: every Vanacloig record's environment changed, and changed records cannot go through incremental admission.
+
+The raw-mirror manifest's `si_expected` entry (written by `deposit_raw_mirror`) still says Table S1 is not mirrored; that record describes the raw mirror's deposit and was left unchanged.

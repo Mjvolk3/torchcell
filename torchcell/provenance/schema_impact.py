@@ -32,6 +32,7 @@ from pydantic import BaseModel, Field
 from torchcell.provenance.schema_deps import (
     ContractSpec,
     SchemaSurface,
+    binding_members,
     default_surface_modules,
     load_surface,
     load_surface_from_sources,
@@ -176,6 +177,38 @@ def classify_change(
     if changed_methods:
         reasons.append(f"validator/serializer changed: {changed_methods}")
         kinds.append(ChangeKind.stale)
+
+    # Module-level names the class resolves through (#734): a Literal alias, pattern map,
+    # union alias or helper function. A member set that only grew is a widening (stale);
+    # a lost member, or a change to a binding with no member set, is breaking.
+    old_bindings = dict(old.module_bindings)
+    new_bindings = dict(new.module_bindings)
+    for name in sorted(set(new_bindings) - set(old_bindings)):
+        reasons.append(f"now resolves through module-level '{name}'")
+        kinds.append(ChangeKind.stale)
+    for name in sorted(set(old_bindings) - set(new_bindings)):
+        reasons.append(f"no longer resolves through module-level '{name}'")
+        kinds.append(ChangeKind.stale)
+    for name in sorted(set(old_bindings) & set(new_bindings)):
+        if old_bindings[name] == new_bindings[name]:
+            continue
+        old_members = binding_members(old_bindings[name])
+        new_members = binding_members(new_bindings[name])
+        if old_members is None or new_members is None:
+            reasons.append(f"module-level '{name}' changed")
+            kinds.append(ChangeKind.breaking)
+            continue
+        lost = sorted(old_members - new_members)
+        gained = sorted(new_members - old_members)
+        if lost:
+            reasons.append(f"module-level '{name}' lost members {lost}")
+            kinds.append(ChangeKind.breaking)
+        if gained:
+            reasons.append(f"module-level '{name}' gained members {gained}")
+            kinds.append(ChangeKind.stale)
+        if not lost and not gained:
+            reasons.append(f"module-level '{name}' reordered")
+            kinds.append(ChangeKind.stale)
 
     if (
         not reasons

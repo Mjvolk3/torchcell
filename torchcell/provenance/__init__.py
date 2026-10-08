@@ -30,7 +30,10 @@ from torchcell.provenance.build_manifest import (
 from torchcell.provenance.schema_deps import (
     ContractSpec,
     FieldSpec,
+    ModuleBinding,
     SchemaSurface,
+    binding_members,
+    collect_module_bindings,
     contract_spec,
     fingerprint,
     forward_closure,
@@ -54,7 +57,10 @@ __all__ = [
     # schema_deps
     "ContractSpec",
     "FieldSpec",
+    "ModuleBinding",
     "SchemaSurface",
+    "binding_members",
+    "collect_module_bindings",
     "contract_spec",
     "fingerprint",
     "forward_closure",

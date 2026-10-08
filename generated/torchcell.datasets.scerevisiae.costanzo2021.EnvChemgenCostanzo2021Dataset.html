@@ -148,11 +148,13 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datasets.scerevisiae.costanzo2021.EnvChemgenCostanzo2021Dataset.download">
 <span class="sig-name descname"><span class="pre">download</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datasets/scerevisiae/costanzo2021.html#EnvChemgenCostanzo2021Dataset.download"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datasets.scerevisiae.costanzo2021.EnvChemgenCostanzo2021Dataset.download" title="Link to this definition"></a></dt>
-<dd><p>Copy Data File S1 from the raw mirror into <code class="docutils literal notranslate"><span class="pre">raw_dir</span></code>; verify its sha256.</p>
+<dd><p>Link Data File S1 from the raw mirror into <code class="docutils literal notranslate"><span class="pre">raw_dir</span></code> after verifying it.</p>
 <p>Science supplementary downloads are not scriptable (HTTP 403 behind a Cloudflare
 challenge, verified 2026-09-12, same as Costanzo 2016), so the file is deposited
 once into <code class="docutils literal notranslate"><span class="pre">$DATA_ROOT/torchcell-raw/&lt;citation_key&gt;/</span></code> and the mirror – not the
-URL – is the source of record.</p>
+URL – is the source of record. <code class="docutils literal notranslate"><span class="pre">raw/</span></code> holds a symlink to the mirror file, not
+a second copy of its bytes, and nothing is linked unless the mirror file hashes
+to <code class="docutils literal notranslate"><span class="pre">_S1_SHA256</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">

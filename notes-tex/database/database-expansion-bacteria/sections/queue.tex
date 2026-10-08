@@ -22,4 +22,49 @@ product-oriented metabolic-engineering campaign.'' \term{Scale anchor} is ``Larg
 perturbation, phenotype, tolerance, or omics resource useful for model pretraining or
 host-feature learning.''
 
+\subsection{A second pass over the queue, and what the ordering rule kept\secstatus{todo}}
+\label{sec:queue2}
+
+The queue was read a second time with the selection order stated as scale times density
+first, then overlap with a modality the store already serves for \org{E. coli}, then the
+isoprenol axis for \org{P. putida}. Running it produced three rows, and the shape of the
+result is more informative than the rows.
+
+Most of the 271 uncurated rows are single-strain production campaigns, which this rule
+ranks last by construction, so the pass reduced to the handful that claim a genome-scale
+measurement. Six of those were checked against their deposits. Three release the matrix
+and three release only the outcome, so the gate that decided this pass was not scale but
+what the supplement contains. The three that passed are
+\emph{Mohiuddin 2022} at final rank 40, a library of 1,930 promoter-GFP reporters read
+nine times under four antibiotic conditions, 69,480 values; \emph{Teteneva 2024} at rank
+41, barcoded transposon fitness for 3,691 genes in lake water, 66,162 values; and
+\emph{Wang 2024} at rank 52, a transposon library under rifampicin on a dose-by-time
+grid, 26,514 gene-by-condition rows with the negatives present. Each count was read off
+the deposited file.
+
+The three that failed are in Table~\ref{tab:bexcluded} and they fail the same way. A
+screen of $10^{5}$ genomic fragments under furfural deposited 268 enriched genes and no
+array data. A copper screen of the whole Keio collection at three doses scored growth
+qualitatively and released 68 named mutants. A ciprofloxacin screen of the same
+collection states that all data are in the supplement, and the supplement is a PDF
+holding 48 mutants. In each case the abstract supports a measurement count in the tens
+of thousands and the deposit supports a few hundred, which is the one failure mode that
+a title-and-abstract sweep cannot detect and that ranking by the sweep's own score would
+have rewarded.
+
+Four more claim genome-scale measurement and were not resolved: a Keio screen against
+benzoic acid and a screen on oleate, neither open access, an aggregated resequencing
+corpus whose deposit resolves to analysis code rather than to the mutation table, and a
+tunable-guide library whose only supplement is a PDF. They stay in the queue as leads and
+none of them is counted anywhere, because a row is ranked on a number read off a file.
+
+Two further things this pass settled. The \org{P. putida} half of the queue is now
+exhausted against this rule: of its 82 uncurated rows not one is a genome-scale
+measurement, and the single large \org{P. putida} dataset in the whole sweep was already
+curated, carrying the sweep's \emph{lowest} priority score of the hundred. And adding two
+rows inside the cut pushed two out, \emph{Hawkins 2020} and \emph{Royet 2025}, the second
+of which is \org{P. putida}. Nothing pins them, because the pin of Sec.~\ref{sec:iso} is
+for one product and neither row measures it. That displacement is the ordering working as
+specified, and it is recorded here rather than absorbed silently.
+
 \input{tables/queue-rows}

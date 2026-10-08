@@ -167,6 +167,12 @@ SeqBasis = Literal[
     # unedited and the perturbation is extra copies of one native ORF on a plasmid,
     # which is the opposite sign to a deletion and must not be merged with one.
     "K-12+ORF-plasmid",
+    # The reference genome plus a low-copy plasmid carrying one native promoter driving
+    # a fluorescent protein. Nothing is perturbed: the plasmid reports rather than acts,
+    # so the readout is expression and not fitness. It is still a distinct basis from
+    # "reference-only" because the plasmid is present in the cell, and a genotype here
+    # is the total genomic content, which includes the plasmids that are there.
+    "K-12+promoter-reporter",
     "KT2440-KO",
     "KT2440+transposon",
     "KT2440+guide",
@@ -5121,6 +5127,194 @@ CANDIDATES: list[Candidate] = [
             ),
         ],
     ),
+    # -----------------------------------------------------------------------
+    # The second pass over the 300-row discovery queue. Selection ran the
+    # requested order: scale times density first, then overlap with a modality
+    # the store already serves for E. coli, then the isoprenol axis for
+    # P. putida. Every count below was read off the released file, not off the
+    # abstract, which is what separated these three from the five that read as
+    # genome-wide and release a hit list.
+    # -----------------------------------------------------------------------
+    Candidate(
+        name="Teteneva 2024 lake water",
+        organism="E. coli",
+        citation="Teteneva N, Sanches-Medeiros A, Sourjik V. Genome-wide screen "
+        "of genetic determinants that govern Escherichia coli growth and "
+        "persistence in lake water. The ISME Journal 2024;18(1):wrae096",
+        url="https://doi.org/10.1093/ismejo/wrae096",
+        klass="Transposon fitness",
+        tier=1,
+        genotypes_n=3691,
+        genotypes="3,691 genes carrying insertions",
+        env_n=18,
+        env="3 lake water samples x filtered or not x 3 days",
+        instances_n=66162,
+        instances_basis="reported",
+        phenotype="gene-level RB-TnSeq fitness (Wetmore normalization)",
+        dim=1,
+        dim_basis="reported",
+        seq_basis="K-12+transposon",
+        modality="transposon insertion",
+        why="Counted off the file rather than the abstract: Supplementary Table S4 "
+        "holds 11,027 gene by water-sample rows and 66,162 non-empty fitness "
+        "values across its six columns, filtered and non-filtered water at days "
+        "2, 4 and 8, for 3,691 distinct genes. The library is 430,849 unique "
+        "insertions in 3,833 genes of E. coli K-12 W3110 RpoS+, built by the "
+        "Wetmore protocol, and fitness is averaged over three technical "
+        "replicates per sample. Two things make it worth the slot. The host is "
+        "W3110 rather than the BW25113 that Price 2018, Shiver 2016 and Tong "
+        "2020 all sit on, so joining it to them tests whether a gene-level "
+        "fitness effect survives a change of K-12 background, which no pair of "
+        "rows already on the list can ask. And the environment is an "
+        "oligotrophic natural water rather than a defined medium or a drug, "
+        "which is the only such condition in either host here. The rpoS "
+        "direction is the opposite sign to the usual stress result, since rpoS "
+        "mutants gain fitness in filtered water and lose viability, so the row "
+        "carries a documented growth-versus-survival split that a single "
+        "fitness number compresses.",
+        accession="Supplementary Table S4 (xlsx, gene fitness); NCBI BioProject PRJNA1043681 (lake water) and PRJNA1073534 (Tn5 library annotation); code at github.com/NataliyaTeteneva/Tn5_library_analysis",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
+        analog=Analog(
+            dataset="Hillenmeyer 2008 HIP/HOP",
+            why="pooled mutant fitness under an environmental stress",
+        ),
+        synergy=[
+            Synergy(
+                partner="Price 2018",
+                partner_status="candidate",
+                join="E. coli gene identifier",
+                yields="the same fitness statistic in a second K-12 background",
+            ),
+            Synergy(
+                partner="Mutalik 2020",
+                partner_status="candidate",
+                join="RB-TnSeq barcode fitness",
+                yields="a natural-water condition beside the phage panel",
+            ),
+        ],
+    ),
+    Candidate(
+        name="Wang 2024 rifampicin Tn-seq",
+        organism="E. coli",
+        citation="Wang Y, Fu H, Shi X-J, Zhao G-P, Lyu L-D. Genome-wide screen "
+        "reveals cellular functions that counteract rifampicin lethality "
+        "in Escherichia coli. Microbiology Spectrum 2024;12(1):e0289523",
+        url="https://doi.org/10.1128/spectrum.02895-23",
+        klass="Transposon fitness",
+        tier=1,
+        genotypes_n=4419,
+        genotypes="4,419 genes",
+        env_n=6,
+        env="3 rifampicin multiples of MIC x 2 exposure times",
+        instances_n=26514,
+        instances_basis="reported",
+        phenotype="TRANSIT resampling log2 fold change, with p and adjusted p",
+        dim=1,
+        dim_basis="reported",
+        seq_basis="K-12+transposon",
+        modality="transposon insertion",
+        why="Table S2 is the whole matrix and not the hits: six sheets, one per "
+        "condition, each carrying all 4,419 genes with insertion-site count, "
+        "mean control and experimental read depth, log2 fold change, raw p and "
+        "adjusted p, for 26,514 gene by condition rows. The separate hit table "
+        "S3 holds 911 genes, so the released negatives outnumber the reported "
+        "positives by about twenty-nine to one, which is the ratio that decides "
+        "whether a row can train anything. Host is K-12 MG1655 with a Tn5 "
+        "library at 71.4 insertions per kilobase, two biological replicates, "
+        "and the design is a dose by time grid, 0.25x, 4x and 20x MIC at 1 and "
+        "3 hours, which is a shape no other row here has: every other drug "
+        "screen on the list is one dose per drug. It joins Choe 2025 and Shiver "
+        "2016 on the drug axis and Girgis 2009 on the modality, so the same "
+        "gene under the same antibiotic can be read as knockdown, deletion and "
+        "insertion fitness.",
+        accession="Table S2 spectrum.02895-23-s0002.xlsx (raw resampling, all genes); Table S3 identified genes; Table S4 pathway enrichment",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
+        analog=Analog(
+            dataset="Hillenmeyer 2008 HIP/HOP",
+            why="pooled mutant fitness across a drug dose series",
+        ),
+        synergy=[
+            Synergy(
+                partner="Choe 2025",
+                partner_status="candidate",
+                join="antibiotic panel",
+                yields="knockdown and insertion fitness for one gene under one drug",
+            ),
+            Synergy(
+                partner="Girgis 2009",
+                partner_status="candidate",
+                join="transposon insertion fitness under antibiotics",
+                yields="a dose and time grid where the earlier row has one dose",
+            ),
+        ],
+    ),
+    Candidate(
+        name="Mohiuddin 2022 promoter library",
+        organism="E. coli",
+        citation="Mohiuddin SG, Massahi A, Orman MA. High-Throughput Screening "
+        "of a Promoter Library Reveals New Persister Mechanisms in "
+        "Escherichia coli. Microbiology Spectrum 2022;10(1):e0225321",
+        url="https://doi.org/10.1128/spectrum.02253-21",
+        klass="Transcriptome",
+        tier=1,
+        genotypes_n=1930,
+        genotypes="1,930 promoter-GFP reporter strains, 1,809 distinct promoters",
+        env_n=4,
+        env="untreated plus ampicillin, ofloxacin and gentamicin",
+        instances_n=7720,
+        instances_basis="product",
+        phenotype="GFP fluorescence time course over 9 reads, and fold change against untreated",
+        dim=9,
+        dim_basis="reported",
+        seq_basis="K-12+promoter-reporter",
+        modality="promoter-GFP reporter",
+        why="Supplemental Data Set 1 releases the full grid twice over: 69,480 raw "
+        "GFP readings, 1,930 reporter strains at nine times under four "
+        "conditions, and 52,110 fold changes against the untreated arm. The "
+        "library is the E. coli K-12 MG1655 collection of more than 1,900 "
+        "native promoters fused to a fast-folding GFP on a low-copy plasmid, "
+        "treated in early stationary phase with ampicillin at 200, ofloxacin at "
+        "5 and gentamicin at 50 micrograms per milliliter for five hours. "
+        "Nothing in the genome is perturbed, which is why it sits beside the "
+        "screens rather than among them, and it is the reason to take it: the "
+        "store serves drug-response FITNESS for E. coli from four rows and no "
+        "drug-response EXPRESSION at all, so this is the half that is missing. "
+        "Two of its three drugs are also in the Choe 2025 CRISPRi panel, so a "
+        "gene can be read as both a knockdown fitness cost and an induced "
+        "promoter under the same compound. The time axis is the second reason: "
+        "nine reads across the exposure, where the RNA-seq compendia are "
+        "endpoint.",
+        accession="Supplemental File 2 spectrum02253-21_supp_2_seq5.xlsx, sheets Raw Data and Fold Change",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
+        time_axis="9 reads across a 5 hour exposure",
+        schema_need="a genotype that is the reference genome plus a reporter plasmid "
+        "which is present but not perturbing, so the record is expression under an "
+        "environment rather than a perturbation phenotype",
+        analog=Analog(
+            dataset="Nadal-Ribelles 2019 single-cell",
+            why="per-gene expression readout under a condition panel",
+        ),
+        synergy=[
+            Synergy(
+                partner="Choe 2025",
+                partner_status="candidate",
+                join="antibiotic panel",
+                yields="induced expression beside knockdown fitness for one gene",
+            ),
+            Synergy(
+                partner="PRECISE-1K",
+                partner_status="candidate",
+                join="E. coli gene identifier",
+                yields="a reporter time course against an endpoint RNA-seq compendium",
+            ),
+        ],
+    ),
 ]
 
 EXCLUDED: list[Excluded] = [
@@ -5152,6 +5346,53 @@ EXCLUDED: list[Excluded] = [
             "phenotype tables are good, with mean and SD for 20 strains, but the "
             "perturbation axis itself, triclosan dose against copy number, is "
             "figure-only"
+        ),
+    ),
+    Excluded(
+        name="Glebes 2014, SCALEs furfural dosage map in E. coli",
+        rule="no-per-record-data",
+        reason=(
+            "The headline is the largest in the whole queue and the release is the "
+            "smallest part of it. More than ten to the fifth genomic fragments were "
+            "assayed by microarray at about 125 nucleotide resolution across the "
+            "genome, under furfural at 0.75 grams per liter against a control, and "
+            "the only table deposited is Table S2, 268 enriched genes with one "
+            "fitness score each. The microarray data are not in GEO or anywhere "
+            "else named in the paper, so the per-clone frequencies the method is "
+            "built on are gone, and the surviving 268 rows are the enriched tail "
+            "with every neutral and depleted fragment discarded. Ranking this by "
+            "its abstract would have placed it near the top of the list on a "
+            "measurement count that no longer exists"
+        ),
+    ),
+    Excluded(
+        name="Casanova-Hampton 2021, copper stress across the Keio collection",
+        rule="no-per-record-data",
+        reason=(
+            "The whole Keio collection was stamped onto LB agar at 0, 3 and 6 "
+            "millimolar copper sulfate, which would be about twelve thousand "
+            "mutant by dose observations, but the paper states that phenotypic "
+            "response was determined qualitatively relative to on-plate controls "
+            "at 24, 48 and 72 hours. There is no colony size, no growth index and "
+            "no score of any kind, and what is released is the call: 43 sensitive "
+            "and 25 resistant mutants in Tables S4 and S5, plus a 36-mutant "
+            "targeted rescreen of iron genes. A qualitative call carries no "
+            "uncertainty and cannot be compared against the quantitative colony "
+            "scores the store already holds for the same collection"
+        ),
+    ),
+    Excluded(
+        name="Mei 2026, ciprofloxacin tolerance across the Keio collection",
+        rule="no-per-record-data",
+        reason=(
+            "A two-step genome-wide screen of the Keio library, stationary-phase "
+            "starvation then dilution into antibiotic, and the data availability "
+            "statement says all data are in the Supporting Information, which is a "
+            "single PDF. Nothing machine-readable is deposited, and what the PDF "
+            "carries is the outcome, 37 ciprofloxacin-sensitive and 11 tolerant "
+            "mutants out of the roughly four thousand screened. The 48 named "
+            "mutants are a hit list, and the survival values behind the other "
+            "mutants are what would have made it a dataset"
         ),
     ),
     Excluded(

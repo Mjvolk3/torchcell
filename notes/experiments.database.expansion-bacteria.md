@@ -558,3 +558,109 @@ on 2026.10.07 in the group library, 35 in `database/Escherichia-coli` and 15 in
 `database/Pseudomonas-putida`, matched to the candidate rows by DOI. Those per-host counts
 agree with the generator's own split of the fifty after the pins, 35 *E. coli* and 15
 *P. putida*.
+
+## 2026.10.08 - A second pass over the queue, three rows, and what it costs the fifty
+
+### The selection rule, applied as stated
+
+The request set the order explicitly: scale times density first, then overlap with a
+modality the store already serves for *E. coli*, then the isoprenol axis for *P. putida*.
+That is a SELECTION rule for which queue rows to curate next. It is not a change to
+`sort_key`, which stays measurements, then instances, then tier, and the isoprenol pin in
+`ranked()` is untouched. Folding "overlap" into the score would have reintroduced exactly
+the hand-tuned weight the pin was built to avoid.
+
+### What it selected: three rows, all *E. coli*, all counted off the deposited file
+
+| row | final rank | measurements | what was counted |
+|---|---|---|---|
+| Mohiuddin 2022 promoter library | 40 | 69,480 | 1,930 promoter-GFP strains x 9 reads x 4 conditions, Supp. Data Set 1 |
+| Teteneva 2024 lake water | 41 | 66,162 | non-empty fitness values in Supplementary Table S4, 11,027 gene x sample rows |
+| Wang 2024 rifampicin Tn-seq | 52 | 26,514 | 4,419 genes x 6 conditions, all six sheets of Table S2 |
+
+Each count was read out of the workbook with `openpyxl`, not taken from the abstract. That
+distinction is the whole result of this pass, see below.
+
+The overlap half of the criterion is what these three buy:
+
+- **Teteneva 2024** is RB-TnSeq in *E. coli* **W3110**, not the BW25113 that Price 2018,
+  Shiver 2016 and Tong 2020 all sit on. Joining it to them asks whether a gene-level
+  fitness effect survives a change of K-12 background, which no pair of rows already in
+  the list can ask. Its environment, an oligotrophic natural water, is also the only one
+  of its kind in either host here.
+- **Wang 2024** is a dose-by-time grid, 0.25x / 4x / 20x MIC at 1 h and 3 h. Every other
+  drug screen in the list is one dose per drug. It joins Choe 2025 and Shiver 2016 on the
+  drug axis and Girgis 2009 on the modality, so one gene under one antibiotic becomes
+  readable as knockdown, deletion and insertion fitness.
+- **Mohiuddin 2022** fills a gap rather than deepening one: the store serves drug-response
+  *fitness* for *E. coli* from four rows and drug-response *expression* from none. Two of
+  its three drugs are in the Choe 2025 panel.
+
+`K-12+promoter-reporter` is a new `SeqBasis`. Nothing in the genome is perturbed; the
+plasmid reports. It is still distinct from `reference-only` because the plasmid is present
+in the cell, and a genotype here is the total genomic content.
+
+### The finding: the gate was never scale, it was the deposit
+
+Six queue rows claiming a genome-scale measurement were checked against what they actually
+deposited. Three release the matrix. Three release the outcome:
+
+- **Glebes 2014** (`10.1371/journal.pone.0087540`) assayed **more than 10^5** genomic
+  fragments under furfural by microarray at ~125 nt resolution. Deposited: 268 enriched
+  genes, one score each. No array data anywhere. Ranked by its abstract this is near the
+  top of the queue; ranked by its deposit it is 268 numbers.
+- **Casanova-Hampton 2021** (`10.1093/mtomcs/mfab052`) stamped the whole Keio collection at
+  0, 3 and 6 mM copper, about 12,000 mutant-by-dose observations. The paper states
+  phenotypic response was determined **qualitatively**. Released: 43 sensitive and 25
+  resistant mutants.
+- **Mei 2026** (`10.1002/mlf2.70072`) screened the Keio library for ciprofloxacin
+  tolerance and says all data are in the Supporting Information, which is a single PDF
+  holding 37 sensitive and 11 tolerant mutants.
+
+In each case the abstract supports a measurement count in the tens of thousands and the
+deposit supports a few hundred. A title-and-abstract sweep cannot see this, and the
+sweep's own priority score **rewards** it: Glebes 2014 would have ranked well.
+
+Four more were not resolved and stay as leads, counted nowhere: a Keio benzoic-acid screen
+(`10.1007/s11274-026-05211-6`) and an oleate screen (`10.1074/jbc.m117.806240`), neither
+open access; the aggregated ALE corpus (`10.1021/acssynbio.1c00337`), whose Zenodo DOI
+resolves to analysis code (`gd_ale_analytics`) rather than to the 13,957-mutation table;
+and a tunable-guide library (`10.1093/nar/gkad234`) whose only supplement is a PDF.
+
+### The *P. putida* half of the sweep is exhausted against this rule
+
+Not one of the 82 uncurated *P. putida* rows is a genome-scale measurement. They are
+single-strain production and tolerance campaigns. The one genome-scale *P. putida* dataset
+in the entire 100-row half was already curated: Thompson 2020 fatty acid and alcohol
+RB-TnSeq, at rank 28. It carries the sweep's **lowest** priority score of the hundred,
+27.5. The sweep's own top *P. putida* row, at 69.4, is a CRISPR/Cas9n tool paper.
+
+Both isoprenoid-adjacent *P. putida* leads were already handled: Hernandez-Arranz 2019 is
+in `EXCLUDED` (lycopene reported two incompatible ways) and Meiners 2026 was assessed and
+deferred in the previous pass.
+
+### What it cost, stated rather than absorbed
+
+Adding two rows inside the cut pushed two out of the fifty: **Hawkins 2020**
+mismatch-CRISPRi and **Royet 2025 KT2440 metal Tn-seq**. Royet is *P. putida*. Nothing
+pins either, because the pin is for one product and neither row measures it. Adding a
+second pin unprompted would be the hand-tuning the design argues against, so the
+displacement is reported and left.
+
+The fifty is now **36 *E. coli* and 14 *P. putida*** (was 35 and 15).
+
+### This breaks the Zotero filing, and nothing was done about it
+
+The 2026.10.07 entry records that the fifty were filed in the group library as 35 in
+`database/Escherichia-coli` and 15 in `database/Pseudomonas-putida`, matched by DOI. That
+filing no longer matches the fifty: Royet 2025 has left it and Mohiuddin 2022 and
+Teteneva 2024 have entered it. **Nothing was added to or removed from Zotero.** Adding a
+reference is a curation decision that needs an explicit instruction each time.
+
+### Build state
+
+92 candidates (was 89), 15 `EXCLUDED` rows (was 12). Tranche 1 is 20 with 11 *E. coli* and
+9 *P. putida*; the floor of six per host still does not bind. Engineering rows: 32, median
+137 measurements, median rule rank 75.5. Screens: 19, median 219,788. The document builds
+to 80 pages (77 before) and `make check` is clean: 0 errors, 0 warnings, 21 SOURCE
+comments, 0 style violations. The PDF was not republished to Zotero from this branch.

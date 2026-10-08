@@ -62,6 +62,7 @@ from torchcell.adapters import (
     EnvChemgenShiver2016Adapter,
     EnvChemgenWang2015Adapter,
     GeneEssentialityGoodall2018Adapter,
+    GrowthRateCampos2018Adapter,
     IsoprenolSelectionMenasalvas2025Adapter,
     IsoprenolTiterCarruthers2025Adapter,
     IsoprenolTiterDeSiqueira2025Adapter,
@@ -87,6 +88,7 @@ from torchcell.datasets.ecoli.caglar2017 import (
     ProteomeCaglar2017Dataset,
     RnaseqCaglar2017Dataset,
 )
+from torchcell.datasets.ecoli.campos2018 import GrowthRateCampos2018Dataset
 from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
@@ -181,7 +183,8 @@ TURNOVER = "protein turnover phenotype"
 # `build_environment` in the loader). Caglar 2017 is a wild-type panel with no
 # perturbation in any record, and so is Schmidt 2016, whose paper's three deletion
 # strains carry no abundance data and are not loaded; Fuhrer 2017 and Goodall 2018 carry
-# no environment perturbation; the CRISPRi leaves of Carruthers, Cui, Menasalvas, Wang
+# no environment perturbation, and so does Campos 2018, whose screen is one medium at
+# one temperature; the CRISPRi leaves of Carruthers, Cui, Menasalvas, Wang
 # 2018 and Yunus carry a CrisprConstruct. Shiver 2016's three temperature-only conditions
 # carry no environment perturbation, but its other 54 do, so its pair is enabled.
 BACTERIAL: list[Bacterial] = [
@@ -200,6 +203,14 @@ BACTERIAL: list[Bacterial] = [
         ProteomeCaglar2017Dataset,
         PROTEOME,
         perturbation=False,
+    ),
+    _case(
+        GrowthRateCampos2018Adapter,
+        "campos2018",
+        "ecoli_growth_rate_campos2018",
+        GrowthRateCampos2018Dataset,
+        "fitness phenotype",
+        env_perturbation=False,
     ),
     _case(
         CrispriKnockdownCui2018Adapter,

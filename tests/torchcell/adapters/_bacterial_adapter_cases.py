@@ -90,6 +90,7 @@ from torchcell.adapters import (
     RbTnseqPrice2018EcoliAdapter,
     RnaseqCaglar2017Adapter,
     RnaseqLamoureux2023Adapter,
+    RnaseqPublicK12Lamoureux2023Adapter,
 )
 from torchcell.adapters.cell_adapter import SINGLE_PASS_EDGES, SINGLE_PASS_NODES
 from torchcell.datamodels.schema import PhagePerturbation
@@ -106,6 +107,9 @@ from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
+from torchcell.datasets.ecoli.lamoureux2023_public_k12 import (
+    RnaseqPublicK12Lamoureux2023Dataset,
+)
 from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
@@ -280,6 +284,13 @@ BACTERIAL: list[Bacterial] = [
         "lamoureux2023",
         "rnaseq_lamoureux2023",
         RnaseqLamoureux2023Dataset,
+        RNASEQ,
+    ),
+    _case(
+        RnaseqPublicK12Lamoureux2023Adapter,
+        "lamoureux2023_public_k12",
+        "rnaseq_public_k12_lamoureux2023",
+        RnaseqPublicK12Lamoureux2023Dataset,
         RNASEQ,
     ),
     _case(

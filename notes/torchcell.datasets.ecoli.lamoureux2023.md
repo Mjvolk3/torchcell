@@ -136,3 +136,30 @@ The paper: "PRECISE-1K constitutes a nearly 4-fold increase in size from the ori
 - `retrieve._UA` 403 at Zenodo (above).
 - The RNA-seq verifier's `strain_uniqueness` and `RNASEQ_DATASETS` registry need a bacterial, replicate-aware entry.
 - 22 environment compounds and kanamycin await compound-table rows.
+
+## 2026.10.08 - The Public K-12 arm is now its own dataset
+
+[[torchcell.datasets.ecoli.lamoureux2023_public_k12]]
+(`RnaseqPublicK12Lamoureux2023Dataset`, 240 records) serves the same release's other arm,
+the 1,675 reprocessed public K-12 samples. Three things about this loader changed with it,
+and none alters a stored PRECISE-1K record:
+
+- **The raw mirror is now shared.** Four more members live under the same citation key
+  (`data/k12_modulome/{metadata_qc,counts,multiqc_stats}` and
+  `data/annotation/gene_info.csv`), and one `manifest.json` pins all eight.
+  `deposit_public_raw_mirror` is additive, so the four pins here survive it; the data-gated
+  mirror test asserts a superset rather than equality.
+- **`parse_amount` grew a keyword-only `extra_units`.** The public cells carry `g/L` and
+  `ng/mL`, which no PRECISE-1K cell of a parsed column does (measured over `Carbon Source`,
+  `Nitrogen Source`, `Supplement`, `Antibiotic for selection` and `Electron Acceptor`: the
+  only matches are `mg/L`). The default is `UNIT_TOKENS`, so this loader's parsing is
+  unchanged and an unknown token still raises.
+- **`MAPPED_READS_GAP` is resolvable, and the other arm resolves it.** `n_mapped_reads` is
+  the featureCounts `Assigned` total of the release's MultiQC table, and the Public K-12
+  loader reads its arm's copy (`data/k12_modulome/multiqc_stats.tsv`), where the total
+  equals the sum of the stored counts for 1,675 of 1,675 samples. The equivalent file for
+  this arm, `data/precise1k/multiqc_stats.tsv`, is still not consumed, so the gap stands
+  here; filling it is a dev-LMDB rebuild of this dataset, not an edit.
+
+The open item above, "BW25113 (148 samples) is a separate loader", is now 148 + 361 = 509
+samples across the two arms, which raises its priority rather than its difficulty.

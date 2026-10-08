@@ -35,6 +35,9 @@ sourcing layer.
   NCM3722 growth conditions, the first consumer of ``ProteinTurnoverPhenotype``.
 - ``lamoureux2023`` -- ``RnaseqLamoureux2023Dataset``: PRECISE-1K, one record per MG1655
   RNA-seq library of the samples whose genotype and environment the release states.
+- ``lamoureux2023_public_k12`` -- ``RnaseqPublicK12Lamoureux2023Dataset``: the Public K-12
+  arm of the same release, one record per reprocessed public MG1655 RNA-seq library, keyed
+  by its SRA experiment accession.
 - ``shiver2016`` -- ``EnvChemgenShiver2016Dataset``: the neglected-antibiotic
   chemical-genomic screen, KEIO deletion fitness-scores across the 57 conditions of
   its own batches in the integrated S1 Dataset matrix.
@@ -89,6 +92,9 @@ from .gupta2024 import (
     ProteinTurnoverGupta2024Dataset as ProteinTurnoverGupta2024Dataset,
 )
 from .lamoureux2023 import RnaseqLamoureux2023Dataset as RnaseqLamoureux2023Dataset
+from .lamoureux2023_public_k12 import (
+    RnaseqPublicK12Lamoureux2023Dataset as RnaseqPublicK12Lamoureux2023Dataset,
+)
 from .mori2021 import ProteomeMori2021Dataset as ProteomeMori2021Dataset
 from .mutalik2020 import (
     PhageRbTnseqMutalik2020Dataset as PhageRbTnseqMutalik2020Dataset,

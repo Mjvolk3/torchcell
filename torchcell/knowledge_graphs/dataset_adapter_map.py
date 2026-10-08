@@ -68,6 +68,7 @@ from torchcell.adapters import (
     RbTnseqPrice2018EcoliAdapter,
     RnaseqCaglar2017Adapter,
     RnaseqLamoureux2023Adapter,
+    RnaseqPublicK12Lamoureux2023Adapter,
     ScmdOhnuki2018Adapter,
     ScmdOhnuki2022Adapter,
     SmfBaryshnikova2010Adapter,
@@ -98,6 +99,9 @@ from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
+from torchcell.datasets.ecoli.lamoureux2023_public_k12 import (
+    RnaseqPublicK12Lamoureux2023Dataset,
+)
 from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
@@ -270,6 +274,7 @@ dataset_adapter_map = {
     GeneEssentialityGoodall2018Dataset: GeneEssentialityGoodall2018Adapter,
     ProteinTurnoverGupta2024Dataset: ProteinTurnoverGupta2024Adapter,
     RnaseqLamoureux2023Dataset: RnaseqLamoureux2023Adapter,
+    RnaseqPublicK12Lamoureux2023Dataset: RnaseqPublicK12Lamoureux2023Adapter,
     ProteomeMori2021Dataset: ProteomeMori2021Adapter,
     PhageRbTnseqMutalik2020Dataset: PhageRbTnseqMutalik2020Adapter,
     RbTnseqPrice2018EcoliDataset: RbTnseqPrice2018EcoliAdapter,

@@ -2007,7 +2007,10 @@ class TestSyntheticRelease:
         for index in range(len(dataset)):
             record = dataset[index]
             screen = record["experiment"]["phenotype"]["screen_id"]
-            by_screen.setdefault(screen, record)
+            # the first record of each screen, bound by subscript rather than
+            # `setdefault` so the value stays traceable from the store to the asserts
+            if screen not in by_screen:
+                by_screen[screen] = record
         challenge = by_screen["Keio:set16IT008"]["experiment"]
         (phage,) = challenge["environment"]["perturbations"]
         assert phage["perturbation_type"] == "phage"

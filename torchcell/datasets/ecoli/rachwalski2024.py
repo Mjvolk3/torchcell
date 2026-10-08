@@ -463,13 +463,12 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     "host_strain": _paper(
         "BW25113",
         "All fitness screens with the CRISPRi collection were performed in E. coli "
-        "BW25113 [F D(araD-araB)567 lacZ4787D::rrnB-3 LAM rph-1 D(rhaD-rhaB)568 "
-        "hsdR514], and, all genes deletions used in the study were obtained from the "
-        "Keio collection4 (kanamycin resistant single-gene deletions in E. coli "
-        "BW25113).",
+        "BW25113",
         page=_PLASMIDS,
         note="the assembly every record pins, and the namespace its locus tags are "
-        "written in; the Keio deletions share it",
+        "written in. The sentence continues with the strain's genotype, whose OCR "
+        "carries two 0x04 control characters, so the quote stops before them; the Keio "
+        "half of the same sentence is quoted verbatim by 'keio_cassette'",
     ),
     "temperature": _paper(
         37.0,
@@ -526,7 +525,8 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     ),
     "agar_mops": _paper(
         1.5,
-        "MOPS minimal medium was prepared according to the manufacturer's instructions: "
+        "MOPS minimal medium was prepared according to the manufacturer\u2019s "
+        "instructions: "
         "components were filter sterilized after preparing liquid growth medium or added "
         "to sterile water and agar ( $1 . 5 \\%$ w/v) for solid growth medium.",
         page=_MODEL,
@@ -692,8 +692,8 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     "keio_size": _paper(
         4000,
         "we chose to conjugate the strongest suppressor from the Dlpp CRISPRi "
-        "conjugation screen, the lolA CRISPRi knockdown, into all ${ \\sim } 4 { , } 0 0 0 $ "
-        "strains of the Keio collection.",
+        "conjugation screen, the lolA CRISPRi knockdown, into all "
+        "${ \\sim } 4 { , } 0 0 0$ strains of the Keio collection.",
         page=_RESULTS_KEIO,
         note="Table S4A holds 4,542 rows over 4,017 distinct deletion labels",
     ),

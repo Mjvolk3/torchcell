@@ -1279,9 +1279,10 @@ def test_every_text_sourced_value_audits_against_its_pinned_bytes() -> None:
     from torchcell.verification.sourced import audit_sourced_value
 
     load_dotenv()
-    library = r.library_dir()
-    if not library.exists():
-        pytest.skip(f"literature mirror at {library} is absent")
+    # ``source_path`` prepends the citation key, so the root is the mirror's parent
+    library = r.library_dir().parent
+    if not r.library_dir().exists():
+        pytest.skip(f"literature mirror at {r.library_dir()} is absent")
     # a workbook is a zip, so its quote is XML; the next row checks it as a cell
     audits = {
         key: audit_sourced_value(value, str(library))

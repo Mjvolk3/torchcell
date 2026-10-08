@@ -63,6 +63,18 @@ sourcing layer.
   the retention ledger rather than stored under a leaf that would misstate them.
 - ``schmidt2016`` -- ``ProteomeSchmidt2016Dataset``: the condition-dependent BW25113
   proteome, one record per loaded growth condition in absolute protein copies per cell.
+- ``schmidt2016_srm`` -- ``ProteomeSrmSet1Schmidt2016Dataset`` and
+  ``ProteomeSrmSet2Schmidt2016Dataset``: the same paper's Tables S2 and S3, the 41-protein
+  SRM + stable-isotope-dilution panel the proteome-wide estimates were anchored on. A
+  DIFFERENT assay of proteins the Table S6 block also covers, so each arm carries its own
+  ``measurement_type`` and the build asserts that zero shared (accession, condition) cells
+  agree with the stored block. The two arms are separate classes because their released
+  dispersions are of different things (two SRM injections against three grown cultures)
+  and one dataset carries one ``measurement_type``.
+- ``schmidt2016_growth_rate`` -- ``GrowthRateSchmidt2016Dataset``: the same paper's Table
+  S24, the only gene-perturbation phenotype it releases. Six records: the KEIO ``rimI``,
+  ``rimJ`` and ``rimL`` deletions in glucose and in acetate, each a ``FitnessPhenotype``
+  ratio to the wild-type row of its own medium.
 - ``mori2021`` -- ``ProteomeMori2021Dataset``: the DIA/SWATH absolute proteome, one
   record per loaded MG1655 (EQ353) calibration sample in protein mass fractions. Seven of
   its 66 released samples are loaded; the other 59 are dropped on their medium and
@@ -108,6 +120,15 @@ from .schastnaya2021 import (
     MetabolomeSchastnaya2021Dataset as MetabolomeSchastnaya2021Dataset,
 )
 from .schmidt2016 import ProteomeSchmidt2016Dataset as ProteomeSchmidt2016Dataset
+from .schmidt2016_growth_rate import (
+    GrowthRateSchmidt2016Dataset as GrowthRateSchmidt2016Dataset,
+)
+from .schmidt2016_srm import (
+    ProteomeSrmSet1Schmidt2016Dataset as ProteomeSrmSet1Schmidt2016Dataset,
+)
+from .schmidt2016_srm import (
+    ProteomeSrmSet2Schmidt2016Dataset as ProteomeSrmSet2Schmidt2016Dataset,
+)
 from .shiver2016 import EnvChemgenShiver2016Dataset as EnvChemgenShiver2016Dataset
 from .tong2020 import CarbonSourceTong2020Dataset as CarbonSourceTong2020Dataset
 from .wang2015 import EnvChemgenWang2015Dataset as EnvChemgenWang2015Dataset

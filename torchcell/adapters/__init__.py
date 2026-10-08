@@ -155,6 +155,15 @@ from .schastnaya2021_adapter import (
 from .schmidt2016_adapter import (
     ProteomeSchmidt2016Adapter as ProteomeSchmidt2016Adapter,
 )
+from .schmidt2016_growth_rate_adapter import (
+    GrowthRateSchmidt2016Adapter as GrowthRateSchmidt2016Adapter,
+)
+from .schmidt2016_srm_set1_adapter import (
+    ProteomeSrmSet1Schmidt2016Adapter as ProteomeSrmSet1Schmidt2016Adapter,
+)
+from .schmidt2016_srm_set2_adapter import (
+    ProteomeSrmSet2Schmidt2016Adapter as ProteomeSrmSet2Schmidt2016Adapter,
+)
 from .sgd_adapter import GeneEssentialitySgdAdapter as GeneEssentialitySgdAdapter
 from .shiver2016_adapter import (
     EnvChemgenShiver2016Adapter as EnvChemgenShiver2016Adapter,

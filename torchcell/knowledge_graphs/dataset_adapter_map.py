@@ -34,6 +34,7 @@ from torchcell.adapters import (
     GeneEssentialityGoodall2018Adapter,
     GeneEssentialitySgdAdapter,
     GrowthRateCampos2018Adapter,
+    GrowthRateSchmidt2016Adapter,
     HetHillenmeyer2008Adapter,
     HomHillenmeyer2008Adapter,
     IsobutanolScreenLopez2024Adapter,
@@ -62,6 +63,8 @@ from torchcell.adapters import (
     ProteomeMessner2023Adapter,
     ProteomeMori2021Adapter,
     ProteomeSchmidt2016Adapter,
+    ProteomeSrmSet1Schmidt2016Adapter,
+    ProteomeSrmSet2Schmidt2016Adapter,
     ProteomeZelezniak2018Adapter,
     PutidaPrecise321Lim2022Adapter,
     RbTnseqBorchert2024Adapter,
@@ -109,6 +112,13 @@ from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
 from torchcell.datasets.ecoli.rousset2018 import CrispriScreenRousset2018Dataset
 from torchcell.datasets.ecoli.schastnaya2021 import MetabolomeSchastnaya2021Dataset
 from torchcell.datasets.ecoli.schmidt2016 import ProteomeSchmidt2016Dataset
+from torchcell.datasets.ecoli.schmidt2016_growth_rate import (
+    GrowthRateSchmidt2016Dataset,
+)
+from torchcell.datasets.ecoli.schmidt2016_srm import (
+    ProteomeSrmSet1Schmidt2016Dataset,
+    ProteomeSrmSet2Schmidt2016Dataset,
+)
 from torchcell.datasets.ecoli.shiver2016 import EnvChemgenShiver2016Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
 from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
@@ -283,6 +293,9 @@ dataset_adapter_map = {
     MetabolomeSchastnaya2021Dataset: MetabolomeSchastnaya2021Adapter,
     EnvChemgenShiver2016Dataset: EnvChemgenShiver2016Adapter,
     ProteomeSchmidt2016Dataset: ProteomeSchmidt2016Adapter,
+    ProteomeSrmSet1Schmidt2016Dataset: ProteomeSrmSet1Schmidt2016Adapter,
+    ProteomeSrmSet2Schmidt2016Dataset: ProteomeSrmSet2Schmidt2016Adapter,
+    GrowthRateSchmidt2016Dataset: GrowthRateSchmidt2016Adapter,
     CarbonSourceTong2020Dataset: CarbonSourceTong2020Adapter,
     EnvChemgenWang2015Dataset: EnvChemgenWang2015Adapter,
     CrispriGuideFitnessWang2018Dataset: CrispriGuideFitnessWang2018Adapter,

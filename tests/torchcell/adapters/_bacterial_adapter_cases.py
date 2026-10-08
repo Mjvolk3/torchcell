@@ -69,6 +69,7 @@ from torchcell.adapters import (
     EnvChemgenWang2015Adapter,
     GeneEssentialityGoodall2018Adapter,
     GrowthRateCampos2018Adapter,
+    GrowthRateSchmidt2016Adapter,
     IsoprenolSelectionMenasalvas2025Adapter,
     IsoprenolTiterCarruthers2025Adapter,
     IsoprenolTiterDeSiqueira2025Adapter,
@@ -85,6 +86,8 @@ from torchcell.adapters import (
     ProteomeLim2025Adapter,
     ProteomeMori2021Adapter,
     ProteomeSchmidt2016Adapter,
+    ProteomeSrmSet1Schmidt2016Adapter,
+    ProteomeSrmSet2Schmidt2016Adapter,
     PutidaPrecise321Lim2022Adapter,
     RbTnseqBorchert2024Adapter,
     RbTnseqPrice2018EcoliAdapter,
@@ -117,6 +120,13 @@ from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
 from torchcell.datasets.ecoli.rousset2018 import CrispriScreenRousset2018Dataset
 from torchcell.datasets.ecoli.schastnaya2021 import MetabolomeSchastnaya2021Dataset
 from torchcell.datasets.ecoli.schmidt2016 import ProteomeSchmidt2016Dataset
+from torchcell.datasets.ecoli.schmidt2016_growth_rate import (
+    GrowthRateSchmidt2016Dataset,
+)
+from torchcell.datasets.ecoli.schmidt2016_srm import (
+    ProteomeSrmSet1Schmidt2016Dataset,
+    ProteomeSrmSet2Schmidt2016Dataset,
+)
 from torchcell.datasets.ecoli.shiver2016 import EnvChemgenShiver2016Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
 from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
@@ -200,8 +210,9 @@ TURNOVER = "protein turnover phenotype"
 # The shape of each dataset's records, measured on its dev-tree LMDB on 2026-10-07 (and,
 # for the two RB-TnSeq stores rebuilding at the time, read off `build_genotype` /
 # `build_environment` in the loader). Caglar 2017 is a wild-type panel with no
-# perturbation in any record, and so are Schmidt 2016, whose paper's three deletion
-# strains carry no abundance data and are not loaded, and Mori 2021, whose engineered
+# perturbation in any record, and so are Schmidt 2016 and its two SRM arms, whose
+# paper's three deletion strains carry no abundance data and are served instead as the
+# six Table S24 fitness records, and Mori 2021, whose engineered
 # NCM3722 derivatives are all in samples dropped on their medium; Fuhrer 2017 and
 # Goodall 2018 carry no environment perturbation, and neither do Campos 2018, whose
 # screen is one medium at one temperature, nor Schastnaya 2021, whose carbon source is
@@ -357,6 +368,29 @@ BACTERIAL: list[Bacterial] = [
         ProteomeSchmidt2016Dataset,
         PROTEOME,
         perturbation=False,
+    ),
+    _case(
+        ProteomeSrmSet1Schmidt2016Adapter,
+        "schmidt2016_srm_set1",
+        "proteome_srm_set1_schmidt2016",
+        ProteomeSrmSet1Schmidt2016Dataset,
+        PROTEOME,
+        perturbation=False,
+    ),
+    _case(
+        ProteomeSrmSet2Schmidt2016Adapter,
+        "schmidt2016_srm_set2",
+        "proteome_srm_set2_schmidt2016",
+        ProteomeSrmSet2Schmidt2016Dataset,
+        PROTEOME,
+        perturbation=False,
+    ),
+    _case(
+        GrowthRateSchmidt2016Adapter,
+        "schmidt2016_growth_rate",
+        "growth_rate_schmidt2016",
+        GrowthRateSchmidt2016Dataset,
+        "fitness phenotype",
     ),
     _case(
         CarbonSourceTong2020Adapter,

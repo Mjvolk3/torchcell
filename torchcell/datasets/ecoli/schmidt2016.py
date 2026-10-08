@@ -123,6 +123,20 @@ the swap for all 2,058 dataset-2 rows, with zero exceptions. This loader reads n
 column, so nothing stored depends on it; the swap is asserted at build time so the
 finding stays pinned to the bytes.
 
+TWO SIBLING LOADERS READ THE SAME WORKBOOK, FROM THEIR OWN MODULES.
+:mod:`torchcell.datasets.ecoli.schmidt2016_srm` serves Tables S2 and S3, the 41-protein
+SRM + stable-isotope-dilution panel the abundances above were anchored on (a different
+assay of proteins this block also covers, under its own ``measurement_type``), and
+:mod:`torchcell.datasets.ecoli.schmidt2016_growth_rate` serves Table S24, the
+rim-deletion growth rates, which are this paper's only gene-perturbation phenotype. They
+are separate MODULES on purpose: ``build_manifest`` keys a built store's staleness on the
+schema closure of the loader module's own ``torchcell.datamodels`` imports, so adding
+``FitnessPhenotype`` or ``BacterialDeletionPerturbation`` here would mark the already-served
+``proteome_schmidt2016`` store stale for a change that touches none of its records. They
+import the pinned artifact, the condition table, :func:`build_environment`,
+:func:`check_environments_distinct`, :func:`publication` and the three supplementary
+verification rules from this module, so each is stated once.
+
 DATA. One file is consumed: ``si2.xlsx``, the publisher's Supplementary tables, from the
 PMC OA Cloud bucket (``PMC4888949.1/NIHMS65833-supplement-Supplementary_tables.xlsx``),
 deposited under ``$DATA_ROOT/torchcell-raw/<citation key>/data/si2.xlsx``. The retrieval

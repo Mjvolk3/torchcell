@@ -1064,3 +1064,107 @@ Table S5 contains an internal duplicate: `MgSO4-2_000.020_mM.tab` replicate 3 an
 (64.6719153, 58.70481327, 71.98933404, 0.994667398). One fit appears under two different
 Mg2+ concentrations, so the 55 rows hold 54 distinct fits. A per-replicate load would store
 one growth curve twice under two different environments.
+
+## 2026.10.08 - Corrections from building ranks 4, 5 and 7
+
+Three "loadable now" rows were implemented. Two of the three needed a correction, both
+measured on the same sha256-pinned bytes the audit read. The original text above is left in
+place. Loaders, dev stores and verification:
+[[torchcell.datasets.pputida.kang2026]], [[torchcell.datasets.pputida.desiqueira2025]],
+[[torchcell.datasets.pputida.yunus2026]].
+
+### Rank 4 is NOT 21 records, it is 0, and the blocker is a missing denominator
+
+The audit called Kang's 7 fed-batch isoprenol titers "unconditional". They are not
+storable at all today. `ProductTiterExperimentReference` requires a `phenotype_reference`
+and `ProductTiterPhenotype.titer` is a required float, so an isoprenol record needs an
+isoprenol REFERENCE titer, and Table S9 is the only place this paper releases any
+isoprenol number. Measured over every SI table and the whole `paper.md`: Table S1 is a
+physicochemical property comparison, Table S4's only titer column is `IPA titer (mg/L)`
+(the ester), Tables S2, S3, S5 to S8 release no titer, and Fig. 2b's isoprenol bars have
+no companion table.
+
+The one isoprenol baseline the paper states is second-hand on three counts, which is why
+it cannot be the reference: "In the previously reported engineered P. putida KT2440
+background, this strain supported isoprenol titers of up to 762 mg/L in shake flasks and
+$3 . 5 ~ \mathrm { g } / \mathrm { L }$ in fed-batch cultures (Banerjee et al., 2024)."
+The measurement is Banerjee's; the strain is the background PIPA was ADAPTED FROM rather
+than PIPA; and no medium, sugar load or replicate count travels with either number.
+Banerjee 2024 is not mirrored, which this audit's own "did NOT check" list already says.
+The sibling Yunus 2026 loader refuses its entire titer family for the same shape of gap,
+and that precedent was followed.
+
+What the revision did instead: read the column (it was asserted by `SI_TABLE9_COLUMNS` and
+declared nowhere on `FedBatchRow`, so it was parsed past), carry it per record in
+`preprocess/titer_rows.csv`, oracle-check it, and re-join it to the deposited bytes with a
+new verification level. The decline is `ISOPRENOL_NOT_A_RECORD` in the loader and is
+written into the build accounting.
+
+**The audit's proposed source for the 14 metabolite records does not exist.** The caveat
+reads "n = 1 must be asserted from 'a single run'". That phrase is in no mirrored byte.
+Measured: `replicate` occurs ONCE in `paper.md` and the hit is "To replicate this
+composition, glucose and xylose are commonly added in a 2:1 ratio"; every figure caption
+except Fig. 8's says "Error bars indicate the standard deviation of biological
+triplicates"; Fig. 8's says only "Cultivations were performed with 1 L medium and 200 mL
+overlay with sampling approximately every 12 h"; and the Table S9 caption states no
+replicate count. So `MetabolitePhenotype.n_replicates`, which is required with a `>= 1`
+validator and therefore non-gappable, has nothing to be filled from, and that is a second
+blocker independent of the missing units field.
+
+### Rank 5 is right, and the two statistics are re-measured over all 34,600 cells
+
+The audit measured the de Siqueira non-recoverability on a 2,000-row sample. Re-measured
+over every released cell, both findings hold and the percent one is stronger than reported.
+
+| claim | audit | re-measured over 34,600 cells |
+|---|---|---|
+| percent is not percent-of-the-mean | per-sample ratio 0.959 to 0.997 | per-CELL ratio 0.914506 to 1.083554, median 1.000007, and ZERO cells agree exactly |
+| log10 is the mean of logs | 1,999 of 2,000 sampled rows disagree | 33,914 strictly below, 686 within 5e-5, **0 above**, largest gap 1.378950 |
+
+The one-sided log10 result is Jensen's inequality for a mean of logarithms, which is a
+stronger statement than a disagreement count: a log10-of-the-mean column would agree
+everywhere. The audit's first-row numbers reproduce exactly (`Csda`, -2.23385590492606
+against -2.19547). Two additions the audit did not make: the log10 SD is not the
+delta-method transform of the percent SD either (34,496 of 34,600 cells disagree), and the
+two columns the audit classified as derived are now build oracles rather than prose (the
+CV is exactly `100 * pct_sd / pct_mean` on every cell; the SEM is single-valued for 1,728
+of 1,729 proteins).
+
+**One structural correction.** The audit says `measurement_type` being a free `str` makes
+each normalization "its own record set" inside one dataset. It cannot be: the shared
+`verify_protein_dataset` asserts a single `measurement_type` per DATASET ("no silent
+cross-assay mixing"), so each normalization is its own dataset CLASS, with the full adapter
+gate. Rank 3 (Carruthers's two unstored abundance sheets) is on the same Top3
+percent-of-total basis the Carruthers loader already stores, so it is unaffected; any
+future row that proposes a second scale inside an existing protein dataset is.
+
+### Rank 7 is right, and the no-clash claim is right for the wrong reason
+
+The audit says "PP_4188 itself is absent from both tables so there is no clash with its
+Table S3 row". No row's `Protein` column is `PP_4188`, and the build asserts it. But the
+protein is in the tables: Table S4 row 40 is `Kgdb` (`Q88FB0`, "Dihydrolipoyllysine-residue
+succinyltransferase component of 2-oxoglutarate dehydrogenase complex") at a fold change of
+0.238537433, which is the enzyme this paper's own Table S2 names for `PP_4188`
+("2-oxoglutarate dehydrogenase dihydrolipoyltranssuccinylase subunit"), and the pinned
+annotation resolves `sucB` to `PP_4188`. Row 39 is `Kgda` (`Q88FA9`, the E1 component) =
+`PP_4189` by the same route. `kgdB` resolves to no locus of this assembly, so both land in
+the 33 released keys that are dropped for want of a gene node.
+
+So the record carries **305 of the audit's 338 keys**, not 338, and the reason nothing
+clashes is the missing UniProt-to-locus-tag crosswalk rather than the protein's absence. A
+crosswalk that recovered `Kgdb` would put 0.238537433 beside Table S3's 0.2213 for the same
+strain, on a different `measurement_type` -- the two independent runs the Yunus note already
+documents, not a contradiction.
+
+### Firm total, revised
+
+| rank | audit | built |
+|---|---|---|
+| 4 | 21 | **0** |
+| 5 | 10 | **10** |
+| 7 | 1 record, 338 keys | **1 record, 305 keys** |
+
+**11 records, not 32.** The audit's "firm total: 157 records across items 1 to 5 and 7"
+becomes 136 once rank 1 (55, corrected to 0 by the Caglar section above) and rank 4 (21,
+corrected to 0 here) come out: 49 + 21 + 10 + 1 for ranks 2, 3, 5 and 7, of which ranks 5
+and 7 are now built and ranks 2 and 3 (Carruthers, 70 records) are still open.

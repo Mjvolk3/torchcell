@@ -632,3 +632,27 @@ needs a notion of a dataset whose own unperturbed arm is part of the release (th
 place the condition-signature limitation noted above belongs). Neither is changed from
 here, because `torchcell/verification/environment_response.py` is shared by every
 chemogenomic dataset and `runners.py` is being changed on `feat/titer-verification-runners`.
+
+## 2026.10.07 - The control arm comes first in the store, and the shared phage check had to stop reading a prefix
+
+The adapter gate's data-gated check (`assert_dev_store_graph` in
+`tests/torchcell/adapters/_bacterial_adapter_cases.py`) runs the enabled node and edge
+methods over `dataset[0:200]`, the first 200 records of the dev store. For this dataset
+that window holds **no phage at all**: records 0 through 3,666 are the first control arm
+of `set16_set19`, one record per mapped gene (the same 3,667 that appear in the L3
+arithmetic above), and the first phage-bearing record is index **3,667** (measured on
+`/scratch/projects/torchcell-scratch/data/torchcell/phage_rbtnseq_mutalik2020`, 286,344
+records). Sampling every 997th record returns either exactly one `PhagePerturbation` or
+no environment perturbation at all, never anything else, so a control carries an empty
+perturbation list exactly as the loader intends.
+
+The consequence is for the test, not the records. The phage block of that shared check had
+asserted that the record-level `phage perturbation (chunked)` method emits nodes over the
+prefix window, which is a property of **record order** rather than of the dataset: it held
+for Rousset 2018, whose every record is a phage challenge, and failed here. The block now
+runs its pair of methods over a second view built from a phage-bearing reference's own
+`member_indices`, where a phage is present by construction, so the property is proved on
+real phage records for every phage dataset instead of depending on what the store happens
+to order first. The `phage perturbation` label still appears in the prefix run's labels
+for this dataset, through `_get_phage_perturbation_reference_nodes`: 68 of its 78
+references carry a phage, and the 10 that do not are the control arms.

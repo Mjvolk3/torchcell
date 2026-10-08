@@ -25,10 +25,14 @@ its own adapter module, its own conf and its own paired test file,
   the build runs them (one single-pass traversal for the chunked nodes, one for the
   chunked edges); the emitted graph is closed (every edge endpoint is an emitted node),
   every label and property is declared, and every sub-object family the conf leaves off
-  is absent from the records. A store that is absent or mid-rebuild (no
-  ``build_manifest.json``) is skipped, and so is one without a cached
-  ``experiment_reference_index.json``, because computing that index would write it into
-  the store.
+  is absent from the records. For a phage dataset ``_phage_pair`` additionally runs the
+  phage method and the served environment-perturbation method over the same records and
+  requires the same node ids from both, which is the record-level form of the one-class
+  rule; it runs over a second view built from a phage-bearing reference's own records,
+  since the leading records of a store can all be unchallenged controls. A store that is
+  absent or mid-rebuild (no ``build_manifest.json``) is skipped, and so is one without a
+  cached ``experiment_reference_index.json``, because computing that index would write it
+  into the store.
 """
 
 from __future__ import annotations
@@ -87,6 +91,7 @@ from torchcell.adapters import (
     RnaseqLamoureux2023Adapter,
 )
 from torchcell.adapters.cell_adapter import SINGLE_PASS_EDGES, SINGLE_PASS_NODES
+from torchcell.datamodels.schema import PhagePerturbation
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.datasets.ecoli.caglar2017 import (
     ProteomeCaglar2017Dataset,
@@ -583,6 +588,72 @@ def _run(adapter: Any, view: Any, kind: str) -> list[Any]:
     return out
 
 
+def _phage_leaves(records: Any) -> int:
+    """The phage perturbations the records carry, counted off the records themselves."""
+    total = 0
+    for i in range(len(records)):
+        item = records.transform_item(records[i])
+        total += sum(
+            isinstance(perturbation, PhagePerturbation)
+            for perturbation in item["experiment"].environment.perturbations
+        )
+    records.close_lmdb()
+    return total
+
+
+def _phage_bearing_view(dataset: Any) -> Any:
+    """A view over the records of the first reference whose environment carries a phage.
+
+    The prefix view the other checks run over is NOT guaranteed to hold one: a dataset
+    that also measures unchallenged controls can order those records first, and Mutalik
+    2020's leading 3,667 records are exactly that, their environment carrying no
+    perturbation at all (measured on its dev store, 2026.10.07). ``member_indices`` names
+    the records of one reference, so a phage is present in this view by construction, and
+    it is read off the reference index the store already caches (``STORE_FILES``) rather
+    than found by scanning records.
+    """
+    phage_references = [
+        entry
+        for entry in dataset.experiment_reference_index
+        if any(
+            isinstance(perturbation, PhagePerturbation)
+            for perturbation in entry.reference.environment_reference.perturbations
+        )
+    ]
+    assert phage_references, "the shape says phage, but no reference carries one"
+    return dataset[phage_references[0].member_indices[:RECORDS]]
+
+
+def _phage_pair(adapter: Any, records: Any) -> list[Any]:
+    """The phage and the environment-perturbation node method over the SAME records.
+
+    A phage conf exempts ``environment perturbation (chunked)`` from the left-off check,
+    and this pair is what stands in for it. The two methods must agree node for node by
+    id: equal ids prove the served method would emit nothing the phage class does not
+    already serve -- one content id written under two labels, which is the double write
+    the one-class rule forbids (issue #756) -- and nothing beyond it either, so the
+    exemption drops no perturbation the records carry. The phage node count is then
+    checked against the phage leaves read straight off the records, so a view that
+    carries none asserts that both methods emit nothing instead of passing vacuously.
+
+    Returns the phage nodes.
+    """
+    by_name = dict(adapter.node_methods)
+    ran: dict[str, list[Any]] = {}
+    for name in (PHAGE_NODE, ENV_PERTURBATION_NODE):
+        adapter._single_pass_methods = [(name, by_name[name])]
+        ran[name] = adapter._all_chunked(records, SINGLE_PASS_NODES, inprocess=True)
+    assert {n.get_label() for n in ran[PHAGE_NODE]} <= {PHAGE_NODE_LABEL}
+    assert {n.get_label() for n in ran[ENV_PERTURBATION_NODE]} <= {
+        ENV_PERTURBATION_NODE_LABEL
+    }
+    assert {n.get_id() for n in ran[ENV_PERTURBATION_NODE]} == {
+        n.get_id() for n in ran[PHAGE_NODE]
+    }
+    assert len(ran[PHAGE_NODE]) == _phage_leaves(records)
+    return ran[PHAGE_NODE]
+
+
 def assert_dev_store_graph(
     bacterial: Bacterial, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -628,8 +699,8 @@ def assert_dev_store_graph(
     # is exempt for a phage conf, and only there: that method does NOT filter phages
     # out, so running it would re-emit the records' phages under the served label --
     # which is the documented reason a conf enables one of the two classes and never
-    # both, not evidence that the phage conf drops anything. The positive check two
-    # lines up is what proves the phages ARE served, under `phage perturbation`.
+    # both, not evidence that the phage conf drops anything. What the exemption leaves
+    # unproved, `_phage_pair` below proves instead, record for record.
     enabled = {m["method_name"] for m in adapter.config.cell_adapter.node_methods}
     overlapping = {ENV_PERTURBATION_NODE} if bacterial.case.shape.phage else set()
     left_off = [
@@ -642,16 +713,10 @@ def assert_dev_store_graph(
 
     if not bacterial.case.shape.phage:
         return
-    by_name = dict(adapter.node_methods)
-    ran: dict[str, list[Any]] = {}
-    for name in (PHAGE_NODE, ENV_PERTURBATION_NODE):
-        adapter._single_pass_methods = [(name, by_name[name])]
-        ran[name] = adapter._all_chunked(view, SINGLE_PASS_NODES, inprocess=True)
-    assert ran[PHAGE_NODE]
-    assert {n.get_label() for n in ran[PHAGE_NODE]} == {PHAGE_NODE_LABEL}
-    assert {n.get_label() for n in ran[ENV_PERTURBATION_NODE]} == {
-        ENV_PERTURBATION_NODE_LABEL
-    }
-    assert {n.get_id() for n in ran[ENV_PERTURBATION_NODE]} == {
-        n.get_id() for n in ran[PHAGE_NODE]
-    }
+    # The phage pair over the first records, which is where the
+    # `environment perturbation (chunked)` exemption above applies, and then over records
+    # that carry a phage by construction, which is what keeps the pair's property from
+    # being vacuous for a dataset whose leading records are unchallenged controls.
+    _phage_pair(adapter, view)
+    phage_nodes = _phage_pair(adapter, _phage_bearing_view(dataset))
+    assert phage_nodes

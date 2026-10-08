@@ -2483,6 +2483,7 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
     """The registry's indirection is one call per dataset, with its family selected."""
     from torchcell.datasets.ecoli import caglar2017, foo2014
     from torchcell.datasets.pputida import (
+        banerjee2025,
         carruthers2025,
         desiqueira2025,
         kang2026,
@@ -2498,6 +2499,7 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
 
         return fake
 
+    monkeypatch.setattr(banerjee2025, "verify_build", record("banerjee"))
     monkeypatch.setattr(foo2014, "verify_build", record("foo"))
     monkeypatch.setattr(carruthers2025, "verify_build", record("carruthers"))
     monkeypatch.setattr(desiqueira2025, "verify_build", record("desiqueira"))
@@ -2506,6 +2508,9 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
     monkeypatch.setattr(caglar2017, "run_verification", record("caglar"))
 
     assert runners._verify_foo_titer("/root", "/data").dataset_name == "foo"
+    assert (
+        runners._verify_banerjee_proteome("/root", "/data").dataset_name == "banerjee"
+    )
     assert (
         runners._verify_carruthers_titer("/root", "/data").dataset_name == "carruthers"
     )
@@ -2525,6 +2530,9 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
     assert runners._verify_caglar_proteome("/root", "/data").dataset_name == "caglar"
     assert calls == [
         ("foo", ("/root", "/data"), {}),
+    ),
+    _case(
+        ("banerjee", ("/root", "/data"), {}),
         ("carruthers", ("/root", "/data"), {"family": "titer"}),
         ("carruthers", ("/root", "/data"), {"family": "proteome"}),
         ("desiqueira", ("/root", "/data"), {"family": "titer"}),
@@ -2555,6 +2563,7 @@ def test_the_bioproduction_registries_name_every_landed_store() -> None:
         name: spec["root"]
         for name, spec in runners.BACTERIAL_PROTEIN_ABUNDANCE_DATASETS.items()
     } == {
+        "proteome_banerjee2025": "data/torchcell/proteome_banerjee2025",
         "proteome_carruthers2025": "data/torchcell/proteome_carruthers2025",
         "proteome_desiqueira2025": "data/torchcell/proteome_desiqueira2025",
         "proteome_percent_desiqueira2025": (

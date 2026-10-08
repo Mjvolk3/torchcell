@@ -63,6 +63,7 @@ from torchcell.adapters import (
     OrganicAcidYoshida2012Adapter,
     PhageRbTnseqMutalik2020Adapter,
     ProteinTurnoverGupta2024Adapter,
+    ProteomeBanerjee2025Adapter,
     ProteomeCaglar2017Adapter,
     ProteomeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Adapter,
@@ -149,6 +150,7 @@ from torchcell.datasets.ecoli.shiver2016 import EnvChemgenShiver2016Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
 from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
 from torchcell.datasets.ecoli.wang2018 import CrispriGuideFitnessWang2018Dataset
+from torchcell.datasets.pputida.banerjee2025 import ProteomeBanerjee2025Dataset
 from torchcell.datasets.pputida.borchert2023 import RbTnseqBorchert2023Dataset
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
 from torchcell.datasets.pputida.carruthers2025 import (
@@ -337,6 +339,7 @@ dataset_adapter_map = {
     CarbonSourceTong2020Dataset: CarbonSourceTong2020Adapter,
     EnvChemgenWang2015Dataset: EnvChemgenWang2015Adapter,
     CrispriGuideFitnessWang2018Dataset: CrispriGuideFitnessWang2018Adapter,
+    ProteomeBanerjee2025Dataset: ProteomeBanerjee2025Adapter,
     RbTnseqBorchert2023Dataset: RbTnseqBorchert2023Adapter,
     RbTnseqBorchert2024Dataset: RbTnseqBorchert2024Adapter,
     IsoprenolTiterCarruthers2025Dataset: IsoprenolTiterCarruthers2025Adapter,

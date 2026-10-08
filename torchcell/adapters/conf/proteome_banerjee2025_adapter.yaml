@@ -1,0 +1,68 @@
+# Banerjee 2025 proteome: 6 samples, BacterialProteinAbundanceExperiment.
+# Four of the six records carry one bacterial perturbation each (two promoter
+# replacements on PP_0897 and two PP_0897 deletions); the two parental records carry
+# none, and all four strains share the D1b_gf background on the reference genome. The
+# environment carries EnvironmentPhysicalPerturbation carbon-source edits, so the
+# environment-perturbation pair is enabled.
+#
+# The temperature methods are enabled and EMIT NOTHING: the shotgun-proteomics Methods
+# state no incubation temperature, so every record's Environment.temperature is None
+# with a typed ProvenanceGap, and both `_temperature_node` and
+# `_temperature_to_environment_edge` return an empty list for a gapped temperature. The
+# enable-list is the canonical one for this record shape, so the methods stay rather
+# than the conf diverging from every sibling proteome conf.
+cell_adapter:
+  node_methods:
+    - method_name: "experiment reference"
+    - method_name: "genome"
+    - method_name: "experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "bacterial perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment reference"
+    - method_name: "media (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media reference"
+    - method_name: "temperature (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature reference"
+    - method_name: "environment perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation reference"
+    - method_name: "protein abundance phenotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "protein abundance phenotype reference"
+    - method_name: "dataset"
+    - method_name: "publication (chunked)"
+      memory_reduction_factor: 1.0
+
+  edge_methods:
+    - method_name: "experiment reference to dataset"
+    - method_name: "experiment to dataset (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "experiment reference to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "perturbation to genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment reference"
+    - method_name: "phenotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation to environment reference"
+    - method_name: "genome to experiment reference"
+    - method_name: "phenotype to experiment reference"
+    - method_name: "publication to experiment (chunked)"
+      memory_reduction_factor: 1.0

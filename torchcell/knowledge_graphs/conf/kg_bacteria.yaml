@@ -90,6 +90,7 @@ datasets:
   - EnvChemgenWang2015Dataset
   - CrispriGuideFitnessWang2018Dataset
   # P. putida
+  - ProteomeBanerjee2025Dataset
   - RbTnseqBorchert2023Dataset
   - RbTnseqBorchert2024Dataset
   - IsoprenolTiterCarruthers2025Dataset

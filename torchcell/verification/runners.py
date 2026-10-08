@@ -2282,6 +2282,13 @@ def _verify_carruthers_proteome(
     return carruthers2025.verify_build(dataset_root, data_root, family="proteome")
 
 
+def _verify_banerjee_proteome(dataset_root: str, data_root: str) -> VerificationReport:
+    """Banerjee 2025 proteome: the shared gate plus its four own L1-L4 rows."""
+    from torchcell.datasets.pputida import banerjee2025
+
+    return banerjee2025.verify_build(dataset_root, data_root)
+
+
 def _verify_desiqueira_titer(dataset_root: str, data_root: str) -> VerificationReport:
     """The de Siqueira 2025 titer battery, with its Results-text cross-source row."""
     from torchcell.datasets.pputida import desiqueira2025
@@ -2380,6 +2387,10 @@ PRODUCT_TITER_DATASETS: dict[str, dict[str, Any]] = {
 #: with the three P. putida proteomes: it is the same experiment class on a different
 #: host, and the containment rule reads its REL606 pin off its own records.
 BACTERIAL_PROTEIN_ABUNDANCE_DATASETS: dict[str, dict[str, Any]] = {
+    "proteome_banerjee2025": {
+        "root": "data/torchcell/proteome_banerjee2025",
+        "verify": _verify_banerjee_proteome,
+    },
     "proteome_carruthers2025": {
         "root": "data/torchcell/proteome_carruthers2025",
         "verify": _verify_carruthers_proteome,

@@ -157,27 +157,39 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_genotype_signature</span><span class="p">(</span>
     <span class="n">experiment</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">],</span> <span class="o">...</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="o">...</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Canonical STRAIN identity: the sorted set of perturbations, each keyed by</span>
-<span class="sd">    ``(systematic_gene_name, perturbation_type, perturbed_gene_name, strain_id)``.</span>
+<span class="sd">    ``(systematic_gene_name, perturbation_type, perturbed_gene_name, strain_id)`` plus</span>
+<span class="sd">    the guide-library discriminators of a CRISPR construct.</span>
 
 <span class="sd">    ``strain_id`` (present on SGA perturbation variants, else None) distinguishes an allelic</span>
 <span class="sd">    SERIES that shares gene + type -- e.g. Baryshnikova 2010 has 58 genes with more than one</span>
 <span class="sd">    temperature-sensitive allele (YAL041W x4); without it they collide as duplicates. It is</span>
 <span class="sd">    None for non-SGA perturbations, so adding it only ever REFINES the key -- pre-existing</span>
 <span class="sd">    fitness datasets keep their (already-unique) signatures.</span>
+
+<span class="sd">    The CRISPR fields are here for the same reason and on the same terms as in</span>
+<span class="sd">    :func:`environment_response._genotype_signature`: a guide library has MANY strains per</span>
+<span class="sd">    (gene, mode), so the spacer (``crispr.guide_sequence``) is part of the strain, and the</span>
+<span class="sd">    SAME spacer screened in two library pools is two pool-relative measurements, so the</span>
+<span class="sd">    pool (``crispr.library_pool``) is too. Both are ``None`` on a non-CRISPR leaf and on a</span>
+<span class="sd">    construct that names neither, which leaves every pre-existing key unchanged; a field</span>
+<span class="sd">    added to this tuple can only SPLIT a group, never merge two.</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
-        <span class="nb">sorted</span><span class="p">(</span>
-            <span class="p">(</span>
-                <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">),</span>
-                <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbation_type"</span><span class="p">),</span>
-                <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbed_gene_name"</span><span class="p">),</span>
-                <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"strain_id"</span><span class="p">),</span>
-            <span class="p">)</span>
-            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_identity</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"crispr"</span><span class="p">)</span>
+        <span class="n">crispr</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">payload</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">),</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbation_type"</span><span class="p">),</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbed_gene_name"</span><span class="p">),</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"strain_id"</span><span class="p">),</span>
+            <span class="n">crispr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"guide_sequence"</span><span class="p">),</span>
+            <span class="n">crispr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"library_pool"</span><span class="p">),</span>
         <span class="p">)</span>
-    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_identity</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_environment_signature</span><span class="p">(</span><span class="n">experiment</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
@@ -194,6 +206,14 @@
 <span class="sd">    value, unit, basis)``, the same tuple :func:`environment_response._condition_signature`</span>
 <span class="sd">    uses, so the two verifiers agree on what makes two conditions different. Elements are</span>
 <span class="sd">    stringified for a total order (mixed None / str / float never breaks the sort).</span>
+
+<span class="sd">    A study that screened the SAME strains in the SAME medium at the SAME dose twice</span>
+<span class="sd">    measured two conditions, not one: the screens are normalized independently, so the</span>
+<span class="sd">    phenotype's ``screen_id`` joins the signature, exactly as it does in</span>
+<span class="sd">    :func:`environment_response._condition_signature`. Rachwalski 2024 releases its</span>
+<span class="sd">    whole CRISPRi collection on MOPS minimal at six doses in BOTH Table S2A and Table</span>
+<span class="sd">    S3, and none of the 2,262 overlapping cells agree. ``.get`` keeps the signature</span>
+<span class="sd">    identical for every dataset that carries no screen label.</span>
 
 <span class="sd">    A yeast fitness dataset carries no environment perturbations, so its key gains an</span>
 <span class="sd">    empty tuple and its (already unique) signatures are unchanged.</span>
@@ -230,6 +250,7 @@
         <span class="n">media</span><span class="p">,</span>
         <span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"duration_hours"</span><span class="p">),</span>
         <span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"duration_generations"</span><span class="p">),</span>
+        <span class="n">experiment</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"screen_id"</span><span class="p">),</span>
     <span class="p">)</span>
 
 

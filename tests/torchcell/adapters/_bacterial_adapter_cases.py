@@ -188,8 +188,7 @@ TURNOVER = "protein turnover phenotype"
 # NCM3722 derivatives are all in samples dropped on their medium; Fuhrer 2017 and
 # Goodall 2018 carry no environment perturbation, and so does Campos 2018, whose screen
 # is one medium at one temperature; the CRISPRi leaves of Carruthers, Cui, Menasalvas,
-# Wang
-# 2018 and Yunus carry a CrisprConstruct. Shiver 2016's three temperature-only conditions
+# Wang 2018 and Yunus carry a CrisprConstruct. Shiver 2016's three temperature-only conditions
 # carry no environment perturbation, but its other 54 do, so its pair is enabled.
 BACTERIAL: list[Bacterial] = [
     _case(

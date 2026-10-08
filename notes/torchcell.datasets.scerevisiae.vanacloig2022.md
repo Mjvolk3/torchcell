@@ -312,3 +312,45 @@ Old build moved aside to `processed.superseded.20261007-185707` and `preprocess.
 The served KG still carries the old Vanacloig records (no IC30 values, solvent gaps) until the next FULL rebuild: every Vanacloig record's environment changed, and changed records cannot go through incremental admission.
 
 The raw-mirror manifest's `si_expected` entry (written by `deposit_raw_mirror`) still says Table S1 is not mirrored; that record describes the raw mirror's deposit and was left unchanged.
+
+## 2026.10.08 - Reported doses served, missing counts per cell, barcodeless rows typed (#764, #524)
+
+Branch `fix/vanacloig-dmso-percent-nan-rows`, stacked on `feat/vanacloig-table-s1-doses` (PR #765).
+
+### Doses as reported (#764)
+
+Decision recorded on #764: "DMSO should use the reported values."
+
+- Schema: `ConcentrationUnit.percent = "percent"`, a percent the source reports WITHOUT stating v/v or w/v; never a substitute for `percent_v_v` / `percent_w_v` when the source states the basis.
+- MBO 1.5, Ethanol 4.0, Isobutanol 0.75, GVL 1.5 (all `percent`, IC30) and MMS 0.01 (`percent`, fixed). Each number is parsed from its Table S1 row quote (`table_s1_ic30`, `table_s1_percent`); none is typed. A molar conversion of these five needs a basis and a density the paper does not report, so a consumer computing a log10 molar dose leaves them None. The 033 flatten (`exp/033-env-chemgen-pooled`, not on this branch) must list `percent` in `NOT_MOLAR_UNITS`.
+- GVL: the OCR row is displaced (its "1.5%" sits on the "OTHER COMPOUNDS" row). The dose is parsed from that displaced row's quote (`GVL_TABLE_S1_DISPLACED`, now built by `_section_row_cell`). Cross-check against the stored PDF itself: `pdftotext -layout si/si2.pdf` (sha256 `2712cfdb92569c014a933307973353ec8da0218ba00326d165999f8c0ef96d85`) prints `Gamma valerolactone (GVL)    1.5%      No         108-29-2          Acros Organics   140795000` on one line and `OTHER COMPOUNDS` alone on its line, so 1.5% is GVL's. An empty IC30 cell for any other token raises.
+- DMSO's own condition: `Concentration(2.5, percent_v_v, IC30)`, Table S1's "2.50%". Table S1 writes it without v/v or w/v; the paper's only DMSO fraction statement that names a basis ("the final concentration of DMSO in SynBase medium was 1% (v/v)", `VEHICLE_CONTROL`) fixes v/v as the paper's convention for DMSO. That 1% v/v stays the vehicle fraction of the 17 DMSO-dissolved compounds (`Solvent(name="DMSO", percent=1.0)`, `DMSO_VEHICLE_PERCENT`, renamed from `DMSO_DOSE`). This replaces the #501 finding-3 pin (DMSO served at 1.0 percent_v/v, fixed).
+
+### Missing counts and barcodes (#524, Vanacloig items)
+
+#524 states no resolution beyond "a fix changes the tests' pinned expectations; do it in one PR with the test updates". The rules adopted:
+
+- A row is dropped whole (`row_is_not_a_barcoded_orf_or_carries_no_counts`) only when EVERY count column is missing, which is what that rule's description always said. A partly missing row is kept.
+- New cell rule `a_count_the_cell_uses_is_missing`: a (strain, compound) cell is dropped when one of the counts it is computed from (a replicate, or one of its paired controls) is NaN. Reason: the paper's per-compound edgeR glmQLFit permits no NA count and its design is three replicates against the paired controls, so a 2-replicate cell is not a value the method defines; the strain's other cells are kept. Items are `<ORF>:<token>`.
+- TMM for a condition now runs over the rows complete in that condition's own columns (was: complete in every column).
+- A row with no `_<barcode>` suffix (or an empty one) is served with `barcode=None` and `BARCODE_ABSENT_GAP` (`not_reported_by_primary`, looked in the GSE186866 matrix's gene column) when no other row names its ORF, never with `barcode ""`. When another row carries the same ORF with a barcode, the barcodeless row is dropped under `barcodeless_row_of_an_orf_another_row_carries_with_a_barcode`.
+- Not changed, still pinned: equal nonzero replicate counts keep an SD of exactly 0 (the third Vanacloig item of #524).
+
+In GSE186866 itself, 3,649 of 3,651 rows have no missing count, 2 miss all 151 count columns, and 0 rows lack a barcode (counted from the mirror matrix), so neither #524 rule changes the served build; the fixture tests pin both (`test_a_missing_replicate_count_drops_only_that_cell`, `test_a_row_with_every_count_missing_is_dropped_whole`, `test_a_barcodeless_row_of_a_barcoded_orf_is_dropped_with_its_rule`, `test_a_row_without_a_barcode_is_served_with_a_typed_absence`).
+
+### Dev rebuild
+
+Old build moved to `processed.superseded.20261008-160841` and `preprocess.superseded.20261008-160841`; rebuilt by instantiating `EnvChemgenVanacloig2022Dataset` on the dev root: **118,662 records before and after** (87 s). `normalization_factors.json` is identical to the previous build's. The ledger is the 2026.10.02 table plus two rules at 0 records (`barcodeless_row_of_an_orf_another_row_carries_with_a_barcode`, `a_count_the_cell_uses_is_missing`). The new build reads fresh under `build_manifest`. First record per condition, `environment.perturbations[0].concentration`:
+
+| condition | value | unit | basis |
+|---|---|---|---|
+| DMSO | 2.5 | percent_v/v | IC30 |
+| Ethanol | 4.0 | percent | IC30 |
+| GVL | 1.5 | percent | IC30 |
+| MBO | 1.5 | percent | IC30 |
+| Isobutanol | 0.75 | percent | IC30 |
+| MMS | 0.01 | percent | fixed |
+
+### Rebuild consequence of the schema change
+
+Adding an enum member changes the contract fingerprint of every closure that contains `ConcentrationUnit`: after this change `python -m torchcell.provenance.build_manifest` reports 109 of 130 dev directories STALE, every one naming `ConcentrationUnit` (1 fresh, the rebuilt Vanacloig store; 20 unmanifested). For 100 of them `ConcentrationUnit` is the only changed symbol; the other 9 also name other symbols (among them the two older Vanacloig sibling directories). Every one needs a dev rebuild before the full KG rebuild, whose precondition is that every mapped dev store reads fresh. Hypothesis (untested): their records serialize identically, since no other loader emits the new member.

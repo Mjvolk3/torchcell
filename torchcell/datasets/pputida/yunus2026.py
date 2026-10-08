@@ -19,6 +19,45 @@ against ONE ``experiment_class``:
   position study: one record per multiplexed construct, the relative expression of each
   of the five representative proteins the panel measured in it, over three biological
   replicates with the sample SD.
+- :class:`CrispriDifferentialProteomeYunus2026Dataset` -- Supplementary Tables S4 and S5,
+  the ``PP_4188`` strain's global fold change against the control: ONE record carrying
+  the 305 of 338 released protein keys that resolve to a locus of the pinned assembly.
+
+THE THIRD FAMILY IS THE SAME QUANTITY TYPE ON A DIFFERENT SCALE, WHICH IS WHY IT IS A
+THIRD DATASET. Tables S4 and S5 release a ``Fold Change`` against the control strain from
+the same DIA-NN Top3 quantification, so it is the quantity ``ProteinAbundancePhenotype``
+already holds here. It is not a 103rd record of the Table S3 family, because the two
+differ in exactly the way ``measurement_type`` exists to record: Table S3 is ONE
+proteomics sample per strain with no uncertainty released, while this is a thresholded
+differential over three biological replicates with a t-test beside it. The shared
+``verify_protein_dataset`` asserts one ``measurement_type`` per dataset, so a different
+scale is a different dataset.
+
+WHAT TABLES S4 AND S5 RELEASE THAT IS READ AND NOT STORED. The ``P-Value (Equal
+Variance)`` and ``(-Log10(P-Value))`` columns are gap R of
+``[[plan.bacteria-si-phenotype-audit-pputida]]``: ``ProteinAbundancePhenotype`` carries
+``protein_abundance_se`` and no per-protein p-value field, and the only p-value in all of
+``schema.py`` is ``gene_interaction_p_value`` on ``GeneInteractionPhenotype``. ``Rank`` is
+a presentation index of the released sort order. All three are read and used as build
+oracles instead (:func:`parse_differential`), so no asserted column is parsed past:
+``log2(Fold Change)`` reproduces the released log2 on 338 of 338 rows, the released
+``-log10 p`` recovers the printed p to its own precision, the ranks are ``1..n`` in row
+order, and every row clears the thresholds its direction implies.
+
+THE KNOCKED-DOWN GENE IS THE GENOTYPE, NOT A MEASURED KEY, AND IT IS IN THE TABLES UNDER
+ANOTHER NAME. No row of either table carries ``PP_4188`` in its ``Protein`` column, which
+the build asserts, so this record's profile and the Table S3 record for the same strain
+share no protein and cannot disagree about one. But the protein IS there: Table S4 row 40
+is ``Kgdb`` (``Q88FB0``, "Dihydrolipoyllysine-residue succinyltransferase component of
+2-oxoglutarate dehydrogenase complex") at a fold change of 0.238537433, and that is the
+enzyme Table S2 names for ``PP_4188`` ("2-oxoglutarate dehydrogenase
+dihydrolipoyltranssuccinylase subunit"), which the pinned annotation resolves from the
+symbol ``sucB``. ``Kgdb`` is a retired symbol this assembly carries no gene row for, so
+it lands in the dropped set and nothing clashes today. A UniProt-to-locus-tag crosswalk
+that recovered it would put 0.238537433 beside Table S3's 0.2213 for the same strain, on
+a DIFFERENT ``measurement_type``, which is the two independent runs this module already
+documents rather than a contradiction. ``Kgda`` (``Q88FA9``, the E1 component) is
+``PP_4189`` by the same route.
 
 THE ISOPRENOL TITERS ARE NOT LOADED, BECAUSE THEY ARE NOT RELEASED. This is a
 production campaign and its headline readout is isoprenol titer, yet no mirrored byte
@@ -230,6 +269,7 @@ LIBRARY_DIR_REL = f"torchcell-library/{CITATION_KEY}"
 
 KNOCKDOWN_ROOT_REL = "data/torchcell/crispri_knockdown_yunus2026"
 ARRAY_ROOT_REL = "data/torchcell/crispri_array_yunus2026"
+DIFFERENTIAL_ROOT_REL = "data/torchcell/crispri_differential_proteome_yunus2026"
 
 #: The MinerU OCR of the publisher PDF; every ``SourcedValue`` quotes these bytes.
 PAPER_MD = "paper.md"
@@ -237,6 +277,8 @@ PAPER_MD_SHA256 = "32ab4cd3753a930c6ad983809e7083a06159b7b0feb6b5252ace180273bbe
 
 #: Supplementary file 1, the ONLY supplementary component the publisher serves.
 SI_DOCX = "si1.docx"
+#: The raw-mirror path of the one consumed file.
+SI_MIRROR_RELPATH = f"data/{SI_DOCX}"
 SI_DOCX_SHA256 = "daa2c91d0ec7b4560e086517bbdbcbf845c060f0f201c294c5ddef2399b963a9"
 SI_DOCX_BYTES = 3517548
 SI_SOURCE_URL = f"https://ars.els-cdn.com/content/image/1-s2.0-{PAPER_PII}-mmc1.docx"
@@ -275,6 +317,12 @@ CHASSIS_STRAIN = "IY1452"
 #: compared with an absolute Top3 signal (Carruthers 2025's
 #: ``dia_nn_top3_peptide_signal_mean``).
 MEASUREMENT_TYPE = "dia_nn_top3_relative_to_control_strain"
+#: What one stored number of the Tables S4 + S5 differential IS. The released header's own
+#: word is ``Fold Change``, and the replicate design behind it is three biological
+#: replicates, so it is a DIFFERENT scale from Table S3's single-sample
+#: ``Relative expression level`` and gets its own measurement_type and its own dataset
+#: class (the shared protein verifier asserts one measurement_type per dataset).
+DIFFERENTIAL_MEASUREMENT_TYPE = "dia_nn_top3_fold_change_relative_to_control_strain"
 #: The reference strain's value on that scale: the ratio's denominator, by definition.
 REFERENCE_RELATIVE_EXPRESSION = 1.0
 
@@ -306,6 +354,29 @@ TABLE_INDEX: dict[str, int] = {
 }
 TABLE_S3_HEADER = ("Strain name", "CRISPRi target gene", "Relative expression level")
 TABLE_S7_HEADER = ("Oligo name", "Sequence (5' to 3')")
+#: Tables S4 and S5 share one header. ``P-Value (Equal Variance)``, ``(-Log10(P-Value))``
+#: and ``Rank`` are read as build oracles and are NOT stored; see
+#: :data:`DIFFERENTIAL_NOT_STORED`.
+TABLE_S4_S5_HEADER = (
+    "Protein.Group",
+    "Protein.Names",
+    "Protein",
+    "Protein.Description",
+    "Fold Change",
+    "Log2(Fold Change)",
+    "P-Value (Equal Variance)",
+    "(-Log10(P-Value))",
+    "Rank",
+)
+#: ``(table, direction)`` of the two halves of the PP_4188 differential, and the row
+#: count each one holds in the pinned docx.
+DIFFERENTIAL_PANELS: tuple[tuple[str, str, int], ...] = (
+    ("S4", "downregulated", 145),
+    ("S5", "upregulated", 193),
+)
+#: The strain both tables are measured on, verbatim from their captions ("from PP_4188
+#: strain"); it is the Table S3 strain of the same name.
+DIFFERENTIAL_STRAIN_TARGET = "PP_4188"
 TABLE_S1_HEADER = (
     "No",
     "Target Gene",
@@ -345,6 +416,8 @@ TABLE_DIGESTS: dict[str, str] = {
     "S1": "ec9e0428ec8093940bc0b3b2b1210edc848c91cf715bef9994eccc194cc92800",
     "S2": "8648b678f58e330055121649788ac75b3d802608a2fba0a9f0f1abdd0c19d661",
     "S3": "8e46cb5226b69d367ce48a0793811851d8952da5b7d23f516d797696f7955881",
+    "S4": "0a36b87dc4d8b19e9821867a926b9093a85bba8a5442e4ebc58a44e339533786",
+    "S5": "82b1a035525763afcddbf52a300ef8371efa20604cd6a40301e0f9273925ad00",
     "S7": "54f8b3ad02b77b1ce8d004e95a3faa69e48fd77c254134a5b0e734770aae9143",
     "S8": "38d44066a69c78914e9e7459eeb30b69fce8327f22e57fa5f3f1b63dca80e35a",
     "S9": "637afca27730c99820ad962208503e88949960d570fe99120e5bb95a004d00ad",
@@ -405,6 +478,25 @@ _METHODS_PROTEOMICS = "Methods 2.6, 'Proteomics analysis'"
 _METHODS_ISOPRENOL = "Methods 2.2, 'Routine isoprenol extraction and analysis'"
 _RESULTS_VAMMPIRE = "Results 3.2, 'VAMMPIRE'"
 _RESULTS_PREDICTIVE = "Results 3.3, 'Predictive CRISPRi downregulation'"
+
+
+def _si_docx(
+    value: Any, quote: str, *, page: str, note: str | None = None
+) -> SourcedValue:
+    """Bind a value to a verbatim paragraph or cell of the pinned ``mmc1.docx`` bytes."""
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=SI_MIRROR_RELPATH,
+            citation_key=CITATION_KEY,
+            sha256=SI_DOCX_SHA256,
+            method="stdlib WordprocessingML read of the deposited mmc1.docx (raw mirror)",
+            page=page,
+        ),
+    )
+
 
 SOURCED_VALUES: dict[str, SourcedValue] = {
     "chassis_strain": _paper(
@@ -612,6 +704,42 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     ),
 }
 
+#: Values quoted from the DEPOSITED ``mmc1.docx`` rather than from the OCR ``paper.md``.
+#: They are a separate dict because ``audit_sourced_value`` reads its artifact as TEXT to
+#: find the quote, and a ``.docx`` is a zip of deflated XML, so a quote inside one can
+#: never be found that way. These three are audited instead against the paragraphs and
+#: cells :func:`read_docx_tables` and the SI paragraph reader return, in
+#: ``tests/torchcell/datasets/pputida/test_yunus2026.py``, which is the same check
+#: against the same sha256-pinned bytes.
+SI_SOURCED_VALUES: dict[str, SourcedValue] = {
+    "differential_replicates": _si_docx(
+        3,
+        "Supplementary Figure S8. Relative expression level of PP_4188 gene in the "
+        "control and PP_4188 strains. Proteins were extracted at 48 h. Error bars "
+        "represent standard deviation from three biological replicates.",
+        page="Supplementary Figure S8 caption",
+        note="the replicate design of the PP_4188 strain's proteomics, and the only "
+        "statement of it. Tables S4 and S5 are 'from PP_4188 strain' and the same 48 h "
+        "extraction, and their 'P-Value (Equal Variance)' column needs a per-group "
+        "replicate set, but neither table releases a per-replicate value or an "
+        "uncertainty, so protein_abundance_se is a typed gap",
+    ),
+    "differential_down_caption": _si_docx(
+        145,
+        "Supplementary Table S4. List of downregulated genes from PP_4188 strain",
+        page="Supplementary Table S4 caption",
+        note="the caption names the strain and the direction; the row count is measured "
+        "on the pinned docx and asserted by DIFFERENTIAL_PANELS",
+    ),
+    "differential_up_caption": _si_docx(
+        193,
+        "Supplementary Table S5. List of upregulated proteins from PP_4188 strain",
+        page="Supplementary Table S5 caption",
+        note="the caption names the strain and the direction; the row count is measured "
+        "on the pinned docx and asserted by DIFFERENTIAL_PANELS",
+    ),
+}
+
 CHASSIS_STRAIN_SOURCE = SOURCED_VALUES["chassis_strain"]
 HOST_STRAIN_SOURCE = SOURCED_VALUES["host_strain"]
 EFFECTOR = SOURCED_VALUES["effector"]
@@ -623,6 +751,27 @@ AEROBICITY = SOURCED_VALUES["aerobicity"]
 SCREEN_SAMPLES: int = int(SOURCED_VALUES["screen_samples"].value)
 NOT_DETECTED_COUNT: int = int(SOURCED_VALUES["not_detected_count"].value)
 ARRAY_N_REPLICATES: int = int(SOURCED_VALUES["array_replicates"].value)
+DIFFERENTIAL_N_REPLICATES: int = int(SI_SOURCED_VALUES["differential_replicates"].value)
+if [n for _, _, n in DIFFERENTIAL_PANELS] != [
+    int(SI_SOURCED_VALUES["differential_down_caption"].value),
+    int(SI_SOURCED_VALUES["differential_up_caption"].value),
+]:
+    raise RuntimeError(
+        "DIFFERENTIAL_PANELS no longer holds the row counts its captions are sourced for"
+    )
+#: What Tables S4 and S5 release that this loader reads but does NOT store, and why.
+#: Both are gap R of [[plan.bacteria-si-phenotype-audit-pputida]].
+DIFFERENTIAL_NOT_STORED: tuple[str, ...] = (
+    "the 'P-Value (Equal Variance)' and '(-Log10(P-Value))' columns: "
+    "ProteinAbundancePhenotype carries protein_abundance_se and no per-protein p-value "
+    "field, and the only p-value anywhere in schema.py is gene_interaction_p_value on "
+    "GeneInteractionPhenotype, so there is no honest home for a per-protein test "
+    "result. Both columns are read and used as build oracles instead",
+    "the 'Rank' column: a presentation index of the released sort order (1 to 145 by "
+    "ascending fold change in Table S4, 1 to 193 by descending fold change in Table "
+    "S5, both measured), so it carries nothing the stored fold change does not. Read "
+    "and asserted as a build oracle",
+)
 
 #: What the paper releases that no loader here consumes, with the reason for each.
 NOT_LOADED: tuple[str, ...] = (
@@ -639,11 +788,9 @@ NOT_LOADED: tuple[str, ...] = (
     "measured 2026-10-07. MANUAL RECIPE: open the input-table link in a browser, sign "
     "in or use the share view, export the notebook table to CSV, deposit it under "
     "data/ with RetrievalMethod.manual_browser and the sha256 of the bytes that arrive",
-    "Supplementary Tables S4 and S5 (145 downregulated and 193 upregulated proteins of "
-    "the PP_4188 strain, as fold change, log2 fold change and a t-test p-value): a "
-    "derived differential statistic for a single strain with no per-replicate values "
-    "released, and no phenotype class models a per-protein differential with its own "
-    "test",
+    "Supplementary Tables S4 and S5's p-value, -log10 p-value and rank columns: the "
+    "Fold Change column IS loaded, by CrispriDifferentialProteomeYunus2026Dataset; the "
+    f"three columns beside it are not ({DIFFERENTIAL_NOT_STORED[0]})",
     "Supplementary Table S6 (plasmids) and the three sequencing primers of Table S7 "
     "(IY77, IY169, IY425): genotype and method metadata, not measurements",
     "Fig. 5A (TCA metabolite concentrations at 24, 48 and 72 h), Fig. 3C/D (terminal "
@@ -683,8 +830,6 @@ def _sha256(path: str | Path) -> str:
     return digest.hexdigest()
 
 
-#: The raw-mirror path of the one consumed file.
-SI_MIRROR_RELPATH = f"data/{SI_DOCX}"
 #: ``{raw file name: pinned sha256}``, the build-time check of every consumed file.
 DATA_SHA256: dict[str, str] = {SI_DOCX: SI_DOCX_SHA256}
 
@@ -942,6 +1087,130 @@ def parse_table_s3(rows: Sequence[Sequence[str]]) -> list[ScreenRow]:
             f"{NOT_DETECTED_COUNT}"
         )
     return parsed
+
+
+class DifferentialRow(BaseModel):
+    """One row of Table S4 or S5: a protein and its fold change against the control."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    table: str
+    direction: str
+    accession: str
+    entry_name: str
+    protein: str
+    description: str
+    fold_change: float
+    log2_fold_change: float
+    #: Read for the build oracles below and deliberately NOT stored
+    #: (:data:`DIFFERENTIAL_NOT_STORED`).
+    p_value: float
+    neg_log10_p_value: float
+    rank: int
+
+
+#: How far ``log2(Fold Change)`` may sit from the released ``Log2(Fold Change)``.
+#: Measured on the pinned docx: zero of 338 rows disagree beyond this.
+_LOG2_TOL = 1e-6
+#: How far ``10 ** -(-Log10(P-Value))`` may sit from the released p, relatively. The
+#: released p is printed to three significant figures for the 23 cells in scientific
+#: notation, so the worst measured disagreement is 3.2488e-3 (Table S4's '1.30E-06'
+#: against a released -log10 of 5.884647992, i.e. p = 1.3042e-6).
+_P_VALUE_TOL = 5e-3
+
+
+def parse_differential(
+    rows: Sequence[Sequence[str]], *, table: str, direction: str
+) -> list[DifferentialRow]:
+    """Parse Table S4 or S5 into typed rows, with every derived column asserted.
+
+    Four oracles on the deposited bytes, each measured before it was written here:
+    ``log2(Fold Change)`` reproduces the released log2 column exactly (0 of 338 rows
+    disagree at 1e-6); ``10 ** -(-Log10(P-Value))`` reproduces the released p to its own
+    printed precision; the ranks are ``1..n`` in released row order; and every released
+    row clears the thresholds its direction implies (fold change below 1 for the
+    downregulated table and above 1 for the upregulated one, every |log2| at least 1 and
+    every p below 0.05). A column shift or a re-released table stops the build.
+    """
+    parsed: list[DifferentialRow] = []
+    for row in rows[1:]:
+        cells = [cell.strip() for cell in row[:9]]
+        parsed.append(
+            DifferentialRow(
+                table=table,
+                direction=direction,
+                accession=cells[0],
+                entry_name=cells[1],
+                protein=cells[2],
+                description=cells[3],
+                fold_change=float(cells[4]),
+                log2_fold_change=float(cells[5]),
+                p_value=float(cells[6]),
+                neg_log10_p_value=float(cells[7]),
+                rank=int(cells[8]),
+            )
+        )
+    if not parsed:
+        raise TableExtractionError(f"Table {table} holds no rows")
+    if len({entry.protein for entry in parsed}) != len(parsed):
+        raise TableExtractionError(f"Table {table} repeats a protein key")
+    if [entry.rank for entry in parsed] != list(range(1, len(parsed) + 1)):
+        raise TableExtractionError(
+            f"Table {table}'s Rank column is not 1..{len(parsed)} in released row order"
+        )
+    for entry in parsed:
+        if abs(math.log2(entry.fold_change) - entry.log2_fold_change) > _LOG2_TOL:
+            raise TableExtractionError(
+                f"Table {table}/{entry.protein}: log2({entry.fold_change}) is "
+                f"{math.log2(entry.fold_change)} and the released Log2(Fold Change) "
+                f"reads {entry.log2_fold_change}; the two columns are not one quantity"
+            )
+        recovered = 10.0**-entry.neg_log10_p_value
+        if abs(recovered - entry.p_value) > _P_VALUE_TOL * entry.p_value:
+            raise TableExtractionError(
+                f"Table {table}/{entry.protein}: the released -log10 p "
+                f"{entry.neg_log10_p_value} recovers p {recovered} against a released "
+                f"{entry.p_value}, beyond the printed precision of the p column"
+            )
+        if entry.p_value >= 0.05 or abs(entry.log2_fold_change) < 1.0:
+            raise TableExtractionError(
+                f"Table {table}/{entry.protein}: p {entry.p_value} and log2 fold change "
+                f"{entry.log2_fold_change} do not clear the thresholds every released "
+                "row of this table clears"
+            )
+        if direction == "downregulated" and entry.fold_change >= 1.0:
+            raise TableExtractionError(
+                f"Table {table}/{entry.protein}: fold change {entry.fold_change} in the "
+                "downregulated table"
+            )
+        if direction == "upregulated" and entry.fold_change <= 1.0:
+            raise TableExtractionError(
+                f"Table {table}/{entry.protein}: fold change {entry.fold_change} in the "
+                "upregulated table"
+            )
+    return parsed
+
+
+def read_differential(
+    tables: Mapping[str, list[list[str]]],
+    panels: Sequence[tuple[str, str, int]] | None = None,
+) -> list[DifferentialRow]:
+    """Both halves of the PP_4188 differential, with each panel's row count asserted."""
+    rows: list[DifferentialRow] = []
+    for table, direction, expected in panels or DIFFERENTIAL_PANELS:
+        panel = parse_differential(tables[table], table=table, direction=direction)
+        if len(panel) != expected:
+            raise TableExtractionError(
+                f"Table {table} holds {len(panel)} rows, pinned {expected}"
+            )
+        rows.extend(panel)
+    keys = [entry.protein for entry in rows]
+    if len(set(keys)) != len(keys):
+        raise TableExtractionError(
+            "a protein key appears in both the downregulated and the upregulated table; "
+            "one strain cannot move both ways"
+        )
+    return rows
 
 
 class ArrayCell(BaseModel):
@@ -1415,6 +1684,54 @@ def array_phenotype(
         protein_abundance_se=dict(standard_errors),
         n_replicates=dict(counts),
         measurement_type=MEASUREMENT_TYPE,
+    )
+
+
+def differential_phenotype(values: Mapping[str, float]) -> ProteinAbundancePhenotype:
+    """The PP_4188 strain's released fold changes, keyed by locus tag.
+
+    ``protein_abundance_se`` is a typed gap rather than a derived number: the replicate
+    COUNT is sourced (three biological replicates, Supplementary Fig. S8's caption), but
+    neither Table S4 nor Table S5 releases a per-replicate value or a spread, so there
+    is nothing to divide by sqrt(n). The released ``P-Value (Equal Variance)`` is a test
+    result, not a dispersion, and ``ProteinAbundancePhenotype`` has no field for it
+    (:data:`DIFFERENTIAL_NOT_STORED`).
+    """
+    if not values:
+        raise RuntimeError("a differential record needs at least one protein")
+    for tag, value in values.items():
+        if not math.isfinite(value) or value <= 0.0:
+            raise RuntimeError(f"{tag}: fold change {value} is not a positive ratio")
+    return ProteinAbundancePhenotype(
+        protein_abundance=dict(values),
+        protein_abundance_se=None,
+        n_replicates=dict.fromkeys(values, DIFFERENTIAL_N_REPLICATES),
+        measurement_type=DIFFERENTIAL_MEASUREMENT_TYPE,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="protein_abundance_se",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                note="Supplementary Tables S4 and S5 release a fold change, its log2, a "
+                "p-value and a rank, and no per-replicate value or spread. The "
+                f"replicate count is sourced ({DIFFERENTIAL_N_REPLICATES} biological "
+                "replicates, Supplementary Fig. S8's caption) but the SD exists only as "
+                "that figure's error bars, so there is nothing to derive an SE from",
+            )
+        ],
+    )
+
+
+def differential_reference_phenotype(
+    values: Mapping[str, float],
+) -> ProteinAbundancePhenotype:
+    """The control strain on the released fold-change scale: 1.0 for every key.
+
+    Not a measurement, the same way :func:`reference_phenotype` is not: 1.0 is the fold
+    change's denominator by definition, so experiment / reference reproduces the
+    released number exactly.
+    """
+    return differential_phenotype(
+        dict.fromkeys(sorted(values), REFERENCE_RELATIVE_EXPRESSION)
     )
 
 
@@ -1962,6 +2279,206 @@ class CrispriArrayYunus2026Dataset(_Yunus2026Dataset):
 
 
 # --------------------------------------------------------------------------- #
+# Family 3: the PP_4188 strain's global differential (Supplementary Tables S4, S5)
+# --------------------------------------------------------------------------- #
+@register_dataset
+class CrispriDifferentialProteomeYunus2026Dataset(_Yunus2026Dataset):
+    """Yunus 2026 global fold change against the control for the PP_4188 strain.
+
+    ONE record carrying every released protein key that resolves to a locus of the
+    pinned assembly. Tables S4 and S5 release 145 downregulated and 193 upregulated
+    proteins "from PP_4188 strain", as a fold change against the control strain on the
+    same DIA-NN Top3 quantification the other two families use, so this is the same
+    QUANTITY TYPE :class:`CrispriKnockdownYunus2026Dataset` already stores.
+
+    It is its own dataset class, not a 103rd record of that family, for two reasons the
+    verifier makes concrete. The scale is different: Table S3's
+    ``Relative expression level`` is one proteomics sample per strain (n = 1, no
+    uncertainty released) while this is a thresholded differential over three biological
+    replicates, so ``measurement_type`` differs and the shared
+    ``verify_protein_dataset`` asserts one ``measurement_type`` per dataset. And the
+    record is one profile of 305 proteins rather than one strain's own target, so pooling
+    them would put two meanings of "the measured protein set" in one store.
+    """
+
+    #: The MEASURED keys here are DIA-NN protein names, not screened locus tags, so the
+    #: base class's 1.0 does not apply. Measured on the pinned docx: 305 of 338 (0.9024)
+    #: resolve to a locus of this assembly, 196 as a current tag and 109 through a gene
+    #: symbol. The threshold sits just below that. The 33 that do not are title-cased
+    #: UniProt gene symbols the GenBank annotation of this assembly carries no symbol
+    #: for; a real drop means the keying changed.
+    MIN_RESOLVED_FRACTION: ClassVar[float] = 0.90
+
+    def __init__(
+        self,
+        root: str = DIFFERENTIAL_ROOT_REL,
+        io_workers: int = 0,
+        pputida_genome: PPutidaKT2440Genome | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize with this family's default dev-tree root."""
+        super().__init__(
+            root, io_workers, pputida_genome, transform, pre_transform, **kwargs
+        )
+
+    @post_process
+    def process(self) -> None:
+        """Build the one PP_4188 differential record; write LMDB."""
+        check_isoprenol_identity()
+        tables = self._tables()
+        rows = read_differential(tables)
+        genome = self._genome()
+        library = build_guide_library(tables["S7"], genome)
+
+        screen = parse_table_s3(tables["S3"])
+        self._assert_the_knocked_down_gene_is_not_a_measured_key(rows, screen)
+
+        keys = sorted({entry.protein for entry in rows})
+        stored, report = reconcile_locus_tags(
+            genome, pd.Series(keys, dtype=object), label=self.name
+        )
+        report.require_resolved(self.MIN_RESOLVED_FRACTION)
+        outside = set(report.outside_namespace)
+        stored_by_key = dict(zip(keys, stored.tolist(), strict=True))
+        kept = {key: stored_by_key[key] for key in keys if key not in outside}
+        if not kept:
+            raise RuntimeError(f"{self.name}: every released protein key was dropped")
+        if len(set(kept.values())) != len(kept):
+            raise RuntimeError(
+                f"{self.name}: two released keys resolve to one locus tag; a fold change "
+                "cannot be attributed to either"
+            )
+
+        target = stored_by_key.get(
+            DIFFERENTIAL_STRAIN_TARGET, DIFFERENTIAL_STRAIN_TARGET
+        )
+        common = standard_names(genome, [target, *kept.values()])
+        assignment = library.assign(target, None)
+        values = {
+            kept[entry.protein]: entry.fold_change
+            for entry in rows
+            if entry.protein in kept
+        }
+
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+        environment = production_environment()
+        pub = publication()
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            experiment = BacterialProteinAbundanceExperiment(
+                dataset_name=self.name,
+                genotype=Genotype(
+                    perturbations=[
+                        crispri_perturbation(target, common[target], assignment)
+                    ]
+                ),
+                environment=environment,
+                phenotype=differential_phenotype(values),
+            )
+            reference = BacterialProteinAbundanceExperimentReference(
+                dataset_name=self.name,
+                genome_reference=chassis_reference(),
+                environment_reference=environment.model_copy(),
+                phenotype_reference=differential_reference_phenotype(values),
+            )
+            txn.put(b"0", self._intern_record(experiment, reference, pub, itxn))
+        env.close()
+        interned_env.close()
+
+        pd.DataFrame(
+            [
+                {
+                    **entry.model_dump(),
+                    "locus_tag": kept.get(entry.protein),
+                    "stored": entry.protein in kept,
+                }
+                for entry in rows
+            ]
+        ).to_csv(osp.join(self.preprocess_dir, "differential.csv"), index=False)
+        pd.DataFrame([assignment.model_dump()]).to_csv(
+            osp.join(self.preprocess_dir, "guide_assignment.csv"), index=False
+        )
+        self._write_guide_library(library)
+        self._write_target_lists(tables)
+        self._write_drop_log(
+            DropLog(
+                dataset=self.name,
+                source_rows=len(rows),
+                candidate_records=1,
+                kept_records=1,
+                dropped_records=0,
+                rules=[],
+                reconciliation=report,
+                notes=[
+                    f"one record over {len(values)} of {len(rows)} released protein "
+                    f"keys; {len(outside)} keys resolve to no locus of "
+                    f"{KT2440_ASSEMBLY_SET} and are dropped from the profile, listed in "
+                    "preprocess/differential.csv with stored=False. They are "
+                    "title-cased UniProt gene symbols the GenBank annotation of this "
+                    "assembly carries no symbol for, and a UniProt-to-locus-tag "
+                    "crosswalk in the genomes tier would recover them",
+                    f"the knocked-down gene {DIFFERENTIAL_STRAIN_TARGET} is the "
+                    "GENOTYPE, not a measured key: neither table releases a row whose "
+                    "Protein column is it, which the build asserts. It IS in the tables "
+                    "under the UniProt symbol 'Kgdb' (Q88FB0, 'Dihydrolipoyllysine-"
+                    "residue succinyltransferase component of 2-oxoglutarate "
+                    "dehydrogenase complex'), which is the enzyme Table S2 names for "
+                    f"{DIFFERENTIAL_STRAIN_TARGET} and which the pinned annotation "
+                    "resolves from the symbol 'sucB'; that key is in the dropped set, so "
+                    "nothing clashes today, and a crosswalk that recovers it would put "
+                    "0.238537433 beside Table S3's 0.2213 on a DIFFERENT "
+                    "measurement_type",
+                    f"n_replicates = {DIFFERENTIAL_N_REPLICATES} for every key: "
+                    f"'{SI_SOURCED_VALUES['differential_replicates'].quote}'",
+                    *DIFFERENTIAL_NOT_STORED,
+                ],
+            )
+        )
+        log.info(
+            "Yunus2026 differential: 1 record over %d of %d released keys (%d dropped "
+            "outside %s); %d down + %d up",
+            len(values),
+            len(rows),
+            len(outside),
+            KT2440_NAMESPACE,
+            sum(1 for entry in rows if entry.direction == "downregulated"),
+            sum(1 for entry in rows if entry.direction == "upregulated"),
+        )
+
+    @staticmethod
+    def _assert_the_knocked_down_gene_is_not_a_measured_key(
+        rows: Sequence[DifferentialRow], screen: Sequence[ScreenRow]
+    ) -> None:
+        """The knocked-down gene is this record's GENOTYPE, so it must not be a key.
+
+        Measured on the pinned docx: no row of Table S4 or S5 carries
+        ``PP_4188`` in its ``Protein`` column, so the profile and the Table S3 record for
+        the same strain share no protein and cannot disagree about one. Table S3 must
+        still hold that strain, because this record's genotype is read from it.
+        """
+        clashing = [
+            entry.protein
+            for entry in rows
+            if entry.protein == DIFFERENTIAL_STRAIN_TARGET
+        ]
+        if clashing:
+            raise TableExtractionError(
+                f"Tables S4/S5 now release a row for {DIFFERENTIAL_STRAIN_TARGET} "
+                "itself; it is this record's genotype and a strain's own knocked-down "
+                "gene cannot also be one of its measured fold changes without deciding "
+                "which of the two released numbers for it wins"
+            )
+        if not any(row.locus_tag == DIFFERENTIAL_STRAIN_TARGET for row in screen):
+            raise TableExtractionError(
+                f"Table S3 no longer screens {DIFFERENTIAL_STRAIN_TARGET}; this "
+                "record's genotype is the strain that table names"
+            )
+
+
+# --------------------------------------------------------------------------- #
 # Verification (L0-L4) of a built LMDB
 # --------------------------------------------------------------------------- #
 DATASETS: dict[str, dict[str, Any]] = {
@@ -1980,6 +2497,14 @@ DATASETS: dict[str, dict[str, Any]] = {
         "method": "per-construct mean relative expression of the five representative "
         "proteins over three biological replicates, with the sample SD over sqrt(n); "
         "reference = the control strain at the ratio's denominator (1.0)",
+    },
+    "crispri_differential_proteome_yunus2026": {
+        "cls": CrispriDifferentialProteomeYunus2026Dataset,
+        "root": DIFFERENTIAL_ROOT_REL,
+        "page": "Supplementary Tables S4 and S5 (mmc1.docx)",
+        "method": "the PP_4188 strain's released per-protein Fold Change against the "
+        "control strain (DIA-NN Top3) over three biological replicates; reference = the "
+        "control strain at the ratio's denominator (1.0)",
     },
 }
 

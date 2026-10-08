@@ -60,6 +60,7 @@ from torchcell.adapters import (
     CarbonSourceTong2020Adapter,
     CrispriArrayYunus2026Adapter,
     CrispriChemgenChoe2025Adapter,
+    CrispriDifferentialProteomeYunus2026Adapter,
     CrispriGuideFitnessWang2018Adapter,
     CrispriKnockdownCui2018Adapter,
     CrispriKnockdownYunus2026Adapter,
@@ -167,6 +168,7 @@ from torchcell.datasets.pputida.menasalvas2025 import (
 )
 from torchcell.datasets.pputida.yunus2026 import (
     CrispriArrayYunus2026Dataset,
+    CrispriDifferentialProteomeYunus2026Dataset,
     CrispriKnockdownYunus2026Dataset,
 )
 from torchcell.knowledge_graphs.kg_manifest import (
@@ -564,6 +566,14 @@ BACTERIAL: list[Bacterial] = [
         "yunus2026_knockdown",
         "crispri_knockdown_yunus2026",
         CrispriKnockdownYunus2026Dataset,
+        PROTEOME,
+        crispr=True,
+    ),
+    _case(
+        CrispriDifferentialProteomeYunus2026Adapter,
+        "yunus2026_differential",
+        "crispri_differential_proteome_yunus2026",
+        CrispriDifferentialProteomeYunus2026Dataset,
         PROTEOME,
         crispr=True,
     ),

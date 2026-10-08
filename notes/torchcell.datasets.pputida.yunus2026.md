@@ -272,3 +272,131 @@ python -m torchcell.database.build_dataset_lmdb --dataset CrispriArrayYunus2026D
 python -m torchcell.datasets.pputida.yunus2026 verify
 python -m torchcell.datasets.pputida.yunus2026 digests                  # re-pin TABLE_DIGESTS
 ```
+
+## 2026.10.08 - Tables S4 and S5: the Fold Change column is loaded, the test columns are not
+
+The first build recorded Supplementary Tables S4 and S5 as not loaded, on the grounds
+that they are "a derived differential statistic for a single strain with no per-replicate
+values released, and no phenotype class models a per-protein differential with its own
+test". Half of that is right and half is not. There is no home for the TEST, but the
+`Fold Change` column is a ratio to the control strain from the same DIA-NN Top3
+quantification, which is exactly the quantity `CrispriKnockdownYunus2026Dataset` already
+stores, so it is loadable with no schema change.
+
+`CrispriDifferentialProteomeYunus2026Dataset` is the third family: **one record**, the
+`PP_4188` knockdown strain, carrying the 305 of 338 released protein keys that resolve to
+a locus of the pinned assembly.
+
+### Why a third dataset class and not a 103rd record of the Table S3 family
+
+`torchcell/verification/protein.py`'s `_l3_measurement_type_consistent` asserts a single
+`measurement_type` per protein-abundance dataset, and these two numbers are on different
+scales:
+
+| | Table S3 | Tables S4 + S5 |
+|---|---|---|
+| released column | `Relative expression level` | `Fold Change` |
+| `measurement_type` | `dia_nn_top3_relative_to_control_strain` | `dia_nn_top3_fold_change_relative_to_control_strain` |
+| replicate design | 1 sample per strain, sourced arithmetically from "shotgun proteomics on 125 samples" over 125 strains | 3 biological replicates (Supplementary Fig. S8's caption) |
+| what one record is | one strain, its OWN target protein | one strain, 305 proteins |
+| uncertainty | typed gap, no design stated behind one sample | typed gap, design stated and no spread released |
+
+### The sourcing, verbatim
+
+The replicate count comes from the Supplementary Fig. S8 caption, read out of the parsed
+`mmc1.docx` (sha256 `daa2c91d0ec7b4560e086517bbdbcbf845c060f0f201c294c5ddef2399b963a9`):
+
+> Supplementary Figure S8. Relative expression level of PP_4188 gene in the control and
+> PP_4188 strains. Proteins were extracted at 48 h. Error bars represent standard
+> deviation from three biological replicates.
+
+and the two table captions name the strain and the direction:
+
+> Supplementary Table S4. List of downregulated genes from PP_4188 strain
+>
+> Supplementary Table S5. List of upregulated proteins from PP_4188 strain
+
+`SE` is still a typed `ProvenanceGap`. The caption states the replicate COUNT and that the
+spread is a standard deviation, but the number exists only as that figure's error bars:
+neither table releases a per-replicate value or a dispersion column, so there is nothing
+to divide by sqrt(3). The `P-Value (Equal Variance)` column needs a per-group replicate
+set, which corroborates n = 3, and is not itself a dispersion.
+
+These three values are in a separate `SI_SOURCED_VALUES` dict, not in `SOURCED_VALUES`.
+`audit_sourced_value` reads its artifact as TEXT to find the quote, and a `.docx` is a zip
+of deflated XML, so a quote inside one can never be found that way. They are audited
+instead against the paragraphs the WordprocessingML reader returns from the same
+sha256-pinned bytes, in a data-marked test.
+
+### What is read and deliberately not stored
+
+| column | why not stored |
+|---|---|
+| `P-Value (Equal Variance)` | gap R: `ProteinAbundancePhenotype` carries `protein_abundance_se` and no per-protein p-value field, and the only p-value in all of `schema.py` is `gene_interaction_p_value` on `GeneInteractionPhenotype` |
+| `(-Log10(P-Value))` | the same, and a presentation transform of the column above |
+| `Rank` | a presentation index of the released sort order |
+
+All three are read into `DifferentialRow`, used as build oracles and written to
+`preprocess/differential.csv`, so no asserted column is parsed past. Four oracles,
+each measured on the pinned bytes before it was written:
+
+- `log2(Fold Change)` reproduces the released `Log2(Fold Change)` on **338 of 338** rows
+  at a tolerance of 1e-6;
+- `10 ** -(-Log10(P-Value))` reproduces the printed p to its own precision. The worst
+  disagreement is **3.2488e-3** relative, on Table S4's `1.30E-06` against a released
+  -log10 of 5.884647992, i.e. p = 1.3042e-6. That is the rounding of the **23 of 338**
+  cells the docx prints in three-significant-figure scientific notation, which is why the
+  tolerance is 5e-3 and not 1e-9;
+- the `Rank` column is `1..145` in Table S4's row order and `1..193` in Table S5's, with
+  the fold change ascending in the first and descending in the second;
+- every row clears its direction's thresholds: fold change below 1 throughout Table S4
+  and above 1 throughout Table S5, every absolute log2 at least 1, every p below 0.05.
+
+### A correction to the audit: PP_4188 IS in Table S4, under another name
+
+The audit note states "PP_4188 itself is absent from both tables so there is no clash
+with its Table S3 row". The first half is true of the `Protein` column and the build
+asserts it: no row of either table carries `PP_4188`, and nothing resolves to `PP_4188`
+either, so the stored profile and the Table S3 record for the same strain share no
+protein. The reason, though, is not that the protein is missing.
+
+Table S4 row 40 is `Kgdb`, accession `Q88FB0`, described as "Dihydrolipoyllysine-residue
+succinyltransferase component of 2-oxoglutarate dehydrogenase complex", at a fold change
+of **0.238537433**. That is the enzyme this paper's own Table S2 names for `PP_4188`
+("2-oxoglutarate dehydrogenase dihydrolipoyltranssuccinylase subunit"), and the pinned
+annotation resolves the symbol `sucB` to `PP_4188`. Row 39 is `Kgda` (`Q88FA9`,
+"2-oxoglutarate dehydrogenase, E1 component"), which is `PP_4189` by the same route
+(`sucA`). Measured on the pinned annotation: `sucB` -> `PP_4188`, `sucA` -> `PP_4189`,
+and `kgdB` resolves to nothing.
+
+So the knocked-down protein's own fold change IS released; it is keyed by a title-cased
+UniProt gene symbol this assembly carries no gene row for, which puts it in the 33 dropped
+keys. The practical consequence: nothing clashes today, and a UniProt-to-locus-tag
+crosswalk in the genomes tier (the same gap
+[[torchcell.datasets.pputida.desiqueira2025]] records) would put 0.238537433 beside Table
+S3's 0.2213 for the same strain, on a DIFFERENT `measurement_type`. That is the two
+independent runs this module already documents (Table S3 gives `PP_4188` 0.2213 while
+Table S8's three replicates mean 0.2509), not a contradiction.
+
+### Key resolution, measured
+
+| | count |
+|---|---|
+| released protein keys | 338 (145 down + 193 up, disjoint) |
+| resolve to a current locus tag | 196 |
+| resolve through a gene symbol | 109 |
+| **stored** | **305** (0.9024) |
+| retired, no gene row on this assembly | 33 |
+| keys resolving to one locus twice | 0 |
+
+`MIN_RESOLVED_FRACTION` is 0.90 on this class, overriding the base `_Yunus2026Dataset`'s
+1.0: that 1.0 is right for SCREENED TARGETS, which are released as `PP_` tags, and wrong
+for MEASURED keys, which are DIA-NN protein names. The 33 unresolved keys are in
+`preprocess/differential.csv` with `stored=False`.
+
+### Still not loaded, unchanged
+
+The per-strain isoprenol titers (bar charts only, no control titer stated, so a
+`ProductTiterExperimentReference` has no reference titer), the two Benchling pages, Table
+S6, the three sequencing primers, Fig. 5A's TCA metabolites, Fig. 3C/D/F and PRIDE
+PXD062697.

@@ -100,3 +100,4 @@ datasets:
   - IsoprenolSelectionMenasalvas2025Dataset
   - CrispriArrayYunus2026Dataset
   - CrispriKnockdownYunus2026Dataset
+  - CrispriDifferentialProteomeYunus2026Dataset

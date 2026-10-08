@@ -1839,6 +1839,11 @@ _FOO2014 = Provenance(
     sha256="b24baad46bdf488cf93a7e59c51eceb2af9ba4ad565459130897a6201cd62407",
     source_uri="paper.md",
 )
+_BANERJEE2025 = Provenance(
+    citation_key="banerjeeAddressingGenomeScale2025",
+    sha256="74d7040a0a7ec721f18e5fc49d855a5c9c6eaeee9ff7bf166ec675824e27c489",
+    source_uri="paper.md",
+)
 _CARRUTHERS2025 = Provenance(
     citation_key="carruthersAutomationMachineLearning2025",
     sha256="ca9a8a2593d2ae3ab3bacfb767e797ece2bdaa0228a4f798f1c38e1af73ef88d",
@@ -3557,6 +3562,80 @@ M9_NREL_MOPS_MENASALVAS2025 = Media(
 )
 """Menasalvas 2025's P. putida isoprenol medium, NREL M9 with MOPS (row 20)."""
 
+# --------------------------------------------------------------------------- #
+# Banerjee 2025 (row 39, P. putida KT2440): the one bacterial medium in this library
+# whose SALTS are a composition DEFERRED, not a stated recipe. The Methods name the
+# formulation and hand its amounts to an earlier paper -- "Engineered strains were grown
+# in a modified M9 minimal medium as previously described21" -- and reference 21 (Eng
+# et al. 2023, Cell Rep. 42, 113087) is not mirrored. The three carbon sources it
+# DOES state are handed to the figure legends, so they are not components either: the loader carries each
+# condition's carbon regime as an EnvironmentPhysicalPerturbation(factor=carbon_source),
+# which is the de Siqueira 2025 convention. What is left is one honest object: M9-based,
+# salts unstated, carbon-free.
+# --------------------------------------------------------------------------- #
+_Q_BANERJEE_M9 = (
+    "Engineered strains were grown in a modified M9 minimal medium as previously "
+    "described21, and $\\boldsymbol { p }$ - CA (Sigma-Aldrich, Product No. C9008), "
+    "L-malic acid sodium salt (Sigma-Aldrich, Product No. M1125) and D-alanine "
+    "(Sigma-Aldrich, Product No. A7377) were used at the concentrations indicated in "
+    "the figure legends."
+)
+_Q_BANERJEE_PROTEOMICS_MEDIA = (
+    "The D1b_gf strains designed in this study were grown in triplicates in M9 "
+    "$6 0 \\ : \\mathrm { m M } \\ : p – \\mathrm { C } A$ , or M9 50 mM "
+    "$\\boldsymbol { p }$ -CA supplemented with $7 0 \\mathrm { m M }$ D-alanine and "
+    "$7 0 \\mathrm { m M L }$ -malate when indicated, using $1 0 \\mathrm { m L }$ "
+    "culture tubes."
+)
+_ENG_BANERJEE2023 = (
+    "Eng et al. 2023, Cell Rep. 42, 113087 (the paper's reference 21, which its own "
+    "Supplementary Table 1 cites as 'Eng andBanerjee,2023'); not mirrored"
+)
+
+M9_DEFERRED_BANERJEE2025 = Media(
+    name="modified M9 minimal medium, composition deferred to Eng et al. 2023, "
+    "no carbon source (Banerjee 2025)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="M9_DEFERRED_BANERJEE2025",
+    components=[
+        _mixture(
+            "modified M9 minimal medium (amounts deferred to Eng et al. 2023)",
+            MediaComponentRole.other,
+            _DEFERRED,
+            provenance=[
+                _cite(
+                    _BANERJEE2025,
+                    "composition deferred to reference 21 (Eng et al. 2023)",
+                    _Q_BANERJEE_M9,
+                )
+            ],
+            note="the source states that the medium is a MODIFIED M9 and gives no "
+            "amounts for any of its salts, so no gram or millimolar figure is copied "
+            "in from another paper's M9. It is therefore its OWN base rather than a "
+            "derivative of the stated M9 salts (the SM_DEFERRED treatment): a "
+            "derivative must restate or drop every base component, and this medium can "
+            "do neither without asserting amounts the source withheld. The PRODUCTION "
+            "runs add 30 mM MOPS at pH 7 and 1.5 percent w/v L-arabinose on top of the "
+            "same base; no medium object carries them because this paper releases no "
+            "titer and no growth rate, so nothing is served from a production run",
+            defers_to=[_ENG_BANERJEE2023],
+        )
+    ],
+    provenance=[
+        _cite(_BANERJEE2025, "modified M9 minimal medium", _Q_BANERJEE_M9),
+        _cite(
+            _BANERJEE2025,
+            "the carbon source is the variable",
+            _Q_BANERJEE_PROTEOMICS_MEDIA,
+            note="60 mM p-CA for the promoter-variant proteomes and 50 mM p-CA + 70 mM "
+            "D-alanine + 70 mM L-malate for the cross-feeding proteomes; the loader "
+            "carries each as EnvironmentPhysicalPerturbation(factor=carbon_source)",
+        ),
+    ],
+)
+"""Banerjee 2025's carbon-free P. putida M9, salts deferred to Eng 2023 (row 39)."""
+
 
 # --------------------------------------------------------------------------- #
 # Foo 2014 (E. coli DH1): "1x M9 salt (Difco)" is a commercial salts powder whose
@@ -3960,6 +4039,9 @@ BACTERIAL_MEDIA_USES: dict[str, tuple[str, ...]] = {
     "M9_NREL_KANG2026": ("18 Kang 2026: 'M9'",),
     "M9_NREL_HIGH_N_KANG2026": ("18 Kang 2026: 'modified M9'",),
     "M9_MOPS_KANG2026": ("18 Kang 2026: 'M9-MOPS'",),
+    "M9_DEFERRED_BANERJEE2025": (
+        "39 Banerjee 2025: the shotgun-proteomics cultures; names a modified M9 and defers its amounts to reference 21",
+    ),
     "M9_NREL_CARRUTHERS2025": ("6 Carruthers 2025: isoprenol production",),
     "M9_NREL_MOPS_MENASALVAS2025": ("20 Menasalvas 2025: isoprenol production",),
     "M9_DIFCO": ("12 Foo 2014: base of both Foo media",),
@@ -4043,6 +4125,7 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "M9_NREL_KANG2026": M9_NREL_KANG2026,
     "M9_NREL_HIGH_N_KANG2026": M9_NREL_HIGH_N_KANG2026,
     "M9_MOPS_KANG2026": M9_MOPS_KANG2026,
+    "M9_DEFERRED_BANERJEE2025": M9_DEFERRED_BANERJEE2025,
     "M9_NREL_CARRUTHERS2025": M9_NREL_CARRUTHERS2025,
     "M9_NREL_MOPS_MENASALVAS2025": M9_NREL_MOPS_MENASALVAS2025,
     "M9_DIFCO": M9_DIFCO,
@@ -4085,6 +4168,8 @@ CARBON_FREE_MEDIA: dict[str, str] = {
     "M9_SCHMIDT2016": "the carbon source is the variable across the eleven carbon-source "
     "conditions",
     "M9_NREL_DESIQUEIRA2025": "acetate or glucose, varied per condition",
+    "M9_DEFERRED_BANERJEE2025": "p-CA alone, or p-CA with D-alanine and L-malate, "
+    "varied per condition; the Methods hand the amounts to the figure legends",
     "M9_NREL_NOCARBON_LIM2022": "the aromatic project varies the carbon source "
     "(p-coumarate, ferulate, both, or glucose) at 2.5 g/L",
     "M9_NREL_KANG2026": "glucose alone or a glucose:xylose mixture, varied per condition",

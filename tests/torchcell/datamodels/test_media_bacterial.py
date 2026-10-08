@@ -157,7 +157,15 @@ def test_bacterial_entries_are_distinct_nodes() -> None:
 def test_every_bacterial_base_is_a_library_member() -> None:
     """The bases the bacterial entries derive from are themselves library objects."""
     bases = {MEDIA_LIBRARY[key].base_medium for key in BACTERIAL_KEYS}
-    assert bases == {"LB", "YT_2X", "M9", "M9_DIFCO", "DAVIS_MINIMAL", "MOPS_MINIMAL"}
+    assert bases == {
+        "LB",
+        "YT_2X",
+        "M9",
+        "M9_DEFERRED_BANERJEE2025",
+        "M9_DIFCO",
+        "DAVIS_MINIMAL",
+        "MOPS_MINIMAL",
+    }
     assert bases <= set(BACTERIAL_MEDIA_USES)
     assert oc.media_base_issues() == []
 

@@ -268,6 +268,10 @@ class CellAdapter:
             ),
             ("flux phenotype (chunked)", self._flux_phenotype_node),
             (
+                "promoter activity phenotype (chunked)",
+                self._promoter_activity_phenotype_node,
+            ),
+            (
                 "fitness phenotype reference",
                 self._get_fitness_phenotype_reference_nodes,
             ),
@@ -328,6 +332,10 @@ class CellAdapter:
                 self._get_protein_turnover_phenotype_reference_nodes,
             ),
             ("flux phenotype reference", self._get_flux_phenotype_reference_nodes),
+            (
+                "promoter activity phenotype reference",
+                self._get_promoter_activity_phenotype_reference_nodes,
+            ),
             ("dataset", self._get_dataset_nodes),
             ("publication (chunked)", self._publication_node),
         ]
@@ -2308,6 +2316,71 @@ class CellAdapter:
                     preferred_id="flux phenotype",
                     node_label="flux phenotype",
                     properties=self._flux_properties(phenotype),
+                )
+            )
+        return nodes
+
+    @staticmethod
+    def _promoter_activity_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``PromoterActivityPhenotype`` (experiment or reference).
+
+        Every value is a scalar: a record measures one promoter, so this family has no
+        dict-valued field to JSON-encode the way the profile phenotypes do.
+        """
+        uncertainty_type = phenotype.promoter_activity_uncertainty_type
+        sample_unit = phenotype.sample_unit
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "promoter_activity": phenotype.promoter_activity,
+            "promoter_activity_se": phenotype.promoter_activity_se,
+            "promoter_activity_uncertainty": phenotype.promoter_activity_uncertainty,
+            "promoter_activity_uncertainty_type": (
+                uncertainty_type.value if uncertainty_type is not None else None
+            ),
+            "n_samples": phenotype.n_samples,
+            "sample_unit": sample_unit.value if sample_unit is not None else None,
+            "promoter_name": phenotype.promoter_name,
+            "promoter_gene": phenotype.promoter_gene,
+            "readout": phenotype.readout.value,
+            "reporter_gene": phenotype.reporter_gene,
+            "activity_units": phenotype.activity_units,
+            "well_id": phenotype.well_id,
+        }
+
+    @data_chunker
+    def _promoter_activity_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="promoter activity phenotype",
+            properties=self._promoter_activity_properties(phenotype),
+        )
+
+    def _get_promoter_activity_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="promoter activity phenotype",
+                    node_label="promoter activity phenotype",
+                    properties=self._promoter_activity_properties(phenotype),
                 )
             )
         return nodes

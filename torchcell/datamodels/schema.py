@@ -5606,6 +5606,180 @@ class FluxPhenotype(Phenotype, ModelStrict):
         return self
 
 
+class ReporterReadout(StrEnum):
+    """HOW a transcriptional reporter's output was physically read.
+
+    The counterpart of ``AssayType`` for a reporter-fusion readout: the number is a
+    signal from a reporter gene, and what instrument produced it decides what the
+    number can be compared with. A plate-reader intensity is a well average over a
+    whole population; a flow-cytometry intensity is a per-cell distribution the source
+    summarized; an enzymatic activity is a rate, not an intensity. Mixing them silently
+    would compare a population average with a single-cell summary.
+
+    - ``plate_reader_fluorescence``: well fluorescence read by a microplate reader.
+    - ``flow_cytometry_fluorescence``: per-cell fluorescence summarized by the source.
+    - ``microscopy_fluorescence``: fluorescence quantified from images.
+    - ``luminescence``: a luciferase or other light-emitting reporter.
+    - ``enzymatic_activity``: a reporter enzyme's activity (e.g. Miller units).
+    """
+
+    plate_reader_fluorescence = "plate_reader_fluorescence"
+    flow_cytometry_fluorescence = "flow_cytometry_fluorescence"
+    microscopy_fluorescence = "microscopy_fluorescence"
+    luminescence = "luminescence"
+    enzymatic_activity = "enzymatic_activity"
+
+
+class PromoterActivityPhenotype(Phenotype, ModelStrict):
+    """Transcription from ONE promoter, read as the signal of a reporter fused to it.
+
+    For transcriptional-reporter libraries (Zaslaver-style promoter-GFP collections,
+    luciferase or lacZ fusion panels): the strain carries a reporter whose expression is
+    driven by one promoter, and the measured number is that reporter's signal. The
+    measured entity is the PROMOTER, not the reporter gene and not the strain's fitness,
+    which is why this is its own family:
+
+    - ``FitnessPhenotype`` and ``EnvironmentResponsePhenotype`` are growth readouts.
+      ``EnvironmentResponsePhenotype`` additionally requires an environmental edit on
+      every record (its verifier's ``environment_perturbed`` rule), so it cannot carry
+      the untreated arm of a reporter time course, which is half of what such a screen
+      releases.
+    - the three expression families (``MicroarrayExpressionPhenotype``,
+      ``RNASeqExpressionPhenotype``, ``PseudobulkExpressionPhenotype``) are genome-wide
+      dicts of one strain's transcriptome. A reporter library inverts that: one promoter
+      per strain, measured in many strains, and the reporter is a proxy for the
+      promoter's transcription rather than a count of the native transcript.
+
+    ``promoter_activity`` is the signal AS RELEASED, in ``activity_units``: an absolute
+    intensity when the source released one, a normalized or background-subtracted value
+    when the source released that, and nothing is converted here. A ratio against a
+    control arm is NOT stored, because it is a function of two stored records (the
+    treated and the control reading of the same promoter at the same time) and storing it
+    beside them would store one measurement twice.
+
+    ``promoter_name`` is the source's own label for the promoter, verbatim.
+    ``promoter_gene`` is the gene identifier that label resolves to in the record's
+    pinned assembly, which is what joins the record to a gene node; it is ``None`` when
+    the label names no single gene, never a guess. ``well_id`` carries the source's own
+    plate/well (or tube) identifier: a library routinely holds one promoter in several
+    wells, and without it two independent readings of one promoter under one condition
+    would collide into a single L1 identity instead of standing as two measurements.
+
+    The uncertainty ontology mirrors ``FitnessPhenotype``: ``promoter_activity_se`` is
+    the DERIVED, ML-facing SE, auto-filled from the source-reported uncertainty and its
+    type via ``derive_se``.
+    """
+
+    graph_level: str = "node"
+    label_name: str = "promoter_activity"
+    label_statistic_name: str | None = "promoter_activity_se"
+
+    promoter_activity: float = Field(
+        description="the reporter signal as released, in activity_units"
+    )
+    promoter_activity_se: float | None = Field(
+        default=None,
+        description="standard error of the signal (primary uncertainty statistic)",
+    )
+    promoter_activity_uncertainty: float | None = Field(
+        default=None,
+        description="source-reported uncertainty number, verbatim (meaning given by "
+        "promoter_activity_uncertainty_type)",
+    )
+    promoter_activity_uncertainty_type: UncertaintyType | None = Field(
+        default=None,
+        description="what promoter_activity_uncertainty IS (sample_sd, ...)",
+    )
+    n_samples: int | None = Field(
+        default=None,
+        description="number of independent replicate measurements of the signal",
+    )
+    sample_unit: SampleUnit | None = Field(
+        default=None,
+        description="what one sample in n_samples is (biological_replicate, ...)",
+    )
+    promoter_name: str = Field(
+        description="the source's own label for the measured promoter, verbatim"
+    )
+    promoter_gene: str | None = Field(
+        default=None,
+        description="the gene identifier the promoter label resolves to in the pinned "
+        "assembly (the join key to a gene node); None when the label names no single "
+        "gene, never a guess",
+    )
+    readout: ReporterReadout = Field(
+        description="HOW the reporter signal was read (plate reader, cytometer, ...)"
+    )
+    reporter_gene: str = Field(
+        description="the reporter the promoter drives, verbatim (e.g. 'gfpmut2')"
+    )
+    activity_units: str = Field(
+        description="human-readable definition and units of the signal, including "
+        "whether it is background-subtracted or normalized"
+    )
+    well_id: str = Field(
+        description="the source's own plate/well (or tube) identifier of this reading, "
+        "which is what keeps two wells of one promoter label L1-distinct"
+    )
+
+    @field_validator("promoter_activity")
+    def validate_activity(cls, v: float) -> float:
+        """Reject a non-finite signal (NaN or infinity is not a measurement)."""
+        if not math.isfinite(v):
+            raise ValueError(f"promoter_activity must be finite, got {v}")
+        return v
+
+    @field_validator("n_samples")
+    def validate_n_samples(cls, v: int | None) -> int | None:
+        """n_samples is a positive integer or None."""
+        if v is not None and (not isinstance(v, int) or v < 1):
+            raise ValueError(f"n_samples must be a positive integer or None, got: {v}")
+        return v
+
+    @model_validator(mode="before")
+    @classmethod
+    def _fill_activity_se(cls, data: Any) -> Any:
+        """Derive the ML-facing SE from the reported uncertainty (frozen -> fill first)."""
+        if not isinstance(data, dict):
+            return data
+        unc = data.get("promoter_activity_uncertainty")
+        typ = data.get("promoter_activity_uncertainty_type")
+        if unc is None or typ is None or data.get("promoter_activity_se") is not None:
+            return data
+        typ = UncertaintyType(typ)
+        n = data.get("n_samples")
+        if typ in (UncertaintyType.sample_sd, UncertaintyType.variance) and n is None:
+            return data
+        data["promoter_activity_se"] = derive_se(unc, typ, n)
+        return data
+
+    @model_validator(mode="after")
+    def _check(self) -> "PromoterActivityPhenotype":
+        """Enforce the uncertainty invariant and non-empty identifiers."""
+        if not self.promoter_name.strip():
+            raise ValueError("promoter_name cannot be empty")
+        if not self.well_id.strip():
+            raise ValueError("well_id cannot be empty")
+        if not self.reporter_gene.strip():
+            raise ValueError("reporter_gene cannot be empty")
+        if not self.activity_units.strip():
+            raise ValueError("activity_units cannot be empty")
+        unc, typ = (
+            self.promoter_activity_uncertainty,
+            self.promoter_activity_uncertainty_type,
+        )
+        if (unc is None) != (typ is None):
+            raise ValueError(
+                "promoter_activity_uncertainty and its type must both be set or both "
+                "be None (no unlabelled uncertainty)"
+            )
+        if typ in (UncertaintyType.sample_sd, UncertaintyType.variance) and (
+            self.n_samples is None or self.sample_unit is None
+        ):
+            raise ValueError(f"n_samples and sample_unit are required for {typ}")
+        return self
+
+
 # --------------------------------------------------------------------------- #
 # Bacterial experiment families (plan 3b, 3c).
 #
@@ -5677,6 +5851,30 @@ class FluxExperiment(Experiment, ModelStrict):
     experiment_type: str = "flux"
     genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: FluxPhenotype
+
+
+class PromoterActivityExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a promoter-activity experiment.
+
+    The reference of a reporter reading is the SAME reporter strain in the control arm
+    of the same screen -- the untreated culture, read at the same time -- so the
+    reference is a real measurement, not a derived baseline. The assembly is pinned for
+    the same reason every bacterial family pins it: pydantic serializes by the DECLARED
+    type, so an ``AssemblyReferenceGenome`` in a ``ReferenceGenome`` slot would dump
+    without its assembly.
+    """
+
+    experiment_reference_type: str = "promoter_activity"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: PromoterActivityPhenotype
+
+
+class PromoterActivityExperiment(Experiment, ModelStrict):
+    """Experiment measuring transcription from one promoter through a reporter fusion."""
+
+    experiment_type: str = "promoter_activity"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: PromoterActivityPhenotype
 
 
 class BacterialFitnessExperimentReference(ExperimentReference, ModelStrict):
@@ -5829,6 +6027,7 @@ PhenotypeType = (
     | ProductTiterPhenotype
     | ProteinTurnoverPhenotype
     | FluxPhenotype
+    | PromoterActivityPhenotype
 )
 
 ExperimentType = (
@@ -5851,6 +6050,7 @@ ExperimentType = (
     | ProductTiterExperiment
     | ProteinTurnoverExperiment
     | FluxExperiment
+    | PromoterActivityExperiment
     | BacterialFitnessExperiment
     | BacterialEnvironmentResponseExperiment
     | BacterialGeneInteractionExperiment
@@ -5881,6 +6081,7 @@ ExperimentReferenceType = (
     | ProductTiterExperimentReference
     | ProteinTurnoverExperimentReference
     | FluxExperimentReference
+    | PromoterActivityExperimentReference
     | BacterialFitnessExperimentReference
     | BacterialEnvironmentResponseExperimentReference
     | BacterialGeneInteractionExperimentReference
@@ -5911,6 +6112,7 @@ EXPERIMENT_TYPE_MAP = {
     "product_titer": ProductTiterExperiment,
     "protein_turnover": ProteinTurnoverExperiment,
     "flux": FluxExperiment,
+    "promoter_activity": PromoterActivityExperiment,
     "bacterial_fitness": BacterialFitnessExperiment,
     "bacterial_environment_response": BacterialEnvironmentResponseExperiment,
     "bacterial_gene_interaction": BacterialGeneInteractionExperiment,
@@ -5940,6 +6142,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "product_titer": ProductTiterExperimentReference,
     "protein_turnover": ProteinTurnoverExperimentReference,
     "flux": FluxExperimentReference,
+    "promoter_activity": PromoterActivityExperimentReference,
     "bacterial_fitness": BacterialFitnessExperimentReference,
     "bacterial_environment_response": BacterialEnvironmentResponseExperimentReference,
     "bacterial_gene_interaction": BacterialGeneInteractionExperimentReference,

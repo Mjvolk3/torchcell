@@ -431,6 +431,33 @@ flux phenotype:
         n_samples: int
         sample_unit: str
         target_reaction_ids: str
+
+# Transcription from ONE promoter read through a reporter fusion
+# (PromoterActivityPhenotype). Every field but provenance_gaps is projected, enums as
+# their value and every value a scalar: this family has no dict-valued field, because a
+# record measures one promoter rather than a profile. promoter_gene is the join key to
+# the gene node and is null when the source label names no single gene. A property is
+# named by its field so the phenotype <-> node class bijection
+# (torchcell/datamodels/ontology_checks.py) matches it without an alias table.
+promoter activity phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        promoter_activity: float
+        promoter_activity_se: float
+        promoter_activity_uncertainty: float
+        promoter_activity_uncertainty_type: str
+        n_samples: int
+        sample_unit: str
+        promoter_name: str
+        promoter_gene: str
+        readout: str
+        reporter_gene: str
+        activity_units: str
+        well_id: str
 # PHENOTYPES END
 
 # RELATIONSHIPS
@@ -493,6 +520,7 @@ phenotype member of:
             product titer phenotype,
             protein turnover phenotype,
             flux phenotype,
+            promoter activity phenotype,
         ]
     target: [experiment, experiment reference]
 

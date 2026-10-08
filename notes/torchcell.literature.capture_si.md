@@ -73,3 +73,25 @@ A `manual` key is the "manual-once, deposit, reproducible via the mirror" case o
 - Dry run over stub keys for the same 50 DOIs (scratch mirror holding only a manifest per key): 46 `would_capture` (pmc_cloud 37, elsevier 7, springer 2; 377 files, about 726 MB through the PMC route alone), 4 `manual`.
 - Dry run on mirrored yeast keys: `kemmerenLargeScaleGeneticPerturbations2014` elsevier 5, `ohnukiHighdimensionalSinglecellPhenotyping2018` pmc_cloud 30, `sameithHighresolutionGeneExpression2015` springer 4, `oduibhirCellCyclePopulation2014` pmc_cloud 17, `mullederFunctionalMetabolomicsDescribes2016` pmc_cloud 4, `caudalPantranscriptomeRevealsLarge2024` present (SI from the issue #598 script).
 - One real capture into a scratch copy of `sameithHighresolutionGeneExpression2015`: four files written as `si/si1.xlsx` to `si/si4.xlsx`, each record verified by `verify_artifact` and re-fetched to a matching sha256 by `check_source`; a second run was `present` with no download. The real mirror's manifest was unchanged (same sha256 before and after).
+
+## 2026.10.08 - OCR of already-recorded SI PDFs (issue #709)
+
+`--ocr` OCRs only the SI PDFs captured in the same invocation, so SI recorded without OCR (the 109 bacterial SI PDFs captured on 2026-10-07, manual deposits under #699) needed a scratch driver. `--ocr-recorded` makes that a first-class mode with no publisher resolution:
+
+```bash
+python scripts/lit_capture_si.py --collection Escherichia-coli --ocr-recorded --dry-run  # list only
+python scripts/lit_capture_si.py --collection Escherichia-coli --ocr-recorded
+```
+
+- **Selection** (`recorded_si_pdfs`): every recorded `si/si<N>.pdf` whose `si/si<N>.md` is not recorded, in `N` order. A markdown on disk that the manifest does not record (an OCR killed before its record was written) leaves its PDF pending, and the re-OCR overwrites it.
+- **Per PDF** (`ocr_recorded_key`): the PDF's bytes are checked against its recorded sha256 (a mismatch is the key's error and stops that key), then `ocr_stored_pdfs` from PR #765 runs `ocr_pdf` + `_record_ocr_outputs` + `write_manifest`, the same recording path a same-run capture uses. One PDF per call, so a run that dies mid-batch (the issue's removed-worktree `_run_mineru.py` failure) keeps every finished PDF recorded and a rerun OCRs only the rest. A PDF with recorded markdown is never re-OCR'd, so a rerun is a no-op.
+- **Report**: per key `pending`, `ocr` (markdown written), `skipped` (PDFs whose markdown was already recorded) and `error`, printed and written as `si_ocr_[dryrun_]<stamp>.json` under `_sync_reports/`. Exit 1 when any key errored; other keys still run.
+- **Environment**: the device follows `$MINERU_DEVICE_MODE`; `ocr_pdf` needs `HF_HOME` or `DATA_ROOT`, which `scripts/lit_capture_si.py` loads from `.env`.
+- Unlike `reocr_si`, it never re-OCRs a recorded markdown and never retires figures.
+
+Also fixed: `_record_ocr_outputs` matched a stem as a bare prefix, so OCR'ing `si1` would have recorded an unrecorded `si/si10.md`; a stem now matches only up to a `.` or `_` boundary.
+
+### Validation on 2026.10.08
+
+- `pytest tests/torchcell/literature -q`: 411 passed, 3 skipped. New tests stub `ocr_pdf`: a key with `si1` (markdown recorded), `si2` and `si10` (none) OCRs `si2` then `si10`, records each markdown with source `mineru-ocr` and its processing record, skips `si1`, and a second run leaves `manifest.json` byte-identical with no OCR call; a swapped `si10.pdf` is refused after `si2` is recorded; the CLI dry run writes nothing.
+- Real MinerU on CPU, on a one-line generated PDF in a scratch mirror (no real mirror key): `pending=1 ocr=1`, the manifest gained `si/si1.md` (`si_ocr`, `mineru-ocr`, with processing), `si1_content_list.json`, `si1_middle.json` and `si1_ocr_provenance.json`; the rerun reported `skipped=['si/si1.pdf']` in 0.44 s and the manifest sha256 was unchanged.

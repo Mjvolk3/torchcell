@@ -418,11 +418,19 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
     assert manifest["dataset_name"] == "het"
     assert manifest["loader_class"] == _HET
     # the old EngineeredCopyNumberPerturbation leaf has left the closure (#505 G1)
+    # Since #734 the closure also lists the module-level bindings (Literal vocabularies,
+    # id patterns, aliases, helper functions) the record classes reach; each is its own
+    # surface node with its own fingerprint, so a narrowed Literal or a changed pattern
+    # is a schema change the manifest can see.
     assert sorted(manifest["closure"]) == [
+        "ALLELE_EDIT_SO",
         "AlleleEdit",
         "AssayType",
         "BackgroundAllele",
         "BarcodedKanMxDeletionPerturbation",
+        "CASSETTE_INTEGRATION_SO",
+        "CATEGORICAL_MEASUREMENT_TYPES",
+        "CHEBI_ID_PATTERN",
         "ComponentDefinition",
         "Compound",
         "Concentration",
@@ -435,6 +443,7 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
         "EndpointRule",
         "Environment",
         "EnvironmentPerturbation",
+        "EnvironmentPerturbationType",
         "EnvironmentPhysicalPerturbation",
         "EnvironmentResponseExperiment",
         "EnvironmentResponseExperimentReference",
@@ -442,10 +451,13 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
         "Experiment",
         "ExperimentReference",
         "GenePerturbation",
+        "GenePerturbationType",
         "GenomicSpan",
         "Genotype",
         "HashableProvenanceGapMixin",
         "HeterozygousDeletionPerturbation",
+        "INCHIKEY_PATTERN",
+        "IntegratedCassette",
         "KanMxDeletionPerturbation",
         "MatingType",
         "MeasurementType",
@@ -463,9 +475,13 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
         "Publication",
         "ReferenceGenome",
         "ResponseCategory",
+        "SGD_SYSTEMATIC_GENE_PATTERN",
+        "SO_ID_PATTERN",
         "SampleUnit",
+        "SgaPerturbationType",
         "SmallMoleculePerturbation",
         "Solvent",
+        "SourceType",
         "StrainBackground",
         "StrainConstruction",
         "StrainEnvironmentResponseExperiment",
@@ -475,6 +491,10 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
         "TemperatureUnit",
         "UncertaintyType",
         "Zygosity",
+        "_Z95",
+        "_require_value_or_gap",
+        "_validate_so_id",
+        "derive_se",
     ]
     assert het.raw_file_names == [
         "het.ratio_result_nm.pub",

@@ -459,18 +459,30 @@ def test_side_files_gene_set_reference_index_and_strain_list(
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "caudal"
     assert manifest["loader_class"] == _DATASET
+    # Since #734 the closure also lists the module-level bindings (Literal vocabularies,
+    # id patterns, aliases, helper functions) the record classes reach; each is its own
+    # surface node with its own fingerprint, so a narrowed Literal or a changed pattern
+    # is a schema change the manifest can see.
     assert sorted(manifest["closure"]) == [
+        "ARTIFACT_MEMBER_SEPARATOR",
+        "ARTIFACT_TIERS",
+        "ARTIFACT_URI_SCHEME",
         "ArtifactRef",
+        "ArtifactTier",
+        "CHEBI_ID_PATTERN",
         "ComponentDefinition",
         "Compound",
         "Concentration",
         "ConcentrationUnit",
         "DoseBasis",
         "Environment",
+        "EnvironmentPerturbationType",
         "Experiment",
         "ExperimentReference",
         "GenePerturbation",
+        "GenePerturbationType",
         "Genotype",
+        "INCHIKEY_PATTERN",
         "Media",
         "MediaComponent",
         "MediaComponentRole",
@@ -485,10 +497,15 @@ def test_side_files_gene_set_reference_index_and_strain_list(
         "RNASeqExpressionExperimentReference",
         "RNASeqExpressionPhenotype",
         "ReferenceGenome",
+        "SO_ID_PATTERN",
         "SequencePerturbation",
         "SequenceVariantPerturbation",
+        "SgaPerturbationType",
+        "SourceType",
         "Temperature",
         "TemperatureUnit",
+        "_ARTIFACT_SHA256",
+        "_validate_so_id",
     ]
     assert dataset.experiment_class is RNASeqExpressionExperiment
     assert dataset.reference_class is RNASeqExpressionExperimentReference

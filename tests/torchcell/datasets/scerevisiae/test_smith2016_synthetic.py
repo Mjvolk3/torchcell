@@ -77,6 +77,7 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     SampleUnit,
     SmallMoleculePerturbation,
+    SourceType,
     Temperature,
     UncertaintyType,
 )
@@ -327,6 +328,11 @@ def test_build_keeps_four_records_in_row_order_with_exact_records(
         "pubmed_url": None,
         "doi": "10.1186/s13059-016-0900-9",
         "doi_url": "https://doi.org/10.1186/s13059-016-0900-9",
+        # a journal article: the non-journal identity fields stay unset (1.7.0)
+        "source_type": SourceType.journal_article,
+        "title": None,
+        "identifier": None,
+        "identifier_url": None,
     }
 
 

@@ -1088,8 +1088,10 @@ def test_mating_type_map_without_gene_or_mating_column(
     ``except Exception`` at line 1116 (logged, then ``({}, {})``). The build does not
     end quietly, though: with no strain map every gene is skipped, the LMDB holds 0
     entries, and ``post_process`` then refuses the empty gene set with ``ValueError
-    ("Cannot set an empty or None value for gene_set")`` (experiment_dataset.py line
-    809), a message that does not name Table S1. Pinned until a Table S1 missing a
+    ("Cannot set an empty gene_set: every record of a dataset with
+    has_gene_perturbations=True carries gene perturbations, so an empty set is a
+    broken build")`` (experiment_dataset.py line 850), a message that does not name
+    Table S1. Pinned until a Table S1 missing a
     required column raises at load time naming the column.
     """
     table = Path(dataset.raw_dir) / "kemmeren2014_table_s1.xlsx"
@@ -1118,7 +1120,12 @@ def test_mating_type_map_without_gene_or_mating_column(
         [["orf name", "gene"], ["YPL177C", "CUP9"], ["YHR127W", "HSN1"]],
     )
     with pytest.raises(
-        ValueError, match=r"^Cannot set an empty or None value for gene_set$"
+        ValueError,
+        match=(
+            r"^Cannot set an empty gene_set: every record of a dataset with "
+            r"has_gene_perturbations=True carries gene perturbations, so an empty "
+            r"set is a broken build$"
+        ),
     ):
         m.MicroarrayKemmeren2014Dataset(root=str(root), genome=_genome())
 

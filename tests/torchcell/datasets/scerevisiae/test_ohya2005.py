@@ -85,6 +85,7 @@ from torchcell.datamodels.schema import (
     KanMxDeletionPerturbation,
     Publication,
     ReferenceGenome,
+    SourceType,
     Temperature,
 )
 from torchcell.datasets.scerevisiae import ohya2005 as m
@@ -353,6 +354,11 @@ def test_publication_is_ohya_2005_although_the_matrix_is_the_suzuki_reanalysis(
         "pubmed_url": "https://pubmed.ncbi.nlm.nih.gov/16365294/",
         "doi": "10.1073/pnas.0509436102",
         "doi_url": "https://www.pnas.org/doi/10.1073/pnas.0509436102",
+        # a journal article: the non-journal identity fields stay unset (1.7.0)
+        "source_type": SourceType.journal_article,
+        "title": None,
+        "identifier": None,
+        "identifier_url": None,
     }
 
 

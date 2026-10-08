@@ -115,7 +115,7 @@ from tqdm import tqdm
 
 from torchcell.data import (
     ExperimentDataset,
-    copy_verified,
+    link_verified,
     post_process,
     verify_raw_files,
     verify_sha256,
@@ -637,27 +637,40 @@ class EnvChemgenCostanzo2021Dataset(ExperimentDataset):
         return [_S1_FILENAME]
 
     def download(self) -> None:
-        """Copy Data File S1 from the raw mirror into ``raw_dir``; verify its sha256.
+        """Link Data File S1 from the raw mirror into ``raw_dir`` after verifying it.
 
         Science supplementary downloads are not scriptable (HTTP 403 behind a Cloudflare
         challenge, verified 2026-09-12, same as Costanzo 2016), so the file is deposited
         once into ``$DATA_ROOT/torchcell-raw/<citation_key>/`` and the mirror -- not the
-        URL -- is the source of record.
+        URL -- is the source of record. ``raw/`` holds a symlink to the mirror file, not
+        a second copy of its bytes, and nothing is linked unless the mirror file hashes
+        to ``_S1_SHA256``.
         """
         os.makedirs(self.raw_dir, exist_ok=True)
-        dest = osp.join(self.raw_dir, _S1_FILENAME)
-        if not osp.exists(dest):
-            mirror = osp.join(
-                os.environ["DATA_ROOT"], "torchcell-raw", CITATION_KEY, _S1_RAW_RELPATH
+        mirror = osp.join(raw_mirror_dir(), _S1_RAW_RELPATH)
+        if not osp.exists(mirror):
+            raise RuntimeError(
+                f"raw-mirror file not found: {mirror}. Costanzo 2021's Science SI is "
+                "not scriptable (403); deposit Data File S1 from "
+                "https://www.science.org/doi/10.1126/science.abf8424 into the raw "
+                "mirror with deposit_raw_mirror(), then rebuild (sha256 verified)."
             )
-            if not osp.exists(mirror):
-                raise RuntimeError(
-                    f"raw-mirror file not found: {mirror}. Costanzo 2021's Science SI is "
-                    "not scriptable (403); deposit Data File S1 from "
-                    "https://www.science.org/doi/10.1126/science.abf8424 into the raw "
-                    "mirror with deposit_raw_mirror(), then rebuild (sha256 verified)."
-                )
-            copy_verified(mirror, dest, _S1_SHA256)
+        link_verified(mirror, osp.join(self.raw_dir, _S1_FILENAME), _S1_SHA256)
+
+    def _process(self) -> None:
+        """Verify Data File S1 in ``raw/`` before PyG creates ``processed/``.
+
+        PyG skips ``download()`` whenever ``raw/`` already holds the file, and its
+        ``_process`` creates ``processed/`` before it calls ``process()``. Checking the
+        pin here, ahead of that, means a file off the pin raises
+        ``RawSha256MismatchError`` (naming the file and both digests) with no
+        ``processed/`` directory left behind, and every later construction refuses the
+        same way: nothing re-downloads or re-links over the unverified file. A store that
+        is already built is not reprocessed, so its raw file is not required.
+        """
+        if not osp.isdir(osp.join(self.processed_dir, "lmdb")):
+            verify_raw_files(self.raw_dir, {_S1_FILENAME: _S1_SHA256})
+        super()._process()
 
     def _environment(self, spec: dict[str, Any]) -> Environment:
         """Build the 26 C environment carrying this condition's edit.

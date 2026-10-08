@@ -19,3 +19,7 @@ Issues #518, #524, #528, #537. Finding retired: `test_a_failed_sha256_check_leav
 ## 2026.10.01 - Fix PR for the pinned findings
 
 Retired the blank-name, repeated-row and AMBIGUOUS-candidate findings (issue #524). The fixture sheet is now seven rows (6 records); the blank and repeated rows are added only in the refusal tests, which assert `BlankSystematicNameError` and `RepeatedStrainRowError` with exact messages and no store or drop log. The drop log asserts `candidates` on every entry.
+
+## 2026.10.08 - No processed/ after a sha256 refusal; raw/ links the mirror
+
+Issue #524 (Costanzo part). A build-time refusal used to leave an empty `processed/`, because PyG's `_process` creates it before calling `process()`. The loader now verifies Data File S1 in an `_process` override ahead of that, so `test_a_raw_file_off_the_pin_is_refused_at_build_time` asserts no `processed/`, no `preprocess/` and no drop log. New `test_a_corrupted_raw_file_refuses_before_processed_exists_and_on_every_retry` links the fixture file from the mirror under its pin, appends one byte to it, and asserts the refusal names the `raw/` path, the pin and the observed digest, leaves only `raw/` under the root, and repeats identically on a second construction with the link untouched. `test_download_links_the_mirror_file_and_verifies_the_pin` (was `..._copies_...`) asserts `raw/` holds a symlink to the mirror file. The two refusal tests fail on the previous loader (checked by running them against the `origin/main` module: 3 failed, 32 passed).

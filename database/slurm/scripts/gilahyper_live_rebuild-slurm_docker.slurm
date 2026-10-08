@@ -49,8 +49,10 @@
 #             plus one neo4j start (minutes), and the old store stays on disk until
 #             someone deletes it: rollback is the reverse pair of mv.
 #   record    kg_manifest bootstrap from the live store (the old manifest is kept beside
-#             it), the release stamped (version, release id, per-dataset content
-#             hashes) into the manifest and the store's KgRelease node, the latest and
+#             it), kg_manifest artifact-refs (the distinct artifact files each dataset's
+#             records point at, read from the dev-tree LMDBs), the release stamped
+#             (version, release id, per-dataset content hashes, the pointer set) into
+#             the manifest and the store's KgRelease node, the latest and
 #             pinned aliases created, CSVs archived to /bulk. The release artifact
 #             itself (an online backup) is scripts/kg_release.sh, run afterwards.
 #
@@ -441,6 +443,10 @@ PREV_VERSION=""
 if [ -f "$KG_MANIFEST.superseded.$SWAP_TS" ]; then
     PREV_VERSION=$(python -c 'import json,sys; print(json.load(open(sys.argv[1])).get("version") or "")' "$KG_MANIFEST.superseded.$SWAP_TS")
 fi
+# The pointer set: every dataset whose closure names ArtifactRef is walked once in the
+# dev tree, so the KgRelease node carries the files `make ops` checks against tc-data.
+python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --repo "$TORCHCELL_SRC" \
+    artifact-refs --data-root "$DEV_DATA_ROOT"
 python -m torchcell.knowledge_graphs.releases stamp --manifest "$KG_MANIFEST" --kind full \
     --built-at "$BUILT_AT" --hashes "$HASHES" ${PREV_VERSION:+--previous-version "$PREV_VERSION"}
 docker exec "$NEO4J_CONTAINER" $CS -d system "CALL dbms.setConfigValue('server.databases.writable', '$NEO4J_DATABASE');"

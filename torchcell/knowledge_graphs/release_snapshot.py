@@ -34,7 +34,14 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from torchcell.knowledge_graphs.kg_manifest import GraphSchemaEntry, KgBuildManifest
+# ArtifactRef is defined on the schema surface; importing it from there keeps the
+# artifacts package (fastapi, pandas through the genome registry) off the CLI's import path.
+from torchcell.datamodels.schema import ArtifactRef
+from torchcell.knowledge_graphs.kg_manifest import (
+    GraphSchemaEntry,
+    KgBuildManifest,
+    manifest_artifact_refs,
+)
 from torchcell.knowledge_graphs.releases import closure_compatibility, content_sha256
 from torchcell.provenance.schema_deps import SchemaSurface
 
@@ -96,6 +103,9 @@ class KgReleaseSnapshot(BaseModel):
     graph_schema: dict[str, GraphSchemaEntry]
     events: list[SnapshotEvent]
     composite_sha256: str
+    # dataset -> the file-level artifact pointers its records carry; None for a release
+    # whose manifest predates pointer recording (or has an unrecorded entry)
+    artifact_refs: dict[str, list[ArtifactRef]] | None = None
 
 
 def composite_sha256(datasets: Mapping[str, SnapshotDataset]) -> str:
@@ -161,6 +171,7 @@ def snapshot_from_manifest(
             for event in manifest.events
         ],
         composite_sha256=composite_sha256(datasets),
+        artifact_refs=manifest_artifact_refs(manifest),
     )
 
 

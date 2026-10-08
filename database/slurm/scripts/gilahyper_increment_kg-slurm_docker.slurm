@@ -64,8 +64,10 @@
 #              server.databases.writable setting, then set back), STOP DATABASE,
 #              neo4j-admin database import incremental as the neo4j user, START DATABASE.
 #   6 VERIFY   every new Dataset node's ExperimentMemberOf count equals its CSV row count.
-#   7 RECORD   kg_manifest record (one event naming every member); CSVs archived to
-#              /bulk/biocypher-out/<ts>.
+#   7 RECORD   kg_manifest record (one event naming every member); kg_manifest
+#              artifact-refs (the artifact files each served dataset's records point
+#              at, read from the dev-tree LMDBs); the release stamped and its KgRelease
+#              node rewritten; CSVs archived to /bulk/biocypher-out/<ts>.
 #
 # Variables (all optional except DATASET_CLASSES, or DATASET_CLASS for a single dataset):
 #   DATASET_CLASSES    comma-separated registered dataset class names, admitted in one
@@ -358,6 +360,10 @@ bash "$TORCHCELL_SRC/database/scripts/kg_content_hashes.sh" "$NEO4J_CONTAINER" "
 PREV_VERSION=$(python -c 'import json,sys; print(json.load(open(sys.argv[1])).get("version") or "")' "$KG_MANIFEST")
 [ -n "$PREV_VERSION" ] || { echo "served manifest carries no version; stamp the served release first (releases stamp --kind full)"; exit 1; }
 BUILT_AT=$(date -Iseconds)
+# The pointer set, re-walked for every served dataset whose closure names ArtifactRef
+# (an admitted entry starts unrecorded), so the KgRelease node never reads half-recorded.
+python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --repo "$TORCHCELL_SRC" \
+    artifact-refs --data-root "$DEV_DATA_ROOT"
 python -m torchcell.knowledge_graphs.releases stamp --manifest "$KG_MANIFEST" --kind incremental \
     --built-at "$BUILT_AT" --hashes "$HASHES" --previous-version "$PREV_VERSION"
 docker exec "$NEO4J_CONTAINER" $CS -d system "CALL dbms.setConfigValue('server.databases.writable', '$NEO4J_DATABASE');"

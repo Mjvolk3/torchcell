@@ -19,6 +19,7 @@ from pathlib import Path
 
 import pytest
 
+from torchcell.artifacts.ref import ArtifactRef
 from torchcell.knowledge_graphs.kg_manifest import (
     GraphSchemaEntry,
     KgBuildManifest,
@@ -211,7 +212,9 @@ def test_write_snapshot_is_byte_stable_and_round_trips(tmp_path: Path) -> None:
     text = paths[0].read_text(encoding="utf-8")
     assert text.endswith("}\n") and not text.endswith("}\n\n")
     assert text == json.dumps(snapshot.model_dump(), indent=2, sort_keys=True) + "\n"
-    assert text.startswith('{\n  "biocypher_version": "0.15.2",\n  "built_at":')
+    assert text.startswith(
+        '{\n  "artifact_refs": null,\n  "biocypher_version": "0.15.2",\n  "built_at":'
+    )
     assert paths[1].read_text(encoding="utf-8") == (
         "{\n"
         '  "DsA": {\n    "Experiment": "e-DsA",\n    "Genotype": "gg"\n  },\n'
@@ -220,6 +223,44 @@ def test_write_snapshot_is_byte_stable_and_round_trips(tmp_path: Path) -> None:
     )
     assert load_snapshot(paths[0]) == snapshot
     assert load_closures(tmp_path, "2026.09.17-7715ee35") == closures
+
+
+def test_snapshot_carries_the_pointer_set_through_write_and_load(
+    tmp_path: Path,
+) -> None:
+    """A fully recorded manifest gives ``dataset -> refs``, written as plain JSON and
+    loaded back equal; one unrecorded entry makes the field None.
+    """
+    ref = ArtifactRef(
+        tier="genomes", key="set_v1", path="genes.tar.gz", sha256="1" * 64
+    )
+    manifest = _manifest()
+    manifest.datasets["DsA"].artifact_refs = [ref]
+    manifest.datasets["DsB"].artifact_refs = []
+    snapshot = snapshot_from_manifest(manifest, n_nodes=99)
+    assert snapshot.artifact_refs == {"DsA": [ref], "DsB": []}
+    closures = {name: dict(e.closure) for name, e in manifest.datasets.items()}
+    paths = write_snapshot(snapshot, closures, tmp_path)
+    assert json.loads(paths[0].read_text(encoding="utf-8"))["artifact_refs"] == {
+        "DsA": [
+            {
+                "bytes": None,
+                "key": "set_v1",
+                "media_type": None,
+                "member": None,
+                "path": "genes.tar.gz",
+                "sha256": "1" * 64,
+                "tier": "genomes",
+            }
+        ],
+        "DsB": [],
+    }
+    assert load_snapshot(paths[0]) == snapshot
+    manifest.datasets["DsB"].artifact_refs = None
+    unrecorded = snapshot_from_manifest(manifest, n_nodes=99)
+    assert unrecorded.artifact_refs is None
+    write_snapshot(unrecorded, closures, tmp_path)
+    assert load_snapshot(paths[0]).artifact_refs is None
 
 
 def test_write_snapshot_refuses_closures_for_other_datasets(tmp_path: Path) -> None:

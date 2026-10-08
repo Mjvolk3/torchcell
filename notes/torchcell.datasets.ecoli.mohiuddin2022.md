@@ -100,6 +100,24 @@ So the family is new and additive: `PromoterActivityPhenotype` with the
 3.2.1 `phenotypic feature` parent, and the `CellAdapter` node method and reference
 collector. No served class changed, so this is admissible rather than a rebuild.
 
+### Schema impact: additive, 0 breaking, 6 sibling dev stores go stale
+
+`python -m torchcell.provenance.schema_impact --base origin/main` exits 0 and reports
+**7 impacted datasets, 0 breaking**. Nine changed symbols: the four new ones
+(`PromoterActivityPhenotype`, its experiment pair and `ReporterReadout`) plus the two
+`EXPERIMENT_*_TYPE_MAP` dicts and the three discriminated unions, each of which GAINED a
+member.
+
+Gaining a union member is what makes six siblings stale, all "via `ExperimentType`":
+`RnaseqCaglar2017Dataset`, `ProteomeCaglar2017Dataset`, `ProteinTurnoverGupta2024Dataset`,
+`MetabolomeSchastnaya2021Dataset`, the four De Siqueira 2025 sets,
+`PutidaPrecise321Lim2022Dataset` and `EnvChemgenHoepfner2014Dataset`. Stale is not
+breaking: no stored record would serialize differently, the contract fingerprint simply
+moved, so those dev LMDBs need their manifests refreshed by a rebuild. That is inherent
+to adding ANY new experiment family, not specific to this one, and
+`scripts/rebuild_stale_dev_stores` (landed on main as the stale-store slurm array) is the
+tool for it. Nothing here rebuilds them.
+
 ### The fold change sheet is exactly derivable, so it is not stored
 
 The sheet's own legend states the rule: "Fold changes were calculated by taking the ratio

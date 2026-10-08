@@ -2298,6 +2298,28 @@ def _verify_desiqueira_proteome(
     return desiqueira2025.verify_build(dataset_root, data_root, family="proteome")
 
 
+def _verify_desiqueira_proteome_percent(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """The de Siqueira 2025 percent-of-total proteome, the paper's own scale."""
+    from torchcell.datasets.pputida import desiqueira2025
+
+    return desiqueira2025.verify_build(
+        dataset_root, data_root, family="proteome_percent"
+    )
+
+
+def _verify_desiqueira_proteome_log10_percent(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """The de Siqueira 2025 mean-log10-percent proteome, the third released scale."""
+    from torchcell.datasets.pputida import desiqueira2025
+
+    return desiqueira2025.verify_build(
+        dataset_root, data_root, family="proteome_log10_percent"
+    )
+
+
 def _verify_kang_titer(dataset_root: str, data_root: str) -> VerificationReport:
     """Kang 2026: the Table 1 / Table S4 / Table S9 titers and their two L4 joins."""
     from torchcell.datasets.pputida import kang2026
@@ -2354,6 +2376,14 @@ BACTERIAL_PROTEIN_ABUNDANCE_DATASETS: dict[str, dict[str, Any]] = {
     "proteome_desiqueira2025": {
         "root": "data/torchcell/proteome_desiqueira2025",
         "verify": _verify_desiqueira_proteome,
+    },
+    "proteome_percent_desiqueira2025": {
+        "root": "data/torchcell/proteome_percent_desiqueira2025",
+        "verify": _verify_desiqueira_proteome_percent,
+    },
+    "proteome_log10_percent_desiqueira2025": {
+        "root": "data/torchcell/proteome_log10_percent_desiqueira2025",
+        "verify": _verify_desiqueira_proteome_log10_percent,
     },
     "proteome_lim2025": {
         "root": "data/torchcell/proteome_lim2025",

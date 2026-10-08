@@ -334,3 +334,118 @@ no shared verifier, so `titer_levels` builds its own battery. Both reports land 
    `CULTURE_FORMAT` rather than on the record.
 6. **`ConcentrationUnit` still has no `mg_per_l`**; this loader did not need it, but the
    Carruthers loader still stores mg/L as the numerically identical `ug/mL`.
+
+## 2026.10.08 - The two further released normalizations, and the measurement that justifies them
+
+Data Set S1 releases 15 columns. The first build asserted all 15 header cells but read
+only `row[7]` and `row[8]`, so columns 9 to 14 were parsed past: two further mean + SD
+pairs and two derived columns. All 15 are now read.
+
+| released column | what it is | where it goes now |
+|---|---|---|
+| `Top_3pep_counts_rep_mean` / `_rep_std` | the Top3 peptide signal | `ProteomeDeSiqueira2025Dataset`, unchanged |
+| `%_of protein_abundance_Top3_rep_mean` / `%_of protein_abundance_Top3-rep_std` | percent of the sample's total abundance | `ProteomePercentDeSiqueira2025Dataset`, 5 new records |
+| `log10_%_abundance_rep_mean` / `log10_%_abundance_rep_std` | the mean of the three replicates' log10 percent | `ProteomeLog10PercentDeSiqueira2025Dataset`, 5 new records |
+| `CV%_of_%_protein_abundance` | derived | build oracle, `assert_percent_cv_is_derived` |
+| `%_of protein_abundance_Top3_rep_mean_sem` | one value per protein | build oracle, `assert_sem_is_constant_per_protein` |
+
+### Why three dataset classes and not one with three measurement types
+
+`torchcell/verification/protein.py`'s `_l3_measurement_type_consistent` is a shared level
+every protein-abundance dataset runs: "L3: all records share a single measurement_type (no
+silent cross-assay mixing)". Three normalizations in one dataset class would fail it, and
+weakening a level every bacterial and yeast proteome dataset depends on to admit one
+paper's extra columns would be the wrong trade. The module's own convention already splits
+on the released family, so the split is per normalization. The supplementary level
+`stored_scale_is_the_released_column_this_class_reads` was added beside it: the shared level
+proves the records agree with each other, the new one proves they agree with the column the
+class actually reads, which is what keeps three classes over one workbook from swapping
+scales.
+
+### The non-recoverability measurement, over all 34,600 released cells
+
+Storing a second and third normalization of one proteome is only worth doing if neither can
+be re-derived from the first. Measured over every released cell of the sha256-pinned
+`si/si1.xlsx` (`6bd1889df343646fdcd972fb6b7d3c6c014fcd428a4a78d8363908cccfbddeae`), not a
+sample of them. Pinned in
+`tests/torchcell/datasets/pputida/test_desiqueira2025.py::test_the_two_new_normalizations_are_not_recoverable_from_the_stored_top3`.
+
+**Finding 1, the percent column is not percent of the stored mean.** Against
+`100 * top3_mean / sum(top3_mean)` within each of the 20 released samples:
+
+| statistic | value |
+|---|---|
+| cells compared | 34,600 |
+| cells agreeing exactly (1e-9 relative) | **0** |
+| cells agreeing to 5e-4 relative | 9,322 |
+| per-cell ratio, min | 0.914506 |
+| per-cell ratio, median | 1.000007 |
+| per-cell ratio, max | 1.083554 |
+
+Each sample's released percents sum to 100.000 (one sample reads 100.00038), so this is not
+a scaling error with a missing denominator. The ratio straddling 1 in both directions with
+a median of 1.000007 is the signature of a replicate-wise mean of per-replicate
+percentages, each replicate normalized by its OWN total: averaging after normalizing is not
+the same as normalizing after averaging, and the gap is whichever direction a protein's
+replicate-to-replicate total variation pushes it. There is no route back from a mean of
+counts.
+
+The audit note reported this as a per-sample ratio range of 0.959 to 0.997. That range is
+narrower and one-sided; the per-cell range measured here is 0.914506 to 1.083554 with a
+median at 1.000007. The conclusion is the same and stronger: zero of 34,600 cells agree.
+
+**Finding 2, the log10 column is the mean of logs.** Against `log10(released percent)`:
+
+| statistic | value |
+|---|---|
+| cells with pct > 0 | 34,600 |
+| released log10 STRICTLY BELOW log10 of the percent (beyond 5e-5) | **33,914** |
+| agreeing within 5e-5 | 686 |
+| released log10 ABOVE log10 of the percent | **0** |
+| largest gap, log10 units | 1.378950 |
+
+Zero violations in 34,600 one-sided comparisons is Jensen's inequality for a mean of
+logarithms, with equality only where the three replicates coincide. A log10-of-the-mean
+column would agree on every cell. The first released row (protein `Csda`) reads
+-2.23385590492606 against a log10 of the mean of -2.19547, which matches the audit exactly.
+
+Its SD is not recoverable either: the delta-method transform of the percent SD,
+`pct_sd / (pct_mean * ln 10)`, disagrees on 34,496 of 34,600 cells.
+
+**The two derived columns, measured and therefore NOT stored.** The CV is exactly
+`100 * pct_sd / pct_mean` on every one of the 34,600 cells, so it carries nothing the
+stored percent pair does not. The SEM is single-valued for 1,728 of 1,729 proteins, so it
+does not vary with the sample and a per-sample record has nothing to put in it. Both are
+asserted at build time instead, which is what keeps every asserted header cell from being
+parsed past a second time.
+
+### Why the percent and log10 scales fit `ProteinAbundancePhenotype`'s docstring
+
+The docstring asks for "absolute per-strain quantity on a log signal scale, NOT a ratio --
+the WT/parent strain supplies the reference". A percent of the sample's own total is a
+compositional quantity of that one strain, not a ratio against another strain, and its log10
+is literally a log signal scale. So these two land inside the docstring, unlike the
+ratio-to-control the Yunus 2026 loader stores, which the audit's gap R flags.
+
+The log10 means are NEGATIVE (a percent below 1 has a negative log10). The schema permits
+it: `protein_abundance` is `dict[str, float]` with no sign validator, only the SE is
+required non-negative, and `l2_value_fidelity` for abundance applies no minimum. The
+`measurement_type` is what tells a consumer the scale.
+
+### Record counts and the stores
+
+| class | root slug | records | protein keys per record |
+|---|---|---|---|
+| `ProteomeDeSiqueira2025Dataset` | `proteome_desiqueira2025` | 5 | 1,531 |
+| `ProteomePercentDeSiqueira2025Dataset` | `proteome_percent_desiqueira2025` | 5 | 1,531 |
+| `ProteomeLog10PercentDeSiqueira2025Dataset` | `proteome_log10_percent_desiqueira2025` | 5 | 1,531 |
+
+Ten new records, 15,310 new values plus their SEs. The same five writable samples, the same
+genotypes, the same environments, the same 1,531 surviving protein keys and the same
+WT/glucose reference sample on each scale, so every difference between the three stores is
+the released column each class reads. All three verified: L0 to L4 pass, 11 levels each.
+
+The two blocked items are unchanged. The 192 host protein keys outside the namespace still
+need a UniProt-to-locus-tag crosswalk (open gap 2), and the Sigma-class strains still need
+the variant-level perturbation leaf (#731) which would take each class from 5 records to
+20.

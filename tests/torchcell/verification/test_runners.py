@@ -2553,6 +2553,12 @@ def test_the_bioproduction_registries_name_every_landed_store() -> None:
     } == {
         "proteome_carruthers2025": "data/torchcell/proteome_carruthers2025",
         "proteome_desiqueira2025": "data/torchcell/proteome_desiqueira2025",
+        "proteome_percent_desiqueira2025": (
+            "data/torchcell/proteome_percent_desiqueira2025"
+        ),
+        "proteome_log10_percent_desiqueira2025": (
+            "data/torchcell/proteome_log10_percent_desiqueira2025"
+        ),
         "proteome_lim2025": "data/torchcell/proteome_lim2025",
         "proteome_caglar2017": "data/torchcell/proteome_caglar2017",
     }

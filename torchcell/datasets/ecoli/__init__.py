@@ -18,9 +18,17 @@ sourcing layer.
 - ``babu2014`` -- ``GeneInteractionBabu2014Dataset``: the genome-wide eSGA digenic
   interaction map, one record per released (donor, recipient) pair with its signed
   colony-size S score. The first consumer of ``BacterialGeneInteractionExperiment``,
-  and the loader that SUBSUMES Butland 2008's 39 screens (every record names its
-  screen set in ``screen_id``). Its 3,420 hypomorph-involving pairs are dropped: a
+  and the loader that re-releases 727 of Butland 2008's measurements (every record
+  names its screen set in ``screen_id``); it does NOT subsume that release, which
+  ``butland2008`` below serves in full. Its 3,420 hypomorph-involving pairs are dropped:
+  a
   3'-UTR cassette hypomorph has no bacterial gene-perturbation leaf.
+- ``butland2008`` -- ``GeneInteractionButland2008Dataset``: the UNFILTERED eSGA
+  matrix those 39 screens actually released, one record per (query strain, recipient
+  isolate) cell of Supplementary Table 4. It is NOT subsumed by Babu 2014, which carries
+  727 of these 314,847 scores, and the build proves the partition against the served
+  Babu store in both directions before writing a record. Its 149 SPA-tag recipient rows
+  share Babu's hypomorph blocker and its two colony-size sheets have no phenotype class.
 - ``caglar2017`` -- ``ProteomeCaglar2017Dataset`` and ``RnaseqCaglar2017Dataset``: the
   REL606 multi-omic growth panel, which became loadable once the *E. coli* B assembly
   set joined the tier (this module began as the provenance record of that blocker).
@@ -137,6 +145,9 @@ sourcing layer.
 """
 
 from .babu2014 import GeneInteractionBabu2014Dataset as GeneInteractionBabu2014Dataset
+from .butland2008 import (
+    GeneInteractionButland2008Dataset as GeneInteractionButland2008Dataset,
+)
 from .caglar2017 import ProteomeCaglar2017Dataset as ProteomeCaglar2017Dataset
 from .caglar2017 import RnaseqCaglar2017Dataset as RnaseqCaglar2017Dataset
 from .campos2018 import GrowthRateCampos2018Dataset as GrowthRateCampos2018Dataset

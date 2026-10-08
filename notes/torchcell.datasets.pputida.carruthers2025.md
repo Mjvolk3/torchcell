@@ -491,8 +491,17 @@ both datasets' 49-symbol schema closures (read off
 `preprocess/build_manifest.json`). No adapter module, conf yaml,
 `dataset_adapter_map` entry, `kg_bacteria.yaml` entry or adapter-case row changes, and the
 `len(dataset_adapter_map) == 84` and `len(BACTERIAL) == 33` pins hold untouched. For the
-served graph this is a superset admission, not a rebuild: the schema fingerprints are
-unchanged and every stored record is still produced.
+served graph this is a superset admission, not a rebuild, and that is MEASURED rather than
+argued. Comparing the retired LMDB against the rebuilt one key by key, by sha256 of the
+serialized record:
+
+| family | old keys | new keys | shared | byte-identical | changed | added | removed |
+|---|---|---|---|---|---|---|---|
+| titer | 465 | 502 | 465 | **465** | **0** | 37 | 0 |
+| proteome | 19 | 21 | 19 | **19** | **0** | 2 | 0 |
+
+No served record would be updated or deleted, which is exactly what incremental import
+cannot do and what the admission check asks about.
 
 | family | before | added | after |
 |---|---|---|---|

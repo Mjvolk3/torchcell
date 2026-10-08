@@ -1943,7 +1943,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         name: spec["root"] for registry in registries for name, spec in registry.items()
     }
     assert roots == {name: f"data/torchcell/{name}" for name in roots}
-    assert len(roots) == 38  # 3 + 1 + 11 + 2 + 5 + 13 + 2 + 1
+    assert len(roots) == 41  # 3 + 1 + 13 + 2 + 5 + 13 + 3 + 1
     assert all(
         isinstance(spec["provenance"], Provenance)
         for registry in registries

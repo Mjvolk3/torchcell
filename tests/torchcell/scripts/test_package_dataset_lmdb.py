@@ -247,6 +247,26 @@ def test_refuses_a_private_loader_class(
     assert not (tmp_path / "store").exists()
 
 
+def test_refuses_the_real_private_bioscreen_dataset(tmp_path: Path) -> None:
+    """The in-house 2021 Bioscreen loader, registered by importing its package, is
+    refused by name: an --include-private graph build does not open the release path.
+    """
+    import torchcell.datasets.private_torchcell  # noqa: F401  # registers the loader
+
+    manifest = _manifest("inhibitor_bioscreen_volk2021").model_copy(
+        update={"loader_class": "InhibitorBioscreenVolk2021Dataset"}
+    )
+    dataset_dir = build_fake_dataset(
+        tmp_path, slug="inhibitor_bioscreen_volk2021", manifest=manifest
+    )
+    with pytest.raises(
+        pkg.PackagingRefused,
+        match="InhibitorBioscreenVolk2021Dataset is PRIVATE .visibility=private.",
+    ):
+        pkg.package_dataset(dataset_dir, tmp_path / "store")
+    assert not (tmp_path / "store").exists()
+
+
 def test_a_public_or_unregistered_loader_class_packages_normally(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -121,6 +121,15 @@ TORCHCELL_PIP_REF="${TORCHCELL_PIP_REF:-git+https://github.com/Mjvolk3/torchcell
 BUILD_ROOT="${BUILD_ROOT:-/scratch/projects/torchcell}"
 SERVE_ROOT="${SERVE_ROOT:-/db/database}"
 KG_MANIFEST="${KG_MANIFEST:-$BUILD_ROOT/database/kg_manifest.json}"
+# The GilaHyper store is the in-house store, so a PRIVATE dataset (visibility=private)
+# may be admitted into it: INCLUDE_PRIVATE=1 (the default) passes --include-private to
+# the admission check and the generator. INCLUDE_PRIVATE=0 refuses one by name.
+INCLUDE_PRIVATE="${INCLUDE_PRIVATE:-1}"
+case "$INCLUDE_PRIVATE" in
+    1) PRIVATE_ARGS=(--include-private) ;;
+    0) PRIVATE_ARGS=() ;;
+    *) echo "INCLUDE_PRIVATE must be 0 or 1, got '$INCLUDE_PRIVATE'"; exit 1 ;;
+esac
 NEO4J_CONTAINER="${NEO4J_CONTAINER:-tc-neo4j-readonly}"
 NEO4J_DATABASE="${NEO4J_DATABASE:-torchcell}"
 NEO4J_BOLT_URI="${NEO4J_BOLT_URI:-bolt://localhost:7687}"
@@ -168,7 +177,7 @@ DATASET_ARGS=()
 for NAME in "${DATASET_ARRAY[@]}"; do DATASET_ARGS+=(--dataset "$NAME"); done
 python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --repo "$TORCHCELL_SRC" \
     admit "${DATASET_ARGS[@]}" --data-root "$DEV_DATA_ROOT" --report "$REPORT" "${ACK_ARGS[@]}" \
-    --neo4j-uri "$NEO4J_BOLT_URI" --database "$NEO4J_DATABASE"
+    --neo4j-uri "$NEO4J_BOLT_URI" --database "$NEO4J_DATABASE" "${PRIVATE_ARGS[@]}"
 
 echo "---------------- 2 STAGE dev LMDBs -> build tree (as uid 7474)"
 TS=$(date +%Y-%m-%d_%H-%M-%S)
@@ -242,7 +251,7 @@ docker run --rm --entrypoint bash \
         python -m pip install --no-cache-dir biocypher==0.15.2 >/dev/null
         set -a; source /.env; set +a
         wandb login \$WANDB_API_KEY >/dev/null
-        python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small --config-name kg_increment 'datasets=[$DATASET_LIST]'
+        python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small --config-name kg_increment 'datasets=[$DATASET_LIST]' ${PRIVATE_ARGS[*]}
         # this container runs as root (pip needs the image's site-packages); hand the
         # output to the neo4j user, which runs the import, and keep it host-readable
         # world-writable as well: the host-side existing-edge filter stages each

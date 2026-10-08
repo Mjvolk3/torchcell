@@ -1406,26 +1406,31 @@ def test_n_experiments_named_twice_is_refused() -> None:
         km.parse_n_experiments(["ADataset=1", "ADataset=2"], ["ADataset"])
 
 
-def test_a_private_dataset_is_never_admissible(
+def test_a_private_dataset_blocks_without_include_private(
     toy: _Toy, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """In-house data has no incremental path into the public served store.
+    """In-house data enters a store only by an admission that opts into it.
 
-    The reason names the dataset and says plainly that there is no path, rather than
-    offering a flag: incremental admission writes into the SERVED store, which is the
-    public one, so an in-house graph is a different store, not a flag on this one.
+    The reason names the dataset and the flag; the same check with
+    ``include_private=True`` (``admit --include-private``, which the GilaHyper
+    increment script passes for the in-house store) lets it through.
     """
     from torchcell.data.experiment_dataset import Visibility
 
     monkeypatch.setattr(
         toy.classes["ToyDataset"], "visibility", Visibility.private, raising=False
     )
-    report = _admit(toy, _bootstrap(toy))
+    manifest = _bootstrap(toy)
+    report = _admit(toy, manifest)
     assert report.verdict == "blocked"
-    assert any(
-        "ToyDataset is PRIVATE (visibility=private)" in reason
-        for reason in report.reasons
+    assert report.reasons == [
+        "ToyDataset is PRIVATE (visibility=private): in-house data is admitted only "
+        "to an in-house store, by an admission run with --include-private"
+    ]
+    admitted = km.check_admission(
+        manifest, toy.repo, "ToyDataset", toy.data_root, include_private=True
     )
+    assert admitted.verdict == "admissible", admitted.reasons
 
 
 def test_a_recorded_entry_carries_the_loader_visibility(toy: _Toy) -> None:

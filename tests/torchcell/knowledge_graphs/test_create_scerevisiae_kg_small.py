@@ -785,3 +785,51 @@ def test_a_yeast_only_build_never_builds_a_bacterial_genome(
     ks.main(_cfg(FULL_CFG))
     assert len(FakeBeta.instances) == 1
     assert log == []
+
+
+# 2026.10.08: the private in-house dataset and the --include-private full build.
+def test_a_named_private_dataset_is_refused_without_include_private(
+    build: SimpleNamespace,
+) -> None:
+    """The real private loader, named in a build without the flag, stops it by name."""
+    from torchcell.knowledge_graphs.dataset_adapter_map import PrivateDatasetRefused
+
+    cfg = {**FULL_CFG, "datasets": ["InhibitorBioscreenVolk2021Dataset"]}
+    with pytest.raises(
+        PrivateDatasetRefused, match="InhibitorBioscreenVolk2021Dataset"
+    ):
+        ks.main(_cfg(cfg))
+    assert FakeAlpha.instances == []
+    assert FakeBioCypher.instances[0].calls == []
+
+
+def test_the_full_build_list_contains_the_private_dataset_only_with_the_flag(
+    build: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``datasets: null`` is every mapped dataset; the flag adds the private map.
+
+    The private dataset has no LMDB under the test root, so the full build reaches it
+    and skips it loudly, which is what makes it visible in ``skipped_datasets``.
+    """
+    from torchcell.datasets.private_torchcell.volk2021_inhibitor_bioscreen import (
+        InhibitorBioscreenVolk2021Dataset,
+    )
+    from torchcell.knowledge_graphs.dataset_adapter_map import (
+        PRIVATE_DATASET_ADAPTER_MAP,
+    )
+
+    assert InhibitorBioscreenVolk2021Dataset in PRIVATE_DATASET_ADAPTER_MAP
+
+    def skipped() -> list[str]:
+        (entry,) = [p for p in build.wandb.logged if "skipped_datasets" in p]
+        names: list[str] = entry["skipped_datasets"]
+        return names
+
+    ks.main(_cfg(FULL_CFG))
+    assert "InhibitorBioscreenVolk2021Dataset" not in skipped()
+
+    build.wandb.logged.clear()
+    reset_instances(FakeAlpha, FakeBeta, FakeGamma, FakeAdapterA, FakeAdapterB)
+    monkeypatch.setattr(ks, "INCLUDE_PRIVATE", True)
+    ks.main(_cfg(FULL_CFG))
+    assert skipped() == ["FakeGamma", "InhibitorBioscreenVolk2021Dataset"]

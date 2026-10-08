@@ -37,9 +37,15 @@ from torchcell.datasets import dataset_registry
 from torchcell.datasets.bacteria_common import BacterialGenomeInjector
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.knowledge_graphs.dataset_adapter_map import (
+    INCLUDE_PRIVATE_FLAG as INCLUDE_PRIVATE_FLAG,
+)
+from torchcell.knowledge_graphs.dataset_adapter_map import (
     PRIVATE_DATASET_ADAPTER_MAP,
     dataset_adapter_map,
     refuse_private_datasets,
+)
+from torchcell.knowledge_graphs.dataset_adapter_map import (
+    take_include_private_flag as take_include_private_flag,
 )
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
@@ -62,21 +68,6 @@ BIOCYPHER_OUT_PATH = cast(str, os.getenv("BIOCYPHER_OUT_PATH"))
 #: :func:`take_include_private_flag` before hydra parses argv; False in every other
 #: entry (a test calling ``main`` directly, an import).
 INCLUDE_PRIVATE = False
-
-INCLUDE_PRIVATE_FLAG = "--include-private"
-
-
-def take_include_private_flag(argv: list[str]) -> bool:
-    """Remove ``--include-private`` from ``argv`` and report whether it was there.
-
-    Hydra owns ``sys.argv``, so the flag has to be taken out of it before
-    ``main()`` runs or hydra fails on an unrecognized option.
-    """
-    if INCLUDE_PRIVATE_FLAG not in argv:
-        return False
-    while INCLUDE_PRIVATE_FLAG in argv:
-        argv.remove(INCLUDE_PRIVATE_FLAG)
-    return True
 
 
 def get_num_workers() -> int:

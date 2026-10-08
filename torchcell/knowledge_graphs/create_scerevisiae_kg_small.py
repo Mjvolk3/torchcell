@@ -2,7 +2,15 @@
 # [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg_small
 # Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg_small.py
-"""Build a small S. cerevisiae BioCypher knowledge graph from Costanzo/Kuzmin data."""
+"""Build the S. cerevisiae (and bacterial) BioCypher knowledge graph from dev LMDBs.
+
+The full and incremental builds both run this module. Membership is
+``dataset_adapter_map`` (the public datasets), unioned with
+``PRIVATE_DATASET_ADAPTER_MAP`` only when the command line carries
+``--include-private`` (``take_include_private_flag`` removes it from
+``sys.argv`` before hydra parses it). A private dataset named in ``datasets`` without the
+flag is refused by name (``refuse_private_datasets``), never silently dropped.
+"""
 
 import hashlib
 import inspect
@@ -11,6 +19,7 @@ import logging
 import math
 import os
 import os.path as osp
+import sys
 import time
 import uuid
 from datetime import datetime
@@ -30,7 +39,12 @@ from torchcell.build_telemetry import BuildPhase, ResourceSampler
 from torchcell.datasets.bacteria_common import BacterialGenomeInjector
 from torchcell.fast_csv import FastCsvSink, build_row_specs
 from torchcell.graph import SCerevisiaeGraph
-from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
+from torchcell.knowledge_graphs.dataset_adapter_map import (
+    PRIVATE_DATASET_ADAPTER_MAP,
+    dataset_adapter_map,
+    refuse_private_datasets,
+    take_include_private_flag,
+)
 from torchcell.knowledge_graphs.head_ontology import verify_head_ontology
 from torchcell.knowledge_graphs.incremental_import import (
     INCREMENTAL_CALL_FILENAME,
@@ -48,6 +62,10 @@ logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
 logging.captureWarnings(True)
 
 os.environ["SSL_CERT_FILE"] = certifi.where()
+
+#: ``--include-private`` was passed on the command line (set in ``__main__`` below,
+#: before hydra parses argv); False for any other entry.
+INCLUDE_PRIVATE = False
 
 
 def get_num_workers() -> int:
@@ -267,18 +285,38 @@ def main(cfg: DictConfig) -> None:
         raise ValueError(
             "import_mode: incremental requires a non-empty `datasets` list"
         )
-    known_names = {cls.__name__ for cls in dataset_adapter_map}
+    # Visibility gate: a private dataset named without --include-private is refused
+    # by name; with the flag the private map joins the build (all of it when
+    # `datasets: null`).
+    if selected_names is not None:
+        refuse_private_datasets(
+            [c for c in PRIVATE_DATASET_ADAPTER_MAP if c.__name__ in selected_names],
+            INCLUDE_PRIVATE,
+        )
+    adapter_map = (
+        {**dataset_adapter_map, **PRIVATE_DATASET_ADAPTER_MAP}
+        if INCLUDE_PRIVATE
+        else dict(dataset_adapter_map)
+    )
+    known_names = {cls.__name__ for cls in adapter_map}
     if selected_names is not None:
         unknown = sorted(set(selected_names) - known_names)
         if unknown:
-            raise KeyError(f"datasets not in dataset_adapter_map: {unknown}")
+            searched = (
+                "dataset_adapter_map or PRIVATE_DATASET_ADAPTER_MAP"
+                if INCLUDE_PRIVATE
+                else "dataset_adapter_map"
+            )
+            raise KeyError(f"datasets not in {searched}: {unknown}")
     build_items = [
         (dataset_class, adapter_class)
-        for dataset_class, adapter_class in dataset_adapter_map.items()
+        for dataset_class, adapter_class in adapter_map.items()
         if selected_names is None or dataset_class.__name__ in selected_names
     ]
     log.info(
-        "Build membership: %s", "ALL" if selected_names is None else selected_names
+        "Build membership: %s (include_private=%s)",
+        "ALL" if selected_names is None else selected_names,
+        INCLUDE_PRIVATE,
     )
 
     # Build every selected dataset (subset), each paired with its adapter.
@@ -466,6 +504,7 @@ def main(cfg: DictConfig) -> None:
 
 
 if __name__ == "__main__":
+    INCLUDE_PRIVATE = take_include_private_flag(sys.argv)
     main()
 
     # Read the logged file name from the file

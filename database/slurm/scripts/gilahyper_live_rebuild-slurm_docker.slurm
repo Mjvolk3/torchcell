@@ -56,6 +56,12 @@
 #             pinned aliases created, CSVs archived to /bulk. The release artifact
 #             itself (an online backup) is scripts/kg_release.sh, run afterwards.
 #
+# PRIVATE DATASETS. The GilaHyper store is the in-house store, so the build includes the
+# private datasets (PRIVATE_DATASET_ADAPTER_MAP, visibility=private) by default:
+# INCLUDE_PRIVATE=1 passes --include-private to the generator and counts the private map
+# in the preflight. INCLUDE_PRIVATE=0 builds the public datasets alone. A tc-data
+# release refuses a private dataset either way (scripts/package_dataset_lmdb.py).
+#
 # RESOURCES. 24 CPUs and 256 G, measured. The generation container's anonymous memory
 # scales with the adapter worker count (SLURM_CPUS_PER_TASK sets it): job 1996 at 32
 # CPUs / 200 G was OOM-killed 15 min in at the Costanzo dmf experiment chunk with the
@@ -95,6 +101,12 @@ ARCHIVE_ROOT="${ARCHIVE_ROOT:-/bulk/biocypher-out}"
 # whole store (680 G) in its work directory before compressing.
 RELEASE_ROOT="${RELEASE_ROOT:-/bulk/kg-releases}"
 KG_MANIFEST="${KG_MANIFEST:-$BUILD_ROOT/database/kg_manifest.json}"
+INCLUDE_PRIVATE="${INCLUDE_PRIVATE:-1}"
+case "$INCLUDE_PRIVATE" in
+    1) PRIVATE_FLAG="--include-private" ;;
+    0) PRIVATE_FLAG="" ;;
+    *) echo "INCLUDE_PRIVATE must be 0 or 1, got '$INCLUDE_PRIVATE'"; exit 1 ;;
+esac
 SERVE_CPUS="${SERVE_CPUS:-16}"
 SERVE_MEM="${SERVE_MEM:-200g}"
 MIN_FREE_GB="${MIN_FREE_GB:-1500}"
@@ -130,7 +142,7 @@ PACKAGE_TAG=$(git -C "$TORCHCELL_SRC" describe --tags --exact-match --match 'v[0
 echo "package tag $PACKAGE_TAG at $BUILD_COMMIT: the release will be paired with it"
 
 echo "Running on $(hostname) at $(date); job $JOB${RESUME_JOB:+ (resuming job $RESUME_JOB)}"
-echo "config $KG_CONFIG; commit $BUILD_COMMIT; dev tree $DEV_DATA_ROOT; serve $SERVE_ROOT; next $NEXT_ROOT"
+echo "config $KG_CONFIG; commit $BUILD_COMMIT; dev tree $DEV_DATA_ROOT; serve $SERVE_ROOT; next $NEXT_ROOT; include private $INCLUDE_PRIVATE"
 echo "SLURM_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK SLURM_MEM_PER_NODE=$SLURM_MEM_PER_NODE"
 cd "$TORCHCELL_SRC"
 export PYTHONPATH="$TORCHCELL_SRC"
@@ -169,13 +181,14 @@ if [ -e "$NEXT_ROOT/data" ] && [ -n "$(ls -A "$NEXT_ROOT/data")" ]; then
 fi
 # Every mapped dataset must have a dev LMDB whose build manifest is fresh under the
 # schema the container will install: the store is built from exactly those records.
-N_DATASETS=$(python - "$DEV_DATA_ROOT" <<'EOF'
+N_DATASETS=$(python - "$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" <<'EOF'
 import os, sys
-from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
+from torchcell.knowledge_graphs.dataset_adapter_map import build_adapter_map
 from torchcell.database.build_dataset_lmdb import dataset_default_root
 from torchcell.provenance.build_manifest import BuildManifest, check_manifest
 from torchcell.provenance.schema_deps import load_default_surface
 dev = sys.argv[1]
+dataset_adapter_map = build_adapter_map(include_private=sys.argv[2] == "1")
 surface = load_default_surface()
 bad = []
 for cls in dataset_adapter_map:
@@ -237,7 +250,7 @@ docker run --rm --entrypoint bash --name "$GEN_CONTAINER" \
             || { echo '${KG_CONFIG}.yaml is not in the installed torchcell'; exit 1; }
         set -a; source /.env; set +a
         wandb login \$WANDB_API_KEY >/dev/null
-        python -m $KG_MODULE --config-name $KG_CONFIG
+        python -m $KG_MODULE --config-name $KG_CONFIG $PRIVATE_FLAG
         CALL=\$(cat biocypher_file_name.txt)
         OUT_DIR=\$(dirname \$CALL)
         chown -R 7474:7474 /var/lib/neo4j/\$OUT_DIR && chmod -R a+rX /var/lib/neo4j/\$OUT_DIR

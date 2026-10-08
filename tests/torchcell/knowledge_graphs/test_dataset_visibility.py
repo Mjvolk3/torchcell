@@ -57,10 +57,54 @@ def test_every_mapped_public_dataset_is_actually_public() -> None:
     assert private == []
 
 
-def test_the_private_map_starts_empty_and_is_disjoint_from_the_public_one() -> None:
-    """Private loaders register in their own map, never in the public one."""
-    assert PRIVATE_DATASET_ADAPTER_MAP == {}
+def test_the_private_map_holds_exactly_the_in_house_loaders() -> None:
+    """Private loaders register in their own map, never in the public one, and every
+    class in it is actually private.
+    """
+    from torchcell.adapters.volk2021_inhibitor_bioscreen_adapter import (
+        InhibitorBioscreenVolk2021Adapter,
+    )
+    from torchcell.datasets.private_torchcell.volk2021_inhibitor_bioscreen import (
+        InhibitorBioscreenVolk2021Dataset,
+    )
+
+    assert PRIVATE_DATASET_ADAPTER_MAP == {
+        InhibitorBioscreenVolk2021Dataset: InhibitorBioscreenVolk2021Adapter
+    }
     assert set(PRIVATE_DATASET_ADAPTER_MAP) & set(dataset_adapter_map) == set()
+    assert all(
+        getattr(cls, "visibility", None) is Visibility.private
+        for cls in PRIVATE_DATASET_ADAPTER_MAP
+    )
+
+
+def test_the_real_private_dataset_is_refused_without_the_flag() -> None:
+    """The gate names the in-house Bioscreen dataset and the flag that admits it."""
+    from torchcell.datasets.private_torchcell.volk2021_inhibitor_bioscreen import (
+        InhibitorBioscreenVolk2021Dataset,
+    )
+
+    with pytest.raises(PrivateDatasetRefused) as excinfo:
+        refuse_private_datasets([_PublicLoader, InhibitorBioscreenVolk2021Dataset])
+    assert "InhibitorBioscreenVolk2021Dataset" in str(excinfo.value)
+    assert "--include-private" in str(excinfo.value)
+    refuse_private_datasets(
+        [_PublicLoader, InhibitorBioscreenVolk2021Dataset], include_private=True
+    )
+    assert InhibitorBioscreenVolk2021Dataset not in build_adapter_map()
+    assert InhibitorBioscreenVolk2021Dataset in build_adapter_map(include_private=True)
+
+
+def test_take_include_private_flag_lives_beside_the_gate() -> None:
+    """Every build entry point reads the flag through the same function."""
+    from torchcell.knowledge_graphs import create_kg
+    from torchcell.knowledge_graphs.dataset_adapter_map import (
+        INCLUDE_PRIVATE_FLAG,
+        take_include_private_flag,
+    )
+
+    assert create_kg.take_include_private_flag is take_include_private_flag
+    assert INCLUDE_PRIVATE_FLAG == "--include-private"
 
 
 def test_build_adapter_map_unions_the_private_map_only_when_asked() -> None:

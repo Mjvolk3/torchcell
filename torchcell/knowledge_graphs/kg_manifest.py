@@ -648,10 +648,15 @@ def _adapter_conf_name(adapter_source: str) -> str:
 
 
 def dataset_adapter_files(dataset_class: type, repo_root: Path) -> list[str]:
-    """Repo-relative adapter module + conf yaml serving ``dataset_class``."""
-    from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
+    """Repo-relative adapter module + conf yaml serving ``dataset_class``.
 
-    adapter_class = dataset_adapter_map[cast(Any, dataset_class)]
+    Looked up in the public and private maps together: this resolves the files of a
+    dataset already in (or entering) a store, and whether a private dataset may be
+    there at all is decided by ``check_admission`` and the build gate, not here.
+    """
+    from torchcell.knowledge_graphs.dataset_adapter_map import build_adapter_map
+
+    adapter_class = build_adapter_map(include_private=True)[cast(Any, dataset_class)]
     adapter_file = Path(inspect.getsourcefile(adapter_class) or "").resolve()
     rel = str(adapter_file.relative_to(repo_root.resolve()))
     conf = _adapter_conf_name(adapter_file.read_text(encoding="utf-8"))
@@ -814,6 +819,7 @@ def checkout_package_version(repo_root: Path) -> tuple[str, str | None]:
 def _dataset_class(name: str) -> type:
     import torchcell.datasets.ecoli  # noqa: F401  # populates the registry
     import torchcell.datasets.pputida  # noqa: F401  # populates the registry
+    import torchcell.datasets.private_torchcell  # noqa: F401  # populates the registry
     import torchcell.datasets.scerevisiae  # noqa: F401  # populates the registry
     from torchcell.datasets.dataset_registry import dataset_registry
 
@@ -1222,6 +1228,7 @@ def check_admission(
     ack_value_drift: str | None = None,
     served_experiment_ids: Callable[[str], Iterable[str]] | None = None,
     served_source: str = "live store",
+    include_private: bool = False,
 ) -> AdmissionReport:
     """Decide whether ``dataset_class_name`` can be added to the store incrementally.
 
@@ -1229,8 +1236,12 @@ def check_admission(
     Dataset node (``live_experiment_ids`` bound to a connection in production, named by
     ``served_source`` in the report). It is called only when the dataset is already
     served, to run the superset proof; without it a served dataset blocks.
+
+    A PRIVATE dataset blocks unless ``include_private`` (``admit --include-private``),
+    the same opt-in the build takes: the in-house store carries private data, a public
+    one never does. With the flag the private adapter map is searched too.
     """
-    from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
+    from torchcell.knowledge_graphs.dataset_adapter_map import build_adapter_map
 
     commit, dirty = _git_info(repo_root)
     torchcell_version, _ = checkout_package_version(repo_root)
@@ -1296,15 +1307,20 @@ def check_admission(
 
     # 5. the new dataset itself
     dataset_class = _dataset_class(dataset_class_name)
-    if dataset_visibility(dataset_class) == "private":
+    if dataset_visibility(dataset_class) == "private" and not include_private:
         reasons.append(
             f"{dataset_class_name} is PRIVATE (visibility=private): in-house data is "
-            "never admitted to the public served graph, so there is no incremental "
-            "path for it"
+            "admitted only to an in-house store, by an admission run with "
+            "--include-private"
         )
-    in_map = dataset_class in dataset_adapter_map
+    in_map = dataset_class in build_adapter_map(include_private)
     if not in_map:
-        reasons.append(f"{dataset_class_name} is not in dataset_adapter_map")
+        searched = (
+            "dataset_adapter_map or PRIVATE_DATASET_ADAPTER_MAP"
+            if include_private
+            else "dataset_adapter_map"
+        )
+        reasons.append(f"{dataset_class_name} is not in {searched}")
     served = dataset_class_name in manifest.datasets
     rel = loader_relpath(dataset_class, repo_root)
     new_closure = closure_in_worktree(repo_root, rel, surface)
@@ -1456,6 +1472,7 @@ def check_batch_admission(
     ack_value_drift: str | None = None,
     served_experiment_ids: Callable[[str], Iterable[str]] | None = None,
     served_source: str = "live store",
+    include_private: bool = False,
 ) -> BatchAdmissionReport:
     """Decide whether every named dataset can be added in ONE incremental import."""
     return batch_report_from_members(
@@ -1469,6 +1486,7 @@ def check_batch_admission(
                 ack_value_drift,
                 served_experiment_ids,
                 served_source,
+                include_private,
             )
             for name in dataset_class_names
         ]
@@ -1958,6 +1976,12 @@ def main(argv: list[str] | None = None) -> int:
         "re-admission is a superset of what the store holds",
     )
     p_admit.add_argument("--database", default="torchcell")
+    p_admit.add_argument(
+        "--include-private",
+        action="store_true",
+        help="admit a PRIVATE dataset (visibility=private) into an in-house store; "
+        "without it a private dataset blocks",
+    )
 
     p_rec = sub.add_parser("record", help="record a completed incremental admission")
     p_rec.add_argument("--report", required=True, help="the admission report JSON")
@@ -2074,6 +2098,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.ack_value_drift,
                 served_ids,
                 uri,
+                args.include_private,
             )
             print(format_report(report))
             if args.report:
@@ -2090,6 +2115,7 @@ def main(argv: list[str] | None = None) -> int:
             args.ack_value_drift,
             served_ids,
             uri,
+            args.include_private,
         )
         print(format_batch_report(batch))
         if args.report:

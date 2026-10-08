@@ -114,6 +114,9 @@ from torchcell.adapters import (
 )
 from torchcell.adapters.ohya2005_adapter import ScmdOhya2005Adapter
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
+from torchcell.adapters.volk2021_inhibitor_bioscreen_adapter import (
+    InhibitorBioscreenVolk2021Adapter,
+)
 from torchcell.data.experiment_dataset import Visibility
 from torchcell.datasets.ecoli.caglar2017 import (
     ProteomeCaglar2017Dataset,
@@ -188,6 +191,9 @@ from torchcell.datasets.pputida.yunus2026 import (
     CrispriArrayYunus2026Dataset,
     CrispriDifferentialProteomeYunus2026Dataset,
     CrispriKnockdownYunus2026Dataset,
+)
+from torchcell.datasets.private_torchcell.volk2021_inhibitor_bioscreen import (
+    InhibitorBioscreenVolk2021Dataset,
 )
 from torchcell.datasets.scerevisiae.auesukaree2009 import (
     EnvChemgenAuesukaree2009Dataset,
@@ -378,12 +384,34 @@ dataset_adapter_map: dict[type, type] = {
     CrispriKnockdownYunus2026Dataset: CrispriKnockdownYunus2026Adapter,
 }
 
-#: The PRIVATE datasets' adapters (``torchcell/datasets/private_torchcell/``). Empty
-#: until the first in-house loader lands; a private dataset registers HERE, never in
-#: ``dataset_adapter_map``, so the public build cannot reach it even by name. Keeping
-#: the two maps separate is what makes the public map readable as "what the served graph
-#: contains".
-PRIVATE_DATASET_ADAPTER_MAP: dict[type, type] = {}
+#: The PRIVATE datasets' adapters (``torchcell/datasets/private_torchcell/``). A private
+#: dataset registers HERE, never in ``dataset_adapter_map``, so a build reaches it only
+#: through ``build_adapter_map(include_private=True)`` (``--include-private``). Keeping
+#: the two maps separate is what makes the public map readable as "what a public build
+#: contains". Imported from their modules rather than through ``torchcell.adapters`` so
+#: the public adapter package does not export them.
+PRIVATE_DATASET_ADAPTER_MAP: dict[type, type] = {
+    InhibitorBioscreenVolk2021Dataset: InhibitorBioscreenVolk2021Adapter
+}
+
+
+INCLUDE_PRIVATE_FLAG = "--include-private"
+
+
+def take_include_private_flag(argv: list[str]) -> bool:
+    """Remove ``--include-private`` from ``argv`` and report whether it was there.
+
+    Hydra owns ``sys.argv``, so the flag has to be taken out of it before a build's
+    ``main()`` runs or hydra fails on an unrecognized option. Lives here, beside the
+    gate, so every build entry point (``create_kg``, ``create_scerevisiae_kg``,
+    ``create_scerevisiae_kg_small``) reads the flag the same way without importing
+    another entry point's module.
+    """
+    if INCLUDE_PRIVATE_FLAG not in argv:
+        return False
+    while INCLUDE_PRIVATE_FLAG in argv:
+        argv.remove(INCLUDE_PRIVATE_FLAG)
+    return True
 
 
 class PrivateDatasetRefused(RuntimeError):

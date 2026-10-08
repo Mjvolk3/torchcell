@@ -75,6 +75,9 @@ datasets:
   - MetabolomeSchastnaya2021Dataset
   - EnvChemgenShiver2016Dataset
   - ProteomeSchmidt2016Dataset
+  - ProteomeSrmSet1Schmidt2016Dataset
+  - ProteomeSrmSet2Schmidt2016Dataset
+  - GrowthRateSchmidt2016Dataset
   - CarbonSourceTong2020Dataset
   - EnvChemgenWang2015Dataset
   - CrispriGuideFitnessWang2018Dataset

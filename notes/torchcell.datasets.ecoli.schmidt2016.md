@@ -436,3 +436,50 @@ graph class, `_crispr_construct_node_from` adapter drift, and the media and
 compound-identity value surface. The identical four blocks come back for the already
 landed `ProteomeCaglar2017Dataset`, so they belong to the pending full rebuild, not to
 this dataset.
+
+## 2026.10.08 - Two sibling loaders for the same paper, and why they are separate modules
+
+This paper now has three dataset families, each with its own loader module, its own
+adapter, its own conf and its own dev store:
+
+| family | module | classes | records |
+|---|---|---|---|
+| Table S6 label-free proteome | `schmidt2016.py` | `ProteomeSchmidt2016Dataset` | 14 |
+| Tables S2 and S3 SRM proteome | `schmidt2016_srm.py` | `ProteomeSrmSet1Schmidt2016Dataset`, `ProteomeSrmSet2Schmidt2016Dataset` | 11 + 14 |
+| Table S24 rim-deletion growth | `schmidt2016_growth_rate.py` | `GrowthRateSchmidt2016Dataset` | 6 |
+
+Full sourcing, measurements and verification for the two new families:
+[[torchcell.datasets.ecoli.schmidt2016_srm]] and
+[[torchcell.datasets.ecoli.schmidt2016_growth_rate]].
+
+**This file was not changed except for a pointer in its docstring, and that is the point.**
+`build_manifest` decides a built store's staleness from the schema closure of the loader
+MODULE's own `torchcell.datamodels` imports (`provenance/schema_deps.py:loader_closure`
+parses `from torchcell.datamodels...` out of the module source). Co-locating the new
+classes here would have added `FitnessPhenotype`, `BacterialDeletionPerturbation` and
+`BacterialFitnessExperiment` to this module's closure, marking the already-served
+`proteome_schmidt2016` store stale and forcing a full knowledge-graph rebuild for a change
+that touches none of its 14 records. Measured: `python -m torchcell.provenance.build_manifest`
+reports `proteome_schmidt2016` as `fresh` both before and after that branch. The siblings
+import the pinned artifact, the condition table, `build_environment`,
+`check_environments_distinct`, `publication` and the three supplementary verification rules
+FROM here, so each is still stated once. A docstring edit changes no import and so changes
+no closure.
+
+**The scope correction this makes to the note above.** The section "Per-condition
+genotype-versus-environment decisions" says the three Keio deletion strains "appear ONLY in
+the N-alpha-acetylation analysis" and carry no per-protein abundance. That remains exactly
+right about ABUNDANCE, and it is why no record of this dataset has a genotype perturbation.
+It is not a statement about their growth rates, which Table S24 releases and
+`GrowthRateSchmidt2016Dataset` now serves as the paper's one gene-perturbation phenotype.
+
+**A third header fault in this release, found while reading Table S23.** The swap this note
+already records in Table S6's coefficient-of-variance block is not the only one.
+Table S23's `Doubling time (h-1)` column is a doubling time in HOURS, not in h^-1: measured
+on all 23 rows with a positive growth rate, the released value equals `ln(2) / rate` to a
+worst absolute deviation of 0.0496 h, inside the 0.05 h rounding of a one-decimal column,
+while `rate / ln(2)` is off by factors of 5 to 10. And Table S23 spells the strain
+`MG1665` on its 2 non-BW25113 rows where Table S25 spells it `MG1655` on 6 samples and the
+Methods say "MG1655". Neither is consumed by any loader; both are recorded because the
+MG1655 arms of Table S9 are already a named follow-up, and a loader keying on the released
+header unit or the released strain string would be wrong.

@@ -15,12 +15,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
-from torchcell.artifacts.ref import ArtifactRef
 from torchcell.knowledge_graphs.kg_manifest import (
+    ArtifactPointer,
     GraphSchemaEntry,
     KgBuildManifest,
     KgDatasetEntry,
@@ -231,7 +234,7 @@ def test_snapshot_carries_the_pointer_set_through_write_and_load(
     """A fully recorded manifest gives ``dataset -> refs``, written as plain JSON and
     loaded back equal; one unrecorded entry makes the field None.
     """
-    ref = ArtifactRef(
+    ref = ArtifactPointer(
         tier="genomes", key="set_v1", path="genes.tar.gz", sha256="1" * 64
     )
     manifest = _manifest()
@@ -244,10 +247,7 @@ def test_snapshot_carries_the_pointer_set_through_write_and_load(
     assert json.loads(paths[0].read_text(encoding="utf-8"))["artifact_refs"] == {
         "DsA": [
             {
-                "bytes": None,
                 "key": "set_v1",
-                "media_type": None,
-                "member": None,
                 "path": "genes.tar.gz",
                 "sha256": "1" * 64,
                 "tier": "genomes",
@@ -372,3 +372,35 @@ def test_pair_package_tag_pairs_once_and_only_when_the_tag_reproduces_every_clos
         pair_package_tag(bare, drifting, "v1.2.1", surface)
     with pytest.raises(ValueError, match=r"0 drifted \[\], 1 unverified \['DsB'\]"):
         pair_package_tag(bare, {"DsA": closure}, "v1.2.1", surface)
+
+
+SLIM_PROBE = (
+    "import sys, torchcell.knowledge_graphs.kg_manifest, "
+    "torchcell.knowledge_graphs.releases, torchcell.knowledge_graphs.release_snapshot, "
+    "torchcell.knowledge_graphs.supported_queries; "
+    "print(sorted(m for m in sys.modules if m in ('lmdb', 'torch', 'pandas', 'numpy', "
+    "'torchcell.datamodels', 'torchcell.artifacts')))"
+)
+
+
+def test_release_modules_import_without_the_heavy_closure() -> None:
+    """The docs workflow's query-drift job (``.github/workflows/docs.yaml``, "Install the
+    check's imports only") installs only pydantic, PyYAML and python-dotenv, so the
+    release modules must not import ``torchcell.datamodels`` (whose package
+    ``__init__`` reaches lmdb), ``torchcell.artifacts``, torch, pandas or numpy at
+    module level. A fresh interpreter imports the four modules and lists which of those
+    got loaded: none.
+    """
+    repo = Path(__file__).resolve().parents[3]
+    env = {**os.environ, "PYTHONPATH": str(repo)}
+    result = subprocess.run(
+        [sys.executable, "-c", SLIM_PROBE],
+        capture_output=True,
+        text=True,
+        check=False,
+        env=env,
+        cwd=repo,
+        timeout=300,
+    )
+    assert result.returncode == 0, result.stderr[-2000:]
+    assert result.stdout.strip().splitlines()[-1] == "[]"

@@ -631,8 +631,7 @@ def assert_dev_store_graph(
     # both, not evidence that the phage conf drops anything. The positive check two
     # lines up is what proves the phages ARE served, under `phage perturbation`.
     enabled = {m["method_name"] for m in adapter.config.cell_adapter.node_methods}
-    if shape.phage:
-        enabled = enabled | {"environment perturbation (chunked)"}
+    overlapping = {ENV_PERTURBATION_NODE} if bacterial.case.shape.phage else set()
     left_off = [
         (name, method)
         for name, method in adapter.node_methods

@@ -580,12 +580,73 @@ READ_INTERVAL_S = _archive(
 )
 
 # --------------------------------------------------------------------------- #
+# Compound identity and medium, for the loader's environment
+# --------------------------------------------------------------------------- #
+INHIBITOR_LABELS = _report(
+    {
+        "LA": "lactic acid",
+        "FA": "formic acid",
+        "AA": "acetic acid",
+        "LVA": "levulinic acid",
+        "HMF": "hydroxymethylfurfural",
+        "FF": "furfural",
+    },
+    "Abbreviations: lactic acid (LA), formic acid (FA), acetic acid (AA), levulinic "
+    "acid (LVA), hydroxymethylfurfural (HMF), furfural (FF).",
+    page="Fig 11 caption, panel (a)",
+    note="the report's own name for each archive abbreviation; the loader passes these "
+    "names to the compound-identity resolver, except HMF (HMF_IDENTITY)",
+)
+HMF_IDENTITY = _archive(
+    "5-(hydroxymethyl)furfural",
+    INHIBITORS_XLSX,
+    "Sheet1!A5=HMF; Sheet1!B5=Hydroxymethylfurfural; Sheet1!G5=126.11",
+    page="Sheet1 'Combinatoric Study' table, row 5",
+    note="the report and the stock sheet say 'hydroxymethylfurfural', which the "
+    "identity table does not list; the sheet's molar mass 126.11 g/mol is that of "
+    "5-(hydroxymethyl)furfural (C6H6O3), the table's canonical name for the compound, "
+    "so the loader resolves that name",
+)
+LEVULINIC_ACID_STOCK = _archive(
+    "levulinic acid, Sigma-Aldrich",
+    INHIBITORS_XLSX,
+    "Sheet1!A7=LVA; Sheet1!B7=Levullinc Acid; Sheet1!G7=116.11",
+    page="Sheet1 'Combinatoric Study' table, row 7",
+    note="the sheet misspells the name; its molar mass 116.11 g/mol is levulinic acid's "
+    "(C5H8O3), which is also the report's name (INHIBITOR_LABELS)",
+)
+LACTIC_ACID_STOCK = _archive(
+    "lactic acid, Sigma-Aldrich, enantiomer not stated",
+    INHIBITORS_XLSX,
+    "Sheet1!A8=LA; Sheet1!B8=Lactic Acid; Sheet1!G8=90.08; Sheet1!I8=sigma aldrich",
+    page="Sheet1 'Combinatoric Study' table, row 8",
+    note="vendor named, product number and enantiomer (L-, D- or DL-) not; the molar "
+    "mass 90.08 g/mol is the same for all three (LACTIC_ACID_IDENTITY_GAP)",
+)
+FORMIC_ACID_STOCK = _archive(
+    "formic acid",
+    INHIBITORS_XLSX,
+    "Sheet1!A6=FA; Sheet1!B6=Formic Acid; Sheet1!G6=46.03",
+    page="Sheet1 'Combinatoric Study' table, row 6",
+    note="the compound-identity table has no formic acid row, so its InChIKey is the "
+    "resolver's deferred gap until the table is curated",
+)
+ISOBOLE_MEDIUM = _archive(
+    "YPD",
+    ISOBOLE_DESIGN_XLSX,
+    "FF_AA_new !A35=YPD; FF_AA_new !A36=Inoculated YPD",
+    page="sheet 'FF_AA_new ' A35:A36, the trough legend (the same on FA_AA)",
+    note="the isobole wells are made of YPD, inoculated YPD and inhibitor-in-YPD "
+    "troughs; the YPD recipe itself is not recorded (MEDIUM_RECIPE_GAP)",
+)
+
+# --------------------------------------------------------------------------- #
 # Typed gaps
 # --------------------------------------------------------------------------- #
 _BSM_LOOKED_IN = archive_provenance(RAW_BSM["ex23"], "S and P records")
 
 SHAKING_GAP = ProvenanceGap(
-    field="shaking",
+    field="shaking_rpm",
     reason=ProvenanceGapReason.not_reported_by_primary,
     looked_in=_BSM_LOOKED_IN,
     note="neither the report nor any wet-lab record states the shaking amplitude, "
@@ -603,7 +664,7 @@ TEMPERATURE_SET_POINT_GAP = ProvenanceGap(
     "plausible set point, unverified",
 )
 WELL_VOLUME_GAP = ProvenanceGap(
-    field="well_volume",
+    field="working_volume_ul",
     reason=ProvenanceGapReason.not_reported_by_primary,
     looked_in=archive_provenance(EX23_OD_CALCULATION),
     note="the volume dispensed per well is not recorded for ex21 or ex23 (ex23's "
@@ -645,6 +706,44 @@ ISOBOLE_ORIENTATION_GAP = ProvenanceGap(
     "distinguishable that way",
 )
 
+LACTIC_ACID_IDENTITY_GAP = ProvenanceGap(
+    field="inchikey",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=archive_provenance(INHIBITORS_XLSX, "Sheet1 B8, G8, I8"),
+    note="the stock sheet names 'Lactic Acid' from 'sigma aldrich' with no product "
+    "number and no enantiomer (L-, D- or DL-), and the InChIKey differs between them, "
+    "so none is assigned (LACTIC_ACID_STOCK)",
+)
+SOLVENT_GAP = ProvenanceGap(
+    field="solvent",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=archive_provenance(INHIBITORS_XLSX, "Sheet1 rows 2-17 and 57"),
+    note="the sheet gives each stock's concentration (C12:C17) but not what it was "
+    "made up in; its 'water (mL)' table (row 57) is marked 'Not Used!'. The inhibitors "
+    "were added from concentrated stocks into YPD; the stock diluent is unrecorded",
+)
+DURATION_GENERATIONS_GAP = ProvenanceGap(
+    field="duration_generations",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=REPORT.model_copy(update={"page": "1.2.3 and 2.2.1"}),
+    note="a Bioscreen run is read for a fixed time (duration_hours, RUN_EVENTS); the "
+    "number of doublings differs per well and is not stated for the environment",
+)
+PRE_CULTURE_GAP = ProvenanceGap(
+    field="pre_culture",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=archive_provenance(EX23_OD_CALCULATION, "Sheet1 B1"),
+    note="ex23's OD sheet states 'Grown up in proper 1x G418 6 mL each' (EX23_PRECULTURE): "
+    "the medium and volume of the pre-culture, but not its duration or growth phase, so "
+    "no PreCultureSource can be chosen; ex21 and the isoboles record nothing about it",
+)
+AUXOTROPH_SUPPLEMENTS_GAP = ProvenanceGap(
+    field="auxotroph_supplements",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=REPORT.model_copy(update={"page": "whole report"}),
+    note="the medium is YPD (rich); no record names an auxotroph supplement",
+)
+
 GAPS: tuple[ProvenanceGap, ...] = (
     SHAKING_GAP,
     TEMPERATURE_SET_POINT_GAP,
@@ -652,4 +751,9 @@ GAPS: tuple[ProvenanceGap, ...] = (
     EX21_INOCULUM_GAP,
     MEDIUM_RECIPE_GAP,
     ISOBOLE_ORIENTATION_GAP,
+    LACTIC_ACID_IDENTITY_GAP,
+    SOLVENT_GAP,
+    DURATION_GENERATIONS_GAP,
+    PRE_CULTURE_GAP,
+    AUXOTROPH_SUPPLEMENTS_GAP,
 )

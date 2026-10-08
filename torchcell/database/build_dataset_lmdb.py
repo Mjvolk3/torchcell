@@ -50,6 +50,7 @@ def resolve_dataset_class(name: str) -> type:
     """Look a dataset class up by name in the registry (importing the loader package)."""
     import torchcell.datasets.ecoli  # noqa: F401  # populates the registry
     import torchcell.datasets.pputida  # noqa: F401  # populates the registry
+    import torchcell.datasets.private_torchcell  # noqa: F401  # populates the registry
     import torchcell.datasets.scerevisiae  # noqa: F401  # populates the registry
     from torchcell.datasets.dataset_registry import dataset_registry
 

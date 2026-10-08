@@ -25,3 +25,9 @@ Filtering is exact, not heuristic: every record carries ``dataset_name``, the da
 class's own name, so the private records in any store are exactly those whose
 ``dataset_name`` names a class in this package.
 """
+
+from .volk2021_inhibitor_bioscreen import (
+    InhibitorBioscreenVolk2021Dataset as InhibitorBioscreenVolk2021Dataset,
+)
+
+private_datasets = ["InhibitorBioscreenVolk2021Dataset"]

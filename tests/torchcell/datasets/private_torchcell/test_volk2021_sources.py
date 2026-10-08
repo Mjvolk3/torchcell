@@ -60,7 +60,7 @@ ARCHIVE_BOUND = [
 def test_the_module_binds_report_lian_and_archive_values() -> None:
     keys = {v.provenance.citation_key for _, v in SOURCED}
     assert keys == {b.CITATION_KEY, s.LIAN_KEY}
-    assert len(LIBRARY_BOUND) == 11
+    assert len(LIBRARY_BOUND) == 12
     assert len(ARCHIVE_BOUND) >= 30
 
 

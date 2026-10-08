@@ -117,7 +117,15 @@
 <span class="c1"># https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg</span>
 <span class="c1"># Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg.py</span>
 
-<span class="sd">"""Build the S. cerevisiae BioCypher knowledge graph from torchcell datasets."""</span>
+<span class="sd">"""Build the S. cerevisiae BioCypher knowledge graph from torchcell datasets.</span>
+
+<span class="sd">PRIVATE datasets (``visibility = Visibility.private``) are refused before any dataset is</span>
+<span class="sd">instantiated, unless the build is run with ``--include-private``</span>
+<span class="sd">(``create_kg.take_include_private_flag`` removes the flag from ``sys.argv`` first,</span>
+<span class="sd">because hydra parses the same argv). This build's dataset list is hardcoded below rather</span>
+<span class="sd">than read from a config, so the gate here guards against a private loader being added to</span>
+<span class="sd">that list, which is the way one would reach this entry point.</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
@@ -126,6 +134,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
@@ -155,12 +164,18 @@
     <span class="n">SmfKuzmin2018Dataset</span><span class="p">,</span>
     <span class="n">TmfKuzmin2018Dataset</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.create_kg</span><span class="w"> </span><span class="kn">import</span> <span class="n">take_include_private_flag</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="n">refuse_private_datasets</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s2">"biocypher_warnings.log"</span><span class="p">)</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">captureWarnings</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"SSL_CERT_FILE"</span><span class="p">]</span> <span class="o">=</span> <span class="n">certifi</span><span class="o">.</span><span class="n">where</span><span class="p">()</span>
+
+
+<span class="c1">#: ``--include-private`` was passed on the command line (set in ``__main__`` below).</span>
+<span class="n">INCLUDE_PRIVATE</span> <span class="o">=</span> <span class="kc">False</span>
 
 
 <div class="viewcode-block" id="get_num_workers">
@@ -262,6 +277,11 @@
         <span class="p">}</span>
     <span class="p">]</span>
 
+    <span class="c1"># Visibility gate, before anything is instantiated.</span>
+    <span class="n">refuse_private_datasets</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">cast</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">"class"</span><span class="p">])</span> <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">dataset_configs</span><span class="p">],</span> <span class="n">INCLUDE_PRIVATE</span>
+    <span class="p">)</span>
+
     <span class="c1"># Instantiate datasets</span>
     <span class="n">datasets</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">dataset_configs</span><span class="p">:</span>
@@ -330,6 +350,7 @@
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">INCLUDE_PRIVATE</span> <span class="o">=</span> <span class="n">take_include_private_flag</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
     <span class="n">main</span><span class="p">()</span>
 
     <span class="c1"># Read the logged file name from the file</span>

@@ -137,6 +137,9 @@
 <span class="sd">  takes one ``provenance`` list for every element or gaps every element.</span>
 <span class="sd">- ``KANMX4_CASSETTE``: the YKO cassette, sourced to Giaever 2014 (mirrored).</span>
 <span class="sd">- ``BRACHMANN_1998`` / ``GIAEVER_2002``: ``resolve_with`` targets for the gaps.</span>
+<span class="sd">- ``baid_background()`` / ``BAID_STRAIN``: the CRISPR-AID host bAID, shared by every</span>
+<span class="sd">  dataset screened in it (Lian 2019 and the in-house Bioscreen dataset), so the two</span>
+<span class="sd">  join on one typed background rather than two spellings of the same strain.</span>
 
 <span class="sd">Design + worked examples per dataset: ``[[torchcell.datamodels.strain-background]]``.</span>
 <span class="sd">"""</span>
@@ -149,6 +152,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AlleleEdit</span><span class="p">,</span>
     <span class="n">BackgroundAllele</span><span class="p">,</span>
+    <span class="n">IntegratedCassette</span><span class="p">,</span>
     <span class="n">MatingType</span><span class="p">,</span>
     <span class="n">StrainBackground</span><span class="p">,</span>
     <span class="n">Zygosity</span><span class="p">,</span>
@@ -162,13 +166,20 @@
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"AlleleSpec"</span><span class="p">,</span>
+    <span class="s2">"BAID_CONSTRUCTION"</span><span class="p">,</span>
+    <span class="s2">"BAID_GENOTYPE"</span><span class="p">,</span>
+    <span class="s2">"BAID_PARENT_GENOTYPE"</span><span class="p">,</span>
+    <span class="s2">"BAID_STRAIN"</span><span class="p">,</span>
     <span class="s2">"BRACHMANN_1998"</span><span class="p">,</span>
     <span class="s2">"GIAEVER_2002"</span><span class="p">,</span>
     <span class="s2">"KANMX4_CASSETTE"</span><span class="p">,</span>
+    <span class="s2">"LIAN_2019_METHODS"</span><span class="p">,</span>
+    <span class="s2">"LIAN_2019_SI1"</span><span class="p">,</span>
     <span class="s2">"R64_GFF"</span><span class="p">,</span>
     <span class="s2">"STANDARD_ALLELES"</span><span class="p">,</span>
     <span class="s2">"STANDARD_BY_GENOTYPES"</span><span class="p">,</span>
     <span class="s2">"ByGenotype"</span><span class="p">,</span>
+    <span class="s2">"baid_background"</span><span class="p">,</span>
     <span class="s2">"pending_source_review"</span><span class="p">,</span>
     <span class="s2">"standard_allele"</span><span class="p">,</span>
     <span class="s2">"standard_background"</span><span class="p">,</span>
@@ -469,6 +480,116 @@
         <span class="n">provenance_gaps</span><span class="o">=</span><span class="n">gaps</span><span class="p">,</span>
     <span class="p">)</span></div>
 
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># bAID: the CRISPR-AID host, shared by every dataset screened in it</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1">#: The CRISPR-AID host strain, as Lian 2019 names it. The in-house Bioscreen dataset was</span>
+<span class="c1">#: run on the same strain under the thesis name ``BY4742-iAID6``, so both datasets join</span>
+<span class="c1">#: on ``baid_background()`` rather than on two spellings of one strain.</span>
+<span class="n">BAID_STRAIN</span> <span class="o">=</span> <span class="s2">"bAID"</span>
+
+<span class="n">LIAN_2019_SI1</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"si/si1.md"</span><span class="p">,</span>
+    <span class="n">citation_key</span><span class="o">=</span><span class="s2">"lianMultifunctionalGenomewideCRISPR2019"</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="o">=</span><span class="s2">"b2bcfe2e672674438216472e3e06903c93d4ee54cd8b6fd9b5f964ad2a3d32db"</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">"MinerU OCR of the publisher Supplementary Information PDF "</span>
+    <span class="s2">"(torchcell-library mirror)"</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Supplementary Table 11, 'Strains constructed in this study' (si1.md line 104)"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="sd">"""Lian 2019's Supplementary Information 1 OCR, which carries the strain table."""</span>
+
+<span class="n">LIAN_2019_METHODS</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
+    <span class="n">citation_key</span><span class="o">=</span><span class="s2">"lianMultifunctionalGenomewideCRISPR2019"</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="o">=</span><span class="s2">"63fe2b7101fc48feb297f9e34b83d108b74f03f28bbc280e08c7219bc975086c"</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">"MinerU OCR of the publisher PDF (torchcell-library mirror)"</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Methods, 'Plasmid and strain construction'"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="sd">"""Lian 2019's paper OCR, which carries bAID's construction sentence."""</span>
+
+<span class="n">BAID_PARENT_GENOTYPE</span> <span class="o">=</span> <span class="n">SourcedValue</span><span class="p">(</span>
+    <span class="n">value</span><span class="o">=</span><span class="s2">"MATα his3∆1 leu2∆0 lys2∆0 ura3∆0"</span><span class="p">,</span>
+    <span class="n">quote</span><span class="o">=</span><span class="s2">"&lt;td rowspan=1 colspan=1&gt;BY4742&lt;/td&gt;&lt;td rowspan=1 colspan=1&gt;MATα his3∆1 "</span>
+    <span class="s2">"leu2∆0 lys2∆0 ura3∆0&lt;/td&gt;"</span><span class="p">,</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="n">LIAN_2019_SI1</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"bAID's parent genotype as the strain table states it; the stored alleles are "</span>
+    <span class="s2">"the STANDARD_ALLELES spellings his3Δ1, leu2Δ0, lys2Δ0, ura3Δ0 (the OCR writes the "</span>
+    <span class="s2">"delta as the mathematical operator ∆)"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">BAID_GENOTYPE</span> <span class="o">=</span> <span class="n">SourcedValue</span><span class="p">(</span>
+    <span class="n">value</span><span class="o">=</span><span class="s2">"BY4742-Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]"</span><span class="p">,</span>
+    <span class="n">quote</span><span class="o">=</span><span class="s2">"&lt;td rowspan=1 colspan=1&gt;bAID&lt;/td&gt;&lt;td rowspan=1 colspan=1&gt;BY4742-Delta::KanMX-"</span>
+    <span class="s2">"[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]&lt;/td&gt;"</span><span class="p">,</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="n">LIAN_2019_SI1</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the integration SITE of the CRISPR-AID cassette: the strain table writes it as "</span>
+    <span class="s2">"the Delta site (the Ty1 delta repeat family), carrying KanMX plus the four "</span>
+    <span class="s2">"orthogonal effector cassettes"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">BAID_CONSTRUCTION</span> <span class="o">=</span> <span class="n">SourcedValue</span><span class="p">(</span>
+    <span class="n">value</span><span class="o">=</span><span class="n">BAID_STRAIN</span><span class="p">,</span>
+    <span class="n">quote</span><span class="o">=</span><span class="s2">"The CRISPR-AID strain (bAID) was constructed by integrating PmeI-digested "</span>
+    <span class="s2">"$</span><span class="se">\\</span><span class="s2">mathrm { </span><span class="se">\\</span><span class="s2"> p A I D } 6 ^ { 8 }$ into the genome of BY4742 and selection for "</span>
+    <span class="s2">"G418 resistance."</span><span class="p">,</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="n">LIAN_2019_METHODS</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"how the host was made: pAID6 integrated into BY4742, selected on G418. The "</span>
+    <span class="s2">"in-house Bioscreen dataset's thesis strain BY4742-iAID6 is this same construction"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">_BAID_ALLELE_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Supplementary Table 11 states BY4742's genotype string ('MATα his3∆1 leu2∆0 "</span>
+    <span class="s2">"lys2∆0 ura3∆0', BAID_PARENT_GENOTYPE), so WHICH alleles the strain carries is "</span>
+    <span class="s2">"sourced; how each was constructed (the delta0 designer deletions vs the "</span>
+    <span class="s2">"his3-delta1 internal deletion, which is what STANDARD_ALLELES encodes as an "</span>
+    <span class="s2">"AlleleEdit) is stated only by Brachmann 1998, which is not mirrored"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">baid_background</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">StrainBackground</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The CRISPR-AID host bAID as a typed ``StrainBackground``.</span>
+
+<span class="sd">    BY4742's four auxotrophies as ``BackgroundAllele``s plus the one cassette the host</span>
+<span class="sd">    carries integrated: ``Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]``,</span>
+<span class="sd">    at the Delta site (the Ty1 delta repeat family). ``locus_systematic_gene_name``</span>
+<span class="sd">    stays None, because a delta repeat family is not an R64 ORF.</span>
+
+<span class="sd">    One helper, so every dataset screened in this strain joins on one background: Lian</span>
+<span class="sd">    2019's genome-wide MAGIC screen, and the in-house Bioscreen dataset, whose thesis</span>
+<span class="sd">    strain **BY4742-iAID6** is this strain (pAID6 integrated into BY4742, selected on</span>
+<span class="sd">    G418 resistance).</span>
+
+<span class="sd">    The auxotrophies are asserted with a ``deferred_pending_source_review`` gap naming</span>
+<span class="sd">    Brachmann 1998 even though the strain table states the genotype string: the SI says</span>
+<span class="sd">    WHICH alleles BY4742 carries, not how any of them was made, and ``STANDARD_ALLELES``</span>
+<span class="sd">    reads each designation as a specific edit kind (``his3Δ1`` partial, the three ``Δ0``</span>
+<span class="sd">    alleles full) that only Brachmann 1998 states.</span>
+<span class="sd">    """</span>
+    <span class="n">genotype</span> <span class="o">=</span> <span class="n">STANDARD_BY_GENOTYPES</span><span class="p">[</span><span class="s2">"BY4742"</span><span class="p">]</span>
+    <span class="n">alleles</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">standard_allele</span><span class="p">(</span>
+            <span class="n">allele_name</span><span class="p">,</span> <span class="n">zygosity</span><span class="p">,</span> <span class="n">resolve_with</span><span class="o">=</span><span class="n">BRACHMANN_1998</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">_BAID_ALLELE_NOTE</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">allele_name</span><span class="p">,</span> <span class="n">zygosity</span> <span class="ow">in</span> <span class="n">genotype</span><span class="o">.</span><span class="n">alleles</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">]</span>
+    <span class="n">cassette</span> <span class="o">=</span> <span class="n">IntegratedCassette</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="s2">"Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]"</span><span class="p">,</span>
+        <span class="n">locus</span><span class="o">=</span><span class="s2">"Delta"</span><span class="p">,</span>
+        <span class="n">elements</span><span class="o">=</span><span class="p">[</span><span class="s2">"KanMX"</span><span class="p">,</span> <span class="s2">"dLbCpf1-VP"</span><span class="p">,</span> <span class="s2">"Csy4"</span><span class="p">,</span> <span class="s2">"dSpCas9-RD1152"</span><span class="p">,</span> <span class="s2">"SaCas9"</span><span class="p">],</span>
+        <span class="n">marker</span><span class="o">=</span><span class="s2">"KanMX"</span><span class="p">,</span>
+        <span class="n">zygosity</span><span class="o">=</span><span class="n">Zygosity</span><span class="o">.</span><span class="n">haploid</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">BAID_GENOTYPE</span><span class="p">,</span> <span class="n">BAID_CONSTRUCTION</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">StrainBackground</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">BAID_STRAIN</span><span class="p">,</span>
+        <span class="n">parents</span><span class="o">=</span><span class="p">[</span><span class="s2">"BY4742"</span><span class="p">],</span>
+        <span class="n">construction</span><span class="o">=</span><span class="n">BAID_CONSTRUCTION</span><span class="o">.</span><span class="n">quote</span><span class="p">,</span>
+        <span class="n">mating_type</span><span class="o">=</span><span class="n">genotype</span><span class="o">.</span><span class="n">mating_type</span><span class="p">,</span>
+        <span class="n">ploidy</span><span class="o">=</span><span class="n">genotype</span><span class="o">.</span><span class="n">ploidy</span><span class="p">,</span>
+        <span class="n">alleles</span><span class="o">=</span><span class="n">alleles</span><span class="p">,</span>
+        <span class="n">integrations</span><span class="o">=</span><span class="p">[</span><span class="n">cassette</span><span class="p">],</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">BAID_PARENT_GENOTYPE</span><span class="p">,</span> <span class="n">BAID_GENOTYPE</span><span class="p">,</span> <span class="n">BAID_CONSTRUCTION</span><span class="p">],</span>
+    <span class="p">)</span>
 </pre></div>
 
            </div>

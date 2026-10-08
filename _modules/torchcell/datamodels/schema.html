@@ -767,6 +767,103 @@
 
 
 
+<span class="c1">#: Sequence Ontology mechanism of a cassette INTEGRATION. The pair is the one the</span>
+<span class="c1">#: gene-addition leaves already pin (``GeneAdditionPerturbation``,</span>
+<span class="c1">#: ``NaturalGenePresencePerturbation``), reused here rather than restated: an integrated</span>
+<span class="c1">#: cassette is an insertion of sequence absent from R64. ``ALLELE_EDIT_SO`` has no</span>
+<span class="c1">#: insertion member, because every ``AlleleEdit`` is a deletion or an in-place variant.</span>
+<span class="n">CASSETTE_INTEGRATION_SO</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"SO:0000667"</span><span class="p">,</span> <span class="s2">"insertion"</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">IntegratedCassette</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One cassette a strain background carries INTEGRATED at a named genomic site.</span>
+
+<span class="sd">    The counterpart of ``BackgroundAllele`` on the insertion axis: an allele is an edit</span>
+<span class="sd">    AT an R64 locus, a cassette is sequence absent from R64 placed INTO one. The</span>
+<span class="sd">    CRISPR-AID host bAID carries</span>
+<span class="sd">    ``Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]``, which no</span>
+<span class="sd">    ``AlleleEdit`` describes: nothing at the Ty1 delta site is deleted, four effector</span>
+<span class="sd">    cassettes and a marker are added.</span>
+
+<span class="sd">    ``name`` is the designation verbatim as the source writes it; ``locus`` is the named</span>
+<span class="sd">    integration site verbatim (``"Delta"`` for a Ty1 delta site, ``"X3"`` / ``"X4"`` /</span>
+<span class="sd">    ``"XI1"`` for a pre-selected intergenic landing pad), which is what the source states</span>
+<span class="sd">    and is frequently NOT an ORF. ``locus_systematic_gene_name`` is set only when the site</span>
+<span class="sd">    IS an R64 ORF, and is then regex-validated like every other systematic name, so a</span>
+<span class="sd">    landing-pad label never masquerades as a gene.</span>
+
+<span class="sd">    ``elements`` are the cassette's parts verbatim and IN ORDER, so the composition is</span>
+<span class="sd">    queryable without parsing ``name``. ``marker`` is the selection marker when the</span>
+<span class="sd">    integration carries one (``KanMX``), ``None`` for a marker-less integration, which</span>
+<span class="sd">    the MAGIC gRNA cassettes are.</span>
+
+<span class="sd">    Sourcing contract, the same ``_require_value_or_gap`` one ``BackgroundAllele`` has:</span>
+<span class="sd">    ``provenance`` (quote + sha256) and ``zygosity`` are each set or carry a typed</span>
+<span class="sd">    ``ProvenanceGap``, never a silent ``None``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"cassette designation verbatim, as the source writes it"</span>
+    <span class="p">)</span>
+    <span class="n">locus</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the named integration site verbatim (e.g. 'Delta', 'X4'); a landing "</span>
+        <span class="s2">"pad label, not necessarily a gene"</span>
+    <span class="p">)</span>
+    <span class="n">locus_systematic_gene_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the R64 ORF the cassette sits in, when the site IS an ORF; None for "</span>
+        <span class="s2">"an intergenic landing pad or a repeat family"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">elements</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the cassette's elements verbatim, in the order the source writes them"</span>
+    <span class="p">)</span>
+    <span class="n">marker</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"selection marker the integration carries, verbatim (e.g. 'KanMX'); "</span>
+        <span class="s2">"None for a marker-less integration"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">zygosity</span><span class="p">:</span> <span class="n">Zygosity</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"copies of the background carrying it; None only with a gap"</span>
+    <span class="p">)</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SourcedValue</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"quotes that state this cassette; None only with a gap on "</span>
+        <span class="s2">"'provenance'"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"locus_systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_locus_systematic</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""When the integration site is given as an ORF, it is a real R64 feature."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">SGD_SYSTEMATIC_GENE_PATTERN</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid systematic gene name </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_cassette</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"IntegratedCassette"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Name, locus and elements are stated; provenance and zygosity set or gapped."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"IntegratedCassette.name cannot be empty"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">locus</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"IntegratedCassette.locus cannot be empty"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">elements</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"IntegratedCassette.elements must name at least one non-empty element"</span>
+            <span class="p">)</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"provenance"</span><span class="p">,</span> <span class="s2">"zygosity"</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mechanism_so</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""(SO id, SO name) of a cassette integration: ``SO:0000667``, insertion."""</span>
+        <span class="k">return</span> <span class="n">CASSETTE_INTEGRATION_SO</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_sourced</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""True when neither the cassette nor its zygosity is a declared gap."""</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance_gaps</span>
+
+
 <div class="viewcode-block" id="StrainBackground">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.StrainBackground.html#torchcell.datamodels.schema.StrainBackground">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StrainBackground</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
@@ -785,8 +882,14 @@
 <span class="sd">    ``mating_type`` and ``provenance`` are set or gapped (a typed absence, never a</span>
 <span class="sd">    silent None). A haploid background is MATa or MATalpha; every allele's zygosity</span>
 <span class="sd">    must fit the ploidy (``haploid`` in a haploid, ``homozygous``/``heterozygous`` in a</span>
-<span class="sd">    diploid). A gene carries one allele entry, or two heterozygous entries for a</span>
-<span class="sd">    compound heterozygote.</span>
+<span class="sd">    diploid), and so must every integration's. A gene carries one allele entry, or two</span>
+<span class="sd">    heterozygous entries for a compound heterozygote.</span>
+
+<span class="sd">    ``integrations`` carries the cassettes the strain has INTEGRATED (an engineered host</span>
+<span class="sd">    such as bAID, whose Cas effectors sit at a Ty1 delta site). It is separate from</span>
+<span class="sd">    ``alleles`` because an insertion at a landing pad is not an edit to an R64 ORF and</span>
+<span class="sd">    has no ``AlleleEdit``; it defaults to empty, so every background written before it</span>
+<span class="sd">    existed reads exactly as before.</span>
 <span class="sd">    """</span>
 
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
@@ -804,6 +907,11 @@
     <span class="n">alleles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BackgroundAllele</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"every non-R64 allele of the background, each sourced or gapped"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">integrations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">IntegratedCassette</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"every cassette the background carries integrated at a named site, "</span>
+        <span class="s2">"each sourced or gapped; empty for a strain that carries none"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">provenance</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SourcedValue</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -824,6 +932,12 @@
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ploidy</span> <span class="o">==</span> <span class="s2">"haploid"</span>
             <span class="k">else</span> <span class="p">{</span><span class="n">Zygosity</span><span class="o">.</span><span class="n">homozygous</span><span class="p">,</span> <span class="n">Zygosity</span><span class="o">.</span><span class="n">heterozygous</span><span class="p">}</span>
         <span class="p">)</span>
+        <span class="k">for</span> <span class="n">cassette</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">integrations</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">cassette</span><span class="o">.</span><span class="n">zygosity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">cassette</span><span class="o">.</span><span class="n">zygosity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cassette</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: zygosity </span><span class="si">{</span><span class="n">cassette</span><span class="o">.</span><span class="n">zygosity</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> does not fit "</span>
+                    <span class="sa">f</span><span class="s2">"a </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ploidy</span><span class="si">}</span><span class="s2"> background"</span>
+                <span class="p">)</span>
         <span class="n">by_gene</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">BackgroundAllele</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">allele</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alleles</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">allele</span><span class="o">.</span><span class="n">zygosity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">allele</span><span class="o">.</span><span class="n">zygosity</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
@@ -878,8 +992,19 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_fully_sourced</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""True when the background and every allele carry no declared gap."""</span>
-        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance_gaps</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">is_sourced</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alleles</span><span class="p">)</span></div>
+<span class="w">        </span><span class="sd">"""True when the background, every allele and every integration carry no gap."""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">provenance_gaps</span>
+            <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">is_sourced</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alleles</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">is_sourced</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">integrations</span><span class="p">)</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="StrainBackground.integrations_at">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.StrainBackground.html#torchcell.datamodels.schema.StrainBackground.integrations_at">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">integrations_at</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">locus</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">IntegratedCassette</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The cassettes integrated at one named site (empty = nothing integrated)."""</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">integrations</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">locus</span> <span class="o">==</span> <span class="n">locus</span><span class="p">]</span></div>
+</div>
 
 
 
@@ -4233,25 +4358,97 @@
 
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">SourceType</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What KIND of document a record's source is.</span>
+
+<span class="sd">    A DOI plus a URL is the right identity for a journal article and the wrong one for</span>
+<span class="sd">    every other kind of source torchcell ingests: a dissertation, a preliminary-exam</span>
+<span class="sd">    report and an in-house measurement have no DOI and no citable URL, so demanding one</span>
+<span class="sd">    would either block the record or invite a fabricated identifier. Each non-journal</span>
+<span class="sd">    source is identified instead by its TITLE plus the deposited document's</span>
+<span class="sd">    mirror-relative path and sha256, which is the identity the provenance principle</span>
+<span class="sd">    already treats as canonical.</span>
+
+<span class="sd">    - ``journal_article``: a peer-reviewed article identified by DOI and/or PubMed ID.</span>
+<span class="sd">    - ``dissertation``: a thesis deposited in an institutional repository or in-house.</span>
+<span class="sd">    - ``preliminary_report``: a preliminary-exam / qualifier report, not published.</span>
+<span class="sd">    - ``in_house``: a measurement recorded in-house with no document beyond the</span>
+<span class="sd">      deposited data record itself.</span>
+<span class="sd">    """</span>
+
+    <span class="n">journal_article</span> <span class="o">=</span> <span class="s2">"journal_article"</span>
+    <span class="n">dissertation</span> <span class="o">=</span> <span class="s2">"dissertation"</span>
+    <span class="n">preliminary_report</span> <span class="o">=</span> <span class="s2">"preliminary_report"</span>
+    <span class="n">in_house</span> <span class="o">=</span> <span class="s2">"in_house"</span>
+
+
 <div class="viewcode-block" id="Publication">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.Publication.html#torchcell.datamodels.schema.Publication">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Publication</span><span class="p">(</span><span class="n">ModelStrict</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Publication reference identified by PubMed ID and/or DOI."""</span>
+<span class="w">    </span><span class="sd">"""The source document a record's values come from.</span>
+
+<span class="sd">    ``source_type`` says what kind of document it is, and the identity rule follows</span>
+<span class="sd">    from it:</span>
+
+<span class="sd">    - ``journal_article`` (the default, so every record written before this field</span>
+<span class="sd">      existed reads exactly as before) keeps the original rule: a DOI and/or a PubMed</span>
+<span class="sd">      ID, plus at least one URL.</span>
+<span class="sd">    - every other ``source_type`` requires ``title`` and ``identifier``, and makes</span>
+<span class="sd">      doi/pubmed optional, because a dissertation or an in-house report has neither.</span>
+<span class="sd">      ``identifier`` is the DEPOSITED document: its mirror-relative path plus</span>
+<span class="sd">      ``sha256:&lt;hex&gt;``, e.g.</span>
+<span class="sd">      ``"si/prelim-report.pdf sha256:&lt;64 hex&gt;"``. That pair is what the provenance</span>
+<span class="sd">      principle calls canonical, and it is resolvable from our own mirror without a</span>
+<span class="sd">      live URL. ``identifier_url`` is optional retrieval metadata, never the identity.</span>
+<span class="sd">    """</span>
 
     <span class="n">pubmed_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">pubmed_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">doi</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">doi_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">source_type</span><span class="p">:</span> <span class="n">SourceType</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">SourceType</span><span class="o">.</span><span class="n">journal_article</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what kind of document the source is; the identity rule follows it"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the document's title verbatim; required for a non-journal source, "</span>
+        <span class="s2">"which has no DOI to name it by"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"for a non-journal source, the deposited document's mirror-relative "</span>
+        <span class="s2">"path plus 'sha256:&lt;hex&gt;'; the canonical identity when there is no DOI"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">identifier_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"optional retrieval metadata for the deposited document; never the "</span>
+        <span class="s2">"identity (the stored artifact plus its sha256 is)"</span><span class="p">,</span>
+    <span class="p">)</span>
 
 <div class="viewcode-block" id="Publication.check_pub_info">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.Publication.html#torchcell.datamodels.schema.Publication.check_pub_info">[docs]</a>
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">check_pub_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Publication"</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Require at least one of PubMed ID/DOI and at least one URL."""</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pubmed_id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">doi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"At least one of PubMed ID or DOI must be provided"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pubmed_url</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">doi_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"At least one of PubMed URL or DOI URL must be provided"</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""A journal article needs a DOI/PMID and a URL; any other source a title + id."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_type</span> <span class="ow">is</span> <span class="n">SourceType</span><span class="o">.</span><span class="n">journal_article</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pubmed_id</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">doi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"At least one of PubMed ID or DOI must be provided"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pubmed_url</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">doi_url</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"At least one of PubMed URL or DOI URL must be provided"</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"a </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">source_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> source requires a title (it has no DOI to "</span>
+                <span class="s2">"name it by)"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">identifier</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">identifier</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"a </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">source_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> source requires an identifier: the "</span>
+                <span class="s2">"deposited document's mirror-relative path plus 'sha256:&lt;hex&gt;'"</span>
+            <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 </div>
 
@@ -5251,6 +5448,12 @@
 <span class="sd">      comparing it to a z-score is meaningless. Like ``categorical``, it requires</span>
 <span class="sd">      ``category``; unlike it, ``environment_response`` may carry the rank itself.</span>
 <span class="sd">    - ``growth_rate``: absolute or normalized growth rate / doubling time.</span>
+<span class="sd">    - ``relative_growth_rate``: the RUN's wild-type generation time divided by the well's</span>
+<span class="sd">      generation time, so 1.0 = grows like the wild type, below 1.0 = slower, above 1.0 =</span>
+<span class="sd">      faster. Distinct from ``growth_rate``, which is an absolute rate in the assay's own</span>
+<span class="sd">      units: this number is a dimensionless ratio against a wild-type control measured in</span>
+<span class="sd">      the SAME run, so it is comparable across runs where a raw rate is not. Its</span>
+<span class="sd">      denominator is the well, which is why a slower strain scores below 1.0.</span>
 <span class="sd">    - ``differential_fitness``: SIGNED difference of normalized colony-size fitness in a</span>
 <span class="sd">      test condition minus the matched reference condition (Costanzo 2021 condition-SGA:</span>
 <span class="sd">      "the difference in colony size measured in a particular test condition versus the</span>
@@ -5274,6 +5477,7 @@
     <span class="n">categorical</span> <span class="o">=</span> <span class="s2">"categorical"</span>
     <span class="n">ordinal</span> <span class="o">=</span> <span class="s2">"ordinal"</span>
     <span class="n">growth_rate</span> <span class="o">=</span> <span class="s2">"growth_rate"</span>
+    <span class="n">relative_growth_rate</span> <span class="o">=</span> <span class="s2">"relative_growth_rate"</span>
     <span class="n">differential_fitness</span> <span class="o">=</span> <span class="s2">"differential_fitness"</span>
     <span class="n">control_regression_residual</span> <span class="o">=</span> <span class="s2">"control_regression_residual"</span>
     <span class="n">colony_size</span> <span class="o">=</span> <span class="s2">"colony_size"</span></div>

@@ -118,6 +118,12 @@
 <span class="sd">(and ``scerevisiae_graph`` the graph on it); ``ecoli_genome`` / ``pputida_genome``</span>
 <span class="sd">receive the bacterial genome of the loader's ``REFERENCE_STRAIN``, built on first request</span>
 <span class="sd">(``torchcell.datasets.bacteria_common.BacterialGenomeInjector``).</span>
+
+<span class="sd">PRIVATE datasets (``visibility = Visibility.private``) are refused before any dataset is</span>
+<span class="sd">instantiated, unless the build is run with ``--include-private``. The flag is read off</span>
+<span class="sd">``sys.argv`` by :func:`take_include_private_flag` and REMOVED there, because hydra parses</span>
+<span class="sd">the same argv and rejects an option it does not know. Reading it from the class rather</span>
+<span class="sd">than from the yaml is what makes the gate unbypassable by editing a config.</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
@@ -128,6 +134,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
@@ -143,7 +150,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataset_registry</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.bacteria_common</span><span class="w"> </span><span class="kn">import</span> <span class="n">BacterialGenomeInjector</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGraph</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataset_adapter_map</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PRIVATE_DATASET_ADAPTER_MAP</span><span class="p">,</span>
+    <span class="n">dataset_adapter_map</span><span class="p">,</span>
+    <span class="n">refuse_private_datasets</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -159,6 +170,27 @@
 <span class="n">BIOCYPHER_CONFIG_PATH</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"BIOCYPHER_CONFIG_PATH"</span><span class="p">))</span>
 <span class="n">SCHEMA_CONFIG_PATH</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"SCHEMA_CONFIG_PATH"</span><span class="p">))</span>
 <span class="n">BIOCYPHER_OUT_PATH</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"BIOCYPHER_OUT_PATH"</span><span class="p">))</span>
+
+
+<span class="c1">#: ``--include-private`` was passed on the command line. Set once by</span>
+<span class="c1">#: :func:`take_include_private_flag` before hydra parses argv; False in every other</span>
+<span class="c1">#: entry (a test calling ``main`` directly, an import).</span>
+<span class="n">INCLUDE_PRIVATE</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="n">INCLUDE_PRIVATE_FLAG</span> <span class="o">=</span> <span class="s2">"--include-private"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">take_include_private_flag</span><span class="p">(</span><span class="n">argv</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Remove ``--include-private`` from ``argv`` and report whether it was there.</span>
+
+<span class="sd">    Hydra owns ``sys.argv``, so the flag has to be taken out of it before</span>
+<span class="sd">    ``main()`` runs or hydra fails on an unrecognized option.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">INCLUDE_PRIVATE_FLAG</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">argv</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">while</span> <span class="n">INCLUDE_PRIVATE_FLAG</span> <span class="ow">in</span> <span class="n">argv</span><span class="p">:</span>
+        <span class="n">argv</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">INCLUDE_PRIVATE_FLAG</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span>
 
 
 <div class="viewcode-block" id="get_num_workers">
@@ -268,6 +300,17 @@
         <span class="p">}</span>
         <span class="n">dataset_configs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dataset_config</span><span class="p">)</span>
 
+    <span class="c1"># Visibility gate, before anything is instantiated: a private loader named in a</span>
+    <span class="c1"># public build's config is refused by name, never silently dropped.</span>
+    <span class="n">refuse_private_datasets</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">cast</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">"class"</span><span class="p">])</span> <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">dataset_configs</span><span class="p">],</span> <span class="n">INCLUDE_PRIVATE</span>
+    <span class="p">)</span>
+    <span class="n">adapter_map</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">{</span><span class="o">**</span><span class="n">dataset_adapter_map</span><span class="p">,</span> <span class="o">**</span><span class="n">PRIVATE_DATASET_ADAPTER_MAP</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">INCLUDE_PRIVATE</span>
+        <span class="k">else</span> <span class="n">dataset_adapter_map</span>
+    <span class="p">)</span>
+
     <span class="c1"># Instantiate datasets</span>
     <span class="n">datasets</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">dataset_configs</span><span class="p">:</span>
@@ -288,7 +331,7 @@
 
     <span class="c1"># Instantiate adapters based on the dataset-adapter mapping</span>
     <span class="n">adapters</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">dataset_adapter_map</span><span class="p">[</span><span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">dataset</span><span class="p">))](</span>
+        <span class="n">adapter_map</span><span class="p">[</span><span class="n">cast</span><span class="p">(</span><span class="n">Any</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">dataset</span><span class="p">))](</span>
             <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
             <span class="n">process_workers</span><span class="o">=</span><span class="n">process_workers</span><span class="p">,</span>
             <span class="n">io_workers</span><span class="o">=</span><span class="n">io_workers</span><span class="p">,</span>
@@ -329,6 +372,7 @@
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">INCLUDE_PRIVATE</span> <span class="o">=</span> <span class="n">take_include_private_flag</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
     <span class="n">main</span><span class="p">()</span>
 
     <span class="c1"># Read the logged file name from the file</span>

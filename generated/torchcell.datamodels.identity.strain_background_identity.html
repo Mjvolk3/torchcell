@@ -139,9 +139,12 @@
 <p>Two datasets that both state BY4741 (one quoting its paper, one carrying a
 pending-review gap) produce different <code class="docutils literal notranslate"><span class="pre">model_dump``s</span> <span class="pre">and</span> <span class="pre">so</span> <span class="pre">different</span> <span class="pre">``genome</span></code>
 node ids; this projection is the join key that says they state the same strain:
-name, reference, mating type, ploidy and the sorted allele set. <code class="docutils literal notranslate"><span class="pre">parents</span></code>,
-<code class="docutils literal notranslate"><span class="pre">construction</span></code>, provenance and gaps are dropped. Not used for node ids (the
-<code class="docutils literal notranslate"><span class="pre">genome</span></code> node id is unchanged); it is the cross-dataset comparison key.</p>
+name, reference, mating type, ploidy, the sorted allele set and the sorted set of
+integrated cassettes. <code class="docutils literal notranslate"><span class="pre">parents</span></code>, <code class="docutils literal notranslate"><span class="pre">construction</span></code>, provenance and gaps are
+dropped. Integrations are IN, because a cassette at a named site is genome content
+exactly as an allele is: bAID and bAID-X3::SIZ1i carry the same alleles and are not
+the same strain. Not used for node ids (the <code class="docutils literal notranslate"><span class="pre">genome</span></code> node id is unchanged); it is
+the cross-dataset comparison key.</p>
 </dd></dl>
 
 </section>

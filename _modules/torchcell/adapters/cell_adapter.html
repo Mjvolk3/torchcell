@@ -949,6 +949,15 @@
         <span class="k">return</span> <span class="n">nodes</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_genome_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""One genome node per distinct reference genome.</span>
+
+<span class="sd">        ``serialized_data`` is the whole ``genome_reference.model_dump()``, so a</span>
+<span class="sd">        ``StrainReferenceGenome``'s typed ``background`` rides along in full: its</span>
+<span class="sd">        ``alleles`` AND its ``integrations`` (the cassettes an engineered host carries at</span>
+<span class="sd">        a named site) are in the blob with no per-field adapter change, which is how the</span>
+<span class="sd">        background has always reached the graph. ``species`` and ``strain`` stay the</span>
+<span class="sd">        queryable scalars.</span>
+<span class="sd">        """</span>
         <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">seen_node_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">):</span>
@@ -2455,16 +2464,27 @@
         <span class="n">publication_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
             <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
         <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="c1"># A non-journal source (a dissertation, a preliminary-exam report, an in-house</span>
+        <span class="c1"># measurement) has no PubMed id and no DOI, so the preferred id falls back to</span>
+        <span class="c1"># the DOI and then to the deposited document's identifier (path + sha256). The</span>
+        <span class="c1"># fallback order is pubmed -&gt; doi -&gt; identifier, and a source carrying none of</span>
+        <span class="c1"># the three cannot exist: Publication's validator requires a doi/pmid for a</span>
+        <span class="c1"># journal article and an identifier for every other source type.</span>
+        <span class="n">preferred</span> <span class="o">=</span> <span class="n">publication</span><span class="o">.</span><span class="n">pubmed_id</span> <span class="ow">or</span> <span class="n">publication</span><span class="o">.</span><span class="n">doi</span> <span class="ow">or</span> <span class="n">publication</span><span class="o">.</span><span class="n">identifier</span>
 
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
             <span class="n">node_id</span><span class="o">=</span><span class="n">publication_id</span><span class="p">,</span>
-            <span class="n">preferred_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"publication_</span><span class="si">{</span><span class="n">publication</span><span class="o">.</span><span class="n">pubmed_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">preferred_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"publication_</span><span class="si">{</span><span class="n">preferred</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">node_label</span><span class="o">=</span><span class="s2">"publication"</span><span class="p">,</span>
             <span class="n">properties</span><span class="o">=</span><span class="p">{</span>
                 <span class="s2">"pubmed_id"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">pubmed_id</span><span class="p">,</span>
                 <span class="s2">"pubmed_url"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">pubmed_url</span><span class="p">,</span>
                 <span class="s2">"doi"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">doi</span><span class="p">,</span>
                 <span class="s2">"doi_url"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">doi_url</span><span class="p">,</span>
+                <span class="s2">"source_type"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">source_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">"title"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+                <span class="s2">"identifier"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">identifier</span><span class="p">,</span>
+                <span class="s2">"identifier_url"</span><span class="p">:</span> <span class="n">publication</span><span class="o">.</span><span class="n">identifier_url</span><span class="p">,</span>
                 <span class="s2">"serialized_data"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()),</span>
             <span class="p">},</span>
         <span class="p">)</span>

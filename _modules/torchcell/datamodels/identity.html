@@ -179,6 +179,7 @@
     <span class="n">Environment</span><span class="p">,</span>
     <span class="n">EnvironmentPhysicalPerturbation</span><span class="p">,</span>
     <span class="n">GenomicSpan</span><span class="p">,</span>
+    <span class="n">IntegratedCassette</span><span class="p">,</span>
     <span class="n">Media</span><span class="p">,</span>
     <span class="n">MediaComponent</span><span class="p">,</span>
     <span class="n">PhagePerturbation</span><span class="p">,</span>
@@ -197,6 +198,7 @@
     <span class="s2">"CULTURE_FORMAT_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"ENVIRONMENT_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS"</span><span class="p">,</span>
+    <span class="s2">"INTEGRATED_CASSETTE_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"MEDIA_COMPONENT_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"MEDIA_IDENTITY_FIELDS"</span><span class="p">,</span>
     <span class="s2">"PHAGE_PERTURBATION_IDENTITY_FIELDS"</span><span class="p">,</span>
@@ -327,6 +329,15 @@
     <span class="s2">"mating_type"</span><span class="p">,</span>
     <span class="s2">"ploidy"</span><span class="p">,</span>
     <span class="s2">"alleles"</span><span class="p">,</span>
+    <span class="s2">"integrations"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">INTEGRATED_CASSETTE_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"name"</span><span class="p">,</span>
+    <span class="s2">"locus"</span><span class="p">,</span>
+    <span class="s2">"locus_systematic_gene_name"</span><span class="p">,</span>
+    <span class="s2">"elements"</span><span class="p">,</span>
+    <span class="s2">"marker"</span><span class="p">,</span>
+    <span class="s2">"zygosity"</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -586,6 +597,18 @@
     <span class="p">}</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_integrated_cassette_identity</span><span class="p">(</span><span class="n">cassette</span><span class="p">:</span> <span class="n">IntegratedCassette</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Project a cassette onto its site, designation, element list and zygosity."""</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"name"</span><span class="p">:</span> <span class="n">cassette</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="s2">"locus"</span><span class="p">:</span> <span class="n">cassette</span><span class="o">.</span><span class="n">locus</span><span class="p">,</span>
+        <span class="s2">"locus_systematic_gene_name"</span><span class="p">:</span> <span class="n">cassette</span><span class="o">.</span><span class="n">locus_systematic_gene_name</span><span class="p">,</span>
+        <span class="s2">"elements"</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">cassette</span><span class="o">.</span><span class="n">elements</span><span class="p">),</span>
+        <span class="s2">"marker"</span><span class="p">:</span> <span class="n">cassette</span><span class="o">.</span><span class="n">marker</span><span class="p">,</span>
+        <span class="s2">"zygosity"</span><span class="p">:</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">cassette</span><span class="o">.</span><span class="n">zygosity</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">cassette</span><span class="o">.</span><span class="n">zygosity</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
 <div class="viewcode-block" id="strain_background_identity">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.identity.strain_background_identity.html#torchcell.datamodels.identity.strain_background_identity">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">strain_background_identity</span><span class="p">(</span><span class="n">background</span><span class="p">:</span> <span class="n">StrainBackground</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -594,9 +617,12 @@
 <span class="sd">    Two datasets that both state BY4741 (one quoting its paper, one carrying a</span>
 <span class="sd">    pending-review gap) produce different ``model_dump``s and so different ``genome``</span>
 <span class="sd">    node ids; this projection is the join key that says they state the same strain:</span>
-<span class="sd">    name, reference, mating type, ploidy and the sorted allele set. ``parents``,</span>
-<span class="sd">    ``construction``, provenance and gaps are dropped. Not used for node ids (the</span>
-<span class="sd">    ``genome`` node id is unchanged); it is the cross-dataset comparison key.</span>
+<span class="sd">    name, reference, mating type, ploidy, the sorted allele set and the sorted set of</span>
+<span class="sd">    integrated cassettes. ``parents``, ``construction``, provenance and gaps are</span>
+<span class="sd">    dropped. Integrations are IN, because a cassette at a named site is genome content</span>
+<span class="sd">    exactly as an allele is: bAID and bAID-X3::SIZ1i carry the same alleles and are not</span>
+<span class="sd">    the same strain. Not used for node ids (the ``genome`` node id is unchanged); it is</span>
+<span class="sd">    the cross-dataset comparison key.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">"name"</span><span class="p">:</span> <span class="n">background</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
@@ -607,6 +633,12 @@
         <span class="s2">"ploidy"</span><span class="p">:</span> <span class="n">background</span><span class="o">.</span><span class="n">ploidy</span><span class="p">,</span>
         <span class="s2">"alleles"</span><span class="p">:</span> <span class="n">_sorted_identities</span><span class="p">(</span>
             <span class="p">[</span><span class="n">_background_allele_identity</span><span class="p">(</span><span class="n">allele</span><span class="p">)</span> <span class="k">for</span> <span class="n">allele</span> <span class="ow">in</span> <span class="n">background</span><span class="o">.</span><span class="n">alleles</span><span class="p">]</span>
+        <span class="p">),</span>
+        <span class="s2">"integrations"</span><span class="p">:</span> <span class="n">_sorted_identities</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">_integrated_cassette_identity</span><span class="p">(</span><span class="n">cassette</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">cassette</span> <span class="ow">in</span> <span class="n">background</span><span class="o">.</span><span class="n">integrations</span>
+            <span class="p">]</span>
         <span class="p">),</span>
     <span class="p">}</span></div>
 

@@ -156,6 +156,12 @@ member because the number is a rank, not a measured quantity: averaging it or
 comparing it to a z-score is meaningless. Like <code class="docutils literal notranslate"><span class="pre">categorical</span></code>, it requires
 <code class="docutils literal notranslate"><span class="pre">category</span></code>; unlike it, <code class="docutils literal notranslate"><span class="pre">environment_response</span></code> may carry the rank itself.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">growth_rate</span></code>: absolute or normalized growth rate / doubling time.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">relative_growth_rate</span></code>: the RUN’s wild-type generation time divided by the well’s
+generation time, so 1.0 = grows like the wild type, below 1.0 = slower, above 1.0 =
+faster. Distinct from <code class="docutils literal notranslate"><span class="pre">growth_rate</span></code>, which is an absolute rate in the assay’s own
+units: this number is a dimensionless ratio against a wild-type control measured in
+the SAME run, so it is comparable across runs where a raw rate is not. Its
+denominator is the well, which is why a slower strain scores below 1.0.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">differential_fitness</span></code>: SIGNED difference of normalized colony-size fitness in a
 test condition minus the matched reference condition (Costanzo 2021 condition-SGA:
 “the difference in colony size measured in a particular test condition versus the

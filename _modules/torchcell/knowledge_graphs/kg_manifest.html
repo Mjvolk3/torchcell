@@ -394,6 +394,11 @@
     <span class="n">loader_relpath</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># repo-relative loader module path</span>
     <span class="n">adapter_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>  <span class="c1"># repo-relative adapter module + conf yaml</span>
     <span class="n">closure</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>  <span class="c1"># schema symbol -&gt; contract fingerprint at admission</span>
+    <span class="c1"># Whether the loader is public or private (``ExperimentDataset.visibility``), read</span>
+    <span class="c1"># off the class when the entry is written. Recorded per dataset so a store states</span>
+    <span class="c1"># plainly whether it holds in-house data; "public" for an entry written before this</span>
+    <span class="c1"># field existed, which is correct, since a private dataset could never be served.</span>
+    <span class="n">visibility</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"public"</span><span class="p">,</span> <span class="s2">"private"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"public"</span>
     <span class="n">n_experiments</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">biocypher_out</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># the biocypher-out/&lt;timestamp&gt; that produced its CSVs</span>
     <span class="n">import_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"full"</span><span class="p">,</span> <span class="s2">"incremental"</span><span class="p">]</span>
@@ -1024,6 +1029,18 @@
     <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">params</span><span class="p">[</span><span class="s2">"root"</span><span class="p">]</span><span class="o">.</span><span class="n">default</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">dataset_visibility</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"public"</span><span class="p">,</span> <span class="s2">"private"</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``public`` or ``private``, read off the loader class's ``visibility``.</span>
+
+<span class="sd">    The manifest records a string rather than the enum so the JSON is readable without</span>
+<span class="sd">    importing torchcell; the enum is the authority.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.experiment_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">Visibility</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">,</span> <span class="s2">"visibility"</span><span class="p">,</span> <span class="n">Visibility</span><span class="o">.</span><span class="n">public</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">"private"</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">Visibility</span><span class="o">.</span><span class="n">private</span> <span class="k">else</span> <span class="s2">"public"</span>
+
+
 <span class="c1"># --------------------------------------------------------------------------- manifest</span>
 
 
@@ -1077,6 +1094,7 @@
             <span class="n">loader_relpath</span><span class="o">=</span><span class="n">rel</span><span class="p">,</span>
             <span class="n">adapter_files</span><span class="o">=</span><span class="n">dataset_adapter_files</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">),</span>
             <span class="n">closure</span><span class="o">=</span><span class="n">closure_at_ref</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">commit</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">surface</span><span class="p">),</span>
+            <span class="n">visibility</span><span class="o">=</span><span class="n">dataset_visibility</span><span class="p">(</span><span class="bp">cls</span><span class="p">),</span>
             <span class="n">n_experiments</span><span class="o">=</span><span class="n">n_experiments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
             <span class="n">biocypher_out</span><span class="o">=</span><span class="n">biocypher_out</span><span class="p">,</span>
             <span class="n">import_mode</span><span class="o">=</span><span class="s2">"full"</span><span class="p">,</span>
@@ -1508,6 +1526,12 @@
 
     <span class="c1"># 5. the new dataset itself</span>
     <span class="n">dataset_class</span> <span class="o">=</span> <span class="n">_dataset_class</span><span class="p">(</span><span class="n">dataset_class_name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dataset_visibility</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"private"</span><span class="p">:</span>
+        <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_class_name</span><span class="si">}</span><span class="s2"> is PRIVATE (visibility=private): in-house data is "</span>
+            <span class="s2">"never admitted to the public served graph, so there is no incremental "</span>
+            <span class="s2">"path for it"</span>
+        <span class="p">)</span>
     <span class="n">in_map</span> <span class="o">=</span> <span class="n">dataset_class</span> <span class="ow">in</span> <span class="n">dataset_adapter_map</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">in_map</span><span class="p">:</span>
         <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_class_name</span><span class="si">}</span><span class="s2"> is not in dataset_adapter_map"</span><span class="p">)</span>
@@ -1727,6 +1751,7 @@
         <span class="n">loader_relpath</span><span class="o">=</span><span class="n">loader_relpath</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">),</span>
         <span class="n">adapter_files</span><span class="o">=</span><span class="n">dataset_adapter_files</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">),</span>
         <span class="n">closure</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">new_dataset_closure</span><span class="p">,</span>
+        <span class="n">visibility</span><span class="o">=</span><span class="n">dataset_visibility</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">),</span>
         <span class="n">n_experiments</span><span class="o">=</span><span class="n">n_experiments</span><span class="p">,</span>
         <span class="n">biocypher_out</span><span class="o">=</span><span class="n">biocypher_out</span><span class="p">,</span>
         <span class="n">import_mode</span><span class="o">=</span><span class="s2">"incremental"</span><span class="p">,</span>

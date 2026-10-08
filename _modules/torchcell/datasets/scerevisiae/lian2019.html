@@ -129,17 +129,22 @@
 <span class="sd">The unique guide is a genetic barcode; furfural tolerance is mapped by tracking each</span>
 <span class="sd">guide's enrichment (furfural-selected vs untreated) by NGS. Screening is ITERATIVE in</span>
 <span class="sd">accumulating integrated backgrounds: round 1 = bAID host (5 mM furfural); round 2 = +SIZ1i</span>
-<span class="sd">(10 mM); round 3 = +SIZ1i +NAT1a (15 mM). A round-2/3 record is therefore a genuine</span>
-<span class="sd">2-/3-perturbation mixed-modality combo, the strain actually in the tube.</span>
+<span class="sd">(10 mM); round 3 = +SIZ1i +NAT1a (15 mM). The accumulated edits stay IN the record's</span>
+<span class="sd">``Genotype``, so a round-2/3 record is a genuine 2-/3-perturbation mixed-modality combo,</span>
+<span class="sd">the strain actually in the tube.</span>
 
-<span class="sd">RECORD = one (guide x round) ``EnvironmentResponseExperiment``:</span>
+<span class="sd">RECORD = one (guide x round) ``StrainEnvironmentResponseExperiment``:</span>
 
 <span class="sd">- GENOTYPE: the library member as a ``CrisprActivation`` / ``CrisprInterference`` /</span>
 <span class="sd">  ``CrisprDeletion`` perturbation (target gene, this guide's spacer, its effector), plus</span>
-<span class="sd">  the round's integrated background perturbations. The common name is the GENOME's own</span>
+<span class="sd">  the round's accumulated integrated perturbations. The common name is the GENOME's own</span>
 <span class="sd">  standard name for the resolved ORF, so one gene carries one spelling across datasets.</span>
-<span class="sd">- ENVIRONMENT: the shared ``media.SED_URA_G418`` object carrying furfural (5/10/15 mM by</span>
-<span class="sd">  round) as a ``SmallMoleculePerturbation``, 30 C, aerobic.</span>
+<span class="sd">- ENVIRONMENT: a ``CultureEnvironment`` over the shared ``media.SED_URA_G418`` object</span>
+<span class="sd">  carrying furfural (5/10/15 mM by round) as a ``SmallMoleculePerturbation``, 30 C,</span>
+<span class="sd">  aerobic, 50 mL in a shaken 250 mL baffled flask.</span>
+<span class="sd">- REFERENCE GENOME: a ``StrainReferenceGenome`` on ONE typed background for every round,</span>
+<span class="sd">  the bAID host (``strain_background.baid_background()``): BY4742's four auxotrophies plus</span>
+<span class="sd">  bAID's Delta-site CRISPR-AID cassette, each element sourced or a typed gap.</span>
 <span class="sd">- PHENOTYPE: ``measurement_type=log2_ratio``,</span>
 <span class="sd">  ``assay_type=pooled_competitive_growth_barcode``, ``environment_response`` = mean</span>
 <span class="sd">  log2(after/before) over 3 biological triplicates, uncertainty = SD (``sample_sd``,</span>
@@ -196,14 +201,29 @@
 <span class="sd">They are distinct strains and are all KEPT: the verifier's genotype signature reads</span>
 <span class="sd">``donor_sequence``, which is what tells them apart.</span>
 
-<span class="sd">THE HOST STAYS ``ReferenceGenome(strain="bAID")``, a documented decision. bAID is BY4742</span>
-<span class="sd">plus an integrated pAID6 carrying the three Cas effector cassettes ("The CRISPR-AID strain</span>
-<span class="sd">(bAID) was constructed by integrating PmeI-digested pAID6 into the genome of BY4742 and</span>
-<span class="sd">selection for G418 resistance."). The integration LOCUS is not stated anywhere in the</span>
-<span class="sd">release, so a gene-keyed ``GeneAdditionPerturbation`` for the cassettes cannot be sourced,</span>
-<span class="sd">and the three effectors are already carried per record on ``CrisprConstruct.effector``.</span>
-<span class="sd">The cost is recorded rather than hidden: the strain string ``bAID`` does not join the</span>
-<span class="sd">BY4742 datasets.</span>
+<span class="sd">THE INTEGRATION LOCUS IS STATED, and the previous build's docstring was wrong to say it</span>
+<span class="sd">"is not stated anywhere in the release" (corrected this build). Supplementary Table 11,</span>
+<span class="sd">"Strains constructed in this study", gives the strain table verbatim:</span>
+
+<span class="sd">    BY4742 | MATα his3∆1 leu2∆0 lys2∆0 ura3∆0</span>
+<span class="sd">    bAID   | BY4742-Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]</span>
+
+<span class="sd">So bAID is BY4742 with the CRISPR-AID cassette integrated at the DELTA site (the Ty1</span>
+<span class="sd">delta repeat family), carrying KanMX plus four orthogonal effector cassettes. That is an</span>
+<span class="sd">INTEGRATION at a named site, which no ``AlleleEdit`` describes, so it is a typed</span>
+<span class="sd">``IntegratedCassette`` on the host's ``StrainBackground``: ``locus`` is the site verbatim</span>
+<span class="sd">and ``locus_systematic_gene_name`` stays None, because a delta repeat family is not an</span>
+<span class="sd">R64 ORF.</span>
+
+<span class="sd">THE HOST IS ONE SHARED BACKGROUND, ``strain_background.baid_background()``, named</span>
+<span class="sd">``bAID`` for every round. It is shared because the in-house Bioscreen dataset was run on</span>
+<span class="sd">the same strain (thesis name ``BY4742-iAID6``, pAID6 integrated into BY4742 and selected</span>
+<span class="sd">on G418), so the two datasets join on one typed background rather than on two spellings</span>
+<span class="sd">of one strain. The round's accumulated SIZ1i / NAT1a edits are NOT in the background:</span>
+<span class="sd">they stay in each record's ``Genotype``, which is the strain actually in the tube. The</span>
+<span class="sd">strain string ``bAID`` does not join the BY4742 datasets, which is correct: this strain</span>
+<span class="sd">is not BY4742, and the background states the difference allele by allele plus the</span>
+<span class="sd">cassette.</span>
 
 <span class="sd">Exposure duration is a typed ``ProvenanceGap`` on both ``duration_hours`` and</span>
 <span class="sd">``duration_generations``: the pooled cultures were harvested at mid-log ("1 OD of the</span>
@@ -263,20 +283,28 @@
     <span class="n">CrisprConstruct</span><span class="p">,</span>
     <span class="n">CrisprDeletionPerturbation</span><span class="p">,</span>
     <span class="n">CrisprInterferencePerturbation</span><span class="p">,</span>
-    <span class="n">Environment</span><span class="p">,</span>
-    <span class="n">EnvironmentResponseExperiment</span><span class="p">,</span>
-    <span class="n">EnvironmentResponseExperimentReference</span><span class="p">,</span>
+    <span class="n">CultureEnvironment</span><span class="p">,</span>
+    <span class="n">CultureFormat</span><span class="p">,</span>
     <span class="n">EnvironmentResponsePhenotype</span><span class="p">,</span>
     <span class="n">Experiment</span><span class="p">,</span>
     <span class="n">ExperimentReference</span><span class="p">,</span>
     <span class="n">Genotype</span><span class="p">,</span>
     <span class="n">MeasurementType</span><span class="p">,</span>
     <span class="n">Publication</span><span class="p">,</span>
-    <span class="n">ReferenceGenome</span><span class="p">,</span>
     <span class="n">SampleUnit</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
+    <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">,</span>
+    <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">,</span>
+    <span class="n">StrainReferenceGenome</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
     <span class="n">UncertaintyType</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.strain_background</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BAID_CONSTRUCTION</span><span class="p">,</span>
+    <span class="n">BAID_GENOTYPE</span><span class="p">,</span>
+    <span class="n">BAID_PARENT_GENOTYPE</span><span class="p">,</span>
+    <span class="n">BAID_STRAIN</span><span class="p">,</span>
+    <span class="n">baid_background</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.smith2006</span><span class="w"> </span><span class="kn">import</span> <span class="n">canonical_common_names</span>
@@ -396,16 +424,13 @@
     <span class="n">note</span><span class="o">=</span><span class="s2">"a pooled library grown competitively and read out by amplifying each strain's "</span>
     <span class="s2">"unique guide sequence as a barcode"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">HOST</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
-    <span class="s2">"bAID"</span><span class="p">,</span>
-    <span class="s2">"The CRISPR-AID strain (bAID) was constructed by integrating PmeI-digested $</span><span class="se">\\</span><span class="s2">mathrm "</span>
-    <span class="s2">"{ </span><span class="se">\\</span><span class="s2"> p A I D } 6 ^ { 8 }$ into the genome of BY4742 and selection for G418 resistance."</span><span class="p">,</span>
-    <span class="n">note</span><span class="o">=</span><span class="s2">"the integration LOCUS is not stated anywhere in the release, so the three Cas "</span>
-    <span class="s2">"effector cassettes cannot be sourced as gene-keyed GeneAdditionPerturbations; they "</span>
-    <span class="s2">"are carried per record on CrisprConstruct.effector instead, and the cost of keeping "</span>
-    <span class="s2">"the engineered-host strain string (bAID does not join the BY4742 datasets) is "</span>
-    <span class="s2">"recorded rather than hidden"</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="c1">#: The host strain, its parent's genotype and its construction sentence, all shared with</span>
+<span class="c1">#: the in-house Bioscreen dataset through ``strain_background.baid_background()``. They</span>
+<span class="c1">#: stay module-level here so the loader's own SourcedValue audit covers their quotes.</span>
+<span class="n">HOST</span> <span class="o">=</span> <span class="n">BAID_CONSTRUCTION</span>
+<span class="n">HOST_GENOTYPE</span> <span class="o">=</span> <span class="n">BAID_GENOTYPE</span>
+<span class="n">HOST_PARENT_GENOTYPE</span> <span class="o">=</span> <span class="n">BAID_PARENT_GENOTYPE</span>
+
 <span class="n">DONOR_LAYOUT</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="p">{</span><span class="s2">"donor_nt"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">"spacer_nt"</span><span class="p">:</span> <span class="n">D_SPACER_LEN</span><span class="p">,</span> <span class="s2">"deleted_bp"</span><span class="p">:</span> <span class="mi">28</span><span class="p">},</span>
     <span class="s2">"the homologous recombination donor was integrated to the $5 ^ { </span><span class="se">\\</span><span class="s2">prime }$ -end of "</span>
@@ -429,19 +454,85 @@
     <span class="s2">"count is reported, so both duration fields are typed ProvenanceGaps"</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="n">SCREEN_VESSEL</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="p">{</span><span class="s2">"vessel"</span><span class="p">:</span> <span class="s2">"250 mL baffled flask"</span><span class="p">,</span> <span class="s2">"working_volume_ul"</span><span class="p">:</span> <span class="mf">50000.0</span><span class="p">},</span>
+    <span class="n">_SCREEN_QUOTE</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"50 mL of medium in a 250 mL baffled flask, the pooled screening culture these "</span>
+    <span class="s2">"records come from"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">SHAKING_RPM</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
+    <span class="mf">250.0</span><span class="p">,</span>
+    <span class="n">_CULTIVATION_QUOTE</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the cultivation sentence that also gives the temperature: 30 C, 250 rpm. It "</span>
+    <span class="s2">"is the paper's one statement of agitation, and the screening flasks are baffled, "</span>
+    <span class="s2">"which is the shaken configuration"</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">_SCREEN_METHODS_PAGE</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="n">PAPER_MD</span><span class="p">,</span>
+    <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="o">=</span><span class="n">PAPER_MD_SHA256</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Methods, 'iMAGIC screening of furfural tolerance'"</span><span class="p">,</span>
+<span class="p">)</span>
+
 <span class="n">DURATION_GAPS</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">ProvenanceGap</span><span class="p">(</span>
         <span class="n">field</span><span class="o">=</span><span class="s2">"duration_hours"</span><span class="p">,</span>
         <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+        <span class="n">looked_in</span><span class="o">=</span><span class="n">_SCREEN_METHODS_PAGE</span><span class="p">,</span>
         <span class="n">note</span><span class="o">=</span><span class="s2">"the pooled cultures were harvested at mid-log phase; no wall-clock exposure "</span>
         <span class="s2">"time is reported for the screening flasks"</span><span class="p">,</span>
     <span class="p">),</span>
     <span class="n">ProvenanceGap</span><span class="p">(</span>
         <span class="n">field</span><span class="o">=</span><span class="s2">"duration_generations"</span><span class="p">,</span>
         <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+        <span class="n">looked_in</span><span class="o">=</span><span class="n">_SCREEN_METHODS_PAGE</span><span class="p">,</span>
         <span class="n">note</span><span class="o">=</span><span class="s2">"no doubling count is reported for the screening flasks either"</span><span class="p">,</span>
     <span class="p">),</span>
 <span class="p">]</span>
+
+<span class="n">ENDPOINT_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+    <span class="n">field</span><span class="o">=</span><span class="s2">"endpoint"</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+    <span class="n">looked_in</span><span class="o">=</span><span class="n">_SCREEN_METHODS_PAGE</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the cultures were read at mid-log phase ('1 OD of the mid-log phase growing "</span>
+    <span class="s2">"cells ... were collected'), which is neither a fixed duration, nor a fixed number "</span>
+    <span class="s2">"of generations, nor control saturation. EndpointRule has no member for a "</span>
+    <span class="s2">"phase-triggered harvest, so the field is a typed gap rather than a chosen rule"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">INOCULUM_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+    <span class="n">field</span><span class="o">=</span><span class="s2">"inoculum_od600"</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+    <span class="n">looked_in</span><span class="o">=</span><span class="n">_SCREEN_METHODS_PAGE</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the same Methods paragraph gives an initial OD of 0.05, but for the "</span>
+    <span class="s2">"INDIVIDUALLY constructed validation strains in culture tubes, not for the pooled "</span>
+    <span class="s2">"library flasks these records come from; the pooled flasks' inoculum is not stated"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">PRE_CULTURE_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+    <span class="n">field</span><span class="o">=</span><span class="s2">"pre_culture"</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+    <span class="n">looked_in</span><span class="o">=</span><span class="n">_SCREEN_METHODS_PAGE</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the screening paragraph says only that the libraries 'were inoculated into 50 "</span>
+    <span class="s2">"mL SED-URA/G418 medium' and names no pre-culture. The library-construction "</span>
+    <span class="s2">"paragraph does say the transformants were 'cultured in 50 mL SED-URA/G418 medium "</span>
+    <span class="s2">"for ~2 days' before pooling, but no PreCultureSource member describes a ~2 day "</span>
+    <span class="s2">"culture of unstated phase: filing it as overnight_culture or log_phase_culture "</span>
+    <span class="s2">"would assert a time or a phase the source does not give"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">AUXOTROPH_SUPPLEMENT_GAP</span> <span class="o">=</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
+    <span class="n">field</span><span class="o">=</span><span class="s2">"auxotroph_supplements"</span><span class="p">,</span>
+    <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">not_reported_by_primary</span><span class="p">,</span>
+    <span class="n">looked_in</span><span class="o">=</span><span class="n">Provenance</span><span class="p">(</span>
+        <span class="n">source_uri</span><span class="o">=</span><span class="n">PAPER_MD</span><span class="p">,</span>
+        <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+        <span class="n">sha256</span><span class="o">=</span><span class="n">PAPER_MD_SHA256</span><span class="p">,</span>
+        <span class="n">page</span><span class="o">=</span><span class="s2">"Methods, 'Strains, media, and cultivation conditions'"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the paper names no supplement added BESIDE the medium for the host's four "</span>
+    <span class="s2">"BY4742 auxotrophies; SED-URA's CSM-URA is a complete supplement mixture minus "</span>
+    <span class="s2">"uracil, so the complementation rides inside media rather than beside it, and "</span>
+    <span class="s2">"uracil is deliberately withheld to select the guide plasmid"</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">UNITS</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"log2(furfural-selected / untreated guide-barcode abundance); positive = the "</span>
@@ -455,8 +546,22 @@
     <span class="s2">"i"</span><span class="p">:</span> <span class="n">CrisprInterferencePerturbation</span><span class="p">,</span>
     <span class="s2">"d"</span><span class="p">:</span> <span class="n">CrisprDeletionPerturbation</span><span class="p">,</span>
 <span class="p">}</span>
-<span class="c1">#: Integrated backgrounds accumulated per round. R1 = bAID (none); R2 = +SIZ1i;</span>
-<span class="c1">#: R3 = +SIZ1i +NAT1a. SIZ1 = YDR409W, NAT1 = YDL040C.</span>
+<span class="c1">#: Integrated backgrounds accumulated per round, each entry ``(ORF, common name, mode)``:</span>
+<span class="c1">#: round 1 = bAID (none); round 2 = +SIZ1i; round 3 = +SIZ1i +NAT1a. SIZ1 = YDR409W,</span>
+<span class="c1">#: NAT1 = YDL040C. They are CRISPR perturbations the strain carries integrated, so they</span>
+<span class="c1">#: sit in each record's Genotype beside the screened guide, not on the reference's</span>
+<span class="c1">#: background: the background is the bAID host, which every round shares.</span>
+<span class="c1">#:</span>
+<span class="c1">#: The SI states the integration SITE of each, which is documentation rather than record</span>
+<span class="c1">#: content: Supplementary Table 11 writes the round strains as ``R1 | bAID-X3::SIZ1i``</span>
+<span class="c1">#: and ``R2 | bAID-X3::SIZ1i-X4::NAT1a``, so SIZ1i sits at X3 and NAT1a at X4. The</span>
+<span class="c1">#: landing pads are the pre-selected loci of the Results ("integrate heterologous</span>
+<span class="c1">#: cassettes into X2, X3, X4, XI1, XI2, XI3, XII1, XII2, XII4, and XII5 loci"), and the</span>
+<span class="c1">#: integrations are marker-less ("in a CRISPR-assisted and marker-less manner"). The</span>
+<span class="c1">#: round-to-host mapping is sourced too: round 2 was screened in R1 ("the second round</span>
+<span class="c1">#: iMAGIC screening identified targets when integrated into the X4 locus of R1 strain</span>
+<span class="c1">#: (SIZ1i)", Supplementary Figure 4) and round 3 in R2 ("the XI1 locus of the R2 strain</span>
+<span class="c1">#: (SIZ1i-NAT1a)", Supplementary Figure 6; the Results says the same).</span>
 <span class="n">ROUND_BACKGROUND</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="mi">1</span><span class="p">:</span> <span class="p">[],</span>
     <span class="mi">2</span><span class="p">:</span> <span class="p">[(</span><span class="s2">"YDR409W"</span><span class="p">,</span> <span class="s2">"SIZ1"</span><span class="p">,</span> <span class="s2">"i"</span><span class="p">)],</span>
@@ -687,12 +792,12 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">experiment_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Experiment</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Experiment schema class produced by this dataset."""</span>
-        <span class="k">return</span> <span class="n">EnvironmentResponseExperiment</span>
+        <span class="k">return</span> <span class="n">StrainEnvironmentResponseExperiment</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">reference_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">ExperimentReference</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Experiment-reference schema class produced by this dataset."""</span>
-        <span class="k">return</span> <span class="n">EnvironmentResponseExperimentReference</span>
+        <span class="k">return</span> <span class="n">StrainEnvironmentResponseExperimentReference</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">raw_file_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -776,9 +881,30 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">split_deletion_cassette</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span> <span class="k">for</span> <span class="n">sequence</span> <span class="ow">in</span> <span class="n">sequences</span><span class="p">]</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">furfural_mm</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Environment</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""SED-URA/G418 liquid carrying furfural (mM), 30 C, aerobic."""</span>
-        <span class="k">return</span> <span class="n">Environment</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_culture_format</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CultureFormat</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""50 mL in a shaken 250 mL baffled flask, harvested at mid-log.</span>
+
+<span class="sd">        ``endpoint`` is a typed gap rather than a value: the cultures were read when</span>
+<span class="sd">        they reached mid-log phase, and ``EndpointRule`` has no member for that (its</span>
+<span class="sd">        three are a fixed time, a fixed doubling count, and control saturation), so</span>
+<span class="sd">        choosing one would assert a rule the source did not use. ``inoculum_od600`` is</span>
+<span class="sd">        None for the same kind of reason: the OD 0.05 the paper states is for the</span>
+<span class="sd">        individually constructed validation strains, not for the pooled screening</span>
+<span class="sd">        flasks these records come from.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">CultureFormat</span><span class="p">(</span>
+            <span class="n">vessel</span><span class="o">=</span><span class="s2">"250 mL baffled flask"</span><span class="p">,</span>
+            <span class="n">working_volume_ul</span><span class="o">=</span><span class="mf">50000.0</span><span class="p">,</span>
+            <span class="n">shaking_rpm</span><span class="o">=</span><span class="mf">250.0</span><span class="p">,</span>
+            <span class="n">inoculum_od600</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">endpoint</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">SCREEN_VESSEL</span><span class="p">,</span> <span class="n">SHAKING_RPM</span><span class="p">,</span> <span class="n">HARVEST</span><span class="p">],</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">ENDPOINT_GAP</span><span class="p">,</span> <span class="n">INOCULUM_GAP</span><span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">furfural_mm</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CultureEnvironment</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""SED-URA/G418 liquid carrying furfural (mM), 30 C, aerobic, in a flask."""</span>
+        <span class="k">return</span> <span class="n">CultureEnvironment</span><span class="p">(</span>
             <span class="n">media</span><span class="o">=</span><span class="n">SED_URA_G418</span><span class="p">,</span>
             <span class="n">temperature</span><span class="o">=</span><span class="n">Temperature</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">TEMPERATURE_C</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
             <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>
@@ -790,18 +916,32 @@
                 <span class="p">)</span>
             <span class="p">],</span>
             <span class="n">aerobicity</span><span class="o">=</span><span class="n">AEROBICITY</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="n">provenance_gaps</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">DURATION_GAPS</span><span class="p">),</span>
+            <span class="n">culture_format</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_culture_format</span><span class="p">(),</span>
+            <span class="n">pre_culture</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">auxotroph_supplements</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="o">*</span><span class="n">DURATION_GAPS</span><span class="p">,</span> <span class="n">PRE_CULTURE_GAP</span><span class="p">,</span> <span class="n">AUXOTROPH_SUPPLEMENT_GAP</span><span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_genome_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StrainReferenceGenome</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The bAID host, typed: BY4742's alleles plus the Delta-site CRISPR-AID cassette.</span>
+
+<span class="sd">        One background for every round, and the same object the in-house Bioscreen</span>
+<span class="sd">        dataset builds, so both datasets join on one strain.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">StrainReferenceGenome</span><span class="p">(</span>
+            <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span>
+            <span class="n">strain</span><span class="o">=</span><span class="n">BAID_STRAIN</span><span class="p">,</span>
+            <span class="n">ploidy</span><span class="o">=</span><span class="s2">"haploid"</span><span class="p">,</span>
+            <span class="n">background</span><span class="o">=</span><span class="n">baid_background</span><span class="p">(),</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_reference</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">:</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">:</span> <span class="n">CultureEnvironment</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""No-enrichment baseline: a guide that neither enriches nor depletes -&gt; log2FC 0."""</span>
-        <span class="k">return</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">(</span>
+        <span class="k">return</span> <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">(</span>
             <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
-            <span class="n">genome_reference</span><span class="o">=</span><span class="n">ReferenceGenome</span><span class="p">(</span>
-                <span class="n">species</span><span class="o">=</span><span class="s2">"Saccharomyces cerevisiae"</span><span class="p">,</span> <span class="n">strain</span><span class="o">=</span><span class="n">HOST</span><span class="o">.</span><span class="n">value</span>
-            <span class="p">),</span>
+            <span class="n">genome_reference</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_genome_reference</span><span class="p">(),</span>
             <span class="n">environment_reference</span><span class="o">=</span><span class="n">environment</span><span class="o">.</span><span class="n">model_copy</span><span class="p">(),</span>
             <span class="n">phenotype_reference</span><span class="o">=</span><span class="n">EnvironmentResponsePhenotype</span><span class="p">(</span>
                 <span class="n">measurement_type</span><span class="o">=</span><span class="n">MeasurementType</span><span class="o">.</span><span class="n">log2_ratio</span><span class="p">,</span>
@@ -863,6 +1003,10 @@
             <span class="n">doi</span><span class="o">=</span><span class="n">DOI</span><span class="p">,</span>
             <span class="n">doi_url</span><span class="o">=</span><span class="sa">f</span><span class="s2">"https://doi.org/</span><span class="si">{</span><span class="n">DOI</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="c1"># One environment and one strain-resolved reference per round, every round on the</span>
+        <span class="c1"># SAME typed bAID background. The round's accumulated integrated edits stay in</span>
+        <span class="c1"># the record's Genotype, so a round-2/3 record is the 2-/3-perturbation strain</span>
+        <span class="c1"># actually in the tube.</span>
         <span class="n">prepared</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">rnd</span> <span class="ow">in</span> <span class="n">rounds</span><span class="p">:</span>
             <span class="n">environment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment</span><span class="p">(</span><span class="n">FURFURAL_MM</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">rnd</span><span class="p">])</span>
@@ -912,7 +1056,7 @@
                     <span class="n">sd</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="sa">f</span><span class="s2">"r</span><span class="si">{</span><span class="n">rnd</span><span class="si">}</span><span class="s2">_log2fc_sd"</span><span class="p">]</span>
                     <span class="n">has_sd</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">sd</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">sd</span><span class="p">))</span>
                     <span class="n">item</span> <span class="o">=</span> <span class="n">prepared</span><span class="p">[</span><span class="n">rnd</span><span class="p">]</span>
-                    <span class="n">experiment</span> <span class="o">=</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">(</span>
+                    <span class="n">experiment</span> <span class="o">=</span> <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">(</span>
                         <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                         <span class="n">genotype</span><span class="o">=</span><span class="n">Genotype</span><span class="p">(</span>
                             <span class="n">perturbations</span><span class="o">=</span><span class="p">[</span>

@@ -128,9 +128,10 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -494,10 +495,35 @@
 
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">Visibility</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether a dataset may leave the house.</span>
+
+<span class="sd">    - ``public``: servable on the public knowledge graph and publishable in a</span>
+<span class="sd">      ``tc-data`` release. Every dataset built from a published source.</span>
+<span class="sd">    - ``private``: in-house data (``torchcell/datasets/private_torchcell/``). It is</span>
+<span class="sd">      never written into the public graph and never packaged into a release; the build</span>
+<span class="sd">      and the packager each refuse it, rather than relying on a human to leave it out</span>
+<span class="sd">      of a config.</span>
+
+<span class="sd">    Filtering is exact rather than heuristic: every record carries ``dataset_name``,</span>
+<span class="sd">    which is the dataset class's own name, so the set of private records in any store is</span>
+<span class="sd">    exactly the records whose ``dataset_name`` names a class with</span>
+<span class="sd">    ``visibility is private``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">public</span> <span class="o">=</span> <span class="s2">"public"</span>
+    <span class="n">private</span> <span class="o">=</span> <span class="s2">"private"</span>
+
+
 <div class="viewcode-block" id="ExperimentDataset">
 <a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExperimentDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>  <span class="c1"># type: ignore[misc]  # Dataset is untyped (Any) in torch_geometric</span>
 <span class="w">    </span><span class="sd">"""Abstract PyG dataset storing experiment items in an LMDB store."""</span>
+
+    <span class="c1">#: Whether this dataset may be served publicly or published in a release. A</span>
+    <span class="c1">#: ClassVar, not a field: it is a property of the LOADER, decided once in code, and</span>
+    <span class="c1">#: the build and release gates read it off the class without instantiating it.</span>
+    <span class="n">visibility</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="n">Visibility</span><span class="p">]</span> <span class="o">=</span> <span class="n">Visibility</span><span class="o">.</span><span class="n">public</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>

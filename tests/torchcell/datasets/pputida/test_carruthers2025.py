@@ -1873,6 +1873,11 @@ def test_both_loaders_pass_their_full_level_batteries_on_the_synthetic_build(
             }
         ),
     )
+    # `verify_build` reads each store with its own reader, and LMDB refuses a second
+    # open of one environment in a process, so both builders hand their handle back
+    # before the batteries run.
+    built_titer.close_lmdb()
+    built_proteome.close_lmdb()
     families: tuple[tuple[str, c25.Family], ...] = (
         (built_titer.root, "titer"),
         (built_proteome.root, "proteome"),

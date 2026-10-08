@@ -82,11 +82,17 @@ predicted a gap that was already filled. The two phenotype families that still h
 consumer are `FluxPhenotype` (a fitted net-flux map) and `BacterialVisualScorePhenotype`
 (an ordinal colony score). Neither is a reporter readout.
 
-`EnvironmentResponsePhenotype` was the near miss. It is documented as a fitness/growth
-response, and its verifier requires an environmental edit on every record, which would
-refuse the untreated arm and the three pre-dose reads of each treated well: 34,740 of the
-69,480 readings. Its `MeasurementType` enum also has no member for an absolute
-fluorescence intensity, and adding one would touch a class 32 served datasets share.
+`EnvironmentResponsePhenotype` was the near miss, and the decisive reason against it is
+structural rather than nominal. It is documented as a fitness/growth response and this
+number is transcription, but what settles it is that its verifier requires an
+environmental edit on EVERY record: that rule refuses the untreated arm and each treated
+well's three pre-dose reads, which is 34,740 of the 69,480 readings, and the control arm
+is not an artifact of the design but the denominator the paper publishes.
+
+Its `MeasurementType` enum also has no member for an absolute fluorescence intensity, but
+that is a weaker argument than it first looks: `relative_growth_rate` was added to that
+same enum on main while this branch was open, so a member CAN be added with the rebuild
+consequence declared. The untreated arm is the reason, not the enum.
 
 So the family is new and additive: `PromoterActivityPhenotype` with the
 `ReporterReadout` axis, its `PromoterActivityExperiment` / `...Reference` pair pinning
@@ -198,12 +204,21 @@ The report is at
 ### Cost of the per-record reference
 
 The reference is distinct per (well, read hour), so the store holds 17,370 distinct
-references and `preprocess/experiment_reference_index.json` is 284 MB. That is well
-inside precedent (`proteome_messner2023` is 1.2 GB), but it makes `stream_records` reload
-a large interned set on every pass, and the verifier makes eleven passes, so a verify run
-takes about half an hour. A cheaper reference would have to drop the untreated reading,
-which is what makes the fold change recoverable in-record, so the cost is bought
-deliberately.
+references and `preprocess/experiment_reference_index.json` is 284 MB, which takes 30.2 s
+to load (measured). That is well inside precedent (`proteome_messner2023` is 1.2 GB), but
+it is paid by every consumer:
+
+- the verifier streams the store eleven times and reloads the interned set on each pass:
+  **7 min** on an idle machine for the whole L0-L4 run (measured 16:45 to 16:52:21);
+- `assert_dev_store_graph` runs past the suite's 300 s default, because six reference
+  collectors each walk all 17,370 entries and sha256 a `model_dump` carrying the whole LB
+  media object. That test carries `@pytest.mark.timeout(1800)` and says why.
+
+The cardinality is irreducible under this schema: `phenotype_reference` requires a real
+`PromoterActivityPhenotype` with a float, the only honest float is the matched untreated
+reading, and that reading varies per well and per hour. The alternative is to drop the
+untreated reading from the reference, which is exactly what makes the fold change
+recoverable in-record, so the cost is bought deliberately rather than overlooked.
 
 ### Pins
 

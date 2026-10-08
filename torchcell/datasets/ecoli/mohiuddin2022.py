@@ -44,11 +44,13 @@ RECORD = one (arm, plate, well, read hour) ``PromoterActivityExperiment``:
 WHY A NEW PHENOTYPE FAMILY AND NOT AN EXISTING ONE. The measured entity is a promoter,
 and the number is a reporter signal:
 
-- ``EnvironmentResponsePhenotype`` is a fitness/growth response and its verifier
-  requires an environmental edit on every record. Three of the four arms here are
-  untreated or pre-dose, which that rule correctly refuses, and those are 32,160 of the
+- ``EnvironmentResponsePhenotype`` is a fitness/growth response, and what settles it is
+  that its verifier requires an environmental edit on EVERY record. The untreated arm
+  and each treated well's three pre-dose reads carry none, and those are 34,740 of the
   69,480 readings: the control arm is not an artifact of the design, it is the
-  denominator the paper publishes.
+  denominator the paper publishes. Its ``MeasurementType`` enum also has no member for
+  an absolute fluorescence intensity, but that is the weaker argument, since a member
+  can be added with the rebuild consequence declared.
 - the three expression families are genome-wide dicts of ONE strain's transcriptome. A
   reporter library inverts that shape: one promoter per strain across 1,809 strains, and
   the number is a proxy for transcription rather than a transcript count.

@@ -747,21 +747,25 @@ def test_the_real_stores_verification_report_passes_every_row() -> None:
         ).read_text()
     )
     assert report["dataset_name"] == "PromoterReporterMohiuddin2022Dataset"
-    rows = {(row["level"], row["name"]): row for row in report["results"]}
+    # ``Level`` serializes as its int value, so L1 is 1.
+    rows = {(Level(row["level"]), row["name"]): row for row in report["results"]}
     assert [key for key, row in rows.items() if not row["passed"]] == []
-    assert rows[("L1", "count")]["details"] == {"observed": 69480, "expected": 69480}
-    assert rows[("L1", "reading_uniqueness")]["details"]["n_keys"] == 69480
-    assert rows[("L2", "value_fidelity")]["details"]["n_values"] == 69480
-    fold = rows[("L3", "fold_change_recoverable_from_one_record")]["details"]
+    assert rows[(Level.L1, "count")]["details"] == {
+        "observed": 69480,
+        "expected": 69480,
+    }
+    assert rows[(Level.L1, "reading_uniqueness")]["details"]["n_keys"] == 69480
+    assert rows[(Level.L2, "value_fidelity")]["details"]["n_values"] == 69480
+    fold = rows[(Level.L3, "fold_change_recoverable_from_one_record")]["details"]
     assert fold["n_checked"] == fold["n_expected"] == 52110
     assert fold["max_relative_error"] < 1e-15
-    dose = rows[("L3", "the_drug_is_on_the_reads_from_hour_five_only")]["details"]
+    dose = rows[(Level.L3, "the_drug_is_on_the_reads_from_hour_five_only")]["details"]
     assert (dose["untreated"], dose["treated_predose"], dose["treated_dosed"]) == (
         17370,
         17370,
         34740,
     )
-    gene = rows[("L3", "promoter_gene_is_a_locus")]["details"]
+    gene = rows[(Level.L3, "promoter_gene_is_a_locus")]["details"]
     assert gene["n_genes"] == 1761
     # 106 of the 1,930 wells carry one of the 48 unresolved labels (Empty, U66 and U139
     # alone occupy 60), and each well is 4 arms x 9 reads.

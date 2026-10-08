@@ -94,7 +94,17 @@ def test_conf_enables_both_the_gene_and_the_environment_perturbation_pairs() -> 
 
 
 @pytest.mark.data
+@pytest.mark.timeout(1800)
 def test_dev_store_emits_a_closed_declared_graph(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Over the suite's 300 s default, because this store has 17,370 REFERENCES.
+
+    A record's reference is its own well in the untreated arm at its own read hour,
+    which is what makes the released fold change recoverable from one record, and it
+    makes the reference index 284 MB (30.2 s to load, measured). Six reference
+    collectors then each walk all 17,370 entries and sha256 a ``model_dump`` that
+    carries the whole LB media object. The cost is bought deliberately; the only
+    cheaper reference would drop the untreated reading the fold change divides by.
+    """
     assert_dev_store_graph(CASE, monkeypatch)
